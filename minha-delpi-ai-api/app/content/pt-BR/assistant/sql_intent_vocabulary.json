@@ -717,7 +717,8 @@
     "authoringHints": {
       "protheusPhysicalTable": "Tabela física Protheus: sufixo 010 (ex.: SB1010) e D_E_L_E_T_ = '' para registros ativos.",
       "productCadastro": "Cadastro de produtos: SB1010 — B1_COD, B1_DESC; filtro de grupo/família via B1_GRUPO; use TOP n quando pedirem limite.",
-      "clientCadastro": "Cadastro de clientes: SA1010 — A1_COD, A1_NOME."
+      "clientCadastro": "Cadastro de clientes: SA1010 — A1_COD, A1_NOME.",
+      "productionAppointment": "Apontamentos de produção: SH6010 — H6_OP, H6_PRODUTO, H6_DATA, H6_HORA, H6_QTDPROD; filtrar H6_TIPO = 'P'; use TOP n e ORDER BY H6_DATA DESC, H6_HORA DESC para os mais recentes."
     },
     "schemaRelations": {
       "userTitle": "Relações internas {table_name} (não exibir catálogo ao usuário)",

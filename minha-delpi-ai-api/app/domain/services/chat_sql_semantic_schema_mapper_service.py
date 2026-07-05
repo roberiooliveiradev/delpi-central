@@ -14,6 +14,11 @@ _SEMANTIC_MAPPINGS: tuple[tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...
     (("nome do cliente", "razao social", "razão social"), ("A1_NOME", "A1_NREDUZ", "CUSTOMER_NAME", "NOME_CLIENTE"), ("SA1",)),
     (("venda", "vendas", "faturamento", "receita"), ("C6_VALOR", "D2_TOTAL", "VALOR_TOTAL", "SALES_VALUE", "TOTAL_AMOUNT"), ("SC6", "SD2", "SF2")),
     (("pedido", "pedidos", "order"), ("C5_NUM", "C5_CLIENTE", "ORDER_ID", "PEDIDO_ID"), ("SC5",)),
+    (
+        ("apontamento", "apontamentos"),
+        ("H6_OP", "H6_PRODUTO", "H6_DATA", "H6_HORA", "H6_QTDPROD", "H6_TIPO"),
+        ("SH6",),
+    ),
     (("produto", "produtos", "item", "sku"), ("B1_COD", "D2_COD", "PRODUCT_ID", "ITEM_CODE", "SKU"), ("SB1", "SD2")),
     (("estoque", "saldo", "inventory"), ("B2_QATU", "B2_QEMP", "SALDO", "QTY", "QUANTIDADE"), ("SB2",)),
     (("filial", "branch"), ("FILIAL", "BRANCH", "A1_FILIAL", "C5_FILIAL", "D2_FILIAL"), ()),
@@ -55,6 +60,18 @@ class ChatSqlSemanticSchemaMapperService:
                 break
 
         return {"matches": matches, "hasMatches": bool(matches)}
+
+    @classmethod
+    def resolve_primary_table(cls, message: str | None) -> str | None:
+        mapping = cls.map_message(message)
+
+        for item in mapping.get("matches") or []:
+            table_hints = item.get("tableHints") or []
+
+            if table_hints:
+                return str(table_hints[0]).upper()
+
+        return None
 
     @classmethod
     def format_hints(cls, mapping: dict[str, Any] | None) -> list[str]:

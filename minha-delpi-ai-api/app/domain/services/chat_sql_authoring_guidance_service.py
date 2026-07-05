@@ -179,6 +179,24 @@ class ChatSqlAuthoringGuidanceService:
         if planned:
             return planned[:3]
 
+        from app.domain.services.chat_sql_semantic_schema_mapper_service import (
+            ChatSqlSemanticSchemaMapperService,
+        )
+
+        canonical_table = ChatSqlSemanticSchemaMapperService.resolve_primary_table(message)
+
+        if canonical_table and not table_names:
+            col_selected = selection_service.select_system_metadata(
+                f"colunas da tabela {canonical_table}",
+                allowed_action_ids,
+            )
+
+            if col_selected and not cls._contains_same_action(planned, col_selected):
+                planned.append(col_selected)
+
+            if planned:
+                return planned[:3]
+
         domain = cls.extract_table_domain_entity(message) or cls.extract_domain_hint(message)
 
         if not domain:

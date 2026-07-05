@@ -517,5 +517,83 @@ def test_plan_schema_prefetch_chains_sb1_columns_after_table_search():
         allowed_action_ids=["api_delpi.system.search_tables_system_tables_search_get"],
     )
 
-    assert len(planned) == 2
+    assert len(planned) == 1
     assert any("colunas da tabela SB1" in call for call in selection.calls)
+
+
+def test_authoring_sql_from_message_production_appointments_sh6():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prompt_service import (
+        ChatAdvancedSqlSpecialistPromptService,
+    )
+
+    msg = (
+        "use sql para criar uma quer que busque os 10 ultimos "
+        "apontamentos de produção"
+    )
+    sql = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(msg, [])
+
+    assert sql is not None
+    assert "SH6010" in sql
+    assert "H6_OP" in sql
+    assert "TOP 10" in sql.upper()
+    assert "H6_TIPO = 'P'" in sql
+    assert "ORDER BY H6_DATA DESC" in sql
+
+
+def test_normalize_replaces_sa1_with_sh6_for_appointment_authoring():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prose_formatting_service import (
+        ChatAdvancedSqlSpecialistProseFormattingService,
+    )
+
+    msg = (
+        "use sql para criar uma quer que busque os 10 ultimos "
+        "apontamentos de produção"
+    )
+    bad = (
+        "Segue a consulta.\n\n```sql\nSELECT A1_COD, A1_NOME FROM SA1010\n```\n\n"
+        "Exemplo genérico."
+    )
+    fixed = ChatAdvancedSqlSpecialistProseFormattingService.normalize_protheus_sql_answer(
+        bad,
+        message=msg,
+        tool_calls=[],
+    )
+
+    assert "SH6010" in fixed
+    assert "H6_OP" in fixed
+    assert "SA1010" not in fixed
+    assert "A1_COD" not in fixed
+
+
+def test_plan_schema_prefetch_targets_sh6_for_appointments():
+    from app.domain.services.chat_sql_authoring_guidance_service import (
+        ChatSqlAuthoringGuidanceService,
+    )
+
+    class _StubSelection:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def select_system_metadata(self, prompt: str, allowed_action_ids: list[str]) -> dict:
+            self.calls.append(prompt)
+
+            return {
+                "arguments": {
+                    "actionId": "api_delpi.system.get_table_columns",
+                },
+                "metadata": {"path": "/system/tables/SH6/columns"},
+            }
+
+    msg = (
+        "use sql para criar uma quer que busque os 10 ultimos "
+        "apontamentos de produção"
+    )
+    selection = _StubSelection()
+    planned = ChatSqlAuthoringGuidanceService.plan_schema_prefetch(
+        selection,
+        message=msg,
+        allowed_action_ids=["api_delpi.system.get_table_columns"],
+    )
+
+    assert len(planned) == 1
+    assert any("colunas da tabela SH6" in call for call in selection.calls)

@@ -80,6 +80,25 @@ class ChatAdvancedSqlSpecialistPromptService:
                     if token not in hints:
                         hints.append(token)
 
+            if "/tables/sh6" in path or (
+                metadata.get("sqlSchemaPrefetch")
+                and cls._authoring_context(message=str(metadata.get("currentMessage") or "")).get(
+                    "logicalTable"
+                )
+                == "SH6"
+            ):
+                for token in (
+                    "H6_OP",
+                    "H6_PRODUTO",
+                    "H6_DATA",
+                    "H6_HORA",
+                    "H6_QTDPROD",
+                    "H6_TIPO",
+                    "D_E_L_E_T_",
+                ):
+                    if token not in hints:
+                        hints.append(token)
+
         return hints
 
     @classmethod
@@ -115,6 +134,10 @@ class ChatAdvancedSqlSpecialistPromptService:
             code_col = "B1_COD"
             name_col = "B1_DESC"
             group_col = "B1_GRUPO"
+        elif logical_table.startswith("SH"):
+            code_col = "H6_OP"
+            name_col = "H6_PRODUTO"
+            group_col = None
         elif logical_table.startswith("SA"):
             code_col = "A1_COD"
             name_col = "A1_NOME"
@@ -157,13 +180,23 @@ class ChatAdvancedSqlSpecialistPromptService:
             top_limit = int(top_match.group(1))
         else:
             count_match = re.search(
-                r"\b(?:liste|listar|list|traga|mostre|retorne)(?:\s+(?:os|as|me))?\s+(\d+)\s+",
+                r"\b(?:liste|listar|list|traga|mostre|retorne|busque|buscar|busca)"
+                r"(?:\s+(?:os|as|me|a))?\s+(\d+)\s+",
                 normalized,
                 flags=re.IGNORECASE,
             )
 
             if count_match:
                 top_limit = int(count_match.group(1))
+            else:
+                recent_count = re.search(
+                    r"\b(\d{1,3})\s+(?:ultim|primeir|recent)",
+                    normalized,
+                    flags=re.IGNORECASE,
+                )
+
+                if recent_count:
+                    top_limit = int(recent_count.group(1))
 
         group_value: str | None = None
         group_match = re.search(r"\bgrupo\s+(\d+)\b", normalized, flags=re.IGNORECASE)
@@ -184,11 +217,27 @@ class ChatAdvancedSqlSpecialistPromptService:
     @classmethod
     def _authoring_sql_from_message(cls, message: str | None, columns: list[str]) -> str | None:
         ctx = cls._authoring_context(message=message, columns=columns)
+        logical = str(ctx.get("logicalTable") or "").upper()
         select_prefix = (
             f"SELECT TOP {ctx['topLimit']} "
             if ctx.get("topLimit")
             else "SELECT "
         )
+
+        if logical.startswith("SH"):
+            select_cols = ["H6_OP", "H6_PRODUTO", "H6_DATA", "H6_HORA", "H6_QTDPROD"]
+            lines = [
+                f"{select_prefix}{', '.join(select_cols)}",
+                f"FROM {ctx['physicalTable']}",
+                "WHERE D_E_L_E_T_ = ''",
+                "  AND H6_TIPO = 'P'",
+            ]
+
+            if cls._wants_recent_order(message):
+                lines.append("ORDER BY H6_DATA DESC, H6_HORA DESC")
+
+            return "\n".join(lines)
+
         select_cols = [str(ctx["codeColumn"])]
 
         if ctx.get("nameColumn") and ctx["nameColumn"] not in select_cols:
@@ -206,6 +255,27 @@ class ChatAdvancedSqlSpecialistPromptService:
         return "\n".join(lines)
 
     @classmethod
+    def _wants_recent_order(cls, message: str | None) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        return any(
+            marker in normalized
+            for marker in (
+                "ultimo",
+                "ultimos",
+                "último",
+                "últimos",
+                "recente",
+                "recentes",
+                "mais recente",
+                "mais recentes",
+            )
+        )
+
+    @classmethod
     def _authoring_sql_domain_mismatch(cls, *, message: str | None, sql_block: str) -> bool:
         ctx = cls._authoring_context(message=message)
         logical = str(ctx.get("logicalTable") or "").upper()
@@ -216,6 +286,16 @@ class ChatAdvancedSqlSpecialistPromptService:
                 "sa1010" in sql_lower
                 or "a1_cod" in sql_lower
                 or re.search(r"\ba1_[a-z0-9_]+\b", sql_lower) is not None
+            )
+
+        if logical.startswith("SH"):
+            return (
+                "sa1010" in sql_lower
+                or "sb1010" in sql_lower
+                or "a1_cod" in sql_lower
+                or "b1_cod" in sql_lower
+                or re.search(r"\ba1_[a-z0-9_]+\b", sql_lower) is not None
+                or re.search(r"\bb1_[a-z0-9_]+\b", sql_lower) is not None
             )
 
         if logical.startswith("SA"):

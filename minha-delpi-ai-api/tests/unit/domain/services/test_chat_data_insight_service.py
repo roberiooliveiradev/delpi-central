@@ -71,6 +71,39 @@ def test_build_generic_empty_list_detects_empty_anomaly():
     )
 
 
+def test_build_sql_result_uses_presentation_rows():
+    metadata = {
+        "path": "/data/sql",
+        "presentation": {
+            "type": "table",
+            "rows": [
+                {"B1_COD": "10080001", "B1_DESC": "Produto A"},
+                {"B1_COD": "10080002", "B1_DESC": "Produto B"},
+            ],
+        },
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, {})
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("profileKey") == "generic_list"
+    assert "2" in str(
+        next(
+            (
+                metric.get("value")
+                for metric in (data_answer.get("derivedMetrics") or [])
+                if isinstance(metric, dict) and metric.get("label") == "Registros"
+            ),
+            {},
+        )
+    )
+    assert not any(
+        anomaly.get("type") == "empty_list"
+        for anomaly in (data_answer.get("anomalies") or [])
+        if isinstance(anomaly, dict)
+    )
+
+
 def test_build_factory_status_marks_limitations_when_production_table_truncated():
     metadata = {
         "path": "/products/90262404/factory-status",

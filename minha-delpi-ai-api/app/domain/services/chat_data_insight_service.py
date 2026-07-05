@@ -424,6 +424,14 @@ class ChatDataInsightService:
         metadata: dict[str, Any],
         data: dict[str, Any],
     ) -> list[dict[str, Any]] | None:
+        presentation = metadata.get("presentation")
+
+        if isinstance(presentation, dict) and str(presentation.get("type") or "").lower() == "table":
+            rows = presentation.get("rows")
+
+            if isinstance(rows, list):
+                return [row for row in rows if isinstance(row, dict)]
+
         table = metadata.get("tablePresentation")
 
         if isinstance(table, dict):

@@ -104,18 +104,16 @@ class ChatSqlMemoryWorkspaceService:
         if not previous_messages:
             return None
 
-        recent = ChatSqlQueryRefinementService.collect_recent_sql_execution(previous_messages)
+        authored_idx, authored_sql = cls._latest_authored_sql_index(previous_messages)
+        executed_idx, executed_sql = cls._latest_executed_sql_index(previous_messages)
 
-        if recent and recent.sql:
-            return recent.sql
+        if authored_sql and (authored_idx >= executed_idx or not executed_sql):
+            return authored_sql
+
+        if executed_sql:
+            return executed_sql
 
         for msg in reversed(previous_messages):
-            content = cls._message_content(msg)
-            sql = ChatSqlPerformanceAdvisorService.extract_sql_block(content)
-
-            if sql:
-                return sql
-
             metadata = cls._message_metadata(msg)
 
             if isinstance(metadata, dict):
@@ -128,6 +126,77 @@ class ChatSqlMemoryWorkspaceService:
                         return stored.strip()
 
         return None
+
+    @classmethod
+    def _latest_authored_sql_index(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> tuple[int, str | None]:
+        last_idx = -1
+        last_sql: str | None = None
+
+        for idx, msg in enumerate(previous_messages or []):
+            content = cls._message_content(msg)
+            sql = ChatSqlPerformanceAdvisorService.extract_sql_block(content)
+
+            if sql:
+                last_idx = idx
+                last_sql = sql
+
+        return last_idx, last_sql
+
+    @classmethod
+    def _latest_executed_sql_index(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> tuple[int, str | None]:
+        from app.domain.services.external_actions.external_action_sql_capability_service import (
+            ExternalActionSqlCapabilityService,
+        )
+
+        last_idx = -1
+        last_sql: str | None = None
+
+        for idx, msg in enumerate(previous_messages or []):
+            metadata = cls._message_metadata(msg)
+
+            if not isinstance(metadata, dict):
+                continue
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata") or {}
+
+                if tool_meta.get("ok") is False:
+                    continue
+
+                path = str(tool_meta.get("path") or "").lower()
+                action_id = str(tool_meta.get("actionId") or "").lower()
+                sensitivity = str(tool_meta.get("sensitivity") or "").lower()
+
+                if path != "/data/sql" and "sql" not in action_id and sensitivity != "sql":
+                    continue
+
+                sql = ExternalActionSqlCapabilityService.extract_sql_from_metadata(tool_meta)
+
+                if not sql:
+                    arguments = tool_call.get("arguments") or {}
+                    body = arguments.get("body") or {}
+                    sql = ExternalActionSqlCapabilityService.extract_sql_from_arguments(
+                        {"body": body, **arguments}
+                    )
+
+                if sql:
+                    last_idx = idx
+                    last_sql = sql
+                    break
+
+        return last_idx, last_sql
 
     @classmethod
     def extract_tables(cls, sql: str | None) -> list[str]:

@@ -242,3 +242,50 @@ def test_resolve_execute_active_query_from_session_authoring():
     assert "SB1010" in refinement.sql
     assert "TOP 5" in refinement.sql.upper()
     assert "B1_GRUPO" in refinement.sql
+
+
+def test_resolve_execute_prefers_latest_authored_sql_over_previous_execution():
+    product_sql = """SELECT TOP 5 B1_COD, B1_DESC
+FROM SB1010
+WHERE D_E_L_E_T_ = ''
+  AND B1_GRUPO = '1008'"""
+    appointment_sql = """SELECT TOP 10 H6_OP, H6_PRODUTO, H6_DATA, H6_HORA, H6_QTDPROD
+FROM SH6010
+WHERE D_E_L_E_T_ = ''
+  AND H6_TIPO = 'P'
+ORDER BY H6_DATA DESC, H6_HORA DESC"""
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/data/sql",
+                            "sensitivity": "sql",
+                            "executedSql": product_sql,
+                        },
+                        "arguments": {
+                            "body": {"sql": product_sql},
+                        },
+                    }
+                ]
+            },
+        },
+        {
+            "role": "assistant",
+            "content": f"Segue a consulta.\n\n```sql\n{appointment_sql}\n```",
+        },
+    ]
+
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "execute a query",
+        previous_messages=history,
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "SH6010" in refinement.sql
+    assert "SB1010" not in refinement.sql
