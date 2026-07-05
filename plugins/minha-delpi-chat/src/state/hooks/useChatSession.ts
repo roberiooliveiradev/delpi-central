@@ -1418,6 +1418,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
                   sessionId,
                   handoffFromPlaybackPayload(sessionId, existingPayload),
                 );
+              } else {
+                finishSending(sessionId);
               }
 
               return;
@@ -1447,6 +1449,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
             playbackPayloadRef.current = payload;
             setPlaybackPayload(payload);
+            finishSending(sessionId);
             return;
           }
 
@@ -1915,6 +1918,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
 
       setError(null);
+
+      userDismissedBackgroundStreamRef.current.delete(activeSession.id);
 
       // Limpa otimisticamente a resposta antiga: ao reenviar criamos uma nova
       // branch a partir desta pergunta, então tudo que vem depois dela sai da
