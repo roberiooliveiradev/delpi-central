@@ -35,11 +35,11 @@ class ChatSqlAuthoringGuidanceService:
         }
     )
     _DOMAIN_HINT_PATTERNS = (
-        r"(?:monte|crie|gera|gere|elabore|escreva|construa|construir|ajuste|corrija|refine)\s+"
-        r"(?:uma\s+)?(?:consulta|query|sql)\s+(?:de|sobre|para|com|que)\s+(.+?)(?:\?|$)",
-        r"(?:consulta|query|sql)\s+(?:de|sobre|para|com|que)\s+(.+?)(?:\?|$)",
-        r"(?:preciso|quero)\s+(?:de\s+)?(?:uma\s+)?(?:consulta|query|sql)\s+(?:de|sobre|para|que)\s+(.+?)(?:\?|$)",
-        r"(?:use\s+)?sql\s+para\s+(?:construir\s+)?(?:uma\s+)?(?:query|consulta)\s+(?:que\s+)?(.+?)(?:\?|$)",
+        r"(?:monte|crie|cria|criar|gera|gere|elabore|escreva|construa|construir|ajuste|corrija|refine)\s+"
+        r"(?:uma\s+)?(?:consulta|query|quer|sql)\s+(?:de|sobre|para|com|que)\s+(.+?)(?:\?|$)",
+        r"(?:consulta|query|quer|sql)\s+(?:de|sobre|para|com|que)\s+(.+?)(?:\?|$)",
+        r"(?:preciso|quero)\s+(?:de\s+)?(?:uma\s+)?(?:consulta|query|quer|sql)\s+(?:de|sobre|para|que)\s+(.+?)(?:\?|$)",
+        r"(?:use\s+)?sql\s+para\s+(?:construir\s+|criar\s+)?(?:uma\s+)?(?:query|quer|consulta)\s+(?:que\s+)?(.+?)(?:\?|$)",
     )
 
     @classmethod

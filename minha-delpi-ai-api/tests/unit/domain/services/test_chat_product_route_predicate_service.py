@@ -196,6 +196,20 @@ def test_system_predicates_metadata_routes():
     assert ChatProductRoutePredicateService.matches("systemWantsTableSearch", table_search)
 
 
+def test_system_table_search_blocked_for_sql_authoring():
+    authoring = ChatMessageNormalizationService.normalize_for_matching(
+        "use sql para criar uma quer que busque os 10 ultimos apontamentos de producao"
+    )
+
+    assert not ChatProductRoutePredicateService.matches(
+        "systemWantsTableSearch",
+        authoring,
+        message=(
+            "use sql para criar uma quer que busque os 10 ultimos apontamentos de producao"
+        ),
+    )
+
+
 def test_product_search_predicates_description_and_group():
     by_description = ChatMessageNormalizationService.normalize_for_matching(
         "busque produtos parafuso sextavado"

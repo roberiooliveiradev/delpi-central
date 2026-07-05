@@ -628,6 +628,9 @@
   },
   "systemPredicates": {
     "systemMetadataQuestion": {
+      "noneOf": [
+        { "excludeIfSqlAuthoring": true }
+      ],
       "termsFrom": "external_action_responses.actionSelection.systemMetadata.terms"
     },
     "systemWantsColumns": {
@@ -637,6 +640,9 @@
       "termsFrom": "external_action_responses.actionSelection.systemMetadataRelationTerms"
     },
     "systemWantsTableSearch": {
+      "noneOf": [
+        { "excludeIfSqlAuthoring": true }
+      ],
       "anyOf": [
         {
           "termsFrom": "external_action_responses.actionSelection.systemMetadataTableSearchPhrases"

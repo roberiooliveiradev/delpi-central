@@ -310,6 +310,7 @@ class OperationalRouteMatcherService:
             and not spec.get("excludeIfSqlConversation")
             and not spec.get("excludeIfWebSearch")
             and not spec.get("excludeIfSqlOperational")
+            and not spec.get("excludeIfSqlAuthoring")
             and not spec.get("excludeIfProductionRestRoute")
             and not plural_scope
             and not spec.get("hasProductEntityReference")
@@ -332,6 +333,7 @@ class OperationalRouteMatcherService:
     ) -> bool | None:
         probes = (
             ("excludeIfSqlConversation", cls._is_sql_conversation_turn),
+            ("excludeIfSqlAuthoring", cls._is_sql_authoring_turn),
             ("excludeIfWebSearch", cls._is_web_search_turn),
             ("excludeIfSqlOperational", cls._requires_sql_operational_knowledge),
             ("excludeIfProductionRestRoute", cls._matches_production_rest_route),
@@ -342,6 +344,14 @@ class OperationalRouteMatcherService:
                 return checker(normalized, message=message)
 
         return None
+
+    @staticmethod
+    def _is_sql_authoring_turn(normalized: str, *, message: str = "") -> bool:
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
+        return ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message or normalized)
 
     @staticmethod
     def _is_sql_conversation_turn(normalized: str, *, message: str = "") -> bool:

@@ -403,6 +403,32 @@ def test_authoring_sql_from_message_traga_os_n_produtos():
     assert "TOP 5" in sql.upper()
 
 
+def test_apontamentos_authoring_not_prefetch_without_custom_authoring():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_pipeline_service import (
+        ChatAdvancedSqlSpecialistPipelineService,
+    )
+    from app.domain.services.chat_sql_authoring_guidance_service import (
+        ChatSqlAuthoringGuidanceService,
+    )
+
+    msg = (
+        "use sql para criar uma quer que busque os 10 ultimos "
+        "apontamentos de produção"
+    )
+    ctx = {
+        "skills": {"sqlAuthoring": True},
+        "actionsEnabled": True,
+        "allowedActionIds": ["system-search"],
+    }
+
+    assert ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(msg)
+    assert ChatAdvancedSqlSpecialistPipelineService.should_prefetch_schema(
+        message=msg,
+        mode="create",
+        workspace_context=ctx,
+    )
+
+
 def test_classify_mode_execute_beats_incremental_edit_follow_up():
     from app.domain.services.chat_advanced_sql_specialist_service import (
         ChatAdvancedSqlSpecialistService,

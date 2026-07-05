@@ -45,6 +45,9 @@
       "planejamento de producao",
       "lista de producao",
       "apontamento de producao",
+      "apontamentos de producao",
+      "ultimos apontamentos",
+      "últimos apontamentos",
       "sc2010"
     ],
     "productionProductScopePhrases": [
@@ -176,6 +179,8 @@
       "monta ",
       "crie ",
       "cria ",
+      "criar ",
+      "criar uma ",
       "gere ",
       "gera ",
       "escreva ",
@@ -230,9 +235,11 @@
     ],
     "sqlBuildContext": [
       "query que",
+      "quer que",
       "consulta que",
       "sql que",
-      "select que"
+      "select que",
+      "sql para criar"
     ],
     "sqlContextTerms": [
       "sql",

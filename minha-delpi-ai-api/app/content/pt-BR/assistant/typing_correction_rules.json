@@ -3,6 +3,14 @@
   "description": "Regras estáticas de correção de typo operacional (Playbook 14). Ordem importa — padrões mais específicos primeiro.",
   "rules": [
     {
+      "pattern": "\\buma quer que\\b",
+      "replacement": "uma query que"
+    },
+    {
+      "pattern": "\\buna quer que\\b",
+      "replacement": "una query que"
+    },
+    {
       "pattern": "\\bforncedor(es)?\\b",
       "replacement": "fornecedor\\1"
     },

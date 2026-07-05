@@ -294,6 +294,13 @@ class ChatToolContextSelectionService:
                 sql_resolution = resolver.resolve(message)
 
                 if sql_resolution and sql_resolution.mode == "authoring":
+                    from app.domain.services.chat_sql_authoring_guidance_service import (
+                        ChatSqlAuthoringGuidanceService,
+                    )
+
+                    if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+                        break
+
                     return ToolSelectionOutcome(
                         early_result=host._finalize_tool_context_result(
                             message=raw_message,

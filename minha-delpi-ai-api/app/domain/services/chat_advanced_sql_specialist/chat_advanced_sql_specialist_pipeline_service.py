@@ -179,13 +179,18 @@ class ChatAdvancedSqlSpecialistPipelineService:
         if not ChatSqlAuthoringGuidanceService.agent_actions_available(workspace_context):
             return False
 
-        if resolved_mode in {"schema_explore", "create", "incremental_edit"}:
+        if resolved_mode == "schema_explore":
             return True
 
         if resolved_mode == "review" and ChatSqlPerformanceAdvisorService.extract_sql_block(
             str(message or "")
         ):
             return True
+
+        if resolved_mode in {"create", "incremental_edit"}:
+            return ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(
+                str(message or "")
+            )
 
         return ChatSqlAuthoringGuidanceService.should_prefetch_schema(
             message=str(message or ""),

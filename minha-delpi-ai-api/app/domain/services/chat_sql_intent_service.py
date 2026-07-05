@@ -133,9 +133,15 @@ class ChatSqlIntentService:
         if any(term in normalized for term in cls._authoring_terms()):
             return True
 
-        if "query" in normalized or "consulta sql" in normalized or "sql" in normalized:
+        if "query" in normalized or "quer" in normalized or "consulta sql" in normalized or "sql" in normalized:
             if any(ctx in normalized for ctx in cls._sql_build_context()):
                 return True
+
+        if re.search(
+            r"\bsql\s+para\s+criar\s+(?:uma\s+)?(?:quer|query|consulta)\b",
+            normalized,
+        ):
+            return True
 
         return False
 

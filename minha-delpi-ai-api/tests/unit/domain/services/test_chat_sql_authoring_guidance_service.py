@@ -1,14 +1,34 @@
 from unittest.mock import MagicMock
 
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_sql_authoring_guidance_service import (
     ChatSqlAuthoringGuidanceService,
 )
+
+configure_domain_infrastructure_ports()
 
 
 def test_detects_custom_sql_authoring_without_execute():
     assert ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(
         "monte uma consulta de faturamento por cliente sem executar"
     )
+
+
+def test_detects_sql_authoring_with_criar_and_quer_typo():
+    msg = (
+        "use sql para criar uma quer que busque os 10 ultimos "
+        "apontamentos de produção"
+    )
+
+    assert ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(msg)
+
+
+def test_extract_domain_hint_from_criar_quer_message():
+    hint = ChatSqlAuthoringGuidanceService.extract_domain_hint(
+        "use sql para criar uma quer que busque os 10 ultimos apontamentos de produção"
+    )
+
+    assert "apontamentos" in hint
 
 
 def test_extract_domain_hint_from_authoring_message():
