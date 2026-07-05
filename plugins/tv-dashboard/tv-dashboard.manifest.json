@@ -8,7 +8,14 @@
   "type": "microfrontend",
   "basePath": "/apps/tv-dashboard",
   "entry": "/apps/tv-dashboard/assets/remoteEntry.js",
-  "backend": "tv-dashboard-api",
+  "backend": {
+    "required": true,
+    "serviceName": "tv-dashboard-api",
+    "baseUrl": "/apps/tv-dashboard-api",
+    "validateJwt": true,
+    "issuer": "http://localhost/auth/realms/delpi",
+    "audience": "delpi-central"
+  },
   "permissions": [
     {
       "code": "tv-dashboard.read",
