@@ -51,3 +51,7 @@ def allowed_branches() -> list[str]:
 def branch_rejection_message() -> str:
     policy = _load_settings().get("branchPolicy") or {}
     return str(policy.get("rejectionMessage") or message("branchNotAllowed"))
+
+
+def ui_content_bundle() -> dict[str, Any]:
+    return dict(_load_content())
