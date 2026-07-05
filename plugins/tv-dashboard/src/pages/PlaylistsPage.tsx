@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import { MonitorPlay, Plus } from "lucide-react";
+import { Copy, MonitorPlay, Plus } from "lucide-react";
 
 import {
   createPlaylist,
+  duplicatePlaylist,
   listPlaylists,
   type Playlist,
 } from "../api/tvDashboardApi";
+
+function formatLastPresented(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
 
 type Props = {
   onOpen: (id: string) => void;
@@ -47,6 +55,16 @@ export function PlaylistsPage({ onOpen }: Props) {
     }
   }
 
+  async function handleDuplicate(item: Playlist) {
+    if (!window.confirm(`Duplicar «${item.name}»?`)) return;
+    try {
+      const copy = await duplicatePlaylist(item.id);
+      onOpen(copy.id);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Erro ao duplicar programação.");
+    }
+  }
+
   return (
     <div className="td-card">
       <div className="td-toolbar">
@@ -73,13 +91,14 @@ export function PlaylistsPage({ onOpen }: Props) {
                 <th>Nome</th>
                 <th>Status</th>
                 <th>Visualizações</th>
+                <th>Última exibição</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={4}>Nenhuma programação cadastrada.</td>
+                  <td colSpan={5}>Nenhuma programação cadastrada.</td>
                 </tr>
               ) : (
                 items.map((item) => (
@@ -91,10 +110,15 @@ export function PlaylistsPage({ onOpen }: Props) {
                       </span>
                     </td>
                     <td>{item.viewCount ?? 0}</td>
+                    <td>{formatLastPresented(item.lastPresentedAt)}</td>
                     <td>
                       <button type="button" className="td-btn" onClick={() => onOpen(item.id)}>
                         <MonitorPlay size={16} />
                         Gerenciar
+                      </button>
+                      <button type="button" className="td-btn" onClick={() => void handleDuplicate(item)}>
+                        <Copy size={16} />
+                        Duplicar
                       </button>
                     </td>
                   </tr>

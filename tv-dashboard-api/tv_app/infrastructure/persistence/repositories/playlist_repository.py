@@ -190,6 +190,105 @@ class PlaylistRepository:
         if not row:
             raise PlaylistNotFoundError
 
+    def regenerate_token(self, playlist_id: UUID) -> dict[str, Any]:
+        token = secrets.token_urlsafe(32)
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE tv_dashboard.playlists
+                    SET public_token = %s, updated_at = NOW()
+                    WHERE id = %s
+                    RETURNING *
+                    """,
+                    (token, str(playlist_id)),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        if not row:
+            raise PlaylistNotFoundError
+        return _row_to_playlist(row)
+
+    def duplicate_playlist(
+        self,
+        playlist_id: UUID,
+        *,
+        created_by: str | None,
+        name_suffix: str = " (cópia)",
+    ) -> dict[str, Any]:
+        source = self.get_by_id(playlist_id)
+        if not source:
+            raise PlaylistNotFoundError
+        slides = self.list_slides(playlist_id)
+        token = secrets.token_urlsafe(32)
+        copy_name = f"{source['name']}{name_suffix}".strip()
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO tv_dashboard.playlists (
+                      public_token, name, description, viewport_profile, transition_style,
+                      default_duration_sec, global_refresh_sec, is_active, created_by
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, FALSE, %s)
+                    RETURNING *
+                    """,
+                    (
+                        token,
+                        copy_name,
+                        source.get("description"),
+                        source["viewportProfile"],
+                        source["transitionStyle"],
+                        source["defaultDurationSec"],
+                        source["globalRefreshSec"],
+                        created_by,
+                    ),
+                )
+                new_row = cur.fetchone()
+                new_id = new_row["id"]
+                for slide in slides:
+                    cur.execute(
+                        """
+                        INSERT INTO tv_dashboard.slides (
+                          playlist_id, sort_order, slide_type, duration_sec, title,
+                          native_screen_key, native_config, external_url, external_sandbox, is_active
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
+                        """,
+                        (
+                            str(new_id),
+                            slide["sortOrder"],
+                            slide["slideType"],
+                            slide.get("durationSec"),
+                            slide["title"],
+                            slide.get("nativeScreenKey"),
+                            json.dumps(slide.get("nativeConfig") or {}),
+                            slide.get("externalUrl"),
+                            slide.get("externalSandbox"),
+                            slide.get("isActive", True),
+                        ),
+                    )
+            conn.commit()
+        return _row_to_playlist(new_row)
+
+    def duplicate_slide(self, slide_id: UUID) -> dict[str, Any]:
+        slide = self.get_slide(slide_id)
+        playlist_id = UUID(slide["playlistId"])
+        copy_title = f"{slide['title']} (cópia)".strip()
+        return self.add_slide(
+            playlist_id,
+            {
+                "slideType": slide["slideType"],
+                "title": copy_title,
+                "durationSec": slide.get("durationSec"),
+                "sortOrder": self.next_sort_order(playlist_id),
+                "nativeScreenKey": slide.get("nativeScreenKey"),
+                "nativeConfig": slide.get("nativeConfig") or {},
+                "externalUrl": slide.get("externalUrl"),
+                "externalSandbox": slide.get("externalSandbox"),
+            },
+        )
+
     def touch_view(self, token: str) -> None:
         with get_connection() as conn:
             with conn.cursor() as cur:

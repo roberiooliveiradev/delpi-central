@@ -1,0 +1,17 @@
+{
+  "externalUrl": {
+    "allowLocalhost": true,
+    "allowedHostSuffixes": [
+      "powerbi.com",
+      "app.powerbi.com",
+      "sharepoint.com",
+      "lookerstudio.google.com",
+      "tableau.com",
+      "public.tableau.com",
+      "metabase.com",
+      "grafana.net",
+      "grafana.com"
+    ],
+    "rejectionMessage": "Domínio não permitido. Use Power BI, Tableau ou outro host autorizado."
+  }
+}

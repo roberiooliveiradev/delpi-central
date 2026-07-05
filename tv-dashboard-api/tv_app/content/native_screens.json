@@ -11,6 +11,36 @@
       }
     },
     {
+      "key": "production_otd_summary",
+      "label": "Produção — OTD",
+      "category": "production",
+      "defaultDurationSec": 40,
+      "configSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+      }
+    },
+    {
+      "key": "quality_ppm_summary",
+      "label": "Qualidade — PPM",
+      "category": "quality",
+      "defaultDurationSec": 40,
+      "configSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "ppmType": { "type": "string", "default": "internal", "label": "Tipo (internal/external)" },
+        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+      }
+    },
+    {
+      "key": "supplies_stock_value",
+      "label": "Suprimentos — Valor de estoque",
+      "category": "supplies",
+      "defaultDurationSec": 40,
+      "configSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" }
+      }
+    },
+    {
       "key": "custom_message",
       "label": "Comunicado interno",
       "category": "general",

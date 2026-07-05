@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ArrowDown,
   ArrowLeft,
+  ArrowUp,
   Copy,
   Eye,
   Link2,
   Plus,
+  QrCode,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 
@@ -14,15 +18,20 @@ import {
   deactivatePlaylist,
   deletePlaylist,
   deleteSlide,
+  duplicateSlide,
+  downloadQrPng,
   getPlaylist,
   getPreviewPayload,
   listNativeScreens,
+  regeneratePlaylistToken,
+  reorderSlides,
   updatePlaylist,
   type NativeScreenCatalogItem,
   type Playlist,
   type PresentationPayload,
   type Slide,
 } from "../api/tvDashboardApi";
+import { AddSlideModal } from "../components/AddSlideModal";
 import { PresentationPreview } from "../presentation/PresentationPreview";
 
 type Props = {
@@ -32,8 +41,15 @@ type Props = {
 
 const VIEWPORT_OPTIONS = [
   { value: "1080p", label: "1920×1080 (Full HD)" },
+  { value: "1080p_portrait", label: "1080×1920 (Retrato)" },
   { value: "4k", label: "3840×2160 (4K)" },
   { value: "720p", label: "1280×720 (HD)" },
+];
+
+const TRANSITION_OPTIONS = [
+  { value: "fade", label: "Fade" },
+  { value: "slide", label: "Deslizar" },
+  { value: "none", label: "Sem transição" },
 ];
 
 export function PlaylistEditorPage({ playlistId, onBack }: Props) {
@@ -43,6 +59,7 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<PresentationPayload | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,32 +88,34 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
     setPlaylist({ ...updated, slides: playlist.slides });
   }
 
-  async function handleAddNative() {
-    if (!playlist || !catalog.length) return;
-    const screen = catalog[0];
-    const title = window.prompt("Título da tela:", screen.label) ?? screen.label;
+  async function handleAddNative(payload: {
+    screenKey: string;
+    title: string;
+    nativeConfig: Record<string, unknown>;
+    durationSec: number;
+  }) {
+    if (!playlist) return;
     const slide = await addSlide(playlist.id, {
       slideType: "native",
-      title,
-      nativeScreenKey: screen.key,
-      nativeConfig: screen.key === "custom_message"
-        ? { headline: "Comunicado", subtitle: "" }
-        : { periodDays: 7 },
-      durationSec: screen.defaultDurationSec,
+      title: payload.title,
+      nativeScreenKey: payload.screenKey,
+      nativeConfig: payload.nativeConfig,
+      durationSec: payload.durationSec,
     });
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
   }
 
-  async function handleAddExternal() {
+  async function handleAddExternal(payload: {
+    title: string;
+    externalUrl: string;
+    durationSec: number;
+  }) {
     if (!playlist) return;
-    const url = window.prompt("URL externa (https://):");
-    if (!url?.trim()) return;
-    const title = window.prompt("Título da tela:", "Link externo") ?? "Link externo";
     const slide = await addSlide(playlist.id, {
       slideType: "external",
-      title,
-      externalUrl: url.trim(),
-      durationSec: 30,
+      title: payload.title,
+      externalUrl: payload.externalUrl,
+      durationSec: payload.durationSec,
     });
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
   }
@@ -109,6 +128,19 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
       ...playlist,
       slides: (playlist.slides ?? []).filter((item) => item.id !== slide.id),
     });
+  }
+
+  async function moveSlide(slide: Slide, direction: -1 | 1) {
+    if (!playlist) return;
+    const slides = [...(playlist.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
+    const index = slides.findIndex((item) => item.id === slide.id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= slides.length) return;
+    const reordered = [...slides];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    const items = reordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+    const result = await reorderSlides(playlist.id, items);
+    setPlaylist({ ...playlist, slides: result.slides });
   }
 
   async function handleToggleActive() {
@@ -126,6 +158,26 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
     onBack();
   }
 
+  async function handleRegenerateToken() {
+    if (!playlist) return;
+    if (
+      !window.confirm(
+        "Gerar novo link? TVs com o link atual deixarão de funcionar até usar o novo endereço.",
+      )
+    ) {
+      return;
+    }
+    const updated = await regeneratePlaylistToken(playlist.id);
+    setPlaylist({ ...updated, slides: playlist.slides });
+    window.alert("Novo link gerado.");
+  }
+
+  async function handleDuplicateSlide(slide: Slide) {
+    if (!playlist) return;
+    const copy = await duplicateSlide(playlist.id, slide.id);
+    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
+  }
+
   async function openPreview() {
     const payload = await getPreviewPayload(playlistId);
     setPreviewPayload(payload);
@@ -138,10 +190,23 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
     window.alert("Link copiado.");
   }
 
+  function openQr() {
+    void downloadQrPng(playlistId).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }).catch((err) => {
+      window.alert(err instanceof Error ? err.message : "Erro ao gerar QR.");
+    });
+  }
+
+  const slides = useMemo(
+    () => [...(playlist?.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    [playlist?.slides],
+  );
+
   if (loading) return <div className="td-state">Carregando programação…</div>;
   if (error || !playlist) return <div className="td-state">{error ?? "Programação não encontrada."}</div>;
-
-  const slides = [...(playlist.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <>
@@ -159,6 +224,14 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
             <Copy size={16} />
             Copiar link
           </button>
+          <button type="button" className="td-btn" onClick={openQr}>
+            <QrCode size={16} />
+            QR code
+          </button>
+          <button type="button" className="td-btn" onClick={() => void handleRegenerateToken()}>
+            <RefreshCw size={16} />
+            Novo link
+          </button>
           <button type="button" className="td-btn" onClick={() => void handleToggleActive()}>
             <Link2 size={16} />
             {playlist.isActive ? "Desativar link" : "Reativar link"}
@@ -173,6 +246,13 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
       <div className="td-grid-2">
         <div className="td-card">
           <h2 style={{ marginTop: 0 }}>{playlist.name}</h2>
+          <p className="td-subtitle" style={{ marginTop: 0 }}>
+            {playlist.viewCount ?? 0} visualizações
+            {playlist.lastPresentedAt
+              ? ` · última exibição ${new Date(playlist.lastPresentedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`
+              : ""}
+            {playlist.isActive ? "" : " · link inativo"}
+          </p>
           <div className="td-field">
             <label htmlFor="td-viewport">Resolução alvo</label>
             <select
@@ -181,6 +261,18 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
               onChange={(e) => void saveSettings("viewportProfile", e.target.value)}
             >
               {VIEWPORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="td-field">
+            <label htmlFor="td-transition">Transição</label>
+            <select
+              id="td-transition"
+              value={playlist.transitionStyle}
+              onChange={(e) => void saveSettings("transitionStyle", e.target.value)}
+            >
+              {TRANSITION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
@@ -215,16 +307,10 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
         <div className="td-card">
           <div className="td-toolbar" style={{ marginBottom: 0 }}>
             <h3 style={{ margin: 0 }}>Telas ({slides.length})</h3>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button type="button" className="td-btn" onClick={() => void handleAddNative()}>
-                <Plus size={16} />
-                Nativa
-              </button>
-              <button type="button" className="td-btn" onClick={() => void handleAddExternal()}>
-                <Plus size={16} />
-                Externa
-              </button>
-            </div>
+            <button type="button" className="td-btn td-btn--primary" onClick={() => setAddModalOpen(true)}>
+              <Plus size={16} />
+              Adicionar tela
+            </button>
           </div>
           <div className="td-slide-list">
             {slides.length === 0 ? (
@@ -243,15 +329,34 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
                       {slide.durationSec ?? playlist.defaultDurationSec}s
                     </div>
                   </div>
-                  <button type="button" className="td-btn td-btn--danger" onClick={() => void handleRemoveSlide(slide)}>
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="td-slide-actions">
+                    <button type="button" className="td-btn td-btn--icon" disabled={idx === 0} onClick={() => void moveSlide(slide, -1)} aria-label="Mover para cima">
+                      <ArrowUp size={14} />
+                    </button>
+                    <button type="button" className="td-btn td-btn--icon" disabled={idx === slides.length - 1} onClick={() => void moveSlide(slide, 1)} aria-label="Mover para baixo">
+                      <ArrowDown size={14} />
+                    </button>
+                    <button type="button" className="td-btn td-btn--icon" onClick={() => void handleDuplicateSlide(slide)} aria-label="Duplicar tela">
+                      <Copy size={14} />
+                    </button>
+                    <button type="button" className="td-btn td-btn--danger td-btn--icon" onClick={() => void handleRemoveSlide(slide)} aria-label="Remover">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
           </div>
         </div>
       </div>
+
+      <AddSlideModal
+        open={addModalOpen}
+        catalog={catalog}
+        onClose={() => setAddModalOpen(false)}
+        onAddNative={(payload) => void handleAddNative(payload)}
+        onAddExternal={(payload) => void handleAddExternal(payload)}
+      />
 
       {previewOpen && previewPayload ? (
         <div className="td-preview-frame">

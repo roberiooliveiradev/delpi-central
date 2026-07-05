@@ -1,4 +1,4 @@
-import { API_BASE, httpDelete, httpGet, httpPatch, httpPost } from "./httpClient";
+import { API_BASE, httpDelete, httpGet, httpGetBlob, httpPatch, httpPost } from "./httpClient";
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
 
@@ -19,6 +19,7 @@ export type Playlist = {
   globalRefreshSec: number;
   isActive: boolean;
   viewCount: number;
+  lastPresentedAt?: string | null;
   publicUrl?: string;
   slides?: Slide[];
 };
@@ -108,6 +109,27 @@ export async function activatePlaylist(id: string) {
   return unwrap(httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/activate`, {}));
 }
 
+export async function duplicatePlaylist(id: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/duplicate`, {}),
+  );
+}
+
+export async function regeneratePlaylistToken(id: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/regenerate-token`, {}),
+  );
+}
+
+export async function duplicateSlide(playlistId: string, slideId: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<Slide>>(
+      `${API_BASE}/playlists/${playlistId}/slides/${slideId}/duplicate`,
+      {},
+    ),
+  );
+}
+
 export async function getPreviewPayload(id: string) {
   return unwrap(
     httpGet<ApiEnvelope<PresentationPayload>>(`${API_BASE}/playlists/${id}/preview-payload`),
@@ -153,4 +175,27 @@ export async function reorderSlides(
       { items },
     ),
   );
+}
+
+export async function updateSlide(
+  playlistId: string,
+  slideId: string,
+  body: Partial<{
+    title: string;
+    durationSec: number;
+    nativeConfig: Record<string, unknown>;
+    externalUrl: string;
+  }>,
+) {
+  return unwrap(
+    httpPatch<ApiEnvelope<Slide>>(`${API_BASE}/playlists/${playlistId}/slides/${slideId}`, body),
+  );
+}
+
+export function qrDownloadUrl(playlistId: string) {
+  return `${API_BASE}/playlists/${playlistId}/qr`;
+}
+
+export async function downloadQrPng(playlistId: string) {
+  return httpGetBlob(qrDownloadUrl(playlistId));
 }

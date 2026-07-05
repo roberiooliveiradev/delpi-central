@@ -15,3 +15,6 @@ def test_native_catalog_has_oee():
     catalog = NativeScreenDataService.catalog()
     keys = {item["key"] for item in catalog}
     assert "production_oee_overview" in keys
+    assert "production_otd_summary" in keys
+    assert "quality_ppm_summary" in keys
+    assert len(catalog) >= 5

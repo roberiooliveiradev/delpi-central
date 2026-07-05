@@ -107,6 +107,12 @@
   text-align: left;
 }
 
+.td-table td:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .td-table th {
   font-size: 12px;
   text-transform: uppercase;
@@ -177,6 +183,68 @@
   border: 1px solid var(--td-border);
   border-radius: 14px;
   background: color-mix(in srgb, var(--td-accent) 3%, var(--td-surface));
+}
+
+.td-slide-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.td-btn--icon {
+  padding: 8px;
+  min-width: 36px;
+  justify-content: center;
+}
+
+.td-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: color-mix(in srgb, #000 45%, transparent);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.td-modal {
+  width: min(520px, 100%);
+  background: var(--td-surface);
+  border: 1px solid var(--td-border);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 20px 60px color-mix(in srgb, #000 18%, transparent);
+}
+
+.td-modal h3 {
+  margin: 0 0 12px;
+}
+
+.td-modal-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.td-tab {
+  border: 1px solid var(--td-border);
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.td-tab--active {
+  background: color-mix(in srgb, var(--td-accent) 12%, var(--td-surface));
+  border-color: color-mix(in srgb, var(--td-accent) 40%, var(--td-border));
+}
+
+.td-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .td-slide-meta {

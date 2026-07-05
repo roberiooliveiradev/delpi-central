@@ -7,3 +7,5 @@ psycopg[binary]
 python-jose[cryptography]
 httpx
 pytest
+qrcode[pil]
+pillow

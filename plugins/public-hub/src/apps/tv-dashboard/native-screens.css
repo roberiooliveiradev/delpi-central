@@ -16,6 +16,14 @@
   font-size: clamp(12px, 1.1vw, 22px);
 }
 
+.tdp-stage[data-viewport="1080p_portrait"] {
+  font-size: clamp(12px, 1.8vh, 22px);
+}
+
+.tdp-stage[data-viewport="1080p_portrait"] .tdp-oee__grid {
+  grid-template-columns: 1fr;
+}
+
 .tdp-slide {
   position: absolute;
   inset: 0;
@@ -166,6 +174,27 @@
   place-items: center;
   color: #9fb0c5;
   font-size: 1.2rem;
+}
+
+.tdp-slide--slide {
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.7s ease, opacity 0.7s ease;
+}
+
+.tdp-slide--slide.tdp-slide--active {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.tdp-oee__grid--single {
+  grid-template-columns: 1fr;
+  max-width: min(720px, 90%);
+  margin: 0 auto;
+}
+
+.tdp-oee__kpi-value--compact {
+  font-size: clamp(2rem, 6vw, 4rem);
 }
 
 .tdp-preview-badge {

@@ -74,4 +74,12 @@ export async function httpDelete<T>(url: string, options: RequestOptions = {}): 
   return parseJson<T>(response);
 }
 
+export async function httpGetBlob(url: string): Promise<Blob> {
+  const response = await fetch(url, { method: "GET", headers: authHeaders() });
+  if (!response.ok) {
+    throw new HttpRequestError(`Erro HTTP ${response.status}`, response.status);
+  }
+  return response.blob();
+}
+
 export { API_BASE };

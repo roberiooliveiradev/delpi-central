@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field, field_validator
 
+from tv_app.application.services.external_url_validator_service import validate_external_url
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_READ, TV_WRITE, assert_permission
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -30,13 +31,13 @@ class CreateSlideBody(BaseModel):
 
     @field_validator("externalUrl")
     @classmethod
-    def validate_external_url(cls, value: str | None, info):
+    def validate_external_url_field(cls, value: str | None, info):
         slide_type = info.data.get("slideType")
-        if slide_type == "external":
-            if not value or not value.strip():
-                raise ValueError("URL externa é obrigatória.")
-            if not value.startswith("https://") and not value.startswith("http://localhost"):
-                raise ValueError("Use uma URL https:// válida.")
+        if slide_type != "external":
+            return value
+        if not value or not value.strip():
+            raise ValueError("URL externa é obrigatória.")
+        validate_external_url(value)
         return value
 
     @field_validator("nativeScreenKey")
@@ -55,6 +56,13 @@ class UpdateSlideBody(BaseModel):
     externalUrl: str | None = None
     externalSandbox: str | None = None
     isActive: bool | None = None
+
+    @field_validator("externalUrl")
+    @classmethod
+    def validate_external_url_field(cls, value: str | None):
+        if value:
+            validate_external_url(value)
+        return value
 
 
 class ReorderItem(BaseModel):
@@ -128,6 +136,28 @@ def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
     return ok(message="Tela removida.")
+
+
+@router.post("/{slide_id}/duplicate")
+def duplicate_slide(request: Request, playlist_id: UUID, slide_id: UUID):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not _ensure_playlist(playlist_id):
+        return fail("Programação não encontrada.", 404)
+    try:
+        existing = _repo.get_slide(slide_id)
+    except SlideNotFoundError:
+        return fail("Tela não encontrada.", 404)
+    if existing["playlistId"] != str(playlist_id):
+        return fail("Tela não pertence a esta programação.", 404)
+    try:
+        slide = _repo.duplicate_slide(slide_id)
+    except SlideNotFoundError:
+        return fail("Tela não encontrada.", 404)
+    return ok(slide, message="Tela duplicada.", status_code=201)
 
 
 @router.post("/reorder")
