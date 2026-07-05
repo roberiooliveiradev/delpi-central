@@ -269,9 +269,16 @@
   text-align: center;
 }
 
-.tdp-stage--preview-shell {
+.tdp-stage--preview-shell,
+.tdp-stage--kiosk {
   min-height: 100vh;
   min-height: 100dvh;
+  height: 100%;
+  flex: 1 1 auto;
+}
+
+.tdp-stage--kiosk {
+  width: 100%;
 }
 
 .tdp-stage--preview-shell:fullscreen {

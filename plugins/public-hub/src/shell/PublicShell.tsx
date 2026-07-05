@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { resolveRoute } from "./routing";
 import { publicRegistry } from "./registry";
@@ -86,6 +86,16 @@ type StageProps = {
 };
 
 function Stage({ children, chrome = "default" }: StageProps) {
+  useLayoutEffect(() => {
+    if (chrome !== "kiosk") return;
+    document.documentElement.classList.add("pub-kiosk");
+    document.body.classList.add("pub-kiosk");
+    return () => {
+      document.documentElement.classList.remove("pub-kiosk");
+      document.body.classList.remove("pub-kiosk");
+    };
+  }, [chrome]);
+
   if (chrome === "kiosk") {
     return (
       <main className="pub-stage pub-stage--kiosk">

@@ -53,16 +53,19 @@ export function PresentationView({
     return () => window.clearInterval(timer);
   }, [mode, token, heartbeatIntervalSec]);
 
+  const stageClass =
+    mode === "public" ? "tdp-stage tdp-stage--kiosk" : "tdp-stage";
+
   if (!slides.length) {
     return (
-      <div className="tdp-stage" data-viewport={viewport}>
+      <div className={stageClass} data-viewport={viewport}>
         <div className="tdp-empty">Nenhuma tela configurada nesta programação.</div>
       </div>
     );
   }
 
   return (
-    <div className="tdp-stage" data-viewport={viewport}>
+    <div className={stageClass} data-viewport={viewport}>
       {mode === "preview" ? (
         <div className="tdp-preview-badge">Pré-visualização</div>
       ) : null}

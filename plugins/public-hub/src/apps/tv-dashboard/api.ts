@@ -45,7 +45,8 @@ export async function fetchPublicPresentation(
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("Não foi possível carregar a apresentação.");
   const env = (await res.json()) as ApiEnvelope<PublicPresentationPayload>;
-  return env.success === false ? null : env.data;
+  if (env.success === false || !env.data || !Array.isArray(env.data.slides)) return null;
+  return env.data;
 }
 
 export async function refreshPublicPresentation(
