@@ -50,7 +50,12 @@ function toolCallsHaveNarrativeContent(toolCalls?: ChatToolCall[]): boolean {
       return true;
     }
 
-    if (metadata.dataAnswer && typeof metadata.dataAnswer === "object") {
+    if (
+      metadata.sqlSchemaPrefetch !== true &&
+      metadata.suppressClientPresentation !== true &&
+      metadata.dataAnswer &&
+      typeof metadata.dataAnswer === "object"
+    ) {
       return true;
     }
 
@@ -420,7 +425,16 @@ export function getDataAnswerFromToolCalls(
   }
 
   for (const toolCall of toolCalls) {
-    const dataAnswer = (toolCall.metadata as Record<string, unknown> | undefined)?.dataAnswer;
+    const metadata = (toolCall.metadata as Record<string, unknown> | undefined) ?? {};
+
+    if (
+      metadata.sqlSchemaPrefetch === true ||
+      metadata.suppressClientPresentation === true
+    ) {
+      continue;
+    }
+
+    const dataAnswer = metadata.dataAnswer;
 
     if (dataAnswer && typeof dataAnswer === "object") {
       return dataAnswer as ChatDataAnswer;

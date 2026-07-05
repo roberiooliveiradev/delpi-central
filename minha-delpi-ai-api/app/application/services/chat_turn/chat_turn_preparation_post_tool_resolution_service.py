@@ -430,6 +430,9 @@ class ChatTurnPreparationPostToolResolutionService:
                     tool_calls
                 )
                 and not (drawing_mode and has_drawing_report)
+                and not (
+                    isinstance(tool_context, dict) and tool_context.get("sqlRequiresLlm")
+                )
             ):
                 direct_answer = authorized_tool_answer
                 skip_rag = True

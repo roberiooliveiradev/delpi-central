@@ -170,6 +170,9 @@ class ChatOperationalLlmSynthesisBriefDirectService:
             if not isinstance(metadata, dict) or not metadata.get("ok"):
                 continue
 
+            if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
+                continue
+
             if ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata):
                 return True
 

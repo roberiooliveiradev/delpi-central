@@ -161,6 +161,56 @@ def test_apply_turn_direct_answer_policy_normal_uses_commentary_direct():
     assert tool_context.get("commentaryBriefDirect") is True
 
 
+def test_brief_direct_skips_sql_schema_prefetch_metadata():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "sqlSchemaPrefetch": True,
+        "suppressClientPresentation": True,
+        "path": "/system/tables/search",
+        "dataCommentary": {
+            "summary": "Foram retornados **50** registros.",
+            "highlights": [{"text": "Foram retornados **50** registros."}],
+        },
+    }
+
+    assert not ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "use sql para construir uma query que liste 5 produtos na tabela de produtos, grupo 1008",
+        _tool_calls(metadata),
+        response_mode="normal",
+    )
+
+
+def test_apply_turn_direct_answer_policy_respects_sql_requires_llm():
+    tool_context = {
+        "sqlRequiresLlm": True,
+        "skipRag": False,
+    }
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "sqlSchemaPrefetch": True,
+        "path": "/system/tables/search",
+        "dataCommentary": {
+            "summary": "Foram retornados **50** registros.",
+            "highlights": [{"text": "Foram retornados **50** registros."}],
+        },
+    }
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="use sql para construir uma query que liste 5 produtos",
+        response_mode="normal",
+        direct_answer=None,
+        skip_rag=False,
+        tool_calls=_tool_calls(metadata),
+        tool_context=tool_context,
+    )
+
+    assert direct is None
+    assert effect == "llm_synthesis"
+    assert tool_context.get("commentaryBriefDirect") is not True
+
+
 def test_apply_turn_direct_answer_policy_prefers_commentary_over_stale_tool_context_direct():
     tool_context: dict = {}
     metadata = {

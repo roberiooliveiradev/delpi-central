@@ -114,6 +114,12 @@ class ChatResponseModeService:
             ChatOperationalLlmSynthesisBriefDirectService,
         )
 
+        if isinstance(tool_context, dict) and tool_context.get("sqlRequiresLlm"):
+            effect = cls.resolve_synthesis_effect(response_mode)
+            resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(skip_rag, tool_calls)
+
+            return None, resolved_skip, effect
+
         mode = ChatPresentationProseDeliveryService.resolve_mode(
             message,
             tool_calls,

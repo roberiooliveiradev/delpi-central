@@ -37,6 +37,8 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
         "presentationDecision",
         "dataCoverageNotice",
         "renderPlan",
+        "dataCommentary",
+        "dataAnswer",
     )
 
     @classmethod
@@ -168,14 +170,7 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
                 or metadata.get("suppressClientPresentation")
                 or sql_specialist_service().is_schema_prefetch_path(str(metadata.get("path") or ""))
             ):
-                for key in (
-                    "presentation",
-                    "tablePresentation",
-                    "textPresentation",
-                    "treePresentation",
-                    "chartPresentation",
-                    "presentationDecision",
-                ):
+                for key in cls._CLIENT_PRESENTATION_KEYS:
                     metadata.pop(key, None)
 
                 metadata["suppressClientPresentation"] = True

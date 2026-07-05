@@ -157,6 +157,8 @@ def test_strip_schema_prefetch_hides_coverage_and_catalog():
                         "sqlSchemaPrefetch": True,
                         "dataCoverageNotice": {"message": "Parcial · 25 de 265"},
                         "presentation": {"type": "table", "title": "Colunas"},
+                        "dataCommentary": {"summary": "Foram retornados **50** registros."},
+                        "dataAnswer": {"summary": {"answer": "Foram retornados **50** registros."}},
                         "humanizedSummary": {"titulo": "Colunas da tabela SA1", "linhas": []},
                     }
                 }
@@ -167,6 +169,8 @@ def test_strip_schema_prefetch_hides_coverage_and_catalog():
     meta = result["toolCalls"][0]["metadata"]
     assert "dataCoverageNotice" not in meta
     assert "presentation" not in meta
+    assert "dataCommentary" not in meta
+    assert "dataAnswer" not in meta
     assert meta["humanizedSummary"]["titulo"] == "Schema interno (uso interno)"
 
 
