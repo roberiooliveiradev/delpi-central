@@ -21,7 +21,23 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <p class="pub-boot" aria-live="polite">Carregando…</p>
+    </div>
+    <script>
+      window.addEventListener("error", function (event) {
+        var root = document.getElementById("root");
+        if (!root || root.dataset.mounted === "1") return;
+        var message =
+          (event && event.error && event.error.message) ||
+          (event && event.message) ||
+          "Erro ao carregar a página.";
+        root.innerHTML =
+          '<div class="pub-fallback pub-fallback--fatal"><h1>Não foi possível exibir esta página</h1><p>' +
+          message +
+          "</p></div>";
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

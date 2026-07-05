@@ -88,6 +88,31 @@ body {
   margin: 0 0 8px;
 }
 
+.pub-fallback--fatal {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #05070a;
+  color: #dbe6ef;
+}
+
+.pub-fallback--fatal h1 {
+  color: #ffffff;
+}
+
+.pub-boot {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: #05070a;
+  color: #9fb0c5;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
 /* Botão de alternância de tema (canto superior direito). */
 .pub-theme-toggle {
   position: fixed;

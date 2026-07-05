@@ -63,9 +63,11 @@ export function PublicShell() {
   }
 
   if (state.status === "not-found" || state.status === "error") {
+    const fallbackClass =
+      chrome === "kiosk" ? "pub-fallback pub-fallback--fatal" : "pub-fallback";
     return (
       <Stage chrome={chrome}>
-        <div className="pub-fallback">
+        <div className={fallbackClass}>
           <h1>{state.status === "not-found" ? "Página não encontrada" : "Ops!"}</h1>
           <p>
             {state.status === "not-found"
