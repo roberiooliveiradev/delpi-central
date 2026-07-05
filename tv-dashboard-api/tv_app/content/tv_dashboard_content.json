@@ -4,7 +4,8 @@
     "playlistNotFoundOrInactive": "Programação não encontrada ou desativada.",
     "slideNotFound": "Tela não encontrada.",
     "nativeDataUnavailable": "Dados indisponíveis no momento.",
-    "branchNotAllowed": "Filial não autorizada para Painéis TV."
+    "branchNotAllowed": "Filial não autorizada para Painéis TV.",
+    "consolidatedNotAllowed": "Visão consolidada não autorizada para seu perfil."
   },
   "presentation": {
     "nativeErrorAdvanceSec": 10,
@@ -17,6 +18,13 @@
     "tvStatusOnline": "TV online",
     "tvStatusOffline": "TV offline",
     "tvStatusNever": "Nunca exibida",
-    "slideInactive": "Tela pausada"
+    "slideInactive": "Tela pausada",
+    "addSlideTitle": "Adicionar tela",
+    "tabNative": "Nativa DELPI",
+    "tabExternal": "Link externo",
+    "tabCatalog": "Catálogo",
+    "catalogHint": "Importe telas prontas dos dashboards DELPI ou do portal.",
+    "catalogImport": "Importar",
+    "branchOptional": "Filial (opcional)"
   }
 }

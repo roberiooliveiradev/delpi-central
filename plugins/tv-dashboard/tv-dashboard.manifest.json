@@ -34,6 +34,24 @@
       "name": "Gerenciar Painéis TV",
       "description": "Ativar, desativar e excluir links públicos",
       "module": "tv-dashboard"
+    },
+    {
+      "code": "tv-dashboard.view.consolidated",
+      "name": "Painéis TV — visão consolidada",
+      "description": "Permite telas nativas sem filial específica (consolidado).",
+      "module": "tv-dashboard"
+    },
+    {
+      "code": "tv-dashboard.view.filial-01",
+      "name": "Painéis TV — Filial 01",
+      "description": "Configurar telas nativas com dados da filial 01.",
+      "module": "tv-dashboard"
+    },
+    {
+      "code": "tv-dashboard.view.filial-02",
+      "name": "Painéis TV — Filial 02",
+      "description": "Configurar telas nativas com dados da filial 02.",
+      "module": "tv-dashboard"
     }
   ],
   "routes": [

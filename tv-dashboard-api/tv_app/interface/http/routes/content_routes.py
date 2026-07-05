@@ -7,7 +7,9 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 
+from tv_app.application.services.branch_access_scope_service import BranchAccessScopeService
 from tv_app.application.services.native_screen_cache_service import native_data_cache_stats
+from tv_app.application.services.slide_preset_service import list_slide_presets
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_READ, assert_permission
 from tv_app.interface.http.auth_http import resolve_user
@@ -30,6 +32,27 @@ def ui_content(request: Request):
     except PermissionError as exc:
         return fail(str(exc), 403)
     return ok(_load_ui_content())
+
+
+@router.get("/slide-presets")
+def slide_presets(request: Request):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    return ok({"items": list_slide_presets()})
+
+
+@router.get("/content/branch-scope")
+def branch_scope(request: Request):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    scope = BranchAccessScopeService().resolve(user)
+    return ok(scope.meta())
 
 
 @router.get("/health/native-cache")

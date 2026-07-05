@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 
-import type { NativeScreenCatalogItem, Slide } from "../api/tvDashboardApi";
+import type { BranchScope, NativeScreenCatalogItem, Slide } from "../api/tvDashboardApi";
+import { BranchField } from "./BranchField";
 
 type Props = {
   open: boolean;
   slide: Slide | null;
   catalog: NativeScreenCatalogItem[];
+  branchScope: BranchScope | null;
   defaultDurationSec: number;
   onClose: () => void;
   onSave: (payload: {
@@ -20,6 +22,7 @@ export function EditSlideModal({
   open,
   slide,
   catalog,
+  branchScope,
   defaultDurationSec,
   onClose,
   onSave,
@@ -103,10 +106,13 @@ export function EditSlideModal({
             </>
           ) : screenKey !== "supplies_stock_value" ? (
             <>
-              <div className="td-field">
-                <label htmlFor="td-edit-branch">Filial (opcional)</label>
-                <input id="td-edit-branch" value={branch} onChange={(e) => setBranch(e.target.value)} />
-              </div>
+              <BranchField
+                id="td-edit-branch"
+                label="Filial (opcional)"
+                scope={branchScope}
+                value={branch}
+                onChange={setBranch}
+              />
               <div className="td-field">
                 <label htmlFor="td-edit-period">Período (dias)</label>
                 <input
@@ -120,10 +126,13 @@ export function EditSlideModal({
               </div>
             </>
           ) : (
-            <div className="td-field">
-              <label htmlFor="td-edit-branch-stock">Filial (opcional)</label>
-              <input id="td-edit-branch-stock" value={branch} onChange={(e) => setBranch(e.target.value)} />
-            </div>
+            <BranchField
+              id="td-edit-branch-stock"
+              label="Filial (opcional)"
+              scope={branchScope}
+              value={branch}
+              onChange={setBranch}
+            />
           )}
           {catalogItem ? (
             <p className="td-subtitle" style={{ marginTop: 0 }}>

@@ -3,9 +3,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 
 from tv_app.application.services.branch_policy_service import validate_native_branch
+from tv_app.application.services.slide_preset_service import (
+    SlidePresetNotFoundError,
+    resolve_preset_slide,
+)
 
 from tv_app.application.services.external_url_validator_service import validate_external_url
 from tv_app.core.responses import fail, ok
@@ -49,12 +53,6 @@ class CreateSlideBody(BaseModel):
             raise ValueError("Tela nativa é obrigatória.")
         return value
 
-    @model_validator(mode="after")
-    def validate_branch_policy(self):
-        if self.slideType == "native" and self.nativeConfig:
-            validate_native_branch(self.nativeConfig)
-        return self
-
 
 class UpdateSlideBody(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
@@ -72,12 +70,6 @@ class UpdateSlideBody(BaseModel):
             validate_external_url(value)
         return value
 
-    @model_validator(mode="after")
-    def validate_branch_policy(self):
-        if self.nativeConfig:
-            validate_native_branch(self.nativeConfig)
-        return self
-
 
 class ReorderItem(BaseModel):
     id: UUID
@@ -86,6 +78,11 @@ class ReorderItem(BaseModel):
 
 class ReorderBody(BaseModel):
     items: list[ReorderItem]
+
+
+class FromPresetBody(BaseModel):
+    presetKey: str = Field(min_length=1, max_length=120)
+    branch: str | None = Field(default=None, max_length=20)
 
 
 def _ensure_playlist(playlist_id: UUID) -> bool:
@@ -101,6 +98,11 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
         return fail(str(exc), 403)
     if not _ensure_playlist(playlist_id):
         return fail("Programação não encontrada.", 404)
+    try:
+        if body.slideType == "native" and body.nativeConfig:
+            validate_native_branch(body.nativeConfig, user=user)
+    except ValueError as exc:
+        return fail(str(exc), 422)
     slide = _repo.add_slide(
         playlist_id,
         {
@@ -115,6 +117,34 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
         },
     )
     return ok(slide, message="Tela adicionada.", status_code=201)
+
+
+@router.post("/from-preset")
+def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPresetBody):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not _ensure_playlist(playlist_id):
+        return fail("Programação não encontrada.", 404)
+    try:
+        preset_payload = resolve_preset_slide(body.presetKey)
+    except SlidePresetNotFoundError:
+        return fail("Preset de tela não encontrado.", 404)
+    except ValueError as exc:
+        return fail(str(exc), 422)
+    if body.branch and body.branch.strip() and preset_payload.get("slideType") == "native":
+        native_config = dict(preset_payload.get("nativeConfig") or {})
+        native_config["branch"] = body.branch.strip()
+        preset_payload["nativeConfig"] = native_config
+    if preset_payload.get("slideType") == "native":
+        try:
+            validate_native_branch(preset_payload.get("nativeConfig"), user=user)
+        except ValueError as exc:
+            return fail(str(exc), 422)
+    slide = _repo.add_slide(playlist_id, preset_payload)
+    return ok(slide, message="Tela importada do catálogo.", status_code=201)
 
 
 @router.post("/reorder")
@@ -142,6 +172,11 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
         return fail(str(exc), 403)
     if not _ensure_playlist(playlist_id):
         return fail("Programação não encontrada.", 404)
+    try:
+        if body.nativeConfig is not None:
+            validate_native_branch(body.nativeConfig, user=user)
+    except ValueError as exc:
+        return fail(str(exc), 422)
     try:
         slide = _repo.update_slide(
             slide_id,

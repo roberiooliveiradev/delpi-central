@@ -5,6 +5,8 @@ from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlparse
 
+from tv_app.config import settings
+
 SETTINGS_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_dashboard_settings.json"
 
 
@@ -15,6 +17,14 @@ def _load_settings() -> dict:
 
 def _external_url_settings() -> dict:
     return dict(_load_settings().get("externalUrl") or {})
+
+
+def _is_same_origin_portal(host: str) -> bool:
+    base = (settings.PUBLIC_BASE_URL or "").strip()
+    if not base:
+        return False
+    public_host = (urlparse(base).hostname or "").lower()
+    return bool(public_host and host == public_host)
 
 
 def validate_external_url(url: str) -> None:
@@ -33,6 +43,9 @@ def validate_external_url(url: str) -> None:
     settings = _external_url_settings()
     allow_localhost = bool(settings.get("allowLocalhost", True))
     if allow_localhost and host in {"localhost", "127.0.0.1"}:
+        return
+
+    if _is_same_origin_portal(host):
         return
 
     if scheme != "https":

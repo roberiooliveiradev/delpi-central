@@ -1,11 +1,10 @@
 import { useCallback, useEffect } from "react";
 
+import { NativeSlideView, usePresentationEngine } from "@delpi/tv-dashboard-presentation";
+
 import type { PublicPresentationPayload, PublicSlide } from "./api";
 import { refreshPublicPresentation, sendPresentationHeartbeat } from "./api";
 import { ExternalSlideView } from "./ExternalSlideView";
-import { NativeSlideView } from "./NativeScreens";
-import { usePresentationEngine } from "@delpi/tv-dashboard-presentation";
-import "./native-screens.css";
 
 type PresentationViewProps = {
   payload: PublicPresentationPayload;

@@ -19,3 +19,10 @@ def test_rejects_unknown_host():
 def test_rejects_http_non_localhost():
     with pytest.raises(ValueError, match="https"):
         validate_external_url("http://app.powerbi.com/view")
+
+
+def test_allows_same_origin_portal(monkeypatch):
+    from tv_app.config import settings
+
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://portal.minhadelpi.com.br")
+    validate_external_url("https://portal.minhadelpi.com.br/apps/dashboard-production/")

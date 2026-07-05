@@ -1,7 +1,7 @@
-import type { PublicSlideNative } from "./api";
+import { formatNumber, formatPct } from "./nativeFormat";
 import "./native-screens.css";
 
-type KpiScreenData = {
+export type KpiScreenData = {
   label?: string;
   startDate?: string;
   endDate?: string;
@@ -10,19 +10,11 @@ type KpiScreenData = {
   message?: string;
 };
 
-function formatPct(value: number | string | null | undefined) {
-  if (value === null || value === undefined || value === "") return "—";
-  const num = typeof value === "number" ? value : Number(value);
-  if (Number.isNaN(num)) return String(value);
-  return `${num.toFixed(1)}%`;
-}
-
-function formatNumber(value: number | string | null | undefined) {
-  if (value === null || value === undefined || value === "") return "—";
-  const num = typeof value === "number" ? value : Number(value);
-  if (Number.isNaN(num)) return String(value);
-  return num.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-}
+export type NativeSlidePayload = {
+  screenKey: string;
+  config?: Record<string, unknown>;
+  data: Record<string, unknown>;
+};
 
 function ErrorScreen({ message }: { message?: string }) {
   return (
@@ -169,20 +161,42 @@ export function CustomMessageScreen({
   );
 }
 
-export function NativeSlideView({ native }: { native: PublicSlideNative }) {
+export function NativeSlideView({ native }: { native: NativeSlidePayload }) {
   const key = native.screenKey;
   const data = native.data as Record<string, unknown>;
   if (key === "production_oee_overview") {
-    return <ProductionOeeOverviewScreen data={data as KpiScreenData & { oeePct?: unknown; targetPct?: unknown }} />;
+    return (
+      <ProductionOeeOverviewScreen
+        data={data as KpiScreenData & { oeePct?: unknown; targetPct?: unknown }}
+      />
+    );
   }
   if (key === "production_otd_summary") {
-    return <ProductionOtdSummaryScreen data={data as KpiScreenData & { otdPct?: unknown; targetPct?: unknown }} />;
+    return (
+      <ProductionOtdSummaryScreen
+        data={data as KpiScreenData & { otdPct?: unknown; targetPct?: unknown }}
+      />
+    );
   }
   if (key === "quality_ppm_summary") {
-    return <QualityPpmSummaryScreen data={data as KpiScreenData & { ppmValue?: unknown; targetPct?: unknown; ppmType?: string }} />;
+    return (
+      <QualityPpmSummaryScreen
+        data={
+          data as KpiScreenData & {
+            ppmValue?: unknown;
+            targetPct?: unknown;
+            ppmType?: string;
+          }
+        }
+      />
+    );
   }
   if (key === "supplies_stock_value") {
-    return <SuppliesStockValueScreen data={data as KpiScreenData & { stockValue?: unknown; currency?: string }} />;
+    return (
+      <SuppliesStockValueScreen
+        data={data as KpiScreenData & { stockValue?: unknown; currency?: string }}
+      />
+    );
   }
   if (key === "custom_message") {
     return <CustomMessageScreen data={data as { headline?: string; subtitle?: string }} />;

@@ -46,6 +46,26 @@ export type NativeScreenCatalogItem = {
   configSchema: Record<string, unknown>;
 };
 
+export type SlidePreset = {
+  key: string;
+  label: string;
+  description?: string | null;
+  slideType?: "native" | "external";
+  durationSec?: number | null;
+};
+
+export type TvDashboardUiContent = {
+  messages?: Record<string, string>;
+  presentation?: Record<string, string | number>;
+  admin?: Record<string, string>;
+};
+
+export type BranchScope = {
+  mode: "unrestricted" | "scoped";
+  allowConsolidated: boolean;
+  branches: string[];
+};
+
 export type PresentationPayload = {
   playlist: {
     id: string;
@@ -164,6 +184,21 @@ export async function listNativeScreens() {
   return data.items;
 }
 
+export async function listSlidePresets() {
+  const data = await unwrap(
+    httpGet<ApiEnvelope<{ items: SlidePreset[] }>>(`${API_BASE}/slide-presets`),
+  );
+  return data.items;
+}
+
+export async function getUiContent() {
+  return unwrap(httpGet<ApiEnvelope<TvDashboardUiContent>>(`${API_BASE}/content/ui`));
+}
+
+export async function getBranchScope() {
+  return unwrap(httpGet<ApiEnvelope<BranchScope>>(`${API_BASE}/content/branch-scope`));
+}
+
 export async function addSlide(
   playlistId: string,
   body: {
@@ -177,6 +212,18 @@ export async function addSlide(
 ) {
   return unwrap(
     httpPost<ApiEnvelope<Slide>>(`${API_BASE}/playlists/${playlistId}/slides`, body),
+  );
+}
+
+export async function addSlideFromPreset(
+  playlistId: string,
+  body: { presetKey: string; branch?: string },
+) {
+  return unwrap(
+    httpPost<ApiEnvelope<Slide>>(
+      `${API_BASE}/playlists/${playlistId}/slides/from-preset`,
+      body,
+    ),
   );
 }
 

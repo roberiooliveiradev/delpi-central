@@ -220,6 +220,10 @@
   opacity: 1;
 }
 
+.tdp-slide--none.tdp-slide--active {
+  transition: none;
+}
+
 .tdp-oee__grid--single {
   grid-template-columns: 1fr;
   max-width: min(720px, 90%);
@@ -241,4 +245,13 @@
   border: 1px solid #089bdb;
   font-size: 12px;
   letter-spacing: 0.04em;
+}
+
+.tdp-stage--preview-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.tdp-stage--preview-shell:fullscreen {
+  background: #05070a;
 }

@@ -1,0 +1,72 @@
+{
+  "presets": [
+    {
+      "key": "preset_production_oee",
+      "label": "Produção — OEE (nativa)",
+      "description": "Mesmos KPIs do dashboard de produção, layout TV.",
+      "slideType": "native",
+      "title": "Produção — OEE",
+      "nativeScreenKey": "production_oee_overview",
+      "nativeConfig": { "periodDays": 7 },
+      "durationSec": 45
+    },
+    {
+      "key": "preset_production_otd",
+      "label": "Produção — OTD (nativa)",
+      "description": "OTD consolidado para painel de fábrica.",
+      "slideType": "native",
+      "title": "Produção — OTD",
+      "nativeScreenKey": "production_otd_summary",
+      "nativeConfig": { "periodDays": 30 },
+      "durationSec": 40
+    },
+    {
+      "key": "preset_quality_ppm",
+      "label": "Qualidade — PPM (nativa)",
+      "description": "PPM interno no formato Painéis TV.",
+      "slideType": "native",
+      "title": "Qualidade — PPM",
+      "nativeScreenKey": "quality_ppm_summary",
+      "nativeConfig": { "periodDays": 30, "ppmType": "internal" },
+      "durationSec": 40
+    },
+    {
+      "key": "preset_supplies_stock",
+      "label": "Suprimentos — Estoque (nativa)",
+      "description": "Valor de estoque consolidado.",
+      "slideType": "native",
+      "title": "Suprimentos — Estoque",
+      "nativeScreenKey": "supplies_stock_value",
+      "nativeConfig": {},
+      "durationSec": 40
+    },
+    {
+      "key": "preset_portal_dashboard_production",
+      "label": "Dashboard Produção (portal)",
+      "description": "Iframe do plugin dashboard-production — requer login corporativo na origem.",
+      "slideType": "external",
+      "title": "Dashboard Produção",
+      "externalUrlPath": "/apps/dashboard-production/",
+      "durationSec": 60
+    },
+    {
+      "key": "preset_portal_dashboard_quality",
+      "label": "Dashboard Qualidade (portal)",
+      "description": "Iframe do plugin dashboard-quality.",
+      "slideType": "external",
+      "title": "Dashboard Qualidade",
+      "externalUrlPath": "/apps/dashboard-quality/",
+      "durationSec": 60
+    },
+    {
+      "key": "preset_comunicado",
+      "label": "Comunicado interno",
+      "description": "Mensagem editável para TVs de corredor.",
+      "slideType": "native",
+      "title": "Comunicado",
+      "nativeScreenKey": "custom_message",
+      "nativeConfig": { "headline": "Comunicado", "subtitle": "" },
+      "durationSec": 20
+    }
+  ]
+}

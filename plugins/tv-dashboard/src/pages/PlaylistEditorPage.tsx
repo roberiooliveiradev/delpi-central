@@ -17,24 +17,31 @@ import {
 import {
   activatePlaylist,
   addSlide,
+  addSlideFromPreset,
   deactivatePlaylist,
   deletePlaylist,
   deleteSlide,
   duplicateSlide,
   downloadQrPng,
+  getBranchScope,
   getPlaylist,
   getPresentationStatus,
   getPreviewPayload,
+  getUiContent,
   listNativeScreens,
+  listSlidePresets,
   regeneratePlaylistToken,
   reorderSlides,
   updatePlaylist,
   updateSlide,
+  type BranchScope,
   type NativeScreenCatalogItem,
   type Playlist,
   type PresentationPayload,
   type PresentationStatus,
   type Slide,
+  type SlidePreset,
+  type TvDashboardUiContent,
 } from "../api/tvDashboardApi";
 import { AddSlideModal } from "../components/AddSlideModal";
 import { EditSlideModal } from "../components/EditSlideModal";
@@ -61,6 +68,9 @@ const TRANSITION_OPTIONS = [
 export function PlaylistEditorPage({ playlistId, onBack }: Props) {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [catalog, setCatalog] = useState<NativeScreenCatalogItem[]>([]);
+  const [presets, setPresets] = useState<SlidePreset[]>([]);
+  const [uiContent, setUiContent] = useState<TvDashboardUiContent | null>(null);
+  const [branchScope, setBranchScope] = useState<BranchScope | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -73,12 +83,18 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const [pl, screens] = await Promise.all([
+      const [pl, screens, presetItems, ui, scope] = await Promise.all([
         getPlaylist(playlistId),
         listNativeScreens(),
+        listSlidePresets(),
+        getUiContent(),
+        getBranchScope(),
       ]);
       setPlaylist(pl);
       setCatalog(screens);
+      setPresets(presetItems);
+      setUiContent(ui);
+      setBranchScope(scope);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar programação.");
     } finally {
@@ -128,6 +144,12 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
       nativeConfig: payload.nativeConfig,
       durationSec: payload.durationSec,
     });
+    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+  }
+
+  async function handleImportPreset(payload: { presetKey: string; branch?: string }) {
+    if (!playlist) return;
+    const slide = await addSlideFromPreset(playlist.id, payload);
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
   }
 
@@ -231,10 +253,11 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
   }
 
   function tvStatusLabel() {
+    const admin = uiContent?.admin;
     if (!tvStatus) return null;
-    if (tvStatus.status === "online") return "TV online";
-    if (tvStatus.status === "offline") return "TV offline";
-    return "Nunca exibida";
+    if (tvStatus.status === "online") return admin?.tvStatusOnline ?? "TV online";
+    if (tvStatus.status === "offline") return admin?.tvStatusOffline ?? "TV offline";
+    return admin?.tvStatusNever ?? "Nunca exibida";
   }
 
   function tvStatusClass() {
@@ -393,7 +416,7 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
                   <div>
                     <div>{slide.title}</div>
                     <div className="td-slide-meta">
-                      {!slide.isActive ? "Pausada · " : ""}
+                      {!slide.isActive ? `${uiContent?.admin?.slideInactive ?? "Tela pausada"} · ` : ""}
                       {slide.slideType === "native"
                         ? `Nativa · ${slide.nativeScreenKey}`
                         : `Externa · ${slide.externalUrl}`}
@@ -431,15 +454,20 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
       <AddSlideModal
         open={addModalOpen}
         catalog={catalog}
+        presets={presets}
+        branchScope={branchScope}
+        ui={uiContent}
         onClose={() => setAddModalOpen(false)}
         onAddNative={(payload) => void handleAddNative(payload)}
         onAddExternal={(payload) => void handleAddExternal(payload)}
+        onImportPreset={(payload) => void handleImportPreset(payload)}
       />
 
       <EditSlideModal
         open={editSlide !== null}
         slide={editSlide}
         catalog={catalog}
+        branchScope={branchScope}
         defaultDurationSec={playlist.defaultDurationSec}
         onClose={() => setEditSlide(null)}
         onSave={(payload) => {
