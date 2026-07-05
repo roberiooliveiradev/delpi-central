@@ -48,6 +48,7 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
       </button>
       <PresentationPreview
         payload={payload}
+        playlistId={playlistId}
         onRefresh={() => getPreviewPayload(playlistId)}
       />
     </div>

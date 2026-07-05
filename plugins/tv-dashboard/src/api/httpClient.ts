@@ -18,6 +18,10 @@ export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
 }
 
+export function getAccessToken(): string | undefined {
+  return accessTokenGetter?.();
+}
+
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -80,6 +84,15 @@ export async function httpGetBlob(url: string): Promise<Blob> {
     throw new HttpRequestError(`Erro HTTP ${response.status}`, response.status);
   }
   return response.blob();
+}
+
+export async function httpPostForm<T>(url: string, form: FormData): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(),
+    body: form,
+  });
+  return parseJson<T>(response);
 }
 
 export { API_BASE };

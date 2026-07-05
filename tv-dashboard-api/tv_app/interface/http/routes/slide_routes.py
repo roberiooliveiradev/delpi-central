@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field, field_validator
 
 from tv_app.application.services.branch_policy_service import validate_native_branch
+from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.slide_preset_service import (
     SlidePresetNotFoundError,
     resolve_preset_slide,
@@ -116,6 +117,10 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
             "externalSandbox": body.externalSandbox,
         },
     )
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="slide_created",
+    )
     return ok(slide, message="Tela adicionada.", status_code=201)
 
 
@@ -144,6 +149,10 @@ def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPres
         except ValueError as exc:
             return fail(str(exc), 422)
     slide = _repo.add_slide(playlist_id, preset_payload)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="slide_imported",
+    )
     return ok(slide, message="Tela importada do catálogo.", status_code=201)
 
 
@@ -159,6 +168,10 @@ def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
     slides = _repo.reorder_slides(
         playlist_id,
         [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items],
+    )
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="slides_reordered",
     )
     return ok({"slides": slides}, message="Ordem atualizada.")
 
@@ -184,6 +197,10 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
         )
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="slide_updated",
+    )
     return ok(slide, message="Tela atualizada.")
 
 
@@ -200,6 +217,10 @@ def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
         _repo.delete_slide(slide_id)
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="slide_deleted",
+    )
     return ok(message="Tela removida.")
 
 
@@ -222,4 +243,8 @@ def duplicate_slide(request: Request, playlist_id: UUID, slide_id: UUID):
         slide = _repo.duplicate_slide(slide_id)
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="slide_duplicated",
+    )
     return ok(slide, message="Tela duplicada.", status_code=201)

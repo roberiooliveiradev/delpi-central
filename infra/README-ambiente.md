@@ -276,6 +276,30 @@ A página pública de agradecimento é servida **fora do portal** (sem login) pe
 
 O `public-hub` é o **irmão público do portal**: um único SPA estático que roteia páginas públicas de vários apps por `/p/{app}/{page}/{token}` (canônico). O QR atual usa o alias legado `/welcome/{token}` → `customer-experience/thanks`, mantido no gateway e no nginx do container para não quebrar códigos já impressos. Novos apps públicos registram suas views em `plugins/public-hub/src/apps/<app>/` + `src/shell/registry.ts`, sem criar um novo container por app.
 
+### Painéis TV (link público)
+
+| Serviço | Container | URL |
+|---|---|---|
+| API | `delpi-tv-dashboard-api` | `/apps/tv-dashboard-api/` |
+| Admin MFE | `delpi-tv-dashboard` | `/apps/tv-dashboard/` |
+| Apresentação TV | `delpi-public-hub` | `/p/tv-dashboard/present/{token}` |
+
+Variáveis: `PUBLIC_BASE_URL` (URL copiada no admin), `PLUGINS_DB_*`, `TV_DASHBOARD_RUN_MIGRATIONS_ON_STARTUP`.
+
+Após alterar view pública ou pacote `tv-dashboard-presentation`: `docker compose … up --build -d public-hub`.
+
+Doc: `docs/12-roadmap-e-evolucao/tv-dashboard/README.md`.
+
+### Mídia de comunicados (Painéis TV)
+
+Imagens e vídeos dos slides «Comunicado interno» ficam em disco no container `delpi-tv-dashboard-api`.
+
+| Variável | Path no container | Host (`DELPI_DATA_HOST_DIR`) |
+|----------|-------------------|------------------------------|
+| `TV_DASHBOARD_MEDIA_UPLOAD_DIR` | `/app/data/tv-dashboard/media` | `${DELPI_DATA_HOST_DIR}/tv-dashboard/media` |
+
+Após deploy/recreate, arquivos enviados antes devem continuar acessíveis no host.
+
 ---
 
 ## Produção CPU (srv-api, 4 vCPU · ~15 GB)

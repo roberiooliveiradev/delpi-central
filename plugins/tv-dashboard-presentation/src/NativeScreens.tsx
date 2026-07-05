@@ -1,3 +1,7 @@
+import type { CSSProperties } from "react";
+
+import { frameStyle, hasRichComunicado, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
+import type { ComunicadoBackground, ComunicadoBlock } from "./comunicadoTypes";
 import { formatNumber, formatPct } from "./nativeFormat";
 import "./native-screens.css";
 
@@ -149,8 +153,11 @@ export function SuppliesStockValueScreen({
 export function CustomMessageScreen({
   data,
 }: {
-  data: { headline?: string; subtitle?: string };
+  data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
 }) {
+  if (hasRichComunicado(data)) {
+    return <RichComunicadoScreen data={data} />;
+  }
   return (
     <div className="tdp-native-screen tdp-message">
       <div className="tdp-message__inner">
@@ -159,6 +166,86 @@ export function CustomMessageScreen({
       </div>
     </div>
   );
+}
+
+function RichComunicadoScreen({
+  data,
+}: {
+  data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
+}) {
+  const background = data.background ?? { type: "color", value: "#0f172a" };
+  const bgStyle: CSSProperties =
+    background.type === "image" && (background.url || background.value)
+      ? {
+          backgroundImage: `url(${background.url ?? background.value})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }
+      : {
+          backgroundColor:
+            background.type === "color" ? background.value || "#0f172a" : "#0f172a",
+        };
+
+  return (
+    <div className="tdp-native-screen tdp-comunicado" style={bgStyle}>
+      <div className="tdp-comunicado__stage">
+        {(data.blocks ?? []).map((block) => (
+          <ComunicadoBlockView key={block.id} block={block} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ComunicadoBlockView({ block }: { block: ComunicadoBlock }) {
+  const style: CSSProperties = {
+    ...frameStyle(block.frame),
+    ...(block.style?.fontSize ? { fontSize: `${block.style.fontSize}px` } : {}),
+    ...(block.style?.color ? { color: block.style.color } : {}),
+    ...(block.style?.textAlign ? { textAlign: block.style.textAlign } : {}),
+    ...(block.style?.fontWeight ? { fontWeight: block.style.fontWeight } : {}),
+  };
+
+  if (block.type === "heading") {
+    return (
+      <div className="tdp-comunicado__block tdp-comunicado__block--heading" style={style}>
+        <h1>{block.content}</h1>
+      </div>
+    );
+  }
+  if (block.type === "text") {
+    return (
+      <div className="tdp-comunicado__block tdp-comunicado__block--text" style={style}>
+        <p>{block.content}</p>
+      </div>
+    );
+  }
+  if (block.type === "image" && block.url) {
+    return (
+      <div className="tdp-comunicado__block tdp-comunicado__block--media" style={style}>
+        <img
+          src={block.url}
+          alt=""
+          style={{ objectFit: block.style?.objectFit ?? "contain" }}
+        />
+      </div>
+    );
+  }
+  if (block.type === "video" && block.url) {
+    return (
+      <div className="tdp-comunicado__block tdp-comunicado__block--media" style={style}>
+        <video
+          src={block.url}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ objectFit: block.style?.objectFit ?? "contain" }}
+        />
+      </div>
+    );
+  }
+  return null;
 }
 
 export function NativeSlideView({ native }: { native: NativeSlidePayload }) {
@@ -199,7 +286,15 @@ export function NativeSlideView({ native }: { native: NativeSlidePayload }) {
     );
   }
   if (key === "custom_message") {
-    return <CustomMessageScreen data={data as { headline?: string; subtitle?: string }} />;
+    return (
+      <CustomMessageScreen
+        data={
+          data as ComunicadoScreenDataLike & {
+            background?: ComunicadoBackground;
+          }
+        }
+      />
+    );
   }
   return (
     <div className="tdp-native-screen tdp-native-screen--error">

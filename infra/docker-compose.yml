@@ -1263,6 +1263,10 @@ services:
       PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
       PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+      TV_DASHBOARD_MEDIA_UPLOAD_DIR: ${TV_DASHBOARD_MEDIA_UPLOAD_DIR:-/app/data/tv-dashboard/media}
+
+    volumes:
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/tv-dashboard/media:/app/data/tv-dashboard/media
 
     depends_on:
       keycloak:

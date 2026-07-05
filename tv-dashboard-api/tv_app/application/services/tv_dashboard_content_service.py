@@ -55,3 +55,22 @@ def branch_rejection_message() -> str:
 
 def ui_content_bundle() -> dict[str, Any]:
     return dict(_load_content())
+
+
+def media_setting_int(key: str, default: int) -> int:
+    media = _load_settings().get("mediaUpload") or {}
+    try:
+        return int(media.get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def media_setting_mime_ext(media_kind: str) -> dict[str, str]:
+    media = _load_settings().get("mediaUpload") or {}
+    if media_kind == "video":
+        raw = media.get("videoMimeExtensions") or {}
+    else:
+        raw = media.get("imageMimeExtensions") or {}
+    if not isinstance(raw, dict):
+        return {}
+    return {str(k).lower(): str(v) for k, v in raw.items()}

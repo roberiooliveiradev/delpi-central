@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.presentation_status_service import build_presentation_status
 from tv_app.application.services.qr_service import build_public_presentation_url, render_qr_png
@@ -115,6 +116,11 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)
     playlist["publicUrl"] = _present.build_public_url(playlist["publicToken"])
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="playlist_updated",
+        revision=playlist.get("updatedAt"),
+    )
     return ok(playlist, message="Programação atualizada.")
 
 
@@ -143,6 +149,11 @@ def deactivate_playlist(request: Request, playlist_id: UUID):
         playlist = _repo.set_active(playlist_id, is_active=False)
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="playlist_deactivated",
+        revision=playlist.get("updatedAt"),
+    )
     return ok(playlist, message="Link desativado.")
 
 
@@ -157,6 +168,11 @@ def activate_playlist(request: Request, playlist_id: UUID):
         playlist = _repo.set_active(playlist_id, is_active=True)
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="playlist_activated",
+        revision=playlist.get("updatedAt"),
+    )
     return ok(playlist, message="Link reativado.")
 
 
@@ -242,6 +258,11 @@ def regenerate_token(request: Request, playlist_id: UUID):
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)
     playlist["publicUrl"] = _present.build_public_url(playlist["publicToken"])
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="token_regenerated",
+        revision=playlist.get("updatedAt"),
+    )
     return ok(
         playlist,
         message="Novo link gerado. O link anterior deixou de funcionar.",

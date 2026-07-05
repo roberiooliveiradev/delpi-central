@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from tv_app.application.services.comunicado_enrichment_service import ComunicadoEnrichmentService
 from tv_app.application.services.native_screen_cache_service import (
     build_native_data_cache_key,
     get_cached_native_data,
     set_cached_native_data,
 )
 from tv_app.application.services.tv_dashboard_content_service import message
+from tv_app.config import settings
 from tv_app.infrastructure.gateways.delpi_production_gateway import DelpiProductionGateway
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     load_native_screens_catalog,
@@ -29,8 +31,13 @@ def _error(message: str, detail: str | None = None) -> dict[str, Any]:
 
 
 class NativeScreenDataService:
-    def __init__(self, gateway: DelpiProductionGateway | None = None) -> None:
+    def __init__(
+        self,
+        gateway: DelpiProductionGateway | None = None,
+        comunicado: ComunicadoEnrichmentService | None = None,
+    ) -> None:
         self._gateway = gateway or DelpiProductionGateway()
+        self._comunicado = comunicado or ComunicadoEnrichmentService()
 
     def resolve(
         self,
@@ -38,6 +45,8 @@ class NativeScreenDataService:
         screen_key: str,
         config: dict[str, Any] | None,
         authorization: str | None = None,
+        playlist_id: str | None = None,
+        public_token: str | None = None,
     ) -> dict[str, Any]:
         cfg = config or {}
         if screen_key != "custom_message":
@@ -54,6 +63,8 @@ class NativeScreenDataService:
             screen_key=screen_key,
             cfg=cfg,
             authorization=authorization,
+            playlist_id=playlist_id,
+            public_token=public_token,
         )
         if screen_key != "custom_message" and not result.get("error"):
             cache_key = build_native_data_cache_key(
@@ -70,6 +81,8 @@ class NativeScreenDataService:
         screen_key: str,
         cfg: dict[str, Any],
         authorization: str | None,
+        playlist_id: str | None = None,
+        public_token: str | None = None,
     ) -> dict[str, Any]:
         try:
             if screen_key == "production_oee_overview":
@@ -97,9 +110,18 @@ class NativeScreenDataService:
                     authorization=authorization,
                 )
             if screen_key == "custom_message":
+                if playlist_id:
+                    return self._comunicado.enrich(
+                        cfg,
+                        api_root_path=settings.TV_DASHBOARD_API_ROOT_PATH,
+                        playlist_id=playlist_id,
+                        public_token=public_token,
+                    )
                 return {
-                    "headline": str(cfg.get("headline") or "Comunicado"),
+                    "headline": str(cfg.get("headline") or message("comunicadoDefaultHeadline", "Comunicado")),
                     "subtitle": str(cfg.get("subtitle") or ""),
+                    "blocks": cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else [],
+                    "background": cfg.get("background") if isinstance(cfg.get("background"), dict) else None,
                 }
         except Exception as exc:  # noqa: BLE001
             return _error(message("nativeDataUnavailable"), str(exc))

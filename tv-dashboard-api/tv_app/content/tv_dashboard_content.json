@@ -5,7 +5,10 @@
     "slideNotFound": "Tela não encontrada.",
     "nativeDataUnavailable": "Dados indisponíveis no momento.",
     "branchNotAllowed": "Filial não autorizada para Painéis TV.",
-    "consolidatedNotAllowed": "Visão consolidada não autorizada para seu perfil."
+    "consolidatedNotAllowed": "Visão consolidada não autorizada para seu perfil.",
+    "comunicadoDefaultHeadline": "Comunicado",
+    "mediaNotFound": "Mídia não encontrada.",
+    "mediaUploaded": "Mídia enviada."
   },
   "presentation": {
     "nativeErrorAdvanceSec": 10,
@@ -25,6 +28,15 @@
     "tabCatalog": "Catálogo",
     "catalogHint": "Importe telas prontas dos dashboards DELPI ou do portal.",
     "catalogImport": "Importar",
-    "branchOptional": "Filial (opcional)"
+    "branchOptional": "Filial (opcional)",
+    "comunicadoComposerTitle": "Editor de comunicado",
+    "comunicadoAddHeading": "Título",
+    "comunicadoAddText": "Texto",
+    "comunicadoAddImage": "Imagem",
+    "comunicadoAddVideo": "Vídeo",
+    "comunicadoBackground": "Fundo",
+    "comunicadoBlocks": "Elementos",
+    "comunicadoUpload": "Enviar arquivo",
+    "comunicadoLegacyHint": "Use o editor visual para montar slides com imagens e vídeos."
   }
 }

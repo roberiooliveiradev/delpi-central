@@ -1177,10 +1177,12 @@ services:
       PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
       PLUGINS_DB_USER: ${PLUGINS_DB_USER}
       PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      TV_DASHBOARD_MEDIA_UPLOAD_DIR: ${TV_DASHBOARD_MEDIA_UPLOAD_DIR:-/app/data/tv-dashboard/media}
 
     volumes:
       - ../tv-dashboard-api:/app
       - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/tv-dashboard/media:/app/data/tv-dashboard/media
 
     depends_on:
       - keycloak

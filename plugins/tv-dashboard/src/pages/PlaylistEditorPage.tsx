@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  buildAdminPresentationWsUrl,
+  usePresentationRealtime,
+} from "@delpi/tv-dashboard-presentation";
+import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
@@ -25,6 +29,7 @@ import {
   downloadQrPng,
   getBranchScope,
   getPlaylist,
+  getPreviewPayload,
   getPresentationStatus,
   getUiContent,
   listNativeScreens,
@@ -36,13 +41,16 @@ import {
   type BranchScope,
   type NativeScreenCatalogItem,
   type Playlist,
+  type PresentationPayload,
   type PresentationStatus,
   type Slide,
   type SlidePreset,
   type TvDashboardUiContent,
 } from "../api/tvDashboardApi";
+import { getAccessToken } from "../api/httpClient";
 import { AddSlideModal } from "../components/AddSlideModal";
 import { EditSlideModal } from "../components/EditSlideModal";
+import { SlideCardThumbnail } from "../components/SlideCardThumbnail";
 
 type Props = {
   playlistId: string;
@@ -76,6 +84,58 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const [editSlide, setEditSlide] = useState<Slide | null>(null);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [previewBySlideId, setPreviewBySlideId] = useState<
+    Record<string, PresentationPayload["slides"][number]>
+  >({});
+
+  const slides = useMemo(
+    () => [...(playlist?.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    [playlist?.slides],
+  );
+
+  const slidesPreviewKey = useMemo(
+    () =>
+      slides
+        .map(
+          (slide) =>
+            `${slide.id}:${slide.title}:${slide.slideType}:${slide.nativeScreenKey ?? ""}:${slide.externalUrl ?? ""}:${JSON.stringify(slide.nativeConfig ?? {})}:${slide.isActive}`,
+        )
+        .join("|"),
+    [slides],
+  );
+
+  const thumbnailWsUrl = useMemo(() => {
+    const token = getAccessToken();
+    if (!token) return null;
+    return buildAdminPresentationWsUrl(playlistId, token);
+  }, [playlistId]);
+
+  const refreshPreviewThumbnails = useCallback(async () => {
+    if (!slides.length) {
+      setPreviewBySlideId({});
+      return;
+    }
+    try {
+      const payload = await getPreviewPayload(playlistId);
+      const next: Record<string, PresentationPayload["slides"][number]> = {};
+      for (const slide of payload.slides) next[slide.id] = slide;
+      setPreviewBySlideId(next);
+    } catch {
+      setPreviewBySlideId({});
+    }
+  }, [playlistId, slides.length]);
+
+  useEffect(() => {
+    void refreshPreviewThumbnails();
+  }, [refreshPreviewThumbnails, slidesPreviewKey]);
+
+  usePresentationRealtime({
+    enabled: Boolean(playlistId && slides.length > 0 && thumbnailWsUrl),
+    wsUrl: thumbnailWsUrl,
+    onPresentationUpdated: () => {
+      void refreshPreviewThumbnails();
+    },
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -292,11 +352,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     });
   }
 
-  const slides = useMemo(
-    () => [...(playlist?.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
-    [playlist?.slides],
-  );
-
   if (loading) return <div className="td-state">Carregando programação…</div>;
   if (error || !playlist) return <div className="td-state">{error ?? "Programação não encontrada."}</div>;
 
@@ -428,6 +483,11 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
                   onDragEnd={() => setDragIndex(null)}
                 >
                   <strong>{idx + 1}</strong>
+                  <SlideCardThumbnail
+                    slide={slide}
+                    playlistId={playlistId}
+                    previewSlide={previewBySlideId[slide.id]}
+                  />
                   <div>
                     <div>{slide.title}</div>
                     <div className="td-slide-meta">
@@ -468,6 +528,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
       <AddSlideModal
         open={addModalOpen}
+        playlistId={playlistId}
         catalog={catalog}
         presets={presets}
         branchScope={branchScope}
@@ -480,6 +541,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
       <EditSlideModal
         open={editSlide !== null}
+        playlistId={playlistId}
         slide={editSlide}
         catalog={catalog}
         branchScope={branchScope}

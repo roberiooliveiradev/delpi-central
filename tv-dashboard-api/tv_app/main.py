@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -11,8 +13,11 @@ from delpi_auth.credential_guard import check_credentials
 from tv_app.config import settings
 from tv_app.core.responses import fail
 from tv_app.interface.http.routes.content_routes import router as content_router
+from tv_app.interface.http.routes.media_routes import router as media_router
 from tv_app.interface.http.routes.native_screen_routes import router as native_screen_router
+from tv_app.application.services.presentation_realtime_hub import presentation_realtime_hub
 from tv_app.interface.http.routes.playlist_routes import router as playlist_router
+from tv_app.interface.http.routes.presentation_realtime_routes import router as presentation_realtime_router
 from tv_app.interface.http.routes.public_routes import router as public_router
 from tv_app.interface.http.routes.slide_routes import router as slide_router
 from tv_app.middleware.auth_middleware import jwt_middleware
@@ -45,7 +50,15 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    yield
+    loop = asyncio.get_running_loop()
+    presentation_realtime_hub.bind_loop(loop)
+    worker = asyncio.create_task(presentation_realtime_hub.worker())
+    try:
+        yield
+    finally:
+        worker.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await worker
 
 
 app = FastAPI(
@@ -91,6 +104,8 @@ def health():
 
 app.include_router(playlist_router)
 app.include_router(slide_router)
+app.include_router(media_router)
 app.include_router(content_router)
 app.include_router(native_screen_router)
 app.include_router(public_router)
+app.include_router(presentation_realtime_router)

@@ -49,5 +49,10 @@ class Settings:
     PLUGINS_DB_CONNECT_TIMEOUT: str = _get_env("PLUGINS_DB_CONNECT_TIMEOUT", default="5")
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
 
+    TV_DASHBOARD_MEDIA_UPLOAD_DIR: str = _get_env(
+        "TV_DASHBOARD_MEDIA_UPLOAD_DIR",
+        default="/app/data/tv-dashboard/media",
+    )
+
 
 settings = Settings()

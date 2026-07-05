@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 
 import type { BranchScope, NativeScreenCatalogItem, SlidePreset, TvDashboardUiContent } from "../api/tvDashboardApi";
 import { BranchField } from "./BranchField";
+import { ComunicadoComposer } from "./ComunicadoComposer";
 import { ExternalSlidePreview } from "../presentation/ExternalSlidePreview";
+import { parseComunicadoConfig, serializeComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
 type Props = {
   open: boolean;
+  playlistId: string;
   catalog: NativeScreenCatalogItem[];
   presets: SlidePreset[];
   branchScope: BranchScope | null;
@@ -23,6 +26,7 @@ type Props = {
 
 export function AddSlideModal({
   open,
+  playlistId,
   catalog,
   presets,
   branchScope,
@@ -37,12 +41,13 @@ export function AddSlideModal({
   const [title, setTitle] = useState("");
   const [durationSec, setDurationSec] = useState(30);
   const [externalUrl, setExternalUrl] = useState("");
-  const [headline, setHeadline] = useState("Comunicado");
-  const [subtitle, setSubtitle] = useState("");
   const [branch, setBranch] = useState("");
   const [periodDays, setPeriodDays] = useState(30);
   const [presetKey, setPresetKey] = useState("");
   const [catalogBranch, setCatalogBranch] = useState("");
+  const [comunicadoConfig, setComunicadoConfig] = useState<Record<string, unknown>>(() =>
+    serializeComunicadoConfig(parseComunicadoConfig({ headline: "Comunicado" })),
+  );
 
   const admin = ui?.admin ?? {};
 
@@ -63,8 +68,9 @@ export function AddSlideModal({
     setTitle(item.label);
     setDurationSec(item.defaultDurationSec);
     if (item.key === "custom_message") {
-      setHeadline("Comunicado");
-      setSubtitle("");
+      setComunicadoConfig(
+        serializeComunicadoConfig(parseComunicadoConfig({ headline: "Comunicado" })),
+      );
     }
   }
 
@@ -89,8 +95,7 @@ export function AddSlideModal({
     if (!item) return;
     const nativeConfig: Record<string, unknown> = {};
     if (item.key === "custom_message") {
-      nativeConfig.headline = headline;
-      nativeConfig.subtitle = subtitle;
+      Object.assign(nativeConfig, comunicadoConfig);
     } else {
       if (branch.trim()) nativeConfig.branch = branch.trim();
       nativeConfig.periodDays = periodDays;
@@ -107,7 +112,7 @@ export function AddSlideModal({
 
   return (
     <div className="td-modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="td-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <div className="td-modal td-modal--wide" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <h3>{admin.addSlideTitle ?? "Adicionar tela"}</h3>
         <div className="td-modal-tabs">
           <button type="button" className={mode === "native" ? "td-tab td-tab--active" : "td-tab"} onClick={() => setMode("native")}>
@@ -174,16 +179,12 @@ export function AddSlideModal({
                 <input id="td-slide-title" value={title || selected?.label || ""} onChange={(e) => setTitle(e.target.value)} />
               </div>
               {selected?.key === "custom_message" ? (
-                <>
-                  <div className="td-field">
-                    <label htmlFor="td-headline">Comunicado</label>
-                    <input id="td-headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
-                  </div>
-                  <div className="td-field">
-                    <label htmlFor="td-subtitle">Subtítulo</label>
-                    <input id="td-subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
-                  </div>
-                </>
+                <ComunicadoComposer
+                  playlistId={playlistId}
+                  value={comunicadoConfig}
+                  onChange={setComunicadoConfig}
+                  labels={admin}
+                />
               ) : selected?.key !== "supplies_stock_value" ? (
                 <>
                   <BranchField

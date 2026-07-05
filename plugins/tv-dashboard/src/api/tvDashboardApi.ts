@@ -1,4 +1,4 @@
-import { API_BASE, httpDelete, httpGet, httpGetBlob, httpPatch, httpPost } from "./httpClient";
+import { API_BASE, httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPostForm } from "./httpClient";
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
 
@@ -102,6 +102,28 @@ export type PresentationStatus = {
   secondsSinceLastPresentation?: number | null;
   isActive: boolean;
 };
+
+export type MediaAsset = {
+  id: string;
+  playlistId: string;
+  storedName: string;
+  originalName?: string | null;
+  mimeType: string;
+  mediaKind: "image" | "video";
+  fileSizeBytes: number;
+};
+
+export function adminMediaUrl(playlistId: string, assetId: string) {
+  return `${API_BASE}/playlists/${playlistId}/media/${assetId}`;
+}
+
+export async function uploadPlaylistMedia(playlistId: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return unwrap(
+    httpPostForm<ApiEnvelope<MediaAsset>>(`${API_BASE}/playlists/${playlistId}/media`, form),
+  );
+}
 
 export async function listPlaylists() {
   const data = await unwrap(httpGet<ApiEnvelope<{ items: Playlist[] }>>(`${API_BASE}/playlists`));

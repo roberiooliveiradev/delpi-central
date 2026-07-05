@@ -1,6 +1,11 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
-import { NativeSlideView, usePresentationEngine } from "@delpi/tv-dashboard-presentation";
+import {
+  NativeSlideView,
+  usePresentationEngine,
+  buildPublicPresentationWsUrl,
+  usePresentationRealtime,
+} from "@delpi/tv-dashboard-presentation";
 
 import type { PublicPresentationPayload, PublicSlide } from "./api";
 import { refreshPublicPresentation, sendPresentationHeartbeat } from "./api";
@@ -31,12 +36,28 @@ export function PresentationView({
     slides,
     viewport,
     transition,
+    setPayload,
   } = usePresentationEngine<PublicPresentationPayload>({
     initialPayload,
     onRefresh: onRefresh || token ? reloadPayload : undefined,
     enableKeyboardPause: true,
     enableHiddenPause: true,
     refreshNativeSlidesOnly: true,
+  });
+
+  const wsUrl = useMemo(
+    () => (mode === "public" && token ? buildPublicPresentationWsUrl(token) : null),
+    [mode, token],
+  );
+
+  usePresentationRealtime({
+    enabled: mode === "public" && Boolean(token),
+    wsUrl,
+    onPresentationUpdated: () => {
+      void reloadPayload().then((next) => {
+        if (next) setPayload(next);
+      });
+    },
   });
 
   const heartbeatIntervalSec =

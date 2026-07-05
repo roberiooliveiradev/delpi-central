@@ -180,6 +180,20 @@ Páginas **públicas separadas e independentes**, cada uma com seu QR próprio:
 
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
+### Painéis TV (`tv-dashboard`)
+
+Apresentação rotativa em modo **kiosk** (sem logo DELPI):
+
+| Página | Rota | `load` |
+|---|---|---|
+| Apresentação TV | `/p/tv-dashboard/present/{token}` | `GET /apps/tv-dashboard-api/public/present/{token}` |
+
+Ver `src/apps/tv-dashboard/` (`api.ts`, `PresentationView.tsx`, `pages.tsx`).  
+Motor compartilhado: `plugins/tv-dashboard-presentation/`.  
+Doc: `docs/12-roadmap-e-evolucao/tv-dashboard/README.md`.
+
+**Rebuild obrigatório** do `public-hub` após alterações na view ou no pacote de apresentação.
+
 ---
 
 ## Build e deploy

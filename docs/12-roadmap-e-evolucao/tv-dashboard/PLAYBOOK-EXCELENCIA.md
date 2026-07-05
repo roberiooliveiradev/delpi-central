@@ -9,6 +9,7 @@
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
 
 **Relacionado:**
+- [`README.md`](./README.md) — **documentação operacional** (arquitetura, deploy, troubleshooting)
 - `docs/05-plugin-system/manifesto-plugin.md` — contrato de registro de plugin
 - `docs/08-plugins/README.md` — checklist de novo plugin
 - `docs/12-roadmap-e-evolucao/customer-experience/PLAYBOOK-EXCELENCIA.md` — padrão admin + página pública

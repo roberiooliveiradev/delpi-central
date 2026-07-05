@@ -2,6 +2,7 @@ fastapi
 pydantic
 uvicorn[standard]
 python-dotenv
+python-multipart
 PyJWT
 psycopg[binary]
 python-jose[cryptography]

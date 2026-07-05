@@ -84,4 +84,5 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 
 | Arquivo | Conteúdo |
 |---|---|
-| [tv-dashboard/PLAYBOOK-EXCELENCIA.md](./tv-dashboard/PLAYBOOK-EXCELENCIA.md) | **Playbook de implementação** — gestão, preview, link público via public-hub, telas nativas viewport-fit |
+| [tv-dashboard/README.md](./tv-dashboard/README.md) | **Documentação da aplicação** — arquitetura, rotas, deploy, troubleshooting |
+| [tv-dashboard/PLAYBOOK-EXCELENCIA.md](./tv-dashboard/PLAYBOOK-EXCELENCIA.md) | Playbook de implementação — north star, ondas, critérios |

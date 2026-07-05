@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 
 import type { BranchScope, NativeScreenCatalogItem, Slide } from "../api/tvDashboardApi";
 import { BranchField } from "./BranchField";
+import { ComunicadoComposer } from "./ComunicadoComposer";
+import { parseComunicadoConfig, serializeComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
 type Props = {
   open: boolean;
+  playlistId: string;
   slide: Slide | null;
   catalog: NativeScreenCatalogItem[];
   branchScope: BranchScope | null;
@@ -20,6 +23,7 @@ type Props = {
 
 export function EditSlideModal({
   open,
+  playlistId,
   slide,
   catalog,
   branchScope,
@@ -30,10 +34,9 @@ export function EditSlideModal({
   const [title, setTitle] = useState("");
   const [durationSec, setDurationSec] = useState(defaultDurationSec);
   const [externalUrl, setExternalUrl] = useState("");
-  const [headline, setHeadline] = useState("");
-  const [subtitle, setSubtitle] = useState("");
   const [branch, setBranch] = useState("");
   const [periodDays, setPeriodDays] = useState(30);
+  const [comunicadoConfig, setComunicadoConfig] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (!slide || !open) return;
@@ -41,8 +44,7 @@ export function EditSlideModal({
     setDurationSec(slide.durationSec ?? defaultDurationSec);
     setExternalUrl(slide.externalUrl ?? "");
     const cfg = slide.nativeConfig ?? {};
-    setHeadline(String(cfg.headline ?? "Comunicado"));
-    setSubtitle(String(cfg.subtitle ?? ""));
+    setComunicadoConfig(serializeComunicadoConfig(parseComunicadoConfig(cfg)));
     setBranch(String(cfg.branch ?? ""));
     setPeriodDays(Number(cfg.periodDays ?? 30));
   }, [slide, open, defaultDurationSec]);
@@ -62,8 +64,7 @@ export function EditSlideModal({
     }
     const nativeConfig: Record<string, unknown> = {};
     if (screenKey === "custom_message") {
-      nativeConfig.headline = headline;
-      nativeConfig.subtitle = subtitle;
+      Object.assign(nativeConfig, comunicadoConfig);
     } else {
       if (branch.trim()) nativeConfig.branch = branch.trim();
       nativeConfig.periodDays = periodDays;
@@ -81,7 +82,7 @@ export function EditSlideModal({
 
   return (
     <div className="td-modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="td-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <div className="td-modal td-modal--wide" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <h3>Editar tela</h3>
         <form onSubmit={handleSubmit}>
           <div className="td-field">
@@ -94,16 +95,11 @@ export function EditSlideModal({
               <input id="td-edit-url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} required />
             </div>
           ) : screenKey === "custom_message" ? (
-            <>
-              <div className="td-field">
-                <label htmlFor="td-edit-headline">Comunicado</label>
-                <input id="td-edit-headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
-              </div>
-              <div className="td-field">
-                <label htmlFor="td-edit-subtitle">Subtítulo</label>
-                <input id="td-edit-subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
-              </div>
-            </>
+            <ComunicadoComposer
+              playlistId={playlistId}
+              value={comunicadoConfig}
+              onChange={setComunicadoConfig}
+            />
           ) : screenKey !== "supplies_stock_value" ? (
             <>
               <BranchField

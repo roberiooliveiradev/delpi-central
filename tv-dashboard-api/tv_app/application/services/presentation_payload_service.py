@@ -44,7 +44,11 @@ class PresentationPayloadService:
                 self._repo.touch_view(token)
             except Exception:
                 pass
-        return self._assemble_payload(playlist, authorization=authorization)
+        return self._assemble_payload(
+            playlist,
+            authorization=authorization,
+            public_media_urls=True,
+        )
 
     def build_by_id(
         self,
@@ -55,13 +59,18 @@ class PresentationPayloadService:
         playlist = self._repo.get_by_id(playlist_id)
         if not playlist:
             raise PlaylistNotFoundError
-        return self._assemble_payload(playlist, authorization=authorization)
+        return self._assemble_payload(
+            playlist,
+            authorization=authorization,
+            public_media_urls=False,
+        )
 
     def _assemble_payload(
         self,
         playlist: dict[str, Any],
         *,
         authorization: str | None,
+        public_media_urls: bool = False,
     ) -> dict[str, Any]:
         slides = [
             slide
@@ -69,6 +78,8 @@ class PresentationPayloadService:
             if slide.get("isActive", True)
         ]
         default_duration = playlist.get("defaultDurationSec") or 30
+        playlist_id = str(playlist["id"])
+        public_token = str(playlist["publicToken"]) if public_media_urls else None
         rendered_slides: list[dict[str, Any]] = []
         for slide in slides:
             duration = slide.get("durationSec") or default_duration
@@ -87,6 +98,8 @@ class PresentationPayloadService:
                         screen_key=str(slide["nativeScreenKey"]),
                         config=slide.get("nativeConfig") or {},
                         authorization=authorization,
+                        playlist_id=playlist_id,
+                        public_token=public_token,
                     ),
                 }
             else:

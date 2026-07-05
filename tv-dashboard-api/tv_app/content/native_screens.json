@@ -47,7 +47,10 @@
       "defaultDurationSec": 20,
       "configSchema": {
         "headline": { "type": "string", "label": "Título" },
-        "subtitle": { "type": "string", "optional": true, "label": "Subtítulo" }
+        "subtitle": { "type": "string", "optional": true, "label": "Subtítulo" },
+        "version": { "type": "integer", "optional": true, "label": "Versão do layout" },
+        "background": { "type": "object", "optional": true, "label": "Fundo" },
+        "blocks": { "type": "array", "optional": true, "label": "Elementos do slide" }
       }
     }
   ]
