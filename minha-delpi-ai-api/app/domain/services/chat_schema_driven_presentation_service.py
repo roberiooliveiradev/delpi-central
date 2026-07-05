@@ -24,7 +24,7 @@ _CHART_VIEW_TOKENS = frozenset(
     }
 )
 
-_TABULAR_LIST_KEYS = ("items", "series", "periods", "history", "rows", "entries", "points")
+_TABULAR_LIST_KEYS = ("items", "results", "series", "periods", "history", "rows", "entries", "points")
 _TREE_CHILD_KEYS = ("children", "components", "items", "nodes")
 
 

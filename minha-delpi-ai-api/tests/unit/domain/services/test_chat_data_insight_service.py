@@ -140,6 +140,35 @@ def test_build_generic_categorical_shape_adds_visual_hint():
     assert derived_metrics[0].get("label") == "Registros"
 
 
+def test_build_system_tables_search_counts_results_rows() -> None:
+    metadata = {
+        "path": "/system/tables/search",
+        "apiDelpiResponseMeta": {
+            "entity": "protheus_table",
+            "shape": "paged_list",
+        },
+    }
+    data = {
+        "success": True,
+        "data": {
+            "success": True,
+            "total_records": 5477,
+            "results": [
+                {"X2_ARQUIVO": "SB1010", "X2_NOME": "CADASTRO DE PRODUTOS"},
+                {"X2_ARQUIVO": "SB2010", "X2_NOME": "GRUPO DE PRODUTOS"},
+            ],
+        },
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert data_answer is not None
+    derived_metrics = data_answer.get("derivedMetrics") or []
+    assert derived_metrics[0]["label"] == "Registros"
+    assert derived_metrics[0]["value"] == "2"
+    assert "não retornou registros" not in str(data_answer.get("summary") or "").lower()
+
+
 def test_build_schedule_today_complete_list_does_not_add_page_limitation() -> None:
     rows = [
         {

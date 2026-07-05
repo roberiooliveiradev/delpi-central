@@ -33,6 +33,22 @@ def test_should_apply_for_kpi_entity_and_generic_path():
     )
 
 
+def test_extract_tabular_rows_from_system_tables_search_results():
+    rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+        {
+            "success": True,
+            "total_records": 2,
+            "results": [
+                {"X2_ARQUIVO": "SB1010", "X2_NOME": "CADASTRO DE PRODUTOS"},
+                {"X2_ARQUIVO": "SB2010", "X2_NOME": "GRUPO DE PRODUTOS"},
+            ],
+        }
+    )
+
+    assert len(rows) == 2
+    assert rows[0]["X2_ARQUIVO"] == "SB1010"
+
+
 def test_extract_tabular_rows_from_nested_last_purchase_object():
     rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
         {

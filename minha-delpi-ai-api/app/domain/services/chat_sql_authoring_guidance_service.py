@@ -35,10 +35,11 @@ class ChatSqlAuthoringGuidanceService:
         }
     )
     _DOMAIN_HINT_PATTERNS = (
-        r"(?:monte|crie|gera|gere|elabore|escreva|construa|ajuste|corrija|refine)\s+"
-        r"(?:uma\s+)?(?:consulta|query|sql)\s+(?:de|sobre|para|com)\s+(.+?)(?:\?|$)",
-        r"(?:consulta|query|sql)\s+(?:de|sobre|para|com)\s+(.+?)(?:\?|$)",
-        r"(?:preciso|quero)\s+(?:de\s+)?(?:uma\s+)?(?:consulta|query|sql)\s+(?:de|sobre|para)\s+(.+?)(?:\?|$)",
+        r"(?:monte|crie|gera|gere|elabore|escreva|construa|construir|ajuste|corrija|refine)\s+"
+        r"(?:uma\s+)?(?:consulta|query|sql)\s+(?:de|sobre|para|com|que)\s+(.+?)(?:\?|$)",
+        r"(?:consulta|query|sql)\s+(?:de|sobre|para|com|que)\s+(.+?)(?:\?|$)",
+        r"(?:preciso|quero)\s+(?:de\s+)?(?:uma\s+)?(?:consulta|query|sql)\s+(?:de|sobre|para|que)\s+(.+?)(?:\?|$)",
+        r"(?:use\s+)?sql\s+para\s+(?:construir\s+)?(?:uma\s+)?(?:query|consulta)\s+(?:que\s+)?(.+?)(?:\?|$)",
     )
 
     @classmethod
@@ -103,7 +104,9 @@ class ChatSqlAuthoringGuidanceService:
         if table_name:
             return True
 
-        return bool(cls.extract_domain_hint(message))
+        return bool(
+            cls.extract_table_domain_entity(message) or cls.extract_domain_hint(message)
+        )
 
     @classmethod
     def extract_table_names(cls, message: str | None) -> list[str]:
@@ -176,7 +179,7 @@ class ChatSqlAuthoringGuidanceService:
         if planned:
             return planned[:3]
 
-        domain = cls.extract_domain_hint(message)
+        domain = cls.extract_table_domain_entity(message) or cls.extract_domain_hint(message)
 
         if not domain:
             return []
@@ -260,6 +263,26 @@ class ChatSqlAuthoringGuidanceService:
             return True
 
         return candidate not in cls._TABLE_NAME_STOPWORDS
+
+    @classmethod
+    def extract_table_domain_entity(cls, message: str | None) -> str | None:
+        """Entidade semântica após «tabela de …» (ex.: produtos, clientes)."""
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        match = re.search(
+            r"\btabela de ([a-z0-9][a-z0-9\s]{1,58}?)(?:,|\s+grupo|\s+onde|\s+com|\?|$)",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+
+        if not match:
+            return None
+
+        entity = match.group(1).strip(" .,")
+
+        if len(entity) < 3 or entity in cls._TABLE_NAME_STOPWORDS:
+            return None
+
+        return entity[:120]
 
     @classmethod
     def extract_domain_hint(cls, message: str | None) -> str | None:

@@ -479,6 +479,25 @@ class ChatDataInsightService:
             if nested_payload_rows is not None:
                 return nested_payload_rows
 
+            from app.domain.services.chat_schema_driven_presentation_service import (
+                ChatSchemaDrivenPresentationService,
+            )
+
+            tabular_rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(data)
+
+            if tabular_rows:
+                return tabular_rows
+
+            nested_payload = data.get("data")
+
+            if isinstance(nested_payload, dict):
+                tabular_rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+                    nested_payload,
+                )
+
+                if tabular_rows:
+                    return tabular_rows
+
             return []
 
         return None

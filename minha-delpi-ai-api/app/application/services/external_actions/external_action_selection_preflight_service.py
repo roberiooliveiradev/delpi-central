@@ -91,6 +91,13 @@ class ExternalActionSelectionPreflightService:
         if not ChatSqlIntentService.is_authoring_request(message):
             return "skip"
 
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
+        if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+            return "skip"
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if OperationalRouteMatcherService.looks_like_system_metadata_question(normalized):

@@ -19,6 +19,35 @@ def test_extract_domain_hint_from_authoring_message():
     assert hint == "faturamento por cliente"
 
 
+def test_extract_table_domain_entity_from_produtos_phrase():
+    entity = ChatSqlAuthoringGuidanceService.extract_table_domain_entity(
+        "use sql para construir uma query que liste 5 produtos na tabela de produtos, grupo 1008"
+    )
+
+    assert entity == "produtos"
+
+
+def test_plan_prefetch_uses_table_domain_entity_for_sql_authoring():
+    selection = MagicMock()
+    selection.select_system_metadata.return_value = {
+        "name": "execute_external_action",
+        "arguments": {"actionId": "system-search"},
+    }
+
+    planned = ChatSqlAuthoringGuidanceService.plan_schema_prefetch(
+        selection,
+        message=(
+            "use sql para construir uma query que liste 5 produtos "
+            "na tabela de produtos, grupo 1008"
+        ),
+        allowed_action_ids=["system-search"],
+    )
+
+    assert len(planned) == 1
+    selection.select_system_metadata.assert_called_once()
+    assert selection.select_system_metadata.call_args.args[0] == "qual a tabela de produtos"
+
+
 def test_should_prefetch_when_domain_hint_present():
     assert ChatSqlAuthoringGuidanceService.should_prefetch_schema(
         message="crie uma query de vendas por filial sem rodar",
