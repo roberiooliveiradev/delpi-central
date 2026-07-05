@@ -391,6 +391,40 @@ def test_authoring_sql_from_message_product_group_sb1():
     assert "1008" in sql
 
 
+def test_authoring_sql_from_message_traga_os_n_produtos():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prompt_service import (
+        ChatAdvancedSqlSpecialistPromptService,
+    )
+
+    msg = "execute essa query e traga os 5 produtos do grupo 1008"
+    sql = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(msg, [])
+
+    assert sql is not None
+    assert "TOP 5" in sql.upper()
+
+
+def test_classify_mode_execute_beats_incremental_edit_follow_up():
+    from app.domain.services.chat_advanced_sql_specialist_service import (
+        ChatAdvancedSqlSpecialistService,
+    )
+
+    history = [
+        {
+            "role": "assistant",
+            "content": (
+                "```sql\nSELECT TOP 5 B1_COD, B1_DESC\nFROM SB1010\n"
+                "WHERE D_E_L_E_T_ = ''\n  AND B1_GRUPO = '1008'\n```"
+            ),
+        }
+    ]
+    mode = ChatAdvancedSqlSpecialistService.classify_mode(
+        "execute essa query e traga os 5 produtos do grupo 1008",
+        previous_messages=history,
+    )
+
+    assert mode == "execute"
+
+
 def test_normalize_replaces_sa1_with_sb1_for_product_authoring():
     from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prose_formatting_service import (
         ChatAdvancedSqlSpecialistProseFormattingService,

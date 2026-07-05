@@ -107,6 +107,9 @@ class ChatAdvancedSqlSpecialistActivationService:
                 if any(pattern in normalized for pattern in patterns):
                     return mode
 
+        if ChatSqlIntentService.should_auto_execute_sql(str(message or "")):
+            return "execute"
+
         if ChatSqlQueryRefinementService.is_sql_follow_up(
             str(message or ""),
             previous_messages=previous_messages,
@@ -121,9 +124,6 @@ class ChatAdvancedSqlSpecialistActivationService:
 
             if workspace.get("hasActiveQuery") or "anterior" in normalized:
                 return "incremental_edit"
-
-        if ChatSqlIntentService.should_auto_execute_sql(str(message or "")):
-            return "execute"
 
         if ChatSqlPerformanceAdvisorService.extract_sql_block(message) and any(
             token in normalized for token in ("revisa", "valida", "corrig", "ajust")

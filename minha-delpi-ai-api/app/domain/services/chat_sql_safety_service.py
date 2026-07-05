@@ -7,6 +7,9 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -21,13 +24,21 @@ _SQL_CONTEXT = re.compile(
     flags=re.IGNORECASE,
 )
 
-_NATURAL_SQL_EXECUTE_INTENT = re.compile(
-    r"\b(essa consulta|esta consulta|consulta no banco|no banco|traga os dados|trazer os dados)\b",
-    flags=re.IGNORECASE,
-)
-
 
 class ChatSqlSafetyService:
+    @classmethod
+    def _natural_execute_intent_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "sqlIntent",
+            "naturalExecuteIntentTerms",
+        )
+
+    @classmethod
+    def _looks_like_read_only_execute_intent(cls, normalized: str) -> bool:
+        if re.search(r"\bselect\b", normalized, flags=re.IGNORECASE):
+            return True
+
+        return any(term in normalized for term in cls._natural_execute_intent_terms())
     @classmethod
     def looks_like_sql_payload(cls, text: str | None) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(text)
@@ -58,10 +69,7 @@ class ChatSqlSafetyService:
             return True
 
         if re.search(r"\b(exec|execute)\b", normalized, flags=re.IGNORECASE):
-            if re.search(r"\bselect\b", normalized, flags=re.IGNORECASE):
-                return False
-
-            if _NATURAL_SQL_EXECUTE_INTENT.search(normalized):
+            if cls._looks_like_read_only_execute_intent(normalized):
                 return False
 
             return True

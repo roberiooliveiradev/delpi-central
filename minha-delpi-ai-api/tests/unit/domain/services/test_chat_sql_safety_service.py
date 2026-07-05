@@ -31,3 +31,15 @@ def test_allows_natural_language_execute_intent():
     assert not ChatSqlSafetyService.contains_destructive_sql(
         "execute essa consulta no banco"
     )
+
+
+def test_allows_execute_essa_query_with_traga_produtos():
+    assert not ChatSqlSafetyService.contains_destructive_sql(
+        "execute essa query e traga os 5 produtos do grupo 1008"
+    )
+
+
+def test_blocked_direct_answer_none_for_execute_query():
+    assert ChatSqlSafetyService.blocked_direct_answer(
+        "execute essa query e traga os 5 produtos do grupo 1008"
+    ) is None

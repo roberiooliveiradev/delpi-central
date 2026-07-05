@@ -153,6 +153,24 @@
       "aplique a query",
       "aplica a query"
     ],
+    "naturalExecuteIntentTerms": [
+      "essa consulta",
+      "esta consulta",
+      "essa query",
+      "esta query",
+      "consulta no banco",
+      "traga os dados",
+      "trazer os dados",
+      "traga os ",
+      "traga as ",
+      "traga me ",
+      "execute essa",
+      "execute a query",
+      "execute o sql",
+      "rode essa",
+      "rode a query",
+      "rode o sql"
+    ],
     "authoringTerms": [
       "monte ",
       "monta ",

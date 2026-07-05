@@ -249,6 +249,21 @@ class ChatSqlQueryRefinementService:
                     reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "productionBranchBreakdown"),
                 )
 
+        if (
+            active_sql
+            and not cls._is_authoring_only(normalized)
+            and cls._looks_like_execute_active_query(message)
+        ):
+            return SqlQueryRefinement(
+                mode="execute",
+                sql=active_sql,
+                title=title,
+                reason=ExternalActionResponseContentService.get(
+                    "sqlQueryRefinement",
+                    "executeActiveQuery",
+                ),
+            )
+
         return None
 
     @classmethod
@@ -661,6 +676,12 @@ class ChatSqlQueryRefinementService:
             definitions.update(ChatSqlIntentVocabularyService.column_definitions("SA1010"))
 
         return definitions
+
+    @classmethod
+    def _looks_like_execute_active_query(cls, message: str | None) -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        return ChatSqlIntentService.should_auto_execute_sql(str(message or ""))
 
     @classmethod
     def _resolve_refinement_mode(

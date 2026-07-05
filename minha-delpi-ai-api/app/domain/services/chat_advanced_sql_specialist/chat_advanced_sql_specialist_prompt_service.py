@@ -157,7 +157,7 @@ class ChatAdvancedSqlSpecialistPromptService:
             top_limit = int(top_match.group(1))
         else:
             count_match = re.search(
-                r"\b(?:liste|listar|list|traga|mostre|retorne)\s+(\d+)\s+",
+                r"\b(?:liste|listar|list|traga|mostre|retorne)(?:\s+(?:os|as|me))?\s+(\d+)\s+",
                 normalized,
                 flags=re.IGNORECASE,
             )

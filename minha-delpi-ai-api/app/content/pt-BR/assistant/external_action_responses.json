@@ -69,6 +69,7 @@
     "rowValueFilter": "Refinamento SQL: filtro por valor da linha aplicado na consulta anterior.",
     "applyBranchFilter": "Refinamento SQL: filtro de filial aplicado na consulta anterior.",
     "showQuery": "A mensagem solicita exibir a consulta SQL da conversa.",
+    "executeActiveQuery": "Execução SQL: consulta ativa da sessão.",
     "productionBranchBreakdown": "Refinamento SQL: consulta de programação expandida para todas as filiais com coluna FILIAL.",
     "showSqlAnswerIntro": "Consulta SQL utilizada na pesquisa anterior:",
     "showSqlAnswerHint": "Peça alterações em linguagem natural — por exemplo: *filial 01 e 02*, *top 100* ou *acrescente a coluna de armazém*."

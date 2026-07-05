@@ -214,3 +214,31 @@ def test_filter_query_ignores_columns_absent_from_sql():
     )
 
     assert refinement is None
+
+
+PRODUCT_GROUP_SQL = """SELECT TOP 5 B1_COD, B1_DESC
+FROM SB1010
+WHERE D_E_L_E_T_ = ''
+  AND B1_GRUPO = '1008'"""
+
+
+def _history_with_authoring_sql(sql: str):
+    return [
+        {
+            "role": "assistant",
+            "content": f"Segue a consulta.\n\n```sql\n{sql}\n```",
+        }
+    ]
+
+
+def test_resolve_execute_active_query_from_session_authoring():
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "execute essa query e traga os 5 produtos do grupo 1008",
+        previous_messages=_history_with_authoring_sql(PRODUCT_GROUP_SQL),
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "SB1010" in refinement.sql
+    assert "TOP 5" in refinement.sql.upper()
+    assert "B1_GRUPO" in refinement.sql
