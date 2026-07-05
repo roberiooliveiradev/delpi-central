@@ -39,7 +39,7 @@ def test_should_not_prefetch_without_agent_actions():
 
 def test_plan_prefetch_table_search(monkeypatch):
     selection = MagicMock()
-    selection._select_system_metadata_action.return_value = {
+    selection.select_system_metadata.return_value = {
         "name": "execute_external_action",
         "arguments": {"actionId": "system-search"},
     }
@@ -51,8 +51,8 @@ def test_plan_prefetch_table_search(monkeypatch):
     )
 
     assert len(planned) == 1
-    selection._select_system_metadata_action.assert_called_once()
-    assert "qual a tabela de" in selection._select_system_metadata_action.call_args.args[0]
+    selection.select_system_metadata.assert_called_once()
+    assert "qual a tabela de" in selection.select_system_metadata.call_args.args[0]
 
 
 def test_extract_table_name_ignores_que_stopword():

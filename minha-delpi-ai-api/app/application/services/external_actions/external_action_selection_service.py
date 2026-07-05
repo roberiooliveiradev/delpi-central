@@ -158,6 +158,17 @@ class ExternalActionSelectionService:
             candidates_loader=self._list_allowed_candidates,
         )
 
+    def select_system_metadata(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        return self._route_selection.select_system_metadata(
+            message,
+            allowed_action_ids,
+            candidates_loader=self._list_allowed_candidates,
+        )
+
     def _select_product_for_refinement(
         self,
         message: str,

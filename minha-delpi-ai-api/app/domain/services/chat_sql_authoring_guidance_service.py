@@ -165,9 +165,9 @@ class ChatSqlAuthoringGuidanceService:
                 if wants_relations
                 else f"colunas da tabela {table_name}"
             )
-            selected = selection_service._select_system_metadata_action(
+            selected = selection_service.select_system_metadata(
                 prompt,
-                allowed_action_ids=allowed_action_ids,
+                allowed_action_ids,
             )
 
             if selected and not cls._contains_same_action(planned, selected):
@@ -182,9 +182,9 @@ class ChatSqlAuthoringGuidanceService:
             return []
 
         search_message = f"qual a tabela de {domain}"
-        selected = selection_service._select_system_metadata_action(
+        selected = selection_service.select_system_metadata(
             search_message,
-            allowed_action_ids=allowed_action_ids,
+            allowed_action_ids,
         )
 
         if selected:

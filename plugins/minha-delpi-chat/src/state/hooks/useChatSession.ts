@@ -504,8 +504,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         setIsLoadingMessages(true);
       }
 
-      setError(null);
-
       try {
         let data = await listChatMessages(sessionId, {
           getAccessToken: options.getAccessToken,
@@ -1513,17 +1511,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
-          dismissBackgroundStream(sessionId);
           setPendingUserMessage(null);
           resetStreamingUi();
-          setMessages((current) =>
-            sanitizeMessagesAfterStreamDismiss(
-              current.filter((message) => !message.metadata?.optimistic),
-            ),
-          );
-          void loadMessages(sessionId, { userDismissedBackground: true });
           finishSending(sessionId);
           setError(streamError);
+          void loadMessages(sessionId, { background: true });
         },
       };
     },
