@@ -12,6 +12,7 @@ import type {
   ChatTypingCorrectionMetadata,
   SendChatMessageResponse,
 } from "../../data/api/chatTypes";
+import { createChatStreamSessionRegistry } from "../chatStreamSessionRegistry";
 
 type UseChatStreamingOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -45,7 +46,7 @@ type StreamMessageParams = {
 };
 
 export function useChatStreaming(options: UseChatStreamingOptions = {}) {
-  const streamsRef = useRef<Map<string, AbortController>>(new Map());
+  const streamsRef = useRef(createChatStreamSessionRegistry());
   const [streamRevision, setStreamRevision] = useState(0);
 
   const bumpStreams = useCallback(() => {
@@ -53,14 +54,13 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
   }, []);
 
   const isSessionStreaming = useCallback(
-    (sessionId: string) => streamsRef.current.has(sessionId),
+    (sessionId: string) => streamsRef.current.isStreaming(sessionId),
     [streamRevision],
   );
 
   const cancelSessionStreaming = useCallback(
     (sessionId: string) => {
-      streamsRef.current.get(sessionId)?.abort();
-      streamsRef.current.delete(sessionId);
+      streamsRef.current.abort(sessionId);
       bumpStreams();
     },
     [bumpStreams],
@@ -73,11 +73,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
         return;
       }
 
-      for (const controller of streamsRef.current.values()) {
-        controller.abort();
-      }
-
-      streamsRef.current.clear();
+      streamsRef.current.abortAll();
       bumpStreams();
     },
     [bumpStreams, cancelSessionStreaming],
@@ -121,7 +117,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       >,
     ) => {
       const abortController = new AbortController();
-      streamsRef.current.set(sessionId, abortController);
+      streamsRef.current.register(sessionId, abortController);
       bumpStreams();
 
       try {
@@ -136,7 +132,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
 
         throw error;
       } finally {
-        streamsRef.current.delete(sessionId);
+        streamsRef.current.unregister(sessionId, abortController);
         bumpStreams();
       }
     },

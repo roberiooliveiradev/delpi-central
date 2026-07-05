@@ -527,7 +527,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           if (serverStillAwaiting) {
             markSessionPending(sessionId);
             ensureAwaitingStreamUi(sessionId);
-          } else {
+          } else if (!isSessionStreaming(sessionId)) {
             unmarkSessionPending(sessionId);
             clearSessionStreamUi(sessionId);
 
@@ -572,6 +572,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     },
     [
       ensureAwaitingStreamUi,
+      isSessionStreaming,
       markSessionPending,
       options.getAccessToken,
       resetStreamingUi,
@@ -1839,6 +1840,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           return;
         }
 
+        if (
+          sessionForMessage?.id &&
+          (isSessionStreaming(sessionForMessage.id) || isSessionPending(sessionForMessage.id))
+        ) {
+          // Reenvio substituiu este stream — não tratar como cancelamento do usuário.
+          return;
+        }
+
         if (sessionForMessage) {
           markSessionCancelling(sessionForMessage.id);
           dismissBackgroundStream(sessionForMessage.id);
@@ -1892,6 +1901,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     ensureAwaitingStreamUi,
     finishSending,
     isActiveSessionBusy,
+    isSessionPending,
+    isSessionStreaming,
     lastSentUserText,
     loadMessages,
     loadSessions,
