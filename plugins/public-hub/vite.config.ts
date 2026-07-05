@@ -7,7 +7,12 @@ import path from "node:path";
 export default defineConfig({
   plugins: [react()],
   resolve: {
+    // Pacote compartilhado é compilado do source; sem dedupe o Vite pode
+    // puxar react de tv-dashboard-presentation/node_modules → hooks quebram.
+    dedupe: ["react", "react-dom"],
     alias: {
+      react: path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
       "@delpi/tv-dashboard-presentation": path.resolve(
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",
