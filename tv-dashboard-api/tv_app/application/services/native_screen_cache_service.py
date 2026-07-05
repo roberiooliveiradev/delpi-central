@@ -54,3 +54,7 @@ def set_cached_native_data(key: str, value: dict[str, Any]) -> None:
 
 def reset_native_data_cache() -> None:
     _native_cache.invalidate_all()
+
+
+def native_data_cache_stats() -> dict[str, float | int]:
+    return _native_cache.stats()

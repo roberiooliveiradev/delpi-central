@@ -10,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from tv_app.config import settings
 from tv_app.core.responses import fail
+from tv_app.interface.http.routes.content_routes import router as content_router
 from tv_app.interface.http.routes.native_screen_routes import router as native_screen_router
 from tv_app.interface.http.routes.playlist_routes import router as playlist_router
 from tv_app.interface.http.routes.public_routes import router as public_router
@@ -90,5 +91,6 @@ def health():
 
 app.include_router(playlist_router)
 app.include_router(slide_router)
+app.include_router(content_router)
 app.include_router(native_screen_router)
 app.include_router(public_router)

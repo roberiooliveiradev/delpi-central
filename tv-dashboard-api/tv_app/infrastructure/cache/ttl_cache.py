@@ -39,3 +39,10 @@ class TtlCache(Generic[T]):
     def invalidate_all(self) -> None:
         with self._lock:
             self._entries.clear()
+
+    def stats(self) -> dict[str, float | int]:
+        with self._lock:
+            return {
+                "ttlSeconds": self._ttl_seconds,
+                "entries": len(self._entries),
+            }

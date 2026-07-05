@@ -16,3 +16,10 @@ def test_ttl_cache_invalidate_all():
     cache.set("a", "1")
     cache.invalidate_all()
     assert cache.get("a") is None
+
+
+def test_ttl_cache_stats():
+    cache = TtlCache[str](ttl_seconds=60)
+    assert cache.stats()["entries"] == 0
+    cache.set("a", "1")
+    assert cache.stats()["entries"] == 1

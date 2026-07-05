@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { usePresentationEngine, useFullscreenStage } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
 import { ExternalSlidePreview } from "./ExternalSlidePreview";
@@ -131,48 +131,12 @@ function NativeSlide({ native }: NonNullable<PresentationPayload["slides"][0]["n
 }
 
 export function PresentationPreview({ payload: initial, onRefresh }: Props) {
-  const [payload, setPayload] = useState(initial);
-  const [index, setIndex] = useState(0);
-  const slides = useMemo(
-    () => [...payload.slides].sort((a, b) => a.sortOrder - b.sortOrder),
-    [payload.slides],
-  );
-  const current = slides[index];
-  const viewport = payload.playlist.viewportProfile || "1080p";
-  const transition = payload.playlist.transitionStyle || "fade";
-  const nativeErrorAdvanceSec = payload.presentationMeta?.nativeErrorAdvanceSec ?? 10;
-  const nativeError =
-    current?.slideType === "native" &&
-    current.native?.data &&
-    (current.native.data as { error?: boolean }).error === true;
-
-  useEffect(() => setPayload(initial), [initial]);
-
-  useEffect(() => {
-    if (!slides.length) return;
-    const baseSec = current?.durationSec ?? payload.playlist.defaultDurationSec ?? 30;
-    const durationMs = (nativeError ? nativeErrorAdvanceSec : baseSec) * 1000;
-    const timer = window.setTimeout(() => {
-      setIndex((prev) => (prev + 1) % slides.length);
-    }, durationMs);
-    return () => window.clearTimeout(timer);
-  }, [
-    slides.length,
-    index,
-    current,
-    nativeError,
-    nativeErrorAdvanceSec,
-    payload.playlist.defaultDurationSec,
-  ]);
-
-  useEffect(() => {
-    const refreshSec = payload.playlist.globalRefreshSec || 300;
-    const timer = window.setInterval(() => {
-      if (!onRefresh) return;
-      void onRefresh().then((next) => setPayload(next));
-    }, refreshSec * 1000);
-    return () => window.clearInterval(timer);
-  }, [onRefresh, payload.playlist.globalRefreshSec]);
+  const { ref, toggleFullscreen } = useFullscreenStage();
+  const { index, slides, viewport, transition } = usePresentationEngine({
+    initialPayload: initial,
+    onRefresh,
+    enableHiddenPause: false,
+  });
 
   if (!slides.length) {
     return (
@@ -183,8 +147,13 @@ export function PresentationPreview({ payload: initial, onRefresh }: Props) {
   }
 
   return (
-    <div className="tdp-stage" data-viewport={viewport}>
-      <div className="tdp-preview-badge">Pré-visualização</div>
+    <div
+      ref={ref}
+      className="tdp-stage tdp-stage--preview-shell"
+      data-viewport={viewport}
+      onDoubleClick={() => void toggleFullscreen()}
+    >
+      <div className="tdp-preview-badge">Pré-visualização · duplo-clique = tela cheia</div>
       {slides.map((slide, slideIndex) => {
         const active = slideIndex === index;
         return (
