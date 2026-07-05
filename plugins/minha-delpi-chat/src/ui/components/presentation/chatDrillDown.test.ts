@@ -124,6 +124,32 @@ describe("buildTableRowMenuActions", () => {
     );
   });
 
+  it("inclui copiar célula e linha quando há coluna clicada", () => {
+    const row = {
+      op: "10599701001",
+      product_code: "90261387",
+      description: "CONJUNTO CABO REGULADOR",
+      planned_quantity: 100,
+    };
+    const columns = [
+      { key: "op", label: "OP" },
+      { key: "product_code", label: "Produto" },
+      { key: "description", label: "Descrição" },
+      { key: "planned_quantity", label: "Qtd. planejada" },
+    ];
+
+    const actions = buildTableRowMenuActions(row, columns, columns[1]);
+    const copyCell = actions.find((action) => action.id === "copy-cell");
+    const copyRow = actions.find((action) => action.id === "copy-row");
+
+    expect(copyCell?.label).toBe("Copiar célula");
+    expect(copyCell?.copyText).toBe("90261387");
+    expect(copyRow?.label).toBe("Copiar linha");
+    expect(copyRow?.copyText).toBe(
+      "OP: 10599701001; Produto: 90261387; Descrição: CONJUNTO CABO REGULADOR; Qtd. planejada: 100",
+    );
+  });
+
   it("inclui detalhar e consultas de produto quando há código", () => {
     const actions = buildTableRowMenuActions(
       { product_code: "10080001", description: "Item teste" },

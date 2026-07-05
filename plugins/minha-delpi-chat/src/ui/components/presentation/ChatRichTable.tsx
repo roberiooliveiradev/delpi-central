@@ -253,21 +253,6 @@ export function ChatRichTable({
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                onClick={(event) => {
-                  if (!onDrillDown) return;
-
-                  const actions = buildTableRowMenuActions(row, columns);
-
-                  if (!actions.length) {
-                    return;
-                  }
-
-                  setRowMenu({
-                    anchor: { point: { x: event.clientX, y: event.clientY } },
-                    actions,
-                  });
-                }}
-                title={onDrillDown ? "Clique para ver ações" : undefined}
               >
                 {columns.map((col) => (
                   <td
@@ -279,6 +264,21 @@ export function ChatRichTable({
                       col.dataType,
                       row,
                     )}
+                    onClick={(event) => {
+                      if (!onDrillDown) return;
+
+                      const actions = buildTableRowMenuActions(row, columns, col);
+
+                      if (!actions.length) {
+                        return;
+                      }
+
+                      setRowMenu({
+                        anchor: { point: { x: event.clientX, y: event.clientY } },
+                        actions,
+                      });
+                    }}
+                    title={onDrillDown ? "Clique para ver ações" : undefined}
                   >
                     {formatCellValue(row[col.key], col.key, col.dataType, row)}
                   </td>

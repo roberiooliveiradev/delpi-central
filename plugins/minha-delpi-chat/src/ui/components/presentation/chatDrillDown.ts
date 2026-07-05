@@ -1,9 +1,13 @@
-type DrillDownColumn = { key: string; label: string };
+import type { ColumnType } from "./tableCellFormatting";
+import { formatCellCopyValue } from "./tableCellFormatting";
+
+type DrillDownColumn = { key: string; label: string; dataType?: string };
 
 export type TableRowMenuAction = {
   id: string;
   label: string;
-  query: string;
+  query?: string;
+  copyText?: string;
 };
 
 const CODE_KEY =
@@ -173,14 +177,71 @@ function buildRowPairs(
     .slice(0, 8);
 }
 
+export function buildTableRowCopyText(
+  row: Record<string, unknown>,
+  columns: DrillDownColumn[],
+): string {
+  return buildRowPairs(row, columns).join("; ");
+}
+
+export function buildTableCellCopyText(
+  row: Record<string, unknown>,
+  column: DrillDownColumn,
+): string {
+  return formatCellCopyValue(
+    row[column.key],
+    column.key,
+    column.dataType as ColumnType | undefined,
+    row,
+  );
+}
+
+function dedupeMenuActions(actions: TableRowMenuAction[]): TableRowMenuAction[] {
+  const seen = new Set<string>();
+
+  return actions.filter((action) => {
+    const dedupeKey = action.query ?? action.copyText ?? action.id;
+
+    if (seen.has(dedupeKey)) {
+      return false;
+    }
+
+    seen.add(dedupeKey);
+    return true;
+  });
+}
+
 export function buildTableRowMenuActions(
   row: Record<string, unknown>,
   columns: DrillDownColumn[],
+  clickedColumn?: DrillDownColumn,
 ): TableRowMenuAction[] {
   const detailQuery = buildDrillDownQuery(row, columns);
   const filterQuery = buildRowFilterQuery(row, columns);
   const { code, desc } = extractRowContext(row, columns);
   const actions: TableRowMenuAction[] = [];
+
+  if (clickedColumn) {
+    const cellText = buildTableCellCopyText(row, clickedColumn);
+
+    if (cellText) {
+      actions.push({
+        id: "copy-cell",
+        label: "Copiar célula",
+        copyText: cellText,
+      });
+    }
+  }
+
+  const rowCopyText = buildTableRowCopyText(row, columns);
+
+  if (rowCopyText) {
+    actions.push({
+      id: "copy-row",
+      label: "Copiar linha",
+      copyText: rowCopyText,
+    });
+  }
 
   if (detailQuery) {
     actions.push({
@@ -229,16 +290,7 @@ export function buildTableRowMenuActions(
     );
   }
 
-  const seen = new Set<string>();
-
-  return actions.filter((action) => {
-    if (seen.has(action.query)) {
-      return false;
-    }
-
-    seen.add(action.query);
-    return true;
-  });
+  return dedupeMenuActions(actions);
 }
 
 export function buildChartPointMenuActions(
@@ -285,16 +337,7 @@ export function buildChartPointMenuActions(
     query: "mostre o último resultado em tabela",
   });
 
-  const seen = new Set<string>();
-
-  return actions.filter((action) => {
-    if (seen.has(action.query)) {
-      return false;
-    }
-
-    seen.add(action.query);
-    return true;
-  });
+  return dedupeMenuActions(actions);
 }
 
 export function buildTreeDrillDownQuery(node: {
@@ -402,14 +445,5 @@ export function buildTreePointMenuActions(node: {
     });
   }
 
-  const seen = new Set<string>();
-
-  return actions.filter((action) => {
-    if (seen.has(action.query)) {
-      return false;
-    }
-
-    seen.add(action.query);
-    return true;
-  });
+  return dedupeMenuActions(actions);
 }

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 
 import type { TableRowMenuAction } from "../../presentation/chatDrillDown";
+import { copyTextToClipboard } from "../../presentation/chatClipboard";
 import { AnchoredMenuPortal } from "../overlay/AnchoredMenuPortal";
 import type { ContextMenuAnchor } from "../overlay/menuPositionUtils";
 import { estimateMenuHeight } from "../overlay/menuPositionUtils";
@@ -72,7 +73,15 @@ export function ChatTableRowMenu({
           className="mdc-table-row-menu__item"
           role="menuitem"
           onClick={() => {
-            onSelect(action.query);
+            if (action.copyText) {
+              void copyTextToClipboard(action.copyText).finally(onClose);
+              return;
+            }
+
+            if (action.query) {
+              onSelect(action.query);
+            }
+
             onClose();
           }}
         >

@@ -198,6 +198,22 @@ export function formatCellValue(
   return str;
 }
 
+/** Valor pronto para colar na área de transferência (omitindo células vazias). */
+export function formatCellCopyValue(
+  value: unknown,
+  columnKey?: string,
+  dataType?: ColumnType,
+  row?: Record<string, unknown>,
+): string {
+  if (value == null || value === "") {
+    return "";
+  }
+
+  const formatted = formatCellValue(value, columnKey, dataType, row);
+
+  return formatted === "—" ? "" : formatted;
+}
+
 function formatNestedCellObject(value: unknown): string {
   if (value == null) {
     return "";
