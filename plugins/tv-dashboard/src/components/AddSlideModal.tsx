@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { BranchScope, NativeScreenCatalogItem, SlidePreset, TvDashboardUiContent } from "../api/tvDashboardApi";
 import { BranchField } from "./BranchField";
+import { ExternalSlidePreview } from "../presentation/ExternalSlidePreview";
 
 type Props = {
   open: boolean;
@@ -217,6 +218,12 @@ export function AddSlideModal({
                 <label htmlFor="td-ext-url">URL (https://)</label>
                 <input id="td-ext-url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} placeholder="https://..." required />
               </div>
+              {externalUrl.trim() ? (
+                <div className="td-external-preview-box">
+                  <p className="td-subtitle">Teste de incorporação</p>
+                  <ExternalSlidePreview url={externalUrl.trim()} title={title || "Preview"} active />
+                </div>
+              ) : null}
             </>
           )}
           {mode !== "catalog" ? (

@@ -1,7 +1,8 @@
-import { NativeSlideView, usePresentationEngine, useFullscreenStage } from "@delpi/tv-dashboard-presentation";
+import { usePresentationEngine, useFullscreenStage, NativeSlideView } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
 import { ExternalSlidePreview } from "./ExternalSlidePreview";
+import { PreviewControls } from "./PreviewControls";
 import "./presentation.css";
 
 type Props = {
@@ -12,10 +13,20 @@ type Props = {
 
 export function PresentationPreview({ payload: initial, onRefresh }: Props) {
   const { ref, toggleFullscreen } = useFullscreenStage();
-  const { index, slides, viewport, transition } = usePresentationEngine({
+  const {
+    index,
+    slides,
+    viewport,
+    transition,
+    paused,
+    setPaused,
+    setIndex,
+  } = usePresentationEngine({
     initialPayload: initial,
     onRefresh,
     enableHiddenPause: false,
+    enableKeyboardPause: true,
+    refreshNativeSlidesOnly: true,
   });
 
   if (!slides.length) {
@@ -33,7 +44,7 @@ export function PresentationPreview({ payload: initial, onRefresh }: Props) {
       data-viewport={viewport}
       onDoubleClick={() => void toggleFullscreen()}
     >
-      <div className="tdp-preview-badge">Pré-visualização · duplo-clique = tela cheia</div>
+      <div className="tdp-preview-badge">Pré-visualização · duplo-clique = tela cheia · Espaço = pausar</div>
       {slides.map((slide, slideIndex) => {
         const active = slideIndex === index;
         return (
@@ -55,6 +66,14 @@ export function PresentationPreview({ payload: initial, onRefresh }: Props) {
           </div>
         );
       })}
+      <PreviewControls
+        index={index}
+        total={slides.length}
+        paused={paused}
+        onPauseToggle={() => setPaused(!paused)}
+        onPrevious={() => setIndex((index - 1 + slides.length) % slides.length)}
+        onNext={() => setIndex((index + 1) % slides.length)}
+      />
     </div>
   );
 }

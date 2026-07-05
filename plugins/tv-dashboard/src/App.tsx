@@ -2,37 +2,33 @@ import { useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
+import { NewPlaylistPage } from "./pages/NewPlaylistPage";
 import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
+import { PlaylistPreviewPage } from "./pages/PlaylistPreviewPage";
+import { PlaylistSharePage } from "./pages/PlaylistSharePage";
 import { PlaylistsPage } from "./pages/PlaylistsPage";
+import {
+  newPlaylistPath,
+  normalizeTvDashboardPath,
+  parseTvDashboardRoute,
+  playlistPath,
+  playlistPreviewPath,
+  playlistSharePath,
+} from "./routing";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
 };
 
-function normalizePath(pathname?: string) {
-  const base = "/apps/tv-dashboard";
-  const raw = pathname ?? (typeof window !== "undefined" ? window.location.pathname : base);
-  if (!raw.startsWith(base)) return base;
-  return raw.replace(/\/+$/, "") || base;
-}
-
-function parseRoute(path: string): { view: "list" } | { view: "edit"; id: string } {
-  const prefix = "/apps/tv-dashboard";
-  if (path === prefix) return { view: "list" };
-  const match = path.match(/^\/apps\/tv-dashboard\/([^/]+)$/);
-  if (match?.[1] && match[1] !== "assets") {
-    return { view: "edit", id: match[1] };
-  }
-  return { view: "list" };
-}
-
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
 
   const pathname = useTvDashboardPath(pathnameFromHost);
-  const path = normalizePath(pathname);
-  const route = useMemo(() => parseRoute(path), [path]);
+  const path = normalizeTvDashboardPath(pathname);
+  const route = useMemo(() => parseTvDashboardRoute(path), [path]);
+
+  const isFullscreenView = route.view === "preview";
 
   function navigate(next: string) {
     if (typeof window === "undefined") return;
@@ -40,25 +36,63 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     window.dispatchEvent(new PopStateEvent("popstate"));
   }
 
-  return (
-    <div className="dashboard-tv-dashboard dashboard-page">
-      <div className="td-app-shell">
-        <header className="td-hero">
-          <p className="td-eyebrow">Operações · Displays</p>
-          <h1 className="td-title">Painéis TV</h1>
-          <p className="td-subtitle">
-            Crie programações rotativas para TVs da empresa e compartilhe um link público sem login.
-          </p>
-        </header>
-
-        {route.view === "list" ? (
-          <PlaylistsPage onOpen={(id) => navigate(`/apps/tv-dashboard/${id}`)} />
-        ) : (
+  function renderBody() {
+    switch (route.view) {
+      case "list":
+        return (
+          <PlaylistsPage
+            onOpen={(id) => navigate(playlistPath(id))}
+            onCreate={() => navigate(newPlaylistPath())}
+          />
+        );
+      case "new":
+        return (
+          <NewPlaylistPage
+            onBack={() => navigate("/apps/tv-dashboard")}
+            onCreated={(id) => navigate(playlistPath(id))}
+          />
+        );
+      case "preview":
+        return (
+          <PlaylistPreviewPage
+            playlistId={route.id}
+            onBack={() => navigate(playlistPath(route.id))}
+          />
+        );
+      case "share":
+        return (
+          <PlaylistSharePage
+            playlistId={route.id}
+            onBack={() => navigate(playlistPath(route.id))}
+          />
+        );
+      case "edit":
+        return (
           <PlaylistEditorPage
             playlistId={route.id}
             onBack={() => navigate("/apps/tv-dashboard")}
+            onPreview={() => navigate(playlistPreviewPath(route.id))}
+            onShare={() => navigate(playlistSharePath(route.id))}
           />
-        )}
+        );
+      default:
+        return null;
+    }
+  }
+
+  return (
+    <div className={`dashboard-tv-dashboard dashboard-page${isFullscreenView ? " td-app-shell--preview" : ""}`}>
+      <div className="td-app-shell">
+        {!isFullscreenView ? (
+          <header className="td-hero">
+            <p className="td-eyebrow">Operações · Displays</p>
+            <h1 className="td-title">Painéis TV</h1>
+            <p className="td-subtitle">
+              Crie programações rotativas para TVs da empresa e compartilhe um link público sem login.
+            </p>
+          </header>
+        ) : null}
+        {renderBody()}
       </div>
     </div>
   );

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Copy, MonitorPlay, Plus } from "lucide-react";
 
 import {
-  createPlaylist,
   duplicatePlaylist,
   listPlaylists,
   type Playlist,
@@ -17,13 +16,13 @@ function formatLastPresented(value?: string | null) {
 
 type Props = {
   onOpen: (id: string) => void;
+  onCreate: () => void;
 };
 
-export function PlaylistsPage({ onOpen }: Props) {
+export function PlaylistsPage({ onOpen, onCreate }: Props) {
   const [items, setItems] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,20 +39,6 @@ export function PlaylistsPage({ onOpen }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function handleCreate() {
-    const name = window.prompt("Nome da programação:");
-    if (!name?.trim()) return;
-    setCreating(true);
-    try {
-      const created = await createPlaylist(name.trim());
-      onOpen(created.id);
-    } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Erro ao criar programação.");
-    } finally {
-      setCreating(false);
-    }
-  }
 
   async function handleDuplicate(item: Playlist) {
     if (!window.confirm(`Duplicar «${item.name}»?`)) return;
@@ -74,7 +59,7 @@ export function PlaylistsPage({ onOpen }: Props) {
             Monte playlists de telas e gere links públicos para TVs.
           </p>
         </div>
-        <button type="button" className="td-btn td-btn--primary" disabled={creating} onClick={() => void handleCreate()}>
+        <button type="button" className="td-btn td-btn--primary" onClick={onCreate}>
           <Plus size={16} />
           Nova programação
         </button>

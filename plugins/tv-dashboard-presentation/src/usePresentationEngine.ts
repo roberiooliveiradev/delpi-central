@@ -7,6 +7,7 @@ export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
   onRefresh?: () => Promise<T | null>;
   enableKeyboardPause?: boolean;
   enableHiddenPause?: boolean;
+  refreshNativeSlidesOnly?: boolean;
 };
 
 export function usePresentationEngine<T extends PresentationPayloadLike>({
@@ -14,6 +15,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   onRefresh,
   enableKeyboardPause = false,
   enableHiddenPause = true,
+  refreshNativeSlidesOnly = false,
 }: UsePresentationEngineOptions<T>) {
   const [payload, setPayload] = useState(initialPayload);
   const [index, setIndex] = useState(0);
@@ -85,10 +87,11 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     if (!refreshSec || !onRefresh) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === "hidden") return;
+      if (refreshNativeSlidesOnly && current?.slideType !== "native") return;
       void reloadPayload();
     }, refreshSec * 1000);
     return () => window.clearInterval(timer);
-  }, [refreshSec, reloadPayload, onRefresh]);
+  }, [refreshSec, reloadPayload, onRefresh, refreshNativeSlidesOnly, current?.slideType]);
 
   useEffect(() => {
     if (!enableKeyboardPause) return;

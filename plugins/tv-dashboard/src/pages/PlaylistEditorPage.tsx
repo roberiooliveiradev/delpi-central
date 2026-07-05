@@ -26,7 +26,6 @@ import {
   getBranchScope,
   getPlaylist,
   getPresentationStatus,
-  getPreviewPayload,
   getUiContent,
   listNativeScreens,
   listSlidePresets,
@@ -37,7 +36,6 @@ import {
   type BranchScope,
   type NativeScreenCatalogItem,
   type Playlist,
-  type PresentationPayload,
   type PresentationStatus,
   type Slide,
   type SlidePreset,
@@ -45,11 +43,12 @@ import {
 } from "../api/tvDashboardApi";
 import { AddSlideModal } from "../components/AddSlideModal";
 import { EditSlideModal } from "../components/EditSlideModal";
-import { PresentationPreview } from "../presentation/PresentationPreview";
 
 type Props = {
   playlistId: string;
   onBack: () => void;
+  onPreview: () => void;
+  onShare: () => void;
 };
 
 const VIEWPORT_OPTIONS = [
@@ -65,7 +64,7 @@ const TRANSITION_OPTIONS = [
   { value: "none", label: "Sem transição" },
 ];
 
-export function PlaylistEditorPage({ playlistId, onBack }: Props) {
+export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: Props) {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [catalog, setCatalog] = useState<NativeScreenCatalogItem[]>([]);
   const [presets, setPresets] = useState<SlidePreset[]>([]);
@@ -73,11 +72,10 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
   const [branchScope, setBranchScope] = useState<BranchScope | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewPayload, setPreviewPayload] = useState<PresentationPayload | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editSlide, setEditSlide] = useState<Slide | null>(null);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -267,10 +265,15 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
     return "td-badge td-badge--inactive";
   }
 
-  async function openPreview() {
-    const payload = await getPreviewPayload(playlistId);
-    setPreviewPayload(payload);
-    setPreviewOpen(true);
+  async function handleDropSlide(targetIndex: number) {
+    if (!playlist || dragIndex === null || dragIndex === targetIndex) return;
+    const reordered = [...slides];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+    const items = reordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+    const result = await reorderSlides(playlist.id, items);
+    setPlaylist({ ...playlist, slides: result.slides });
+    setDragIndex(null);
   }
 
   function copyLink() {
@@ -305,9 +308,13 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
           Voltar
         </button>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" className="td-btn" onClick={() => void openPreview()}>
+          <button type="button" className="td-btn" onClick={onPreview}>
             <Eye size={16} />
             Pré-visualizar
+          </button>
+          <button type="button" className="td-btn" onClick={onShare}>
+            <Link2 size={16} />
+            Compartilhar
           </button>
           <button type="button" className="td-btn" onClick={copyLink}>
             <Copy size={16} />
@@ -411,7 +418,15 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
               <p className="td-subtitle">Adicione telas nativas DELPI ou links externos (Power BI, sites).</p>
             ) : (
               slides.map((slide, idx) => (
-                <div key={slide.id} className={`td-slide-item${slide.isActive ? "" : " td-slide-item--inactive"}`}>
+                <div
+                  key={slide.id}
+                  className={`td-slide-item${slide.isActive ? "" : " td-slide-item--inactive"}${dragIndex === idx ? " td-slide-item--dragging" : ""}`}
+                  draggable
+                  onDragStart={() => setDragIndex(idx)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => void handleDropSlide(idx)}
+                  onDragEnd={() => setDragIndex(null)}
+                >
                   <strong>{idx + 1}</strong>
                   <div>
                     <div>{slide.title}</div>
@@ -475,17 +490,6 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
         }}
       />
 
-      {previewOpen && previewPayload ? (
-        <div className="td-preview-frame">
-          <button type="button" className="td-btn td-preview-close" onClick={() => setPreviewOpen(false)}>
-            Fechar preview
-          </button>
-          <PresentationPreview
-            payload={previewPayload}
-            onRefresh={() => getPreviewPayload(playlistId)}
-          />
-        </div>
-      ) : null}
     </>
   );
 }

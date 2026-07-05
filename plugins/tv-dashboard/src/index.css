@@ -199,6 +199,38 @@
   opacity: 0.65;
 }
 
+.td-slide-item--dragging {
+  opacity: 0.55;
+  outline: 2px dashed var(--td-accent);
+}
+
+.td-preview-page {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: #05070a;
+}
+
+.td-preview-page__back {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 35;
+}
+
+.td-external-preview-box {
+  height: 220px;
+  border: 1px solid var(--td-border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: #05070a;
+}
+
+.td-app-shell--preview .td-app-shell {
+  padding: 0;
+}
+
 .td-slide-actions {
   display: flex;
   gap: 6px;

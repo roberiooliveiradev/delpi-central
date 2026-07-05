@@ -36,6 +36,7 @@ export function PresentationView({
     onRefresh: onRefresh || token ? reloadPayload : undefined,
     enableKeyboardPause: true,
     enableHiddenPause: true,
+    refreshNativeSlidesOnly: true,
   });
 
   const heartbeatIntervalSec =

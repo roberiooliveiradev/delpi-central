@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.0
 > **Data:** 2026-07-05
-> **Status:** Onda 0–2 (parcial) + Onda 3.1/3.3/3.4 (parcial) — 2026-07-05
+> **Status:** Ondas 0–3 concluídas (v1) — 2026-07-05. Backlog v2: `supplies_stock_alert`, `strategic_indicators_hero`, gráficos Recharts.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -493,11 +493,11 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 | 0.10 | Gateway `/apps/tv-dashboard-api/` + compose + manifesto RBAC | infra + plugin | S |
 
 **Critérios de aceite Onda 0:**
-- [ ] Usuário logado cria programação com 2 slides (nativo + Power BI URL) e define duração.
-- [ ] Preview mostra rotação igual à TV.
-- [ ] Link `/p/tv-dashboard/present/{token}` abre **sem login** e roda em loop.
-- [ ] Desativar programação → link retorna 404.
-- [ ] Tela nativa OEE em 1920×1080 **sem scroll**.
+- [x] Usuário logado cria programação com 2 slides (nativo + Power BI URL) e define duração.
+- [x] Preview mostra rotação igual à TV.
+- [x] Link `/p/tv-dashboard/present/{token}` abre **sem login** e roda em loop.
+- [x] Desativar programação → link retorna 404.
+- [x] Tela nativa OEE em 1920×1080 **sem scroll**.
 
 ### Onda 1 — Catálogo nativo + resolução + QR
 
@@ -601,7 +601,16 @@ sequenceDiagram
 
 ---
 
-## 16. Próximo passo imediato
+## 16. Próximo passo imediato (v2)
+
+1. **`supplies_stock_alert`** — top 6 itens críticos (endpoint api-delpi + tela nativa).
+2. **`strategic_indicators_hero`** — gateway strategic-indicators-api + componente hero.
+3. **Gráficos Recharts** — séries OEE/OTD/PPM no pacote `@delpi/tv-dashboard-presentation`.
+4. **Rate limit dedicado** em dev nginx para `GET /public/present/*`.
+
+---
+
+## 16 (histórico v1)
 
 1. Validar com stakeholders o **catálogo inicial** de telas nativas (§6.2).
 2. Decidir conta de serviço api-delpi para agregação server-side.
