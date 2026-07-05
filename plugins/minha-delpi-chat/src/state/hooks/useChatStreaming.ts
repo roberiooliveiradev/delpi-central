@@ -117,22 +117,61 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       >,
     ) => {
       const abortController = new AbortController();
-      streamsRef.current.register(sessionId, abortController);
+      const registry = streamsRef.current;
+
+      registry.register(sessionId, abortController);
       bumpStreams();
 
+      const isStaleStream = () => registry.getActiveController(sessionId) !== abortController;
+
+      const guard = <T extends (...args: never[]) => void>(
+        handler: T | undefined,
+      ): T | undefined => {
+        if (!handler) {
+          return undefined;
+        }
+
+        return ((...args: Parameters<T>) => {
+          if (isStaleStream()) {
+            return;
+          }
+
+          handler(...args);
+        }) as T;
+      };
+
+      const guardedCallbacks = {
+        onStatus: guard(callbacks.onStatus),
+        onActivity: guard(callbacks.onActivity),
+        onSources: guard(callbacks.onSources),
+        onToolCalls: guard(callbacks.onToolCalls),
+        onToken: guard(callbacks.onToken),
+        onUserPersisted: guard(callbacks.onUserPersisted),
+        onSessionRenamed: guard(callbacks.onSessionRenamed),
+        onAssistantPending: guard(callbacks.onAssistantPending),
+        onPlayback: guard(callbacks.onPlayback),
+        onCanvasOpen: guard(callbacks.onCanvasOpen),
+        onDone: guard(callbacks.onDone),
+        onError: guard(callbacks.onError),
+      };
+
       try {
-        await runner(callbacks, abortController.signal);
+        await runner(guardedCallbacks, abortController.signal);
       } catch (error) {
         if (
           abortController.signal.aborted ||
           (error instanceof DOMException && error.name === "AbortError")
         ) {
+          if (isStaleStream()) {
+            return;
+          }
+
           throw new DOMException("The operation was aborted.", "AbortError");
         }
 
         throw error;
       } finally {
-        streamsRef.current.unregister(sessionId, abortController);
+        registry.unregister(sessionId, abortController);
         bumpStreams();
       }
     },

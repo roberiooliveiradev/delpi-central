@@ -1833,49 +1833,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        if (
-          sessionForMessage?.id &&
-          userDismissedBackgroundStreamRef.current.has(sessionForMessage.id)
-        ) {
-          return;
-        }
-
-        if (
-          sessionForMessage?.id &&
-          (isSessionStreaming(sessionForMessage.id) || isSessionPending(sessionForMessage.id))
-        ) {
-          // Reenvio substituiu este stream — não tratar como cancelamento do usuário.
-          return;
-        }
-
-        if (sessionForMessage) {
-          markSessionCancelling(sessionForMessage.id);
-          dismissBackgroundStream(sessionForMessage.id);
-          resetStreamingUi();
-
-          setMessages((current) =>
-            sanitizeMessagesAfterStreamDismiss(
-              current.filter((message) => !message.metadata?.optimistic),
-            ),
-          );
-
-          void loadMessages(sessionForMessage.id, { userDismissedBackground: true }).finally(
-            () => {
-              unmarkSessionCancelling(sessionForMessage.id);
-            },
-          );
-        } else {
-          resetStreamingUi();
-        }
-
-        setPendingUserMessage(null);
-
-        const textToRestore = lastSentUserText.trim();
-
-        if (textToRestore) {
-          setDraft(textToRestore);
-        }
-
         return;
       }
 
@@ -1901,8 +1858,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     ensureAwaitingStreamUi,
     finishSending,
     isActiveSessionBusy,
-    isSessionPending,
-    isSessionStreaming,
     lastSentUserText,
     loadMessages,
     loadSessions,

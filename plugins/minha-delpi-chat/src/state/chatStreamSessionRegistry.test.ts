@@ -35,6 +35,8 @@ describe("createChatStreamSessionRegistry", () => {
     registry.register("sess-1", first);
     registry.register("sess-1", second);
 
+    expect(registry.getActiveController("sess-1")).toBe(second);
+
     registry.unregister("sess-1", first);
 
     expect(registry.isStreaming("sess-1")).toBe(true);
