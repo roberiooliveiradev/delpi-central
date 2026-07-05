@@ -1,0 +1,107 @@
+from __future__ import annotations
+
+from typing import Any
+from uuid import UUID
+
+from tv_app.application.services.native_screen_data_service import NativeScreenDataService
+from tv_app.config import settings
+from tv_app.infrastructure.persistence.repositories.playlist_repository import (
+    PlaylistNotFoundError,
+    PlaylistRepository,
+)
+
+
+class PresentationPayloadService:
+    def __init__(
+        self,
+        repository: PlaylistRepository | None = None,
+        native_data: NativeScreenDataService | None = None,
+    ) -> None:
+        self._repo = repository or PlaylistRepository()
+        self._native_data = native_data or NativeScreenDataService()
+
+    def build_public_url(self, public_token: str) -> str:
+        base = (settings.PUBLIC_BASE_URL or "http://localhost").rstrip("/")
+        path = settings.TV_DASHBOARD_PUBLIC_PATH.rstrip("/")
+        return f"{base}{path}/{public_token}"
+
+    def build_by_token(
+        self,
+        token: str,
+        *,
+        authorization: str | None = None,
+        track_view: bool = False,
+    ) -> dict[str, Any] | None:
+        playlist = self._repo.get_by_token(token)
+        if not playlist or not playlist.get("isActive"):
+            return None
+        if track_view:
+            try:
+                self._repo.touch_view(token)
+            except Exception:
+                pass
+        return self._assemble_payload(playlist, authorization=authorization)
+
+    def build_by_id(
+        self,
+        playlist_id: UUID,
+        *,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        playlist = self._repo.get_by_id(playlist_id)
+        if not playlist:
+            raise PlaylistNotFoundError
+        return self._assemble_payload(playlist, authorization=authorization)
+
+    def _assemble_payload(
+        self,
+        playlist: dict[str, Any],
+        *,
+        authorization: str | None,
+    ) -> dict[str, Any]:
+        slides = [
+            slide
+            for slide in self._repo.list_slides(UUID(playlist["id"]))
+            if slide.get("isActive", True)
+        ]
+        default_duration = playlist.get("defaultDurationSec") or 30
+        rendered_slides: list[dict[str, Any]] = []
+        for slide in slides:
+            duration = slide.get("durationSec") or default_duration
+            item: dict[str, Any] = {
+                "id": slide["id"],
+                "sortOrder": slide["sortOrder"],
+                "slideType": slide["slideType"],
+                "durationSec": duration,
+                "title": slide["title"],
+            }
+            if slide["slideType"] == "native":
+                item["native"] = {
+                    "screenKey": slide["nativeScreenKey"],
+                    "config": slide.get("nativeConfig") or {},
+                    "data": self._native_data.resolve(
+                        screen_key=str(slide["nativeScreenKey"]),
+                        config=slide.get("nativeConfig") or {},
+                        authorization=authorization,
+                    ),
+                }
+            else:
+                item["external"] = {
+                    "url": slide["externalUrl"],
+                    "sandbox": slide.get("externalSandbox"),
+                }
+            rendered_slides.append(item)
+
+        return {
+            "playlist": {
+                "id": playlist["id"],
+                "name": playlist["name"],
+                "description": playlist.get("description"),
+                "viewportProfile": playlist.get("viewportProfile") or "1080p",
+                "transitionStyle": playlist.get("transitionStyle") or "fade",
+                "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
+                "defaultDurationSec": default_duration,
+                "publicUrl": self.build_public_url(playlist["publicToken"]),
+            },
+            "slides": rendered_slides,
+        }

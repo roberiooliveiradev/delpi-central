@@ -68,3 +68,11 @@ services:
       resources:
         limits:
           memory: 4500M
+
+  # Evita npm install no build Docker (ECONNRESET); usa dist/ do host.
+  minha-delpi-chat:
+    build:
+      context: ../plugins/minha-delpi-chat
+      dockerfile: Dockerfile.dev-static
+    volumes:
+      - ../plugins/minha-delpi-chat/dist:/usr/share/nginx/html:ro

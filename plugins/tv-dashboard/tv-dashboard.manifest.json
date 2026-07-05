@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "tv-dashboard",
+  "name": "Painéis TV",
+  "description": "Programações rotativas para TVs corporativas com link público",
+  "icon": "monitor-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/tv-dashboard",
+  "entry": "/apps/tv-dashboard/assets/remoteEntry.js",
+  "backend": "tv-dashboard-api",
+  "permissions": [
+    {
+      "code": "tv-dashboard.read",
+      "name": "Visualizar Painéis TV",
+      "description": "Consultar programações e pré-visualizar",
+      "module": "tv-dashboard"
+    },
+    {
+      "code": "tv-dashboard.write",
+      "name": "Editar Painéis TV",
+      "description": "Criar e editar programações e telas",
+      "module": "tv-dashboard"
+    },
+    {
+      "code": "tv-dashboard.manage",
+      "name": "Gerenciar Painéis TV",
+      "description": "Ativar, desativar e excluir links públicos",
+      "module": "tv-dashboard"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/tv-dashboard",
+      "label": "Painéis TV",
+      "permission": "tv-dashboard.read",
+      "icon": "monitor-icon",
+      "order": 25,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

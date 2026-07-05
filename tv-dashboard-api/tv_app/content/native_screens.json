@@ -1,0 +1,24 @@
+{
+  "screens": [
+    {
+      "key": "production_oee_overview",
+      "label": "Produção — OEE visão geral",
+      "category": "production",
+      "defaultDurationSec": 45,
+      "configSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 7, "label": "Período (dias)" }
+      }
+    },
+    {
+      "key": "custom_message",
+      "label": "Comunicado interno",
+      "category": "general",
+      "defaultDurationSec": 20,
+      "configSchema": {
+        "headline": { "type": "string", "label": "Título" },
+        "subtitle": { "type": "string", "optional": true, "label": "Subtítulo" }
+      }
+    }
+  ]
+}

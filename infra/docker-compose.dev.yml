@@ -583,6 +583,20 @@ services:
     networks:
       - delpi-network
 
+  tv-dashboard:
+    build:
+      context: ../plugins/tv-dashboard
+      dockerfile: Dockerfile
+
+    container_name: delpi-tv-dashboard
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   pedidos-venda-abertos:
     build:
       context: ../plugins/pedidos-venda-abertos
@@ -1128,6 +1142,50 @@ services:
     depends_on:
       - keycloak
       - postgres-plugins
+
+    networks:
+      - delpi-network
+
+  tv-dashboard-api:
+    build:
+      context: ..
+      dockerfile: tv-dashboard-api/Dockerfile
+
+    container_name: delpi-tv-dashboard-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      TV_DASHBOARD_API_ROOT_PATH: /apps/tv-dashboard-api
+      TV_DASHBOARD_RUN_MIGRATIONS_ON_STARTUP: ${TV_DASHBOARD_RUN_MIGRATIONS_ON_STARTUP:-true}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_CALLER_APP: tv-dashboard-api
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+
+    volumes:
+      - ../tv-dashboard-api:/app
+      - ../shared:/shared
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - api-delpi
 
     networks:
       - delpi-network

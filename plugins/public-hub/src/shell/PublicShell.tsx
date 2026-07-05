@@ -16,6 +16,7 @@ export function PublicShell() {
   const page: PublicPageDefinition | undefined = route
     ? publicRegistry[route.appId]?.[route.pageId]
     : undefined;
+  const chrome = page?.chrome ?? "default";
 
   const [state, setState] = useState<State>(() =>
     route && page ? { status: "loading" } : { status: "not-found" },
@@ -55,7 +56,7 @@ export function PublicShell() {
 
   if (state.status === "loading") {
     return (
-      <Stage>
+      <Stage chrome={chrome}>
         <div className="pub-loader" aria-label="Carregando" />
       </Stage>
     );
@@ -63,7 +64,7 @@ export function PublicShell() {
 
   if (state.status === "not-found" || state.status === "error") {
     return (
-      <Stage>
+      <Stage chrome={chrome}>
         <div className="pub-fallback">
           <h1>{state.status === "not-found" ? "Página não encontrada" : "Ops!"}</h1>
           <p>
@@ -76,11 +77,23 @@ export function PublicShell() {
     );
   }
 
-  return <Stage>{state.content}</Stage>;
+  return <Stage chrome={chrome}>{state.content}</Stage>;
 }
 
-/** Palco transversal da marca: logo Minha DELPI no topo + conteúdo centralizado. */
-function Stage({ children }: { children: ReactNode }) {
+type StageProps = {
+  children: ReactNode;
+  chrome?: "default" | "kiosk";
+};
+
+function Stage({ children, chrome = "default" }: StageProps) {
+  if (chrome === "kiosk") {
+    return (
+      <main className="pub-stage pub-stage--kiosk">
+        <div className="pub-content pub-content--kiosk">{children}</div>
+      </main>
+    );
+  }
+
   return (
     <main className="pub-stage">
       <ThemeToggle />

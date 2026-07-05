@@ -79,3 +79,9 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [inspecoes-entrada/ESPECIFICACAO-VIEW.md](./inspecoes-entrada/ESPECIFICACAO-VIEW.md) | Views TOTVS e mapeamento de colunas |
 | [inspecoes-entrada/FASE0-VALIDACAO.md](./inspecoes-entrada/FASE0-VALIDACAO.md) | Validação Fase 0 (TOTVS) |
 | [inspecoes-entrada/status-atual.md](./inspecoes-entrada/status-atual.md) | Snapshot do estado atual |
+
+### Painéis TV (Dashboard rotativo)
+
+| Arquivo | Conteúdo |
+|---|---|
+| [tv-dashboard/PLAYBOOK-EXCELENCIA.md](./tv-dashboard/PLAYBOOK-EXCELENCIA.md) | **Playbook de implementação** — gestão, preview, link público via public-hub, telas nativas viewport-fit |

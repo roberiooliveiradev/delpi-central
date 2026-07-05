@@ -1,0 +1,233 @@
+.dashboard-tv-dashboard {
+  --td-accent: var(--primary, #089bdb);
+  --td-surface: var(--surface, #ffffff);
+  --td-text: var(--text, #111111);
+  --td-border: var(--border, #e5e7eb);
+  --td-muted: color-mix(in srgb, var(--td-text) 55%, transparent);
+}
+
+.dashboard-tv-dashboard.dashboard-page {
+  min-height: 100%;
+  background-color: var(--app-canvas, var(--bg));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--td-accent) 5%, var(--app-canvas, #f5f7fb)),
+    var(--app-canvas, #f5f7fb) 280px
+  );
+}
+
+.td-app-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.td-hero {
+  margin-bottom: 24px;
+}
+
+.td-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--td-muted);
+}
+
+.td-title {
+  margin: 6px 0 8px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.td-subtitle {
+  margin: 0;
+  color: var(--td-muted);
+  max-width: 720px;
+}
+
+.td-card {
+  background: var(--td-surface);
+  border: 1px solid var(--td-border);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 4%, transparent);
+}
+
+.td-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.td-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--td-border);
+  background: var(--td-surface);
+  color: var(--td-text);
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.td-btn:hover {
+  border-color: color-mix(in srgb, var(--td-accent) 40%, var(--td-border));
+}
+
+.td-btn--primary {
+  background: var(--td-accent);
+  border-color: var(--td-accent);
+  color: #fff;
+}
+
+.td-btn--danger {
+  color: #b42318;
+  border-color: color-mix(in srgb, #b42318 35%, var(--td-border));
+}
+
+.td-table-wrap {
+  overflow-x: auto;
+}
+
+.td-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.td-table th,
+.td-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--td-border);
+  text-align: left;
+}
+
+.td-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--td-muted);
+}
+
+.td-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.td-badge--active {
+  background: color-mix(in srgb, #12b76a 14%, transparent);
+  color: #027a48;
+}
+
+.td-badge--inactive {
+  background: color-mix(in srgb, #f04438 12%, transparent);
+  color: #b42318;
+}
+
+.td-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.td-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.td-field label {
+  font-size: 13px;
+  color: var(--td-muted);
+}
+
+.td-field input,
+.td-field select,
+.td-field textarea {
+  border: 1px solid var(--td-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  background: var(--td-surface);
+  color: var(--td-text);
+}
+
+.td-slide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.td-slide-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--td-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--td-accent) 3%, var(--td-surface));
+}
+
+.td-slide-meta {
+  font-size: 12px;
+  color: var(--td-muted);
+}
+
+.td-link-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.td-link-box input {
+  flex: 1;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+
+.td-preview-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #05070a;
+}
+
+.td-preview-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 60;
+}
+
+.td-state {
+  padding: 24px;
+  text-align: center;
+  color: var(--td-muted);
+}
+
+@media (max-width: 768px) {
+  .td-app-shell {
+    padding: 16px;
+  }
+
+  .td-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .td-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
