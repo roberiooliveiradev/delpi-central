@@ -17,6 +17,26 @@ describe("comunicadoHelpers", () => {
     expect(serialized.version).toBe(2);
     expect(serialized.headline).toBe("Titulo");
   });
+
+  it("não persiste URL de mídia no native_config", () => {
+    const parsed = parseComunicadoConfig({
+      blocks: [
+        {
+          id: "1",
+          type: "image",
+          assetId: "asset-1",
+          url: "https://example.com/x.jpg",
+          frame: { x: 0, y: 0, w: 50, h: 50 },
+        },
+      ],
+      background: { type: "image", assetId: "bg-1", url: "https://example.com/bg.jpg" },
+    });
+    const serialized = serializeComunicadoConfig(parsed);
+    const block = (serialized.blocks as Array<Record<string, unknown>>)[0];
+    expect(block.url).toBeUndefined();
+    expect(block.assetId).toBe("asset-1");
+    expect(serialized.background).toEqual({ type: "image", assetId: "bg-1" });
+  });
 });
 
 describe("CustomMessageScreen rich layout", () => {

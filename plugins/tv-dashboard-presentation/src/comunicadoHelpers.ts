@@ -78,11 +78,16 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
 export function serializeComunicadoConfig(config: ComunicadoConfig): Record<string, unknown> {
   const headingBlock = config.blocks?.find((b) => b.type === "heading");
   const textBlock = config.blocks?.find((b) => b.type === "text");
+  const background = config.background ?? DEFAULT_BACKGROUND;
+  const serializedBackground =
+    background.type === "image"
+      ? { type: "image", assetId: background.assetId }
+      : { type: "color", value: background.value || "#0f172a" };
   return {
     version: 2,
     headline: headingBlock && "content" in headingBlock ? headingBlock.content : config.headline ?? "Comunicado",
     subtitle: textBlock && "content" in textBlock ? textBlock.content : config.subtitle ?? "",
-    background: config.background ?? DEFAULT_BACKGROUND,
+    background: serializedBackground,
     blocks: (config.blocks ?? []).map((block) => ({
       id: block.id,
       type: block.type,

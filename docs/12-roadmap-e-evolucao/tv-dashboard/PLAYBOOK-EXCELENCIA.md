@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.0
 > **Data:** 2026-07-05
-> **Status:** Ondas 0–3 concluídas (v1) — 2026-07-05. Backlog v2: `supplies_stock_alert`, `strategic_indicators_hero`, gráficos Recharts.
+> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. Backlog v2: `supplies_stock_alert`, `strategic_indicators_hero`, gráficos Recharts.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -85,10 +85,16 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 ### Fora de escopo (v1)
 
 - Controle remoto de múltiplas TVs (MDM / Chrome Sign Builder).
-- Edição colaborativa em tempo real (WebSocket).
 - Gravação de sessão ou analytics avançado de audiência.
 - Autenticação na TV (modo kiosk anônimo é o alvo).
 - Proxy server-side de Power BI (iframe direto).
+
+### Entregue em v1.1 (jul/2026)
+
+- Comunicados visuais (`custom_message` v2) com blocos, imagens e vídeos.
+- Upload de mídia persistente + rota pública de serve.
+- WebSocket push (`presentation_updated`) — TV, preview e editor.
+- Miniaturas nos cards do editor.
 
 ---
 
@@ -322,7 +328,7 @@ Telas nativas são **layouts de apresentação**, não páginas de dashboard ope
 | `quality_ppm_summary` | PPM + tendência | api-delpi quality |
 | `supplies_stock_alert` | Top itens críticos (máx. 6) | api-delpi supplies |
 | `strategic_indicators_hero` | Hero executivo simplificado | strategic-indicators-api (server-side) |
-| `custom_message` | Título + subtítulo + logo (comunicados) | só config JSON, sem SQL |
+| `custom_message` | Comunicado visual — blocos (título, texto, imagem, vídeo) + fundo | config JSON + mídia em disco |
 
 Novas telas = nova entrada no JSON + componente + agregador backend + teste visual nos presets §6.3.
 
@@ -447,7 +453,8 @@ Componente central (sugestão: pacote compartilhado `plugins/tv-dashboard-presen
 | Loop | Ao fim da lista, volta ao slide 0 |
 | Pause | Tecla `Space` ou toque (preview); oculto em kiosk produção |
 | Fullscreen | Duplo-clique ou `F11`; botão opcional no preview |
-| Refresh | Timer `globalRefreshSec` — refetch só `/public/present/{token}` ou preview API |
+| Refresh | Timer `globalRefreshSec` — refetch payload (fallback) |
+| WebSocket | `WS /public/present/{token}/ws` ou admin `presentation-ws` — refetch imediato em `presentation_updated` |
 | Visibilidade | Pausa autoplay se `document.hidden` (economia em TV com overlay) |
 | Erro slide nativo | Tela de fallback «Dados indisponíveis» + avança após 10s |
 | Erro iframe | Mensagem + avança após duração |

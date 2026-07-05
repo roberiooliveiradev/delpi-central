@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createBlock,
   frameStyle,
-  parseComunicadoConfig,
   serializeComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoConfig,
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
+import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 
 type Props = {
   playlistId: string;
@@ -19,15 +19,17 @@ type Props = {
 };
 
 export function ComunicadoComposer({ playlistId, value, onChange, labels = {} }: Props) {
-  const [config, setConfig] = useState<ComunicadoConfig>(() => parseComunicadoConfig(value));
+  const [config, setConfig] = useState<ComunicadoConfig>(() =>
+    enrichComunicadoConfigForEditor(value, playlistId),
+  );
   const [selectedId, setSelectedId] = useState<string | null>(config.blocks?.[0]?.id ?? null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<"block" | "background">("block");
 
   useEffect(() => {
-    setConfig(parseComunicadoConfig(value));
-  }, [value]);
+    setConfig(enrichComunicadoConfigForEditor(value, playlistId));
+  }, [value, playlistId]);
 
   const selected = useMemo(
     () => config.blocks?.find((block) => block.id === selectedId) ?? null,

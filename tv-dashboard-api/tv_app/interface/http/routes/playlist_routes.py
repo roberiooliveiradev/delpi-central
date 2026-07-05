@@ -132,6 +132,10 @@ def delete_playlist(request: Request, playlist_id: UUID):
     except PermissionError as exc:
         return fail(str(exc), 403)
     try:
+        notify_presentation_changed(
+            playlist_id=str(playlist_id),
+            reason="playlist_deleted",
+        )
         _repo.delete(playlist_id)
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)

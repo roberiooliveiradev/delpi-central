@@ -1,4 +1,4 @@
-import type { NativeSlidePayload } from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoConfig, NativeSlidePayload } from "@delpi/tv-dashboard-presentation";
 import { parseComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, type Slide } from "../api/tvDashboardApi";
@@ -28,6 +28,14 @@ export function buildSlideThumbnailNative(
     config: slide.nativeConfig ?? {},
     data: { label: slide.title },
   };
+}
+
+export function enrichComunicadoConfigForEditor(
+  raw: Record<string, unknown>,
+  playlistId: string,
+): ComunicadoConfig {
+  const data = buildComunicadoPreviewData(raw, playlistId);
+  return parseComunicadoConfig(data);
 }
 
 function buildComunicadoPreviewData(

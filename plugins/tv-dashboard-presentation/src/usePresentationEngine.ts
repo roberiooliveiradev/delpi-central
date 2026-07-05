@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { PresentationPayloadLike, PresentationSlide } from "./types";
+import { usePresentationRealtime } from "./usePresentationRealtime";
 
 export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
   initialPayload: T;
@@ -8,6 +9,7 @@ export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
   enableKeyboardPause?: boolean;
   enableHiddenPause?: boolean;
   refreshNativeSlidesOnly?: boolean;
+  realtimeWsUrl?: string | null;
 };
 
 export function usePresentationEngine<T extends PresentationPayloadLike>({
@@ -16,6 +18,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   enableKeyboardPause = false,
   enableHiddenPause = true,
   refreshNativeSlidesOnly = false,
+  realtimeWsUrl = null,
 }: UsePresentationEngineOptions<T>) {
   const [payload, setPayload] = useState(initialPayload);
   const [index, setIndex] = useState(0);
@@ -92,6 +95,14 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     }, refreshSec * 1000);
     return () => window.clearInterval(timer);
   }, [refreshSec, reloadPayload, onRefresh, refreshNativeSlidesOnly, current?.slideType]);
+
+  usePresentationRealtime({
+    enabled: Boolean(realtimeWsUrl && onRefresh),
+    wsUrl: realtimeWsUrl,
+    onPresentationUpdated: () => {
+      void reloadPayload();
+    },
+  });
 
   useEffect(() => {
     if (!enableKeyboardPause) return;

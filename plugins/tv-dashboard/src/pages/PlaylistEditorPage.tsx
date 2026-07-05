@@ -125,6 +125,16 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     }
   }, [playlistId, slides.length]);
 
+  const reloadPlaylistFromServer = useCallback(async () => {
+    try {
+      const pl = await getPlaylist(playlistId);
+      setPlaylist((current) => (current ? { ...pl, slides: pl.slides ?? current.slides } : pl));
+      await refreshPreviewThumbnails();
+    } catch {
+      // mantém estado local se a sincronização falhar
+    }
+  }, [playlistId, refreshPreviewThumbnails]);
+
   useEffect(() => {
     void refreshPreviewThumbnails();
   }, [refreshPreviewThumbnails, slidesPreviewKey]);
@@ -133,7 +143,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     enabled: Boolean(playlistId && slides.length > 0 && thumbnailWsUrl),
     wsUrl: thumbnailWsUrl,
     onPresentationUpdated: () => {
-      void refreshPreviewThumbnails();
+      void reloadPlaylistFromServer();
     },
   });
 

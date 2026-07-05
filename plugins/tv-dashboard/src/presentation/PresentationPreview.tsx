@@ -4,7 +4,6 @@ import {
   useFullscreenStage,
   NativeSlideView,
   buildAdminPresentationWsUrl,
-  usePresentationRealtime,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
@@ -22,6 +21,12 @@ type Props = {
 
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {
   const { ref, toggleFullscreen } = useFullscreenStage();
+  const wsUrl = useMemo(() => {
+    if (!playlistId) return null;
+    const token = getAccessToken();
+    if (!token) return null;
+    return buildAdminPresentationWsUrl(playlistId, token);
+  }, [playlistId]);
   const {
     index,
     slides,
@@ -30,31 +35,13 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     paused,
     setPaused,
     setIndex,
-    setPayload,
   } = usePresentationEngine({
     initialPayload: initial,
     onRefresh,
     enableHiddenPause: false,
     enableKeyboardPause: true,
     refreshNativeSlidesOnly: true,
-  });
-
-  const wsUrl = useMemo(() => {
-    if (!playlistId) return null;
-    const token = getAccessToken();
-    if (!token) return null;
-    return buildAdminPresentationWsUrl(playlistId, token);
-  }, [playlistId]);
-
-  usePresentationRealtime({
-    enabled: Boolean(playlistId && onRefresh),
-    wsUrl,
-    onPresentationUpdated: () => {
-      if (!onRefresh) return;
-      void onRefresh().then((next) => {
-        if (next) setPayload(next);
-      });
-    },
+    realtimeWsUrl: wsUrl,
   });
 
   if (!slides.length) {
