@@ -7,6 +7,7 @@ from tv_app.application.services.native_screen_cache_service import (
     get_cached_native_data,
     set_cached_native_data,
 )
+from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.infrastructure.gateways.delpi_production_gateway import DelpiProductionGateway
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     load_native_screens_catalog,
@@ -101,7 +102,7 @@ class NativeScreenDataService:
                     "subtitle": str(cfg.get("subtitle") or ""),
                 }
         except Exception as exc:  # noqa: BLE001
-            return _error("Dados indisponíveis no momento.", str(exc))
+            return _error(message("nativeDataUnavailable"), str(exc))
         return _error(f"Tela nativa desconhecida: {screen_key}")
 
     @staticmethod

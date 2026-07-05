@@ -57,6 +57,10 @@ export type PresentationPayload = {
     defaultDurationSec: number;
     publicUrl?: string;
   };
+  presentationMeta?: {
+    nativeErrorAdvanceSec: number;
+    heartbeatIntervalSec: number;
+  };
   slides: Array<{
     id: string;
     sortOrder: number;
@@ -66,6 +70,17 @@ export type PresentationPayload = {
     native?: { screenKey: string; config: Record<string, unknown>; data: Record<string, unknown> };
     external?: { url: string; sandbox?: string | null };
   }>;
+};
+
+export type PresentationStatus = {
+  status: "online" | "offline" | "never";
+  online: boolean;
+  lastPresentedAt?: string | null;
+  viewCount: number;
+  heartbeatIntervalSec: number;
+  staleAfterSec: number;
+  secondsSinceLastPresentation?: number | null;
+  isActive: boolean;
 };
 
 export async function listPlaylists() {
@@ -81,6 +96,12 @@ export async function createPlaylist(name: string, description?: string) {
 
 export async function getPlaylist(id: string) {
   return unwrap(httpGet<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}`));
+}
+
+export async function getPresentationStatus(id: string) {
+  return unwrap(
+    httpGet<ApiEnvelope<PresentationStatus>>(`${API_BASE}/playlists/${id}/presentation-status`),
+  );
 }
 
 export async function updatePlaylist(
@@ -185,6 +206,7 @@ export async function updateSlide(
     durationSec: number;
     nativeConfig: Record<string, unknown>;
     externalUrl: string;
+    isActive: boolean;
   }>,
 ) {
   return unwrap(

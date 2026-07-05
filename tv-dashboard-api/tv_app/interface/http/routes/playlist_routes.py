@@ -7,7 +7,9 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
+from tv_app.application.services.presentation_status_service import build_presentation_status
 from tv_app.application.services.qr_service import build_public_presentation_url, render_qr_png
+from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_MANAGE, TV_READ, TV_WRITE, assert_permission
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -78,6 +80,19 @@ def get_playlist(request: Request, playlist_id: UUID):
     playlist["publicUrl"] = _present.build_public_url(playlist["publicToken"])
     playlist["slides"] = _repo.list_slides(playlist_id)
     return ok(playlist)
+
+
+@router.get("/{playlist_id}/presentation-status")
+def presentation_status(request: Request, playlist_id: UUID):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    playlist = _repo.get_by_id(playlist_id)
+    if not playlist:
+        return fail(message("playlistNotFound"), 404)
+    return ok(build_presentation_status(playlist))
 
 
 @router.patch("/{playlist_id}")

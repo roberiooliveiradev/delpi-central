@@ -27,6 +27,10 @@ export type PublicPresentationPayload = {
     defaultDurationSec: number;
     publicUrl?: string;
   };
+  presentationMeta?: {
+    nativeErrorAdvanceSec: number;
+    heartbeatIntervalSec: number;
+  };
   slides: PublicSlide[];
 };
 

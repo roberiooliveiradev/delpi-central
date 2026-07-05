@@ -138,6 +138,16 @@
   color: #b42318;
 }
 
+.td-badge--online {
+  background: color-mix(in srgb, #12b76a 14%, transparent);
+  color: #027a48;
+}
+
+.td-badge--offline {
+  background: color-mix(in srgb, #f79009 14%, transparent);
+  color: #b54708;
+}
+
 .td-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -183,6 +193,10 @@
   border: 1px solid var(--td-border);
   border-radius: 14px;
   background: color-mix(in srgb, var(--td-accent) 3%, var(--td-surface));
+}
+
+.td-slide-item--inactive {
+  opacity: 0.65;
 }
 
 .td-slide-actions {

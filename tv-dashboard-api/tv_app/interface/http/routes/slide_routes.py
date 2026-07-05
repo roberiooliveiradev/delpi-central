@@ -3,7 +3,9 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from tv_app.application.services.branch_policy_service import validate_native_branch
 
 from tv_app.application.services.external_url_validator_service import validate_external_url
 from tv_app.core.responses import fail, ok
@@ -47,6 +49,12 @@ class CreateSlideBody(BaseModel):
             raise ValueError("Tela nativa é obrigatória.")
         return value
 
+    @model_validator(mode="after")
+    def validate_branch_policy(self):
+        if self.slideType == "native" and self.nativeConfig:
+            validate_native_branch(self.nativeConfig)
+        return self
+
 
 class UpdateSlideBody(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
@@ -63,6 +71,12 @@ class UpdateSlideBody(BaseModel):
         if value:
             validate_external_url(value)
         return value
+
+    @model_validator(mode="after")
+    def validate_branch_policy(self):
+        if self.nativeConfig:
+            validate_native_branch(self.nativeConfig)
+        return self
 
 
 class ReorderItem(BaseModel):

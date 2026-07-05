@@ -24,6 +24,9 @@ export function PresentationView({
   const [payload, setPayload] = useState(initialPayload);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [hidden, setHidden] = useState(
+    typeof document !== "undefined" ? document.visibilityState === "hidden" : false,
+  );
 
   const slides = useMemo(
     () => [...(payload.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -34,8 +37,20 @@ export function PresentationView({
   const viewport = playlist.viewportProfile || "1080p";
   const refreshSec = playlist.globalRefreshSec || 300;
   const transition = playlist.transitionStyle || "fade";
+  const nativeErrorAdvanceSec = payload.presentationMeta?.nativeErrorAdvanceSec ?? 10;
+  const heartbeatIntervalSec = payload.presentationMeta?.heartbeatIntervalSec ?? HEARTBEAT_INTERVAL_SEC;
 
   const current = slides[index];
+  const nativeError =
+    current?.slideType === "native" &&
+    current.native?.data &&
+    (current.native.data as { error?: boolean }).error === true;
+
+  useEffect(() => {
+    const onVisibility = () => setHidden(document.visibilityState === "hidden");
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   const reloadPayload = useCallback(async () => {
     if (onRefresh) {
@@ -58,13 +73,23 @@ export function PresentationView({
   }, [slides.length, index]);
 
   useEffect(() => {
-    if (!slides.length || paused) return;
-    const durationMs = (current?.durationSec ?? playlist.defaultDurationSec ?? 30) * 1000;
+    if (!slides.length || paused || hidden) return;
+    const baseSec = current?.durationSec ?? playlist.defaultDurationSec ?? 30;
+    const durationMs = (nativeError ? nativeErrorAdvanceSec : baseSec) * 1000;
     const timer = window.setTimeout(() => {
       setIndex((prev) => (prev + 1) % slides.length);
     }, durationMs);
     return () => window.clearTimeout(timer);
-  }, [slides.length, index, current, paused, playlist.defaultDurationSec]);
+  }, [
+    slides.length,
+    index,
+    current,
+    paused,
+    hidden,
+    nativeError,
+    nativeErrorAdvanceSec,
+    playlist.defaultDurationSec,
+  ]);
 
   useEffect(() => {
     if (!refreshSec) return;
@@ -93,9 +118,9 @@ export function PresentationView({
       void sendPresentationHeartbeat(token).catch(() => undefined);
     };
     send();
-    const timer = window.setInterval(send, HEARTBEAT_INTERVAL_SEC * 1000);
+    const timer = window.setInterval(send, heartbeatIntervalSec * 1000);
     return () => window.clearInterval(timer);
-  }, [mode, token]);
+  }, [mode, token, heartbeatIntervalSec]);
 
   if (!slides.length) {
     return (

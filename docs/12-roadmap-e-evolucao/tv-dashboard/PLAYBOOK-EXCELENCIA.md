@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.0
 > **Data:** 2026-07-05
-> **Status:** Onda 0–1 + Onda 2 (parcial) + Onda 3.1/3.3 (parcial) — 2026-07-05
+> **Status:** Onda 0–2 (parcial) + Onda 3.1/3.3 + PresentationEngine §9 — 2026-07-05
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.

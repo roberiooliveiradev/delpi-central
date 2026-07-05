@@ -5,6 +5,7 @@ import {
   ArrowUp,
   Copy,
   Eye,
+  EyeOff,
   Link2,
   Plus,
   QrCode,
@@ -22,6 +23,7 @@ import {
   duplicateSlide,
   downloadQrPng,
   getPlaylist,
+  getPresentationStatus,
   getPreviewPayload,
   listNativeScreens,
   regeneratePlaylistToken,
@@ -31,6 +33,7 @@ import {
   type NativeScreenCatalogItem,
   type Playlist,
   type PresentationPayload,
+  type PresentationStatus,
   type Slide,
 } from "../api/tvDashboardApi";
 import { AddSlideModal } from "../components/AddSlideModal";
@@ -64,6 +67,7 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
   const [previewPayload, setPreviewPayload] = useState<PresentationPayload | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editSlide, setEditSlide] = useState<Slide | null>(null);
+  const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,6 +89,24 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function pollStatus() {
+      try {
+        const status = await getPresentationStatus(playlistId);
+        if (!cancelled) setTvStatus(status);
+      } catch {
+        if (!cancelled) setTvStatus(null);
+      }
+    }
+    void pollStatus();
+    const timer = window.setInterval(() => void pollStatus(), 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [playlistId]);
 
   async function saveSettings(field: string, value: string | number) {
     if (!playlist) return;
@@ -176,12 +198,6 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
     window.alert("Novo link gerado.");
   }
 
-  async function handleDuplicateSlide(slide: Slide) {
-    if (!playlist) return;
-    const copy = await duplicateSlide(playlist.id, slide.id);
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
-  }
-
   async function handleSaveSlide(
     slide: Slide,
     payload: {
@@ -197,6 +213,35 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
       ...playlist,
       slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
     });
+  }
+
+  async function handleDuplicateSlide(slide: Slide) {
+    if (!playlist) return;
+    const copy = await duplicateSlide(playlist.id, slide.id);
+    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
+  }
+
+  async function handleToggleSlideActive(slide: Slide) {
+    if (!playlist) return;
+    const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
+    setPlaylist({
+      ...playlist,
+      slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+    });
+  }
+
+  function tvStatusLabel() {
+    if (!tvStatus) return null;
+    if (tvStatus.status === "online") return "TV online";
+    if (tvStatus.status === "offline") return "TV offline";
+    return "Nunca exibida";
+  }
+
+  function tvStatusClass() {
+    if (!tvStatus) return "td-badge";
+    if (tvStatus.status === "online") return "td-badge td-badge--online";
+    if (tvStatus.status === "offline") return "td-badge td-badge--offline";
+    return "td-badge td-badge--inactive";
   }
 
   async function openPreview() {
@@ -266,7 +311,12 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
 
       <div className="td-grid-2">
         <div className="td-card">
-          <h2 style={{ marginTop: 0 }}>{playlist.name}</h2>
+          <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {playlist.name}
+            {tvStatusLabel() ? (
+              <span className={tvStatusClass()}>{tvStatusLabel()}</span>
+            ) : null}
+          </h2>
           <p className="td-subtitle" style={{ marginTop: 0 }}>
             {playlist.viewCount ?? 0} visualizações
             {playlist.lastPresentedAt
@@ -338,11 +388,12 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
               <p className="td-subtitle">Adicione telas nativas DELPI ou links externos (Power BI, sites).</p>
             ) : (
               slides.map((slide, idx) => (
-                <div key={slide.id} className="td-slide-item">
+                <div key={slide.id} className={`td-slide-item${slide.isActive ? "" : " td-slide-item--inactive"}`}>
                   <strong>{idx + 1}</strong>
                   <div>
                     <div>{slide.title}</div>
                     <div className="td-slide-meta">
+                      {!slide.isActive ? "Pausada · " : ""}
                       {slide.slideType === "native"
                         ? `Nativa · ${slide.nativeScreenKey}`
                         : `Externa · ${slide.externalUrl}`}
@@ -356,6 +407,9 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
                     </button>
                     <button type="button" className="td-btn td-btn--icon" disabled={idx === slides.length - 1} onClick={() => void moveSlide(slide, 1)} aria-label="Mover para baixo">
                       <ArrowDown size={14} />
+                    </button>
+                    <button type="button" className="td-btn td-btn--icon" onClick={() => void handleToggleSlideActive(slide)} aria-label={slide.isActive ? "Pausar tela" : "Reativar tela"}>
+                      {slide.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
                     </button>
                     <button type="button" className="td-btn td-btn--icon" onClick={() => setEditSlide(slide)} aria-label="Editar tela">
                       <Pencil size={14} />

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
+import { ExternalSlidePreview } from "./ExternalSlidePreview";
 import "../presentation/presentation.css";
 
 type Props = {
@@ -139,18 +140,30 @@ export function PresentationPreview({ payload: initial, onRefresh }: Props) {
   const current = slides[index];
   const viewport = payload.playlist.viewportProfile || "1080p";
   const transition = payload.playlist.transitionStyle || "fade";
+  const nativeErrorAdvanceSec = payload.presentationMeta?.nativeErrorAdvanceSec ?? 10;
+  const nativeError =
+    current?.slideType === "native" &&
+    current.native?.data &&
+    (current.native.data as { error?: boolean }).error === true;
 
   useEffect(() => setPayload(initial), [initial]);
 
   useEffect(() => {
     if (!slides.length) return;
-    const durationMs =
-      (current?.durationSec ?? payload.playlist.defaultDurationSec ?? 30) * 1000;
+    const baseSec = current?.durationSec ?? payload.playlist.defaultDurationSec ?? 30;
+    const durationMs = (nativeError ? nativeErrorAdvanceSec : baseSec) * 1000;
     const timer = window.setTimeout(() => {
       setIndex((prev) => (prev + 1) % slides.length);
     }, durationMs);
     return () => window.clearTimeout(timer);
-  }, [slides.length, index, current, payload.playlist.defaultDurationSec]);
+  }, [
+    slides.length,
+    index,
+    current,
+    nativeError,
+    nativeErrorAdvanceSec,
+    payload.playlist.defaultDurationSec,
+  ]);
 
   useEffect(() => {
     const refreshSec = payload.playlist.globalRefreshSec || 300;
@@ -183,12 +196,11 @@ export function PresentationPreview({ payload: initial, onRefresh }: Props) {
             {slide.slideType === "native" && slide.native ? (
               <NativeSlide native={slide.native} />
             ) : (
-              <iframe
-                className="tdp-external-frame"
-                src={slide.external?.url}
+              <ExternalSlidePreview
+                url={slide.external?.url}
                 title={slide.title}
-                sandbox={slide.external?.sandbox ?? undefined}
-                allow="fullscreen"
+                sandbox={slide.external?.sandbox}
+                active={active}
               />
             )}
           </div>

@@ -19,5 +19,9 @@
   },
   "presentationHeartbeat": {
     "intervalSec": 60
+  },
+  "branchPolicy": {
+    "allowedBranches": [],
+    "rejectionMessage": "Filial não autorizada para Painéis TV."
   }
 }

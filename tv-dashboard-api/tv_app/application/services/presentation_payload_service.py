@@ -4,6 +4,10 @@ from typing import Any
 from uuid import UUID
 
 from tv_app.application.services.native_screen_data_service import NativeScreenDataService
+from tv_app.application.services.tv_dashboard_content_service import (
+    heartbeat_interval_sec,
+    presentation_setting_int,
+)
 from tv_app.config import settings
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistNotFoundError,
@@ -102,6 +106,10 @@ class PresentationPayloadService:
                 "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
                 "defaultDurationSec": default_duration,
                 "publicUrl": self.build_public_url(playlist["publicToken"]),
+            },
+            "presentationMeta": {
+                "nativeErrorAdvanceSec": presentation_setting_int("nativeErrorAdvanceSec", 10),
+                "heartbeatIntervalSec": heartbeat_interval_sec(),
             },
             "slides": rendered_slides,
         }

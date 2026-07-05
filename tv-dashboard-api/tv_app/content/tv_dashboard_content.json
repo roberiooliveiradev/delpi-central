@@ -1,0 +1,22 @@
+{
+  "messages": {
+    "playlistNotFound": "Programação não encontrada.",
+    "playlistNotFoundOrInactive": "Programação não encontrada ou desativada.",
+    "slideNotFound": "Tela não encontrada.",
+    "nativeDataUnavailable": "Dados indisponíveis no momento.",
+    "branchNotAllowed": "Filial não autorizada para Painéis TV."
+  },
+  "presentation": {
+    "nativeErrorAdvanceSec": 10,
+    "emptySlides": "Nenhuma tela configurada nesta programação.",
+    "previewBadge": "Pré-visualização",
+    "externalIframeFailed": "Não foi possível exibir este link em iframe.",
+    "externalIframeHint": "Verifique se o site permite incorporação (ex.: Power BI «Publicar na Web»)."
+  },
+  "admin": {
+    "tvStatusOnline": "TV online",
+    "tvStatusOffline": "TV offline",
+    "tvStatusNever": "Nunca exibida",
+    "slideInactive": "Tela pausada"
+  }
+}
