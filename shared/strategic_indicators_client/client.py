@@ -55,6 +55,27 @@ class StrategicIndicatorsApiClient:
             authorization=authorization,
         )
 
+    def get_tv_dashboard_hero(
+        self,
+        *,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        params: dict[str, str | None] = {
+            "branch": branch,
+            "competence": competence,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        return self._get(
+            "/strategic-indicators/integrations/tv-dashboard-hero",
+            params=params,
+            authorization=authorization,
+        )
+
     def get_dashboard_department_score(
         self,
         *,

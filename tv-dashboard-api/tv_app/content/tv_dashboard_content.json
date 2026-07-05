@@ -4,6 +4,7 @@
     "playlistNotFoundOrInactive": "Programação não encontrada ou desativada.",
     "slideNotFound": "Tela não encontrada.",
     "nativeDataUnavailable": "Dados indisponíveis no momento.",
+    "strategicHeroLabel": "Índice Global Delpi",
     "branchNotAllowed": "Filial não autorizada para Painéis TV.",
     "consolidatedNotAllowed": "Visão consolidada não autorizada para seu perfil.",
     "comunicadoDefaultHeadline": "Comunicado",
@@ -15,7 +16,18 @@
     "emptySlides": "Nenhuma tela configurada nesta programação.",
     "previewBadge": "Pré-visualização",
     "externalIframeFailed": "Não foi possível exibir este link em iframe.",
-    "externalIframeHint": "Verifique se o site permite incorporação (ex.: Power BI «Publicar na Web»)."
+    "externalIframeHint": "Verifique se o site permite incorporação (ex.: Power BI «Publicar na Web»).",
+    "trendDirectionLabels": {
+      "up": "Alta",
+      "down": "Queda",
+      "stable": "Estável"
+    },
+    "stockAlertEmpty": "Nenhum item crítico encontrado.",
+    "stockAlertValueLabel": "Valor em estoque",
+    "strategicHeroEyebrow": "Indicadores estratégicos",
+    "strategicHeroTrendLabel": "Tendência",
+    "strategicHeroPositiveLabel": "Destaque",
+    "strategicHeroRiskLabel": "Atenção"
   },
   "admin": {
     "tvStatusOnline": "TV online",

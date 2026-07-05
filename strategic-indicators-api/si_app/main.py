@@ -27,6 +27,9 @@ from si_app.interface.http.routes.integrations_routes import (
 from si_app.interface.http.routes.integrations_department_score_routes import (
     router as strategic_indicators_department_score_integrations_router,
 )
+from si_app.interface.http.routes.integrations_tv_dashboard_routes import (
+    router as strategic_indicators_tv_dashboard_integrations_router,
+)
 from si_app.interface.http.routes.strategic_indicators_routes import (
     router as strategic_indicators_router,
 )
@@ -133,6 +136,7 @@ def health():
 
 app.include_router(strategic_indicators_router)
 app.include_router(strategic_indicators_integrations_router)
+app.include_router(strategic_indicators_tv_dashboard_integrations_router)
 app.include_router(strategic_indicators_department_score_integrations_router)
 
 

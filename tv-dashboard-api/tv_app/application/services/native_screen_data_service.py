@@ -11,6 +11,7 @@ from tv_app.application.services.native_screen_cache_service import (
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.config import settings
 from tv_app.infrastructure.gateways.delpi_production_gateway import DelpiProductionGateway
+from tv_app.infrastructure.gateways.strategic_indicators_gateway import StrategicIndicatorsGateway
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     load_native_screens_catalog,
 )
@@ -34,9 +35,11 @@ class NativeScreenDataService:
     def __init__(
         self,
         gateway: DelpiProductionGateway | None = None,
+        strategic: StrategicIndicatorsGateway | None = None,
         comunicado: ComunicadoEnrichmentService | None = None,
     ) -> None:
         self._gateway = gateway or DelpiProductionGateway()
+        self._strategic = strategic or StrategicIndicatorsGateway()
         self._comunicado = comunicado or ComunicadoEnrichmentService()
 
     def resolve(
@@ -107,6 +110,19 @@ class NativeScreenDataService:
             if screen_key == "supplies_stock_value":
                 return self._gateway.fetch_stock_value_summary(
                     branch=_optional_branch(cfg),
+                    authorization=authorization,
+                )
+            if screen_key == "supplies_stock_alert":
+                return self._gateway.fetch_stock_alert(
+                    branch=_optional_branch(cfg),
+                    item_limit=int(cfg.get("itemLimit") or 6),
+                    authorization=authorization,
+                )
+            if screen_key == "strategic_indicators_hero":
+                competence = cfg.get("competence")
+                return self._strategic.fetch_hero(
+                    branch=_optional_branch(cfg),
+                    competence=str(competence).strip() if competence else None,
                     authorization=authorization,
                 )
             if screen_key == "custom_message":

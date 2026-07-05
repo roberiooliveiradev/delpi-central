@@ -13,6 +13,7 @@ def _is_dashboard_integration_path(path: str) -> bool:
     return (
         "integrations/dashboard-goals" in normalized
         or "integrations/dashboard-department-score" in normalized
+        or "integrations/tv-dashboard-hero" in normalized
     )
 
 

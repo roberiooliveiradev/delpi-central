@@ -129,3 +129,39 @@ class DelpiProductionGateway:
             "label": summary.get("label") or "Valor de estoque",
             "currency": summary.get("currency") or "BRL",
         }
+
+    def fetch_stock_alert(
+        self,
+        *,
+        branch: str | None,
+        item_limit: int = 6,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        limit = max(1, min(int(item_limit or 6), 6))
+        params: dict[str, str] = {"top_limit": str(limit)}
+        if branch:
+            params["branch"] = branch
+        envelope = self._client.get_stock_value(
+            params=params,
+            authorization=self._auth(authorization),
+        )
+        raw_items = envelope.get("top_products") if isinstance(envelope, dict) else []
+        items: list[dict[str, Any]] = []
+        if isinstance(raw_items, list):
+            for row in raw_items[:limit]:
+                if not isinstance(row, dict):
+                    continue
+                items.append(
+                    {
+                        "productCode": row.get("product_code") or row.get("productCode"),
+                        "description": row.get("product_description") or row.get("description"),
+                        "stockValue": row.get("total_stock_value") or row.get("stockValue"),
+                        "stockQuantity": row.get("total_stock_quantity") or row.get("stockQuantity"),
+                    }
+                )
+        return {
+            "branch": branch,
+            "itemLimit": limit,
+            "items": items,
+            "label": "Itens críticos de estoque",
+        }

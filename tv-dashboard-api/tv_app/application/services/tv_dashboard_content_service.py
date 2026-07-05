@@ -32,6 +32,15 @@ def presentation_setting_int(key: str, default: int) -> int:
         return default
 
 
+def trend_direction_label(direction: str | None) -> str:
+    presentation = _load_content().get("presentation") or {}
+    labels = presentation.get("trendDirectionLabels") or {}
+    if not isinstance(labels, dict):
+        return "—"
+    normalized = str(direction or "stable").strip().lower()
+    return str(labels.get(normalized) or labels.get("stable") or "—")
+
+
 def heartbeat_interval_sec() -> int:
     heartbeat = _load_settings().get("presentationHeartbeat") or {}
     try:

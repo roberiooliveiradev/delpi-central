@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.0
 > **Data:** 2026-07-05
-> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. Backlog v2: `supplies_stock_alert`, `strategic_indicators_hero`, gráficos Recharts.
+> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): `supplies_stock_alert`, `strategic_indicators_hero`. Backlog: gráficos Recharts, rate limit nginx.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -611,10 +611,13 @@ sequenceDiagram
 
 ## 16. Próximo passo imediato (v2)
 
-1. **`supplies_stock_alert`** — top 6 itens críticos (endpoint api-delpi + tela nativa).
-2. **`strategic_indicators_hero`** — gateway strategic-indicators-api + componente hero.
-3. **Gráficos Recharts** — séries OEE/OTD/PPM no pacote `@delpi/tv-dashboard-presentation`.
-4. **Rate limit dedicado** em dev nginx para `GET /public/present/*`.
+1. **Gráficos Recharts** — séries OEE/OTD/PPM no pacote `@delpi/tv-dashboard-presentation`.
+2. **Rate limit dedicado** em dev nginx para `GET /public/present/*`.
+
+### Concluído v2 (jul/2026)
+
+- **`supplies_stock_alert`** — top 6 itens por valor (`/supplies/stock-value?top_limit=6`) + tela nativa.
+- **`strategic_indicators_hero`** — integração `GET /strategic-indicators/integrations/tv-dashboard-hero` + componente hero.
 
 ---
 

@@ -99,6 +99,8 @@ Envelope padrão: `{ success, message, data }`.
 | `production_otd_summary` | OTD + meta |
 | `quality_ppm_summary` | PPM + meta |
 | `supplies_stock_value` | Valor de estoque |
+| `supplies_stock_alert` | Top itens por valor em estoque (máx. 6) |
+| `strategic_indicators_hero` | Hero executivo IGD |
 
 Telas **externas**: URL + `sandbox` opcional em iframe.
 
@@ -166,8 +168,8 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 
 ## Backlog v2 (não implementado)
 
-- `supplies_stock_alert` — top itens críticos
-- `strategic_indicators_hero` — hero executivo
+- `supplies_stock_alert` — top itens críticos ✅
+- `strategic_indicators_hero` — hero executivo ✅
 - Gráficos Recharts em telas nativas OEE/OTD/PPM
 
 ---

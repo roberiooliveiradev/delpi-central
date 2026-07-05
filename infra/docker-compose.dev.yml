@@ -1172,6 +1172,7 @@ services:
       TZ: ${TZ}
       DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
       DELPI_API_CALLER_APP: tv-dashboard-api
+      STRATEGIC_INDICATORS_API_BASE_URL: ${STRATEGIC_INDICATORS_API_BASE_URL:-http://strategic-indicators-api:8000}
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
       PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
@@ -1188,6 +1189,7 @@ services:
       - keycloak
       - postgres-plugins
       - api-delpi
+      - strategic-indicators-api
 
     networks:
       - delpi-network

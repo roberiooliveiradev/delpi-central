@@ -41,6 +41,26 @@
       "durationSec": 40
     },
     {
+      "key": "preset_supplies_stock_alert",
+      "label": "Suprimentos — Itens críticos (nativa)",
+      "description": "Top 6 produtos por valor em estoque.",
+      "slideType": "native",
+      "title": "Suprimentos — Itens críticos",
+      "nativeScreenKey": "supplies_stock_alert",
+      "nativeConfig": { "itemLimit": 6 },
+      "durationSec": 45
+    },
+    {
+      "key": "preset_strategic_hero",
+      "label": "Indicadores — Hero IGD (nativa)",
+      "description": "Resumo executivo do Índice Global Delpi.",
+      "slideType": "native",
+      "title": "IGD — Hero executivo",
+      "nativeScreenKey": "strategic_indicators_hero",
+      "nativeConfig": {},
+      "durationSec": 50
+    },
+    {
       "key": "preset_portal_dashboard_production",
       "label": "Dashboard Produção (portal)",
       "description": "Iframe do plugin dashboard-production — requer login corporativo na origem.",

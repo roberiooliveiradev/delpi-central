@@ -41,6 +41,26 @@
       }
     },
     {
+      "key": "supplies_stock_alert",
+      "label": "Suprimentos — Itens críticos",
+      "category": "supplies",
+      "defaultDurationSec": 45,
+      "configSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "itemLimit": { "type": "integer", "default": 6, "label": "Máximo de itens (até 6)" }
+      }
+    },
+    {
+      "key": "strategic_indicators_hero",
+      "label": "Indicadores — Hero executivo (IGD)",
+      "category": "strategic",
+      "defaultDurationSec": 50,
+      "configSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "competence": { "type": "string", "optional": true, "label": "Competência (YYYY-MM)" }
+      }
+    },
+    {
       "key": "custom_message",
       "label": "Comunicado interno",
       "category": "general",

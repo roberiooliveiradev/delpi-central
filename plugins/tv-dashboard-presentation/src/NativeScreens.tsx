@@ -150,6 +150,109 @@ export function SuppliesStockValueScreen({
   );
 }
 
+export type StockAlertItem = {
+  productCode?: string;
+  description?: string;
+  stockValue?: unknown;
+  stockQuantity?: unknown;
+};
+
+export function SuppliesStockAlertScreen({
+  data,
+}: {
+  data: KpiScreenData & { items?: StockAlertItem[]; itemLimit?: number };
+}) {
+  if (data.error) return <ErrorScreen message={data.message} />;
+  const items = Array.isArray(data.items) ? data.items.slice(0, 6) : [];
+  return (
+    <div className="tdp-native-screen tdp-stock-alert">
+      <header className="tdp-stock-alert__header">
+        <p className="tdp-stock-alert__eyebrow">Suprimentos</p>
+        <h1 className="tdp-stock-alert__title">{data.label ?? "Itens críticos de estoque"}</h1>
+        <p className="tdp-stock-alert__period">
+          {data.branch ? `Filial ${data.branch}` : "Consolidado"}
+          {items.length ? ` · Top ${items.length}` : ""}
+        </p>
+      </header>
+      <div className="tdp-stock-alert__grid">
+        {items.length === 0 ? (
+          <p className="tdp-stock-alert__empty">Nenhum item crítico encontrado.</p>
+        ) : (
+          items.map((item, index) => (
+            <article key={`${item.productCode ?? index}`} className="tdp-stock-alert__card">
+              <span className="tdp-stock-alert__rank">{index + 1}</span>
+              <div className="tdp-stock-alert__copy">
+                <strong className="tdp-stock-alert__code">{item.productCode ?? "—"}</strong>
+                <p className="tdp-stock-alert__desc">{item.description ?? "—"}</p>
+              </div>
+              <div className="tdp-stock-alert__metrics">
+                <span className="tdp-stock-alert__metric-label">Valor</span>
+                <strong>{formatNumber(item.stockValue as number | string | null | undefined)}</strong>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+      <footer className="tdp-oee__footer">
+        <span>Minha DELPI · Painéis TV</span>
+      </footer>
+    </div>
+  );
+}
+
+export function StrategicIndicatorsHeroScreen({
+  data,
+}: {
+  data: KpiScreenData & {
+    igd?: unknown;
+    classification?: string;
+    trendLabel?: string;
+    bestDepartment?: string;
+    primaryRisk?: string;
+    competence?: string;
+  };
+}) {
+  if (data.error) return <ErrorScreen message={data.message} />;
+  return (
+    <div className="tdp-native-screen tdp-si-hero">
+      <header className="tdp-si-hero__header">
+        <p className="tdp-si-hero__eyebrow">Indicadores estratégicos</p>
+        <h1 className="tdp-si-hero__title">{data.label ?? "Índice Global Delpi"}</h1>
+        <p className="tdp-si-hero__period">
+          {data.competence ? `Competência ${data.competence}` : "Competência atual"}
+          {data.branch ? ` · Filial ${data.branch}` : " · Consolidado"}
+        </p>
+      </header>
+      <div className="tdp-si-hero__headline">
+        <div className="tdp-si-hero__igd-block">
+          <span className="tdp-si-hero__igd-label">IGD</span>
+          <strong className="tdp-si-hero__igd-value">
+            {formatNumber(data.igd as number | string | null | undefined)}
+          </strong>
+          <p className="tdp-si-hero__classification">{data.classification ?? "—"}</p>
+        </div>
+        <article className="tdp-si-hero__trend">
+          <span className="tdp-si-hero__chip-label">Tendência</span>
+          <strong>{data.trendLabel ?? "—"}</strong>
+        </article>
+      </div>
+      <div className="tdp-si-hero__highlights">
+        <article className="tdp-si-hero__highlight">
+          <span className="tdp-si-hero__chip-label">Destaque</span>
+          <strong>{data.bestDepartment ?? "—"}</strong>
+        </article>
+        <article className="tdp-si-hero__highlight">
+          <span className="tdp-si-hero__chip-label">Atenção</span>
+          <strong>{data.primaryRisk ?? "—"}</strong>
+        </article>
+      </div>
+      <footer className="tdp-oee__footer">
+        <span>Minha DELPI · Painéis TV</span>
+      </footer>
+    </div>
+  );
+}
+
 export function CustomMessageScreen({
   data,
 }: {
@@ -282,6 +385,29 @@ export function NativeSlideView({ native }: { native: NativeSlidePayload }) {
     return (
       <SuppliesStockValueScreen
         data={data as KpiScreenData & { stockValue?: unknown; currency?: string }}
+      />
+    );
+  }
+  if (key === "supplies_stock_alert") {
+    return (
+      <SuppliesStockAlertScreen
+        data={data as KpiScreenData & { items?: StockAlertItem[]; itemLimit?: number }}
+      />
+    );
+  }
+  if (key === "strategic_indicators_hero") {
+    return (
+      <StrategicIndicatorsHeroScreen
+        data={
+          data as KpiScreenData & {
+            igd?: unknown;
+            classification?: string;
+            trendLabel?: string;
+            bestDepartment?: string;
+            primaryRisk?: string;
+            competence?: string;
+          }
+        }
       />
     );
   }
