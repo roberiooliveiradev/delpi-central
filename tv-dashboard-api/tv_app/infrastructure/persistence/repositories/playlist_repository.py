@@ -304,6 +304,23 @@ class PlaylistRepository:
                 )
             conn.commit()
 
+    def touch_heartbeat(self, token: str) -> bool:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE tv_dashboard.playlists
+                    SET last_presented_at = NOW(),
+                        updated_at = updated_at
+                    WHERE public_token = %s AND is_active = TRUE
+                    RETURNING id
+                    """,
+                    (token.strip(),),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return row is not None
+
     def list_slides(self, playlist_id: UUID) -> list[dict[str, Any]]:
         with get_connection() as conn:
             with conn.cursor() as cur:

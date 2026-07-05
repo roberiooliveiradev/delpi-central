@@ -49,3 +49,10 @@ export async function refreshPublicPresentation(
 ): Promise<PublicPresentationPayload | null> {
   return fetchPublicPresentation(token);
 }
+
+export async function sendPresentationHeartbeat(token: string): Promise<void> {
+  await fetch(`${API_BASE}/public/present/${encodeURIComponent(token)}/heartbeat`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+  });
+}

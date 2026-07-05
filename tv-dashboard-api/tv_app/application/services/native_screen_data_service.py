@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from tv_app.application.services.native_screen_cache_service import (
+    build_native_data_cache_key,
+    get_cached_native_data,
+    set_cached_native_data,
+)
 from tv_app.infrastructure.gateways.delpi_production_gateway import DelpiProductionGateway
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     load_native_screens_catalog,
@@ -34,6 +39,37 @@ class NativeScreenDataService:
         authorization: str | None = None,
     ) -> dict[str, Any]:
         cfg = config or {}
+        if screen_key != "custom_message":
+            cache_key = build_native_data_cache_key(
+                screen_key=screen_key,
+                config=cfg,
+                authorization=authorization,
+            )
+            cached = get_cached_native_data(cache_key)
+            if cached is not None:
+                return cached
+
+        result = self._resolve_uncached(
+            screen_key=screen_key,
+            cfg=cfg,
+            authorization=authorization,
+        )
+        if screen_key != "custom_message" and not result.get("error"):
+            cache_key = build_native_data_cache_key(
+                screen_key=screen_key,
+                config=cfg,
+                authorization=authorization,
+            )
+            set_cached_native_data(cache_key, result)
+        return result
+
+    def _resolve_uncached(
+        self,
+        *,
+        screen_key: str,
+        cfg: dict[str, Any],
+        authorization: str | None,
+    ) -> dict[str, Any]:
         try:
             if screen_key == "production_oee_overview":
                 return self._gateway.fetch_oee_overview(

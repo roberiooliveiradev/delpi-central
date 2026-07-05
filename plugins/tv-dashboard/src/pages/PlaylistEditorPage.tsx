@@ -9,6 +9,7 @@ import {
   Plus,
   QrCode,
   RefreshCw,
+  Pencil,
   Trash2,
 } from "lucide-react";
 
@@ -26,12 +27,14 @@ import {
   regeneratePlaylistToken,
   reorderSlides,
   updatePlaylist,
+  updateSlide,
   type NativeScreenCatalogItem,
   type Playlist,
   type PresentationPayload,
   type Slide,
 } from "../api/tvDashboardApi";
 import { AddSlideModal } from "../components/AddSlideModal";
+import { EditSlideModal } from "../components/EditSlideModal";
 import { PresentationPreview } from "../presentation/PresentationPreview";
 
 type Props = {
@@ -60,6 +63,7 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<PresentationPayload | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editSlide, setEditSlide] = useState<Slide | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -176,6 +180,23 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
     if (!playlist) return;
     const copy = await duplicateSlide(playlist.id, slide.id);
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
+  }
+
+  async function handleSaveSlide(
+    slide: Slide,
+    payload: {
+      title: string;
+      durationSec: number;
+      nativeConfig?: Record<string, unknown>;
+      externalUrl?: string;
+    },
+  ) {
+    if (!playlist) return;
+    const updated = await updateSlide(playlist.id, slide.id, payload);
+    setPlaylist({
+      ...playlist,
+      slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+    });
   }
 
   async function openPreview() {
@@ -336,6 +357,9 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
                     <button type="button" className="td-btn td-btn--icon" disabled={idx === slides.length - 1} onClick={() => void moveSlide(slide, 1)} aria-label="Mover para baixo">
                       <ArrowDown size={14} />
                     </button>
+                    <button type="button" className="td-btn td-btn--icon" onClick={() => setEditSlide(slide)} aria-label="Editar tela">
+                      <Pencil size={14} />
+                    </button>
                     <button type="button" className="td-btn td-btn--icon" onClick={() => void handleDuplicateSlide(slide)} aria-label="Duplicar tela">
                       <Copy size={14} />
                     </button>
@@ -356,6 +380,17 @@ export function PlaylistEditorPage({ playlistId, onBack }: Props) {
         onClose={() => setAddModalOpen(false)}
         onAddNative={(payload) => void handleAddNative(payload)}
         onAddExternal={(payload) => void handleAddExternal(payload)}
+      />
+
+      <EditSlideModal
+        open={editSlide !== null}
+        slide={editSlide}
+        catalog={catalog}
+        defaultDurationSec={playlist.defaultDurationSec}
+        onClose={() => setEditSlide(null)}
+        onSave={(payload) => {
+          if (editSlide) void handleSaveSlide(editSlide, payload);
+        }}
       />
 
       {previewOpen && previewPayload ? (

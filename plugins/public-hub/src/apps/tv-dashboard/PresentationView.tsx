@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { PublicPresentationPayload, PublicSlide } from "./api";
-import { refreshPublicPresentation } from "./api";
+import type { PublicPresentationPayload } from "./api";
+import { refreshPublicPresentation, sendPresentationHeartbeat } from "./api";
+import { ExternalSlideView } from "./ExternalSlideView";
 import { NativeSlideView } from "./NativeScreens";
 import "./native-screens.css";
 
@@ -12,24 +13,7 @@ type PresentationViewProps = {
   onRefresh?: () => Promise<PublicPresentationPayload | null>;
 };
 
-function ExternalSlideView({
-  slide,
-}: {
-  slide: PublicSlide;
-}) {
-  const url = slide.external?.url ?? "";
-  const sandbox = slide.external?.sandbox ?? undefined;
-  return (
-    <iframe
-      className="tdp-external-frame"
-      src={url}
-      title={slide.title}
-      sandbox={sandbox}
-      allow="fullscreen"
-      referrerPolicy="no-referrer-when-downgrade"
-    />
-  );
-}
+const HEARTBEAT_INTERVAL_SEC = 60;
 
 export function PresentationView({
   payload: initialPayload,
@@ -102,6 +86,17 @@ export function PresentationView({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    if (mode !== "public" || !token) return;
+    const send = () => {
+      if (document.visibilityState === "hidden") return;
+      void sendPresentationHeartbeat(token).catch(() => undefined);
+    };
+    send();
+    const timer = window.setInterval(send, HEARTBEAT_INTERVAL_SEC * 1000);
+    return () => window.clearInterval(timer);
+  }, [mode, token]);
+
   if (!slides.length) {
     return (
       <div className="tdp-stage" data-viewport={viewport}>
@@ -126,7 +121,7 @@ export function PresentationView({
             {slide.slideType === "native" && slide.native ? (
               <NativeSlideView native={slide.native} />
             ) : (
-              <ExternalSlideView slide={slide} />
+              <ExternalSlideView slide={slide} active={active} />
             )}
           </div>
         );

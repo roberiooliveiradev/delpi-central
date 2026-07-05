@@ -13,5 +13,11 @@
       "grafana.com"
     ],
     "rejectionMessage": "Domínio não permitido. Use Power BI, Tableau ou outro host autorizado."
+  },
+  "nativeDataCache": {
+    "ttlSeconds": 120
+  },
+  "presentationHeartbeat": {
+    "intervalSec": 60
   }
 }

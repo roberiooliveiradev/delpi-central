@@ -4,9 +4,11 @@ from fastapi import APIRouter
 
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.core.responses import fail, ok
+from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 
 router = APIRouter(prefix="/public", tags=["Public"])
 _present = PresentationPayloadService()
+_repo = PlaylistRepository()
 
 
 @router.get("/present/{token}")
@@ -15,3 +17,10 @@ def public_present(token: str):
     if payload is None:
         return fail("Programação não encontrada ou desativada.", 404)
     return ok(payload)
+
+
+@router.post("/present/{token}/heartbeat")
+def public_heartbeat(token: str):
+    if not _repo.touch_heartbeat(token):
+        return fail("Programação não encontrada ou desativada.", 404)
+    return ok({"ok": True})
