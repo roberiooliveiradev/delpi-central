@@ -624,8 +624,8 @@ services:
 
   tv-dashboard:
     build:
-      context: ../plugins/tv-dashboard
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: tv-dashboard/Dockerfile
 
     container_name: delpi-tv-dashboard
     restart: unless-stopped
@@ -727,8 +727,8 @@ services:
 
   public-hub:
     build:
-      context: ../plugins/public-hub
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: public-hub/Dockerfile
       target: production
 
     container_name: delpi-public-hub
