@@ -46,6 +46,68 @@ def test_requires_llm_for_sql_authoring_modes():
     assert ChatAdvancedSqlSpecialistService.requires_llm_response(rel)
 
 
+def test_schema_prefetch_annotates_table_search_on_sql_authoring():
+    msg = (
+        "use sql para construir uma query que liste 5 produtos "
+        "na tabela de produtos, grupo 1008"
+    )
+    meta = ChatAdvancedSqlSpecialistService.annotate_schema_prefetch_tool_metadata(
+        msg,
+        {
+            "path": "/system/tables/search",
+            "ok": True,
+            "presentation": {"type": "table", "title": "Resultado da consulta"},
+        },
+    )
+
+    assert meta.get("sqlSchemaPrefetch") is True
+    assert meta.get("suppressClientPresentation") is True
+    assert "presentation" not in meta
+
+
+def test_table_search_not_internal_for_metadata_question():
+    meta = ChatAdvancedSqlSpecialistService.annotate_schema_prefetch_tool_metadata(
+        "qual a tabela de produtos?",
+        {"path": "/system/tables/search", "ok": True},
+    )
+
+    assert not meta.get("sqlSchemaPrefetch")
+
+
+def test_turn_has_only_sql_schema_prefetch_detects_authoring_prefetch():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "path": "/system/tables/search",
+                "sqlSchemaPrefetch": True,
+            },
+        }
+    ]
+
+    assert ChatAdvancedSqlSpecialistService.turn_has_only_sql_schema_prefetch(tool_calls)
+
+
+def test_compact_table_search_prefetch_context_lists_candidates():
+    humanized = ChatAdvancedSqlSpecialistService.compact_schema_prefetch_context(
+        message="use sql para listar produtos",
+        data={
+            "data": {
+                "results": [
+                    {"X2_ARQUIVO": "SB1010", "X2_NOME": "Cadastro de Produtos", "X2_CHAVE": "SB1"},
+                ]
+            }
+        },
+        metadata={"path": "/system/tables/search"},
+    )
+
+    joined = " ".join(str(line) for line in humanized.get("linhas") or [])
+    assert "SB1010" in joined
+    assert "Cadastro de Produtos" in joined
+
+
 def test_schema_prefetch_annotates_metadata():
     from app.domain.services.chat_advanced_sql_specialist_service import (
         ChatAdvancedSqlSpecialistService,

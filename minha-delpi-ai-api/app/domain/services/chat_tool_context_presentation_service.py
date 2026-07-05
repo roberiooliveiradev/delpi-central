@@ -64,6 +64,9 @@ class ChatToolContextPresentationService:
                 if not isinstance(metadata, dict):
                     continue
 
+                if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
+                    continue
+
                 if not metadata.get("ok"):
                     continue
 
@@ -446,6 +449,9 @@ class ChatToolContextPresentationService:
                 metadata = tool_call.get("metadata")
 
                 if not isinstance(metadata, dict):
+                    continue
+
+                if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
                     continue
 
                 if cls._rich_presentation_from_metadata(metadata):

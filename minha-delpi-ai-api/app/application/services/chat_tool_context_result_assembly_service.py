@@ -51,6 +51,26 @@ class ChatToolContextResultAssemblyService:
         pagination_continue_prompt = execution.pagination_continue_prompt
         context = execution.context
 
+        from app.domain.services.chat_advanced_sql_specialist_service import (
+            ChatAdvancedSqlSpecialistService,
+        )
+
+        if any(
+            isinstance(tool_call, dict)
+            and (tool_call.get("metadata") or {}).get("sqlSchemaPrefetch")
+            for tool_call in safe_tool_calls
+        ):
+            stripped = ChatAdvancedSqlSpecialistService.strip_schema_catalog_presentations(
+                {"toolCalls": safe_tool_calls}
+            )
+            safe_tool_calls = stripped.get("toolCalls", safe_tool_calls)
+
+        sql_schema_prefetch_only = (
+            ChatAdvancedSqlSpecialistService.turn_has_only_sql_schema_prefetch(
+                safe_tool_calls
+            )
+        )
+
         if execution.external_action_results:
             from app.application.services.chat_composite_direct_answer_service import (
                 ChatCompositeDirectAnswerService,
@@ -114,7 +134,7 @@ class ChatToolContextResultAssemblyService:
 
             if not ChatPresentationProseDeliveryService.should_omit_legacy_tool_context_direct_answer(
                 action_metadata,
-            ):
+            ) and not action_metadata.get("sqlSchemaPrefetch"):
                 direct_answer = host._auxiliary_service._build_direct_answer(
                     host._attach_request_sql(
                         last_external_action_data,
@@ -191,15 +211,19 @@ class ChatToolContextResultAssemblyService:
                 safe_tool_calls,
             )
 
-        presentation_answer = ChatToolContextPresentationService.prefer_presentation_direct_answer(
-            direct_answer,
-            safe_tool_calls,
-            message=raw_message,
-        )
+        if not sql_schema_prefetch_only:
+            presentation_answer = ChatToolContextPresentationService.prefer_presentation_direct_answer(
+                direct_answer,
+                safe_tool_calls,
+                message=raw_message,
+            )
 
-        if presentation_answer:
-            direct_answer = presentation_answer
-            skip_rag = True
+            if presentation_answer:
+                direct_answer = presentation_answer
+                skip_rag = True
+        else:
+            direct_answer = None
+            skip_rag = False
 
         if pagination_continue_prompt:
             direct_answer = (

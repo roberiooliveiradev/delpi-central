@@ -683,6 +683,12 @@
       "columnNamesHint": "Use exatamente estes nomes de coluna no SQL (não invente Codigo/Nome/Status genéricos).",
       "noMetadataOnlyHint": "Não responda apenas com tabela de metadados/colunas — isso foi prefetch interno."
     },
+    "schemaTableSearch": {
+      "userTitle": "Busca interna de tabelas (não exibir catálogo ao usuário)",
+      "resultsLine": "Candidatas Protheus: {tables}.",
+      "emptyFallback": "nenhuma tabela ranqueada — use SB1/SA1 conforme o domínio",
+      "hintLine": "Prefira a tabela cadastral principal (ex.: SB1 para produtos) e valide colunas em /columns antes do SELECT."
+    },
     "schemaRelations": {
       "userTitle": "Relações internas {table_name} (não exibir catálogo ao usuário)",
       "tableLine": "Tabela consultada: {table_name} — {count} relação(ões) no SX9.",

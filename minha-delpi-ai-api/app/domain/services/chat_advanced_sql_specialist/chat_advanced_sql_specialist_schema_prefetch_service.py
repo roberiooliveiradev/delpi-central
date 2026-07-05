@@ -28,6 +28,21 @@ from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_speciali
 
 
 class ChatAdvancedSqlSpecialistSchemaPrefetchService:
+    _CLIENT_PRESENTATION_KEYS = (
+        "presentation",
+        "tablePresentation",
+        "textPresentation",
+        "treePresentation",
+        "chartPresentation",
+        "presentationDecision",
+        "dataCoverageNotice",
+        "renderPlan",
+    )
+
+    @classmethod
+    def is_table_search_prefetch_path(cls, path: str | None) -> bool:
+        return "/system/tables/search" in str(path or "").lower()
+
     @classmethod
     def is_schema_prefetch_path(cls, path: str | None) -> bool:
         lowered = str(path or "").lower()
@@ -37,10 +52,19 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
         )
 
     @classmethod
+    def is_system_table_metadata_path(cls, path: str | None) -> bool:
+        return cls.is_table_search_prefetch_path(path) or cls.is_schema_prefetch_path(path)
+
+    @classmethod
     def should_treat_schema_as_internal(cls, message: str | None, *, path: str | None) -> bool:
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
-        if not sql_specialist_service().is_schema_prefetch_path(path):
+        path_str = str(path or "")
+
+        if cls.is_table_search_prefetch_path(path_str):
+            return ChatSqlIntentService.is_authoring_request(message)
+
+        if not cls.is_schema_prefetch_path(path_str):
             return False
 
         if ChatSqlIntentService.is_authoring_request(message):
@@ -58,6 +82,52 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
         }
 
     @classmethod
+    def turn_has_only_sql_schema_prefetch(cls, tool_calls: list | None) -> bool:
+        if not isinstance(tool_calls, list):
+            return False
+
+        successful_external: list[dict] = []
+
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata") or {}
+
+            if not metadata.get("ok"):
+                continue
+
+            status_code = metadata.get("statusCode")
+
+            try:
+                if not (200 <= int(status_code) < 300):
+                    continue
+            except (TypeError, ValueError):
+                continue
+
+            successful_external.append(tool_call)
+
+        if not successful_external:
+            return False
+
+        return all(
+            (tool_call.get("metadata") or {}).get("sqlSchemaPrefetch")
+            for tool_call in successful_external
+        )
+
+    @classmethod
+    def _strip_client_presentation_from_metadata(cls, metadata: dict) -> dict:
+        cleaned = dict(metadata)
+
+        for key in cls._CLIENT_PRESENTATION_KEYS:
+            cleaned.pop(key, None)
+
+        return cleaned
+
+    @classmethod
     def annotate_schema_prefetch_tool_metadata(
         cls,
         message: str | None,
@@ -73,7 +143,7 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
         meta["preferredFormat"] = "text"
         meta["currentMessage"] = str(message or "")
 
-        return meta
+        return cls._strip_client_presentation_from_metadata(meta)
 
     @classmethod
     def strip_schema_catalog_presentations(cls, result: dict) -> dict:
@@ -151,6 +221,10 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
         metadata: dict | None,
     ) -> dict[str, object]:
         path = str((metadata or {}).get("path") or "")
+
+        if cls.is_table_search_prefetch_path(path):
+            return cls._compact_table_search_prefetch_context(data=data)
+
         table_match = re.search(r"/system/tables/([A-Za-z0-9]+)", path, flags=re.IGNORECASE)
         table_name = table_match.group(1).upper() if table_match else "tabela"
 
@@ -288,6 +362,67 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
                     "advancedSqlSpecialist",
                     "schemaExplore",
                     "columnNamesHint",
+                ),
+                ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "schemaExplore",
+                    "noMetadataOnlyHint",
+                ),
+            ],
+        }
+
+    @classmethod
+    def _compact_table_search_prefetch_context(cls, *, data: object) -> dict[str, object]:
+        payload = data.get("data") if isinstance(data, dict) and "data" in data else data
+        candidates: list[str] = []
+
+        if isinstance(payload, dict):
+            raw_results = payload.get("results") or payload.get("items") or []
+
+            if isinstance(raw_results, list):
+                for item in raw_results[:8]:
+                    if not isinstance(item, dict):
+                        continue
+
+                    arquivo = str(item.get("X2_ARQUIVO") or item.get("x2_arquivo") or "").strip()
+                    nome = str(item.get("X2_NOME") or item.get("x2_nome") or "").strip()
+                    chave = str(item.get("X2_CHAVE") or item.get("x2_chave") or "").strip()
+
+                    if arquivo and nome:
+                        candidates.append(f"{arquivo} — {nome}")
+                    elif chave and nome:
+                        candidates.append(f"{chave} — {nome}")
+                    elif arquivo:
+                        candidates.append(arquivo)
+
+        return {
+            "titulo": ChatSqlIntentVocabularyService.text(
+                "advancedSqlSpecialist",
+                "schemaTableSearch",
+                "userTitle",
+            ),
+            "linhas": [
+                ChatSqlIntentVocabularyService.format(
+                    "advancedSqlSpecialist",
+                    "schemaTableSearch",
+                    "resultsLine",
+                    tables=", ".join(candidates)
+                    if candidates
+                    else ChatSqlIntentVocabularyService.text(
+                        "advancedSqlSpecialist",
+                        "schemaTableSearch",
+                        "emptyFallback",
+                    ),
+                ),
+                ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "schemaTableSearch",
+                    "hintLine",
+                ),
+                ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "schemaExplore",
+                    "deliveryHint",
                 ),
                 ChatSqlIntentVocabularyService.text(
                     "advancedSqlSpecialist",

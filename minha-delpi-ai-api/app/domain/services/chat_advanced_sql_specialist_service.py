@@ -78,6 +78,18 @@ class ChatAdvancedSqlSpecialistService:
         )
 
     @classmethod
+    def is_table_search_prefetch_path(cls, *args, **kwargs) -> bool:
+        return ChatAdvancedSqlSpecialistSchemaPrefetchService.is_table_search_prefetch_path(
+            *args, **kwargs
+        )
+
+    @classmethod
+    def turn_has_only_sql_schema_prefetch(cls, *args, **kwargs) -> bool:
+        return ChatAdvancedSqlSpecialistSchemaPrefetchService.turn_has_only_sql_schema_prefetch(
+            *args, **kwargs
+        )
+
+    @classmethod
     def should_treat_schema_as_internal(cls, *args, **kwargs) -> bool:
         return ChatAdvancedSqlSpecialistSchemaPrefetchService.should_treat_schema_as_internal(
             *args, **kwargs
