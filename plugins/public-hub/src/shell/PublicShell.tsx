@@ -9,7 +9,7 @@ type State =
   | { status: "loading" }
   | { status: "not-found"; message?: string }
   | { status: "error"; message: string }
-  | { status: "ready"; content: ReactNode };
+  | { status: "ready"; data: unknown };
 
 export function PublicShell() {
   const route = useMemo(() => resolveRoute(window.location.pathname), []);
@@ -39,7 +39,7 @@ export function PublicShell() {
           setState({ status: "not-found", message: page.notFoundMessage });
           return;
         }
-        setState({ status: "ready", content: page.render(data, ctx) });
+        setState({ status: "ready", data });
       })
       .catch((err: unknown) => {
         if (!active) return;
@@ -77,7 +77,11 @@ export function PublicShell() {
     );
   }
 
-  return <Stage chrome={chrome}>{state.content}</Stage>;
+  return (
+    <Stage chrome={chrome}>
+      {state.status === "ready" && page ? page.render(state.data, route!) : null}
+    </Stage>
+  );
 }
 
 type StageProps = {
@@ -97,11 +101,7 @@ function Stage({ children, chrome = "default" }: StageProps) {
   }, [chrome]);
 
   if (chrome === "kiosk") {
-    return (
-      <main className="pub-stage pub-stage--kiosk">
-        <div className="pub-content pub-content--kiosk">{children}</div>
-      </main>
-    );
+    return <div className="pub-kiosk-root">{children}</div>;
   }
 
   return (

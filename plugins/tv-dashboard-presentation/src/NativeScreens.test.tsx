@@ -1,0 +1,111 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import { NativeSlideView } from "./NativeScreens";
+import { usePresentationEngine } from "./usePresentationEngine";
+import type { PresentationPayloadLike } from "./types";
+
+const publicPayload: PresentationPayloadLike = {
+  playlist: {
+    id: "6e2d24be-051f-49fd-861b-07f1f4f64087",
+    name: "teste",
+    viewportProfile: "1080p",
+    transitionStyle: "fade",
+    globalRefreshSec: 300,
+    defaultDurationSec: 30,
+  },
+  presentationMeta: {
+    nativeErrorAdvanceSec: 10,
+    heartbeatIntervalSec: 60,
+  },
+  slides: [
+    {
+      id: "55e5c1b1-c432-42ed-b32d-47660c1f8b51",
+      sortOrder: 0,
+      slideType: "native",
+      durationSec: 30,
+      title: "Produção — OEE visão geral",
+      native: {
+        screenKey: "production_oee_overview",
+        config: { periodDays: 30 },
+        data: {
+          branch: null,
+          periodDays: 30,
+          startDate: "2026-06-05",
+          endDate: "2026-07-05",
+          oeePct: null,
+          targetPct: null,
+          status: null,
+          label: "OEE",
+        },
+      },
+    },
+    {
+      id: "32676cdc-03ae-4fb3-b29e-738ad3f58fff",
+      sortOrder: 1,
+      slideType: "native",
+      durationSec: 40,
+      title: "Produção — OTD",
+      native: {
+        screenKey: "production_otd_summary",
+        config: { periodDays: 30 },
+        data: {
+          branch: null,
+          periodDays: 30,
+          startDate: "2026-06-05",
+          endDate: "2026-07-05",
+          otdPct: null,
+          targetPct: null,
+          label: "OTD Produção",
+        },
+      },
+    },
+  ],
+};
+
+function PublicStagePreview({ payload }: { payload: PresentationPayloadLike }) {
+  const { index, slides, viewport, transition } = usePresentationEngine({
+    initialPayload: payload,
+    enableHiddenPause: false,
+  });
+
+  return (
+    <div className="tdp-stage tdp-stage--kiosk" data-viewport={viewport}>
+      {slides.map((slide, slideIndex) => {
+        const active = slideIndex === index;
+        return (
+          <div
+            key={slide.id}
+            className={`tdp-slide tdp-slide--${transition}${active ? " tdp-slide--active" : ""}`}
+          >
+            {slide.slideType === "native" && slide.native ? (
+              <NativeSlideView native={slide.native} />
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+describe("NativeScreens public payload", () => {
+  it("renders OEE overview with null KPI values", () => {
+    render(
+      <NativeSlideView
+        native={{
+          screenKey: "production_oee_overview",
+          config: { periodDays: 30 },
+          data: publicPayload.slides[0].native!.data,
+        }}
+      />,
+    );
+    expect(screen.getAllByText("OEE").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+  });
+
+  it("renders public stage with active slide", () => {
+    render(<PublicStagePreview payload={publicPayload} />);
+    expect(document.querySelector(".tdp-slide--active")).toBeTruthy();
+    expect(screen.getAllByText("OEE").length).toBeGreaterThan(0);
+  });
+});
