@@ -243,27 +243,34 @@ class ChatAdvancedSqlSpecialistProseFormattingService:
             )
         )
         uses_protheus = any(col.lower() in sql_lower for col in columns)
-
-        if not uses_generic and uses_protheus:
-            return text
-
-        replacement = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(
-            message, columns
+        domain_mismatch = ChatAdvancedSqlSpecialistPromptService._authoring_sql_domain_mismatch(
+            message=message,
+            sql_block=sql_block,
         )
 
-        if not replacement:
+        if not uses_generic and uses_protheus and not domain_mismatch:
             return text
 
-        if "```sql" in text.lower():
-            text = re.sub(
-                r"```sql\s*[\s\S]*?```",
-                f"```sql\n{replacement}\n```",
-                text,
-                count=1,
-                flags=re.IGNORECASE,
+        if domain_mismatch or uses_generic or not uses_protheus:
+            replacement = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(
+                message, columns
             )
-        else:
-            text = f"```sql\n{replacement}\n```\n\n{text}".strip()
 
-        return cls.format_sql_authoring_answer(text)
+            if not replacement:
+                return text
+
+            if "```sql" in text.lower():
+                text = re.sub(
+                    r"```sql\s*[\s\S]*?```",
+                    f"```sql\n{replacement}\n```",
+                    text,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+            else:
+                text = f"```sql\n{replacement}\n```\n\n{text}".strip()
+
+            return cls.format_sql_authoring_answer(text)
+
+        return text
 

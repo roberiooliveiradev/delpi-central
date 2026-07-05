@@ -69,35 +69,163 @@ class ChatAdvancedSqlSpecialistPromptService:
                     if token not in hints:
                         hints.append(token)
 
+            if "/tables/sb1" in path or (
+                metadata.get("sqlSchemaPrefetch")
+                and cls._authoring_context(message=str(metadata.get("currentMessage") or "")).get(
+                    "logicalTable"
+                )
+                == "SB1"
+            ):
+                for token in ("B1_COD", "B1_DESC", "B1_GRUPO", "D_E_L_E_T_"):
+                    if token not in hints:
+                        hints.append(token)
+
         return hints
 
     @classmethod
-    def _authoring_sql_from_message(cls, message: str | None, columns: list[str]) -> str | None:
+    def _authoring_context(cls, *, message: str | None, columns: list[str] | None = None) -> dict[str, Any]:
+        from app.domain.services.chat_sql_semantic_schema_mapper_service import (
+            ChatSqlSemanticSchemaMapperService,
+        )
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        table_match = re.search(
+        mapping = ChatSqlSemanticSchemaMapperService.map_message(message)
+        logical_table = "SA1"
+        code_col = "A1_COD"
+        name_col = "A1_NOME"
+        group_col: str | None = None
+
+        for item in mapping.get("matches") or []:
+            table_hints = item.get("tableHints") or []
+
+            if table_hints:
+                logical_table = str(table_hints[0]).upper()
+                break
+
+        explicit = re.search(
             r"\b(?:sa|sb|sc|sd|se|sf|sg|sh|si|sj|sk|sl|sm|sn|so|sp)[a-z]?\d{0,4}\b",
             normalized,
             flags=re.IGNORECASE,
         )
-        table_code = table_match.group(0).upper() if table_match else "SA1"
-        physical = f"{table_code}010" if not re.search(r"\d{3}$", table_code) else table_code
 
-        code_col = next((c for c in columns if "cod" in c.lower()), "A1_COD")
-        name_col = next((c for c in columns if "nome" in c.lower() and "cod" not in c.lower()), "A1_NOME")
+        if explicit:
+            logical_table = explicit.group(0).upper()
 
-        select_cols = [code_col]
+        if logical_table.startswith("SB"):
+            code_col = "B1_COD"
+            name_col = "B1_DESC"
+            group_col = "B1_GRUPO"
+        elif logical_table.startswith("SA"):
+            code_col = "A1_COD"
+            name_col = "A1_NOME"
 
-        if name_col and name_col not in select_cols:
-            select_cols.append(name_col)
+        column_list = list(columns or [])
 
-        if "ativ" in normalized and "D_E_L_E_T_" not in select_cols:
-            return (
-                f"SELECT {', '.join(select_cols)}\n"
-                f"FROM {physical}\n"
-                f"WHERE D_E_L_E_T_ = ''"
+        if column_list:
+            code_col = next(
+                (c for c in column_list if "cod" in c.lower()),
+                code_col,
+            )
+            name_col = next(
+                (
+                    c
+                    for c in column_list
+                    if (
+                        "nome" in c.lower()
+                        or "desc" in c.lower()
+                        or "name" in c.lower()
+                    )
+                    and "cod" not in c.lower()
+                ),
+                name_col,
+            )
+            group_col = next(
+                (c for c in column_list if "grupo" in c.lower()),
+                group_col,
             )
 
-        return f"SELECT {', '.join(select_cols)}\nFROM {physical}"
+        physical = (
+            logical_table
+            if re.search(r"\d{3}$", logical_table)
+            else f"{logical_table}010"
+        )
+
+        top_limit: int | None = None
+        top_match = re.search(r"\btop\s+(\d+)\b", normalized, flags=re.IGNORECASE)
+
+        if top_match:
+            top_limit = int(top_match.group(1))
+        else:
+            count_match = re.search(
+                r"\b(?:liste|listar|list|traga|mostre|retorne)\s+(\d+)\s+",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+
+            if count_match:
+                top_limit = int(count_match.group(1))
+
+        group_value: str | None = None
+        group_match = re.search(r"\bgrupo\s+(\d+)\b", normalized, flags=re.IGNORECASE)
+
+        if group_match:
+            group_value = group_match.group(1)
+
+        return {
+            "logicalTable": logical_table,
+            "physicalTable": physical,
+            "codeColumn": code_col,
+            "nameColumn": name_col,
+            "groupColumn": group_col,
+            "groupValue": group_value,
+            "topLimit": top_limit,
+        }
+
+    @classmethod
+    def _authoring_sql_from_message(cls, message: str | None, columns: list[str]) -> str | None:
+        ctx = cls._authoring_context(message=message, columns=columns)
+        select_prefix = (
+            f"SELECT TOP {ctx['topLimit']} "
+            if ctx.get("topLimit")
+            else "SELECT "
+        )
+        select_cols = [str(ctx["codeColumn"])]
+
+        if ctx.get("nameColumn") and ctx["nameColumn"] not in select_cols:
+            select_cols.append(str(ctx["nameColumn"]))
+
+        lines = [
+            f"{select_prefix}{', '.join(select_cols)}",
+            f"FROM {ctx['physicalTable']}",
+            "WHERE D_E_L_E_T_ = ''",
+        ]
+
+        if ctx.get("groupColumn") and ctx.get("groupValue"):
+            lines.append(f"  AND {ctx['groupColumn']} = '{ctx['groupValue']}'")
+
+        return "\n".join(lines)
+
+    @classmethod
+    def _authoring_sql_domain_mismatch(cls, *, message: str | None, sql_block: str) -> bool:
+        ctx = cls._authoring_context(message=message)
+        logical = str(ctx.get("logicalTable") or "").upper()
+        sql_lower = sql_block.lower()
+
+        if logical.startswith("SB"):
+            return (
+                "sa1010" in sql_lower
+                or "a1_cod" in sql_lower
+                or re.search(r"\ba1_[a-z0-9_]+\b", sql_lower) is not None
+            )
+
+        if logical.startswith("SA"):
+            return (
+                "sb1010" in sql_lower
+                or "b1_cod" in sql_lower
+                or re.search(r"\bb1_[a-z0-9_]+\b", sql_lower) is not None
+            )
+
+        return False
 
     @classmethod
     def ensure_required_sql_block(
@@ -113,6 +241,26 @@ class ChatAdvancedSqlSpecialistPromptService:
 
         if not sql_specialist_service().requires_llm_response(snapshot):
             return text
+
+        message = str((snapshot or {}).get("message") or "")
+        columns = cls._column_hints_from_prefetch(
+            (snapshot or {}).get("toolCalls") if isinstance(snapshot, dict) else None
+        )
+        authored = cls._authoring_sql_from_message(message, columns)
+
+        if authored and snapshot and str(snapshot.get("mode") or "") in {
+            "create",
+            "incremental_edit",
+        }:
+            intro = ChatSqlIntentVocabularyService.text(
+                "advancedSqlSpecialist",
+                "authoringHints",
+                "protheusPhysicalTable",
+            )
+
+            return f"{intro}\n\n```sql\n{authored}\n```\n\n{text}".strip() if text else (
+                f"{intro}\n\n```sql\n{authored}\n```"
+            )
 
         discovery = (
             snapshot.get("schemaDiscovery")
@@ -303,9 +451,26 @@ class ChatAdvancedSqlSpecialistPromptService:
                 "Prefetch GET /system/tables/* é contexto interno — não substitua o SQL por "
                 "tabela/catálogo de colunas, salvo se o usuário pediu explicitamente «quais colunas» ou «schema»."
             )
+            authoring_hint_key = "protheusPhysicalTable"
+            mapping = schema_discovery.get("semanticMapping") if isinstance(schema_discovery, dict) else {}
+
+            for item in (mapping or {}).get("matches") or []:
+                term = str((item or {}).get("term") or "").lower()
+
+                if term in {"produto", "produtos", "item", "sku"}:
+                    authoring_hint_key = "productCadastro"
+                    break
+
+                if term in {"cliente", "clientes", "customer"}:
+                    authoring_hint_key = "clientCadastro"
+                    break
+
             lines.append(
-                "No Protheus use nomes reais das colunas (ex.: A1_COD, A1_NOME, D_E_L_E_T_ = '' para ativos); "
-                "tabela física costuma ser sufixo 010 (SA1010) se o ambiente exigir."
+                ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "authoringHints",
+                    authoring_hint_key,
+                )
             )
         elif visualization:
             lines.append(

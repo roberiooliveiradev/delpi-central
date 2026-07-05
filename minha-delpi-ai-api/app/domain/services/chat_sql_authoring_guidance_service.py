@@ -193,6 +193,37 @@ class ChatSqlAuthoringGuidanceService:
         if selected:
             planned.append(selected)
 
+            action_id = str((selected.get("arguments") or {}).get("actionId") or "")
+            search_path = str(
+                (selected.get("metadata") or {}).get("path")
+                or selected.get("path")
+                or ""
+            ).lower()
+
+            if "/tables/search" in search_path or "search_tables" in action_id:
+                from app.domain.services.chat_sql_semantic_schema_mapper_service import (
+                    ChatSqlSemanticSchemaMapperService,
+                )
+
+                canonical_table: str | None = None
+                mapping = ChatSqlSemanticSchemaMapperService.map_message(message)
+
+                for item in mapping.get("matches") or []:
+                    table_hints = item.get("tableHints") or []
+
+                    if table_hints:
+                        canonical_table = str(table_hints[0]).upper()
+                        break
+
+                if canonical_table:
+                    col_selected = selection_service.select_system_metadata(
+                        f"colunas da tabela {canonical_table}",
+                        allowed_action_ids,
+                    )
+
+                    if col_selected and not cls._contains_same_action(planned, col_selected):
+                        planned.append(col_selected)
+
         return planned
 
     @classmethod

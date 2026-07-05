@@ -369,3 +369,93 @@ def test_apply_top_limit_inserts_when_missing():
     sql = "SELECT A1_COD, A1_NOME FROM SA1010 WHERE D_E_L_E_T_ = ''"
     updated = ChatSqlQueryRefinementService.apply_top_limit(sql, 10)
     assert "TOP 10" in updated.upper()
+
+
+def test_authoring_sql_from_message_product_group_sb1():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prompt_service import (
+        ChatAdvancedSqlSpecialistPromptService,
+    )
+
+    msg = (
+        "use sql para construir uma query que liste 5 produtos "
+        "na tabela de produtos, grupo 1008"
+    )
+    sql = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(msg, [])
+
+    assert sql is not None
+    assert "SB1010" in sql
+    assert "B1_COD" in sql
+    assert "B1_DESC" in sql
+    assert "TOP 5" in sql.upper()
+    assert "B1_GRUPO" in sql
+    assert "1008" in sql
+
+
+def test_normalize_replaces_sa1_with_sb1_for_product_authoring():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prose_formatting_service import (
+        ChatAdvancedSqlSpecialistProseFormattingService,
+    )
+
+    msg = (
+        "use sql para construir uma query que liste 5 produtos "
+        "na tabela de produtos, grupo 1008"
+    )
+    bad = (
+        "Segue a consulta.\n\n```sql\nSELECT A1_COD, A1_NOME FROM SA1010\n```\n\n"
+        "Esta consulta lista produtos do grupo 1008."
+    )
+    fixed = ChatAdvancedSqlSpecialistProseFormattingService.normalize_protheus_sql_answer(
+        bad,
+        message=msg,
+        tool_calls=[],
+    )
+
+    assert "SB1010" in fixed
+    assert "B1_COD" in fixed
+    assert "TOP 5" in fixed.upper()
+    assert "B1_GRUPO" in fixed
+    assert "1008" in fixed
+    assert "A1_COD" not in fixed
+    assert "SA1010" not in fixed
+
+
+def test_plan_schema_prefetch_chains_sb1_columns_after_table_search():
+    from app.domain.services.chat_sql_authoring_guidance_service import (
+        ChatSqlAuthoringGuidanceService,
+    )
+
+    class _StubSelection:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def select_system_metadata(self, prompt: str, allowed_action_ids: list[str]) -> dict:
+            self.calls.append(prompt)
+
+            if "colunas" in prompt.lower():
+                return {
+                    "arguments": {
+                        "actionId": "api_delpi.system.get_table_columns",
+                    },
+                    "metadata": {"path": "/system/tables/SB1/columns"},
+                }
+
+            return {
+                "arguments": {
+                    "actionId": "api_delpi.system.search_tables_system_tables_search_get",
+                },
+                "metadata": {"path": "/system/tables/search"},
+            }
+
+    msg = (
+        "use sql para construir uma query que liste 5 produtos "
+        "na tabela de produtos, grupo 1008"
+    )
+    selection = _StubSelection()
+    planned = ChatSqlAuthoringGuidanceService.plan_schema_prefetch(
+        selection,
+        message=msg,
+        allowed_action_ids=["api_delpi.system.search_tables_system_tables_search_get"],
+    )
+
+    assert len(planned) == 2
+    assert any("colunas da tabela SB1" in call for call in selection.calls)

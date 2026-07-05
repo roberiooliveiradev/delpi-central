@@ -62,6 +62,11 @@ def test_advanced_sql_specialist_vocabulary_loaded():
         "advancedSqlSpecialist",
         "sqlAuthoringIntro",
     )
+    assert ChatSqlIntentVocabularyService.text(
+        "advancedSqlSpecialist",
+        "authoringHints",
+        "productCadastro",
+    )
     assert ChatSqlIntentVocabularyService.mode_pattern_map().get("review")
     assert ChatSqlIntentVocabularyService.planner_hints()
 
