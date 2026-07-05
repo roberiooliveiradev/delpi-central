@@ -429,6 +429,16 @@ class PlaylistRepository:
     def reorder_slides(self, playlist_id: UUID, items: list[dict[str, int | str]]) -> list[dict[str, Any]]:
         with get_connection() as conn:
             with conn.cursor() as cur:
+                # Fase 1: ordens temporárias negativas — evita violar idx_slides_playlist_order ao trocar posições.
+                for offset, item in enumerate(items):
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.slides
+                        SET sort_order = %s, updated_at = NOW()
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (-1000 - offset, str(item["id"]), str(playlist_id)),
+                    )
                 for item in items:
                     cur.execute(
                         """

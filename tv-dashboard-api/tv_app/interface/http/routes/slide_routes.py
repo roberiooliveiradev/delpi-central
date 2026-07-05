@@ -103,6 +103,22 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
     return ok(slide, message="Tela adicionada.", status_code=201)
 
 
+@router.post("/reorder")
+def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not _ensure_playlist(playlist_id):
+        return fail("Programação não encontrada.", 404)
+    slides = _repo.reorder_slides(
+        playlist_id,
+        [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items],
+    )
+    return ok({"slides": slides}, message="Ordem atualizada.")
+
+
 @router.patch("/{slide_id}")
 def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: UpdateSlideBody):
     user = resolve_user(request)
@@ -158,19 +174,3 @@ def duplicate_slide(request: Request, playlist_id: UUID, slide_id: UUID):
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
     return ok(slide, message="Tela duplicada.", status_code=201)
-
-
-@router.post("/reorder")
-def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
-    slides = _repo.reorder_slides(
-        playlist_id,
-        [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items],
-    )
-    return ok({"slides": slides}, message="Ordem atualizada.")
