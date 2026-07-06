@@ -61,6 +61,10 @@ class Settings:
         "TM_REVISION_EVIDENCE_UPLOAD_DIR",
         default="/app/data/revisao-evidencias",
     )
+    TM_BACKUP_PACKAGE_MAX_BYTES: int = int(
+        _get_env("TM_BACKUP_PACKAGE_MAX_BYTES", default=str(500 * 1024 * 1024))
+        or str(500 * 1024 * 1024)
+    )
 
 
 settings = Settings()

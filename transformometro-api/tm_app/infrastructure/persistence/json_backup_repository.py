@@ -242,6 +242,7 @@ REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY = "revisao_diagrama_overlays"
 PROCESSO_DECOMPOSICAO_BUNDLE_KEY = "processo_decomposicao"
 INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY = "instancia_decomposicao_escopos"
 REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY = "revisao_decomposicao_overlays"
+REVISAO_EVIDENCIAS_BUNDLE_KEY = "revisao_evidencias"
 BUNDLE_KEYS = (
     *tuple(spec.bundle_key for spec in ENTITY_SPECS),
     SETOR_FILIAIS_BUNDLE_KEY,
@@ -252,6 +253,7 @@ BUNDLE_KEYS = (
     PROCESSO_DECOMPOSICAO_BUNDLE_KEY,
     INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY,
     REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY,
+    REVISAO_EVIDENCIAS_BUNDLE_KEY,
 )
 
 
@@ -360,6 +362,82 @@ class JsonBackupRepository(PluginBaseRepository):
             ORDER BY instancia_id ASC
             """
         )
+
+    def fetch_revisao_evidencias(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                evidencia_id,
+                revisao_id,
+                tipo,
+                nome_arquivo,
+                nome_armazenado,
+                tipo_mime,
+                tamanho_bytes,
+                descricao,
+                url_externa,
+                enviado_por_id,
+                enviado_por_nome,
+                created_at
+            FROM transformometro.revisao_evidencias
+            WHERE deleted_at IS NULL
+            ORDER BY created_at ASC
+            """
+        )
+
+    def fetch_revisao_evidencias_existing_ids(self) -> set[str]:
+        rows = self.fetch_all(
+            """
+            SELECT evidencia_id::text AS id
+            FROM transformometro.revisao_evidencias
+            WHERE deleted_at IS NULL
+            """
+        )
+        return {str(row["id"]) for row in rows}
+
+    def sync_revisao_evidencias(
+        self,
+        payload: dict[str, list[dict[str, Any]]],
+        *,
+        auto_commit: bool = False,
+    ) -> None:
+        for row in payload.get(REVISAO_EVIDENCIAS_BUNDLE_KEY, []) or []:
+            if not isinstance(row, dict) or not row.get("evidencia_id"):
+                continue
+            values = {
+                col: row[col]
+                for col in (
+                    "evidencia_id",
+                    "revisao_id",
+                    "tipo",
+                    "nome_arquivo",
+                    "nome_armazenado",
+                    "tipo_mime",
+                    "tamanho_bytes",
+                    "descricao",
+                    "url_externa",
+                    "enviado_por_id",
+                    "enviado_por_nome",
+                    "created_at",
+                )
+                if col in row
+            }
+            cols = list(values.keys())
+            placeholders = ", ".join(["%s"] * len(cols))
+            col_sql = ", ".join(cols)
+            update_cols = [c for c in cols if c != "evidencia_id"]
+            update_sql = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
+            self.execute(
+                f"""
+                INSERT INTO transformometro.revisao_evidencias ({col_sql})
+                VALUES ({placeholders})
+                ON CONFLICT (evidencia_id) DO UPDATE SET {update_sql}
+                """,
+                tuple(values[c] for c in cols),
+                auto_commit=False,
+            )
+        if auto_commit:
+            self._connection.commit()
 
     def fetch_revisao_decomposicao_overlays(self) -> list[dict[str, Any]]:
         return self.fetch_all(
@@ -606,6 +684,7 @@ class JsonBackupRepository(PluginBaseRepository):
             """
             TRUNCATE TABLE
                 transformometro.dashboard_calculos,
+                transformometro.revisao_evidencias,
                 transformometro.revisao_decomposicao_overlays,
                 transformometro.instancia_decomposicao_escopo,
                 transformometro.processo_decomposicao,

@@ -73,6 +73,10 @@ def _sample_bundle() -> dict:
                 "deletado": False,
             }
         ],
+        "processo_decomposicao": [],
+        "instancia_decomposicao_escopos": [],
+        "revisao_decomposicao_overlays": [],
+        "revisao_evidencias": [],
     }
 
 

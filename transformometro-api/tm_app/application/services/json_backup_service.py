@@ -24,6 +24,7 @@ from tm_app.infrastructure.persistence.json_backup_repository import (
     PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
     REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY,
     REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
+    REVISAO_EVIDENCIAS_BUNDLE_KEY,
     SETOR_FILIAIS_BUNDLE_KEY,
     EntitySpec,
     JsonBackupRepository,
@@ -32,7 +33,8 @@ from tm_app.infrastructure.persistence.json_backup_repository import (
 ExportMode = Literal["replace", "merge"]
 ImportFormat = Literal["auto", "modern", "legacy"]
 ResolvedImportFormat = Literal["modern", "legacy"]
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
+SUPPORTED_SCHEMA_VERSIONS = frozenset({SCHEMA_VERSION, "1.1", "1.0"})
 LEGACY_IMPORT_NAMESPACE = NAMESPACE_DNS
 
 IMPORT_FORMAT_INCOMPATIBLE_MESSAGE = (
@@ -84,7 +86,7 @@ def _is_transformometro_backup(payload: dict[str, Any]) -> bool:
         return False
 
     schema_version = payload.get("schema_version")
-    if schema_version is not None and schema_version not in {SCHEMA_VERSION, "1.0"}:
+    if schema_version is not None and schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         return False
 
     markers = {
@@ -221,6 +223,7 @@ class JsonBackupService:
         data["processo_decomposicao"] = self._repo.fetch_processo_decomposicao()
         data["instancia_decomposicao_escopos"] = self._repo.fetch_instancia_decomposicao_escopos()
         data["revisao_decomposicao_overlays"] = self._repo.fetch_revisao_decomposicao_overlays()
+        data["revisao_evidencias"] = self._repo.fetch_revisao_evidencias()
         data = self._repo.ensure_bundle_parent_rows(data)
         return {
             "schema_version": SCHEMA_VERSION,
@@ -266,9 +269,9 @@ class JsonBackupService:
     def validate_bundle(self, payload: dict[str, Any]) -> list[str]:
         errors: list[str] = []
 
-        if payload.get("schema_version") != SCHEMA_VERSION:
+        if payload.get("schema_version") not in SUPPORTED_SCHEMA_VERSIONS:
             errors.append(
-                f"schema_version inválida (esperado {SCHEMA_VERSION!r})."
+                f"schema_version inválida (esperado {SCHEMA_VERSION!r} ou legado 1.1)."
             )
 
         for key in BUNDLE_KEYS:
@@ -351,6 +354,25 @@ class JsonBackupService:
                     if pk_str in seen_diagram:
                         errors.append(f"{key}: {pk_field} duplicado ({pk_str}).")
                     seen_diagram.add(pk_str)
+                continue
+
+            if key == REVISAO_EVIDENCIAS_BUNDLE_KEY:
+                seen_evidence: set[str] = set()
+                for index, row in enumerate(rows):
+                    if not isinstance(row, dict):
+                        errors.append(f"{key}[{index}]: registro deve ser objeto.")
+                        continue
+                    evidencia_id = row.get("evidencia_id")
+                    revisao_id = row.get("revisao_id")
+                    if not evidencia_id:
+                        errors.append(f"{key}[{index}]: evidencia_id obrigatório.")
+                    if not revisao_id:
+                        errors.append(f"{key}[{index}]: revisao_id obrigatório.")
+                    if evidencia_id:
+                        pk_str = _norm_id(evidencia_id)
+                        if pk_str in seen_evidence:
+                            errors.append(f"{key}: evidencia_id duplicado ({pk_str}).")
+                        seen_evidence.add(pk_str)
                 continue
 
             spec = _entity_spec_for_key(key)
@@ -477,6 +499,14 @@ class JsonBackupService:
                         f"revisao_decomposicao_overlays: revisao_id={rid} não está em revisoes no JSON."
                     )
 
+        for row in payload.get(REVISAO_EVIDENCIAS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("revisao_id"):
+                rid = _norm_id(row["revisao_id"])
+                if rid not in revisao_ids:
+                    errors.append(
+                        f"revisao_evidencias: revisao_id={rid} não está em revisoes no JSON."
+                    )
+
         return _dedupe_errors(errors)
 
     def preview(
@@ -562,6 +592,30 @@ class JsonBackupService:
                 "skip": skip,
             }
 
+        evidence_rows = prepared.get(REVISAO_EVIDENCIAS_BUNDLE_KEY, [])
+        evidence_existing = self._repo.fetch_revisao_evidencias_existing_ids()
+        ev_insert = ev_update = ev_skip = 0
+        for row in evidence_rows:
+            if not isinstance(row, dict):
+                continue
+            pk = str(row.get("evidencia_id", ""))
+            if not pk:
+                ev_skip += 1
+                continue
+            if mode == "merge":
+                if pk in evidence_existing:
+                    ev_update += 1
+                else:
+                    ev_insert += 1
+            else:
+                ev_insert += 1
+        entities[REVISAO_EVIDENCIAS_BUNDLE_KEY] = {
+            "total": len(evidence_rows),
+            "insert": ev_insert,
+            "update": ev_update,
+            "skip": ev_skip,
+        }
+
         sf_rows = prepared.get(SETOR_FILIAIS_BUNDLE_KEY, [])
         entities[SETOR_FILIAIS_BUNDLE_KEY] = {
             "total": len(sf_rows),
@@ -625,6 +679,7 @@ class JsonBackupService:
             self._sync_processo_instancia_setores_from_payload(prepared)
             self._repo.sync_diagram_bundles(prepared, auto_commit=False)
             self._repo.sync_decomposition_bundles(prepared, auto_commit=False)
+            self._repo.sync_revisao_evidencias(prepared, auto_commit=False)
 
             self._repo._connection.commit()
         except Exception:

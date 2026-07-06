@@ -1,6 +1,6 @@
-# Backup JSON — Transformômetro
+# Backup JSON e pacote — Transformômetro
 
-Exportação e importação cadastral via `/transformometro/data/export` e `/transformometro/data/import/*`.
+Exportação e importação via `/transformometro/data/export` (JSON), `/transformometro/data/export/package` (pacote `.tmbackup.zip`) e rotas `/import/*`.
 
 ## Versão do pacote
 
@@ -8,8 +8,30 @@ Exportação e importação cadastral via `/transformometro/data/export` e `/tra
 |------------------|---------|
 | `1.0` | Processos, revisões, medições, investimentos, recursos |
 | `1.1` | Inclui `setores`, `setor_filiais` e valida FK `processos.setor_id` → `setores` |
+| `1.2` | Diagramas (PB19), decomposição WBS (PB20), `contexto` de instância, `revisao_evidencias` |
 
-Pacotes `1.0` devem ser reexportados após upgrade da API; importação exige `schema_version: "1.1"`.
+Importação aceita `schema_version` **1.1** ou **1.2** (chaves ausentes em 1.1 são tratadas como listas vazias).
+
+## Pacote `.tmbackup.zip` (recomendado)
+
+```
+transformometro-backup-YYYYMMDD-HHMMSS.tmbackup.zip
+├── manifest.json       # formato, schema, SHA-256 por arquivo
+├── cadastro.json       # bundle JSON (schema 1.2)
+└── evidencias/
+    └── {revisao_id}/
+        └── {nome_armazenado}
+```
+
+| Rota | Método | Descrição |
+|------|--------|-----------|
+| `/transformometro/data/export/package` | GET | Download do pacote completo |
+| `/transformometro/data/import/package/preview` | POST multipart | Pré-visualização (`file`, `mode`, `import_format`) |
+| `/transformometro/data/import/package/apply` | POST multipart | Aplica cadastro + restaura evidências |
+
+Limite padrão: `TM_BACKUP_PACKAGE_MAX_BYTES` (500 MB). Modo `replace` apaga evidências no volume antes de restaurar o pacote.
+
+O export JSON (`GET /export`) **não** inclui binários de evidência — só metadados em `revisao_evidencias` quando exportado via pacote ou após upgrade 1.2.
 
 ## Formatos de importação (`import_format`)
 
@@ -44,8 +66,10 @@ Ordem lógica de dependência:
 8. **`processo_diagramas`** — macro `flowchart_v1` por `processo_id` (Playbook 19, V026)
 9. **`instancia_diagrama_escopos`** — escopo de nós por `instancia_id` (V027)
 10. **`revisao_diagrama_overlays`** — overlay as-is/to-be por `revisao_id` (V028)
+11. **`processo_decomposicao`**, **`instancia_decomposicao_escopos`**, **`revisao_decomposicao_overlays`** — mapeamento WBS (PB20, V030–V032)
+12. **`revisao_evidencias`** — metadados de evidências por revisão (V024); binários só no pacote `.tmbackup.zip`
 
-Diagramas dependem de `processos` → `processo_instancias` → `revisoes` na importação (FK validada no preview).
+Diagramas e decomposição dependem de `processos` → `processo_instancias` → `revisoes` na importação (FK validada no preview).
 
 ### Instância multi-unidade (`todas_filiais_ativas`)
 
@@ -157,6 +181,7 @@ Regra de economia multi-unidade no motor: [regras-de-calculo.md](regras-de-calcu
 
 ## Código
 
-- Serviço: `tm_app/application/services/json_backup_service.py`
+- Serviço JSON: `tm_app/application/services/json_backup_service.py`
+- Pacote ZIP: `tm_app/application/services/backup_package_service.py`
 - Repositório: `tm_app/infrastructure/persistence/json_backup_repository.py`
-- Testes: `tests/test_json_backup_service.py`
+- Testes: `tests/test_json_backup_service.py`, `tests/test_backup_package_service.py`

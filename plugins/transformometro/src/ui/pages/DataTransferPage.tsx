@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { AlertTriangle, ArrowDownUp, Download, FileJson, RefreshCw, Upload } from "lucide-react";
+import { AlertTriangle, Archive, ArrowDownUp, Download, FileJson, RefreshCw, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { HelpTooltip, TableHeader } from "../../components/HelpTooltip";
@@ -8,8 +8,11 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   applyJsonImport,
+  applyPackageImport,
   downloadJsonExport,
+  downloadPackageExport,
   previewJsonImport,
+  previewPackageImport,
   type JsonBackupBundle,
   type JsonImportMode,
   type JsonImportPreview,
@@ -21,29 +24,41 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate: (path: string) => void;
 };
 
+type ImportSource = "json" | "package";
+
 const ENTITY_LABELS: Record<string, string> = {
   filiais: "Unidades",
   setores: "Departamentos",
   setor_filiais: "Departamento × unidade",
   processos: "Processos",
   processo_instancias: "Instâncias de processo",
+  processo_instancia_setores: "Instância × departamento",
+  processo_diagramas: "Diagramas de processo",
+  instancia_diagrama_escopos: "Escopos de diagrama",
+  revisao_diagrama_overlays: "Overlays de diagrama",
+  processo_decomposicao: "Mapeamento (WBS)",
+  instancia_decomposicao_escopos: "Escopos de mapeamento",
+  revisao_decomposicao_overlays: "Overlays de mapeamento",
   revisoes: "Revisões",
   medicoes: "Medições",
   investimentos: "Investimentos",
   recursos_compartilhados: "Recursos compartilhados",
   recurso_custos: "Custos de recurso",
   revisao_recursos_compartilhados: "Vínculos revisão ↔ recurso",
+  revisao_evidencias: "Evidências de revisão",
 };
 
 const RESOLVED_FORMAT_LABELS: Record<"legacy" | "modern", string> = {
   legacy: "backup legado (1.1)",
-  modern: "Playbook 18",
+  modern: "Playbook 18+",
 };
 
 export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<JsonImportMode>("merge");
+  const [importSource, setImportSource] = useState<ImportSource>("package");
   const [bundle, setBundle] = useState<JsonBackupBundle | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState<JsonImportPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,14 +70,27 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     setSuccess(null);
   };
 
-  const onExport = useCallback(async () => {
+  const onExportPackage = useCallback(async () => {
     clearMessages();
-    setBusy("export");
+    setBusy("export-package");
+    try {
+      await downloadPackageExport(getAccessToken);
+      setSuccess("Exportação concluída — pacote .tmbackup.zip baixado (cadastro + evidências).");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao exportar pacote.");
+    } finally {
+      setBusy(null);
+    }
+  }, [getAccessToken]);
+
+  const onExportJson = useCallback(async () => {
+    clearMessages();
+    setBusy("export-json");
     try {
       await downloadJsonExport(getAccessToken);
-      setSuccess("Exportação concluída — arquivo JSON baixado.");
+      setSuccess("Exportação concluída — arquivo JSON baixado (sem binários de evidência).");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao exportar.");
+      setError(err instanceof Error ? err.message : "Erro ao exportar JSON.");
     } finally {
       setBusy(null);
     }
@@ -71,28 +99,45 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
   const onFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     clearMessages();
     setPreview(null);
+    setBundle(null);
+    setImportFile(null);
     const file = event.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
+
+    const lower = file.name.toLowerCase();
+    if (lower.endsWith(".zip") || lower.endsWith(".tmbackup.zip")) {
+      setImportSource("package");
+      setImportFile(file);
+      return;
+    }
+
+    setImportSource("json");
     try {
       const text = await file.text();
       const parsed = JSON.parse(text) as JsonBackupBundle;
       setBundle(parsed);
     } catch {
-      setBundle(null);
-      setError("Arquivo inválido — envie um JSON exportado pelo Transformômetro.");
+      setError("Arquivo inválido — envie um JSON ou pacote .tmbackup.zip exportado pelo Transformômetro.");
     }
   }, []);
 
   const onPreview = useCallback(async () => {
-    if (!bundle) {
+    if (importSource === "package" && !importFile) {
+      setError("Selecione um pacote .zip antes de pré-visualizar.");
+      return;
+    }
+    if (importSource === "json" && !bundle) {
       setError("Selecione um arquivo JSON antes de pré-visualizar.");
       return;
     }
     clearMessages();
     setBusy("preview");
     try {
-      const result = await previewJsonImport(bundle, mode, "auto", getAccessToken);
+      const result =
+        importSource === "package" && importFile
+          ? await previewPackageImport(importFile, mode, "auto", getAccessToken)
+          : await previewJsonImport(bundle!, mode, "auto", getAccessToken);
       setPreview(result);
       if (!result.valid) {
         setError((result.errors ?? []).join(" ") || "Pacote inválido.");
@@ -102,45 +147,60 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     } finally {
       setBusy(null);
     }
-  }, [bundle, mode, getAccessToken]);
+  }, [importSource, importFile, bundle, mode, getAccessToken]);
 
   const onApply = useCallback(async () => {
-    if (!bundle) {
+    if (importSource === "package" && !importFile) {
+      setError("Selecione um pacote .zip antes de importar.");
+      return;
+    }
+    if (importSource === "json" && !bundle) {
       setError("Selecione um arquivo JSON antes de importar.");
       return;
     }
     if (mode === "replace") {
       const ok = window.confirm(
-        "Substituir todos os dados apagará departamentos, processos, revisões, medições, investimentos e recursos atuais. Deseja continuar?"
+        "Substituir todos os dados apagará departamentos, processos, revisões, medições, investimentos, recursos e evidências atuais. Deseja continuar?"
       );
       if (!ok) return;
     }
     clearMessages();
     setBusy("apply");
     try {
-      const result = await applyJsonImport(bundle, mode, "auto", getAccessToken);
+      const result =
+        importSource === "package" && importFile
+          ? await applyPackageImport(importFile, mode, "auto", getAccessToken)
+          : await applyJsonImport(bundle!, mode, "auto", getAccessToken);
       setPreview(result as JsonImportPreview);
       const rows = result.recalc?.rows_upserted ?? 0;
+      const evidence =
+        result.evidence_files_restored != null
+          ? ` ${result.evidence_files_restored} arquivo(s) de evidência restaurado(s).`
+          : "";
       setSuccess(
-        `Importação concluída (${mode === "replace" ? "substituição total" : "mesclagem por ID"}). Dashboard recalculado (${rows} linhas derivadas).`
+        `Importação concluída (${mode === "replace" ? "substituição total" : "mesclagem por ID"}). Dashboard recalculado (${rows} linhas derivadas).${evidence}`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro na importação.");
     } finally {
       setBusy(null);
     }
-  }, [bundle, mode, getAccessToken]);
+  }, [importSource, importFile, bundle, mode, getAccessToken]);
 
   const selectMode = (next: JsonImportMode) => {
     setMode(next);
     setPreview(null);
   };
 
+  const hasImportFile =
+    (importSource === "package" && importFile !== null) ||
+    (importSource === "json" && bundle !== null);
+
   return (
     <TransformometroShell>
       <PageHeader
-        title="Exportar / Importar JSON"
-        subtitle="Backup completo do cadastro (processos, revisões, medições, investimentos e recursos)."
+        title="Exportar / Importar"
+        subtitle="Backup completo em pacote (.tmbackup.zip) com cadastro, diagramas, mapeamento e evidências."
         currentPath={pathname}
         onNavigate={onNavigate}
       />
@@ -172,20 +232,31 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                   />
                 </h2>
                 <p className="ds-hint">
-                  Gera um arquivo <code>.json</code> com todo o cadastro atual para backup ou
-                  transferência entre ambientes.
+                  O pacote <code>.tmbackup.zip</code> inclui cadastro, diagramas, mapeamento WBS e
+                  arquivos de evidência. Use JSON apenas para transferência leve sem anexos.
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              className="ds-primary-btn"
-              disabled={busy !== null}
-              onClick={() => void onExport()}
-            >
-              <Download size={16} aria-hidden />
-              {busy === "export" ? "Exportando…" : "Baixar backup JSON"}
-            </button>
+            <div className="tm-data-transfer__toolbar">
+              <button
+                type="button"
+                className="ds-primary-btn"
+                disabled={busy !== null}
+                onClick={() => void onExportPackage()}
+              >
+                <Archive size={16} aria-hidden />
+                {busy === "export-package" ? "Exportando…" : "Baixar pacote completo"}
+              </button>
+              <button
+                type="button"
+                className="ds-ghost-btn"
+                disabled={busy !== null}
+                onClick={() => void onExportJson()}
+              >
+                <FileJson size={16} aria-hidden />
+                {busy === "export-json" ? "Exportando…" : "Só JSON"}
+              </button>
+            </div>
           </section>
 
           <section className="ds-card tm-data-transfer__panel tm-data-transfer__panel--import">
@@ -196,8 +267,8 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               <div className="tm-data-transfer__panel-text">
                 <h2 className="ds-section-title">Importar</h2>
                 <p className="ds-hint">
-                  Envie um backup exportado neste app. O formato é detectado automaticamente (legado
-                  ou Playbook 18). Pré-visualize o impacto antes de aplicar.
+                  Envie um pacote <code>.tmbackup.zip</code> (recomendado) ou JSON exportado neste
+                  app. Pré-visualize o impacto antes de aplicar.
                 </p>
               </div>
             </div>
@@ -241,7 +312,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                     Substituir tudo
                   </span>
                   <span className="tm-data-transfer__mode-desc">
-                    Apaga o cadastro atual e importa somente o conteúdo do JSON.
+                    Apaga o cadastro atual e importa somente o conteúdo do pacote.
                   </span>
                 </label>
               </div>
@@ -255,12 +326,16 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/json,.json"
+                accept="application/json,.json,application/zip,.zip,.tmbackup.zip"
                 hidden
                 onChange={(e) => void onFileChange(e)}
               />
               <div className="tm-data-transfer__file-row">
-                <FileJson size={20} aria-hidden style={{ color: "var(--ds-accent)", flexShrink: 0 }} />
+                {importSource === "package" ? (
+                  <Archive size={20} aria-hidden style={{ color: "var(--ds-accent)", flexShrink: 0 }} />
+                ) : (
+                  <FileJson size={20} aria-hidden style={{ color: "var(--ds-accent)", flexShrink: 0 }} />
+                )}
                 <span
                   className={`tm-data-transfer__file-name${
                     fileName ? " tm-data-transfer__file-name--selected" : ""
@@ -268,6 +343,11 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                   title={fileName ?? undefined}
                 >
                   {fileName ?? "Nenhum arquivo selecionado"}
+                  {fileName ? (
+                    <span className="ds-hint" style={{ display: "block", marginTop: 4 }}>
+                      Formato: {importSource === "package" ? "pacote completo" : "JSON"}
+                    </span>
+                  ) : null}
                 </span>
                 <button
                   type="button"
@@ -283,7 +363,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               <button
                 type="button"
                 className="ds-ghost-btn"
-                disabled={!bundle || busy !== null}
+                disabled={!hasImportFile || busy !== null}
                 onClick={() => void onPreview()}
               >
                 <RefreshCw size={16} aria-hidden />
@@ -292,7 +372,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               <button
                 type="button"
                 className="ds-primary-btn"
-                disabled={!bundle || busy !== null}
+                disabled={!hasImportFile || busy !== null}
                 onClick={() => void onApply()}
               >
                 {busy === "apply" ? "Importando…" : "Aplicar importação"}
@@ -314,6 +394,14 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                 <h3 className="ds-section-title tm-data-transfer__preview-title">
                   Resumo da pré-visualização
                 </h3>
+                {preview.package_format ? (
+                  <p className="tm-data-transfer__format-summary">
+                    Pacote {preview.package_version ?? ""} · schema {preview.manifest_schema_version ?? "—"}
+                    {preview.evidence_files
+                      ? ` · ${preview.evidence_files.in_package} arquivo(s) de evidência`
+                      : ""}
+                  </p>
+                ) : null}
                 {preview.resolved_format ? (
                   <p className="tm-data-transfer__format-summary">
                     Formato detectado: {RESOLVED_FORMAT_LABELS[preview.resolved_format]}

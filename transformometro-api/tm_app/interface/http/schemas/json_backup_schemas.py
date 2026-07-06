@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 ImportMode = Literal["replace", "merge"]
 ImportFormat = Literal["auto", "modern", "legacy"]
+JsonImportMode = ImportMode
 
 
 class JsonImportBody(BaseModel):

@@ -1069,10 +1069,88 @@ export type JsonImportPreview = {
   current_counts?: Record<string, number>;
   import_counts?: Record<string, number>;
   recalc?: DashboardRecalcResult;
+  package_format?: string;
+  package_version?: string;
+  manifest_schema_version?: string;
+  evidence_files?: {
+    in_package: number;
+    expected_from_metadata: number;
+    missing_paths?: string[];
+  };
+  evidence_files_restored?: number;
 };
 
 export function downloadJsonExport(getAccessToken?: () => string | undefined) {
   return downloadFile("/data/export", "transformometro-backup.json", getAccessToken);
+}
+
+export function downloadPackageExport(getAccessToken?: () => string | undefined) {
+  return downloadFile(
+    "/data/export/package",
+    "transformometro-backup.tmbackup.zip",
+    getAccessToken
+  );
+}
+
+async function uploadPackageFile<T>(
+  path: string,
+  file: File,
+  mode: JsonImportMode,
+  importFormat: JsonImportFormat,
+  getAccessToken?: () => string | undefined
+): Promise<T> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("mode", mode);
+  form.append("import_format", importFormat);
+
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}${path}`, {
+    method: "POST",
+    headers: buildAuthHeaders(getAccessToken),
+    body: form,
+  });
+
+  const body = (await response.json()) as {
+    success?: boolean;
+    data?: T;
+    message?: string;
+    detail?: string;
+  };
+
+  if (!response.ok || body.success === false) {
+    throw new Error(body.message || body.detail || `Erro HTTP ${response.status}`);
+  }
+  return body.data as T;
+}
+
+export function previewPackageImport(
+  file: File,
+  mode: JsonImportMode,
+  importFormat: JsonImportFormat = "auto",
+  getAccessToken?: () => string | undefined
+) {
+  return uploadPackageFile<JsonImportPreview>(
+    "/data/import/package/preview",
+    file,
+    mode,
+    importFormat,
+    getAccessToken
+  );
+}
+
+export function applyPackageImport(
+  file: File,
+  mode: JsonImportMode,
+  importFormat: JsonImportFormat = "auto",
+  getAccessToken?: () => string | undefined
+) {
+  return uploadPackageFile<JsonImportPreview>(
+    "/data/import/package/apply",
+    file,
+    mode,
+    importFormat,
+    getAccessToken
+  );
 }
 
 export function previewJsonImport(
