@@ -131,7 +131,12 @@ export function ProcessoDecompositionSection({
       </div>
 
       {tab === "arvore" ? (
-        <DecompositionTreeEditor tree={tree} readOnly={readOnly} onChange={setTree} />
+        <DecompositionTreeEditor
+          tree={tree}
+          readOnly={readOnly}
+          title={processoNome ? `Macroprocesso — ${processoNome}` : "Mapeamento do processo"}
+          onChange={setTree}
+        />
       ) : (
         <DecompositionFlatPreview tree={tree} macroprocesso={processoNome} />
       )}

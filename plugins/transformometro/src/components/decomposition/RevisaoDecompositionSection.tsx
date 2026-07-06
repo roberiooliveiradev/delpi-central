@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { AppProps } from "../../App";
 import { FieldLabel } from "../HelpTooltip";
@@ -10,11 +10,12 @@ import {
 } from "../../data/api/transformometroDecompositionApi";
 import {
   emptyDecompositionOverlay,
-  sortDecompositionNodes,
   type DecompositionOverlayV1,
   type DecompositionTreeV1,
 } from "../../types/decomposition";
+import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
+import { DecompositionRichTree } from "./DecompositionRichTree";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
@@ -38,6 +39,7 @@ export function RevisaoDecompositionSection({
   const [saving, setSaving] = useState(false);
   const [mergedTree, setMergedTree] = useState<DecompositionTreeV1 | null>(null);
   const [overlay, setOverlay] = useState<DecompositionOverlayV1>(emptyDecompositionOverlay());
+  const [tab, setTab] = useState<"arvore" | "planilha">("arvore");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,6 +66,17 @@ export function RevisaoDecompositionSection({
     if (!resyncVersion) return;
     void load();
   }, [resyncVersion, load]);
+
+  const richRoot = useMemo(
+    () =>
+      mergedTree
+        ? buildDecompositionRichTree(mergedTree, {
+            title: processoNome ? `Mapeamento — ${processoNome}` : "Mapeamento da revisão",
+            overlay,
+          })
+        : null,
+    [mergedTree, overlay, processoNome]
+  );
 
   function updateOverride(nodeId: string, label: string) {
     setOverlay((current) => ({
@@ -104,35 +117,54 @@ export function RevisaoDecompositionSection({
     );
   }
 
-  const nodes = sortDecompositionNodes(mergedTree.nodes);
-
   return (
     <div className="tm-decomposition-revisao">
       {!embeddedInCard ? (
         <FieldLabel label="Mapeamento da revisão" hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao} />
       ) : null}
 
-      <ul className="tm-decomposition-tree">
-        {nodes.map((node) => {
-          const overrideLabel = overlay.node_overrides?.[node.id]?.label;
-          return (
-            <li key={node.id} className="tm-decomposition-tree__item">
-              <span className="tm-decomposition-tree__badge">{node.level}</span>
-              {readOnly ? (
-                <span>{overrideLabel ?? node.label}</span>
-              ) : (
-                <input
-                  className="tm-decomposition-tree__input"
-                  value={overrideLabel ?? node.label}
-                  onChange={(event) => updateOverride(node.id, event.target.value)}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <div className="tm-decomposition-section__tabs">
+        <button
+          type="button"
+          className={tab === "arvore" ? "ds-tab-btn is-active" : "ds-tab-btn"}
+          onClick={() => setTab("arvore")}
+        >
+          Árvore
+        </button>
+        <button
+          type="button"
+          className={tab === "planilha" ? "ds-tab-btn is-active" : "ds-tab-btn"}
+          onClick={() => setTab("planilha")}
+        >
+          Planilha
+        </button>
+      </div>
 
-      <DecompositionFlatPreview tree={mergedTree} macroprocesso={processoNome} />
+      {tab === "arvore" && richRoot ? (
+        <DecompositionRichTree
+          root={richRoot}
+          expandDepth={2}
+          renderLabel={
+            readOnly
+              ? undefined
+              : (node) =>
+                  node.id === "decomposition-root" ? (
+                    <span className="tm-rich-tree__label">{node.label}</span>
+                  ) : (
+                    <input
+                      className="tm-rich-tree__input"
+                      value={overlay.node_overrides?.[node.id]?.label ?? node.label}
+                      onChange={(event) => updateOverride(node.id, event.target.value)}
+                      aria-label={`Rótulo ${node.label}`}
+                    />
+                  )
+          }
+        />
+      ) : null}
+
+      {tab === "planilha" ? (
+        <DecompositionFlatPreview tree={mergedTree} macroprocesso={processoNome} />
+      ) : null}
 
       {!readOnly ? (
         <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>

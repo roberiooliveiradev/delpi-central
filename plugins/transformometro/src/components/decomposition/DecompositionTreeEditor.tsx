@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -5,26 +6,30 @@ import {
   DECOMPOSITION_LEVEL_LABELS,
   createDecompositionNodeId,
   nextSiblingOrdem,
-  sortDecompositionNodes,
   type DecompositionLevel,
   type DecompositionNode,
   type DecompositionTreeV1,
 } from "../../types/decomposition";
+import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
+import { DecompositionRichTree } from "./DecompositionRichTree";
 
 type Props = {
   tree: DecompositionTreeV1;
   readOnly?: boolean;
+  title?: string;
   onChange: (tree: DecompositionTreeV1) => void;
 };
 
-function depthForNode(node: DecompositionNode): number {
-  if (node.level === "processo_chave") return 0;
-  if (node.level === "tarefa") return 1;
-  return 2;
+function isEditableNodeId(nodeId: string): boolean {
+  return nodeId !== "decomposition-root";
 }
 
-export function DecompositionTreeEditor({ tree, readOnly = false, onChange }: Props) {
-  const visibleNodes = sortDecompositionNodes(tree.nodes);
+export function DecompositionTreeEditor({ tree, readOnly = false, title, onChange }: Props) {
+  const nodeById = useMemo(() => new Map(tree.nodes.map((node) => [node.id, node])), [tree.nodes]);
+  const richRoot = useMemo(
+    () => buildDecompositionRichTree(tree, { title }),
+    [tree, title]
+  );
 
   function updateNodes(nextNodes: DecompositionNode[]) {
     onChange({ ...tree, nodes: nextNodes });
@@ -46,9 +51,7 @@ export function DecompositionTreeEditor({ tree, readOnly = false, onChange }: Pr
   }
 
   function updateNode(nodeId: string, patch: Partial<DecompositionNode>) {
-    updateNodes(
-      tree.nodes.map((node) => (node.id === nodeId ? { ...node, ...patch } : node))
-    );
+    updateNodes(tree.nodes.map((node) => (node.id === nodeId ? { ...node, ...patch } : node)));
   }
 
   function removeNode(nodeId: string) {
@@ -66,6 +69,40 @@ export function DecompositionTreeEditor({ tree, readOnly = false, onChange }: Pr
     updateNodes(tree.nodes.filter((node) => !toRemove.has(node.id)));
   }
 
+  function renderRowActions(nodeId: string) {
+    if (!isEditableNodeId(nodeId)) return null;
+    const source = nodeById.get(nodeId);
+    if (!source) return null;
+
+    return (
+      <>
+        {source.level === "processo_chave" ? (
+          <>
+            <button type="button" className="ds-link-btn" onClick={() => addNode("tarefa", nodeId)}>
+              + Tarefa
+            </button>
+            <button type="button" className="ds-link-btn" onClick={() => addNode("sub_tarefa", nodeId)}>
+              + Sub-tarefa
+            </button>
+          </>
+        ) : null}
+        {source.level === "tarefa" ? (
+          <button type="button" className="ds-link-btn" onClick={() => addNode("sub_tarefa", nodeId)}>
+            + Sub-tarefa
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="ds-ghost-btn tm-rich-tree__delete-btn"
+          aria-label="Excluir nó"
+          onClick={() => removeNode(nodeId)}
+        >
+          <Trash2 size={14} />
+        </button>
+      </>
+    );
+  }
+
   return (
     <div className="tm-decomposition-editor">
       {!readOnly ? (
@@ -77,69 +114,31 @@ export function DecompositionTreeEditor({ tree, readOnly = false, onChange }: Pr
         </div>
       ) : null}
 
-      {visibleNodes.length === 0 ? (
+      {!richRoot ? (
         <p className="ds-hint">{TM_HELP_TOOLTIPS.decomposition.arvoreVazia}</p>
       ) : (
-        <ul className="tm-decomposition-tree">
-          {visibleNodes.map((node) => (
-            <li
-              key={node.id}
-              className="tm-decomposition-tree__item"
-              style={{ paddingLeft: `${depthForNode(node) * 1.25}rem` }}
-            >
-              <span className="tm-decomposition-tree__badge">{DECOMPOSITION_LEVEL_LABELS[node.level]}</span>
-              {readOnly ? (
-                <span className="tm-decomposition-tree__label">{node.label}</span>
-              ) : (
-                <input
-                  className="tm-decomposition-tree__input"
-                  value={node.label}
-                  onChange={(event) => updateNode(node.id, { label: event.target.value })}
-                  aria-label={`Rótulo ${node.id}`}
-                />
-              )}
-              {!readOnly ? (
-                <span className="tm-decomposition-tree__actions">
-                  {node.level === "processo_chave" ? (
-                    <>
-                      <button
-                        type="button"
-                        className="ds-link-btn"
-                        onClick={() => addNode("tarefa", node.id)}
-                      >
-                        + Tarefa
-                      </button>
-                      <button
-                        type="button"
-                        className="ds-link-btn"
-                        onClick={() => addNode("sub_tarefa", node.id)}
-                      >
-                        + Sub-tarefa
-                      </button>
-                    </>
-                  ) : null}
-                  {node.level === "tarefa" ? (
-                    <button
-                      type="button"
-                      className="ds-link-btn"
-                      onClick={() => addNode("sub_tarefa", node.id)}
-                    >
-                      + Sub-tarefa
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="ds-ghost-btn"
-                    aria-label="Excluir nó"
-                    onClick={() => removeNode(node.id)}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <DecompositionRichTree
+          root={richRoot}
+          expandDepth={2}
+          maxHeight={readOnly ? "480px" : "520px"}
+          renderLabel={
+            readOnly
+              ? undefined
+              : (node) =>
+                  isEditableNodeId(node.id) ? (
+                    <input
+                      className="tm-rich-tree__input"
+                      value={node.label}
+                      onChange={(event) => updateNode(node.id, { label: event.target.value })}
+                      aria-label={`Rótulo ${node.label}`}
+                    />
+                  ) : (
+                    <span className="tm-rich-tree__label">{node.label}</span>
+                  )
+          }
+          renderActions={readOnly ? undefined : (node) => renderRowActions(node.id)}
+          footerLabel={(count) => `${count} nó(s) no mapeamento`}
+        />
       )}
     </div>
   );

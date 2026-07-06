@@ -15,6 +15,7 @@ import {
 import { emptyFlowchart, type FlowchartV1 } from "../../types/diagram";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 import { DiagramValidationPanel } from "./DiagramValidationPanel";
+import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
 
 const FlowchartEditor = lazy(() =>
   import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
@@ -151,70 +152,75 @@ export function ProcessoDiagramSection({
         <FieldLabel label="Diagrama macro" hint={TM_HELP_TOOLTIPS.processos.diagramaMacro} />
       ) : null}
 
-      <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
-        <FlowchartEditor
-          value={flowchart}
-          onChange={readOnly ? undefined : setFlowchart}
-          readOnly={readOnly}
-          mermaidPreview={mermaid}
-          exportRef={exportRef}
-        />
-      </Suspense>
-
-      <DiagramValidationPanel report={validation} loading={validating} />
-
-      {mermaid ? (
-        <details className="tm-diagram-section__preview">
-          <summary>Preview Mermaid</summary>
-          <DiagramMermaidPreview code={mermaid} />
-        </details>
-      ) : null}
-
-      {!readOnly ? (
-        <div className="tm-diagram-section__actions">
-          <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-            {saving ? "Salvando…" : "Salvar diagrama"}
-          </button>
-          <button type="button" className="ds-ghost-btn" disabled={validating} onClick={() => void runValidation()}>
-            <ShieldCheck size={16} />
-            Validar / simular
-          </button>
-          <button type="button" className="ds-ghost-btn" onClick={() => void exportPng()}>
-            <Download size={16} />
-            Exportar PNG
-          </button>
-          <button type="button" className="ds-ghost-btn" onClick={() => void exportBpmnXml()}>
-            <FileCode2 size={16} />
-            Exportar BPMN XML
-          </button>
-          <button type="button" className="ds-ghost-btn" onClick={() => importInputRef.current?.click()}>
-            <Upload size={16} />
-            Importar BPMN XML
-          </button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".bpmn,.xml,text/xml,application/xml"
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void importBpmnXml(file);
-            }}
+      <DiagramFullscreenFrame
+        title="Diagrama macro"
+        subtitle="Mapa canônico do fluxo end-to-end deste processo-mestre."
+      >
+        <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
+          <FlowchartEditor
+            value={flowchart}
+            onChange={readOnly ? undefined : setFlowchart}
+            readOnly={readOnly}
+            mermaidPreview={mermaid}
+            exportRef={exportRef}
           />
-        </div>
-      ) : (
-        <div className="tm-diagram-section__actions">
-          <button type="button" className="ds-ghost-btn" onClick={() => void exportPng()}>
-            <Download size={16} />
-            Exportar PNG
-          </button>
-          <button type="button" className="ds-ghost-btn" onClick={() => void exportBpmnXml()}>
-            <FileCode2 size={16} />
-            Exportar BPMN XML
-          </button>
-        </div>
-      )}
+        </Suspense>
+
+        <DiagramValidationPanel report={validation} loading={validating} />
+
+        {mermaid ? (
+          <details className="tm-diagram-section__preview">
+            <summary>Preview Mermaid</summary>
+            <DiagramMermaidPreview code={mermaid} />
+          </details>
+        ) : null}
+
+        {!readOnly ? (
+          <div className="tm-diagram-section__actions">
+            <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
+              {saving ? "Salvando…" : "Salvar diagrama"}
+            </button>
+            <button type="button" className="ds-ghost-btn" disabled={validating} onClick={() => void runValidation()}>
+              <ShieldCheck size={16} />
+              Validar / simular
+            </button>
+            <button type="button" className="ds-ghost-btn" onClick={() => void exportPng()}>
+              <Download size={16} />
+              Exportar PNG
+            </button>
+            <button type="button" className="ds-ghost-btn" onClick={() => void exportBpmnXml()}>
+              <FileCode2 size={16} />
+              Exportar BPMN XML
+            </button>
+            <button type="button" className="ds-ghost-btn" onClick={() => importInputRef.current?.click()}>
+              <Upload size={16} />
+              Importar BPMN XML
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".bpmn,.xml,text/xml,application/xml"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void importBpmnXml(file);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="tm-diagram-section__actions">
+            <button type="button" className="ds-ghost-btn" onClick={() => void exportPng()}>
+              <Download size={16} />
+              Exportar PNG
+            </button>
+            <button type="button" className="ds-ghost-btn" onClick={() => void exportBpmnXml()}>
+              <FileCode2 size={16} />
+              Exportar BPMN XML
+            </button>
+          </div>
+        )}
+      </DiagramFullscreenFrame>
     </div>
   );
 }

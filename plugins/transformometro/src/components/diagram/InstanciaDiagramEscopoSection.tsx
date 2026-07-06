@@ -10,6 +10,7 @@ import {
 } from "../../data/api/transformometroDiagramApi";
 import { emptyEscopo, emptyFlowchart, type FlowchartEscopo, type FlowchartV1 } from "../../types/diagram";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
+import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
 
 const FlowchartEditor = lazy(() =>
   import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
@@ -149,26 +150,31 @@ export function InstanciaDiagramEscopoSection({
         Incluir arestas na fronteira do escopo
       </label>
 
-      <Suspense fallback={<p className="ds-hint">Carregando canvas…</p>}>
-        <FlowchartEditor
-          value={macro}
-          readOnly
-          selectedScopeIds={selectedScopeIds}
-          onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
-          showTemplates={false}
-          showPreviewTab={false}
-        />
-      </Suspense>
+      <DiagramFullscreenFrame
+        title="Escopo no diagrama"
+        subtitle="Selecione os nós do mapa macro que se aplicam a esta instância."
+      >
+        <Suspense fallback={<p className="ds-hint">Carregando canvas…</p>}>
+          <FlowchartEditor
+            value={macro}
+            readOnly
+            selectedScopeIds={selectedScopeIds}
+            onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
+            showTemplates={false}
+            showPreviewTab={false}
+          />
+        </Suspense>
 
-      {mermaid ? <DiagramMermaidPreview code={mermaid} /> : null}
+        {mermaid ? <DiagramMermaidPreview code={mermaid} /> : null}
 
-      {!readOnly ? (
-        <div className="tm-diagram-section__actions">
-          <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-            {saving ? "Salvando…" : "Salvar escopo"}
-          </button>
-        </div>
-      ) : null}
+        {!readOnly ? (
+          <div className="tm-diagram-section__actions">
+            <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
+              {saving ? "Salvando…" : "Salvar escopo"}
+            </button>
+          </div>
+        ) : null}
+      </DiagramFullscreenFrame>
     </div>
   );
 }

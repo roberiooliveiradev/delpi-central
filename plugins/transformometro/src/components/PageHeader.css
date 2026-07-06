@@ -23,7 +23,7 @@
   }
 
   .dashboard-transformometro .ds-page-header {
-    gap: 14px;
+    gap: 12px 14px;
   }
 
   .dashboard-transformometro .ds-page-header__brand {
@@ -37,8 +37,7 @@
   }
 
   .dashboard-transformometro .ds-header-actions {
-    padding-left: 60px;
-    grid-template-columns: repeat(auto-fill, minmax(10.5rem, max-content));
+    max-width: min(100%, 28rem);
   }
 
   .dashboard-transformometro .ds-header-actions .ds-ghost-btn,
@@ -150,17 +149,26 @@
     line-height: 1.35;
   }
 
+  .dashboard-transformometro .ds-page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-transformometro .ds-page-header__brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
   .dashboard-transformometro .ds-header-actions {
-    padding-left: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: stretch;
+    justify-content: flex-end;
+    max-width: 100%;
   }
 
   .dashboard-transformometro .ds-header-actions .ds-ghost-btn,
   .dashboard-transformometro .ds-header-actions .ds-primary-btn {
-    width: 100%;
-    justify-content: center;
+    width: auto;
     min-width: 0;
     white-space: nowrap;
   }
@@ -193,6 +201,6 @@
   }
 
   .dashboard-transformometro .ds-header-actions {
-    grid-template-columns: 1fr;
+    justify-content: flex-end;
   }
 }

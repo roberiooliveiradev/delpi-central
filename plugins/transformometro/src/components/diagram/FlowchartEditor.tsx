@@ -8,6 +8,7 @@ import {
   useEdgesState,
   useNodesState,
   useOnSelectionChange,
+  useReactFlow,
   type Connection,
   type Edge,
   type Node,
@@ -52,6 +53,7 @@ import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import { FlowchartEditableEdge } from "./FlowchartEditableEdge";
+import { useDiagramEditorLayout } from "./DiagramLayoutContext";
 
 type FlowchartEditorProps = {
   value: FlowchartV1;
@@ -256,7 +258,10 @@ function FlowchartEditorInner({
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const isDark = useTransformometroDarkMode();
   const colorMode = isDark ? "dark" : "light";
-  const canvasHeight = canvasHeightForLanes(lanes, lanes.length ? 360 : 420);
+  const layout = useDiagramEditorLayout();
+  const { fitView } = useReactFlow();
+  const canvasHeight =
+    layout === "fill" ? undefined : canvasHeightForLanes(lanes, lanes.length ? 360 : 420);
   const hasNodeSelection = selectedNodeIds.length > 0;
   const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0;
 
@@ -279,6 +284,14 @@ function FlowchartEditorInner({
     const lane = lanes.find((item) => item.id === activeLaneId);
     setLaneLabelDraft(lane?.label ?? "");
   }, [activeLaneId, lanes]);
+
+  useEffect(() => {
+    if (layout !== "fill") return;
+    const timer = window.setTimeout(() => {
+      void fitView({ padding: 0.12, duration: 200 });
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [fitView, layout, nodes.length, edges.length, activeTab]);
 
   const emitChange = useCallback(
     (nextNodes: EditorNode[], nextEdges: Edge[]) => {
@@ -713,7 +726,15 @@ function FlowchartEditorInner({
   };
 
   return (
-    <div className="tm-diagram-editor" ref={exportRef}>
+    <div
+      className={[
+        "tm-diagram-editor",
+        layout === "fill" ? "tm-diagram-editor--fill" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      ref={exportRef}
+    >
       {!readOnly && showTemplates ? (
         <div className="tm-diagram-editor__toolbar">
           <div className="tm-diagram-editor__palette">
@@ -848,7 +869,7 @@ function FlowchartEditorInner({
           ]
             .filter(Boolean)
             .join(" ")}
-          style={{ height: canvasHeight }}
+          style={canvasHeight != null ? { height: canvasHeight } : undefined}
         >
           <ReactFlow
             nodes={nodes}

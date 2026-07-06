@@ -36,20 +36,22 @@ export function PageHeader({
         </div>
       </div>
 
-      <div className="ds-header-actions">
-        {actions}
-        {onRefresh ? (
-          <button
-            className="ds-primary-btn"
-            type="button"
-            onClick={onRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw size={16} />
-            {refreshing ? "Atualizando…" : "Atualizar"}
-          </button>
-        ) : null}
-      </div>
+      {(actions || onRefresh) ? (
+        <div className="ds-header-actions">
+          {actions}
+          {onRefresh ? (
+            <button
+              className="ds-primary-btn"
+              type="button"
+              onClick={onRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw size={16} />
+              {refreshing ? "Atualizando…" : "Atualizar"}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }

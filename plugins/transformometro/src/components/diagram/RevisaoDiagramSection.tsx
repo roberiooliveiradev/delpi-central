@@ -19,6 +19,7 @@ import {
   type MergedRevisaoDiagram,
 } from "../../types/diagram";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
+import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
 
 const FlowchartEditor = lazy(() =>
   import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
@@ -163,42 +164,47 @@ export function RevisaoDiagramSection({
         </div>
       ) : null}
 
-      <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
-        <FlowchartEditor
-          value={editable}
-          onChange={readOnly ? undefined : setEditable}
-          readOnly={readOnly}
-          diffNodeIds={merged.baseline_diff ?? undefined}
-          mermaidPreview={merged.mermaid}
-          exportRef={exportRef}
-          showTemplates={false}
-        />
-      </Suspense>
+      <DiagramFullscreenFrame
+        title="Diagrama da revisão"
+        subtitle="Overlay as-is / to-be sobre o mapa macro do processo."
+      >
+        <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
+          <FlowchartEditor
+            value={editable}
+            onChange={readOnly ? undefined : setEditable}
+            readOnly={readOnly}
+            diffNodeIds={merged.baseline_diff ?? undefined}
+            mermaidPreview={merged.mermaid}
+            exportRef={exportRef}
+            showTemplates={false}
+          />
+        </Suspense>
 
-      {merged.mermaid ? (
-        <details className="tm-diagram-section__preview">
-          <summary>Preview Mermaid (mesclado)</summary>
-          <DiagramMermaidPreview code={merged.mermaid} />
-        </details>
-      ) : null}
+        {merged.mermaid ? (
+          <details className="tm-diagram-section__preview">
+            <summary>Preview Mermaid (mesclado)</summary>
+            <DiagramMermaidPreview code={merged.mermaid} />
+          </details>
+        ) : null}
 
-      <div className="tm-diagram-section__actions">
-        {!readOnly ? (
-          <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-            {saving ? "Salvando…" : "Salvar diagrama da revisão"}
+        <div className="tm-diagram-section__actions">
+          {!readOnly ? (
+            <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
+              {saving ? "Salvando…" : "Salvar diagrama da revisão"}
+            </button>
+          ) : null}
+          <button type="button" className="ds-ghost-btn" onClick={() => void exportPng(false)}>
+            <Download size={16} />
+            Exportar PNG
           </button>
-        ) : null}
-        <button type="button" className="ds-ghost-btn" onClick={() => void exportPng(false)}>
-          <Download size={16} />
-          Exportar PNG
-        </button>
-        {!readOnly ? (
-          <button type="button" className="ds-ghost-btn" onClick={() => void exportPng(true)}>
-            <ImagePlus size={16} />
-            PNG como evidência
-          </button>
-        ) : null}
-      </div>
+          {!readOnly ? (
+            <button type="button" className="ds-ghost-btn" onClick={() => void exportPng(true)}>
+              <ImagePlus size={16} />
+              PNG como evidência
+            </button>
+          ) : null}
+        </div>
+      </DiagramFullscreenFrame>
     </div>
   );
 }

@@ -276,6 +276,8 @@ export const TM_HELP_TOOLTIPS = {
       "Remove a faixa ativa. Os nós nela são realocados na faixa restante. É necessário manter ao menos uma faixa.",
     canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
     mermaidTab: "Visualização somente leitura do código Mermaid gerado a partir do diagrama.",
+    fullscreen:
+      "Abre o editor em tela cheia com paleta, ferramentas e ações de salvamento. Pressione Esc ou use «Sair da tela cheia» para voltar.",
     selectionDelete:
       "Remove os nós e setas selecionados. Atalho: Delete ou Backspace. Faixas (swimlanes) não são excluídas por aqui.",
     selectionMove:
