@@ -73,12 +73,6 @@ export function RecursoDetailPage({
   onBack,
 }: Props) {
   const isCreate = isCatalogCreateId("recurso", recursoId);
-  const sectionEdit = useCollaborativeSectionEdit({
-    entityType: "recurso",
-    entityId: recursoId,
-    getAccessToken,
-    enabled: !isCreate,
-  });
   const [recurso, setRecurso] = useState<RecursoCompartilhado | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<RecursoCatalogFormState>(() => emptyRecursoForm());
@@ -119,6 +113,14 @@ export function RecursoDetailPage({
       setRefreshing(false);
     }
   }, [getAccessToken, isCreate, recursoId]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "recurso",
+    entityId: recursoId,
+    getAccessToken,
+    enabled: !isCreate,
+    onResync: () => void load(),
+  });
 
   useEffect(() => {
     void load();
@@ -320,7 +322,14 @@ export function RecursoDetailPage({
         onRetry={() => void load()}
       />
 
-      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        wsConnected={sectionEdit.wsConnected}
+        wsConnectionError={sectionEdit.wsConnectionError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
 
       <div className="ds-cadastro-panel ds-cadastro-panel--cards">
         {options ? (

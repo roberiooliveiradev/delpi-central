@@ -1,5 +1,7 @@
 import logging
 import os
+import asyncio
+import contextlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -20,6 +22,10 @@ from tm_app.interface.http.routes.collaboration_routes import router as collabor
 from tm_app.interface.http.routes.diagram_routes import router as diagram_router
 from tm_app.interface.http.routes.revisao_evidence_routes import router as revisao_evidence_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
+from tm_app.application.services.transformometro_realtime_hub import (
+    transformometro_realtime_hub,
+)
+from tm_app.interface.http.routes.realtime_routes import router as realtime_router
 from tm_app.middleware.auth_middleware import jwt_middleware
 from tm_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -54,7 +60,15 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    yield
+    loop = asyncio.get_running_loop()
+    transformometro_realtime_hub.bind_loop(loop)
+    worker = asyncio.create_task(transformometro_realtime_hub.worker())
+    try:
+        yield
+    finally:
+        worker.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await worker
 
 
 app = FastAPI(
@@ -106,3 +120,4 @@ app.include_router(json_backup_router)
 app.include_router(revisao_evidence_router)
 app.include_router(diagram_router)
 app.include_router(collaboration_router)
+app.include_router(realtime_router)

@@ -24,6 +24,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  resyncVersion?: number;
   onError: (message: string | null) => void;
 };
 
@@ -32,6 +33,7 @@ export function ProcessoDiagramSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  resyncVersion = 0,
   onError,
 }: Props) {
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,11 @@ export function ProcessoDiagramSection({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!resyncVersion) return;
+    void load();
+  }, [resyncVersion, load]);
 
   async function runValidation(nextChart: FlowchartV1 = flowchart) {
     setValidating(true);

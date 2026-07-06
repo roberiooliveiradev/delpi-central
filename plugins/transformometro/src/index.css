@@ -3598,6 +3598,21 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   padding: 8px 0;
 }
 
+.dashboard-transformometro .tm-collab-banner__line--info {
+  color: var(--ds-accent);
+}
+
+.dashboard-transformometro .tm-collab-banner__dismiss {
+  margin-left: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .dashboard-transformometro .tm-diagram-lane-toolbar select,
 .dashboard-transformometro .tm-diagram-lane-toolbar input {
   min-width: 140px;

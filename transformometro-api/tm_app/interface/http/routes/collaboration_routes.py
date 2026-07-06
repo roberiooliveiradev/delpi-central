@@ -6,12 +6,27 @@ from pydantic import BaseModel, Field
 from tm_app.application.services.collaboration_presence_service import (
     CollaborationPresenceService,
 )
+from tm_app.application.services.transformometro_realtime_notify import (
+    notify_presence_updated,
+)
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.responses import fail, ok
 
 router = APIRouter(prefix="/transformometro/colaboracao", tags=["Transformômetro — colaboração"])
 
 _service = CollaborationPresenceService()
+
+
+def _broadcast_presence(entity_type: str, entity_id: str) -> None:
+    try:
+        payload = _service.list_presence(entity_type=entity_type, entity_id=entity_id)
+        notify_presence_updated(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            presence=payload,
+        )
+    except ValueError:
+        return
 
 
 class HeartbeatBody(BaseModel):
@@ -53,6 +68,7 @@ def post_presenca(body: HeartbeatBody, request: Request):
         )
     except ValueError as exc:
         return fail(str(exc), 400)
+    _broadcast_presence(body.entity_type, body.entity_id)
     return ok(row, "Presença atualizada.")
 
 
@@ -78,6 +94,7 @@ def post_travar(body: LockBody, request: Request):
             409,
             data=result,
         )
+    _broadcast_presence(body.entity_type, body.entity_id)
     return ok(result, "Trava de edição adquirida.")
 
 
@@ -95,4 +112,5 @@ def post_liberar(body: LockBody, request: Request):
         )
     except ValueError as exc:
         return fail(str(exc), 400)
+    _broadcast_presence(body.entity_type, body.entity_id)
     return ok({"released": True}, "Trava liberada.")

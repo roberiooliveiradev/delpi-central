@@ -59,11 +59,6 @@ export function InstanciaDetailPage({
   pathname,
   onNavigate,
 }: Props) {
-  const sectionEdit = useCollaborativeSectionEdit({
-    entityType: "processo_instancia",
-    entityId: instanciaId,
-    getAccessToken,
-  });
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancia, setInstancia] = useState<ProcessoInstancia | null>(null);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
@@ -109,6 +104,13 @@ export function InstanciaDetailPage({
       setRefreshing(false);
     }
   }, [getAccessToken, instanciaId, processoId]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "processo_instancia",
+    entityId: instanciaId,
+    getAccessToken,
+    onResync: () => void load(),
+  });
 
   useEffect(() => {
     void load();
@@ -231,7 +233,14 @@ export function InstanciaDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
-      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        wsConnected={sectionEdit.wsConnected}
+        wsConnectionError={sectionEdit.wsConnectionError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
 
       {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
         <p className="tm-instancia-multi-banner">

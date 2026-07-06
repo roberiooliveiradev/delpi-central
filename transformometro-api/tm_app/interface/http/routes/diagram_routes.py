@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from tm_app.application.services.diagram_mermaid_export_service import DiagramMermaidExportService
 from tm_app.application.services.flowchart_bpmn_xml_service import FlowchartBpmnXmlService
 from tm_app.application.services.revisao_diagram_merge_service import RevisaoDiagramMergeService
+from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
@@ -87,6 +88,13 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
             action,
             format_api_error(exc),
         )
+    notify_from_audit(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        action=action,
+        actor_user_id=user_id,
+        payload=payload,
+    )
 
 
 def _macro_response(row: dict[str, Any] | None) -> dict[str, Any]:

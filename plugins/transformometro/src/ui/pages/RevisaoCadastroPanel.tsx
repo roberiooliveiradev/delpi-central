@@ -97,11 +97,6 @@ export function RevisaoCadastroPanel({
   onRevisaoUpdated,
   onRevisaoDeleted,
 }: Props) {
-  const sectionEdit = useCollaborativeSectionEdit({
-    entityType: "revisao",
-    entityId: revisao.revisao_id,
-    getAccessToken,
-  });
   const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
@@ -156,6 +151,16 @@ export function RevisaoCadastroPanel({
       setLoading(false);
     }
   }, [getAccessToken, onError, revisao.revisao_id]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "revisao",
+    entityId: revisao.revisao_id,
+    getAccessToken,
+    onResync: () => {
+      void load();
+      onRevisaoUpdated();
+    },
+  });
 
   useEffect(() => {
     void load();
@@ -253,7 +258,14 @@ export function RevisaoCadastroPanel({
         onDelete={handleDeleteRevisao}
       />
 
-      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        wsConnected={sectionEdit.wsConnected}
+        wsConnectionError={sectionEdit.wsConnectionError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
 
       {rateioDiag ? (
         <div

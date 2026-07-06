@@ -9,6 +9,8 @@ import {
   type CollaborationPresencePayload,
 } from "../data/api/transformometroCollaborationApi";
 import { useSectionEdit } from "./useSectionEdit";
+import { useTransformometroRealtime } from "./useTransformometroRealtime";
+import { getUserIdFromToken } from "../utils/jwt";
 
 const POLL_MS = 12_000;
 const LOCK_HEARTBEAT_MS = 20_000;
@@ -19,6 +21,7 @@ type Options = {
   entityId: string;
   getAccessToken?: () => string | undefined;
   enabled?: boolean;
+  onResync?: () => void;
 };
 
 export function useCollaborativeSectionEdit({
@@ -26,12 +29,20 @@ export function useCollaborativeSectionEdit({
   entityId,
   getAccessToken,
   enabled = true,
+  onResync,
 }: Options) {
   const sectionEdit = useSectionEdit();
   const [presence, setPresence] = useState<CollaborationPresencePayload | null>(null);
   const [lockError, setLockError] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [resyncVersion, setResyncVersion] = useState(0);
+  const [realtimeNotice, setRealtimeNotice] = useState<string | null>(null);
   const editingSectionRef = useRef<string | null>(null);
+  const onResyncRef = useRef(onResync);
+
+  useEffect(() => {
+    onResyncRef.current = onResync;
+  }, [onResync]);
 
   const refreshPresence = useCallback(async () => {
     if (!enabled || !entityId) return;
@@ -43,12 +54,43 @@ export function useCollaborativeSectionEdit({
     }
   }, [enabled, entityId, entityType, getAccessToken]);
 
+  const handleEntityUpdated = useCallback(
+    (event: { actorUserId?: string | null; sectionKey?: string | null }) => {
+      const token = getAccessToken?.();
+      const myUserId = getUserIdFromToken(token);
+      if (event.actorUserId && myUserId && event.actorUserId === myUserId) {
+        return;
+      }
+
+      if (editingSectionRef.current) {
+        setRealtimeNotice(
+          "Outro usuário alterou dados desta entidade. Salve ou cancele a edição e recarregue para ver as mudanças."
+        );
+        return;
+      }
+
+      setResyncVersion((value) => value + 1);
+      setRealtimeNotice("Dados atualizados por outro usuário.");
+      onResyncRef.current?.();
+    },
+    [getAccessToken]
+  );
+
+  const { connected: wsConnected, connectionError: wsConnectionError } = useTransformometroRealtime({
+    entityType,
+    entityId,
+    getAccessToken,
+    enabled,
+    onPresenceUpdated: setPresence,
+    onEntityUpdated: handleEntityUpdated,
+  });
+
   useEffect(() => {
-    if (!enabled || !entityId) return;
+    if (!enabled || !entityId || wsConnected) return;
     void refreshPresence();
     const timer = window.setInterval(() => void refreshPresence(), POLL_MS);
     return () => window.clearInterval(timer);
-  }, [enabled, entityId, refreshPresence]);
+  }, [enabled, entityId, refreshPresence, wsConnected]);
 
   useEffect(() => {
     if (!enabled || !entityId || editingSection) return;
@@ -189,5 +231,10 @@ export function useCollaborativeSectionEdit({
     lockError,
     clearLockError: () => setLockError(null),
     refreshPresence,
+    wsConnected,
+    wsConnectionError,
+    resyncVersion,
+    realtimeNotice,
+    clearRealtimeNotice: () => setRealtimeNotice(null),
   };
 }

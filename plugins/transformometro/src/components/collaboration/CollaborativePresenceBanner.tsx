@@ -4,10 +4,23 @@ import { COLLABORATION_SECTION_LABELS } from "../../constants/collaborationSecti
 type Props = {
   presence: CollaborationPresencePayload | null;
   lockError?: string | null;
+  wsConnected?: boolean;
+  wsConnectionError?: string | null;
+  realtimeNotice?: string | null;
+  onDismissRealtimeNotice?: () => void;
 };
 
-export function CollaborativePresenceBanner({ presence, lockError }: Props) {
-  if (!presence && !lockError) return null;
+export function CollaborativePresenceBanner({
+  presence,
+  lockError,
+  wsConnected = false,
+  wsConnectionError,
+  realtimeNotice,
+  onDismissRealtimeNotice,
+}: Props) {
+  if (!presence && !lockError && !realtimeNotice && !wsConnectionError) {
+    return null;
+  }
 
   const editors = presence?.editors.filter((item) => item.lock_active) ?? [];
   const viewers = presence?.viewers ?? [];
@@ -15,6 +28,25 @@ export function CollaborativePresenceBanner({ presence, lockError }: Props) {
   return (
     <div className="tm-collab-banner" role="status">
       {lockError ? <p className="tm-collab-banner__alert">{lockError}</p> : null}
+      {realtimeNotice ? (
+        <p className="tm-collab-banner__line tm-collab-banner__line--info">
+          {realtimeNotice}
+          {onDismissRealtimeNotice ? (
+            <button
+              type="button"
+              className="tm-collab-banner__dismiss"
+              onClick={onDismissRealtimeNotice}
+            >
+              Ok
+            </button>
+          ) : null}
+        </p>
+      ) : null}
+      {wsConnectionError && !wsConnected ? (
+        <p className="tm-collab-banner__line tm-collab-banner__line--muted">
+          Tempo real indisponível — usando atualização periódica.
+        </p>
+      ) : null}
       {editors.length ? (
         <p className="tm-collab-banner__line">
           Editando:{" "}

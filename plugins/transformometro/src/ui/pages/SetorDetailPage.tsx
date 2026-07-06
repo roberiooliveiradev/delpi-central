@@ -49,12 +49,6 @@ export function SetorDetailPage({
   onBack,
 }: Props) {
   const isCreate = isCatalogCreateId("setor", setorId);
-  const sectionEdit = useCollaborativeSectionEdit({
-    entityType: "setor",
-    entityId: setorId,
-    getAccessToken,
-    enabled: !isCreate,
-  });
   const [setor, setSetor] = useState<Setor | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<SetorFormState>(() => emptySetorForm());
@@ -95,6 +89,14 @@ export function SetorDetailPage({
       setRefreshing(false);
     }
   }, [getAccessToken, isCreate, setorId]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "setor",
+    entityId: setorId,
+    getAccessToken,
+    enabled: !isCreate,
+    onResync: () => void load(),
+  });
 
   useEffect(() => {
     void load();
@@ -228,7 +230,14 @@ export function SetorDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
-      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        wsConnected={sectionEdit.wsConnected}
+        wsConnectionError={sectionEdit.wsConnectionError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
 
       {options ? (
         <EditableSectionCard

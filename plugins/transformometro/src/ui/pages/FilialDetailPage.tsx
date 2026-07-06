@@ -49,12 +49,6 @@ export function FilialDetailPage({
   onBack,
 }: Props) {
   const isCreate = isCatalogCreateId("filial", filialId);
-  const sectionEdit = useCollaborativeSectionEdit({
-    entityType: "filial",
-    entityId: filialId,
-    getAccessToken,
-    enabled: !isCreate,
-  });
   const [filial, setFilial] = useState<Filial | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<FilialFormState>(() => emptyFilialForm());
@@ -89,6 +83,14 @@ export function FilialDetailPage({
       setRefreshing(false);
     }
   }, [filialId, getAccessToken, isCreate]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "filial",
+    entityId: filialId,
+    getAccessToken,
+    enabled: !isCreate,
+    onResync: () => void load(),
+  });
 
   useEffect(() => {
     void load();
@@ -217,7 +219,14 @@ export function FilialDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
-      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        wsConnected={sectionEdit.wsConnected}
+        wsConnectionError={sectionEdit.wsConnectionError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
 
       {options ? (
         <EditableSectionCard

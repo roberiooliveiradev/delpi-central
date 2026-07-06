@@ -58,11 +58,6 @@ export function ProcessoDetailPage({
   onNavigate,
   onBack,
 }: Props) {
-  const sectionEdit = useCollaborativeSectionEdit({
-    entityType: "processo",
-    entityId: processoId,
-    getAccessToken,
-  });
   const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
@@ -116,6 +111,13 @@ export function ProcessoDetailPage({
     }
     void loadTimeline();
   }, [getAccessToken, processoId, loadTimeline]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "processo",
+    entityId: processoId,
+    getAccessToken,
+    onResync: () => void load(),
+  });
 
   useEffect(() => {
     void load();
@@ -232,7 +234,14 @@ export function ProcessoDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
-      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        wsConnected={sectionEdit.wsConnected}
+        wsConnectionError={sectionEdit.wsConnectionError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
 
       <EditableSectionCard
         title="Dados do processo"
@@ -281,6 +290,7 @@ export function ProcessoDetailPage({
             processoId={processoId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
         editContent={
@@ -289,6 +299,7 @@ export function ProcessoDetailPage({
             processoId={processoId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
       />
