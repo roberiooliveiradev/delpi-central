@@ -235,10 +235,16 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
 
 SETOR_FILIAIS_BUNDLE_KEY = "setor_filiais"
 PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY = "processo_instancia_setores"
+PROCESSO_DIAGRAMAS_BUNDLE_KEY = "processo_diagramas"
+INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY = "instancia_diagrama_escopos"
+REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY = "revisao_diagrama_overlays"
 BUNDLE_KEYS = (
     *tuple(spec.bundle_key for spec in ENTITY_SPECS),
     SETOR_FILIAIS_BUNDLE_KEY,
     PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
+    PROCESSO_DIAGRAMAS_BUNDLE_KEY,
+    INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
+    REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
 )
 
 
@@ -297,6 +303,70 @@ class JsonBackupRepository(PluginBaseRepository):
             ORDER BY pis.instancia_id ASC, pis.setor_id ASC
             """
         )
+
+    def fetch_processo_diagramas(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT processo_id, conteudo, mermaid_cached, created_at, updated_at
+            FROM transformometro.processo_diagramas
+            ORDER BY processo_id ASC
+            """
+        )
+
+    def fetch_instancia_diagrama_escopos(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                instancia_id, node_ids, inherit_all, include_boundary_edges,
+                created_at, updated_at
+            FROM transformometro.instancia_diagrama_escopo
+            ORDER BY instancia_id ASC
+            """
+        )
+
+    def fetch_revisao_diagrama_overlays(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT revisao_id, conteudo, mermaid_cached, created_at, updated_at
+            FROM transformometro.revisao_diagrama_overlays
+            ORDER BY revisao_id ASC
+            """
+        )
+
+    def sync_diagram_bundles(
+        self,
+        payload: dict[str, list[dict[str, Any]]],
+        *,
+        auto_commit: bool = False,
+    ) -> None:
+        from tm_app.infrastructure.persistence.repositories.instancia_diagram_escopo_repository import (
+            InstanciaDiagramEscopoRepository,
+        )
+        from tm_app.infrastructure.persistence.repositories.processo_diagram_repository import (
+            ProcessoDiagramRepository,
+        )
+        from tm_app.infrastructure.persistence.repositories.revisao_diagram_overlay_repository import (
+            RevisaoDiagramOverlayRepository,
+        )
+
+        processo_repo = ProcessoDiagramRepository(connection=self._connection)
+        instancia_repo = InstanciaDiagramEscopoRepository(connection=self._connection)
+        revisao_repo = RevisaoDiagramOverlayRepository(connection=self._connection)
+
+        for row in payload.get(PROCESSO_DIAGRAMAS_BUNDLE_KEY, []) or []:
+            if isinstance(row, dict) and row.get("processo_id"):
+                processo_repo.upsert_from_backup(row, auto_commit=False)
+
+        for row in payload.get(INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY, []) or []:
+            if isinstance(row, dict) and row.get("instancia_id"):
+                instancia_repo.upsert_from_backup(row, auto_commit=False)
+
+        for row in payload.get(REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY, []) or []:
+            if isinstance(row, dict) and row.get("revisao_id"):
+                revisao_repo.upsert_from_backup(row, auto_commit=False)
+
+        if auto_commit:
+            self._connection.commit()
 
     def fetch_setor_filiais(self) -> list[dict[str, Any]]:
         return self.fetch_all(
@@ -464,6 +534,9 @@ class JsonBackupRepository(PluginBaseRepository):
             """
             TRUNCATE TABLE
                 transformometro.dashboard_calculos,
+                transformometro.revisao_diagrama_overlays,
+                transformometro.instancia_diagrama_escopo,
+                transformometro.processo_diagramas,
                 transformometro.revisao_recursos_compartilhados,
                 transformometro.recurso_custos,
                 transformometro.investimentos,

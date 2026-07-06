@@ -136,6 +136,8 @@ export const TM_HELP_TOOLTIPS = {
     timeline:
       "Histórico auditado de alterações neste processo e entidades vinculadas (instâncias, revisões, medições, investimentos e recursos).",
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
+    diagramaMacro:
+      "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas instâncias e revisões.",
   },
   instancias: {
     escopo:
@@ -152,6 +154,8 @@ export const TM_HELP_TOOLTIPS = {
       "Departamentos vinculados à instância. Departamentos já usados por outra instância na mesma unidade aparecem como 'em uso' e ficam desabilitados.",
     status: "Instâncias inativas deixam de contribuir para os números do dashboard.",
     rotulo: "Texto livre para identificar a instância (ex.: 'Matriz — rollout Q2'). Opcional.",
+    diagramaEscopo:
+      "Selecione quais nós do diagrama macro desta instância são relevantes neste ambiente operacional.",
   },
   revisao: {
     versao: "Identificador da revisão (ex.: 1.0.0). Deve ser único dentro da instância.",
@@ -179,6 +183,8 @@ export const TM_HELP_TOOLTIPS = {
       "Verifica se o rateio de recursos compartilhados não excede a economia bruta da revisão.",
     evidencias:
       "Anexos (PDF, imagem, planilha) ou links que comprovam a melhoria desta revisão.",
+    diagramaRevisao:
+      "Estado visual as-is (baseline) ou to-be (melhoria) sobre o escopo da instância — overlay sobre o diagrama macro.",
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://delpi.local/transformometro/flowchart_v1.schema.json",
+  "title": "Transformômetro flowchart_v1",
+  "description": "Diagrama macro de processo — formato canônico Playbook 19.",
+  "type": "object",
+  "required": ["format", "format_version", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "flowchart_v1" },
+    "format_version": { "type": "integer", "const": 1 },
+    "nodes": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "maxItems": 400,
+      "items": { "$ref": "#/$defs/edge" }
+    }
+  },
+  "$defs": {
+    "nodeId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-zA-Z0-9_\\-]+$"
+    },
+    "position": {
+      "type": "object",
+      "required": ["x", "y"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "nodeType": {
+      "type": "string",
+      "enum": [
+        "start",
+        "end",
+        "process",
+        "decision",
+        "document",
+        "data",
+        "subprocess",
+        "comment"
+      ]
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "label", "position"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nodeId" },
+        "type": { "$ref": "#/$defs/nodeType" },
+        "label": { "type": "string", "maxLength": 500 },
+        "position": { "$ref": "#/$defs/position" },
+        "disabled": { "type": "boolean" },
+        "meta": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "from": { "$ref": "#/$defs/nodeId" },
+        "to": { "$ref": "#/$defs/nodeId" },
+        "label": { "type": ["string", "null"], "maxLength": 200 }
+      }
+    }
+  }
+}

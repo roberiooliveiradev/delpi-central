@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://delpi.local/transformometro/flowchart_overlay_v1.schema.json",
+  "title": "Transformômetro flowchart_overlay_v1",
+  "description": "Overlay as-is/to-be por revisão — referencia nós do diagrama macro.",
+  "type": "object",
+  "required": ["format", "format_version"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "flowchart_overlay_v1" },
+    "format_version": { "type": "integer", "const": 1 },
+    "modo": { "type": "string", "enum": ["full_scope", "partial"] },
+    "node_overrides": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/nodeOverride" }
+    },
+    "edge_overrides": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/edgeOverride" }
+    },
+    "removed_node_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 64 }
+    },
+    "removed_edge_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 64 }
+    },
+    "extra_nodes": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "$ref": "flowchart_v1.schema.json#/$defs/node" }
+    },
+    "extra_edges": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "flowchart_v1.schema.json#/$defs/edge" }
+    }
+  },
+  "$defs": {
+    "nodeOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string", "maxLength": 500 },
+        "type": { "type": "string" },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          }
+        },
+        "highlight": { "type": "string", "enum": ["asis", "tobe", "changed", "removed"] },
+        "meta": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "edgeOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": ["string", "null"], "maxLength": 200 },
+        "from": { "type": "string" },
+        "to": { "type": "string" }
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@
 
 Este playbook define como modelar, calcular e evoluir o Transformômetro sem quebrar a coerência entre cadastro, API, dashboard, exportações e integrações.
 
-Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md)
+Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [PLAYBOOK-19 — diagramas processo/revisão/escopo](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md)
 
 ## 1. Princípios
 
@@ -60,8 +60,11 @@ Fonte derivada:
 
 ```text
 processo-mestre (codigo_processo)
+  ├── diagrama-macro (mapa canônico — Playbook 19)
   └── instancia (filial × setor) [instancia_id]
+        ├── escopo no diagrama (subset de nós do macro)
         └── revisão [revisao_id]
+              ├── overlay diagrama (as-is / to-be)
               ├── medição
               ├── investimentos
               └── vínculos → recursos compartilhados (rateio conforme escopo_recurso)

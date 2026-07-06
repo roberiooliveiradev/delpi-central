@@ -17,7 +17,10 @@ from tm_app.infrastructure.persistence.repositories.processo_instancia_repositor
 from tm_app.infrastructure.persistence.json_backup_repository import (
     BUNDLE_KEYS,
     ENTITY_SPECS,
+    INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
+    PROCESSO_DIAGRAMAS_BUNDLE_KEY,
     PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
+    REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
     SETOR_FILIAIS_BUNDLE_KEY,
     EntitySpec,
     JsonBackupRepository,
@@ -209,6 +212,9 @@ class JsonBackupService:
         if not data.get("processo_instancias"):
             data["processo_instancias"] = self._repo.fetch_processo_instancias()
         data["processo_instancia_setores"] = self._repo.fetch_processo_instancia_setores()
+        data["processo_diagramas"] = self._repo.fetch_processo_diagramas()
+        data["instancia_diagrama_escopos"] = self._repo.fetch_instancia_diagrama_escopos()
+        data["revisao_diagrama_overlays"] = self._repo.fetch_revisao_diagrama_overlays()
         data = self._repo.ensure_bundle_parent_rows(data)
         return {
             "schema_version": SCHEMA_VERSION,
@@ -310,6 +316,31 @@ class JsonBackupService:
                         seen_links.add(pair)
                 continue
 
+            if key in {
+                PROCESSO_DIAGRAMAS_BUNDLE_KEY,
+                INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
+                REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
+            }:
+                pk_field = {
+                    PROCESSO_DIAGRAMAS_BUNDLE_KEY: "processo_id",
+                    INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY: "instancia_id",
+                    REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY: "revisao_id",
+                }[key]
+                seen_diagram: set[str] = set()
+                for index, row in enumerate(rows):
+                    if not isinstance(row, dict):
+                        errors.append(f"{key}[{index}]: registro deve ser objeto.")
+                        continue
+                    pk = row.get(pk_field)
+                    if not pk:
+                        errors.append(f"{key}[{index}]: {pk_field} obrigatório.")
+                        continue
+                    pk_str = _norm_id(pk)
+                    if pk_str in seen_diagram:
+                        errors.append(f"{key}: {pk_field} duplicado ({pk_str}).")
+                    seen_diagram.add(pk_str)
+                continue
+
             spec = _entity_spec_for_key(key)
             seen: set[str] = set()
             for index, row in enumerate(rows):
@@ -381,6 +412,34 @@ class JsonBackupService:
                     f"processos: setor_id={setor_id} não está em setores no JSON "
                     f"(reexporte o backup ou inclua o setor)."
                 )
+
+        processo_ids = id_sets.get("processos", set())
+        instancia_ids = id_sets.get("processo_instancias", set())
+        revisao_ids = id_sets.get("revisoes", set())
+
+        for row in payload.get(PROCESSO_DIAGRAMAS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("processo_id"):
+                pid = _norm_id(row["processo_id"])
+                if pid not in processo_ids:
+                    errors.append(
+                        f"processo_diagramas: processo_id={pid} não está em processos no JSON."
+                    )
+
+        for row in payload.get(INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("instancia_id"):
+                iid = _norm_id(row["instancia_id"])
+                if iid not in instancia_ids:
+                    errors.append(
+                        f"instancia_diagrama_escopos: instancia_id={iid} não está em processo_instancias no JSON."
+                    )
+
+        for row in payload.get(REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("revisao_id"):
+                rid = _norm_id(row["revisao_id"])
+                if rid not in revisao_ids:
+                    errors.append(
+                        f"revisao_diagrama_overlays: revisao_id={rid} não está em revisoes no JSON."
+                    )
 
         return _dedupe_errors(errors)
 
@@ -528,6 +587,7 @@ class JsonBackupService:
             self._repo.sync_setor_filiais(sf_rows, auto_commit=False)
             self._sync_processo_instancias_from_payload(prepared)
             self._sync_processo_instancia_setores_from_payload(prepared)
+            self._repo.sync_diagram_bundles(prepared, auto_commit=False)
 
             self._repo._connection.commit()
         except Exception:

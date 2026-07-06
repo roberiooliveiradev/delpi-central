@@ -29,6 +29,9 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V020 | `V020__dashboard_integration_views.sql` | Views `dashboard_competencia_evolucao` e `instancia_operacional_snapshot` (leitura rápida dashboard + api-delpi) |
 | V024 | `V024__revisao_evidencias.sql` | Evidências por revisão (metadado Postgres + binário em volume) |
 | V025 | `V025__audit_logs_user_name.sql` | `user_name` em `audit_logs` para linha do tempo |
+| V026 | `V026__processo_diagramas.sql` | Diagrama macro `flowchart_v1` por processo-mestre |
+| V027 | `V027__instancia_diagrama_escopo.sql` | Escopo de nós do macro por instância |
+| V028 | `V028__revisao_diagrama_overlays.sql` | Overlay as-is/to-be por revisão |
 
 ## Notas V019–V020
 

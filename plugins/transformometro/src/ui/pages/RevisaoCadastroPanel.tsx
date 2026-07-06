@@ -24,8 +24,10 @@ import {
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
 import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceApi";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
+import { RevisaoDiagramSection } from "../../components/diagram/RevisaoDiagramSection";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
 import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
@@ -296,6 +298,36 @@ export function RevisaoCadastroPanel({
               event.preventDefault();
               void saveVigencia();
             }}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title="Diagrama da revisão"
+        description="Estado visual as-is ou to-be sobre o escopo da instância."
+        hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao}
+        isEditing={sectionEdit.isEditing("diagrama_revisao")}
+        onEdit={() => sectionEdit.startEdit("diagrama_revisao")}
+        onCancel={() => sectionEdit.cancelEdit("diagrama_revisao")}
+        readContent={
+          <RevisaoDiagramSection
+            embeddedInCard
+            readOnly
+            revisaoId={revisao.revisao_id}
+            cenarioTipo={revisao.cenario_tipo}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
+          />
+        }
+        editContent={
+          <RevisaoDiagramSection
+            embeddedInCard
+            revisaoId={revisao.revisao_id}
+            cenarioTipo={revisao.cenario_tipo}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
           />
         }
       />

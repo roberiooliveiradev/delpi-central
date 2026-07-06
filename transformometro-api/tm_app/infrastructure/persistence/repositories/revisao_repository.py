@@ -339,3 +339,30 @@ class RevisaoRepository(PluginBaseRepository):
     @staticmethod
     def _is_baseline(data: dict[str, Any]) -> bool:
         return str(data.get("cenario_tipo") or "").lower() == "baseline"
+
+    def find_baseline_for_instancia(
+        self,
+        instancia_id: str,
+        *,
+        exclude_revisao_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        if not instancia_id:
+            return None
+        params: list[Any] = [instancia_id]
+        exclude_clause = ""
+        if exclude_revisao_id:
+            exclude_clause = "AND revisao_id <> %s::uuid"
+            params.append(exclude_revisao_id)
+        return self.fetch_one(
+            f"""
+            SELECT *
+            FROM transformometro.revisoes
+            WHERE instancia_id = %s::uuid
+              AND deletado = FALSE
+              AND lower(coalesce(cenario_tipo, '')) = 'baseline'
+              {exclude_clause}
+            ORDER BY data_inicio_vigencia DESC, versao_revisao DESC
+            LIMIT 1
+            """,
+            tuple(params),
+        )

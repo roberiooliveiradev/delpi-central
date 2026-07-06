@@ -36,6 +36,7 @@ import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { buildInstanciaPath } from "../../utils/routeParser";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
+import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
 import {
   masterPayloadFromProcessoForm,
   processoFormFromEntity,
@@ -256,6 +257,32 @@ export function ProcessoDetailPage({
               />
             </form>
           ) : null
+        }
+      />
+
+      <EditableSectionCard
+        title="Diagrama macro"
+        description="Mapa canônico do fluxo end-to-end deste processo-mestre."
+        hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
+        isEditing={sectionEdit.isEditing("diagrama_macro")}
+        onEdit={() => sectionEdit.startEdit("diagrama_macro")}
+        onCancel={() => sectionEdit.cancelEdit("diagrama_macro")}
+        readContent={
+          <ProcessoDiagramSection
+            embeddedInCard
+            readOnly
+            processoId={processoId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+          />
+        }
+        editContent={
+          <ProcessoDiagramSection
+            embeddedInCard
+            processoId={processoId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+          />
         }
       />
 

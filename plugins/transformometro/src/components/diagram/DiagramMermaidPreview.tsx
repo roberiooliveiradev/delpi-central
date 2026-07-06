@@ -1,0 +1,86 @@
+import { useEffect, useId, useState } from "react";
+
+type DiagramMermaidPreviewProps = {
+  code: string;
+  className?: string;
+};
+
+type MermaidRenderer = {
+  initialize: (config: Record<string, unknown>) => void;
+  render: (id: string, code: string) => Promise<{ svg: string }>;
+};
+
+let mermaidModulePromise: Promise<MermaidRenderer> | null = null;
+
+function loadMermaidModule(): Promise<MermaidRenderer> {
+  if (!mermaidModulePromise) {
+    mermaidModulePromise = import("mermaid").then(
+      (module) => module.default as MermaidRenderer
+    );
+  }
+  return mermaidModulePromise;
+}
+
+export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreviewProps) {
+  const reactId = useId();
+  const [svg, setSvg] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const diagram = String(code || "").trim();
+    if (!diagram) {
+      setSvg("");
+      setError(null);
+      return;
+    }
+
+    let cancelled = false;
+    loadMermaidModule()
+      .then(async (mermaid) => {
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "strict",
+          theme: "neutral",
+        });
+        const renderId = `tm-mermaid-${reactId}-${Date.now()}`;
+        const result = await mermaid.render(renderId, diagram);
+        if (!cancelled) {
+          setSvg(result.svg);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Erro ao renderizar Mermaid.");
+          setSvg("");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [code, reactId]);
+
+  if (error) {
+    return (
+      <div className={["tm-diagram-mermaid tm-diagram-mermaid--error", className].filter(Boolean).join(" ")}>
+        {error}
+      </div>
+    );
+  }
+
+  if (!svg) {
+    return (
+      <div className={["tm-diagram-mermaid tm-diagram-mermaid--loading", className].filter(Boolean).join(" ")}>
+        Gerando preview…
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={["tm-diagram-mermaid", className].filter(Boolean).join(" ")}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}

@@ -43,6 +43,10 @@ def _sample_bundle() -> dict:
             }
         ],
         "processo_instancias": [],
+        "processo_instancia_setores": [],
+        "processo_diagramas": [],
+        "instancia_diagrama_escopos": [],
+        "revisao_diagrama_overlays": [],
         "recursos_compartilhados": [],
         "revisoes": [
             {
@@ -159,6 +163,9 @@ def test_validate_modern_ignores_orphan_revisoes_on_deleted_process():
         "investimentos": [],
         "recurso_custos": [],
         "revisao_recursos_compartilhados": [],
+        "processo_diagramas": [],
+        "instancia_diagrama_escopos": [],
+        "revisao_diagrama_overlays": [],
     }
     assert detect_import_format(bundle) == "modern"
     errors = JsonBackupService(MagicMock()).validate_bundle(bundle)

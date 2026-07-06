@@ -16,6 +16,7 @@ from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
 from tm_app.interface.http.routes.integrations_routes import router as integrations_router
 from tm_app.interface.http.routes.json_backup_routes import router as json_backup_router
+from tm_app.interface.http.routes.diagram_routes import router as diagram_router
 from tm_app.interface.http.routes.revisao_evidence_routes import router as revisao_evidence_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 from tm_app.middleware.auth_middleware import jwt_middleware
@@ -102,3 +103,4 @@ app.include_router(dashboard_router)
 app.include_router(integrations_router)
 app.include_router(json_backup_router)
 app.include_router(revisao_evidence_router)
+app.include_router(diagram_router)

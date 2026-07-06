@@ -42,6 +42,7 @@ import {
 } from "../../utils/processoDetailTables";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
+import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -262,6 +263,34 @@ export function InstanciaDetailPage({
               await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
               await load();
             }}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title="Escopo no diagrama"
+        description="Subset de nós do diagrama macro relevante para esta instância."
+        hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
+        isEditing={sectionEdit.isEditing("diagrama_escopo")}
+        onEdit={() => sectionEdit.startEdit("diagrama_escopo")}
+        onCancel={() => sectionEdit.cancelEdit("diagrama_escopo")}
+        readContent={
+          <InstanciaDiagramEscopoSection
+            embeddedInCard
+            readOnly
+            processoId={processoId}
+            instanciaId={instanciaId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+          />
+        }
+        editContent={
+          <InstanciaDiagramEscopoSection
+            embeddedInCard
+            processoId={processoId}
+            instanciaId={instanciaId}
+            getAccessToken={getAccessToken}
+            onError={setError}
           />
         }
       />
