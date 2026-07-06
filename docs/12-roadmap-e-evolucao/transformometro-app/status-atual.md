@@ -1,6 +1,8 @@
 # Status atual — Transformômetro
 
-Atualizado: **jul/2026** (Playbook 20 mapeamento WBS; melhorias com escopo livre V034; UI SelectField + modal de confirmação; duplicação completa de processo)
+Atualizado: **jul/2026** (V035 referência de comparação entre revisões; editor Mermaid bidirecional; aliases PT-BR de cenários; Playbook 20; V034; UI SelectField + modal)
+
+> **Regra jul/2026 — referência de comparação (`revisao_referencia_id`, V035).** Revisões não-baseline indicam **contra qual revisão** calcular economia e diffs (diagrama/WBS). A **baseline** não precisa de referência. Se `revisao_referencia_id` estiver vazio (legado), o motor usa a **baseline da instância** (`_pick_reference_review` → fallback `_pick_baseline_review`). Migration V035 faz backfill das revisões existentes apontando para a baseline da mesma melhoria.
 
 > **Regra jul/2026 — média por instância.** Cada instância tem baseline/parâmetros próprios. A economia consolidada de um processo é a **média aritmética das instâncias ativas no mês** (`Σ economia_instância / nº_instâncias_ativas`); investimento, horas e ROI seguem a mesma média. Recorte por unidade/setor mostra o **valor real** da instância (média de 1 = ela mesma). Fonte da regra: `transformometro-api/docs/regras-de-calculo.md`.
 
@@ -27,7 +29,7 @@ Atualizado: **jul/2026** (Playbook 20 mapeamento WBS; melhorias com escopo livre
 
 | Área | Status |
 |------|--------|
-| API + migrations **V001–V034** | ✅ Auto no boot (`TM_RUN_MIGRATIONS_ON_STARTUP=true`) |
+| API + migrations **V001–V035** | ✅ Auto no boot (`TM_RUN_MIGRATIONS_ON_STARTUP=true`) |
 | Processo-mestre + **melhorias** (filial + N setores, escopo livre) | ✅ V013–V015 + **V019** + **V034**; painel MFE **Melhorias** |
 | **CRUD filiais** + editar/excluir instância | ✅ MFE `FiliaisPage` + `PUT/DELETE /instancias/{id}` |
 | Filiais / setores **UUID** + `codigo_*` | ✅ V011–V012; CRUD + options |
@@ -50,7 +52,9 @@ Atualizado: **jul/2026** (Playbook 20 mapeamento WBS; melhorias com escopo livre
 | Testes API | ✅ `scripts/ci-transformometro-api.sh` (123+) |
 | Build MFE | ✅ Docker build `transformometro` |
 | Documentação Playbook 18 | ✅ modelagem, arquitetura, regras de cálculo, status |
-| **Diagramas de processo (Playbook 19)** | ✅ V026–V028; macro + escopo + overlay; editor BPMN-lite + swimlanes + tela cheia |
+| **Diagramas de processo (Playbook 19)** | ✅ V026–V028; macro + escopo + overlay; editor BPMN-lite + swimlanes + tela cheia; aba **Mermaid** (preview ao vivo + aplicar ao canvas) |
+| **Referência de comparação entre revisões** | ✅ V035 `revisao_referencia_id`; UI «Compara com»; cálculo + diffs diagrama/WBS |
+| **Aliases PT-BR de cenários** | ✅ UI exibe «Linha de base», «Automação», etc. (slugs técnicos permanecem na API) |
 | **Mapeamento WBS (Playbook 20)** | ✅ V030–V033; árvore + CSV + escopo/overlay por melhoria/revisão |
 | **Colaboração presença (WS)** | ✅ V029 |
 | **Campos melhoria** (resumo, fase, prioridade, go-live) | ✅ V034 |
@@ -60,7 +64,7 @@ Atualizado: **jul/2026** (Playbook 20 mapeamento WBS; melhorias com escopo livre
 
 ## Migrations automáticas
 
-Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose e `infra/.env`), o container **`delpi-transformometro-api`** aplica V001–V034 pendentes no **startup** (`run_migrations_on_startup` no lifespan FastAPI). Falha de migration **impede** a API de subir.
+Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose e `infra/.env`), o container **`delpi-transformometro-api`** aplica V001–V035 pendentes no **startup** (`run_migrations_on_startup` no lifespan FastAPI). Falha de migration **impede** a API de subir.
 
 > **V021** redefine `processo_competencia_snapshot` e `dashboard_competencia_evolucao` com a média por instância (agregação em 2 níveis). Só relevante se `TM_DASHBOARD_PERSIST_CACHE=true` (leitura legada da tabela) — nesse caso, rodar **recalc full** após aplicar. Com o padrão (fonte única live), as views/tabela não são usadas.
 
@@ -74,7 +78,7 @@ docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistenc
 
 1. **Backup JSON** do cadastro atual (`import_cadastro_json.py export`).
 2. Rebuild + recreate `transformometro-api` + `transformometro`.
-3. Migrations sobem sozinhas; validar `status` até **V034** (ou última pendente).
+3. Migrations sobem sozinhas; validar `status` até **V035** (ou última pendente).
 4. **Bootstrap filiais** (V011 não faz seed):  
    `python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/...json`
 5. **Recalc full** do dashboard (obrigatório após V017/V019/V020): Dashboard → Recalcular ou `POST /transformometro/dashboard/recalcular`.

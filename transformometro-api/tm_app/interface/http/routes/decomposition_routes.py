@@ -440,9 +440,9 @@ def get_revisao_decomposicao_merged(revisao_id: str):
 
     merged = _merge.merge(tree=tree, escopo=escopo, overlay=overlay)
     baseline_diff = None
-    baseline_revisao = RevisaoRepository().find_baseline_for_instancia(
-        str(revisao.get("instancia_id") or ""),
-        exclude_revisao_id=revisao_id,
+    baseline_revisao = RevisaoRepository().find_reference_for_revisao(
+        revisao_id,
+        revisao_row=revisao,
     )
     if baseline_revisao:
         _, baseline_tree, baseline_escopo, baseline_overlay = _load_decomposition_merge_context(

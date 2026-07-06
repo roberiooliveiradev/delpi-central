@@ -171,6 +171,10 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 | Transições suaves entre páginas/abas | ✅ |
 | Diagrama revisão com mesmos controles do macro + tela cheia | ✅ |
 | Linha do tempo de mapeamento no detalhe do processo | ✅ |
+| **Referência de comparação entre revisões** (V035 + UI «Compara com») | ✅ |
+| **Aliases PT-BR** de cenários na UI | ✅ |
+| Editor **Mermaid** bidirecional (preview ao vivo + aplicar ao canvas) | ✅ |
+| Layout tela cheia do diagrama (sem sobreposição de controles) | ✅ |
 
 ## Fase 6 — Limpeza de legado (pendente)
 
@@ -190,5 +194,5 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 2. **Registrar manifesto** na Core API + RBAC escopado (quem precisar)
 3. **Planilha somente leitura** (checklist Google)
 4. Validar smoke pós-deploy: diagrama macro → escopo melhoria → overlay revisão → mapeamento WBS → export PNG/CSV
-5. Aplicar migration **V034** em ambientes que ainda não subiram (campos melhoria + escopo livre)
+5. Aplicar migrations **V034** e **V035** em ambientes que ainda não subiram
 6. **Limpeza Fase 6** — apagar código Sheets morto na api-delpi

@@ -190,7 +190,7 @@ Regras de conversão:
 - Overlay aplica **rótulos** do override antes de gerar.
 - Escopo filtra nós/arestas não incluídos.
 
-**Não** editar Mermaid manualmente no MVP como fonte primária — apenas modo avançado opcional em S2+ com round-trip best-effort.
+**Não** editar Mermaid manualmente no MVP como fonte primária — **jul/2026:** aba **Mermaid** no editor com preview ao vivo, edição de código e **Aplicar ao canvas** (round-trip best-effort via `flowchartToMermaid` / `mermaidToFlowchart` no MFE). JSON `flowchart_v1` permanece fonte de verdade.
 
 ---
 
@@ -214,7 +214,7 @@ Posição sugerida na revisão: **após Vigência, antes de Medição** — cont
 - Conectar nós (handles).
 - «Aplicar template» insere subgraph inicial.
 - Modo leitura: SVG/canvas estático + botão «Exportar PNG» (opcional S1).
-- Aba secundária «Preview Mermaid» (somente leitura) — reutilizar padrão de `ChatMermaidBlock` (lazy `import('mermaid')`).
+- Aba **Mermaid** — código derivado ao vivo + preview renderizado; **Aplicar ao canvas** / **Atualizar do canvas** (jul/2026)
 
 ### 4.3 Instância = parte do macro
 

@@ -310,9 +310,9 @@ def get_revisao_diagrama_merged(revisao_id: str):
 
     merged = _merge.merge(macro=macro, escopo=escopo, overlay=overlay)
     baseline_diff = None
-    baseline_revisao = RevisaoRepository().find_baseline_for_instancia(
-        str(revisao.get("instancia_id") or ""),
-        exclude_revisao_id=revisao_id,
+    baseline_revisao = RevisaoRepository().find_reference_for_revisao(
+        revisao_id,
+        revisao_row=revisao,
     )
     if baseline_revisao:
         _, baseline_macro, baseline_escopo, baseline_overlay = _load_merge_context(

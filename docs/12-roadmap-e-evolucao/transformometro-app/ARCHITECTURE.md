@@ -172,7 +172,7 @@ Schema: **`transformometro`**. Migrations **V001–V020** (ver [migrations/READM
 | `processos` | `processo_id` UUID | Mestre; sem filial/setor (V015) |
 | `processo_instancias` | `instancia_id` UUID | Processo × filial ou `todas_filiais_ativas` (V013/V019) |
 | `processo_instancia_setores` | — | N:N instância ↔ setores (V019) |
-| `revisoes` | `revisao_id` UUID | FK **`instancia_id`** NOT NULL (V014); unique `(instancia_id, versao_revisao)` (V018) |
+| `revisoes` | `revisao_id` UUID | FK **`instancia_id`** NOT NULL (V014); unique `(instancia_id, versao_revisao)` (V018); **`revisao_referencia_id`** FK opcional (V035) |
 | `medicoes` | `medicao_id` UUID | FK `revisao_id` |
 | `investimentos` | `investimento_id` UUID | FK `revisao_id` |
 | `recursos_compartilhados` | `recurso_compartilhado_id` UUID | `escopo_recurso` DEFAULT `empresa` (V016) |

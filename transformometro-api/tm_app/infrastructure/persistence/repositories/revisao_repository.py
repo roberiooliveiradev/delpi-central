@@ -75,6 +75,7 @@ class RevisaoRepository(PluginBaseRepository):
                 str(data["processo_id"])
             )
             instancia_id = str(instancia["instancia_id"])
+        self._validate_referencia_payload(data, instancia_id=instancia_id)
         chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
         row = self.execute_returning_one(
             """
@@ -82,8 +83,8 @@ class RevisaoRepository(PluginBaseRepository):
                 processo_id, instancia_id, versao_revisao, chave_unica_processo_revisao,
                 descricao_revisao, motivo_revisao, cenario_tipo,
                 data_implantacao, data_inicio_vigencia, data_fim_vigencia,
-                revisao_ativa, observacoes, status_aprovacao
-            ) VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                revisao_ativa, observacoes, status_aprovacao, revisao_referencia_id
+            ) VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid)
             RETURNING *
             """,
             (
@@ -100,6 +101,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("revisao_ativa", False),
                 data.get("observacoes"),
                 data.get("status_aprovacao", "aprovada"),
+                data.get("revisao_referencia_id"),
             ),
             auto_commit=False,
         )
@@ -119,6 +121,11 @@ class RevisaoRepository(PluginBaseRepository):
             or (current or {}).get("instancia_id")
             or ""
         )
+        self._validate_referencia_payload(
+            data,
+            instancia_id=instancia_id,
+            revisao_id=revisao_id,
+        )
         chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
         row = self.execute_returning_one(
             """
@@ -134,6 +141,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data_fim_vigencia = %s,
                 revisao_ativa = %s,
                 observacoes = %s,
+                revisao_referencia_id = %s::uuid,
                 updated_at = NOW()
             WHERE revisao_id = %s AND deletado = FALSE
             RETURNING *
@@ -150,6 +158,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("revisao_ativa", False),
                 data.get("observacoes"),
+                data.get("revisao_referencia_id"),
                 revisao_id,
             ),
             auto_commit=False,
@@ -238,9 +247,38 @@ class RevisaoRepository(PluginBaseRepository):
         normalized = dict(data)
         if self._is_baseline(normalized):
             normalized["revisao_ativa"] = False
+            normalized["revisao_referencia_id"] = None
         elif normalized.get("data_fim_vigencia"):
             normalized["revisao_ativa"] = False
         return normalized
+
+    def _validate_referencia_payload(
+        self,
+        data: dict[str, Any],
+        *,
+        instancia_id: str,
+        revisao_id: str | None = None,
+    ) -> None:
+        cenario = str(data.get("cenario_tipo") or "").lower()
+        referencia_id = str(data.get("revisao_referencia_id") or "").strip() or None
+
+        if cenario == "baseline":
+            if referencia_id:
+                raise ValueError("Revisão baseline não deve informar revisão de referência.")
+            return
+
+        if not referencia_id:
+            raise ValueError(
+                "Informe a revisão de referência para comparar economia e diffs."
+            )
+        if revisao_id and referencia_id == revisao_id:
+            raise ValueError("A revisão não pode ser referência de si mesma.")
+
+        referencia = self.get(referencia_id)
+        if not referencia:
+            raise ValueError("Revisão de referência não encontrada.")
+        if str(referencia.get("instancia_id") or "") != instancia_id:
+            raise ValueError("A revisão de referência deve pertencer à mesma melhoria.")
 
     def _apply_revision_lifecycle(
         self,
@@ -365,4 +403,26 @@ class RevisaoRepository(PluginBaseRepository):
             LIMIT 1
             """,
             tuple(params),
+        )
+
+    def find_reference_for_revisao(
+        self,
+        revisao_id: str,
+        *,
+        revisao_row: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        revisao = revisao_row or self.get(revisao_id)
+        if not revisao:
+            return None
+
+        referencia_id = str(revisao.get("revisao_referencia_id") or "").strip()
+        if referencia_id:
+            referencia = self.get(referencia_id)
+            if referencia and not referencia.get("deletado"):
+                return referencia
+
+        instancia_id = str(revisao.get("instancia_id") or "")
+        return self.find_baseline_for_instancia(
+            instancia_id,
+            exclude_revisao_id=str(revisao.get("revisao_id") or ""),
         )

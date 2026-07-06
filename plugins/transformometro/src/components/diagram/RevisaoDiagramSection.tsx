@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, ImagePlus } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -18,6 +18,7 @@ import {
   type FlowchartV1,
   type MergedRevisaoDiagram,
 } from "../../types/diagram";
+import { flowchartToMermaid } from "../../utils/flowchartMermaid";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
 
@@ -48,6 +49,7 @@ export function RevisaoDiagramSection({
   const [merged, setMerged] = useState<MergedRevisaoDiagram | null>(null);
   const [editable, setEditable] = useState<FlowchartV1>(emptyFlowchart());
   const [overlayDraft, setOverlayDraft] = useState<FlowchartOverlayV1>(emptyOverlay());
+  const liveMermaid = useMemo(() => flowchartToMermaid(editable), [editable]);
   const [baseMerged, setBaseMerged] = useState<FlowchartV1>(emptyFlowchart());
   const exportRef = useRef<HTMLDivElement>(null);
 
@@ -174,17 +176,14 @@ export function RevisaoDiagramSection({
             onChange={readOnly ? undefined : setEditable}
             readOnly={readOnly}
             diffNodeIds={merged.baseline_diff ?? undefined}
-            mermaidPreview={merged.mermaid}
             exportRef={exportRef}
           />
         </Suspense>
 
-        {merged.mermaid ? (
-          <details className="tm-diagram-section__preview">
-            <summary>Preview Mermaid (mesclado)</summary>
-            <DiagramMermaidPreview code={merged.mermaid} />
-          </details>
-        ) : null}
+        <details className="tm-diagram-section__preview" open={false}>
+          <summary>Preview Mermaid (mesclado)</summary>
+          <DiagramMermaidPreview code={liveMermaid} />
+        </details>
 
         <div className="tm-diagram-section__actions">
           {!readOnly ? (

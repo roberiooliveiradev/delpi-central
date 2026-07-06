@@ -10,12 +10,15 @@ Documento oficial alinhado ao [playbook de correções](playbook_correcoes.md). 
 - tem parâmetros de cálculo diferentes entre unidades;
 - não atinge os mesmos setores.
 
-O cálculo mensal itera **por instância** (baseline escolhido dentro da instância — `_pick_baseline_review` sobre as revisões da instância), nunca mais por processo com um único baseline compartilhado.
+O cálculo mensal itera **por instância**. Para **cada revisão comparável**, a referência de comparação é resolvida por `_pick_reference_review`:
+
+1. Se `revisao_referencia_id` estiver preenchido → usa essa revisão (mesma instância).
+2. Se NULL (legado) → fallback `_pick_baseline_review` (baseline mais antiga da instância).
 
 ```text
-economia(instância, mês) = Σ (revisões comparáveis da instância no mês)  vs baseline da própria instância
-economia(processo, mês)  = Σ economia(instância, mês)   # instâncias ativas SOMAM
-economia(empresa, mês)   = Σ economia(processo, mês)    # consolidado soma os processos
+economia(revisão R, mês) = custo(referência de R) − custo(R)   [componentes ≥ 0]
+economia(instância, mês)   = Σ revisões comparáveis válidas no mês
+economia(processo, mês)  = Σ instâncias ativas
 ```
 
 - **Instância ativa no mês**: tem pelo menos uma revisão comparável válida naquela competência. Se a unidade B começou depois, só entra nos meses em que está ativa.

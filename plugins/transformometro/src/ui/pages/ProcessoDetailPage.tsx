@@ -214,6 +214,7 @@ export function ProcessoDetailPage({
       decompositionNodeCount,
       revisoes,
       comparativoItems,
+      hasMedicao: processo.setup_stats?.has_medicao,
     });
   }, [comparativoItems, decompositionNodeCount, diagramNodeCount, instancias.length, processo, revisoes]);
 

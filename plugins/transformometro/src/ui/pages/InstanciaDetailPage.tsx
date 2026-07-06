@@ -20,6 +20,8 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel } from "../../components/HelpTooltip";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
+import { cenarioSelectLabel } from "../../content/cenarioLabels";
+import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   createRevisao,
@@ -76,11 +78,32 @@ export function InstanciaDetailPage({
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
     cenario_tipo: "baseline",
+    revisao_referencia_id: "",
     data_inicio_vigencia: todayDateInput(),
     data_implantacao: "",
     data_fim_vigencia: "",
     revisao_ativa: true,
   });
+
+  const revisoesById = useMemo(
+    () => new Map(revisoes.map((item) => [item.revisao_id, item])),
+    [revisoes]
+  );
+
+  const referenciaOptions = useMemo(
+    () =>
+      revisoes.map((item) => ({
+        value: item.revisao_id,
+        label: revisaoDisplayLabel(item),
+      })),
+    [revisoes]
+  );
+
+  const defaultReferenciaId = useMemo(() => {
+    const active = revisoes.find((item) => item.revisao_ativa);
+    if (active) return active.revisao_id;
+    return revisoes[revisoes.length - 1]?.revisao_id ?? "";
+  }, [revisoes]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -120,7 +143,7 @@ export function InstanciaDetailPage({
   }, [load]);
 
   async function handleDeleteRevisao(revisao: Revisao) {
-    const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
+    const label = revisaoDisplayLabel(revisao);
     const confirmed = await confirm({
       title: "Excluir revisão",
       message: `Excluir a revisão ${label}?`,
@@ -141,11 +164,12 @@ export function InstanciaDetailPage({
   const revisaoColumns = useMemo(
     () =>
       buildRevisaoColumns({
+        revisoesById,
         onOpen: (revisaoId) =>
           onNavigate(buildProcessoPath(processoId, revisaoId, instanciaId)),
         onDelete: (revisao) => void handleDeleteRevisao(revisao),
       }),
-    [instanciaId, onNavigate, processoId]
+    [instanciaId, onNavigate, processoId, revisoesById]
   );
 
   async function handleCreateRevisao(e: React.FormEvent) {
@@ -158,6 +182,8 @@ export function InstanciaDetailPage({
           instancia_id: instanciaId,
           versao_revisao: revForm.versao_revisao,
           cenario_tipo: revForm.cenario_tipo,
+          revisao_referencia_id:
+            revForm.cenario_tipo === "baseline" ? undefined : revForm.revisao_referencia_id,
           data_inicio_vigencia: revForm.data_inicio_vigencia,
           revisao_ativa: revForm.revisao_ativa,
           data_implantacao: optionalDateField(revForm.data_implantacao),
@@ -217,7 +243,22 @@ export function InstanciaDetailPage({
               <ArrowLeft size={16} />
               Processo
             </button>
-            <button type="button" className="ds-primary-btn" onClick={() => setShowRevisaoForm((v) => !v)}>
+            <button
+              type="button"
+              className="ds-primary-btn"
+              onClick={() => {
+                setRevForm({
+                  versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
+                  cenario_tipo: revisoes.length ? "melhoria" : "baseline",
+                  revisao_referencia_id: defaultReferenciaId,
+                  data_inicio_vigencia: todayDateInput(),
+                  data_implantacao: "",
+                  data_fim_vigencia: "",
+                  revisao_ativa: revisoes.length > 0,
+                });
+                setShowRevisaoForm((v) => !v);
+              }}
+            >
               <Plus size={16} />
               {showRevisaoForm ? "Cancelar revisão" : "Nova revisão"}
             </button>
@@ -396,9 +437,32 @@ export function InstanciaDetailPage({
                 label="Cenário"
                 hint={TM_HELP_TOOLTIPS.revisao.cenario}
                 value={revForm.cenario_tipo}
-                onChange={(cenario) => setRevForm({ ...revForm, cenario_tipo: cenario })}
-                options={mapSelectOptions(options.cenario_tipo)}
+                onChange={(cenario) =>
+                  setRevForm((current) => ({
+                    ...current,
+                    cenario_tipo: cenario,
+                    revisao_referencia_id:
+                      cenario === "baseline"
+                        ? ""
+                        : current.revisao_referencia_id || defaultReferenciaId,
+                    revisao_ativa: cenario === "baseline" ? false : current.revisao_ativa,
+                  }))
+                }
+                options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
               />
+              {revForm.cenario_tipo !== "baseline" ? (
+                <SelectField
+                  id="tm-rev-referencia"
+                  label="Compara com"
+                  hint={TM_HELP_TOOLTIPS.revisao.referenciaComparacao}
+                  required
+                  value={revForm.revisao_referencia_id || defaultReferenciaId}
+                  onChange={(revisaoReferenciaId) =>
+                    setRevForm({ ...revForm, revisao_referencia_id: revisaoReferenciaId })
+                  }
+                  options={referenciaOptions}
+                />
+              ) : null}
               <div className="ds-filter-box">
                 <FieldLabel label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
                 <input

@@ -23,7 +23,7 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 3. **Alertas** (economia líquida negativa ≥3 meses) e export **CSV** ou **Excel** no dashboard.
 4. Cadastro: preencher **família** e **agrupador ferramenta** quando o processo participa de rateio compartilhado.
 5. **Recursos compartilhados:** cadastrar em **Recursos** (menu); vincular em Processos → revisão → aba Recursos.
-6. **Revisões:** cadastrar baseline/melhorias e **Definir como ativa** quando for usar no dashboard (sem aprovação).
+6. **Revisões:** cadastrar baseline/melhorias; informar **Compara com** (V035) em cenários não-baseline; **Definir como ativa** quando for usar no dashboard.
 7. Cadastro oficial somente no portal (sem importação de planilha).
 8. **Instâncias:** replicar timeline entre filiais/setores pelo painel **Replicar instância** (canônico); evitar duplicar processo-mestre (legado deprecado).
 9. **Dashboard:** escolher visão Consolidado / Filial / Departamento; usuários com RBAC filial veem escopo em `/options` → `access_scope`.

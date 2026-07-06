@@ -80,7 +80,10 @@ Um processo pode ter **N instâncias** (ex.: mesma melhoria em Matriz/Engenharia
 ## 3. Vocabulário do Domínio
 
 **Baseline**  
-Cenário original do processo. É usada para comparar custo operacional contra revisões de melhoria, automação ou correção.
+Cenário original do processo (`cenario_tipo = baseline`). Serve como referência padrão quando nenhuma revisão de comparação explícita foi informada.
+
+**Revisão de referência (`revisao_referencia_id`)**  
+Revisão contra a qual outra revisão calcula economia e diffs visuais. Obrigatória para cenários não-baseline no cadastro (V035). Se NULL (legado), o motor usa a baseline da instância (`DashboardCalculatorService._pick_reference_review`).
 
 **Revisão não-baseline**  
 Qualquer revisão com `cenario_tipo` diferente de `baseline`. Hoje os cenários comparáveis oficiais são `melhoria`, `automacao` e `correcao`.
@@ -126,15 +129,16 @@ Revisão cuja competência calculada cai entre:
 
 1. Criar processo-mestre (+ primeira instância operacional com filial/setor).
 2. Criar baseline **na instância** com medição.
-3. Criar primeira revisão não-baseline **na mesma instância**.
-4. Informar `data_implantacao` ou, no mínimo, `data_inicio_vigencia`.
-5. Informar medição da revisão.
-6. Registrar investimentos únicos ou recorrentes da revisão.
-7. Vincular recursos compartilhados (definir `escopo_recurso` no catálogo quando ≠ `empresa`).
-8. Ativar uma revisão operacional da instância.
-9. Para replicar a timeline em outro par filial × setor: `POST /instancias/{id}/duplicar` (não duplicar processo-mestre inteiro salvo legado deprecado).
-10. Encerrar revisões antigas por `data_fim_vigencia` quando houver troca real de cenário.
-11. Recalcular dashboard ou deixar o cálculo em tempo real refletir a alteração.
+3. Criar primeira revisão não-baseline **na mesma instância** com `revisao_referencia_id` apontando para a baseline (ou revisão escolhida).
+4. Revisões posteriores podem referenciar a **revisão ativa anterior** (incremento entre versões) — campo **Compara com** no MFE.
+5. Informar `data_implantacao` ou, no mínimo, `data_inicio_vigencia`.
+6. Informar medição da revisão.
+7. Registrar investimentos únicos ou recorrentes da revisão.
+8. Vincular recursos compartilhados (definir `escopo_recurso` no catálogo quando ≠ `empresa`).
+9. Ativar uma revisão operacional da instância.
+10. Para replicar a timeline em outro par filial × setor: `POST /instancias/{id}/duplicar` (não duplicar processo-mestre inteiro salvo legado deprecado).
+11. Encerrar revisões antigas por `data_fim_vigencia` quando houver troca real de cenário.
+12. Recalcular dashboard ou deixar o cálculo em tempo real refletir a alteração.
 
 ## 5. Regras de Atividade e Vigência
 
@@ -367,7 +371,7 @@ horas_economizadas_mes =
 5. Para cada competência:
    - iterar instâncias/revisões no escopo;
    - descartar processos sem revisão ativa na instância;
-   - resolver baseline da instância;
+   - resolver revisão de referência (`revisao_referencia_id` ou baseline da instância);
    - selecionar revisões não-baseline vigentes;
    - calcular custos operacionais;
    - calcular investimentos únicos e recorrentes da revisão;

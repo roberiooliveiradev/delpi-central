@@ -19,17 +19,6 @@ function buildCompletion(items: CompletionItem[]): FormCompletion {
   return { percent, done, total: items.length, items };
 }
 
-/** Campos mestre disponíveis na listagem (sem instâncias, diagrama ou revisões). */
-export function computeProcessoMasterCompletion(processo: Processo): FormCompletion {
-  const items: CompletionItem[] = [
-    { id: "gestor", label: "Gestor", done: filled(processo.gestor_responsavel) },
-    { id: "objetivo", label: "Objetivo", done: filled(processo.objetivo_processo) },
-    { id: "descricao", label: "Descrição", done: filled(processo.descricao_processo) },
-    { id: "familia", label: "Família", done: filled(processo.familia_processo) },
-  ];
-  return buildCompletion(items);
-}
-
 export type ProcessoSetupCompletionInput = {
   processo: Processo;
   instanciaCount: number;
@@ -37,6 +26,10 @@ export type ProcessoSetupCompletionInput = {
   decompositionNodeCount: number;
   revisoes: Revisao[];
   comparativoItems?: ProcessoComparativoItem[];
+  /** Quando informados (ex.: listagem via setup_stats), substituem inferência por revisões/comparativo. */
+  hasBaseline?: boolean;
+  hasMelhoria?: boolean;
+  hasMedicao?: boolean;
 };
 
 function hasCenario(revisoes: Revisao[], cenario: string): boolean {
@@ -49,9 +42,29 @@ function hasMedicao(comparativoItems: ProcessoComparativoItem[] | undefined): bo
   return comparativoItems.some((row) => (row.meses_com_dados ?? 0) > 0);
 }
 
+function resolveCenarioDone(
+  input: ProcessoSetupCompletionInput,
+  cenario: "baseline" | "melhoria"
+): boolean {
+  if (cenario === "baseline" && input.hasBaseline !== undefined) {
+    return input.hasBaseline;
+  }
+  if (cenario === "melhoria" && input.hasMelhoria !== undefined) {
+    return input.hasMelhoria;
+  }
+  return hasCenario(input.revisoes, cenario);
+}
+
+function resolveMedicaoDone(input: ProcessoSetupCompletionInput): boolean {
+  if (input.hasMedicao !== undefined) {
+    return input.hasMedicao;
+  }
+  return hasMedicao(input.comparativoItems);
+}
+
 /** Checklist completo do processo-mestre (padrão quality-action-plans / Kaizen). */
 export function computeProcessoSetupCompletion(input: ProcessoSetupCompletionInput): FormCompletion {
-  const { processo, instanciaCount, diagramNodeCount, decompositionNodeCount, revisoes, comparativoItems } = input;
+  const { processo, instanciaCount, diagramNodeCount, decompositionNodeCount } = input;
   const items: CompletionItem[] = [
     { id: "gestor", label: "Gestor", done: filled(processo.gestor_responsavel) },
     { id: "objetivo", label: "Objetivo", done: filled(processo.objetivo_processo) },
@@ -75,18 +88,33 @@ export function computeProcessoSetupCompletion(input: ProcessoSetupCompletionInp
     {
       id: "baseline",
       label: "Baseline",
-      done: hasCenario(revisoes, "baseline"),
+      done: resolveCenarioDone(input, "baseline"),
     },
     {
       id: "melhoria",
       label: "Melhoria",
-      done: hasCenario(revisoes, "melhoria"),
+      done: resolveCenarioDone(input, "melhoria"),
     },
     {
       id: "medicao",
       label: "Medição",
-      done: hasMedicao(comparativoItems),
+      done: resolveMedicaoDone(input),
     },
   ];
   return buildCompletion(items);
+}
+
+/** Listagem — usa setup_stats retornado pela API (mesmo checklist do detalhe). */
+export function computeProcessoListCompletion(processo: Processo): FormCompletion {
+  const stats = processo.setup_stats;
+  return computeProcessoSetupCompletion({
+    processo,
+    instanciaCount: stats?.instancia_count ?? 0,
+    diagramNodeCount: stats?.diagram_node_count ?? 0,
+    decompositionNodeCount: stats?.decomposition_node_count ?? 0,
+    revisoes: [],
+    hasBaseline: stats?.has_baseline,
+    hasMelhoria: stats?.has_melhoria,
+    hasMedicao: stats?.has_medicao,
+  });
 }

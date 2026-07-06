@@ -100,11 +100,14 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 ### Passo 6 — Primeira melhoria (cenário)
 
 1. Na mesma melhoria, crie revisão **melhoria**, **automação** ou **correção**.
-2. Informe **data de implantação** (ou, no mínimo, início de vigência).
-3. Cadastre **medição** da situação pós-melhoria.
-4. Registre **investimentos** (únicos ou recorrentes).
-5. Vincule **recursos** se aplicável.
-6. Clique **Definir como ativa** — só **uma** revisão não-baseline fica ativa por melhoria.
+2. Em **Compara com**, escolha a revisão de referência (normalmente a **linha de base** na primeira melhoria; revisões posteriores podem comparar com a **revisão ativa anterior**).
+3. Informe **data de implantação** (ou, no mínimo, início de vigência).
+4. Cadastre **medição** da situação pós-melhoria.
+5. Registre **investimentos** (únicos ou recorrentes).
+6. Vincule **recursos** se aplicável.
+7. Clique **Definir como ativa** — só **uma** revisão não-baseline fica ativa por melhoria.
+
+**Revisões cotidianas (após ~1 ano):** ao registrar v3.0, v4.0…, compare com a versão imediatamente anterior (ex.: v2.0), não necessariamente com a baseline original — a economia passa a refletir o **incremento entre versões**.
 
 ### Passo 7 — Replicar em outra unidade ou foco (se necessário)
 
@@ -193,7 +196,7 @@ Cada revisão possui seções editáveis (clique **Editar** no card):
 
 | Seção | Conteúdo |
 |-------|----------|
-| **Vigência** | Versão, cenário, datas, descrição, revisão ativa |
+| **Vigência** | Versão, cenário, **Compara com** (referência), datas, descrição, revisão ativa |
 | **Medição** | Volume, tempos, custos hora, erros, retrabalho |
 | **Investimentos** | Itens únicos ou recorrentes da revisão |
 | **Recursos** | Vínculos com recursos do catálogo + peso/rateio |
@@ -202,19 +205,31 @@ Cada revisão possui seções editáveis (clique **Editar** no card):
 
 ### Cenários (`cenario_tipo`)
 
-| Cenário | Uso |
-|---------|-----|
-| **baseline** | Referência «como era» — não gera economia sozinha |
-| **melhoria** | Mudança de processo, ferramenta ou método |
-| **automacao** | Automação relevante (RPA, integração, etc.) |
-| **correcao** | Correção de falha ou desperdício |
+Na interface, os cenários aparecem com **nomes amigáveis em português**; na API permanecem os slugs técnicos.
+
+| Slug (API) | Nome na UI | Uso |
+|------------|------------|-----|
+| **baseline** | Linha de base (as-is) | Referência «como era» — **não** informa «Compara com»; não gera economia sozinha |
+| **melhoria** | Melhoria de processo | Mudança de processo, ferramenta ou método |
+| **automacao** | Automação | Automação relevante (RPA, integração, etc.) |
+| **correcao** | Correção / estabilização | Correção de falha ou desperdício |
+
+### Referência de comparação (`revisao_referencia_id`)
+
+| Regra | Detalhe |
+|-------|---------|
+| **Baseline** | Sem referência — é o ponto zero da melhoria |
+| **Demais cenários** | Campo **Compara com** obrigatório ao criar/editar |
+| **Legado / vazio** | Cálculo usa a **baseline da instância** automaticamente |
+| **Economia** | `custo_referência − custo_atual` (referência = revisão escolhida, não sempre baseline) |
+| **Diffs diagrama/WBS** | Mesma referência da revisão |
 
 ### Regras importantes
 
-1. **Baseline com medição** é obrigatória para calcular economia das melhorias.
+1. **Baseline com medição** é obrigatória para calcular economia (ou uma revisão de referência com medição).
 2. Revisão **encerrada** (`data_fim_vigencia`) não pode ser marcada como ativa.
 3. **Data de implantação** da melhoria = primeira revisão não-baseline (usa `data_implantacao` ou `data_inicio_vigencia`).
-4. Use **Comparativo** na melhoria para ver baseline vs melhorias lado a lado.
+4. Use **Comparativo** na melhoria para ver totais de cada versão lado a lado (cada uma já reflete sua referência no cálculo).
 
 ### Diagnóstico de rateio
 
@@ -273,8 +288,8 @@ flowchart TB
 
 **Abas do editor:**
 
-- **Canvas** — edição interativa
-- **Preview Mermaid** — visualização derivada (somente leitura)
+- **Canvas** — edição visual interativa (fonte de verdade: JSON `flowchart_v1`)
+- **Mermaid** — código derivado **ao vivo** + preview renderizado; edite o texto e use **Aplicar ao canvas** (ou **Atualizar do canvas** para sincronizar). **Modelo inicial** disponível em diagrama vazio.
 
 **Antes de salvar:**
 
@@ -476,6 +491,7 @@ Use como roteiro de conferência:
 - [ ] Melhoria operacional com unidade/departamento, **Título** e campos de rollout
 - [ ] **Escopo do diagrama** e **escopo no mapeamento** definidos na melhoria
 - [ ] Revisão **baseline** com vigência + **medição**
+- [ ] Revisões de melhoria com **Compara com** definido (referência correta)
 - [ ] Overlay **as-is** na baseline (fluxo e/ou WBS — recomendado)
 - [ ] Revisão **melhoria** com implantação + vigência + **medição**
 - [ ] Overlay **to-be** na melhoria
@@ -499,7 +515,13 @@ Sim. Desde jul/2026 o escopo é livre — use **Título**, resumo, fase e priori
 Não. Apenas **uma** revisão não-baseline ativa por melhoria.
 
 **A baseline entra no ROI?**  
-Não diretamente. Ela é referência para medir ganho das melhorias.
+Não gera economia comparativa (economia = 0). Serve como referência padrão quando nenhuma revisão de comparação foi informada.
+
+**O que é «Compara com»?**  
+Revisão de referência para calcular economia e diffs visuais. Obrigatório em cenários não-baseline. Ex.: v3.0 comparando com v2.0 mede o **incremento** desde a versão anterior; sem referência explícita (legado), o sistema usa a **linha de base**.
+
+**Preciso sempre comparar com a baseline?**  
+Não. Após a primeira melhoria, revisões cotidianas podem referenciar a **revisão ativa anterior**. A baseline continua existindo como ponto zero histórico.
 
 **O diagrama ou o mapeamento impactam o cálculo financeiro?**  
 Não. São **documentação** vinculada ao processo/melhoria/revisão. KPIs vêm de medição, investimentos e recursos.
@@ -522,6 +544,7 @@ No detalhe do processo → **Linha do tempo** (audit log).
 | Árvore / planilha mapeamento | [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) |
 | Status técnico Playbook 20 | [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) |
 | Fórmulas de cálculo | [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) |
+| Status técnico e deploy | [status-atual.md](./status-atual.md) |
 | Deploy e migrations | [OPERATIONS.md](./OPERATIONS.md) |
 
 ---

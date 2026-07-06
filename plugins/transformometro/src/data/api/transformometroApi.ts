@@ -95,6 +95,16 @@ export type Processo = {
   objetivo_processo?: string | null;
   familia_processo?: string | null;
   agrupador_ferramenta?: string | null;
+  setup_stats?: ProcessoSetupStats;
+};
+
+export type ProcessoSetupStats = {
+  instancia_count: number;
+  diagram_node_count: number;
+  decomposition_node_count: number;
+  has_baseline: boolean;
+  has_melhoria: boolean;
+  has_medicao: boolean;
 };
 
 export type Revisao = {
@@ -103,6 +113,7 @@ export type Revisao = {
   instancia_id?: string;
   versao_revisao: string;
   cenario_tipo: string;
+  revisao_referencia_id?: string | null;
   data_inicio_vigencia: string;
   revisao_ativa: boolean;
   status_aprovacao?: string;

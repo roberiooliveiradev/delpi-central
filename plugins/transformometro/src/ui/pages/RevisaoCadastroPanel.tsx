@@ -27,6 +27,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceApi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoDiagramSection } from "../../components/diagram/RevisaoDiagramSection";
@@ -85,6 +86,7 @@ const emptyMedicao = (revisaoId: string): Medicao => ({
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisao: Revisao;
+  revisoesReferencia?: Revisao[];
   options: OptionsData;
   onError: (message: string | null) => void;
   onRevisaoUpdated: () => void;
@@ -93,6 +95,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 
 export function RevisaoCadastroPanel({
   revisao,
+  revisoesReferencia = [],
   options,
   getAccessToken,
   onError,
@@ -118,12 +121,14 @@ export function RevisaoCadastroPanel({
     revisao.revisao_id,
     revisao.versao_revisao,
     revisao.cenario_tipo,
+    revisao.revisao_referencia_id,
     revisao.data_inicio_vigencia,
     revisao.data_implantacao,
     revisao.data_fim_vigencia,
     revisao.descricao_revisao,
     revisao.motivo_revisao,
     revisao.observacoes,
+    revisao.revisao_ativa,
   ]);
 
   const load = useCallback(async () => {
@@ -225,7 +230,7 @@ export function RevisaoCadastroPanel({
   }
 
   async function handleDeleteRevisao() {
-    const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
+    const label = revisaoDisplayLabel(revisao);
     const confirmed = await confirm({
       title: "Excluir revisão",
       message: `Excluir a revisão ${label}?`,
@@ -307,6 +312,8 @@ export function RevisaoCadastroPanel({
           <RevisaoVigenciaSection
             embeddedInCard
             readOnly
+            revisaoId={revisao.revisao_id}
+            revisoesReferencia={revisoesReferencia}
             revisaoVigencia={revisaoVigencia}
             options={options}
             onChange={setRevisaoVigencia}
@@ -317,6 +324,8 @@ export function RevisaoCadastroPanel({
           <RevisaoVigenciaSection
             embeddedInCard
             hideSubmit
+            revisaoId={revisao.revisao_id}
+            revisoesReferencia={revisoesReferencia}
             revisaoVigencia={revisaoVigencia}
             options={options}
             onChange={setRevisaoVigencia}

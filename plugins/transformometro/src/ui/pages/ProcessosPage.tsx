@@ -25,7 +25,7 @@ import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
-import { computeProcessoMasterCompletion } from "../../utils/processoCompletion";
+import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const P = TM_HELP_TOOLTIPS.processos;
@@ -175,8 +175,8 @@ export function ProcessosPage({
         render: (row) => (
           <ProcessoFormProgress
             compact
-            completion={computeProcessoMasterCompletion(row)}
-            title={`Preenchimento mestre — ${row.codigo_processo}`}
+            completion={computeProcessoListCompletion(row)}
+            title={`Preenchimento do cadastro — ${row.codigo_processo}`}
           />
         ),
       },

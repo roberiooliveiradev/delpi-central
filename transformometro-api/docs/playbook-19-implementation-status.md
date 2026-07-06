@@ -49,6 +49,7 @@ Ver [migrations/README.md](../migrations/README.md).
 | Tipos + templates | `src/types/diagram.ts` |
 | Swimlanes / layout | `src/utils/diagramSwimlanes.ts` |
 | Preview Mermaid | `DiagramMermaidPreview.tsx` |
+| Editor Mermaid bidirecional | `FlowchartMermaidPanel.tsx`, `flowchartMermaid.ts` (preview ao vivo + aplicar ao canvas) |
 | Client API | `src/data/api/transformometroDiagramApi.ts` |
 
 Integração UI: `ProcessoDetailPage`, `InstanciaDetailPage`, `RevisaoCadastroPanel` (seção editável).
@@ -66,8 +67,14 @@ Integração UI: `ProcessoDetailPage`, `InstanciaDetailPage`, `RevisaoCadastroPa
 | Auto-layout | Rank por ordem do fluxo; posicionamento horizontal por faixa |
 | Exclusão | `Delete` / `Backspace` em nó ou aresta selecionados |
 | Export PNG | `html-to-image` no macro e na revisão; revisão pode anexar como evidência |
+| Aba Mermaid (jul/2026) | Preview ao vivo do código derivado; edição + **Aplicar ao canvas** / **Atualizar do canvas** (round-trip best-effort) |
+| Tela cheia | Controles React Flow em `top-right`; barra de ações sem sobreposição sticky |
 
 Validação API: `lanes`, `lane_id`, `routing` (`straight` \| `step` \| `smoothstep`) — ver `tests/test_flowchart_v1.py`.
+
+## Diff de diagrama e referência de revisão (V035)
+
+Diffs baseline/melhoria e overlay usam `find_reference_for_revisao()` — mesma regra do cálculo (`revisao_referencia_id` ou fallback baseline da instância). Ver [regras-de-calculo.md](./regras-de-calculo.md) § referência de comparação.
 
 ## Testes
 
@@ -77,11 +84,12 @@ Validação API: `lanes`, `lane_id`, `routing` (`straight` \| `step` \| `smooths
 | `tests/test_diagram_mermaid_export_service.py` | Export Mermaid |
 | `tests/test_revisao_diagram_merge_service.py` | Merge + escopo + overlay |
 | `tests/test_json_backup_service.py` | Round-trip bundles de diagrama |
+| `plugins/transformometro/src/utils/flowchartMermaid.test.ts` | Round-trip Mermaid ↔ `flowchart_v1` (MFE) |
 
 ## Pós-deploy (1ª vez com V026–V028)
 
 1. Rebuild + recreate `transformometro-api` e `transformometro` (migrations automáticas).
-2. Conferir `migrations_runner status` até **V028**.
+2. Conferir `migrations_runner status` até **V035** (ou última pendente).
 3. Smoke: processo → editar diagrama macro → salvar → preview Mermaid.
 4. Instância → marcar escopo de nós → revisão → overlay as-is/to-be → salvar.
 5. Backup JSON export → conferir chaves `processo_diagramas` / escopos / overlays.

@@ -33,6 +33,12 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V027 | `V027__instancia_diagrama_escopo.sql` | Escopo de nós do macro por instância |
 | V028 | `V028__revisao_diagrama_overlays.sql` | Overlay as-is/to-be por revisão |
 | V029 | `V029__collaboration_presence.sql` | Presença colaborativa e travas soft por seção (`collaboration_presence`) |
+| V030 | `V030__processo_decomposicao.sql` | Árvore WBS (`processo_decomposicao`) no processo-mestre |
+| V031 | `V031__instancia_decomposicao_escopo.sql` | Escopo de nós WBS por melhoria (`instancia_decomposicao_escopo`) |
+| V032 | `V032__revisao_decomposicao_overlays.sql` | Overlay WBS as-is/to-be por revisão |
+| V033 | `V033__instancia_contexto.sql` | Contexto operacional da melhoria (metadados de escopo) |
+| V034 | `V034__melhoria_campos_e_escopo_livre.sql` | Campos rollout em `processo_instancias`; remove unique `(processo, filial)` |
+| V035 | `V035__revisao_referencia_comparacao.sql` | `revisoes.revisao_referencia_id` — referência de comparação entre revisões |
 
 ## Notas V019–V020
 

@@ -1,3 +1,5 @@
+import { cenarioLabel } from "../content/cenarioLabels";
+
 export type ProcessoAuditLogEntry = {
   audit_id: string;
   entity_type: string;
@@ -138,7 +140,10 @@ function detailFromPayload(
   }
 
   if (nome) return nome;
-  if (versao) return `Versão ${versao}${asString(payload.cenario_tipo) ? ` · ${payload.cenario_tipo}` : ""}`;
+  if (versao) {
+    const cenario = asString(payload.cenario_tipo);
+    return `Versão ${versao}${cenario ? ` · ${cenarioLabel(cenario)}` : ""}`;
+  }
   if (descricao) return descricao;
   if (rotulo) return rotulo;
   if (status) return `Status: ${status}`;

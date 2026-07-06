@@ -132,11 +132,26 @@ class RevisaoBody(BaseModel):
     cenario_tipo: str
     data_inicio_vigencia: str
     revisao_ativa: bool = False
+    revisao_referencia_id: Optional[str] = None
     descricao_revisao: Optional[str] = None
     motivo_revisao: Optional[str] = None
     data_implantacao: Optional[str] = None
     data_fim_vigencia: Optional[str] = None
     observacoes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _validate_referencia(self) -> "RevisaoBody":
+        cenario = (self.cenario_tipo or "").strip().lower()
+        referencia = (self.revisao_referencia_id or "").strip() or None
+        if cenario == "baseline":
+            if referencia:
+                raise ValueError("Revisão baseline não deve informar revisão de referência.")
+            return self
+        if not referencia:
+            raise ValueError(
+                "Informe a revisão de referência para comparar economia e diffs."
+            )
+        return self
 
 
 class MedicaoBody(BaseModel):

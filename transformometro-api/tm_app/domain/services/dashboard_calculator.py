@@ -105,16 +105,20 @@ class DashboardCalculatorService:
         process_active = self._is_process_active(revisoes)
         display_review = self._pick_display_review(revisoes) if process_active else None
         implementation_review = self._pick_first_non_baseline_review(revisoes)
-        baseline_review = self._pick_baseline_review(revisoes)
+        reference_review = (
+            self._pick_reference_review(display_review, revisoes)
+            if display_review
+            else self._pick_baseline_review(revisoes)
+        )
 
         daily_savings = self._calculate_process_daily_savings(
             display_review=display_review,
-            baseline_review=baseline_review,
+            baseline_review=reference_review,
             context=context,
         )
         payback_months = self._calculate_review_payback_months(
             review=display_review,
-            baseline_review=baseline_review,
+            baseline_review=reference_review,
             context=context,
         )
 
@@ -673,20 +677,6 @@ class DashboardCalculatorService:
                         process_id=str(process_id),
                     )
 
-                    baseline_review = self._pick_baseline_review(revisoes_instancia)
-                    baseline_id = (
-                        self._empty_to_none(baseline_review.get("revisao_id"))
-                        if baseline_review
-                        else None
-                    )
-                    baseline_measurement = (
-                        context.medicoes_by_revisao.get(baseline_id)
-                        if baseline_id
-                        else None
-                    )
-                    if not baseline_review or not baseline_measurement:
-                        continue
-
                     selected_reviews = self._select_reviews_for_month(
                         revisoes_instancia, cursor
                     )
@@ -694,11 +684,23 @@ class DashboardCalculatorService:
                     rows_da_instancia: List[dict] = []
                     unit_mult = self._instance_unit_multiplier(instancia_row, escopo_unidades)
                     for review in selected_reviews:
+                        reference_review = self._pick_reference_review(review, revisoes_instancia)
+                        if not reference_review:
+                            continue
+                        reference_id = self._empty_to_none(reference_review.get("revisao_id"))
+                        reference_measurement = (
+                            context.medicoes_by_revisao.get(reference_id)
+                            if reference_id
+                            else None
+                        )
+                        if not reference_measurement:
+                            continue
+
                         row = self._calculate_review_month_result(
                             process_row=process_row,
                             review=review,
-                            baseline_review=baseline_review,
-                            baseline_measurement=baseline_measurement,
+                            baseline_review=reference_review,
+                            baseline_measurement=reference_measurement,
                             context=context,
                             competencia_date=cursor,
                         )
@@ -1521,6 +1523,25 @@ class DashboardCalculatorService:
             return None
 
         return self._sort_reviews(active_reviews)[0]
+
+    def _pick_reference_review(
+        self,
+        review: Optional[dict],
+        reviews: List[dict],
+    ) -> Optional[dict]:
+        if not review:
+            return self._pick_baseline_review(reviews)
+
+        referencia_id = self._empty_to_none(review.get("revisao_referencia_id"))
+        if referencia_id:
+            for candidate in reviews:
+                if (
+                    self._empty_to_none(candidate.get("revisao_id")) == referencia_id
+                    and not self._is_deleted(candidate)
+                ):
+                    return candidate
+
+        return self._pick_baseline_review(reviews)
 
     def _pick_first_non_baseline_review(self, reviews: List[dict]) -> Optional[dict]:
         """Return the earliest review that is not a baseline and is not deleted.

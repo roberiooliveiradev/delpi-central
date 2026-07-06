@@ -549,12 +549,15 @@ automacao
 correcao
 ```
 
-### Seleção da baseline
+### Seleção da revisão de referência (V035)
 
-Para cada revisão comparável, selecionar a baseline nesta ordem:
+Para cada revisão comparável (`melhoria`, `automacao`, `correcao`), resolver a referência nesta ordem:
 
-1. revisão do mesmo processo com `cenario_tipo = baseline`;
-2. se não houver baseline, usar a menor `versao_revisao` do processo.
+1. `revisao_referencia_id` da revisão (FK `revisoes`, mesma `instancia_id`);
+2. se NULL (legado): revisão com `cenario_tipo = baseline` da instância (mais antiga por vigência);
+3. se não houver baseline: menor `versao_revisao` da instância.
+
+A baseline **não** possui `revisao_referencia_id`. Migration V035 faz backfill das revisões existentes (2 → baseline da instância).
 
 ---
 
@@ -1210,9 +1213,10 @@ competencia >= data_inicio_vigencia
 e, se existir data_fim_vigencia,
 competencia <= data_fim_vigencia.
 
-Para cada revisão comparável, selecionar baseline nesta ordem:
-1. revisão do mesmo processo com cenario_tipo = baseline;
-2. se não houver, menor versao_revisao do processo.
+Para cada revisão comparável, selecionar referência nesta ordem:
+1. revisao_referencia_id quando preenchido (mesma instancia_id);
+2. revisão baseline da instância (cenario_tipo = baseline);
+3. se não houver, menor versao_revisao da instância.
 
 Cálculo de custo de tempo:
 custo_tempo = volume_mensal * (tempo_medio_execucao_min / 60) * custo_hora_mao_obra.

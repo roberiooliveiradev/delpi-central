@@ -30,8 +30,8 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 
 | Peça | Situação |
 |------|----------|
-| **transformometro-api** | API canônica — CRUD, dashboard, diagramas (V026–V028), mapeamento WBS (V030–V033), melhorias V034, integração S2S, migrations **V001–V034** |
-| **plugins/transformometro** | UI oficial — cadastro, dashboard (3 visões), filiais, diagramas BPMN-lite, mapeamento WBS, backup JSON, **SelectField** + **modal de confirmação** |
+| **transformometro-api** | API canônica — CRUD, dashboard, diagramas (V026–V028), mapeamento WBS (V030–V033), melhorias V034, **referência de revisão V035**, integração S2S, migrations **V001–V035** |
+| **plugins/transformometro** | UI oficial — cadastro, dashboard (3 visões), filiais, diagramas BPMN-lite + Mermaid bidirecional, mapeamento WBS, backup JSON, **SelectField**, **modal de confirmação**, aliases PT-BR de cenários |
 | **Cálculo** | `DashboardCalculatorService` em `tm_app/domain/services/` (+ testes golden) |
 | **Integração Transforma+** | api-delpi `GET /engineering/transforma-mais/*` → `TransformometroTransformaMaisGateway` → Postgres |
 | **Strategic Indicators** | KPI engenharia via `DelpiEngineeringGateway` → api-delpi (não lê Sheets nem SQL local) |

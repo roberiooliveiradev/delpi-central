@@ -13,6 +13,7 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel, HelpTooltip, TableHeader } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { cenarioLabel } from "../../content/cenarioLabels";
 import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
 import {
   createRecurso,
@@ -556,7 +557,7 @@ export function RecursoDetailPage({
                             <td>{row.filial_id ?? "—"}</td>
                             <td>{row.setor_id ?? "—"}</td>
                             <td>
-                              {row.versao_revisao ?? "—"} · {row.cenario_tipo ?? "—"}
+                              {row.versao_revisao ?? "—"} · {cenarioLabel(row.cenario_tipo)}
                             </td>
                             <td>
                               {toDateInputValue(row.data_inicio_uso) || "…"} →{" "}

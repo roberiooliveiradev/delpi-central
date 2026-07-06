@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** jul/2026 (Playbook 18 — melhorias/instâncias, visões dashboard, RBAC filial; UI «Melhoria»; Playbook 20 WBS)
+**Última atualização:** jul/2026 (V035 referência entre revisões; Mermaid bidirecional; aliases de cenário; Playbook 18/20; UI «Melhoria»)
 
 ## O que é
 

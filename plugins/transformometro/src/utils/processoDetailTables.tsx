@@ -2,7 +2,9 @@ import type { DataTableColumn } from "../components/DataTable";
 import { TableRowActions } from "../components/ui/TableRowActions";
 import { TM_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ProcessoComparativoItem, Revisao } from "../data/api/transformometroApi";
+import { cenarioLabel } from "../content/cenarioLabels";
 import { toDateInputValue } from "./dateInputs";
+import { revisaoDisplayLabel } from "./revisaoLabels";
 
 const C = TM_HELP_TOOLTIPS.columns;
 
@@ -21,7 +23,7 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
       key: "cenario",
       header: "Cenário",
       headerHint: C.cenario,
-      render: (row) => row.cenario_tipo ?? "—",
+      render: (row) => cenarioLabel(row.cenario_tipo),
     },
     {
       key: "ativa",
@@ -83,11 +85,21 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
 type RevisaoColumnOptions = {
   onOpen: (revisaoId: string) => void;
   onDelete: (revisao: Revisao) => void;
+  revisoesById?: Map<string, Revisao>;
 };
+
+function renderReferenciaLabel(revisao: Revisao, revisoesById?: Map<string, Revisao>): string {
+  if ((revisao.cenario_tipo ?? "").toLowerCase() === "baseline") return "—";
+  const refId = revisao.revisao_referencia_id;
+  if (!refId) return "Linha de base (automático)";
+  const ref = revisoesById?.get(refId);
+  return ref ? revisaoDisplayLabel(ref) : "—";
+}
 
 export function buildRevisaoColumns({
   onOpen,
   onDelete,
+  revisoesById,
 }: RevisaoColumnOptions): DataTableColumn<Revisao>[] {
   return [
     {
@@ -100,7 +112,13 @@ export function buildRevisaoColumns({
       key: "cenario",
       header: "Cenário",
       headerHint: C.cenario,
-      render: (r) => r.cenario_tipo,
+      render: (r) => cenarioLabel(r.cenario_tipo),
+    },
+    {
+      key: "referencia",
+      header: "Compara com",
+      headerHint: C.referenciaComparacao,
+      render: (r) => renderReferenciaLabel(r, revisoesById),
     },
     {
       key: "inicio",

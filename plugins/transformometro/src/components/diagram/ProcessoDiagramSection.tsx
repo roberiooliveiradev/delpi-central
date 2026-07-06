@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, FileCode2, ShieldCheck, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -13,6 +13,7 @@ import {
   type DiagramValidationReport,
 } from "../../data/api/transformometroDiagramApi";
 import { emptyFlowchart, type FlowchartV1 } from "../../types/diagram";
+import { flowchartToMermaid } from "../../utils/flowchartMermaid";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 import { DiagramValidationPanel } from "./DiagramValidationPanel";
 import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
@@ -43,7 +44,7 @@ export function ProcessoDiagramSection({
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [flowchart, setFlowchart] = useState<FlowchartV1>(emptyFlowchart());
-  const [mermaid, setMermaid] = useState("");
+  const liveMermaid = useMemo(() => flowchartToMermaid(flowchart), [flowchart]);
   const [validation, setValidation] = useState<DiagramValidationReport | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,6 @@ export function ProcessoDiagramSection({
     try {
       const data = await fetchProcessoDiagrama(processoId, getAccessToken);
       setFlowchart(data.conteudo ?? emptyFlowchart());
-      setMermaid(data.mermaid ?? "");
       setValidation(null);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar diagrama macro.");
@@ -99,7 +99,6 @@ export function ProcessoDiagramSection({
       }
       const data = await saveProcessoDiagrama(processoId, flowchart, getAccessToken);
       setFlowchart(data.conteudo);
-      setMermaid(data.mermaid);
       onEntityChanged?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar diagrama macro.");
@@ -138,7 +137,6 @@ export function ProcessoDiagramSection({
       const xml = await file.text();
       const data = await importProcessoDiagramBpmnXml(processoId, xml, getAccessToken);
       setFlowchart(data.conteudo);
-      setMermaid(data.mermaid);
       setValidation(null);
       onEntityChanged?.();
     } catch (err) {
@@ -165,19 +163,16 @@ export function ProcessoDiagramSection({
             value={flowchart}
             onChange={readOnly ? undefined : setFlowchart}
             readOnly={readOnly}
-            mermaidPreview={mermaid}
             exportRef={exportRef}
           />
         </Suspense>
 
         <DiagramValidationPanel report={validation} loading={validating} />
 
-        {mermaid ? (
-          <details className="tm-diagram-section__preview">
-            <summary>Preview Mermaid</summary>
-            <DiagramMermaidPreview code={mermaid} />
-          </details>
-        ) : null}
+        <details className="tm-diagram-section__preview" open={false}>
+          <summary>Preview Mermaid</summary>
+          <DiagramMermaidPreview code={liveMermaid} />
+        </details>
 
         {!readOnly ? (
           <div className="tm-diagram-section__actions">

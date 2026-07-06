@@ -46,6 +46,9 @@ from tm_app.infrastructure.persistence.repositories.recurso_repository import (
 )
 from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
+from tm_app.application.services.processo_setup_stats_service import (
+    ProcessoSetupStatsService,
+)
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
@@ -240,6 +243,7 @@ def list_processos(
         q=q,
     )
     rows = filter_rows_for_access(request, rows)
+    rows = ProcessoSetupStatsService().enrich_processos(rows)
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
@@ -272,7 +276,8 @@ def get_processo(processo_id: str, request: Request):
     row = ProcessoRepository().get(processo_id)
     if not row:
         return fail("Processo não encontrado.", 404)
-    return ok(row_to_json(row))
+    enriched = ProcessoSetupStatsService().enrich_processos([row])
+    return ok(row_to_json(enriched[0]))
 
 
 @router.get("/processos/{processo_id}/timeline")

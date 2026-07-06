@@ -1,7 +1,9 @@
 import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
 import { FieldLabel, HelpTooltip } from "../../../components/HelpTooltip";
 import { SelectField } from "../../../components/ui/SelectField";
-import { mapSelectOptions } from "../../../components/ui/selectTypes";
+import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
+import { mapSelectOptions, mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
+import { revisaoDisplayLabel } from "../../../utils/revisaoLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
@@ -11,6 +13,7 @@ const R = TM_HELP_TOOLTIPS.revisao;
 export type RevisaoVigenciaForm = {
   versao_revisao: string;
   cenario_tipo: string;
+  revisao_referencia_id: string;
   data_inicio_vigencia: string;
   data_implantacao: string;
   data_fim_vigencia: string;
@@ -23,6 +26,8 @@ export type RevisaoVigenciaForm = {
 type Props = {
   revisaoVigencia: RevisaoVigenciaForm;
   options: OptionsData;
+  revisoesReferencia?: Revisao[];
+  revisaoId?: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
   hideSubmit?: boolean;
@@ -30,12 +35,28 @@ type Props = {
   onSubmit: (e: React.FormEvent) => void;
 };
 
-function VigenciaReadContent({ revisaoVigencia }: { revisaoVigencia: RevisaoVigenciaForm }) {
+function VigenciaReadContent({
+  revisaoVigencia,
+  revisoesReferencia,
+}: {
+  revisaoVigencia: RevisaoVigenciaForm;
+  revisoesReferencia?: Revisao[];
+}) {
+  const referencia = revisoesReferencia?.find(
+    (item) => item.revisao_id === revisaoVigencia.revisao_referencia_id
+  );
+
   return (
     <>
       <dl className="ds-dl-grid">
         <div><dt>Versão</dt><dd>{revisaoVigencia.versao_revisao}</dd></div>
-        <div><dt>Cenário</dt><dd>{revisaoVigencia.cenario_tipo}</dd></div>
+        <div><dt>Cenário</dt><dd>{cenarioLabel(revisaoVigencia.cenario_tipo)}</dd></div>
+        {revisaoVigencia.cenario_tipo !== "baseline" ? (
+          <div>
+            <dt>Compara com</dt>
+            <dd>{referencia ? revisaoDisplayLabel(referencia) : "Linha de base (automático)"}</dd>
+          </div>
+        ) : null}
         <div><dt>Início</dt><dd>{revisaoVigencia.data_inicio_vigencia || "—"}</dd></div>
         <div><dt>Implantação</dt><dd>{revisaoVigencia.data_implantacao || "—"}</dd></div>
         <div><dt>Fim</dt><dd>{revisaoVigencia.data_fim_vigencia || "—"}</dd></div>
@@ -57,6 +78,8 @@ function VigenciaReadContent({ revisaoVigencia }: { revisaoVigencia: RevisaoVige
 export function RevisaoVigenciaSection({
   revisaoVigencia,
   options,
+  revisoesReferencia = [],
+  revisaoId,
   readOnly = false,
   embeddedInCard = false,
   hideSubmit = false,
@@ -66,7 +89,12 @@ export function RevisaoVigenciaSection({
   const isBaseline = revisaoVigencia.cenario_tipo === "baseline";
 
   if (readOnly) {
-    const content = <VigenciaReadContent revisaoVigencia={revisaoVigencia} />;
+    const content = (
+      <VigenciaReadContent
+        revisaoVigencia={revisaoVigencia}
+        revisoesReferencia={revisoesReferencia}
+      />
+    );
     if (embeddedInCard) return content;
     return (
       <CadastroSection embedded title="Vigência e identificação">
@@ -74,6 +102,12 @@ export function RevisaoVigenciaSection({
       </CadastroSection>
     );
   }
+
+  const referenciaOptions = mapSelectOptionsFromItems(
+    revisoesReferencia.filter((item) => item.revisao_id !== revisaoId),
+    (item) => item.revisao_id,
+    (item) => revisaoDisplayLabel(item)
+  );
 
   const form = (
       <form onSubmit={onSubmit}>
@@ -95,11 +129,29 @@ export function RevisaoVigenciaSection({
               onChange({
                 ...revisaoVigencia,
                 cenario_tipo: cenario,
+                revisao_referencia_id:
+                  cenario === "baseline"
+                    ? ""
+                    : revisaoVigencia.revisao_referencia_id ||
+                      referenciaOptions[0]?.value ||
+                      "",
                 revisao_ativa: cenario === "baseline" ? false : revisaoVigencia.revisao_ativa,
               });
             }}
-            options={mapSelectOptions(options.cenario_tipo)}
+            options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
           />
+          {!isBaseline ? (
+            <SelectField
+              label="Compara com *"
+              hint={R.referenciaComparacao}
+              required
+              value={revisaoVigencia.revisao_referencia_id}
+              onChange={(revisaoReferenciaId) =>
+                onChange({ ...revisaoVigencia, revisao_referencia_id: revisaoReferenciaId })
+              }
+              options={referenciaOptions}
+            />
+          ) : null}
           <label className="ds-filter-box">
             <FieldLabel label="Início vigência *" hint={R.inicioVigencia} />
             <input
@@ -203,6 +255,7 @@ export function buildRevisaoVigenciaFromRevisao(revisao: Revisao): RevisaoVigenc
   return {
     versao_revisao: revisao.versao_revisao ?? "",
     cenario_tipo: revisao.cenario_tipo ?? "baseline",
+    revisao_referencia_id: revisao.revisao_referencia_id ?? "",
     data_inicio_vigencia: toDateInputValue(revisao.data_inicio_vigencia),
     data_implantacao: toDateInputValue(revisao.data_implantacao),
     data_fim_vigencia: toDateInputValue(revisao.data_fim_vigencia),
@@ -217,6 +270,8 @@ export function revisaoPayloadFromVigenciaForm(form: RevisaoVigenciaForm) {
   return {
     versao_revisao: form.versao_revisao.trim(),
     cenario_tipo: form.cenario_tipo,
+    revisao_referencia_id:
+      form.cenario_tipo === "baseline" ? undefined : form.revisao_referencia_id || undefined,
     data_inicio_vigencia: form.data_inicio_vigencia,
     data_implantacao: optionalDateField(form.data_implantacao),
     data_fim_vigencia: optionalDateField(form.data_fim_vigencia),

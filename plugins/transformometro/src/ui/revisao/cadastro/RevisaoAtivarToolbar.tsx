@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Revisao } from "../../../data/api/transformometroApi";
+import { cenarioLabel } from "../../../content/cenarioLabels";
 
 type Props = {
   revisao: Revisao;
@@ -27,7 +28,7 @@ export function RevisaoAtivarToolbar({ revisao, onError, onActivate, onDelete }:
   return (
     <div className="ds-cadastro-panel__workflow">
       <span className="ds-cadastro-panel__workflow-meta">
-        {revisao.versao_revisao} · {revisao.cenario_tipo}
+        {revisao.versao_revisao} · {cenarioLabel(revisao.cenario_tipo)}
         {revisao.revisao_ativa ? (
           <span className="ds-badge ds-badge--success">ativa</span>
         ) : null}

@@ -13,10 +13,12 @@ export type ComparativoChartRow = {
 
 export type ComparativoChartView = "money" | "hours";
 
+import { cenarioLabel } from "../content/cenarioLabels";
+
 export function revisaoComparativoLabel(item: ProcessoComparativoItem): string {
   const versao = item.versao_revisao?.trim() || "?";
   const cenario = item.cenario_tipo?.trim();
-  return cenario ? `v${versao} · ${cenario}` : `v${versao}`;
+  return cenario ? `v${versao} · ${cenarioLabel(cenario)}` : `v${versao}`;
 }
 
 export function toComparativoChartRows(items: ProcessoComparativoItem[]): ComparativoChartRow[] {

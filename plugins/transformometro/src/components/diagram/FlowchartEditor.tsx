@@ -55,7 +55,14 @@ import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import { FlowchartEditableEdge } from "./FlowchartEditableEdge";
+import { FlowchartMermaidPanel } from "./FlowchartMermaidPanel";
 import { useDiagramEditorLayout } from "./DiagramLayoutContext";
+import {
+  createStarterMermaidTemplate,
+  flowchartToMermaid,
+  mermaidToFlowchart,
+  MermaidImportError,
+} from "../../utils/flowchartMermaid";
 
 type FlowchartEditorProps = {
   value: FlowchartV1;
@@ -67,7 +74,6 @@ type FlowchartEditorProps = {
   diffNodeIds?: { changed?: string[]; added?: string[]; removed?: string[] };
   showTemplates?: boolean;
   showPreviewTab?: boolean;
-  mermaidPreview?: string;
   exportRef?: RefObject<HTMLDivElement | null>;
 };
 
@@ -227,7 +233,6 @@ function FlowchartEditorInner({
   diffNodeIds,
   showTemplates = true,
   showPreviewTab = true,
-  mermaidPreview,
   exportRef,
 }: FlowchartEditorProps) {
   const confirm = useConfirm();
@@ -253,6 +258,10 @@ function FlowchartEditorInner({
   const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
   const [activeTab, setActiveTab] = useState<"canvas" | "mermaid">("canvas");
+  const [mermaidDraft, setMermaidDraft] = useState("");
+  const [mermaidApplyError, setMermaidApplyError] = useState<string | null>(null);
+  const [mermaidApplying, setMermaidApplying] = useState(false);
+  const canvasMermaid = useMemo(() => flowchartToMermaid(value), [value]);
   const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
   const [laneLabelDraft, setLaneLabelDraft] = useState("");
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -282,6 +291,44 @@ function FlowchartEditorInner({
       setActiveLaneId(lanes[0]?.id);
     }
   }, [activeLaneId, lanes]);
+
+  const switchToMermaidTab = useCallback(() => {
+    setMermaidDraft(canvasMermaid);
+    setMermaidApplyError(null);
+    setActiveTab("mermaid");
+  }, [canvasMermaid]);
+
+  const refreshMermaidFromCanvas = useCallback(() => {
+    setMermaidDraft(canvasMermaid);
+    setMermaidApplyError(null);
+  }, [canvasMermaid]);
+
+  const applyMermaidDraft = useCallback(() => {
+    if (readOnly) return;
+    setMermaidApplying(true);
+    setMermaidApplyError(null);
+    try {
+      const parsed = mermaidToFlowchart(mermaidDraft, value);
+      const laidOut = autoLayoutFlowchart(parsed);
+      onChange?.(laidOut);
+      setActiveTab("canvas");
+    } catch (err) {
+      setMermaidApplyError(
+        err instanceof MermaidImportError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Não foi possível interpretar o código Mermaid."
+      );
+    } finally {
+      setMermaidApplying(false);
+    }
+  }, [mermaidDraft, onChange, readOnly, value]);
+
+  const useMermaidTemplate = useCallback(() => {
+    setMermaidDraft(createStarterMermaidTemplate());
+    setMermaidApplyError(null);
+  }, []);
 
   useEffect(() => {
     const lane = lanes.find((item) => item.id === activeLaneId);
@@ -857,9 +904,9 @@ function FlowchartEditorInner({
                   ? "tm-diagram-editor__tab is-active"
                   : "tm-diagram-editor__tab"
               }
-              onClick={() => setActiveTab("mermaid")}
+              onClick={() => switchToMermaidTab()}
             >
-              Preview Mermaid
+              Mermaid
             </button>
           </HelpTooltip>
         </div>
@@ -906,11 +953,25 @@ function FlowchartEditorInner({
             >
               <Background gap={20} size={1} />
               <MiniMap pannable zoomable />
-              <Controls showInteractive={!readOnly} />
+              <Controls
+                showInteractive={!readOnly}
+                position={layout === "fill" ? "top-right" : "bottom-left"}
+              />
             </ReactFlow>
           </div>
         ) : (
-          <pre className="tm-diagram-editor__mermaid-code">{mermaidPreview ?? "Sem preview."}</pre>
+          <FlowchartMermaidPanel
+            draft={mermaidDraft}
+            onDraftChange={setMermaidDraft}
+            onApply={applyMermaidDraft}
+            onRefreshFromCanvas={refreshMermaidFromCanvas}
+            onUseTemplate={useMermaidTemplate}
+            readOnly={readOnly}
+            layout={layout}
+            applyError={mermaidApplyError}
+            applying={mermaidApplying}
+            isEmpty={!value.nodes.length}
+          />
         )}
       </TabPanelTransition>
     </div>

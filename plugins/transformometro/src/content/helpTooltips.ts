@@ -15,7 +15,9 @@ export const TM_HELP_TOOLTIPS = {
     status: "Situação do cadastro — ativos entram nos formulários e no dashboard.",
     rotulo: "Título curto da melhoria (opcional), para reconhecê-la na listagem.",
     versao: "Número ou rótulo da revisão do processo (ex.: 1.0.0, 2.1).",
-    cenario: "Baseline (referência) ou melhoria (pós-transformação).",
+    cenario: "Tipo de cenário: linha de base, melhoria, automação ou correção.",
+    referenciaComparacao:
+      "Revisão usada como referência para calcular economia e diffs desta versão.",
     inicio: "Data de início da vigência da revisão ou período de custo.",
     implantacao: "Data em que a melhoria entrou em operação.",
     fim: "Data de encerramento da vigência. Revisões encerradas deixam de ser ativas.",
@@ -141,7 +143,7 @@ export const TM_HELP_TOOLTIPS = {
     preenchimento:
       "Checklist do cadastro completo: dados mestre, instâncias operacionais, diagrama macro, baseline, melhoria e medição com competências registradas.",
     preenchimentoLista:
-      "Percentual dos campos mestre (gestor, objetivo, descrição e família). Abra o processo para ver o checklist completo com instâncias, diagrama e revisões.",
+      "Mesmo checklist do detalhe do processo: dados mestre, melhorias, mapeamento, diagrama macro, baseline, melhoria e medição.",
   },
   decomposition: {
     mapeamento:
@@ -181,7 +183,10 @@ export const TM_HELP_TOOLTIPS = {
   },
   revisao: {
     versao: "Identificador da revisão (ex.: 1.0.0). Deve ser único dentro da instância.",
-    cenario: "Baseline = referência antes da melhoria; melhoria = cenário pós-transformação.",
+    cenario:
+      "Linha de base = as-is (sem referência). Demais cenários exigem escolher contra qual revisão comparar.",
+    referenciaComparacao:
+      "Revisão anterior usada como referência para economia, payback e diffs de diagrama/WBS. A baseline não precisa deste campo.",
     inicioVigencia: "Data a partir da qual a revisão passa a valer para medições e dashboard.",
     implantacao: "Data em que a solução foi implantada — usada em relatórios de implantação.",
     fimVigencia: "Encerra a revisão. Revisões com fim não podem ser marcadas como ativas.",
@@ -281,7 +286,8 @@ export const TM_HELP_TOOLTIPS = {
     laneRemove:
       "Remove a faixa ativa. Os nós nela são realocados na faixa restante. É necessário manter ao menos uma faixa.",
     canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
-    mermaidTab: "Visualização somente leitura do código Mermaid gerado a partir do diagrama.",
+    mermaidTab:
+      "Edite o código Mermaid ou visualize o diagrama renderizado. Use «Aplicar ao canvas» para converter em editor visual, ou «Atualizar do canvas» para sincronizar com o desenho atual.",
     fullscreen:
       "Abre o editor em tela cheia com paleta, ferramentas e ações de salvamento. Pressione Esc ou use «Sair da tela cheia» para voltar.",
     selectionDelete:

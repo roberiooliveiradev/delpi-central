@@ -19,6 +19,7 @@ import {
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
+import { cenarioLabel } from "../../content/cenarioLabels";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -41,6 +42,7 @@ export function RevisaoDetailPage({
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [revisao, setRevisao] = useState<Revisao | null>(null);
+  const [revisoesInstancia, setRevisoesInstancia] = useState<Revisao[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +58,9 @@ export function RevisaoDetailPage({
       const rev = revs.items.find((row) => row.revisao_id === revisaoId) ?? null;
       setProcesso(proc);
       setRevisao(rev);
+      setRevisoesInstancia(
+        revs.items.filter((row) => row.instancia_id === (rev?.instancia_id ?? instanciaId))
+      );
       setOptions(opts);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar");
@@ -110,7 +115,7 @@ export function RevisaoDetailPage({
   return (
     <TransformometroShell>
       <PageHeader
-        title={`Revisão v${revisao.versao_revisao} · ${revisao.cenario_tipo}`}
+        title={`Revisão v${revisao.versao_revisao} · ${cenarioLabel(revisao.cenario_tipo)}`}
         subtitle={`${processo.codigo_processo} — ${processo.nome_processo}${revisao.revisao_ativa ? " · ativa" : ""}`}
         currentPath={pathname ?? buildProcessoPath(processoId, revisaoId, resolvedInstanciaId)}
         onNavigate={onNavigate}
@@ -130,6 +135,7 @@ export function RevisaoDetailPage({
 
       <RevisaoCadastroPanel
         revisao={revisao}
+        revisoesReferencia={revisoesInstancia}
         options={options}
         getAccessToken={getAccessToken}
         onError={setError}
