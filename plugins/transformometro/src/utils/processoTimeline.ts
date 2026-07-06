@@ -46,6 +46,14 @@ const ACTION_LABELS: Record<string, string> = {
   activate: "Ativação",
   upsert: "Registro",
   reajuste: "Reajuste",
+  "decomposition.updated": "Mapeamento atualizado",
+  "decomposition.scope.updated": "Escopo WBS atualizado",
+  "decomposition.context.updated": "Contexto operacional atualizado",
+  "decomposition.overlay.updated": "Overlay de mapeamento atualizado",
+  "diagram.macro.updated": "Diagrama macro atualizado",
+  "diagram.macro.imported_bpmn": "Diagrama importado (BPMN)",
+  "diagram.escopo.updated": "Diagrama de escopo atualizado",
+  "diagram.overlay.updated": "Diagrama da revisão atualizado",
 };
 
 export const PROCESSO_TIMELINE_FILTER_OPTIONS: Array<{
@@ -90,6 +98,20 @@ function detailFromPayload(
   payload: Record<string, unknown> | null | undefined
 ): string | undefined {
   if (!payload) return undefined;
+
+  if (typeof payload.nodes === "number") {
+    const unit = action.startsWith("diagram") ? "elemento(s) no diagrama" : "nó(s) no mapeamento";
+    return `${payload.nodes} ${unit}`;
+  }
+  if (typeof payload.overrides === "number") {
+    return `${payload.overrides} alteração(ões) no overlay`;
+  }
+  if (typeof payload.node_notes === "number") {
+    return `${payload.node_notes} nota(s) de contexto`;
+  }
+  if (action === "decomposition.scope.updated" && typeof payload.inherit_all === "boolean") {
+    return payload.inherit_all ? "Escopo: herda árvore completa" : "Escopo: nós selecionados";
+  }
 
   const nome = asString(payload.nome_processo);
   const versao = asString(payload.versao_revisao);

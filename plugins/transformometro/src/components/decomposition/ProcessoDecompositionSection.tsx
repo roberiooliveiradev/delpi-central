@@ -21,6 +21,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   resyncVersion?: number;
   onError: (message: string | null) => void;
+  onEntityChanged?: () => void;
 };
 
 export function ProcessoDecompositionSection({
@@ -31,6 +32,7 @@ export function ProcessoDecompositionSection({
   embeddedInCard = false,
   resyncVersion = 0,
   onError,
+  onEntityChanged,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,6 +67,7 @@ export function ProcessoDecompositionSection({
     try {
       await saveProcessoDecomposicao(processoId, tree, getAccessToken);
       await load();
+      onEntityChanged?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar mapeamento.");
     } finally {

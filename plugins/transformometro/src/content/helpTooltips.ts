@@ -134,7 +134,7 @@ export const TM_HELP_TOOLTIPS = {
     filtroStatus: "Filtra processos pelo status operacional.",
     busca: "Busca por código, nome, família ou agrupador de ferramenta.",
     timeline:
-      "Histórico auditado de alterações neste processo e entidades vinculadas (instâncias, revisões, medições, investimentos e recursos).",
+      "Histórico auditado de alterações neste processo e entidades vinculadas (mapeamento WBS, diagramas, instâncias, revisões, medições, investimentos e recursos).",
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
     diagramaMacro:
       "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas instâncias e revisões.",

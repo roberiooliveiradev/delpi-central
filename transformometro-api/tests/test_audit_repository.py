@@ -5,6 +5,18 @@ from unittest.mock import MagicMock
 from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
 
 
+def test_list_for_processo_includes_diagram_and_decomposition_actions():
+    repo = AuditRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(return_value={"total": 2})
+    repo.fetch_all = MagicMock(return_value=[])
+
+    repo.list_for_processo("p1", page=1, page_size=50)
+
+    sql = repo.fetch_all.call_args[0][0]
+    assert "entity_type = 'processo'" in sql
+    assert repo.fetch_all.call_args[0][1][0:6] == ("p1", "p1", "p1", "p1", "p1", "p1")
+
+
 def test_list_for_processo_paginates_and_counts():
     repo = AuditRepository(connection=MagicMock())
     repo.fetch_one = MagicMock(return_value={"total": 3})

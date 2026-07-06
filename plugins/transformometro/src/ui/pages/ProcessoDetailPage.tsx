@@ -139,6 +139,11 @@ export function ProcessoDetailPage({
   });
 
   useEffect(() => {
+    if (!sectionEdit.resyncVersion) return;
+    void loadTimeline();
+  }, [sectionEdit.resyncVersion, loadTimeline]);
+
+  useEffect(() => {
     void load();
   }, [load]);
 
@@ -326,6 +331,7 @@ export function ProcessoDetailPage({
             getAccessToken={getAccessToken}
             onError={setError}
             resyncVersion={sectionEdit.resyncVersion}
+            onEntityChanged={() => void loadTimeline()}
           />
         }
         editContent={
@@ -336,6 +342,7 @@ export function ProcessoDetailPage({
             getAccessToken={getAccessToken}
             onError={setError}
             resyncVersion={sectionEdit.resyncVersion}
+            onEntityChanged={() => void loadTimeline()}
           />
         }
       />
@@ -355,6 +362,7 @@ export function ProcessoDetailPage({
             getAccessToken={getAccessToken}
             onError={setError}
             resyncVersion={sectionEdit.resyncVersion}
+            onEntityChanged={() => void loadTimeline()}
           />
         }
         editContent={
@@ -364,6 +372,7 @@ export function ProcessoDetailPage({
             getAccessToken={getAccessToken}
             onError={setError}
             resyncVersion={sectionEdit.resyncVersion}
+            onEntityChanged={() => void loadTimeline()}
           />
         }
       />

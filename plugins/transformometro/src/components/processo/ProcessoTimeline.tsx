@@ -75,7 +75,8 @@ export function ProcessoTimeline({ entries, loading = false }: Props) {
             <HelpTooltip content={TM_HELP_TOOLTIPS.processos.timeline} ariaLabel="Ajuda: Linha do tempo" />
           </h2>
           <p className="ds-hint">
-            Alterações do processo, instâncias, revisões, medições, investimentos e recursos vinculados.
+            Alterações do processo, mapeamento WBS, diagramas, instâncias, revisões, medições, investimentos e
+            recursos vinculados.
           </p>
         </div>
       </div>

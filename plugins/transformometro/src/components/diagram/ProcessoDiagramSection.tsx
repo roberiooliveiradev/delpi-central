@@ -27,6 +27,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   resyncVersion?: number;
   onError: (message: string | null) => void;
+  onEntityChanged?: () => void;
 };
 
 export function ProcessoDiagramSection({
@@ -36,6 +37,7 @@ export function ProcessoDiagramSection({
   embeddedInCard = false,
   resyncVersion = 0,
   onError,
+  onEntityChanged,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -98,6 +100,7 @@ export function ProcessoDiagramSection({
       const data = await saveProcessoDiagrama(processoId, flowchart, getAccessToken);
       setFlowchart(data.conteudo);
       setMermaid(data.mermaid);
+      onEntityChanged?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar diagrama macro.");
     } finally {
@@ -137,6 +140,7 @@ export function ProcessoDiagramSection({
       setFlowchart(data.conteudo);
       setMermaid(data.mermaid);
       setValidation(null);
+      onEntityChanged?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao importar BPMN XML.");
     }

@@ -8,8 +8,13 @@ from tm_app.application.services.transformometro_realtime_hub import (
 
 SECTION_KEY_BY_ACTION: dict[str, str] = {
     "diagram.macro.updated": "diagrama_macro",
+    "diagram.macro.imported_bpmn": "diagrama_macro",
     "diagram.escopo.updated": "diagrama_escopo",
     "diagram.overlay.updated": "diagrama_revisao",
+    "decomposition.updated": "decomposicao",
+    "decomposition.scope.updated": "decomposicao_escopo",
+    "decomposition.context.updated": "decomposicao_contexto",
+    "decomposition.overlay.updated": "decomposicao_overlay",
     "update": "processo",
     "create": "processo",
     "upsert": "medicao",
