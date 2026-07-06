@@ -2761,19 +2761,29 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-timeline-filters__chip {
-  border: 1px solid var(--ds-border-subtle, #e2e8f0);
+  border: 1px solid var(--ds-card-border);
   border-radius: 999px;
-  background: var(--ds-surface, #fff);
-  color: var(--ds-text-muted, #64748b);
+  background: var(--ds-card-bg);
+  color: var(--ds-text-muted);
   font-size: 0.8125rem;
   padding: 0.35rem 0.75rem;
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.dashboard-transformometro .tm-timeline-filters__chip:hover {
+  border-color: color-mix(in srgb, var(--ds-accent) 28%, var(--ds-card-border));
+  color: var(--ds-text);
 }
 
 .dashboard-transformometro .tm-timeline-filters__chip--active {
-  border-color: color-mix(in srgb, var(--ds-accent, #089bdb) 45%, transparent);
-  background: color-mix(in srgb, var(--ds-accent, #089bdb) 10%, transparent);
-  color: var(--ds-accent, #089bdb);
+  border-color: color-mix(in srgb, var(--ds-accent) 45%, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-accent) 12%, var(--ds-card-bg));
+  color: var(--ds-accent);
+  font-weight: 600;
 }
 
 .dashboard-transformometro .tm-timeline-track {
@@ -2790,7 +2800,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   top: 0.35rem;
   bottom: 0.35rem;
   width: 2px;
-  background: var(--ds-border-subtle, #e2e8f0);
+  background: var(--ds-card-border);
 }
 
 .dashboard-transformometro .tm-timeline-entry {
@@ -2813,40 +2823,70 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  border: 2px solid var(--ds-surface, #fff);
-  background: var(--ds-surface-muted, #f8fafc);
-  color: var(--ds-text-muted, #64748b);
+  border: 2px solid var(--ds-card-bg);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text-muted);
   flex-shrink: 0;
 }
 
 .dashboard-transformometro .tm-timeline-entry__marker--processo {
   color: #0369a1;
-  background: #e0f2fe;
+  background: color-mix(in srgb, #0369a1 14%, var(--ds-card-bg));
 }
 
 .dashboard-transformometro .tm-timeline-entry__marker--instancia {
   color: #7c3aed;
-  background: #ede9fe;
+  background: color-mix(in srgb, #7c3aed 14%, var(--ds-card-bg));
 }
 
 .dashboard-transformometro .tm-timeline-entry__marker--revisao {
   color: #0f766e;
-  background: #ccfbf1;
+  background: color-mix(in srgb, #0f766e 14%, var(--ds-card-bg));
 }
 
 .dashboard-transformometro .tm-timeline-entry__marker--medicao {
   color: #b45309;
-  background: #fef3c7;
+  background: color-mix(in srgb, #b45309 14%, var(--ds-card-bg));
 }
 
 .dashboard-transformometro .tm-timeline-entry__marker--investimento {
   color: #be123c;
-  background: #ffe4e6;
+  background: color-mix(in srgb, #be123c 14%, var(--ds-card-bg));
 }
 
 .dashboard-transformometro .tm-timeline-entry__marker--vinculo {
   color: #4338ca;
-  background: #e0e7ff;
+  background: color-mix(in srgb, #4338ca 14%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-timeline-entry__marker--processo {
+  color: #7dd3fc;
+  background: color-mix(in srgb, #0369a1 32%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-timeline-entry__marker--instancia {
+  color: #c4b5fd;
+  background: color-mix(in srgb, #7c3aed 32%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-timeline-entry__marker--revisao {
+  color: #5eead4;
+  background: color-mix(in srgb, #0f766e 32%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-timeline-entry__marker--medicao {
+  color: #fcd34d;
+  background: color-mix(in srgb, #b45309 32%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-timeline-entry__marker--investimento {
+  color: #fda4af;
+  background: color-mix(in srgb, #be123c 32%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-timeline-entry__marker--vinculo {
+  color: #a5b4fc;
+  background: color-mix(in srgb, #4338ca 32%, var(--ds-card-bg));
 }
 
 .dashboard-transformometro .tm-timeline-entry__header {
@@ -2857,13 +2897,74 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   gap: 0.35rem 0.75rem;
 }
 
+.dashboard-transformometro .tm-timeline-entry__header time {
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-xs);
+  white-space: nowrap;
+}
+
 .dashboard-transformometro .tm-timeline-entry__detail {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
+  color: var(--ds-text-muted);
 }
 
 .dashboard-transformometro .tm-timeline-entry__meta {
   margin: 0.2rem 0 0;
   font-size: 0.8125rem;
+  color: var(--ds-accent);
+}
+
+/* Comparativo de revisões (instância) */
+.dashboard-transformometro .tm-comparativo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-transformometro .tm-comparativo-chart .recharts-responsive-container {
+  width: 100% !important;
+  min-height: 320px;
+}
+
+.dashboard-transformometro .tm-comparativo-table {
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-card-bg);
+  overflow: hidden;
+}
+
+.dashboard-transformometro .tm-comparativo-table .ds-collapsible__trigger {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ds-title);
+}
+
+.dashboard-transformometro .tm-comparativo-table__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  text-align: left;
+}
+
+.dashboard-transformometro .tm-comparativo-table__count {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: var(--ds-font-xs);
+}
+
+.dashboard-transformometro .tm-comparativo-table__body {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .tm-comparativo-table__body .ds-table-section--embedded {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 

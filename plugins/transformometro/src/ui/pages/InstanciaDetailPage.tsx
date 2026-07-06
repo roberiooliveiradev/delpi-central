@@ -12,6 +12,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useSectionEdit } from "../../hooks/useSectionEdit";
 import { PageHeader } from "../../components/PageHeader";
+import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel } from "../../components/HelpTooltip";
@@ -310,15 +311,7 @@ export function InstanciaDetailPage({
       ) : null}
 
       {comparativo.length > 0 ? (
-        <DataTableSection
-          title="Comparativo de revisões"
-          columns={comparativoColumns}
-          rows={comparativo}
-          rowKey={(row) => row.revisao_id}
-          hideSearch
-          pageSize={10}
-          emptyMessage=""
-        />
+        <RevisaoComparativoSection items={comparativo} columns={comparativoColumns} />
       ) : null}
 
       <DataTableSection

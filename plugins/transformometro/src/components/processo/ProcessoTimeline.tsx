@@ -47,12 +47,12 @@ function TimelineItem({ entry }: { entry: ProcessoTimelineEntry }) {
       <div className="tm-timeline-entry__body">
         <div className="tm-timeline-entry__header">
           <strong>{entry.title}</strong>
-          <time className="ds-muted" dateTime={entry.occurredAt}>
+          <time className="tm-timeline-entry__time" dateTime={entry.occurredAt}>
             {formatDateTime(entry.occurredAt)}
           </time>
         </div>
         {entry.detail ? <p className="tm-timeline-entry__detail">{entry.detail}</p> : null}
-        {entry.meta ? <p className="ds-muted tm-timeline-entry__meta">{entry.meta}</p> : null}
+        {entry.meta ? <p className="tm-timeline-entry__meta">{entry.meta}</p> : null}
       </div>
     </li>
   );

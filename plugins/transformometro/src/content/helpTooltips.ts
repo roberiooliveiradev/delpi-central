@@ -180,6 +180,10 @@ export const TM_HELP_TOOLTIPS = {
       "Anexos (PDF, imagem, planilha) ou links que comprovam a melhoria desta revisão.",
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
+    comparativoChart:
+      "Compara economia bruta, líquida, investimentos, recursos compartilhados e horas entre as revisões desta instância.",
+    comparativoTable:
+      "Tabela com os mesmos indicadores do gráfico, incluindo competência e meses com dados.",
   },
   investimentos: {
     tipo: "Natureza do investimento (software, equipamento, horas, etc.).",
