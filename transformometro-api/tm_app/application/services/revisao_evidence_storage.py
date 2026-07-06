@@ -78,6 +78,22 @@ class RevisaoEvidenceStorage:
             return path
         raise RevisaoEvidenceStorageError("Arquivo não encontrado.")
 
+    def copy_file(
+        self,
+        *,
+        source_revisao_id: str,
+        stored_name: str,
+        target_revisao_id: str,
+    ) -> str:
+        source_path = self.resolve_file(revisao_id=source_revisao_id, stored_name=stored_name)
+        mime_type = mimetypes.guess_type(source_path.name)[0]
+        return self.save(
+            revisao_id=target_revisao_id,
+            original_name=source_path.name,
+            content=source_path.read_bytes(),
+            mime_type=mime_type,
+        )
+
     def delete_file(self, *, revisao_id: str, stored_name: str) -> None:
         try:
             path = self.resolve_file(revisao_id=revisao_id, stored_name=stored_name)

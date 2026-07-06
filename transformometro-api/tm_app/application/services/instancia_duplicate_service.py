@@ -70,7 +70,7 @@ class InstanciaDuplicateService:
             if rev_repo.list_by_instancia(target_id):
                 raise ValueError("Instância destino já possui revisões.")
 
-            stats = copy_revisao_tree(
+            stats, _revisao_id_map = copy_revisao_tree(
                 revisoes=source_revisoes,
                 processo_id=processo_id,
                 instancia_id=target_id,

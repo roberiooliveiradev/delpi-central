@@ -454,10 +454,18 @@ export type ProcessoDuplicateResult = {
   processo: Processo;
   origem_processo_id: string;
   copiados: {
+    melhorias?: number;
     revisoes: number;
     medicoes: number;
     investimentos: number;
     vinculos: number;
+    diagramas_macro?: number;
+    decomposicao?: number;
+    escopos_diagrama?: number;
+    escopos_decomposicao?: number;
+    overlays_diagrama?: number;
+    overlays_decomposicao?: number;
+    evidencias?: number;
   };
 };
 

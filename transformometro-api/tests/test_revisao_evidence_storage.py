@@ -41,3 +41,26 @@ def test_resolve_file_missing_raises(tmp_path: Path) -> None:
     storage = RevisaoEvidenceStorage(base_dir=str(tmp_path))
     with pytest.raises(RevisaoEvidenceStorageError, match="Arquivo não encontrado"):
         storage.resolve_file(revisao_id="rev-1", stored_name="missing.pdf")
+
+
+def test_copy_file_duplicates_binary_to_new_revisao(tmp_path: Path) -> None:
+    storage = RevisaoEvidenceStorage(base_dir=str(tmp_path))
+    source_revisao = "11111111-1111-1111-1111-111111111111"
+    target_revisao = "22222222-2222-2222-2222-222222222222"
+
+    stored_name = storage.save(
+        revisao_id=source_revisao,
+        original_name="doc.pdf",
+        content=b"pdf-content",
+        mime_type="application/pdf",
+    )
+
+    copied_name = storage.copy_file(
+        source_revisao_id=source_revisao,
+        stored_name=stored_name,
+        target_revisao_id=target_revisao,
+    )
+
+    copied_path = storage.resolve_file(revisao_id=target_revisao, stored_name=copied_name)
+    assert copied_path.read_bytes() == b"pdf-content"
+    assert copied_name != stored_name

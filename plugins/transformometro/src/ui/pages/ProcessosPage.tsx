@@ -133,7 +133,7 @@ export function ProcessosPage({
     const label = `${row.codigo_processo} — ${row.nome_processo}`;
     if (
       !window.confirm(
-        `Duplicar ${label}? Serão copiadas revisões, medições, investimentos e vínculos de recursos.`
+        `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`
       )
     ) {
       return;

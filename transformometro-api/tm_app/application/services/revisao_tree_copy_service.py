@@ -20,13 +20,14 @@ def copy_revisao_tree(
     inv_repo: InvestimentoRepository,
     vin_repo: VinculoRepository,
     auto_commit: bool = False,
-) -> dict[str, int]:
+) -> tuple[dict[str, int], dict[str, str]]:
     stats = {
         "revisoes": 0,
         "medicoes": 0,
         "investimentos": 0,
         "vinculos": 0,
     }
+    revisao_id_map: dict[str, str] = {}
 
     for revisao in revisoes:
         old_rev_id = str(revisao["revisao_id"])
@@ -48,6 +49,7 @@ def copy_revisao_tree(
             auto_commit=auto_commit,
         )
         new_rev_id = str(new_revisao["revisao_id"])
+        revisao_id_map[old_rev_id] = new_rev_id
         stats["revisoes"] += 1
 
         medicao = med_repo.get_by_revisao(old_rev_id)
@@ -108,4 +110,4 @@ def copy_revisao_tree(
             )
             stats["vinculos"] += 1
 
-    return stats
+    return stats, revisao_id_map

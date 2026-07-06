@@ -601,15 +601,8 @@ def duplicate_processo(
         "processo": row_to_json(result["processo"]),
         "origem_processo_id": processo_id,
         "copiados": result["copiados"],
-        "deprecated": True,
-        "successor_route": "POST /transformometro/instancias/{instancia_id}/duplicar",
     }
-    response = ok(payload, "Processo duplicado com revisões e vínculos.", 201)
-    response.headers["Deprecation"] = "true"
-    response.headers["Link"] = (
-        '</transformometro/instancias/{instancia_id}/duplicar>; rel="successor-version"'
-    )
-    return response
+    return ok(payload, "Processo duplicado com melhorias, diagrama, mapeamento e revisões.", 201)
 
 
 # --- Revisões ---

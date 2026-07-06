@@ -49,7 +49,13 @@ class RevisaoEvidenceRepository(PluginBaseRepository):
             (revisao_id, evidencia_id),
         )
 
-    def create(self, revisao_id: str, fields: dict[str, Any]) -> dict[str, Any]:
+    def create(
+        self,
+        revisao_id: str,
+        fields: dict[str, Any],
+        *,
+        auto_commit: bool = True,
+    ) -> dict[str, Any]:
         evidence_type = fields.get("tipo", "anexo")
         if evidence_type not in _VALID_TYPES:
             evidence_type = "anexo"
@@ -74,6 +80,7 @@ class RevisaoEvidenceRepository(PluginBaseRepository):
                 fields.get("enviado_por_id"),
                 fields.get("enviado_por_nome"),
             ),
+            auto_commit=auto_commit,
         )
         created = self.get(revisao_id, str(row["evidencia_id"])) if row else None
         return created or {}
