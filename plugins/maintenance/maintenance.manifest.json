@@ -4,7 +4,7 @@
   "name": "Manutenção",
   "description": "Gestão de manutenção industrial. Tile único no menu do portal; submódulos e filiais navegam no MFE (rotas internas com showInMenu false, padrão strategic-indicators).",
   "icon": "wrench",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "microfrontend",
   "basePath": "/apps/maintenance",
   "entry": "/apps/maintenance/assets/remoteEntry.js",
@@ -94,8 +94,17 @@
       "label": "Manutenção geral",
       "permission": "maintenance.manutencao-geral.view.filial-01",
       "icon": "clipboard-list",
-      "entry": null,
+      "entry": "https://script.google.com/macros/s/AKfycbwD5vJs0lraZEZbibUVM9tLc8kdW6T4h4c-QYEXEzKopVTNhhbLIwPUOGK41aX4WuJ0/exec",
       "order": 20,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/maintenance/manutencao-geral",
+      "label": "Manutenção geral",
+      "permission": "maintenance.manutencao-geral.view.filial-01",
+      "icon": "clipboard-list",
+      "entry": "https://script.google.com/macros/s/AKfycbwD5vJs0lraZEZbibUVM9tLc8kdW6T4h4c-QYEXEzKopVTNhhbLIwPUOGK41aX4WuJ0/exec",
+      "order": 19,
       "showInMenu": false
     },
     {

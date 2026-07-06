@@ -12,9 +12,15 @@ import { RelatorioPage } from "./ui/pages/RelatorioPage";
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
+  /** URL externa declarada em `routes[].entry` do manifesto (portal → `alternateEntry`). */
+  alternateEntry?: string;
 };
 
-export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
+export default function App({
+  getAccessToken,
+  pathname: pathnameFromHost,
+  alternateEntry,
+}: AppProps) {
   const pathname = useMaintenanceRouterPath(pathnameFromHost);
   const route = parseMaintenancePath(pathname);
   const onNavigate = navigateMaintenance;
@@ -72,6 +78,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         getAccessToken={getAccessToken}
         pathname={pathname}
         filialScope={route.filialScope}
+        alternateEntry={alternateEntry}
         onNavigate={onNavigate}
       />
     );
