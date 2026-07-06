@@ -1,3 +1,5 @@
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptions, mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { FieldLabel } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
@@ -51,57 +53,41 @@ export function ProcessoFormFields({
       </div>
       {showInstanciaFields ? (
         <>
-          <div className="ds-filter-box">
-            <label htmlFor="tm-proc-filial">
-              <FieldLabel label="Unidade *" hint={TM_HELP_TOOLTIPS.processos.unidade} />
-            </label>
-            <select
-              id="tm-proc-filial"
-              value={form.filial_id}
-              onChange={(e) => handleFilialChange(e.target.value)}
-            >
-              {options.filiais.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="ds-filter-box">
-            <label htmlFor="tm-proc-setor">
-              <FieldLabel label="Departamento *" hint={TM_HELP_TOOLTIPS.processos.setor} />
-            </label>
-            <select
-              id="tm-proc-setor"
-              value={form.setor_id}
-              onChange={(e) => set({ setor_id: e.target.value })}
-              disabled={setoresDisponiveis.length === 0}
-            >
-              {setoresDisponiveis.map((setor) => (
-                <option key={setor.id} value={setor.id}>
-                  {setor.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            id="tm-proc-filial"
+            label="Unidade *"
+            hint={TM_HELP_TOOLTIPS.processos.unidade}
+            value={form.filial_id}
+            onChange={handleFilialChange}
+            options={mapSelectOptionsFromItems(
+              options.filiais,
+              (filial) => filial.id,
+              (filial) => filial.label
+            )}
+          />
+          <SelectField
+            id="tm-proc-setor"
+            label="Departamento *"
+            hint={TM_HELP_TOOLTIPS.processos.setor}
+            value={form.setor_id}
+            onChange={(setorId) => set({ setor_id: setorId })}
+            disabled={setoresDisponiveis.length === 0}
+            options={mapSelectOptionsFromItems(
+              setoresDisponiveis,
+              (setor) => setor.id,
+              (setor) => setor.label
+            )}
+          />
         </>
       ) : null}
-      <div className="ds-filter-box">
-        <label htmlFor="tm-proc-status">
-          <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.processos.status} />
-        </label>
-        <select
-          id="tm-proc-status"
-          value={form.status_processo}
-          onChange={(e) => set({ status_processo: e.target.value })}
-        >
-          {options.status_processo.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SelectField
+        id="tm-proc-status"
+        label="Status *"
+        hint={TM_HELP_TOOLTIPS.processos.status}
+        value={form.status_processo}
+        onChange={(status) => set({ status_processo: status })}
+        options={mapSelectOptions(options.status_processo)}
+      />
       <div className="ds-filter-box">
         <label htmlFor="tm-proc-familia">
           <FieldLabel label="Família (rateio)" hint={TM_HELP_TOOLTIPS.processos.familia} />

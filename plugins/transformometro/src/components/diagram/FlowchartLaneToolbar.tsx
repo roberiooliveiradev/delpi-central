@@ -3,6 +3,8 @@ import { Check, Trash2 } from "lucide-react";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { FlowchartLane } from "../../types/diagram";
 import { FieldLabel } from "../HelpTooltip";
+import { SelectControl } from "../ui/SelectControl";
+import { mapSelectOptionsFromItems } from "../ui/selectTypes";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 
 const D = TM_HELP_TOOLTIPS.diagramEditor;
@@ -36,13 +38,16 @@ export function FlowchartLaneToolbar({
     <div className="tm-diagram-lane-toolbar">
       <label className="tm-diagram-editor__lane-select">
         <FieldLabel label="Faixa ativa" hint={D.laneSelect} />
-        <select value={activeLaneId ?? ""} onChange={(event) => onActiveLaneChange(event.target.value)}>
-          {lanes.map((lane) => (
-            <option key={lane.id} value={lane.id}>
-              {lane.label}
-            </option>
-          ))}
-        </select>
+        <SelectControl
+          ariaLabel="Faixa ativa"
+          value={activeLaneId ?? ""}
+          onChange={onActiveLaneChange}
+          options={mapSelectOptionsFromItems(
+            lanes,
+            (lane) => lane.id,
+            (lane) => lane.label
+          )}
+        />
       </label>
       <label className="tm-diagram-lane-toolbar__rename">
         <FieldLabel label="Nome da faixa" hint={D.laneRename} />

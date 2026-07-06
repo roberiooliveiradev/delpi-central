@@ -17,6 +17,8 @@ import { RevisaoComparativoSection } from "../../components/processo/RevisaoComp
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   createRevisao,
@@ -374,18 +376,14 @@ export function InstanciaDetailPage({
                   onChange={(e) => setRevForm({ ...revForm, versao_revisao: e.target.value })}
                 />
               </div>
-              <div className="ds-filter-box">
-                <FieldLabel label="Cenário" hint={TM_HELP_TOOLTIPS.revisao.cenario} />
-                <select
-                  id="tm-rev-cenario"
-                  value={revForm.cenario_tipo}
-                  onChange={(e) => setRevForm({ ...revForm, cenario_tipo: e.target.value })}
-                >
-                  {options.cenario_tipo.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                id="tm-rev-cenario"
+                label="Cenário"
+                hint={TM_HELP_TOOLTIPS.revisao.cenario}
+                value={revForm.cenario_tipo}
+                onChange={(cenario) => setRevForm({ ...revForm, cenario_tipo: cenario })}
+                options={mapSelectOptions(options.cenario_tipo)}
+              />
               <div className="ds-filter-box">
                 <FieldLabel label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
                 <input

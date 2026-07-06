@@ -1,7 +1,13 @@
 import { FieldLabel } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
-import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
+import {
+  labelBaseCompetencia,
+  labelCriterioRateio,
+  labelEscopoRecurso,
+} from "../../utils/catalogLabels";
 import type { RecursoCatalogFormState } from "./recursoCatalogForm";
 
 const R = TM_HELP_TOOLTIPS.recursos;
@@ -43,20 +49,18 @@ export function RecursoCatalogFormFields({
             onChange={(e) => onChange({ ...form, nome_recurso: e.target.value })}
           />
         </label>
-        <label className="ds-filter-box">
-          <FieldLabel label="Categoria" hint={R.categoria} />
-          <select
-            value={form.categoria_recurso}
-            onChange={(e) => onChange({ ...form, categoria_recurso: e.target.value })}
-          >
-            <option value="">—</option>
-            {options.categorias.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Categoria"
+          hint={R.categoria}
+          value={form.categoria_recurso}
+          onChange={(categoria) => onChange({ ...form, categoria_recurso: categoria })}
+          allowEmpty
+          options={mapSelectOptionsFromItems(
+            options.categorias,
+            (c) => c,
+            (c) => c
+          )}
+        />
         <label className="ds-filter-box">
           <FieldLabel label="Fornecedor" hint={R.fornecedor} />
           <input
@@ -64,84 +68,72 @@ export function RecursoCatalogFormFields({
             onChange={(e) => onChange({ ...form, fornecedor: e.target.value })}
           />
         </label>
-        <label className="ds-filter-box">
-          <FieldLabel label="Tipo de custo *" hint={R.tipoCusto} />
-          <select
-            value={form.tipo_custo}
-            onChange={(e) => onChange({ ...form, tipo_custo: e.target.value })}
-          >
-            {(options.tipo_custo ?? ["fixo", "variavel", "assinatura", "licenca"]).map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ds-filter-box">
-          <FieldLabel label="Recorrência *" hint={R.recorrencia} />
-          <select
-            value={form.recorrencia}
-            onChange={(e) => onChange({ ...form, recorrencia: e.target.value })}
-          >
-            {options.recorrencias.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ds-filter-box">
-          <FieldLabel label="Critério de rateio *" hint={R.criterioRateio} />
-          <select
-            value={form.criterio_rateio}
-            onChange={(e) => onChange({ ...form, criterio_rateio: e.target.value })}
-          >
-            {options.criterio_rateio.map((c) => (
-              <option key={c} value={c}>
-                {labelCriterioRateio(c)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ds-filter-box">
-          <FieldLabel label="Escopo de rateio *" hint={R.escopo} />
-          <select
-            value={form.escopo_recurso}
-            onChange={(e) => onChange({ ...form, escopo_recurso: e.target.value })}
-          >
-            {escopoOptions.map((escopo) => (
-              <option key={escopo} value={escopo}>
-                {labelEscopoRecurso(escopo)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ds-filter-box">
-          <FieldLabel label="Base de competência *" hint={R.baseCompetencia} />
-          <select
-            value={form.base_competencia}
-            onChange={(e) => onChange({ ...form, base_competencia: e.target.value })}
-          >
-            {baseCompetenciaOptions.map((base) => (
-              <option key={base} value={base}>
-                {labelBaseCompetencia(base)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ds-filter-box">
-          <FieldLabel label="Status *" hint={R.status} />
-          <select
-            value={form.status_recurso}
-            onChange={(e) => onChange({ ...form, status_recurso: e.target.value })}
-          >
-            {options.status_recurso.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Tipo de custo *"
+          hint={R.tipoCusto}
+          value={form.tipo_custo}
+          onChange={(tipo) => onChange({ ...form, tipo_custo: tipo })}
+          options={mapSelectOptionsFromItems(
+            options.tipo_custo ?? ["fixo", "variavel", "assinatura", "licenca"],
+            (t) => t,
+            (t) => t
+          )}
+        />
+        <SelectField
+          label="Recorrência *"
+          hint={R.recorrencia}
+          value={form.recorrencia}
+          onChange={(recorrencia) => onChange({ ...form, recorrencia })}
+          options={mapSelectOptionsFromItems(
+            options.recorrencias,
+            (r) => r,
+            (r) => r
+          )}
+        />
+        <SelectField
+          label="Critério de rateio *"
+          hint={R.criterioRateio}
+          value={form.criterio_rateio}
+          onChange={(criterio) => onChange({ ...form, criterio_rateio: criterio })}
+          options={mapSelectOptionsFromItems(
+            options.criterio_rateio,
+            (c) => c,
+            (c) => labelCriterioRateio(c)
+          )}
+        />
+        <SelectField
+          label="Escopo de rateio *"
+          hint={R.escopo}
+          value={form.escopo_recurso}
+          onChange={(escopo) => onChange({ ...form, escopo_recurso: escopo })}
+          options={mapSelectOptionsFromItems(
+            escopoOptions,
+            (escopo) => escopo,
+            (escopo) => labelEscopoRecurso(escopo)
+          )}
+        />
+        <SelectField
+          label="Base de competência *"
+          hint={R.baseCompetencia}
+          value={form.base_competencia}
+          onChange={(base) => onChange({ ...form, base_competencia: base })}
+          options={mapSelectOptionsFromItems(
+            baseCompetenciaOptions,
+            (base) => base,
+            (base) => labelBaseCompetencia(base)
+          )}
+        />
+        <SelectField
+          label="Status *"
+          hint={R.status}
+          value={form.status_recurso}
+          onChange={(status) => onChange({ ...form, status_recurso: status })}
+          options={mapSelectOptionsFromItems(
+            options.status_recurso,
+            (s) => s,
+            (s) => s
+          )}
+        />
         <label className="ds-filter-box">
           <FieldLabel label="Centro de custo" hint={R.centroCusto} />
           <input

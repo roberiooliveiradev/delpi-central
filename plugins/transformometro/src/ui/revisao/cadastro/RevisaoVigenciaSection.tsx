@@ -1,5 +1,7 @@
 import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
 import { FieldLabel, HelpTooltip } from "../../../components/HelpTooltip";
+import { SelectField } from "../../../components/ui/SelectField";
+import { mapSelectOptions } from "../../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
@@ -84,27 +86,20 @@ export function RevisaoVigenciaSection({
               onChange={(e) => onChange({ ...revisaoVigencia, versao_revisao: e.target.value })}
             />
           </label>
-          <label className="ds-filter-box">
-            <FieldLabel label="Cenário *" hint={R.cenario} />
-            <select
-              required
-              value={revisaoVigencia.cenario_tipo}
-              onChange={(e) => {
-                const cenario = e.target.value;
-                onChange({
-                  ...revisaoVigencia,
-                  cenario_tipo: cenario,
-                  revisao_ativa: cenario === "baseline" ? false : revisaoVigencia.revisao_ativa,
-                });
-              }}
-            >
-              {options.cenario_tipo.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SelectField
+            label="Cenário *"
+            hint={R.cenario}
+            required
+            value={revisaoVigencia.cenario_tipo}
+            onChange={(cenario) => {
+              onChange({
+                ...revisaoVigencia,
+                cenario_tipo: cenario,
+                revisao_ativa: cenario === "baseline" ? false : revisaoVigencia.revisao_ativa,
+              });
+            }}
+            options={mapSelectOptions(options.cenario_tipo)}
+          />
           <label className="ds-filter-box">
             <FieldLabel label="Início vigência *" hint={R.inicioVigencia} />
             <input

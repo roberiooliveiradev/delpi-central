@@ -1,4 +1,6 @@
 import { FieldLabel } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import type { SetorFormState } from "./setorCatalogForm";
@@ -49,22 +51,14 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
           onChange={(e) => set({ nome_setor: e.target.value })}
         />
       </div>
-      <div className="ds-filter-box">
-        <label htmlFor="tm-setor-status">
-          <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.setores.status} />
-        </label>
-        <select
-          id="tm-setor-status"
-          value={form.status_setor}
-          onChange={(e) => set({ status_setor: e.target.value })}
-        >
-          {(options.status_setor ?? ["ativo", "inativo"]).map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SelectField
+        id="tm-setor-status"
+        label="Status *"
+        hint={TM_HELP_TOOLTIPS.setores.status}
+        value={form.status_setor}
+        onChange={(status) => set({ status_setor: status })}
+        options={mapSelectOptions(options.status_setor ?? ["ativo", "inativo"])}
+      />
       <div className="ds-filter-box ds-filter-box--wide">
         <span className="ds-field-label">
           <FieldLabel

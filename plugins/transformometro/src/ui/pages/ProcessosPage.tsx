@@ -14,11 +14,12 @@ import {
   duplicateProcesso,
   fetchOptions,
   fetchProcessos,
-  updateProcesso,
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
 import { FieldLabel } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
@@ -31,7 +32,6 @@ import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
   emptyProcessoForm,
   masterPayloadFromProcessoForm,
-  processoFormFromEntity,
   type ProcessoFormState,
 } from "../processos/processoForm";
 import { renderTableStatus } from "../../utils/tablePresentation";
@@ -54,7 +54,6 @@ export function ProcessosPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProcessoFormState>(emptyProcessoForm);
   const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
   const [statusFilter, setStatusFilter] = useState("");
@@ -90,22 +89,13 @@ export function ProcessosPage({
   }, [load]);
 
   function startCreate() {
-    setEditingId(null);
     setForm(emptyProcessoForm());
-    setShowForm(true);
-    scrollToForm();
-  }
-
-  function startEdit(row: Processo) {
-    setEditingId(row.processo_id);
-    setForm(processoFormFromEntity(row));
     setShowForm(true);
     scrollToForm();
   }
 
   function cancelForm() {
     setShowForm(false);
-    setEditingId(null);
     setForm(emptyProcessoForm());
   }
 
@@ -114,16 +104,10 @@ export function ProcessosPage({
     setError(null);
     const payload = masterPayloadFromProcessoForm(form);
     try {
-      if (editingId) {
-        await updateProcesso(editingId, payload, getAccessToken);
-        cancelForm();
-        await load();
-      } else {
-        const created = await createProcesso(payload, getAccessToken);
-        cancelForm();
-        await load();
-        onOpenProcesso(created.processo_id, { setupInstancia: true });
-      }
+      const created = await createProcesso(payload, getAccessToken);
+      cancelForm();
+      await load();
+      onOpenProcesso(created.processo_id, { setupInstancia: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
     }
@@ -156,14 +140,11 @@ export function ProcessosPage({
     setError(null);
     try {
       await deleteProcesso(row.processo_id, getAccessToken);
-      if (editingId === row.processo_id) cancelForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir processo");
     }
   }
-
-  const editingRow = editingId ? items.find((p) => p.processo_id === editingId) : null;
 
   const columns = useMemo<DataTableColumn<Processo>[]>(
     () => [
@@ -197,16 +178,6 @@ export function ProcessosPage({
         className: "ds-table__actions-col",
         render: (row) => (
           <TableRowActions>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                startEdit(row);
-              }}
-            >
-              Editar
-            </button>
             <button
               type="button"
               className="ds-ghost-btn"
@@ -261,26 +232,21 @@ export function ProcessosPage({
 
       {showForm && options ? (
         <section ref={formSectionRef} className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">
-            {editingId ? "Editar processo" : "Novo processo"}
-          </h2>
-          {!editingId ? (
-            <p className="ds-hint">
-              Cadastre só o mestre aqui. Unidade e departamento entram na primeira instância operacional
-              na tela seguinte.
-            </p>
-          ) : null}
+          <h2 className="ds-section-title">Novo processo</h2>
+          <p className="ds-hint">
+            Cadastre só o mestre aqui. Unidade e departamento entram na primeira instância operacional
+            na tela seguinte. Para alterar um processo existente, abra-o e edite o card desejado.
+          </p>
           <form onSubmit={handleSubmit}>
             <ProcessoFormFields
               form={form}
               options={options}
-              codigoProcesso={editingRow?.codigo_processo}
               showInstanciaFields={false}
               onChange={setForm}
             />
             <div className="ds-cadastro-form__actions">
               <button type="submit" className="ds-primary-btn">
-                {editingId ? "Salvar alterações" : "Criar processo"}
+                Criar processo
               </button>
               <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
                 Cancelar
@@ -292,7 +258,7 @@ export function ProcessosPage({
 
       <DataTableSection
         title="Lista de processos"
-        hint="Filtros acima aplicam na API · Editar/Excluir ou clique na linha para revisões"
+        hint="Filtros acima aplicam na API · Duplicar/Excluir ou clique na linha para abrir"
         filters={
           <section className="ds-filters-row ds-filters-row--extended">
             <div className="ds-filter-box ds-filter-box--wide">
@@ -305,21 +271,16 @@ export function ProcessosPage({
                 onChange={(e) => setSearchQ(e.target.value)}
               />
             </div>
-            <div className="ds-filter-box">
-              <FieldLabel label="Status" hint={P.filtroStatus} />
-              <select
-                id="tm-proc-list-status"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {(options?.status_processo ?? []).map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              id="tm-proc-list-status"
+              label="Status"
+              hint={P.filtroStatus}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              allowEmpty
+              emptyLabel="Todos"
+              options={mapSelectOptions(options?.status_processo ?? [])}
+            />
           </section>
         }
         columns={columns}

@@ -176,7 +176,6 @@ export function RevisaoDiagramSection({
             diffNodeIds={merged.baseline_diff ?? undefined}
             mermaidPreview={merged.mermaid}
             exportRef={exportRef}
-            showTemplates={false}
           />
         </Suspense>
 

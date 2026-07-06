@@ -1,5 +1,7 @@
 import type { OptionsData } from "../../data/api/transformometroApi";
 import { FieldLabel } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { InvestimentoFormState } from "./investimentoForm";
 
@@ -17,20 +19,14 @@ export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm
 
   return (
     <div className="ds-filters-row">
-      <label className="ds-filter-box">
-        <FieldLabel label="Tipo" hint={I.tipo} />
-        <select
-          id={`${idPrefix}-tipo`}
-          value={form.tipo_investimento}
-          onChange={(e) => set({ tipo_investimento: e.target.value })}
-        >
-          {options.tipo_investimento.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SelectField
+        id={`${idPrefix}-tipo`}
+        label="Tipo"
+        hint={I.tipo}
+        value={form.tipo_investimento}
+        onChange={(tipo) => set({ tipo_investimento: tipo })}
+        options={mapSelectOptions(options.tipo_investimento)}
+      />
       <label className="ds-filter-box ds-filter-box--wide">
         <FieldLabel label="Descrição *" hint={I.descricao} />
         <input
@@ -60,33 +56,21 @@ export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm
           onChange={(e) => set({ valor_unitario: Number(e.target.value) })}
         />
       </label>
-      <label className="ds-filter-box">
-        <FieldLabel label="Recorrência" hint={I.recorrencia} />
-        <select
-          value={form.recorrencia}
-          onChange={(e) => set({ recorrencia: e.target.value })}
-        >
-          {options.recorrencias.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="ds-filter-box">
-        <FieldLabel label="Categoria" hint={I.categoria} />
-        <select
-          value={form.categoria_investimento}
-          onChange={(e) => set({ categoria_investimento: e.target.value })}
-        >
-          <option value="">—</option>
-          {options.categorias.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SelectField
+        label="Recorrência"
+        hint={I.recorrencia}
+        value={form.recorrencia}
+        onChange={(recorrencia) => set({ recorrencia })}
+        options={mapSelectOptions(options.recorrencias)}
+      />
+      <SelectField
+        label="Categoria"
+        hint={I.categoria}
+        value={form.categoria_investimento}
+        onChange={(categoria) => set({ categoria_investimento: categoria })}
+        allowEmpty
+        options={mapSelectOptions(options.categorias)}
+      />
       <label className="ds-filter-box">
         <FieldLabel label="Data" hint={I.data} />
         <input

@@ -1,4 +1,6 @@
 import { FieldLabel } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import type { FilialFormState } from "./filialCatalogForm";
@@ -39,22 +41,14 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
           onChange={(e) => set({ nome_filial: e.target.value })}
         />
       </div>
-      <div className="ds-filter-box">
-        <label htmlFor="tm-filial-status">
-          <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.filiais.status} />
-        </label>
-        <select
-          id="tm-filial-status"
-          value={form.status_filial}
-          onChange={(e) => set({ status_filial: e.target.value })}
-        >
-          {(options.status_filial ?? ["ativo", "inativo"]).map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SelectField
+        id="tm-filial-status"
+        label="Status *"
+        hint={TM_HELP_TOOLTIPS.filiais.status}
+        value={form.status_filial}
+        onChange={(status) => set({ status_filial: status })}
+        options={mapSelectOptions(options.status_filial ?? ["ativo", "inativo"])}
+      />
     </div>
   );
 }

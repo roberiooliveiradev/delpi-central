@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, Plus, Trash2 } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DataTableSection } from "../../components/DataTableSection";
 import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
 import {
@@ -514,10 +516,6 @@ export function ProcessoInstanciasPanel({
                   ? "Selecionada"
                   : "Selecionar"}
             </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => startEdit(row)}>
-              <Pencil size={14} />
-              Editar
-            </button>
             <button type="button" className="ds-ghost-btn" onClick={() => startDuplicate(row)}>
               <Copy size={14} />
               Replicar
@@ -654,18 +652,14 @@ export function ProcessoInstanciasPanel({
             placeholder="Nome do gestor ou patrocinador"
           />
         </div>
-        <div className="ds-filter-box">
-          <label htmlFor="tm-melhoria-fase">
-            <FieldLabel label="Fase" hint={TM_HELP_TOOLTIPS.instancias.fase} />
-          </label>
-          <select id="tm-melhoria-fase" value={faseMelhoria} onChange={(e) => setFaseMelhoria(e.target.value)}>
-            {MELHORIA_FASE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="tm-melhoria-fase"
+          label="Fase"
+          hint={TM_HELP_TOOLTIPS.instancias.fase}
+          value={faseMelhoria}
+          onChange={setFaseMelhoria}
+          options={MELHORIA_FASE_OPTIONS}
+        />
       </div>
       <div className="tm-inst-form__row">
         <div className="ds-filter-box">
@@ -679,22 +673,14 @@ export function ProcessoInstanciasPanel({
             onChange={(e) => setDataAlvoGoLive(e.target.value)}
           />
         </div>
-        <div className="ds-filter-box">
-          <label htmlFor="tm-melhoria-prioridade">
-            <FieldLabel label="Prioridade" hint={TM_HELP_TOOLTIPS.instancias.prioridade} />
-          </label>
-          <select
-            id="tm-melhoria-prioridade"
-            value={prioridade}
-            onChange={(e) => setPrioridade(e.target.value)}
-          >
-            {MELHORIA_PRIORIDADE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="tm-melhoria-prioridade"
+          label="Prioridade"
+          hint={TM_HELP_TOOLTIPS.instancias.prioridade}
+          value={prioridade}
+          onChange={setPrioridade}
+          options={MELHORIA_PRIORIDADE_OPTIONS}
+        />
       </div>
     </>
   );
@@ -851,19 +837,14 @@ export function ProcessoInstanciasPanel({
                   {!todasFiliais ? unidadesGrid : null}
 
                   <div className="tm-inst-form__row">
-                    <div className="ds-filter-box">
-                      <label htmlFor="tm-inst-status">
-                        <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.instancias.status} />
-                      </label>
-                      <select
-                        id="tm-inst-status"
-                        value={statusInstancia}
-                        onChange={(e) => setStatusInstancia(e.target.value)}
-                      >
-                        <option value="ativo">ativo</option>
-                        <option value="inativo">inativo</option>
-                      </select>
-                    </div>
+                    <SelectField
+                      id="tm-inst-status"
+                      label="Status *"
+                      hint={TM_HELP_TOOLTIPS.instancias.status}
+                      value={statusInstancia}
+                      onChange={setStatusInstancia}
+                      options={mapSelectOptions(["ativo", "inativo"])}
+                    />
                   </div>
 
                   {setoresGrid}

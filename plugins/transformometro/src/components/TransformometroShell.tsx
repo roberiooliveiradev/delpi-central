@@ -17,5 +17,9 @@ export function TransformometroShell({ children, printRoot = false }: Props) {
     .filter(Boolean)
     .join(" ");
 
-  return <div className={className}>{children}</div>;
+  return (
+    <div className={className}>
+      <div className="tm-page-sections">{children}</div>
+    </div>
+  );
 }

@@ -19,6 +19,8 @@ import {
 } from "../../recursos/recursoCatalogForm";
 import { Pagination } from "../../../components/Pagination";
 import { FieldLabel, HelpTooltip, TableHeader } from "../../../components/HelpTooltip";
+import { SelectField } from "../../../components/ui/SelectField";
+import { mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { useClientPagination } from "../../../hooks/useClientPagination";
 import { CadastroSection } from "./CadastroSection";
@@ -345,23 +347,23 @@ export function RevisaoRecursosSection({
       <form className="ds-cadastro-subsection" onSubmit={handleAddVinculo}>
         <h4 className="ds-cadastro-subsection__title">Vincular recurso à revisão</h4>
         <div className="ds-filters-row">
-          <label className="ds-filter-box ds-filter-box--wide">
-            <FieldLabel label="Recurso do catálogo" hint={R.catalogoVinculo} />
-            <select
-              required
-              value={vinculoForm.recurso_compartilhado_id}
-              onChange={(e) =>
-                setVinculoForm({ ...vinculoForm, recurso_compartilhado_id: e.target.value })
-              }
-            >
-              <option value="">Selecione…</option>
-              {recursosDisponiveis.map((r) => (
-                <option key={r.recurso_compartilhado_id} value={r.recurso_compartilhado_id}>
-                  {r.codigo_recurso} — {r.nome_recurso} ({formatCurrency(r.valor_total_recorrente)}/mês)
-                </option>
-              ))}
-            </select>
-          </label>
+          <SelectField
+            className="ds-filter-box--wide"
+            label="Recurso do catálogo"
+            hint={R.catalogoVinculo}
+            required
+            searchable
+            value={vinculoForm.recurso_compartilhado_id}
+            onChange={(recursoId) =>
+              setVinculoForm({ ...vinculoForm, recurso_compartilhado_id: recursoId })
+            }
+            options={mapSelectOptionsFromItems(
+              recursosDisponiveis,
+              (r) => r.recurso_compartilhado_id,
+              (r) =>
+                `${r.codigo_recurso} — ${r.nome_recurso} (${formatCurrency(r.valor_total_recorrente)}/mês)`
+            )}
+          />
           <label className="ds-filter-box">
             <FieldLabel label="Início do uso" hint={R.vinculoInicio} />
             <input

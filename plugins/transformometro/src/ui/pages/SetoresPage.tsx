@@ -21,7 +21,8 @@ import {
   type OptionsData,
   type Setor,
 } from "../../data/api/transformometroApi";
-import { FieldLabel } from "../../components/HelpTooltip";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildSetorPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
@@ -215,21 +216,20 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
         title="Catálogo de departamentos"
         filters={
           <div className="ds-filters-row">
-            <div className="ds-filter-box">
-              <FieldLabel label="Unidade" hint={S.filtroUnidade} />
-              <select
-                id="tm-setor-list-filial"
-                value={filialFilter}
-                onChange={(e) => setFilialFilter(e.target.value)}
-              >
-                <option value="">Todas</option>
-                {(options?.filiais ?? []).map((filial) => (
-                  <option key={filial.id} value={filial.id}>
-                    {filial.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              id="tm-setor-list-filial"
+              label="Unidade"
+              hint={S.filtroUnidade}
+              value={filialFilter}
+              onChange={setFilialFilter}
+              allowEmpty
+              emptyLabel="Todas"
+              options={mapSelectOptionsFromItems(
+                options?.filiais ?? [],
+                (filial) => filial.id,
+                (filial) => filial.label
+              )}
+            />
           </div>
         }
         columns={columns}
