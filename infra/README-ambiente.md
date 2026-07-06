@@ -6,7 +6,7 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 
 | Arquivo | Uso |
 |---------|-----|
-| `docker-compose.dev.yml` | Desenvolvimento local: hot-reload, Flask dev, profile `chat` / `vision` |
+| `docker-compose.dev.yml` | Desenvolvimento local: **padrão = stack essencial** (8 serviços); profiles `chat` e `plugins` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
 | `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
 | `docker-compose.prod.vision.yml` | **Override legado** prod — redundante; compose base já inclui visão |
@@ -14,9 +14,18 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
 
 ```bash
-# Desenvolvimento (a partir da raiz do monorepo ou de infra/)
+# Desenvolvimento — stack essencial (portal + api-delpi, ~8 containers)
 cp infra/.env.dev.example infra/.env
+docker compose -f infra/docker-compose.dev.yml up -d
+
+# Chat (ollama + minha-delpi-ai-api + MFE chat)
 docker compose -f infra/docker-compose.dev.yml --profile chat up -d
+
+# Um plugin/MFE específico (ex.: controle-retrabalhos)
+docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
+
+# Atalho stack mínimo (equivalente ao up -d padrão)
+./infra/scripts/up-minimal-dev.sh
 
 # Chat + rebuild explícito com extras de visão (opcional — dev já inclui EasyOCR/Docling)
 ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev

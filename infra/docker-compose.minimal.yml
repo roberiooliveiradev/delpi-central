@@ -1,8 +1,9 @@
-# Override dev — stack mínimo: chat + desenho + api-delpi (sem SearXNG, LanguageTool, dashboards).
+# Override dev — stack mínimo: reforça desligamento de extras pesados.
+# O dev padrão já sobe só essencial; plugins ficam em profile `plugins`.
 #
 # Uso:
 #   ./infra/scripts/up-minimal-dev.sh
-#   ./infra/scripts/up-minimal-dev.sh --restore   # restaura dumps em D:\delpi-backups\...
+#   ./infra/scripts/up-minimal-dev.sh --restore
 
 services:
   searxng:

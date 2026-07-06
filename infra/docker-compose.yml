@@ -770,6 +770,21 @@ services:
     networks:
       - delpi-network
 
+  controle-retrabalhos:
+    build:
+      context: ../plugins/controle-retrabalhos
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-controle-retrabalhos
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     build:
       context: ../plugins/dashboard-supplies
@@ -1326,6 +1341,7 @@ services:
       - quality-action-plans
       - inspecoes-entrada
       - central-agendamento
+      - controle-retrabalhos
       - dashboard-supplies
       - dashboard-financial
       - financeiro-centro-custo
