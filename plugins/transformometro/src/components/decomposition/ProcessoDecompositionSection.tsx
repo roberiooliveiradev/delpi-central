@@ -12,6 +12,7 @@ import {
 } from "../../data/api/transformometroDecompositionApi";
 import { emptyDecompositionTree, type DecompositionTreeV1 } from "../../types/decomposition";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
+import { TabPanelTransition } from "../TabPanelTransition";
 import { DecompositionTreeEditor } from "./DecompositionTreeEditor";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -133,16 +134,18 @@ export function ProcessoDecompositionSection({
         </button>
       </div>
 
-      {tab === "arvore" ? (
-        <DecompositionTreeEditor
-          tree={tree}
-          readOnly={readOnly}
-          title={processoNome ? `Macroprocesso — ${processoNome}` : "Mapeamento do processo"}
-          onChange={setTree}
-        />
-      ) : (
-        <DecompositionFlatPreview tree={tree} macroprocesso={processoNome} />
-      )}
+      <TabPanelTransition tabKey={tab}>
+        {tab === "arvore" ? (
+          <DecompositionTreeEditor
+            tree={tree}
+            readOnly={readOnly}
+            title={processoNome ? `Macroprocesso — ${processoNome}` : "Mapeamento do processo"}
+            onChange={setTree}
+          />
+        ) : (
+          <DecompositionFlatPreview tree={tree} macroprocesso={processoNome} />
+        )}
+      </TabPanelTransition>
 
       {!readOnly ? (
         <div className="tm-decomposition-section__actions">

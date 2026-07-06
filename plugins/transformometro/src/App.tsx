@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+
+import { PageTransition } from "./components/PageTransition";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import { FilialDetailPage } from "./ui/pages/FilialDetailPage";
 import { InstanciaDetailPage } from "./ui/pages/InstanciaDetailPage";
@@ -15,6 +18,7 @@ import { useTransformometroRouterPath } from "./hooks/useTransformometroRouterPa
 import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
 import { buildProcessoPath, parseTransformometroPath } from "./utils/routeParser";
 import { navigateTransformometro } from "./utils/navigation";
+import { buildTransformometroTransitionKey } from "./utils/transitionKey";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -24,23 +28,24 @@ export type AppProps = {
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   const pathname = useTransformometroRouterPath(pathnameFromHost);
   const route = parseTransformometroPath(pathname);
+  const transitionKey = buildTransformometroTransitionKey(pathname);
 
   useDelpiPortalBridge(pathname);
 
   const onNavigate = navigateTransformometro;
 
+  let page: ReactNode;
+
   if (route.view === "dashboard") {
-    return (
+    page = (
       <DashboardPage
         getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={onNavigate}
       />
     );
-  }
-
-  if (route.view === "recurso" && route.recursoId) {
-    return (
+  } else if (route.view === "recurso" && route.recursoId) {
+    page = (
       <RecursoDetailPage
         getAccessToken={getAccessToken}
         recursoId={route.recursoId}
@@ -49,10 +54,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.recursos)}
       />
     );
-  }
-
-  if (route.view === "filial" && route.filialId) {
-    return (
+  } else if (route.view === "filial" && route.filialId) {
+    page = (
       <FilialDetailPage
         getAccessToken={getAccessToken}
         filialId={route.filialId}
@@ -61,10 +64,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.filiais)}
       />
     );
-  }
-
-  if (route.view === "setor" && route.setorId) {
-    return (
+  } else if (route.view === "setor" && route.setorId) {
+    page = (
       <SetorDetailPage
         getAccessToken={getAccessToken}
         setorId={route.setorId}
@@ -73,38 +74,28 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.setores)}
       />
     );
-  }
-
-  if (route.view === "dados") {
-    return (
+  } else if (route.view === "dados") {
+    page = (
       <DataTransferPage
         getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={onNavigate}
       />
     );
-  }
-
-  if (route.view === "recursos") {
-    return (
+  } else if (route.view === "recursos") {
+    page = (
       <RecursosPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
-  }
-
-  if (route.view === "setores") {
-    return (
+  } else if (route.view === "setores") {
+    page = (
       <SetoresPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
-  }
-
-  if (route.view === "filiais") {
-    return (
+  } else if (route.view === "filiais") {
+    page = (
       <FiliaisPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
-  }
-
-  if (route.view === "revisao" && route.processoId && route.revisaoId) {
-    return (
+  } else if (route.view === "revisao" && route.processoId && route.revisaoId) {
+    page = (
       <RevisaoDetailPage
         getAccessToken={getAccessToken}
         processoId={route.processoId}
@@ -115,10 +106,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onNavigate={onNavigate}
       />
     );
-  }
-
-  if (route.view === "instancia" && route.processoId && route.instanciaId) {
-    return (
+  } else if (route.view === "instancia" && route.processoId && route.instanciaId) {
+    page = (
       <InstanciaDetailPage
         getAccessToken={getAccessToken}
         processoId={route.processoId}
@@ -127,10 +116,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onNavigate={onNavigate}
       />
     );
-  }
-
-  if (route.view === "processo" && route.processoId) {
-    return (
+  } else if (route.view === "processo" && route.processoId) {
+    page = (
       <ProcessoDetailPage
         getAccessToken={getAccessToken}
         processoId={route.processoId}
@@ -139,10 +126,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
       />
     );
-  }
-
-  if (route.view === "processos") {
-    return (
+  } else if (route.view === "processos") {
+    page = (
       <ProcessosPage
         getAccessToken={getAccessToken}
         pathname={pathname}
@@ -156,9 +141,11 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         }
       />
     );
+  } else {
+    page = (
+      <DashboardPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+    );
   }
 
-  return (
-    <DashboardPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
-  );
+  return <PageTransition transitionKey={transitionKey}>{page}</PageTransition>;
 }

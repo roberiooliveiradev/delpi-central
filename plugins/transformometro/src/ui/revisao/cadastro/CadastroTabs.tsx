@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { TabPanelTransition } from "../../../components/TabPanelTransition";
+
 export type CadastroTabId = "vigencia" | "medicao" | "investimentos" | "recursos" | "evidencias";
 
 export type CadastroTabDef = {
@@ -49,7 +51,7 @@ export function CadastroTabs({ tabs, activeTab, onTabChange, children }: Props) 
         id={`tm-tabpanel-${activeTab}`}
         aria-labelledby={`tm-tab-${activeTab}`}
       >
-        {children}
+        <TabPanelTransition tabKey={activeTab}>{children}</TabPanelTransition>
       </div>
     </div>
   );

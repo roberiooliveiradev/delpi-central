@@ -65,7 +65,44 @@
 }
 
 .dashboard-transformometro .ds-app-shell {
-  animation: ds-view-fade-in 0.18s ease-out;
+  min-height: 100%;
+}
+
+.dashboard-transformometro .tm-page-transition {
+  animation: tm-view-fade-in 0.22s ease-out;
+}
+
+.dashboard-transformometro .tm-tab-panel-transition {
+  animation: tm-tab-fade-in 0.16s ease-out;
+}
+
+@keyframes tm-view-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tm-tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-transformometro .tm-page-transition,
+  .dashboard-transformometro .tm-tab-panel-transition {
+    animation: none;
+  }
 }
 
 @keyframes ds-view-fade-in {
@@ -774,6 +811,11 @@
   padding: 6px 12px;
   font-size: var(--ds-font-sm);
   cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .dashboard-transformometro .ds-tab-btn.is-active {
@@ -1419,6 +1461,10 @@
   color: var(--ds-text-muted);
   text-decoration: none;
   border: 1px solid transparent;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
 }
 
 .dashboard-transformometro .ds-nav__link:hover {
@@ -2732,6 +2778,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   border-top: none;
   border-radius: 0 0 var(--ds-filter-radius) var(--ds-filter-radius);
   background: var(--ds-card-bg);
+  overflow: hidden;
 }
 
 .dashboard-transformometro .ds-cadastro-section {
@@ -3814,6 +3861,10 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   font-size: var(--ds-font-xs);
   color: var(--ds-text);
   cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
 }
 
 .dashboard-transformometro .tm-diagram-editor__tab.is-active {

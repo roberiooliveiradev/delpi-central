@@ -16,6 +16,7 @@ import {
 import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
 import { DecompositionRichTree } from "./DecompositionRichTree";
+import { TabPanelTransition } from "../TabPanelTransition";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
@@ -140,31 +141,33 @@ export function RevisaoDecompositionSection({
         </button>
       </div>
 
-      {tab === "arvore" && richRoot ? (
-        <DecompositionRichTree
-          root={richRoot}
-          expandDepth={2}
-          renderLabel={
-            readOnly
-              ? undefined
-              : (node) =>
-                  node.id === "decomposition-root" ? (
-                    <span className="tm-rich-tree__label">{node.label}</span>
-                  ) : (
-                    <input
-                      className="tm-rich-tree__input"
-                      value={overlay.node_overrides?.[node.id]?.label ?? node.label}
-                      onChange={(event) => updateOverride(node.id, event.target.value)}
-                      aria-label={`Rótulo ${node.label}`}
-                    />
-                  )
-          }
-        />
-      ) : null}
+      <TabPanelTransition tabKey={tab}>
+        {tab === "arvore" && richRoot ? (
+          <DecompositionRichTree
+            root={richRoot}
+            expandDepth={2}
+            renderLabel={
+              readOnly
+                ? undefined
+                : (node) =>
+                    node.id === "decomposition-root" ? (
+                      <span className="tm-rich-tree__label">{node.label}</span>
+                    ) : (
+                      <input
+                        className="tm-rich-tree__input"
+                        value={overlay.node_overrides?.[node.id]?.label ?? node.label}
+                        onChange={(event) => updateOverride(node.id, event.target.value)}
+                        aria-label={`Rótulo ${node.label}`}
+                      />
+                    )
+            }
+          />
+        ) : null}
 
-      {tab === "planilha" ? (
-        <DecompositionFlatPreview tree={mergedTree} macroprocesso={processoNome} />
-      ) : null}
+        {tab === "planilha" ? (
+          <DecompositionFlatPreview tree={mergedTree} macroprocesso={processoNome} />
+        ) : null}
+      </TabPanelTransition>
 
       {!readOnly ? (
         <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>

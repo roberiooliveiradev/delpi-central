@@ -20,6 +20,7 @@ import { CircleHelp } from "lucide-react";
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip } from "../HelpTooltip";
+import { TabPanelTransition } from "../TabPanelTransition";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import {
   DIAGRAM_EDITOR_ACTIONS,
@@ -859,52 +860,54 @@ function FlowchartEditorInner({
         </div>
       ) : null}
 
-      {activeTab === "canvas" ? (
-        <div
-          ref={canvasWrapperRef}
-          tabIndex={readOnly ? -1 : 0}
-          className={[
-            "tm-diagram-editor__canvas",
-            lanes.length ? "tm-diagram-editor__canvas--swimlanes" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          style={canvasHeight != null ? { height: canvasHeight } : undefined}
-        >
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            colorMode={colorMode}
-            defaultEdgeOptions={{
-              type: "flowchart",
-              labelStyle: { fontSize: 11, fontWeight: 600 },
-              labelBgStyle: { fillOpacity: 0.92 },
-            }}
-            onNodesChange={readOnly ? undefined : onNodesChange}
-            onEdgesChange={readOnly ? undefined : onEdgesChange}
-            onConnect={onConnect}
-            onNodeDragStop={onNodeDragStop}
-            onNodesDelete={onNodesDelete}
-            onEdgesDelete={onEdgesDelete}
-            deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
-            fitView
-            minZoom={0.2}
-            maxZoom={1.5}
-            nodesDraggable={!readOnly}
-            nodesConnectable={!readOnly}
-            elementsSelectable={!readOnly}
-            proOptions={{ hideAttribution: true }}
+      <TabPanelTransition tabKey={activeTab}>
+        {activeTab === "canvas" ? (
+          <div
+            ref={canvasWrapperRef}
+            tabIndex={readOnly ? -1 : 0}
+            className={[
+              "tm-diagram-editor__canvas",
+              lanes.length ? "tm-diagram-editor__canvas--swimlanes" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={canvasHeight != null ? { height: canvasHeight } : undefined}
           >
-            <Background gap={20} size={1} />
-            <MiniMap pannable zoomable />
-            <Controls showInteractive={!readOnly} />
-          </ReactFlow>
-        </div>
-      ) : (
-        <pre className="tm-diagram-editor__mermaid-code">{mermaidPreview ?? "Sem preview."}</pre>
-      )}
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              colorMode={colorMode}
+              defaultEdgeOptions={{
+                type: "flowchart",
+                labelStyle: { fontSize: 11, fontWeight: 600 },
+                labelBgStyle: { fillOpacity: 0.92 },
+              }}
+              onNodesChange={readOnly ? undefined : onNodesChange}
+              onEdgesChange={readOnly ? undefined : onEdgesChange}
+              onConnect={onConnect}
+              onNodeDragStop={onNodeDragStop}
+              onNodesDelete={onNodesDelete}
+              onEdgesDelete={onEdgesDelete}
+              deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
+              fitView
+              minZoom={0.2}
+              maxZoom={1.5}
+              nodesDraggable={!readOnly}
+              nodesConnectable={!readOnly}
+              elementsSelectable={!readOnly}
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background gap={20} size={1} />
+              <MiniMap pannable zoomable />
+              <Controls showInteractive={!readOnly} />
+            </ReactFlow>
+          </div>
+        ) : (
+          <pre className="tm-diagram-editor__mermaid-code">{mermaidPreview ?? "Sem preview."}</pre>
+        )}
+      </TabPanelTransition>
     </div>
   );
 }
