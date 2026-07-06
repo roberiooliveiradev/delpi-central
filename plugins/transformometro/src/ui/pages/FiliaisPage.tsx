@@ -24,6 +24,7 @@ import {
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip } from "../../components/HelpTooltip";
 import { TableRowActions } from "../../components/ui/TableRowActions";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { buildFilialPath } from "../../utils/routeParser";
 
@@ -36,6 +37,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 };
 
 export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
+  const confirm = useConfirm();
   const [items, setItems] = useState<Filial[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,11 +68,13 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [load]);
 
   async function handleDelete(filial: Filial) {
-    if (
-      !window.confirm(
-        `Excluir unidade ${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}?`
-      )
-    ) {
+    const confirmed = await confirm({
+      title: "Excluir unidade",
+      message: `Excluir unidade ${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     setError(null);

@@ -26,6 +26,7 @@ import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildSetorPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";
 
 const C = TM_HELP_TOOLTIPS.columns;
@@ -37,6 +38,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 };
 
 export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
+  const confirm = useConfirm();
   const [items, setItems] = useState<Setor[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +74,13 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [options?.filiais]);
 
   async function handleDelete(setor: Setor) {
-    if (!window.confirm(`Excluir departamento ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`)) return;
+    const confirmed = await confirm({
+      title: "Excluir departamento",
+      message: `Excluir departamento ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       await deleteSetor(setor.setor_id, getAccessToken);

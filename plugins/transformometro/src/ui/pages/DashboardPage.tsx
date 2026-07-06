@@ -31,6 +31,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { SegmentToggle } from "../../components/SegmentToggle";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import {
   downloadDashboardCsv,
   downloadDashboardExcel,
@@ -183,6 +184,7 @@ function ChartCard({
 }
 
 export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
+  const confirm = useConfirm();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [resumo, setResumo] = useState<DashboardResumo | null>(null);
   const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
@@ -328,11 +330,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   }
 
   async function handleRecalcCache() {
-    if (
-      !window.confirm(
-        "Recalcular o cache materializado (dashboard_calculos)? Pode levar alguns minutos."
-      )
-    ) {
+    const confirmed = await confirm({
+      title: "Recalcular cache",
+      message:
+        "Recalcular o cache materializado (dashboard_calculos)? Pode levar alguns minutos.",
+      confirmLabel: "Recalcular",
+    });
+    if (!confirmed) {
       return;
     }
     setRecalculating(true);

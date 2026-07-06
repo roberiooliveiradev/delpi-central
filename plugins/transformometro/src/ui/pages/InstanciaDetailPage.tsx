@@ -5,6 +5,7 @@ import type { AppProps } from "../../App";
 import { DataTableSection } from "../../components/DataTableSection";
 import { InstanciaReadView } from "../../components/instancia/InstanciaReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -63,6 +64,7 @@ export function InstanciaDetailPage({
   pathname,
   onNavigate,
 }: Props) {
+  const confirm = useConfirm();
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancia, setInstancia] = useState<ProcessoInstancia | null>(null);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
@@ -119,7 +121,13 @@ export function InstanciaDetailPage({
 
   async function handleDeleteRevisao(revisao: Revisao) {
     const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
-    if (!window.confirm(`Excluir a revisão ${label}?`)) return;
+    const confirmed = await confirm({
+      title: "Excluir revisão",
+      message: `Excluir a revisão ${label}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       await deleteRevisao(revisao.revisao_id, getAccessToken);
@@ -217,10 +225,17 @@ export function InstanciaDetailPage({
               type="button"
               className="ds-ghost-btn"
               onClick={() => {
-                if (!window.confirm("Excluir esta instância operacional?")) return;
-                void deleteInstancia(instanciaId, getAccessToken).then(() =>
-                  onNavigate(buildProcessoPath(processoId))
-                );
+                void (async () => {
+                  const confirmed = await confirm({
+                    title: "Excluir melhoria",
+                    message: "Excluir esta instância operacional?",
+                    confirmLabel: "Excluir",
+                    variant: "danger",
+                  });
+                  if (!confirmed) return;
+                  await deleteInstancia(instanciaId, getAccessToken);
+                  onNavigate(buildProcessoPath(processoId));
+                })();
               }}
             >
               <Trash2 size={16} />

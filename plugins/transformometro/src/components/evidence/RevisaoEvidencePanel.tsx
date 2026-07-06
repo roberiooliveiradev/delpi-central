@@ -16,6 +16,7 @@ import {
 import { FieldLabel } from "../HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RevisaoEvidence } from "../../types/revisaoEvidence";
+import { useConfirm } from "../ui/ConfirmDialogProvider";
 
 const R = TM_HELP_TOOLTIPS.revisao;
 
@@ -216,6 +217,7 @@ export function RevisaoEvidencePanel({
   readOnly = false,
   hideHeader = false,
 }: Props) {
+  const confirm = useConfirm();
   const [evidences, setEvidences] = useState<RevisaoEvidence[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -317,7 +319,13 @@ export function RevisaoEvidencePanel({
   }
 
   async function handleDelete(evidence: RevisaoEvidence) {
-    if (!window.confirm("Excluir esta evidência?")) return;
+    const confirmed = await confirm({
+      title: "Excluir evidência",
+      message: "Excluir esta evidência?",
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     onError(null);
     try {
       await deleteRevisaoEvidence(revisaoId, evidence.evidencia_id, getAccessToken);

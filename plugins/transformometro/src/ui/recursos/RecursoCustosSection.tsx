@@ -11,6 +11,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;
@@ -31,6 +32,7 @@ export function RecursoCustosSection({
   onError,
   onRecursoSynced,
 }: Props) {
+  const confirm = useConfirm();
   const [custos, setCustos] = useState<RecursoCusto[]>([]);
   const [loading, setLoading] = useState(true);
   const [reajuste, setReajuste] = useState({
@@ -128,7 +130,13 @@ export function RecursoCustosSection({
   }
 
   async function handleDelete(c: RecursoCusto) {
-    if (!window.confirm("Excluir esta vigência de custo?")) return;
+    const confirmed = await confirm({
+      title: "Excluir vigência",
+      message: "Excluir esta vigência de custo?",
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     onError(null);
     try {
       await deleteRecursoCusto(c.recurso_custo_id, getAccessToken);

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { PageTransition } from "./components/PageTransition";
+import { ConfirmDialogProvider } from "./components/ui/ConfirmDialogProvider";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import { FilialDetailPage } from "./ui/pages/FilialDetailPage";
 import { InstanciaDetailPage } from "./ui/pages/InstanciaDetailPage";
@@ -147,5 +148,9 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     );
   }
 
-  return <PageTransition transitionKey={transitionKey}>{page}</PageTransition>;
+  return (
+    <ConfirmDialogProvider>
+      <PageTransition transitionKey={transitionKey}>{page}</PageTransition>
+    </ConfirmDialogProvider>
+  );
 }

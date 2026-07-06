@@ -7,6 +7,7 @@ import { ProcessoTimeline } from "../../components/processo/ProcessoTimeline";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { ProcessoReadView } from "../../components/processo/ProcessoReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
@@ -66,6 +67,7 @@ export function ProcessoDetailPage({
   onNavigate,
   onBack,
 }: Props) {
+  const confirm = useConfirm();
   const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
@@ -183,7 +185,13 @@ export function ProcessoDetailPage({
   async function handleDeleteProcesso() {
     if (!processo) return;
     const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
-    if (!window.confirm(`Excluir o processo ${label}? Você será redirecionado à lista.`)) {
+    const confirmed = await confirm({
+      title: "Excluir processo",
+      message: `Excluir o processo ${label}? Você será redirecionado à lista.`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     setError(null);

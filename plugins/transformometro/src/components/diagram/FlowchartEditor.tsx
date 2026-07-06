@@ -20,6 +20,7 @@ import { CircleHelp } from "lucide-react";
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip } from "../HelpTooltip";
+import { useConfirm } from "../ui/ConfirmDialogProvider";
 import { TabPanelTransition } from "../TabPanelTransition";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import {
@@ -229,6 +230,7 @@ function FlowchartEditorInner({
   mermaidPreview,
   exportRef,
 }: FlowchartEditorProps) {
+  const confirm = useConfirm();
   const lanes = useMemo(() => normalizeLanes(value.lanes), [value.lanes]);
 
   const handleRenameLane = useCallback(
@@ -514,12 +516,15 @@ function FlowchartEditorInner({
     onChange?.(renameLane(value, activeLaneId, laneLabelDraft));
   };
 
-  const removeActiveLane = () => {
+  const removeActiveLane = async () => {
     if (readOnly || !activeLaneId || lanes.length <= 1) return;
     const lane = lanes.find((item) => item.id === activeLaneId);
-    const confirmed = window.confirm(
-      `Remover a faixa «${lane?.label ?? "Faixa"}»? Os nós serão realocados na faixa restante.`
-    );
+    const confirmed = await confirm({
+      title: "Remover faixa",
+      message: `Remover a faixa «${lane?.label ?? "Faixa"}»? Os nós serão realocados na faixa restante.`,
+      confirmLabel: "Remover",
+      variant: "danger",
+    });
     if (!confirmed) return;
     const next = removeLane(value, activeLaneId);
     onChange?.(next);

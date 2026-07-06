@@ -4,6 +4,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import type { AppProps } from "../../App";
 import { FilialReadView } from "../../components/filial/FilialReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -48,6 +49,7 @@ export function FilialDetailPage({
   onNavigate,
   onBack,
 }: Props) {
+  const confirm = useConfirm();
   const isCreate = isCatalogCreateId("filial", filialId);
   const [filial, setFilial] = useState<Filial | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
@@ -134,7 +136,13 @@ export function FilialDetailPage({
   async function handleDelete() {
     if (!filial) return;
     const label = `${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}`;
-    if (!window.confirm(`Excluir unidade ${label}?`)) return;
+    const confirmed = await confirm({
+      title: "Excluir unidade",
+      message: `Excluir unidade ${label}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       await deleteFilial(filial.filial_id, getAccessToken);

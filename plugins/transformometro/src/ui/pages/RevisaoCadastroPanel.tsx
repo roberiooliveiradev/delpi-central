@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppProps } from "../../App";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -98,6 +99,7 @@ export function RevisaoCadastroPanel({
   onRevisaoUpdated,
   onRevisaoDeleted,
 }: Props) {
+  const confirm = useConfirm();
   const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
@@ -224,7 +226,13 @@ export function RevisaoCadastroPanel({
 
   async function handleDeleteRevisao() {
     const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
-    if (!window.confirm(`Excluir a revisão ${label}?`)) {
+    const confirmed = await confirm({
+      title: "Excluir revisão",
+      message: `Excluir a revisão ${label}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     onError(null);

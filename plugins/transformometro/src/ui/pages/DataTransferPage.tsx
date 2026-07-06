@@ -5,6 +5,7 @@ import type { AppProps } from "../../App";
 import { HelpTooltip, TableHeader } from "../../components/HelpTooltip";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   applyJsonImport,
@@ -54,6 +55,7 @@ const RESOLVED_FORMAT_LABELS: Record<"legacy" | "modern", string> = {
 };
 
 export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props) {
+  const confirm = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<JsonImportMode>("merge");
   const [importSource, setImportSource] = useState<ImportSource>("package");
@@ -159,9 +161,13 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
       return;
     }
     if (mode === "replace") {
-      const ok = window.confirm(
-        "Substituir todos os dados apagará departamentos, processos, revisões, medições, investimentos, recursos e evidências atuais. Deseja continuar?"
-      );
+      const ok = await confirm({
+        title: "Substituir dados",
+        message:
+          "Substituir todos os dados apagará departamentos, processos, revisões, medições, investimentos, recursos e evidências atuais. Deseja continuar?",
+        confirmLabel: "Substituir",
+        variant: "danger",
+      });
       if (!ok) return;
     }
     clearMessages();

@@ -4,6 +4,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import type { AppProps } from "../../App";
 import { SetorReadView } from "../../components/setor/SetorReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -48,6 +49,7 @@ export function SetorDetailPage({
   onNavigate,
   onBack,
 }: Props) {
+  const confirm = useConfirm();
   const isCreate = isCatalogCreateId("setor", setorId);
   const [setor, setSetor] = useState<Setor | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
@@ -145,7 +147,13 @@ export function SetorDetailPage({
   async function handleDelete() {
     if (!setor) return;
     const label = `${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}`;
-    if (!window.confirm(`Excluir departamento ${label}?`)) return;
+    const confirmed = await confirm({
+      title: "Excluir departamento",
+      message: `Excluir departamento ${label}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       await deleteSetor(setor.setor_id, getAccessToken);

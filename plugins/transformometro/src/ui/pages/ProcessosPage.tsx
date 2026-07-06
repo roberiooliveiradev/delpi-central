@@ -22,6 +22,7 @@ import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TableRowActions } from "../../components/ui/TableRowActions";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
 import { computeProcessoMasterCompletion } from "../../utils/processoCompletion";
@@ -48,6 +49,7 @@ export function ProcessosPage({
   onNavigate,
   onOpenProcesso,
 }: Props) {
+  const confirm = useConfirm();
   const [items, setItems] = useState<Processo[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,11 +117,12 @@ export function ProcessosPage({
 
   async function handleDuplicate(row: Processo) {
     const label = `${row.codigo_processo} — ${row.nome_processo}`;
-    if (
-      !window.confirm(
-        `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`
-      )
-    ) {
+    const confirmed = await confirm({
+      title: "Duplicar processo",
+      message: `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`,
+      confirmLabel: "Duplicar",
+    });
+    if (!confirmed) {
       return;
     }
     setError(null);
@@ -134,7 +137,13 @@ export function ProcessosPage({
 
   async function handleDelete(row: Processo) {
     const label = `${row.codigo_processo} — ${row.nome_processo}`;
-    if (!window.confirm(`Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica).`)) {
+    const confirmed = await confirm({
+      title: "Excluir processo",
+      message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica).`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     setError(null);

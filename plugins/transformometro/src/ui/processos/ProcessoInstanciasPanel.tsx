@@ -7,6 +7,7 @@ import { DataTableSection } from "../../components/DataTableSection";
 import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
 import {
@@ -138,6 +139,7 @@ export function ProcessoInstanciasPanel({
   onDelete,
   onDuplicate,
 }: Props) {
+  const confirm = useConfirm();
   const [showForm, setShowForm] = useState(initialShowForm);
   const [editingInstanciaId, setEditingInstanciaId] = useState<string | null>(null);
   const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
@@ -350,11 +352,13 @@ export function ProcessoInstanciasPanel({
   }
 
   async function handleDelete(row: ProcessoInstancia) {
-    if (
-      !window.confirm(
-        `Excluir melhoria ${row.todas_filiais_ativas ? "todas as unidades" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`
-      )
-    ) {
+    const confirmed = await confirm({
+      title: "Excluir melhoria",
+      message: `Excluir melhoria ${row.todas_filiais_ativas ? "todas as unidades" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     setSaving(true);
@@ -385,9 +389,12 @@ export function ProcessoInstanciasPanel({
         ? "__todas__"
         : (resolveKeepFilial() ?? "").toLowerCase();
       if (escopoNovo !== escopoAtual) {
-        const confirmed = window.confirm(
-          "Esta melhoria possui revisões. Alterar a unidade reatribui os números ao novo destino e recalcula o dashboard. Deseja continuar?"
-        );
+        const confirmed = await confirm({
+          title: "Alterar unidade",
+          message:
+            "Esta melhoria possui revisões. Alterar a unidade reatribui os números ao novo destino e recalcula o dashboard. Deseja continuar?",
+          confirmLabel: "Continuar",
+        });
         if (!confirmed) return;
       }
     }

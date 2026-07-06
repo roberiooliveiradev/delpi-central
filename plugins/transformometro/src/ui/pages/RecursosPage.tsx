@@ -25,6 +25,7 @@ import { formatCurrency } from "../../utils/format";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildRecursoPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";
 
 const C = TM_HELP_TOOLTIPS.columns;
@@ -35,6 +36,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 };
 
 export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
+  const confirm = useConfirm();
   const [items, setItems] = useState<RecursoCompartilhado[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,13 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [load]);
 
   async function handleDelete(r: RecursoCompartilhado) {
-    if (!window.confirm(`Excluir ${r.codigo_recurso} — ${r.nome_recurso}?`)) return;
+    const confirmed = await confirm({
+      title: "Excluir recurso",
+      message: `Excluir ${r.codigo_recurso} — ${r.nome_recurso}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       await deleteRecurso(r.recurso_compartilhado_id, getAccessToken);

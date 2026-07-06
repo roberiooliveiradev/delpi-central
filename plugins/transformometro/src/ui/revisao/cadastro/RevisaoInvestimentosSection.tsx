@@ -19,6 +19,7 @@ import {
   payloadFromInvestimentoForm,
 } from "../investimentoForm";
 import { CadastroSection } from "./CadastroSection";
+import { useConfirm } from "../../../components/ui/ConfirmDialogProvider";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
 const C = TM_HELP_TOOLTIPS.columns;
@@ -44,6 +45,7 @@ export function RevisaoInvestimentosSection({
   onError,
   onReload,
 }: Props) {
+  const confirm = useConfirm();
   const [invForm, setInvForm] = useState(() => emptyInvestimentoForm(options));
   const [editingInvestimentoId, setEditingInvestimentoId] = useState<string | null>(null);
   const [editInvForm, setEditInvForm] = useState(() => emptyInvestimentoForm(options));
@@ -95,7 +97,13 @@ export function RevisaoInvestimentosSection({
   }
 
   async function handleDeleteInvestimento(inv: Investimento) {
-    if (!window.confirm(`Remover o investimento "${inv.descricao_item}"?`)) {
+    const confirmed = await confirm({
+      title: "Remover investimento",
+      message: `Remover o investimento "${inv.descricao_item}"?`,
+      confirmLabel: "Remover",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     onError(null);

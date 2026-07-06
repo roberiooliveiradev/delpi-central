@@ -14,6 +14,7 @@ import { emptyDecompositionTree, type DecompositionTreeV1 } from "../../types/de
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
 import { TabPanelTransition } from "../TabPanelTransition";
 import { DecompositionTreeEditor } from "./DecompositionTreeEditor";
+import { useConfirm } from "../ui/ConfirmDialogProvider";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -35,6 +36,7 @@ export function ProcessoDecompositionSection({
   onError,
   onEntityChanged,
 }: Props) {
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [tree, setTree] = useState<DecompositionTreeV1>(emptyDecompositionTree());
@@ -92,11 +94,16 @@ export function ProcessoDecompositionSection({
   }
 
   async function handleSuggestDraft() {
-    if (
-      tree.nodes.length > 0 &&
-      !window.confirm("Substituir a árvore atual pelo rascunho sugerido a partir do fluxo?")
-    ) {
-      return;
+    if (tree.nodes.length > 0) {
+      const confirmed = await confirm({
+        title: "Substituir mapeamento",
+        message: "Substituir a árvore atual pelo rascunho sugerido a partir do fluxo?",
+        confirmLabel: "Substituir",
+        variant: "danger",
+      });
+      if (!confirmed) {
+        return;
+      }
     }
     onError(null);
     try {

@@ -4,6 +4,7 @@ import { ArrowLeft, Search, Trash2 } from "lucide-react";
 import type { AppProps } from "../../App";
 import { RecursoReadView } from "../../components/recurso/RecursoReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
@@ -72,6 +73,7 @@ export function RecursoDetailPage({
   onNavigate,
   onBack,
 }: Props) {
+  const confirm = useConfirm();
   const isCreate = isCatalogCreateId("recurso", recursoId);
   const [recurso, setRecurso] = useState<RecursoCompartilhado | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
@@ -182,7 +184,13 @@ export function RecursoDetailPage({
 
   async function handleDeleteRecurso() {
     if (!recurso) return;
-    if (!window.confirm(`Excluir ${recurso.codigo_recurso} — ${recurso.nome_recurso}?`)) return;
+    const confirmed = await confirm({
+      title: "Excluir recurso",
+      message: `Excluir ${recurso.codigo_recurso} — ${recurso.nome_recurso}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       await deleteRecurso(recurso.recurso_compartilhado_id, getAccessToken);
@@ -245,7 +253,13 @@ export function RecursoDetailPage({
 
   async function handleDeleteVinculo(vinculo: VinculoRecurso) {
     const label = `${vinculo.codigo_processo ?? "processo"} — ${vinculo.nome_processo ?? ""}`;
-    if (!window.confirm(`Desvincular este recurso de ${label}?`)) return;
+    const confirmed = await confirm({
+      title: "Desvincular recurso",
+      message: `Desvincular este recurso de ${label}?`,
+      confirmLabel: "Desvincular",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       await deleteVinculo(vinculo.vinculo_id, getAccessToken);

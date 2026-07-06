@@ -3670,6 +3670,95 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   min-width: 0;
 }
 
+/* Modal de confirmação — padrão action plans (PAC) */
+.dashboard-transformometro.ds-modal-overlay,
+.dashboard-transformometro .ds-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--ds-text) 52%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.dashboard-transformometro .ds-modal {
+  width: min(480px, 100%);
+  max-height: min(88vh, 640px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ds-card-radius);
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-card-bg);
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--ds-text) 28%, transparent);
+  color: var(--ds-text);
+  animation: tm-diagram-modal-in 0.18s ease-out;
+}
+
+.dashboard-transformometro .ds-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+}
+
+.dashboard-transformometro .ds-modal__title {
+  margin: 0;
+  font-size: var(--ds-font-md, 16px);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-transformometro .ds-modal__body {
+  padding: 16px 18px 18px;
+  overflow: auto;
+}
+
+.dashboard-transformometro .ds-modal__close {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  justify-content: center;
+}
+
+.dashboard-transformometro .ds-confirm-modal__message {
+  margin: 0 0 1.25rem;
+  font-size: var(--ds-font-sm, 14px);
+  line-height: 1.55;
+  color: var(--ds-text);
+  white-space: pre-line;
+}
+
+.dashboard-transformometro .ds-form-actions--end {
+  justify-content: flex-end;
+}
+
+.dashboard-transformometro .ds-danger-btn {
+  min-height: var(--ds-control-height);
+  border-radius: var(--ds-control-radius);
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--ds-danger-fg) 55%, transparent);
+  background: color-mix(in srgb, var(--ds-danger-fg) 88%, #000 12%);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-transformometro .ds-danger-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Modal tela cheia — diagrama */
 .dashboard-transformometro.tm-diagram-modal {
   position: fixed;
