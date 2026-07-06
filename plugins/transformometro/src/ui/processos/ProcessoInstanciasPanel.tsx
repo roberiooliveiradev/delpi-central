@@ -497,7 +497,7 @@ export function ProcessoInstanciasPanel({
       },
       {
         key: "acoes",
-        header: "",
+        header: "Ações",
         className: "ds-table__actions-col ds-table__actions-col--wide",
         render: (row) => (
           <TableRowActions>

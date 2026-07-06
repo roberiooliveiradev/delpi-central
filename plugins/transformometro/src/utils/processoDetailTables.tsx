@@ -129,7 +129,7 @@ export function buildRevisaoColumns({
     },
     {
       key: "acoes",
-      header: "",
+      header: "Ações",
       className: "ds-table__actions-col",
       render: (r) => (
         <TableRowActions>

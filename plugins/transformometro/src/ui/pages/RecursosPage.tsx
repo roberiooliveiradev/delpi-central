@@ -132,7 +132,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     },
     {
       key: "acoes",
-      header: "",
+      header: "Ações",
       className: "ds-table__actions-col",
       render: (r) => (
         <TableRowActions>

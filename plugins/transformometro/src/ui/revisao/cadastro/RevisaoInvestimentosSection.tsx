@@ -126,7 +126,7 @@ export function RevisaoInvestimentosSection({
                   <th><TableHeader label="Total" hint={I.total} /></th>
                   <th><TableHeader label="Data" hint={I.data} /></th>
                   <th><TableHeader label="Meses vig." hint={C.mesesVigenciaCurto} /></th>
-                  {!readOnly ? <th /> : null}
+                  {!readOnly ? <th className="ds-table__actions-col">Ações</th> : null}
                 </tr>
               </thead>
               <tbody>

@@ -177,7 +177,7 @@ export function ProcessosPage({
       { key: "status", header: "Status", headerHint: C.status, className: "ds-table__col--status", render: (row) => renderTableStatus(row.status_processo), sortable: true },
       {
         key: "acoes",
-        header: "",
+        header: "Ações",
         className: "ds-table__actions-col",
         render: (row) => (
           <TableRowActions>
