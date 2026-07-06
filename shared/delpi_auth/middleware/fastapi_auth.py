@@ -52,12 +52,20 @@ def normalize_path(path: str) -> str:
     return normalized
 
 
+def _is_root_health_path(normalized: str) -> bool:
+    """Health raiz da API — com ou sem prefixo root_path (/apps/api-delpi)."""
+    if normalized == "/health":
+        return True
+    # Com --root-path /apps/api-delpi o scope chega como /apps/api-delpi/health.
+    # Não liberar rotas aninhadas (ex.: /retrabalhos/health).
+    return normalized.endswith("/api-delpi/health")
+
+
 def is_public_path(path: str) -> bool:
     raw_path = path.split("?", 1)[0]
     normalized = normalize_path(path)
 
-    # Somente o health raiz da API é público — não rotas aninhadas (* /retrabalhos/health).
-    if normalized == "/health":
+    if _is_root_health_path(normalized):
         return True
 
     doc_paths = ("/docs", "/docs/", "/redoc", "/redoc/", "/openapi.json")
