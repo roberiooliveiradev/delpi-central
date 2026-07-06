@@ -1,0 +1,16 @@
+export const COLLABORATION_SECTION_LABELS: Record<string, string> = {
+  processo: "Dados do processo",
+  diagrama_macro: "Diagrama macro",
+  instancia: "Instância",
+  diagrama_escopo: "Escopo no diagrama",
+  diagrama_revisao: "Diagrama da revisão",
+  vigencia: "Vigência",
+  medicao: "Medição",
+  investimentos: "Investimentos",
+  recursos: "Recursos",
+  evidencias: "Evidências",
+  filial: "Unidade",
+  setor: "Departamento",
+  recurso: "Recurso",
+  custos: "Custos",
+};

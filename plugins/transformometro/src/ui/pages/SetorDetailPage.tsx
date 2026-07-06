@@ -9,7 +9,8 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useSectionEdit } from "../../hooks/useSectionEdit";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -48,7 +49,12 @@ export function SetorDetailPage({
   onBack,
 }: Props) {
   const isCreate = isCatalogCreateId("setor", setorId);
-  const sectionEdit = useSectionEdit();
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "setor",
+    entityId: setorId,
+    getAccessToken,
+    enabled: !isCreate,
+  });
   const [setor, setSetor] = useState<Setor | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<SetorFormState>(() => emptySetorForm());
@@ -222,13 +228,15 @@ export function SetorDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
+      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+
       {options ? (
         <EditableSectionCard
           title="Dados do departamento"
           hint={TM_HELP_TOOLTIPS.setores.nome}
           description="Código, nome, status e unidades onde o departamento aparece nos processos."
           isEditing={isCreate || sectionEdit.isEditing("setor")}
-          onEdit={() => sectionEdit.startEdit("setor")}
+          onEdit={() => void sectionEdit.startEdit("setor")}
           onCancel={cancelEdit}
           onSave={() => void handleSave()}
           saving={saving}

@@ -5,7 +5,8 @@ import type { AppProps } from "../../App";
 import { RecursoReadView } from "../../components/recurso/RecursoReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import { useSectionEdit } from "../../hooks/useSectionEdit";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -72,7 +73,12 @@ export function RecursoDetailPage({
   onBack,
 }: Props) {
   const isCreate = isCatalogCreateId("recurso", recursoId);
-  const sectionEdit = useSectionEdit();
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "recurso",
+    entityId: recursoId,
+    getAccessToken,
+    enabled: !isCreate,
+  });
   const [recurso, setRecurso] = useState<RecursoCompartilhado | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<RecursoCatalogFormState>(() => emptyRecursoForm());
@@ -314,13 +320,15 @@ export function RecursoDetailPage({
         onRetry={() => void load()}
       />
 
+      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+
       <div className="ds-cadastro-panel ds-cadastro-panel--cards">
         {options ? (
           <EditableSectionCard
             title="Dados do recurso"
             description="Cadastro principal — rateio, escopo e vigência."
             isEditing={isCreate || sectionEdit.isEditing("recurso")}
-            onEdit={() => sectionEdit.startEdit("recurso")}
+            onEdit={() => void sectionEdit.startEdit("recurso")}
             onCancel={cancelRecursoEdit}
             onSave={() => void handleSaveRecurso()}
             saving={saving}
@@ -353,7 +361,7 @@ export function RecursoDetailPage({
               title="Custos ao longo do tempo"
               description="Histórico de vigências de custo mensal usado no dashboard."
               isEditing={sectionEdit.isEditing("custos")}
-              onEdit={() => sectionEdit.startEdit("custos")}
+              onEdit={() => void sectionEdit.startEdit("custos")}
               onCancel={() => sectionEdit.cancelEdit("custos")}
               readContent={
                 <RecursoCustosSection

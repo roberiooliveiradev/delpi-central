@@ -13,6 +13,33 @@ type ApiEnvelope<T> = {
   data: T;
 };
 
+export type DiagramValidationIssue = {
+  severity: "error" | "warning" | "info";
+  code: string;
+  message: string;
+  node_id?: string;
+};
+
+export type DiagramValidationReport = {
+  valid: boolean;
+  issues: DiagramValidationIssue[];
+  simulation: {
+    completed_paths: Array<{
+      path_ids: string[];
+      path_labels: string[];
+      steps: number;
+      branch?: string;
+    }>;
+    stuck_paths: Array<{
+      path_ids: string[];
+      path_labels: string[];
+      reason: string;
+    }>;
+    completed_count: number;
+    stuck_count: number;
+  };
+};
+
 async function parseEnvelope<T>(response: Response): Promise<T> {
   const body = (await response.json()) as ApiEnvelope<T>;
   if (!response.ok || !body.success) {
@@ -52,6 +79,39 @@ export async function saveProcessoDiagrama(
   return request(`/processos/${processoId}/diagrama`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify({ conteudo }),
+  });
+}
+
+export async function validateProcessoDiagrama(
+  processoId: string,
+  conteudo: FlowchartV1,
+  getAccessToken?: () => string | undefined
+): Promise<DiagramValidationReport> {
+  return request(`/processos/${processoId}/diagrama/validacao`, getAccessToken, {
+    method: "POST",
+    body: JSON.stringify({ conteudo }),
+  });
+}
+
+export async function fetchProcessoDiagramBpmnXml(
+  processoId: string,
+  getAccessToken?: () => string | undefined
+): Promise<string> {
+  const data = await request<{ xml: string }>(
+    `/processos/${processoId}/diagrama/bpmn.xml`,
+    getAccessToken
+  );
+  return data.xml;
+}
+
+export async function importProcessoDiagramBpmnXml(
+  processoId: string,
+  xml: string,
+  getAccessToken?: () => string | undefined
+): Promise<ProcessoDiagramResponse> {
+  return request(`/processos/${processoId}/diagrama/bpmn.xml`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify({ xml }),
   });
 }
 

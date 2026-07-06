@@ -10,7 +10,8 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useSectionEdit } from "../../hooks/useSectionEdit";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -57,7 +58,11 @@ export function ProcessoDetailPage({
   onNavigate,
   onBack,
 }: Props) {
-  const sectionEdit = useSectionEdit();
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "processo",
+    entityId: processoId,
+    getAccessToken,
+  });
   const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
@@ -227,12 +232,14 @@ export function ProcessoDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
+      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+
       <EditableSectionCard
         title="Dados do processo"
         hint={TM_HELP_TOOLTIPS.processos.nome}
         description="Informações mestre do processo. Instâncias operacionais e revisões ficam nos níveis abaixo."
         isEditing={sectionEdit.isEditing("processo")}
-        onEdit={() => sectionEdit.startEdit("processo")}
+        onEdit={() => void sectionEdit.startEdit("processo")}
         onCancel={() => {
           sectionEdit.cancelEdit("processo");
           setProcessoForm(null);
@@ -265,7 +272,7 @@ export function ProcessoDetailPage({
         description="Mapa canônico do fluxo end-to-end deste processo-mestre."
         hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
         isEditing={sectionEdit.isEditing("diagrama_macro")}
-        onEdit={() => sectionEdit.startEdit("diagrama_macro")}
+        onEdit={() => void sectionEdit.startEdit("diagrama_macro")}
         onCancel={() => sectionEdit.cancelEdit("diagrama_macro")}
         readContent={
           <ProcessoDiagramSection

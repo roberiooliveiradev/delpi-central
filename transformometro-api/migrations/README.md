@@ -32,6 +32,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V026 | `V026__processo_diagramas.sql` | Diagrama macro `flowchart_v1` por processo-mestre |
 | V027 | `V027__instancia_diagrama_escopo.sql` | Escopo de nós do macro por instância |
 | V028 | `V028__revisao_diagrama_overlays.sql` | Overlay as-is/to-be por revisão |
+| V029 | `V029__collaboration_presence.sql` | Presença colaborativa e travas soft por seção (`collaboration_presence`) |
 
 ## Notas V019–V020
 

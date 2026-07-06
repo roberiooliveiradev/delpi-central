@@ -7,10 +7,12 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from tm_app.application.services.diagram_mermaid_export_service import DiagramMermaidExportService
+from tm_app.application.services.flowchart_bpmn_xml_service import FlowchartBpmnXmlService
 from tm_app.application.services.revisao_diagram_merge_service import RevisaoDiagramMergeService
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
+from tm_app.domain.diagram.flowchart_validation_service import FlowchartValidationService
 from tm_app.domain.diagram.flowchart_v1 import (
     FlowchartValidationError,
     empty_escopo,
@@ -43,6 +45,8 @@ router = APIRouter(prefix="/transformometro", tags=["Transformômetro — diagra
 
 _mermaid = DiagramMermaidExportService()
 _merge = RevisaoDiagramMergeService(_mermaid)
+_validator = FlowchartValidationService()
+_bpmn_xml = FlowchartBpmnXmlService()
 
 
 class FlowchartBody(BaseModel):
@@ -57,6 +61,10 @@ class EscopoBody(BaseModel):
 
 class OverlayBody(BaseModel):
     conteudo: dict[str, Any] = Field(default_factory=dict)
+
+
+class BpmnImportBody(BaseModel):
+    xml: str = Field(min_length=1)
 
 
 def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
@@ -161,6 +169,62 @@ def put_processo_diagrama(processo_id: str, body: FlowchartBody, request: Reques
     payload = _macro_response(row)
     payload["processo_id"] = processo_id
     return ok(payload, "Diagrama macro salvo.")
+
+
+@router.post("/processos/{processo_id}/diagrama/validacao")
+def post_processo_diagrama_validacao(processo_id: str, body: FlowchartBody):
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    try:
+        conteudo = validate_flowchart_v1(body.conteudo)
+    except FlowchartValidationError as exc:
+        return fail(str(exc), 400)
+    report = _validator.validate(conteudo)
+    return ok(report, "Validação estrutural e simulação do diagrama.")
+
+
+@router.get("/processos/{processo_id}/diagrama/bpmn.xml")
+def get_processo_diagrama_bpmn_xml(processo_id: str):
+    processo = ProcessoRepository().get(processo_id)
+    if not processo:
+        return fail("Processo não encontrado.", 404)
+    row = ProcessoDiagramRepository().get(processo_id)
+    conteudo = (row or {}).get("conteudo") or empty_flowchart()
+    try:
+        xml_text = _bpmn_xml.export_xml(
+            conteudo,
+            process_name=str(processo.get("nome_processo") or "Processo"),
+        )
+    except FlowchartValidationError as exc:
+        return fail(str(exc), 400)
+    return ok({"xml": xml_text}, "Export BPMN 2.0 XML.")
+
+
+@router.put("/processos/{processo_id}/diagrama/bpmn.xml")
+def put_processo_diagrama_bpmn_xml(processo_id: str, body: BpmnImportBody, request: Request):
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    try:
+        conteudo = _bpmn_xml.import_xml(body.xml)
+    except FlowchartValidationError as exc:
+        return fail(str(exc), 400)
+
+    mermaid = _mermaid.flowchart_to_mermaid(conteudo)
+    row = ProcessoDiagramRepository().upsert(
+        processo_id,
+        conteudo=conteudo,
+        mermaid_cached=mermaid,
+    )
+    _audit(
+        request,
+        "processo",
+        processo_id,
+        "diagram.macro.imported_bpmn",
+        {"nodes": len(conteudo.get("nodes", []))},
+    )
+    payload = _macro_response(row)
+    payload["processo_id"] = processo_id
+    return ok(payload, "Diagrama importado de BPMN 2.0 XML.")
 
 
 @router.get("/instancias/{instancia_id}/diagrama-escopo")

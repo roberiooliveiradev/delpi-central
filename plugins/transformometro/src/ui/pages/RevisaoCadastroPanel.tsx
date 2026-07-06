@@ -6,7 +6,8 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useSectionEdit } from "../../hooks/useSectionEdit";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import {
   activateRevisao,
   deleteRevisao,
@@ -96,7 +97,11 @@ export function RevisaoCadastroPanel({
   onRevisaoUpdated,
   onRevisaoDeleted,
 }: Props) {
-  const sectionEdit = useSectionEdit();
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "revisao",
+    entityId: revisao.revisao_id,
+    getAccessToken,
+  });
   const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
@@ -248,6 +253,8 @@ export function RevisaoCadastroPanel({
         onDelete={handleDeleteRevisao}
       />
 
+      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+
       {rateioDiag ? (
         <div
           className={[
@@ -273,7 +280,7 @@ export function RevisaoCadastroPanel({
         title="Vigência e identificação"
         description="Versão, cenário e período usados no dashboard."
         isEditing={sectionEdit.isEditing("vigencia")}
-        onEdit={() => sectionEdit.startEdit("vigencia")}
+        onEdit={() => void sectionEdit.startEdit("vigencia")}
         onCancel={cancelVigencia}
         onSave={() => void saveVigencia()}
         saving={savingVigencia}
@@ -307,7 +314,7 @@ export function RevisaoCadastroPanel({
         description="Estado visual as-is ou to-be sobre o escopo da instância."
         hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao}
         isEditing={sectionEdit.isEditing("diagrama_revisao")}
-        onEdit={() => sectionEdit.startEdit("diagrama_revisao")}
+        onEdit={() => void sectionEdit.startEdit("diagrama_revisao")}
         onCancel={() => sectionEdit.cancelEdit("diagrama_revisao")}
         readContent={
           <RevisaoDiagramSection
@@ -338,7 +345,7 @@ export function RevisaoCadastroPanel({
         isEditing={sectionEdit.isEditing("medicao")}
         onEdit={() => {
           medicaoSnapshot.current = medicao;
-          sectionEdit.startEdit("medicao");
+          void sectionEdit.startEdit("medicao");
         }}
         onCancel={cancelMedicao}
         onSave={() => void saveMedicao()}
@@ -370,7 +377,7 @@ export function RevisaoCadastroPanel({
         title={`Investimentos (${investimentos.length})`}
         description="Custos únicos ou recorrentes ligados a esta revisão."
         isEditing={sectionEdit.isEditing("investimentos")}
-        onEdit={() => sectionEdit.startEdit("investimentos")}
+        onEdit={() => void sectionEdit.startEdit("investimentos")}
         onCancel={() => sectionEdit.cancelEdit("investimentos")}
         readContent={
           <RevisaoInvestimentosSection
@@ -401,7 +408,7 @@ export function RevisaoCadastroPanel({
         title={`Recursos compartilhados (${vinculos.length})`}
         description="Ferramentas do catálogo vinculadas ao rateio desta revisão."
         isEditing={sectionEdit.isEditing("recursos")}
-        onEdit={() => sectionEdit.startEdit("recursos")}
+        onEdit={() => void sectionEdit.startEdit("recursos")}
         onCancel={() => sectionEdit.cancelEdit("recursos")}
         readContent={
           <RevisaoRecursosSection
@@ -434,7 +441,7 @@ export function RevisaoCadastroPanel({
         title={`Evidências${evidenciasCount ? ` (${evidenciasCount})` : ""}`}
         description="Anexos, imagens e links que comprovam a melhoria."
         isEditing={sectionEdit.isEditing("evidencias")}
-        onEdit={() => sectionEdit.startEdit("evidencias")}
+        onEdit={() => void sectionEdit.startEdit("evidencias")}
         onCancel={() => sectionEdit.cancelEdit("evidencias")}
         readContent={
           <RevisaoEvidenciasSection

@@ -10,7 +10,8 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useSectionEdit } from "../../hooks/useSectionEdit";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
 import { StatusAlerts } from "../../components/StatusAlerts";
@@ -58,7 +59,11 @@ export function InstanciaDetailPage({
   pathname,
   onNavigate,
 }: Props) {
-  const sectionEdit = useSectionEdit();
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "processo_instancia",
+    entityId: instanciaId,
+    getAccessToken,
+  });
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancia, setInstancia] = useState<ProcessoInstancia | null>(null);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
@@ -226,6 +231,8 @@ export function InstanciaDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
+      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+
       {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
         <p className="tm-instancia-multi-banner">
           {TM_HELP_TOOLTIPS.instancias.multiplicadorConsolidado}{" "}
@@ -237,7 +244,7 @@ export function InstanciaDetailPage({
         title="Instância operacional"
         hint={TM_HELP_TOOLTIPS.instancias.escopo}
         isEditing={sectionEdit.isEditing("instancia")}
-        onEdit={() => sectionEdit.startEdit("instancia")}
+        onEdit={() => void sectionEdit.startEdit("instancia")}
         onCancel={() => sectionEdit.cancelEdit("instancia")}
         readContent={<InstanciaReadView instancia={instancia} options={options} />}
         editContent={
@@ -272,7 +279,7 @@ export function InstanciaDetailPage({
         description="Subset de nós do diagrama macro relevante para esta instância."
         hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
         isEditing={sectionEdit.isEditing("diagrama_escopo")}
-        onEdit={() => sectionEdit.startEdit("diagrama_escopo")}
+        onEdit={() => void sectionEdit.startEdit("diagrama_escopo")}
         onCancel={() => sectionEdit.cancelEdit("diagrama_escopo")}
         readContent={
           <InstanciaDiagramEscopoSection

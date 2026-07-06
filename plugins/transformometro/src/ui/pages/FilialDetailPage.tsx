@@ -9,7 +9,8 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useSectionEdit } from "../../hooks/useSectionEdit";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -48,7 +49,12 @@ export function FilialDetailPage({
   onBack,
 }: Props) {
   const isCreate = isCatalogCreateId("filial", filialId);
-  const sectionEdit = useSectionEdit();
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "filial",
+    entityId: filialId,
+    getAccessToken,
+    enabled: !isCreate,
+  });
   const [filial, setFilial] = useState<Filial | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<FilialFormState>(() => emptyFilialForm());
@@ -211,13 +217,15 @@ export function FilialDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
+      <CollaborativePresenceBanner presence={sectionEdit.presence} lockError={sectionEdit.lockError} />
+
       {options ? (
         <EditableSectionCard
           title="Dados da unidade"
           hint={TM_HELP_TOOLTIPS.filiais.nome}
           description="Código TOTVS, nome e status usados em departamentos e processos."
           isEditing={isCreate || sectionEdit.isEditing("filial")}
-          onEdit={() => sectionEdit.startEdit("filial")}
+          onEdit={() => void sectionEdit.startEdit("filial")}
           onCancel={cancelEdit}
           onSave={() => void handleSave()}
           saving={saving}

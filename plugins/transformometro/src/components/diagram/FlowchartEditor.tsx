@@ -39,6 +39,7 @@ import {
 } from "../../types/diagram";
 import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
+import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 
 type FlowchartEditorProps = {
   value: FlowchartV1;
@@ -225,6 +226,7 @@ function FlowchartEditorInner({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
   const [activeTab, setActiveTab] = useState<"canvas" | "mermaid">("canvas");
   const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
+  const [laneLabelDraft, setLaneLabelDraft] = useState("");
   const isDark = useTransformometroDarkMode();
   const colorMode = isDark ? "dark" : "light";
   const canvasHeight = canvasHeightForLanes(lanes, lanes.length ? 360 : 420);
@@ -233,6 +235,11 @@ function FlowchartEditorInner({
     if (lanes.length && !lanes.some((lane) => lane.id === activeLaneId)) {
       setActiveLaneId(lanes[0]?.id);
     }
+  }, [activeLaneId, lanes]);
+
+  useEffect(() => {
+    const lane = lanes.find((item) => item.id === activeLaneId);
+    setLaneLabelDraft(lane?.label ?? "");
   }, [activeLaneId, lanes]);
 
   useEffect(() => {
@@ -395,11 +402,8 @@ function FlowchartEditorInner({
   };
 
   const renameActiveLane = () => {
-    if (readOnly || !activeLaneId) return;
-    const lane = lanes.find((item) => item.id === activeLaneId);
-    const nextLabel = window.prompt("Nome da faixa (swimlane)", lane?.label ?? "");
-    if (nextLabel == null) return;
-    onChange?.(renameLane(value, activeLaneId, nextLabel));
+    if (readOnly || !activeLaneId || !laneLabelDraft.trim()) return;
+    onChange?.(renameLane(value, activeLaneId, laneLabelDraft));
   };
 
   const removeActiveLane = () => {
@@ -477,32 +481,16 @@ function FlowchartEditorInner({
           </div>
           <div className="tm-diagram-editor__templates">
             {lanes.length ? (
-              <>
-                <label className="tm-diagram-editor__lane-select">
-                  Faixa ativa
-                  <select
-                    value={activeLaneId ?? ""}
-                    onChange={(event) => setActiveLaneId(event.target.value)}
-                  >
-                    {lanes.map((lane) => (
-                      <option key={lane.id} value={lane.id}>
-                        {lane.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button type="button" className="ds-ghost-btn" onClick={renameActiveLane}>
-                  Renomear faixa
-                </button>
-                <button
-                  type="button"
-                  className="ds-ghost-btn"
-                  onClick={removeActiveLane}
-                  disabled={lanes.length <= 1}
-                >
-                  Remover faixa
-                </button>
-              </>
+              <FlowchartLaneToolbar
+                lanes={lanes}
+                activeLaneId={activeLaneId}
+                onActiveLaneChange={setActiveLaneId}
+                laneLabelDraft={laneLabelDraft}
+                onLaneLabelDraftChange={setLaneLabelDraft}
+                onRenameLane={renameActiveLane}
+                onRemoveLane={removeActiveLane}
+                disableRemove={lanes.length <= 1}
+              />
             ) : null}
             <button type="button" className="ds-ghost-btn" onClick={addLane}>
               + Faixa (swimlane)
