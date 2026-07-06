@@ -31,9 +31,8 @@ LEGACY_IMPORT_NAMESPACE = NAMESPACE_DNS
 
 IMPORT_FORMAT_INCOMPATIBLE_MESSAGE = (
     "Formato do arquivo não reconhecido ou incompatível com o Transformômetro. "
-    "Use um backup exportado por este app (legado 1.1 com unidade e setor nos processos, "
-    "ou Playbook 18 com instâncias operacionais). "
-    "Se souber o formato, selecione manualmente «Backup legado (1.1)» ou «Playbook 18 (instâncias)»."
+    "Envie um backup exportado por este app (legado 1.1 com unidade e setor nos processos, "
+    "ou Playbook 18 com instâncias operacionais)."
 )
 
 _UUID_PATTERN = re.compile(

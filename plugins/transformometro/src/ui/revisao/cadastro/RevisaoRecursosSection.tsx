@@ -299,7 +299,7 @@ export function RevisaoRecursosSection({
                     <td>{v.peso_rateio ?? (v.criterio_rateio === "por_peso" ? "1" : "—")}</td>
                     <td>{labelSimNao(v.ativo)}</td>
                     {!readOnly ? (
-                      <td className="ds-table__actions">
+                      <td className="ds-table__actions-col">
                         <button
                           type="button"
                           className="ds-ghost-btn"

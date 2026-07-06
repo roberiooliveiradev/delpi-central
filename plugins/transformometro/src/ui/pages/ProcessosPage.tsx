@@ -174,11 +174,11 @@ export function ProcessosPage({
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      { key: "status", header: "Status", headerHint: C.status, render: (row) => renderTableStatus(row.status_processo), sortable: true },
+      { key: "status", header: "Status", headerHint: C.status, className: "ds-table__col--status", render: (row) => renderTableStatus(row.status_processo), sortable: true },
       {
         key: "acoes",
         header: "",
-        className: "ds-table__actions",
+        className: "ds-table__actions-col",
         render: (row) => (
           <TableRowActions>
             <button

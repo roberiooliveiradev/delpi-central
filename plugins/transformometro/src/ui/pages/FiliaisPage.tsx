@@ -105,12 +105,13 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       header: "Status",
       headerHint: C.status,
       sortable: true,
+      className: "ds-table__col--status",
       render: (row) => renderTableStatus(row.status_filial),
     },
     {
       key: "acoes",
       header: "",
-      className: "ds-table__actions",
+      className: "ds-table__actions-col",
       render: (row) => (
         <TableRowActions>
           <button

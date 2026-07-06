@@ -1353,6 +1353,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: var(--ds-font-sm);
+  table-layout: auto;
 }
 
 .dashboard-transformometro .ds-table thead th {
@@ -1435,12 +1436,25 @@
   color: var(--ds-accent);
 }
 
-.dashboard-transformometro td.ds-table__actions,
+.dashboard-transformometro th.ds-table__actions-col,
+.dashboard-transformometro td.ds-table__actions-col,
 .dashboard-transformometro .ds-table__actions-cell {
   vertical-align: middle;
   white-space: nowrap;
   text-align: right;
   width: 1%;
+  min-width: 17rem;
+  padding-left: 16px;
+}
+
+.dashboard-transformometro .ds-table__actions-col--wide {
+  min-width: 22rem;
+}
+
+.dashboard-transformometro .ds-table__col--status {
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .dashboard-transformometro .ds-table__actions {
@@ -1449,6 +1463,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
+  max-width: 100%;
 }
 
 .dashboard-transformometro .ds-table td .ds-ghost-btn,

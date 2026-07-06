@@ -1,4 +1,5 @@
 import type { DataTableColumn } from "../components/DataTable";
+import { TableRowActions } from "../components/ui/TableRowActions";
 import { TM_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ProcessoComparativoItem, Revisao } from "../data/api/transformometroApi";
 import { toDateInputValue } from "./dateInputs";
@@ -129,20 +130,30 @@ export function buildRevisaoColumns({
     {
       key: "acoes",
       header: "",
-      className: "ds-table__actions",
+      className: "ds-table__actions-col",
       render: (r) => (
-        <div
-          className="ds-table__actions"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <button type="button" className="ds-ghost-btn" onClick={() => onOpen(r.revisao_id)}>
+        <TableRowActions>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(r.revisao_id);
+            }}
+          >
             Abrir
           </button>
-          <button type="button" className="ds-ghost-btn ds-ghost-btn--danger" onClick={() => void onDelete(r)}>
+          <button
+            type="button"
+            className="ds-ghost-btn ds-ghost-btn--danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              void onDelete(r);
+            }}
+          >
             Excluir
           </button>
-        </div>
+        </TableRowActions>
       ),
     },
   ];

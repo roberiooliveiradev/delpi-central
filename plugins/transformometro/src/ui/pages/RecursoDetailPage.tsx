@@ -535,7 +535,7 @@ export function RecursoDetailPage({
                             </td>
                             <td className="ds-table__col--numeric">{row.peso_rateio ?? "—"}</td>
                             <td>{row.ativo ? "Sim" : "Não"}</td>
-                            <td className="ds-table__actions">
+                            <td className="ds-table__actions-col">
                               <button
                                 type="button"
                                 className="ds-ghost-btn"

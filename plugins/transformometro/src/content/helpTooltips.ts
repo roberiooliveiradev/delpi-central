@@ -228,7 +228,7 @@ export const TM_HELP_TOOLTIPS = {
     export:
       "Gera um backup em JSON com todo o cadastro (unidades, setores, processos, instâncias e revisões).",
     importFormat:
-      "Automático: a API detecta legado (unidade/setor nos processos) ou Playbook 18 (instâncias). Se não reconhecer o arquivo, indica incompatibilidade — use legado ou Playbook 18 manualmente.",
+      "A importação detecta automaticamente backup legado (unidade/setor nos processos) ou Playbook 18 (instâncias). Arquivos fora desse padrão são rejeitados.",
     previewEntidade: "Tipo de registro no backup (unidades, processos, revisões…).",
     previewNoArquivo: "Quantidade de registros deste tipo no arquivo importado.",
     previewInserir: "Registros novos que serão criados no banco.",

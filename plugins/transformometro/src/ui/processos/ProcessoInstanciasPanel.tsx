@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
+import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DataTableSection } from "../../components/DataTableSection";
 import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -497,9 +498,9 @@ export function ProcessoInstanciasPanel({
       {
         key: "acoes",
         header: "",
-        className: "ds-table__actions",
+        className: "ds-table__actions-col ds-table__actions-col--wide",
         render: (row) => (
-          <div className="ds-table__actions">
+          <TableRowActions>
             <button
               type="button"
               className={`ds-ghost-btn${!navigateOnSelect && selectedInstanciaId === row.instancia_id ? " ds-ghost-btn--active" : ""}`}
@@ -528,7 +529,7 @@ export function ProcessoInstanciasPanel({
               <Trash2 size={14} />
               Excluir
             </button>
-          </div>
+          </TableRowActions>
         ),
       },
     ],

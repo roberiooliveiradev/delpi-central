@@ -118,7 +118,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
       sortable: true,
       sortValue: (r) => r.base_competencia ?? "mensal_cheio",
     },
-    { key: "status", header: "Status", headerHint: C.status, render: (r) => renderTableStatus(r.status_recurso), sortable: true },
+    { key: "status", header: "Status", headerHint: C.status, className: "ds-table__col--status", render: (r) => renderTableStatus(r.status_recurso), sortable: true },
     {
       key: "vigencia",
       header: "Vigência do recurso",
@@ -133,7 +133,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "acoes",
       header: "",
-      className: "ds-table__actions",
+      className: "ds-table__actions-col",
       render: (r) => (
         <TableRowActions>
           <button

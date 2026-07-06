@@ -11,7 +11,6 @@ import {
   downloadJsonExport,
   previewJsonImport,
   type JsonBackupBundle,
-  type JsonImportFormat,
   type JsonImportMode,
   type JsonImportPreview,
 } from "../../data/api/transformometroApi";
@@ -36,16 +35,14 @@ const ENTITY_LABELS: Record<string, string> = {
   revisao_recursos_compartilhados: "Vínculos revisão ↔ recurso",
 };
 
-const FORMAT_LABELS: Record<JsonImportFormat, string> = {
-  auto: "Detectar automaticamente",
-  legacy: "Backup legado (1.1)",
-  modern: "Playbook 18 (instâncias)",
+const RESOLVED_FORMAT_LABELS: Record<"legacy" | "modern", string> = {
+  legacy: "backup legado (1.1)",
+  modern: "Playbook 18",
 };
 
 export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<JsonImportMode>("merge");
-  const [importFormat, setImportFormat] = useState<JsonImportFormat>("auto");
   const [bundle, setBundle] = useState<JsonBackupBundle | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState<JsonImportPreview | null>(null);
@@ -95,7 +92,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     clearMessages();
     setBusy("preview");
     try {
-      const result = await previewJsonImport(bundle, mode, importFormat, getAccessToken);
+      const result = await previewJsonImport(bundle, mode, "auto", getAccessToken);
       setPreview(result);
       if (!result.valid) {
         setError((result.errors ?? []).join(" ") || "Pacote inválido.");
@@ -105,7 +102,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     } finally {
       setBusy(null);
     }
-  }, [bundle, mode, importFormat, getAccessToken]);
+  }, [bundle, mode, getAccessToken]);
 
   const onApply = useCallback(async () => {
     if (!bundle) {
@@ -121,7 +118,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     clearMessages();
     setBusy("apply");
     try {
-      const result = await applyJsonImport(bundle, mode, importFormat, getAccessToken);
+      const result = await applyJsonImport(bundle, mode, "auto", getAccessToken);
       setPreview(result as JsonImportPreview);
       const rows = result.recalc?.rows_upserted ?? 0;
       setSuccess(
@@ -132,15 +129,10 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     } finally {
       setBusy(null);
     }
-  }, [bundle, mode, importFormat, getAccessToken]);
+  }, [bundle, mode, getAccessToken]);
 
   const selectMode = (next: JsonImportMode) => {
     setMode(next);
-    setPreview(null);
-  };
-
-  const selectImportFormat = (next: JsonImportFormat) => {
-    setImportFormat(next);
     setPreview(null);
   };
 
@@ -204,7 +196,8 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               <div className="tm-data-transfer__panel-text">
                 <h2 className="ds-section-title">Importar</h2>
                 <p className="ds-hint">
-                  Envie um backup exportado neste app. Pré-visualize o impacto antes de aplicar.
+                  Envie um backup exportado neste app. O formato é detectado automaticamente (legado
+                  ou Playbook 18). Pré-visualize o impacto antes de aplicar.
                 </p>
               </div>
             </div>
@@ -251,45 +244,6 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                     Apaga o cadastro atual e importa somente o conteúdo do JSON.
                   </span>
                 </label>
-              </div>
-            </div>
-
-            <div>
-              <p className="tm-data-transfer__field-label tm-field__label">
-                Formato do backup
-                <HelpTooltip
-                  content={TM_HELP_TOOLTIPS.dataTransfer.importFormat}
-                  ariaLabel="Ajuda: Formato do backup"
-                />
-              </p>
-              <div
-                className="tm-data-transfer__formats"
-                role="radiogroup"
-                aria-label="Formato do backup JSON"
-              >
-                {(["auto", "legacy", "modern"] as const).map((value) => (
-                  <label
-                    key={value}
-                    className={`tm-data-transfer__format${
-                      importFormat === value ? " tm-data-transfer__format--active" : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="import-format"
-                      checked={importFormat === value}
-                      onChange={() => selectImportFormat(value)}
-                    />
-                    <span className="tm-data-transfer__format-title">{FORMAT_LABELS[value]}</span>
-                    <span className="tm-data-transfer__format-desc">
-                      {value === "auto"
-                        ? "A API identifica legado (unidade/setor nos processos) ou Playbook 18 (instâncias). Formato desconhecido → mensagem de incompatibilidade."
-                        : value === "legacy"
-                          ? "JSON antigo sem instâncias; unidades e revisões por instância são geradas na importação."
-                          : "Backup exportado após Playbook 18, com unidades, instâncias e revisoes.instancia_id."}
-                    </span>
-                  </label>
-                ))}
               </div>
             </div>
 
@@ -350,7 +304,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                 <p>
                   <AlertTriangle size={16} aria-hidden style={{ verticalAlign: "text-bottom", marginRight: 6 }} />
                   {(preview.errors ?? []).join(" ") ||
-                    "Formato do arquivo não reconhecido. Selecione legado ou Playbook 18 manualmente."}
+                    "Formato do arquivo não reconhecido. Envie um backup exportado pelo Transformômetro."}
                 </p>
               </div>
             ) : null}
@@ -362,14 +316,8 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                 </h3>
                 {preview.resolved_format ? (
                   <p className="tm-data-transfer__format-summary">
-                    Formato: {FORMAT_LABELS[preview.requested_format ?? "auto"]} →{" "}
-                    {preview.resolved_format === "legacy" ? "legado convertido" : "Playbook 18"}
+                    Formato detectado: {RESOLVED_FORMAT_LABELS[preview.resolved_format]}
                     {preview.legacy_transformed ? " (filiais e instâncias sintéticas geradas)" : ""}
-                  </p>
-                ) : preview.requested_format === "auto" && preview.detected_format ? (
-                  <p className="tm-data-transfer__format-summary">
-                    Detectado automaticamente:{" "}
-                    {preview.detected_format === "legacy" ? "backup legado (1.1)" : "Playbook 18"}
                   </p>
                 ) : null}
                 <div className="ds-table-wrap">
