@@ -37,7 +37,6 @@ PUBLIC_SUFFIXES = (
     "/redoc",
     "/redoc/",
     "/openapi.json",
-    "/health",
 )
 
 
@@ -57,13 +56,14 @@ def is_public_path(path: str) -> bool:
     raw_path = path.split("?", 1)[0]
     normalized = normalize_path(path)
 
-    public_base_paths = {"/docs", "/redoc", "/openapi.json", "/health"}
+    # Somente o health raiz da API é público — não rotas aninhadas (* /retrabalhos/health).
+    if normalized == "/health":
+        return True
 
-    return (
-        raw_path.endswith(PUBLIC_SUFFIXES)
-        or normalized in public_base_paths
-        or any(normalized.endswith(public_path) for public_path in public_base_paths)
-    )
+    doc_paths = ("/docs", "/docs/", "/redoc", "/redoc/", "/openapi.json")
+    public_doc_paths = {"/docs", "/redoc", "/openapi.json"}
+
+    return raw_path.endswith(doc_paths) or normalized in public_doc_paths
 
 
 def _cache_key(token: str) -> str:

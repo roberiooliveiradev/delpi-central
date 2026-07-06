@@ -307,6 +307,27 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_financeiro_despesas_centro_custo_lancamentos": RouteContract(
         "financeiro_despesas_centro_custo_lancamento", "paged_list"
     ),
+    "get_retrabalhos_health": RouteContract(
+        "retrabalho_horas_improdutivas_health", "scalar"
+    ),
+    "get_retrabalhos_filtros": RouteContract(
+        "retrabalho_horas_improdutivas_filtros", "scalar"
+    ),
+    "get_retrabalhos_resumo": RouteContract(
+        "retrabalho_horas_improdutivas_resumo", "scalar"
+    ),
+    "get_retrabalhos_mensal": RouteContract(
+        "retrabalho_horas_improdutivas_mensal", "list"
+    ),
+    "get_retrabalhos_recursos": RouteContract(
+        "retrabalho_horas_improdutivas_recursos", "list"
+    ),
+    "get_retrabalhos_colaboradores": RouteContract(
+        "retrabalho_horas_improdutivas_colaboradores", "list"
+    ),
+    "get_retrabalhos_detalhes": RouteContract(
+        "retrabalho_horas_improdutivas_detalhe", "paged_list"
+    ),
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),

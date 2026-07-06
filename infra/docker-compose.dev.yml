@@ -1,3 +1,17 @@
+# Compose dev — perfis:
+#   (padrão)  postgres, keycloak, core-api, portal, gateway, postgres-plugins, api-delpi
+#   chat      ollama, minha-delpi-ai-api, minha-delpi-chat, searxng, languagetool
+#   plugins   microfrontends e APIs de plugin (dashboards, MFEs, etc.)
+#
+# Exemplos:
+#   docker compose -f infra/docker-compose.dev.yml up -d
+#   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
+#   docker compose -f infra/docker-compose.dev.yml --profile chat --profile plugins up -d
+
+x-plugin-profile: &plugin-profile
+  profiles:
+    - plugins
+
 services:
 
   postgres-core:
@@ -425,6 +439,7 @@ services:
 
 
   strategic-indicators:
+    <<: *plugin-profile
     build:
       context: ../plugins/strategic-indicators
       dockerfile: Dockerfile
@@ -439,6 +454,7 @@ services:
       - delpi-network
 
   transformometro:
+    <<: *plugin-profile
     build:
       context: ../plugins/transformometro
       dockerfile: Dockerfile
@@ -453,6 +469,7 @@ services:
       - delpi-network
 
   maintenance:
+    <<: *plugin-profile
     build:
       context: ../plugins/maintenance
       dockerfile: Dockerfile
@@ -483,6 +500,7 @@ services:
       - delpi-network
 
   dashboard-lmps:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-lmps
       dockerfile: Dockerfile
@@ -497,6 +515,7 @@ services:
       - delpi-network
 
   dashboard-quality:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-quality
       dockerfile: Dockerfile
@@ -511,6 +530,7 @@ services:
       - delpi-network
 
   dashboard-commercial:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-commercial
       dockerfile: Dockerfile
@@ -525,6 +545,7 @@ services:
       - delpi-network
 
   dashboard-production:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-production
       dockerfile: Dockerfile
@@ -539,6 +560,7 @@ services:
       - delpi-network
 
   eficiencia-fabril:
+    <<: *plugin-profile
     build:
       context: ../plugins/eficiencia-fabril
       dockerfile: Dockerfile
@@ -554,6 +576,7 @@ services:
       - delpi-network
 
   cultura-delpi:
+    <<: *plugin-profile
     build:
       context: ../plugins/cultura-delpi
       dockerfile: Dockerfile
@@ -569,6 +592,7 @@ services:
       - delpi-network
 
   quality-labels:
+    <<: *plugin-profile
     build:
       context: ../plugins/quality-labels
       dockerfile: Dockerfile
@@ -584,6 +608,7 @@ services:
       - delpi-network
 
   tv-dashboard:
+    <<: *plugin-profile
     build:
       context: ../plugins
       dockerfile: tv-dashboard/Dockerfile
@@ -598,6 +623,7 @@ services:
       - delpi-network
 
   pedidos-venda-abertos:
+    <<: *plugin-profile
     build:
       context: ../plugins/pedidos-venda-abertos
       dockerfile: Dockerfile
@@ -613,6 +639,7 @@ services:
       - delpi-network
 
   propostas-comerciais:
+    <<: *plugin-profile
     build:
       context: ../plugins/propostas-comerciais
       dockerfile: Dockerfile
@@ -628,6 +655,7 @@ services:
       - delpi-network
 
   auditoria-5s:
+    <<: *plugin-profile
     build:
       context: ../plugins/auditoria-5s
       dockerfile: Dockerfile
@@ -643,6 +671,7 @@ services:
       - delpi-network
 
   inspecoes-entrada:
+    <<: *plugin-profile
     build:
       context: ../plugins/inspecoes-entrada
       dockerfile: Dockerfile
@@ -658,6 +687,7 @@ services:
       - delpi-network
 
   cadastro-kaizen:
+    <<: *plugin-profile
     build:
       context: ../plugins/cadastro-kaizen
       dockerfile: Dockerfile
@@ -673,6 +703,7 @@ services:
       - delpi-network
 
   quality-action-plans:
+    <<: *plugin-profile
     build:
       context: ../plugins/quality-action-plans
       dockerfile: Dockerfile
@@ -688,6 +719,7 @@ services:
       - delpi-network
 
   customer-experience:
+    <<: *plugin-profile
     build:
       context: ../plugins/customer-experience
       dockerfile: Dockerfile
@@ -703,6 +735,7 @@ services:
       - delpi-network
 
   public-hub:
+    <<: *plugin-profile
     build:
       context: ../plugins
       dockerfile: public-hub/Dockerfile
@@ -718,6 +751,7 @@ services:
       - delpi-network
 
   central-agendamento:
+    <<: *plugin-profile
     build:
       context: ../plugins/central-agendamento
       dockerfile: Dockerfile
@@ -732,7 +766,24 @@ services:
     networks:
       - delpi-network
 
+  controle-retrabalhos:
+    <<: *plugin-profile
+    build:
+      context: ../plugins/controle-retrabalhos
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-controle-retrabalhos
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-supplies
       dockerfile: Dockerfile
@@ -747,6 +798,7 @@ services:
       - delpi-network
 
   dashboard-financial:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-financial
       dockerfile: Dockerfile
@@ -761,6 +813,7 @@ services:
       - delpi-network
 
   financeiro-centro-custo:
+    <<: *plugin-profile
     build:
       context: ../plugins/financeiro-centro-custo
       dockerfile: Dockerfile
@@ -776,6 +829,7 @@ services:
       - delpi-network
 
   dashboard-engineering:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-engineering
       dockerfile: Dockerfile
@@ -790,6 +844,7 @@ services:
       - delpi-network
 
   api-delpi-console:
+    <<: *plugin-profile
     build:
       context: ../plugins/api-delpi-console
       dockerfile: Dockerfile
@@ -804,6 +859,7 @@ services:
       - delpi-network
 
   dashboard-hr:
+    <<: *plugin-profile
     build:
       context: ../plugins/dashboard-hr
       dockerfile: Dockerfile
@@ -940,6 +996,7 @@ services:
       - delpi-network
 
   strategic-indicators-api:
+    <<: *plugin-profile
     build:
       context: ..
       dockerfile: strategic-indicators-api/Dockerfile
@@ -1003,6 +1060,7 @@ services:
       - delpi-network
 
   transformometro-api:
+    <<: *plugin-profile
     build:
       context: ..
       dockerfile: transformometro-api/Dockerfile
@@ -1050,6 +1108,7 @@ services:
       - delpi-network
 
   maintenance-api:
+    <<: *plugin-profile
     build:
       context: ..
       dockerfile: maintenance-api/Dockerfile
@@ -1098,6 +1157,7 @@ services:
       - delpi-network
 
   customer-experience-api:
+    <<: *plugin-profile
     build:
       context: ..
       dockerfile: customer-experience-api/Dockerfile
@@ -1150,6 +1210,7 @@ services:
       - delpi-network
 
   tv-dashboard-api:
+    <<: *plugin-profile
     build:
       context: ..
       dockerfile: tv-dashboard-api/Dockerfile

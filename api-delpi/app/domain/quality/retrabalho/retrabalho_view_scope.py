@@ -1,0 +1,12 @@
+from __future__ import annotations
+
+RETRABALHO_HORAS_IMPRODUTIVAS_VIEW = "dbo.VW_BI_RT_HORAS_IMPRODUTIVAS"
+
+VALID_RETRABALHO_BRANCHES = frozenset({"01", "02"})
+
+FONTE_CUSTO_SEM_CUSTO = "SEM CUSTO"
+
+# Código TOTVS do motivo retrabalho na view VW_BI_RT_HORAS_IMPRODUTIVAS.
+RETRABALHO_MOTIVO_CODE = "RT"
+
+OPERADOR_SEM_NOME_LABEL = "Sem nome cadastrado"

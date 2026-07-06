@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Sobe stack mínimo DELPI dev (chat + desenho + api-delpi), sem serviços pesados opcionais.
+# Sobe stack mínimo DELPI dev (portal + api-delpi), sem plugins/MFEs pesados.
+# Plugins sob demanda: --profile plugins up -d <nome-do-servico>
 set -euo pipefail
 
 COMPOSE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -23,9 +24,6 @@ MINIMAL_SERVICES=(
   postgres-plugins
   core-api
   api-delpi
-  ollama
-  minha-delpi-ai-api
-  minha-delpi-chat
   portal
   gateway
 )
@@ -66,21 +64,11 @@ fi
 echo "=== Parando serviços opcionais (se subiram por dependência antiga) ==="
 docker stop delpi-searxng delpi-languagetool 2>/dev/null || true
 
-echo "=== Fase 3: modelos Ollama (chat leve) ==="
-MODEL="${OLLAMA_MODEL:-qwen2.5:1.5b}"
-EMBED="${EMBEDDING_MODEL:-bge-m3}"
-for _ in $(seq 1 30); do
-  if docker exec delpi-ollama ollama list >/dev/null 2>&1; then
-    break
-  fi
-  sleep 2
-done
-docker exec delpi-ollama ollama pull "$MODEL" || true
-docker exec delpi-ollama ollama pull "$EMBED" || true
-
 echo ""
 echo "Stack mínimo no ar: http://localhost"
 echo "Serviços: ${MINIMAL_SERVICES[*]}"
-echo "Sem: searxng, languagetool, dashboards, strategic-indicators, transformometro, maintenance"
+echo "Chat:     ${COMPOSE[*]} --profile chat up -d"
+echo "Plugin:   ${COMPOSE[*]} --profile plugins up -d <servico>"
+echo "Sem: dashboards, MFEs, strategic-indicators, transformometro, maintenance (profile plugins)"
 echo ""
 docker ps --format 'table {{.Names}}\t{{.Status}}' | grep delpi || true

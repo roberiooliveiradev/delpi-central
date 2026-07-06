@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "controle-retrabalhos",
+  "name": "Controle de Retrabalhos",
+  "description": "Dashboard de horas improdutivas de retrabalho — resumo, evolução mensal, rankings e detalhes por filial",
+  "icon": "factory-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/controle-retrabalhos",
+  "entry": "/apps/controle-retrabalhos/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "controle-retrabalhos.access",
+      "name": "Acessar Controle de Retrabalhos",
+      "description": "Permite abrir o app de controle de retrabalhos no portal.",
+      "module": "controle-retrabalhos"
+    },
+    {
+      "code": "controle-retrabalhos.view",
+      "name": "Visualizar Controle de Retrabalhos",
+      "description": "Permite consultar resumo, gráficos, rankings e detalhes de retrabalho.",
+      "module": "controle-retrabalhos"
+    },
+    {
+      "code": "controle-retrabalhos.export",
+      "name": "Exportar Controle de Retrabalhos",
+      "description": "Permite exportar dados do app de controle de retrabalhos.",
+      "module": "controle-retrabalhos"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/controle-retrabalhos/sc",
+      "label": "Controle de Retrabalhos - SC",
+      "permission": "controle-retrabalhos.view",
+      "icon": "factory-icon",
+      "order": 19,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/controle-retrabalhos/es",
+      "label": "Controle de Retrabalhos - ES",
+      "permission": "controle-retrabalhos.view",
+      "icon": "factory-icon",
+      "order": 20,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}
