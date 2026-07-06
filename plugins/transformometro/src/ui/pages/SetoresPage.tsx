@@ -24,6 +24,8 @@ import {
 import { FieldLabel } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildSetorPath } from "../../utils/routeParser";
+import { TableRowActions } from "../../components/ui/TableRowActions";
+import { renderTableStatus } from "../../utils/tablePresentation";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const S = TM_HELP_TOOLTIPS.setores;
@@ -111,14 +113,14 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       header: "Status",
       headerHint: C.status,
       sortable: true,
-      render: (row) => row.status_setor,
+      render: (row) => renderTableStatus(row.status_setor),
     },
     {
       key: "acoes",
       header: "",
       className: "ds-table__actions",
       render: (row) => (
-        <>
+        <TableRowActions>
           <button
             type="button"
             className="ds-ghost-btn"
@@ -131,7 +133,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
           </button>
           <button
             type="button"
-            className="ds-ghost-btn"
+            className="ds-ghost-btn ds-ghost-btn--danger"
             onClick={(event) => {
               event.stopPropagation();
               void handleDelete(row);
@@ -139,7 +141,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
           >
             Excluir
           </button>
-        </>
+        </TableRowActions>
       ),
     },
   ];

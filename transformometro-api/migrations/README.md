@@ -28,6 +28,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V019 | `V019__processo_instancia_setores.sql` | Amarração N:N instância × setores; instância = processo × filial (ou todas ativas) |
 | V020 | `V020__dashboard_integration_views.sql` | Views `dashboard_competencia_evolucao` e `instancia_operacional_snapshot` (leitura rápida dashboard + api-delpi) |
 | V024 | `V024__revisao_evidencias.sql` | Evidências por revisão (metadado Postgres + binário em volume) |
+| V025 | `V025__audit_logs_user_name.sql` | `user_name` em `audit_logs` para linha do tempo |
 
 ## Notas V019–V020
 

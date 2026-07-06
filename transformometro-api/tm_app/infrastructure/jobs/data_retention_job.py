@@ -69,6 +69,7 @@ def run_data_retention(*, dry_run: bool = False) -> RetentionResult:
                 f"""
                 UPDATE transformometro.audit_logs
                 SET user_email = 'anonimizado@lgpd',
+                    user_name = NULL,
                     user_id = NULL
                 WHERE user_email IS NOT NULL
                   AND user_email != 'anonimizado@lgpd'

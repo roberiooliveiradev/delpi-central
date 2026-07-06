@@ -311,6 +311,7 @@ export type ProcessoTimelineResponse = {
     action: string;
     user_id?: string | null;
     user_email?: string | null;
+    user_name?: string | null;
     payload_json?: Record<string, unknown> | null;
     created_at: string;
   }>;
@@ -1060,9 +1061,10 @@ export type JsonImportPreview = {
   errors?: string[];
   mode: JsonImportMode;
   requested_format?: JsonImportFormat;
-  resolved_format?: "modern" | "legacy";
-  detected_format?: "modern" | "legacy";
+  resolved_format?: "modern" | "legacy" | null;
+  detected_format?: "modern" | "legacy" | null;
   legacy_transformed?: boolean;
+  format_compatible?: boolean;
   entities?: Record<string, JsonImportEntityStats>;
   current_counts?: Record<string, number>;
   import_counts?: Record<string, number>;

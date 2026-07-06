@@ -70,13 +70,14 @@ class AuditRepository(PluginBaseRepository):
         action: str,
         user_id: str | None,
         user_email: str | None,
+        user_name: str | None = None,
         payload: dict[str, Any] | None = None,
     ) -> None:
         self.execute(
             """
             INSERT INTO transformometro.audit_logs (
-                entity_type, entity_id, action, user_id, user_email, payload_json
-            ) VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+                entity_type, entity_id, action, user_id, user_email, user_name, payload_json
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb)
             """,
             (
                 entity_type,
@@ -84,6 +85,7 @@ class AuditRepository(PluginBaseRepository):
                 action,
                 user_id,
                 user_email,
+                user_name,
                 json.dumps(payload or {}, default=str),
             ),
         )
@@ -119,6 +121,7 @@ class AuditRepository(PluginBaseRepository):
                 a.action,
                 a.user_id,
                 a.user_email,
+                a.user_name,
                 a.payload_json,
                 a.created_at
             FROM transformometro.audit_logs a

@@ -17,6 +17,7 @@ def test_list_for_processo_paginates_and_counts():
                 "action": "create",
                 "user_id": "u1",
                 "user_email": "user@example.com",
+                "user_name": "Usuário Teste",
                 "payload_json": {},
                 "created_at": "2026-01-01T10:00:00+00:00",
             }

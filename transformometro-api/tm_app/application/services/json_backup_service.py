@@ -29,6 +29,13 @@ ResolvedImportFormat = Literal["modern", "legacy"]
 SCHEMA_VERSION = "1.1"
 LEGACY_IMPORT_NAMESPACE = NAMESPACE_DNS
 
+IMPORT_FORMAT_INCOMPATIBLE_MESSAGE = (
+    "Formato do arquivo não reconhecido ou incompatível com o Transformômetro. "
+    "Use um backup exportado por este app (legado 1.1 com unidade e setor nos processos, "
+    "ou Playbook 18 com instâncias operacionais). "
+    "Se souber o formato, selecione manualmente «Backup legado (1.1)» ou «Playbook 18 (instâncias)»."
+)
+
 _UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.IGNORECASE,
@@ -67,19 +74,68 @@ def _legacy_instancia_id(processo_id: str, codigo_filial: str) -> str:
     )
 
 
-def detect_import_format(payload: dict[str, Any]) -> ResolvedImportFormat:
-    instancias = payload.get("processo_instancias") or []
+def _is_transformometro_backup(payload: dict[str, Any]) -> bool:
+    if not isinstance(payload, dict):
+        return False
+
+    schema_version = payload.get("schema_version")
+    if schema_version is not None and schema_version not in {SCHEMA_VERSION, "1.0"}:
+        return False
+
+    markers = {
+        "processos",
+        "setores",
+        "revisoes",
+        "recursos_compartilhados",
+        "processo_instancias",
+        "filiais",
+        "schema_version",
+        "exported_at",
+    }
+    return bool(set(payload.keys()) & markers)
+
+
+def detect_import_format(payload: dict[str, Any]) -> ResolvedImportFormat | None:
+    """Classifica legado vs Playbook 18. None = formato não reconhecido (modo auto)."""
+    if not _is_transformometro_backup(payload):
+        return None
+
+    instancias = [
+        row for row in (payload.get("processo_instancias") or []) if isinstance(row, dict)
+    ]
     if instancias:
-        # Playbook 18: instâncias no JSON indicam backup moderno mesmo que existam
-        # revisões órfãs (ex.: processo deletado sem instância).
         return "modern"
-    processos = payload.get("processos") or []
+
+    processos = [row for row in (payload.get("processos") or []) if isinstance(row, dict)]
     if any(
         isinstance(row, dict) and row.get("filial_id") and row.get("setor_id")
         for row in processos
     ):
         return "legacy"
-    return "modern"
+
+    revisoes_ativas = [
+        row
+        for row in (payload.get("revisoes") or [])
+        if isinstance(row, dict) and not row.get("deletado")
+    ]
+    if revisoes_ativas and not instancias:
+        if any(not row.get("instancia_id") for row in revisoes_ativas):
+            return None
+
+    if processos:
+        if all(not (row.get("filial_id") and row.get("setor_id")) for row in processos):
+            return "modern"
+
+    setores = payload.get("setores") or []
+    filiais = payload.get("filiais") or []
+    if (setores or filiais) and not processos:
+        return "modern"
+
+    explicit = payload.get("import_format")
+    if explicit in ("modern", "legacy"):
+        return explicit
+
+    return None
 
 
 def _collect_filial_codigos(payload: dict[str, Any]) -> set[str]:
@@ -170,7 +226,10 @@ class JsonBackupService:
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         detected = detect_import_format(payload)
         requested = import_format
-        resolved: ResolvedImportFormat = detected if import_format == "auto" else import_format
+        if import_format == "auto":
+            resolved: ResolvedImportFormat | None = detected
+        else:
+            resolved = import_format
 
         prepared = copy.deepcopy(payload)
         for key in BUNDLE_KEYS:
@@ -187,6 +246,9 @@ class JsonBackupService:
             "resolved_format": resolved,
             "detected_format": detected,
             "legacy_transformed": legacy_transformed,
+            "format_compatible": resolved is not None
+            if requested == "auto"
+            else True,
         }
         return prepared, meta
 
@@ -329,7 +391,31 @@ class JsonBackupService:
         mode: ExportMode,
         import_format: ImportFormat = "auto",
     ) -> dict[str, Any]:
+        detected = detect_import_format(payload)
+        if import_format == "auto" and detected is None:
+            return {
+                "valid": False,
+                "errors": [IMPORT_FORMAT_INCOMPATIBLE_MESSAGE],
+                "mode": mode,
+                "entities": {},
+                "requested_format": import_format,
+                "detected_format": None,
+                "resolved_format": None,
+                "legacy_transformed": False,
+                "format_compatible": False,
+            }
+
         prepared, format_meta = self.resolve_import_payload(payload, import_format)
+        if format_meta.get("resolved_format") is None:
+            return {
+                "valid": False,
+                "errors": [IMPORT_FORMAT_INCOMPATIBLE_MESSAGE],
+                "mode": mode,
+                "entities": {},
+                **format_meta,
+                "format_compatible": False,
+            }
+
         errors = self.validate_bundle(prepared)
         if errors:
             return {

@@ -24,6 +24,8 @@ import { toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildRecursoPath } from "../../utils/routeParser";
+import { TableRowActions } from "../../components/ui/TableRowActions";
+import { renderTableStatus } from "../../utils/tablePresentation";
 
 const C = TM_HELP_TOOLTIPS.columns;
 
@@ -116,7 +118,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
       sortable: true,
       sortValue: (r) => r.base_competencia ?? "mensal_cheio",
     },
-    { key: "status", header: "Status", headerHint: C.status, render: (r) => r.status_recurso, sortable: true },
+    { key: "status", header: "Status", headerHint: C.status, render: (r) => renderTableStatus(r.status_recurso), sortable: true },
     {
       key: "vigencia",
       header: "Vigência do recurso",
@@ -133,7 +135,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
       header: "",
       className: "ds-table__actions",
       render: (r) => (
-        <>
+        <TableRowActions>
           <button
             type="button"
             className="ds-ghost-btn"
@@ -146,7 +148,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
           </button>
           <button
             type="button"
-            className="ds-ghost-btn"
+            className="ds-ghost-btn ds-ghost-btn--danger"
             onClick={(event) => {
               event.stopPropagation();
               void handleDelete(r);
@@ -154,7 +156,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
           >
             Excluir
           </button>
-        </>
+        </TableRowActions>
       ),
     },
   ];

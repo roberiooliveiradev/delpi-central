@@ -325,3 +325,76 @@ def test_preview_merge_counts_insert_and_update():
     assert preview["entities"]["processos"]["insert"] == 0
     assert preview["entities"]["revisoes"]["insert"] == 1
     assert preview["entities"]["setor_filiais"]["total"] == 1
+
+
+def test_detect_import_format_unknown_for_non_backup():
+    assert detect_import_format({"hello": "world"}) is None
+    assert detect_import_format({"schema_version": "9.9", "processos": []}) is None
+
+
+def test_detect_import_format_unknown_for_ambiguous_revisoes():
+    pid = "11111111-1111-1111-1111-111111111111"
+    bundle = {
+        "schema_version": SCHEMA_VERSION,
+        "processos": [
+            {
+                "processo_id": pid,
+                "codigo_processo": "PROC-1",
+                "nome_processo": "Mestre",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        "processo_instancias": [],
+        "revisoes": [
+            {
+                "revisao_id": "22222222-2222-2222-2222-222222222222",
+                "processo_id": pid,
+                "versao_revisao": "1.0.0",
+                "deletado": False,
+            }
+        ],
+        "setores": [],
+        "setor_filiais": [],
+        "recursos_compartilhados": [],
+        "medicoes": [],
+        "investimentos": [],
+        "recurso_custos": [],
+        "revisao_recursos_compartilhados": [],
+    }
+    assert detect_import_format(bundle) is None
+
+
+def test_detect_import_format_modern_master_only():
+    assert (
+        detect_import_format(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "processos": [
+                    {
+                        "processo_id": "11111111-1111-1111-1111-111111111111",
+                        "codigo_processo": "PROC-1",
+                        "nome_processo": "Mestre",
+                        "deletado": False,
+                    }
+                ],
+                "setores": [],
+                "setor_filiais": [],
+                "revisoes": [],
+                "recursos_compartilhados": [],
+                "medicoes": [],
+                "investimentos": [],
+                "recurso_custos": [],
+                "revisao_recursos_compartilhados": [],
+            }
+        )
+        == "modern"
+    )
+
+
+def test_preview_auto_reports_incompatible_format():
+    preview = JsonBackupService(MagicMock()).preview({"foo": "bar"}, "merge", "auto")
+    assert preview["valid"] is False
+    assert preview["format_compatible"] is False
+    assert preview["detected_format"] is None
+    assert preview["errors"]

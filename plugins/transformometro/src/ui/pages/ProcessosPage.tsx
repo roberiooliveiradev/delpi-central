@@ -20,7 +20,9 @@ import {
 } from "../../data/api/transformometroApi";
 import { FieldLabel } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
+import { renderTableStatus } from "../../utils/tablePresentation";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const P = TM_HELP_TOOLTIPS.processos;
@@ -172,13 +174,13 @@ export function ProcessosPage({
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      { key: "status", header: "Status", headerHint: C.status, render: (row) => row.status_processo, sortable: true },
+      { key: "status", header: "Status", headerHint: C.status, render: (row) => renderTableStatus(row.status_processo), sortable: true },
       {
         key: "acoes",
         header: "",
         className: "ds-table__actions",
         render: (row) => (
-          <>
+          <TableRowActions>
             <button
               type="button"
               className="ds-ghost-btn"
@@ -202,7 +204,7 @@ export function ProcessosPage({
             </button>
             <button
               type="button"
-              className="ds-ghost-btn"
+              className="ds-ghost-btn ds-ghost-btn--danger"
               onClick={(event) => {
                 event.stopPropagation();
                 void handleDelete(row);
@@ -210,7 +212,7 @@ export function ProcessosPage({
             >
               Excluir
             </button>
-          </>
+          </TableRowActions>
         ),
       },
     ],

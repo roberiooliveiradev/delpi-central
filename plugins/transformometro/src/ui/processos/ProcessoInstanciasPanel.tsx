@@ -497,6 +497,7 @@ export function ProcessoInstanciasPanel({
       {
         key: "acoes",
         header: "",
+        className: "ds-table__actions",
         render: (row) => (
           <div className="ds-table__actions">
             <button
@@ -520,7 +521,7 @@ export function ProcessoInstanciasPanel({
             </button>
             <button
               type="button"
-              className="ds-ghost-btn"
+              className="ds-ghost-btn ds-ghost-btn--danger"
               disabled={busy || saving}
               onClick={() => void handleDelete(row)}
             >

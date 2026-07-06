@@ -129,6 +129,7 @@ export function buildRevisaoColumns({
     {
       key: "acoes",
       header: "",
+      className: "ds-table__actions",
       render: (r) => (
         <div
           className="ds-table__actions"
@@ -138,7 +139,7 @@ export function buildRevisaoColumns({
           <button type="button" className="ds-ghost-btn" onClick={() => onOpen(r.revisao_id)}>
             Abrir
           </button>
-          <button type="button" className="ds-ghost-btn" onClick={() => void onDelete(r)}>
+          <button type="button" className="ds-ghost-btn ds-ghost-btn--danger" onClick={() => void onDelete(r)}>
             Excluir
           </button>
         </div>

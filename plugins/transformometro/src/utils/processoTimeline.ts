@@ -5,6 +5,7 @@ export type ProcessoAuditLogEntry = {
   action: string;
   user_id?: string | null;
   user_email?: string | null;
+  user_name?: string | null;
   payload_json?: Record<string, unknown> | null;
   created_at: string;
 };
@@ -135,9 +136,15 @@ function detailFromPayload(
   return `${keys.length} campos alterados`;
 }
 
-export function formatActorDisplay(entry: Pick<ProcessoAuditLogEntry, "user_id" | "user_email">): string | undefined {
+export function formatActorDisplay(
+  entry: Pick<ProcessoAuditLogEntry, "user_id" | "user_email" | "user_name">
+): string | undefined {
+  const name = entry.user_name?.trim();
   const email = entry.user_email?.trim();
   const userId = entry.user_id?.trim();
+
+  if (name && email) return `Por ${name} (${email})`;
+  if (name) return `Por ${name}`;
   if (email) return `Por ${email}`;
   if (userId) return `Por ${userId}`;
   return undefined;

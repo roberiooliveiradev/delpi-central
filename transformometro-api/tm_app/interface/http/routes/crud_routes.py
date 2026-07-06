@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, Query, Request
 
+from tm_app.application.services.audit_timeline_service import enrich_timeline_actor_names
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import format_api_error
 
@@ -117,7 +118,7 @@ def _mask_personal_data(payload: dict) -> dict:
 
 
 def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
-    user_id, user_email = actor_from_request(request)
+    user_id, user_email, user_name = actor_from_request(request)
     try:
         AuditRepository().log(
             entity_type=entity_type,
@@ -125,6 +126,7 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
             action=action,
             user_id=user_id,
             user_email=user_email,
+            user_name=user_name,
             payload=_mask_personal_data(payload),
         )
     except Exception as exc:
@@ -277,12 +279,16 @@ def processo_timeline(
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
     data = AuditRepository().list_for_processo(processo_id, page=page, page_size=page_size)
+    items = enrich_timeline_actor_names(
+        rows_to_json(data["items"]),
+        authorization=request.headers.get("Authorization"),
+    )
     return ok(
         {
             "total": data["total"],
             "page": data["page"],
             "page_size": data["page_size"],
-            "items": rows_to_json(data["items"]),
+            "items": items,
         },
         "Linha do tempo de alterações do processo.",
     )

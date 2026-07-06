@@ -15,7 +15,7 @@ Pacotes `1.0` devem ser reexportados após upgrade da API; importação exige `s
 
 | Valor | Uso |
 |-------|-----|
-| `auto` (padrão) | Detecta legado vs Playbook 18 pelo conteúdo do JSON |
+| `auto` (padrão) | Detecta legado vs Playbook 18 pelo conteúdo do JSON; se não reconhecer, retorna **incompatibilidade** (não tenta importar como moderno por padrão) |
 | `legacy` | Backup **1.1** com `processos.filial_id` / `setor_id`, sem `processo_instancias` ou `revisoes.instancia_id` |
 | `modern` | Backup **Playbook 18** com `filiais`, `processo_instancias` e `revisoes.instancia_id` |
 

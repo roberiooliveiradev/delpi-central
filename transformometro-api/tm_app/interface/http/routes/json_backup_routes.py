@@ -38,7 +38,7 @@ def import_preview(body: JsonImportBody):
 
 @router.post("/import/apply")
 def import_apply(body: JsonImportBody, request: Request):
-    user_id, user_email = actor_from_request(request)
+    user_id, user_email, user_name = actor_from_request(request)
     try:
         result = JsonBackupService().apply(body.data, body.mode, body.import_format)
     except ValueError as exc:
@@ -52,6 +52,7 @@ def import_apply(body: JsonImportBody, request: Request):
         action=f"import_{body.mode}",
         user_id=user_id,
         user_email=user_email,
+        user_name=user_name,
         payload={
             "mode": body.mode,
             "import_format": body.import_format,

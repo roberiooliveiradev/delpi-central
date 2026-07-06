@@ -23,6 +23,8 @@ import {
 } from "../../data/api/transformometroApi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip } from "../../components/HelpTooltip";
+import { TableRowActions } from "../../components/ui/TableRowActions";
+import { renderTableStatus } from "../../utils/tablePresentation";
 import { buildFilialPath } from "../../utils/routeParser";
 
 const C = TM_HELP_TOOLTIPS.columns;
@@ -103,14 +105,14 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       header: "Status",
       headerHint: C.status,
       sortable: true,
-      render: (row) => row.status_filial,
+      render: (row) => renderTableStatus(row.status_filial),
     },
     {
       key: "acoes",
       header: "",
       className: "ds-table__actions",
       render: (row) => (
-        <>
+        <TableRowActions>
           <button
             type="button"
             className="ds-ghost-btn"
@@ -123,7 +125,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
           </button>
           <button
             type="button"
-            className="ds-ghost-btn"
+            className="ds-ghost-btn ds-ghost-btn--danger"
             onClick={(event) => {
               event.stopPropagation();
               void handleDelete(row);
@@ -131,7 +133,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
           >
             Excluir
           </button>
-        </>
+        </TableRowActions>
       ),
     },
   ];

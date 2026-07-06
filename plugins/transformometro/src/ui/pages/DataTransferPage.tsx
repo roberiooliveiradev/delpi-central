@@ -283,7 +283,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                     <span className="tm-data-transfer__format-title">{FORMAT_LABELS[value]}</span>
                     <span className="tm-data-transfer__format-desc">
                       {value === "auto"
-                        ? "A API identifica se o arquivo é legado (processos com unidade/setor) ou Playbook 18."
+                        ? "A API identifica legado (unidade/setor nos processos) ou Playbook 18 (instâncias). Formato desconhecido → mensagem de incompatibilidade."
                         : value === "legacy"
                           ? "JSON antigo sem instâncias; unidades e revisões por instância são geradas na importação."
                           : "Backup exportado após Playbook 18, com unidades, instâncias e revisoes.instancia_id."}
@@ -345,6 +345,16 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               </button>
             </div>
 
+            {preview && preview.format_compatible === false ? (
+              <div className="ds-state ds-state--error tm-data-transfer__incompatible" role="alert">
+                <p>
+                  <AlertTriangle size={16} aria-hidden style={{ verticalAlign: "text-bottom", marginRight: 6 }} />
+                  {(preview.errors ?? []).join(" ") ||
+                    "Formato do arquivo não reconhecido. Selecione legado ou Playbook 18 manualmente."}
+                </p>
+              </div>
+            ) : null}
+
             {preview?.valid && preview.entities ? (
               <div className="tm-data-transfer__preview">
                 <h3 className="ds-section-title tm-data-transfer__preview-title">
@@ -355,6 +365,11 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                     Formato: {FORMAT_LABELS[preview.requested_format ?? "auto"]} →{" "}
                     {preview.resolved_format === "legacy" ? "legado convertido" : "Playbook 18"}
                     {preview.legacy_transformed ? " (filiais e instâncias sintéticas geradas)" : ""}
+                  </p>
+                ) : preview.requested_format === "auto" && preview.detected_format ? (
+                  <p className="tm-data-transfer__format-summary">
+                    Detectado automaticamente:{" "}
+                    {preview.detected_format === "legacy" ? "backup legado (1.1)" : "Playbook 18"}
                   </p>
                 ) : null}
                 <div className="ds-table-wrap">
