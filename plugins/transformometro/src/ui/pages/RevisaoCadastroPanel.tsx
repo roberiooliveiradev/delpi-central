@@ -29,6 +29,7 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoDiagramSection } from "../../components/diagram/RevisaoDiagramSection";
+import { RevisaoDecompositionSection } from "../../components/decomposition/RevisaoDecompositionSection";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
 import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
@@ -315,6 +316,34 @@ export function RevisaoCadastroPanel({
               event.preventDefault();
               void saveVigencia();
             }}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title="Mapeamento da revisão"
+        description="Estado textual as-is ou to-be sobre o escopo WBS da instância."
+        hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao}
+        isEditing={sectionEdit.isEditing("decomposicao_revisao")}
+        onEdit={() => void sectionEdit.startEdit("decomposicao_revisao")}
+        onCancel={() => sectionEdit.cancelEdit("decomposicao_revisao")}
+        readContent={
+          <RevisaoDecompositionSection
+            embeddedInCard
+            readOnly
+            revisaoId={revisao.revisao_id}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            resyncVersion={sectionEdit.resyncVersion}
+          />
+        }
+        editContent={
+          <RevisaoDecompositionSection
+            embeddedInCard
+            revisaoId={revisao.revisao_id}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
       />

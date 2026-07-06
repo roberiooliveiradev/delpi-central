@@ -17,9 +17,12 @@ from tm_app.infrastructure.persistence.repositories.processo_instancia_repositor
 from tm_app.infrastructure.persistence.json_backup_repository import (
     BUNDLE_KEYS,
     ENTITY_SPECS,
+    INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY,
     INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
+    PROCESSO_DECOMPOSICAO_BUNDLE_KEY,
     PROCESSO_DIAGRAMAS_BUNDLE_KEY,
     PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
+    REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY,
     REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
     SETOR_FILIAIS_BUNDLE_KEY,
     EntitySpec,
@@ -215,6 +218,9 @@ class JsonBackupService:
         data["processo_diagramas"] = self._repo.fetch_processo_diagramas()
         data["instancia_diagrama_escopos"] = self._repo.fetch_instancia_diagrama_escopos()
         data["revisao_diagrama_overlays"] = self._repo.fetch_revisao_diagrama_overlays()
+        data["processo_decomposicao"] = self._repo.fetch_processo_decomposicao()
+        data["instancia_decomposicao_escopos"] = self._repo.fetch_instancia_decomposicao_escopos()
+        data["revisao_decomposicao_overlays"] = self._repo.fetch_revisao_decomposicao_overlays()
         data = self._repo.ensure_bundle_parent_rows(data)
         return {
             "schema_version": SCHEMA_VERSION,
@@ -320,11 +326,17 @@ class JsonBackupService:
                 PROCESSO_DIAGRAMAS_BUNDLE_KEY,
                 INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
                 REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
+                PROCESSO_DECOMPOSICAO_BUNDLE_KEY,
+                INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY,
+                REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY,
             }:
                 pk_field = {
                     PROCESSO_DIAGRAMAS_BUNDLE_KEY: "processo_id",
                     INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY: "instancia_id",
                     REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY: "revisao_id",
+                    PROCESSO_DECOMPOSICAO_BUNDLE_KEY: "processo_id",
+                    INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY: "instancia_id",
+                    REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY: "revisao_id",
                 }[key]
                 seen_diagram: set[str] = set()
                 for index, row in enumerate(rows):
@@ -439,6 +451,30 @@ class JsonBackupService:
                 if rid not in revisao_ids:
                     errors.append(
                         f"revisao_diagrama_overlays: revisao_id={rid} não está em revisoes no JSON."
+                    )
+
+        for row in payload.get(PROCESSO_DECOMPOSICAO_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("processo_id"):
+                pid = _norm_id(row["processo_id"])
+                if pid not in processo_ids:
+                    errors.append(
+                        f"processo_decomposicao: processo_id={pid} não está em processos no JSON."
+                    )
+
+        for row in payload.get(INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("instancia_id"):
+                iid = _norm_id(row["instancia_id"])
+                if iid not in instancia_ids:
+                    errors.append(
+                        f"instancia_decomposicao_escopos: instancia_id={iid} não está em processo_instancias no JSON."
+                    )
+
+        for row in payload.get(REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("revisao_id"):
+                rid = _norm_id(row["revisao_id"])
+                if rid not in revisao_ids:
+                    errors.append(
+                        f"revisao_decomposicao_overlays: revisao_id={rid} não está em revisoes no JSON."
                     )
 
         return _dedupe_errors(errors)
@@ -588,6 +624,7 @@ class JsonBackupService:
             self._sync_processo_instancias_from_payload(prepared)
             self._sync_processo_instancia_setores_from_payload(prepared)
             self._repo.sync_diagram_bundles(prepared, auto_commit=False)
+            self._repo.sync_decomposition_bundles(prepared, auto_commit=False)
 
             self._repo._connection.commit()
         except Exception:

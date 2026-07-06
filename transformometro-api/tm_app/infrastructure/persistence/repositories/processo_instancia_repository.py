@@ -26,6 +26,7 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             f.nome_filial,
             pi.rotulo_instancia,
             pi.status_instancia,
+            pi.contexto,
             pi.created_at,
             pi.updated_at,
             COALESCE(
@@ -59,6 +60,7 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             f.nome_filial,
             pi.rotulo_instancia,
             pi.status_instancia,
+            pi.contexto,
             pi.created_at,
             pi.updated_at
     """
@@ -449,6 +451,25 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
         if updated is None:
             raise RuntimeError("Falha ao carregar instância atualizada.")
         return updated
+
+    def update_contexto(
+        self,
+        instancia_id: str,
+        contexto: dict[str, Any],
+        *,
+        auto_commit: bool = True,
+    ) -> None:
+        self.execute(
+            """
+            UPDATE transformometro.processo_instancias
+            SET contexto = %s::jsonb,
+                updated_at = NOW()
+            WHERE instancia_id = %s::uuid
+              AND deletado = FALSE
+            """,
+            (json.dumps(contexto), instancia_id),
+            auto_commit=auto_commit,
+        )
 
     def soft_delete(self, instancia_id: str, *, auto_commit: bool = True) -> bool:
         existing = self.get(instancia_id)

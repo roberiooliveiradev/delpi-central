@@ -143,6 +143,18 @@ export const TM_HELP_TOOLTIPS = {
     preenchimentoLista:
       "Percentual dos campos mestre (gestor, objetivo, descrição e família). Abra o processo para ver o checklist completo com instâncias, diagrama e revisões.",
   },
+  decomposition: {
+    mapeamento:
+      "Árvore WBS do macroprocesso — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento e export CSV.",
+    escopoInstancia:
+      "Selecione quais processos-chave desta instância operacional executa ou melhora.",
+    contextoInstancia:
+      "Metadados operacionais extras — responsável local, rollout e observações complementares.",
+    mapeamentoRevisao:
+      "Overlay textual as-is/to-be sobre o escopo WBS — rótulos e descrições da revisão.",
+    arvoreVazia:
+      "Nenhum processo-chave cadastrado. Use + Processo-chave ou «Sugerir do fluxo» para começar.",
+  },
   instancias: {
     escopo:
       "Cada instância pertence a uma unidade (ou a todas as ativas, instância multi-unidade) e amarra um ou mais departamentos. As revisões ficam na instância — baseline e medições são independentes por ambiente.",

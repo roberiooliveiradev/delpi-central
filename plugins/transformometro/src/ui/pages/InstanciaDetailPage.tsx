@@ -44,6 +44,8 @@ import {
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
+import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
+import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -272,6 +274,60 @@ export function InstanciaDetailPage({
               await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
               await load();
             }}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title="Escopo no mapeamento"
+        description="Quais processos-chave deste macroprocesso esta instância trata."
+        hint={TM_HELP_TOOLTIPS.decomposition.escopoInstancia}
+        isEditing={sectionEdit.isEditing("decomposicao_escopo")}
+        onEdit={() => void sectionEdit.startEdit("decomposicao_escopo")}
+        onCancel={() => sectionEdit.cancelEdit("decomposicao_escopo")}
+        readContent={
+          <InstanciaDecompositionEscopoSection
+            embeddedInCard
+            readOnly
+            processoId={processoId}
+            instanciaId={instanciaId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+          />
+        }
+        editContent={
+          <InstanciaDecompositionEscopoSection
+            embeddedInCard
+            processoId={processoId}
+            instanciaId={instanciaId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title="Contexto operacional"
+        description="Metadados locais da instância — rollout, responsáveis e observações."
+        hint={TM_HELP_TOOLTIPS.decomposition.contextoInstancia}
+        isEditing={sectionEdit.isEditing("instancia_contexto")}
+        onEdit={() => void sectionEdit.startEdit("instancia_contexto")}
+        onCancel={() => sectionEdit.cancelEdit("instancia_contexto")}
+        readContent={
+          <InstanciaContextoSection
+            embeddedInCard
+            readOnly
+            instanciaId={instanciaId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+          />
+        }
+        editContent={
+          <InstanciaContextoSection
+            embeddedInCard
+            instanciaId={instanciaId}
+            getAccessToken={getAccessToken}
+            onError={setError}
           />
         }
       />

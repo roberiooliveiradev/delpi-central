@@ -38,11 +38,13 @@ import {
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { fetchProcessoDiagrama } from "../../data/api/transformometroDiagramApi";
+import { fetchProcessoDecomposicao } from "../../data/api/transformometroDecompositionApi";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
 import { buildInstanciaPath } from "../../utils/routeParser";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
+import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
 import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
 import {
   masterPayloadFromProcessoForm,
@@ -70,6 +72,7 @@ export function ProcessoDetailPage({
   const [instanciasComRevisao, setInstanciasComRevisao] = useState<string[]>([]);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
   const [diagramNodeCount, setDiagramNodeCount] = useState(0);
+  const [decompositionNodeCount, setDecompositionNodeCount] = useState(0);
   const [comparativoItems, setComparativoItems] = useState<ProcessoComparativoItem[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,19 +99,21 @@ export function ProcessoDetailPage({
     setRefreshing(true);
     setError(null);
     try {
-      const [proc, revs, opts, inst, diagram, comparativo] = await Promise.all([
+      const [proc, revs, opts, inst, diagram, comparativo, decomposicao] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
         fetchRevisoes(processoId, getAccessToken),
         fetchOptions(getAccessToken),
         fetchProcessoInstancias(processoId, getAccessToken),
         fetchProcessoDiagrama(processoId, getAccessToken).catch(() => null),
         fetchProcessoComparativo(processoId, getAccessToken).catch(() => ({ items: [] })),
+        fetchProcessoDecomposicao(processoId, getAccessToken).catch(() => null),
       ]);
       setProcesso(proc);
       setOptions(opts);
       setInstancias(inst.items);
       setRevisoes(revs.items);
       setDiagramNodeCount(diagram?.conteudo?.nodes?.length ?? 0);
+      setDecompositionNodeCount(decomposicao?.conteudo?.nodes?.length ?? 0);
       setComparativoItems(comparativo.items ?? []);
       setInstanciasComRevisao(
         Array.from(
@@ -193,10 +198,11 @@ export function ProcessoDetailPage({
       processo,
       instanciaCount: instancias.length,
       diagramNodeCount,
+      decompositionNodeCount,
       revisoes,
       comparativoItems,
     });
-  }, [comparativoItems, diagramNodeCount, instancias.length, processo, revisoes]);
+  }, [comparativoItems, decompositionNodeCount, diagramNodeCount, instancias.length, processo, revisoes]);
 
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
   const processLoadingProgress = useLoadingProgress(loading && !processo, processFetchProgress);
@@ -301,6 +307,36 @@ export function ProcessoDetailPage({
               />
             </form>
           ) : null
+        }
+      />
+
+      <EditableSectionCard
+        title="Mapeamento do processo"
+        description="Árvore WBS — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento."
+        hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
+        isEditing={sectionEdit.isEditing("decomposicao")}
+        onEdit={() => void sectionEdit.startEdit("decomposicao")}
+        onCancel={() => sectionEdit.cancelEdit("decomposicao")}
+        readContent={
+          <ProcessoDecompositionSection
+            embeddedInCard
+            readOnly
+            processoId={processoId}
+            processoNome={processo.nome_processo}
+            getAccessToken={getAccessToken}
+            onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
+          />
+        }
+        editContent={
+          <ProcessoDecompositionSection
+            embeddedInCard
+            processoId={processoId}
+            processoNome={processo.nome_processo}
+            getAccessToken={getAccessToken}
+            onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
+          />
         }
       />
 

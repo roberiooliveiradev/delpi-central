@@ -1,8 +1,12 @@
 export const COLLABORATION_SECTION_LABELS: Record<string, string> = {
   processo: "Dados do processo",
   diagrama_macro: "Diagrama macro",
+  decomposicao: "Mapeamento do processo",
   instancia: "Instância",
+  decomposicao_escopo: "Escopo no mapeamento",
+  instancia_contexto: "Contexto operacional",
   diagrama_escopo: "Escopo no diagrama",
+  decomposicao_revisao: "Mapeamento da revisão",
   diagrama_revisao: "Diagrama da revisão",
   vigencia: "Vigência",
   medicao: "Medição",

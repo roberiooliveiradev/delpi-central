@@ -151,12 +151,12 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 | Sprint | Entrega | Status |
 |--------|---------|--------|
 | S0 | Playbook + JSON Schema + ADR | ✅ doc |
-| S1 | V030 + árvore + editor processo | ⬜ |
-| S2 | Export CSV/Excel | ⬜ |
-| S3 | V031 + escopo instância | ⬜ |
-| S4 | V032 + overlay revisão + backup | ⬜ |
-| S5 | Vínculo fluxo + assistente rascunho | ⬜ |
-| S6 | Colaboração + diff textual | ⬜ |
+| S1 | V030 + árvore + editor processo | ✅ |
+| S2 | Export CSV/Excel | ✅ CSV |
+| S3 | V031 + escopo instância + contexto V033 | ✅ |
+| S4 | V032 + overlay revisão + backup | ✅ |
+| S5 | Vínculo fluxo + assistente rascunho | ✅ parcial |
+| S6 | Colaboração + diff textual | ✅ parcial |
 
 ## Fase 6 — Limpeza de legado (pendente)
 

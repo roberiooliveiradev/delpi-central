@@ -34,6 +34,7 @@ export type ProcessoSetupCompletionInput = {
   processo: Processo;
   instanciaCount: number;
   diagramNodeCount: number;
+  decompositionNodeCount: number;
   revisoes: Revisao[];
   comparativoItems?: ProcessoComparativoItem[];
 };
@@ -50,7 +51,7 @@ function hasMedicao(comparativoItems: ProcessoComparativoItem[] | undefined): bo
 
 /** Checklist completo do processo-mestre (padrão quality-action-plans / Kaizen). */
 export function computeProcessoSetupCompletion(input: ProcessoSetupCompletionInput): FormCompletion {
-  const { processo, instanciaCount, diagramNodeCount, revisoes, comparativoItems } = input;
+  const { processo, instanciaCount, diagramNodeCount, decompositionNodeCount, revisoes, comparativoItems } = input;
   const items: CompletionItem[] = [
     { id: "gestor", label: "Gestor", done: filled(processo.gestor_responsavel) },
     { id: "objetivo", label: "Objetivo", done: filled(processo.objetivo_processo) },
@@ -60,6 +61,11 @@ export function computeProcessoSetupCompletion(input: ProcessoSetupCompletionInp
       id: "instancias",
       label: "Instâncias",
       done: instanciaCount > 0,
+    },
+    {
+      id: "mapeamento",
+      label: "Mapeamento",
+      done: decompositionNodeCount > 0,
     },
     {
       id: "diagrama",

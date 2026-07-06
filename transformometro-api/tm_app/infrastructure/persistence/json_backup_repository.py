@@ -80,6 +80,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "todas_filiais_ativas",
             "rotulo_instancia",
             "status_instancia",
+            "contexto",
             "created_at",
             "updated_at",
             "deletado",
@@ -238,6 +239,9 @@ PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY = "processo_instancia_setores"
 PROCESSO_DIAGRAMAS_BUNDLE_KEY = "processo_diagramas"
 INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY = "instancia_diagrama_escopos"
 REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY = "revisao_diagrama_overlays"
+PROCESSO_DECOMPOSICAO_BUNDLE_KEY = "processo_decomposicao"
+INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY = "instancia_decomposicao_escopos"
+REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY = "revisao_decomposicao_overlays"
 BUNDLE_KEYS = (
     *tuple(spec.bundle_key for spec in ENTITY_SPECS),
     SETOR_FILIAIS_BUNDLE_KEY,
@@ -245,6 +249,9 @@ BUNDLE_KEYS = (
     PROCESSO_DIAGRAMAS_BUNDLE_KEY,
     INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
     REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
+    PROCESSO_DECOMPOSICAO_BUNDLE_KEY,
+    INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY,
+    REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY,
 )
 
 
@@ -280,6 +287,7 @@ class JsonBackupRepository(PluginBaseRepository):
                 pi.todas_filiais_ativas,
                 pi.rotulo_instancia,
                 pi.status_instancia,
+                pi.contexto,
                 pi.created_at,
                 pi.updated_at,
                 pi.deletado
@@ -333,6 +341,35 @@ class JsonBackupRepository(PluginBaseRepository):
             """
         )
 
+    def fetch_processo_decomposicao(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT processo_id, conteudo, created_at, updated_at
+            FROM transformometro.processo_decomposicao
+            ORDER BY processo_id ASC
+            """
+        )
+
+    def fetch_instancia_decomposicao_escopos(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                instancia_id, node_ids, inherit_all, include_descendants,
+                created_at, updated_at
+            FROM transformometro.instancia_decomposicao_escopo
+            ORDER BY instancia_id ASC
+            """
+        )
+
+    def fetch_revisao_decomposicao_overlays(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT revisao_id, conteudo, created_at, updated_at
+            FROM transformometro.revisao_decomposicao_overlays
+            ORDER BY revisao_id ASC
+            """
+        )
+
     def sync_diagram_bundles(
         self,
         payload: dict[str, list[dict[str, Any]]],
@@ -362,6 +399,41 @@ class JsonBackupRepository(PluginBaseRepository):
                 instancia_repo.upsert_from_backup(row, auto_commit=False)
 
         for row in payload.get(REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY, []) or []:
+            if isinstance(row, dict) and row.get("revisao_id"):
+                revisao_repo.upsert_from_backup(row, auto_commit=False)
+
+        if auto_commit:
+            self._connection.commit()
+
+    def sync_decomposition_bundles(
+        self,
+        payload: dict[str, list[dict[str, Any]]],
+        *,
+        auto_commit: bool = False,
+    ) -> None:
+        from tm_app.infrastructure.persistence.repositories.instancia_decomposicao_escopo_repository import (
+            InstanciaDecomposicaoEscopoRepository,
+        )
+        from tm_app.infrastructure.persistence.repositories.processo_decomposicao_repository import (
+            ProcessoDecomposicaoRepository,
+        )
+        from tm_app.infrastructure.persistence.repositories.revisao_decomposicao_overlay_repository import (
+            RevisaoDecomposicaoOverlayRepository,
+        )
+
+        processo_repo = ProcessoDecomposicaoRepository(connection=self._connection)
+        instancia_repo = InstanciaDecomposicaoEscopoRepository(connection=self._connection)
+        revisao_repo = RevisaoDecomposicaoOverlayRepository(connection=self._connection)
+
+        for row in payload.get(PROCESSO_DECOMPOSICAO_BUNDLE_KEY, []) or []:
+            if isinstance(row, dict) and row.get("processo_id"):
+                processo_repo.upsert_from_backup(row, auto_commit=False)
+
+        for row in payload.get(INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY, []) or []:
+            if isinstance(row, dict) and row.get("instancia_id"):
+                instancia_repo.upsert_from_backup(row, auto_commit=False)
+
+        for row in payload.get(REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY, []) or []:
             if isinstance(row, dict) and row.get("revisao_id"):
                 revisao_repo.upsert_from_backup(row, auto_commit=False)
 
@@ -534,6 +606,9 @@ class JsonBackupRepository(PluginBaseRepository):
             """
             TRUNCATE TABLE
                 transformometro.dashboard_calculos,
+                transformometro.revisao_decomposicao_overlays,
+                transformometro.instancia_decomposicao_escopo,
+                transformometro.processo_decomposicao,
                 transformometro.revisao_diagrama_overlays,
                 transformometro.instancia_diagrama_escopo,
                 transformometro.processo_diagramas,
