@@ -1035,9 +1035,12 @@ services:
       PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
 
+      TM_REVISION_EVIDENCE_UPLOAD_DIR: ${TM_REVISION_EVIDENCE_UPLOAD_DIR:-/app/data/revisao-evidencias}
+
     volumes:
       - ../transformometro-api:/app
       - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/revisao-evidencias:/app/data/revisao-evidencias
 
     depends_on:
       - keycloak

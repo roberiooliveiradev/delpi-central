@@ -21,8 +21,10 @@ import {
   type Revisao,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
+import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceApi";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { CadastroTabs, type CadastroTabId } from "../revisao/cadastro/CadastroTabs";
+import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
 import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
@@ -96,6 +98,7 @@ export function RevisaoCadastroPanel({
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
   const [recursos, setRecursos] = useState<RecursoCompartilhado[]>([]);
+  const [evidenciasCount, setEvidenciasCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [rateioDiag, setRateioDiag] = useState<RateioDiagnostic | null>(null);
   const [revisaoVigencia, setRevisaoVigencia] = useState(() => buildRevisaoVigenciaFromRevisao(revisao));
@@ -118,17 +121,19 @@ export function RevisaoCadastroPanel({
     setLoading(true);
     onError(null);
     try {
-      const [med, inv, vin, rec, diag] = await Promise.all([
+      const [med, inv, vin, rec, ev, diag] = await Promise.all([
         fetchMedicao(revisao.revisao_id, getAccessToken),
         fetchInvestimentos(revisao.revisao_id, getAccessToken),
         fetchVinculos(revisao.revisao_id, getAccessToken),
         fetchRecursos(getAccessToken),
+        fetchRevisaoEvidencias(revisao.revisao_id, getAccessToken).catch(() => []),
         fetchRevisaoDiagnosticoRateio(revisao.revisao_id, getAccessToken).catch(() => null),
       ]);
       setMedicao(med ? { ...med, revisao_id: revisao.revisao_id } : emptyMedicao(revisao.revisao_id));
       setInvestimentos(inv.items);
       setVinculos(vin.items);
       setRecursos(rec.items);
+      setEvidenciasCount(ev.length);
       setRateioDiag(diag);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar cadastro da revisão");
@@ -147,8 +152,9 @@ export function RevisaoCadastroPanel({
       { id: "medicao" as const, label: "Medição" },
       { id: "investimentos" as const, label: "Investimentos", badge: investimentos.length },
       { id: "recursos" as const, label: "Recursos", badge: vinculos.length },
+      { id: "evidencias" as const, label: "Evidências", badge: evidenciasCount || undefined },
     ],
-    [investimentos.length, vinculos.length]
+    [investimentos.length, vinculos.length, evidenciasCount]
   );
 
   async function handleSaveRevisaoDatas(e: React.FormEvent) {
@@ -280,6 +286,14 @@ export function RevisaoCadastroPanel({
             options={options}
             recursos={recursos}
             vinculos={vinculos}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
+          />
+        ) : null}
+        {activeTab === "evidencias" ? (
+          <RevisaoEvidenciasSection
+            revisaoId={revisao.revisao_id}
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}

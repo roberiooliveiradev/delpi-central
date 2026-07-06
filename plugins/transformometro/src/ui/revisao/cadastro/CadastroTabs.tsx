@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type CadastroTabId = "vigencia" | "medicao" | "investimentos" | "recursos";
+export type CadastroTabId = "vigencia" | "medicao" | "investimentos" | "recursos" | "evidencias";
 
 export type CadastroTabDef = {
   id: CadastroTabId;

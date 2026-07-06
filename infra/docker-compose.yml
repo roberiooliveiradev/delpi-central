@@ -1094,7 +1094,12 @@ services:
       PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
 
+      TM_REVISION_EVIDENCE_UPLOAD_DIR: ${TM_REVISION_EVIDENCE_UPLOAD_DIR:-/app/data/revisao-evidencias}
+
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+    volumes:
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/revisao-evidencias:/app/data/revisao-evidencias
 
     depends_on:
       - keycloak

@@ -57,5 +57,10 @@ class Settings:
     PLUGINS_DB_CONNECT_TIMEOUT: str = _get_env("PLUGINS_DB_CONNECT_TIMEOUT", default="5")
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
 
+    TM_REVISION_EVIDENCE_UPLOAD_DIR: str = _get_env(
+        "TM_REVISION_EVIDENCE_UPLOAD_DIR",
+        default="/app/data/revisao-evidencias",
+    )
+
 
 settings = Settings()

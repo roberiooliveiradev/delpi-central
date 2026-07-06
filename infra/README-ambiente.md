@@ -223,6 +223,19 @@ docker exec delpi-api-delpi ls -la /app/data/pac-evidences
 
 Anexos enviados **antes** deste volume precisam ser **reenviados** (não há backup automático).
 
+## Evidências de revisão (transformometro-api)
+
+Uploads de evidências por revisão ficam em `/app/data/revisao-evidencias` no container `transformometro-api` (metadado em `transformometro.revisao_evidencias`).
+
+| Variável | Default no container | Host (volume) |
+|----------|----------------------|---------------|
+| `TM_REVISION_EVIDENCE_UPLOAD_DIR` | `/app/data/revisao-evidencias` | `${DELPI_DATA_HOST_DIR}/revisao-evidencias` |
+
+```bash
+sudo mkdir -p /var/lib/delpi/revisao-evidencias
+docker compose -f docker-compose.yml up -d --force-recreate transformometro-api
+```
+
 ---
 
 ## Logs de aplicação persistentes (api-delpi)
