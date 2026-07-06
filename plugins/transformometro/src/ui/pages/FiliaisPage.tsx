@@ -159,7 +159,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     <TransformometroShell>
       <PageHeader
         title="Unidades"
-        subtitle="Cadastro de unidades — base para instâncias, setores e escopo do dashboard"
+        subtitle="Cadastro de unidades — base para instâncias, departamentos e escopo do dashboard"
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.filiais}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
@@ -190,7 +190,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
           className="ds-ghost-btn"
           onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.setores)}
         >
-          Setores
+          Departamentos
         </button>{" "}
         e{" "}
         <button

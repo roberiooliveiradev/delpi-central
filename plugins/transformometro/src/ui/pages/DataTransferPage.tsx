@@ -23,8 +23,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 
 const ENTITY_LABELS: Record<string, string> = {
   filiais: "Unidades",
-  setores: "Setores",
-  setor_filiais: "Setor × unidade",
+  setores: "Departamentos",
+  setor_filiais: "Departamento × unidade",
   processos: "Processos",
   processo_instancias: "Instâncias de processo",
   revisoes: "Revisões",
@@ -111,7 +111,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     }
     if (mode === "replace") {
       const ok = window.confirm(
-        "Substituir todos os dados apagará setores, processos, revisões, medições, investimentos e recursos atuais. Deseja continuar?"
+        "Substituir todos os dados apagará departamentos, processos, revisões, medições, investimentos e recursos atuais. Deseja continuar?"
       );
       if (!ok) return;
     }

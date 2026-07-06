@@ -35,7 +35,7 @@ export function PrintReportSummary({
           <dd>{branchLabel}</dd>
         </div>
         <div>
-          <dt>Setor</dt>
+          <dt>Departamento</dt>
           <dd>{setorLabel}</dd>
         </div>
         <div>

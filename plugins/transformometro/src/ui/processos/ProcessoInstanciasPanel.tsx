@@ -485,7 +485,7 @@ export function ProcessoInstanciasPanel({
       },
       {
         key: "setor",
-        header: "Setores",
+        header: "Departamentos",
         headerHint: TM_HELP_TOOLTIPS.instancias.setores,
         render: (row) => formatSetores(row) || "—",
       },
@@ -598,14 +598,14 @@ export function ProcessoInstanciasPanel({
   const setoresGrid = (
     <div className="ds-filter-box tm-inst-form__field--full">
       <span className="ds-field-label">
-        <FieldLabel label="Setores *" hint={TM_HELP_TOOLTIPS.instancias.setores} />
+        <FieldLabel label="Departamentos *" hint={TM_HELP_TOOLTIPS.instancias.setores} />
       </span>
-      <div className="tm-check-grid" role="group" aria-label="Setores da instância">
+      <div className="tm-check-grid" role="group" aria-label="Departamentos da instância">
         {setoresDisponiveis.length === 0 ? (
           <p className="ds-hint">
             {!duplicateSourceId && !todasFiliais && filialIds.length === 0
-              ? "Selecione ao menos uma unidade para listar os setores."
-              : "Nenhum setor disponível para esta seleção."}
+              ? "Selecione ao menos uma unidade para listar os departamentos."
+              : "Nenhum departamento disponível para esta seleção."}
           </p>
         ) : (
           setoresDisponiveis.map((setor) => {
@@ -687,21 +687,21 @@ export function ProcessoInstanciasPanel({
           <h2 className="ds-section-title">{formTitle}</h2>
           {isCreate ? (
             <p className="ds-hint">
-              Marque uma ou mais unidades e os setores vinculados. Criamos uma instância por unidade;
-              setores já usados em uma unidade aparecem desabilitados.
+              Marque uma ou mais unidades e os departamentos vinculados. Criamos uma instância por unidade;
+              departamentos já usados em uma unidade aparecem desabilitados.
             </p>
           ) : null}
           {editingInstanciaId ? (
             <p className="ds-hint">
               {editingHasRevisoes
                 ? "Edição liberada. Trocar a unidade reatribui as revisões ao novo destino e recalcula o dashboard (pediremos confirmação). Unidades extras marcadas criam novas instâncias."
-                : "Edite unidades, setores, rótulo e status. A instância assume a unidade marcada; unidades extras criam novas instâncias."}
+                : "Edite unidades, departamentos, rótulo e status. A instância assume a unidade marcada; unidades extras criam novas instâncias."}
             </p>
           ) : null}
           {duplicateSourceId ? (
             <p className="ds-hint">
               Replica a timeline (revisões, medições, investimentos e vínculos). Marque uma ou mais
-              unidades e setores de destino: cada par unidade × setor livre vira uma cópia. Setores
+              unidades e departamentos de destino: cada par unidade × departamento livre vira uma cópia. Departamentos
               já em uso aparecem desabilitados.
             </p>
           ) : null}
@@ -741,7 +741,7 @@ export function ProcessoInstanciasPanel({
 
                   {skippedFiliais.length > 0 ? (
                     <p className="ds-hint">
-                      Sem setor livre para: {skippedFiliais.join(", ")}. Essas unidades serão
+                      Sem departamento livre para: {skippedFiliais.join(", ")}. Essas unidades serão
                       ignoradas.
                     </p>
                   ) : null}
@@ -802,7 +802,7 @@ export function ProcessoInstanciasPanel({
 
                   {skippedFiliais.length > 0 ? (
                     <p className="ds-hint">
-                      Sem setor livre para: {skippedFiliais.join(", ")}. Essas unidades serão
+                      Sem departamento livre para: {skippedFiliais.join(", ")}. Essas unidades serão
                       ignoradas.
                     </p>
                   ) : null}

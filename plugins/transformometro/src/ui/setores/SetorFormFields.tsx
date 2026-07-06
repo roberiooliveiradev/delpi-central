@@ -40,7 +40,7 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
         <label htmlFor="tm-setor-nome">
-          <FieldLabel label="Nome do setor *" hint={TM_HELP_TOOLTIPS.setores.nome} />
+          <FieldLabel label="Nome do departamento *" hint={TM_HELP_TOOLTIPS.setores.nome} />
         </label>
         <input
           id="tm-setor-nome"

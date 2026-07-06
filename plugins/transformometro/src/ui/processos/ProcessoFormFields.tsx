@@ -69,7 +69,7 @@ export function ProcessoFormFields({
           </div>
           <div className="ds-filter-box">
             <label htmlFor="tm-proc-setor">
-              <FieldLabel label="Setor *" hint={TM_HELP_TOOLTIPS.processos.setor} />
+              <FieldLabel label="Departamento *" hint={TM_HELP_TOOLTIPS.processos.setor} />
             </label>
             <select
               id="tm-proc-setor"

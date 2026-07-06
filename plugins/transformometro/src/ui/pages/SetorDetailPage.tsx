@@ -83,7 +83,7 @@ export function SetorDetailPage({
       setOptions(opts);
       if (row) setForm(setorFormFromEntity(row));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar setor");
+      setError(err instanceof Error ? err.message : "Erro ao carregar departamento");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -107,7 +107,7 @@ export function SetorDetailPage({
 
   async function handleSave() {
     if (form.filiais.length === 0) {
-      setError("Selecione ao menos uma unidade para o setor.");
+      setError("Selecione ao menos uma unidade para o departamento.");
       return;
     }
     setSaving(true);
@@ -131,7 +131,7 @@ export function SetorDetailPage({
       setSetor(updated);
       sectionEdit.stopEdit("setor");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar setor");
+      setError(err instanceof Error ? err.message : "Erro ao salvar departamento");
     } finally {
       setSaving(false);
     }
@@ -140,13 +140,13 @@ export function SetorDetailPage({
   async function handleDelete() {
     if (!setor) return;
     const label = `${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}`;
-    if (!window.confirm(`Excluir setor ${label}?`)) return;
+    if (!window.confirm(`Excluir departamento ${label}?`)) return;
     setError(null);
     try {
       await deleteSetor(setor.setor_id, getAccessToken);
       onBack();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir setor");
+      setError(err instanceof Error ? err.message : "Erro ao excluir departamento");
     }
   }
 
@@ -166,8 +166,8 @@ export function SetorDetailPage({
     return (
       <TransformometroShell>
         <LoadingActivityCard
-          title="Carregando setor"
-          description="Dados do setor e unidades vinculadas."
+          title="Carregando departamento"
+          description="Dados do departamento e unidades vinculadas."
           progressPercent={loadingProgress}
         />
       </TransformometroShell>
@@ -178,7 +178,7 @@ export function SetorDetailPage({
     return (
       <TransformometroShell>
         <div className="ds-state ds-state--error" role="alert">
-          <p>{error ?? "Setor não encontrado."}</p>
+          <p>{error ?? "Departamento não encontrado."}</p>
           <button type="button" className="ds-ghost-btn" onClick={onBack}>
             Voltar à lista
           </button>
@@ -188,7 +188,7 @@ export function SetorDetailPage({
   }
 
   const title = isCreate
-    ? "Novo setor"
+    ? "Novo departamento"
     : `${setor?.codigo_setor ?? setorId} — ${setor?.nome_setor ?? ""}`;
 
   return (
@@ -197,7 +197,7 @@ export function SetorDetailPage({
         title={title}
         subtitle={
           isCreate
-            ? "Cadastre setor e vínculo com unidades"
+            ? "Cadastre departamento e vínculo com unidades"
             : `Status: ${setor?.status_setor ?? "ativo"}`
         }
         currentPath={pathname ?? (isCreate ? buildSetorPath(CATALOG_CREATE.setor) : buildSetorPath(setorId))}
@@ -224,9 +224,9 @@ export function SetorDetailPage({
 
       {options ? (
         <EditableSectionCard
-          title="Dados do setor"
+          title="Dados do departamento"
           hint={TM_HELP_TOOLTIPS.setores.nome}
-          description="Código, nome, status e unidades onde o setor aparece nos processos."
+          description="Código, nome, status e unidades onde o departamento aparece nos processos."
           isEditing={isCreate || sectionEdit.isEditing("setor")}
           onEdit={() => sectionEdit.startEdit("setor")}
           onCancel={cancelEdit}

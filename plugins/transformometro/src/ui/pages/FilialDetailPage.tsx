@@ -186,7 +186,7 @@ export function FilialDetailPage({
         title={title}
         subtitle={
           isCreate
-            ? "Cadastre uma unidade para instâncias, setores e escopo do dashboard"
+            ? "Cadastre uma unidade para instâncias, departamentos e escopo do dashboard"
             : `Status: ${filial?.status_filial ?? "ativo"}`
         }
         currentPath={pathname ?? (isCreate ? buildFilialPath(CATALOG_CREATE.filial) : buildFilialPath(filialId))}
@@ -215,7 +215,7 @@ export function FilialDetailPage({
         <EditableSectionCard
           title="Dados da unidade"
           hint={TM_HELP_TOOLTIPS.filiais.nome}
-          description="Código TOTVS, nome e status usados em setores e processos."
+          description="Código TOTVS, nome e status usados em departamentos e processos."
           isEditing={isCreate || sectionEdit.isEditing("filial")}
           onEdit={() => sectionEdit.startEdit("filial")}
           onCancel={cancelEdit}

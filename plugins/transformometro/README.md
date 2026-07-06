@@ -11,7 +11,7 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 | `/apps/transformometro/processos/{id}` | Mestre + painel instâncias + revisões |
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão |
 | `/apps/transformometro/filiais` | CRUD filiais |
-| `/apps/transformometro/setores` | Catálogo de setores |
+| `/apps/transformometro/setores` | Catálogo de departamentos |
 | `/apps/transformometro/recursos` | Catálogo global (`escopo_recurso`) |
 | `/apps/transformometro/dados` | Export/import backup JSON |
 

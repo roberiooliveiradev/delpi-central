@@ -9,9 +9,9 @@ export const TM_HELP_TOOLTIPS = {
     codigoTotvs: "Código da unidade no ERP (TOTVS), ex.: 01, 02.",
     nome: "Nome exibido nas telas, relatórios e filtros.",
     unidade: "Unidade operacional (filial) associada ao registro.",
-    unidades: "Unidades em que o setor ou vínculo está ativo.",
-    setor: "Setor operacional dentro da unidade.",
-    setores: "Setores vinculados à instância operacional.",
+    unidades: "Unidades em que o departamento ou vínculo está ativo.",
+    setor: "Departamento operacional dentro da unidade.",
+    setores: "Departamentos vinculados à instância operacional.",
     status: "Situação do cadastro — ativos entram nos formulários e no dashboard.",
     rotulo: "Texto livre para identificar a instância (opcional).",
     versao: "Número ou rótulo da revisão do processo (ex.: 1.0.0, 2.1).",
@@ -63,7 +63,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   dashboard: {
     view:
-      "Alterna o recorte da análise: Consolidado (todas as unidades), por Unidade ou por Departamento (unidade × setor). No Consolidado, instâncias multi-unidade multiplicam economia bruta, líquida e horas pelo nº de unidades ativas; nas visões Unidade/Departamento o fator é 1.",
+      "Alterna o recorte da análise: Consolidado (todas as unidades), por Unidade ou por Departamento (unidade × departamento). No Consolidado, instâncias multi-unidade multiplicam economia bruta, líquida e horas pelo nº de unidades ativas; nas visões Unidade/Departamento o fator é 1.",
     competencia:
       "Escolhe um mês (competência) e preenche o período automaticamente. Ao ajustar as datas para meses diferentes, a competência fica em branco.",
     dateStart: "Início do período analisado (competência mensal). Filtra economias, custos e horas.",
@@ -71,7 +71,7 @@ export const TM_HELP_TOOLTIPS = {
     unidade:
       "Restringe a análise a uma ou mais unidades operacionais. Habilitado nas visões Unidade e Departamento.",
     setor:
-      "Restringe a análise a um ou mais setores das unidades selecionadas. Disponível apenas na visão Departamento.",
+      "Restringe a análise a um ou mais departamentos das unidades selecionadas. Disponível apenas na visão Departamento.",
     alerts:
       "Processos com pelo menos 3 meses consecutivos de economia líquida negativa no recorte filtrado — sinal de atenção.",
     kpis: {
@@ -106,20 +106,20 @@ export const TM_HELP_TOOLTIPS = {
       "Código da unidade no ERP (TOTVS), ex.: 01, 02. Não muda após criado — identifica a unidade nas integrações.",
     nome: "Nome exibido da unidade nas telas e relatórios (ex.: Santa Catarina).",
     status:
-      "Unidades ativas aparecem nos formulários de setores, processos e no filtro do dashboard. Inativas ficam ocultas.",
+      "Unidades ativas aparecem nos formulários de departamentos, processos e no filtro do dashboard. Inativas ficam ocultas.",
     incluirInativas: "Mostra também unidades desativadas na listagem do catálogo.",
   },
   setores: {
-    codigo: "Identificador do setor (ex.: engenharia, qualidade). Não muda após criado.",
-    nome: "Nome exibido do setor nas telas e relatórios.",
+    codigo: "Identificador do departamento (ex.: engenharia, qualidade). Não muda após criado.",
+    nome: "Nome exibido do departamento nas telas e relatórios.",
     unidadesVinculadas:
-      "Unidades em que este setor existe. Um setor só pode ser usado em processos das unidades vinculadas.",
-    status: "Setores ativos e vinculados à unidade aparecem nos formulários de processo.",
-    filtroUnidade: "Filtra o catálogo para exibir apenas setores vinculados à unidade escolhida.",
+      "Unidades em que este departamento existe. Um departamento só pode ser usado em processos das unidades vinculadas.",
+    status: "Departamentos ativos e vinculados à unidade aparecem nos formulários de processo.",
+    filtroUnidade: "Filtra o catálogo para exibir apenas departamentos vinculados à unidade escolhida.",
   },
   processos: {
     codigo: "Código gerado automaticamente ao criar o processo (PROC-XXXX).",
-    nome: "Nome do processo (mestre). A unidade e o setor entram na instância operacional.",
+    nome: "Nome do processo (mestre). A unidade e o departamento entram na instância operacional.",
     familia:
       "Agrupador do processo (ex.: ferramenta ou tema). Usado para consolidar a economia por família no dashboard.",
     agrupadorFerramenta: "Ferramenta ou plataforma principal (ex.: ChatGPT, Power Automate).",
@@ -127,7 +127,7 @@ export const TM_HELP_TOOLTIPS = {
     objetivo: "Objetivo de negócio do processo — contexto para relatórios.",
     descricao: "Descrição livre do processo e do escopo operacional.",
     unidade: "Unidade da primeira instância operacional criada junto com o processo.",
-    setor: "Setor da primeira instância operacional, dentro da unidade escolhida.",
+    setor: "Departamento da primeira instância operacional, dentro da unidade escolhida.",
     status:
       "Processos ativos entram no dashboard. Descontinuado e Em implantação ajudam a controlar o ciclo de vida.",
     filtroUnidade: "Filtra a lista de processos por unidade (aplicado na API).",
@@ -139,7 +139,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   instancias: {
     escopo:
-      "Cada instância pertence a uma unidade (ou a todas as ativas, instância multi-unidade) e amarra um ou mais setores. As revisões ficam na instância — baseline e medições são independentes por ambiente.",
+      "Cada instância pertence a uma unidade (ou a todas as ativas, instância multi-unidade) e amarra um ou mais departamentos. As revisões ficam na instância — baseline e medições são independentes por ambiente.",
     todasUnidades:
       "Instância multi-unidade: uma única timeline válida para todas as unidades ativas (ex.: mesmo processo idêntico em SC e ES). Evita duplicar cadastro por unidade quando baseline, volumes e investimentos são iguais.",
     multiplicadorConsolidado:
@@ -149,7 +149,7 @@ export const TM_HELP_TOOLTIPS = {
     unidades:
       "Marque as unidades da instância. No cadastro, criamos uma instância por unidade marcada; na edição, unidades extras viram novas instâncias.",
     setores:
-      "Setores vinculados à instância. Setores já usados por outra instância na mesma unidade aparecem como 'em uso' e ficam desabilitados.",
+      "Departamentos vinculados à instância. Departamentos já usados por outra instância na mesma unidade aparecem como 'em uso' e ficam desabilitados.",
     status: "Instâncias inativas deixam de contribuir para os números do dashboard.",
     rotulo: "Texto livre para identificar a instância (ex.: 'Matriz — rollout Q2'). Opcional.",
   },
@@ -207,7 +207,7 @@ export const TM_HELP_TOOLTIPS = {
     inicioVigencia: "Data em que o recurso passa a existir no catálogo.",
     fimVigencia: "Data de encerramento — vínculos posteriores não são permitidos.",
     escopo:
-      "Alcance do custo do recurso: Empresa (pool global), Unidade (mesma unidade da instância) ou Departamento (unidade × setor).",
+      "Alcance do custo do recurso: Empresa (pool global), Unidade (mesma unidade da instância) ou Departamento (unidade × departamento).",
     criterioRateio:
       "Como o custo do recurso é dividido entre os vínculos: igualitário, por revisões ativas ou por peso do vínculo.",
     baseCompetencia:
@@ -227,9 +227,9 @@ export const TM_HELP_TOOLTIPS = {
   },
   dataTransfer: {
     export:
-      "Gera um backup em JSON com todo o cadastro (unidades, setores, processos, instâncias e revisões).",
+      "Gera um backup em JSON com todo o cadastro (unidades, departamentos, processos, instâncias e revisões).",
     importFormat:
-      "A importação detecta automaticamente backup legado (unidade/setor nos processos) ou Playbook 18 (instâncias). Arquivos fora desse padrão são rejeitados.",
+      "A importação detecta automaticamente backup legado (unidade/departamento nos processos) ou Playbook 18 (instâncias). Arquivos fora desse padrão são rejeitados.",
     previewEntidade: "Tipo de registro no backup (unidades, processos, revisões…).",
     previewNoArquivo: "Quantidade de registros deste tipo no arquivo importado.",
     previewInserir: "Registros novos que serão criados no banco.",

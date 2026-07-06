@@ -54,7 +54,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       setItems(list.items);
       setOptions(opts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar setores");
+      setError(err instanceof Error ? err.message : "Erro ao carregar departamentos");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -71,13 +71,13 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [options?.filiais]);
 
   async function handleDelete(setor: Setor) {
-    if (!window.confirm(`Excluir setor ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`)) return;
+    if (!window.confirm(`Excluir departamento ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`)) return;
     setError(null);
     try {
       await deleteSetor(setor.setor_id, getAccessToken);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir setor");
+      setError(err instanceof Error ? err.message : "Erro ao excluir departamento");
     }
   }
 
@@ -92,7 +92,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     },
     {
       key: "nome_setor",
-      header: "Setor",
+      header: "Departamento",
       headerHint: C.setor,
       sortable: true,
       className: "ds-table__col--wide",
@@ -155,8 +155,8 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     return (
       <TransformometroShell>
         <LoadingActivityCard
-          title="Carregando setores"
-          description="Catálogo de setores vinculados às unidades."
+          title="Carregando departamentos"
+          description="Catálogo de departamentos vinculados às unidades."
           progressPercent={catalogLoadingProgress}
         />
       </TransformometroShell>
@@ -166,8 +166,8 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   return (
     <TransformometroShell>
       <PageHeader
-        title="Setores"
-        subtitle="Cadastro de setores e vínculo com unidades — usado nos processos"
+        title="Departamentos"
+        subtitle="Cadastro de departamentos e vínculo com unidades — usado nos processos"
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.setores}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
@@ -179,7 +179,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
             onClick={() => onNavigate(buildSetorPath(CATALOG_CREATE.setor))}
           >
             <Plus size={16} />
-            Novo setor
+            Novo departamento
           </button>
         }
       />
@@ -192,7 +192,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <p className="ds-hint">
-        Setores ativos e vinculados à unidade aparecem no formulário de{" "}
+        Departamentos ativos e vinculados à unidade aparecem no formulário de{" "}
         <button
           type="button"
           className="ds-ghost-btn"
@@ -212,7 +212,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       </p>
 
       <DataTableSection
-        title="Catálogo de setores"
+        title="Catálogo de departamentos"
         filters={
           <div className="ds-filters-row">
             <div className="ds-filter-box">
@@ -225,7 +225,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
                 <option value="">Todas</option>
                 {(options?.filiais ?? []).map((filial) => (
                   <option key={filial.id} value={filial.id}>
-                    {filial.id} — {filial.label}
+                    {filial.label}
                   </option>
                 ))}
               </select>
@@ -239,12 +239,12 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
         refreshing={refreshing}
         hideSearch
         pageSize={15}
-        emptyMessage="Nenhum setor cadastrado. Use Novo setor para incluir."
+        emptyMessage="Nenhum departamento cadastrado. Use Novo departamento para incluir."
         onRowClick={(row) => onNavigate(buildSetorPath(row.setor_id))}
         footer={
           <p className="ds-hint">
             {items.length} registro(s)
-            {filialFilter ? ` · filtrados para unidade ${filialFilter}` : ""}
+            {filialFilter ? ` · filtrados para unidade ${filialLabels.get(filialFilter) ?? filialFilter}` : ""}
           </p>
         }
       />

@@ -651,7 +651,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             labelHint={TM_HELP_TOOLTIPS.dashboard.unidade}
             options={(options?.filiais ?? []).map((filial) => ({
               value: filial.id,
-              label: `${filial.id} — ${filial.label}`,
+              label: filial.label,
             }))}
             selectedValues={filters.filialIds}
             onChange={(values) =>
@@ -675,7 +675,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             searchable
           />
           <MultiSelectField
-            label="Setor"
+            label="Departamento"
             labelHint={TM_HELP_TOOLTIPS.dashboard.setor}
             options={setoresFiltrados.map((setor) => ({
               value: setor.id,

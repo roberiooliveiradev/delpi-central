@@ -118,7 +118,7 @@
     },
     {
       "path": "/apps/transformometro/setores",
-      "label": "Setores",
+      "label": "Departamentos",
       "permission": "transformometro.processes.manage",
       "icon": "building",
       "entry": null,

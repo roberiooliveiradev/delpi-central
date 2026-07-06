@@ -251,7 +251,7 @@ export function ProcessosPage({
           </h2>
           {!editingId ? (
             <p className="ds-hint">
-              Cadastre só o mestre aqui. Unidade e setor entram na primeira instância operacional
+              Cadastre só o mestre aqui. Unidade e departamento entram na primeira instância operacional
               na tela seguinte.
             </p>
           ) : null}

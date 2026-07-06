@@ -34,7 +34,7 @@ export function InstanciaReadView({ instancia, options }: Props) {
         <dd>{instancia.status_instancia ?? "ativo"}</dd>
       </div>
       <div>
-        <dt><FieldLabel label="Setores" hint={I.setores} /></dt>
+        <dt><FieldLabel label="Departamentos" hint={I.setores} /></dt>
         <dd>{formatSetores(instancia) || "—"}</dd>
       </div>
       <div>
