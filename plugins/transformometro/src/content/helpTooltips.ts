@@ -231,6 +231,36 @@ export const TM_HELP_TOOLTIPS = {
     novoRecursoCatalogo: "Cadastra um recurso novo no catálogo e seleciona para vínculo.",
     vinculoAtivo: "Vínculo considerado no rateio mensal quando marcado como ativo.",
   },
+  diagramEditor: {
+    usoGeral:
+      "Adicione nós pela paleta (entram na faixa ativa). Arraste para posicionar; conecte arrastando de um ponto de ancoragem a outro. Duplo clique no nó ou na seta edita o texto. Delete/Backspace remove a seleção. Use Auto-layout para reorganizar o fluxo.",
+    nodes: {
+      start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
+      process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
+      decision: "Gateway exclusivo (losango). Use duas ou mais saídas rotuladas (ex.: Sim/Não).",
+      document: "Documento ou artefato produzido ou consumido na etapa.",
+      data: "Dado ou sistema de registro referenciado no fluxo.",
+      subprocess: "Subprocesso encapsulado — etapa composta por fluxo interno.",
+      end: "Evento de fim (círculo duplo). Todo caminho deve terminar em um fim.",
+      comment: "Nota explicativa — não participa da lógica do fluxo.",
+    },
+    addLane:
+      "Adiciona uma faixa horizontal (swimlane) para separar papéis ou áreas (ex.: Comercial, Engenharia). Novos nós entram na faixa selecionada.",
+    autoLayout:
+      "Reorganiza automaticamente nós e setas em grade legível, respeitando as faixas. Útil após adicionar muitos elementos.",
+    templateLinear: "Substitui o diagrama por um fluxo linear simples (início → atividades → fim) para começar rápido.",
+    templateDecision:
+      "Modelo com bifurcação: início, atividade, decisão Sim/Não e dois caminhos convergindo no fim.",
+    templateSwimlanes:
+      "Exemplo BPMN com duas faixas (Comercial e Engenharia), handoff e gateways — ponto de partida para processos cross-funcionais.",
+    laneSelect: "Faixa onde novos nós da paleta serão inseridos. Também define qual faixa renomear ou remover.",
+    laneRename: "Nome exibido no cabeçalho da faixa. Duplo clique no cabeçalho no canvas também abre a edição.",
+    laneApply: "Aplica o nome digitado à faixa selecionada.",
+    laneRemove:
+      "Remove a faixa ativa. Os nós nela são realocados na faixa restante. É necessário manter ao menos uma faixa.",
+    canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
+    mermaidTab: "Visualização somente leitura do código Mermaid gerado a partir do diagrama.",
+  },
   dataTransfer: {
     export:
       "Gera um backup em JSON com todo o cadastro (unidades, departamentos, processos, instâncias e revisões).",

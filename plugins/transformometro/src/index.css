@@ -3141,6 +3141,39 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   align-items: center;
 }
 
+.dashboard-transformometro .tm-diagram-editor__tool-wrap {
+  border-bottom: none;
+  cursor: default;
+}
+
+.dashboard-transformometro .tm-diagram-editor__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ds-font-xs);
+}
+
+.dashboard-transformometro .tm-diagram-editor__tool-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dashboard-transformometro .tm-diagram-editor__hint-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ds-accent);
+  font-weight: 600;
+}
+
+.dashboard-transformometro .tm-diagram-editor__hint-wrap {
+  border-bottom: none;
+}
+
+.dashboard-transformometro .tm-diagram-editor__tab-wrap {
+  border-bottom: none;
+}
+
 .dashboard-transformometro .tm-diagram-editor__hint {
   flex-basis: 100%;
   margin: 0;
@@ -3516,6 +3549,10 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-diagram-lane-toolbar select,
 .dashboard-transformometro .tm-diagram-lane-toolbar input {
   min-width: 140px;
+}
+
+.dashboard-transformometro .tm-diagram-lane-toolbar .tm-field__label {
+  margin-right: 4px;
 }
 
 .dashboard-transformometro .tm-diagram-lane-toolbar__rename {

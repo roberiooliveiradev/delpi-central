@@ -13,8 +13,17 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useState, type RefObject } from "react";
+import { CircleHelp } from "lucide-react";
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { HelpTooltip } from "../HelpTooltip";
+import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
+import {
+  DIAGRAM_EDITOR_ACTIONS,
+  FLOWCHART_NODE_ICONS,
+  flowchartNodeHint,
+} from "./flowchartEditorToolbar";
 import {
   autoLayoutFlowchart,
   canvasHeightForLanes,
@@ -468,16 +477,18 @@ function FlowchartEditorInner({
       {!readOnly && showTemplates ? (
         <div className="tm-diagram-editor__toolbar">
           <div className="tm-diagram-editor__palette">
-            {FLOWCHART_NODE_PALETTE.map((item) => (
-              <button
-                key={item.type}
-                type="button"
-                className="ds-ghost-btn tm-diagram-editor__palette-btn"
-                onClick={() => addNode(item.type)}
-              >
-                {item.label}
-              </button>
-            ))}
+            {FLOWCHART_NODE_PALETTE.map((item) => {
+              const Icon = FLOWCHART_NODE_ICONS[item.type];
+              return (
+                <DiagramEditorToolbarButton
+                  key={item.type}
+                  label={item.label}
+                  hint={flowchartNodeHint(item.type)}
+                  icon={Icon}
+                  onClick={() => addNode(item.type)}
+                />
+              );
+            })}
           </div>
           <div className="tm-diagram-editor__templates">
             {lanes.length ? (
@@ -492,28 +503,37 @@ function FlowchartEditorInner({
                 disableRemove={lanes.length <= 1}
               />
             ) : null}
-            <button type="button" className="ds-ghost-btn" onClick={addLane}>
-              + Faixa (swimlane)
-            </button>
-            <button type="button" className="ds-ghost-btn" onClick={runAutoLayout}>
-              Auto-layout
-            </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => applyTemplate("linear")}>
-              Template linear
-            </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => applyTemplate("decision")}>
-              Template com decisão
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={() => applyTemplate("swimlanes")}
-            >
-              Template BPMN + swimlanes
-            </button>
+            {DIAGRAM_EDITOR_ACTIONS.map((action) => (
+              <DiagramEditorToolbarButton
+                key={action.id}
+                label={action.label}
+                hint={action.hint}
+                icon={action.icon}
+                onClick={() => {
+                  if (action.id === "addLane") addLane();
+                  else if (action.id === "autoLayout") runAutoLayout();
+                  else if (action.id === "templateLinear") applyTemplate("linear");
+                  else if (action.id === "templateDecision") applyTemplate("decision");
+                  else if (action.id === "templateSwimlanes") applyTemplate("swimlanes");
+                }}
+              />
+            ))}
           </div>
           <p className="tm-diagram-editor__hint ds-hint">
-            Duplo clique no nó ou na seta para editar o texto · Delete/Backspace remove seleção
+            <HelpTooltip
+              content={TM_HELP_TOOLTIPS.diagramEditor.usoGeral}
+              ariaLabel="Como usar o editor de diagrama"
+              wrap
+              placement="bottom"
+              className="tm-diagram-editor__hint-wrap"
+            >
+              <span className="tm-diagram-editor__hint-link">
+                <CircleHelp size={14} aria-hidden="true" />
+                Como usar
+              </span>
+            </HelpTooltip>
+            {" · "}
+            Passe o mouse nos botões para ver dicas de cada ferramenta
             {lanes.length ? " · Duplo clique no cabeçalho da faixa para renomear" : ""}
           </p>
         </div>
@@ -521,26 +541,44 @@ function FlowchartEditorInner({
 
       {showPreviewTab ? (
         <div className="tm-diagram-editor__tabs">
-          <button
-            type="button"
-            className={
-              activeTab === "canvas" ? "tm-diagram-editor__tab is-active" : "tm-diagram-editor__tab"
-            }
-            onClick={() => setActiveTab("canvas")}
+          <HelpTooltip
+            content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
+            ariaLabel="Ajuda: Canvas"
+            wrap
+            placement="bottom"
+            className="tm-diagram-editor__tab-wrap"
           >
-            Canvas
-          </button>
-          <button
-            type="button"
-            className={
-              activeTab === "mermaid"
-                ? "tm-diagram-editor__tab is-active"
-                : "tm-diagram-editor__tab"
-            }
-            onClick={() => setActiveTab("mermaid")}
+            <button
+              type="button"
+              className={
+                activeTab === "canvas"
+                  ? "tm-diagram-editor__tab is-active"
+                  : "tm-diagram-editor__tab"
+              }
+              onClick={() => setActiveTab("canvas")}
+            >
+              Canvas
+            </button>
+          </HelpTooltip>
+          <HelpTooltip
+            content={TM_HELP_TOOLTIPS.diagramEditor.mermaidTab}
+            ariaLabel="Ajuda: Preview Mermaid"
+            wrap
+            placement="bottom"
+            className="tm-diagram-editor__tab-wrap"
           >
-            Preview Mermaid
-          </button>
+            <button
+              type="button"
+              className={
+                activeTab === "mermaid"
+                  ? "tm-diagram-editor__tab is-active"
+                  : "tm-diagram-editor__tab"
+              }
+              onClick={() => setActiveTab("mermaid")}
+            >
+              Preview Mermaid
+            </button>
+          </HelpTooltip>
         </div>
       ) : null}
 

@@ -1,4 +1,11 @@
+import { Check, Trash2 } from "lucide-react";
+
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { FlowchartLane } from "../../types/diagram";
+import { FieldLabel } from "../HelpTooltip";
+import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
+
+const D = TM_HELP_TOOLTIPS.diagramEditor;
 
 type Props = {
   lanes: FlowchartLane[];
@@ -28,7 +35,7 @@ export function FlowchartLaneToolbar({
   return (
     <div className="tm-diagram-lane-toolbar">
       <label className="tm-diagram-editor__lane-select">
-        Faixa ativa
+        <FieldLabel label="Faixa ativa" hint={D.laneSelect} />
         <select value={activeLaneId ?? ""} onChange={(event) => onActiveLaneChange(event.target.value)}>
           {lanes.map((lane) => (
             <option key={lane.id} value={lane.id}>
@@ -38,7 +45,7 @@ export function FlowchartLaneToolbar({
         </select>
       </label>
       <label className="tm-diagram-lane-toolbar__rename">
-        Nome da faixa
+        <FieldLabel label="Nome da faixa" hint={D.laneRename} />
         <input
           type="text"
           value={laneLabelDraft}
@@ -51,17 +58,19 @@ export function FlowchartLaneToolbar({
           }}
         />
       </label>
-      <button type="button" className="ds-ghost-btn" onClick={onRenameLane}>
-        Aplicar nome
-      </button>
-      <button
-        type="button"
-        className="ds-ghost-btn"
+      <DiagramEditorToolbarButton
+        label="Aplicar nome"
+        hint={D.laneApply}
+        icon={Check}
+        onClick={onRenameLane}
+      />
+      <DiagramEditorToolbarButton
+        label="Remover faixa"
+        hint={D.laneRemove}
+        icon={Trash2}
         onClick={onRemoveLane}
         disabled={disableRemove}
-      >
-        Remover faixa
-      </button>
+      />
     </div>
   );
 }
