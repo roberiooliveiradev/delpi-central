@@ -58,6 +58,8 @@ export type DataTableSectionProps<T> = {
   getRowClassName?: (row: T) => string | undefined;
   footer?: ReactNode;
   interactive?: boolean;
+  /** Botões ou ações no canto direito do cabeçalho (ex.: «Nova revisão»). */
+  headerActions?: ReactNode;
   /** Sem borda de card — uso dentro de outro `.ds-card` */
   embedded?: boolean;
 };
@@ -83,6 +85,7 @@ export function DataTableSection<T>({
   onRowClick,
   getRowClassName,
   footer,
+  headerActions,
   interactive = Boolean(onRowClick),
   embedded = false,
 }: DataTableSectionProps<T>) {
@@ -221,6 +224,7 @@ export function DataTableSection<T>({
             <span />
           )}
           <div className="ds-table-section__meta-group">
+            {headerActions}
             {hint ? <span className="ds-table-section__meta">{hint}</span> : null}
             <span className="ds-table-section__meta">{total} registro(s)</span>
           </div>

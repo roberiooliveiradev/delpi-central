@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -12,6 +12,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
@@ -75,6 +76,9 @@ export function InstanciaDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRevisaoForm, setShowRevisaoForm] = useState(false);
+  const pendingRevisaoScroll = useRef(false);
+  const consumedNovaRevisaoHash = useRef(false);
+  const { ref: revisoesSectionRef, scrollToRef: scrollToRevisoes } = useScrollToRef<HTMLElement>();
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
     cenario_tipo: "baseline",
@@ -141,6 +145,47 @@ export function InstanciaDetailPage({
   useEffect(() => {
     void load();
   }, [load]);
+
+  function buildNovaRevisaoFormState() {
+    return {
+      versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
+      cenario_tipo: revisoes.length ? "melhoria" : "baseline",
+      revisao_referencia_id: defaultReferenciaId,
+      data_inicio_vigencia: todayDateInput(),
+      data_implantacao: "",
+      data_fim_vigencia: "",
+      revisao_ativa: revisoes.length > 0,
+    };
+  }
+
+  function openNovaRevisaoForm() {
+    setRevForm(buildNovaRevisaoFormState());
+    if (showRevisaoForm) {
+      scrollToRevisoes();
+      return;
+    }
+    pendingRevisaoScroll.current = true;
+    setShowRevisaoForm(true);
+  }
+
+  function closeNovaRevisaoForm() {
+    setShowRevisaoForm(false);
+  }
+
+  useEffect(() => {
+    if (!showRevisaoForm || !pendingRevisaoScroll.current) return;
+    pendingRevisaoScroll.current = false;
+    scrollToRevisoes();
+  }, [showRevisaoForm, scrollToRevisoes]);
+
+  useEffect(() => {
+    if (loading || !instancia || consumedNovaRevisaoHash.current) return;
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#nova-revisao") return;
+    consumedNovaRevisaoHash.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    openNovaRevisaoForm();
+  }, [loading, instancia, revisoes.length, defaultReferenciaId]);
 
   async function handleDeleteRevisao(revisao: Revisao) {
     const label = revisaoDisplayLabel(revisao);
@@ -243,24 +288,9 @@ export function InstanciaDetailPage({
               <ArrowLeft size={16} />
               Processo
             </button>
-            <button
-              type="button"
-              className="ds-primary-btn"
-              onClick={() => {
-                setRevForm({
-                  versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
-                  cenario_tipo: revisoes.length ? "melhoria" : "baseline",
-                  revisao_referencia_id: defaultReferenciaId,
-                  data_inicio_vigencia: todayDateInput(),
-                  data_implantacao: "",
-                  data_fim_vigencia: "",
-                  revisao_ativa: revisoes.length > 0,
-                });
-                setShowRevisaoForm((v) => !v);
-              }}
-            >
+            <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
               <Plus size={16} />
-              {showRevisaoForm ? "Cancelar revisão" : "Nova revisão"}
+              Nova revisão
             </button>
             <button
               type="button"
@@ -313,6 +343,7 @@ export function InstanciaDetailPage({
           <ProcessoInstanciasPanel
             hideTable
             initialEditInstanciaId={instanciaId}
+            onCancelEdit={() => sectionEdit.cancelEdit("instancia")}
             instancias={[instancia]}
             selectedInstanciaId={instanciaId}
             options={options}
@@ -386,6 +417,7 @@ export function InstanciaDetailPage({
             instanciaId={instanciaId}
             getAccessToken={getAccessToken}
             onError={setError}
+            onSaved={() => sectionEdit.stopEdit("instancia_contexto")}
           />
         }
       />
@@ -418,6 +450,7 @@ export function InstanciaDetailPage({
         }
       />
 
+      <section ref={revisoesSectionRef} id="tm-instancia-revisoes" className="tm-panel-stack">
       {showRevisaoForm ? (
         <section className="ds-card ds-cadastro-form">
           <h2 className="ds-section-title">Nova revisão</h2>
@@ -476,6 +509,9 @@ export function InstanciaDetailPage({
             </div>
             <div className="ds-cadastro-form__actions">
               <button type="submit" className="ds-primary-btn">Salvar revisão</button>
+              <button type="button" className="ds-ghost-btn" onClick={closeNovaRevisaoForm}>
+                Cancelar
+              </button>
             </div>
           </form>
         </section>
@@ -494,12 +530,25 @@ export function InstanciaDetailPage({
         pageSize={10}
         emptyMessage="Nenhuma revisão nesta instância. Cadastre baseline e melhoria para mensurar economia."
         onRowClick={(r) => onNavigate(buildProcessoPath(processoId, r.revisao_id, instanciaId))}
+        headerActions={
+          showRevisaoForm ? (
+            <button type="button" className="ds-ghost-btn" onClick={closeNovaRevisaoForm}>
+              Cancelar revisão
+            </button>
+          ) : (
+            <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
+              <Plus size={16} />
+              Nova revisão
+            </button>
+          )
+        }
         footer={
           <p className="ds-hint">
             Abra uma revisão para cadastrar medição, investimentos, recursos compartilhados e evidências.
           </p>
         }
       />
+      </section>
     </TransformometroShell>
   );
 }

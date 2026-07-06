@@ -152,6 +152,11 @@ export const TM_HELP_TOOLTIPS = {
       "Selecione quais processos-chave desta instância operacional executa ou melhora.",
     contextoInstancia:
       "Metadados operacionais extras — responsável local, rollout e observações complementares.",
+    contextoResponsavel:
+      "Ponto focal operacional desta instância para rollout, dúvidas e acompanhamento local.",
+    contextoContato: "Telefone, e-mail ou canal preferencial do responsável local.",
+    contextoObservacoesRollout:
+      "Notas sobre implantação, dependências, restrições locais ou plano de comunicação.",
     mapeamentoRevisao:
       "Overlay textual as-is/to-be sobre o escopo WBS — rótulos e descrições da revisão.",
     arvoreVazia:

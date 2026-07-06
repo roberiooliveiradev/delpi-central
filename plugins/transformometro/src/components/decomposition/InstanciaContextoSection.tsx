@@ -8,12 +8,16 @@ import {
   saveInstanciaContexto,
 } from "../../data/api/transformometroDecompositionApi";
 import { emptyInstanciaContexto, type InstanciaContextoV1 } from "../../types/decomposition";
+import { InstanciaContextoReadView } from "./InstanciaContextoReadView";
+
+const C = TM_HELP_TOOLTIPS.decomposition;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   instanciaId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
   onError: (message: string | null) => void;
+  onSaved?: () => void;
 };
 
 export function InstanciaContextoSection({
@@ -22,6 +26,7 @@ export function InstanciaContextoSection({
   readOnly = false,
   embeddedInCard = false,
   onError,
+  onSaved,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,6 +55,7 @@ export function InstanciaContextoSection({
     try {
       await saveInstanciaContexto(instanciaId, contexto, getAccessToken);
       await load();
+      onSaved?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar contexto operacional.");
     } finally {
@@ -61,50 +67,53 @@ export function InstanciaContextoSection({
     return <p className="ds-hint">Carregando contexto operacional…</p>;
   }
 
+  if (readOnly) {
+    return (
+      <div className="tm-instancia-contexto">
+        <InstanciaContextoReadView contexto={contexto} />
+      </div>
+    );
+  }
+
   return (
     <div className="tm-instancia-contexto">
       {!embeddedInCard ? (
-        <FieldLabel label="Contexto operacional" hint={TM_HELP_TOOLTIPS.decomposition.contextoInstancia} />
+        <FieldLabel label="Contexto operacional" hint={C.contextoInstancia} />
       ) : null}
 
       <div className="tm-inst-form__row">
         <label className="ds-field">
-          <span className="ds-field-label">Responsável local</span>
+          <FieldLabel label="Responsável local" hint={C.contextoResponsavel} />
           <input
             value={contexto.responsavel_local ?? ""}
-            disabled={readOnly}
             onChange={(event) =>
               setContexto({ ...contexto, responsavel_local: event.target.value || null })
             }
           />
         </label>
         <label className="ds-field">
-          <span className="ds-field-label">Contato</span>
+          <FieldLabel label="Contato" hint={C.contextoContato} />
           <input
             value={contexto.contato ?? ""}
-            disabled={readOnly}
             onChange={(event) => setContexto({ ...contexto, contato: event.target.value || null })}
           />
         </label>
       </div>
 
       <label className="ds-field tm-inst-form__field--full">
-        <span className="ds-field-label">Observações de rollout</span>
+        <FieldLabel label="Observações de rollout" hint={C.contextoObservacoesRollout} />
         <textarea
           rows={3}
           value={contexto.observacoes_rollout ?? ""}
-          disabled={readOnly}
           onChange={(event) =>
             setContexto({ ...contexto, observacoes_rollout: event.target.value || null })
           }
         />
       </label>
 
-      {!readOnly ? (
-        <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-          {saving ? "Salvando…" : "Salvar contexto"}
-        </button>
-      ) : null}
+      <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
+        {saving ? "Salvando…" : "Salvar contexto"}
+      </button>
     </div>
   );
 }

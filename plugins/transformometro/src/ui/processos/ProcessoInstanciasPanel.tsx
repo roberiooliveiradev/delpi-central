@@ -66,6 +66,8 @@ type Props = {
   hideTable?: boolean;
   /** Abre o formulário de edição desta instância ao montar. */
   initialEditInstanciaId?: string | null;
+  /** Chamado ao cancelar edição embutida (ex.: card editável na página da instância). */
+  onCancelEdit?: () => void;
   onSelect: (instanciaId: string) => void;
   onCreate: (payload: CreatePayload) => Promise<void>;
   onUpdate: (
@@ -134,6 +136,7 @@ export function ProcessoInstanciasPanel({
   navigateOnSelect = false,
   hideTable = false,
   initialEditInstanciaId = null,
+  onCancelEdit,
   onSelect,
   onCreate,
   onUpdate,
@@ -276,6 +279,11 @@ export function ProcessoInstanciasPanel({
     setFaseMelhoria("planejado");
     setDataAlvoGoLive("");
     setPrioridade("media");
+  }
+
+  function handleCancelForm() {
+    resetForm();
+    onCancelEdit?.();
   }
 
   function openCreateForm() {
@@ -884,7 +892,7 @@ export function ProcessoInstanciasPanel({
               <button type="submit" className="ds-primary-btn" disabled={saving || !canSubmit}>
                 {submitLabel}
               </button>
-              <button type="button" className="ds-ghost-btn" disabled={saving} onClick={resetForm}>
+              <button type="button" className="ds-ghost-btn" disabled={saving} onClick={handleCancelForm}>
                 Cancelar
               </button>
             </div>

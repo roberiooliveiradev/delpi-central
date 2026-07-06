@@ -2094,7 +2094,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
-  align-items: baseline;
+  align-items: center;
 }
 
 .dashboard-transformometro .ds-section-title {
