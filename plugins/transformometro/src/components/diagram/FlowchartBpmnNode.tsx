@@ -2,6 +2,7 @@ import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { User } from "lucide-react";
 
 import type { FlowchartNodeType } from "../../types/diagram";
+import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
 export type BpmnNodeData = {
   label: string;
@@ -12,6 +13,7 @@ export type BpmnNodeData = {
   inScope?: boolean;
   scopeSelectable?: boolean;
   onToggleScope?: (nodeId: string) => void;
+  onLabelChange?: (nodeId: string, label: string) => void;
 };
 
 const HANDLE_STYLE = { width: 8, height: 8, borderRadius: 4 };
@@ -39,6 +41,29 @@ function nodeClassName(type: FlowchartNodeType, highlight?: string): string {
     .join(" ");
 }
 
+function NodeLabel({
+  nodeId,
+  data,
+  className,
+  ariaLabel = "Texto do nó",
+}: {
+  nodeId: string;
+  data: BpmnNodeData;
+  className?: string;
+  ariaLabel?: string;
+}) {
+  return (
+    <DiagramInlineTextEdit
+      value={data.label}
+      readOnly={data.readOnly}
+      onCommit={(next) => data.onLabelChange?.(nodeId, next)}
+      className={className}
+      ariaLabel={ariaLabel}
+      emptyFallback="Texto"
+    />
+  );
+}
+
 export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
   const scopeCheckbox = data.scopeSelectable ? (
     <label className="tm-diagram-node__scope">
@@ -57,7 +82,7 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
         <div className={nodeClassName("start", data.highlight)}>
           <span className="tm-diagram-node__start-dot" aria-hidden />
         </div>
-        <span className="tm-diagram-node__external-label">{data.label}</span>
+        <NodeLabel nodeId={id} data={data} className="tm-diagram-node__external-label" />
         {scopeCheckbox}
       </div>
     );
@@ -70,7 +95,7 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
         <div className={nodeClassName("end", data.highlight)}>
           <span className="tm-diagram-node__end-ring" aria-hidden />
         </div>
-        <span className="tm-diagram-node__external-label">{data.label}</span>
+        <NodeLabel nodeId={id} data={data} className="tm-diagram-node__external-label" />
         {scopeCheckbox}
       </div>
     );
@@ -85,9 +110,11 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
             ×
           </span>
         </div>
-        <span className="tm-diagram-node__external-label tm-diagram-node__external-label--below">
-          {data.label}
-        </span>
+        <NodeLabel
+          nodeId={id}
+          data={data}
+          className="tm-diagram-node__external-label tm-diagram-node__external-label--below"
+        />
         {scopeCheckbox}
       </div>
     );
@@ -102,7 +129,7 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
           <User size={12} strokeWidth={2.2} />
         </span>
       ) : null}
-      <span className="tm-diagram-node__label">{data.label}</span>
+      <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
     </div>
   );
 }

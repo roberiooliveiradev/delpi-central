@@ -1,6 +1,7 @@
 import type { Node, NodeProps } from "@xyflow/react";
 
 import { LANE_CANVAS_WIDTH } from "../../utils/diagramSwimlanes";
+import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
 type LaneNodeData = {
   label: string;
@@ -11,13 +12,6 @@ type LaneNodeData = {
 };
 
 export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
-  const handleRename = () => {
-    if (data.readOnly || !data.laneId || !data.onRename) return;
-    const nextLabel = window.prompt("Nome da faixa (swimlane)", data.label);
-    if (nextLabel == null) return;
-    data.onRename(data.laneId, nextLabel);
-  };
-
   return (
     <div
       className="tm-diagram-lane"
@@ -30,14 +24,19 @@ export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
         ]
           .filter(Boolean)
           .join(" ")}
-        onDoubleClick={handleRename}
-        title={
-          !data.readOnly && data.onRename
-            ? "Duplo clique para renomear a faixa"
-            : undefined
-        }
       >
-        <span className="tm-diagram-lane__label">{data.label}</span>
+        <DiagramInlineTextEdit
+          value={data.label}
+          readOnly={data.readOnly || !data.laneId || !data.onRename}
+          onCommit={(next) => {
+            if (data.laneId && data.onRename) {
+              data.onRename(data.laneId, next);
+            }
+          }}
+          className="tm-diagram-lane__label"
+          ariaLabel="Nome da faixa"
+          emptyFallback="Faixa"
+        />
       </div>
       <div className="tm-diagram-lane__body" />
     </div>

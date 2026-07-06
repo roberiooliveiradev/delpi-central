@@ -233,7 +233,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   diagramEditor: {
     usoGeral:
-      "Adicione nós pela paleta (entram na faixa ativa). Arraste para posicionar; conecte arrastando de um ponto de ancoragem a outro. Duplo clique no nó ou na seta edita o texto. Delete/Backspace remove a seleção. Use Auto-layout para reorganizar o fluxo.",
+      "Adicione nós pela paleta (entram na faixa ativa). Arraste para posicionar; conecte arrastando de um ponto de ancoragem a outro. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Delete/Backspace remove a seleção. Use Auto-layout para reorganizar o fluxo.",
     nodes: {
       start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",

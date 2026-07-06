@@ -49,6 +49,7 @@ import {
 import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
+import { FlowchartEditableEdge } from "./FlowchartEditableEdge";
 
 type FlowchartEditorProps = {
   value: FlowchartV1;
@@ -77,6 +78,10 @@ type EditorNode = Node;
 const nodeTypes = {
   flowchart: FlowchartBpmnNode,
   lane: FlowchartLaneNode,
+};
+
+const edgeTypes = {
+  flowchart: FlowchartEditableEdge,
 };
 
 const LANE_NODE_PREFIX = "__lane__";
@@ -137,7 +142,7 @@ function toReactFlow(
     id: edge.id,
     source: edge.from,
     target: edge.to,
-    type: edge.routing ?? "smoothstep",
+    type: "flowchart",
     label: edge.label ?? undefined,
     labelStyle: { fontSize: 11, fontWeight: 600 },
     labelBgStyle: { fillOpacity: 0.92 },
@@ -251,6 +256,52 @@ function FlowchartEditorInner({
     setLaneLabelDraft(lane?.label ?? "");
   }, [activeLaneId, lanes]);
 
+  const emitChange = useCallback(
+    (nextNodes: EditorNode[], nextEdges: Edge[]) => {
+      onChange?.(fromReactFlow(nextNodes, nextEdges, value));
+    },
+    [onChange, value]
+  );
+
+  const handleNodeLabelChange = useCallback(
+    (nodeId: string, label: string) => {
+      if (readOnly) return;
+      setNodes((currentNodes) => {
+        const nextNodes = currentNodes.map((item) =>
+          item.id === nodeId && item.type !== "lane"
+            ? {
+                ...item,
+                data: { ...(item.data as BpmnNodeData), label },
+              }
+            : item
+        );
+        setEdges((currentEdges) => {
+          emitChange(nextNodes, currentEdges);
+          return currentEdges;
+        });
+        return nextNodes;
+      });
+    },
+    [emitChange, readOnly, setEdges, setNodes]
+  );
+
+  const handleEdgeLabelChange = useCallback(
+    (edgeId: string, label: string) => {
+      if (readOnly) return;
+      setEdges((currentEdges) => {
+        const nextEdges = currentEdges.map((item) =>
+          item.id === edgeId ? { ...item, label: label || undefined } : item
+        );
+        setNodes((currentNodes) => {
+          emitChange(currentNodes, nextEdges);
+          return currentNodes;
+        });
+        return nextEdges;
+      });
+    },
+    [emitChange, readOnly, setEdges, setNodes]
+  );
+
   useEffect(() => {
     const next = toReactFlow(value, laneRenderOptions);
     setNodes(
@@ -268,6 +319,7 @@ function FlowchartEditorInner({
               : {
                   ...(node.data as BpmnNodeData),
                   readOnly,
+                  onLabelChange: readOnly ? undefined : handleNodeLabelChange,
                   scopeSelectable: Boolean(onToggleScopeNode) && !readOnly,
                   inScope: selectedScopeIds
                     ? selectedScopeIds.has(node.id)
@@ -285,7 +337,17 @@ function FlowchartEditorInner({
         };
       })
     );
-    setEdges(next.edges.map((edge) => ({ ...edge, animated: false })));
+    setEdges(
+      next.edges.map((edge) => ({
+        ...edge,
+        type: "flowchart",
+        animated: false,
+        data: {
+          readOnly,
+          onLabelChange: readOnly ? undefined : handleEdgeLabelChange,
+        },
+      }))
+    );
   }, [
     value,
     readOnly,
@@ -294,16 +356,11 @@ function FlowchartEditorInner({
     onToggleScopeNode,
     diffNodeIds,
     laneRenderOptions,
+    handleNodeLabelChange,
+    handleEdgeLabelChange,
     setNodes,
     setEdges,
   ]);
-
-  const emitChange = useCallback(
-    (nextNodes: EditorNode[], nextEdges: Edge[]) => {
-      onChange?.(fromReactFlow(nextNodes, nextEdges, value));
-    },
-    [onChange, value]
-  );
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -313,7 +370,11 @@ function FlowchartEditorInner({
           {
             ...connection,
             id: createEdgeId(),
-            type: "smoothstep",
+            type: "flowchart",
+            data: {
+              readOnly,
+              onLabelChange: handleEdgeLabelChange,
+            },
             labelStyle: { fontSize: 11, fontWeight: 600 },
             labelBgStyle: { fillOpacity: 0.92 },
           },
@@ -323,7 +384,7 @@ function FlowchartEditorInner({
         return next;
       });
     },
-    [emitChange, nodes, readOnly, setEdges]
+    [emitChange, handleEdgeLabelChange, nodes, readOnly, setEdges]
   );
 
   const onNodeDragStop = useCallback(
@@ -534,7 +595,8 @@ function FlowchartEditorInner({
             </HelpTooltip>
             {" · "}
             Passe o mouse nos botões para ver dicas de cada ferramenta
-            {lanes.length ? " · Duplo clique no cabeçalho da faixa para renomear" : ""}
+            {" · "}
+            Duplo clique no texto do nó, da faixa ou do rótulo da seta para editar inline
           </p>
         </div>
       ) : null}
@@ -596,9 +658,10 @@ function FlowchartEditorInner({
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             colorMode={colorMode}
             defaultEdgeOptions={{
-              type: "smoothstep",
+              type: "flowchart",
               labelStyle: { fontSize: 11, fontWeight: 600 },
               labelBgStyle: { fillOpacity: 0.92 },
             }}
@@ -609,37 +672,6 @@ function FlowchartEditorInner({
             onNodesDelete={onNodesDelete}
             onEdgesDelete={onEdgesDelete}
             deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
-            onNodeDoubleClick={(_, node) => {
-              if (readOnly || node.type === "lane") return;
-              const data = node.data as BpmnNodeData;
-              const nextLabel = window.prompt("Texto do nó", data.label);
-              if (nextLabel == null) return;
-              const nextNodes = nodes.map((item) =>
-                item.id === node.id
-                  ? {
-                      ...item,
-                      data: { ...(item.data as BpmnNodeData), label: nextLabel.trim() || data.label },
-                    }
-                  : item
-              );
-              setNodes(nextNodes);
-              emitChange(nextNodes, edges);
-            }}
-            onEdgeDoubleClick={(_, edge) => {
-              if (readOnly) return;
-              const nextLabel = window.prompt(
-                "Rótulo da conexão (ex.: Sim, Não)",
-                typeof edge.label === "string" ? edge.label : ""
-              );
-              if (nextLabel == null) return;
-              const nextEdges = edges.map((item) =>
-                item.id === edge.id
-                  ? { ...item, label: nextLabel.trim() || undefined }
-                  : item
-              );
-              setEdges(nextEdges);
-              emitChange(nodes, nextEdges);
-            }}
             fitView
             minZoom={0.2}
             maxZoom={1.5}
