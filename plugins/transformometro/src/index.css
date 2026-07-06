@@ -2697,6 +2697,10 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   font-size: var(--ds-font-sm);
 }
 
+.dashboard-transformometro .ds-dl-grid__full {
+  grid-column: 1 / -1;
+}
+
 /* Seções read/edit (padrão Kaizen / Action Plans) */
 .dashboard-transformometro .ds-editable-section {
   margin-bottom: 1rem;
@@ -2788,6 +2792,76 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .ds-badge--warning {
   background: var(--ds-warning-bg);
   color: var(--ds-warning-fg);
+}
+
+.dashboard-transformometro .ds-badge--fase-planejado {
+  background: color-mix(in srgb, var(--ds-text-muted) 14%, var(--ds-card-bg));
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-instancia-read {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-transformometro .tm-fase-pipeline-block {
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-transformometro .tm-fase-pipeline-block__label {
+  margin: 0 0 0.35rem;
+  font-size: var(--ds-font-sm, 0.8125rem);
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-fase-pipeline {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .tm-fase-pipeline__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 88px;
+  flex: 1;
+  text-align: center;
+}
+
+.dashboard-transformometro .tm-fase-pipeline__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--ds-card-border);
+  border: 2px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .tm-fase-pipeline__label {
+  font-size: 10px;
+  color: var(--ds-text-muted);
+  line-height: 1.2;
+}
+
+.dashboard-transformometro .tm-fase-pipeline__step--past .tm-fase-pipeline__dot {
+  background: var(--ds-accent);
+  border-color: var(--ds-accent);
+}
+
+.dashboard-transformometro .tm-fase-pipeline__step--active .tm-fase-pipeline__dot {
+  background: var(--ds-accent);
+  border-color: color-mix(in srgb, var(--ds-accent) 40%, white);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ds-accent) 20%, transparent);
+}
+
+.dashboard-transformometro .tm-fase-pipeline__step--active .tm-fase-pipeline__label {
+  color: var(--ds-accent);
+  font-weight: 700;
 }
 
 .dashboard-transformometro .ds-cadastro-panel__workflow {

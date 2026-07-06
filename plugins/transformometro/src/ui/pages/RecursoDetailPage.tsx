@@ -129,16 +129,18 @@ export function RecursoDetailPage({
     void load();
   }, [load]);
 
+  const editingRecurso = sectionEdit.isEditing("recurso");
+
   useEffect(() => {
     if (isCreate) {
       sectionEdit.startEdit("recurso");
     }
-  }, [isCreate, sectionEdit]);
+  }, [isCreate, sectionEdit.startEdit]);
 
   useEffect(() => {
-    if (!recurso || sectionEdit.isEditing("recurso")) return;
+    if (!recurso || editingRecurso) return;
     setForm(recursoFormFromEntity(recurso));
-  }, [recurso, sectionEdit]);
+  }, [recurso, editingRecurso]);
 
   const ativos = useMemo(() => vinculos.filter((v) => v.ativo).length, [vinculos]);
 

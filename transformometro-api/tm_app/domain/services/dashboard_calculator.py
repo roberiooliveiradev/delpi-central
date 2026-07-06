@@ -258,19 +258,9 @@ class DashboardCalculatorService:
         total_investment = period_totals["investimento_total_mes"]
         total_hours_saved = period_totals["horas_economizadas_mes"]
 
-        implemented_solutions_count = len(
-            {
-                row["revisao_id"]
-                for row in calculation_rows
-                if row["cenario_tipo"] in self.COMPARABLE_SCENARIOS
-                and self.competencia_day_fraction_in_range(
-                    str(row.get("competencia") or ""),
-                    start_date,
-                    end_date,
-                )
-                > 0
-                and float(row.get("economia_bruta") or 0) > 0
-            }
+        implemented_solutions_count = calc_rules.count_active_implemented_improvements(
+            instancias=filtered_raw.processo_instancias,
+            revisoes=filtered_raw.revisoes,
         )
 
         consolidated_roi = (

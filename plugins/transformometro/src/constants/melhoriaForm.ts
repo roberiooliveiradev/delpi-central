@@ -52,3 +52,17 @@ export function labelMelhoriaFase(value?: string | null): string {
 export function labelMelhoriaPrioridade(value?: string | null): string {
   return MELHORIA_PRIORIDADE_OPTIONS.find((item) => item.value === value)?.label ?? value ?? "—";
 }
+
+export function melhoriaFaseBadgeClass(value?: string | null): string {
+  switch ((value ?? "planejado").trim().toLowerCase()) {
+    case "implantado":
+      return "ds-badge--success";
+    case "piloto":
+      return "ds-badge--warning";
+    case "encerrado":
+      return "ds-badge--info";
+    case "planejado":
+    default:
+      return "ds-badge--fase-planejado";
+  }
+}

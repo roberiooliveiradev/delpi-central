@@ -272,6 +272,12 @@ Endpoints de leitura analítica — **fonte única = motor live** (com query cac
 
 O dashboard interativo (`GET /dashboard/resumo`, etc.) e o Transforma+ S2S também usam `DashboardLiveService` — todos aceitam faixa de tempo por dia.
 
+### KPI «Soluções implementadas»
+
+Conta **melhorias** (`processo_instancias`) distintas que possuem revisão comparável **ativa** (`revisao_ativa = true`, cenário `melhoria` | `automacao` | `correcao`). É um snapshot do cadastro no recorte de visão (consolidado / unidade / departamento), **não** filtrado pela competência nem pelo volume de economia no período.
+
+Implementação: `calc_rules.count_active_implemented_improvements` (live) e `DashboardDataRepository.count_active_implemented_improvements` (cache).
+
 ## Histórico de revisões
 
 A série mensal considera revisões comparáveis **pela vigência no mês**, não apenas `revisao_ativa = true` no cadastro atual.

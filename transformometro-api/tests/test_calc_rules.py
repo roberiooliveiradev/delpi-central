@@ -5,6 +5,37 @@ from datetime import date
 from tm_app.domain import calc_rules
 
 
+def test_count_active_implemented_improvements_counts_distinct_instancias():
+    instancias = [
+        {"instancia_id": "i1", "deletado": False},
+        {"instancia_id": "i2", "deletado": False},
+    ]
+    revisoes = [
+        {
+            "instancia_id": "i1",
+            "cenario_tipo": "melhoria",
+            "revisao_ativa": True,
+            "deletado": False,
+        },
+        {
+            "instancia_id": "i1",
+            "cenario_tipo": "automacao",
+            "revisao_ativa": False,
+            "deletado": False,
+        },
+        {
+            "instancia_id": "i2",
+            "cenario_tipo": "baseline",
+            "revisao_ativa": True,
+            "deletado": False,
+        },
+    ]
+    assert calc_rules.count_active_implemented_improvements(
+        instancias=instancias,
+        revisoes=revisoes,
+    ) == 1
+
+
 def test_review_vigencia_open_review_full_month():
     review = {
         "cenario_tipo": "melhoria",

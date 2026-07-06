@@ -156,10 +156,12 @@ export function ProcessoDetailPage({
     window.history.replaceState(null, "", window.location.pathname);
   }, [processoId]);
 
-  useEffect(() => {
-    if (!processo || !sectionEdit.isEditing("processo")) return;
-    setProcessoForm(processoFormFromEntity(processo));
-  }, [processo, sectionEdit]);
+  async function handleStartEditProcesso() {
+    const acquired = await sectionEdit.startEdit("processo");
+    if (acquired !== false) {
+      setProcessoForm(processoFormFromEntity(processo!));
+    }
+  }
 
   async function handleSaveProcesso() {
     if (!processoForm) return;
@@ -296,7 +298,7 @@ export function ProcessoDetailPage({
         hint={TM_HELP_TOOLTIPS.processos.nome}
         description="Informações mestre do processo. Instâncias operacionais e revisões ficam nos níveis abaixo."
         isEditing={sectionEdit.isEditing("processo")}
-        onEdit={() => void sectionEdit.startEdit("processo")}
+        onEdit={() => void handleStartEditProcesso()}
         onCancel={() => {
           sectionEdit.cancelEdit("processo");
           setProcessoForm(null);

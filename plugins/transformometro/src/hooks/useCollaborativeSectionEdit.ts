@@ -231,20 +231,36 @@ export function useCollaborativeSectionEdit({
     return { editors, viewers };
   }, [presence]);
 
-  return {
-    ...sectionEdit,
-    startEdit,
-    cancelEdit,
-    stopEdit,
-    presence,
-    presenceSummary,
-    lockError,
-    clearLockError: () => setLockError(null),
-    refreshPresence,
-    wsConnected,
-    wsConnectionError,
-    resyncVersion,
-    realtimeNotice,
-    clearRealtimeNotice: () => setRealtimeNotice(null),
-  };
+  return useMemo(
+    () => ({
+      ...sectionEdit,
+      startEdit,
+      cancelEdit,
+      stopEdit,
+      presence,
+      presenceSummary,
+      lockError,
+      clearLockError: () => setLockError(null),
+      refreshPresence,
+      wsConnected,
+      wsConnectionError,
+      resyncVersion,
+      realtimeNotice,
+      clearRealtimeNotice: () => setRealtimeNotice(null),
+    }),
+    [
+      cancelEdit,
+      lockError,
+      presence,
+      presenceSummary,
+      realtimeNotice,
+      refreshPresence,
+      resyncVersion,
+      sectionEdit,
+      startEdit,
+      stopEdit,
+      wsConnected,
+      wsConnectionError,
+    ]
+  );
 }

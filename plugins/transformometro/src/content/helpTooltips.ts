@@ -82,7 +82,7 @@ export const TM_HELP_TOOLTIPS = {
       economiaBruta:
         "Ganho bruto estimado no período, antes de descontar custos. No Consolidado, instâncias multi-unidade contam uma vez por unidade ativa cadastrada.",
       solucoes:
-        "Quantidade de soluções implementadas que compõem o recorte.",
+        "Melhorias (instâncias) com revisão comparável ativa (melhoria, automação ou correção) no recorte de visão — snapshot do cadastro, independente do período filtrado.",
       horas:
         "Total de horas de trabalho economizadas no período no recorte. Instâncias multi-unidade multiplicam horas no Consolidado pelo nº de unidades ativas.",
       roi:

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export function useSectionEdit() {
   const [editingKeys, setEditingKeys] = useState<Set<string>>(() => new Set());
@@ -21,5 +21,8 @@ export function useSectionEdit() {
     cancelEdit(key);
   }, [cancelEdit]);
 
-  return { isEditing, startEdit, cancelEdit, stopEdit };
+  return useMemo(
+    () => ({ isEditing, startEdit, cancelEdit, stopEdit }),
+    [cancelEdit, isEditing, startEdit, stopEdit]
+  );
 }

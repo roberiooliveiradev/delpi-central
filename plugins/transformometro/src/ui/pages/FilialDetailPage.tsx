@@ -95,16 +95,18 @@ export function FilialDetailPage({
     void load();
   }, [load]);
 
+  const editingFilial = sectionEdit.isEditing("filial");
+
   useEffect(() => {
     if (isCreate) {
       sectionEdit.startEdit("filial");
     }
-  }, [isCreate, sectionEdit]);
+  }, [isCreate, sectionEdit.startEdit]);
 
   useEffect(() => {
-    if (!filial || sectionEdit.isEditing("filial")) return;
+    if (!filial || editingFilial) return;
     setForm(filialFormFromEntity(filial));
-  }, [filial, sectionEdit]);
+  }, [filial, editingFilial]);
 
   async function handleSave() {
     setSaving(true);

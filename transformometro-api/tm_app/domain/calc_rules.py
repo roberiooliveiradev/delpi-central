@@ -118,6 +118,48 @@ def is_comparable_scenario(cenario_tipo: Optional[str]) -> bool:
     return (cenario_tipo or "").lower() in COMPARABLE_SCENARIOS
 
 
+def _is_truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, (int, float)):
+        return value != 0
+    return str(value).strip().lower() in {"1", "true", "t", "yes", "sim"}
+
+
+def _is_deleted(row: dict[str, Any]) -> bool:
+    return _is_truthy(row.get("deletado"))
+
+
+def count_active_implemented_improvements(
+    *,
+    instancias: list[dict[str, Any]],
+    revisoes: list[dict[str, Any]],
+) -> int:
+    """Conta melhorias (instâncias) com revisão comparável ativa no cadastro.
+
+    Snapshot do estado atual — independente do recorte de competência do dashboard.
+    """
+    allowed_instancias = {
+        str(row.get("instancia_id"))
+        for row in instancias
+        if row.get("instancia_id") and not _is_deleted(row)
+    }
+    active: set[str] = set()
+    for review in revisoes:
+        if _is_deleted(review):
+            continue
+        if not _is_truthy(review.get("revisao_ativa")):
+            continue
+        if not is_comparable_scenario(review.get("cenario_tipo")):
+            continue
+        instancia_id = str(review.get("instancia_id") or "")
+        if instancia_id in allowed_instancias:
+            active.add(instancia_id)
+    return len(active)
+
+
 def review_calculation_start_date(review: dict) -> Optional[date]:
     start_date = parse_date(review.get("data_inicio_vigencia"))
     implementation_date = parse_date(review.get("data_implantacao"))

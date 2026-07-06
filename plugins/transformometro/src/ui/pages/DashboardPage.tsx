@@ -812,7 +812,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Soluções implementadas"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.solucoes}
           value={formatDecimal(resumo?.solucoes_implementadas, 0)}
-          subtitle="Melhoria, automação e correção"
+          subtitle="Melhorias com revisão ativa implantada"
           icon={<Lightbulb size={22} />}
           loading={isBusy && !resumo}
         />

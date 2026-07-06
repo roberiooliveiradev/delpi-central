@@ -101,16 +101,18 @@ export function SetorDetailPage({
     void load();
   }, [load]);
 
+  const editingSetor = sectionEdit.isEditing("setor");
+
   useEffect(() => {
     if (isCreate) {
       sectionEdit.startEdit("setor");
     }
-  }, [isCreate, sectionEdit]);
+  }, [isCreate, sectionEdit.startEdit]);
 
   useEffect(() => {
-    if (!setor || sectionEdit.isEditing("setor")) return;
+    if (!setor || editingSetor) return;
     setForm(setorFormFromEntity(setor));
-  }, [setor, sectionEdit]);
+  }, [setor, editingSetor]);
 
   async function handleSave() {
     if (form.filiais.length === 0) {

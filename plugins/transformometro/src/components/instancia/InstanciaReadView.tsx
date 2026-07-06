@@ -1,6 +1,9 @@
 import { FieldLabel } from "../../components/HelpTooltip";
+import { MelhoriaFaseBadge } from "../../components/melhoria/MelhoriaFaseBadge";
+import { MelhoriaFasePipeline } from "../../components/melhoria/MelhoriaFasePipeline";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
+import { renderTableStatus } from "../../utils/tablePresentation";
 
 const I = TM_HELP_TOOLTIPS.instancias;
 
@@ -24,29 +27,44 @@ export function InstanciaReadView({ instancia, options }: Props) {
     : `${instancia.codigo_filial ?? instancia.filial_id} — ${instancia.nome_filial ?? ""}`.trim();
 
   return (
-    <dl className="ds-dl-grid">
-      <div>
-        <dt><FieldLabel label="Unidade" hint={I.colunaUnidade} /></dt>
-        <dd>{unidade}</dd>
-      </div>
-      <div>
-        <dt><FieldLabel label="Status" hint={I.status} /></dt>
-        <dd>{instancia.status_instancia ?? "ativo"}</dd>
-      </div>
-      <div>
-        <dt><FieldLabel label="Departamentos" hint={I.setores} /></dt>
-        <dd>{formatSetores(instancia) || "—"}</dd>
-      </div>
-      <div>
-        <dt><FieldLabel label="Título" hint={I.rotulo} /></dt>
-        <dd>{instancia.rotulo_instancia ?? "—"}</dd>
-      </div>
-      {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
+    <div className="tm-instancia-read">
+      <MelhoriaFasePipeline currentFase={instancia.fase_melhoria} hint={I.fase} />
+      <dl className="ds-dl-grid">
         <div>
-          <dt><FieldLabel label="Consolidado" hint={I.multiplicadorConsolidado} /></dt>
-          <dd>Economia e horas × {options.filiais.length} unidades</dd>
+          <dt><FieldLabel label="Unidade" hint={I.colunaUnidade} /></dt>
+          <dd>{unidade}</dd>
         </div>
-      ) : null}
-    </dl>
+        <div>
+          <dt><FieldLabel label="Status" hint={I.status} /></dt>
+          <dd>{renderTableStatus(instancia.status_instancia ?? "ativo")}</dd>
+        </div>
+        <div>
+          <dt><FieldLabel label="Fase" hint={I.fase} /></dt>
+          <dd>
+            <MelhoriaFaseBadge fase={instancia.fase_melhoria} />
+          </dd>
+        </div>
+        <div>
+          <dt><FieldLabel label="Departamentos" hint={I.setores} /></dt>
+          <dd>{formatSetores(instancia) || "—"}</dd>
+        </div>
+        <div>
+          <dt><FieldLabel label="Título" hint={I.rotulo} /></dt>
+          <dd>{instancia.rotulo_instancia ?? "—"}</dd>
+        </div>
+        {instancia.resumo_melhoria?.trim() ? (
+          <div className="ds-dl-grid__full">
+            <dt><FieldLabel label="Resumo" hint={I.resumo} /></dt>
+            <dd>{instancia.resumo_melhoria.trim()}</dd>
+          </div>
+        ) : null}
+        {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
+          <div>
+            <dt><FieldLabel label="Consolidado" hint={I.multiplicadorConsolidado} /></dt>
+            <dd>Economia e horas × {options.filiais.length} unidades</dd>
+          </div>
+        ) : null}
+      </dl>
+    </div>
   );
 }

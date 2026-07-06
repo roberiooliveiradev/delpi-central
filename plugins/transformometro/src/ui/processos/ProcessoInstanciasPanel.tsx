@@ -10,8 +10,8 @@ import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
+import { MelhoriaFaseBadge } from "../../components/melhoria/MelhoriaFaseBadge";
 import {
-  labelMelhoriaFase,
   labelMelhoriaPrioridade,
   melhoriaFieldsFromInstancia,
   melhoriaPayloadFromForm,
@@ -20,6 +20,7 @@ import {
   type MelhoriaFormFields,
 } from "../../constants/melhoriaForm";
 import { filterSetoresByFilial } from "../../utils/setores";
+import { renderTableStatus } from "../../utils/tablePresentation";
 
 function renderInstanciaUnidade(row: ProcessoInstancia, activeFilialCount: number) {
   if (!row.todas_filiais_ativas) {
@@ -479,7 +480,7 @@ export function ProcessoInstanciasPanel({
         key: "status",
         header: "Status",
         headerHint: TM_HELP_TOOLTIPS.instancias.status,
-        render: (row) => row.status_instancia ?? "ativo",
+        render: (row) => row.status_instancia ? renderTableStatus(row.status_instancia) : renderTableStatus("ativo"),
       },
       {
         key: "setor",
@@ -497,7 +498,7 @@ export function ProcessoInstanciasPanel({
         key: "fase",
         header: "Fase",
         headerHint: TM_HELP_TOOLTIPS.instancias.fase,
-        render: (row) => labelMelhoriaFase(row.fase_melhoria),
+        render: (row) => <MelhoriaFaseBadge fase={row.fase_melhoria} />,
       },
       {
         key: "prioridade",

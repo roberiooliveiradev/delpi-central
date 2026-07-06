@@ -530,19 +530,11 @@ class DashboardCalculoRepository(PluginBaseRepository):
             competencia_fim=competencia_fim,
         )
         cte = _instance_average_cte(where_sql)
-        # ``solucoes_implementadas`` = nº de soluções (distintas) no recorte — não é média.
-        # A subquery reaproveita o mesmo WHERE, então os parâmetros entram duas vezes.
-        full_params = list(params) + list(params)
 
-        return self.fetch_one(
+        row = self.fetch_one(
             f"""
             {cte}
             SELECT
-                (
-                    SELECT COUNT(DISTINCT d.revisao_id)
-                    FROM transformometro.dashboard_calculos d
-                    WHERE {where_sql}
-                ) AS solucoes_implementadas,
                 COALESCE(SUM(economia_bruta), 0) AS economia_bruta_total,
                 COALESCE(SUM(economia_liquida_mes), 0) AS economia_liquida_total,
                 COALESCE(SUM(investimento_unico_mes), 0) AS investimento_unico_total,
@@ -557,8 +549,79 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 COALESCE(SUM(horas_economizadas_mes), 0) AS horas_economizadas_total
             FROM proc_lvl
             """,
-            tuple(full_params),
+            tuple(params),
         ) or {}
+        row["solucoes_implementadas"] = self.count_active_implemented_improvements(
+            filial_id=filial_id,
+            setor_id=setor_id,
+        )
+        return row
+
+    def count_active_implemented_improvements(
+        self,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+    ) -> int:
+        """Melhorias (instâncias) com revisão comparável ativa — alinhado ao cálculo live."""
+        clauses = [
+            "pi.deletado = FALSE",
+            "r.deletado = FALSE",
+            "r.revisao_ativa = TRUE",
+            "lower(coalesce(r.cenario_tipo, '')) IN ('melhoria', 'automacao', 'correcao')",
+        ]
+        params: list[Any] = []
+        if filial_id:
+            for token in str(filial_id).split(","):
+                ref = token.strip()
+                if not ref:
+                    continue
+                clauses.append(
+                    """
+                    (
+                        pi.todas_filiais_ativas = TRUE
+                        OR EXISTS (
+                            SELECT 1
+                            FROM transformometro.filiais f
+                            WHERE f.filial_id = pi.filial_id
+                              AND f.deletado = FALSE
+                              AND (f.codigo_filial = %s OR f.filial_id::text = %s)
+                        )
+                    )
+                    """
+                )
+                params.extend([ref, ref])
+                break
+        if setor_id:
+            for token in str(setor_id).split(","):
+                ref = token.strip()
+                if not ref:
+                    continue
+                clauses.append(
+                    """
+                    EXISTS (
+                        SELECT 1
+                        FROM transformometro.processo_instancia_setores pis
+                        JOIN transformometro.setores s ON s.setor_id = pis.setor_id
+                        WHERE pis.instancia_id = pi.instancia_id
+                          AND s.deletado = FALSE
+                          AND (s.codigo_setor = %s OR s.setor_id::text = %s)
+                    )
+                    """
+                )
+                params.extend([ref, ref])
+                break
+
+        result = self.fetch_one(
+            f"""
+            SELECT COUNT(DISTINCT pi.instancia_id)::int AS total
+            FROM transformometro.processo_instancias pi
+            JOIN transformometro.revisoes r ON r.instancia_id = pi.instancia_id
+            WHERE {' AND '.join(clauses)}
+            """,
+            tuple(params),
+        )
+        return int((result or {}).get("total") or 0)
 
     def query_evolucao(
         self,
