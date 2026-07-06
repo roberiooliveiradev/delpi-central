@@ -8,7 +8,9 @@ export type TransformometroView =
   | "recursos"
   | "recurso"
   | "processos"
-  | "processo";
+  | "processo"
+  | "instancia"
+  | "revisao";
 
 export type ParsedTransformometroRoute = {
   view: TransformometroView;
@@ -35,7 +37,7 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
   );
   if (canonicalRevisaoMatch) {
     return {
-      view: "processo",
+      view: "revisao",
       processoId: canonicalRevisaoMatch[1],
       instanciaId: canonicalRevisaoMatch[2],
       revisaoId: canonicalRevisaoMatch[3],
@@ -47,7 +49,7 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
   );
   if (legacyRevisaoMatch) {
     return {
-      view: "processo",
+      view: "revisao",
       processoId: legacyRevisaoMatch[1],
       revisaoId: legacyRevisaoMatch[2],
       legacyRevisaoPath: true,
@@ -59,7 +61,7 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
   );
   if (instanciaMatch) {
     return {
-      view: "processo",
+      view: "instancia",
       processoId: instanciaMatch[1],
       instanciaId: instanciaMatch[2],
     };

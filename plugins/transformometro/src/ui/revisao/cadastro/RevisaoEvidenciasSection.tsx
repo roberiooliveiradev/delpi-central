@@ -3,6 +3,7 @@ import { RevisaoEvidencePanel } from "../../../components/evidence/RevisaoEviden
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
+  readOnly?: boolean;
   onError: (message: string | null) => void;
   onReload?: () => void;
 };
@@ -10,6 +11,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 export function RevisaoEvidenciasSection({
   revisaoId,
   getAccessToken,
+  readOnly = false,
   onError,
   onReload,
 }: Props) {
@@ -17,6 +19,7 @@ export function RevisaoEvidenciasSection({
     <RevisaoEvidencePanel
       revisaoId={revisaoId}
       getAccessToken={getAccessToken}
+      readOnly={readOnly}
       onError={onError}
       onChanged={onReload}
     />

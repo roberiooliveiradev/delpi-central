@@ -38,6 +38,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   options: OptionsData;
   recursos: RecursoCompartilhado[];
   vinculos: VinculoRecurso[];
+  readOnly?: boolean;
   onError: (message: string | null) => void;
   onReload: () => Promise<void>;
 };
@@ -47,6 +48,7 @@ export function RevisaoRecursosSection({
   options,
   recursos,
   vinculos,
+  readOnly = false,
   getAccessToken,
   onError,
   onReload,
@@ -176,12 +178,12 @@ export function RevisaoRecursosSection({
                 <th>Uso na revisão</th>
                 <th>Peso</th>
                 <th>Ativo</th>
-                <th />
+                {!readOnly ? <th /> : null}
               </tr>
             </thead>
             <tbody>
               {slice.map((v) =>
-                editingVinculoId === v.vinculo_id ? (
+                !readOnly && editingVinculoId === v.vinculo_id ? (
                   <tr key={v.vinculo_id} className="ds-table__row--editing">
                     <td colSpan={7}>
                       <form className="ds-cadastro-subsection" onSubmit={handleSaveEditVinculo}>
@@ -292,24 +294,26 @@ export function RevisaoRecursosSection({
                     </td>
                     <td>{v.peso_rateio ?? (v.criterio_rateio === "por_peso" ? "1" : "—")}</td>
                     <td>{labelSimNao(v.ativo)}</td>
-                    <td className="ds-table__actions">
-                      <button
-                        type="button"
-                        className="ds-ghost-btn"
-                        onClick={() => startEditVinculo(v)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="ds-ghost-btn"
-                        onClick={() =>
-                          void deleteVinculo(v.vinculo_id, getAccessToken).then(() => onReload())
-                        }
-                      >
-                        Desvincular
-                      </button>
-                    </td>
+                    {!readOnly ? (
+                      <td className="ds-table__actions">
+                        <button
+                          type="button"
+                          className="ds-ghost-btn"
+                          onClick={() => startEditVinculo(v)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="ds-ghost-btn"
+                          onClick={() =>
+                            void deleteVinculo(v.vinculo_id, getAccessToken).then(() => onReload())
+                          }
+                        >
+                          Desvincular
+                        </button>
+                      </td>
+                    ) : null}
                   </tr>
                 )
               )}
@@ -328,6 +332,8 @@ export function RevisaoRecursosSection({
         <p className="ds-state-box">Nenhum recurso vinculado. O rateio só considera recursos com vínculo ativo.</p>
       )}
 
+      {!readOnly ? (
+        <>
       <form className="ds-cadastro-subsection" onSubmit={handleAddVinculo}>
         <h4 className="ds-cadastro-subsection__title">Vincular recurso à revisão</h4>
         <div className="ds-filters-row">
@@ -427,6 +433,8 @@ export function RevisaoRecursosSection({
           </form>
         ) : null}
       </div>
+        </>
+      ) : null}
     </CadastroSection>
   );
 }

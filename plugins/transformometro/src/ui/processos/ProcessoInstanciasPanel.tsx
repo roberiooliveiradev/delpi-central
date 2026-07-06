@@ -46,6 +46,12 @@ type Props = {
   initialShowForm?: boolean;
   /** IDs de instâncias que já possuem revisões (bloqueiam a troca de filial). */
   instanciasComRevisao?: string[];
+  /** Quando true, o botão principal navega para a instância (página dedicada). */
+  navigateOnSelect?: boolean;
+  /** Oculta tabela e botão nova instância (modo embutido na página da instância). */
+  hideTable?: boolean;
+  /** Abre o formulário de edição desta instância ao montar. */
+  initialEditInstanciaId?: string | null;
   onSelect: (instanciaId: string) => void;
   onCreate: (payload: CreatePayload) => Promise<void>;
   onUpdate: (
@@ -122,6 +128,9 @@ export function ProcessoInstanciasPanel({
   busy = false,
   initialShowForm = false,
   instanciasComRevisao = [],
+  navigateOnSelect = false,
+  hideTable = false,
+  initialEditInstanciaId = null,
   onSelect,
   onCreate,
   onUpdate,
@@ -287,6 +296,12 @@ export function ProcessoInstanciasPanel({
     setStatusInstancia(row.status_instancia ?? "ativo");
     setShowForm(true);
   }
+
+  useEffect(() => {
+    if (!initialEditInstanciaId) return;
+    const row = instancias.find((item) => item.instancia_id === initialEditInstanciaId);
+    if (row) startEdit(row);
+  }, [initialEditInstanciaId, instancias]);
 
   function startDuplicate(row: ProcessoInstancia) {
     setEditingInstanciaId(null);
@@ -483,10 +498,14 @@ export function ProcessoInstanciasPanel({
           <div className="ds-table__actions">
             <button
               type="button"
-              className={`ds-ghost-btn${selectedInstanciaId === row.instancia_id ? " ds-ghost-btn--active" : ""}`}
+              className={`ds-ghost-btn${!navigateOnSelect && selectedInstanciaId === row.instancia_id ? " ds-ghost-btn--active" : ""}`}
               onClick={() => onSelect(row.instancia_id)}
             >
-              {selectedInstanciaId === row.instancia_id ? "Selecionada" : "Selecionar"}
+              {navigateOnSelect
+                ? "Abrir"
+                : selectedInstanciaId === row.instancia_id
+                  ? "Selecionada"
+                  : "Selecionar"}
             </button>
             <button type="button" className="ds-ghost-btn" onClick={() => startEdit(row)}>
               <Pencil size={14} />
@@ -509,7 +528,7 @@ export function ProcessoInstanciasPanel({
         ),
       },
     ],
-    [activeFilialCount, busy, onSelect, saving, selectedInstanciaId]
+    [activeFilialCount, busy, navigateOnSelect, onSelect, saving, selectedInstanciaId]
   );
 
   const formTitle = editingInstanciaId
@@ -622,6 +641,7 @@ export function ProcessoInstanciasPanel({
 
   return (
     <div className="tm-panel-stack">
+      {hideTable ? null : (
       <section className="ds-card">
         <div className="ds-table-section__header">
           <div>
@@ -635,8 +655,8 @@ export function ProcessoInstanciasPanel({
               </span>
             </h2>
             <p className="ds-hint">
-              Instância por unidade ou multi-unidade (todas as ativas). Revisões, baseline e
-              medições ficam na instância selecionada.
+              Instância por unidade ou multi-unidade (todas as ativas). Abra a instância para
+              gerenciar revisões, baseline e medições.
             </p>
           </div>
           <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
@@ -654,6 +674,7 @@ export function ProcessoInstanciasPanel({
           emptyMessage="Nenhuma instância cadastrada."
         />
       </section>
+      )}
 
       {showForm ? (
         <section className="ds-card ds-cadastro-form">

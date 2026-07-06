@@ -2034,6 +2034,34 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   font-size: var(--ds-font-sm);
 }
 
+/* Seções read/edit (padrão Kaizen / Action Plans) */
+.dashboard-transformometro .ds-editable-section {
+  margin-bottom: 1rem;
+}
+
+.dashboard-transformometro .ds-editable-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.dashboard-transformometro .ds-editable-section__header .ds-section-title {
+  margin: 0;
+}
+
+.dashboard-transformometro .ds-editable-section__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-transformometro .ds-revisao-read-summary {
+  margin-bottom: 1rem;
+}
+
 .dashboard-transformometro .ds-cadastro-form__actions {
   margin-top: 12px;
   display: flex;

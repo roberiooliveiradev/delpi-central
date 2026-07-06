@@ -23,6 +23,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceApi";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
+import { toDateInputValue } from "../../utils/dateInputs";
 import { CadastroTabs, type CadastroTabId } from "../revisao/cadastro/CadastroTabs";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
@@ -80,6 +81,7 @@ const emptyMedicao = (revisaoId: string): Medicao => ({
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisao: Revisao;
   options: OptionsData;
+  readOnly?: boolean;
   onError: (message: string | null) => void;
   onRevisaoUpdated: () => void;
   onRevisaoDeleted?: () => void;
@@ -89,6 +91,7 @@ export function RevisaoCadastroPanel({
   revisao,
   options,
   getAccessToken,
+  readOnly = false,
   onError,
   onRevisaoUpdated,
   onRevisaoDeleted,
@@ -226,12 +229,35 @@ export function RevisaoCadastroPanel({
 
   return (
     <div className="ds-cadastro-panel">
-      <RevisaoAtivarToolbar
-        revisao={revisao}
-        onError={onError}
-        onActivate={handleActivate}
-        onDelete={handleDeleteRevisao}
-      />
+      {!readOnly ? (
+        <RevisaoAtivarToolbar
+          revisao={revisao}
+          onError={onError}
+          onActivate={handleActivate}
+          onDelete={handleDeleteRevisao}
+        />
+      ) : (
+        <section className="ds-card ds-revisao-read-summary">
+          <dl className="ds-dl-grid">
+            <div>
+              <dt>Versão</dt>
+              <dd>{revisao.versao_revisao}</dd>
+            </div>
+            <div>
+              <dt>Cenário</dt>
+              <dd>{revisao.cenario_tipo}</dd>
+            </div>
+            <div>
+              <dt>Início vigência</dt>
+              <dd>{toDateInputValue(revisao.data_inicio_vigencia) || "—"}</dd>
+            </div>
+            <div>
+              <dt>Ativa</dt>
+              <dd>{revisao.revisao_ativa ? "sim" : "não"}</dd>
+            </div>
+          </dl>
+        </section>
+      )}
 
       {rateioDiag ? (
         <div
@@ -259,6 +285,7 @@ export function RevisaoCadastroPanel({
           <RevisaoVigenciaSection
             revisaoVigencia={revisaoVigencia}
             options={options}
+            readOnly={readOnly}
             onChange={setRevisaoVigencia}
             onSubmit={handleSaveRevisaoDatas}
           />
@@ -266,6 +293,7 @@ export function RevisaoCadastroPanel({
         {activeTab === "medicao" ? (
           <RevisaoMedicaoSection
             medicao={medicao}
+            readOnly={readOnly}
             onChange={setMedicao}
             onSubmit={handleSaveMedicao}
           />
@@ -275,6 +303,7 @@ export function RevisaoCadastroPanel({
             revisaoId={revisao.revisao_id}
             options={options}
             investimentos={investimentos}
+            readOnly={readOnly}
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
@@ -286,6 +315,7 @@ export function RevisaoCadastroPanel({
             options={options}
             recursos={recursos}
             vinculos={vinculos}
+            readOnly={readOnly}
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
@@ -295,6 +325,7 @@ export function RevisaoCadastroPanel({
           <RevisaoEvidenciasSection
             revisaoId={revisao.revisao_id}
             getAccessToken={getAccessToken}
+            readOnly={readOnly}
             onError={onError}
             onReload={load}
           />

@@ -4,11 +4,32 @@ import { CadastroSection } from "./CadastroSection";
 
 type Props = {
   medicao: Medicao;
+  readOnly?: boolean;
   onChange: (value: Medicao) => void;
   onSubmit: (e: React.FormEvent) => void;
 };
 
-export function RevisaoMedicaoSection({ medicao, onChange, onSubmit }: Props) {
+export function RevisaoMedicaoSection({
+  medicao,
+  readOnly = false,
+  onChange,
+  onSubmit,
+}: Props) {
+  if (readOnly) {
+    return (
+      <CadastroSection embedded title="Medição operacional">
+        <dl className="ds-dl-grid">
+          <div><dt>Volume mensal</dt><dd>{medicao.volume_mensal}</dd></div>
+          <div><dt>Tempo médio (min)</dt><dd>{medicao.tempo_medio_execucao_min}</dd></div>
+          <div><dt>Tempo retrabalho (min)</dt><dd>{medicao.tempo_retrabalho_min}</dd></div>
+          <div><dt>Custo hora MO</dt><dd>{medicao.custo_hora_mao_obra}</dd></div>
+          <div><dt>% retrabalho</dt><dd>{medicao.percentual_retrabalho}</dd></div>
+          <div><dt>% erro</dt><dd>{medicao.percentual_erro}</dd></div>
+        </dl>
+      </CadastroSection>
+    );
+  }
+
   return (
     <CadastroSection
       embedded

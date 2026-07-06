@@ -1,5 +1,7 @@
 import { DashboardPage } from "./ui/pages/DashboardPage";
+import { InstanciaDetailPage } from "./ui/pages/InstanciaDetailPage";
 import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
+import { RevisaoDetailPage } from "./ui/pages/RevisaoDetailPage";
 import { RecursoDetailPage } from "./ui/pages/RecursoDetailPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 import { SetoresPage } from "./ui/pages/SetoresPage";
@@ -75,14 +77,37 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     );
   }
 
+  if (route.view === "revisao" && route.processoId && route.revisaoId) {
+    return (
+      <RevisaoDetailPage
+        getAccessToken={getAccessToken}
+        processoId={route.processoId}
+        instanciaId={route.instanciaId ?? ""}
+        revisaoId={route.revisaoId}
+        legacyRevisaoPath={route.legacyRevisaoPath}
+        pathname={pathname}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+
+  if (route.view === "instancia" && route.processoId && route.instanciaId) {
+    return (
+      <InstanciaDetailPage
+        getAccessToken={getAccessToken}
+        processoId={route.processoId}
+        instanciaId={route.instanciaId}
+        pathname={pathname}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+
   if (route.view === "processo" && route.processoId) {
     return (
       <ProcessoDetailPage
         getAccessToken={getAccessToken}
         processoId={route.processoId}
-        instanciaId={route.instanciaId ?? null}
-        revisaoId={route.revisaoId ?? null}
-        legacyRevisaoPath={route.legacyRevisaoPath}
         pathname={pathname}
         onNavigate={onNavigate}
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}

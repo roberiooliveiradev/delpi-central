@@ -17,12 +17,43 @@ export type RevisaoVigenciaForm = {
 type Props = {
   revisaoVigencia: RevisaoVigenciaForm;
   options: OptionsData;
+  readOnly?: boolean;
   onChange: (value: RevisaoVigenciaForm) => void;
   onSubmit: (e: React.FormEvent) => void;
 };
 
-export function RevisaoVigenciaSection({ revisaoVigencia, options, onChange, onSubmit }: Props) {
+export function RevisaoVigenciaSection({
+  revisaoVigencia,
+  options,
+  readOnly = false,
+  onChange,
+  onSubmit,
+}: Props) {
   const isBaseline = revisaoVigencia.cenario_tipo === "baseline";
+
+  if (readOnly) {
+    return (
+      <CadastroSection embedded title="Vigência e identificação">
+        <dl className="ds-dl-grid">
+          <div><dt>Versão</dt><dd>{revisaoVigencia.versao_revisao}</dd></div>
+          <div><dt>Cenário</dt><dd>{revisaoVigencia.cenario_tipo}</dd></div>
+          <div><dt>Início</dt><dd>{revisaoVigencia.data_inicio_vigencia || "—"}</dd></div>
+          <div><dt>Implantação</dt><dd>{revisaoVigencia.data_implantacao || "—"}</dd></div>
+          <div><dt>Fim</dt><dd>{revisaoVigencia.data_fim_vigencia || "—"}</dd></div>
+          <div><dt>Ativa</dt><dd>{revisaoVigencia.revisao_ativa ? "sim" : "não"}</dd></div>
+          {revisaoVigencia.descricao_revisao ? (
+            <div><dt>Descrição</dt><dd>{revisaoVigencia.descricao_revisao}</dd></div>
+          ) : null}
+          {revisaoVigencia.motivo_revisao ? (
+            <div><dt>Motivo</dt><dd>{revisaoVigencia.motivo_revisao}</dd></div>
+          ) : null}
+        </dl>
+        {revisaoVigencia.observacoes ? (
+          <p className="ds-hint"><strong>Observações:</strong> {revisaoVigencia.observacoes}</p>
+        ) : null}
+      </CadastroSection>
+    );
+  }
 
   return (
     <CadastroSection

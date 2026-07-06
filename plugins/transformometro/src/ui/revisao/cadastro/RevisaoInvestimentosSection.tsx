@@ -24,6 +24,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
   options: OptionsData;
   investimentos: Investimento[];
+  readOnly?: boolean;
   onError: (message: string | null) => void;
   onReload: () => Promise<void>;
 };
@@ -32,6 +33,7 @@ export function RevisaoInvestimentosSection({
   revisaoId,
   options,
   investimentos,
+  readOnly = false,
   getAccessToken,
   onError,
   onReload,
@@ -123,12 +125,12 @@ export function RevisaoInvestimentosSection({
                   <th>Total</th>
                   <th>Data</th>
                   <th>Meses vig.</th>
-                  <th />
+                  {!readOnly ? <th /> : null}
                 </tr>
               </thead>
               <tbody>
                 {slice.map((inv) =>
-                  editingInvestimentoId === inv.investimento_id ? (
+                  !readOnly && editingInvestimentoId === inv.investimento_id ? (
                     <tr key={inv.investimento_id} className="ds-table__row--editing">
                       <td colSpan={8}>
                         <form className="ds-cadastro-subsection" onSubmit={handleSaveEditInvestimento}>
@@ -168,24 +170,26 @@ export function RevisaoInvestimentosSection({
                       <td>{inv.valor_total.toLocaleString("pt-BR")}</td>
                       <td>{toDateInputValue(inv.data_investimento) || "—"}</td>
                       <td>{inv.meses_vigencia ?? "—"}</td>
-                      <td>
-                        <div className="ds-table__actions">
-                          <button
-                            type="button"
-                            className="ds-ghost-btn"
-                            onClick={() => startEditInvestimento(inv)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            className="ds-ghost-btn"
-                            onClick={() => void handleDeleteInvestimento(inv)}
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      </td>
+                      {!readOnly ? (
+                        <td>
+                          <div className="ds-table__actions">
+                            <button
+                              type="button"
+                              className="ds-ghost-btn"
+                              onClick={() => startEditInvestimento(inv)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              className="ds-ghost-btn"
+                              onClick={() => void handleDeleteInvestimento(inv)}
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        </td>
+                      ) : null}
                     </tr>
                   )
                 )}
@@ -204,13 +208,15 @@ export function RevisaoInvestimentosSection({
         <p className="ds-state-box">Nenhum investimento nesta revisão.</p>
       )}
 
-      <form className="ds-cadastro-subsection" onSubmit={handleAddInvestimento}>
-        <h4 className="ds-cadastro-subsection__title">Adicionar investimento</h4>
-        <InvestimentoFormFields form={invForm} options={options} onChange={setInvForm} />
-        <button type="submit" className="ds-primary-btn">
-          Adicionar investimento
-        </button>
-      </form>
+      {!readOnly ? (
+        <form className="ds-cadastro-subsection" onSubmit={handleAddInvestimento}>
+          <h4 className="ds-cadastro-subsection__title">Adicionar investimento</h4>
+          <InvestimentoFormFields form={invForm} options={options} onChange={setInvForm} />
+          <button type="submit" className="ds-primary-btn">
+            Adicionar investimento
+          </button>
+        </form>
+      ) : null}
     </CadastroSection>
   );
 }
