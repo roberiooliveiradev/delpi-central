@@ -138,6 +138,10 @@ export const TM_HELP_TOOLTIPS = {
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
     diagramaMacro:
       "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas instâncias e revisões.",
+    preenchimento:
+      "Checklist do cadastro completo: dados mestre, instâncias operacionais, diagrama macro, baseline, melhoria e medição com competências registradas.",
+    preenchimentoLista:
+      "Percentual dos campos mestre (gestor, objetivo, descrição e família). Abra o processo para ver o checklist completo com instâncias, diagrama e revisões.",
   },
   instancias: {
     escopo:

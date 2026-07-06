@@ -142,6 +142,22 @@ Plano: [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagrama
 
 **Backlog pós-MVP:** action chat com Mermaid da revisão; swimlanes automáticas por unidade/departamento.
 
+## Fase 8 — Decomposição de processo (árvore + planilha) 🚧 roadmap (jul/2026)
+
+**Objetivo:** árvore WBS no processo-mestre (processo-chave → tarefa → sub-tarefa), export tabular no formato planilha operacional, escopo/overlay por instância/revisão, vínculo com diagrama macro (Playbook 19).
+
+Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · status: [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md).
+
+| Sprint | Entrega | Status |
+|--------|---------|--------|
+| S0 | Playbook + JSON Schema + ADR | ✅ doc |
+| S1 | V030 + árvore + editor processo | ⬜ |
+| S2 | Export CSV/Excel | ⬜ |
+| S3 | V031 + escopo instância | ⬜ |
+| S4 | V032 + overlay revisão + backup | ⬜ |
+| S5 | Vínculo fluxo + assistente rascunho | ⬜ |
+| S6 | Colaboração + diff textual | ⬜ |
+
 ## Fase 6 — Limpeza de legado (pendente)
 
 **Objetivo:** remover código e config órfãos após confirmação em produção.

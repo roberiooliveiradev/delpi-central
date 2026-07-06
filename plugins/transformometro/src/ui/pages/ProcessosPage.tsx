@@ -22,7 +22,8 @@ import { FieldLabel } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
-import { renderTableStatus } from "../../utils/tablePresentation";
+import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
+import { computeProcessoMasterCompletion } from "../../utils/processoCompletion";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const P = TM_HELP_TOOLTIPS.processos;
@@ -33,6 +34,7 @@ import {
   processoFormFromEntity,
   type ProcessoFormState,
 } from "../processos/processoForm";
+import { renderTableStatus } from "../../utils/tablePresentation";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -175,6 +177,19 @@ export function ProcessosPage({
         render: (row) => row.nome_processo,
       },
       { key: "status", header: "Status", headerHint: C.status, className: "ds-table__col--status", render: (row) => renderTableStatus(row.status_processo), sortable: true },
+      {
+        key: "preenchimento",
+        header: "Preenchimento",
+        headerHint: P.preenchimentoLista,
+        className: "ds-table__col--progress",
+        render: (row) => (
+          <ProcessoFormProgress
+            compact
+            completion={computeProcessoMasterCompletion(row)}
+            title={`Preenchimento mestre — ${row.codigo_processo}`}
+          />
+        ),
+      },
       {
         key: "acoes",
         header: "Ações",

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
 import { ProcessoTimeline } from "../../components/processo/ProcessoTimeline";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { ProcessoReadView } from "../../components/processo/ProcessoReadView";
@@ -24,6 +25,7 @@ import {
   duplicateInstancia,
   fetchOptions,
   fetchProcesso,
+  fetchProcessoComparativo,
   fetchProcessoInstancias,
   fetchProcessoTimeline,
   fetchRevisoes,
@@ -31,9 +33,13 @@ import {
   updateInstancia,
   type OptionsData,
   type Processo,
+  type ProcessoComparativoItem,
   type ProcessoInstancia,
+  type Revisao,
 } from "../../data/api/transformometroApi";
+import { fetchProcessoDiagrama } from "../../data/api/transformometroDiagramApi";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
+import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
 import { buildInstanciaPath } from "../../utils/routeParser";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
@@ -62,6 +68,9 @@ export function ProcessoDetailPage({
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [instanciasComRevisao, setInstanciasComRevisao] = useState<string[]>([]);
+  const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  const [diagramNodeCount, setDiagramNodeCount] = useState(0);
+  const [comparativoItems, setComparativoItems] = useState<ProcessoComparativoItem[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,15 +96,20 @@ export function ProcessoDetailPage({
     setRefreshing(true);
     setError(null);
     try {
-      const [proc, revs, opts, inst] = await Promise.all([
+      const [proc, revs, opts, inst, diagram, comparativo] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
         fetchRevisoes(processoId, getAccessToken),
         fetchOptions(getAccessToken),
         fetchProcessoInstancias(processoId, getAccessToken),
+        fetchProcessoDiagrama(processoId, getAccessToken).catch(() => null),
+        fetchProcessoComparativo(processoId, getAccessToken).catch(() => ({ items: [] })),
       ]);
       setProcesso(proc);
       setOptions(opts);
       setInstancias(inst.items);
+      setRevisoes(revs.items);
+      setDiagramNodeCount(diagram?.conteudo?.nodes?.length ?? 0);
+      setComparativoItems(comparativo.items ?? []);
       setInstanciasComRevisao(
         Array.from(
           new Set(
@@ -171,6 +185,19 @@ export function ProcessoDetailPage({
     }
   }
 
+  const setupCompletion = useMemo(() => {
+    if (!processo) {
+      return { percent: 0, done: 0, total: 0, items: [] };
+    }
+    return computeProcessoSetupCompletion({
+      processo,
+      instanciaCount: instancias.length,
+      diagramNodeCount,
+      revisoes,
+      comparativoItems,
+    });
+  }, [comparativoItems, diagramNodeCount, instancias.length, processo, revisoes]);
+
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
   const processLoadingProgress = useLoadingProgress(loading && !processo, processFetchProgress);
 
@@ -237,6 +264,11 @@ export function ProcessoDetailPage({
         lockError={sectionEdit.lockError}
         realtimeNotice={sectionEdit.realtimeNotice}
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
+
+      <ProcessoFormProgress
+        completion={setupCompletion}
+        title="Preenchimento do cadastro"
       />
 
       <EditableSectionCard

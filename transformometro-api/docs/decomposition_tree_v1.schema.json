@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://delpi.local/transformometro/decomposition_tree_v1.schema.json",
+  "title": "Transformômetro decomposition_tree_v1",
+  "description": "Árvore de decomposição de processo — Playbook 20.",
+  "type": "object",
+  "required": ["format", "format_version", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "decomposition_tree_v1" },
+    "format_version": { "type": "integer", "const": 1 },
+    "nodes": {
+      "type": "array",
+      "maxItems": 500,
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "nodeId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-zA-Z0-9_\\-]+$"
+    },
+    "level": {
+      "type": "string",
+      "enum": ["processo_chave", "tarefa", "sub_tarefa"]
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "level", "ordem", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nodeId" },
+        "level": { "$ref": "#/$defs/level" },
+        "ordem": { "type": "integer", "minimum": 1, "maximum": 999 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "parent_id": {
+          "oneOf": [{ "$ref": "#/$defs/nodeId" }, { "type": "null" }]
+        },
+        "descricao": { "type": ["string", "null"], "maxLength": 4000 },
+        "disabled": { "type": "boolean" },
+        "meta": { "type": "object", "additionalProperties": true }
+      }
+    }
+  }
+}

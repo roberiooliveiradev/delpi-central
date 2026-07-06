@@ -5,7 +5,7 @@
 
 Este playbook define como modelar, calcular e evoluir o Transformômetro sem quebrar a coerência entre cadastro, API, dashboard, exportações e integrações.
 
-Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [PLAYBOOK-19 — diagramas processo/revisão/escopo](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) · [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)
+Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [PLAYBOOK-19 — diagramas processo/revisão/escopo](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição árvore/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) · [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) · [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md)
 
 ## 1. Princípios
 
@@ -59,12 +59,17 @@ Fonte derivada:
 ### 2.3 Hierarquia lógica
 
 ```text
-processo-mestre (codigo_processo)
-  ├── diagrama-macro (mapa canônico — Playbook 19)
-  └── instancia (filial × setor) [instancia_id]
-        ├── escopo no diagrama (subset de nós do macro)
+processo-mestre (codigo_processo) — macroprocesso
+  ├── decomposicao (árvore WBS — Playbook 20)
+  │     processo_chave → tarefa → sub_tarefa
+  ├── diagrama-macro (mapa canônico de fluxo — Playbook 19)
+  └── instancia (filial × setor) [instancia_id] — **onde a melhoria acontece**
+        ├── contexto operacional extra (`instancia_contexto`, PB20)
+        ├── escopo decomposição (processos-chave desta fatia)
+        ├── escopo no diagrama (subset nós fluxo)
         └── revisão [revisao_id]
-              ├── overlay diagrama (as-is / to-be)
+              ├── overlay decomposição (as-is / to-be textual)
+              ├── overlay diagrama (as-is / to-be fluxo)
               ├── medição
               ├── investimentos
               └── vínculos → recursos compartilhados (rateio conforme escopo_recurso)
@@ -89,7 +94,7 @@ Data da primeira revisão não-baseline **da instância operacional** (escopo lo
 No dashboard consolidado por processo-mestre, a data exibida segue a regra acima **por instância**; agregações somam linhas de cada instância.
 
 **Instância operacional**  
-Par único `(filial_id, setor_id)` dentro de um processo-mestre. Identificador canônico: `instancia_id` (UUID). Opcional: `rotulo_instancia` para UI.
+Par `(filial × setor)` dentro de um processo-mestre — **onde a melhoria acontece**. Declara escopo (processos-chave / nós de fluxo) e concentra timeline de revisões. Identificador canônico: `instancia_id` (UUID). Opcional: `rotulo_instancia`, `instancia_contexto` (metadados operacionais extras — Playbook 20).
 
 **Processo-mestre**  
 Cadastro sem `filial_id`/`setor_id` na tabela `processos` (V015). Create via API ainda aceita filial/setor no body → cria **primeira instância**.

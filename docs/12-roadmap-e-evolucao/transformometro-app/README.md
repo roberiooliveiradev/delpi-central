@@ -12,7 +12,9 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) | Contrato vivo de modelagem, vigência, atividade, investimentos, recursos e cálculo |
 | [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) | Refatoração: instâncias operacionais, filiais/setores UUID, escopo híbrido de recursos, visões consolidado/filial/dept |
 | [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) | Diagramas macro, escopo por instância, overlay por revisão (Playbook 19) |
+| [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) | Árvore de decomposição, export planilha, vínculo com fluxo (Playbook 20) |
 | [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) | Status técnico S0–S6 (API + MFE) |
+| [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) | Status técnico Playbook 20 (S0–S6) |
 | [adr-diagramas-processo.md](../../../transformometro-api/docs/adr-diagramas-processo.md) | ADR diagramas — decisões e endpoints |
 | [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) | Status técnico S1–S12 + MFE §9 (API) |
 | [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) | Fórmulas oficiais + escopo de recurso e visões |

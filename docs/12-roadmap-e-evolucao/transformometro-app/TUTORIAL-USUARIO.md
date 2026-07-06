@@ -6,7 +6,7 @@
 
 Este guia explica **como cadastrar corretamente**, **como usar diagramas** (macro → escopo → revisão) e **como tirar proveito das demais funcionalidades** do app.
 
-Documentação técnica complementar: [OVERVIEW.md](./OVERVIEW.md) · [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) · [PLAYBOOK-19 — diagramas](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md)
+Documentação técnica complementar: [OVERVIEW.md](./OVERVIEW.md) · [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) · [PLAYBOOK-19 — diagramas](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)
 
 ---
 
@@ -134,10 +134,14 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 
 ## 5. Instâncias operacionais — boas práticas
 
-### Uma instância = unidade × departamento(s)
+> **Playbook 20:** a instância **permanece** como unidade onde a melhoria acontece. O macroprocesso traz árvore + fluxo completos; cada instância declara **qual parte** do macro está sendo transformada naquela unidade/departamento e pode ganhar **contexto operacional extra** (responsáveis locais, notas por processo-chave, links).
+
+### Uma instância = unidade × departamento(s) × fatia do macro
 
 - Cada combinação operacional tem **baseline e melhorias independentes**.
 - O dashboard **consolidado** soma todas as instâncias do processo-mestre.
+- **Escopo no mapeamento (futuro):** selecione quais **processos-chave** desta instância executa (ex.: Engenharia trata PK 2–5 do LMP).
+- **Contexto local (futuro):** observações de rollout, responsável, sistema local por processo-chave — além de rotulo e status.
 
 ### Instância multi-unidade («Todas as unidades ativas»)
 
@@ -189,7 +193,9 @@ Na revisão, o sistema pode alertar se o **custo rateado de recursos** excede a 
 
 ---
 
-## 7. Diagramas — modelo em três camadas
+## 7. Diagramas e mapeamento — modelo em três camadas (+ árvore WBS)
+
+> **Roadmap (Playbook 20):** em breve, além do fluxo, haverá **árvore de decomposição** (processo-chave → tarefa → sub-tarefa) com **export da planilha de mapeamento**. Ver [PLAYBOOK-20](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md).
 
 Os diagramas **não são desenhos soltos**: eles se **amarram** do processo-mestre até cada revisão.
 
@@ -453,7 +459,8 @@ No detalhe do processo → **Linha do tempo** (audit log).
 |------|-----------|
 | Modelo de domínio | [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) |
 | Instâncias e escopo | [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) |
-| Diagramas (técnico) | [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) |
+| Diagramas fluxo (técnico) | [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) |
+| Árvore / planilha mapeamento | [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) |
 | Fórmulas de cálculo | [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) |
 | Deploy e migrations | [OPERATIONS.md](./OPERATIONS.md) |
 

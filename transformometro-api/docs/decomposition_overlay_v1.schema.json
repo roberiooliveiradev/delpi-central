@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://delpi.local/transformometro/decomposition_overlay_v1.schema.json",
+  "title": "Transformômetro decomposition_overlay_v1",
+  "description": "Overlay as-is/to-be sobre árvore de decomposição — Playbook 20.",
+  "type": "object",
+  "required": ["format", "format_version"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "decomposition_overlay_v1" },
+    "format_version": { "type": "integer", "const": 1 },
+    "node_overrides": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string", "maxLength": 500 },
+          "descricao": { "type": ["string", "null"], "maxLength": 4000 },
+          "highlight": {
+            "type": "string",
+            "enum": ["asis", "tobe", "changed", "removed"]
+          },
+          "meta": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "disabled_node_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 64 }
+    }
+  }
+}

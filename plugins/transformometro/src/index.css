@@ -664,6 +664,93 @@
   color: var(--ds-text-muted);
 }
 
+/* Barra de preenchimento do cadastro (padrão quality-action-plans / Kaizen) */
+.dashboard-transformometro .tm-form-progress {
+  padding: 14px 16px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-control-radius);
+  background: color-mix(in srgb, var(--ds-accent) 4%, var(--ds-card-bg));
+  margin-bottom: var(--ds-section-gap);
+}
+
+.dashboard-transformometro .tm-form-progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.dashboard-transformometro .tm-form-progress__title {
+  font-weight: 700;
+  color: var(--ds-title);
+}
+
+.dashboard-transformometro .tm-form-progress__pct {
+  font-size: var(--ds-font-sm);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+  white-space: nowrap;
+}
+
+.dashboard-transformometro .tm-form-progress__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ds-card-border);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.dashboard-transformometro .tm-form-progress--compact .tm-form-progress__bar {
+  flex: 1;
+  min-width: 48px;
+  margin-bottom: 0;
+}
+
+.dashboard-transformometro .tm-form-progress--compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  margin-bottom: 0;
+}
+
+.dashboard-transformometro .tm-form-progress--compact .tm-form-progress__pct {
+  font-size: var(--ds-font-xs);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.dashboard-transformometro .tm-form-progress__fill {
+  display: block;
+  height: 100%;
+  background: var(--ds-accent);
+  transition: width 0.2s ease;
+}
+
+.dashboard-transformometro .tm-form-progress__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-transformometro .tm-form-progress__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ds-font-xs);
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-form-progress__item--done {
+  color: var(--ds-success);
+}
+
 .dashboard-transformometro .tm-panel-stack {
   display: flex;
   flex-direction: column;
@@ -1471,6 +1558,12 @@
 .dashboard-transformometro .ds-table__col--status {
   width: 1%;
   white-space: nowrap;
+  vertical-align: middle;
+}
+
+.dashboard-transformometro .ds-table__col--progress {
+  width: 8rem;
+  min-width: 7rem;
   vertical-align: middle;
 }
 
