@@ -79,6 +79,14 @@ class InstanciaBody(BaseModel):
     )
     rotulo_instancia: Optional[str] = Field(default=None, max_length=255)
     status_instancia: str = Field(default="ativo", max_length=32)
+    resumo_melhoria: Optional[str] = Field(default=None, max_length=4000)
+    responsavel_local: Optional[str] = Field(default=None, max_length=255)
+    fase_melhoria: str = Field(default="planejado", max_length=32)
+    data_alvo_go_live: Optional[str] = Field(
+        default=None,
+        description="Data-alvo ISO (YYYY-MM-DD).",
+    )
+    prioridade: str = Field(default="media", max_length=16)
 
     @model_validator(mode="after")
     def _normalize_setores(self) -> "InstanciaBody":
@@ -95,6 +103,11 @@ class InstanciaUpdateBody(BaseModel):
     rotulo_instancia: Optional[str] = Field(default=None, max_length=255)
     status_instancia: str = Field(default="ativo", max_length=32)
     setor_ids: list[str] = Field(min_length=1)
+    resumo_melhoria: Optional[str] = Field(default=None, max_length=4000)
+    responsavel_local: Optional[str] = Field(default=None, max_length=255)
+    fase_melhoria: Optional[str] = Field(default=None, max_length=32)
+    data_alvo_go_live: Optional[str] = Field(default=None)
+    prioridade: Optional[str] = Field(default=None, max_length=16)
     filial_id: Optional[str] = Field(
         default=None,
         max_length=16,

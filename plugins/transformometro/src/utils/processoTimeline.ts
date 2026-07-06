@@ -31,7 +31,7 @@ export type ProcessoTimelineEntry = {
 
 const ENTITY_LABELS: Record<string, string> = {
   processo: "Processo",
-  processo_instancia: "Instância operacional",
+  processo_instancia: "Melhoria",
   revisao: "Revisão",
   medicao: "Medição",
   investimento: "Investimento",
@@ -62,7 +62,7 @@ export const PROCESSO_TIMELINE_FILTER_OPTIONS: Array<{
 }> = [
   { value: "all", label: "Todos" },
   { value: "processo", label: "Processo" },
-  { value: "instancia", label: "Instâncias" },
+  { value: "instancia", label: "Melhorias" },
   { value: "revisao", label: "Revisões" },
   { value: "medicao", label: "Medição" },
   { value: "investimento", label: "Investimentos" },

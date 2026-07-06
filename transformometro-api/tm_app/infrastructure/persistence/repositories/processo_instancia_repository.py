@@ -26,6 +26,11 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             f.nome_filial,
             pi.rotulo_instancia,
             pi.status_instancia,
+            pi.resumo_melhoria,
+            pi.responsavel_local,
+            pi.fase_melhoria,
+            pi.data_alvo_go_live,
+            pi.prioridade,
             pi.contexto,
             pi.created_at,
             pi.updated_at,
@@ -60,6 +65,11 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             f.nome_filial,
             pi.rotulo_instancia,
             pi.status_instancia,
+            pi.resumo_melhoria,
+            pi.responsavel_local,
+            pi.fase_melhoria,
+            pi.data_alvo_go_live,
+            pi.prioridade,
             pi.contexto,
             pi.created_at,
             pi.updated_at
@@ -268,34 +278,6 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             todas_filiais_ativas=todas_filiais_ativas,
         )
 
-        existing = self._find_existing(
-            processo_id=processo_id,
-            filial_uuid=str(filial["filial_id"]) if filial else None,
-            todas_filiais_ativas=todas_filiais_ativas,
-        )
-        if existing:
-            self._attach_setores(
-                str(existing["instancia_id"]),
-                setores,
-                auto_commit=auto_commit,
-            )
-            if data.get("rotulo_instancia"):
-                self.execute_returning_one(
-                    """
-                    UPDATE transformometro.processo_instancias
-                    SET rotulo_instancia = %s,
-                        updated_at = NOW()
-                    WHERE instancia_id = %s::uuid
-                    RETURNING instancia_id
-                    """,
-                    (data.get("rotulo_instancia"), existing["instancia_id"]),
-                    auto_commit=auto_commit,
-                )
-            loaded = self.get(str(existing["instancia_id"]))
-            if loaded is None:
-                raise RuntimeError("Instância existente não pôde ser carregada.")
-            return loaded
-
         row = self.execute_returning_one(
             """
             INSERT INTO transformometro.processo_instancias (
@@ -303,9 +285,14 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
                 filial_id,
                 todas_filiais_ativas,
                 rotulo_instancia,
-                status_instancia
+                status_instancia,
+                resumo_melhoria,
+                responsavel_local,
+                fase_melhoria,
+                data_alvo_go_live,
+                prioridade
             )
-            VALUES (%s::uuid, %s::uuid, %s, %s, %s)
+            VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING instancia_id
             """,
             (
@@ -314,6 +301,11 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
                 todas_filiais_ativas,
                 data.get("rotulo_instancia"),
                 data.get("status_instancia", "ativo"),
+                data.get("resumo_melhoria"),
+                data.get("responsavel_local"),
+                data.get("fase_melhoria", "planejado"),
+                data.get("data_alvo_go_live"),
+                data.get("prioridade", "media"),
             ),
             auto_commit=False,
         )
@@ -404,17 +396,6 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
                 todas_filiais_ativas=False,
             )
 
-        if scope_changed:
-            conflito = self._find_existing(
-                processo_id=str(existing["processo_id"]),
-                filial_uuid=str(target_filial["filial_id"]) if target_filial else None,
-                todas_filiais_ativas=target_todas,
-            )
-            if conflito and str(conflito["instancia_id"]) != str(instancia_id):
-                raise ProcessoInstanciaDomainError(
-                    "Já existe uma instância deste processo para o escopo de destino."
-                )
-
         setores = self._resolve_setores(
             setor_refs,
             filial_codigo=target_filial_codigo,
@@ -428,6 +409,11 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
                 status_instancia = %s,
                 todas_filiais_ativas = %s,
                 filial_id = %s::uuid,
+                resumo_melhoria = %s,
+                responsavel_local = %s,
+                fase_melhoria = %s,
+                data_alvo_go_live = %s,
+                prioridade = %s,
                 updated_at = NOW()
             WHERE instancia_id = %s::uuid
               AND deletado = FALSE
@@ -438,6 +424,11 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
                 data.get("status_instancia", existing.get("status_instancia") or "ativo"),
                 target_todas,
                 target_filial["filial_id"] if target_filial else None,
+                data.get("resumo_melhoria"),
+                data.get("responsavel_local"),
+                data.get("fase_melhoria", existing.get("fase_melhoria") or "planejado"),
+                data.get("data_alvo_go_live"),
+                data.get("prioridade", existing.get("prioridade") or "media"),
                 instancia_id,
             ),
             auto_commit=False,

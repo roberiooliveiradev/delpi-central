@@ -48,23 +48,6 @@ class InstanciaDuplicateService:
 
         target_filial = str(filial_id).strip()
         target_setor = str(setor_id).strip()
-        source_setores = {
-            str(source.get("codigo_setor") or source.get("setor_id") or "").lower(),
-            *(
-                str(item.get("codigo_setor") or item.get("setor_id") or "").lower()
-                for item in (source.get("setores") or [])
-                if isinstance(item, dict)
-            ),
-        }
-        source_setores.discard("")
-        if (
-            str(source.get("codigo_filial") or "").lower() == target_filial.lower()
-            and target_setor.lower() in source_setores
-        ):
-            raise ValueError(
-                "Destino igual à instância origem. Informe outra unidade ou setor."
-            )
-
         processo_id = str(source["processo_id"])
         source_revisoes = rev_repo.list_by_instancia(instancia_id)
         if not source_revisoes:
@@ -82,9 +65,7 @@ class InstanciaDuplicateService:
             )
             target_id = str(target["instancia_id"])
             if target_id == str(source["instancia_id"]):
-                raise ValueError(
-                    "Destino igual à instância origem. Informe outra unidade ou setor."
-                )
+                raise ValueError("Falha ao criar melhoria de destino.")
 
             if rev_repo.list_by_instancia(target_id):
                 raise ValueError("Instância destino já possui revisões.")

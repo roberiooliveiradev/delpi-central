@@ -59,7 +59,7 @@ export function computeProcessoSetupCompletion(input: ProcessoSetupCompletionInp
     { id: "familia", label: "Família", done: filled(processo.familia_processo) },
     {
       id: "instancias",
-      label: "Instâncias",
+      label: "Melhorias",
       done: instanciaCount > 0,
     },
     {

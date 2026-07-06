@@ -157,9 +157,14 @@ export const TM_HELP_TOOLTIPS = {
   },
   instancias: {
     escopo:
-      "Cada instância pertence a uma unidade (ou a todas as ativas, instância multi-unidade) e amarra um ou mais departamentos. As revisões ficam na instância — baseline e medições são independentes por ambiente.",
+      "Cada melhoria aplica o processo a unidades e departamentos. Várias melhorias podem compartilhar a mesma unidade e os mesmos departamentos — cada cadastro é um foco distinto de transformação.",
+    resumo: "Oportunidade ou objetivo desta melhoria neste recorte do processo.",
+    responsavel: "Gestor ou patrocinador local responsável pela implantação.",
+    fase: "Fase de rollout: planejado, piloto, implantado ou encerrado.",
+    dataAlvo: "Data-alvo de go-live (planejamento). A data efetiva fica na revisão.",
+    prioridade: "Prioridade operacional para acompanhamento e ranking.",
     todasUnidades:
-      "Instância multi-unidade: uma única timeline válida para todas as unidades ativas (ex.: mesmo processo idêntico em SC e ES). Evita duplicar cadastro por unidade quando baseline, volumes e investimentos são iguais.",
+      "Melhoria multi-unidade: uma única timeline válida para todas as unidades ativas (ex.: mesmo processo idêntico em SC e ES).",
     multiplicadorConsolidado:
       "No dashboard (visão Consolidado), economia bruta, economia líquida e horas desta instância são multiplicadas pelo número de unidades ativas cadastradas. Investimento único, custo recorrente e recursos compartilhados não multiplicam. Na visão por Unidade ou Departamento, o fator é sempre 1.",
     colunaUnidade:
@@ -167,9 +172,9 @@ export const TM_HELP_TOOLTIPS = {
     unidades:
       "Marque as unidades da instância. No cadastro, criamos uma instância por unidade marcada; na edição, unidades extras viram novas instâncias.",
     setores:
-      "Departamentos vinculados à instância. Departamentos já usados por outra instância na mesma unidade aparecem como 'em uso' e ficam desabilitados.",
-    status: "Instâncias inativas deixam de contribuir para os números do dashboard.",
-    rotulo: "Texto livre para identificar a instância (ex.: 'Matriz — rollout Q2'). Opcional.",
+      "Departamentos envolvidos nesta melhoria. Podem repetir entre melhorias — use o rótulo e o resumo para diferenciá-las.",
+    status: "Melhorias inativas deixam de contribuir para os números do dashboard.",
+    rotulo: "Texto livre para identificar a melhoria (ex.: «Matriz — rollout Q2»). Recomendado quando unidade e departamento se repetem.",
     diagramaEscopo:
       "Selecione quais nós do diagrama macro desta instância são relevantes neste ambiente operacional.",
   },

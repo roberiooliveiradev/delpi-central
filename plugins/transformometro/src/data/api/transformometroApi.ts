@@ -174,6 +174,11 @@ export type ProcessoInstancia = {
   nome_setor?: string;
   rotulo_instancia?: string | null;
   status_instancia?: string;
+  resumo_melhoria?: string | null;
+  responsavel_local?: string | null;
+  fase_melhoria?: string | null;
+  data_alvo_go_live?: string | null;
+  prioridade?: string | null;
 };
 
 export type OptionsData = {
@@ -382,6 +387,11 @@ export function createProcessoInstancia(
     setor_ids: string[];
     rotulo_instancia?: string;
     status_instancia?: string;
+    resumo_melhoria?: string;
+    responsavel_local?: string;
+    fase_melhoria?: string;
+    data_alvo_go_live?: string;
+    prioridade?: string;
   },
   getAccessToken?: () => string | undefined
 ) {
@@ -399,6 +409,11 @@ export function updateInstancia(
     status_instancia?: string;
     filial_id?: string;
     todas_filiais_ativas?: boolean;
+    resumo_melhoria?: string;
+    responsavel_local?: string;
+    fase_melhoria?: string;
+    data_alvo_go_live?: string;
+    prioridade?: string;
   },
   getAccessToken?: () => string | undefined
 ) {

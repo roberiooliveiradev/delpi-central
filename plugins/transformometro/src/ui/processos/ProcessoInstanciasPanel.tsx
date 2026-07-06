@@ -7,6 +7,15 @@ import { DataTableSection } from "../../components/DataTableSection";
 import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
+import {
+  labelMelhoriaFase,
+  labelMelhoriaPrioridade,
+  melhoriaFieldsFromInstancia,
+  melhoriaPayloadFromForm,
+  MELHORIA_FASE_OPTIONS,
+  MELHORIA_PRIORIDADE_OPTIONS,
+  type MelhoriaFormFields,
+} from "../../constants/melhoriaForm";
 import { filterSetoresByFilial } from "../../utils/setores";
 
 function renderInstanciaUnidade(row: ProcessoInstancia, activeFilialCount: number) {
@@ -37,7 +46,7 @@ type CreatePayload = {
   todas_filiais_ativas?: boolean;
   setor_ids: string[];
   rotulo_instancia?: string;
-};
+} & MelhoriaFormFields;
 
 type Props = {
   instancias: ProcessoInstancia[];
@@ -63,7 +72,7 @@ type Props = {
       status_instancia?: string;
       filial_id?: string;
       todas_filiais_ativas?: boolean;
-    }
+    } & MelhoriaFormFields
   ) => Promise<void>;
   onDelete: (instanciaId: string) => Promise<void>;
   onDuplicate: (payload: {
@@ -106,19 +115,8 @@ function formatSetores(row: ProcessoInstancia): string {
   return `${row.codigo_setor ?? row.setor_id ?? ""} — ${row.nome_setor ?? ""}`.trim();
 }
 
-function defaultSetorIds(
-  setores: OptionsData["setores"],
-  filialId: string,
-  instancias: ProcessoInstancia[]
-): string[] {
-  const used = new Set<string>();
-  for (const row of instancias) {
-    if (instanciaFilialKey(row) !== filialId.trim().toLowerCase()) continue;
-    for (const key of instanciaSetorKeys(row)) used.add(key);
-  }
-  const first = filterSetoresByFilial(setores, filialId).find(
-    (setor) => !used.has(setor.id.toLowerCase())
-  );
+function defaultSetorIds(setores: OptionsData["setores"], filialId: string): string[] {
+  const first = filterSetoresByFilial(setores, filialId)[0];
   return first ? [first.id] : [];
 }
 
@@ -147,10 +145,15 @@ export function ProcessoInstanciasPanel({
     options.filiais[0]?.id ? [options.filiais[0].id] : []
   );
   const [setorIds, setSetorIds] = useState<string[]>(() =>
-    defaultSetorIds(options.setores, options.filiais[0]?.id ?? "01", instancias)
+    defaultSetorIds(options.setores, options.filiais[0]?.id ?? "01")
   );
   const [rotulo, setRotulo] = useState("");
   const [statusInstancia, setStatusInstancia] = useState("ativo");
+  const [resumoMelhoria, setResumoMelhoria] = useState("");
+  const [responsavelLocal, setResponsavelLocal] = useState("");
+  const [faseMelhoria, setFaseMelhoria] = useState("planejado");
+  const [dataAlvoGoLive, setDataAlvoGoLive] = useState("");
+  const [prioridade, setPrioridade] = useState("media");
   const [saving, setSaving] = useState(false);
 
   const editingInstancia = useMemo(
@@ -169,22 +172,6 @@ export function ProcessoInstanciasPanel({
       setShowForm(true);
     }
   }, [initialShowForm]);
-
-  // Setores já utilizados por outras instâncias, agrupados por filial (chave normalizada).
-  const usedSetorKeysByFilial = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const row of instancias) {
-      if (editingInstanciaId && row.instancia_id === editingInstanciaId) continue;
-      const filialKey = instanciaFilialKey(row);
-      let set = map.get(filialKey);
-      if (!set) {
-        set = new Set<string>();
-        map.set(filialKey, set);
-      }
-      for (const key of instanciaSetorKeys(row)) set.add(key);
-    }
-    return map;
-  }, [editingInstanciaId, instancias]);
 
   // Setores disponíveis conforme o modo (criar/editar multi-filial ou replicar).
   const setoresDisponiveis = useMemo(() => {
@@ -210,20 +197,23 @@ export function ProcessoInstanciasPanel({
     const rotuloValue = rotulo.trim() || undefined;
     const payloads: CreatePayload[] = [];
     for (const fid of filialIds) {
-      const filialKey = fid.trim().toLowerCase();
       const available = new Set(
         filterSetoresByFilial(options.setores, fid).map((setor) => setor.id.toLowerCase())
       );
-      const used = usedSetorKeysByFilial.get(filialKey) ?? new Set<string>();
-      const valid = setorIds.filter(
-        (id) => available.has(id.toLowerCase()) && !used.has(id.toLowerCase())
-      );
+      const valid = setorIds.filter((id) => available.has(id.toLowerCase()));
       if (valid.length > 0) {
         payloads.push({
           filial_id: fid,
           todas_filiais_ativas: false,
           setor_ids: valid,
           rotulo_instancia: rotuloValue,
+          ...melhoriaPayloadFromForm({
+            resumo_melhoria: resumoMelhoria,
+            responsavel_local: responsavelLocal,
+            fase_melhoria: faseMelhoria,
+            data_alvo_go_live: dataAlvoGoLive,
+            prioridade,
+          }),
         });
       }
     }
@@ -231,41 +221,43 @@ export function ProcessoInstanciasPanel({
   }, [
     duplicateSourceId,
     rotulo,
+    resumoMelhoria,
+    responsavelLocal,
+    faseMelhoria,
+    dataAlvoGoLive,
+    prioridade,
     todasFiliais,
     setorIds,
     filialIds,
     options.setores,
-    usedSetorKeysByFilial,
   ]);
 
   // Quantas instâncias o submit produz no modo criar (todas = 1 consolidada).
   const createCount = todasFiliais ? (setorIds.length > 0 ? 1 : 0) : filialPayloads.length;
 
-  // Filiais selecionadas que ficariam sem nenhum setor válido (aviso ao usuário).
+  // Filiais selecionadas sem departamento marcado (aviso ao usuário).
   const skippedFiliais = useMemo(() => {
     if (duplicateSourceId || todasFiliais) return [] as string[];
     const withPayload = new Set(filialPayloads.map((p) => (p.filial_id ?? "").toLowerCase()));
     return filialIds.filter((fid) => !withPayload.has(fid.toLowerCase()));
   }, [duplicateSourceId, todasFiliais, filialPayloads, filialIds]);
 
-  // Replicar: pares (unidade × setor) válidos e livres — cada par vira uma cópia da timeline.
+  // Replicar: pares (unidade × setor) válidos — cada par vira uma cópia da timeline.
   const duplicatePayloads = useMemo<{ filial_id: string; setor_id: string }[]>(() => {
     if (!duplicateSourceId) return [];
     const out: { filial_id: string; setor_id: string }[] = [];
     for (const fid of filialIds) {
-      const filialKey = fid.trim().toLowerCase();
       const available = new Set(
         filterSetoresByFilial(options.setores, fid).map((setor) => setor.id.toLowerCase())
       );
-      const used = usedSetorKeysByFilial.get(filialKey) ?? new Set<string>();
       for (const sid of setorIds) {
-        if (available.has(sid.toLowerCase()) && !used.has(sid.toLowerCase())) {
+        if (available.has(sid.toLowerCase())) {
           out.push({ filial_id: fid, setor_id: sid });
         }
       }
     }
     return out;
-  }, [duplicateSourceId, filialIds, setorIds, options.setores, usedSetorKeysByFilial]);
+  }, [duplicateSourceId, filialIds, setorIds, options.setores]);
 
   function resetForm() {
     setShowForm(false);
@@ -274,6 +266,11 @@ export function ProcessoInstanciasPanel({
     setTodasFiliais(false);
     setRotulo("");
     setStatusInstancia("ativo");
+    setResumoMelhoria("");
+    setResponsavelLocal("");
+    setFaseMelhoria("planejado");
+    setDataAlvoGoLive("");
+    setPrioridade("media");
   }
 
   function openCreateForm() {
@@ -281,7 +278,7 @@ export function ProcessoInstanciasPanel({
     const firstFilial = options.filiais[0]?.id ?? "01";
     setFilialId(firstFilial);
     setFilialIds(firstFilial ? [firstFilial] : []);
-    setSetorIds(defaultSetorIds(options.setores, firstFilial, instancias));
+    setSetorIds(defaultSetorIds(options.setores, firstFilial));
     setShowForm(true);
   }
 
@@ -295,6 +292,12 @@ export function ProcessoInstanciasPanel({
     setSetorIds(instanciaSetorIdsForForm(row, options.setores));
     setRotulo(row.rotulo_instancia ?? "");
     setStatusInstancia(row.status_instancia ?? "ativo");
+    const melhoria = melhoriaFieldsFromInstancia(row);
+    setResumoMelhoria(melhoria.resumo_melhoria ?? "");
+    setResponsavelLocal(melhoria.responsavel_local ?? "");
+    setFaseMelhoria(melhoria.fase_melhoria ?? "planejado");
+    setDataAlvoGoLive(melhoria.data_alvo_go_live ?? "");
+    setPrioridade(melhoria.prioridade ?? "media");
     setShowForm(true);
   }
 
@@ -324,7 +327,7 @@ export function ProcessoInstanciasPanel({
         : [...current, value];
       // Garante ao menos um setor pré-selecionado quando a primeira filial é marcada.
       if (next.length > 0 && setorIds.length === 0) {
-        setSetorIds(defaultSetorIds(options.setores, next[0], instancias));
+        setSetorIds(defaultSetorIds(options.setores, next[0]));
       }
       return next;
     });
@@ -338,39 +341,16 @@ export function ProcessoInstanciasPanel({
     );
   }
 
-  // Estado de cada setor na grade: se está marcado e se deve ficar desabilitado.
-  function setorState(setorIdValue: string): { checked: boolean; disabled: boolean; used: boolean } {
+  function setorState(setorIdValue: string): { checked: boolean; disabled: boolean } {
     const key = setorIdValue.toLowerCase();
     const checked = setorIds.some((id) => id.toLowerCase() === key);
-    if (todasFiliais) {
-      return { checked, disabled: false, used: false };
-    }
-    if (filialIds.length <= 1) {
-      const filialKey = (filialIds[0] ?? "").toLowerCase();
-      const usedByOther = (usedSetorKeysByFilial.get(filialKey) ?? new Set()).has(key);
-      return { checked, disabled: usedByOther, used: usedByOther };
-    }
-    // Multi-filial: só desabilita quando o setor já está em uso em TODAS as filiais que o oferecem.
-    let offering = 0;
-    let usedEverywhere = true;
-    for (const fid of filialIds) {
-      const available = filterSetoresByFilial(options.setores, fid).some(
-        (setor) => setor.id.toLowerCase() === key
-      );
-      if (!available) continue;
-      offering += 1;
-      if (!(usedSetorKeysByFilial.get(fid.toLowerCase()) ?? new Set()).has(key)) {
-        usedEverywhere = false;
-      }
-    }
-    const fullyUsed = offering > 0 && usedEverywhere;
-    return { checked, disabled: fullyUsed, used: fullyUsed };
+    return { checked, disabled: false };
   }
 
   async function handleDelete(row: ProcessoInstancia) {
     if (
       !window.confirm(
-        `Excluir instância ${row.todas_filiais_ativas ? "todas as unidades" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`
+        `Excluir melhoria ${row.todas_filiais_ativas ? "todas as unidades" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`
       )
     ) {
       return;
@@ -404,13 +384,20 @@ export function ProcessoInstanciasPanel({
         : (resolveKeepFilial() ?? "").toLowerCase();
       if (escopoNovo !== escopoAtual) {
         const confirmed = window.confirm(
-          "Esta instância possui revisões. Alterar o escopo (unidade) reatribui os números ao novo destino e recalcula o dashboard. Deseja continuar?"
+          "Esta melhoria possui revisões. Alterar a unidade reatribui os números ao novo destino e recalcula o dashboard. Deseja continuar?"
         );
         if (!confirmed) return;
       }
     }
     setSaving(true);
     try {
+      const melhoriaPayload = melhoriaPayloadFromForm({
+        resumo_melhoria: resumoMelhoria,
+        responsavel_local: responsavelLocal,
+        fase_melhoria: faseMelhoria,
+        data_alvo_go_live: dataAlvoGoLive,
+        prioridade,
+      });
       if (editingInstanciaId) {
         if (todasFiliais) {
           await onUpdate(editingInstanciaId, {
@@ -418,6 +405,7 @@ export function ProcessoInstanciasPanel({
             rotulo_instancia: rotulo.trim() || undefined,
             status_instancia: statusInstancia,
             todas_filiais_ativas: true,
+            ...melhoriaPayload,
           });
         } else {
           const keep = resolveKeepFilial();
@@ -431,8 +419,8 @@ export function ProcessoInstanciasPanel({
               status_instancia: statusInstancia,
               todas_filiais_ativas: false,
               filial_id: keep,
+              ...melhoriaPayload,
             });
-            // Filiais extras marcadas viram novas instâncias (fan-out, igual ao "novo").
             for (const payload of filialPayloads) {
               if ((payload.filial_id ?? "").toLowerCase() === keep.toLowerCase()) continue;
               await onCreate(payload);
@@ -454,6 +442,7 @@ export function ProcessoInstanciasPanel({
             todas_filiais_ativas: true,
             setor_ids: setorIds,
             rotulo_instancia: rotulo.trim() || undefined,
+            ...melhoriaPayload,
           });
         }
       } else {
@@ -494,6 +483,18 @@ export function ProcessoInstanciasPanel({
         header: "Rótulo",
         headerHint: TM_HELP_TOOLTIPS.instancias.rotulo,
         render: (row) => row.rotulo_instancia ?? "—",
+      },
+      {
+        key: "fase",
+        header: "Fase",
+        headerHint: TM_HELP_TOOLTIPS.instancias.fase,
+        render: (row) => labelMelhoriaFase(row.fase_melhoria),
+      },
+      {
+        key: "prioridade",
+        header: "Prioridade",
+        headerHint: TM_HELP_TOOLTIPS.instancias.prioridade,
+        render: (row) => labelMelhoriaPrioridade(row.prioridade),
       },
       {
         key: "acoes",
@@ -538,10 +539,10 @@ export function ProcessoInstanciasPanel({
   );
 
   const formTitle = editingInstanciaId
-    ? "Editar instância operacional"
+    ? "Editar melhoria"
     : duplicateSourceId
-      ? "Replicar instância"
-      : "Nova instância operacional";
+      ? "Replicar melhoria"
+      : "Nova melhoria";
 
   // Instâncias extras (novas) que uma edição multi-filial criaria além da editada.
   const editExtraCount = editingInstanciaId && !todasFiliais ? Math.max(0, filialPayloads.length - 1) : 0;
@@ -557,8 +558,8 @@ export function ProcessoInstanciasPanel({
           ? `Replicar ${duplicatePayloads.length} cópias`
           : "Replicar timeline"
         : createCount > 1
-          ? `Criar ${createCount} instâncias`
-          : "Criar instância";
+          ? `Criar ${createCount} melhorias`
+          : "Criar melhoria";
 
   const canSubmit = editingInstanciaId
     ? todasFiliais
@@ -573,7 +574,7 @@ export function ProcessoInstanciasPanel({
       <span className="ds-field-label">
         <FieldLabel label="Unidades *" hint={TM_HELP_TOOLTIPS.instancias.unidades} />
       </span>
-      <div className="tm-check-grid" role="group" aria-label="Unidades da instância">
+      <div className="tm-check-grid" role="group" aria-label="Unidades da melhoria">
         {options.filiais.map((filial) => {
           const checked = filialIds.some(
             (id) => id.toLowerCase() === filial.id.toLowerCase()
@@ -600,7 +601,7 @@ export function ProcessoInstanciasPanel({
       <span className="ds-field-label">
         <FieldLabel label="Departamentos *" hint={TM_HELP_TOOLTIPS.instancias.setores} />
       </span>
-      <div className="tm-check-grid" role="group" aria-label="Departamentos da instância">
+      <div className="tm-check-grid" role="group" aria-label="Departamentos da melhoria">
         {setoresDisponiveis.length === 0 ? (
           <p className="ds-hint">
             {!duplicateSourceId && !todasFiliais && filialIds.length === 0
@@ -609,12 +610,9 @@ export function ProcessoInstanciasPanel({
           </p>
         ) : (
           setoresDisponiveis.map((setor) => {
-            const { checked, disabled, used } = setorState(setor.id);
+            const { checked, disabled } = setorState(setor.id);
             return (
-              <label
-                key={setor.id}
-                className={`tm-check-option${used ? " tm-check-option--used" : ""}`}
-              >
+              <label key={setor.id} className="tm-check-option">
                 <input
                   type="checkbox"
                   checked={checked}
@@ -622,13 +620,83 @@ export function ProcessoInstanciasPanel({
                   onChange={() => toggleSetor(setor.id)}
                 />
                 <span>{setor.label}</span>
-                {used ? <span className="tm-check-option__tag">em uso</span> : null}
               </label>
             );
           })
         )}
       </div>
     </div>
+  );
+
+  const melhoriaFields = (
+    <>
+      <div className="ds-filter-box tm-inst-form__field--full">
+        <label htmlFor="tm-melhoria-resumo">
+          <FieldLabel label="Resumo da melhoria" hint={TM_HELP_TOOLTIPS.instancias.resumo} />
+        </label>
+        <textarea
+          id="tm-melhoria-resumo"
+          rows={3}
+          value={resumoMelhoria}
+          onChange={(e) => setResumoMelhoria(e.target.value)}
+          placeholder="Ex.: Automatizar emissão de laudos na recepção de materiais"
+        />
+      </div>
+      <div className="tm-inst-form__row">
+        <div className="ds-filter-box">
+          <label htmlFor="tm-melhoria-responsavel">
+            <FieldLabel label="Responsável local" hint={TM_HELP_TOOLTIPS.instancias.responsavel} />
+          </label>
+          <input
+            id="tm-melhoria-responsavel"
+            value={responsavelLocal}
+            onChange={(e) => setResponsavelLocal(e.target.value)}
+            placeholder="Nome do gestor ou patrocinador"
+          />
+        </div>
+        <div className="ds-filter-box">
+          <label htmlFor="tm-melhoria-fase">
+            <FieldLabel label="Fase" hint={TM_HELP_TOOLTIPS.instancias.fase} />
+          </label>
+          <select id="tm-melhoria-fase" value={faseMelhoria} onChange={(e) => setFaseMelhoria(e.target.value)}>
+            {MELHORIA_FASE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="tm-inst-form__row">
+        <div className="ds-filter-box">
+          <label htmlFor="tm-melhoria-data-alvo">
+            <FieldLabel label="Data-alvo de go-live" hint={TM_HELP_TOOLTIPS.instancias.dataAlvo} />
+          </label>
+          <input
+            id="tm-melhoria-data-alvo"
+            type="date"
+            value={dataAlvoGoLive}
+            onChange={(e) => setDataAlvoGoLive(e.target.value)}
+          />
+        </div>
+        <div className="ds-filter-box">
+          <label htmlFor="tm-melhoria-prioridade">
+            <FieldLabel label="Prioridade" hint={TM_HELP_TOOLTIPS.instancias.prioridade} />
+          </label>
+          <select
+            id="tm-melhoria-prioridade"
+            value={prioridade}
+            onChange={(e) => setPrioridade(e.target.value)}
+          >
+            {MELHORIA_PRIORIDADE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </>
   );
 
   const rotuloField = (
@@ -653,21 +721,21 @@ export function ProcessoInstanciasPanel({
           <div>
             <h2 className="ds-section-title">
               <span className="ds-field-label">
-                Instâncias operacionais
+                Melhorias
                 <HelpTooltip
                   content={TM_HELP_TOOLTIPS.instancias.escopo}
-                  ariaLabel="Ajuda: Instâncias operacionais"
+                  ariaLabel="Ajuda: Melhorias"
                 />
               </span>
             </h2>
             <p className="ds-hint">
-              Instância por unidade ou multi-unidade (todas as ativas). Abra a instância para
-              gerenciar revisões, baseline e medições.
+              Cada melhoria aplica o processo a unidades e departamentos — podem se repetir livremente.
+              Abra para definir escopo, baseline, cenários e medições.
             </p>
           </div>
           <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
             <Plus size={16} />
-            Nova instância
+            Nova melhoria
           </button>
         </div>
         <DataTableSection
@@ -677,7 +745,7 @@ export function ProcessoInstanciasPanel({
           rows={instancias}
           rowKey={(row) => row.instancia_id}
           hideSearch
-          emptyMessage="Nenhuma instância cadastrada."
+          emptyMessage="Nenhuma melhoria cadastrada."
         />
       </section>
       )}
@@ -687,22 +755,21 @@ export function ProcessoInstanciasPanel({
           <h2 className="ds-section-title">{formTitle}</h2>
           {isCreate ? (
             <p className="ds-hint">
-              Marque uma ou mais unidades e os departamentos vinculados. Criamos uma instância por unidade;
-              departamentos já usados em uma unidade aparecem desabilitados.
+              Marque unidades e departamentos. Várias melhorias podem usar a mesma combinação — cada
+              cadastro representa um foco distinto de transformação no processo.
             </p>
           ) : null}
           {editingInstanciaId ? (
             <p className="ds-hint">
               {editingHasRevisoes
-                ? "Edição liberada. Trocar a unidade reatribui as revisões ao novo destino e recalcula o dashboard (pediremos confirmação). Unidades extras marcadas criam novas instâncias."
-                : "Edite unidades, departamentos, rótulo e status. A instância assume a unidade marcada; unidades extras criam novas instâncias."}
+                ? "Edição liberada. Trocar a unidade reatribui as revisões ao novo destino (pediremos confirmação). Unidades extras criam novas melhorias."
+                : "Edite unidades, departamentos, rótulo, fase e status. Unidades extras criam novas melhorias."}
             </p>
           ) : null}
           {duplicateSourceId ? (
             <p className="ds-hint">
-              Replica a timeline (revisões, medições, investimentos e vínculos). Marque uma ou mais
-              unidades e departamentos de destino: cada par unidade × departamento livre vira uma cópia. Departamentos
-              já em uso aparecem desabilitados.
+              Replica a timeline (revisões, medições, investimentos e vínculos). Marque unidades e
+              departamentos de destino — cada par válido vira uma nova melhoria.
             </p>
           ) : null}
           <form onSubmit={handleSubmit}>
@@ -719,11 +786,11 @@ export function ProcessoInstanciasPanel({
                           setTodasFiliais(next);
                           if (!next) {
                             const firstFilial = filialIds[0] ?? options.filiais[0]?.id ?? "01";
-                            setSetorIds(defaultSetorIds(options.setores, firstFilial, instancias));
+                            setSetorIds(defaultSetorIds(options.setores, firstFilial));
                           }
                         }}
                       />
-                      <span>Todas as unidades ativas (instância multi-unidade)</span>
+                      <span>Todas as unidades ativas (melhoria multi-unidade)</span>
                       <HelpTooltip
                         content={multiplicadorHint(activeFilialCount)}
                         ariaLabel="Ajuda: Instância multi-unidade"
@@ -741,11 +808,12 @@ export function ProcessoInstanciasPanel({
 
                   {skippedFiliais.length > 0 ? (
                     <p className="ds-hint">
-                      Sem departamento livre para: {skippedFiliais.join(", ")}. Essas unidades serão
+                      Sem departamento selecionado para: {skippedFiliais.join(", ")}. Essas unidades serão
                       ignoradas.
                     </p>
                   ) : null}
 
+                  {melhoriaFields}
                   {rotuloField}
                 </>
               ) : null}
@@ -764,11 +832,11 @@ export function ProcessoInstanciasPanel({
                             const fallback =
                               filialIds[0] || filialId || options.filiais[0]?.id || "01";
                             setFilialIds([fallback]);
-                            setSetorIds(defaultSetorIds(options.setores, fallback, instancias));
+                            setSetorIds(defaultSetorIds(options.setores, fallback));
                           }
                         }}
                       />
-                      <span>Todas as unidades ativas (instância multi-unidade)</span>
+                      <span>Todas as unidades ativas (melhoria multi-unidade)</span>
                       <HelpTooltip
                         content={multiplicadorHint(activeFilialCount)}
                         ariaLabel="Ajuda: Instância multi-unidade"
@@ -802,11 +870,12 @@ export function ProcessoInstanciasPanel({
 
                   {skippedFiliais.length > 0 ? (
                     <p className="ds-hint">
-                      Sem departamento livre para: {skippedFiliais.join(", ")}. Essas unidades serão
+                      Sem departamento selecionado para: {skippedFiliais.join(", ")}. Essas unidades serão
                       ignoradas.
                     </p>
                   ) : null}
 
+                  {melhoriaFields}
                   {rotuloField}
                 </>
               ) : null}
@@ -817,6 +886,7 @@ export function ProcessoInstanciasPanel({
 
                   {setoresGrid}
 
+                  {melhoriaFields}
                   {rotuloField}
                 </>
               ) : null}

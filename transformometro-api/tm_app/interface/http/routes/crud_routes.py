@@ -380,6 +380,11 @@ def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Re
                 "setor_ids": body.setor_ids,
                 "rotulo_instancia": body.rotulo_instancia,
                 "status_instancia": body.status_instancia,
+                "resumo_melhoria": body.resumo_melhoria,
+                "responsavel_local": body.responsavel_local,
+                "fase_melhoria": body.fase_melhoria,
+                "data_alvo_go_live": body.data_alvo_go_live,
+                "prioridade": body.prioridade,
             }
         )
     except ProcessoInstanciaDomainError as exc:
@@ -390,7 +395,7 @@ def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Re
 
     iid = str(row["instancia_id"])
     _audit(request, "processo_instancia", iid, "create", body.model_dump())
-    return ok(row_to_json(row), "Instância operacional criada.", 201)
+    return ok(row_to_json(row), "Melhoria criada.", 201)
 
 
 @router.get("/instancias/{instancia_id}")
@@ -447,6 +452,11 @@ def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Requ
                 "todas_filiais_ativas": target_todas,
                 "filial_id": target_filial,
                 "scope_changed": scope_changed,
+                "resumo_melhoria": body.resumo_melhoria,
+                "responsavel_local": body.responsavel_local,
+                "fase_melhoria": body.fase_melhoria,
+                "data_alvo_go_live": body.data_alvo_go_live,
+                "prioridade": body.prioridade,
             },
         )
     except ProcessoInstanciaDomainError as exc:
@@ -459,7 +469,7 @@ def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Requ
     if scope_changed:
         # Cache do dashboard é denormalizado por filial: recalcula ao mudar o escopo.
         _recalc_after_processo(str(existing["processo_id"]))
-    return ok(row_to_json(row), "Instância operacional atualizada.")
+    return ok(row_to_json(row), "Melhoria atualizada.")
 
 
 @router.delete("/instancias/{instancia_id}")
