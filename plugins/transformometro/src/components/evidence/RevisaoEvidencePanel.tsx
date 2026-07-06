@@ -13,7 +13,11 @@ import {
   revisaoEvidenceFileUrl,
   uploadRevisaoEvidence,
 } from "../../data/api/transformometroEvidenceApi";
+import { FieldLabel } from "../HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RevisaoEvidence } from "../../types/revisaoEvidence";
+
+const R = TM_HELP_TOOLTIPS.revisao;
 
 type PendingUpload = {
   id: string;
@@ -27,6 +31,7 @@ type Props = {
   onError: (message: string | null) => void;
   onChanged?: () => void;
   readOnly?: boolean;
+  hideHeader?: boolean;
 };
 
 function isImage(mime: string | null | undefined): boolean {
@@ -209,6 +214,7 @@ export function RevisaoEvidencePanel({
   onError,
   onChanged,
   readOnly = false,
+  hideHeader = false,
 }: Props) {
   const [evidences, setEvidences] = useState<RevisaoEvidence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -323,13 +329,24 @@ export function RevisaoEvidencePanel({
   }
 
   return (
-    <section className="ds-cadastro-section ds-cadastro-section--embedded tm-evidence-panel">
-      <header className="ds-cadastro-section__header">
-        <h3 className="ds-section-title">Evidências da revisão</h3>
-        {evidences.length ? (
-          <span className="ds-cadastro-section__badge">{evidences.length}</span>
-        ) : null}
-      </header>
+    <section
+      className={[
+        "ds-cadastro-section",
+        "ds-cadastro-section--embedded",
+        "tm-evidence-panel",
+        hideHeader ? "tm-evidence-panel--no-header" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {hideHeader ? null : (
+        <header className="ds-cadastro-section__header">
+          <h3 className="ds-section-title">Evidências da revisão</h3>
+          {evidences.length ? (
+            <span className="ds-cadastro-section__badge">{evidences.length}</span>
+          ) : null}
+        </header>
+      )}
 
       {loading ? <p className="ds-hint">Carregando evidências…</p> : null}
 
@@ -400,7 +417,9 @@ export function RevisaoEvidencePanel({
           {showLink ? (
             <div className="tm-evidence-link">
               <div className="ds-field">
-                <label htmlFor="tm-ev-url">URL</label>
+                <label htmlFor="tm-ev-url">
+                  <FieldLabel label="URL" hint={R.evidenceUrl} />
+                </label>
                 <input
                   id="tm-ev-url"
                   type="url"
@@ -411,7 +430,9 @@ export function RevisaoEvidencePanel({
                 />
               </div>
               <div className="ds-field">
-                <label htmlFor="tm-ev-link-desc">Descrição</label>
+                <label htmlFor="tm-ev-link-desc">
+                  <FieldLabel label="Descrição" hint={R.evidenceDescription} />
+                </label>
                 <input
                   id="tm-ev-link-desc"
                   value={linkDescription}

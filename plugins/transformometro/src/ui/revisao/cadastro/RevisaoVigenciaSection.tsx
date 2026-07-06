@@ -1,6 +1,10 @@
 import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
+import { FieldLabel, HelpTooltip } from "../../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
+
+const R = TM_HELP_TOOLTIPS.revisao;
 
 export type RevisaoVigenciaForm = {
   versao_revisao: string;
@@ -18,53 +22,62 @@ type Props = {
   revisaoVigencia: RevisaoVigenciaForm;
   options: OptionsData;
   readOnly?: boolean;
+  embeddedInCard?: boolean;
+  hideSubmit?: boolean;
   onChange: (value: RevisaoVigenciaForm) => void;
   onSubmit: (e: React.FormEvent) => void;
 };
+
+function VigenciaReadContent({ revisaoVigencia }: { revisaoVigencia: RevisaoVigenciaForm }) {
+  return (
+    <>
+      <dl className="ds-dl-grid">
+        <div><dt>Versão</dt><dd>{revisaoVigencia.versao_revisao}</dd></div>
+        <div><dt>Cenário</dt><dd>{revisaoVigencia.cenario_tipo}</dd></div>
+        <div><dt>Início</dt><dd>{revisaoVigencia.data_inicio_vigencia || "—"}</dd></div>
+        <div><dt>Implantação</dt><dd>{revisaoVigencia.data_implantacao || "—"}</dd></div>
+        <div><dt>Fim</dt><dd>{revisaoVigencia.data_fim_vigencia || "—"}</dd></div>
+        <div><dt>Ativa</dt><dd>{revisaoVigencia.revisao_ativa ? "sim" : "não"}</dd></div>
+        {revisaoVigencia.descricao_revisao ? (
+          <div><dt>Descrição</dt><dd>{revisaoVigencia.descricao_revisao}</dd></div>
+        ) : null}
+        {revisaoVigencia.motivo_revisao ? (
+          <div><dt>Motivo</dt><dd>{revisaoVigencia.motivo_revisao}</dd></div>
+        ) : null}
+      </dl>
+      {revisaoVigencia.observacoes ? (
+        <p className="ds-hint"><strong>Observações:</strong> {revisaoVigencia.observacoes}</p>
+      ) : null}
+    </>
+  );
+}
 
 export function RevisaoVigenciaSection({
   revisaoVigencia,
   options,
   readOnly = false,
+  embeddedInCard = false,
+  hideSubmit = false,
   onChange,
   onSubmit,
 }: Props) {
   const isBaseline = revisaoVigencia.cenario_tipo === "baseline";
 
   if (readOnly) {
+    const content = <VigenciaReadContent revisaoVigencia={revisaoVigencia} />;
+    if (embeddedInCard) return content;
     return (
       <CadastroSection embedded title="Vigência e identificação">
-        <dl className="ds-dl-grid">
-          <div><dt>Versão</dt><dd>{revisaoVigencia.versao_revisao}</dd></div>
-          <div><dt>Cenário</dt><dd>{revisaoVigencia.cenario_tipo}</dd></div>
-          <div><dt>Início</dt><dd>{revisaoVigencia.data_inicio_vigencia || "—"}</dd></div>
-          <div><dt>Implantação</dt><dd>{revisaoVigencia.data_implantacao || "—"}</dd></div>
-          <div><dt>Fim</dt><dd>{revisaoVigencia.data_fim_vigencia || "—"}</dd></div>
-          <div><dt>Ativa</dt><dd>{revisaoVigencia.revisao_ativa ? "sim" : "não"}</dd></div>
-          {revisaoVigencia.descricao_revisao ? (
-            <div><dt>Descrição</dt><dd>{revisaoVigencia.descricao_revisao}</dd></div>
-          ) : null}
-          {revisaoVigencia.motivo_revisao ? (
-            <div><dt>Motivo</dt><dd>{revisaoVigencia.motivo_revisao}</dd></div>
-          ) : null}
-        </dl>
-        {revisaoVigencia.observacoes ? (
-          <p className="ds-hint"><strong>Observações:</strong> {revisaoVigencia.observacoes}</p>
-        ) : null}
+        {content}
       </CadastroSection>
     );
   }
 
-  return (
-    <CadastroSection
-      embedded
-      title="Vigência e identificação"
-      hint="Versão, cenário e período usados no dashboard. Para reativar uma revisão, remova o fim da vigência e marque como ativa."
-    >
+  const form = (
       <form onSubmit={onSubmit}>
         <div className="ds-filters-row">
           <label className="ds-filter-box">
-            Versão *
+            <FieldLabel label="Versão *" hint={R.versao} />
             <input
               required
               value={revisaoVigencia.versao_revisao}
@@ -72,7 +85,7 @@ export function RevisaoVigenciaSection({
             />
           </label>
           <label className="ds-filter-box">
-            Cenário *
+            <FieldLabel label="Cenário *" hint={R.cenario} />
             <select
               required
               value={revisaoVigencia.cenario_tipo}
@@ -93,7 +106,7 @@ export function RevisaoVigenciaSection({
             </select>
           </label>
           <label className="ds-filter-box">
-            Início vigência *
+            <FieldLabel label="Início vigência *" hint={R.inicioVigencia} />
             <input
               type="date"
               required
@@ -104,7 +117,7 @@ export function RevisaoVigenciaSection({
             />
           </label>
           <label className="ds-filter-box">
-            Implantação
+            <FieldLabel label="Implantação" hint={R.implantacao} />
             <input
               type="date"
               value={revisaoVigencia.data_implantacao}
@@ -114,7 +127,7 @@ export function RevisaoVigenciaSection({
             />
           </label>
           <label className="ds-filter-box">
-            Fim vigência
+            <FieldLabel label="Fim vigência" hint={R.fimVigencia} />
             <input
               type="date"
               value={revisaoVigencia.data_fim_vigencia}
@@ -136,11 +149,14 @@ export function RevisaoVigenciaSection({
                 onChange({ ...revisaoVigencia, revisao_ativa: e.target.checked })
               }
             />
-            <span>Marcar como revisão ativa</span>
+            <span className="tm-field__label">
+              Marcar como revisão ativa
+              <HelpTooltip content={R.revisaoAtiva} ariaLabel="Ajuda: Marcar como revisão ativa" />
+            </span>
           </label>
         </div>
         <label className="ds-filter-box ds-filter-box--wide">
-          Descrição da revisão
+          <FieldLabel label="Descrição da revisão" hint={R.descricao} />
           <input
             value={revisaoVigencia.descricao_revisao}
             onChange={(e) =>
@@ -150,7 +166,7 @@ export function RevisaoVigenciaSection({
           />
         </label>
         <label className="ds-filter-box ds-filter-box--wide">
-          Motivo da revisão
+          <FieldLabel label="Motivo da revisão" hint={R.motivo} />
           <input
             value={revisaoVigencia.motivo_revisao}
             onChange={(e) =>
@@ -160,17 +176,30 @@ export function RevisaoVigenciaSection({
           />
         </label>
         <label className="ds-filter-box ds-filter-box--wide">
-          Observações
+          <FieldLabel label="Observações" hint={R.observacoes} />
           <textarea
             rows={2}
             value={revisaoVigencia.observacoes}
             onChange={(e) => onChange({ ...revisaoVigencia, observacoes: e.target.value })}
           />
         </label>
-        <button type="submit" className="ds-primary-btn">
-          Salvar vigência e identificação
-        </button>
+        {hideSubmit ? null : (
+          <button type="submit" className="ds-primary-btn">
+            Salvar vigência e identificação
+          </button>
+        )}
       </form>
+  );
+
+  if (embeddedInCard) return form;
+
+  return (
+    <CadastroSection
+      embedded
+      title="Vigência e identificação"
+      hint="Versão, cenário e período usados no dashboard. Para reativar uma revisão, remova o fim da vigência e marque como ativa."
+    >
+      {form}
     </CadastroSection>
   );
 }

@@ -479,16 +479,19 @@ export function ProcessoInstanciasPanel({
       {
         key: "status",
         header: "Status",
+        headerHint: TM_HELP_TOOLTIPS.instancias.status,
         render: (row) => row.status_instancia ?? "ativo",
       },
       {
         key: "setor",
         header: "Setores",
+        headerHint: TM_HELP_TOOLTIPS.instancias.setores,
         render: (row) => formatSetores(row) || "—",
       },
       {
         key: "rotulo",
         header: "Rótulo",
+        headerHint: TM_HELP_TOOLTIPS.instancias.rotulo,
         render: (row) => row.rotulo_instancia ?? "—",
       },
       {

@@ -1,4 +1,8 @@
+import { FieldLabel } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
+
+const I = TM_HELP_TOOLTIPS.instancias;
 
 type Props = {
   instancia: ProcessoInstancia;
@@ -22,24 +26,24 @@ export function InstanciaReadView({ instancia, options }: Props) {
   return (
     <dl className="ds-dl-grid">
       <div>
-        <dt>Unidade</dt>
+        <dt><FieldLabel label="Unidade" hint={I.colunaUnidade} /></dt>
         <dd>{unidade}</dd>
       </div>
       <div>
-        <dt>Status</dt>
+        <dt><FieldLabel label="Status" hint={I.status} /></dt>
         <dd>{instancia.status_instancia ?? "ativo"}</dd>
       </div>
       <div>
-        <dt>Setores</dt>
+        <dt><FieldLabel label="Setores" hint={I.setores} /></dt>
         <dd>{formatSetores(instancia) || "—"}</dd>
       </div>
       <div>
-        <dt>Rótulo</dt>
+        <dt><FieldLabel label="Rótulo" hint={I.rotulo} /></dt>
         <dd>{instancia.rotulo_instancia ?? "—"}</dd>
       </div>
       {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
         <div>
-          <dt>Consolidado</dt>
+          <dt><FieldLabel label="Consolidado" hint={I.multiplicadorConsolidado} /></dt>
           <dd>Economia e horas × {options.filiais.length} unidades</dd>
         </div>
       ) : null}

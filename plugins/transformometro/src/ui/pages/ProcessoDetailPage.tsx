@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { ProcessoTimeline } from "../../components/processo/ProcessoTimeline";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { ProcessoReadView } from "../../components/processo/ProcessoReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
@@ -23,6 +24,7 @@ import {
   fetchOptions,
   fetchProcesso,
   fetchProcessoInstancias,
+  fetchProcessoTimeline,
   fetchRevisoes,
   updateProcesso,
   updateInstancia,
@@ -30,6 +32,7 @@ import {
   type Processo,
   type ProcessoInstancia,
 } from "../../data/api/transformometroApi";
+import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { buildInstanciaPath } from "../../utils/routeParser";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
@@ -64,6 +67,20 @@ export function ProcessoDetailPage({
   const [refreshing, setRefreshing] = useState(false);
   const [processoForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
   const [savingProcesso, setSavingProcesso] = useState(false);
+  const [timelineEntries, setTimelineEntries] = useState<ProcessoAuditLogEntry[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(true);
+
+  const loadTimeline = useCallback(async () => {
+    setTimelineLoading(true);
+    try {
+      const data = await fetchProcessoTimeline(processoId, getAccessToken, { page_size: 500 });
+      setTimelineEntries(data.items);
+    } catch {
+      setTimelineEntries([]);
+    } finally {
+      setTimelineLoading(false);
+    }
+  }, [getAccessToken, processoId]);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -91,7 +108,8 @@ export function ProcessoDetailPage({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getAccessToken, processoId]);
+    void loadTimeline();
+  }, [getAccessToken, processoId, loadTimeline]);
 
   useEffect(() => {
     void load();
@@ -122,6 +140,7 @@ export function ProcessoDetailPage({
       setProcesso(updated);
       sectionEdit.stopEdit("processo");
       setProcessoForm(null);
+      await loadTimeline();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
     } finally {
@@ -267,6 +286,8 @@ export function ProcessoDetailPage({
           await load();
         }}
       />
+
+      <ProcessoTimeline entries={timelineEntries} loading={timelineLoading} />
     </TransformometroShell>
   );
 }

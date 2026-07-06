@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -45,7 +45,6 @@ export function RevisaoDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [editing, setEditing] = useState(false);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -121,24 +120,14 @@ export function RevisaoDetailPage({
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
-          <>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
-            >
-              <ArrowLeft size={16} />
-              Instância
-            </button>
-            <button
-              type="button"
-              className={editing ? "ds-primary-btn" : "ds-ghost-btn"}
-              onClick={() => setEditing((current) => !current)}
-            >
-              <Pencil size={16} />
-              {editing ? "Modo leitura" : "Modo edição"}
-            </button>
-          </>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
+          >
+            <ArrowLeft size={16} />
+            Instância
+          </button>
         }
       />
 
@@ -148,7 +137,6 @@ export function RevisaoDetailPage({
         revisao={revisao}
         options={options}
         getAccessToken={getAccessToken}
-        readOnly={!editing}
         onError={setError}
         onRevisaoUpdated={load}
         onRevisaoDeleted={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}

@@ -18,7 +18,12 @@ import {
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
+import { FieldLabel } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
+
+const C = TM_HELP_TOOLTIPS.columns;
+const P = TM_HELP_TOOLTIPS.processos;
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
   emptyProcessoForm,
@@ -158,15 +163,16 @@ export function ProcessosPage({
 
   const columns = useMemo<DataTableColumn<Processo>[]>(
     () => [
-      { key: "codigo", header: "Código", render: (row) => row.codigo_processo, sortable: true },
+      { key: "codigo", header: "Código", headerHint: P.codigo, render: (row) => row.codigo_processo, sortable: true },
       {
         key: "nome",
         header: "Processo",
+        headerHint: P.nome,
         sortable: true,
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      { key: "status", header: "Status", render: (row) => row.status_processo, sortable: true },
+      { key: "status", header: "Status", headerHint: C.status, render: (row) => row.status_processo, sortable: true },
       {
         key: "acoes",
         header: "",
@@ -272,7 +278,7 @@ export function ProcessosPage({
         filters={
           <section className="ds-filters-row ds-filters-row--extended">
             <div className="ds-filter-box ds-filter-box--wide">
-              <label htmlFor="tm-proc-q">Buscar</label>
+              <FieldLabel label="Buscar" hint={P.busca} />
               <input
                 id="tm-proc-q"
                 type="search"
@@ -282,7 +288,7 @@ export function ProcessosPage({
               />
             </div>
             <div className="ds-filter-box">
-              <label htmlFor="tm-proc-list-status">Status</label>
+              <FieldLabel label="Status" hint={P.filtroStatus} />
               <select
                 id="tm-proc-list-status"
                 value={statusFilter}

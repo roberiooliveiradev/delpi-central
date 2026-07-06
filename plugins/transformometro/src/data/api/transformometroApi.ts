@@ -300,6 +300,34 @@ export function fetchProcesso(
   return request<Processo>(`/processos/${processoId}`, getAccessToken);
 }
 
+export type ProcessoTimelineResponse = {
+  total: number;
+  page: number;
+  page_size: number;
+  items: Array<{
+    audit_id: string;
+    entity_type: string;
+    entity_id: string;
+    action: string;
+    user_id?: string | null;
+    user_email?: string | null;
+    payload_json?: Record<string, unknown> | null;
+    created_at: string;
+  }>;
+};
+
+export function fetchProcessoTimeline(
+  processoId: string,
+  getAccessToken?: () => string | undefined,
+  params?: { page?: number; page_size?: number }
+) {
+  const search = new URLSearchParams();
+  if (params?.page) search.set("page", String(params.page));
+  if (params?.page_size) search.set("page_size", String(params.page_size));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return request<ProcessoTimelineResponse>(`/processos/${processoId}/timeline${qs}`, getAccessToken);
+}
+
 export function createProcesso(
   payload: Partial<Processo>,
   getAccessToken?: () => string | undefined

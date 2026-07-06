@@ -9,26 +9,24 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
-  createFilial,
   deleteFilial,
   fetchFiliais,
   fetchOptions,
-  updateFilial,
   type Filial,
   type OptionsData,
 } from "../../data/api/transformometroApi";
-import { FilialFormFields } from "../filiais/FilialFormFields";
-import {
-  emptyFilialForm,
-  filialFormFromEntity,
-  payloadFromFilialForm,
-} from "../filiais/filialCatalogForm";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { HelpTooltip } from "../../components/HelpTooltip";
+import { buildFilialPath } from "../../utils/routeParser";
+
+const C = TM_HELP_TOOLTIPS.columns;
+const F = TM_HELP_TOOLTIPS.filiais;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -41,11 +39,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyFilialForm);
   const [includeInactive, setIncludeInactive] = useState(true);
-  const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -69,57 +63,6 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     void load();
   }, [load]);
 
-  function startCreate() {
-    setEditingId(null);
-    setForm(emptyFilialForm());
-    setShowForm(true);
-    scrollToForm();
-  }
-
-  function startEdit(filial: Filial) {
-    setEditingId(filial.filial_id);
-    setForm(filialFormFromEntity(filial));
-    setShowForm(true);
-    scrollToForm();
-  }
-
-  function cancelForm() {
-    setShowForm(false);
-    setEditingId(null);
-    setForm(emptyFilialForm());
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const payload = payloadFromFilialForm(form, Boolean(editingId));
-    try {
-      if (editingId) {
-        await updateFilial(
-          editingId,
-          {
-            nome_filial: payload.nome_filial,
-            status_filial: payload.status_filial,
-          },
-          getAccessToken
-        );
-      } else {
-        await createFilial(
-          {
-            codigo_filial: form.codigo_filial.trim(),
-            nome_filial: payload.nome_filial,
-            status_filial: payload.status_filial,
-          },
-          getAccessToken
-        );
-      }
-      cancelForm();
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar unidade");
-    }
-  }
-
   async function handleDelete(filial: Filial) {
     if (
       !window.confirm(
@@ -131,7 +74,6 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     setError(null);
     try {
       await deleteFilial(filial.filial_id, getAccessToken);
-      if (editingId === filial.filial_id) cancelForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir unidade");
@@ -142,6 +84,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "codigo_filial",
       header: "Código",
+      headerHint: C.codigoTotvs,
       sortable: true,
       sortValue: (row) => row.codigo_filial ?? row.filial_id,
       render: (row) => row.codigo_filial ?? row.filial_id,
@@ -149,6 +92,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "nome_filial",
       header: "Unidade",
+      headerHint: C.unidade,
       sortable: true,
       className: "ds-table__col--wide",
       sortValue: (row) => row.nome_filial,
@@ -157,6 +101,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "status_filial",
       header: "Status",
+      headerHint: C.status,
       sortable: true,
       render: (row) => row.status_filial,
     },
@@ -171,10 +116,10 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
             className="ds-ghost-btn"
             onClick={(event) => {
               event.stopPropagation();
-              startEdit(row);
+              onNavigate(buildFilialPath(row.filial_id));
             }}
           >
-            Editar
+            Abrir
           </button>
           <button
             type="button"
@@ -216,7 +161,11 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
-          <button type="button" className="ds-primary-btn" onClick={startCreate}>
+          <button
+            type="button"
+            className="ds-primary-btn"
+            onClick={() => onNavigate(buildFilialPath(CATALOG_CREATE.filial))}
+          >
             <Plus size={16} />
             Nova unidade
           </button>
@@ -250,28 +199,6 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
         .
       </p>
 
-      {showForm && options ? (
-        <section ref={formSectionRef} className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">{editingId ? "Editar unidade" : "Nova unidade"}</h2>
-          <form onSubmit={handleSubmit}>
-            <FilialFormFields
-              form={form}
-              options={options}
-              editing={Boolean(editingId)}
-              onChange={setForm}
-            />
-            <div className="ds-cadastro-form__actions">
-              <button type="submit" className="ds-primary-btn">
-                {editingId ? "Salvar alterações" : "Cadastrar unidade"}
-              </button>
-              <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </section>
-      ) : null}
-
       <DataTableSection
         title="Catálogo de unidades"
         filters={
@@ -281,7 +208,10 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
               checked={includeInactive}
               onChange={(e) => setIncludeInactive(e.target.checked)}
             />
-            <span>Incluir unidades inativas</span>
+            <span className="tm-field__label">
+              Incluir unidades inativas
+              <HelpTooltip content={F.incluirInativas} ariaLabel="Ajuda: Incluir unidades inativas" />
+            </span>
           </label>
         }
         columns={columns}
@@ -292,6 +222,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
         hideSearch
         pageSize={15}
         emptyMessage="Nenhuma unidade cadastrada. Use Nova unidade para incluir."
+        onRowClick={(row) => onNavigate(buildFilialPath(row.filial_id))}
         footer={<p className="ds-hint">{items.length} registro(s)</p>}
       />
     </TransformometroShell>

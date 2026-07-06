@@ -14,6 +14,7 @@ import { useSectionEdit } from "../../hooks/useSectionEdit";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { FieldLabel } from "../../components/HelpTooltip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   createRevisao,
@@ -270,7 +271,7 @@ export function InstanciaDetailPage({
           <form onSubmit={handleCreateRevisao}>
             <div className="ds-filters-row">
               <div className="ds-filter-box">
-                <label htmlFor="tm-rev-versao">Versão</label>
+                <FieldLabel label="Versão" hint={TM_HELP_TOOLTIPS.revisao.versao} />
                 <input
                   id="tm-rev-versao"
                   required
@@ -279,7 +280,7 @@ export function InstanciaDetailPage({
                 />
               </div>
               <div className="ds-filter-box">
-                <label htmlFor="tm-rev-cenario">Cenário</label>
+                <FieldLabel label="Cenário" hint={TM_HELP_TOOLTIPS.revisao.cenario} />
                 <select
                   id="tm-rev-cenario"
                   value={revForm.cenario_tipo}
@@ -291,7 +292,7 @@ export function InstanciaDetailPage({
                 </select>
               </div>
               <div className="ds-filter-box">
-                <label htmlFor="tm-rev-inicio">Início vigência</label>
+                <FieldLabel label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
                 <input
                   id="tm-rev-inicio"
                   type="date"

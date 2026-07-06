@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { AppProps } from "../../../App";
 import { Pagination } from "../../../components/Pagination";
+import { TableHeader } from "../../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { useClientPagination } from "../../../hooks/useClientPagination";
 import {
   createInvestimento,
@@ -19,12 +21,15 @@ import {
 import { CadastroSection } from "./CadastroSection";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
+const C = TM_HELP_TOOLTIPS.columns;
+const I = TM_HELP_TOOLTIPS.investimentos;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
   options: OptionsData;
   investimentos: Investimento[];
   readOnly?: boolean;
+  embeddedInCard?: boolean;
   onError: (message: string | null) => void;
   onReload: () => Promise<void>;
 };
@@ -34,6 +39,7 @@ export function RevisaoInvestimentosSection({
   options,
   investimentos,
   readOnly = false,
+  embeddedInCard = false,
   getAccessToken,
   onError,
   onReload,
@@ -105,26 +111,21 @@ export function RevisaoInvestimentosSection({
     }
   }
 
-  return (
-    <CadastroSection
-      embedded
-      title="Investimentos"
-      hint="Custos únicos ou recorrentes ligados a esta revisão (software, equipamento, horas, etc.)."
-      badge={`${investimentos.length}`}
-    >
+  const body = (
+    <>
       {investimentos.length > 0 ? (
         <>
           <div className="ds-table-wrap ds-cadastro-section__table">
             <table className="ds-table ds-table--compact">
               <thead>
                 <tr>
-                  <th>Tipo</th>
-                  <th>Descrição</th>
-                  <th>Qtd</th>
-                  <th>Unit.</th>
-                  <th>Total</th>
-                  <th>Data</th>
-                  <th>Meses vig.</th>
+                  <th><TableHeader label="Tipo" hint={I.tipo} /></th>
+                  <th><TableHeader label="Descrição" hint={I.descricao} /></th>
+                  <th><TableHeader label="Qtd" hint={I.quantidade} /></th>
+                  <th><TableHeader label="Unit." hint={C.unitario} /></th>
+                  <th><TableHeader label="Total" hint={I.total} /></th>
+                  <th><TableHeader label="Data" hint={I.data} /></th>
+                  <th><TableHeader label="Meses vig." hint={C.mesesVigenciaCurto} /></th>
                   {!readOnly ? <th /> : null}
                 </tr>
               </thead>
@@ -217,6 +218,19 @@ export function RevisaoInvestimentosSection({
           </button>
         </form>
       ) : null}
+    </>
+  );
+
+  if (embeddedInCard) return body;
+
+  return (
+    <CadastroSection
+      embedded
+      title="Investimentos"
+      hint="Custos únicos ou recorrentes ligados a esta revisão (software, equipamento, horas, etc.)."
+      badge={`${investimentos.length}`}
+    >
+      {body}
     </CadastroSection>
   );
 }

@@ -1,25 +1,43 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { RecursoReadView } from "../../components/recurso/RecursoReadView";
+import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { useSectionEdit } from "../../hooks/useSectionEdit";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { FieldLabel, HelpTooltip, TableHeader } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
 import {
+  createRecurso,
+  deleteRecurso,
   deleteVinculo,
+  fetchOptions,
   fetchRecurso,
   fetchRecursoVinculos,
+  updateRecurso,
   updateVinculo,
+  type OptionsData,
   type RecursoCompartilhado,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
-import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
 import { optionalDateField, toDateInputValue } from "../../utils/dateInputs";
-import { formatCurrency } from "../../utils/format";
-import { buildProcessoPath } from "../../utils/routeParser";
+import { buildProcessoPath, buildRecursoPath } from "../../utils/routeParser";
+import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
 import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
+import {
+  emptyRecursoForm,
+  payloadFromRecursoForm,
+  recursoFormFromEntity,
+  type RecursoCatalogFormState,
+} from "../recursos/recursoCatalogForm";
+
+const C = TM_HELP_TOOLTIPS.columns;
+const R = TM_HELP_TOOLTIPS.recursos;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   recursoId: string;
@@ -35,23 +53,6 @@ type VinculoEditForm = {
   peso_rateio: string;
   observacoes: string;
 };
-
-type DetailMetricProps = {
-  label: string;
-  value: string | number;
-  highlight?: boolean;
-};
-
-function DetailMetric({ label, value, highlight = false }: DetailMetricProps) {
-  return (
-    <div className="ds-summary-metric">
-      <dt>{label}</dt>
-      <dd className={highlight ? "ds-summary-metric__value--accent" : undefined}>
-        {value}
-      </dd>
-    </div>
-  );
-}
 
 function formFromVinculo(vinculo: VinculoRecurso): VinculoEditForm {
   return {
@@ -70,96 +71,65 @@ export function RecursoDetailPage({
   onNavigate,
   onBack,
 }: Props) {
+  const isCreate = isCatalogCreateId("recurso", recursoId);
+  const sectionEdit = useSectionEdit();
   const [recurso, setRecurso] = useState<RecursoCompartilhado | null>(null);
+  const [options, setOptions] = useState<OptionsData | null>(null);
+  const [form, setForm] = useState<RecursoCatalogFormState>(() => emptyRecursoForm());
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isCreate);
   const [refreshing, setRefreshing] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<VinculoEditForm | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editingVinculoId, setEditingVinculoId] = useState<string | null>(null);
+  const [editVinculoForm, setEditVinculoForm] = useState<VinculoEditForm | null>(null);
   const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
+    if (isCreate) {
+      const opts = await fetchOptions(getAccessToken);
+      setOptions(opts);
+      setForm(emptyRecursoForm());
+      setLoading(false);
+      return;
+    }
+
     setRefreshing(true);
     setError(null);
     try {
-      const [recursoData, vinculosData] = await Promise.all([
+      const [recursoData, vinculosData, opts] = await Promise.all([
         fetchRecurso(recursoId, getAccessToken),
         fetchRecursoVinculos(recursoId, getAccessToken),
+        fetchOptions(getAccessToken),
       ]);
       setRecurso(recursoData);
       setVinculos(vinculosData.items);
+      setOptions(opts);
+      setForm(recursoFormFromEntity(recursoData));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar recurso");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getAccessToken, recursoId]);
+  }, [getAccessToken, isCreate, recursoId]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  function startEdit(vinculo: VinculoRecurso) {
-    setEditingId(vinculo.vinculo_id);
-    setEditForm(formFromVinculo(vinculo));
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditForm(null);
-  }
-
-  async function saveEdit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!editingId || !editForm) return;
-
-    const peso = editForm.peso_rateio.trim()
-      ? Number.parseFloat(editForm.peso_rateio)
-      : undefined;
-    if (peso != null && (!Number.isFinite(peso) || peso < 0)) {
-      setError("Informe um peso de rateio válido.");
-      return;
+  useEffect(() => {
+    if (isCreate) {
+      sectionEdit.startEdit("recurso");
     }
+  }, [isCreate, sectionEdit]);
 
-    setError(null);
-    try {
-      await updateVinculo(
-        editingId,
-        {
-          ativo: editForm.ativo,
-          data_inicio_uso: optionalDateField(editForm.data_inicio_uso) ?? undefined,
-          data_fim_uso: optionalDateField(editForm.data_fim_uso) ?? undefined,
-          peso_rateio: peso,
-          observacoes: editForm.observacoes.trim() || undefined,
-        },
-        getAccessToken
-      );
-      cancelEdit();
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar vínculo");
-    }
-  }
-
-  async function handleDelete(vinculo: VinculoRecurso) {
-    const label = `${vinculo.codigo_processo ?? "processo"} — ${vinculo.nome_processo ?? ""}`;
-    if (!window.confirm(`Desvincular este recurso de ${label}?`)) return;
-    setError(null);
-    try {
-      await deleteVinculo(vinculo.vinculo_id, getAccessToken);
-      if (editingId === vinculo.vinculo_id) cancelEdit();
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao desvincular recurso");
-    }
-  }
+  useEffect(() => {
+    if (!recurso || sectionEdit.isEditing("recurso")) return;
+    setForm(recursoFormFromEntity(recurso));
+  }, [recurso, sectionEdit]);
 
   const ativos = useMemo(() => vinculos.filter((v) => v.ativo).length, [vinculos]);
-  const vigenciaRecurso = recurso
-    ? `${toDateInputValue(recurso.data_inicio_vigencia) || "…"} → ${toDateInputValue(recurso.data_fim_vigencia) || "…"}`
-    : "—";
 
   const filteredVinculos = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -181,7 +151,104 @@ export function RecursoDetailPage({
     );
   }, [search, vinculos]);
 
-  if (loading && !recurso) {
+  async function handleSaveRecurso() {
+    setSaving(true);
+    setError(null);
+    const payload = payloadFromRecursoForm(form);
+    try {
+      if (isCreate) {
+        const created = await createRecurso(payload, getAccessToken);
+        onNavigate(buildRecursoPath(created.recurso_compartilhado_id));
+        return;
+      }
+      const updated = await updateRecurso(recursoId, payload, getAccessToken);
+      setRecurso(updated);
+      sectionEdit.stopEdit("recurso");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar recurso");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteRecurso() {
+    if (!recurso) return;
+    if (!window.confirm(`Excluir ${recurso.codigo_recurso} — ${recurso.nome_recurso}?`)) return;
+    setError(null);
+    try {
+      await deleteRecurso(recurso.recurso_compartilhado_id, getAccessToken);
+      onBack();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir recurso");
+    }
+  }
+
+  function cancelRecursoEdit() {
+    if (isCreate) {
+      onBack();
+      return;
+    }
+    if (recurso) setForm(recursoFormFromEntity(recurso));
+    sectionEdit.cancelEdit("recurso");
+  }
+
+  function startEditVinculo(vinculo: VinculoRecurso) {
+    setEditingVinculoId(vinculo.vinculo_id);
+    setEditVinculoForm(formFromVinculo(vinculo));
+  }
+
+  function cancelEditVinculo() {
+    setEditingVinculoId(null);
+    setEditVinculoForm(null);
+  }
+
+  async function saveEditVinculo(event: React.FormEvent) {
+    event.preventDefault();
+    if (!editingVinculoId || !editVinculoForm) return;
+
+    const peso = editVinculoForm.peso_rateio.trim()
+      ? Number.parseFloat(editVinculoForm.peso_rateio)
+      : undefined;
+    if (peso != null && (!Number.isFinite(peso) || peso < 0)) {
+      setError("Informe um peso de rateio válido.");
+      return;
+    }
+
+    setError(null);
+    try {
+      await updateVinculo(
+        editingVinculoId,
+        {
+          ativo: editVinculoForm.ativo,
+          data_inicio_uso: optionalDateField(editVinculoForm.data_inicio_uso) ?? undefined,
+          data_fim_uso: optionalDateField(editVinculoForm.data_fim_uso) ?? undefined,
+          peso_rateio: peso,
+          observacoes: editVinculoForm.observacoes.trim() || undefined,
+        },
+        getAccessToken
+      );
+      cancelEditVinculo();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar vínculo");
+    }
+  }
+
+  async function handleDeleteVinculo(vinculo: VinculoRecurso) {
+    const label = `${vinculo.codigo_processo ?? "processo"} — ${vinculo.nome_processo ?? ""}`;
+    if (!window.confirm(`Desvincular este recurso de ${label}?`)) return;
+    setError(null);
+    try {
+      await deleteVinculo(vinculo.vinculo_id, getAccessToken);
+      if (editingVinculoId === vinculo.vinculo_id) cancelEditVinculo();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao desvincular recurso");
+    }
+  }
+
+  if (loading && !isCreate && !recurso) {
     return (
       <TransformometroShell>
         <LoadingActivityCard
@@ -192,231 +259,309 @@ export function RecursoDetailPage({
     );
   }
 
+  if (!isCreate && !recurso && !loading) {
+    return (
+      <TransformometroShell>
+        <div className="ds-state ds-state--error" role="alert">
+          <p>{error ?? "Recurso não encontrado."}</p>
+          <button type="button" className="ds-ghost-btn" onClick={onBack}>
+            Voltar à lista
+          </button>
+        </div>
+      </TransformometroShell>
+    );
+  }
+
+  const title = isCreate
+    ? "Novo recurso"
+    : `${recurso?.codigo_recurso ?? ""} — ${recurso?.nome_recurso ?? ""}`;
+
   return (
     <TransformometroShell>
       <PageHeader
-        title={recurso ? `${recurso.codigo_recurso} — ${recurso.nome_recurso}` : "Recurso"}
-        subtitle="Detalhes do recurso, histórico de custos e processos vinculados"
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.recursos}
+        title={title}
+        subtitle={
+          isCreate
+            ? "Cadastre licenças e ferramentas compartilhadas do catálogo global"
+            : "Detalhes, histórico de custos e processos vinculados"
+        }
+        currentPath={
+          pathname ?? (isCreate ? buildRecursoPath(CATALOG_CREATE.recurso) : buildRecursoPath(recursoId))
+        }
         onNavigate={onNavigate}
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
-          <button type="button" className="ds-ghost-btn" onClick={onBack}>
-            <ArrowLeft size={16} />
-            Lista
-          </button>
+          <>
+            <button type="button" className="ds-ghost-btn" onClick={onBack}>
+              <ArrowLeft size={16} />
+              Lista
+            </button>
+            {!isCreate ? (
+              <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRecurso()}>
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            ) : null}
+          </>
         }
       />
 
       <StatusAlerts
         error={error}
         loading={loading}
-        hasData={Boolean(recurso)}
+        hasData={Boolean(recurso) || isCreate}
         onRetry={() => void load()}
       />
 
-      {recurso ? (
-        <section className="ds-card ds-cadastro-subsection">
-          <div className="ds-table-section__header">
-            <h2 className="ds-section-title">Dados do recurso</h2>
-            <span className="ds-table-section__meta">{vinculos.length} vínculo(s)</span>
-          </div>
-          <dl className="ds-summary-metrics ds-summary-metrics--resource-detail">
-            <DetailMetric label="Código" value={recurso.codigo_recurso} highlight />
-            <DetailMetric label="Status" value={recurso.status_recurso} />
-            <DetailMetric label="Categoria" value={recurso.categoria_recurso || "—"} />
-            <DetailMetric label="Fornecedor" value={recurso.fornecedor || "—"} />
-            <DetailMetric label="Tipo / recorrência" value={`${recurso.tipo_custo} · ${recurso.recorrencia}`} />
-            <DetailMetric label="Rateio" value={labelCriterioRateio(recurso.criterio_rateio)} />
-            <DetailMetric label="Escopo" value={labelEscopoRecurso(recurso.escopo_recurso)} />
-            <DetailMetric
-              label="Competência do custo"
-              value={labelBaseCompetencia(recurso.base_competencia)}
+      <div className="ds-cadastro-panel ds-cadastro-panel--cards">
+        {options ? (
+          <EditableSectionCard
+            title="Dados do recurso"
+            description="Cadastro principal — rateio, escopo e vigência."
+            isEditing={isCreate || sectionEdit.isEditing("recurso")}
+            onEdit={() => sectionEdit.startEdit("recurso")}
+            onCancel={cancelRecursoEdit}
+            onSave={() => void handleSaveRecurso()}
+            saving={saving}
+            editable={!isCreate}
+            readContent={
+              recurso ? <RecursoReadView recurso={recurso} vinculosAtivos={ativos} /> : null
+            }
+            editContent={
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleSaveRecurso();
+                }}
+              >
+                <RecursoCatalogFormFields
+                  form={form}
+                  options={options}
+                  onChange={setForm}
+                  submitLabel="Salvar alterações"
+                  hideSubmit
+                />
+              </form>
+            }
+          />
+        ) : null}
+
+        {!isCreate ? (
+          <>
+            <EditableSectionCard
+              title="Custos ao longo do tempo"
+              description="Histórico de vigências de custo mensal usado no dashboard."
+              isEditing={sectionEdit.isEditing("custos")}
+              onEdit={() => sectionEdit.startEdit("custos")}
+              onCancel={() => sectionEdit.cancelEdit("custos")}
+              readContent={
+                <RecursoCustosSection
+                  embeddedInCard
+                  readOnly
+                  recursoId={recursoId}
+                  getAccessToken={getAccessToken}
+                  onError={setError}
+                  onRecursoSynced={() => void load()}
+                />
+              }
+              editContent={
+                <RecursoCustosSection
+                  embeddedInCard
+                  recursoId={recursoId}
+                  getAccessToken={getAccessToken}
+                  onError={setError}
+                  onRecursoSynced={() => void load()}
+                />
+              }
             />
-            <DetailMetric label="Custo mês vigente" value={formatCurrency(recurso.valor_total_recorrente)} highlight />
-            <DetailMetric label="Vínculos ativos" value={ativos} highlight />
-            <DetailMetric label="Vigência do recurso" value={vigenciaRecurso} />
-          </dl>
-        </section>
-      ) : null}
 
-      <section className="ds-card ds-cadastro-subsection">
-        <RecursoCustosSection
-          recursoId={recursoId}
-          getAccessToken={getAccessToken}
-          onError={setError}
-          onRecursoSynced={() => void load()}
-        />
-      </section>
+            <section className="ds-card ds-table-section" aria-busy={loading || refreshing}>
+              <div className="ds-table-section__header">
+                <h2 className="ds-section-title">Processos vinculados</h2>
+                <div className="ds-table-section__meta-group">
+                  <span className="ds-table-section__meta">
+                    Vínculos ativos entram no rateio das revisões
+                  </span>
+                  <span className="ds-table-section__meta">{filteredVinculos.length} registro(s)</span>
+                </div>
+              </div>
 
-      <section className="ds-card ds-table-section" aria-busy={loading || refreshing}>
-        <div className="ds-table-section__header">
-          <h2 className="ds-section-title">Processos vinculados</h2>
-          <div className="ds-table-section__meta-group">
-            <span className="ds-table-section__meta">
-              Edite os vínculos ou abra o processo para revisar medição e investimentos
-            </span>
-            <span className="ds-table-section__meta">{filteredVinculos.length} registro(s)</span>
-          </div>
-        </div>
+              <div className="ds-table-toolbar">
+                <div className="ds-table-search" role="search">
+                  <Search size={16} aria-hidden="true" className="ds-table-search__icon" />
+                  <input
+                    type="search"
+                    className="ds-table-search__input"
+                    value={search}
+                    placeholder="Código, processo, unidade, setor…"
+                    onChange={(event) => setSearch(event.target.value)}
+                    aria-label="Filtrar processos vinculados"
+                  />
+                </div>
+              </div>
 
-        <div className="ds-table-toolbar">
-          <div className="ds-table-search" role="search">
-            <Search size={16} aria-hidden="true" className="ds-table-search__icon" />
-            <input
-              type="search"
-              className="ds-table-search__input"
-              value={search}
-              placeholder="Código, processo, unidade, setor…"
-              onChange={(event) => setSearch(event.target.value)}
-              aria-label="Filtrar processos vinculados"
-            />
-          </div>
-        </div>
-
-        {loading && vinculos.length === 0 ? (
-          <p className="ds-state-box">Carregando vínculos…</p>
-        ) : filteredVinculos.length === 0 ? (
-          <p className="ds-state-box">Nenhum processo vinculado a este recurso.</p>
-        ) : (
-          <div className="ds-table-wrap ds-cadastro-section__table">
-            <table className="ds-table ds-table--compact">
-              <thead>
-                <tr>
-                  <th>Processo</th>
-                  <th>Unidade</th>
-                  <th>Setor</th>
-                  <th>Revisão</th>
-                  <th>Uso no processo</th>
-                  <th>Peso</th>
-                  <th>Ativo</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredVinculos.map((row) =>
-                  editingId === row.vinculo_id && editForm ? (
-                    <tr key={row.vinculo_id} className="ds-table__row--editing">
-                      <td colSpan={8}>
-                        <form className="ds-cadastro-subsection" onSubmit={saveEdit}>
-                          <h4 className="ds-cadastro-subsection__title">
-                            Editar vínculo — {row.codigo_processo ?? "—"} · {row.nome_processo ?? "—"}
-                          </h4>
-                          <div className="ds-filters-row">
-                            <label className="ds-filter-box">
-                              Início do uso
-                              <input
-                                type="date"
-                                value={editForm.data_inicio_uso}
-                                onChange={(event) =>
-                                  setEditForm({ ...editForm, data_inicio_uso: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label className="ds-filter-box">
-                              Fim do uso
-                              <input
-                                type="date"
-                                value={editForm.data_fim_uso}
-                                onChange={(event) =>
-                                  setEditForm({ ...editForm, data_fim_uso: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label className="ds-filter-box">
-                              Peso do rateio
-                              <input
-                                type="number"
-                                min={0}
-                                step="any"
-                                value={editForm.peso_rateio}
-                                onChange={(event) =>
-                                  setEditForm({ ...editForm, peso_rateio: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label className="ds-check-label">
-                              <input
-                                type="checkbox"
-                                checked={editForm.ativo}
-                                onChange={(event) =>
-                                  setEditForm({ ...editForm, ativo: event.target.checked })
-                                }
-                              />
-                              <span>Vínculo ativo</span>
-                            </label>
-                          </div>
-                          <label className="ds-filter-box ds-filter-box--wide">
-                            Observações
-                            <input
-                              value={editForm.observacoes}
-                              onChange={(event) =>
-                                setEditForm({ ...editForm, observacoes: event.target.value })
-                              }
-                            />
-                          </label>
-                          <div className="ds-cadastro-form__actions">
-                            <button type="submit" className="ds-primary-btn">
-                              Salvar vínculo
-                            </button>
-                            <button type="button" className="ds-ghost-btn" onClick={cancelEdit}>
-                              Cancelar
-                            </button>
-                          </div>
-                        </form>
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr key={row.vinculo_id}>
-                      <td className="ds-table__col--wide">
-                        <button
-                          type="button"
-                          className="ds-link-btn"
-                          onClick={() => {
-                            if (row.processo_id) {
-                              onNavigate(buildProcessoPath(row.processo_id, row.revisao_id));
-                            }
-                          }}
-                        >
-                          {row.codigo_processo ?? "—"} — {row.nome_processo ?? "—"}
-                        </button>
-                      </td>
-                      <td>{row.filial_id ?? "—"}</td>
-                      <td>{row.setor_id ?? "—"}</td>
-                      <td>
-                        {row.versao_revisao ?? "—"} · {row.cenario_tipo ?? "—"}
-                      </td>
-                      <td>
-                        {toDateInputValue(row.data_inicio_uso) || "…"} →{" "}
-                        {toDateInputValue(row.data_fim_uso) || "…"}
-                      </td>
-                      <td className="ds-table__col--numeric">{row.peso_rateio ?? "—"}</td>
-                      <td>{row.ativo ? "Sim" : "Não"}</td>
-                      <td className="ds-table__actions">
-                        <button
-                          type="button"
-                          className="ds-ghost-btn"
-                          onClick={() => startEdit(row)}
-                        >
-                          Editar vínculo
-                        </button>
-                        <button
-                          type="button"
-                          className="ds-ghost-btn"
-                          onClick={() => void handleDelete(row)}
-                        >
-                          Desvincular
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+              {filteredVinculos.length === 0 ? (
+                <p className="ds-state-box">Nenhum processo vinculado a este recurso.</p>
+              ) : (
+                <div className="ds-table-wrap ds-cadastro-section__table">
+                  <table className="ds-table ds-table--compact">
+                    <thead>
+                      <tr>
+                        <th><TableHeader label="Processo" hint={C.processo} /></th>
+                        <th><TableHeader label="Unidade" hint={C.unidade} /></th>
+                        <th><TableHeader label="Setor" hint={C.setor} /></th>
+                        <th><TableHeader label="Revisão" hint={C.revisao} /></th>
+                        <th><TableHeader label="Uso no processo" hint={C.usoRevisao} /></th>
+                        <th><TableHeader label="Peso" hint={C.peso} /></th>
+                        <th><TableHeader label="Ativo" hint={C.ativoVinculo} /></th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredVinculos.map((row) =>
+                        editingVinculoId === row.vinculo_id && editVinculoForm ? (
+                          <tr key={row.vinculo_id} className="ds-table__row--editing">
+                            <td colSpan={8}>
+                              <form className="ds-cadastro-subsection" onSubmit={saveEditVinculo}>
+                                <h4 className="ds-cadastro-subsection__title">
+                                  Editar vínculo — {row.codigo_processo ?? "—"} · {row.nome_processo ?? "—"}
+                                </h4>
+                                <div className="ds-filters-row">
+                                  <label className="ds-filter-box">
+                                    <FieldLabel label="Início do uso" hint={R.vinculoInicio} />
+                                    <input
+                                      type="date"
+                                      value={editVinculoForm.data_inicio_uso}
+                                      onChange={(event) =>
+                                        setEditVinculoForm({
+                                          ...editVinculoForm,
+                                          data_inicio_uso: event.target.value,
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <label className="ds-filter-box">
+                                    <FieldLabel label="Fim do uso" hint={R.vinculoFim} />
+                                    <input
+                                      type="date"
+                                      value={editVinculoForm.data_fim_uso}
+                                      onChange={(event) =>
+                                        setEditVinculoForm({
+                                          ...editVinculoForm,
+                                          data_fim_uso: event.target.value,
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <label className="ds-filter-box">
+                                    <FieldLabel label="Peso do rateio" hint={R.peso} />
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      step="any"
+                                      value={editVinculoForm.peso_rateio}
+                                      onChange={(event) =>
+                                        setEditVinculoForm({
+                                          ...editVinculoForm,
+                                          peso_rateio: event.target.value,
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <label className="ds-check-label">
+                                    <input
+                                      type="checkbox"
+                                      checked={editVinculoForm.ativo}
+                                      onChange={(event) =>
+                                        setEditVinculoForm({
+                                          ...editVinculoForm,
+                                          ativo: event.target.checked,
+                                        })
+                                      }
+                                    />
+                                    <span className="tm-field__label">
+                                      Vínculo ativo
+                                      <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" />
+                                    </span>
+                                  </label>
+                                </div>
+                                <label className="ds-filter-box ds-filter-box--wide">
+                                  <FieldLabel label="Observações" hint={R.vinculoObservacoes} />
+                                  <input
+                                    value={editVinculoForm.observacoes}
+                                    onChange={(event) =>
+                                      setEditVinculoForm({
+                                        ...editVinculoForm,
+                                        observacoes: event.target.value,
+                                      })
+                                    }
+                                  />
+                                </label>
+                                <div className="ds-cadastro-form__actions">
+                                  <button type="submit" className="ds-primary-btn">
+                                    Salvar vínculo
+                                  </button>
+                                  <button type="button" className="ds-ghost-btn" onClick={cancelEditVinculo}>
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </form>
+                            </td>
+                          </tr>
+                        ) : (
+                          <tr key={row.vinculo_id}>
+                            <td className="ds-table__col--wide">
+                              <button
+                                type="button"
+                                className="ds-link-btn"
+                                onClick={() => {
+                                  if (row.processo_id) {
+                                    onNavigate(buildProcessoPath(row.processo_id, row.revisao_id));
+                                  }
+                                }}
+                              >
+                                {row.codigo_processo ?? "—"} — {row.nome_processo ?? "—"}
+                              </button>
+                            </td>
+                            <td>{row.filial_id ?? "—"}</td>
+                            <td>{row.setor_id ?? "—"}</td>
+                            <td>
+                              {row.versao_revisao ?? "—"} · {row.cenario_tipo ?? "—"}
+                            </td>
+                            <td>
+                              {toDateInputValue(row.data_inicio_uso) || "…"} →{" "}
+                              {toDateInputValue(row.data_fim_uso) || "…"}
+                            </td>
+                            <td className="ds-table__col--numeric">{row.peso_rateio ?? "—"}</td>
+                            <td>{row.ativo ? "Sim" : "Não"}</td>
+                            <td className="ds-table__actions">
+                              <button
+                                type="button"
+                                className="ds-ghost-btn"
+                                onClick={() => startEditVinculo(row)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                className="ds-ghost-btn"
+                                onClick={() => void handleDeleteVinculo(row)}
+                              >
+                                Desvincular
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
+        ) : null}
+      </div>
     </TransformometroShell>
   );
 }

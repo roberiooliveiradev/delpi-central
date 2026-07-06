@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AppProps } from "../../App";
+import { FieldLabel, TableHeader } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   deleteRecursoCusto,
   fetchRecursoCustos,
@@ -10,8 +12,13 @@ import {
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
 
+const C = TM_HELP_TOOLTIPS.columns;
+const R = TM_HELP_TOOLTIPS.recursos;
+
 type Props = Pick<AppProps, "getAccessToken"> & {
   recursoId: string;
+  readOnly?: boolean;
+  embeddedInCard?: boolean;
   onError: (message: string | null) => void;
   onRecursoSynced: () => void;
 };
@@ -19,6 +26,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 export function RecursoCustosSection({
   recursoId,
   getAccessToken,
+  readOnly = false,
+  embeddedInCard = false,
   onError,
   onRecursoSynced,
 }: Props) {
@@ -131,13 +140,17 @@ export function RecursoCustosSection({
     }
   }
 
-  return (
-    <section className="ds-cadastro-subsection">
-      <h3 className="ds-cadastro-subsection__title">Custos ao longo do tempo</h3>
-      <p className="ds-hint">
-        O dashboard usa o valor vigente em cada mês (competência). Registre reajustes com a data de
-        início; períodos anteriores permanecem com o valor antigo no cálculo retroativo.
-      </p>
+  const body = (
+    <>
+      {embeddedInCard ? null : (
+        <>
+          <h3 className="ds-cadastro-subsection__title">Custos ao longo do tempo</h3>
+          <p className="ds-hint">
+            O dashboard usa o valor vigente em cada mês (competência). Registre reajustes com a data de
+            início; períodos anteriores permanecem com o valor antigo no cálculo retroativo.
+          </p>
+        </>
+      )}
 
       {loading ? (
         <p className="ds-state-box">Carregando histórico…</p>
@@ -146,22 +159,22 @@ export function RecursoCustosSection({
           <table className="ds-table ds-table--compact">
             <thead>
               <tr>
-                <th>Valor/mês</th>
-                <th>Início</th>
-                <th>Fim</th>
-                <th>Obs.</th>
-                <th />
+                <th><TableHeader label="Valor/mês" hint={C.valorMes} /></th>
+                <th><TableHeader label="Início" hint={C.inicio} /></th>
+                <th><TableHeader label="Fim" hint={C.fim} /></th>
+                <th><TableHeader label="Obs." hint={C.observacoes} /></th>
+                {!readOnly ? <th /> : null}
               </tr>
             </thead>
             <tbody>
               {custos.map((c) =>
-                editingId === c.recurso_custo_id ? (
+                !readOnly && editingId === c.recurso_custo_id ? (
                   <tr key={c.recurso_custo_id} className="ds-table__row--editing">
                     <td colSpan={5}>
                       <form onSubmit={handleSaveEdit}>
                         <div className="ds-filters-row">
                           <label className="ds-filter-box">
-                            Valor (R$)
+                            <FieldLabel label="Valor (R$)" hint={C.valorMes} />
                             <input
                               type="number"
                               min={0}
@@ -174,7 +187,7 @@ export function RecursoCustosSection({
                             />
                           </label>
                           <label className="ds-filter-box">
-                            Início *
+                            <FieldLabel label="Início *" hint={C.inicio} />
                             <input
                               type="date"
                               required
@@ -188,7 +201,7 @@ export function RecursoCustosSection({
                             />
                           </label>
                           <label className="ds-filter-box">
-                            Fim
+                            <FieldLabel label="Fim" hint={C.fim} />
                             <input
                               type="date"
                               value={editForm.data_fim_vigencia}
@@ -199,7 +212,7 @@ export function RecursoCustosSection({
                           </label>
                         </div>
                         <label className="ds-filter-box ds-filter-box--wide">
-                          Observações
+                          <FieldLabel label="Observações" hint={C.observacoes} />
                           <input
                             value={editForm.observacoes}
                             onChange={(e) =>
@@ -228,24 +241,26 @@ export function RecursoCustosSection({
                     <td>{toDateInputValue(c.data_inicio_vigencia) || "—"}</td>
                     <td>{toDateInputValue(c.data_fim_vigencia) || "—"}</td>
                     <td>{c.observacoes || "—"}</td>
-                    <td>
-                      <div className="ds-table__actions">
-                        <button
-                          type="button"
-                          className="ds-ghost-btn"
-                          onClick={() => startEdit(c)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="ds-ghost-btn"
-                          onClick={() => void handleDelete(c)}
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    </td>
+                    {!readOnly ? (
+                      <td>
+                        <div className="ds-table__actions">
+                          <button
+                            type="button"
+                            className="ds-ghost-btn"
+                            onClick={() => startEdit(c)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className="ds-ghost-btn"
+                            onClick={() => void handleDelete(c)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </td>
+                    ) : null}
                   </tr>
                 )
               )}
@@ -256,42 +271,48 @@ export function RecursoCustosSection({
         <p className="ds-state-box">Nenhum período de custo cadastrado.</p>
       )}
 
-      <form className="ds-cadastro-subsection" onSubmit={handleReajuste}>
-        <h4 className="ds-cadastro-subsection__title">Registrar reajuste</h4>
-        <div className="ds-filters-row">
-          <label className="ds-filter-box">
-            Novo valor mensal (R$) *
+      {!readOnly ? (
+        <form className="ds-cadastro-subsection" onSubmit={handleReajuste}>
+          <h4 className="ds-cadastro-subsection__title">Registrar reajuste</h4>
+          <div className="ds-filters-row">
+            <label className="ds-filter-box">
+              <FieldLabel label="Novo valor mensal (R$) *" hint={R.reajusteValor} />
+              <input
+                type="number"
+                min={0}
+                step="any"
+                required
+                value={reajuste.valor_mensal}
+                onChange={(e) => setReajuste({ ...reajuste, valor_mensal: e.target.value })}
+              />
+            </label>
+            <label className="ds-filter-box">
+              <FieldLabel label="Vigente a partir de *" hint={R.reajusteDesde} />
+              <input
+                type="date"
+                required
+                value={reajuste.vigente_desde}
+                onChange={(e) => setReajuste({ ...reajuste, vigente_desde: e.target.value })}
+              />
+            </label>
+          </div>
+          <label className="ds-filter-box ds-filter-box--wide">
+            <FieldLabel label="Observações" hint={C.observacoes} />
             <input
-              type="number"
-              min={0}
-              step="any"
-              required
-              value={reajuste.valor_mensal}
-              onChange={(e) => setReajuste({ ...reajuste, valor_mensal: e.target.value })}
+              value={reajuste.observacoes}
+              onChange={(e) => setReajuste({ ...reajuste, observacoes: e.target.value })}
+              placeholder="Ex.: Renovação anual / renegociação"
             />
           </label>
-          <label className="ds-filter-box">
-            Vigente a partir de *
-            <input
-              type="date"
-              required
-              value={reajuste.vigente_desde}
-              onChange={(e) => setReajuste({ ...reajuste, vigente_desde: e.target.value })}
-            />
-          </label>
-        </div>
-        <label className="ds-filter-box ds-filter-box--wide">
-          Observações
-          <input
-            value={reajuste.observacoes}
-            onChange={(e) => setReajuste({ ...reajuste, observacoes: e.target.value })}
-            placeholder="Ex.: Renovação anual / renegociação"
-          />
-        </label>
-        <button type="submit" className="ds-primary-btn">
-          Registrar reajuste
-        </button>
-      </form>
-    </section>
+          <button type="submit" className="ds-primary-btn">
+            Registrar reajuste
+          </button>
+        </form>
+      ) : null}
+    </>
   );
+
+  if (embeddedInCard) return body;
+
+  return <section className="ds-cadastro-subsection">{body}</section>;
 }

@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppProps } from "../../App";
+import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
+import { useSectionEdit } from "../../hooks/useSectionEdit";
 import {
   activateRevisao,
   deleteRevisao,
@@ -23,8 +25,6 @@ import {
 } from "../../data/api/transformometroApi";
 import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceApi";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
-import { toDateInputValue } from "../../utils/dateInputs";
-import { CadastroTabs, type CadastroTabId } from "../revisao/cadastro/CadastroTabs";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
 import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
@@ -81,7 +81,6 @@ const emptyMedicao = (revisaoId: string): Medicao => ({
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisao: Revisao;
   options: OptionsData;
-  readOnly?: boolean;
   onError: (message: string | null) => void;
   onRevisaoUpdated: () => void;
   onRevisaoDeleted?: () => void;
@@ -91,18 +90,20 @@ export function RevisaoCadastroPanel({
   revisao,
   options,
   getAccessToken,
-  readOnly = false,
   onError,
   onRevisaoUpdated,
   onRevisaoDeleted,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<CadastroTabId>("vigencia");
+  const sectionEdit = useSectionEdit();
+  const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
   const [recursos, setRecursos] = useState<RecursoCompartilhado[]>([]);
   const [evidenciasCount, setEvidenciasCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [savingVigencia, setSavingVigencia] = useState(false);
+  const [savingMedicao, setSavingMedicao] = useState(false);
   const [rateioDiag, setRateioDiag] = useState<RateioDiagnostic | null>(null);
   const [revisaoVigencia, setRevisaoVigencia] = useState(() => buildRevisaoVigenciaFromRevisao(revisao));
 
@@ -132,7 +133,11 @@ export function RevisaoCadastroPanel({
         fetchRevisaoEvidencias(revisao.revisao_id, getAccessToken).catch(() => []),
         fetchRevisaoDiagnosticoRateio(revisao.revisao_id, getAccessToken).catch(() => null),
       ]);
-      setMedicao(med ? { ...med, revisao_id: revisao.revisao_id } : emptyMedicao(revisao.revisao_id));
+      const nextMedicao = med
+        ? { ...med, revisao_id: revisao.revisao_id }
+        : emptyMedicao(revisao.revisao_id);
+      setMedicao(nextMedicao);
+      medicaoSnapshot.current = nextMedicao;
       setInvestimentos(inv.items);
       setVinculos(vin.items);
       setRecursos(rec.items);
@@ -149,19 +154,8 @@ export function RevisaoCadastroPanel({
     void load();
   }, [load]);
 
-  const tabs = useMemo(
-    () => [
-      { id: "vigencia" as const, label: "Vigência" },
-      { id: "medicao" as const, label: "Medição" },
-      { id: "investimentos" as const, label: "Investimentos", badge: investimentos.length },
-      { id: "recursos" as const, label: "Recursos", badge: vinculos.length },
-      { id: "evidencias" as const, label: "Evidências", badge: evidenciasCount || undefined },
-    ],
-    [investimentos.length, vinculos.length, evidenciasCount]
-  );
-
-  async function handleSaveRevisaoDatas(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveVigencia() {
+    setSavingVigencia(true);
     onError(null);
     try {
       await updateRevisao(
@@ -172,21 +166,37 @@ export function RevisaoCadastroPanel({
         },
         getAccessToken
       );
+      sectionEdit.stopEdit("vigencia");
       onRevisaoUpdated();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar vigência da revisão");
+    } finally {
+      setSavingVigencia(false);
     }
   }
 
-  async function handleSaveMedicao(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveMedicao() {
+    setSavingMedicao(true);
     onError(null);
     try {
       await upsertMedicao(medicao, getAccessToken);
+      sectionEdit.stopEdit("medicao");
       await load();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar medição");
+    } finally {
+      setSavingMedicao(false);
     }
+  }
+
+  function cancelVigencia() {
+    setRevisaoVigencia(buildRevisaoVigenciaFromRevisao(revisao));
+    sectionEdit.cancelEdit("vigencia");
+  }
+
+  function cancelMedicao() {
+    setMedicao(medicaoSnapshot.current);
+    sectionEdit.cancelEdit("medicao");
   }
 
   async function handleActivate() {
@@ -228,36 +238,13 @@ export function RevisaoCadastroPanel({
   }
 
   return (
-    <div className="ds-cadastro-panel">
-      {!readOnly ? (
-        <RevisaoAtivarToolbar
-          revisao={revisao}
-          onError={onError}
-          onActivate={handleActivate}
-          onDelete={handleDeleteRevisao}
-        />
-      ) : (
-        <section className="ds-card ds-revisao-read-summary">
-          <dl className="ds-dl-grid">
-            <div>
-              <dt>Versão</dt>
-              <dd>{revisao.versao_revisao}</dd>
-            </div>
-            <div>
-              <dt>Cenário</dt>
-              <dd>{revisao.cenario_tipo}</dd>
-            </div>
-            <div>
-              <dt>Início vigência</dt>
-              <dd>{toDateInputValue(revisao.data_inicio_vigencia) || "—"}</dd>
-            </div>
-            <div>
-              <dt>Ativa</dt>
-              <dd>{revisao.revisao_ativa ? "sim" : "não"}</dd>
-            </div>
-          </dl>
-        </section>
-      )}
+    <div className="ds-cadastro-panel ds-cadastro-panel--cards">
+      <RevisaoAtivarToolbar
+        revisao={revisao}
+        onError={onError}
+        onActivate={handleActivate}
+        onDelete={handleDeleteRevisao}
+      />
 
       {rateioDiag ? (
         <div
@@ -280,57 +267,163 @@ export function RevisaoCadastroPanel({
         </div>
       ) : null}
 
-      <CadastroTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
-        {activeTab === "vigencia" ? (
+      <EditableSectionCard
+        title="Vigência e identificação"
+        description="Versão, cenário e período usados no dashboard."
+        isEditing={sectionEdit.isEditing("vigencia")}
+        onEdit={() => sectionEdit.startEdit("vigencia")}
+        onCancel={cancelVigencia}
+        onSave={() => void saveVigencia()}
+        saving={savingVigencia}
+        readContent={
           <RevisaoVigenciaSection
+            embeddedInCard
+            readOnly
             revisaoVigencia={revisaoVigencia}
             options={options}
-            readOnly={readOnly}
             onChange={setRevisaoVigencia}
-            onSubmit={handleSaveRevisaoDatas}
+            onSubmit={(event) => event.preventDefault()}
           />
-        ) : null}
-        {activeTab === "medicao" ? (
+        }
+        editContent={
+          <RevisaoVigenciaSection
+            embeddedInCard
+            hideSubmit
+            revisaoVigencia={revisaoVigencia}
+            options={options}
+            onChange={setRevisaoVigencia}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveVigencia();
+            }}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title="Medição operacional"
+        description="Volume, tempos e custos usados para calcular economia bruta."
+        isEditing={sectionEdit.isEditing("medicao")}
+        onEdit={() => {
+          medicaoSnapshot.current = medicao;
+          sectionEdit.startEdit("medicao");
+        }}
+        onCancel={cancelMedicao}
+        onSave={() => void saveMedicao()}
+        saving={savingMedicao}
+        readContent={
           <RevisaoMedicaoSection
+            embeddedInCard
+            readOnly
             medicao={medicao}
-            readOnly={readOnly}
             onChange={setMedicao}
-            onSubmit={handleSaveMedicao}
+            onSubmit={(event) => event.preventDefault()}
           />
-        ) : null}
-        {activeTab === "investimentos" ? (
+        }
+        editContent={
+          <RevisaoMedicaoSection
+            embeddedInCard
+            hideSubmit
+            medicao={medicao}
+            onChange={setMedicao}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveMedicao();
+            }}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title={`Investimentos (${investimentos.length})`}
+        description="Custos únicos ou recorrentes ligados a esta revisão."
+        isEditing={sectionEdit.isEditing("investimentos")}
+        onEdit={() => sectionEdit.startEdit("investimentos")}
+        onCancel={() => sectionEdit.cancelEdit("investimentos")}
+        readContent={
           <RevisaoInvestimentosSection
+            embeddedInCard
+            readOnly
             revisaoId={revisao.revisao_id}
             options={options}
             investimentos={investimentos}
-            readOnly={readOnly}
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
           />
-        ) : null}
-        {activeTab === "recursos" ? (
+        }
+        editContent={
+          <RevisaoInvestimentosSection
+            embeddedInCard
+            revisaoId={revisao.revisao_id}
+            options={options}
+            investimentos={investimentos}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title={`Recursos compartilhados (${vinculos.length})`}
+        description="Ferramentas do catálogo vinculadas ao rateio desta revisão."
+        isEditing={sectionEdit.isEditing("recursos")}
+        onEdit={() => sectionEdit.startEdit("recursos")}
+        onCancel={() => sectionEdit.cancelEdit("recursos")}
+        readContent={
           <RevisaoRecursosSection
+            embeddedInCard
+            readOnly
             revisaoId={revisao.revisao_id}
             options={options}
             recursos={recursos}
             vinculos={vinculos}
-            readOnly={readOnly}
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
           />
-        ) : null}
-        {activeTab === "evidencias" ? (
+        }
+        editContent={
+          <RevisaoRecursosSection
+            embeddedInCard
+            revisaoId={revisao.revisao_id}
+            options={options}
+            recursos={recursos}
+            vinculos={vinculos}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title={`Evidências${evidenciasCount ? ` (${evidenciasCount})` : ""}`}
+        description="Anexos, imagens e links que comprovam a melhoria."
+        isEditing={sectionEdit.isEditing("evidencias")}
+        onEdit={() => sectionEdit.startEdit("evidencias")}
+        onCancel={() => sectionEdit.cancelEdit("evidencias")}
+        readContent={
           <RevisaoEvidenciasSection
+            embeddedInCard
+            readOnly
             revisaoId={revisao.revisao_id}
             getAccessToken={getAccessToken}
-            readOnly={readOnly}
             onError={onError}
             onReload={load}
           />
-        ) : null}
-      </CadastroTabs>
+        }
+        editContent={
+          <RevisaoEvidenciasSection
+            embeddedInCard
+            revisaoId={revisao.revisao_id}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
+          />
+        }
+      />
     </div>
   );
 }

@@ -9,26 +9,24 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
-  createSetor,
   deleteSetor,
   fetchOptions,
   fetchSetores,
-  updateSetor,
   type OptionsData,
   type Setor,
 } from "../../data/api/transformometroApi";
-import { SetorFormFields } from "../setores/SetorFormFields";
-import {
-  emptySetorForm,
-  payloadFromSetorForm,
-  setorFormFromEntity,
-} from "../setores/setorCatalogForm";
+import { FieldLabel } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { buildSetorPath } from "../../utils/routeParser";
+
+const C = TM_HELP_TOOLTIPS.columns;
+const S = TM_HELP_TOOLTIPS.setores;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -41,11 +39,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptySetorForm);
   const [filialFilter, setFilialFilter] = useState("");
-  const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -74,69 +68,11 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     return map;
   }, [options?.filiais]);
 
-  function startCreate() {
-    setEditingId(null);
-    setForm(emptySetorForm(filialFilter || "01"));
-    setShowForm(true);
-    scrollToForm();
-  }
-
-  function startEdit(setor: Setor) {
-    setEditingId(setor.setor_id);
-    setForm(setorFormFromEntity(setor));
-    setShowForm(true);
-    scrollToForm();
-  }
-
-  function cancelForm() {
-    setShowForm(false);
-    setEditingId(null);
-    setForm(emptySetorForm());
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (form.filiais.length === 0) {
-      setError("Selecione ao menos uma unidade para o setor.");
-      return;
-    }
-    const payload = payloadFromSetorForm(form, Boolean(editingId));
-    try {
-      if (editingId) {
-        await updateSetor(
-          editingId,
-          {
-            nome_setor: payload.nome_setor,
-            filiais: payload.filiais,
-            status_setor: payload.status_setor,
-          },
-          getAccessToken
-        );
-      } else {
-        await createSetor(
-          {
-            setor_id: form.codigo_setor.trim(),
-            nome_setor: payload.nome_setor,
-            filiais: payload.filiais,
-            status_setor: payload.status_setor,
-          },
-          getAccessToken
-        );
-      }
-      cancelForm();
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar setor");
-    }
-  }
-
   async function handleDelete(setor: Setor) {
     if (!window.confirm(`Excluir setor ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`)) return;
     setError(null);
     try {
       await deleteSetor(setor.setor_id, getAccessToken);
-      if (editingId === setor.setor_id) cancelForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir setor");
@@ -147,6 +83,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "codigo_setor",
       header: "Código",
+      headerHint: C.codigo,
       sortable: true,
       sortValue: (row) => row.codigo_setor ?? row.setor_id,
       render: (row) => row.codigo_setor ?? row.setor_id,
@@ -154,6 +91,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "nome_setor",
       header: "Setor",
+      headerHint: C.setor,
       sortable: true,
       className: "ds-table__col--wide",
       sortValue: (row) => row.nome_setor,
@@ -162,6 +100,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "filiais",
       header: "Unidades",
+      headerHint: C.unidades,
       render: (row) =>
         (row.filiais ?? [])
           .map((filialId) => `${filialId} — ${filialLabels.get(filialId) ?? filialId}`)
@@ -170,6 +109,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "status_setor",
       header: "Status",
+      headerHint: C.status,
       sortable: true,
       render: (row) => row.status_setor,
     },
@@ -184,10 +124,10 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
             className="ds-ghost-btn"
             onClick={(event) => {
               event.stopPropagation();
-              startEdit(row);
+              onNavigate(buildSetorPath(row.setor_id));
             }}
           >
-            Editar
+            Abrir
           </button>
           <button
             type="button"
@@ -229,7 +169,11 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
-          <button type="button" className="ds-primary-btn" onClick={startCreate}>
+          <button
+            type="button"
+            className="ds-primary-btn"
+            onClick={() => onNavigate(buildSetorPath(CATALOG_CREATE.setor))}
+          >
             <Plus size={16} />
             Novo setor
           </button>
@@ -263,34 +207,12 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
         .
       </p>
 
-      {showForm && options ? (
-        <section ref={formSectionRef} className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">{editingId ? "Editar setor" : "Novo setor"}</h2>
-          <form onSubmit={handleSubmit}>
-            <SetorFormFields
-              form={form}
-              options={options}
-              editing={Boolean(editingId)}
-              onChange={setForm}
-            />
-            <div className="ds-cadastro-form__actions">
-              <button type="submit" className="ds-primary-btn">
-                {editingId ? "Salvar alterações" : "Cadastrar setor"}
-              </button>
-              <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </section>
-      ) : null}
-
       <DataTableSection
         title="Catálogo de setores"
         filters={
           <div className="ds-filters-row">
             <div className="ds-filter-box">
-              <label htmlFor="tm-setor-list-filial">Unidade</label>
+              <FieldLabel label="Unidade" hint={S.filtroUnidade} />
               <select
                 id="tm-setor-list-filial"
                 value={filialFilter}
@@ -314,12 +236,11 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
         hideSearch
         pageSize={15}
         emptyMessage="Nenhum setor cadastrado. Use Novo setor para incluir."
+        onRowClick={(row) => onNavigate(buildSetorPath(row.setor_id))}
         footer={
           <p className="ds-hint">
             {items.length} registro(s)
-            {filialFilter
-              ? ` · filtrados para unidade ${filialFilter}`
-              : ""}
+            {filialFilter ? ` · filtrados para unidade ${filialFilter}` : ""}
           </p>
         }
       />

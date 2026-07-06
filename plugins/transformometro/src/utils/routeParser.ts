@@ -4,7 +4,9 @@ export type TransformometroView =
   | "dashboard"
   | "dados"
   | "filiais"
+  | "filial"
   | "setores"
+  | "setor"
   | "recursos"
   | "recurso"
   | "processos"
@@ -17,6 +19,8 @@ export type ParsedTransformometroRoute = {
   processoId?: string;
   instanciaId?: string;
   revisaoId?: string;
+  filialId?: string;
+  setorId?: string;
   recursoId?: string;
   legacyRevisaoPath?: boolean;
 };
@@ -77,6 +81,16 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
     return { view: "recurso", recursoId: recursoMatch[1] };
   }
 
+  const filialMatch = path.match(/^\/apps\/transformometro\/filiais\/([^/]+)$/);
+  if (filialMatch) {
+    return { view: "filial", filialId: filialMatch[1] };
+  }
+
+  const setorMatch = path.match(/^\/apps\/transformometro\/setores\/([^/]+)$/);
+  if (setorMatch) {
+    return { view: "setor", setorId: setorMatch[1] };
+  }
+
   if (
     path === TRANSFORMOMETRO_ROUTES.home ||
     path === TRANSFORMOMETRO_ROUTES.dashboard ||
@@ -128,4 +142,12 @@ export function buildProcessoPath(
 
 export function buildRecursoPath(recursoId: string): string {
   return `${TRANSFORMOMETRO_ROUTES.recursos}/${recursoId}`;
+}
+
+export function buildFilialPath(filialId: string): string {
+  return `${TRANSFORMOMETRO_ROUTES.filiais}/${filialId}`;
+}
+
+export function buildSetorPath(setorId: string): string {
+  return `${TRANSFORMOMETRO_ROUTES.setores}/${setorId}`;
 }

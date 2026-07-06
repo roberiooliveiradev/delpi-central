@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Eye, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -9,31 +9,23 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
-  createRecurso,
   deleteRecurso,
-  fetchOptions,
   fetchRecursos,
-  updateRecurso,
-  type OptionsData,
   type RecursoCompartilhado,
 } from "../../data/api/transformometroApi";
 import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
 import { toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildRecursoPath } from "../../utils/routeParser";
-import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
-import {
-  emptyRecursoForm,
-  payloadFromRecursoForm,
-  recursoFormFromEntity,
-} from "../recursos/recursoCatalogForm";
-import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
+
+const C = TM_HELP_TOOLTIPS.columns;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -42,25 +34,16 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 
 export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [items, setItems] = useState<RecursoCompartilhado[]>([]);
-  const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyRecursoForm);
-  const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
 
   const load = useCallback(async () => {
     setRefreshing(true);
     setError(null);
     try {
-      const [list, opts] = await Promise.all([
-        fetchRecursos(getAccessToken),
-        fetchOptions(getAccessToken),
-      ]);
+      const list = await fetchRecursos(getAccessToken);
       setItems(list.items);
-      setOptions(opts);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar recursos");
     } finally {
@@ -73,51 +56,11 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     void load();
   }, [load]);
 
-  function startCreate() {
-    setEditingId(null);
-    setForm(emptyRecursoForm());
-    setShowForm(true);
-    scrollToForm();
-  }
-
-  function startEdit(r: RecursoCompartilhado) {
-    setEditingId(r.recurso_compartilhado_id);
-    setForm(recursoFormFromEntity(r));
-    setShowForm(true);
-    scrollToForm();
-  }
-
-  function cancelForm() {
-    setShowForm(false);
-    setEditingId(null);
-    setForm(emptyRecursoForm());
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const payload = payloadFromRecursoForm(form);
-    try {
-      if (editingId) {
-        await updateRecurso(editingId, payload, getAccessToken);
-      } else {
-        const novo = await createRecurso(payload, getAccessToken);
-        setEditingId(novo.recurso_compartilhado_id);
-        setForm(recursoFormFromEntity(novo));
-        setShowForm(true);
-      }
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar recurso");
-    }
-  }
-
   async function handleDelete(r: RecursoCompartilhado) {
     if (!window.confirm(`Excluir ${r.codigo_recurso} — ${r.nome_recurso}?`)) return;
     setError(null);
     try {
       await deleteRecurso(r.recurso_compartilhado_id, getAccessToken);
-      if (editingId === r.recurso_compartilhado_id) cancelForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir recurso");
@@ -128,53 +71,39 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "codigo",
       header: "Código",
-      render: (r) => (
-        <button
-          type="button"
-          className="ds-link-btn"
-          onClick={(event) => {
-            event.stopPropagation();
-            onNavigate(buildRecursoPath(r.recurso_compartilhado_id));
-          }}
-        >
-          {r.codigo_recurso}
-        </button>
-      ),
+      headerHint: C.codigo,
+      render: (r) => r.codigo_recurso,
       sortable: true,
       sortValue: (r) => r.codigo_recurso,
     },
     {
       key: "nome",
       header: "Nome",
+      headerHint: C.nome,
       sortable: true,
       className: "ds-table__col--wide",
       sortValue: (r) => r.nome_recurso,
       render: (r) => (
-        <button
-          type="button"
-          className="ds-link-btn"
-          onClick={(event) => {
-            event.stopPropagation();
-            onNavigate(buildRecursoPath(r.recurso_compartilhado_id));
-          }}
-        >
+        <>
           <strong>{r.nome_recurso}</strong>
           {r.fornecedor ? <span className="ds-table__sub"> · {r.fornecedor}</span> : null}
-        </button>
+        </>
       ),
     },
     {
       key: "custo",
       header: "Custo/mês vigente",
+      headerHint: C.custoMesVigente,
       sortable: true,
       className: "ds-table__col--numeric",
       sortValue: (r) => r.valor_total_recorrente,
       render: (r) => formatCurrency(r.valor_total_recorrente),
     },
-    { key: "rateio", header: "Rateio", render: (r) => labelCriterioRateio(r.criterio_rateio), sortable: true },
+    { key: "rateio", header: "Rateio", headerHint: C.rateio, render: (r) => labelCriterioRateio(r.criterio_rateio), sortable: true },
     {
       key: "escopo_recurso",
       header: "Escopo",
+      headerHint: C.escopo,
       render: (r) => labelEscopoRecurso(r.escopo_recurso),
       sortable: true,
       sortValue: (r) => r.escopo_recurso ?? "empresa",
@@ -182,14 +111,16 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "base_competencia",
       header: "Competência",
+      headerHint: C.baseCompetencia,
       render: (r) => labelBaseCompetencia(r.base_competencia),
       sortable: true,
       sortValue: (r) => r.base_competencia ?? "mensal_cheio",
     },
-    { key: "status", header: "Status", render: (r) => r.status_recurso, sortable: true },
+    { key: "status", header: "Status", headerHint: C.status, render: (r) => r.status_recurso, sortable: true },
     {
       key: "vigencia",
       header: "Vigência do recurso",
+      headerHint: C.vigenciaRecurso,
       sortable: true,
       render: (r) => (
         <>
@@ -211,18 +142,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
               onNavigate(buildRecursoPath(r.recurso_compartilhado_id));
             }}
           >
-            <Eye size={15} />
-            Detalhes
-          </button>
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            onClick={(event) => {
-              event.stopPropagation();
-              startEdit(r);
-            }}
-          >
-            Editar
+            Abrir
           </button>
           <button
             type="button"
@@ -239,13 +159,10 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     },
   ];
 
-  const catalogFetchProgress = useTrackedSingleFetchProgress(loading && !options);
-  const catalogLoadingProgress = useLoadingProgress(
-    loading && !options,
-    catalogFetchProgress
-  );
+  const catalogFetchProgress = useTrackedSingleFetchProgress(loading && items.length === 0);
+  const catalogLoadingProgress = useLoadingProgress(loading && items.length === 0, catalogFetchProgress);
 
-  if (loading && !options) {
+  if (loading && items.length === 0) {
     return (
       <TransformometroShell>
         <LoadingActivityCard
@@ -267,7 +184,11 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
-          <button type="button" className="ds-primary-btn" onClick={startCreate}>
+          <button
+            type="button"
+            className="ds-primary-btn"
+            onClick={() => onNavigate(buildRecursoPath(CATALOG_CREATE.recurso))}
+          >
             <Plus size={16} />
             Novo recurso
           </button>
@@ -288,39 +209,10 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
           className="ds-ghost-btn"
           onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
         >
-          Processos → revisão → aba Recursos
+          Processos → revisão → Recursos
         </button>
-        . O custo mensal usado nos cálculos vem da tabela de vigências de custo, não do cadastro principal.
+        . O custo mensal usado nos cálculos vem da tabela de vigências de custo.
       </p>
-
-      {showForm && options ? (
-        <section ref={formSectionRef} className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">
-            {editingId ? "Editar recurso" : "Novo recurso no catálogo"}
-          </h2>
-          <form onSubmit={handleSubmit}>
-            <RecursoCatalogFormFields
-              form={form}
-              options={options}
-              onChange={setForm}
-              submitLabel={editingId ? "Salvar alterações" : "Cadastrar recurso"}
-            />
-            <div className="ds-cadastro-form__actions">
-              <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
-                Cancelar
-              </button>
-            </div>
-          </form>
-          {editingId ? (
-            <RecursoCustosSection
-              recursoId={editingId}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              onRecursoSynced={() => void load()}
-            />
-          ) : null}
-        </section>
-      ) : null}
 
       <DataTableSection
         title="Catálogo de recursos"
@@ -341,6 +233,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
             .filter(Boolean)
             .join(" ")
         }
+        onRowClick={(r) => onNavigate(buildRecursoPath(r.recurso_compartilhado_id))}
         emptyMessage="Nenhum recurso no catálogo. Cadastre licenças e ferramentas compartilhadas."
       />
     </TransformometroShell>

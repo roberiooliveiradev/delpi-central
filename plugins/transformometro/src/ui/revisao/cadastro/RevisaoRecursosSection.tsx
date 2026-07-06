@@ -18,11 +18,15 @@ import {
   payloadFromRecursoForm,
 } from "../../recursos/recursoCatalogForm";
 import { Pagination } from "../../../components/Pagination";
+import { FieldLabel, HelpTooltip, TableHeader } from "../../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { useClientPagination } from "../../../hooks/useClientPagination";
 import { CadastroSection } from "./CadastroSection";
 import { RecursoPreviewCard } from "./RecursoPreviewCard";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
+const C = TM_HELP_TOOLTIPS.columns;
+const R = TM_HELP_TOOLTIPS.recursos;
 
 export const emptyVinculoForm = () => ({
   recurso_compartilhado_id: "",
@@ -39,6 +43,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   recursos: RecursoCompartilhado[];
   vinculos: VinculoRecurso[];
   readOnly?: boolean;
+  embeddedInCard?: boolean;
   onError: (message: string | null) => void;
   onReload: () => Promise<void>;
 };
@@ -49,6 +54,7 @@ export function RevisaoRecursosSection({
   recursos,
   vinculos,
   readOnly = false,
+  embeddedInCard = false,
   getAccessToken,
   onError,
   onReload,
@@ -159,25 +165,20 @@ export function RevisaoRecursosSection({
     }
   }
 
-  return (
-    <CadastroSection
-      embedded
-      title="Recursos compartilhados"
-      hint="Vincule ferramentas do catálogo (ChatGPT, licenças, etc.). O custo entra no rateio conforme o critério do recurso."
-      badge={`${vinculos.length} vínculo(s)`}
-    >
+  const body = (
+    <>
       {vinculos.length > 0 ? (
         <>
-        <div className="ds-table-wrap ds-cadastro-section__table">
+          <div className="ds-table-wrap ds-cadastro-section__table">
           <table className="ds-table ds-table--compact">
             <thead>
               <tr>
-                <th>Recurso</th>
-                <th>Custo/mês</th>
-                <th>Rateio</th>
-                <th>Uso na revisão</th>
-                <th>Peso</th>
-                <th>Ativo</th>
+                <th><TableHeader label="Recurso" hint={C.nome} /></th>
+                <th><TableHeader label="Custo/mês" hint={C.custoMesVigente} /></th>
+                <th><TableHeader label="Rateio" hint={C.rateio} /></th>
+                <th><TableHeader label="Uso na revisão" hint={C.usoRevisao} /></th>
+                <th><TableHeader label="Peso" hint={C.peso} /></th>
+                <th><TableHeader label="Ativo" hint={C.ativoVinculo} /></th>
                 {!readOnly ? <th /> : null}
               </tr>
             </thead>
@@ -192,7 +193,7 @@ export function RevisaoRecursosSection({
                         </h4>
                         <div className="ds-filters-row">
                           <label className="ds-filter-box">
-                            Início do uso
+                            <FieldLabel label="Início do uso" hint={R.vinculoInicio} />
                             <input
                               type="date"
                               value={editVinculoForm.data_inicio_uso}
@@ -205,7 +206,7 @@ export function RevisaoRecursosSection({
                             />
                           </label>
                           <label className="ds-filter-box">
-                            Fim do uso
+                            <FieldLabel label="Fim do uso" hint={R.vinculoFim} />
                             <input
                               type="date"
                               value={editVinculoForm.data_fim_uso}
@@ -218,7 +219,7 @@ export function RevisaoRecursosSection({
                             />
                           </label>
                           <label className="ds-filter-box">
-                            Peso
+                            <FieldLabel label="Peso" hint={R.peso} />
                             <input
                               type="number"
                               min={0}
@@ -243,11 +244,14 @@ export function RevisaoRecursosSection({
                                 })
                               }
                             />
-                            <span>Ativo</span>
+                            <span className="tm-field__label">
+                              Ativo
+                              <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Ativo" />
+                            </span>
                           </label>
                         </div>
                         <label className="ds-filter-box ds-filter-box--wide">
-                          Observações
+                          <FieldLabel label="Observações" hint={R.vinculoObservacoes} />
                           <input
                             value={editVinculoForm.observacoes}
                             onChange={(e) =>
@@ -338,7 +342,7 @@ export function RevisaoRecursosSection({
         <h4 className="ds-cadastro-subsection__title">Vincular recurso à revisão</h4>
         <div className="ds-filters-row">
           <label className="ds-filter-box ds-filter-box--wide">
-            Recurso do catálogo
+            <FieldLabel label="Recurso do catálogo" hint={R.catalogoVinculo} />
             <select
               required
               value={vinculoForm.recurso_compartilhado_id}
@@ -355,7 +359,7 @@ export function RevisaoRecursosSection({
             </select>
           </label>
           <label className="ds-filter-box">
-            Início do uso
+            <FieldLabel label="Início do uso" hint={R.vinculoInicio} />
             <input
               type="date"
               value={vinculoForm.data_inicio_uso}
@@ -365,7 +369,7 @@ export function RevisaoRecursosSection({
             />
           </label>
           <label className="ds-filter-box">
-            Fim do uso
+            <FieldLabel label="Fim do uso" hint={R.vinculoFim} />
             <input
               type="date"
               value={vinculoForm.data_fim_uso}
@@ -373,7 +377,7 @@ export function RevisaoRecursosSection({
             />
           </label>
           <label className="ds-filter-box">
-            Peso do rateio
+            <FieldLabel label="Peso do rateio" hint={R.peso} />
             <input
               type="number"
               min={0}
@@ -391,11 +395,14 @@ export function RevisaoRecursosSection({
               checked={vinculoForm.ativo}
               onChange={(e) => setVinculoForm({ ...vinculoForm, ativo: e.target.checked })}
             />
-            <span>Vínculo ativo</span>
+            <span className="tm-field__label">
+              Vínculo ativo
+              <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" />
+            </span>
           </label>
         </div>
         <label className="ds-filter-box ds-filter-box--wide">
-          Observações do vínculo
+          <FieldLabel label="Observações do vínculo" hint={R.vinculoObservacoes} />
           <input
             placeholder="Ex.: uso apenas nesta automação"
             value={vinculoForm.observacoes}
@@ -435,6 +442,19 @@ export function RevisaoRecursosSection({
       </div>
         </>
       ) : null}
+    </>
+  );
+
+  if (embeddedInCard) return body;
+
+  return (
+    <CadastroSection
+      embedded
+      title="Recursos compartilhados"
+      hint="Vincule ferramentas do catálogo (ChatGPT, licenças, etc.). O custo entra no rateio conforme o critério do recurso."
+      badge={`${vinculos.length} vínculo(s)`}
+    >
+      {body}
     </CadastroSection>
   );
 }

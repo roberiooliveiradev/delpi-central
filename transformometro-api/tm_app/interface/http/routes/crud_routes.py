@@ -265,6 +265,29 @@ def get_processo(processo_id: str, request: Request):
     return ok(row_to_json(row))
 
 
+@router.get("/processos/{processo_id}/timeline")
+def processo_timeline(
+    processo_id: str,
+    request: Request,
+    page: int = 1,
+    page_size: int = 100,
+):
+    if err := check_processo_view_access(request, processo_id):
+        return err
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    data = AuditRepository().list_for_processo(processo_id, page=page, page_size=page_size)
+    return ok(
+        {
+            "total": data["total"],
+            "page": data["page"],
+            "page_size": data["page_size"],
+            "items": rows_to_json(data["items"]),
+        },
+        "Linha do tempo de alterações do processo.",
+    )
+
+
 def _processo_master_payload(body: ProcessoCreateBody) -> dict:
     return {
         "nome_processo": body.nome_processo,

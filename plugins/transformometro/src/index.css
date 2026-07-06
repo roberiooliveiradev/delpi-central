@@ -2062,6 +2062,12 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   margin-bottom: 1rem;
 }
 
+.dashboard-transformometro .ds-cadastro-panel--cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .dashboard-transformometro .ds-cadastro-form__actions {
   margin-top: 12px;
   display: flex;
@@ -2734,5 +2740,130 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-evidence-upload__submit,
 .dashboard-transformometro .tm-evidence-upload__link-toggle {
   align-self: flex-start;
+}
+
+/* ── Linha do tempo (auditoria do processo) ───────────────────────── */
+.dashboard-transformometro .tm-timeline__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dashboard-transformometro .tm-timeline-filters__label {
+  margin: 0 0 0.5rem;
+}
+
+.dashboard-transformometro .tm-timeline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-transformometro .tm-timeline-filters__chip {
+  border: 1px solid var(--ds-border-subtle, #e2e8f0);
+  border-radius: 999px;
+  background: var(--ds-surface, #fff);
+  color: var(--ds-text-muted, #64748b);
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+
+.dashboard-transformometro .tm-timeline-filters__chip--active {
+  border-color: color-mix(in srgb, var(--ds-accent, #089bdb) 45%, transparent);
+  background: color-mix(in srgb, var(--ds-accent, #089bdb) 10%, transparent);
+  color: var(--ds-accent, #089bdb);
+}
+
+.dashboard-transformometro .tm-timeline-track {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0 0 0.75rem;
+}
+
+.dashboard-transformometro .tm-timeline-track::before {
+  content: "";
+  position: absolute;
+  left: 1.05rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 2px;
+  background: var(--ds-border-subtle, #e2e8f0);
+}
+
+.dashboard-transformometro .tm-timeline-entry {
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0 0 1rem 0;
+}
+
+.dashboard-transformometro .tm-timeline-entry:last-child {
+  padding-bottom: 0;
+}
+
+.dashboard-transformometro .tm-timeline-entry__marker {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 2px solid var(--ds-surface, #fff);
+  background: var(--ds-surface-muted, #f8fafc);
+  color: var(--ds-text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+.dashboard-transformometro .tm-timeline-entry__marker--processo {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+.dashboard-transformometro .tm-timeline-entry__marker--instancia {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+.dashboard-transformometro .tm-timeline-entry__marker--revisao {
+  color: #0f766e;
+  background: #ccfbf1;
+}
+
+.dashboard-transformometro .tm-timeline-entry__marker--medicao {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.dashboard-transformometro .tm-timeline-entry__marker--investimento {
+  color: #be123c;
+  background: #ffe4e6;
+}
+
+.dashboard-transformometro .tm-timeline-entry__marker--vinculo {
+  color: #4338ca;
+  background: #e0e7ff;
+}
+
+.dashboard-transformometro .tm-timeline-entry__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.dashboard-transformometro .tm-timeline-entry__detail {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+.dashboard-transformometro .tm-timeline-entry__meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
 }
 

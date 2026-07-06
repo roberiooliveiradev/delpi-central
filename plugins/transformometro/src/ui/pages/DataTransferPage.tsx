@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { AlertTriangle, ArrowDownUp, Download, FileJson, RefreshCw, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { HelpTooltip } from "../../components/HelpTooltip";
+import { HelpTooltip, TableHeader } from "../../components/HelpTooltip";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -361,10 +361,10 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                   <table className="ds-table">
                     <thead>
                       <tr>
-                        <th>Entidade</th>
-                        <th>No arquivo</th>
-                        <th>Inserir</th>
-                        <th>Atualizar</th>
+                        <th><TableHeader label="Entidade" hint={TM_HELP_TOOLTIPS.dataTransfer.previewEntidade} /></th>
+                        <th><TableHeader label="No arquivo" hint={TM_HELP_TOOLTIPS.dataTransfer.previewNoArquivo} /></th>
+                        <th><TableHeader label="Inserir" hint={TM_HELP_TOOLTIPS.dataTransfer.previewInserir} /></th>
+                        <th><TableHeader label="Atualizar" hint={TM_HELP_TOOLTIPS.dataTransfer.previewAtualizar} /></th>
                       </tr>
                     </thead>
                     <tbody>

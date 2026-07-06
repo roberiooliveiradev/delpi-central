@@ -4,6 +4,8 @@ import type { OptionsData } from "../../data/api/transformometroApi";
 import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
 import type { RecursoCatalogFormState } from "./recursoCatalogForm";
 
+const R = TM_HELP_TOOLTIPS.recursos;
+
 const DEFAULT_BASE_COMPETENCIA_OPTIONS = ["mensal_cheio", "proporcional_dias"];
 
 type Props = {
@@ -11,11 +13,18 @@ type Props = {
   options: OptionsData;
   onChange: (value: RecursoCatalogFormState) => void;
   submitLabel: string;
+  hideSubmit?: boolean;
 };
 
 const DEFAULT_ESCOPO_RECURSO_OPTIONS = ["empresa", "filial", "setor"];
 
-export function RecursoCatalogFormFields({ form, options, onChange, submitLabel }: Props) {
+export function RecursoCatalogFormFields({
+  form,
+  options,
+  onChange,
+  submitLabel,
+  hideSubmit = false,
+}: Props) {
   const baseCompetenciaOptions = options.base_competencia_recurso?.length
     ? options.base_competencia_recurso
     : DEFAULT_BASE_COMPETENCIA_OPTIONS;
@@ -27,7 +36,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
     <>
       <div className="ds-filters-row">
         <label className="ds-filter-box ds-filter-box--wide">
-          Nome *
+          <FieldLabel label="Nome *" hint={R.nome} />
           <input
             required
             value={form.nome_recurso}
@@ -35,7 +44,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           />
         </label>
         <label className="ds-filter-box">
-          Categoria
+          <FieldLabel label="Categoria" hint={R.categoria} />
           <select
             value={form.categoria_recurso}
             onChange={(e) => onChange({ ...form, categoria_recurso: e.target.value })}
@@ -49,14 +58,14 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Fornecedor
+          <FieldLabel label="Fornecedor" hint={R.fornecedor} />
           <input
             value={form.fornecedor}
             onChange={(e) => onChange({ ...form, fornecedor: e.target.value })}
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Tipo de custo *" hint={TM_HELP_TOOLTIPS.recursos.tipoCusto} />
+          <FieldLabel label="Tipo de custo *" hint={R.tipoCusto} />
           <select
             value={form.tipo_custo}
             onChange={(e) => onChange({ ...form, tipo_custo: e.target.value })}
@@ -69,7 +78,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Recorrência *
+          <FieldLabel label="Recorrência *" hint={R.recorrencia} />
           <select
             value={form.recorrencia}
             onChange={(e) => onChange({ ...form, recorrencia: e.target.value })}
@@ -82,7 +91,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Critério de rateio *" hint={TM_HELP_TOOLTIPS.recursos.criterioRateio} />
+          <FieldLabel label="Critério de rateio *" hint={R.criterioRateio} />
           <select
             value={form.criterio_rateio}
             onChange={(e) => onChange({ ...form, criterio_rateio: e.target.value })}
@@ -95,7 +104,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Escopo de rateio *" hint={TM_HELP_TOOLTIPS.recursos.escopo} />
+          <FieldLabel label="Escopo de rateio *" hint={R.escopo} />
           <select
             value={form.escopo_recurso}
             onChange={(e) => onChange({ ...form, escopo_recurso: e.target.value })}
@@ -108,7 +117,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Base de competência *" hint={TM_HELP_TOOLTIPS.recursos.baseCompetencia} />
+          <FieldLabel label="Base de competência *" hint={R.baseCompetencia} />
           <select
             value={form.base_competencia}
             onChange={(e) => onChange({ ...form, base_competencia: e.target.value })}
@@ -121,7 +130,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Status *
+          <FieldLabel label="Status *" hint={R.status} />
           <select
             value={form.status_recurso}
             onChange={(e) => onChange({ ...form, status_recurso: e.target.value })}
@@ -134,14 +143,14 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Centro de custo
+          <FieldLabel label="Centro de custo" hint={R.centroCusto} />
           <input
             value={form.centro_custo}
             onChange={(e) => onChange({ ...form, centro_custo: e.target.value })}
           />
         </label>
         <label className="ds-filter-box">
-          Início vigência do recurso
+          <FieldLabel label="Início vigência do recurso" hint={R.inicioVigencia} />
           <input
             type="date"
             value={form.data_inicio_vigencia}
@@ -149,7 +158,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           />
         </label>
         <label className="ds-filter-box">
-          Fim vigência do recurso
+          <FieldLabel label="Fim vigência do recurso" hint={R.fimVigencia} />
           <input
             type="date"
             value={form.data_fim_vigencia}
@@ -158,15 +167,17 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
         </label>
       </div>
       <label className="ds-filter-box ds-filter-box--wide">
-        Observações
+        <FieldLabel label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} />
         <input
           value={form.observacoes}
           onChange={(e) => onChange({ ...form, observacoes: e.target.value })}
         />
       </label>
-      <button type="submit" className="ds-primary-btn">
-        {submitLabel}
-      </button>
+      {hideSubmit ? null : (
+        <button type="submit" className="ds-primary-btn">
+          {submitLabel}
+        </button>
+      )}
     </>
   );
 }

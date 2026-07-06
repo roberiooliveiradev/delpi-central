@@ -1,8 +1,10 @@
 import { DashboardPage } from "./ui/pages/DashboardPage";
+import { FilialDetailPage } from "./ui/pages/FilialDetailPage";
 import { InstanciaDetailPage } from "./ui/pages/InstanciaDetailPage";
 import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { RevisaoDetailPage } from "./ui/pages/RevisaoDetailPage";
 import { RecursoDetailPage } from "./ui/pages/RecursoDetailPage";
+import { SetorDetailPage } from "./ui/pages/SetorDetailPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 import { SetoresPage } from "./ui/pages/SetoresPage";
 import { FiliaisPage } from "./ui/pages/FiliaisPage";
@@ -45,6 +47,30 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         pathname={pathname}
         onNavigate={onNavigate}
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.recursos)}
+      />
+    );
+  }
+
+  if (route.view === "filial" && route.filialId) {
+    return (
+      <FilialDetailPage
+        getAccessToken={getAccessToken}
+        filialId={route.filialId}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.filiais)}
+      />
+    );
+  }
+
+  if (route.view === "setor" && route.setorId) {
+    return (
+      <SetorDetailPage
+        getAccessToken={getAccessToken}
+        setorId={route.setorId}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.setores)}
       />
     );
   }

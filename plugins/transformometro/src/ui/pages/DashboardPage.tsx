@@ -421,11 +421,12 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
     () => [
-      { key: "familia", header: "Família", render: (row) => row.familia_processo || "—", sortable: true },
-      { key: "processos", header: "Processos", render: (row) => row.processos, sortable: true },
+      { key: "familia", header: "Família", headerHint: TM_HELP_TOOLTIPS.columns.familia, render: (row) => row.familia_processo || "—", sortable: true },
+      { key: "processos", header: "Processos", headerHint: TM_HELP_TOOLTIPS.columns.processos, render: (row) => row.processos, sortable: true },
       {
         key: "bruta",
         header: "Economia bruta",
+        headerHint: TM_HELP_TOOLTIPS.columns.economiaBruta,
         render: (row) => formatCurrency(row.economia_bruta),
         sortable: true,
         className: "tm-table__money--positive",
@@ -433,6 +434,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "liquida",
         header: "Economia líquida",
+        headerHint: TM_HELP_TOOLTIPS.columns.economiaLiquida,
         render: (row) => formatCurrency(row.economia_liquida_mes),
         sortable: true,
         className: "tm-table__money--positive",
@@ -446,6 +448,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "codigo",
         header: "Código",
+        headerHint: TM_HELP_TOOLTIPS.processos.codigo,
         render: (row) => (
           <button
             type="button"
@@ -461,6 +464,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "processo",
         header: "Processo",
+        headerHint: TM_HELP_TOOLTIPS.processos.nome,
         render: (row) => (
           <button
             type="button"
@@ -476,6 +480,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "implantacao",
         header: "Implantação",
+        headerHint: TM_HELP_TOOLTIPS.columns.implantacaoProcesso,
         render: (row) => row.data_implantacao?.split("-").reverse().join("/") ?? "—",
         sortable: true,
         sortValue: (row) => row.data_implantacao ?? "",
@@ -483,6 +488,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "economia_diaria",
         header: "Economia/dia",
+        headerHint: TM_HELP_TOOLTIPS.columns.economiaDia,
         render: (row) => formatCurrency(row.economia_diaria),
         sortable: true,
         sortValue: (row) => row.economia_diaria ?? 0,
@@ -491,6 +497,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "investimentos",
         header: "Invest. vigentes",
+        headerHint: TM_HELP_TOOLTIPS.columns.investVigentes,
         render: (row) => formatCurrency(row.investimento_unico_mes),
         sortable: true,
         sortValue: (row) => row.investimento_unico_mes ?? 0,
@@ -499,6 +506,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "recursos",
         header: "Recursos vigentes",
+        headerHint: TM_HELP_TOOLTIPS.columns.recursosVigentes,
         render: (row) => formatCurrency(row.custo_recursos_compartilhados_mes),
         sortable: true,
         sortValue: (row) => row.custo_recursos_compartilhados_mes ?? 0,
@@ -507,6 +515,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "liquida",
         header: "Líquida no recorte",
+        headerHint: TM_HELP_TOOLTIPS.columns.liquidaRecorte,
         render: (row) => {
           const moneyClass =
             (row.economia_liquida_mes ?? 0) < 0
@@ -520,6 +529,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "bruta",
         header: "Bruta no recorte",
+        headerHint: TM_HELP_TOOLTIPS.columns.brutaRecorte,
         render: (row) => formatCurrency(row.economia_bruta),
         sortable: true,
         sortValue: (row) => row.economia_bruta ?? 0,
@@ -626,11 +636,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           </label>
           <DateField
             label="Data inicial"
+            hint={TM_HELP_TOOLTIPS.dashboard.dateStart}
             value={filters.dataInicial}
             onChange={handleDateInicialChange}
           />
           <DateField
             label="Data final"
+            hint={TM_HELP_TOOLTIPS.dashboard.dateEnd}
             value={filters.dataFinal}
             onChange={handleDateFinalChange}
           />
