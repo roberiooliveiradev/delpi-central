@@ -3134,11 +3134,32 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-editor__palette,
-.dashboard-transformometro .tm-diagram-editor__templates {
+.dashboard-transformometro .tm-diagram-editor__templates,
+.dashboard-transformometro .tm-diagram-editor__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+}
+
+.dashboard-transformometro .tm-diagram-editor__section-label {
+  font-size: var(--ds-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-muted);
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.dashboard-transformometro .tm-diagram-editor__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex-basis: 100%;
+  padding-top: 4px;
+  border-top: 1px solid var(--ds-border-subtle);
 }
 
 .dashboard-transformometro .tm-diagram-editor__tool-wrap {

@@ -1,6 +1,8 @@
 import {
   Circle,
   CircleDot,
+  Copy,
+  CopyPlus,
   Database,
   Diamond,
   FileText,
@@ -8,9 +10,11 @@ import {
   LayoutGrid,
   Layers,
   MessageSquare,
+  Move,
   Plus,
   Rows3,
   Square,
+  Trash2,
   Wand2,
   type LucideIcon,
 } from "lucide-react";
@@ -65,5 +69,32 @@ export const DIAGRAM_EDITOR_ACTIONS = [
     label: "Template BPMN + swimlanes",
     icon: Rows3,
     hint: D.templateSwimlanes,
+  },
+] as const;
+
+export const DIAGRAM_EDITOR_SELECTION_ACTIONS = [
+  {
+    id: "delete",
+    label: "Excluir",
+    icon: Trash2,
+    hint: D.selectionDelete,
+  },
+  {
+    id: "move",
+    label: "Mover",
+    icon: Move,
+    hint: D.selectionMove,
+  },
+  {
+    id: "copy",
+    label: "Copiar",
+    icon: Copy,
+    hint: D.selectionCopy,
+  },
+  {
+    id: "duplicate",
+    label: "Duplicar",
+    icon: CopyPlus,
+    hint: D.selectionDuplicate,
   },
 ] as const;

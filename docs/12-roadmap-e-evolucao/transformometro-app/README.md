@@ -6,6 +6,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 
 | Documento | Conteúdo |
 |-----------|----------|
+| **[TUTORIAL-USUARIO.md](./TUTORIAL-USUARIO.md)** | **Guia prático de uso** — cadastro, diagramas, revisões, dashboard |
 | [OVERVIEW.md](./OVERVIEW.md) | Visão geral, objetivo, componentes, URLs, permissões |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Camadas, domínio, cálculo, banco, integração portal |
 | [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) | Contrato vivo de modelagem, vigência, atividade, investimentos, recursos e cálculo |

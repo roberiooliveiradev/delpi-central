@@ -233,7 +233,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   diagramEditor: {
     usoGeral:
-      "Adicione nós pela paleta (entram na faixa ativa). Arraste para posicionar; conecte arrastando de um ponto de ancoragem a outro. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Delete/Backspace remove a seleção. Use Auto-layout para reorganizar o fluxo.",
+      "Adicione nós pela paleta (entram na faixa ativa). Selecione elementos no canvas e use a seção Ações (excluir, mover, copiar, duplicar) ou arraste para posicionar. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Delete/Backspace remove a seleção. Setas ← ↑ → ↓ ajustam posição fina. Use Auto-layout para reorganizar o fluxo.",
     nodes: {
       start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
@@ -260,6 +260,14 @@ export const TM_HELP_TOOLTIPS = {
       "Remove a faixa ativa. Os nós nela são realocados na faixa restante. É necessário manter ao menos uma faixa.",
     canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
     mermaidTab: "Visualização somente leitura do código Mermaid gerado a partir do diagrama.",
+    selectionDelete:
+      "Remove os nós e setas selecionados. Atalho: Delete ou Backspace. Faixas (swimlanes) não são excluídas por aqui.",
+    selectionMove:
+      "Selecione um ou mais nós e arraste no canvas para reposicionar. Teclas ← ↑ → ↓ ajustam a posição em passos finos (8 px).",
+    selectionCopy:
+      "Copia os nós selecionados (e setas entre eles) para a área de transferência interna do editor.",
+    selectionDuplicate:
+      "Cria cópias dos nós selecionados com deslocamento automático, mantendo conexões internas.",
   },
   dataTransfer: {
     export:

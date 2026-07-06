@@ -7,12 +7,13 @@ import {
   addEdge,
   useEdgesState,
   useNodesState,
+  useOnSelectionChange,
   type Connection,
   type Edge,
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useCallback, useEffect, useMemo, useState, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { CircleHelp } from "lucide-react";
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
@@ -21,6 +22,7 @@ import { HelpTooltip } from "../HelpTooltip";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import {
   DIAGRAM_EDITOR_ACTIONS,
+  DIAGRAM_EDITOR_SELECTION_ACTIONS,
   FLOWCHART_NODE_ICONS,
   flowchartNodeHint,
 } from "./flowchartEditorToolbar";
@@ -85,6 +87,13 @@ const edgeTypes = {
 };
 
 const LANE_NODE_PREFIX = "__lane__";
+const DUPLICATE_OFFSET = 48;
+const NUDGE_STEP = 8;
+
+type SelectionClipboard = {
+  nodes: ActivityNode[];
+  edges: Edge[];
+};
 
 function isLaneNodeId(id: string): boolean {
   return id.startsWith(LANE_NODE_PREFIX);
@@ -241,9 +250,24 @@ function FlowchartEditorInner({
   const [activeTab, setActiveTab] = useState<"canvas" | "mermaid">("canvas");
   const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
   const [laneLabelDraft, setLaneLabelDraft] = useState("");
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
+  const clipboardRef = useRef<SelectionClipboard | null>(null);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const isDark = useTransformometroDarkMode();
   const colorMode = isDark ? "dark" : "light";
   const canvasHeight = canvasHeightForLanes(lanes, lanes.length ? 360 : 420);
+  const hasNodeSelection = selectedNodeIds.length > 0;
+  const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0;
+
+  useOnSelectionChange({
+    onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      setSelectedNodeIds(
+        selectedNodes.filter((node) => node.type !== "lane").map((node) => node.id)
+      );
+      setSelectedEdgeIds(selectedEdges.map((edge) => edge.id));
+    },
+  });
 
   useEffect(() => {
     if (lanes.length && !lanes.some((lane) => lane.id === activeLaneId)) {
@@ -533,6 +557,161 @@ function FlowchartEditorInner({
     onChange?.(template);
   };
 
+  const nudgeSelection = useCallback(
+    (dx: number, dy: number) => {
+      if (readOnly || !selectedNodeIds.length) return;
+      const selectedIds = new Set(selectedNodeIds);
+      const nextNodes = nodes.map((node) => {
+        if (node.type === "lane" || !selectedIds.has(node.id)) return node;
+        return {
+          ...node,
+          position: {
+            x: node.position.x + dx,
+            y: node.position.y + dy,
+          },
+        };
+      });
+      setNodes(nextNodes);
+      emitChange(nextNodes, edges);
+    },
+    [edges, emitChange, nodes, readOnly, selectedNodeIds, setNodes]
+  );
+
+  const deleteSelection = useCallback(() => {
+    if (readOnly || !hasSelection) return;
+    if (selectedNodeIds.length) {
+      const deletedIds = new Set(selectedNodeIds);
+      const nextNodes = nodes.filter((node) => !deletedIds.has(node.id));
+      const nextEdges = edges.filter(
+        (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
+      );
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+      emitChange(nextNodes, nextEdges);
+      return;
+    }
+    const deletedEdgeIds = new Set(selectedEdgeIds);
+    const nextEdges = edges.filter((edge) => !deletedEdgeIds.has(edge.id));
+    setEdges(nextEdges);
+    emitChange(nodes, nextEdges);
+  }, [
+    edges,
+    emitChange,
+    hasSelection,
+    nodes,
+    readOnly,
+    selectedEdgeIds,
+    selectedNodeIds,
+    setEdges,
+    setNodes,
+  ]);
+
+  const copySelection = useCallback(() => {
+    if (readOnly || !hasNodeSelection) return;
+    const selectedIds = new Set(selectedNodeIds);
+    clipboardRef.current = {
+      nodes: nodes.filter(
+        (node): node is ActivityNode => node.type !== "lane" && selectedIds.has(node.id)
+      ),
+      edges: edges.filter(
+        (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
+      ),
+    };
+  }, [edges, hasNodeSelection, nodes, readOnly, selectedNodeIds]);
+
+  const duplicateSelection = useCallback(() => {
+    if (readOnly || !hasNodeSelection) return;
+    const selectedIds = new Set(selectedNodeIds);
+    const idMap = new Map<string, string>();
+    const duplicatedNodes: ActivityNode[] = nodes
+      .filter((node): node is ActivityNode => node.type !== "lane" && selectedIds.has(node.id))
+      .map((node) => {
+        const data = node.data as BpmnNodeData;
+        const newId = createNodeId(data.nodeType.slice(0, 3));
+        idMap.set(node.id, newId);
+        return {
+          ...node,
+          id: newId,
+          selected: true,
+          position: {
+            x: node.position.x + DUPLICATE_OFFSET,
+            y: node.position.y + DUPLICATE_OFFSET,
+          },
+        };
+      });
+
+    if (!duplicatedNodes.length) return;
+
+    const duplicatedEdges = edges
+      .filter((edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target))
+      .map((edge) => ({
+        ...edge,
+        id: createEdgeId(),
+        source: idMap.get(edge.source) ?? edge.source,
+        target: idMap.get(edge.target) ?? edge.target,
+        selected: false,
+        data: {
+          readOnly,
+          onLabelChange: readOnly ? undefined : handleEdgeLabelChange,
+        },
+      }));
+
+    const nextNodes = [
+      ...nodes.map((node) => ({ ...node, selected: false })),
+      ...duplicatedNodes,
+    ];
+    const nextEdges = [...edges, ...duplicatedEdges];
+    setNodes(nextNodes);
+    setEdges(nextEdges);
+    emitChange(nextNodes, nextEdges);
+  }, [
+    edges,
+    emitChange,
+    handleEdgeLabelChange,
+    hasNodeSelection,
+    nodes,
+    readOnly,
+    selectedNodeIds,
+    setEdges,
+    setNodes,
+  ]);
+
+  useEffect(() => {
+    if (readOnly || !hasNodeSelection) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, [contenteditable='true']")) return;
+
+      const dx =
+        event.key === "ArrowLeft" ? -NUDGE_STEP : event.key === "ArrowRight" ? NUDGE_STEP : 0;
+      const dy =
+        event.key === "ArrowUp" ? -NUDGE_STEP : event.key === "ArrowDown" ? NUDGE_STEP : 0;
+      if (!dx && !dy) return;
+      event.preventDefault();
+      nudgeSelection(dx, dy);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [hasNodeSelection, nudgeSelection, readOnly]);
+
+  const runSelectionAction = (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => {
+    if (actionId === "delete") deleteSelection();
+    else if (actionId === "move") canvasWrapperRef.current?.focus();
+    else if (actionId === "copy") copySelection();
+    else if (actionId === "duplicate") duplicateSelection();
+  };
+
+  const isSelectionActionDisabled = (
+    actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]
+  ) => {
+    if (actionId === "delete") return !hasSelection;
+    if (actionId === "move" || actionId === "copy" || actionId === "duplicate") {
+      return !hasNodeSelection;
+    }
+    return false;
+  };
+
   return (
     <div className="tm-diagram-editor" ref={exportRef}>
       {!readOnly && showTemplates ? (
@@ -579,6 +758,21 @@ function FlowchartEditorInner({
                 }}
               />
             ))}
+          </div>
+          <div className="tm-diagram-editor__actions-row">
+            <span className="tm-diagram-editor__section-label">Ações</span>
+            <div className="tm-diagram-editor__actions">
+              {DIAGRAM_EDITOR_SELECTION_ACTIONS.map((action) => (
+                <DiagramEditorToolbarButton
+                  key={action.id}
+                  label={action.label}
+                  hint={action.hint}
+                  icon={action.icon}
+                  disabled={isSelectionActionDisabled(action.id)}
+                  onClick={() => runSelectionAction(action.id)}
+                />
+              ))}
+            </div>
           </div>
           <p className="tm-diagram-editor__hint ds-hint">
             <HelpTooltip
@@ -646,6 +840,8 @@ function FlowchartEditorInner({
 
       {activeTab === "canvas" ? (
         <div
+          ref={canvasWrapperRef}
+          tabIndex={readOnly ? -1 : 0}
           className={[
             "tm-diagram-editor__canvas",
             lanes.length ? "tm-diagram-editor__canvas--swimlanes" : "",
