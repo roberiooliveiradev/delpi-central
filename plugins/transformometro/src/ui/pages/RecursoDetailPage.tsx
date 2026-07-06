@@ -415,7 +415,9 @@ export function RecursoDetailPage({
                         <th><TableHeader label="Uso no processo" hint={C.usoRevisao} /></th>
                         <th><TableHeader label="Peso" hint={C.peso} /></th>
                         <th><TableHeader label="Ativo" hint={C.ativoVinculo} /></th>
-                        <th className="ds-table__actions-col">Ações</th>
+                        <th className="ds-table__actions-col">
+                          <TableHeader label="Ações" hint={C.acoes} />
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

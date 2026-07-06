@@ -179,7 +179,11 @@ export function RevisaoRecursosSection({
                 <th><TableHeader label="Uso na revisão" hint={C.usoRevisao} /></th>
                 <th><TableHeader label="Peso" hint={C.peso} /></th>
                 <th><TableHeader label="Ativo" hint={C.ativoVinculo} /></th>
-                {!readOnly ? <th className="ds-table__actions-col">Ações</th> : null}
+                {!readOnly ? (
+                  <th className="ds-table__actions-col">
+                    <TableHeader label="Ações" hint={C.acoes} />
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody>

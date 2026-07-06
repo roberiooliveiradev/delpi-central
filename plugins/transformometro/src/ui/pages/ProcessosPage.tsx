@@ -178,6 +178,7 @@ export function ProcessosPage({
       {
         key: "acoes",
         header: "Ações",
+        headerHint: C.acoes,
         className: "ds-table__actions-col",
         render: (row) => (
           <TableRowActions>

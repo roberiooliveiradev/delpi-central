@@ -59,6 +59,7 @@ export const TM_HELP_TOOLTIPS = {
     baseCompetencia: "Forma de apropriar o custo no mês: valor cheio ou proporcional aos dias.",
     unitario: "Valor unitário em R$.",
     mesesVigenciaCurto: "Meses em que um investimento único é diluído no cálculo.",
+    acoes: "Comandos da linha: abrir cadastro, editar, excluir ou outras opções conforme a tela.",
   },
   dashboard: {
     view:

@@ -163,7 +163,11 @@ export function RecursoCustosSection({
                 <th><TableHeader label="Início" hint={C.inicio} /></th>
                 <th><TableHeader label="Fim" hint={C.fim} /></th>
                 <th><TableHeader label="Obs." hint={C.observacoes} /></th>
-                {!readOnly ? <th className="ds-table__actions-col">Ações</th> : null}
+                {!readOnly ? (
+                  <th className="ds-table__actions-col">
+                    <TableHeader label="Ações" hint={C.acoes} />
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
