@@ -16,10 +16,13 @@ import { useCallback, useEffect, useMemo, useState, type RefObject } from "react
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import {
+  autoLayoutFlowchart,
   canvasHeightForLanes,
   defaultNodePosition,
   laneTopOffset,
   normalizeLanes,
+  removeLane,
+  renameLane,
   snapNodeToLane,
 } from "../../utils/diagramSwimlanes";
 import {
@@ -52,7 +55,13 @@ type FlowchartEditorProps = {
 };
 
 type ActivityNode = Node<BpmnNodeData>;
-type LaneNode = Node<{ label: string; height: number }>;
+type LaneNode = Node<{
+  label: string;
+  height: number;
+  laneId?: string;
+  readOnly?: boolean;
+  onRename?: (laneId: string, label: string) => void;
+}>;
 type EditorNode = Node;
 
 const nodeTypes = {
@@ -66,7 +75,13 @@ function isLaneNodeId(id: string): boolean {
   return id.startsWith(LANE_NODE_PREFIX);
 }
 
-function buildLaneNodes(lanes: ReturnType<typeof normalizeLanes>): LaneNode[] {
+function buildLaneNodes(
+  lanes: ReturnType<typeof normalizeLanes>,
+  options?: {
+    readOnly?: boolean;
+    onRenameLane?: (laneId: string, label: string) => void;
+  }
+): LaneNode[] {
   return lanes.map((lane) => ({
     id: `${LANE_NODE_PREFIX}${lane.id}`,
     type: "lane",
@@ -74,16 +89,26 @@ function buildLaneNodes(lanes: ReturnType<typeof normalizeLanes>): LaneNode[] {
     data: {
       label: lane.label,
       height: lane.height ?? 168,
+      laneId: lane.id,
+      readOnly: options?.readOnly ?? true,
+      onRename: options?.onRenameLane,
     },
     draggable: false,
     selectable: false,
     connectable: false,
     focusable: false,
+    deletable: false,
     zIndex: -1,
   }));
 }
 
-function toReactFlow(value: FlowchartV1): { nodes: EditorNode[]; edges: Edge[] } {
+function toReactFlow(
+  value: FlowchartV1,
+  laneOptions?: {
+    readOnly?: boolean;
+    onRenameLane?: (laneId: string, label: string) => void;
+  }
+): { nodes: EditorNode[]; edges: Edge[] } {
   const lanes = normalizeLanes(value.lanes);
   const activityNodes: ActivityNode[] = value.nodes.map((node) => ({
     id: node.id,
@@ -109,7 +134,7 @@ function toReactFlow(value: FlowchartV1): { nodes: EditorNode[]; edges: Edge[] }
   }));
 
   return {
-    nodes: [...buildLaneNodes(lanes), ...activityNodes],
+    nodes: [...buildLaneNodes(lanes, laneOptions), ...activityNodes],
     edges,
   };
 }
@@ -178,7 +203,24 @@ function FlowchartEditorInner({
   exportRef,
 }: FlowchartEditorProps) {
   const lanes = useMemo(() => normalizeLanes(value.lanes), [value.lanes]);
-  const initial = useMemo(() => toReactFlow(value), [value]);
+
+  const handleRenameLane = useCallback(
+    (laneId: string, label: string) => {
+      if (readOnly) return;
+      onChange?.(renameLane(value, laneId, label));
+    },
+    [onChange, readOnly, value]
+  );
+
+  const laneRenderOptions = useMemo(
+    () => ({
+      readOnly,
+      onRenameLane: readOnly ? undefined : handleRenameLane,
+    }),
+    [handleRenameLane, readOnly]
+  );
+
+  const initial = useMemo(() => toReactFlow(value, laneRenderOptions), [laneRenderOptions, value]);
   const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
   const [activeTab, setActiveTab] = useState<"canvas" | "mermaid">("canvas");
@@ -194,7 +236,7 @@ function FlowchartEditorInner({
   }, [activeLaneId, lanes]);
 
   useEffect(() => {
-    const next = toReactFlow(value);
+    const next = toReactFlow(value, laneRenderOptions);
     setNodes(
       next.nodes.map((node) => {
         if (node.type === "lane") {
@@ -235,6 +277,7 @@ function FlowchartEditorInner({
     selectedScopeIds,
     onToggleScopeNode,
     diffNodeIds,
+    laneRenderOptions,
     setNodes,
     setEdges,
   ]);
@@ -351,6 +394,60 @@ function FlowchartEditorInner({
     onChange?.(next);
   };
 
+  const renameActiveLane = () => {
+    if (readOnly || !activeLaneId) return;
+    const lane = lanes.find((item) => item.id === activeLaneId);
+    const nextLabel = window.prompt("Nome da faixa (swimlane)", lane?.label ?? "");
+    if (nextLabel == null) return;
+    onChange?.(renameLane(value, activeLaneId, nextLabel));
+  };
+
+  const removeActiveLane = () => {
+    if (readOnly || !activeLaneId || lanes.length <= 1) return;
+    const lane = lanes.find((item) => item.id === activeLaneId);
+    const confirmed = window.confirm(
+      `Remover a faixa «${lane?.label ?? "Faixa"}»? Os nós serão realocados na faixa restante.`
+    );
+    if (!confirmed) return;
+    const next = removeLane(value, activeLaneId);
+    onChange?.(next);
+    setActiveLaneId(normalizeLanes(next.lanes)[0]?.id);
+  };
+
+  const runAutoLayout = () => {
+    if (readOnly) return;
+    onChange?.(autoLayoutFlowchart(value));
+  };
+
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      if (readOnly) return;
+      const deletedIds = new Set(
+        deleted.filter((node) => node.type !== "lane").map((node) => node.id)
+      );
+      if (!deletedIds.size) return;
+      const nextNodes = nodes.filter((node) => !deletedIds.has(node.id));
+      const nextEdges = edges.filter(
+        (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
+      );
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+      emitChange(nextNodes, nextEdges);
+    },
+    [edges, emitChange, nodes, readOnly, setEdges, setNodes]
+  );
+
+  const onEdgesDelete = useCallback(
+    (deleted: Edge[]) => {
+      if (readOnly) return;
+      const deletedIds = new Set(deleted.map((edge) => edge.id));
+      const nextEdges = edges.filter((edge) => !deletedIds.has(edge.id));
+      setEdges(nextEdges);
+      emitChange(nodes, nextEdges);
+    },
+    [edges, emitChange, nodes, readOnly, setEdges]
+  );
+
   const applyTemplate = (kind: "linear" | "decision" | "swimlanes") => {
     if (readOnly) return;
     const template =
@@ -380,22 +477,38 @@ function FlowchartEditorInner({
           </div>
           <div className="tm-diagram-editor__templates">
             {lanes.length ? (
-              <label className="tm-diagram-editor__lane-select">
-                Faixa ativa
-                <select
-                  value={activeLaneId ?? ""}
-                  onChange={(event) => setActiveLaneId(event.target.value)}
+              <>
+                <label className="tm-diagram-editor__lane-select">
+                  Faixa ativa
+                  <select
+                    value={activeLaneId ?? ""}
+                    onChange={(event) => setActiveLaneId(event.target.value)}
+                  >
+                    {lanes.map((lane) => (
+                      <option key={lane.id} value={lane.id}>
+                        {lane.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button type="button" className="ds-ghost-btn" onClick={renameActiveLane}>
+                  Renomear faixa
+                </button>
+                <button
+                  type="button"
+                  className="ds-ghost-btn"
+                  onClick={removeActiveLane}
+                  disabled={lanes.length <= 1}
                 >
-                  {lanes.map((lane) => (
-                    <option key={lane.id} value={lane.id}>
-                      {lane.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  Remover faixa
+                </button>
+              </>
             ) : null}
             <button type="button" className="ds-ghost-btn" onClick={addLane}>
               + Faixa (swimlane)
+            </button>
+            <button type="button" className="ds-ghost-btn" onClick={runAutoLayout}>
+              Auto-layout
             </button>
             <button type="button" className="ds-ghost-btn" onClick={() => applyTemplate("linear")}>
               Template linear
@@ -411,6 +524,10 @@ function FlowchartEditorInner({
               Template BPMN + swimlanes
             </button>
           </div>
+          <p className="tm-diagram-editor__hint ds-hint">
+            Duplo clique no nó ou na seta para editar o texto · Delete/Backspace remove seleção
+            {lanes.length ? " · Duplo clique no cabeçalho da faixa para renomear" : ""}
+          </p>
         </div>
       ) : null}
 
@@ -463,6 +580,9 @@ function FlowchartEditorInner({
             onEdgesChange={readOnly ? undefined : onEdgesChange}
             onConnect={onConnect}
             onNodeDragStop={onNodeDragStop}
+            onNodesDelete={onNodesDelete}
+            onEdgesDelete={onEdgesDelete}
+            deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
             onNodeDoubleClick={(_, node) => {
               if (readOnly || node.type === "lane") return;
               const data = node.data as BpmnNodeData;

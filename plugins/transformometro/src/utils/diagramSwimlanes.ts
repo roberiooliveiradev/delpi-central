@@ -3,6 +3,8 @@ import type { FlowchartLane, FlowchartNode, FlowchartV1 } from "../types/diagram
 export const LANE_HEADER_WIDTH = 132;
 export const DEFAULT_LANE_HEIGHT = 168;
 export const LANE_CANVAS_WIDTH = 2400;
+export const AUTO_LAYOUT_HORIZONTAL_GAP = 220;
+export const AUTO_LAYOUT_START_X = LANE_HEADER_WIDTH + 48;
 
 
 export function normalizeLanes(lanes: FlowchartLane[] | undefined): FlowchartLane[] {
@@ -102,5 +104,157 @@ export function withNormalizedLanes(flowchart: FlowchartV1): FlowchartV1 {
     ...flowchart,
     lanes,
     nodes: flowchart.nodes.map((node) => snapNodeToLane(node, lanes, node.lane_id)),
+  };
+}
+
+export function renameLane(
+  flowchart: FlowchartV1,
+  laneId: string,
+  label: string
+): FlowchartV1 {
+  const trimmed = label.trim();
+  if (!trimmed) {
+    return flowchart;
+  }
+  return {
+    ...flowchart,
+    lanes: (flowchart.lanes ?? []).map((lane) =>
+      lane.id === laneId ? { ...lane, label: trimmed } : lane
+    ),
+  };
+}
+
+export function removeLane(flowchart: FlowchartV1, laneId: string): FlowchartV1 {
+  const lanes = normalizeLanes(flowchart.lanes);
+  if (!lanes.length) {
+    return flowchart;
+  }
+
+  const nextLanes = lanes.filter((lane) => lane.id !== laneId).map((lane, index) => ({
+    ...lane,
+    order: index,
+  }));
+  const fallbackLaneId = nextLanes[0]?.id;
+
+  const nextNodes = flowchart.nodes.map((node) => {
+    const currentLaneId = resolveNodeLaneId(node, lanes);
+    if (currentLaneId !== laneId) {
+      return node;
+    }
+    if (!fallbackLaneId) {
+      const { lane_id: _laneId, ...rest } = node;
+      return rest;
+    }
+    return snapNodeToLane({ ...node, lane_id: fallbackLaneId }, nextLanes, fallbackLaneId);
+  });
+
+  return {
+    ...flowchart,
+    lanes: nextLanes.length ? nextLanes : undefined,
+    nodes: nextNodes,
+  };
+}
+
+function computeNodeRanks(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): Map<string, number> {
+  const ranks = new Map<string, number>();
+  const incoming = new Map<string, string[]>();
+  const outgoing = new Map<string, string[]>();
+
+  for (const node of nodes) {
+    incoming.set(node.id, []);
+    outgoing.set(node.id, []);
+  }
+
+  for (const edge of edges) {
+    if (!incoming.has(edge.to) || !outgoing.has(edge.from)) {
+      continue;
+    }
+    incoming.get(edge.to)!.push(edge.from);
+    outgoing.get(edge.from)!.push(edge.to);
+  }
+
+  const seeds = nodes.filter((node) => (incoming.get(node.id)?.length ?? 0) === 0);
+  const queue = (seeds.length ? seeds : nodes.filter((node) => node.type === "start"))
+    .map((node) => node.id);
+
+  if (!queue.length) {
+    for (const node of nodes) {
+      queue.push(node.id);
+    }
+  }
+
+  for (const seedId of queue) {
+    ranks.set(seedId, 0);
+  }
+
+  let guard = 0;
+  while (queue.length && guard < nodes.length * nodes.length) {
+    guard += 1;
+    const nodeId = queue.shift()!;
+    const rank = ranks.get(nodeId) ?? 0;
+    for (const targetId of outgoing.get(nodeId) ?? []) {
+      const nextRank = rank + 1;
+      const previous = ranks.get(targetId);
+      if (previous == null || nextRank > previous) {
+        ranks.set(targetId, nextRank);
+        queue.push(targetId);
+      }
+    }
+  }
+
+  for (const node of nodes) {
+    if (!ranks.has(node.id)) {
+      ranks.set(node.id, 0);
+    }
+  }
+
+  return ranks;
+}
+
+export function autoLayoutFlowchart(flowchart: FlowchartV1): FlowchartV1 {
+  const lanes = normalizeLanes(flowchart.lanes);
+  const ranks = computeNodeRanks(flowchart.nodes, flowchart.edges);
+
+  if (!lanes.length) {
+    return {
+      ...flowchart,
+      nodes: flowchart.nodes.map((node, index) => ({
+        ...node,
+        position: {
+          x: 80 + (ranks.get(node.id) ?? 0) * AUTO_LAYOUT_HORIZONTAL_GAP,
+          y: 80 + (index % 2) * 96,
+        },
+      })),
+    };
+  }
+
+  const laneRankCounts = new Map<string, Map<number, number>>();
+
+  const nextNodes = flowchart.nodes.map((node) => {
+    const laneId = resolveNodeLaneId(node, lanes) ?? lanes[0].id;
+    const rank = ranks.get(node.id) ?? 0;
+    const rankUsage = laneRankCounts.get(laneId) ?? new Map<number, number>();
+    const offsetIndex = rankUsage.get(rank) ?? 0;
+    rankUsage.set(rank, offsetIndex + 1);
+    laneRankCounts.set(laneId, rankUsage);
+
+    const x = AUTO_LAYOUT_START_X + rank * AUTO_LAYOUT_HORIZONTAL_GAP + offsetIndex * 48;
+    const y = defaultNodePosition(lanes, laneId, 0).y;
+
+    return snapNodeToLane(
+      {
+        ...node,
+        lane_id: laneId,
+        position: { x, y },
+      },
+      lanes,
+      laneId
+    );
+  });
+
+  return {
+    ...flowchart,
+    lanes,
+    nodes: nextNodes,
   };
 }
