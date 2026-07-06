@@ -1,6 +1,6 @@
 # Playbook 19 — Diagramas de processo (macro), escopo por instância e overlays por revisão
 
-**Status:** aprovado (jul/2026) — implementação S0–S5  
+**Status:** entregue (jul/2026) — S0–S6 implementados · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)  
 **Decisões fechadas (S0):**  
 - **Diagrama-macro único por processo-mestre** — mapa canônico do fluxo end-to-end; nós com **ID estável**.  
 - **Instância declara escopo** — subset de nós do macro (um ou mais subprocessos-chave).  
@@ -310,9 +310,23 @@ Camadas: `routes/` fino → `application/services/` → `repositories/` (padrão
 | **S2 — Escopo instância** | V027, UI `InstanciaDetailPage`, merge parcial no GET revisão | I3, I4 |
 | **S3 — Overlay revisão** | V028, seção `RevisaoCadastroPanel`, save/load overlay, merged preview | I5, I6 |
 | **S4 — Backup + audit** | JSON import/export; audit; helpTooltips | I7, I8 |
-| **S5 — Diff + export** | Comparativo baseline vs melhoria; PNG → evidência; templates extras | I9 |
+| **S5 — Diff + export** | Comparativo baseline vs melhoria; PNG → evidência; templates extras | I9 | ✅ |
+| **S6 — Editor BPMN-lite** | Swimlanes, tema claro/escuro, auto-layout, renomear/remover faixa, Delete | UX draw.io-like | ✅ |
 
-**Dependências:** S1 → S2 → S3 linear; S4 após S3; S5 opcional.
+**Dependências:** S1 → S2 → S3 linear; S4 após S3; S5 e S6 sobre S1.
+
+### Editor visual (S6 — entregue)
+
+| Recurso | Onde |
+|---------|------|
+| Paleta + templates (linear, decisão, BPMN + swimlanes) | Toolbar `FlowchartEditor` |
+| Swimlanes (`lanes[]`, snap, faixa ativa) | `diagramSwimlanes.ts` + `FlowchartLaneNode` |
+| Renomear / remover faixa | Toolbar + duplo clique no cabeçalho da faixa |
+| Auto-layout por rank de fluxo | Botão «Auto-layout» |
+| Tema claro/escuro | `useTransformometroDarkMode` + Mermaid `dark`/`neutral` |
+| Excluir nó/aresta | `Delete` / `Backspace` |
+
+**Fora de S6 (backlog):** swimlanes automáticas por unidade/departamento; import BPMN XML; layout colaborativo.
 
 ---
 
@@ -332,35 +346,37 @@ Camadas: `routes/` fino → `application/services/` → `repositories/` (padrão
 
 ---
 
-## 10. Mapa de arquivos (implementação futura)
+## 10. Mapa de arquivos (implementação)
 
 ### API
 
 - `migrations/V026__processo_diagramas.sql`
 - `migrations/V027__instancia_diagrama_escopo.sql`
 - `migrations/V028__revisao_diagrama_overlays.sql`
-- `tm_app/application/services/processo_diagram_service.py`
-- `tm_app/application/services/revisao_diagram_merge_service.py`
+- `tm_app/domain/diagram/flowchart_v1.py`
 - `tm_app/application/services/diagram_mermaid_export_service.py`
+- `tm_app/application/services/revisao_diagram_merge_service.py`
 - `tm_app/infrastructure/persistence/repositories/processo_diagram_repository.py`
-- `tm_app/infrastructure/persistence/repositories/instancia_diagram_scope_repository.py`
+- `tm_app/infrastructure/persistence/repositories/instancia_diagram_escopo_repository.py`
 - `tm_app/infrastructure/persistence/repositories/revisao_diagram_overlay_repository.py`
-- `tm_app/interface/http/routes/processo_diagram_routes.py`
-- `tm_app/interface/http/routes/revisao_diagram_routes.py`
-- `tests/test_processo_diagram_service.py`, `tests/test_revisao_diagram_merge.py`
+- `tm_app/interface/http/routes/diagram_routes.py`
+- `tests/test_flowchart_v1.py`, `tests/test_diagram_mermaid_export_service.py`, `tests/test_revisao_diagram_merge_service.py`
+
+Status detalhado: [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md).
 
 ### MFE
 
-- `plugins/transformometro/src/components/diagram/ProcessoDiagramEditor.tsx`
-- `plugins/transformometro/src/components/diagram/RevisaoDiagramEditor.tsx`
-- `plugins/transformometro/src/components/diagram/DiagramNodePalette.tsx`
+- `plugins/transformometro/src/components/diagram/FlowchartEditor.tsx` — editor canônico (lazy)
+- `plugins/transformometro/src/components/diagram/FlowchartBpmnNode.tsx` — formas BPMN-lite
+- `plugins/transformometro/src/components/diagram/FlowchartLaneNode.tsx` — swimlanes
 - `plugins/transformometro/src/components/diagram/DiagramMermaidPreview.tsx`
-- `plugins/transformometro/src/utils/diagramFlowchartV1.ts` — tipos + templates
-- `plugins/transformometro/src/utils/diagramMermaidExport.ts`
+- `plugins/transformometro/src/components/diagram/ProcessoDiagramSection.tsx`
+- `plugins/transformometro/src/components/diagram/InstanciaDiagramEscopoSection.tsx`
+- `plugins/transformometro/src/components/diagram/RevisaoDiagramSection.tsx`
+- `plugins/transformometro/src/types/diagram.ts` — tipos + templates
+- `plugins/transformometro/src/utils/diagramSwimlanes.ts`
+- `plugins/transformometro/src/hooks/useTransformometroDarkMode.ts`
 - `plugins/transformometro/src/data/api/transformometroDiagramApi.ts`
-- `plugins/transformometro/src/ui/revisao/cadastro/RevisaoDiagramaSection.tsx`
-- `plugins/transformometro/src/ui/processos/ProcessoDiagramaSection.tsx`
-- `plugins/transformometro/src/ui/instancia/InstanciaDiagramaEscopoSection.tsx`
 
 ---
 
@@ -382,7 +398,7 @@ Camadas: `routes/` fino → `application/services/` → `repositories/` (padrão
 - BPMN 2.0 XML import/export completo
 - Simulação de tempos / capacity no diagrama
 - Versionamento git-like do macro (branch/merge)
-- Swimlanes por filial/departamento automáticas (fase futura)
+- Swimlanes **manuais** no editor (S6); swimlanes por filial/departamento **automáticas** (fase futura)
 - Edição colaborativa tempo real
 - LLM gerando diagrama a partir de texto (integração chat)
 
@@ -408,5 +424,6 @@ Camadas: `routes/` fino → `application/services/` → `repositories/` (padrão
 3. **Cada revisão persiste um overlay** (as-is / to-be) referenciando o macro/escopo — não um desenho isolado.  
 4. **JSON estruturado é a fonte de verdade**; Mermaid é derivado para preview e integrações.  
 5. **Implementar em 3 camadas** (macro → escopo → overlay) antes de diff, PNG e chat.  
+6. **Editor S6** — swimlanes BPMN-lite, tema, auto-layout e gestão de faixas no MFE (`FlowchartEditor`).
 
-**Próximo passo após aprovação deste playbook:** S0 — publicar JSON Schema + ADR curto em `transformometro-api/docs/`; em seguida S1 (migration V026 + API + editor macro no processo).
+**Próximo passo:** integração chat/api-delpi (Mermaid da revisão ativa) e swimlanes automáticas por cadastro — backlog pós-MVP.

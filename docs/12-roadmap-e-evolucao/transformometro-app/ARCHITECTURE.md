@@ -1,6 +1,6 @@
 # Arquitetura — Transformômetro App
 
-**Última atualização:** jun/2026 (Playbook 18 — instâncias, UUID, visões, RBAC filial)
+**Última atualização:** jul/2026 (Playbook 18 — instâncias; Playbook 19 — diagramas macro/escopo/overlay)
 
 ## Diagrama de contexto
 
@@ -81,6 +81,16 @@ erDiagram
 
 **Regra:** filial/setor **não** ficam em `processos` (V015). Toda revisão pertence a uma **instância**.
 
+### Diagramas (Playbook 19)
+
+```text
+processos (1) ── processo_diagramas (macro flowchart_v1)
+processo_instancias (1) ── instancia_diagrama_escopo (node_ids | inherit_all)
+revisoes (1) ── revisao_diagrama_overlays (flowchart_overlay_v1)
+```
+
+Merge para UI: `RevisaoDiagramMergeService` → macro filtrado pelo escopo + overrides da revisão → Mermaid via `DiagramMermaidExportService`. Detalhe: [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md).
+
 ## Serviços canônicos (pós–Playbook 18)
 
 | Serviço | Camada | Função |
@@ -93,6 +103,9 @@ erDiagram
 | `InstanciaDuplicateService` | application | Replica timeline entre instâncias |
 | `DashboardLiveService` | application | Dashboard em tempo real |
 | `DashboardRecalcService` | application | Materializa `dashboard_calculos` |
+| `RevisaoDiagramMergeService` | application | Merge macro + escopo + overlay (Playbook 19) |
+| `DiagramMermaidExportService` | application | `flowchart_v1` → Mermaid |
+| `flowchart_v1` (validador) | domain | JSON Schema runtime — nós, arestas, lanes |
 
 ## Estrutura de pastas (proposta)
 

@@ -27,7 +27,7 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 
 | Área | Status |
 |------|--------|
-| API + migrations **V001–V020** | ✅ Auto no boot (`TM_RUN_MIGRATIONS_ON_STARTUP=true`) |
+| API + migrations **V001–V028** | ✅ Auto no boot (`TM_RUN_MIGRATIONS_ON_STARTUP=true`) |
 | Processo-mestre + **instâncias** (filial + N setores) | ✅ V013–V015 + **V019**; painel MFE multi-setor |
 | **CRUD filiais** + editar/excluir instância | ✅ MFE `FiliaisPage` + `PUT/DELETE /instancias/{id}` |
 | Filiais / setores **UUID** + `codigo_*` | ✅ V011–V012; CRUD + options |
@@ -49,10 +49,12 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 | Testes API | ✅ `scripts/ci-transformometro-api.sh` (123+) |
 | Build MFE | ✅ Docker build `transformometro` |
 | Documentação Playbook 18 | ✅ modelagem, arquitetura, regras de cálculo, status |
+| **Diagramas de processo (Playbook 19)** | ✅ V026–V028; macro + escopo + overlay; editor BPMN-lite + swimlanes |
+| Documentação Playbook 19 | ✅ playbook, ADR, schemas, [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) |
 
 ## Migrations automáticas
 
-Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose e `infra/.env`), o container **`delpi-transformometro-api`** aplica V001–V021 pendentes no **startup** (`run_migrations_on_startup` no lifespan FastAPI). Falha de migration **impede** a API de subir.
+Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose e `infra/.env`), o container **`delpi-transformometro-api`** aplica V001–V028 pendentes no **startup** (`run_migrations_on_startup` no lifespan FastAPI). Falha de migration **impede** a API de subir.
 
 > **V021** redefine `processo_competencia_snapshot` e `dashboard_competencia_evolucao` com a média por instância (agregação em 2 níveis). Só relevante se `TM_DASHBOARD_PERSIST_CACHE=true` (leitura legada da tabela) — nesse caso, rodar **recalc full** após aplicar. Com o padrão (fonte única live), as views/tabela não são usadas.
 
@@ -148,5 +150,7 @@ export TOKEN="..." BASE_URL="https://www.minhadelpi.com.br"
 - [ROADMAP.md](./ROADMAP.md)
 - [OPERATIONS.md](./OPERATIONS.md)
 - [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md)
-- [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md)
+- [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md)
+- [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)
+- [adr-diagramas-processo.md](../../../transformometro-api/docs/adr-diagramas-processo.md)
 - [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md)

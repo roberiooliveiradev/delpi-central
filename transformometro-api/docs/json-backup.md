@@ -41,6 +41,11 @@ Ordem lógica de dependência:
 5. **`processo_instancias`** — instância operacional (processo × filial × setor **ou** multi-unidade)
 6. **`processo_instancia_setores`** — vínculos N:N instância ↔ setor (`instancia_id`, `setor_id`)
 7. **`recursos_compartilhados`**, **`revisoes`** (com `instancia_id`), **`medicoes`**, **`investimentos`**, **`recurso_custos`**, **`revisao_recursos_compartilhados`**
+8. **`processo_diagramas`** — macro `flowchart_v1` por `processo_id` (Playbook 19, V026)
+9. **`instancia_diagrama_escopos`** — escopo de nós por `instancia_id` (V027)
+10. **`revisao_diagrama_overlays`** — overlay as-is/to-be por `revisao_id` (V028)
+
+Diagramas dependem de `processos` → `processo_instancias` → `revisoes` na importação (FK validada no preview).
 
 ### Instância multi-unidade (`todas_filiais_ativas`)
 

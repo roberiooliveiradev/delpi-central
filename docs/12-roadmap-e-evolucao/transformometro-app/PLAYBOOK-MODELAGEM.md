@@ -5,7 +5,7 @@
 
 Este playbook define como modelar, calcular e evoluir o Transformômetro sem quebrar a coerência entre cadastro, API, dashboard, exportações e integrações.
 
-Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [PLAYBOOK-19 — diagramas processo/revisão/escopo](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md)
+Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [PLAYBOOK-19 — diagramas processo/revisão/escopo](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) · [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)
 
 ## 1. Princípios
 

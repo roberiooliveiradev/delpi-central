@@ -122,7 +122,25 @@ Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-
 | MFE §9 | Instâncias, rotas, toggle dashboard, escopo recurso | ✅ |
 | Docs | MODELAGEM, ARCHITECTURE, regras-de-calculo | ✅ |
 
-**Deploy:** export JSON → migrations V011–V020 (auto) → bootstrap filiais → recalc dashboard → rebuild API + MFE → manifesto RBAC.
+**Deploy:** export JSON → migrations V011–V028 (auto) → bootstrap filiais → recalc dashboard → rebuild API + MFE → manifesto RBAC.
+
+## Fase 7 — Diagramas de processo ✅ entregue (jul/2026)
+
+**Objetivo:** diagrama-macro no processo, escopo por instância, overlay as-is/to-be por revisão — documentação visual estruturada (não BPMN XML).
+
+Plano: [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · status: [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md).
+
+| Sprint | Entrega | Status |
+|--------|---------|--------|
+| S0 | ADR + JSON Schema | ✅ |
+| S1 | V026 + macro + editor processo | ✅ |
+| S2 | V027 + escopo instância | ✅ |
+| S3 | V028 + overlay revisão + merge | ✅ |
+| S4 | Backup JSON + audit | ✅ |
+| S5 | Diff baseline/melhoria + PNG evidência | ✅ |
+| S6 | Swimlanes BPMN-lite, tema, auto-layout, gestão de faixas | ✅ |
+
+**Backlog pós-MVP:** action chat com Mermaid da revisão; swimlanes automáticas por unidade/departamento.
 
 ## Fase 6 — Limpeza de legado (pendente)
 
@@ -138,8 +156,8 @@ Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-
 
 ## Próximo passo imediato
 
-1. **Deploy produção** com runbook em [status-atual.md](./status-atual.md) e [OPERATIONS.md](./OPERATIONS.md)
+1. **Deploy produção** com runbook em [status-atual.md](./status-atual.md) e [OPERATIONS.md](./OPERATIONS.md) (incl. V026–V028 na 1ª subida pós-pull)
 2. **Registrar manifesto** na Core API + RBAC escopado (quem precisar)
 3. **Planilha somente leitura** (checklist Google)
-4. Validar smoke pós-deploy: 3 visões dashboard, instância → revisão canônica, Transforma+ por `instancia_id`
+4. Validar smoke pós-deploy: diagrama macro → escopo instância → overlay revisão → export PNG
 5. **Limpeza Fase 6** — apagar código Sheets morto na api-delpi
