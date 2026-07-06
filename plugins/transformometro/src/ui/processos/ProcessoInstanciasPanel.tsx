@@ -480,7 +480,7 @@ export function ProcessoInstanciasPanel({
       },
       {
         key: "rotulo",
-        header: "Rótulo",
+        header: "Título",
         headerHint: TM_HELP_TOOLTIPS.instancias.rotulo,
         render: (row) => row.rotulo_instancia ?? "—",
       },
@@ -702,13 +702,13 @@ export function ProcessoInstanciasPanel({
   const rotuloField = (
     <div className="ds-filter-box tm-inst-form__field--full">
       <label htmlFor="tm-inst-rotulo">
-        <FieldLabel label="Rótulo (opcional)" hint={TM_HELP_TOOLTIPS.instancias.rotulo} />
+        <FieldLabel label="Título (opcional)" hint={TM_HELP_TOOLTIPS.instancias.rotulo} />
       </label>
       <input
         id="tm-inst-rotulo"
         value={rotulo}
         onChange={(e) => setRotulo(e.target.value)}
-        placeholder="Ex.: Matriz — rollout Q2"
+        placeholder="Ex.: Automação do fechamento — Q2/2026"
       />
     </div>
   );
@@ -763,7 +763,7 @@ export function ProcessoInstanciasPanel({
             <p className="ds-hint">
               {editingHasRevisoes
                 ? "Edição liberada. Trocar a unidade reatribui as revisões ao novo destino (pediremos confirmação). Unidades extras criam novas melhorias."
-                : "Edite unidades, departamentos, rótulo, fase e status. Unidades extras criam novas melhorias."}
+                : "Edite unidades, departamentos, título, fase e status. Unidades extras criam novas melhorias."}
             </p>
           ) : null}
           {duplicateSourceId ? (

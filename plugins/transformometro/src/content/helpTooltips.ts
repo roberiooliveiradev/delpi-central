@@ -13,7 +13,7 @@ export const TM_HELP_TOOLTIPS = {
     setor: "Departamento operacional dentro da unidade.",
     setores: "Departamentos vinculados à instância operacional.",
     status: "Situação do cadastro — ativos entram nos formulários e no dashboard.",
-    rotulo: "Texto livre para identificar a instância (opcional).",
+    rotulo: "Título curto da melhoria (opcional), para reconhecê-la na listagem.",
     versao: "Número ou rótulo da revisão do processo (ex.: 1.0.0, 2.1).",
     cenario: "Baseline (referência) ou melhoria (pós-transformação).",
     inicio: "Data de início da vigência da revisão ou período de custo.",
@@ -172,9 +172,10 @@ export const TM_HELP_TOOLTIPS = {
     unidades:
       "Marque as unidades da instância. No cadastro, criamos uma instância por unidade marcada; na edição, unidades extras viram novas instâncias.",
     setores:
-      "Departamentos envolvidos nesta melhoria. Podem repetir entre melhorias — use o rótulo e o resumo para diferenciá-las.",
+      "Departamentos envolvidos nesta melhoria. Podem repetir entre melhorias — use o título e o resumo para diferenciá-las.",
     status: "Melhorias inativas deixam de contribuir para os números do dashboard.",
-    rotulo: "Texto livre para identificar a melhoria (ex.: «Matriz — rollout Q2»). Recomendado quando unidade e departamento se repetem.",
+    rotulo:
+      "Título curto da melhoria, exibido na listagem, na linha do tempo e nos relatórios. Use para distinguir melhorias no mesmo par unidade × departamento (ex.: «Automação do fechamento — Q2/2026»).",
     diagramaEscopo:
       "Selecione quais nós do diagrama macro desta instância são relevantes neste ambiente operacional.",
   },

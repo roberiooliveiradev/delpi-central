@@ -38,7 +38,7 @@ export function InstanciaReadView({ instancia, options }: Props) {
         <dd>{formatSetores(instancia) || "—"}</dd>
       </div>
       <div>
-        <dt><FieldLabel label="Rótulo" hint={I.rotulo} /></dt>
+        <dt><FieldLabel label="Título" hint={I.rotulo} /></dt>
         <dd>{instancia.rotulo_instancia ?? "—"}</dd>
       </div>
       {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
