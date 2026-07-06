@@ -23,7 +23,13 @@ NODE_TYPES = frozenset({
     "comment",
 })
 
+MAX_LANES = 12
+MAX_LANE_HEIGHT = 400
+
+EDGE_ROUTINGS = frozenset({"straight", "step", "smoothstep"})
+
 NODE_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")
+LANE_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")
 
 
 class FlowchartValidationError(ValueError):
@@ -103,6 +109,25 @@ def _validate_edge(edge: Any, *, index: int, node_ids: set[str]) -> None:
     label = edge.get("label")
     if label is not None and not isinstance(label, str):
         raise FlowchartValidationError(f"edges[{index}].label inválido.")
+    routing = edge.get("routing", "smoothstep")
+    if routing is not None and routing not in EDGE_ROUTINGS:
+        raise FlowchartValidationError(f"edges[{index}].routing inválido.")
+
+
+def _validate_lane(lane: Any, *, index: int) -> None:
+    if not isinstance(lane, dict):
+        raise FlowchartValidationError(f"lanes[{index}] deve ser um objeto.")
+    lane_id = lane.get("id")
+    if not isinstance(lane_id, str) or not LANE_ID_PATTERN.match(lane_id):
+        raise FlowchartValidationError(f"lanes[{index}].id inválido.")
+    label = lane.get("label")
+    if not isinstance(label, str) or not label.strip():
+        raise FlowchartValidationError(f"lanes[{index}].label obrigatório.")
+    height = lane.get("height")
+    if height is not None and (not isinstance(height, (int, float)) or height <= 0):
+        raise FlowchartValidationError(f"lanes[{index}].height inválido.")
+    if height is not None and float(height) > MAX_LANE_HEIGHT:
+        raise FlowchartValidationError(f"lanes[{index}].height acima do limite.")
 
 
 def validate_flowchart_v1(doc: Any) -> dict[str, Any]:
@@ -123,6 +148,22 @@ def validate_flowchart_v1(doc: Any) -> dict[str, Any]:
     if len(edges) > MAX_EDGES:
         raise FlowchartValidationError(f"Máximo de {MAX_EDGES} arestas.")
 
+    lanes = data.get("lanes", [])
+    if lanes is None:
+        lanes = []
+    if not isinstance(lanes, list):
+        raise FlowchartValidationError("lanes deve ser uma lista.")
+    if len(lanes) > MAX_LANES:
+        raise FlowchartValidationError(f"Máximo de {MAX_LANES} faixas (swimlanes).")
+
+    lane_ids: set[str] = set()
+    for index, lane in enumerate(lanes):
+        _validate_lane(lane, index=index)
+        lane_id = str(lane["id"])
+        if lane_id in lane_ids:
+            raise FlowchartValidationError(f"lane id duplicado: {lane_id}.")
+        lane_ids.add(lane_id)
+
     seen_ids: set[str] = set()
     for index, node in enumerate(nodes):
         _validate_node(node, index=index)
@@ -130,6 +171,12 @@ def validate_flowchart_v1(doc: Any) -> dict[str, Any]:
         if node_id in seen_ids:
             raise FlowchartValidationError(f"node_id duplicado: {node_id}.")
         seen_ids.add(node_id)
+        lane_id = node.get("lane_id")
+        if lane_id is not None:
+            if not isinstance(lane_id, str) or lane_id not in lane_ids:
+                raise FlowchartValidationError(
+                    f"nodes[{index}].lane_id inválido ou faixa inexistente."
+                )
 
     seen_edge_ids: set[str] = set()
     for index, edge in enumerate(edges):

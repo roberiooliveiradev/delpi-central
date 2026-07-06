@@ -61,3 +61,41 @@ def test_overlay_valid_minimal():
         }
     )
     assert overlay["node_overrides"]["n1"]["highlight"] == "tobe"
+
+
+def test_flowchart_accepts_swimlanes_and_routing():
+    lane_id = "lane_comercial"
+    doc = validate_flowchart_v1(
+        {
+            "format": "flowchart_v1",
+            "format_version": 1,
+            "lanes": [{"id": lane_id, "label": "Comercial", "height": 168}],
+            "nodes": [
+                {
+                    "id": "n_start",
+                    "type": "start",
+                    "label": "Início",
+                    "lane_id": lane_id,
+                    "position": {"x": 160, "y": 60},
+                },
+                {
+                    "id": "n_proc",
+                    "type": "process",
+                    "label": "Atividade",
+                    "lane_id": lane_id,
+                    "position": {"x": 320, "y": 50},
+                    "meta": {"manual": True},
+                },
+            ],
+            "edges": [
+                {
+                    "id": "e1",
+                    "from": "n_start",
+                    "to": "n_proc",
+                    "label": None,
+                    "routing": "smoothstep",
+                }
+            ],
+        }
+    )
+    assert doc["lanes"][0]["id"] == lane_id

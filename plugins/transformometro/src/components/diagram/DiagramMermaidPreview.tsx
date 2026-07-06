@@ -1,5 +1,10 @@
 import { useEffect, useId, useState } from "react";
 
+import {
+  resolveMermaidTheme,
+  useTransformometroDarkMode,
+} from "../../hooks/useTransformometroDarkMode";
+
 type DiagramMermaidPreviewProps = {
   code: string;
   className?: string;
@@ -23,6 +28,7 @@ function loadMermaidModule(): Promise<MermaidRenderer> {
 
 export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreviewProps) {
   const reactId = useId();
+  const isDark = useTransformometroDarkMode();
   const [svg, setSvg] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +46,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
         mermaid.initialize({
           startOnLoad: false,
           securityLevel: "strict",
-          theme: "neutral",
+          theme: resolveMermaidTheme(isDark),
         });
         const renderId = `tm-mermaid-${reactId}-${Date.now()}`;
         const result = await mermaid.render(renderId, diagram);
@@ -59,7 +65,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
     return () => {
       cancelled = true;
     };
-  }, [code, reactId]);
+  }, [code, isDark, reactId]);
 
   if (error) {
     return (

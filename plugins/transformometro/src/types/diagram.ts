@@ -8,26 +8,41 @@ export type FlowchartNodeType =
   | "subprocess"
   | "comment";
 
+export type FlowchartLane = {
+  id: string;
+  label: string;
+  height?: number;
+  order?: number;
+};
+
 export type FlowchartNode = {
   id: string;
   type: FlowchartNodeType;
   label: string;
   position: { x: number; y: number };
+  lane_id?: string;
   disabled?: boolean;
   highlight?: "asis" | "tobe" | "changed" | "removed";
-  meta?: Record<string, unknown>;
+  meta?: {
+    manual?: boolean;
+    [key: string]: unknown;
+  };
 };
+
+export type FlowchartEdgeRouting = "straight" | "step" | "smoothstep";
 
 export type FlowchartEdge = {
   id: string;
   from: string;
   to: string;
   label?: string | null;
+  routing?: FlowchartEdgeRouting;
 };
 
 export type FlowchartV1 = {
   format: "flowchart_v1";
   format_version: 1;
+  lanes?: FlowchartLane[];
   nodes: FlowchartNode[];
   edges: FlowchartEdge[];
 };
@@ -48,11 +63,15 @@ export type FlowchartOverlayV1 = {
       label?: string;
       type?: FlowchartNodeType;
       position?: { x: number; y: number };
+      lane_id?: string;
       highlight?: "asis" | "tobe" | "changed" | "removed";
-      meta?: Record<string, unknown>;
+      meta?: FlowchartNode["meta"];
     }
   >;
-  edge_overrides?: Record<string, { label?: string | null; from?: string; to?: string }>;
+  edge_overrides?: Record<
+    string,
+    { label?: string | null; from?: string; to?: string; routing?: FlowchartEdgeRouting }
+  >;
   removed_node_ids?: string[];
   removed_edge_ids?: string[];
   extra_nodes?: FlowchartNode[];
@@ -134,6 +153,123 @@ export const FLOWCHART_NODE_PALETTE: Array<{ type: FlowchartNodeType; label: str
   { type: "comment", label: "Nota" },
 ];
 
+export function createLaneId(): string {
+  return `lane_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function applySwimlaneBpmnTemplate(): FlowchartV1 {
+  const laneComercial = createLaneId();
+  const laneEngenharia = createLaneId();
+
+  const start = createNodeId("start");
+  const crm = createNodeId("proc");
+  const handoff = createNodeId("proc");
+  const validar = createNodeId("proc");
+  const gatewayInfo = createNodeId("dec");
+  const solicitar = createNodeId("proc");
+  const elaborar = createNodeId("proc");
+  const gatewayRev = createNodeId("dec");
+  const end = createNodeId("end");
+
+  const lanes: FlowchartLane[] = [
+    { id: laneComercial, label: "Comercial", height: 168, order: 0 },
+    {
+      id: laneEngenharia,
+      label: "LMP — Lançamento e Modificação de Produtos / Engenharia",
+      height: 168,
+      order: 1,
+    },
+  ];
+
+  return {
+    format: "flowchart_v1",
+    format_version: 1,
+    lanes,
+    nodes: [
+      {
+        id: start,
+        type: "start",
+        label: "Recebimento de nova demanda no CRM",
+        lane_id: laneComercial,
+        position: { x: 168, y: 56 },
+      },
+      {
+        id: crm,
+        type: "process",
+        label: "Registrar oportunidade e anexos no CRM",
+        lane_id: laneComercial,
+        position: { x: 420, y: 48 },
+        meta: { manual: true },
+      },
+      {
+        id: handoff,
+        type: "process",
+        label: "Encaminhar demanda para Engenharia",
+        lane_id: laneComercial,
+        position: { x: 700, y: 48 },
+        meta: { manual: true },
+      },
+      {
+        id: validar,
+        type: "process",
+        label: "Validar informações técnicas recebidas",
+        lane_id: laneEngenharia,
+        position: { x: 168, y: 224 },
+        meta: { manual: true },
+      },
+      {
+        id: gatewayInfo,
+        type: "decision",
+        label: "Informações completas?",
+        lane_id: laneEngenharia,
+        position: { x: 460, y: 216 },
+      },
+      {
+        id: solicitar,
+        type: "process",
+        label: "Solicitar informações faltantes ao cliente",
+        lane_id: laneComercial,
+        position: { x: 980, y: 48 },
+        meta: { manual: true },
+      },
+      {
+        id: elaborar,
+        type: "process",
+        label: "Elaborar lançamento / modificação de produto",
+        lane_id: laneEngenharia,
+        position: { x: 700, y: 224 },
+        meta: { manual: true },
+      },
+      {
+        id: gatewayRev,
+        type: "decision",
+        label: "Revisão técnica aprovada?",
+        lane_id: laneEngenharia,
+        position: { x: 980, y: 216 },
+      },
+      {
+        id: end,
+        type: "end",
+        label: "Fim",
+        lane_id: laneEngenharia,
+        position: { x: 1240, y: 224 },
+      },
+    ],
+    edges: [
+      { id: createEdgeId(), from: start, to: crm, label: null, routing: "smoothstep" },
+      { id: createEdgeId(), from: crm, to: handoff, label: null, routing: "smoothstep" },
+      { id: createEdgeId(), from: handoff, to: validar, label: null, routing: "smoothstep" },
+      { id: createEdgeId(), from: validar, to: gatewayInfo, label: null, routing: "smoothstep" },
+      { id: createEdgeId(), from: gatewayInfo, to: elaborar, label: "Sim", routing: "smoothstep" },
+      { id: createEdgeId(), from: gatewayInfo, to: solicitar, label: "Não", routing: "smoothstep" },
+      { id: createEdgeId(), from: solicitar, to: validar, label: null, routing: "smoothstep" },
+      { id: createEdgeId(), from: elaborar, to: gatewayRev, label: null, routing: "smoothstep" },
+      { id: createEdgeId(), from: gatewayRev, to: end, label: "Sim", routing: "smoothstep" },
+      { id: createEdgeId(), from: gatewayRev, to: elaborar, label: "Não", routing: "smoothstep" },
+    ],
+  };
+}
+
 export function applyLinearTemplate(): FlowchartV1 {
   const n1 = createNodeId("start");
   const n2 = createNodeId("proc");
@@ -198,6 +334,7 @@ export function flowToOverlayDraft(
       original.type !== node.type ||
       original.position.x !== node.position.x ||
       original.position.y !== node.position.y ||
+      original.lane_id !== node.lane_id ||
       node.highlight;
     if (changed) {
       nodeOverrides[node.id] = {
@@ -205,7 +342,9 @@ export function flowToOverlayDraft(
         label: node.label,
         type: node.type,
         position: node.position,
+        lane_id: node.lane_id,
         highlight: node.highlight,
+        meta: node.meta,
       };
     }
   }

@@ -39,6 +39,16 @@
   --ds-font-hero: clamp(24px, 2vw, 36px);
   --ds-font-kpi: clamp(26px, 2.2vw, 38px);
   --ds-kpi-icon-size: 44px;
+  --ds-radius-md: 12px;
+  --ds-radius-sm: 8px;
+  --ds-accent-soft: color-mix(in srgb, var(--ds-accent) 14%, var(--ds-card-bg));
+  --tm-diagram-canvas-bg: var(--ds-surface-inset);
+  --tm-diagram-dot-color: color-mix(in srgb, var(--ds-text) 22%, transparent);
+  --tm-diagram-edge-color: color-mix(in srgb, var(--ds-text) 38%, transparent);
+  --tm-diagram-minimap-bg: var(--ds-card-bg);
+  --tm-diagram-minimap-node: color-mix(in srgb, var(--ds-accent) 28%, var(--ds-card-bg));
+  --tm-diagram-controls-bg: var(--ds-card-bg);
+  --tm-diagram-controls-border: var(--ds-card-border);
 }
 
 .dashboard-transformometro button,
@@ -98,6 +108,13 @@
   --ds-negative-fg: #fca5a5;
   --ds-danger-fg: #fca5a5;
   --ds-danger-bg: color-mix(in srgb, #ef4444 18%, var(--ds-card-bg));
+  --tm-diagram-canvas-bg: color-mix(in srgb, var(--ds-card-bg) 82%, black 18%);
+  --tm-diagram-dot-color: rgba(255, 255, 255, 0.16);
+  --tm-diagram-edge-color: rgba(255, 255, 255, 0.42);
+  --tm-diagram-minimap-bg: color-mix(in srgb, var(--ds-card-bg) 90%, black);
+  --tm-diagram-minimap-node: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-bg));
+  --tm-diagram-controls-bg: color-mix(in srgb, var(--ds-card-bg) 92%, black);
+  --tm-diagram-controls-border: rgba(255, 255, 255, 0.12);
 }
 
 /* Header */
@@ -3134,11 +3151,14 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   border-radius: var(--ds-radius-sm);
   padding: 4px 10px;
   font-size: var(--ds-font-xs);
+  color: var(--ds-text);
+  cursor: pointer;
 }
 
 .dashboard-transformometro .tm-diagram-editor__tab.is-active {
   background: var(--ds-accent-soft);
   border-color: var(--ds-accent);
+  color: var(--ds-text);
 }
 
 .dashboard-transformometro .tm-diagram-editor__canvas {
@@ -3146,6 +3166,36 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
   overflow: hidden;
+  background: var(--tm-diagram-canvas-bg);
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow {
+  --xy-background-color: var(--tm-diagram-canvas-bg);
+  --xy-background-pattern-dots-color: var(--tm-diagram-dot-color);
+  --xy-background-pattern-lines-color: var(--tm-diagram-dot-color);
+  --xy-edge-stroke-default: var(--tm-diagram-edge-color);
+  --xy-edge-stroke-selected-default: var(--ds-accent);
+  --xy-connectionline-stroke-default: var(--tm-diagram-edge-color);
+  --xy-minimap-background-color: var(--tm-diagram-minimap-bg);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--tm-diagram-canvas-bg) 55%, transparent);
+  --xy-minimap-node-background-color: var(--tm-diagram-minimap-node);
+  --xy-minimap-node-stroke-color: var(--ds-card-border);
+  --xy-controls-button-background-color: var(--tm-diagram-controls-bg);
+  --xy-controls-button-background-color-hover-default: var(--ds-surface-muted);
+  --xy-controls-button-border-color-default: var(--tm-diagram-controls-border);
+  --xy-controls-button-color-default: var(--ds-text);
+  --xy-controls-button-color-hover-default: var(--ds-text);
+  --xy-controls-box-shadow-default: 0 0 0 1px var(--tm-diagram-controls-border);
+  --xy-edge-label-background-color: var(--ds-card-bg);
+  --xy-edge-label-color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-text {
+  fill: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-textbg {
+  fill: var(--ds-card-bg);
 }
 
 .dashboard-transformometro .tm-diagram-editor__mermaid-code {
@@ -3156,6 +3206,158 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   border-radius: var(--ds-radius-md);
   font-size: var(--ds-font-xs);
   white-space: pre-wrap;
+  color: var(--ds-text);
+  background: var(--ds-surface-inset);
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas--swimlanes {
+  min-height: 360px;
+}
+
+.dashboard-transformometro .tm-diagram-editor__lane-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ds-font-xs);
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-diagram-editor__lane-select select {
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-input-bg);
+  color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-diagram-lane {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  pointer-events: none;
+  border-top: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .tm-diagram-lane__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: color-mix(in srgb, var(--ds-accent) 10%, var(--ds-card-bg));
+  border-right: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .tm-diagram-lane__label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-diagram-lane__body {
+  background: color-mix(in srgb, var(--ds-card-bg) 96%, var(--ds-accent) 4%);
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--decision {
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dashboard-transformometro .tm-diagram-node__external-label {
+  max-width: 220px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ds-text);
+  text-align: left;
+}
+
+.dashboard-transformometro .tm-diagram-node__external-label--below {
+  text-align: center;
+  max-width: 160px;
+}
+
+.dashboard-transformometro .tm-diagram-node__start-dot {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #22c55e;
+  border: 2px solid #15803d;
+}
+
+.dashboard-transformometro .tm-diagram-node__end-ring {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 3px solid #dc2626;
+  box-shadow: inset 0 0 0 2px var(--ds-card-bg);
+  background: color-mix(in srgb, #ef4444 18%, var(--ds-card-bg));
+}
+
+.dashboard-transformometro .tm-diagram-node--start,
+.dashboard-transformometro .tm-diagram-node--end {
+  min-width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dashboard-transformometro .tm-diagram-node--decision {
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(45deg);
+  border-radius: 4px;
+  clip-path: none;
+  background: #f59e0b;
+  border: 2px solid #d97706;
+  color: #78350f;
+}
+
+.dashboard-transformometro .tm-diagram-node__gateway-x {
+  transform: rotate(-45deg);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dashboard-transformometro .tm-diagram-node--process {
+  min-width: 180px;
+  min-height: 72px;
+  padding-top: 22px;
+  border-radius: 14px;
+  position: relative;
+}
+
+.dashboard-transformometro .tm-diagram-node__icon {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-diagram-node--process .tm-diagram-node__label {
+  display: block;
+  padding: 0 10px 8px;
+  line-height: 1.35;
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node-lane {
+  pointer-events: none !important;
 }
 
 .dashboard-transformometro .tm-diagram-node {
@@ -3163,9 +3365,11 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   padding: 8px 12px;
   border: 2px solid var(--ds-card-border);
   border-radius: var(--ds-radius-sm);
-  background: var(--ds-surface);
+  background: var(--ds-card-bg);
+  color: var(--ds-text);
   font-size: var(--ds-font-xs);
   text-align: center;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ds-text) 8%, transparent);
 }
 
 .dashboard-transformometro .tm-diagram-node--decision {
@@ -3201,6 +3405,30 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   opacity: 0.7;
 }
 
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node--asis {
+  border-color: #fbbf24;
+  background: color-mix(in srgb, #d97706 34%, var(--ds-card-bg));
+  color: #fde68a;
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node--tobe {
+  border-color: #60a5fa;
+  background: color-mix(in srgb, #2563eb 34%, var(--ds-card-bg));
+  color: #dbeafe;
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node--changed {
+  border-color: #f472b6;
+  background: color-mix(in srgb, #db2777 30%, var(--ds-card-bg));
+  color: #fce7f3;
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node--removed {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: color-mix(in srgb, var(--ds-card-bg) 70%, black);
+  color: var(--ds-text-muted);
+}
+
 .dashboard-transformometro .tm-diagram-node__scope {
   display: block;
   margin-bottom: 4px;
@@ -3211,6 +3439,13 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   padding: 8px;
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-inset);
+}
+
+.dashboard-transformometro .tm-diagram-mermaid svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 .dashboard-transformometro .tm-diagram-mermaid--loading,
