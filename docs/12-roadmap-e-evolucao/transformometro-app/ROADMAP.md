@@ -142,9 +142,9 @@ Plano: [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagrama
 
 **Backlog pós-MVP:** action chat com Mermaid da revisão; swimlanes automáticas por unidade/departamento.
 
-## Fase 8 — Decomposição de processo (árvore + planilha) 🚧 roadmap (jul/2026)
+## Fase 8 — Decomposição de processo (árvore + planilha) ✅ entregue (jul/2026)
 
-**Objetivo:** árvore WBS no processo-mestre (processo-chave → tarefa → sub-tarefa), export tabular no formato planilha operacional, escopo/overlay por instância/revisão, vínculo com diagrama macro (Playbook 19).
+**Objetivo:** árvore WBS no processo-mestre (processo-chave → tarefa → sub-tarefa), export tabular no formato planilha operacional, escopo/overlay por melhoria/revisão, vínculo com diagrama macro (Playbook 19).
 
 Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · status: [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md).
 
@@ -153,10 +153,24 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 | S0 | Playbook + JSON Schema + ADR | ✅ doc |
 | S1 | V030 + árvore + editor processo | ✅ |
 | S2 | Export CSV/Excel | ✅ CSV |
-| S3 | V031 + escopo instância + contexto V033 | ✅ |
+| S3 | V031 + escopo melhoria + contexto V033 | ✅ |
 | S4 | V032 + overlay revisão + backup | ✅ |
 | S5 | Vínculo fluxo + assistente rascunho | ✅ parcial |
 | S6 | Colaboração + diff textual | ✅ parcial |
+
+**Backlog pós-MVP:** export Excel (.xlsx); import assistido planilha legado; diff visual dedicado na UI revisão.
+
+## Fase 9 — UX MFE (jul/2026) ✅ entregue
+
+| Entrega | Status |
+|---------|--------|
+| Terminologia **Melhoria** + campos rollout (V034) | ✅ |
+| **SelectField** centralizado (padrão PAC) | ✅ |
+| **Modal de confirmação** (substitui `window.confirm`) | ✅ |
+| Duplicação completa de processo-mestre | ✅ |
+| Transições suaves entre páginas/abas | ✅ |
+| Diagrama revisão com mesmos controles do macro + tela cheia | ✅ |
+| Linha do tempo de mapeamento no detalhe do processo | ✅ |
 
 ## Fase 6 — Limpeza de legado (pendente)
 
@@ -175,5 +189,6 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 1. **Deploy produção** com runbook em [status-atual.md](./status-atual.md) e [OPERATIONS.md](./OPERATIONS.md) (incl. V026–V028 na 1ª subida pós-pull)
 2. **Registrar manifesto** na Core API + RBAC escopado (quem precisar)
 3. **Planilha somente leitura** (checklist Google)
-4. Validar smoke pós-deploy: diagrama macro → escopo instância → overlay revisão → export PNG
-5. **Limpeza Fase 6** — apagar código Sheets morto na api-delpi
+4. Validar smoke pós-deploy: diagrama macro → escopo melhoria → overlay revisão → mapeamento WBS → export PNG/CSV
+5. Aplicar migration **V034** em ambientes que ainda não subiram (campos melhoria + escopo livre)
+6. **Limpeza Fase 6** — apagar código Sheets morto na api-delpi

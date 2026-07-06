@@ -6,7 +6,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 
 | Documento | Conteúdo |
 |-----------|----------|
-| **[TUTORIAL-USUARIO.md](./TUTORIAL-USUARIO.md)** | **Guia prático de uso** — cadastro, diagramas, revisões, dashboard |
+| **[TUTORIAL-USUARIO.md](./TUTORIAL-USUARIO.md)** | **Guia prático de uso** — cadastro, melhorias, diagramas, mapeamento WBS, revisões, dashboard, UI (SelectField, modal) |
 | [OVERVIEW.md](./OVERVIEW.md) | Visão geral, objetivo, componentes, URLs, permissões |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Camadas, domínio, cálculo, banco, integração portal |
 | [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) | Contrato vivo de modelagem, vigência, atividade, investimentos, recursos e cálculo |
@@ -24,14 +24,14 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [OPERATIONS.md](./OPERATIONS.md) | Runbook operacional e deploy Playbook 18 |
 | [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md) | Docker, compose, migrations, checklist |
 
-## Estado atual no monorepo (jun/2026)
+## Estado atual no monorepo (jul/2026)
 
 **Fonte de verdade:** schema `transformometro` no Postgres (`postgres-plugins`). Cadastro, cálculo e cache materializado vivem em `transformometro-api` + plugin `plugins/transformometro`.
 
 | Peça | Situação |
 |------|----------|
-| **transformometro-api** | API canônica — CRUD, dashboard, diagramas (V026–V028), integração S2S, migrations **V001–V028** |
-| **plugins/transformometro** | UI oficial — cadastro, dashboard (3 visões), filiais, diagramas BPMN-lite, backup JSON |
+| **transformometro-api** | API canônica — CRUD, dashboard, diagramas (V026–V028), mapeamento WBS (V030–V033), melhorias V034, integração S2S, migrations **V001–V034** |
+| **plugins/transformometro** | UI oficial — cadastro, dashboard (3 visões), filiais, diagramas BPMN-lite, mapeamento WBS, backup JSON, **SelectField** + **modal de confirmação** |
 | **Cálculo** | `DashboardCalculatorService` em `tm_app/domain/services/` (+ testes golden) |
 | **Integração Transforma+** | api-delpi `GET /engineering/transforma-mais/*` → `TransformometroTransformaMaisGateway` → Postgres |
 | **Strategic Indicators** | KPI engenharia via `DelpiEngineeringGateway` → api-delpi (não lê Sheets nem SQL local) |

@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** jun/2026 (Playbook 18 — instâncias, visões dashboard, RBAC filial)
+**Última atualização:** jul/2026 (Playbook 18 — melhorias/instâncias, visões dashboard, RBAC filial; UI «Melhoria»; Playbook 20 WBS)
 
 ## O que é
 
@@ -30,9 +30,9 @@ Origem histórica: **Google Sheets + Apps Script**. Hoje a aplicação web na **
 | Rota | Função |
 |------|--------|
 | `/apps/transformometro/dashboard` | KPIs, toggle Consolidado/Filial/Departamento, alertas, export, recalcular |
-| `/apps/transformometro/processos` | Lista; create com primeira instância |
-| `/apps/transformometro/processos/{id}` | Mestre + painel instâncias + revisões |
-| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão |
+| `/apps/transformometro/processos` | Lista; create com primeira melhoria; duplicar processo completo |
+| `/apps/transformometro/processos/{id}` | Mestre + painel **Melhorias** + revisões + diagrama + mapeamento WBS |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão (rota `/instancias/` = melhoria na UI) |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado (redirect automático) |
 | `/apps/transformometro/filiais` | CRUD de filiais |
 | `/apps/transformometro/setores` | Catálogo de setores |
@@ -59,7 +59,7 @@ Portal MinhaDelpi
 Tudo gira em torno de **`revisao_id`**, sempre vinculada a uma **`instancia_id`** (processo × filial ou `todas_filiais_ativas`, com N setores):
 
 - `processos` = cadastro **mestre** (sem filial/setor na tabela)
-- `processo_instancias` = unidade operacional do mestre (filial + `todas_filiais_ativas`)
+- `processo_instancias` = unidade operacional do mestre (**melhoria** na UI; filial + `todas_filiais_ativas`; escopo livre desde V034)
 - `processo_instancia_setores` = N setores por instância (junction V019)
 - `revisoes` = cenários por instância (baseline, melhoria, automacao, correcao)
 - `medicoes`, `investimentos`, vínculos de recurso = dados da revisão
