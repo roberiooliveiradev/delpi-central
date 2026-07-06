@@ -4,7 +4,7 @@
   "name": "Transformômetro",
   "description": "Cadastro e mensuração de melhorias de processo — economia, investimento, ROI e payback.",
   "icon": "gauge",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "type": "microfrontend",
   "basePath": "/apps/transformometro",
   "entry": "/apps/transformometro/assets/remoteEntry.js",
@@ -96,7 +96,7 @@
       "icon": "layout-dashboard",
       "entry": null,
       "order": 20,
-      "showInMenu": true
+      "showInMenu": false
     },
     {
       "path": "/apps/transformometro/processos",
@@ -105,7 +105,7 @@
       "icon": "list",
       "entry": null,
       "order": 22,
-      "showInMenu": true
+      "showInMenu": false
     },
     {
       "path": "/apps/transformometro/filiais",
@@ -113,17 +113,17 @@
       "permission": "transformometro.processes.manage",
       "icon": "building",
       "entry": null,
-      "order": 22.2,
-      "showInMenu": true
+      "order": 23,
+      "showInMenu": false
     },
     {
       "path": "/apps/transformometro/setores",
       "label": "Setores",
       "permission": "transformometro.processes.manage",
-      "icon": "building-2",
+      "icon": "building",
       "entry": null,
-      "order": 22.5,
-      "showInMenu": true
+      "order": 24,
+      "showInMenu": false
     },
     {
       "path": "/apps/transformometro/recursos",
@@ -131,8 +131,8 @@
       "permission": "transformometro.shared-resources.manage",
       "icon": "layers",
       "entry": null,
-      "order": 23,
-      "showInMenu": true
+      "order": 25,
+      "showInMenu": false
     },
     {
       "path": "/apps/transformometro/dados",
@@ -140,8 +140,8 @@
       "permission": "transformometro.data.transfer",
       "icon": "arrow-down-up",
       "entry": null,
-      "order": 24,
-      "showInMenu": true
+      "order": 26,
+      "showInMenu": false
     }
   ],
   "backend": {
