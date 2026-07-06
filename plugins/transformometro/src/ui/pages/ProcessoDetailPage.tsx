@@ -216,8 +216,6 @@ export function ProcessoDetailPage({
           .join(" · ")}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
         onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
         actions={
           <>
             <button type="button" className="ds-ghost-btn" onClick={onBack}>
@@ -237,8 +235,6 @@ export function ProcessoDetailPage({
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}
         lockError={sectionEdit.lockError}
-        wsConnected={sectionEdit.wsConnected}
-        wsConnectionError={sectionEdit.wsConnectionError}
         realtimeNotice={sectionEdit.realtimeNotice}
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />

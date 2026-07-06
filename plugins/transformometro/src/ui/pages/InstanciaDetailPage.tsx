@@ -66,7 +66,6 @@ export function InstanciaDetailPage({
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [showRevisaoForm, setShowRevisaoForm] = useState(false);
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
@@ -78,7 +77,6 @@ export function InstanciaDetailPage({
   });
 
   const load = useCallback(async () => {
-    setRefreshing(true);
     setError(null);
     try {
       const [proc, revs, opts, comp, inst] = await Promise.all([
@@ -101,7 +99,6 @@ export function InstanciaDetailPage({
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [getAccessToken, instanciaId, processoId]);
 
@@ -202,8 +199,6 @@ export function InstanciaDetailPage({
         subtitle={`${processo.codigo_processo} — ${processo.nome_processo} · ${instancia.status_instancia ?? "ativo"}`}
         currentPath={pathname ?? buildInstanciaPath(processoId, instanciaId)}
         onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
         actions={
           <>
             <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
@@ -236,8 +231,6 @@ export function InstanciaDetailPage({
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}
         lockError={sectionEdit.lockError}
-        wsConnected={sectionEdit.wsConnected}
-        wsConnectionError={sectionEdit.wsConnectionError}
         realtimeNotice={sectionEdit.realtimeNotice}
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />

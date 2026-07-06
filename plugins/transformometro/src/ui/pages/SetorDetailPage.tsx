@@ -54,7 +54,6 @@ export function SetorDetailPage({
   const [form, setForm] = useState<SetorFormState>(() => emptySetorForm());
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isCreate);
-  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const filialLabels = useMemo(
@@ -71,7 +70,6 @@ export function SetorDetailPage({
       return;
     }
 
-    setRefreshing(true);
     setError(null);
     try {
       const [list, opts] = await Promise.all([
@@ -86,7 +84,6 @@ export function SetorDetailPage({
       setError(err instanceof Error ? err.message : "Erro ao carregar departamento");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [getAccessToken, isCreate, setorId]);
 
@@ -210,8 +207,6 @@ export function SetorDetailPage({
         }
         currentPath={pathname ?? (isCreate ? buildSetorPath(CATALOG_CREATE.setor) : buildSetorPath(setorId))}
         onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
         actions={
           <>
             <button type="button" className="ds-ghost-btn" onClick={onBack}>
@@ -233,8 +228,6 @@ export function SetorDetailPage({
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}
         lockError={sectionEdit.lockError}
-        wsConnected={sectionEdit.wsConnected}
-        wsConnectionError={sectionEdit.wsConnectionError}
         realtimeNotice={sectionEdit.realtimeNotice}
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />

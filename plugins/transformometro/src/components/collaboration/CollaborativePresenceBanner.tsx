@@ -4,8 +4,6 @@ import { COLLABORATION_SECTION_LABELS } from "../../constants/collaborationSecti
 type Props = {
   presence: CollaborationPresencePayload | null;
   lockError?: string | null;
-  wsConnected?: boolean;
-  wsConnectionError?: string | null;
   realtimeNotice?: string | null;
   onDismissRealtimeNotice?: () => void;
 };
@@ -13,12 +11,10 @@ type Props = {
 export function CollaborativePresenceBanner({
   presence,
   lockError,
-  wsConnected = false,
-  wsConnectionError,
   realtimeNotice,
   onDismissRealtimeNotice,
 }: Props) {
-  if (!presence && !lockError && !realtimeNotice && !wsConnectionError) {
+  if (!presence && !lockError && !realtimeNotice) {
     return null;
   }
 
@@ -40,11 +36,6 @@ export function CollaborativePresenceBanner({
               Ok
             </button>
           ) : null}
-        </p>
-      ) : null}
-      {wsConnectionError && !wsConnected ? (
-        <p className="tm-collab-banner__line tm-collab-banner__line--muted">
-          Tempo real indisponível — usando atualização periódica.
         </p>
       ) : null}
       {editors.length ? (

@@ -297,8 +297,6 @@ export function RecursoDetailPage({
           pathname ?? (isCreate ? buildRecursoPath(CATALOG_CREATE.recurso) : buildRecursoPath(recursoId))
         }
         onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
         actions={
           <>
             <button type="button" className="ds-ghost-btn" onClick={onBack}>
@@ -325,8 +323,6 @@ export function RecursoDetailPage({
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}
         lockError={sectionEdit.lockError}
-        wsConnected={sectionEdit.wsConnected}
-        wsConnectionError={sectionEdit.wsConnectionError}
         realtimeNotice={sectionEdit.realtimeNotice}
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />

@@ -44,10 +44,8 @@ export function RevisaoDetailPage({
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    setRefreshing(true);
     setError(null);
     try {
       const [proc, revs, opts] = await Promise.all([
@@ -63,7 +61,6 @@ export function RevisaoDetailPage({
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [getAccessToken, instanciaId, processoId, revisaoId]);
 
@@ -117,8 +114,6 @@ export function RevisaoDetailPage({
         subtitle={`${processo.codigo_processo} — ${processo.nome_processo}${revisao.revisao_ativa ? " · ativa" : ""}`}
         currentPath={pathname ?? buildProcessoPath(processoId, revisaoId, resolvedInstanciaId)}
         onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
         actions={
           <button
             type="button"

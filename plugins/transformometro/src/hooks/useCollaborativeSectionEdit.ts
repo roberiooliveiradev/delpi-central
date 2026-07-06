@@ -15,6 +15,7 @@ import { getUserIdFromToken } from "../utils/jwt";
 const POLL_MS = 12_000;
 const LOCK_HEARTBEAT_MS = 20_000;
 const VIEW_HEARTBEAT_MS = 30_000;
+const RESYNC_FALLBACK_MS = 60_000;
 
 type Options = {
   entityType: CollaborationEntityType;
@@ -91,6 +92,15 @@ export function useCollaborativeSectionEdit({
     const timer = window.setInterval(() => void refreshPresence(), POLL_MS);
     return () => window.clearInterval(timer);
   }, [enabled, entityId, refreshPresence, wsConnected]);
+
+  useEffect(() => {
+    if (!enabled || !entityId || wsConnected || !onResync) return;
+    const timer = window.setInterval(() => {
+      if (editingSectionRef.current) return;
+      onResyncRef.current?.();
+    }, RESYNC_FALLBACK_MS);
+    return () => window.clearInterval(timer);
+  }, [enabled, entityId, onResync, wsConnected]);
 
   useEffect(() => {
     if (!enabled || !entityId || editingSection) return;

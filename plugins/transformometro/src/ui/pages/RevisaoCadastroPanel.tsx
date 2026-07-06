@@ -261,8 +261,6 @@ export function RevisaoCadastroPanel({
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}
         lockError={sectionEdit.lockError}
-        wsConnected={sectionEdit.wsConnected}
-        wsConnectionError={sectionEdit.wsConnectionError}
         realtimeNotice={sectionEdit.realtimeNotice}
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />
