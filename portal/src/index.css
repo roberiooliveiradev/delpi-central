@@ -479,16 +479,16 @@ body:has(.app-shell) {
 
 /*
  * Painéis TV — editor em tela cheia na área do app.
+ * Só via classe em html (useTvDashboardDeckLayout); sem :has() global para não
+ * afetar outros MFEs se a classe ficar presa ou o seletor casar indevidamente.
  */
-html.tv-dashboard-deck-active .main-area,
-html:has(.dashboard-page--deck-edit) .main-area {
+html.tv-dashboard-deck-active .main-area {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
 
-html.tv-dashboard-deck-active .content,
-.content:has(.dashboard-page--deck-edit) {
+html.tv-dashboard-deck-active .content {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
@@ -496,16 +496,13 @@ html.tv-dashboard-deck-active .content,
 }
 
 html.tv-dashboard-deck-active .content > .app-host,
-html.tv-dashboard-deck-active .content > .app-host-federated,
-.content:has(.dashboard-page--deck-edit) > .app-host,
-.content:has(.dashboard-page--deck-edit) > .app-host-federated {
+html.tv-dashboard-deck-active .content > .app-host-federated {
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
 }
 
-html.tv-dashboard-deck-active .app-host-federated__mount,
-.content:has(.dashboard-page--deck-edit) .app-host-federated__mount {
+html.tv-dashboard-deck-active .app-host-federated__mount {
   position: relative;
   flex: 1 1 auto;
   width: 100%;
@@ -514,6 +511,23 @@ html.tv-dashboard-deck-active .app-host-federated__mount,
   min-height: 0;
   height: auto !important;
   overflow: hidden;
+}
+
+/*
+ * Dashboards MFE (padrão): scroll único em `.content` — altura pelo conteúdo.
+ * Imersivos (deck TV, embed manutenção, settings) têm regras próprias acima.
+ */
+.content > .app-host-federated:has(.dashboard-page:not(.dashboard-page--deck-edit):not(.dashboard-page--embed)) {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: auto;
+}
+
+.app-host-federated__mount:has(.dashboard-page:not(.dashboard-page--deck-edit):not(.dashboard-page--embed)) {
+  height: auto !important;
+  min-height: 0 !important;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 /*

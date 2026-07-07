@@ -10,6 +10,7 @@ type Props = {
   fontScale?: number;
   className?: string;
   isSelected?: boolean;
+  isEditingText?: boolean;
 };
 
 function EditorImageBlock({
@@ -59,6 +60,7 @@ export function ComunicadoEditorBlockView({
   fontScale = 1,
   className = "",
   isSelected = false,
+  isEditingText = false,
 }: Props) {
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
@@ -76,6 +78,7 @@ export function ComunicadoEditorBlockView({
         fontScale={fontScale}
         className={className}
         isSelected={isSelected}
+        isEditing={isEditingText}
       />
     );
   }

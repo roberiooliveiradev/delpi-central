@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -30,6 +31,8 @@ type ComunicadoEditorContextValue = {
   selected: ComunicadoBlock | null;
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;
+  editingTextId: string | null;
+  setEditingTextId: (id: string | null) => void;
   uploading: boolean;
   shapeMenuOpen: boolean;
   setShapeMenuOpen: (open: boolean) => void;
@@ -70,8 +73,14 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const [config, setConfig] = useState<ComunicadoConfig>(() =>
     enrichComunicadoConfigForEditor(value, playlistId),
   );
-  const [selectedId, setSelectedId] = useState<string | null>(config.blocks?.[0]?.id ?? null);
+  const [selectedId, setSelectedIdState] = useState<string | null>(config.blocks?.[0]?.id ?? null);
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const setSelectedId = useCallback((id: string | null) => {
+    setSelectedIdState(id);
+    setEditingTextId((current) => (id === current ? current : null));
+  }, []);
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<"block" | "background">("block");
@@ -198,6 +207,8 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     selected,
     selectedId,
     setSelectedId,
+    editingTextId,
+    setEditingTextId,
     uploading,
     shapeMenuOpen,
     setShapeMenuOpen,

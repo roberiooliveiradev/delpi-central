@@ -510,6 +510,10 @@
   opacity: 0.45;
 }
 
+.td-composer__text-block--readonly {
+  pointer-events: auto;
+}
+
 .td-composer__text-block--editing {
   pointer-events: auto;
 }

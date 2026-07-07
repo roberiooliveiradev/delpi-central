@@ -28,7 +28,8 @@ function useCanvasBackgroundStyle() {
 }
 
 export function ComunicadoComposerCanvas() {
-  const { blocks, selectedId, setSelectedId, canvasRef, startDrag } = useComunicadoEditor();
+  const { blocks, selectedId, setSelectedId, editingTextId, canvasRef, startDrag } =
+    useComunicadoEditor();
   const canvasStyle = useCanvasBackgroundStyle();
 
   return (
@@ -43,11 +44,13 @@ export function ComunicadoComposerCanvas() {
                 className={`td-composer__block-wrap${isSelected ? " td-composer__block-wrap--selected" : ""}`}
                 style={frameStyle(block.frame)}
                 onPointerDown={(event) => {
-                  if ((event.target as HTMLElement).closest(".td-composer__inline-text, .td-composer__text-block--editing")) {
-                    setSelectedId(block.id);
+                  setSelectedId(block.id);
+                  if (
+                    editingTextId === block.id &&
+                    (event.target as HTMLElement).closest(".td-composer__inline-text")
+                  ) {
                     return;
                   }
-                  setSelectedId(block.id);
                   startDrag(event, block, "move");
                 }}
               >
@@ -55,6 +58,7 @@ export function ComunicadoComposerCanvas() {
                   block={block}
                   fontScale={FONT_SCALE}
                   isSelected={isSelected}
+                  isEditingText={editingTextId === block.id}
                   className={isSelected ? "td-composer__block--selected" : ""}
                 />
                 {isSelected ? (
