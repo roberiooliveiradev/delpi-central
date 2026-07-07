@@ -1,14 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FileText, QrCode, Users } from "lucide-react";
+import {
+  formsListPath,
+  parseRoute,
+  participantsPath,
+  type CxTab,
+} from "../constants/routes";
 import { CxPermissionsProvider, useCxPermissions } from "../context/CxPermissionsContext";
+import { navigateCx } from "../utils/navigation";
 import { ParticipantsPanel } from "./ParticipantsPanel";
 import { FormsPanel } from "./FormsPanel";
 
-type Tab = "participants" | "forms";
+type Props = {
+  pathname?: string;
+};
 
-function CustomerExperienceShell() {
+function CustomerExperienceShell({ pathname }: Props) {
   const { loading, canReadParticipants, canReadForms } = useCxPermissions();
-  const [tab, setTab] = useState<Tab>("participants");
+  const route = useMemo(() => parseRoute(pathname), [pathname]);
+  const [tab, setTab] = useState<CxTab>(route.tab);
+
+  useEffect(() => {
+    setTab(route.tab);
+  }, [route.tab]);
 
   useEffect(() => {
     if (loading) return;
@@ -35,6 +49,14 @@ function CustomerExperienceShell() {
 
   const showTabs = canReadParticipants && canReadForms;
 
+  const handleTabChange = (next: CxTab) => {
+    if (next === "participants") {
+      navigateCx(participantsPath());
+      return;
+    }
+    navigateCx(formsListPath());
+  };
+
   return (
     <div className="cx-page">
       <header className="cx-header">
@@ -57,7 +79,7 @@ function CustomerExperienceShell() {
               role="tab"
               aria-selected={tab === "participants"}
               className={`cx-tab ${tab === "participants" ? "is-active" : ""}`}
-              onClick={() => setTab("participants")}
+              onClick={() => handleTabChange("participants")}
             >
               <Users size={16} /> Participantes
             </button>
@@ -68,7 +90,7 @@ function CustomerExperienceShell() {
               role="tab"
               aria-selected={tab === "forms"}
               className={`cx-tab ${tab === "forms" ? "is-active" : ""}`}
-              onClick={() => setTab("forms")}
+              onClick={() => handleTabChange("forms")}
             >
               <FileText size={16} /> Formulários
             </button>
@@ -77,15 +99,21 @@ function CustomerExperienceShell() {
       )}
 
       {tab === "participants" && canReadParticipants ? <ParticipantsPanel /> : null}
-      {tab === "forms" && canReadForms ? <FormsPanel /> : null}
+      {tab === "forms" && canReadForms ? (
+        <FormsPanel
+          view={route.formsView}
+          formId={route.formId}
+          onNavigate={navigateCx}
+        />
+      ) : null}
     </div>
   );
 }
 
-export function CustomerExperiencePage() {
+export function CustomerExperiencePage({ pathname }: Props) {
   return (
     <CxPermissionsProvider>
-      <CustomerExperienceShell />
+      <CustomerExperienceShell pathname={pathname} />
     </CxPermissionsProvider>
   );
 }

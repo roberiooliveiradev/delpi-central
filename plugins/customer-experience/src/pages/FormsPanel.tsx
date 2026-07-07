@@ -47,6 +47,12 @@ import type {
   QuestionType,
 } from "../types";
 import { useCxPermissions } from "../context/CxPermissionsContext";
+import {
+  formDashboardPath,
+  formEditPath,
+  formsListPath,
+  type FormsView,
+} from "../constants/routes";
 
 const TYPE_LABELS: Record<QuestionType, string> = {
   rating: "Nota (estrelas 1–5)",
@@ -93,12 +99,20 @@ const EMPTY_REMOVED: RemovedImages = {
   questionPoint: {},
 };
 
-type View = "list" | "editor" | "dashboard";
+type View = FormsView;
 
-export function FormsPanel() {
-  const [view, setView] = useState<View>("list");
+export function FormsPanel({
+  view,
+  formId,
+  onNavigate,
+}: {
+  view: View;
+  formId?: string;
+  onNavigate: (path: string) => void;
+}) {
   const [forms, setForms] = useState<FormSummary[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [selected, setSelected] = useState<FormDetail | null>(null);
@@ -125,31 +139,52 @@ export function FormsPanel() {
     return () => window.clearTimeout(timer);
   }, [feedback]);
 
-  const openEditor = async (id: string) => {
-    setError(null);
-    try {
-      setSelected(await getForm(id));
-      setView("editor");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao abrir formulário.");
+  useEffect(() => {
+    if (view === "list") {
+      setSelected(null);
+      return;
     }
+    if (!formId) return;
+    if (selected?.id === formId) return;
+
+    let alive = true;
+    setLoadingForm(true);
+    setError(null);
+    (async () => {
+      try {
+        const form = await getForm(formId);
+        if (!alive) return;
+        setSelected(form);
+      } catch (err) {
+        if (!alive) return;
+        setError(err instanceof Error ? err.message : "Erro ao carregar formulário.");
+        setSelected(null);
+      } finally {
+        if (alive) setLoadingForm(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [view, formId, selected?.id]);
+
+  const openEditor = (id: string) => {
+    onNavigate(formEditPath(id));
   };
 
-  const openDashboard = async (id: string) => {
-    setError(null);
-    try {
-      setSelected(await getForm(id));
-      setView("dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao abrir dashboard.");
-    }
+  const openDashboard = (id: string) => {
+    onNavigate(formDashboardPath(id));
   };
 
   const backToList = async () => {
-    setSelected(null);
-    setView("list");
+    onNavigate(formsListPath());
     await load();
   };
+
+  if (loadingForm && (view === "editor" || view === "dashboard")) {
+    return <p className="cx-state">Carregando formulário...</p>;
+  }
 
   if (view === "editor" && selected) {
     return (
@@ -163,6 +198,21 @@ export function FormsPanel() {
 
   if (view === "dashboard" && selected) {
     return <FormDashboardView form={selected} onBack={backToList} />;
+  }
+
+  if ((view === "editor" || view === "dashboard") && formId && !selected && !loadingForm) {
+    return (
+      <>
+        {error && (
+          <div className="cx-banner cx-banner--error" role="alert">
+            {error}
+          </div>
+        )}
+        <button className="cx-button cx-button--ghost" type="button" onClick={() => void backToList()}>
+          <ArrowLeft size={16} /> Voltar para formulários
+        </button>
+      </>
+    );
   }
 
   return (
@@ -181,10 +231,7 @@ export function FormsPanel() {
       <FormsList
         forms={forms}
         loading={loading}
-        onCreated={async (form) => {
-          setSelected(form);
-          setView("editor");
-        }}
+        onCreated={(form) => onNavigate(formEditPath(form.id))}
         onEdit={openEditor}
         onDashboard={openDashboard}
         onChanged={(msg) => {
