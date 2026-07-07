@@ -478,38 +478,28 @@ body:has(.app-shell) {
 }
 
 /*
- * Painéis TV — editor em tela cheia na área do app.
- * Só via classe em html (useTvDashboardDeckLayout); sem :has() global para não
- * afetar outros MFEs se a classe ficar presa ou o seletor casar indevidamente.
+ * Painéis TV — editor imersivo enquanto o MFE está montado no host.
+ * Escopo em .dashboard-tv-dashboard (nunca classe em html) — ao sair do app o :has
+ * deixa de casar e o scroll do portal volta sem vazamento.
  */
-html.tv-dashboard-deck-active .main-area {
-  flex: 1 1 auto;
-  min-height: 0;
+.content:has(.dashboard-tv-dashboard.dashboard-page--deck-edit) {
   overflow: hidden;
 }
 
-html.tv-dashboard-deck-active .content {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  padding: 0;
-}
-
-html.tv-dashboard-deck-active .content > .app-host,
-html.tv-dashboard-deck-active .content > .app-host-federated {
+.content > .app-host-federated:has(.dashboard-tv-dashboard.dashboard-page--deck-edit) {
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
 }
 
-html.tv-dashboard-deck-active .app-host-federated__mount {
+.app-host-federated__mount:has(.dashboard-tv-dashboard.dashboard-page--deck-edit) {
   position: relative;
   flex: 1 1 auto;
   width: 100%;
   max-width: none;
   min-width: 0;
   min-height: 0;
-  height: auto !important;
+  height: 100% !important;
   overflow: hidden;
 }
 

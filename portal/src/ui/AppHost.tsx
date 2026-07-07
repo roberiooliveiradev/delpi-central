@@ -491,9 +491,15 @@ export const AppHost = () => {
 
       mountedModuleRef.current = null;
 
-      if (federatedHostRef.current) {
-        federatedHostRef.current.innerHTML = "";
-      }
+      // Limpa sinais legados de layout imersivo (ex.: tv-dashboard-deck-active no html).
+      document.documentElement.classList.remove("tv-dashboard-deck-active");
+
+      const mountEl = federatedHostRef.current;
+      queueMicrotask(() => {
+        if (mountEl) {
+          mountEl.innerHTML = "";
+        }
+      });
     };
   }, [app?.id, app?.renderMode, federationEntry, getAccessToken]);
 
