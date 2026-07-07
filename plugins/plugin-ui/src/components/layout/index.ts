@@ -35,6 +35,7 @@ export {
   SimpleKpiCard,
   createSimpleKpiCard,
   simpleKpiCardBemClasses,
+  simpleKpiCardVariantClass,
   type DashboardSimpleKpiCardProps,
   type SimpleKpiCardClassNames,
   type SimpleKpiCardProps,

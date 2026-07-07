@@ -14,6 +14,16 @@ export {
 } from "./Pagination";
 
 export {
+  CompactPagination,
+  createCompactPagination,
+  compactPaginationBemClasses,
+  type CompactPaginationClassNames,
+  type CompactPaginationLabels,
+  type CompactPaginationProps,
+  type DashboardCompactPaginationProps,
+} from "./CompactPagination";
+
+export {
   DataTable,
   dataTableBemClasses,
   type DataTableClassNames,

@@ -43,4 +43,27 @@ describe("ChartCard", () => {
     );
     expect(screen.getByRole("button", { name: "Exportar" })).toBeTruthy();
   });
+
+  it("layout titleRow coloca hint abaixo da linha título+ações", () => {
+    const classNames = chartCardBemClasses("cr", { headerLayout: "titleRow" });
+
+    render(
+      <ChartCard
+        title="Ranking"
+        hint="Top 10"
+        classNames={classNames}
+        headerActions={<button type="button">Expandir</button>}
+      >
+        <span>chart</span>
+      </ChartCard>,
+    );
+
+    const headerRow = document.querySelector(`.${classNames.headerRow}`);
+    expect(headerRow?.querySelector(`.${classNames.title}`)?.textContent).toBe("Ranking");
+    expect(headerRow?.querySelector("button")?.textContent).toBe("Expandir");
+    expect(headerRow?.querySelector(`.${classNames.hint}`)).toBeNull();
+
+    const header = document.querySelector(`.${classNames.header}`);
+    expect(header?.querySelector(`.${classNames.hint}`)?.textContent).toBe("Top 10");
+  });
 });

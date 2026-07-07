@@ -36,4 +36,27 @@ describe("SimpleKpiCard", () => {
 
     expect(screen.getByText("…")).toBeTruthy();
   });
+
+  it("suporta body, subtitle e variant", () => {
+    const classNames = simpleKpiCardBemClasses("ie", "kpi-card", {
+      withBody: true,
+      withSubtitle: true,
+    });
+
+    render(
+      <SimpleKpiCard
+        title="Aprovadas"
+        value="12"
+        subtitle="No período"
+        icon={<span data-testid="icon">✓</span>}
+        valueTag="p"
+        classNames={classNames}
+        className="ie-kpi-card--success"
+      />,
+    );
+
+    expect(document.querySelector(".ie-kpi-card__body")).toBeTruthy();
+    expect(screen.getByText("No período")).toBeTruthy();
+    expect(document.querySelector(".ie-kpi-card--success")).toBeTruthy();
+  });
 });
