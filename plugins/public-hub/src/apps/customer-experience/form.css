@@ -10,63 +10,84 @@
 }
 
 .cxform--fullpage {
-  max-width: none;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  min-height: 100%;
-  padding: 12px 0 0;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0;
   border-radius: 0;
   text-align: center;
 }
 
 .cxform--fullpage.cxform--has-bg {
+  border-radius: 16px;
+  padding: 20px 16px 16px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-.cxform--fullpage .cxform-progress {
-  max-width: min(520px, 100%);
-  padding: 0 clamp(16px, 4vw, 32px);
+.cxform--fullpage .cxform-header {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-top: 8px solid var(--pub-accent);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 24px 18px;
+  box-shadow: var(--pub-card-shadow);
+  text-align: center;
 }
 
-.cxform--fullpage .cxform-title,
-.cxform--fullpage .cxform-subtitle,
-.cxform--fullpage .cxform-eyebrow {
-  padding-inline: clamp(16px, 4vw, 32px);
+.cxform--fullpage .cxform-header .cxform-progress {
+  margin-bottom: 0;
+}
+
+.cxform--fullpage .cxform-title {
+  margin-bottom: 6px;
+}
+
+.cxform--fullpage .cxform-subtitle {
+  margin-bottom: 16px;
 }
 
 .cxform--fullpage .cxform-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  max-width: none;
+  margin-top: 0;
+  border-radius: 0 0 16px 16px;
+  border-top: 0;
+  padding: 24px 24px 20px;
+  box-shadow: var(--pub-card-shadow);
+}
+
+.cxform--fullpage:not(:has(.cxform-header)) .cxform-card {
   margin-top: 12px;
-  border-radius: 20px 20px 0 0;
-  border-left: 0;
-  border-right: 0;
-  border-bottom: 0;
-  padding: clamp(20px, 4vw, 36px) clamp(16px, 5vw, 48px) clamp(24px, 5vw, 40px);
-  box-shadow: 0 -8px 32px rgba(8, 40, 64, 0.08);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  border-radius: 16px;
+  border-top: 1px solid var(--pub-card-border);
 }
 
 .cxform--fullpage.cxform--wizard .cxform-card {
   min-height: 0;
 }
 
-.cxform--fullpage .cxform-nav,
+.cxform--fullpage .cxform-nav {
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.cxform--fullpage .cxform-nav__btn {
+  flex: 0 1 auto;
+  min-width: 112px;
+}
+
+.cxform--fullpage .cxform-nav__btn--primary:only-child {
+  min-width: 140px;
+}
+
 .cxform--fullpage .cxform-submit {
-  margin-top: auto;
+  margin-top: 20px;
 }
 
 .cxform--fullpage.cxform--message {
-  justify-content: center;
-  padding: clamp(24px, 6vw, 48px);
+  max-width: 520px;
+  padding: clamp(24px, 6vw, 48px) 16px;
 }
 
 .cxform--has-bg {
@@ -87,9 +108,11 @@
 
 .cxform-progress__track {
   flex: 1;
-  height: 8px;
+  min-width: 120px;
+  height: 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--pub-accent) 12%, var(--pub-card-bg));
+  background: color-mix(in srgb, var(--pub-accent) 22%, var(--pub-card-bg));
+  border: 1px solid color-mix(in srgb, var(--pub-accent) 28%, transparent);
   overflow: hidden;
 }
 

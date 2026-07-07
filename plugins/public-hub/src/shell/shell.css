@@ -168,26 +168,26 @@ body {
   flex: 1 1 auto;
 }
 
-/* Formulários e views imersivas — conteúdo preenche a viewport abaixo do logo. */
+/* Formulários — fundo em tela cheia, conteúdo em coluna central (estilo Google Forms). */
 .pub-stage--fullpage {
-  padding: 0;
-  gap: 0;
-  align-items: stretch;
+  padding: 16px 16px 32px;
+  gap: 12px;
+  align-items: center;
 }
 
 .pub-logo--compact {
-  width: 72px;
-  height: 72px;
-  margin: 14px auto 0;
+  width: 64px;
+  height: 64px;
+  margin: 4px auto 0;
   flex: none;
 }
 
 .pub-content--fullpage {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   width: 100%;
-  min-height: 0;
-  margin: 0;
-  align-items: stretch;
+  max-width: 680px;
+  margin: 0 auto;
+  align-items: center;
   display: flex;
   flex-direction: column;
 }

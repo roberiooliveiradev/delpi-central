@@ -307,20 +307,22 @@ export function FormView({ form }: { form: PublicForm }) {
       className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}${backgroundUrl ? " cxform--has-bg" : ""}`}
       style={shellStyle}
     >
-      <span className="cxform-eyebrow">Programa Experiência do Cliente · DELPI</span>
-      <h1 className="cxform-title">{form.title}</h1>
-      {form.description && stepIndex === 0 && (
-        <p className="cxform-subtitle">{form.description}</p>
-      )}
+      <header className="cxform-header">
+        <span className="cxform-eyebrow">Programa Experiência do Cliente · DELPI</span>
+        <h1 className="cxform-title">{form.title}</h1>
+        {form.description && stepIndex === 0 && (
+          <p className="cxform-subtitle">{form.description}</p>
+        )}
 
-      {(wizard || form.questions.length > 0) && (
-        <div className="cxform-progress" aria-label={`Progresso: ${progress}%`}>
-          <div className="cxform-progress__track">
-            <div className="cxform-progress__fill" style={{ width: `${progress}%` }} />
+        {(wizard || form.questions.length > 0) && (
+          <div className="cxform-progress" aria-label={`Progresso: ${progress}%`}>
+            <div className="cxform-progress__track">
+              <div className="cxform-progress__fill" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="cxform-progress__label">{progress}%</span>
           </div>
-          <span className="cxform-progress__label">{progress}%</span>
-        </div>
-      )}
+        )}
+      </header>
 
       <form className="cxform-card" onSubmit={handleSubmit}>
         {wizard ? renderWizardStep() : renderScrollForm()}
