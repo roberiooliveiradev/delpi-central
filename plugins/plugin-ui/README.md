@@ -76,6 +76,8 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `SectionHintLabel` | Rótulo de seção (ribbon) + ajuda |
 | `TabHintCell` | Aba + ? sem botão aninhado |
 | `HintAction` | Botão/controle com balão ao hover |
+| `ChartCard` | Cartão de gráfico (layout headless + `classNames` BEM) |
+| `chartCardBemClasses` | Helper para mapa BEM `{prefix}-chart-card__*` |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 

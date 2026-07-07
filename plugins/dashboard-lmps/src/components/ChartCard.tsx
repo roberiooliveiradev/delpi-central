@@ -1,29 +1,19 @@
-import type { ReactNode } from "react";
+import {
+  ChartCard as DelpiChartCard,
+  type ChartCardClassNames,
+  type ChartCardProps as DelpiChartCardProps,
+} from "@delpi/plugin-ui";
 
-import { HelpTooltip } from "@delpi/plugin-ui";
+const CLASS_NAMES = {
+  section: "lmps-card lmps-chart-card",
+  header: "lmps-card-header",
+  title: "",
+  titleHelp: "lmps-chart-card__title-help",
+  body: "lmps-card-body",
+} satisfies ChartCardClassNames;
 
-type ChartCardProps = {
-  title: string;
-  titleHint?: string;
-  children: ReactNode;
-};
+export type ChartCardProps = Omit<DelpiChartCardProps, "classNames" | "titleLevel">;
 
-export function ChartCard({ title, titleHint, children }: ChartCardProps) {
-  return (
-    <section className="lmps-card lmps-chart-card">
-      <div className="lmps-card-header">
-        <h3>
-          {title}
-          {titleHint ? (
-            <HelpTooltip
-              content={titleHint}
-              ariaLabel={`Ajuda: ${title}`}
-              className="lmps-chart-card__title-help"
-            />
-          ) : null}
-        </h3>
-      </div>
-      <div className="lmps-card-body">{children}</div>
-    </section>
-  );
+export function ChartCard(props: ChartCardProps) {
+  return <DelpiChartCard classNames={CLASS_NAMES} titleLevel={3} {...props} />;
 }

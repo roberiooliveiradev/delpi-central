@@ -123,6 +123,39 @@ Atalho para `HelpTooltip` com `wrap` em um único filho (botão, input color, et
 
 ---
 
+## Família `layout` — cartões de painel
+
+### `ChartCard`
+
+Cartão de gráfico com título, hint opcional, ações no header e corpo para o chart. **Estilos visuais ficam no plugin** via `classNames` BEM; o pacote só monta a estrutura e a11y.
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `title` | `string` | Título da região |
+| `titleHint` | `string?` | Balão no título |
+| `hint` | `string?` | Subtítulo abaixo do título |
+| `children` | `ReactNode` | Conteúdo (chart) |
+| `headerActions` | `ReactNode?` | Toolbar à direita (ex.: export) |
+| `classNames` | `ChartCardClassNames` | Classes BEM do plugin |
+| `className` | `string?` | Extra no `<section>` |
+| `titleLevel` | `2 \| 3` | Nível do heading (default `2`) |
+
+Helper `chartCardBemClasses(prefix, options?)` gera o mapa BEM padrão `{prefix}-chart-card__*`.
+
+```tsx
+import { ChartCard, chartCardBemClasses } from "@delpi/plugin-ui";
+
+const classNames = chartCardBemClasses("dp", { withHeading: false, withActions: false });
+
+<ChartCard title="OEE" titleHint={H.charts.oee} classNames={classNames}>
+  <ResponsiveContainer>...</ResponsiveContainer>
+</ChartCard>
+```
+
+**Padrão nos dashboards:** wrapper fino local reexporta `ChartCard` com `classNames` fixo do prefixo do plugin.
+
+---
+
 ## Estilos base (`styles.css`)
 
 | Classe | Uso |

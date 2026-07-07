@@ -5,3 +5,4 @@
  * Como contribuir: docs/contributing.md
  */
 export * from "./components/help";
+export * from "./components/layout";
