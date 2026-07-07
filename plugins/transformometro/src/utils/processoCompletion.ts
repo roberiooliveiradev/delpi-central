@@ -71,6 +71,13 @@ export function computeProcessoSetupCompletion(input: ProcessoSetupCompletionInp
     { id: "descricao", label: "Descrição", done: filled(processo.descricao_processo) },
     { id: "familia", label: "Família", done: filled(processo.familia_processo) },
     {
+      id: "escopo",
+      label: "Unidades e deptos.",
+      done:
+        Boolean(processo.todas_filiais_ativas && (processo.setor_ids?.length ?? 0) > 0) ||
+        Boolean((processo.filial_ids?.length ?? 0) > 0 && (processo.setor_ids?.length ?? 0) > 0),
+    },
+    {
       id: "instancias",
       label: "Melhorias",
       done: instanciaCount > 0,

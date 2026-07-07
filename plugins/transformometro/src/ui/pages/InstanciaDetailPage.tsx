@@ -49,6 +49,7 @@ import {
 } from "../../utils/processoDetailTables";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
+import { processoEscopoFromEntity } from "../processos/processoEscopo";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
 import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
@@ -347,6 +348,7 @@ export function InstanciaDetailPage({
             instancias={[instancia]}
             selectedInstanciaId={instanciaId}
             options={options}
+            processoEscopo={processo ? processoEscopoFromEntity(processo) : null}
             instanciasComRevisao={revisoes.length > 0 ? [instanciaId] : []}
             onSelect={() => undefined}
             onCreate={async (payload) => {

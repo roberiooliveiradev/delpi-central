@@ -662,6 +662,19 @@
   grid-column: 1 / -1;
 }
 
+.dashboard-transformometro .tm-inst-form--spaced {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ds-border-subtle);
+}
+
+.dashboard-transformometro .ds-subsection-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ds-text);
+}
+
 .dashboard-transformometro .tm-instancia-unidade {
   display: flex;
   flex-direction: column;

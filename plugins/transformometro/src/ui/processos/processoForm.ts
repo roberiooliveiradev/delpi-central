@@ -1,4 +1,10 @@
 import type { Processo } from "../../data/api/transformometroApi";
+import {
+  emptyProcessoEscopo,
+  processoEscopoFromEntity,
+  processoEscopoPayload,
+  type ProcessoEscopoState,
+} from "./processoEscopo";
 
 export type ProcessoFormState = {
   nome_processo: string;
@@ -10,12 +16,14 @@ export type ProcessoFormState = {
   objetivo_processo: string;
   familia_processo: string;
   agrupador_ferramenta: string;
+  escopo: ProcessoEscopoState;
 };
 
 export function emptyProcessoForm(): ProcessoFormState {
+  const defaultFilial = "01";
   return {
     nome_processo: "",
-    filial_id: "01",
+    filial_id: defaultFilial,
     setor_id: "engenharia",
     status_processo: "ativo",
     descricao_processo: "",
@@ -23,6 +31,7 @@ export function emptyProcessoForm(): ProcessoFormState {
     objetivo_processo: "",
     familia_processo: "",
     agrupador_ferramenta: "",
+    escopo: emptyProcessoEscopo(defaultFilial),
   };
 }
 
@@ -37,6 +46,7 @@ export function processoFormFromEntity(processo: Processo): ProcessoFormState {
     objetivo_processo: processo.objetivo_processo ?? "",
     familia_processo: processo.familia_processo ?? "",
     agrupador_ferramenta: processo.agrupador_ferramenta ?? "",
+    escopo: processoEscopoFromEntity(processo),
   };
 }
 
@@ -53,6 +63,7 @@ export function masterPayloadFromProcessoForm(form: ProcessoFormState): Partial<
     objetivo_processo: form.objetivo_processo.trim() || undefined,
     familia_processo: form.familia_processo.trim() || undefined,
     agrupador_ferramenta: form.agrupador_ferramenta.trim() || undefined,
+    ...processoEscopoPayload(form.escopo),
   };
 }
 

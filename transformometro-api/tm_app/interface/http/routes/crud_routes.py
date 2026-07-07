@@ -32,7 +32,11 @@ from tm_app.infrastructure.persistence.repositories.investimento_repository impo
     InvestimentoRepository,
 )
 from tm_app.infrastructure.persistence.repositories.medicao_repository import MedicaoRepository
+from tm_app.domain.services.processo_escopo_service import ProcessoEscopoDomainError
 from tm_app.domain.services.processo_instancia_service import ProcessoInstanciaDomainError
+from tm_app.infrastructure.persistence.repositories.processo_escopo_repository import (
+    ProcessoEscopoRepository,
+)
 from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
     ProcessoInstanciaRepository,
 )
@@ -170,6 +174,67 @@ def _active_filial_codigos() -> set[str]:
     if active:
         return active
     return set(FILIAIS.keys())
+
+
+def _has_processo_escopo(body: ProcessoCreateBody | ProcessoUpdateBody) -> bool:
+    if isinstance(body, ProcessoUpdateBody):
+        return (
+            body.todas_filiais_ativas is not None
+            or body.filial_ids is not None
+            or body.setor_ids is not None
+        )
+    return bool(
+        body.todas_filiais_ativas
+        or body.filial_ids
+        or body.setor_ids
+    )
+
+
+def _escopo_values(body: ProcessoCreateBody | ProcessoUpdateBody) -> tuple[bool, list[str], list[str]]:
+    if isinstance(body, ProcessoUpdateBody):
+        return (
+            bool(body.todas_filiais_ativas),
+            list(body.filial_ids or []),
+            list(body.setor_ids or []),
+        )
+    return (
+        bool(body.todas_filiais_ativas),
+        list(body.filial_ids or []),
+        list(body.setor_ids or []),
+    )
+
+
+def _validate_processo_escopo_access(
+    request: Request,
+    body: ProcessoCreateBody | ProcessoUpdateBody,
+) -> object | None:
+    if not _has_processo_escopo(body):
+        return None
+    todas, filial_ids, _ = _escopo_values(body)
+    if todas:
+        return None
+    for filial_id in filial_ids:
+        if err := check_manage_filial_access(request, filial_id):
+            return err
+    return None
+
+
+def _save_processo_escopo(
+    processo_id: str,
+    body: ProcessoCreateBody | ProcessoUpdateBody,
+    *,
+    auto_commit: bool = True,
+) -> None:
+    if not _has_processo_escopo(body):
+        return
+    todas, filial_ids, setor_ids = _escopo_values(body)
+    ProcessoEscopoRepository().save_escopo(
+        processo_id,
+        todas_filiais_ativas=todas,
+        filial_ids=filial_ids,
+        setor_ids=setor_ids,
+        auto_commit=auto_commit,
+    )
 
 
 def _validate_processo_body(body: ProcessoCreateBody):
@@ -328,11 +393,14 @@ def create_processo(body: ProcessoCreateBody, request: Request):
     if create_instancia:
         if err := check_manage_filial_access(request, filial_id):
             return err
+    if err := _validate_processo_escopo_access(request, body):
+        return err
     try:
         _validate_processo_body(body)
         repo = ProcessoRepository()
         row = repo.create(_processo_master_payload(body))
         pid = str(row["processo_id"])
+        _save_processo_escopo(pid, body)
         if create_instancia:
             instancia = ProcessoInstanciaRepository().create(
                 {
@@ -342,6 +410,10 @@ def create_processo(body: ProcessoCreateBody, request: Request):
                 }
             )
             row = repo.get(pid) or {**row, **instancia}
+        else:
+            row = repo.get(pid) or row
+    except ProcessoEscopoDomainError as exc:
+        return fail(str(exc), 400)
     except ProcessoInstanciaDomainError as exc:
         return fail(str(exc), 400)
     except ValueError as exc:
@@ -551,9 +623,16 @@ def duplicate_instancia(instancia_id: str, body: InstanciaDuplicateBody, request
 
 @router.put("/processos/{processo_id}")
 def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request):
+    if err := _validate_processo_escopo_access(request, body):
+        return err
     try:
         assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
         row = ProcessoRepository().update(processo_id, _processo_master_payload(body))
+        if row:
+            _save_processo_escopo(processo_id, body)
+            row = ProcessoRepository().get(processo_id)
+    except ProcessoEscopoDomainError as exc:
+        return fail(str(exc), 400)
     except ValueError as exc:
         return fail(str(exc), 400)
 

@@ -19,6 +19,10 @@ import {
   MELHORIA_PRIORIDADE_OPTIONS,
   type MelhoriaFormFields,
 } from "../../constants/melhoriaForm";
+import {
+  hasProcessoEscopo,
+  type ProcessoEscopoState,
+} from "./processoEscopo";
 import { filterSetoresByFilial } from "../../utils/setores";
 import { renderTableStatus } from "../../utils/tablePresentation";
 
@@ -56,6 +60,7 @@ type Props = {
   instancias: ProcessoInstancia[];
   selectedInstanciaId: string | null;
   options: OptionsData;
+  processoEscopo?: ProcessoEscopoState | null;
   busy?: boolean;
   initialShowForm?: boolean;
   /** IDs de instâncias que já possuem revisões (bloqueiam a troca de filial). */
@@ -130,6 +135,7 @@ export function ProcessoInstanciasPanel({
   instancias,
   selectedInstanciaId,
   options,
+  processoEscopo = null,
   busy = false,
   initialShowForm = false,
   instanciasComRevisao = [],
@@ -163,6 +169,8 @@ export function ProcessoInstanciasPanel({
   const [dataAlvoGoLive, setDataAlvoGoLive] = useState("");
   const [prioridade, setPrioridade] = useState("media");
   const [saving, setSaving] = useState(false);
+  const processoTemEscopo = hasProcessoEscopo(processoEscopo);
+  const [usarEscopoProcesso, setUsarEscopoProcesso] = useState(processoTemEscopo);
 
   const editingInstancia = useMemo(
     () => instancias.find((row) => row.instancia_id === editingInstanciaId) ?? null,
@@ -286,12 +294,28 @@ export function ProcessoInstanciasPanel({
     onCancelEdit?.();
   }
 
+  function applyProcessoEscopo() {
+    if (!processoEscopo) return;
+    setTodasFiliais(processoEscopo.todas_filiais_ativas);
+    setFilialIds(processoEscopo.todas_filiais_ativas ? [] : [...processoEscopo.filial_ids]);
+    setSetorIds([...processoEscopo.setor_ids]);
+    if (!processoEscopo.todas_filiais_ativas && processoEscopo.filial_ids[0]) {
+      setFilialId(processoEscopo.filial_ids[0]);
+    }
+  }
+
   function openCreateForm() {
     resetForm();
     const firstFilial = options.filiais[0]?.id ?? "01";
     setFilialId(firstFilial);
     setFilialIds(firstFilial ? [firstFilial] : []);
     setSetorIds(defaultSetorIds(options.setores, firstFilial));
+    setUsarEscopoProcesso(processoTemEscopo);
+    if (processoTemEscopo && processoEscopo) {
+      setTodasFiliais(processoEscopo.todas_filiais_ativas);
+      setFilialIds(processoEscopo.todas_filiais_ativas ? [] : [...processoEscopo.filial_ids]);
+      setSetorIds([...processoEscopo.setor_ids]);
+    }
     setShowForm(true);
   }
 
@@ -778,35 +802,78 @@ export function ProcessoInstanciasPanel({
             <div className="tm-inst-form">
               {isCreate ? (
                 <>
-                  <div className="ds-filter-box ds-filter-box--checkbox">
-                    <label className="ds-check-label">
-                      <input
-                        type="checkbox"
-                        checked={todasFiliais}
-                        onChange={(e) => {
-                          const next = e.target.checked;
-                          setTodasFiliais(next);
-                          if (!next) {
-                            const firstFilial = filialIds[0] ?? options.filiais[0]?.id ?? "01";
-                            setSetorIds(defaultSetorIds(options.setores, firstFilial));
-                          }
-                        }}
-                      />
-                      <span>Todas as unidades ativas (melhoria multi-unidade)</span>
-                      <HelpTooltip
-                        content={multiplicadorHint(activeFilialCount)}
-                        ariaLabel="Ajuda: Instância multi-unidade"
-                      />
-                    </label>
-                  </div>
-
-                  {todasFiliais ? (
-                    <p className="tm-instancia-multi-banner">{multiplicadorHint(activeFilialCount)}</p>
+                  {processoTemEscopo ? (
+                    <div className="ds-filter-box ds-filter-box--checkbox tm-inst-form__field--full">
+                      <label className="ds-check-label">
+                        <input
+                          type="checkbox"
+                          checked={usarEscopoProcesso}
+                          onChange={(event) => {
+                            const next = event.target.checked;
+                            setUsarEscopoProcesso(next);
+                            if (next) {
+                              applyProcessoEscopo();
+                            }
+                          }}
+                        />
+                        <span>Usar unidades e departamentos do processo</span>
+                      </label>
+                    </div>
                   ) : null}
 
-                  {!todasFiliais ? unidadesGrid : null}
+                  {!usarEscopoProcesso || !processoTemEscopo ? (
+                    <>
+                      <div className="ds-filter-box ds-filter-box--checkbox">
+                        <label className="ds-check-label">
+                          <input
+                            type="checkbox"
+                            checked={todasFiliais}
+                            onChange={(e) => {
+                              const next = e.target.checked;
+                              setTodasFiliais(next);
+                              if (!next) {
+                                const firstFilial = filialIds[0] ?? options.filiais[0]?.id ?? "01";
+                                setSetorIds(defaultSetorIds(options.setores, firstFilial));
+                              }
+                            }}
+                          />
+                          <span>Todas as unidades ativas (melhoria multi-unidade)</span>
+                          <HelpTooltip
+                            content={multiplicadorHint(activeFilialCount)}
+                            ariaLabel="Ajuda: Instância multi-unidade"
+                          />
+                        </label>
+                      </div>
 
-                  {setoresGrid}
+                      {todasFiliais ? (
+                        <p className="tm-instancia-multi-banner">{multiplicadorHint(activeFilialCount)}</p>
+                      ) : null}
+
+                      {!todasFiliais ? unidadesGrid : null}
+
+                      {setoresGrid}
+                    </>
+                  ) : (
+                    <>
+                      <p className="ds-hint">
+                        Escopo herdado do processo-mestre. Desmarque acima para escolher outras
+                        unidades ou departamentos nesta melhoria.
+                      </p>
+                      {todasFiliais ? (
+                        <p className="tm-instancia-multi-banner">{multiplicadorHint(activeFilialCount)}</p>
+                      ) : (
+                        <p className="ds-hint">
+                          Unidades: {filialIds.join(", ") || "—"}
+                        </p>
+                      )}
+                      <p className="ds-hint">
+                        Departamentos:{" "}
+                        {setorIds
+                          .map((id) => options.setores.find((setor) => setor.id === id)?.label ?? id)
+                          .join("; ") || "—"}
+                      </p>
+                    </>
+                  )}
 
                   {skippedFiliais.length > 0 ? (
                     <p className="ds-hint">

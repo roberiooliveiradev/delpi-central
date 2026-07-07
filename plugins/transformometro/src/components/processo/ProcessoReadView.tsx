@@ -1,14 +1,24 @@
 import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { Processo } from "../../data/api/transformometroApi";
+import { formatProcessoEscopoRead, hasProcessoEscopo } from "../../ui/processos/processoEscopo";
 
 const P = TM_HELP_TOOLTIPS.processos;
 
 type Props = {
   processo: Processo;
+  activeFilialCount?: number;
 };
 
-export function ProcessoReadView({ processo }: Props) {
+export function ProcessoReadView({ processo, activeFilialCount = 1 }: Props) {
+  const escopo = hasProcessoEscopo({
+    todas_filiais_ativas: Boolean(processo.todas_filiais_ativas),
+    filial_ids: processo.filial_ids ?? (processo.filial_id ? [processo.filial_id] : []),
+    setor_ids: processo.setor_ids ?? (processo.setor_id ? [processo.setor_id] : []),
+  })
+    ? formatProcessoEscopoRead(processo, activeFilialCount)
+    : null;
+
   return (
     <>
       <dl className="ds-dl-grid">
@@ -41,6 +51,18 @@ export function ProcessoReadView({ processo }: Props) {
             <dt><FieldLabel className="tm-field__label" label="Gestor" hint={P.gestor} /></dt>
             <dd>{processo.gestor_responsavel}</dd>
           </div>
+        ) : null}
+        {escopo ? (
+          <>
+            <div>
+              <dt><FieldLabel className="tm-field__label" label="Unidades" hint={P.unidade} /></dt>
+              <dd>{escopo.unidades}</dd>
+            </div>
+            <div>
+              <dt><FieldLabel className="tm-field__label" label="Departamentos" hint={P.setor} /></dt>
+              <dd>{escopo.departamentos}</dd>
+            </div>
+          </>
         ) : null}
       </dl>
       {processo.objetivo_processo ? (

@@ -5,6 +5,9 @@ from typing import Any
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
+from tm_app.infrastructure.persistence.repositories.processo_escopo_repository import (
+    ProcessoEscopoRepository,
+)
 
 _PROCESSO_SELECT = """
     SELECT
@@ -17,35 +20,23 @@ _PROCESSO_SELECT = """
         p.status_processo,
         p.familia_processo,
         p.agrupador_ferramenta,
+        p.todas_filiais_ativas,
         p.created_at,
         p.updated_at,
-        p.deletado,
-        pi.instancia_id,
-        f.codigo_filial AS filial_id,
-        s.codigo_setor AS setor_id
+        p.deletado
     FROM transformometro.processos p
-    LEFT JOIN LATERAL (
-        SELECT pi2.instancia_id, pi2.filial_id
-        FROM transformometro.processo_instancias pi2
-        WHERE pi2.processo_id = p.processo_id
-          AND pi2.deletado = FALSE
-        ORDER BY pi2.created_at ASC
-        LIMIT 1
-    ) pi ON TRUE
-    LEFT JOIN transformometro.filiais f
-        ON f.filial_id = pi.filial_id AND f.deletado = FALSE
-    LEFT JOIN LATERAL (
-        SELECT s.codigo_setor
-        FROM transformometro.processo_instancia_setores pis
-        JOIN transformometro.setores s ON s.setor_id = pis.setor_id AND s.deletado = FALSE
-        WHERE pis.instancia_id = pi.instancia_id
-        ORDER BY s.codigo_setor ASC
-        LIMIT 1
-    ) s ON TRUE
 """
 
 
 class ProcessoRepository(PluginBaseRepository):
+    def _enrich_rows(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        escopo_repo = ProcessoEscopoRepository(connection=self._connection)
+        return [escopo_repo.enrich_row(row) for row in rows]
+
+    def _enrich_row(self, row: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not row:
+            return None
+        return ProcessoEscopoRepository(connection=self._connection).enrich_row(row)
     def next_codigo(self) -> str:
         # Inclui registros deletados: uq_processos_codigo vale para todos.
         row = self.fetch_one(
@@ -75,43 +66,64 @@ class ProcessoRepository(PluginBaseRepository):
         if filial_id:
             clauses.append(
                 """
-                EXISTS (
-                    SELECT 1
-                    FROM transformometro.processo_instancias pi_f
-                    JOIN transformometro.filiais f_f ON f_f.filial_id = pi_f.filial_id
-                    WHERE pi_f.processo_id = p.processo_id
-                      AND pi_f.deletado = FALSE
-                      AND pi_f.todas_filiais_ativas = FALSE
-                      AND f_f.codigo_filial = %s
-                      AND f_f.deletado = FALSE
-                )
-                OR EXISTS (
-                    SELECT 1
-                    FROM transformometro.processo_instancias pi_all
-                    WHERE pi_all.processo_id = p.processo_id
-                      AND pi_all.deletado = FALSE
-                      AND pi_all.todas_filiais_ativas = TRUE
+                (
+                    EXISTS (
+                        SELECT 1
+                        FROM transformometro.processo_filiais pf
+                        JOIN transformometro.filiais f_pf ON f_pf.filial_id = pf.filial_id
+                        WHERE pf.processo_id = p.processo_id
+                          AND f_pf.codigo_filial = %s
+                          AND f_pf.deletado = FALSE
+                    )
+                    OR p.todas_filiais_ativas = TRUE
+                    OR EXISTS (
+                        SELECT 1
+                        FROM transformometro.processo_instancias pi_f
+                        JOIN transformometro.filiais f_f ON f_f.filial_id = pi_f.filial_id
+                        WHERE pi_f.processo_id = p.processo_id
+                          AND pi_f.deletado = FALSE
+                          AND pi_f.todas_filiais_ativas = FALSE
+                          AND f_f.codigo_filial = %s
+                          AND f_f.deletado = FALSE
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM transformometro.processo_instancias pi_all
+                        WHERE pi_all.processo_id = p.processo_id
+                          AND pi_all.deletado = FALSE
+                          AND pi_all.todas_filiais_ativas = TRUE
+                    )
                 )
                 """
             )
-            params.append(filial_id)
+            params.extend([filial_id, filial_id])
         if setor_id:
             clauses.append(
                 """
-                EXISTS (
-                    SELECT 1
-                    FROM transformometro.processo_instancias pi_s
-                    JOIN transformometro.processo_instancia_setores pis
-                        ON pis.instancia_id = pi_s.instancia_id
-                    JOIN transformometro.setores s_s ON s_s.setor_id = pis.setor_id
-                    WHERE pi_s.processo_id = p.processo_id
-                      AND pi_s.deletado = FALSE
-                      AND s_s.codigo_setor = %s
-                      AND s_s.deletado = FALSE
+                (
+                    EXISTS (
+                        SELECT 1
+                        FROM transformometro.processo_setores ps
+                        JOIN transformometro.setores s_ps ON s_ps.setor_id = ps.setor_id
+                        WHERE ps.processo_id = p.processo_id
+                          AND s_ps.codigo_setor = %s
+                          AND s_ps.deletado = FALSE
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM transformometro.processo_instancias pi_s
+                        JOIN transformometro.processo_instancia_setores pis
+                            ON pis.instancia_id = pi_s.instancia_id
+                        JOIN transformometro.setores s_s ON s_s.setor_id = pis.setor_id
+                        WHERE pi_s.processo_id = p.processo_id
+                          AND pi_s.deletado = FALSE
+                          AND s_s.codigo_setor = %s
+                          AND s_s.deletado = FALSE
+                    )
                 )
                 """
             )
-            params.append(setor_id)
+            params.extend([setor_id, setor_id])
         if status_processo:
             clauses.append("p.status_processo = %s")
             params.append(status_processo)
@@ -126,22 +138,26 @@ class ProcessoRepository(PluginBaseRepository):
             params.extend([like, like, like])
 
         where_sql = " AND ".join(clauses)
-        return self.fetch_all(
+        return self._enrich_rows(
+            self.fetch_all(
             f"""
             {_PROCESSO_SELECT}
             WHERE {where_sql}
             ORDER BY p.updated_at DESC, p.nome_processo ASC
             """,
             tuple(params),
+            )
         )
 
     def get(self, processo_id: str) -> dict[str, Any] | None:
-        return self.fetch_one(
+        return self._enrich_row(
+            self.fetch_one(
             f"""
             {_PROCESSO_SELECT}
             WHERE p.processo_id = %s AND p.deletado = FALSE
             """,
             (processo_id,),
+            )
         )
 
     def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
@@ -155,7 +171,8 @@ class ProcessoRepository(PluginBaseRepository):
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING processo_id, codigo_processo, nome_processo, descricao_processo,
                       gestor_responsavel, objetivo_processo, status_processo,
-                      familia_processo, agrupador_ferramenta, created_at, updated_at, deletado
+                      familia_processo, agrupador_ferramenta, todas_filiais_ativas,
+                      created_at, updated_at, deletado
             """,
             (
                 codigo,

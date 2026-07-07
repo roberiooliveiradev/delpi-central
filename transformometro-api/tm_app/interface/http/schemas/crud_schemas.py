@@ -5,7 +5,37 @@ from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 
 
-class ProcessoCreateBody(BaseModel):
+class ProcessoEscopoFields(BaseModel):
+    todas_filiais_ativas: bool = Field(
+        default=False,
+        description="Processo válido em todas as filiais ativas.",
+    )
+    filial_ids: list[str] = Field(
+        default_factory=list,
+        description="Unidades amarradas ao processo-mestre.",
+    )
+    setor_ids: list[str] = Field(
+        default_factory=list,
+        description="Departamentos amarrados ao processo-mestre.",
+    )
+
+    @model_validator(mode="after")
+    def _validate_escopo(self) -> "ProcessoEscopoFields":
+        if self.todas_filiais_ativas:
+            if self.filial_ids:
+                raise ValueError("Não informe filial_ids quando todas_filiais_ativas=true.")
+            if not self.setor_ids:
+                raise ValueError("Informe ao menos um departamento.")
+            return self
+        if self.filial_ids or self.setor_ids:
+            if not self.filial_ids:
+                raise ValueError("Informe ao menos uma unidade ou marque todas_filiais_ativas.")
+            if not self.setor_ids:
+                raise ValueError("Informe ao menos um departamento.")
+        return self
+
+
+class ProcessoCreateBody(ProcessoEscopoFields):
     nome_processo: str = Field(min_length=1, max_length=500)
     filial_id: Optional[str] = Field(
         default=None,
@@ -35,6 +65,38 @@ class ProcessoUpdateBody(BaseModel):
     codigo_processo: Optional[str] = None
     familia_processo: Optional[str] = Field(default=None, max_length=64)
     agrupador_ferramenta: Optional[str] = Field(default=None, max_length=128)
+    todas_filiais_ativas: Optional[bool] = Field(
+        default=None,
+        description="Processo válido em todas as filiais ativas.",
+    )
+    filial_ids: Optional[list[str]] = Field(
+        default=None,
+        description="Unidades amarradas ao processo-mestre.",
+    )
+    setor_ids: Optional[list[str]] = Field(
+        default=None,
+        description="Departamentos amarrados ao processo-mestre.",
+    )
+
+    @model_validator(mode="after")
+    def _validate_escopo(self) -> "ProcessoUpdateBody":
+        if self.todas_filiais_ativas is None and self.filial_ids is None and self.setor_ids is None:
+            return self
+        todas = bool(self.todas_filiais_ativas)
+        filiais = self.filial_ids or []
+        setores = self.setor_ids or []
+        if todas:
+            if filiais:
+                raise ValueError("Não informe filial_ids quando todas_filiais_ativas=true.")
+            if not setores:
+                raise ValueError("Informe ao menos um departamento.")
+            return self
+        if filiais or setores:
+            if not filiais:
+                raise ValueError("Informe ao menos uma unidade ou marque todas_filiais_ativas.")
+            if not setores:
+                raise ValueError("Informe ao menos um departamento.")
+        return self
 
 
 class ProcessoDuplicateBody(BaseModel):

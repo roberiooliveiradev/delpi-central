@@ -83,12 +83,29 @@ async function downloadFile(
   window.URL.revokeObjectURL(url);
 }
 
+export type ProcessoInstanciaSetor = {
+  setor_id: string;
+  codigo_setor?: string;
+  nome_setor?: string;
+};
+
+export type ProcessoFilialRef = {
+  filial_id: string;
+  codigo_filial?: string;
+  nome_filial?: string;
+};
+
 export type Processo = {
   processo_id: string;
   codigo_processo: string;
   nome_processo: string;
-  filial_id: string;
-  setor_id: string;
+  filial_id?: string;
+  setor_id?: string;
+  todas_filiais_ativas?: boolean;
+  filial_ids?: string[];
+  setor_ids?: string[];
+  filiais?: ProcessoFilialRef[];
+  setores?: ProcessoInstanciaSetor[];
   status_processo: string;
   descricao_processo?: string | null;
   gestor_responsavel?: string | null;
@@ -163,12 +180,6 @@ export type Filial = {
   codigo_filial?: string;
   nome_filial: string;
   status_filial: string;
-};
-
-export type ProcessoInstanciaSetor = {
-  setor_id: string;
-  codigo_setor?: string;
-  nome_setor?: string;
 };
 
 export type ProcessoInstancia = {

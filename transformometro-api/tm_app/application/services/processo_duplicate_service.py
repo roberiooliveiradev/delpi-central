@@ -29,7 +29,9 @@ from tm_app.infrastructure.persistence.repositories.processo_diagram_repository 
 from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
     ProcessoInstanciaRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.processo_escopo_repository import (
+    ProcessoEscopoRepository,
+)
 from tm_app.infrastructure.persistence.repositories.recurso_repository import VinculoRepository
 from tm_app.infrastructure.persistence.repositories.revisao_decomposicao_overlay_repository import (
     RevisaoDecomposicaoOverlayRepository,
@@ -106,6 +108,7 @@ class ProcessoDuplicateService:
     ) -> dict[str, Any]:
         conn = get_plugins_connection()
         proc_repo = ProcessoRepository(connection=conn)
+        escopo_repo = ProcessoEscopoRepository(connection=conn)
         inst_repo = ProcessoInstanciaRepository(connection=conn)
         rev_repo = RevisaoRepository(connection=conn)
         med_repo = MedicaoRepository(connection=conn)
@@ -142,6 +145,16 @@ class ProcessoDuplicateService:
                 auto_commit=False,
             )
             new_processo_id = str(new_processo["processo_id"])
+
+            source_escopo = escopo_repo.get_escopo(processo_id)
+            if source_escopo.get("setor_ids") or source_escopo.get("todas_filiais_ativas"):
+                escopo_repo.save_escopo(
+                    new_processo_id,
+                    todas_filiais_ativas=bool(source_escopo.get("todas_filiais_ativas")),
+                    filial_ids=source_escopo.get("filial_ids"),
+                    setor_ids=source_escopo.get("setor_ids"),
+                    auto_commit=False,
+                )
 
             source_diagram = diagram_repo.get(processo_id)
             if source_diagram:

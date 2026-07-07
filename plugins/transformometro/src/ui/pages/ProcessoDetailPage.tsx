@@ -45,6 +45,7 @@ import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
 import { buildInstanciaPath } from "../../utils/routeParser";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
+import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
 import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
@@ -54,6 +55,7 @@ import {
   processoFormFromEntity,
   type ProcessoFormState,
 } from "../processos/processoForm";
+import { processoEscopoFromEntity } from "../processos/processoEscopo";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -310,9 +312,9 @@ export function ProcessoDetailPage({
         }}
         onSave={() => void handleSaveProcesso()}
         saving={savingProcesso}
-        readContent={<ProcessoReadView processo={processo} />}
+        readContent={<ProcessoReadView processo={processo} activeFilialCount={options?.filiais.length ?? 1} />}
         editContent={
-          processoForm ? (
+          processoForm && options ? (
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -326,6 +328,19 @@ export function ProcessoDetailPage({
                 showInstanciaFields={false}
                 onChange={setProcessoForm}
               />
+              <div className="tm-inst-form tm-inst-form--spaced">
+                <h3 className="ds-subsection-title">Unidades e departamentos do processo</h3>
+                <p className="ds-hint">
+                  Escopo operacional do processo-mestre. Ao criar melhorias, você pode replicar esta
+                  amarração ou definir outra.
+                </p>
+                <ProcessoEscopoFields
+                  value={processoForm.escopo}
+                  options={options}
+                  onChange={(escopo) => setProcessoForm({ ...processoForm, escopo })}
+                  activeFilialCount={options.filiais.length}
+                />
+              </div>
             </form>
           ) : null
         }
@@ -424,6 +439,7 @@ export function ProcessoDetailPage({
         instancias={instancias}
         selectedInstanciaId={null}
         options={options}
+        processoEscopo={processo ? processoEscopoFromEntity(processo) : null}
         busy={refreshing}
         initialShowForm={openInstanciaForm}
         instanciasComRevisao={instanciasComRevisao}
