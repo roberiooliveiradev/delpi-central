@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildAdminPresentationWsUrl,
   parseComunicadoConfig,
@@ -51,22 +51,13 @@ import { ComunicadoComposerCanvas } from "../components/ComunicadoComposer";
 import { ComunicadoEditorProvider, useComunicadoEditor } from "../components/comunicadoEditorContext";
 import { ComunicadoEditorRibbon } from "../components/ComunicadoEditorRibbon";
 import {
-  ComunicadoElementInspector,
-  ComunicadoSlideBackgroundPanel,
-  DeckRibbonShell,
+  DeckElementSidePanel,
 } from "../components/deck";
-import { DeckSettingsTabs } from "../components/DeckSettingsTabs";
+import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
-import { SlideDeckRibbon } from "../components/SlideDeckRibbon";
 import { SlideStagePreview } from "../components/SlideStagePreview";
 
 type DeckSettingsProps = {
-  playlist: Playlist;
-  slide: Slide | null;
-  catalog: NativeScreenCatalogItem[];
-  branchScope: BranchScope | null;
-  adminLabels: Record<string, string>;
-  onSavePlaylistSettings: (field: string, value: string | number) => void;
   onSaveSlide: (
     slide: Slide,
     payload: {
@@ -76,21 +67,7 @@ type DeckSettingsProps = {
       externalUrl?: string;
     },
   ) => void;
-  ribbon?: ReactNode;
 };
-
-function CustomDeckSettingsTabs({ adminLabels, ...props }: DeckSettingsProps) {
-  const { selectedId } = useComunicadoEditor();
-  return (
-    <DeckSettingsTabs
-      {...props}
-      showElementTab
-      elementTab={<ComunicadoElementInspector labels={adminLabels} />}
-      slideTabExtra={<ComunicadoSlideBackgroundPanel labels={adminLabels} />}
-      selectedElementId={selectedId}
-    />
-  );
-}
 
 type Props = {
   playlistId: string;
@@ -422,20 +399,28 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const admin = uiContent?.admin ?? {};
   const isCustomSlide = selectedSlide?.nativeScreenKey === "custom_message";
 
-  const deckRibbon = (
-    <DeckRibbonShell>
-      <SlideDeckRibbon
-        slides={slides}
-        selectedSlide={selectedSlide}
-        onAdd={() => setAddModalOpen(true)}
-        onSelect={setSelectedSlideId}
-        onDuplicate={(slide) => void handleDuplicateSlide(slide)}
-        onToggleActive={(slide) => void handleToggleSlideActive(slide)}
-        onRemove={(slide) => void handleRemoveSlide(slide)}
-      />
-      {isCustomSlide ? <ComunicadoEditorRibbon labels={admin} /> : null}
-    </DeckRibbonShell>
-  );
+  const slideDeckProps = {
+    slides,
+    selectedSlide,
+    onAdd: () => setAddModalOpen(true),
+    onSelect: setSelectedSlideId,
+    onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
+    onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
+    onRemove: (slide: Slide) => void handleRemoveSlide(slide),
+  };
+
+  const chromeProps = {
+    playlist,
+    slide: selectedSlide,
+    catalog,
+    branchScope,
+    isCustomSlide,
+    adminLabels: admin,
+    slideDeck: slideDeckProps,
+    onSavePlaylistSettings: (field: string, value: string | number) => void saveSettings(field, value),
+    onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
+      void handleSaveSlide(slide, payload),
+  };
 
   const workspaceProps = {
     slides,
@@ -448,16 +433,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     onDragStart: setDragIndex,
     onDrop: (index: number) => void handleDropSlide(index),
     onDragEnd: () => setDragIndex(null),
-  };
-
-  const settingsProps: DeckSettingsProps = {
-    playlist,
-    slide: selectedSlide,
-    catalog,
-    branchScope,
-    adminLabels: admin,
-    onSavePlaylistSettings: (field, value) => void saveSettings(field, value),
-    onSaveSlide: (slide, payload) => void handleSaveSlide(slide, payload),
   };
 
   return (
@@ -522,10 +497,11 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
           value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
-          <CustomDeckSettingsTabs {...settingsProps} ribbon={deckRibbon} />
+          <DeckEditorChrome {...chromeProps} />
           <DeckWorkspace
             {...workspaceProps}
             selectedSlideId={selectedSlide.id}
+            rightPanel={<DeckElementSidePanel labels={admin} />}
             stage={
               <div className="td-deck-stage__editor">
                 <ComunicadoComposerCanvas />
@@ -535,7 +511,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         </ComunicadoEditorProvider>
       ) : (
         <>
-          <DeckSettingsTabs {...settingsProps} ribbon={deckRibbon} />
+          <DeckEditorChrome {...chromeProps} />
           <DeckWorkspace
             {...workspaceProps}
             stage={

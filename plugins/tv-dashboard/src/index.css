@@ -933,6 +933,152 @@
   grid-template-columns: 196px minmax(0, 1fr);
 }
 
+.td-deck-side-panel {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 0;
+  min-width: 0;
+  border-radius: 16px;
+  border: 1px solid var(--td-border);
+  background: var(--td-surface);
+  overflow: hidden;
+  box-shadow: 0 10px 32px color-mix(in srgb, #000 6%, transparent);
+}
+
+.td-deck-side-panel--collapsed {
+  width: 42px;
+}
+
+.td-deck-side-panel--open {
+  min-width: 0;
+}
+
+.td-deck-side-panel__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 42px;
+  padding: 14px 6px;
+  border: none;
+  border-right: 1px solid var(--td-border);
+  background: color-mix(in srgb, var(--td-text) 3%, var(--td-surface));
+  color: var(--td-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.td-deck-side-panel__tab:hover {
+  color: var(--td-text);
+  background: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
+}
+
+.td-deck-side-panel--open .td-deck-side-panel__tab {
+  color: var(--td-accent);
+}
+
+.td-deck-side-panel__tab-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.td-deck-side-panel__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.td-deck-side-panel__header {
+  flex-shrink: 0;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--td-border);
+}
+
+.td-deck-side-panel__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--td-text);
+}
+
+.td-deck-chrome {
+  margin-bottom: 12px;
+  border: 1px solid var(--td-border);
+  border-radius: 14px;
+  background: var(--td-surface);
+  overflow: hidden;
+  box-shadow: 0 4px 16px color-mix(in srgb, #000 4%, transparent);
+}
+
+.td-deck-chrome__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--td-border);
+  background: color-mix(in srgb, var(--td-text) 3%, var(--td-surface));
+}
+
+.td-deck-chrome__tab-cell {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.td-deck-chrome__tab {
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--td-muted);
+  background: transparent;
+  cursor: help;
+  white-space: nowrap;
+}
+
+.td-deck-chrome__tab:hover:not(:disabled) {
+  color: var(--td-text);
+  background: color-mix(in srgb, var(--td-accent) 6%, transparent);
+}
+
+.td-deck-chrome__tab--active {
+  color: var(--td-text);
+  border-bottom-color: var(--td-accent);
+  background: var(--td-surface);
+}
+
+.td-deck-chrome__tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.td-deck-chrome__ribbon .td-deck-ribbon {
+  border-bottom: 1px solid var(--td-border);
+}
+
+.td-deck-chrome__panel {
+  padding: 14px 16px;
+}
+
+.td-deck-ribbon__hint {
+  margin: 0;
+  padding: 8px 4px;
+  max-width: 280px;
+  font-size: 12px;
+}
+
 .td-deck-tabs {
   margin-bottom: 12px;
   border: 1px solid var(--td-border);
@@ -1279,6 +1425,19 @@
   max-height: calc(100vh - 220px);
 }
 
+.td-deck-inspector--side {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  padding: 12px 14px 14px;
+  max-height: none;
+  background: transparent;
+}
+
+.td-deck-side-panel .td-deck-inspector--side {
+  overflow-y: auto;
+}
+
 .td-deck-inspector__section + .td-deck-inspector__section {
   margin-top: 18px;
   padding-top: 18px;
@@ -1365,6 +1524,26 @@
 
   .td-deck__workspace {
     grid-template-columns: 1fr;
+  }
+
+  .td-deck-side-panel--open {
+    grid-column: 1 / -1;
+    max-height: 320px;
+  }
+
+  .td-deck-side-panel--collapsed {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    height: auto;
+    max-height: 200px;
+    box-shadow: 0 8px 24px color-mix(in srgb, #000 20%, transparent);
+  }
+
+  .td-deck-stage {
+    position: relative;
   }
 
   .td-deck-filmstrip__list {

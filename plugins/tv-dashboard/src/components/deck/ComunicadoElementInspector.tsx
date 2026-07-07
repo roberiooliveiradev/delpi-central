@@ -24,7 +24,13 @@ function formatFrameValue(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
 
-export function ComunicadoElementInspector({ labels = {} }: { labels?: Labels }) {
+export function ComunicadoElementInspector({
+  labels = {},
+  placement = "default",
+}: {
+  labels?: Labels;
+  placement?: "default" | "side";
+}) {
   const {
     selected,
     uploading,
@@ -41,7 +47,7 @@ export function ComunicadoElementInspector({ labels = {} }: { labels?: Labels })
 
   if (!selected) {
     return (
-      <DeckInspectorLayout>
+      <DeckInspectorLayout variant={placement}>
         <p className="td-subtitle td-deck-inspector__empty">
           Selecione um elemento no palco ou arraste para posicionar.
         </p>
@@ -50,7 +56,7 @@ export function ComunicadoElementInspector({ labels = {} }: { labels?: Labels })
   }
 
   return (
-    <DeckInspectorLayout>
+    <DeckInspectorLayout variant={placement}>
       <DeckPropertySection
         title={labels.comunicadoBlocks ?? "Elemento selecionado"}
         hint={E.panel}

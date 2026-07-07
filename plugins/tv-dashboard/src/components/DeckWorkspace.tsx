@@ -15,6 +15,7 @@ type Props = {
   onDrop: (index: number) => void;
   onDragEnd: () => void;
   stage: ReactNode;
+  rightPanel?: ReactNode;
 };
 
 export function DeckWorkspace({
@@ -29,9 +30,17 @@ export function DeckWorkspace({
   onDrop,
   onDragEnd,
   stage,
+  rightPanel,
 }: Props) {
   return (
-    <div className="td-deck__workspace td-deck__workspace--wide">
+    <div
+      className={[
+        "td-deck__workspace",
+        rightPanel ? null : "td-deck__workspace--wide",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <SlideFilmstrip
         slides={slides}
         playlistId={playlistId}
@@ -47,6 +56,7 @@ export function DeckWorkspace({
       <main className="td-deck-stage" aria-label="Palco da tela selecionada">
         {stage}
       </main>
+      {rightPanel}
     </div>
   );
 }

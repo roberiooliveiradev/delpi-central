@@ -32,6 +32,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     playlist:
       "Parâmetros globais da apresentação: resolução da TV, transição entre telas, duração padrão e link público.",
   },
+  ribbonTabs: {
+    home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
+    insert: "Insira elementos no slide personalizado: títulos, textos, imagens, vídeos e formas.",
+    format: "Formate o slide e o elemento selecionado: fundo, fonte, forma, camadas e mídia.",
+  },
   fields: {
     slideTitle: "Nome curto para identificar a tela no filmstrip e nos relatórios internos.",
     slideDuration:
