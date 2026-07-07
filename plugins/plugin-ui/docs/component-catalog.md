@@ -188,6 +188,23 @@ Feedback de carregamento com spinner, barra de progresso (determinada ou indeter
 
 Helpers: `loadingActivityBemClasses(prefix, { withCopyWrapper? })` e `createDashboardLoadingActivityCard`.
 
+### `Pagination` + `TablePageSizeSelect`
+
+Rodapé de tabela com navegação, páginas visíveis (reticências), «Ir para» e seletor de itens por página.
+
+| Prop / export | Tipo | Descrição |
+|---------------|------|-----------|
+| `page` / `totalPages` / `total` | `number` | Estado da paginação |
+| `onPageChange` | `(page: number) => void` | Callback de página |
+| `classNames` | `PaginationClassNames` | BEM do plugin |
+| `labels` | `PaginationLabels` | Textos PT (Anterior, Próxima, info, erros de jump) |
+| `hints` | `PaginationHints?` | Conteúdo dos `HelpTooltip` |
+| `TABLE_PAGE_SIZE_OPTIONS` | `readonly number[]` | Opções default `[10, 25, 50, 100]` |
+
+Utils: `buildVisiblePageItems`, `parsePageJumpInput` em `src/utils/paginationPages.ts`.
+
+Helpers: `paginationBemClasses(prefix)` e `createDashboardPaginationKit({ prefix, labels, hints, tablePageSizeLabels })` — wrapper fino nos dashboards (~50 linhas) com textos de `helpTooltips.pagination`.
+
 ---
 
 ## Estilos base (`styles.css`)

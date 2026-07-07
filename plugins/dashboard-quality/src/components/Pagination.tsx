@@ -1,152 +1,52 @@
-import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
+  createDashboardPaginationKit,
   TABLE_PAGE_SIZE_OPTIONS,
-  buildVisiblePageItems,
-} from "../utils/paginationPages";
-import { HelpTooltip } from "@delpi/plugin-ui";
-import { PaginationPageJump } from "./PaginationPageJump";
+  type PageJumpValidationReason,
+} from "@delpi/plugin-ui";
 
-type TablePageSizeSelectProps = {
-  pageSize: number;
-  pageSizeOptions?: readonly number[];
-  onPageSizeChange: (pageSize: number) => void;
-};
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
-export function TablePageSizeSelect({
-  pageSize,
-  pageSizeOptions = TABLE_PAGE_SIZE_OPTIONS,
-  onPageSizeChange,
-}: TablePageSizeSelectProps) {
-  return (
-    <label className="dq-table-page-size">
-      <span className="dq-table-page-size__label">Itens por página</span>
-      <select
-        className="dq-table-page-size__select"
-        value={pageSize}
-        onChange={(event) => onPageSizeChange(Number(event.target.value))}
-        aria-label="Quantidade de itens por página"
-      >
-        {pageSizeOptions.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      <HelpTooltip
-        content={QUALITY_HELP_TOOLTIPS.pagination.pageSize}
-        ariaLabel="Ajuda: itens por página"
-        className="dq-table-page-size__help"
-      />
-    </label>
-  );
-}
+const P = QUALITY_HELP_TOOLTIPS.pagination;
 
-type PaginationProps = {
-  page: number;
-  pageSize: number;
-  total: number;
-  onPageChange: (page: number) => void;
-};
+const kit = createDashboardPaginationKit({
+  prefix: "dq",
+  hints: {
+    pageSize: P.pageSize,
+    previous: P.previous,
+    next: P.next,
+    info: P.info,
+    jump: P.jump,
+  },
+  tablePageSizeLabels: {
+    label: "Itens por página",
+    selectAriaLabel: "Quantidade de itens por página",
+  },
+  labels: {
+    navigationAriaLabel: "Paginação da tabela",
+    pagesAriaLabel: "Páginas",
+    previous: "Anterior",
+    next: "Próxima",
+    info: ({ rangeStart, rangeEnd, total, page, totalPages }) =>
+      `Exibindo ${rangeStart}–${rangeEnd} de ${total} · Página ${page} de ${totalPages}`,
+    jumpLabel: "Ir para",
+    jumpInputAriaLabel: "Ir para página",
+    jumpError: (reason: PageJumpValidationReason, totalPages: number) => {
+      switch (reason) {
+        case "empty":
+          return P.jumpEmpty;
+        case "invalid":
+          return P.jumpInvalid;
+        case "below_min":
+          return P.jumpBelowMin;
+        case "above_max":
+          return `A página máxima é ${totalPages}.`;
+        default:
+          return "";
+      }
+    },
+  },
+});
 
-export function Pagination({
-  page,
-  pageSize,
-  total,
-  onPageChange,
-}: PaginationProps) {
-  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
-  const pageItems = buildVisiblePageItems(page, totalPages);
-  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const rangeEnd = Math.min(page * pageSize, total);
-
-  if (total === 0) return null;
-
-  return (
-    <div className="dq-pagination" role="navigation" aria-label="Paginação da tabela">
-      <div className="dq-pagination__controls">
-        <div className="dq-pagination__action">
-          <button
-            type="button"
-            className="dq-ghost-btn"
-            disabled={!canPrev}
-            onClick={() => onPageChange(page - 1)}
-            aria-disabled={!canPrev}
-          >
-            Anterior
-          </button>
-          <HelpTooltip
-            content={QUALITY_HELP_TOOLTIPS.pagination.previous}
-            ariaLabel="Ajuda: página anterior"
-            className="dq-pagination__action-help"
-          />
-        </div>
-
-        {totalPages > 1 ? (
-          <div className="dq-pagination__pages" role="group" aria-label="Páginas">
-            {pageItems.map((item, index) =>
-              item === "ellipsis" ? (
-                <span
-                  key={`ellipsis-${index}`}
-                  className="dq-pagination__ellipsis"
-                  aria-hidden="true"
-                >
-                  …
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  type="button"
-                  className={
-                    item === page
-                      ? "dq-pagination__page dq-pagination__page--active"
-                      : "dq-pagination__page"
-                  }
-                  aria-current={item === page ? "page" : undefined}
-                  onClick={() => onPageChange(item)}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-          </div>
-        ) : null}
-
-        {totalPages > 1 ? (
-          <PaginationPageJump
-            page={page}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
-        ) : null}
-
-        <div className="dq-pagination__action">
-          <button
-            type="button"
-            className="dq-ghost-btn"
-            disabled={!canNext}
-            onClick={() => onPageChange(page + 1)}
-            aria-disabled={!canNext}
-          >
-            Próxima
-          </button>
-          <HelpTooltip
-            content={QUALITY_HELP_TOOLTIPS.pagination.next}
-            ariaLabel="Ajuda: próxima página"
-            className="dq-pagination__action-help"
-          />
-        </div>
-      </div>
-
-      <span className="dq-pagination__info">
-        Exibindo {rangeStart}–{rangeEnd} de {total} · Página {page} de {totalPages}
-        <HelpTooltip
-          content={QUALITY_HELP_TOOLTIPS.pagination.info}
-          ariaLabel="Ajuda: paginação"
-          className="dq-pagination__help"
-        />
-      </span>
-    </div>
-  );
-}
+export const Pagination = kit.Pagination;
+export const TablePageSizeSelect = kit.TablePageSizeSelect;
+export { TABLE_PAGE_SIZE_OPTIONS };

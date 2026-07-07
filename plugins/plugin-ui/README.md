@@ -82,6 +82,10 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `kpiCardBemClasses` / `createDashboardKpiCard` | Helpers BEM + factory de wrapper |
 | `LoadingActivityCard` | Spinner + barra de progresso de carregamento |
 | `loadingActivityBemClasses` / `createDashboardLoadingActivityCard` | Helpers BEM + factory |
+| `Pagination` / `TablePageSizeSelect` | Rodapé de tabela + seletor de page size |
+| `paginationBemClasses` / `createDashboardPaginationKit` | Helpers BEM + factory |
+| `buildVisiblePageItems` / `parsePageJumpInput` | Utils de paginação |
+| `TABLE_PAGE_SIZE_OPTIONS` | Opções default de itens por página |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 
@@ -94,12 +98,12 @@ src/
 ├── index.ts              # barrel público
 ├── styles.css            # classes delpi-ui-*
 └── components/
-    └── help/             # família: balões explicativos
-        ├── HelpTooltip.tsx
-        ├── FieldLabel.tsx
-        ├── SectionHintLabel.tsx
-        ├── TabHintCell.tsx
-        └── HintAction.tsx
+    ├── help/             # balões explicativos
+    ├── layout/           # ChartCard, KpiCard
+    ├── feedback/         # LoadingActivityCard
+    └── data/             # Pagination, TablePageSizeSelect
+└── utils/
+    └── paginationPages.ts
 ```
 
 ---

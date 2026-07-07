@@ -54,10 +54,10 @@ Resumo (2+ consumidores):
 
 | Componente | Ocorrências | Fase sugerida |
 |------------|-------------|---------------|
-| `KpiCard` | 15 | F2 |
-| `ChartCard` | 14 | F2 |
-| `LoadingActivityCard` | 12 | F2 |
-| `Pagination` (+ jump, page size) | 14–20 | F2 |
+| `KpiCard` | 15 | F2 ✅ |
+| `ChartCard` | 14 | F2 ✅ |
+| `LoadingActivityCard` | 12 | F2 ✅ |
+| `Pagination` (+ jump, page size) | 7 dashboards | F2 ✅ (7 dept.) |
 | `MultiSelectField` | 13 | F2 |
 | `FilterBar` | 12 | F2 |
 | `DataTable` / `DataTableSection` | ~25 | F2 (último) |
@@ -65,3 +65,22 @@ Resumo (2+ consumidores):
 | `EmptyState` | 2+ | F3/F5 |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
+
+## Status — Fase 2 (shell de dashboard)
+
+| Plugin | Pagination | ChartCard | KpiCard | LoadingActivity | Notas |
+|--------|------------|-----------|---------|-----------------|-------|
+| `dashboard-production` | ✅ | ✅ | ✅ | ✅ | Piloto F2 |
+| `dashboard-commercial` | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-engineering` | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-financial` | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-hr` | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-lmps` | — | ✅ | ✅ | ✅ | Pagination simplificado (local) |
+| `transformometro` | — | — | — | ✅ | |
+| `eficiencia-fabril` | — | — | — | ✅ | |
+| `inspecoes-entrada` | ⏳ | — | — | — | Variante local |
+| `controle-retrabalhos` | — | — | — | — | Sem `@delpi/plugin-ui` ainda |
+
+Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.

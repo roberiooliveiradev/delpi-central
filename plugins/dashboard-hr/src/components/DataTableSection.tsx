@@ -10,7 +10,7 @@ import { HelpTooltip } from "@delpi/plugin-ui";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination, TablePageSizeSelect } from "./Pagination";
-import { TABLE_PAGE_SIZE_OPTIONS } from "../utils/paginationPages";
+import { TABLE_PAGE_SIZE_OPTIONS } from "./Pagination";
 
 const DEFAULT_PAGE_SIZE = 20;
 
