@@ -8,8 +8,14 @@ import { ComunicadoElementInspector } from "./ComunicadoElementInspector";
 
 type Labels = Record<string, string>;
 
+type Props = {
+  labels?: Labels;
+  /** Dentro do card do palco (não coluna externa do grid). */
+  embedded?: boolean;
+};
+
 /** Painel colapsável à direita do palco — propriedades do elemento selecionado. */
-export function DeckElementSidePanel({ labels = {} }: { labels?: Labels }) {
+export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
   const { selectedId } = useComunicadoEditor();
   const [open, setOpen] = useState(false);
 
@@ -21,7 +27,11 @@ export function DeckElementSidePanel({ labels = {} }: { labels?: Labels }) {
 
   return (
     <aside
-      className={["td-deck-side-panel", open ? "td-deck-side-panel--open" : "td-deck-side-panel--collapsed"]
+      className={[
+        "td-deck-side-panel",
+        embedded ? "td-deck-side-panel--stage" : null,
+        open ? "td-deck-side-panel--open" : "td-deck-side-panel--collapsed",
+      ]
         .filter(Boolean)
         .join(" ")}
       aria-label="Propriedades do elemento"

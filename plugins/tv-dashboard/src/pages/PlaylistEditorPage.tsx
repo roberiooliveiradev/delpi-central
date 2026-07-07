@@ -436,60 +436,64 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   };
 
   return (
-    <div className="td-deck">
-      <div className="td-toolbar td-deck__toolbar">
-        <button type="button" className="td-btn" onClick={onBack}>
+    <div className="td-deck td-deck--editor">
+      <div className="td-deck__compact-bar">
+        <button type="button" className="td-btn td-btn--compact" onClick={onBack}>
           <ArrowLeft size={16} />
           Voltar
         </button>
-        <div className="td-deck__toolbar-actions">
-          <button type="button" className="td-btn" onClick={onPreview}>
+        <div className="td-deck__compact-meta">
+          <span className="td-deck__compact-title">{playlist.name}</span>
+          {tvStatusLabel() ? <span className={tvStatusClass()}>{tvStatusLabel()}</span> : null}
+        </div>
+        <div className="td-deck__compact-actions">
+          <button type="button" className="td-btn td-btn--compact" onClick={onPreview} title="Pré-visualizar">
             <Eye size={16} />
-            Pré-visualizar
+            <span className="td-deck__compact-action-label">Pré-visualizar</span>
           </button>
-          <button type="button" className="td-btn" onClick={onShare}>
+          <button type="button" className="td-btn td-btn--compact" onClick={onShare} title="Compartilhar">
             <Link2 size={16} />
-            Compartilhar
+            <span className="td-deck__compact-action-label">Compartilhar</span>
           </button>
-          <button type="button" className="td-btn" onClick={copyLink}>
+          <button type="button" className="td-btn td-btn--compact" onClick={copyLink} title="Copiar link">
             <Copy size={16} />
-            Copiar link
+            <span className="td-deck__compact-action-label">Copiar link</span>
           </button>
-          <button type="button" className="td-btn" onClick={openQr}>
+          <button type="button" className="td-btn td-btn--compact" onClick={openQr} title="QR code">
             <QrCode size={16} />
-            QR code
+            <span className="td-deck__compact-action-label">QR code</span>
           </button>
-          <button type="button" className="td-btn" onClick={() => void handleRegenerateToken()}>
+          <button
+            type="button"
+            className="td-btn td-btn--compact"
+            onClick={() => void handleRegenerateToken()}
+            title="Novo link"
+          >
             <RefreshCw size={16} />
-            Novo link
+            <span className="td-deck__compact-action-label">Novo link</span>
           </button>
-          <button type="button" className="td-btn" onClick={() => void handleToggleActive()}>
+          <button
+            type="button"
+            className="td-btn td-btn--compact"
+            onClick={() => void handleToggleActive()}
+            title={playlist.isActive ? "Desativar link" : "Reativar link"}
+          >
             <Link2 size={16} />
-            {playlist.isActive ? "Desativar link" : "Reativar link"}
+            <span className="td-deck__compact-action-label">
+              {playlist.isActive ? "Desativar link" : "Reativar link"}
+            </span>
           </button>
-          <button type="button" className="td-btn td-btn--danger" onClick={() => void handleDelete()}>
+          <button
+            type="button"
+            className="td-btn td-btn--compact td-btn--danger"
+            onClick={() => void handleDelete()}
+            title="Excluir"
+          >
             <Trash2 size={16} />
-            Excluir
+            <span className="td-deck__compact-action-label">Excluir</span>
           </button>
         </div>
       </div>
-
-      <header className="td-deck__header">
-        <div>
-          <h2 className="td-deck__title">
-            {playlist.name}
-            {tvStatusLabel() ? <span className={tvStatusClass()}>{tvStatusLabel()}</span> : null}
-          </h2>
-          <p className="td-subtitle td-deck__meta">
-            {playlist.viewCount ?? 0} visualizações
-            {playlist.lastPresentedAt
-              ? ` · última exibição ${new Date(playlist.lastPresentedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`
-              : ""}
-            {playlist.isActive ? "" : " · link inativo"}
-            {selectedSlide ? ` · tela ${slides.findIndex((item) => item.id === selectedSlide.id) + 1} de ${slides.length}` : ""}
-          </p>
-        </div>
-      </header>
 
       {isCustomSlide && selectedSlide ? (
         <ComunicadoEditorProvider

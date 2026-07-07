@@ -33,14 +33,7 @@ export function DeckWorkspace({
   rightPanel,
 }: Props) {
   return (
-    <div
-      className={[
-        "td-deck__workspace",
-        rightPanel ? null : "td-deck__workspace--wide",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <div className="td-deck__workspace">
       <SlideFilmstrip
         slides={slides}
         playlistId={playlistId}
@@ -54,9 +47,11 @@ export function DeckWorkspace({
         onDragEnd={onDragEnd}
       />
       <main className="td-deck-stage" aria-label="Palco da tela selecionada">
-        {stage}
+        <div className="td-deck-stage__inner">
+          <div className="td-deck-stage__main">{stage}</div>
+          {rightPanel}
+        </div>
       </main>
-      {rightPanel}
     </div>
   );
 }

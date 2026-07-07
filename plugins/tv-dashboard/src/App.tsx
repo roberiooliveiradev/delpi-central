@@ -29,6 +29,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   const route = useMemo(() => parseTvDashboardRoute(path), [path]);
 
   const isFullscreenView = route.view === "preview";
+  const isDeckEditor = route.view === "edit";
 
   function navigate(next: string) {
     if (typeof window === "undefined") return;
@@ -81,9 +82,18 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   }
 
   return (
-    <div className={`dashboard-tv-dashboard dashboard-page${isFullscreenView ? " td-app-shell--preview" : ""}`}>
-      <div className={`td-app-shell${route.view === "edit" ? " td-app-shell--deck" : ""}`}>
-        {!isFullscreenView ? (
+    <div
+      className={[
+        "dashboard-tv-dashboard",
+        "dashboard-page",
+        isFullscreenView ? "td-app-shell--preview" : null,
+        isDeckEditor ? "dashboard-page--deck-edit" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <div className={`td-app-shell${isDeckEditor ? " td-app-shell--deck" : ""}`}>
+        {!isFullscreenView && !isDeckEditor ? (
           <header className="td-hero">
             <p className="td-eyebrow">Operações · Displays</p>
             <h1 className="td-title">Painéis TV</h1>
@@ -92,7 +102,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
             </p>
           </header>
         ) : null}
-        <div className={route.view === "edit" ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
+        <div className={isDeckEditor ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
           {renderBody()}
         </div>
       </div>
