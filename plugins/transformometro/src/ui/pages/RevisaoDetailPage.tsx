@@ -33,6 +33,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   legacyRevisaoPath?: boolean;
   pathname?: string;
   onNavigate: (path: string) => void;
+  embedded?: boolean;
 };
 
 export function RevisaoDetailPage({
@@ -43,6 +44,7 @@ export function RevisaoDetailPage({
   legacyRevisaoPath = false,
   pathname,
   onNavigate,
+  embedded = false,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [revisao, setRevisao] = useState<Revisao | null>(null);
@@ -91,38 +93,50 @@ export function RevisaoDetailPage({
   const loadingProgress = useLoadingProgress(loading && !revisao, fetchProgress);
 
   if (loading && !revisao) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando revisão"
-          description="Medição, investimentos, recursos e evidências."
-          progressPercent={loadingProgress}
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando revisão"
+        description="Medição, investimentos, recursos e evidências."
+        progressPercent={loadingProgress}
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
   if (!processo || !revisao || !options) {
-    return (
-      <TransformometroShell>
-        <div className="ds-state ds-state--error" role="alert">
-          <p>{error ?? "Revisão não encontrada."}</p>
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            onClick={() => onNavigate(buildInstanciaPath(processoId, instanciaId))}
-          >
-            Voltar à instância
-          </button>
-        </div>
-      </TransformometroShell>
+    const errorView = (
+      <div className="ds-state ds-state--error" role="alert">
+        <p>{error ?? "Revisão não encontrada."}</p>
+        <button
+          type="button"
+          className="ds-ghost-btn"
+          onClick={() => onNavigate(buildInstanciaPath(processoId, instanciaId))}
+        >
+          Voltar à instância
+        </button>
+      </div>
     );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
   }
 
   const resolvedInstanciaId = revisao.instancia_id ?? instanciaId;
 
-  return (
-    <TransformometroShell>
+  const revisaoMain = (
+    <RevisaoCadastroPanel
+      revisao={revisao}
+      revisoesReferencia={revisoesInstancia}
+      options={options}
+      getAccessToken={getAccessToken}
+      onError={setError}
+      onRevisaoUpdated={load}
+      onRevisaoDeleted={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
+    />
+  );
+
+  const pageBody = (
+    <>
       <PageHeader
         title={`Revisão v${revisao.versao_revisao} · ${cenarioLabel(revisao.cenario_tipo)}`}
         subtitle={`${processo.codigo_processo} — ${processo.nome_processo}${revisao.revisao_ativa ? " · ativa" : ""}`}
@@ -142,29 +156,28 @@ export function RevisaoDetailPage({
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
-      <ProcessoWorkspaceShell
-        processoId={processoId}
-        activeNodeId={resolveActiveWorkspaceNodeId({
-          view: "revisao",
-          revisaoId,
-          instanciaId: resolvedInstanciaId,
-        })}
-        getAccessToken={getAccessToken}
-        onNavigate={onNavigate}
-        processo={processo}
-        instancias={allInstancias}
-        revisoes={allRevisoes}
-      >
-        <RevisaoCadastroPanel
-          revisao={revisao}
-          revisoesReferencia={revisoesInstancia}
-          options={options}
+      {embedded ? (
+        revisaoMain
+      ) : (
+        <ProcessoWorkspaceShell
+          processoId={processoId}
+          activeNodeId={resolveActiveWorkspaceNodeId({
+            view: "revisao",
+            revisaoId,
+            instanciaId: resolvedInstanciaId,
+          })}
           getAccessToken={getAccessToken}
-          onError={setError}
-          onRevisaoUpdated={load}
-          onRevisaoDeleted={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
-        />
-      </ProcessoWorkspaceShell>
-    </TransformometroShell>
+          onNavigate={onNavigate}
+          processo={processo}
+          instancias={allInstancias}
+          revisoes={allRevisoes}
+        >
+          {revisaoMain}
+        </ProcessoWorkspaceShell>
+      )}
+    </>
   );
+
+  if (embedded) return pageBody;
+  return <TransformometroShell>{pageBody}</TransformometroShell>;
 }

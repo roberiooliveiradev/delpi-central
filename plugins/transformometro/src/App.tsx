@@ -4,9 +4,7 @@ import { PageTransition } from "./components/PageTransition";
 import { ConfirmDialogProvider } from "./components/ui/ConfirmDialogProvider";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import { FilialDetailPage } from "./ui/pages/FilialDetailPage";
-import { InstanciaDetailPage } from "./ui/pages/InstanciaDetailPage";
-import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
-import { RevisaoDetailPage } from "./ui/pages/RevisaoDetailPage";
+import { ProcessoWorkspacePage, isProcessoWorkspaceRoute } from "./ui/pages/ProcessoWorkspacePage";
 import { RecursoDetailPage } from "./ui/pages/RecursoDetailPage";
 import { SetorDetailPage } from "./ui/pages/SetorDetailPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
@@ -95,33 +93,11 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     page = (
       <FiliaisPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
-  } else if (route.view === "revisao" && route.processoId && route.revisaoId) {
+  } else if (isProcessoWorkspaceRoute(route)) {
     page = (
-      <RevisaoDetailPage
+      <ProcessoWorkspacePage
         getAccessToken={getAccessToken}
-        processoId={route.processoId}
-        instanciaId={route.instanciaId ?? ""}
-        revisaoId={route.revisaoId}
-        legacyRevisaoPath={route.legacyRevisaoPath}
-        pathname={pathname}
-        onNavigate={onNavigate}
-      />
-    );
-  } else if (route.view === "instancia" && route.processoId && route.instanciaId) {
-    page = (
-      <InstanciaDetailPage
-        getAccessToken={getAccessToken}
-        processoId={route.processoId}
-        instanciaId={route.instanciaId}
-        pathname={pathname}
-        onNavigate={onNavigate}
-      />
-    );
-  } else if (route.view === "processo" && route.processoId) {
-    page = (
-      <ProcessoDetailPage
-        getAccessToken={getAccessToken}
-        processoId={route.processoId}
+        route={route}
         pathname={pathname}
         onNavigate={onNavigate}
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}

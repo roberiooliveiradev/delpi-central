@@ -136,6 +136,20 @@ export function resolveActiveWorkspaceNodeId(input: {
   return `section:${section}`;
 }
 
+export function resolveWorkspacePanelKey(input: {
+  view: "processo" | "instancia" | "revisao";
+  instanciaId?: string;
+  revisaoId?: string;
+}): string {
+  if (input.view === "revisao" && input.revisaoId) {
+    return `revisao:${input.revisaoId}`;
+  }
+  if (input.view === "instancia" && input.instanciaId) {
+    return `instancia:${input.instanciaId}`;
+  }
+  return "processo";
+}
+
 export function filterWorkspaceTree(
   nodes: ProcessoWorkspaceNavNode[],
   query: string

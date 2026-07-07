@@ -70,6 +70,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
   onBack: () => void;
+  embedded?: boolean;
 };
 
 export function ProcessoDetailPage({
@@ -78,6 +79,7 @@ export function ProcessoDetailPage({
   pathname,
   onNavigate,
   onBack,
+  embedded = false,
 }: Props) {
   const confirm = useConfirm();
   const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
@@ -279,93 +281,48 @@ export function ProcessoDetailPage({
   const processLoadingProgress = useLoadingProgress(loading && !processo, processFetchProgress);
 
   if (loading && !processo) {
-    return (
-      <TransformometroShell>
-        <button type="button" className="ds-ghost-btn" onClick={onBack}>
-          <ArrowLeft size={16} />
-          Voltar
-        </button>
+    const loader = (
+      <>
+        {!embedded ? (
+          <button type="button" className="ds-ghost-btn" onClick={onBack}>
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
+        ) : null}
         <LoadingActivityCard
           title="Carregando processo"
           description="Buscando dados mestre e instâncias operacionais."
           progressPercent={processLoadingProgress}
         />
-      </TransformometroShell>
+      </>
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
   if (!processo || !options) {
-    return (
-      <TransformometroShell>
-        <button type="button" className="ds-ghost-btn" onClick={onBack}>
-          <ArrowLeft size={16} />
-          Voltar
-        </button>
+    const errorView = (
+      <>
+        {!embedded ? (
+          <button type="button" className="ds-ghost-btn" onClick={onBack}>
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
+        ) : null}
         <div className="ds-state ds-state--error" role="alert">
           <p>{error ?? "Processo não encontrado."}</p>
           <button type="button" className="ds-primary-btn" onClick={() => void load()}>
             Tentar novamente
           </button>
         </div>
-      </TransformometroShell>
+      </>
     );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
   }
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title={`${processo.codigo_processo} — ${processo.nome_processo}`}
-        subtitle={[processo.status_processo, processo.familia_processo ? `família ${processo.familia_processo}` : null]
-          .filter(Boolean)
-          .join(" · ")}
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
-        onNavigate={onNavigate}
-        actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
-              <ArrowLeft size={16} />
-              Lista
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={refreshing}
-              onClick={() => void handleDuplicateProcesso()}
-            >
-              <Copy size={16} />
-              Duplicar processo
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn ds-ghost-btn--danger"
-              disabled={refreshing}
-              onClick={() => void handleDeleteProcesso()}
-            >
-              <Trash2 size={16} />
-              Excluir processo
-            </button>
-          </>
-        }
-      />
-
-      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
-
-      <CollaborativePresenceBanner
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-      />
-
-      <ProcessoWorkspaceShell
-        processoId={processoId}
-        activeNodeId={activeNodeId}
-        getAccessToken={getAccessToken}
-        onNavigate={onNavigate}
-        processo={processo}
-        instancias={instancias}
-        revisoes={revisoes}
-      >
+  const sectionPanels = (
+    <>
         {visibleSections.has("visao-geral") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "visao-geral"} sectionId="visao-geral">
           <section className="ds-card tm-processo-workspace-panel">
@@ -585,7 +542,73 @@ export function ProcessoDetailPage({
           <ProcessoTimeline entries={timelineEntries} loading={timelineLoading} />
           </ProcessoWorkspaceSectionPanel>
         ) : null}
-      </ProcessoWorkspaceShell>
-    </TransformometroShell>
+    </>
   );
+
+  const pageBody = (
+    <>
+      <PageHeader
+        title={`${processo.codigo_processo} — ${processo.nome_processo}`}
+        subtitle={[processo.status_processo, processo.familia_processo ? `família ${processo.familia_processo}` : null]
+          .filter(Boolean)
+          .join(" · ")}
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
+        onNavigate={onNavigate}
+        actions={
+          <>
+            <button type="button" className="ds-ghost-btn" onClick={onBack}>
+              <ArrowLeft size={16} />
+              Lista
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={refreshing}
+              onClick={() => void handleDuplicateProcesso()}
+            >
+              <Copy size={16} />
+              Duplicar processo
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn ds-ghost-btn--danger"
+              disabled={refreshing}
+              onClick={() => void handleDeleteProcesso()}
+            >
+              <Trash2 size={16} />
+              Excluir processo
+            </button>
+          </>
+        }
+      />
+
+      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
+
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
+
+      {embedded ? (
+        sectionPanels
+      ) : (
+        <ProcessoWorkspaceShell
+          processoId={processoId}
+          activeNodeId={activeNodeId}
+          getAccessToken={getAccessToken}
+          onNavigate={onNavigate}
+          processo={processo}
+          instancias={instancias}
+          revisoes={revisoes}
+        >
+          {sectionPanels}
+        </ProcessoWorkspaceShell>
+      )}
+    </>
+  );
+
+  if (embedded) return pageBody;
+  return <TransformometroShell>{pageBody}</TransformometroShell>;
 }

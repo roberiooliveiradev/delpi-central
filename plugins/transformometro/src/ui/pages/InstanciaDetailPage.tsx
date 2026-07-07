@@ -61,6 +61,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   instanciaId: string;
   pathname?: string;
   onNavigate: (path: string) => void;
+  embedded?: boolean;
 };
 
 export function InstanciaDetailPage({
@@ -69,6 +70,7 @@ export function InstanciaDetailPage({
   instanciaId,
   pathname,
   onNavigate,
+  embedded = false,
 }: Props) {
   const confirm = useConfirm();
   const [processo, setProcesso] = useState<Processo | null>(null);
@@ -254,100 +256,36 @@ export function InstanciaDetailPage({
   const loadingProgress = useLoadingProgress(loading && !instancia, fetchProgress);
 
   if (loading && !instancia) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando instância"
-          description="Buscando dados operacionais e revisões."
-          progressPercent={loadingProgress}
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando instância"
+        description="Buscando dados operacionais e revisões."
+        progressPercent={loadingProgress}
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
   if (!processo || !instancia || !options) {
-    return (
-      <TransformometroShell>
-        <div className="ds-state ds-state--error" role="alert">
-          <p>{error ?? "Instância não encontrada."}</p>
-          <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
-            Voltar ao processo
-          </button>
-        </div>
-      </TransformometroShell>
+    const errorView = (
+      <div className="ds-state ds-state--error" role="alert">
+        <p>{error ?? "Instância não encontrada."}</p>
+        <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
+          Voltar ao processo
+        </button>
+      </div>
     );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
   }
 
   const instanciaLabel = instancia.todas_filiais_ativas
     ? "Todas as unidades ativas"
     : `${instancia.codigo_filial ?? instancia.filial_id} · ${instancia.setores?.[0]?.codigo_setor ?? instancia.codigo_setor ?? ""}`;
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title={instanciaLabel}
-        subtitle={`${processo.codigo_processo} — ${processo.nome_processo} · ${instancia.status_instancia ?? "ativo"}`}
-        currentPath={pathname ?? buildInstanciaPath(processoId, instanciaId)}
-        onNavigate={onNavigate}
-        actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
-              <ArrowLeft size={16} />
-              Processo
-            </button>
-            <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
-              <Plus size={16} />
-              Nova revisão
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={() => {
-                void (async () => {
-                  const confirmed = await confirm({
-                    title: "Excluir melhoria",
-                    message: "Excluir esta instância operacional?",
-                    confirmLabel: "Excluir",
-                    variant: "danger",
-                  });
-                  if (!confirmed) return;
-                  await deleteInstancia(instanciaId, getAccessToken);
-                  onNavigate(buildProcessoPath(processoId));
-                })();
-              }}
-            >
-              <Trash2 size={16} />
-              Excluir instância
-            </button>
-          </>
-        }
-      />
-
-      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
-
-      <CollaborativePresenceBanner
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-      />
-
-      {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
-        <p className="tm-instancia-multi-banner">
-          {TM_HELP_TOOLTIPS.instancias.multiplicadorConsolidado}{" "}
-          Unidades ativas hoje: {options.filiais.length} (fator ×{options.filiais.length} no Consolidado).
-        </p>
-      ) : null}
-
-      <ProcessoWorkspaceShell
-        processoId={processoId}
-        activeNodeId={resolveActiveWorkspaceNodeId({ view: "instancia", instanciaId })}
-        getAccessToken={getAccessToken}
-        onNavigate={onNavigate}
-        processo={processo}
-        instancias={allInstancias}
-        revisoes={allRevisoes}
-      >
+  const instanciaMain = (
+    <>
         <EditableSectionCard
           title="Instância operacional"
         hint={TM_HELP_TOOLTIPS.instancias.escopo}
@@ -566,7 +504,84 @@ export function InstanciaDetailPage({
         }
       />
       </section>
-      </ProcessoWorkspaceShell>
-    </TransformometroShell>
+    </>
   );
+
+  const pageBody = (
+    <>
+      <PageHeader
+        title={instanciaLabel}
+        subtitle={`${processo.codigo_processo} — ${processo.nome_processo} · ${instancia.status_instancia ?? "ativo"}`}
+        currentPath={pathname ?? buildInstanciaPath(processoId, instanciaId)}
+        onNavigate={onNavigate}
+        actions={
+          <>
+            <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
+              <ArrowLeft size={16} />
+              Processo
+            </button>
+            <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
+              <Plus size={16} />
+              Nova revisão
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={() => {
+                void (async () => {
+                  const confirmed = await confirm({
+                    title: "Excluir melhoria",
+                    message: "Excluir esta instância operacional?",
+                    confirmLabel: "Excluir",
+                    variant: "danger",
+                  });
+                  if (!confirmed) return;
+                  await deleteInstancia(instanciaId, getAccessToken);
+                  onNavigate(buildProcessoPath(processoId));
+                })();
+              }}
+            >
+              <Trash2 size={16} />
+              Excluir instância
+            </button>
+          </>
+        }
+      />
+
+      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
+
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
+
+      {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
+        <p className="tm-instancia-multi-banner">
+          {TM_HELP_TOOLTIPS.instancias.multiplicadorConsolidado}{" "}
+          Unidades ativas hoje: {options.filiais.length} (fator ×{options.filiais.length} no Consolidado).
+        </p>
+      ) : null}
+
+      {embedded ? (
+        instanciaMain
+      ) : (
+        <ProcessoWorkspaceShell
+          processoId={processoId}
+          activeNodeId={resolveActiveWorkspaceNodeId({ view: "instancia", instanciaId })}
+          getAccessToken={getAccessToken}
+          onNavigate={onNavigate}
+          processo={processo}
+          instancias={allInstancias}
+          revisoes={allRevisoes}
+        >
+          {instanciaMain}
+        </ProcessoWorkspaceShell>
+      )}
+    </>
+  );
+
+  if (embedded) return pageBody;
+  return <TransformometroShell>{pageBody}</TransformometroShell>;
 }
