@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-import { parseComunicadoConfig, serializeComunicadoConfig } from "./comunicadoHelpers";
+import {
+  createShapeBlock,
+  parseComunicadoConfig,
+  serializeComunicadoConfig,
+} from "./comunicadoHelpers";
 import { CustomMessageScreen } from "./NativeScreens";
 
 describe("comunicadoHelpers", () => {
@@ -16,6 +20,29 @@ describe("comunicadoHelpers", () => {
     const serialized = serializeComunicadoConfig(parsed);
     expect(serialized.version).toBe(2);
     expect(serialized.headline).toBe("Titulo");
+  });
+
+  it("serializa v3 com formas e links", () => {
+    const shape = createShapeBlock("rectangle");
+    const parsed = parseComunicadoConfig({
+      version: 3,
+      blocks: [
+        {
+          id: "1",
+          type: "text",
+          content: "Saiba mais",
+          href: "https://example.com",
+          frame: { x: 10, y: 10, w: 40, h: 20 },
+          style: { fontFamily: "Arial, sans-serif" },
+        },
+        shape,
+      ],
+    });
+    const serialized = serializeComunicadoConfig(parsed);
+    expect(serialized.version).toBe(3);
+    const blocks = serialized.blocks as Array<Record<string, unknown>>;
+    expect(blocks[0].href).toBe("https://example.com");
+    expect(blocks[1].type).toBe("shape");
   });
 
   it("não persiste URL de mídia no native_config", () => {
@@ -59,5 +86,37 @@ describe("CustomMessageScreen rich layout", () => {
       />,
     );
     expect(screen.getByText("Campanha interna")).toBeTruthy();
+  });
+
+  it("renderiza forma e link", () => {
+    render(
+      <CustomMessageScreen
+        data={{
+          version: 3,
+          blocks: [
+            {
+              id: "1",
+              type: "shape",
+              shape: "rectangle",
+              content: "Destaque",
+              frame: { x: 20, y: 20, w: 60, h: 30 },
+              style: { fill: "#089bdb", stroke: "#fff", strokeWidth: 2, zIndex: 1 },
+            },
+            {
+              id: "2",
+              type: "text",
+              content: "Clique aqui",
+              href: "https://delpi.example",
+              frame: { x: 10, y: 60, w: 80, h: 20 },
+              style: { fontSize: 24, color: "#fff", textAlign: "center", zIndex: 2 },
+            },
+          ],
+          background: { type: "color", value: "#111827" },
+        }}
+      />,
+    );
+    expect(screen.getByText("Destaque")).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Clique aqui" });
+    expect(link.getAttribute("href")).toBe("https://delpi.example");
   });
 });

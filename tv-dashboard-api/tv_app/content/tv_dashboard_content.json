@@ -7,7 +7,7 @@
     "strategicHeroLabel": "Índice Global Delpi",
     "branchNotAllowed": "Filial não autorizada para Painéis TV.",
     "consolidatedNotAllowed": "Visão consolidada não autorizada para seu perfil.",
-    "comunicadoDefaultHeadline": "Comunicado",
+    "comunicadoDefaultHeadline": "Título",
     "mediaNotFound": "Mídia não encontrada.",
     "mediaUploaded": "Mídia enviada."
   },
@@ -41,14 +41,15 @@
     "catalogHint": "Importe telas prontas dos dashboards DELPI ou do portal.",
     "catalogImport": "Importar",
     "branchOptional": "Filial (opcional)",
-    "comunicadoComposerTitle": "Editor de comunicado",
+    "comunicadoComposerTitle": "Editor personalizado",
     "comunicadoAddHeading": "Título",
     "comunicadoAddText": "Texto",
     "comunicadoAddImage": "Imagem",
     "comunicadoAddVideo": "Vídeo",
+    "comunicadoAddShape": "Forma",
     "comunicadoBackground": "Fundo",
     "comunicadoBlocks": "Elementos",
     "comunicadoUpload": "Enviar arquivo",
-    "comunicadoLegacyHint": "Use o editor visual para montar slides com imagens e vídeos."
+    "comunicadoLegacyHint": "Monte slides com texto, formas, imagens, vídeos e links."
   }
 }

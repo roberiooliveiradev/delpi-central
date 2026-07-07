@@ -5,6 +5,7 @@ import type {
   ComunicadoBlock,
   ComunicadoConfig,
   ComunicadoFrame,
+  ComunicadoShapeKind,
 } from "./comunicadoTypes";
 
 export function newBlockId(): string {
@@ -15,38 +16,80 @@ export function newBlockId(): string {
 }
 
 const DEFAULT_BACKGROUND: ComunicadoBackground = { type: "color", value: "#0f172a" };
+const DEFAULT_HEADLINE = "Título";
 
-export function defaultFrame(type: ComunicadoBlock["type"]): ComunicadoFrame {
+export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoShapeKind): ComunicadoFrame {
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
-  return { x: 5, y: 15, w: 90, h: 70 };
+  if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
+  if (shape === "line") return { x: 10, y: 48, w: 80, h: 2 };
+  if (shape === "arrow-right") return { x: 35, y: 40, w: 30, h: 20 };
+  return { x: 30, y: 30, w: 40, h: 40 };
 }
 
-export function defaultStyle(type: ComunicadoBlock["type"]) {
+export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoShapeKind) {
   if (type === "heading") {
-    return { fontSize: 56, color: "#ffffff", textAlign: "center" as const, fontWeight: "bold" as const };
+    return {
+      fontSize: 56,
+      color: "#ffffff",
+      fontFamily: "Inter, system-ui, sans-serif",
+      textAlign: "center" as const,
+      fontWeight: "bold" as const,
+      zIndex: 2,
+    };
   }
   if (type === "text") {
-    return { fontSize: 28, color: "#cbd5e1", textAlign: "center" as const, fontWeight: "normal" as const };
+    return {
+      fontSize: 28,
+      color: "#cbd5e1",
+      fontFamily: "Inter, system-ui, sans-serif",
+      textAlign: "center" as const,
+      fontWeight: "normal" as const,
+      zIndex: 2,
+    };
   }
   if (type === "image" || type === "video") {
-    return { objectFit: "contain" as const };
+    return { objectFit: "contain" as const, zIndex: 1 };
+  }
+  if (type === "shape") {
+    const base = {
+      zIndex: 1,
+      fill: "#089bdb",
+      stroke: "#ffffff",
+      strokeWidth: shape === "line" ? 4 : 2,
+      opacity: shape === "line" ? 1 : 0.9,
+    };
+    if (shape === "rounded-rect") return { ...base, borderRadius: 16 };
+    if (shape === "ellipse") return { ...base, borderRadius: 9999 };
+    return base;
   }
   return {};
 }
 
-export function createBlock(type: ComunicadoBlock["type"], content = ""): ComunicadoBlock {
+export function createBlock(
+  type: ComunicadoBlock["type"],
+  content = "",
+  shape?: ComunicadoShapeKind,
+): ComunicadoBlock {
   const base = {
     id: newBlockId(),
     type,
-    frame: defaultFrame(type),
-    style: defaultStyle(type),
+    frame: defaultFrame(type, shape),
+    style: defaultStyle(type, shape),
   };
   if (type === "heading" || type === "text") {
     return { ...base, type, content };
   }
+  if (type === "shape") {
+    const kind = shape ?? "rectangle";
+    return { ...base, type, shape: kind, content: content || "" };
+  }
   return { ...base, type };
+}
+
+export function createShapeBlock(shape: ComunicadoShapeKind): ComunicadoBlock {
+  return createBlock("shape", "", shape);
 }
 
 export function parseComunicadoConfig(raw: Record<string, unknown> | undefined | null): ComunicadoConfig {
@@ -54,14 +97,14 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
   const blocks = Array.isArray(cfg.blocks) ? (cfg.blocks as ComunicadoBlock[]) : [];
   if (blocks.length > 0) {
     return {
-      version: Number(cfg.version) || 2,
+      version: Number(cfg.version) || detectConfigVersion(blocks),
       headline: String(cfg.headline ?? ""),
       subtitle: String(cfg.subtitle ?? ""),
       background: normalizeBackground(cfg.background),
       blocks: blocks.map(normalizeBlock),
     };
   }
-  const headline = String(cfg.headline ?? "Comunicado");
+  const headline = String(cfg.headline ?? DEFAULT_HEADLINE);
   const subtitle = String(cfg.subtitle ?? "");
   return {
     version: 2,
@@ -75,6 +118,23 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
   };
 }
 
+function detectConfigVersion(blocks: ComunicadoBlock[]): number {
+  const hasV3 = blocks.some((block) => {
+    if (block.type === "shape") return true;
+    if ((block.type === "heading" || block.type === "text") && block.href) return true;
+    const style = block.style ?? {};
+    return Boolean(
+      style.fontFamily ||
+        style.fontStyle ||
+        style.textDecoration ||
+        style.rotation ||
+        style.fill ||
+        style.stroke,
+    );
+  });
+  return hasV3 ? 3 : 2;
+}
+
 export function serializeComunicadoConfig(config: ComunicadoConfig): Record<string, unknown> {
   const headingBlock = config.blocks?.find((b) => b.type === "heading");
   const textBlock = config.blocks?.find((b) => b.type === "text");
@@ -83,21 +143,38 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
     background.type === "image"
       ? { type: "image", assetId: background.assetId }
       : { type: "color", value: background.value || "#0f172a" };
+  const blocks = (config.blocks ?? []).map(serializeBlock);
+  const version = config.version ?? detectConfigVersion(config.blocks ?? []);
   return {
-    version: 2,
-    headline: headingBlock && "content" in headingBlock ? headingBlock.content : config.headline ?? "Comunicado",
+    version,
+    headline:
+      headingBlock && "content" in headingBlock
+        ? headingBlock.content
+        : config.headline ?? DEFAULT_HEADLINE,
     subtitle: textBlock && "content" in textBlock ? textBlock.content : config.subtitle ?? "",
     background: serializedBackground,
-    blocks: (config.blocks ?? []).map((block) => ({
-      id: block.id,
-      type: block.type,
-      frame: block.frame,
-      style: block.style ?? {},
-      ...(block.type === "heading" || block.type === "text"
-        ? { content: "content" in block ? block.content : "" }
-        : { assetId: "assetId" in block ? block.assetId : undefined }),
-    })),
+    blocks,
   };
+}
+
+function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
+  const base: Record<string, unknown> = {
+    id: block.id,
+    type: block.type,
+    frame: block.frame,
+    style: block.style ?? {},
+  };
+  if (block.type === "heading" || block.type === "text") {
+    base.content = block.content;
+    if (block.href) base.href = block.href;
+    if (block.linkTarget) base.linkTarget = block.linkTarget;
+  } else if (block.type === "image" || block.type === "video") {
+    base.assetId = block.assetId;
+  } else if (block.type === "shape") {
+    base.shape = block.shape;
+    if (block.content) base.content = block.content;
+  }
+  return base;
 }
 
 function normalizeBackground(value: unknown): ComunicadoBackground {
@@ -121,8 +198,9 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   }
   const block = value as Record<string, unknown>;
   const type = (block.type as ComunicadoBlock["type"]) ?? "text";
-  const frame = normalizeFrame(block.frame);
-  const style = (block.style as ComunicadoBlock["style"]) ?? defaultStyle(type);
+  const frame = normalizeFrame(block.frame, type);
+  const shape = typeof block.shape === "string" ? (block.shape as ComunicadoShapeKind) : undefined;
+  const style = (block.style as ComunicadoBlock["style"]) ?? defaultStyle(type, shape);
   const id = typeof block.id === "string" ? block.id : newBlockId();
   if (type === "heading" || type === "text") {
     return {
@@ -131,6 +209,19 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       frame,
       style,
       content: String(block.content ?? ""),
+      href: typeof block.href === "string" && block.href.trim() ? block.href.trim() : undefined,
+      linkTarget: block.linkTarget === "_self" ? "_self" : block.linkTarget === "_blank" ? "_blank" : undefined,
+    };
+  }
+  if (type === "shape") {
+    const kind = shape && isShapeKind(shape) ? shape : "rectangle";
+    return {
+      id,
+      type,
+      frame,
+      style: { ...defaultStyle("shape", kind), ...style },
+      shape: kind,
+      content: typeof block.content === "string" ? block.content : "",
     };
   }
   return {
@@ -143,8 +234,12 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   };
 }
 
-function normalizeFrame(value: unknown): ComunicadoFrame {
-  if (!value || typeof value !== "object") return defaultFrame("text");
+function isShapeKind(value: string): value is ComunicadoShapeKind {
+  return ["rectangle", "rounded-rect", "ellipse", "triangle", "arrow-right", "line"].includes(value);
+}
+
+function normalizeFrame(value: unknown, type: ComunicadoBlock["type"]): ComunicadoFrame {
+  if (!value || typeof value !== "object") return defaultFrame(type);
   const frame = value as Record<string, unknown>;
   const num = (key: keyof ComunicadoFrame, fallback: number) => {
     const raw = frame[key];
@@ -154,8 +249,8 @@ function normalizeFrame(value: unknown): ComunicadoFrame {
   return {
     x: Math.max(0, Math.min(100, num("x", 5))),
     y: Math.max(0, Math.min(100, num("y", 10))),
-    w: Math.max(5, Math.min(100, num("w", 90))),
-    h: Math.max(5, Math.min(100, num("h", 20))),
+    w: Math.max(2, Math.min(100, num("w", 90))),
+    h: Math.max(1, Math.min(100, num("h", 20))),
   };
 }
 
@@ -168,6 +263,40 @@ export function frameStyle(frame: ComunicadoFrame): CSSProperties {
   };
 }
 
+export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
+  const fontScale = options?.fontScale ?? 1;
+  const style = block.style ?? {};
+  const css: CSSProperties = {
+    ...frameStyle(block.frame),
+    zIndex: style.zIndex ?? 1,
+    opacity: style.opacity ?? 1,
+    ...(style.rotation ? { transform: `rotate(${style.rotation}deg)` } : {}),
+  };
+
+  if (block.type === "heading" || block.type === "text" || (block.type === "shape" && block.content)) {
+    if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
+    if (style.color) css.color = style.color;
+    if (style.fontFamily) css.fontFamily = style.fontFamily;
+    if (style.textAlign) css.textAlign = style.textAlign;
+    if (style.fontWeight) css.fontWeight = style.fontWeight;
+    if (style.fontStyle) css.fontStyle = style.fontStyle;
+    if (style.textDecoration) css.textDecoration = style.textDecoration;
+  }
+
+  if (block.type === "shape") {
+    if (style.backgroundColor) css.backgroundColor = style.backgroundColor;
+    if (style.borderColor) css.borderColor = style.borderColor;
+    if (style.borderWidth != null) css.borderWidth = style.borderWidth;
+    if (style.borderRadius != null) css.borderRadius = style.borderRadius;
+  }
+
+  return css;
+}
+
+export function sortBlocksByZIndex(blocks: ComunicadoBlock[]): ComunicadoBlock[] {
+  return [...blocks].sort((a, b) => (a.style?.zIndex ?? 1) - (b.style?.zIndex ?? 1));
+}
+
 export function hasRichComunicado(data: ComunicadoScreenDataLike): boolean {
   return Array.isArray(data.blocks) && data.blocks.length > 0;
 }
@@ -177,3 +306,17 @@ export type ComunicadoScreenDataLike = {
   headline?: string;
   subtitle?: string;
 };
+
+export function clampFrame(frame: ComunicadoFrame): ComunicadoFrame {
+  return {
+    x: Math.max(0, Math.min(100 - frame.w, frame.x)),
+    y: Math.max(0, Math.min(100 - frame.h, frame.y)),
+    w: Math.max(2, Math.min(100, frame.w)),
+    h: Math.max(1, Math.min(100, frame.h)),
+  };
+}
+
+export function nextZIndex(blocks: ComunicadoBlock[]): number {
+  const max = blocks.reduce((acc, block) => Math.max(acc, block.style?.zIndex ?? 1), 0);
+  return max + 1;
+}

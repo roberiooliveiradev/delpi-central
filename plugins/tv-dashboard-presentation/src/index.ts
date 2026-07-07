@@ -18,12 +18,24 @@ export type {
   PresentationSlide,
 } from "./types";
 export type { UsePresentationEngineOptions } from "./usePresentationEngine";
-export type { ComunicadoBlock, ComunicadoConfig, ComunicadoScreenData } from "./comunicadoTypes";
+export type {
+  ComunicadoBlock,
+  ComunicadoConfig,
+  ComunicadoScreenData,
+  ComunicadoShapeKind,
+} from "./comunicadoTypes";
+export { COMUNICADO_FONT_FAMILIES, COMUNICADO_SHAPE_KINDS } from "./comunicadoTypes";
 export {
+  blockCssStyle,
+  clampFrame,
   createBlock,
+  createShapeBlock,
   defaultFrame,
   frameStyle,
+  nextZIndex,
   parseComunicadoConfig,
   serializeComunicadoConfig,
+  sortBlocksByZIndex,
 } from "./comunicadoHelpers";
+export { ComunicadoBlockView } from "./comunicadoBlockView";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

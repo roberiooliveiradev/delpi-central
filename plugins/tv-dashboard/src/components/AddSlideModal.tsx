@@ -46,7 +46,7 @@ export function AddSlideModal({
   const [presetKey, setPresetKey] = useState("");
   const [catalogBranch, setCatalogBranch] = useState("");
   const [comunicadoConfig, setComunicadoConfig] = useState<Record<string, unknown>>(() =>
-    serializeComunicadoConfig(parseComunicadoConfig({ headline: "Comunicado" })),
+    serializeComunicadoConfig(parseComunicadoConfig({ headline: "Título" })),
   );
 
   const admin = ui?.admin ?? {};
@@ -69,7 +69,7 @@ export function AddSlideModal({
     setDurationSec(item.defaultDurationSec);
     if (item.key === "custom_message") {
       setComunicadoConfig(
-        serializeComunicadoConfig(parseComunicadoConfig({ headline: "Comunicado" })),
+        serializeComunicadoConfig(parseComunicadoConfig({ headline: "Título" })),
       );
     }
   }

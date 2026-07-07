@@ -246,6 +246,51 @@
   display: block;
 }
 
+.tdp-comunicado__block--shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.tdp-comunicado__shape-svg,
+.tdp-comunicado__shape-fill,
+.tdp-comunicado__shape-line {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tdp-comunicado__shape-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4em;
+  text-align: center;
+  pointer-events: none;
+}
+
+.tdp-comunicado__link {
+  color: inherit;
+  text-decoration: inherit;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: inherit;
+}
+
+.tdp-comunicado__placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
 .tdp-empty {
   width: 100%;
   height: 100%;

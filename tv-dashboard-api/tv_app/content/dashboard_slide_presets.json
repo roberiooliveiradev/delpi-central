@@ -80,12 +80,12 @@
     },
     {
       "key": "preset_comunicado",
-      "label": "Comunicado interno",
-      "description": "Mensagem editável para TVs de corredor.",
+      "label": "Personalizado",
+      "description": "Slide livre com texto, formas, mídia e links.",
       "slideType": "native",
-      "title": "Comunicado",
+      "title": "Slide personalizado",
       "nativeScreenKey": "custom_message",
-      "nativeConfig": { "headline": "Comunicado", "subtitle": "" },
+      "nativeConfig": { "headline": "Título", "subtitle": "" },
       "durationSec": 20
     }
   ]

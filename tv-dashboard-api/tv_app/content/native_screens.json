@@ -62,7 +62,7 @@
     },
     {
       "key": "custom_message",
-      "label": "Comunicado interno",
+      "label": "Personalizado",
       "category": "general",
       "defaultDurationSec": 20,
       "configSchema": {

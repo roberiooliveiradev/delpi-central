@@ -57,7 +57,7 @@ class ComunicadoEnrichmentService:
             for block in blocks_raw
             if isinstance(block, dict)
         ]
-        headline = str(cfg.get("headline") or self._headline_from_blocks(blocks_raw) or "Comunicado")
+        headline = str(cfg.get("headline") or self._headline_from_blocks(blocks_raw) or message("comunicadoDefaultHeadline", "Título"))
         subtitle = str(cfg.get("subtitle") or "")
         return {
             "version": 2,
@@ -119,6 +119,17 @@ class ComunicadoEnrichmentService:
         }
         if block_type in {"heading", "text"}:
             enriched["content"] = str(block.get("content") or "")
+            href = block.get("href")
+            if isinstance(href, str) and href.strip():
+                enriched["href"] = href.strip()
+            link_target = block.get("linkTarget")
+            if link_target in {"_blank", "_self"}:
+                enriched["linkTarget"] = link_target
+        elif block_type == "shape":
+            enriched["shape"] = str(block.get("shape") or "rectangle")
+            content = block.get("content")
+            if isinstance(content, str) and content.strip():
+                enriched["content"] = content
         elif block_type in {"image", "video"}:
             asset_id = block.get("assetId")
             if isinstance(asset_id, str) and asset_id.strip():
