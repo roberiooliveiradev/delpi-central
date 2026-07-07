@@ -1,3 +1,4 @@
+import { TitleWithHelp } from "./ui/TitleWithHelp";
 import type { CSSProperties } from "react";
 import { useLayoutEffect, useRef } from "react";
 import { Cog, FlaskConical, Leaf, Plus, Ruler, Trash2, Users, Wrench } from "lucide-react";
@@ -5,7 +6,6 @@ import type { LucideIcon } from "lucide-react";
 
 import { FormActions } from "./ui/FormActions";
 import { SectionSaveButton } from "./ui/SectionSaveButton";
-import { TitleWithHelp } from "./ui/HelpTooltip";
 import { TextAreaField } from "./ui/TextAreaField";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { IshikawaCategoryKey, IshikawaCausesForm } from "../utils/ishikawaCauses";

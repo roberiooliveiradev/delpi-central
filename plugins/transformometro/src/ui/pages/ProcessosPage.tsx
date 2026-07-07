@@ -17,7 +17,7 @@ import {
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -271,7 +271,7 @@ export function ProcessosPage({
         filters={
           <section className="ds-filters-row ds-filters-row--extended">
             <div className="ds-filter-box ds-filter-box--wide">
-              <FieldLabel label="Buscar" hint={P.busca} />
+              <FieldLabel className="tm-field__label" label="Buscar" hint={P.busca} />
               <input
                 id="tm-proc-q"
                 type="search"

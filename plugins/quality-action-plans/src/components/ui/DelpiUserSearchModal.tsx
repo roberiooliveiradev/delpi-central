@@ -4,7 +4,7 @@ import { type FormEvent, useEffect, useId, useState } from "react";
 import { searchDirectoryUsers, type DirectoryUser } from "../../api/directoryApi";
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { formatPersonName } from "../../utils/formatPersonName";
-import { TableHeaderCell } from "./HelpTooltip";
+import { TableHeaderCell } from "./TableHeaderCell";
 import { Modal } from "./Modal";
 import { TextField } from "./TextField";
 

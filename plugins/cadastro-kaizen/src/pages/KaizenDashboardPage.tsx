@@ -14,7 +14,7 @@ import { fetchKaizenSummary } from "../api/kaizenApi";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
-import { FieldLabel } from "../components/ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "../components/ui/MultiSelectField";
 import { BRANCHES, detailPath, newPath } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -260,7 +260,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
             label="Competência"
             htmlFor="kz-dash-competence"
             hint="Mês de referência. Preenche automaticamente as datas inicial e final."
-          />
+           className="kz-field__label" />
           <input
             id="kz-dash-competence"
             type="month"
@@ -274,7 +274,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
             label="Data inicial"
             htmlFor="kz-dash-date-start"
             hint="Início do período considerado nos indicadores."
-          />
+           className="kz-field__label" />
           <input
             id="kz-dash-date-start"
             type="date"
@@ -288,7 +288,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
             label="Data final"
             htmlFor="kz-dash-date-end"
             hint="Fim do período considerado nos indicadores."
-          />
+           className="kz-field__label" />
           <input
             id="kz-dash-date-end"
             type="date"

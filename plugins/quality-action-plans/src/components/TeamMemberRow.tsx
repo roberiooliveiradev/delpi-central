@@ -5,7 +5,7 @@ import type { DirectoryUser } from "../api/directoryApi";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { TeamMember } from "../types/rnc8d";
 import { formatPersonName } from "../utils/formatPersonName";
-import { FieldLabel } from "./ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { DragHandle, type DragHandleProps, RemoveRowButton } from "./ui/RowActions";
 import { TextField } from "./ui/TextField";
 import { DelpiUserSearchModal } from "./ui/DelpiUserSearchModal";

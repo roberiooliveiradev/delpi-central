@@ -1,4 +1,4 @@
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { Setor } from "../../data/api/transformometroApi";
 
@@ -19,20 +19,20 @@ export function SetorReadView({ setor, filialLabels }: Props) {
     <>
       <dl className="ds-dl-grid">
         <div>
-          <dt><FieldLabel label="Código" hint={S.codigo} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Código" hint={S.codigo} /></dt>
           <dd>{setor.codigo_setor ?? setor.setor_id}</dd>
         </div>
         <div>
-          <dt><FieldLabel label="Nome" hint={S.nome} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Nome" hint={S.nome} /></dt>
           <dd>{setor.nome_setor}</dd>
         </div>
         <div>
-          <dt><FieldLabel label="Status" hint={S.status} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Status" hint={S.status} /></dt>
           <dd>{setor.status_setor ?? "ativo"}</dd>
         </div>
       </dl>
       <p className="ds-hint">
-        <FieldLabel label="Unidades vinculadas" hint={S.unidadesVinculadas} />: {unidades}
+        <FieldLabel className="tm-field__label" label="Unidades vinculadas" hint={S.unidadesVinculadas} />: {unidades}
       </p>
     </>
   );

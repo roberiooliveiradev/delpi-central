@@ -259,18 +259,18 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 | `dashboard-lmps` | ✅ | ⏳ | Detail* | sim |
 | `dashboard-quality` | ✅ | ⏳ | — | sim |
 | `dashboard-supplies` | ✅ | ⏳ | — | sim |
-| `transformometro` | ⏳ | parcial | ⏳ | sim |
-| `cadastro-kaizen` | ⏳ | — | ⏳ | sim |
-| `quality-action-plans` | ⏳ | parcial | ⏳ | sim |
-| `eficiencia-fabril` | ⏳ | parcial | — | sim |
-| `maintenance` | ⏳ | parcial | — | sim |
+| `transformometro` | ✅ | parcial | ⏳ | sim |
+| `cadastro-kaizen` | ✅ | — | ⏳ | sim |
+| `quality-action-plans` | ✅ | parcial | ⏳ | sim |
+| `eficiencia-fabril` | ✅ | parcial | — | sim |
+| `maintenance` | ✅ | parcial | — | sim |
 | `controle-retrabalhos` | — | Kpi/Chart simples | — | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination | PageHeader | sim |
 | `financeiro-centro-custo` | — | Kpi/Chart/Empty | — | sim |
 | `pedidos-venda-abertos` | — | Kpi/Filter | PageHeader | sim |
 | `auditoria-5s` | — | ChartCard | — | sim |
 | `tv-dashboard` | ✅ | — | — | sim |
-| `portal` | ⚠️ F1e | — | — | N/A |
+| `portal` | ❌ fora de escopo | — | — | N/A (shell) |
 
 ---
 
@@ -291,8 +291,8 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 
 | Métrica | Hoje | Meta pós-F1 | Meta pós-F2 |
 |---------|------|-------------|-------------|
-| Arquivos `HelpTooltip.tsx` locais | 13 | 0 (+ portal opcional) | 0 |
-| Plugins consumindo `@delpi/plugin-ui` | 1 | 14+ | 20+ |
+| Arquivos `HelpTooltip.tsx` locais | 1 (portal) | 0 nos plugins | 0 |
+| Plugins consumindo `@delpi/plugin-ui` | 15 | 15 ✅ | 20+ |
 | LOC duplicada (help only) | ~3.800 | ~0 | ~0 |
 | Componentes shell duplicados | ~80 arquivos | ~80 | ≤15 |
 
@@ -300,10 +300,9 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 
 ## 7. Próximo passo recomendado
 
-1. **Fase 0.3** — decidir extensão portal (`open` + `placement: right`) em `HelpTooltip`.
-2. **Fase 1 piloto** — migrar `dashboard-production` (1 PR, build + Docker + visual).
-3. Replicar checklist para os 7 dashboards departamentais em paralelo.
-4. Abrir **Fase 2.1** (`LoadingActivityCard`) assim que 3+ dashboards estiverem na F1.
+1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
+2. Abrir **Fase 2.1** (`LoadingActivityCard`) em 3+ dashboards como piloto.
+3. Consolidar `KpiCard` / `ChartCard` com props `className` granulares antes de extrair CSS de marca.
 
 ---
 

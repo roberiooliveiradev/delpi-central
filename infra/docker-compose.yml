@@ -407,8 +407,8 @@ services:
 
   transformometro:
     build:
-      context: ../plugins/transformometro
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: transformometro/Dockerfile
 
     container_name: delpi-transformometro
     restart: unless-stopped
@@ -427,8 +427,8 @@ services:
 
   maintenance:
     build:
-      context: ../plugins/maintenance
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: maintenance/Dockerfile
 
     container_name: delpi-maintenance
     restart: unless-stopped
@@ -554,8 +554,8 @@ services:
 
   eficiencia-fabril:
     build:
-      context: ../plugins/eficiencia-fabril
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: eficiencia-fabril/Dockerfile
 
     container_name: delpi-eficiencia-fabril
     restart: unless-stopped
@@ -666,8 +666,8 @@ services:
 
   cadastro-kaizen:
     build:
-      context: ../plugins/cadastro-kaizen
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: cadastro-kaizen/Dockerfile
       target: production
 
     container_name: delpi-cadastro-kaizen
@@ -681,8 +681,8 @@ services:
 
   quality-action-plans:
     build:
-      context: ../plugins/quality-action-plans
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: quality-action-plans/Dockerfile
       target: production
 
     container_name: delpi-quality-action-plans

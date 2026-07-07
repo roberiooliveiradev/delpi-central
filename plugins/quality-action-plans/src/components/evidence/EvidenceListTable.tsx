@@ -1,3 +1,4 @@
+import { TableHeaderCell } from "../ui/TableHeaderCell";
 import { Download, Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -13,7 +14,6 @@ import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { PlanAction } from "../../types/actionPlan";
 import type { PlanEvidence } from "../../types/rnc8d";
 import { formatDateTime } from "../../utils/format";
-import { TableHeaderCell } from "../ui/HelpTooltip";
 import {
   formatEvidenceFileSize,
   linkedActionCell,

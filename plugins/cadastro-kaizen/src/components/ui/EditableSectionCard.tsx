@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pencil, Save, X, type LucideIcon } from "lucide-react";
 
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 
 type EditableSectionCardProps = {
   title: string;

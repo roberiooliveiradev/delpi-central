@@ -14,7 +14,7 @@ import type {
   KaizenEvidenceType,
 } from "../../types/kaizen";
 import { StateAlert } from "../StateAlert";
-import { FieldLabel, HelpTooltip } from "../ui/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
 import {
@@ -451,7 +451,7 @@ export function KaizenEvidencePanel({
                   label="Etapa"
                   htmlFor="kz-ev-link-stage"
                   hint={KAIZEN_HELP_TOOLTIPS.evidence.stage}
-                />
+                 className="kz-field__label" />
                 <select
                   id="kz-ev-link-stage"
                   value={linkStage}
@@ -464,7 +464,7 @@ export function KaizenEvidencePanel({
                 </select>
               </div>
               <div className="kz-field">
-                <FieldLabel label="URL" htmlFor="kz-ev-url" hint={KAIZEN_HELP_TOOLTIPS.evidence.link} />
+                <FieldLabel label="URL" htmlFor="kz-ev-url" hint={KAIZEN_HELP_TOOLTIPS.evidence.link}  className="kz-field__label" />
                 <input
                   id="kz-ev-url"
                   type="url"

@@ -1,3 +1,4 @@
+import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { Eye, Paperclip } from "lucide-react";
 import { useState } from "react";
 
@@ -15,7 +16,6 @@ import {
   queueItemEvidenceLabel,
   queueItemMissingRequiredEvidence,
 } from "../utils/myQueueEvidence";
-import { TableHeaderCell } from "./ui/HelpTooltip";
 import { MyQueueEvidenceModal } from "./MyQueueEvidenceModal";
 
 const T = PAC_HELP_TOOLTIPS.tables;

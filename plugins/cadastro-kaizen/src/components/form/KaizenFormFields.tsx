@@ -2,7 +2,7 @@ import { FormSection } from "./FormSection";
 import { SelectField, TextAreaField, TextField } from "./FormField";
 import { KaizenParticipantsField } from "./KaizenParticipantsField";
 import { SavingsParamFields } from "./SavingsParamFields";
-import { FieldLabel } from "../ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   BRANCHES,
@@ -106,7 +106,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         />
 
         <div className="kz-field kz-span-2">
-          <FieldLabel label="Equipe / responsáveis" hint={KAIZEN_HELP_TOOLTIPS.sections.participants} />
+          <FieldLabel label="Equipe / responsáveis" hint={KAIZEN_HELP_TOOLTIPS.sections.participants}  className="kz-field__label" />
           <KaizenParticipantsField
             participants={values.participants}
             onChange={(participants) => onChange("participants", participants)}

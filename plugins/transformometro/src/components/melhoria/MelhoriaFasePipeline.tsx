@@ -1,5 +1,5 @@
 import { MELHORIA_FASE_OPTIONS } from "../../constants/melhoriaForm";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 type Props = {
   currentFase?: string | null;
@@ -14,7 +14,7 @@ export function MelhoriaFasePipeline({ currentFase, hint }: Props) {
     <div className="tm-fase-pipeline-block">
       {hint ? (
         <p className="tm-fase-pipeline-block__label">
-          <FieldLabel label="Fase da melhoria" hint={hint} />
+          <FieldLabel className="tm-field__label" label="Fase da melhoria" hint={hint} />
         </p>
       ) : null}
       <div className="tm-fase-pipeline" role="list" aria-label="Progresso da melhoria">

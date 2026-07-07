@@ -14,7 +14,7 @@ import {
   revisaoEvidenceFileUrl,
   uploadRevisaoEvidence,
 } from "../../data/api/transformometroEvidenceApi";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RevisaoEvidence } from "../../types/revisaoEvidence";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
@@ -407,7 +407,7 @@ export function RevisaoEvidencePanel({
             <div className="tm-evidence-link">
               <div className="ds-field">
                 <label htmlFor="tm-ev-url">
-                  <FieldLabel label="URL" hint={R.evidenceUrl} />
+                  <FieldLabel className="tm-field__label" label="URL" hint={R.evidenceUrl} />
                 </label>
                 <input
                   id="tm-ev-url"
@@ -420,7 +420,7 @@ export function RevisaoEvidencePanel({
               </div>
               <div className="ds-field">
                 <label htmlFor="tm-ev-link-desc">
-                  <FieldLabel label="Descrição" hint={R.evidenceDescription} />
+                  <FieldLabel className="tm-field__label" label="Descrição" hint={R.evidenceDescription} />
                 </label>
                 <input
                   id="tm-ev-link-desc"

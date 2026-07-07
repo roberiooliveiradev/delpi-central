@@ -1,3 +1,4 @@
+import { TitleWithHelp } from "./ui/TitleWithHelp";
 import { useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -5,7 +6,7 @@ import { upsertFiveWhys } from "../api/actionPlansApi";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FormActions } from "./ui/FormActions";
 import { SectionSaveButton } from "./ui/SectionSaveButton";
-import { FieldLabel, TitleWithHelp } from "./ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import type { FiveWhysForm, FiveWhyStep } from "../utils/fiveWhys";

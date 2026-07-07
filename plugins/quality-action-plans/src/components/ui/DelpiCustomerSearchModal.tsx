@@ -6,7 +6,7 @@ import {
   type DelpiCustomerLookupItem,
 } from "../../api/delpiLookupApi";
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { TableHeaderCell } from "./HelpTooltip";
+import { TableHeaderCell } from "./TableHeaderCell";
 import { Modal } from "./Modal";
 import { TextField } from "./TextField";
 

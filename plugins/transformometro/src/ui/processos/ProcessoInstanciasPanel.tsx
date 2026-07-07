@@ -4,7 +4,7 @@ import { Copy, Plus, Trash2 } from "lucide-react";
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DataTableSection } from "../../components/DataTableSection";
-import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
@@ -586,7 +586,7 @@ export function ProcessoInstanciasPanel({
   const unidadesGrid = (
     <div className="ds-filter-box tm-inst-form__field--full">
       <span className="ds-field-label">
-        <FieldLabel label="Unidades *" hint={TM_HELP_TOOLTIPS.instancias.unidades} />
+        <FieldLabel className="tm-field__label" label="Unidades *" hint={TM_HELP_TOOLTIPS.instancias.unidades} />
       </span>
       <div className="tm-check-grid" role="group" aria-label="Unidades da melhoria">
         {options.filiais.map((filial) => {
@@ -613,7 +613,7 @@ export function ProcessoInstanciasPanel({
   const setoresGrid = (
     <div className="ds-filter-box tm-inst-form__field--full">
       <span className="ds-field-label">
-        <FieldLabel label="Departamentos *" hint={TM_HELP_TOOLTIPS.instancias.setores} />
+        <FieldLabel className="tm-field__label" label="Departamentos *" hint={TM_HELP_TOOLTIPS.instancias.setores} />
       </span>
       <div className="tm-check-grid" role="group" aria-label="Departamentos da melhoria">
         {setoresDisponiveis.length === 0 ? (
@@ -646,7 +646,7 @@ export function ProcessoInstanciasPanel({
     <>
       <div className="ds-filter-box tm-inst-form__field--full">
         <label htmlFor="tm-melhoria-resumo">
-          <FieldLabel label="Resumo da melhoria" hint={TM_HELP_TOOLTIPS.instancias.resumo} />
+          <FieldLabel className="tm-field__label" label="Resumo da melhoria" hint={TM_HELP_TOOLTIPS.instancias.resumo} />
         </label>
         <textarea
           id="tm-melhoria-resumo"
@@ -659,7 +659,7 @@ export function ProcessoInstanciasPanel({
       <div className="tm-inst-form__row">
         <div className="ds-filter-box">
           <label htmlFor="tm-melhoria-responsavel">
-            <FieldLabel label="Responsável local" hint={TM_HELP_TOOLTIPS.instancias.responsavel} />
+            <FieldLabel className="tm-field__label" label="Responsável local" hint={TM_HELP_TOOLTIPS.instancias.responsavel} />
           </label>
           <input
             id="tm-melhoria-responsavel"
@@ -680,7 +680,7 @@ export function ProcessoInstanciasPanel({
       <div className="tm-inst-form__row">
         <div className="ds-filter-box">
           <label htmlFor="tm-melhoria-data-alvo">
-            <FieldLabel label="Data-alvo de go-live" hint={TM_HELP_TOOLTIPS.instancias.dataAlvo} />
+            <FieldLabel className="tm-field__label" label="Data-alvo de go-live" hint={TM_HELP_TOOLTIPS.instancias.dataAlvo} />
           </label>
           <input
             id="tm-melhoria-data-alvo"
@@ -704,7 +704,7 @@ export function ProcessoInstanciasPanel({
   const rotuloField = (
     <div className="ds-filter-box tm-inst-form__field--full">
       <label htmlFor="tm-inst-rotulo">
-        <FieldLabel label="Título (opcional)" hint={TM_HELP_TOOLTIPS.instancias.rotulo} />
+        <FieldLabel className="tm-field__label" label="Título (opcional)" hint={TM_HELP_TOOLTIPS.instancias.rotulo} />
       </label>
       <input
         id="tm-inst-rotulo"

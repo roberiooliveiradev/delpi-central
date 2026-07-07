@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { FieldLabel } from "../ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 type BaseFieldProps = {
   id: string;
@@ -24,7 +24,7 @@ export function FormField({
 }: BaseFieldProps & { children: ReactNode }) {
   return (
     <div className={fieldClass(span)}>
-      <FieldLabel label={label} htmlFor={id} hint={hint} />
+      <FieldLabel label={label} htmlFor={id} hint={hint}  className="kz-field__label" />
       {children}
     </div>
   );

@@ -1,5 +1,5 @@
 import type { OptionsData } from "../../data/api/transformometroApi";
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -28,7 +28,7 @@ export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm
         options={mapSelectOptions(options.tipo_investimento)}
       />
       <label className="ds-filter-box ds-filter-box--wide">
-        <FieldLabel label="Descrição *" hint={I.descricao} />
+        <FieldLabel className="tm-field__label" label="Descrição *" hint={I.descricao} />
         <input
           id={`${idPrefix}-desc`}
           required
@@ -37,7 +37,7 @@ export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm
         />
       </label>
       <label className="ds-filter-box">
-        <FieldLabel label="Qtd" hint={I.quantidade} />
+        <FieldLabel className="tm-field__label" label="Qtd" hint={I.quantidade} />
         <input
           type="number"
           min={0}
@@ -47,7 +47,7 @@ export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm
         />
       </label>
       <label className="ds-filter-box">
-        <FieldLabel label="Valor unit. (R$)" hint={I.valorUnitario} />
+        <FieldLabel className="tm-field__label" label="Valor unit. (R$)" hint={I.valorUnitario} />
         <input
           type="number"
           min={0}
@@ -72,7 +72,7 @@ export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm
         options={mapSelectOptions(options.categorias)}
       />
       <label className="ds-filter-box">
-        <FieldLabel label="Data" hint={I.data} />
+        <FieldLabel className="tm-field__label" label="Data" hint={I.data} />
         <input
           type="date"
           value={form.data_investimento}
@@ -80,7 +80,7 @@ export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm
         />
       </label>
       <label className="ds-filter-box">
-        <FieldLabel label="Meses vigência" hint={I.mesesVigencia} />
+        <FieldLabel className="tm-field__label" label="Meses vigência" hint={I.mesesVigencia} />
         <input
           type="number"
           min={1}

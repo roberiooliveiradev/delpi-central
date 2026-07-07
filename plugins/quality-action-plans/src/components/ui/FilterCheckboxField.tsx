@@ -1,4 +1,4 @@
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 type FilterCheckboxFieldProps = {
   id: string;

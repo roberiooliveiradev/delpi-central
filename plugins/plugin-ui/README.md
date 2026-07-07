@@ -103,15 +103,22 @@ src/
 | Plugin | Status |
 |--------|--------|
 | `tv-dashboard` | ✅ Integrado (referência) |
-| `dashboard-production` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| `dashboard-commercial` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| `dashboard-engineering` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| `dashboard-financial` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| `dashboard-hr` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| `dashboard-lmps` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| `dashboard-quality` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| `dashboard-supplies` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
-| Demais plugins com `HelpTooltip.tsx` local | ⏳ Ver [migration-catalog.md](./docs/migration-catalog.md) |
+| `dashboard-commercial` | ✅ Fase 1 |
+| `dashboard-engineering` | ✅ Fase 1 |
+| `dashboard-financial` | ✅ Fase 1 |
+| `dashboard-hr` | ✅ Fase 1 |
+| `dashboard-lmps` | ✅ Fase 1 |
+| `dashboard-production` | ✅ Fase 1 |
+| `dashboard-quality` | ✅ Fase 1 |
+| `dashboard-supplies` | ✅ Fase 1 |
+| `cadastro-kaizen` | ✅ Fase 1 |
+| `transformometro` | ✅ Fase 1 |
+| `quality-action-plans` | ✅ Fase 1 |
+| `eficiencia-fabril` | ✅ Fase 1 |
+| `maintenance` | ✅ Fase 1 |
+| `portal` | ❌ Fora de escopo (shell) |
+
+Demais plugins — ver [migration-catalog.md](./docs/migration-catalog.md).
 
 ---
 

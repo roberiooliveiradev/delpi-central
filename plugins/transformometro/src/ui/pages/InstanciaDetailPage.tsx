@@ -18,7 +18,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { cenarioSelectLabel } from "../../content/cenarioLabels";
@@ -457,7 +457,7 @@ export function InstanciaDetailPage({
           <form onSubmit={handleCreateRevisao}>
             <div className="ds-filters-row">
               <div className="ds-filter-box">
-                <FieldLabel label="Versão" hint={TM_HELP_TOOLTIPS.revisao.versao} />
+                <FieldLabel className="tm-field__label" label="Versão" hint={TM_HELP_TOOLTIPS.revisao.versao} />
                 <input
                   id="tm-rev-versao"
                   required
@@ -497,7 +497,7 @@ export function InstanciaDetailPage({
                 />
               ) : null}
               <div className="ds-filter-box">
-                <FieldLabel label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
+                <FieldLabel className="tm-field__label" label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
                 <input
                   id="tm-rev-inicio"
                   type="date"

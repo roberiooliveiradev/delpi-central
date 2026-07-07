@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { KpiTone } from "../../constants/dashboardKpis";
-import { TitleWithHelp } from "./HelpTooltip";
+import { TitleWithHelp } from "./TitleWithHelp";
 
 type KpiCardProps = {
   label: string;

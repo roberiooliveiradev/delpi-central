@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Download, FileCode2, ShieldCheck, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchProcessoDiagramBpmnXml,
@@ -151,7 +151,7 @@ export function ProcessoDiagramSection({
   return (
     <div className="tm-diagram-section">
       {!embeddedInCard ? (
-        <FieldLabel label="Diagrama macro" hint={TM_HELP_TOOLTIPS.processos.diagramaMacro} />
+        <FieldLabel className="tm-field__label" label="Diagrama macro" hint={TM_HELP_TOOLTIPS.processos.diagramaMacro} />
       ) : null}
 
       <DiagramFullscreenFrame

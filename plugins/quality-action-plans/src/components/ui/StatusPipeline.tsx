@@ -1,5 +1,5 @@
 import { PLAN_STATUSES } from "../../constants/actionPlans";
-import { TitleWithHelp } from "./HelpTooltip";
+import { TitleWithHelp } from "./TitleWithHelp";
 
 type StatusPipelineProps = {
   currentStatus: string;

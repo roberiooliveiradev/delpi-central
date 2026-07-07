@@ -1,3 +1,4 @@
+import { TableHeaderCell } from "../components/ui/TableHeaderCell";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { Eye, X } from "lucide-react";
 
@@ -11,7 +12,6 @@ import { PageHeader } from "../components/PageHeader";
 import { OpenPlanActionsBadge } from "../components/OpenPlanActionsBadge";
 import { ScopeBadge, SeverityBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
-import { TableHeaderCell } from "../components/ui/HelpTooltip";
 import { TextAreaField } from "../components/ui/TextAreaField";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {

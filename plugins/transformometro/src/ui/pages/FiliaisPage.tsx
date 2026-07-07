@@ -22,7 +22,7 @@ import {
   type OptionsData,
 } from "../../data/api/transformometroApi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { HelpTooltip } from "../../components/HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";

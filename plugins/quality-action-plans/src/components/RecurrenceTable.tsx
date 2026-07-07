@@ -1,10 +1,10 @@
+import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { Eye } from "lucide-react";
 
 import { branchLabel, detailPath } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RecurrenceGroup } from "../types/recurrence";
 import { formatDateTime } from "../utils/format";
-import { TableHeaderCell } from "./ui/HelpTooltip";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 

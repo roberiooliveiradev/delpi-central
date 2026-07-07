@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom/client";
 import App, { type AppProps } from "./App";
-import "./index.css";
+import "../../plugin-ui/src/styles.css";
 import "./index.css";
 
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();

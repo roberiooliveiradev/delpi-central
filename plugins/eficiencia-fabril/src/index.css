@@ -28,6 +28,11 @@
   --ef-font-md: 14px;
   --ef-font-hero: clamp(24px, 2vw, 36px);
   --ef-font-kpi: clamp(26px, 2.2vw, 38px);
+  --delpi-ui-accent: var(--ef-accent);
+  --delpi-ui-surface: var(--ef-surface);
+  --delpi-ui-text: var(--ef-text);
+  --delpi-ui-border: var(--ef-border);
+  --delpi-ui-muted: var(--ef-muted);
 }
 
 .dashboard-eficiencia-fabril button,
@@ -165,19 +170,16 @@
   color: var(--ef-muted);
 }
 
-.ef-help-tooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
 }
 
-.ef-help-tooltip--wrap {
   cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--ef-muted) 55%, transparent);
 }
 
-.ef-help-tooltip__trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -193,15 +195,12 @@
   transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
-.ef-help-tooltip__trigger:hover,
-.ef-help-tooltip__trigger:focus-visible {
   opacity: 1;
   color: var(--ef-accent);
   background: color-mix(in srgb, var(--ef-accent) 10%, transparent);
   outline: none;
 }
 
-.ef-help-tooltip__bubble {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 50%;
@@ -229,24 +228,18 @@
     visibility 0.18s ease;
 }
 
-.ef-help-tooltip:hover .ef-help-tooltip__bubble,
-.ef-help-tooltip:focus-within .ef-help-tooltip__bubble {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
 
-.ef-help-tooltip--wrap .ef-help-tooltip__bubble {
   left: 0;
   transform: translateY(4px);
 }
 
-.ef-help-tooltip--wrap:hover .ef-help-tooltip__bubble,
-.ef-help-tooltip--wrap:focus-within .ef-help-tooltip__bubble {
   transform: translateY(0);
 }
 
-.ef-help-tooltip--wrap:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--ef-accent) 45%, transparent);
   outline-offset: 2px;
   border-radius: 4px;
@@ -999,14 +992,11 @@
   min-width: 0;
 }
 
-.ef-table thead th .ef-help-tooltip__bubble {
   bottom: auto;
   top: calc(100% + 8px);
   transform: translateX(-50%) translateY(-4px);
 }
 
-.ef-table thead th .ef-help-tooltip:hover .ef-help-tooltip__bubble,
-.ef-table thead th .ef-help-tooltip:focus-within .ef-help-tooltip__bubble {
   transform: translateX(-50%) translateY(0);
 }
 

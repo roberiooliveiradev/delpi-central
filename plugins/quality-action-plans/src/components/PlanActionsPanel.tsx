@@ -1,3 +1,4 @@
+import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { useState } from "react";
 import { Pencil, Trash2, X } from "lucide-react";
 
@@ -15,7 +16,7 @@ import { ActionResponsiblesField } from "./ActionResponsiblesField";
 import { ActionResponsiblesChips } from "./ActionResponsiblesChips";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
-import { FieldLabel, TableHeaderCell } from "./ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";

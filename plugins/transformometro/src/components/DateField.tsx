@@ -1,4 +1,4 @@
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 type DateFieldProps = {
   label: string;
@@ -12,7 +12,7 @@ export function DateField({ label, value, onChange, id, hint }: DateFieldProps) 
   const inputId = id ?? `tm-date-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
     <label className="ds-filter-box" htmlFor={inputId}>
-      <FieldLabel label={label} hint={hint} />
+      <FieldLabel className="tm-field__label" label={label} hint={hint} />
       <input
         id={inputId}
         type="date"

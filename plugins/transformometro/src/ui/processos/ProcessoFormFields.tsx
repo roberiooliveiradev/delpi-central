@@ -1,6 +1,6 @@
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import { filterSetoresByFilial, resolveSetorIdForFilial } from "../../utils/setores";
@@ -36,13 +36,13 @@ export function ProcessoFormFields({
     <div className="ds-filters-row ds-filters-row--extended">
       {codigoProcesso ? (
         <div className="ds-filter-box">
-          <FieldLabel label="Código" hint={TM_HELP_TOOLTIPS.processos.codigo} />
+          <FieldLabel className="tm-field__label" label="Código" hint={TM_HELP_TOOLTIPS.processos.codigo} />
           <input id="tm-proc-codigo" readOnly value={codigoProcesso} />
         </div>
       ) : null}
       <div className="ds-filter-box ds-filter-box--wide">
         <label htmlFor="tm-proc-nome">
-          <FieldLabel label="Nome do processo *" hint={TM_HELP_TOOLTIPS.processos.nome} />
+          <FieldLabel className="tm-field__label" label="Nome do processo *" hint={TM_HELP_TOOLTIPS.processos.nome} />
         </label>
         <input
           id="tm-proc-nome"
@@ -90,7 +90,7 @@ export function ProcessoFormFields({
       />
       <div className="ds-filter-box">
         <label htmlFor="tm-proc-familia">
-          <FieldLabel label="Família (rateio)" hint={TM_HELP_TOOLTIPS.processos.familia} />
+          <FieldLabel className="tm-field__label" label="Família (rateio)" hint={TM_HELP_TOOLTIPS.processos.familia} />
         </label>
         <input
           id="tm-proc-familia"
@@ -101,7 +101,7 @@ export function ProcessoFormFields({
       </div>
       <div className="ds-filter-box">
         <label htmlFor="tm-proc-ferramenta">
-          <FieldLabel label="Agrupador ferramenta" hint={TM_HELP_TOOLTIPS.processos.agrupadorFerramenta} />
+          <FieldLabel className="tm-field__label" label="Agrupador ferramenta" hint={TM_HELP_TOOLTIPS.processos.agrupadorFerramenta} />
         </label>
         <input
           id="tm-proc-ferramenta"
@@ -112,7 +112,7 @@ export function ProcessoFormFields({
       </div>
       <div className="ds-filter-box">
         <label htmlFor="tm-proc-gestor">
-          <FieldLabel label="Gestor responsável" hint={TM_HELP_TOOLTIPS.processos.gestor} />
+          <FieldLabel className="tm-field__label" label="Gestor responsável" hint={TM_HELP_TOOLTIPS.processos.gestor} />
         </label>
         <input
           id="tm-proc-gestor"
@@ -122,7 +122,7 @@ export function ProcessoFormFields({
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
         <label htmlFor="tm-proc-objetivo">
-          <FieldLabel label="Objetivo" hint={TM_HELP_TOOLTIPS.processos.objetivo} />
+          <FieldLabel className="tm-field__label" label="Objetivo" hint={TM_HELP_TOOLTIPS.processos.objetivo} />
         </label>
         <textarea
           id="tm-proc-objetivo"
@@ -133,7 +133,7 @@ export function ProcessoFormFields({
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
         <label htmlFor="tm-proc-descricao">
-          <FieldLabel label="Descrição" hint={TM_HELP_TOOLTIPS.processos.descricao} />
+          <FieldLabel className="tm-field__label" label="Descrição" hint={TM_HELP_TOOLTIPS.processos.descricao} />
         </label>
         <textarea
           id="tm-proc-descricao"

@@ -1,3 +1,4 @@
+import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { Eye } from "lucide-react";
 
 import { branchLabel, detailPath } from "../constants/actionPlans";
@@ -6,7 +7,6 @@ import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
 import { PlanSlaBadge } from "./PlanSlaBadge";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "./StatusBadge";
-import { TableHeaderCell } from "./ui/HelpTooltip";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 

@@ -395,7 +395,7 @@ export function FerramentaRevisaoProgramadaSection({
       {!loading && canManage && schedule ? (
         <div className="dm-revisao-ferramenta__feito">
           <label className="dm-field dm-revisao-ferramenta__feito-date">
-            <FieldLabel label="Data do feito" hint={CONFIG_TOOLTIPS.revisaoRegistrar} />
+            <FieldLabel label="Data do feito" hint={CONFIG_TOOLTIPS.revisaoRegistrar}  className="dm-field__label" />
             <BrDateInput value={feitoDate} onChange={setFeitoDate} />
           </label>
           <button
@@ -547,7 +547,7 @@ export function FerramentaRevisaoProgramadaSection({
           {formExpanded && !schedule ? (
             <form className="dm-form-grid dm-revisao-ferramenta__form" onSubmit={handleCreate}>
               <label className="dm-field dm-field--span-3">
-                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
+                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo}  className="dm-field__label" />
                 <input
                   type="number"
                   min={1}
@@ -562,7 +562,7 @@ export function FerramentaRevisaoProgramadaSection({
                 />
               </label>
               <label className="dm-field dm-field--span-4">
-                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
+                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia}  className="dm-field__label" />
                 <BrDateInput
                   value={createDraft.data_referencia}
                   onChange={(value) =>
@@ -571,7 +571,7 @@ export function FerramentaRevisaoProgramadaSection({
                 />
               </label>
               <label className="dm-field dm-field--span-full dm-field--textarea">
-                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
+                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao}  className="dm-field__label" />
                 <textarea
                   rows={4}
                   value={createDraft.observacao}
@@ -592,7 +592,7 @@ export function FerramentaRevisaoProgramadaSection({
           {formExpanded && schedule ? (
             <div className="dm-form-grid dm-revisao-ferramenta__edit">
               <label className="dm-field dm-field--span-3">
-                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
+                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo}  className="dm-field__label" />
                 <div className="dm-editable-cell">
                   <input
                     type="number"
@@ -607,7 +607,7 @@ export function FerramentaRevisaoProgramadaSection({
                 </div>
               </label>
               <label className="dm-field dm-field--span-4">
-                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
+                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia}  className="dm-field__label" />
                 <div className="dm-editable-cell">
                   <BrDateInput
                     value={draft.data_referencia}
@@ -627,7 +627,7 @@ export function FerramentaRevisaoProgramadaSection({
                 ) : null}
               </label>
               <label className="dm-field dm-field--span-full dm-field--textarea">
-                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
+                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao}  className="dm-field__label" />
                 <textarea
                   rows={4}
                   value={draft.observacao}

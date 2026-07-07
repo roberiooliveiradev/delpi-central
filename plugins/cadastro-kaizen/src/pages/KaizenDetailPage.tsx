@@ -12,7 +12,7 @@ import {
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { EditableSectionCard } from "../components/ui/EditableSectionCard";
-import { FieldLabel, HelpTooltip } from "../components/ui/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { ReadOnlyField } from "../components/ui/ReadOnlyField";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SavingsParamFields, SavingsParamReadFields } from "../components/form/SavingsParamFields";
@@ -453,7 +453,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         editContent={
           <div className="kz-form-grid">
             <div className="kz-field">
-              <FieldLabel label="Unidade *" htmlFor="kz-d-branch" hint={KAIZEN_HELP_TOOLTIPS.fields.branch} />
+              <FieldLabel label="Unidade *" htmlFor="kz-d-branch" hint={KAIZEN_HELP_TOOLTIPS.fields.branch}  className="kz-field__label" />
               <select
                 id="kz-d-branch"
                 value={form.branch_code}
@@ -467,7 +467,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               </select>
             </div>
             <div className="kz-field">
-              <FieldLabel label="Setor" htmlFor="kz-d-sector" hint={KAIZEN_HELP_TOOLTIPS.fields.sector} />
+              <FieldLabel label="Setor" htmlFor="kz-d-sector" hint={KAIZEN_HELP_TOOLTIPS.fields.sector}  className="kz-field__label" />
               <input
                 id="kz-d-sector"
                 value={form.sector}
@@ -475,7 +475,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field">
-              <FieldLabel label="Categoria" htmlFor="kz-d-category" hint={KAIZEN_HELP_TOOLTIPS.fields.category} />
+              <FieldLabel label="Categoria" htmlFor="kz-d-category" hint={KAIZEN_HELP_TOOLTIPS.fields.category}  className="kz-field__label" />
               <select
                 id="kz-d-category"
                 value={form.category}
@@ -494,7 +494,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Investimento (R$)"
                 htmlFor="kz-d-investment"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
-              />
+               className="kz-field__label" />
               <input
                 id="kz-d-investment"
                 inputMode="decimal"
@@ -503,7 +503,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <FieldLabel label="Título *" htmlFor="kz-d-title" hint={KAIZEN_HELP_TOOLTIPS.fields.title} />
+              <FieldLabel label="Título *" htmlFor="kz-d-title" hint={KAIZEN_HELP_TOOLTIPS.fields.title}  className="kz-field__label" />
               <input
                 id="kz-d-title"
                 value={form.title}
@@ -512,7 +512,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <FieldLabel label="Equipe / responsáveis" hint={KAIZEN_HELP_TOOLTIPS.sections.participants} />
+              <FieldLabel label="Equipe / responsáveis" hint={KAIZEN_HELP_TOOLTIPS.sections.participants}  className="kz-field__label" />
               <KaizenParticipantsField
                 participants={form.participants}
                 onChange={(participants) => updateField("participants", participants)}
@@ -523,7 +523,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Descrição do processo"
                 htmlFor="kz-d-process"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.processDescription}
-              />
+               className="kz-field__label" />
               <textarea
                 id="kz-d-process"
                 value={form.process_description}
@@ -535,7 +535,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Problema / oportunidade"
                 htmlFor="kz-d-problem"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.problemDescription}
-              />
+               className="kz-field__label" />
               <textarea
                 id="kz-d-problem"
                 value={form.problem_description}
@@ -547,7 +547,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Melhoria realizada"
                 htmlFor="kz-d-improvement"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.improvementDescription}
-              />
+               className="kz-field__label" />
               <textarea
                 id="kz-d-improvement"
                 value={form.improvement_description}
@@ -559,7 +559,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Resultado esperado"
                 htmlFor="kz-d-expected"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.expectedResult}
-              />
+               className="kz-field__label" />
               <textarea
                 id="kz-d-expected"
                 value={form.expected_result}
@@ -567,7 +567,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <FieldLabel label="Notas" htmlFor="kz-d-notes" hint={KAIZEN_HELP_TOOLTIPS.fields.notes} />
+              <FieldLabel label="Notas" htmlFor="kz-d-notes" hint={KAIZEN_HELP_TOOLTIPS.fields.notes}  className="kz-field__label" />
               <textarea
                 id="kz-d-notes"
                 value={form.notes}
@@ -610,7 +610,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         editContent={
           <div className="kz-form-grid">
             <div className="kz-field">
-              <FieldLabel label="Status" htmlFor="kz-d-status" hint={KAIZEN_HELP_TOOLTIPS.fields.status} />
+              <FieldLabel label="Status" htmlFor="kz-d-status" hint={KAIZEN_HELP_TOOLTIPS.fields.status}  className="kz-field__label" />
               <select
                 id="kz-d-status"
                 value={form.status}
@@ -630,7 +630,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Vigente a partir de"
                 htmlFor="kz-d-eff"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.effectiveFrom}
-              />
+               className="kz-field__label" />
               <input
                 id="kz-d-eff"
                 type="date"
@@ -643,7 +643,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Data implantação"
                 htmlFor="kz-d-date-impl"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
-              />
+               className="kz-field__label" />
               <input
                 id="kz-d-date-impl"
                 type="date"
@@ -656,7 +656,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Data descontinuação"
                 htmlFor="kz-d-date-disc"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
-              />
+               className="kz-field__label" />
               <input
                 id="kz-d-date-disc"
                 type="date"
@@ -669,7 +669,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Motivo da correção (registra na auditoria)"
                 htmlFor="kz-d-reason"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
-              />
+               className="kz-field__label" />
               <input
                 id="kz-d-reason"
                 value={changeReason}
@@ -739,7 +739,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Tipo de economia"
                 htmlFor="kz-d-savings-type"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
-              />
+               className="kz-field__label" />
               <select
                 id="kz-d-savings-type"
                 value={form.savings_type}
@@ -768,7 +768,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Economia realizada/dia (R$)"
                 htmlFor="kz-d-realized"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.realizedDailySavings}
-              />
+               className="kz-field__label" />
               <input
                 id="kz-d-realized"
                 inputMode="decimal"
@@ -781,7 +781,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 label="Motivo da correção (registra na auditoria)"
                 htmlFor="kz-d-eco-reason"
                 hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
-              />
+               className="kz-field__label" />
               <input
                 id="kz-d-eco-reason"
                 value={changeReason}

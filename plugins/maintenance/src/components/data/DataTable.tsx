@@ -1,5 +1,5 @@
 import type { DataTableColumn } from "./types";
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import "./DataTable.css";
 
 type DataTableProps<T> = {

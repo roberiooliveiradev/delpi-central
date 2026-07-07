@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchRevisaoDecomposicaoMerged,
@@ -121,7 +121,7 @@ export function RevisaoDecompositionSection({
   return (
     <div className="tm-decomposition-revisao">
       {!embeddedInCard ? (
-        <FieldLabel label="Mapeamento da revisão" hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao} />
+        <FieldLabel className="tm-field__label" label="Mapeamento da revisão" hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao} />
       ) : null}
 
       <div className="tm-decomposition-section__tabs">

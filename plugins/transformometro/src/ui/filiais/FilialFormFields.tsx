@@ -1,4 +1,4 @@
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -19,7 +19,7 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
     <div className="ds-filters-row ds-filters-row--extended">
       <div className="ds-filter-box">
         <label htmlFor="tm-filial-codigo">
-          <FieldLabel label="Código TOTVS *" hint={TM_HELP_TOOLTIPS.filiais.codigo} />
+          <FieldLabel className="tm-field__label" label="Código TOTVS *" hint={TM_HELP_TOOLTIPS.filiais.codigo} />
         </label>
         <input
           id="tm-filial-codigo"
@@ -32,7 +32,7 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
         <label htmlFor="tm-filial-nome">
-          <FieldLabel label="Nome da unidade *" hint={TM_HELP_TOOLTIPS.filiais.nome} />
+          <FieldLabel className="tm-field__label" label="Nome da unidade *" hint={TM_HELP_TOOLTIPS.filiais.nome} />
         </label>
         <input
           id="tm-filial-nome"

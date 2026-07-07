@@ -19,7 +19,7 @@ import { CircleHelp } from "lucide-react";
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { HelpTooltip } from "../HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
 import { TabPanelTransition } from "../TabPanelTransition";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";

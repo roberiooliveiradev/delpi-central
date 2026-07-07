@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchKaizenSavingsTimeline } from "../../api/kaizenApi";
 import type { KaizenRecord, KaizenRevision, KaizenSavingsTimeline } from "../../types/kaizen";
 import { formatCurrency, formatDate } from "../../utils/format";
-import { HelpTooltip } from "../ui/HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 const CURRENT_YEAR = new Date().getFullYear();

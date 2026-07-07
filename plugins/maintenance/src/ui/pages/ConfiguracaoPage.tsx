@@ -544,7 +544,7 @@ export function ConfiguracaoPage({
           canManageMiniApplicators ? (
             <FilterBar embedded className="dm-filter-bar--motivo-create" onSubmit={handleCreateMotivo}>
               <label className="dm-field">
-                <FieldLabel label="Novo motivo" hint={CONFIG_TOOLTIPS.motivoDescricao} />
+                <FieldLabel label="Novo motivo" hint={CONFIG_TOOLTIPS.motivoDescricao}  className="dm-field__label" />
                 <input
                   value={novoMotivo}
                   onChange={(event) => setNovoMotivo(event.target.value)}
@@ -591,7 +591,7 @@ export function ConfiguracaoPage({
           canManageMiniApplicators ? (
             <FilterBar embedded className="dm-filter-bar--status-create" onSubmit={handleCreateStatus}>
               <label className="dm-field">
-                <FieldLabel label="Novo status" hint={CONFIG_TOOLTIPS.statusDescricao} />
+                <FieldLabel label="Novo status" hint={CONFIG_TOOLTIPS.statusDescricao}  className="dm-field__label" />
                 <input
                   value={novoStatus.descricao}
                   onChange={(event) =>
@@ -601,7 +601,7 @@ export function ConfiguracaoPage({
                 />
               </label>
               <label className="dm-field">
-                <FieldLabel label="Operador" hint={CONFIG_TOOLTIPS.statusOperador} />
+                <FieldLabel label="Operador" hint={CONFIG_TOOLTIPS.statusOperador}  className="dm-field__label" />
                 <select
                   value={novoStatus.operador}
                   onChange={(event) =>
@@ -619,7 +619,7 @@ export function ConfiguracaoPage({
                 </select>
               </label>
               <label className="dm-field">
-                <FieldLabel label="Percentual" hint={CONFIG_TOOLTIPS.statusPercentual} />
+                <FieldLabel label="Percentual" hint={CONFIG_TOOLTIPS.statusPercentual}  className="dm-field__label" />
                 <input
                   type="number"
                   min={0}

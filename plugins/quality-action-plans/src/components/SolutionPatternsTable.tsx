@@ -1,7 +1,7 @@
+import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { SolutionPattern } from "../types/solutionPattern";
 import { formatEffectivenessRate } from "../utils/symptomTags";
-import { TableHeaderCell } from "./ui/HelpTooltip";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 

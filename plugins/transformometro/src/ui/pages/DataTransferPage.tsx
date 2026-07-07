@@ -2,7 +2,8 @@ import { useCallback, useRef, useState } from "react";
 import { AlertTriangle, Archive, ArrowDownUp, Download, FileJson, RefreshCw, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { HelpTooltip, TableHeader } from "../../components/HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
+import { TableHeader } from "../../components/TableHeader";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";

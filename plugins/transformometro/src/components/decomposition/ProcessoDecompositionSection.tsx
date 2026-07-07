@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Download, Sparkles } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   downloadProcessoDecomposicaoCsv,
@@ -121,7 +121,7 @@ export function ProcessoDecompositionSection({
   return (
     <div className="tm-decomposition-section">
       {!embeddedInCard ? (
-        <FieldLabel label="Mapeamento do processo" hint={TM_HELP_TOOLTIPS.decomposition.mapeamento} />
+        <FieldLabel className="tm-field__label" label="Mapeamento do processo" hint={TM_HELP_TOOLTIPS.decomposition.mapeamento} />
       ) : null}
 
       <div className="tm-decomposition-section__tabs">

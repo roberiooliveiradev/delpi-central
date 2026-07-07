@@ -9,7 +9,7 @@ import {
   Ruler,
 } from "lucide-react";
 
-import { FieldLabel, HelpTooltip } from "../HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import {
@@ -82,7 +82,7 @@ export function ProcessoTimeline({ entries, loading = false }: Props) {
       </div>
 
       <p className="tm-timeline-filters__label">
-        <FieldLabel label="Filtrar eventos" hint={TM_HELP_TOOLTIPS.processos.timelineFilter} />
+        <FieldLabel className="tm-field__label" label="Filtrar eventos" hint={TM_HELP_TOOLTIPS.processos.timelineFilter} />
       </p>
       <div className="tm-timeline-filters" role="tablist" aria-label="Filtrar linha do tempo">
         {PROCESSO_TIMELINE_FILTER_OPTIONS.map((option) => (

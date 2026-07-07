@@ -1,3 +1,4 @@
+import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { Eye } from "lucide-react";
 
 import { branchLabel, detailPath } from "../constants/actionPlans";
@@ -5,7 +6,6 @@ import { evidenceSectionLabel } from "../constants/evidence";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EvidenceSearchHit } from "../types/evidenceSearch";
 import { formatDateTime } from "../utils/format";
-import { TableHeaderCell } from "./ui/HelpTooltip";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 

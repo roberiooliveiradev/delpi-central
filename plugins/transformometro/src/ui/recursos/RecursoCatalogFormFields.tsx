@@ -1,4 +1,4 @@
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -42,7 +42,7 @@ export function RecursoCatalogFormFields({
     <>
       <div className="ds-filters-row">
         <label className="ds-filter-box ds-filter-box--wide">
-          <FieldLabel label="Nome *" hint={R.nome} />
+          <FieldLabel className="tm-field__label" label="Nome *" hint={R.nome} />
           <input
             required
             value={form.nome_recurso}
@@ -62,7 +62,7 @@ export function RecursoCatalogFormFields({
           )}
         />
         <label className="ds-filter-box">
-          <FieldLabel label="Fornecedor" hint={R.fornecedor} />
+          <FieldLabel className="tm-field__label" label="Fornecedor" hint={R.fornecedor} />
           <input
             value={form.fornecedor}
             onChange={(e) => onChange({ ...form, fornecedor: e.target.value })}
@@ -135,14 +135,14 @@ export function RecursoCatalogFormFields({
           )}
         />
         <label className="ds-filter-box">
-          <FieldLabel label="Centro de custo" hint={R.centroCusto} />
+          <FieldLabel className="tm-field__label" label="Centro de custo" hint={R.centroCusto} />
           <input
             value={form.centro_custo}
             onChange={(e) => onChange({ ...form, centro_custo: e.target.value })}
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Início vigência do recurso" hint={R.inicioVigencia} />
+          <FieldLabel className="tm-field__label" label="Início vigência do recurso" hint={R.inicioVigencia} />
           <input
             type="date"
             value={form.data_inicio_vigencia}
@@ -150,7 +150,7 @@ export function RecursoCatalogFormFields({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Fim vigência do recurso" hint={R.fimVigencia} />
+          <FieldLabel className="tm-field__label" label="Fim vigência do recurso" hint={R.fimVigencia} />
           <input
             type="date"
             value={form.data_fim_vigencia}
@@ -159,7 +159,7 @@ export function RecursoCatalogFormFields({
         </label>
       </div>
       <label className="ds-filter-box ds-filter-box--wide">
-        <FieldLabel label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} />
+        <FieldLabel className="tm-field__label" label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} />
         <input
           value={form.observacoes}
           onChange={(e) => onChange({ ...form, observacoes: e.target.value })}

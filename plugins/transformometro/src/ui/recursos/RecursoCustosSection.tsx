@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AppProps } from "../../App";
-import { FieldLabel, TableHeader } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
+import { TableHeader } from "../../components/TableHeader";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   deleteRecursoCusto,
@@ -186,7 +187,7 @@ export function RecursoCustosSection({
                       <form onSubmit={handleSaveEdit}>
                         <div className="ds-filters-row">
                           <label className="ds-filter-box">
-                            <FieldLabel label="Valor (R$)" hint={C.valorMes} />
+                            <FieldLabel className="tm-field__label" label="Valor (R$)" hint={C.valorMes} />
                             <input
                               type="number"
                               min={0}
@@ -199,7 +200,7 @@ export function RecursoCustosSection({
                             />
                           </label>
                           <label className="ds-filter-box">
-                            <FieldLabel label="Início *" hint={C.inicio} />
+                            <FieldLabel className="tm-field__label" label="Início *" hint={C.inicio} />
                             <input
                               type="date"
                               required
@@ -213,7 +214,7 @@ export function RecursoCustosSection({
                             />
                           </label>
                           <label className="ds-filter-box">
-                            <FieldLabel label="Fim" hint={C.fim} />
+                            <FieldLabel className="tm-field__label" label="Fim" hint={C.fim} />
                             <input
                               type="date"
                               value={editForm.data_fim_vigencia}
@@ -224,7 +225,7 @@ export function RecursoCustosSection({
                           </label>
                         </div>
                         <label className="ds-filter-box ds-filter-box--wide">
-                          <FieldLabel label="Observações" hint={C.observacoes} />
+                          <FieldLabel className="tm-field__label" label="Observações" hint={C.observacoes} />
                           <input
                             value={editForm.observacoes}
                             onChange={(e) =>
@@ -288,7 +289,7 @@ export function RecursoCustosSection({
           <h4 className="ds-cadastro-subsection__title">Registrar reajuste</h4>
           <div className="ds-filters-row">
             <label className="ds-filter-box">
-              <FieldLabel label="Novo valor mensal (R$) *" hint={R.reajusteValor} />
+              <FieldLabel className="tm-field__label" label="Novo valor mensal (R$) *" hint={R.reajusteValor} />
               <input
                 type="number"
                 min={0}
@@ -299,7 +300,7 @@ export function RecursoCustosSection({
               />
             </label>
             <label className="ds-filter-box">
-              <FieldLabel label="Vigente a partir de *" hint={R.reajusteDesde} />
+              <FieldLabel className="tm-field__label" label="Vigente a partir de *" hint={R.reajusteDesde} />
               <input
                 type="date"
                 required
@@ -309,7 +310,7 @@ export function RecursoCustosSection({
             </label>
           </div>
           <label className="ds-filter-box ds-filter-box--wide">
-            <FieldLabel label="Observações" hint={C.observacoes} />
+            <FieldLabel className="tm-field__label" label="Observações" hint={C.observacoes} />
             <input
               value={reajuste.observacoes}
               onChange={(e) => setReajuste({ ...reajuste, observacoes: e.target.value })}

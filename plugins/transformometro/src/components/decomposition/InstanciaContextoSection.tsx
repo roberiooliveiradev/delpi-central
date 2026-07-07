@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchInstanciaContexto,
@@ -78,12 +78,12 @@ export function InstanciaContextoSection({
   return (
     <div className="tm-instancia-contexto">
       {!embeddedInCard ? (
-        <FieldLabel label="Contexto operacional" hint={C.contextoInstancia} />
+        <FieldLabel className="tm-field__label" label="Contexto operacional" hint={C.contextoInstancia} />
       ) : null}
 
       <div className="tm-inst-form__row">
         <label className="ds-field">
-          <FieldLabel label="Responsável local" hint={C.contextoResponsavel} />
+          <FieldLabel className="tm-field__label" label="Responsável local" hint={C.contextoResponsavel} />
           <input
             value={contexto.responsavel_local ?? ""}
             onChange={(event) =>
@@ -92,7 +92,7 @@ export function InstanciaContextoSection({
           />
         </label>
         <label className="ds-field">
-          <FieldLabel label="Contato" hint={C.contextoContato} />
+          <FieldLabel className="tm-field__label" label="Contato" hint={C.contextoContato} />
           <input
             value={contexto.contato ?? ""}
             onChange={(event) => setContexto({ ...contexto, contato: event.target.value || null })}
@@ -101,7 +101,7 @@ export function InstanciaContextoSection({
       </div>
 
       <label className="ds-field tm-inst-form__field--full">
-        <FieldLabel label="Observações de rollout" hint={C.contextoObservacoesRollout} />
+        <FieldLabel className="tm-field__label" label="Observações de rollout" hint={C.contextoObservacoesRollout} />
         <textarea
           rows={3}
           value={contexto.observacoes_rollout ?? ""}

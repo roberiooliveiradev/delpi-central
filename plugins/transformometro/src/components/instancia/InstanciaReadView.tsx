@@ -1,4 +1,4 @@
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MelhoriaFaseBadge } from "../../components/melhoria/MelhoriaFaseBadge";
 import { MelhoriaFasePipeline } from "../../components/melhoria/MelhoriaFasePipeline";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -31,36 +31,36 @@ export function InstanciaReadView({ instancia, options }: Props) {
       <MelhoriaFasePipeline currentFase={instancia.fase_melhoria} hint={I.fase} />
       <dl className="ds-dl-grid">
         <div>
-          <dt><FieldLabel label="Unidade" hint={I.colunaUnidade} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Unidade" hint={I.colunaUnidade} /></dt>
           <dd>{unidade}</dd>
         </div>
         <div>
-          <dt><FieldLabel label="Status" hint={I.status} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Status" hint={I.status} /></dt>
           <dd>{renderTableStatus(instancia.status_instancia ?? "ativo")}</dd>
         </div>
         <div>
-          <dt><FieldLabel label="Fase" hint={I.fase} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Fase" hint={I.fase} /></dt>
           <dd>
             <MelhoriaFaseBadge fase={instancia.fase_melhoria} />
           </dd>
         </div>
         <div>
-          <dt><FieldLabel label="Departamentos" hint={I.setores} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Departamentos" hint={I.setores} /></dt>
           <dd>{formatSetores(instancia) || "—"}</dd>
         </div>
         <div>
-          <dt><FieldLabel label="Título" hint={I.rotulo} /></dt>
+          <dt><FieldLabel className="tm-field__label" label="Título" hint={I.rotulo} /></dt>
           <dd>{instancia.rotulo_instancia ?? "—"}</dd>
         </div>
         {instancia.resumo_melhoria?.trim() ? (
           <div className="ds-dl-grid__full">
-            <dt><FieldLabel label="Resumo" hint={I.resumo} /></dt>
+            <dt><FieldLabel className="tm-field__label" label="Resumo" hint={I.resumo} /></dt>
             <dd>{instancia.resumo_melhoria.trim()}</dd>
           </div>
         ) : null}
         {instancia.todas_filiais_ativas && options.filiais.length > 1 ? (
           <div>
-            <dt><FieldLabel label="Consolidado" hint={I.multiplicadorConsolidado} /></dt>
+            <dt><FieldLabel className="tm-field__label" label="Consolidado" hint={I.multiplicadorConsolidado} /></dt>
             <dd>Economia e horas × {options.filiais.length} unidades</dd>
           </div>
         ) : null}

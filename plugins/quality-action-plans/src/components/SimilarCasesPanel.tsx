@@ -1,3 +1,4 @@
+import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { useEffect, useState } from "react";
 
 import { fetchPlanSimilarCases } from "../api/actionPlansApi";
@@ -7,7 +8,6 @@ import type { PlanSimilarCasesResult } from "../types/similarCases";
 import { detailPath } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatDate } from "../utils/format";
-import { TableHeaderCell } from "./ui/HelpTooltip";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 

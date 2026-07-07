@@ -1166,7 +1166,7 @@ export function MiniAplicadoresPage({
                 </label>
 
                 <label className="dm-field dm-field--span-full dm-field--textarea">
-                  <FieldLabel label="Observação" />
+                  <FieldLabel label="Observação"  className="dm-field__label" />
                   <textarea
                     rows={4}
                     value={observacao}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchInstanciaDecomposicaoEscopo,
@@ -121,7 +121,7 @@ export function InstanciaDecompositionEscopoSection({
   return (
     <div className="tm-decomposition-escopo">
       {!embeddedInCard ? (
-        <FieldLabel label="Escopo no mapeamento" hint={TM_HELP_TOOLTIPS.decomposition.escopoInstancia} />
+        <FieldLabel className="tm-field__label" label="Escopo no mapeamento" hint={TM_HELP_TOOLTIPS.decomposition.escopoInstancia} />
       ) : null}
 
       <label className="ds-check-label">

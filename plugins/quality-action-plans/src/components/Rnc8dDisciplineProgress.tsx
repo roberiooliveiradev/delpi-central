@@ -1,6 +1,6 @@
+import { TitleWithHelp } from "./ui/TitleWithHelp";
 import type { ActionPlanDetail } from "../types/actionPlan";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { TitleWithHelp } from "./ui/HelpTooltip";
 import { computeRnc8dDisciplineProgress } from "../utils/rnc8dDisciplineProgress";
 
 type Props = {

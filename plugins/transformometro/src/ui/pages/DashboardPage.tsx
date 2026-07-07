@@ -13,7 +13,7 @@ import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
-import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KpiCard } from "../../components/KpiCard";
@@ -602,7 +602,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
       <section className="ds-filters-row ds-no-print">
           <div className="ds-filter-box">
-            <FieldLabel label="Visão" hint={TM_HELP_TOOLTIPS.dashboard.view} />
+            <FieldLabel className="tm-field__label" label="Visão" hint={TM_HELP_TOOLTIPS.dashboard.view} />
             <SegmentToggle
             ariaLabel="Visão analítica do dashboard"
             idPrefix="tm-dashboard-view"
@@ -628,7 +628,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           />
           </div>
           <label className="ds-filter-box ds-field">
-            <FieldLabel
+            <FieldLabel className="tm-field__label"
               label="Competência"
               hint={TM_HELP_TOOLTIPS.dashboard.competencia}
             />

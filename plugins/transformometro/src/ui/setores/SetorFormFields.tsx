@@ -1,4 +1,4 @@
-import { FieldLabel } from "../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -29,7 +29,7 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
     <div className="ds-filters-row ds-filters-row--extended">
       <div className="ds-filter-box">
         <label htmlFor="tm-setor-codigo">
-          <FieldLabel label="Código de negócio *" hint={TM_HELP_TOOLTIPS.setores.codigo} />
+          <FieldLabel className="tm-field__label" label="Código de negócio *" hint={TM_HELP_TOOLTIPS.setores.codigo} />
         </label>
         <input
           id="tm-setor-codigo"
@@ -42,7 +42,7 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
         <label htmlFor="tm-setor-nome">
-          <FieldLabel label="Nome do departamento *" hint={TM_HELP_TOOLTIPS.setores.nome} />
+          <FieldLabel className="tm-field__label" label="Nome do departamento *" hint={TM_HELP_TOOLTIPS.setores.nome} />
         </label>
         <input
           id="tm-setor-nome"
@@ -61,7 +61,7 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
       />
       <div className="ds-filter-box ds-filter-box--wide">
         <span className="ds-field-label">
-          <FieldLabel
+          <FieldLabel className="tm-field__label"
             label="Unidades vinculadas *"
             hint={TM_HELP_TOOLTIPS.setores.unidadesVinculadas}
           />

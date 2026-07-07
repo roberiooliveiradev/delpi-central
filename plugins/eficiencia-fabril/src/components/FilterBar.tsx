@@ -1,7 +1,7 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
 import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { MultiSelectOption } from "./MultiSelectField";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -54,7 +54,7 @@ export function FilterBar({
     <section className="ef-filter-bar" aria-label="Filtros do dashboard">
       <div className="ef-filter-bar__grid">
         <label className="ef-field">
-          <FieldLabel label="Data início" hint={EF_HELP_TOOLTIPS.filters.dateStart} />
+          <FieldLabel label="Data início" hint={EF_HELP_TOOLTIPS.filters.dateStart}  className="ef-field__label" />
           <input
             type="date"
             value={dateStart}
@@ -64,7 +64,7 @@ export function FilterBar({
         </label>
 
         <label className="ef-field">
-          <FieldLabel label="Data fim" hint={EF_HELP_TOOLTIPS.filters.dateEnd} />
+          <FieldLabel label="Data fim" hint={EF_HELP_TOOLTIPS.filters.dateEnd}  className="ef-field__label" />
           <input
             type="date"
             value={dateEnd}

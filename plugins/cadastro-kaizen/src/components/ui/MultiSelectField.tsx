@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 export type MultiSelectOption = {
   value: string;
@@ -87,7 +87,7 @@ export function MultiSelectField({
 
   return (
     <div className={rootClass} ref={wrapperRef}>
-      <FieldLabel label={label} hint={labelHint} />
+      <FieldLabel label={label} hint={labelHint}  className="kz-field__label" />
       <div className={`kz-multi-select${open ? " kz-multi-select--open" : ""}`}>
         <button
           type="button"

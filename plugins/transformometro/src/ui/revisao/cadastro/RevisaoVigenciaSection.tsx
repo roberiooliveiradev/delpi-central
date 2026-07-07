@@ -1,5 +1,5 @@
 import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
-import { FieldLabel, HelpTooltip } from "../../../components/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { SelectField } from "../../../components/ui/SelectField";
 import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
@@ -113,7 +113,7 @@ export function RevisaoVigenciaSection({
       <form onSubmit={onSubmit}>
         <div className="ds-filters-row">
           <label className="ds-filter-box">
-            <FieldLabel label="Versão *" hint={R.versao} />
+            <FieldLabel className="tm-field__label" label="Versão *" hint={R.versao} />
             <input
               required
               value={revisaoVigencia.versao_revisao}
@@ -153,7 +153,7 @@ export function RevisaoVigenciaSection({
             />
           ) : null}
           <label className="ds-filter-box">
-            <FieldLabel label="Início vigência *" hint={R.inicioVigencia} />
+            <FieldLabel className="tm-field__label" label="Início vigência *" hint={R.inicioVigencia} />
             <input
               type="date"
               required
@@ -164,7 +164,7 @@ export function RevisaoVigenciaSection({
             />
           </label>
           <label className="ds-filter-box">
-            <FieldLabel label="Implantação" hint={R.implantacao} />
+            <FieldLabel className="tm-field__label" label="Implantação" hint={R.implantacao} />
             <input
               type="date"
               value={revisaoVigencia.data_implantacao}
@@ -174,7 +174,7 @@ export function RevisaoVigenciaSection({
             />
           </label>
           <label className="ds-filter-box">
-            <FieldLabel label="Fim vigência" hint={R.fimVigencia} />
+            <FieldLabel className="tm-field__label" label="Fim vigência" hint={R.fimVigencia} />
             <input
               type="date"
               value={revisaoVigencia.data_fim_vigencia}
@@ -203,7 +203,7 @@ export function RevisaoVigenciaSection({
           </label>
         </div>
         <label className="ds-filter-box ds-filter-box--wide">
-          <FieldLabel label="Descrição da revisão" hint={R.descricao} />
+          <FieldLabel className="tm-field__label" label="Descrição da revisão" hint={R.descricao} />
           <input
             value={revisaoVigencia.descricao_revisao}
             onChange={(e) =>
@@ -213,7 +213,7 @@ export function RevisaoVigenciaSection({
           />
         </label>
         <label className="ds-filter-box ds-filter-box--wide">
-          <FieldLabel label="Motivo da revisão" hint={R.motivo} />
+          <FieldLabel className="tm-field__label" label="Motivo da revisão" hint={R.motivo} />
           <input
             value={revisaoVigencia.motivo_revisao}
             onChange={(e) =>
@@ -223,7 +223,7 @@ export function RevisaoVigenciaSection({
           />
         </label>
         <label className="ds-filter-box ds-filter-box--wide">
-          <FieldLabel label="Observações" hint={R.observacoes} />
+          <FieldLabel className="tm-field__label" label="Observações" hint={R.observacoes} />
           <textarea
             rows={2}
             value={revisaoVigencia.observacoes}

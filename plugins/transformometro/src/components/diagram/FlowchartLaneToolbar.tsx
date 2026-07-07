@@ -2,7 +2,7 @@ import { Check, Trash2 } from "lucide-react";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { FlowchartLane } from "../../types/diagram";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectControl } from "../ui/SelectControl";
 import { mapSelectOptionsFromItems } from "../ui/selectTypes";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
@@ -37,7 +37,7 @@ export function FlowchartLaneToolbar({
   return (
     <div className="tm-diagram-lane-toolbar">
       <label className="tm-diagram-editor__lane-select">
-        <FieldLabel label="Faixa ativa" hint={D.laneSelect} />
+        <FieldLabel className="tm-field__label" label="Faixa ativa" hint={D.laneSelect} />
         <SelectControl
           ariaLabel="Faixa ativa"
           value={activeLaneId ?? ""}
@@ -50,7 +50,7 @@ export function FlowchartLaneToolbar({
         />
       </label>
       <label className="tm-diagram-lane-toolbar__rename">
-        <FieldLabel label="Nome da faixa" hint={D.laneRename} />
+        <FieldLabel className="tm-field__label" label="Nome da faixa" hint={D.laneRename} />
         <input
           type="text"
           value={laneLabelDraft}

@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Download, ImagePlus } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { uploadRevisaoEvidence } from "../../data/api/transformometroEvidenceApi";
 import {
@@ -146,7 +146,7 @@ export function RevisaoDiagramSection({
   return (
     <div className="tm-diagram-section">
       {!embeddedInCard ? (
-        <FieldLabel label="Diagrama da revisão" hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao} />
+        <FieldLabel className="tm-field__label" label="Diagrama da revisão" hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao} />
       ) : null}
 
       {merged.warnings?.length ? (

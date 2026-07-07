@@ -1,6 +1,6 @@
 import { useId } from "react";
 
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectControl } from "./SelectControl";
 import type { SelectOption } from "./selectTypes";
 
@@ -43,7 +43,7 @@ export function SelectField({
   return (
     <div className={rootClass}>
       <label htmlFor={fieldId}>
-        <FieldLabel label={label} hint={hint} />
+        <FieldLabel className="tm-field__label" label={label} hint={hint} />
         {required ? <span className="ds-field__required"> *</span> : null}
       </label>
       <SelectControl

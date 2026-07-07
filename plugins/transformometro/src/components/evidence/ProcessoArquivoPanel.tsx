@@ -14,7 +14,7 @@ import {
   processoArquivoFileUrl,
   uploadProcessoArquivo,
 } from "../../data/api/transformometroProcessoArquivoApi";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoArquivo } from "../../types/processoArquivo";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
@@ -407,7 +407,7 @@ export function ProcessoArquivoPanel({
             <div className="tm-evidence-link">
               <div className="ds-field">
                 <label htmlFor="tm-proc-arq-url">
-                  <FieldLabel label="URL" hint={P.arquivoUrl} />
+                  <FieldLabel className="tm-field__label" label="URL" hint={P.arquivoUrl} />
                 </label>
                 <input
                   id="tm-proc-arq-url"
@@ -420,7 +420,7 @@ export function ProcessoArquivoPanel({
               </div>
               <div className="ds-field">
                 <label htmlFor="tm-proc-arq-desc">
-                  <FieldLabel label="Descrição" hint={P.arquivoDescription} />
+                  <FieldLabel className="tm-field__label" label="Descrição" hint={P.arquivoDescription} />
                 </label>
                 <input
                   id="tm-proc-arq-desc"

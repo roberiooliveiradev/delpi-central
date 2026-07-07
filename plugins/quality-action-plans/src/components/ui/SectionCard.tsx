@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { TitleWithHelp } from "./HelpTooltip";
+import { TitleWithHelp } from "./TitleWithHelp";
 
 type SectionCardProps = {
   title: string;

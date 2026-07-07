@@ -1,7 +1,7 @@
 import { ChevronDown, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import type { SelectOption } from "./types";
 
 type CreatableMultiSelectFieldProps = {

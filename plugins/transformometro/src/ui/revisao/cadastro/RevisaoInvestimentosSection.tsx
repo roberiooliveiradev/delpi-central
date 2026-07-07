@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { AppProps } from "../../../App";
 import { Pagination } from "../../../components/Pagination";
-import { TableHeader } from "../../../components/HelpTooltip";
+import { TableHeader } from "../../../components/TableHeader";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { useClientPagination } from "../../../hooks/useClientPagination";
 import {

@@ -1,5 +1,5 @@
 import type { Medicao } from "../../../data/api/transformometroApi";
-import { FieldLabel } from "../../../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { toMonthInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
@@ -60,7 +60,7 @@ export function RevisaoMedicaoSection({
     <form onSubmit={onSubmit}>
       <div className="ds-filters-row">
         <label className="ds-filter-box">
-          <FieldLabel label="Volume mensal" hint={R.volumeMensal} />
+          <FieldLabel className="tm-field__label" label="Volume mensal" hint={R.volumeMensal} />
           <input
             type="number"
             min={0}
@@ -70,7 +70,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Tempo médio (min)" hint={R.tempoMedio} />
+          <FieldLabel className="tm-field__label" label="Tempo médio (min)" hint={R.tempoMedio} />
           <input
             type="number"
             min={0}
@@ -82,7 +82,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Tempo retrabalho (min)" hint={R.tempoRetrabalho} />
+          <FieldLabel className="tm-field__label" label="Tempo retrabalho (min)" hint={R.tempoRetrabalho} />
           <input
             type="number"
             min={0}
@@ -94,7 +94,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Custo hora MO (R$)" hint={R.custoHoraMo} />
+          <FieldLabel className="tm-field__label" label="Custo hora MO (R$)" hint={R.custoHoraMo} />
           <input
             type="number"
             min={0}
@@ -106,7 +106,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="% retrabalho" hint={R.percentualRetrabalho} />
+          <FieldLabel className="tm-field__label" label="% retrabalho" hint={R.percentualRetrabalho} />
           <input
             type="number"
             min={0}
@@ -118,7 +118,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="% erro" hint={R.percentualErro} />
+          <FieldLabel className="tm-field__label" label="% erro" hint={R.percentualErro} />
           <input
             type="number"
             min={0}
@@ -128,7 +128,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Qtd. erros/mês" hint={R.quantidadeErros} />
+          <FieldLabel className="tm-field__label" label="Qtd. erros/mês" hint={R.quantidadeErros} />
           <input
             type="number"
             min={0}
@@ -140,7 +140,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Custo unit. erro (R$)" hint={R.custoUnitarioErro} />
+          <FieldLabel className="tm-field__label" label="Custo unit. erro (R$)" hint={R.custoUnitarioErro} />
           <input
             type="number"
             min={0}
@@ -152,7 +152,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Custo unit. retrabalho (R$)" hint={R.custoUnitarioRetrabalho} />
+          <FieldLabel className="tm-field__label" label="Custo unit. retrabalho (R$)" hint={R.custoUnitarioRetrabalho} />
           <input
             type="number"
             min={0}
@@ -164,7 +164,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Outros desperdícios (R$/mês)" hint={R.outrosDesperdicios} />
+          <FieldLabel className="tm-field__label" label="Outros desperdícios (R$/mês)" hint={R.outrosDesperdicios} />
           <input
             type="number"
             min={0}
@@ -176,7 +176,7 @@ export function RevisaoMedicaoSection({
           />
         </label>
         <label className="ds-filter-box">
-          <FieldLabel label="Mês de referência" hint={R.mesReferencia} />
+          <FieldLabel className="tm-field__label" label="Mês de referência" hint={R.mesReferencia} />
           <input
             type="month"
             value={toMonthInputValue(medicao.base_referencia_mes)}
@@ -190,7 +190,7 @@ export function RevisaoMedicaoSection({
         </label>
       </div>
       <label className="ds-filter-box ds-filter-box--wide">
-        <FieldLabel label="Observações" hint={R.medicaoObservacoes} />
+        <FieldLabel className="tm-field__label" label="Observações" hint={R.medicaoObservacoes} />
         <textarea
           rows={2}
           value={medicao.observacoes ?? ""}

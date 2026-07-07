@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 export type MultiSelectOption = {
   value: string;
@@ -103,7 +103,7 @@ export function MultiSelectField({
 
   return (
     <div className={`ds-filter-box ${rootClass}`.trim()} ref={wrapperRef}>
-      <FieldLabel label={label} hint={labelHint} />
+      <FieldLabel className="tm-field__label" label={label} hint={labelHint} />
       <div className={`ds-multi-select${open ? " ds-multi-select--open" : ""}`}>
         <button
           type="button"

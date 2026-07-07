@@ -11,7 +11,8 @@ import { CollaborativePresenceBanner } from "../../components/collaboration/Coll
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel, HelpTooltip, TableHeader } from "../../components/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { TableHeader } from "../../components/TableHeader";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
@@ -461,7 +462,7 @@ export function RecursoDetailPage({
                                 </h4>
                                 <div className="ds-filters-row">
                                   <label className="ds-filter-box">
-                                    <FieldLabel label="Início do uso" hint={R.vinculoInicio} />
+                                    <FieldLabel className="tm-field__label" label="Início do uso" hint={R.vinculoInicio} />
                                     <input
                                       type="date"
                                       value={editVinculoForm.data_inicio_uso}
@@ -474,7 +475,7 @@ export function RecursoDetailPage({
                                     />
                                   </label>
                                   <label className="ds-filter-box">
-                                    <FieldLabel label="Fim do uso" hint={R.vinculoFim} />
+                                    <FieldLabel className="tm-field__label" label="Fim do uso" hint={R.vinculoFim} />
                                     <input
                                       type="date"
                                       value={editVinculoForm.data_fim_uso}
@@ -487,7 +488,7 @@ export function RecursoDetailPage({
                                     />
                                   </label>
                                   <label className="ds-filter-box">
-                                    <FieldLabel label="Peso do rateio" hint={R.peso} />
+                                    <FieldLabel className="tm-field__label" label="Peso do rateio" hint={R.peso} />
                                     <input
                                       type="number"
                                       min={0}
@@ -519,7 +520,7 @@ export function RecursoDetailPage({
                                   </label>
                                 </div>
                                 <label className="ds-filter-box ds-filter-box--wide">
-                                  <FieldLabel label="Observações" hint={R.vinculoObservacoes} />
+                                  <FieldLabel className="tm-field__label" label="Observações" hint={R.vinculoObservacoes} />
                                   <input
                                     value={editVinculoForm.observacoes}
                                     onChange={(event) =>

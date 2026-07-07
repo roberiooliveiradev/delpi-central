@@ -27,6 +27,11 @@
   --pac-font-sm: 13px;
   --pac-font-md: 14px;
   --pac-font-hero: clamp(24px, 2vw, 36px);
+  --delpi-ui-accent: var(--pac-accent);
+  --delpi-ui-surface: var(--pac-card-bg);
+  --delpi-ui-text: var(--pac-text);
+  --delpi-ui-border: var(--pac-card-border);
+  --delpi-ui-muted: var(--pac-text-muted);
 }
 
 .dashboard-quality-action-plans button,
@@ -967,82 +972,6 @@
 .dashboard-quality-action-plans .pac-chart-card__title .pac-title-with-help,
 .dashboard-quality-action-plans .pac-kpi-card__label .pac-title-with-help {
   display: inline-flex;
-}
-
-.dashboard-quality-action-plans .pac-help-tooltip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-
-.dashboard-quality-action-plans .pac-help-tooltip--wrap {
-  cursor: help;
-  border-bottom: 1px dotted color-mix(in srgb, var(--pac-text-muted) 55%, transparent);
-}
-
-.dashboard-quality-action-plans .pac-help-tooltip__trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--pac-text-muted);
-  cursor: help;
-  opacity: 0.72;
-  transition:
-    opacity 0.15s ease,
-    color 0.15s ease,
-    background 0.15s ease;
-}
-
-.dashboard-quality-action-plans .pac-help-tooltip__trigger:hover,
-.dashboard-quality-action-plans .pac-help-tooltip__trigger:focus-visible {
-  opacity: 1;
-  color: var(--pac-accent);
-  background: color-mix(in srgb, var(--pac-accent) 10%, transparent);
-  outline: none;
-}
-
-/* Portal no body: estilos globais (fora de .dashboard-quality-action-plans) */
-.pac-help-tooltip__bubble--fixed {
-  position: fixed;
-  z-index: 10200;
-  max-width: min(280px, calc(100vw - 24px));
-  min-width: 200px;
-  box-sizing: border-box;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border, #e6e6e6);
-  background: var(--surface, #ffffff);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.45;
-  color: var(--text, #111111);
-  white-space: normal;
-  text-align: left;
-  transition: opacity 0.15s ease;
-}
-
-:root[data-theme="dark"] .pac-help-tooltip__bubble--fixed {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: color-mix(in srgb, var(--surface-2, #1b2030) 88%, #089bdb 12%);
-  color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
-}
-
-.pac-help-tooltip__bubble--fixed.pac-help-tooltip__bubble--ready {
-  opacity: 1;
-  visibility: visible;
 }
 
 .dashboard-quality-action-plans .pac-field__required {
@@ -3797,14 +3726,14 @@
   vertical-align: middle;
 }
 
-.pac-modal .pac-help-tooltip,
+.pac-modal .delpi-ui-help-tooltip,
 .pac-modal .pac-field__label-row {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.pac-modal .pac-help-tooltip {
+.pac-modal .delpi-ui-help-tooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -3812,7 +3741,7 @@
   flex-shrink: 0;
 }
 
-.pac-modal .pac-help-tooltip__trigger {
+.pac-modal .delpi-ui-help-tooltip__trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3827,8 +3756,8 @@
   opacity: 0.72;
 }
 
-.pac-modal .pac-help-tooltip__trigger:hover,
-.pac-modal .pac-help-tooltip__trigger:focus-visible {
+.pac-modal .delpi-ui-help-tooltip__trigger:hover,
+.pac-modal .delpi-ui-help-tooltip__trigger:focus-visible {
   opacity: 1;
   color: var(--pac-accent, #089bdb);
   background: color-mix(in srgb, var(--pac-accent, #089bdb) 10%, transparent);

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 
 type ReadOnlyFieldProps = {
   label: string;

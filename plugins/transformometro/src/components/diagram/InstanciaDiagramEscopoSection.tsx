@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "../HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchInstanciaDiagramEscopo,
@@ -119,7 +119,7 @@ export function InstanciaDiagramEscopoSection({
   return (
     <div className="tm-diagram-section">
       {!embeddedInCard ? (
-        <FieldLabel label="Escopo no diagrama" hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo} />
+        <FieldLabel className="tm-field__label" label="Escopo no diagrama" hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo} />
       ) : null}
 
       <label className="tm-diagram-section__checkbox">

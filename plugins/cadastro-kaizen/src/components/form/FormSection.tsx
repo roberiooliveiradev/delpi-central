@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { HelpTooltip } from "../ui/HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 
 type FormSectionProps = {
   title: string;

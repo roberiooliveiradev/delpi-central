@@ -1,4 +1,4 @@
-import { FieldLabel } from "../ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 type Rnc8dQuantityUnitFieldProps = {
   quantityId: string;

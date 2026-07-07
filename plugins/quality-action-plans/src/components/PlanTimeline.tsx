@@ -20,7 +20,7 @@ import {
 } from "../utils/planTimeline";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SectionCard } from "./ui/SectionCard";
-import { FieldLabel } from "./ui/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 type Props = {
   detail: ActionPlanDetail;
