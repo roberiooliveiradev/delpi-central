@@ -10,7 +10,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export function useComunicadoEditorKeyboard() {
   const {
-    selected,
+    selectedIds,
     editingTextId,
     undo,
     redo,
@@ -20,6 +20,8 @@ export function useComunicadoEditorKeyboard() {
     removeSelected,
     nudgeSelected,
   } = useComunicadoEditor();
+
+  const hasSelection = selectedIds.length > 0;
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -43,19 +45,19 @@ export function useComunicadoEditorKeyboard() {
       }
 
       if (mod && event.key.toLowerCase() === "d") {
-        if (!selected) return;
+        if (!hasSelection) return;
         event.preventDefault();
         duplicateSelected();
         return;
       }
 
-      if ((event.key === "Delete" || event.key === "Backspace") && selected) {
+      if ((event.key === "Delete" || event.key === "Backspace") && hasSelection) {
         event.preventDefault();
         removeSelected();
         return;
       }
 
-      if (!selected) return;
+      if (!hasSelection) return;
 
       const step = event.shiftKey ? 10 : 1;
       if (event.key === "ArrowLeft") {
@@ -80,10 +82,10 @@ export function useComunicadoEditorKeyboard() {
     canUndo,
     duplicateSelected,
     editingTextId,
+    hasSelection,
     nudgeSelected,
     redo,
     removeSelected,
-    selected,
     undo,
   ]);
 }

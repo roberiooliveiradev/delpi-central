@@ -1,12 +1,14 @@
 import { comunicadoBackgroundCssProperties, frameStyle } from "@delpi/tv-dashboard-presentation";
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
+import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const FONT_SCALE = 0.35;
+const MARQUEE_THRESHOLD_PX = 4;
 
 const BLOCK_RESIZE_HANDLES: Array<{
   mode: Exclude<BlockDragMode, "move">;
@@ -35,9 +37,125 @@ function useCanvasBackgroundStyle() {
 }
 
 export function ComunicadoComposerCanvas() {
-  const { blocks, selectedId, setSelectedId, editingTextId, canvasRef, startDrag, dataPreviewLoading } =
-    useComunicadoEditor();
+  const {
+    blocks,
+    selectedId,
+    selectedIds,
+    isBlockSelected,
+    selectBlock,
+    selectBlocksByIds,
+    clearSelection,
+    editingTextId,
+    canvasRef,
+    startDrag,
+    dataPreviewLoading,
+  } = useComunicadoEditor();
   const canvasStyle = useCanvasBackgroundStyle();
+  const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
+  const marqueeActiveRef = useRef(false);
+  const marqueeStartClientRef = useRef<{ x: number; y: number } | null>(null);
+  const marqueeRectRef = useRef<MarqueeRect | null>(null);
+
+  const clientToCanvasPercent = useCallback((clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * 100,
+      y: ((clientY - rect.top) / rect.height) * 100,
+    };
+  }, [canvasRef]);
+
+  const finishMarquee = useCallback(
+    (additive: boolean) => {
+      const rect = marqueeRectRef.current;
+      marqueeActiveRef.current = false;
+      marqueeStartClientRef.current = null;
+      marqueeRectRef.current = null;
+      setMarquee(null);
+
+      if (!rect) return;
+
+      const normalized = normalizeMarqueeRect(rect);
+      const tiny =
+        Math.abs(normalized.x2 - normalized.x1) < 0.5 && Math.abs(normalized.y2 - normalized.y1) < 0.5;
+      if (tiny) {
+        if (!additive) clearSelection();
+        return;
+      }
+
+      const ids = blocksInMarquee(blocks, normalized);
+      if (ids.length === 0) {
+        if (!additive) clearSelection();
+        return;
+      }
+      if (additive) {
+        const merged = new Set([...selectedIds, ...ids]);
+        selectBlocksByIds([...merged]);
+      } else {
+        selectBlocksByIds(ids);
+      }
+    },
+    [blocks, clearSelection, selectBlocksByIds, selectedIds],
+  );
+
+  const handleCanvasPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget) return;
+      if (editingTextId) return;
+
+      const additive = event.shiftKey;
+      const origin = clientToCanvasPercent(event.clientX, event.clientY);
+      marqueeActiveRef.current = true;
+      marqueeStartClientRef.current = { x: event.clientX, y: event.clientY };
+      const initial: MarqueeRect = { x1: origin.x, y1: origin.y, x2: origin.x, y2: origin.y };
+      marqueeRectRef.current = initial;
+      setMarquee(initial);
+
+      function onMove(moveEvent: PointerEvent) {
+        if (!marqueeActiveRef.current || !marqueeStartClientRef.current) return;
+        const start = marqueeStartClientRef.current;
+        const dx = Math.abs(moveEvent.clientX - start.x);
+        const dy = Math.abs(moveEvent.clientY - start.y);
+        if (dx < MARQUEE_THRESHOLD_PX && dy < MARQUEE_THRESHOLD_PX) return;
+
+        const point = clientToCanvasPercent(moveEvent.clientX, moveEvent.clientY);
+        const next: MarqueeRect = {
+          x1: initial.x1,
+          y1: initial.y1,
+          x2: point.x,
+          y2: point.y,
+        };
+        marqueeRectRef.current = next;
+        setMarquee(next);
+      }
+
+      function onUp() {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        finishMarquee(additive);
+      }
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [clientToCanvasPercent, editingTextId, finishMarquee],
+  );
+
+  const primarySelected = selectedId;
+  const showResizeHandles = (blockId: string) =>
+    blockId === primarySelected && editingTextId !== blockId && selectedIds.length <= 1;
+
+  const marqueeStyle = useMemo(() => {
+    if (!marquee) return null;
+    const rect = normalizeMarqueeRect(marquee);
+    return {
+      left: `${rect.x1}%`,
+      top: `${rect.y1}%`,
+      width: `${rect.x2 - rect.x1}%`,
+      height: `${rect.y2 - rect.y1}%`,
+    };
+  }, [marquee]);
 
   return (
     <div className="td-composer td-composer--deck">
@@ -46,21 +164,25 @@ export function ComunicadoComposerCanvas() {
           ref={canvasRef}
           className="td-composer__canvas"
           style={canvasStyle}
-          onPointerDown={(event) => {
-            if (event.target !== event.currentTarget) return;
-            setSelectedId(null);
-          }}
+          onPointerDown={handleCanvasPointerDown}
         >
           {blocks.map((block) => {
-            const isSelected = block.id === selectedId;
+            const isSelected = isBlockSelected(block.id);
+            const isPrimary = block.id === primarySelected;
             return (
               <div
                 key={block.id}
-                className={`td-composer__block-wrap${isSelected ? " td-composer__block-wrap--selected" : ""}`}
+                className={[
+                  "td-composer__block-wrap",
+                  isSelected ? "td-composer__block-wrap--selected" : "",
+                  isSelected && !isPrimary ? "td-composer__block-wrap--multi" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 style={frameStyle(block.frame)}
                 onPointerDown={(event) => {
                   event.stopPropagation();
-                  setSelectedId(block.id);
+                  selectBlock(block.id, { additive: event.shiftKey });
                   if (
                     editingTextId === block.id &&
                     (event.target as HTMLElement).closest(".td-composer__inline-text")
@@ -78,7 +200,7 @@ export function ComunicadoComposerCanvas() {
                   className={isSelected ? "td-composer__block--selected" : ""}
                   dataLoading={dataPreviewLoading}
                 />
-                {isSelected && editingTextId !== block.id ? (
+                {showResizeHandles(block.id) ? (
                   <>
                     {BLOCK_RESIZE_HANDLES.map(({ mode, position, label }) => (
                       <button
@@ -94,6 +216,9 @@ export function ComunicadoComposerCanvas() {
               </div>
             );
           })}
+          {marqueeStyle ? (
+            <div className="td-composer__marquee" style={marqueeStyle} aria-hidden="true" />
+          ) : null}
         </div>
       </div>
     </div>

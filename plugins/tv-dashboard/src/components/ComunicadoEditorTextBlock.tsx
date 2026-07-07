@@ -1,5 +1,6 @@
-import { blockCssStyle, comunicadoTextInnerStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useRef, type CSSProperties } from "react";
+import { Link2 } from "lucide-react";
+import { blockCssStyle, comunicadoTextInnerStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
@@ -25,7 +26,7 @@ export function ComunicadoEditorTextBlock({
   isSelected,
   isEditing,
 }: Props) {
-  const { updateBlockContent, setEditingTextId, setSelectedId } = useComunicadoEditor();
+  const { updateBlockContent, updateBlockLink, setEditingTextId, selectBlock } = useComunicadoEditor();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const style: CSSProperties = {
@@ -65,11 +66,7 @@ export function ComunicadoEditorTextBlock({
 
   if (isEditing) {
     return (
-      <div
-        className={blockClass}
-        style={style}
-        onPointerDown={(event) => event.stopPropagation()}
-      >
+      <div className={blockClass} style={style} onPointerDown={(event) => event.stopPropagation()}>
         <div className={`td-composer__inline-text-wrap td-composer__inline-text-wrap--${block.type}`}>
           <textarea
             ref={inputRef}
@@ -96,6 +93,7 @@ export function ComunicadoEditorTextBlock({
 
   const label = block.content.trim() || PLACEHOLDER[block.type];
   const isPlaceholder = !block.content.trim();
+  const showInlineChrome = isSelected;
 
   return (
     <div
@@ -103,25 +101,44 @@ export function ComunicadoEditorTextBlock({
       style={style}
       onDoubleClick={(event) => {
         event.stopPropagation();
-        setSelectedId(block.id);
+        selectBlock(block.id);
         setEditingTextId(block.id);
       }}
     >
-      {block.type === "heading" ? (
-        <h1
-          className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
-          style={innerStyle}
+      <div className="td-composer__text-block-body">
+        {block.type === "heading" ? (
+          <h1
+            className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
+            style={innerStyle}
+          >
+            {label}
+          </h1>
+        ) : (
+          <p
+            className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
+            style={innerStyle}
+          >
+            {label}
+          </p>
+        )}
+      </div>
+      {showInlineChrome ? (
+        <div
+          className="td-composer__text-inline-chrome"
+          onPointerDown={(event) => event.stopPropagation()}
         >
-          {label}
-        </h1>
-      ) : (
-        <p
-          className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
-          style={innerStyle}
-        >
-          {label}
-        </p>
-      )}
+          <span className="td-composer__text-inline-hint">Duplo-clique para editar</span>
+          <label className="td-composer__text-link-field">
+            <Link2 size={12} aria-hidden="true" />
+            <input
+              type="url"
+              placeholder="Link (URL)"
+              value={block.href ?? ""}
+              onChange={(event) => updateBlockLink(block.id, event.target.value)}
+            />
+          </label>
+        </div>
+      ) : null}
     </div>
   );
 }

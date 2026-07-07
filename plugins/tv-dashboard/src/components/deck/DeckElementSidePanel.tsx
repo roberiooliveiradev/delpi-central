@@ -1,12 +1,14 @@
-import { MousePointer2, PanelRightClose } from "lucide-react";
+import { Layers, MousePointer2, PanelRightClose } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui";
 import { useEffect, useState } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ComunicadoElementInspector } from "./ComunicadoElementInspector";
+import { ComunicadoLayersPanel } from "./ComunicadoLayersPanel";
 
 type Labels = Record<string, string>;
+type SideTab = "element" | "layers";
 
 type Props = {
   labels?: Labels;
@@ -16,12 +18,13 @@ type Props = {
 
 /** Painel colapsável à direita do palco — propriedades do elemento selecionado. */
 export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
-  const { selectedId } = useComunicadoEditor();
+  const { selectedIds } = useComunicadoEditor();
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<SideTab>("element");
 
   useEffect(() => {
-    if (selectedId) setOpen(true);
-  }, [selectedId]);
+    if (selectedIds.length > 0) setOpen(true);
+  }, [selectedIds]);
 
   const hint = TV_DASHBOARD_HELP_TOOLTIPS.tabs.element;
 
@@ -51,9 +54,36 @@ export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
       {open ? (
         <div id="td-deck-element-panel" className="td-deck-side-panel__content">
           <header className="td-deck-side-panel__header">
-            <h3 className="td-deck-side-panel__title">Elemento</h3>
+            <div className="td-deck-side-panel__tabs" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "element"}
+                className={`td-deck-side-panel__tab-btn${tab === "element" ? " td-deck-side-panel__tab-btn--active" : ""}`}
+                onClick={() => setTab("element")}
+              >
+                <MousePointer2 size={14} aria-hidden="true" />
+                Elemento
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "layers"}
+                className={`td-deck-side-panel__tab-btn${tab === "layers" ? " td-deck-side-panel__tab-btn--active" : ""}`}
+                onClick={() => setTab("layers")}
+              >
+                <Layers size={14} aria-hidden="true" />
+                Camadas
+              </button>
+            </div>
           </header>
-          <ComunicadoElementInspector labels={labels} placement="side" />
+          {tab === "element" ? (
+            <ComunicadoElementInspector labels={labels} placement="side" />
+          ) : (
+            <div className="td-deck-side-panel__layers">
+              <ComunicadoLayersPanel />
+            </div>
+          )}
         </div>
       ) : null}
     </aside>
