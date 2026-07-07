@@ -54,6 +54,15 @@ export type SlidePreset = {
   durationSec?: number | null;
 };
 
+export type SlidePresetDetail = {
+  slideType: "native" | "external";
+  title: string;
+  durationSec?: number | null;
+  nativeScreenKey?: string;
+  nativeConfig?: Record<string, unknown>;
+  externalUrl?: string;
+};
+
 export type TvDashboardUiContent = {
   messages?: Record<string, string>;
   presentation?: Record<string, string | number>;
@@ -259,6 +268,10 @@ export async function listSlidePresets() {
     httpGet<ApiEnvelope<{ items: SlidePreset[] }>>(`${API_BASE}/slide-presets`),
   );
   return data.items;
+}
+
+export async function getSlidePreset(presetKey: string) {
+  return unwrap(httpGet<ApiEnvelope<SlidePresetDetail>>(`${API_BASE}/slide-presets/${presetKey}`));
 }
 
 export async function getUiContent() {
