@@ -1,4 +1,8 @@
-import { useId, type ReactNode } from "react";
+import type { ReactNode } from "react";
+
+import { ChartCard as PluginChartCard, chartCardBemClasses } from "@delpi/plugin-ui";
+
+const FCC_CHART_CARD_CLASSES = chartCardBemClasses("fcc");
 
 type ChartCardProps = {
   title: string;
@@ -8,30 +12,16 @@ type ChartCardProps = {
   headerActions?: ReactNode;
 };
 
-export function ChartCard({
-  title,
-  children,
-  hint,
-  className,
-  headerActions,
-}: ChartCardProps) {
-  const titleId = useId();
-
+export function ChartCard({ title, children, hint, className, headerActions }: ChartCardProps) {
   return (
-    <section
-      className={["fcc-card", "fcc-chart-card", className].filter(Boolean).join(" ")}
-      aria-labelledby={titleId}
+    <PluginChartCard
+      title={title}
+      hint={hint}
+      headerActions={headerActions}
+      classNames={FCC_CHART_CARD_CLASSES}
+      className={className}
     >
-      <header className="fcc-chart-card__header">
-        <div className="fcc-chart-card__heading">
-          <h2 id={titleId} className="fcc-chart-card__title">
-            {title}
-          </h2>
-          {hint ? <p className="fcc-chart-card__hint">{hint}</p> : null}
-        </div>
-        {headerActions ? <div className="fcc-chart-card__actions">{headerActions}</div> : null}
-      </header>
-      <div className="fcc-chart-card__body">{children}</div>
-    </section>
+      {children}
+    </PluginChartCard>
   );
 }

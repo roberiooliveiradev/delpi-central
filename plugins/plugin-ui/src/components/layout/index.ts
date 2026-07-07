@@ -32,6 +32,14 @@ export {
   type KpiScopeBadge,
 } from "./KpiCard";
 export {
+  SimpleKpiCard,
+  createSimpleKpiCard,
+  simpleKpiCardBemClasses,
+  type DashboardSimpleKpiCardProps,
+  type SimpleKpiCardClassNames,
+  type SimpleKpiCardProps,
+} from "./SimpleKpiCard";
+export {
   FilterBar,
   FilterInputField,
   FiltersRow,

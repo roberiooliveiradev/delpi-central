@@ -1,22 +1,5 @@
-import type { ReactNode } from "react";
+import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui";
 
-type KpiCardProps = {
-  title: string;
-  value: string;
-  icon: ReactNode;
-  loading?: boolean;
-};
+export const KpiCard = createSimpleKpiCard("fcc");
 
-export function KpiCard({ title, value, icon, loading = false }: KpiCardProps) {
-  return (
-    <article className="fcc-card fcc-kpi-card">
-      <div className="fcc-kpi-card__icon" aria-hidden="true">
-        {icon}
-      </div>
-      <div>
-        <p className="fcc-kpi-card__title">{title}</p>
-        <h3 className="fcc-kpi-card__value">{loading ? "…" : value}</h3>
-      </div>
-    </article>
-  );
-}
+export type KpiCardProps = DashboardSimpleKpiCardProps;

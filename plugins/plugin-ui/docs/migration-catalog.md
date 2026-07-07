@@ -111,7 +111,8 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `transformometro` | — | — | — | — | ✅ | |
 | `eficiencia-fabril` | — | — | — | — | ✅ | |
 | `inspecoes-entrada` | — | — | — | — | — | — | `@delpi/plugin-ui` + PageHeader F3 |
-| `controle-retrabalhos` | — | — | — | — | — | — | `@delpi/plugin-ui` + Empty/Loading F3 |
+| `controle-retrabalhos` | — | — | — | — | ✅ | — | `@delpi/plugin-ui` + Empty/Loading F3, KpiCard F2 |
+| `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
@@ -161,6 +162,6 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `inspecoes-entrada` | — | PageHeader |
 | `propostas-comerciais` | — | PageHeader |
 | `strategic-indicators` | — | PageHeader | `operationalUnitLabels` |
-| `controle-retrabalhos` | — | EmptyState, LoadingState |
-| `financeiro-centro-custo` | — | EmptyState, LoadingState |
+| `controle-retrabalhos` | — | KpiCard |
+| `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState |
 | `auditoria-5s` | — | ChartCard |

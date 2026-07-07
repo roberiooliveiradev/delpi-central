@@ -274,9 +274,9 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `quality-action-plans` | ✅ | parcial | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | LoadingActivity ✅ | — | sim |
 | `maintenance` | ✅ | parcial | — | sim |
-| `controle-retrabalhos` | — | Kpi/Chart simples | — | sim |
+| `controle-retrabalhos` | — | Kpi/Chart simples | Empty/Loading ✅ KpiCard ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination | PageHeader | sim |
-| `financeiro-centro-custo` | — | Kpi/Chart/Empty | — | sim |
+| `financeiro-centro-custo` | — | Kpi/Chart/Empty | ChartCard ✅ Empty/Loading | sim |
 | `pedidos-venda-abertos` | — | Kpi/Filter | PageHeader | sim |
 | `auditoria-5s` | — | ChartCard | — | sim |
 | `tv-dashboard` | ✅ | — | — | sim |
