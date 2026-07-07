@@ -7,6 +7,8 @@ from si_app.application.services.engineering.engineering_metrics_helpers import 
 )
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
+    clamp_resolved_period_to_elapsed,
+    resolve_period,
 )
 from si_app.infrastructure.gateways.delpi_engineering_gateway import DelpiEngineeringGateway
 from si_app.shared.branch_filter import effective_query_branch
@@ -88,10 +90,21 @@ class EngineeringMetricsSnapshotService:
         end_date: str | None,
         branch: str | None,
     ) -> EngineeringMetricsSnapshot:
+        requested_period = resolve_period(
+            competence=None,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        effective_period, _entirely_future = clamp_resolved_period_to_elapsed(
+            requested_period
+        )
+        query_start = effective_period.start_date
+        query_end = effective_period.end_date
+
         lmp_summary = resolve_lmp_dashboard_summary(
             gateway=self._engineering_gateway,
-            date_start=start_date,
-            date_end=end_date,
+            date_start=query_start,
+            date_end=query_end,
             branch=branch,
         )
 
@@ -101,8 +114,8 @@ class EngineeringMetricsSnapshotService:
 
         transforma_summary = self._engineering_gateway.get_transforma_mais_summary(
             filial_id=branch,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=query_start,
+            end_date=query_end,
         )
         transforma_mais_financial_gain = self._extract_financial_gain_value(
             transforma_summary

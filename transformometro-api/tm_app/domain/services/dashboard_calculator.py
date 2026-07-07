@@ -218,6 +218,39 @@ class DashboardCalculatorService:
         )
         return calculation_rows
 
+    def _empty_summary(
+        self,
+        *,
+        start_date: Optional[str],
+        end_date: Optional[str],
+    ) -> dict:
+        range_summary = self._build_range_summary(
+            start_date=start_date,
+            end_date=end_date,
+            monthly_breakdown=[],
+            proration_factor=1.0,
+        )
+        return {
+            "solucoes_implementadas": 0,
+            "economia_liquida_total": 0.0,
+            "economia_bruta_total": 0.0,
+            "horas_economizadas_total": 0.0,
+            "investimento_unico_total": 0.0,
+            "custo_recorrente_total": 0.0,
+            "custo_recursos_compartilhados_total": 0.0,
+            "investimento_total": 0.0,
+            "roi_medio": 0.0,
+            "evolucao_mensal": [],
+            "periodo": range_summary,
+            "_debug": {
+                "calculation_rows_count": 0,
+                "comparable_rows": 0,
+                "revisoes_with_investment": 0,
+                "total_investment_acumulated": 0.0,
+                "total_economy_acumulated": 0.0,
+            },
+        }
+
     def build_summary(
         self,
         raw: TransformometroRawData,
@@ -230,24 +263,34 @@ class DashboardCalculatorService:
         filtered_raw = self.filter_raw(raw=raw, filial_id=filial_id)
         context = self._build_context(filtered_raw)
 
+        clamped_start, clamped_end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+            start_date,
+            end_date,
+        )
+        if entirely_future:
+            return self._empty_summary(
+                start_date=start_date,
+                end_date=end_date,
+            )
+
         monthly_breakdown, calculation_rows = self._calculate_monthly_series(
             context=context,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=clamped_start,
+            end_date=clamped_end,
             escopo_unidades=escopo_unidades,
         )
 
         monthly_for_totals = self._monthly_breakdown_for_period(
             monthly_breakdown,
             calculation_rows,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=clamped_start,
+            end_date=clamped_end,
         )
 
         period_totals = self._aggregate_period_from_rows(
             calculation_rows,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=clamped_start,
+            end_date=clamped_end,
         )
 
         total_net_savings = period_totals["economia_liquida_mes"]
@@ -268,8 +311,8 @@ class DashboardCalculatorService:
         )
 
         range_summary = self._build_range_summary(
-            start_date=start_date,
-            end_date=end_date,
+            start_date=clamped_start,
+            end_date=clamped_end,
             monthly_breakdown=monthly_for_totals,
             proration_factor=1.0,
         )
@@ -624,6 +667,16 @@ class DashboardCalculatorService:
         start_date = self._normalize_date_filter(start_date)
         end_date = self._normalize_date_filter(end_date)
 
+        clamped_start, clamped_end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+            start_date,
+            end_date,
+        )
+        if entirely_future:
+            return [], []
+
+        start_date = clamped_start
+        end_date = clamped_end
+
         start_month = (
             self._resolve_filter_month_start(start_date, timeline_start)
             if start_date
@@ -634,6 +687,7 @@ class DashboardCalculatorService:
             if end_date
             else self._month_start(date.today())
         )
+        end_month = min(end_month, self._month_start(date.today()))
 
         monthly_items: List[dict] = []
         calculation_rows: List[dict] = []

@@ -4,6 +4,7 @@ from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date
 
+
 @dataclass(frozen=True)
 class ResolvedPeriod:
     competence: str
@@ -104,6 +105,73 @@ def previous_competence(competence: str) -> str:
 def is_standard_competence_period(period: ResolvedPeriod) -> bool:
     expected_start, expected_end = build_month_range(period.competence)
     return period.start_date == expected_start and period.end_date == expected_end
+
+
+def parse_period_date(value: str | None) -> date | None:
+    normalized = normalize_dashboard_period_date(value)
+    if not normalized:
+        return None
+    parts = _parse_dashboard_date_parts(normalized)
+    if parts is None:
+        return None
+    day, month, year = parts
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def format_resolved_period_date(value: date) -> str:
+    return f"{str(value.day).zfill(2)}-{str(value.month).zfill(2)}-{value.year}"
+
+
+def clamp_resolved_period_to_elapsed(
+    period: ResolvedPeriod,
+    *,
+    today: date | None = None,
+) -> tuple[ResolvedPeriod, bool]:
+    """Limita o fim do recorte a hoje; sinaliza período inteiramente futuro."""
+    ref = today or date.today()
+    start = parse_period_date(period.start_date)
+    end = parse_period_date(period.end_date)
+    if start is None or end is None:
+        return period, False
+
+    if start > ref:
+        return period, True
+
+    if end <= ref:
+        return period, False
+
+    return (
+        ResolvedPeriod(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=format_resolved_period_date(ref),
+        ),
+        False,
+    )
+
+
+def period_extends_beyond_today(
+    period: ResolvedPeriod,
+    *,
+    today: date | None = None,
+) -> bool:
+    ref = today or date.today()
+    end = parse_period_date(period.end_date)
+    return end is not None and end > ref
+
+
+def stored_period_matches_request(
+    requested: ResolvedPeriod,
+    stored: ResolvedPeriod,
+) -> bool:
+    return (
+        requested.start_date == stored.start_date
+        and requested.end_date == stored.end_date
+        and requested.competence == stored.competence
+    )
 
 
 def build_trend_periods(

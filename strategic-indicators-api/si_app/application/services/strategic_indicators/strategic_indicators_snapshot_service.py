@@ -10,9 +10,12 @@ from typing import Iterable
 
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
+    clamp_resolved_period_to_elapsed,
     is_standard_competence_period,
+    period_extends_beyond_today,
     previous_period,
     resolve_period,
+    stored_period_matches_request,
 )
 from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
@@ -209,6 +212,7 @@ class StrategicIndicatorsSnapshotService:
             start_date=start_date,
             end_date=end_date,
         )
+        measurement_period, _entirely_future = clamp_resolved_period_to_elapsed(period)
 
         if not force_compute:
             stored = self._load_stored_period_snapshot(
@@ -247,8 +251,8 @@ class StrategicIndicatorsSnapshotService:
         )
 
         measurements, measurement_errors = self._get_measurements(
-            start_date=period.start_date,
-            end_date=period.end_date,
+            start_date=measurement_period.start_date,
+            end_date=measurement_period.end_date,
             competence=period.competence,
             department_id=department_id,
             branch=branch,
@@ -312,11 +316,23 @@ class StrategicIndicatorsSnapshotService:
             end_date=end_date,
         )
 
-        stored_global = self._load_stored_period_snapshot(
-            period=period,
-            department_id=None,
-            branch=branch,
+        use_global_cache = (
+            is_standard_competence_period(period)
+            and not period_extends_beyond_today(period)
         )
+
+        stored_global = None
+        if use_global_cache:
+            stored_global = self._load_stored_period_snapshot(
+                period=period,
+                department_id=None,
+                branch=branch,
+            )
+            if stored_global is not None and not stored_period_matches_request(
+                period, stored_global.period
+            ):
+                stored_global = None
+
         if stored_global is not None and not has_stale_period_snapshot_errors(
             stored_global.measurement_errors
         ):
@@ -995,6 +1011,34 @@ class StrategicIndicatorsSnapshotService:
             branch=branch,
         )
         if stored_hash == current_hash:
+            if not stored_period_matches_request(period, entry.snapshot.period):
+                logger.info(
+                    (
+                        "si_period_scores_stale period_mismatch "
+                        "competence=%s department_id=%s branch=%s "
+                        "requested=%s..%s stored=%s..%s"
+                    ),
+                    period.competence,
+                    department_id,
+                    branch,
+                    period.start_date,
+                    period.end_date,
+                    entry.snapshot.period.start_date,
+                    entry.snapshot.period.end_date,
+                )
+                return False
+            if period_extends_beyond_today(period):
+                logger.info(
+                    (
+                        "si_period_scores_stale period_extends_beyond_today "
+                        "competence=%s department_id=%s branch=%s end=%s"
+                    ),
+                    period.competence,
+                    department_id,
+                    branch,
+                    period.end_date,
+                )
+                return False
             return True
 
         logger.info(

@@ -1,4 +1,6 @@
 import json
+from calendar import monthrange
+from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
@@ -131,6 +133,35 @@ def test_list_processes_filter_by_filial(mock_load, mock_live_cls):
         )
     )
     assert hit["total"] == 1
+
+
+def _entirely_future_period_strings() -> tuple[str, str]:
+    today = date.today()
+    if today.month == 12:
+        future_month = date(today.year + 1, 1, 1)
+    else:
+        future_month = date(today.year, today.month + 1, 1)
+    last_day = monthrange(future_month.year, future_month.month)[1]
+    return (
+        future_month.isoformat(),
+        date(future_month.year, future_month.month, last_day).isoformat(),
+    )
+
+
+@patch(_COUNT_FILIAIS, return_value=1)
+@patch(_LOAD_RAW)
+def test_summary_entirely_future_period_has_zero_gains(mock_load, _mock_filiais):
+    mock_load.return_value = _load_fixture("golden_baseline_melhoria.json")
+    start_date, end_date = _entirely_future_period_strings()
+
+    data = EngineeringTransformaMaisService().get_summary(
+        filial_id=None,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    assert data["total_gross_savings_in_period"] == 0.0
+    assert data["monthly_breakdown"] == []
 
 
 @patch(_COUNT_FILIAIS, return_value=1)

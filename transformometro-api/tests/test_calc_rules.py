@@ -2,6 +2,9 @@
 
 from datetime import date
 
+from datetime import date
+from unittest.mock import patch
+
 from tm_app.domain import calc_rules
 
 
@@ -145,3 +148,27 @@ def test_aggregate_period_from_rows():
         rows, start_date="2026-06-01", end_date="2026-06-04"
     )
     assert round(totals["horas_economizadas_mes"], 2) == 14.56
+
+
+def test_clamp_period_to_elapsed_days_limits_end_to_today():
+    start, end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+        "2026-07-01",
+        "2026-07-31",
+        today=date(2026, 7, 7),
+    )
+
+    assert entirely_future is False
+    assert start == "2026-07-01"
+    assert end == "2026-07-07"
+
+
+def test_clamp_period_to_elapsed_days_marks_entirely_future():
+    start, end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+        "2026-08-01",
+        "2026-08-31",
+        today=date(2026, 7, 7),
+    )
+
+    assert entirely_future is True
+    assert start == "2026-08-01"
+    assert end == "2026-08-31"

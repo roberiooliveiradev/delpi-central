@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from pathlib import Path
+from calendar import monthrange
 
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
@@ -965,3 +966,33 @@ def test_instancia_por_filial_nao_escala_com_escopo_unidades():
 
     # Instâncias por filial: multiplicador consolidado não altera (só todas_filiais_ativas).
     assert _month_bruta(summary, "2025-04") == 3500.0
+
+
+def _entirely_future_period_strings() -> tuple[str, str]:
+    today = date.today()
+    if today.month == 12:
+        future_month = date(today.year + 1, 1, 1)
+    else:
+        future_month = date(today.year, today.month + 1, 1)
+    last_day = monthrange(future_month.year, future_month.month)[1]
+    return (
+        future_month.isoformat(),
+        date(future_month.year, future_month.month, last_day).isoformat(),
+    )
+
+
+def test_build_summary_zeros_gains_for_entirely_future_period():
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    calc = DashboardCalculatorService()
+    start_date, end_date = _entirely_future_period_strings()
+
+    summary = calc.build_summary(
+        raw,
+        filial_id=None,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    assert summary["economia_bruta_total"] == 0.0
+    assert summary["economia_liquida_total"] == 0.0
+    assert summary["evolucao_mensal"] == []

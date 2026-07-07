@@ -88,6 +88,47 @@ def to_float(value: Any) -> Optional[float]:
         return None
 
 
+def format_period_date(value: date) -> str:
+    return value.strftime("%Y-%m-%d")
+
+
+def clamp_period_to_elapsed_days(
+    start_date: Optional[str],
+    end_date: Optional[str],
+    *,
+    today: Optional[date] = None,
+) -> tuple[Optional[str], Optional[str], bool]:
+    """Limita o recorte a dias já percorridos (não projeta ganhos futuros).
+
+    Retorna ``(start, end, is_entirely_future)``. Quando o período inteiro é
+    futuro, o caller deve zerar economia/ganhos.
+    """
+    ref = today or date.today()
+    start = parse_date(start_date)
+    end = parse_date(end_date)
+
+    if start is None and end is None:
+        return start_date, end_date, False
+
+    if start is None:
+        start = end
+    if end is None:
+        end = start
+    if start is None or end is None:
+        return start_date, end_date, False
+
+    if start > ref:
+        return start_date, end_date, True
+
+    if end > ref:
+        end = ref
+
+    if end < start:
+        end = start
+
+    return format_period_date(start), format_period_date(end), False
+
+
 def uses_day_level_date_filter(
     start_date: Optional[str],
     end_date: Optional[str],
