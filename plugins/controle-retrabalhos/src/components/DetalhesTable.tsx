@@ -10,6 +10,11 @@ import {
   joinMotivoObservacao,
 } from "../utils/formatters";
 import { ExportExcelButton } from "./ExportExcelButton";
+import { LoadingActivityCard } from "./LoadingActivityCard";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../utils/loadingProgress";
 
 type DetalhesTableProps = {
   data: RetrabalhoDetalhesData | null;
@@ -31,6 +36,12 @@ export function DetalhesTable({
   const page = data?.page ?? 1;
   const totalPages = data?.totalPages ?? 1;
   const total = data?.total ?? 0;
+  const showInitialLoading = loading && data === null;
+  const showRefreshLoading = loading && data !== null;
+  const initialFetchProgress = useTrackedSingleFetchProgress(showInitialLoading);
+  const refreshFetchProgress = useTrackedSingleFetchProgress(showRefreshLoading);
+  const initialLoadingProgress = useLoadingProgress(showInitialLoading, initialFetchProgress);
+  const refreshLoadingProgress = useLoadingProgress(showRefreshLoading, refreshFetchProgress);
 
   const handleExportExcel = useCallback(async () => {
     if (exporting || total <= 0) return;
@@ -49,7 +60,7 @@ export function DetalhesTable({
   }, [exporting, filters, onExportError, total]);
 
   return (
-    <section className="cr-card cr-table-card">
+    <section className="cr-card cr-table-card" aria-busy={loading}>
       <header className="cr-table-card__header">
         <div>
           <h2>Detalhes dos apontamentos</h2>
@@ -68,6 +79,22 @@ export function DetalhesTable({
         </div>
       </header>
 
+      {showRefreshLoading ? (
+        <LoadingActivityCard
+          title="Atualizando detalhes"
+          description="Carregando a página selecionada dos apontamentos de retrabalho."
+          variant="compact"
+          progressPercent={refreshLoadingProgress}
+        />
+      ) : null}
+
+      {showInitialLoading ? (
+        <LoadingActivityCard
+          title="Carregando detalhes dos apontamentos"
+          description="Consultando registros paginados no TOTVS."
+          progressPercent={initialLoadingProgress}
+        />
+      ) : (
       <div className="cr-table-wrap">
         <table className="cr-table">
           <thead>
@@ -81,13 +108,7 @@ export function DetalhesTable({
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="cr-table__loading">
-                  Carregando detalhes…
-                </td>
-              </tr>
-            ) : items.length === 0 ? (
+            {items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="cr-table__empty">
                   Nenhum registro nesta página.
@@ -108,6 +129,7 @@ export function DetalhesTable({
           </tbody>
         </table>
       </div>
+      )}
 
       <footer className="cr-table-card__footer">
         <button

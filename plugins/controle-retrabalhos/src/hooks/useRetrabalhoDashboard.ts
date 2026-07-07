@@ -14,6 +14,11 @@ import type {
   RetrabalhoRecursoItem,
 } from "../types/retrabalho";
 import { DEFAULT_RANKING_LIMIT } from "../types/retrabalho";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 export type DashboardLoadState = "idle" | "loading" | "success" | "error";
 
@@ -37,52 +42,134 @@ function hasRequiredFilters(
   return Boolean(filters?.filial && filters.dataInicio && filters.dataFim);
 }
 
+function firstRejectedReason(
+  results: Array<PromiseSettledResult<unknown>>,
+): unknown {
+  for (const result of results) {
+    if (result.status === "rejected") {
+      return result.reason;
+    }
+  }
+  return null;
+}
+
 export function useRetrabalhoDashboard(appliedFilters: RetrabalhoQueryFilters | null) {
   const [state, setState] = useState<DashboardLoadState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<RetrabalhoDashboardData>(emptyDashboard);
-  const requestIdRef = useRef(0);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS,
+  );
+  const [reloadKey, setReloadKey] = useState(0);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
+
+  useEffect(() => {
     if (!hasRequiredFilters(appliedFilters)) {
       setState("idle");
       setData(emptyDashboard);
       setError(null);
+      setLoading(false);
+      setRefreshing(false);
+      setRequestProgress(EMPTY_REQUEST_PROGRESS);
       return;
     }
 
-    const requestId = ++requestIdRef.current;
-    setState("loading");
-    setError(null);
+    const controller = new AbortController();
+    const filters = appliedFilters;
+    const hasPreviousData = dataRef.current.resumo !== null;
 
-    try {
-      const [resumo, mensal, recursos, colaboradores] = await Promise.all([
-        fetchRetrabalhoResumo(appliedFilters),
-        fetchRetrabalhoMensal(appliedFilters),
-        fetchRetrabalhoRecursos(appliedFilters, DEFAULT_RANKING_LIMIT),
-        fetchRetrabalhoColaboradores(appliedFilters, DEFAULT_RANKING_LIMIT),
-      ]);
+    async function run() {
+      try {
+        setError(null);
+        setRequestProgress(EMPTY_REQUEST_PROGRESS);
 
-      if (requestId !== requestIdRef.current) return;
+        if (hasPreviousData) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+          setState("loading");
+        }
 
-      setData({
-        resumo,
-        mensal: mensal.items ?? [],
-        recursos: recursos.items ?? [],
-        colaboradores: colaboradores.items ?? [],
-      });
-      setState("success");
-    } catch (err) {
-      if (requestId !== requestIdRef.current) return;
-      setState("error");
-      setError(err instanceof Error ? err.message : "Falha ao carregar o painel.");
-      setData(emptyDashboard);
+        const results = await runParallelWithProgress(
+          [
+            (signal) => fetchRetrabalhoResumo(filters, { signal }),
+            (signal) => fetchRetrabalhoMensal(filters, { signal }),
+            (signal) =>
+              fetchRetrabalhoRecursos(filters, DEFAULT_RANKING_LIMIT, { signal }),
+            (signal) =>
+              fetchRetrabalhoColaboradores(filters, DEFAULT_RANKING_LIMIT, {
+                signal,
+              }),
+          ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+          controller.signal,
+          setRequestProgress,
+        );
+
+        if (controller.signal.aborted) return;
+
+        const rejectedReason = firstRejectedReason(results);
+        if (rejectedReason) {
+          throw rejectedReason;
+        }
+
+        const [resumoResult, mensalResult, recursosResult, colaboradoresResult] =
+          results;
+
+        if (
+          resumoResult.status !== "fulfilled" ||
+          mensalResult.status !== "fulfilled" ||
+          recursosResult.status !== "fulfilled" ||
+          colaboradoresResult.status !== "fulfilled"
+        ) {
+          throw new Error("Falha ao carregar o painel.");
+        }
+
+        setData({
+          resumo: resumoResult.value as RetrabalhoResumo,
+          mensal: (mensalResult.value as { items?: RetrabalhoMensalItem[] }).items ?? [],
+          recursos: (recursosResult.value as { items?: RetrabalhoRecursoItem[] }).items ?? [],
+          colaboradores:
+            (colaboradoresResult.value as { items?: RetrabalhoColaboradorItem[] }).items ??
+            [],
+        });
+        setState("success");
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setState("error");
+        setError(err instanceof Error ? err.message : "Falha ao carregar o painel.");
+        if (!hasPreviousData) {
+          setData(emptyDashboard);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
     }
-  }, [appliedFilters]);
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+    void run();
 
-  return { state, error, data, reload, isLoading: state === "loading" };
+    return () => {
+      controller.abort();
+    };
+  }, [appliedFilters, reloadKey]);
+
+  return {
+    state,
+    error,
+    data,
+    reload,
+    loading,
+    refreshing,
+    requestProgress,
+    isLoading: loading || refreshing,
+  };
 }

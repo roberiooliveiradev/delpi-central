@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { DetalhesTable } from "../components/DetalhesTable";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
-import { LoadingState } from "../components/LoadingState";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { PeriodFilters, type QuickRangePreset } from "../components/PeriodFilters";
 import { RetrabalhoCharts } from "../components/RetrabalhoCharts";
 import { SummaryCards } from "../components/SummaryCards";
@@ -24,6 +24,7 @@ import {
   validatePeriodRange,
 } from "../utils/dateRange";
 import { formatDatePtBr } from "../utils/formatters";
+import { useLoadingProgress } from "../utils/loadingProgress";
 
 type ControleRetrabalhosPageProps = {
   pathname?: string;
@@ -96,8 +97,18 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
     applyFilterRange(range);
   };
 
-  const showInitialLoading = dashboard.isLoading && !dashboard.data.resumo;
   const resumo = dashboard.data.resumo;
+  const hasDashboardData = resumo !== null;
+  const showInitialLoading = dashboard.loading && !hasDashboardData;
+  const showRefreshLoading = dashboard.refreshing && hasDashboardData;
+  const initialLoadingProgress = useLoadingProgress(
+    showInitialLoading,
+    dashboard.requestProgress,
+  );
+  const refreshLoadingProgress = useLoadingProgress(
+    showRefreshLoading,
+    dashboard.requestProgress,
+  );
   const isEmpty =
     dashboard.state === "success" &&
     (resumo?.totalApontamentos ?? 0) === 0 &&
@@ -137,7 +148,23 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
         <ErrorState message={dashboardError} onRetry={dashboard.reload} />
       ) : null}
 
-      {showInitialLoading ? <LoadingState message="Carregando painel…" /> : null}
+      {showRefreshLoading ? (
+        <LoadingActivityCard
+          title="Atualizando painel de retrabalhos"
+          description="Recalculando resumo, gráficos e rankings com o período selecionado."
+          variant="compact"
+          sticky
+          progressPercent={refreshLoadingProgress}
+        />
+      ) : null}
+
+      {showInitialLoading ? (
+        <LoadingActivityCard
+          title="Carregando painel de retrabalhos"
+          description="Buscando resumo, evolução mensal, recursos e colaboradores no TOTVS."
+          progressPercent={initialLoadingProgress}
+        />
+      ) : null}
 
       {!showInitialLoading && !dashboardError && isEmpty ? <EmptyState /> : null}
 
