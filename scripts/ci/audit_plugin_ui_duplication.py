@@ -118,7 +118,29 @@ def plugin_candidates(manifest: dict) -> list[Path]:
     return plugins
 
 
-def is_thin_wrapper_content(content: str) -> bool:
+def _component_stem(basename: str) -> str:
+    return basename.removesuffix(".tsx").removesuffix(".ts")
+
+
+def has_local_hook_implementation(content: str, basename: str) -> bool:
+    """Detecta implementação React completa (hooks) exportada com o nome do arquivo."""
+    stem = _component_stem(basename)
+    export_patterns = (
+        rf"export\s+function\s+{re.escape(stem)}\s*\(",
+        rf"export\s+const\s+{re.escape(stem)}\s*=",
+    )
+    if not any(re.search(pattern, content) for pattern in export_patterns):
+        return False
+    if re.search(rf"create\w*{re.escape(stem)}", content, re.IGNORECASE):
+        return False
+    if "createDashboard" in content:
+        return False
+    return bool(re.search(r"\buseState\s*\(|\buseEffect\s*\(", content))
+
+
+def is_thin_wrapper_content(content: str, *, basename: str = "") -> bool:
+    if basename and has_local_hook_implementation(content, basename):
+        return False
     return any(marker in content for marker in WRAPPER_MARKERS)
 
 
@@ -132,7 +154,7 @@ def _resolve_ts_path(base_dir: Path, rel_import: str) -> Path | None:
 
 
 def is_thin_wrapper(file_path: Path, content: str, *, depth: int = 0) -> bool:
-    if is_thin_wrapper_content(content):
+    if is_thin_wrapper_content(content, basename=file_path.name):
         return True
     if depth >= 4:
         return False

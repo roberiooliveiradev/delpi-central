@@ -1,7 +1,7 @@
 # Roadmap de refatoração — componentes compartilhados (`@delpi/plugin-ui`)
 
 > **Objetivo:** eliminar duplicação de UI transversal entre plugins MFE, centralizando em `plugins/plugin-ui/` sem quebrar builds, Docker nem tema claro/escuro no portal federado.  
-> **Baseline:** jul/2026 · **Único consumidor hoje:** `tv-dashboard`.
+> **Baseline:** jul/2026 · **Consumidores:** 21 plugins MFE com alias Vite + `styles.css` (ver `migration-catalog.md`).
 
 ---
 
@@ -50,7 +50,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 | `Pagination` | 14 | `dashboard-production` | ✅ F2.4 — 7 dashboards dept.; `createDashboardPaginationKit` |
 | `PaginationPageJump` | 8 | `dashboard-production` | ✅ incorporado em `Pagination` |
 | `TablePageSizeSelect` | (em `Pagination.tsx`) | `dashboard-production` | ✅ incorporado em `Pagination` |
-| `MultiSelectField` | 13 | `dashboard-production` | ✅ F2.5 — 8 dashboards + lmps |
+| `MultiSelectField` | 13 | `dashboard-production` | ✅ F2.5 — 8 dashboards + lmps + ef + transformometro |
 | `FilterBar` | 12 | `dashboard-production` | ✅ F2.6 — `FiltersRow` + `FilterInputField` (alias `FilterBar`) |
 | `ChartToolbar` | 6 | `dashboard-production` | ✅ F2.7 + `ChartGranularityToggle` |
 | `DataTable` | ~12 dashboards | `dashboard-production` | Maior risco — colunas via props |
@@ -270,11 +270,11 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ | Detail* | sim |
 | `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
-| `transformometro` | ✅ | LoadingActivity ✅ | EditableSectionCard ✅ PageHeader ✅ | sim |
-| `cadastro-kaizen` | ✅ | — | EditableSectionCard ✅ | sim |
-| `quality-action-plans` | ✅ | parcial | PageHeader ✅ SectionCard ✅ | sim |
-| `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | DetailFieldGrid ✅ | sim |
-| `maintenance` | ✅ | Pagination ✅ | PageHeader ✅ | sim |
+| `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ | EditableSectionCard ✅ PageHeader ✅ · DataTable* local | sim |
+| `cadastro-kaizen` | ✅ | Pagination ✅ MultiSelect ✅ | EditableSectionCard ✅ · DataTable* allowlist | sim |
+| `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
+| `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
+| `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ | PageHeader ✅ · DataTable* local | sim |
 | `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ | Empty/Loading ✅ | sim |
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |
