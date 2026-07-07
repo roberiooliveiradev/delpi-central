@@ -1,20 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildAdminPresentationWsUrl,
+  parseComunicadoConfig,
+  serializeComunicadoConfig,
   usePresentationRealtime,
 } from "@delpi/tv-dashboard-presentation";
+
 import {
-  ArrowDown,
   ArrowLeft,
-  ArrowUp,
   Copy,
   Eye,
-  EyeOff,
   Link2,
-  Plus,
   QrCode,
   RefreshCw,
-  Pencil,
   Trash2,
 } from "lucide-react";
 
@@ -49,8 +47,13 @@ import {
 } from "../api/tvDashboardApi";
 import { getAccessToken } from "../api/httpClient";
 import { AddSlideModal } from "../components/AddSlideModal";
-import { EditSlideModal } from "../components/EditSlideModal";
-import { SlideCardThumbnail } from "../components/SlideCardThumbnail";
+import { ComunicadoComposer } from "../components/ComunicadoComposer";
+import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
+import { ComunicadoEditorRibbon } from "../components/ComunicadoEditorRibbon";
+import { SlideDeckRibbon } from "../components/SlideDeckRibbon";
+import { SlideFilmstrip } from "../components/SlideFilmstrip";
+import { SlideInspector } from "../components/SlideInspector";
+import { SlideStagePreview } from "../components/SlideStagePreview";
 
 type Props = {
   playlistId: string;
@@ -58,19 +61,6 @@ type Props = {
   onPreview: () => void;
   onShare: () => void;
 };
-
-const VIEWPORT_OPTIONS = [
-  { value: "1080p", label: "1920×1080 (Full HD)" },
-  { value: "1080p_portrait", label: "1080×1920 (Retrato)" },
-  { value: "4k", label: "3840×2160 (4K)" },
-  { value: "720p", label: "1280×720 (HD)" },
-];
-
-const TRANSITION_OPTIONS = [
-  { value: "fade", label: "Fade" },
-  { value: "slide", label: "Deslizar" },
-  { value: "none", label: "Sem transição" },
-];
 
 export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: Props) {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
@@ -81,16 +71,22 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [editSlide, setEditSlide] = useState<Slide | null>(null);
+  const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [previewBySlideId, setPreviewBySlideId] = useState<
     Record<string, PresentationPayload["slides"][number]>
   >({});
+  const saveComunicadoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const slides = useMemo(
     () => [...(playlist?.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
     [playlist?.slides],
+  );
+
+  const selectedSlide = useMemo(
+    () => slides.find((slide) => slide.id === selectedSlideId) ?? slides[0] ?? null,
+    [slides, selectedSlideId],
   );
 
   const slidesPreviewKey = useMemo(
@@ -138,6 +134,16 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   useEffect(() => {
     void refreshPreviewThumbnails();
   }, [refreshPreviewThumbnails, slidesPreviewKey]);
+
+  useEffect(() => {
+    if (!slides.length) {
+      setSelectedSlideId(null);
+      return;
+    }
+    if (!selectedSlideId || !slides.some((slide) => slide.id === selectedSlideId)) {
+      setSelectedSlideId(slides[0].id);
+    }
+  }, [slides, selectedSlideId]);
 
   usePresentationRealtime({
     enabled: Boolean(playlistId && slides.length > 0 && thumbnailWsUrl),
@@ -192,6 +198,12 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     };
   }, [playlistId]);
 
+  useEffect(() => {
+    return () => {
+      if (saveComunicadoTimerRef.current) window.clearTimeout(saveComunicadoTimerRef.current);
+    };
+  }, []);
+
   async function saveSettings(field: string, value: string | number) {
     if (!playlist) return;
     const updated = await updatePlaylist(playlist.id, { [field]: value });
@@ -213,12 +225,14 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       durationSec: payload.durationSec,
     });
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+    setSelectedSlideId(slide.id);
   }
 
   async function handleImportPreset(payload: { presetKey: string; branch?: string }) {
     if (!playlist) return;
     const slide = await addSlideFromPreset(playlist.id, payload);
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+    setSelectedSlideId(slide.id);
   }
 
   async function handleAddExternal(payload: {
@@ -234,29 +248,18 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       durationSec: payload.durationSec,
     });
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+    setSelectedSlideId(slide.id);
   }
 
   async function handleRemoveSlide(slide: Slide) {
     if (!playlist) return;
     if (!window.confirm(`Remover a tela «${slide.title}»?`)) return;
     await deleteSlide(playlist.id, slide.id);
-    setPlaylist({
-      ...playlist,
-      slides: (playlist.slides ?? []).filter((item) => item.id !== slide.id),
-    });
-  }
-
-  async function moveSlide(slide: Slide, direction: -1 | 1) {
-    if (!playlist) return;
-    const slides = [...(playlist.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
-    const index = slides.findIndex((item) => item.id === slide.id);
-    const target = index + direction;
-    if (index < 0 || target < 0 || target >= slides.length) return;
-    const reordered = [...slides];
-    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-    const items = reordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-    const result = await reorderSlides(playlist.id, items);
-    setPlaylist({ ...playlist, slides: result.slides });
+    const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
+    setPlaylist({ ...playlist, slides: remaining });
+    if (selectedSlideId === slide.id) {
+      setSelectedSlideId(remaining[0]?.id ?? null);
+    }
   }
 
   async function handleToggleActive() {
@@ -305,10 +308,22 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     });
   }
 
+  function scheduleCustomSlideSave(slide: Slide, nativeConfig: Record<string, unknown>) {
+    if (saveComunicadoTimerRef.current) window.clearTimeout(saveComunicadoTimerRef.current);
+    saveComunicadoTimerRef.current = window.setTimeout(() => {
+      void handleSaveSlide(slide, {
+        title: slide.title,
+        durationSec: slide.durationSec ?? playlist?.defaultDurationSec ?? 30,
+        nativeConfig,
+      });
+    }, 700);
+  }
+
   async function handleDuplicateSlide(slide: Slide) {
     if (!playlist) return;
     const copy = await duplicateSlide(playlist.id, slide.id);
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
+    setSelectedSlideId(copy.id);
   }
 
   async function handleToggleSlideActive(slide: Slide) {
@@ -353,26 +368,31 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   }
 
   function openQr() {
-    void downloadQrPng(playlistId).then((blob) => {
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    }).catch((err) => {
-      window.alert(err instanceof Error ? err.message : "Erro ao gerar QR.");
-    });
+    void downloadQrPng(playlistId)
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank", "noopener,noreferrer");
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      })
+      .catch((err) => {
+        window.alert(err instanceof Error ? err.message : "Erro ao gerar QR.");
+      });
   }
 
   if (loading) return <div className="td-state">Carregando programação…</div>;
   if (error || !playlist) return <div className="td-state">{error ?? "Programação não encontrada."}</div>;
 
+  const admin = uiContent?.admin ?? {};
+  const isCustomSlide = selectedSlide?.nativeScreenKey === "custom_message";
+
   return (
-    <>
-      <div className="td-toolbar">
+    <div className="td-deck">
+      <div className="td-toolbar td-deck__toolbar">
         <button type="button" className="td-btn" onClick={onBack}>
           <ArrowLeft size={16} />
           Voltar
         </button>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="td-deck__toolbar-actions">
           <button type="button" className="td-btn" onClick={onPreview}>
             <Eye size={16} />
             Pré-visualizar
@@ -404,137 +424,127 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         </div>
       </div>
 
-      <div className="td-grid-2">
-        <div className="td-card">
-          <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <header className="td-deck__header">
+        <div>
+          <h2 className="td-deck__title">
             {playlist.name}
-            {tvStatusLabel() ? (
-              <span className={tvStatusClass()}>{tvStatusLabel()}</span>
-            ) : null}
+            {tvStatusLabel() ? <span className={tvStatusClass()}>{tvStatusLabel()}</span> : null}
           </h2>
-          <p className="td-subtitle" style={{ marginTop: 0 }}>
+          <p className="td-subtitle td-deck__meta">
             {playlist.viewCount ?? 0} visualizações
             {playlist.lastPresentedAt
               ? ` · última exibição ${new Date(playlist.lastPresentedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`
               : ""}
             {playlist.isActive ? "" : " · link inativo"}
+            {selectedSlide ? ` · tela ${slides.findIndex((item) => item.id === selectedSlide.id) + 1} de ${slides.length}` : ""}
           </p>
-          <div className="td-field">
-            <label htmlFor="td-viewport">Resolução alvo</label>
-            <select
-              id="td-viewport"
-              value={playlist.viewportProfile}
-              onChange={(e) => void saveSettings("viewportProfile", e.target.value)}
-            >
-              {VIEWPORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="td-field">
-            <label htmlFor="td-transition">Transição</label>
-            <select
-              id="td-transition"
-              value={playlist.transitionStyle}
-              onChange={(e) => void saveSettings("transitionStyle", e.target.value)}
-            >
-              {TRANSITION_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="td-field">
-            <label htmlFor="td-duration">Duração padrão (s)</label>
-            <input
-              id="td-duration"
-              type="number"
-              min={5}
-              max={600}
-              value={playlist.defaultDurationSec}
-              onChange={(e) => void saveSettings("defaultDurationSec", Number(e.target.value))}
-            />
-          </div>
-          <div className="td-field">
-            <label htmlFor="td-refresh">Atualizar dados a cada (s)</label>
-            <input
-              id="td-refresh"
-              type="number"
-              min={30}
-              max={3600}
-              value={playlist.globalRefreshSec}
-              onChange={(e) => void saveSettings("globalRefreshSec", Number(e.target.value))}
-            />
-          </div>
-          <div className="td-link-box">
-            <input readOnly value={playlist.publicUrl ?? ""} aria-label="Link público" />
-          </div>
         </div>
+      </header>
 
-        <div className="td-card">
-          <div className="td-toolbar" style={{ marginBottom: 0 }}>
-            <h3 style={{ margin: 0 }}>Telas ({slides.length})</h3>
-            <button type="button" className="td-btn td-btn--primary" onClick={() => setAddModalOpen(true)}>
-              <Plus size={16} />
-              Adicionar tela
-            </button>
+      {isCustomSlide && selectedSlide ? (
+        <ComunicadoEditorProvider
+          playlistId={playlistId}
+          value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
+          onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
+        >
+          <div className="td-deck-ribbon" role="toolbar" aria-label="Controles de slide">
+            <SlideDeckRibbon
+              slides={slides}
+              selectedSlide={selectedSlide}
+              onAdd={() => setAddModalOpen(true)}
+              onSelect={setSelectedSlideId}
+              onDuplicate={(slide) => void handleDuplicateSlide(slide)}
+              onToggleActive={(slide) => void handleToggleSlideActive(slide)}
+              onRemove={(slide) => void handleRemoveSlide(slide)}
+            />
+            <ComunicadoEditorRibbon labels={admin} />
           </div>
-          <div className="td-slide-list">
-            {slides.length === 0 ? (
-              <p className="td-subtitle">Adicione telas nativas DELPI ou links externos (Power BI, sites).</p>
-            ) : (
-              slides.map((slide, idx) => (
-                <div
-                  key={slide.id}
-                  className={`td-slide-item${slide.isActive ? "" : " td-slide-item--inactive"}${dragIndex === idx ? " td-slide-item--dragging" : ""}`}
-                  draggable
-                  onDragStart={() => setDragIndex(idx)}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => void handleDropSlide(idx)}
-                  onDragEnd={() => setDragIndex(null)}
-                >
-                  <strong>{idx + 1}</strong>
-                  <SlideCardThumbnail
-                    slide={slide}
-                    playlistId={playlistId}
-                    previewSlide={previewBySlideId[slide.id]}
-                  />
-                  <div>
-                    <div>{slide.title}</div>
-                    <div className="td-slide-meta">
-                      {!slide.isActive ? `${uiContent?.admin?.slideInactive ?? "Tela pausada"} · ` : ""}
-                      {slide.slideType === "native"
-                        ? `Nativa · ${slide.nativeScreenKey}`
-                        : `Externa · ${slide.externalUrl}`}
-                      {" · "}
-                      {slide.durationSec ?? playlist.defaultDurationSec}s
-                    </div>
-                  </div>
-                  <div className="td-slide-actions">
-                    <button type="button" className="td-btn td-btn--icon" disabled={idx === 0} onClick={() => void moveSlide(slide, -1)} aria-label="Mover para cima">
-                      <ArrowUp size={14} />
-                    </button>
-                    <button type="button" className="td-btn td-btn--icon" disabled={idx === slides.length - 1} onClick={() => void moveSlide(slide, 1)} aria-label="Mover para baixo">
-                      <ArrowDown size={14} />
-                    </button>
-                    <button type="button" className="td-btn td-btn--icon" onClick={() => void handleToggleSlideActive(slide)} aria-label={slide.isActive ? "Pausar tela" : "Reativar tela"}>
-                      {slide.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
-                    </button>
-                    <button type="button" className="td-btn td-btn--icon" onClick={() => setEditSlide(slide)} aria-label="Editar tela">
-                      <Pencil size={14} />
-                    </button>
-                    <button type="button" className="td-btn td-btn--icon" onClick={() => void handleDuplicateSlide(slide)} aria-label="Duplicar tela">
-                      <Copy size={14} />
-                    </button>
-                    <button type="button" className="td-btn td-btn--danger td-btn--icon" onClick={() => void handleRemoveSlide(slide)} aria-label="Remover">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+
+          <div className="td-deck__workspace">
+            <SlideFilmstrip
+              slides={slides}
+              playlistId={playlistId}
+              selectedSlideId={selectedSlide.id}
+              previewBySlideId={previewBySlideId}
+              dragIndex={dragIndex}
+              inactiveLabel={admin.slideInactive ?? "Pausada"}
+              onSelect={setSelectedSlideId}
+              onDragStart={setDragIndex}
+              onDrop={(index) => void handleDropSlide(index)}
+              onDragEnd={() => setDragIndex(null)}
+            />
+
+            <main className="td-deck-stage" aria-label="Palco da tela selecionada">
+              <div className="td-deck-stage__editor">
+                <ComunicadoComposer labels={admin} />
+              </div>
+            </main>
+
+            <SlideInspector
+              playlist={playlist}
+              slide={selectedSlide}
+              catalog={catalog}
+              branchScope={branchScope}
+              onSavePlaylistSettings={(field, value) => void saveSettings(field, value)}
+              onSaveSlide={(slide, payload) => void handleSaveSlide(slide, payload)}
+            />
+          </div>
+        </ComunicadoEditorProvider>
+      ) : (
+        <>
+          <div className="td-deck-ribbon" role="toolbar" aria-label="Controles de slide">
+            <SlideDeckRibbon
+              slides={slides}
+              selectedSlide={selectedSlide}
+              onAdd={() => setAddModalOpen(true)}
+              onSelect={setSelectedSlideId}
+              onDuplicate={(slide) => void handleDuplicateSlide(slide)}
+              onToggleActive={(slide) => void handleToggleSlideActive(slide)}
+              onRemove={(slide) => void handleRemoveSlide(slide)}
+            />
+          </div>
+
+          <div className="td-deck__workspace">
+            <SlideFilmstrip
+              slides={slides}
+              playlistId={playlistId}
+              selectedSlideId={selectedSlide?.id ?? null}
+              previewBySlideId={previewBySlideId}
+              dragIndex={dragIndex}
+              inactiveLabel={admin.slideInactive ?? "Pausada"}
+              onSelect={setSelectedSlideId}
+              onDragStart={setDragIndex}
+              onDrop={(index) => void handleDropSlide(index)}
+              onDragEnd={() => setDragIndex(null)}
+            />
+
+            <main className="td-deck-stage" aria-label="Palco da tela selecionada">
+              {!selectedSlide ? (
+                <div className="td-deck-stage__empty">
+                  <p className="td-subtitle">Adicione uma tela ou selecione um slide na coluna à esquerda.</p>
                 </div>
-              ))
-            )}
+              ) : (
+                <div className="td-deck-stage__canvas" data-viewport={playlist.viewportProfile}>
+                  <SlideStagePreview
+                    slide={selectedSlide}
+                    playlistId={playlistId}
+                    previewSlide={previewBySlideId[selectedSlide.id]}
+                  />
+                </div>
+              )}
+            </main>
+
+            <SlideInspector
+              playlist={playlist}
+              slide={selectedSlide}
+              catalog={catalog}
+              branchScope={branchScope}
+              onSavePlaylistSettings={(field, value) => void saveSettings(field, value)}
+              onSaveSlide={(slide, payload) => void handleSaveSlide(slide, payload)}
+            />
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       <AddSlideModal
         open={addModalOpen}
@@ -548,20 +558,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         onAddExternal={(payload) => void handleAddExternal(payload)}
         onImportPreset={(payload) => void handleImportPreset(payload)}
       />
-
-      <EditSlideModal
-        open={editSlide !== null}
-        playlistId={playlistId}
-        slide={editSlide}
-        catalog={catalog}
-        branchScope={branchScope}
-        defaultDurationSec={playlist.defaultDurationSec}
-        onClose={() => setEditSlide(null)}
-        onSave={(payload) => {
-          if (editSlide) void handleSaveSlide(editSlide, payload);
-        }}
-      />
-
-    </>
+    </div>
   );
 }

@@ -82,7 +82,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
 
   return (
     <div className={`dashboard-tv-dashboard dashboard-page${isFullscreenView ? " td-app-shell--preview" : ""}`}>
-      <div className="td-app-shell">
+      <div className={`td-app-shell${route.view === "edit" ? " td-app-shell--deck" : ""}`}>
         {!isFullscreenView ? (
           <header className="td-hero">
             <p className="td-eyebrow">Operações · Displays</p>
@@ -92,7 +92,9 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
             </p>
           </header>
         ) : null}
-        {renderBody()}
+        <div className={route.view === "edit" ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
+          {renderBody()}
+        </div>
       </div>
     </div>
   );

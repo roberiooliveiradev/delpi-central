@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { BranchScope, NativeScreenCatalogItem, SlidePreset, TvDashboardUiContent } from "../api/tvDashboardApi";
 import { BranchField } from "./BranchField";
-import { ComunicadoComposer } from "./ComunicadoComposer";
+import { ComunicadoComposerField } from "./ComunicadoComposerField";
 import { ExternalSlidePreview } from "../presentation/ExternalSlidePreview";
 import { parseComunicadoConfig, serializeComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
@@ -179,7 +179,7 @@ export function AddSlideModal({
                 <input id="td-slide-title" value={title || selected?.label || ""} onChange={(e) => setTitle(e.target.value)} />
               </div>
               {selected?.key === "custom_message" ? (
-                <ComunicadoComposer
+                <ComunicadoComposerField
                   playlistId={playlistId}
                   value={comunicadoConfig}
                   onChange={setComunicadoConfig}
