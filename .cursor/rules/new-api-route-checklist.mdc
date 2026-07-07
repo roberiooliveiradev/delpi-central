@@ -115,6 +115,28 @@ Payload representativo + modo **Automático**:
 
 ---
 
+## Dashboard MFE multi-filial (api-delpi + manifest)
+
+Quando o plugin tem rotas `/sc` e `/es` (ou filiais TOTVS `01`/`02`):
+
+| # | Entrega | Onde |
+|---|---------|------|
+| 1 | Permissões granulares + mapa `{MODULO}_BRANCH_VIEW_PERMS` | `api_delpi_permissions.py` |
+| 2 | Gate `branch_access_error(filial)` em **toda** rota com parâmetro filial | router do módulo |
+| 3 | Manifest: declarar `.view.filial-*` e amarrar **cada** rota do menu à permissão da filial | `*.manifest.json` |
+| 4 | `.view` genérico opcional (legado — ambas filiais) | permissions + gate no router |
+| 5 | Teste unitário do gate + smoke 403 + meta | `api-delpi/tests/test_*_branch_access.py`, `test_*_routes.py` |
+
+Referência: `retrabalho_branch_access.py`, `eficiencia-fabril.manifest.json`, `inspecoes_entrada_router.py`.
+
+**Proibido:** permissões filiais só no manifest/menu sem enforcement na API — o MFE não é barreira de segurança.
+
+### Documentação (obrigatório)
+
+Ver **`plugins-documentation.mdc`**: README do plugin, doc API, índices `06-modulos` / `10-referencia` / `08-plugins`, pasta roadmap se view TOTVS.
+
+---
+
 ## O que NÃO fazer
 
 - Endpoint sem contrato `meta.entity` / `meta.fields` quando o chat precisa apresentar dados.

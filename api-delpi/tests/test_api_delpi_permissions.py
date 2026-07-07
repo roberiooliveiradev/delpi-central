@@ -23,6 +23,15 @@ def test_scheduling_branch_maps_use_central_constants() -> None:
     assert perms.SCHEDULING_BRANCH_MANAGE_PERMS["SC"] == perms.CENTRAL_AGENDAMENTO_MANAGE_FILIAL_SC
 
 
+def test_retrabalho_branch_maps_use_filial_constants() -> None:
+    assert perms.CONTROLE_RETRABALHO_BRANCH_VIEW_PERMS["01"] == (
+        perms.CONTROLE_RETRABALHO_VIEW_FILIAL_SC
+    )
+    assert perms.CONTROLE_RETRABALHO_BRANCH_VIEW_PERMS["02"] == (
+        perms.CONTROLE_RETRABALHO_VIEW_FILIAL_ES
+    )
+
+
 def test_financeiro_centro_custo_permissions_are_stable_strings() -> None:
     assert perms.FINANCEIRO_CENTRO_CUSTO_ACCESS == "financeiro-centro-custo.access"
     assert perms.FINANCEIRO_CENTRO_CUSTO_VIEW == "financeiro-centro-custo.view"

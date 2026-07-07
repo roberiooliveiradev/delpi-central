@@ -54,6 +54,7 @@ alwaysApply: true
 | `chat-prose-rendering.mdc` | Markdown, streaming, títulos do assistente (`minha-delpi-chat`) |
 | `plugins-visual-design-system.mdc` | Tokens, layout, **escopo CSS anti-vazamento**, claro/escuro |
 | `plugins-frontend-build.mdc` | Build MFE, checklist CSS antes de commit |
+| `plugins-documentation.mdc` | **README + doc API + inventário** — todo plugin documentado |
 
 ## Fluxo por tipo de tarefa
 
@@ -67,7 +68,8 @@ Nova intenção operacional → operational-api-routing → api_route_domains.js
 Texto novo ao usuário   → assistant-content-json
 Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)
 Upload / anexo em disco     → persistent-upload-storage → volume Compose + DELPI_DATA_HOST_DIR
-Novo plugin / UI MFE        → plugins-visual-design-system (escopo CSS + data-theme) → plugins-frontend-build
+Novo plugin / UI MFE        → plugins-documentation → plugins-visual-design-system → plugins-frontend-build
+API dashboard multi-filial → api-delpi-response-contract § RBAC filial → manifest `.view.filial-*`
 ```
 
 ## Ordem de prioridade em conflito

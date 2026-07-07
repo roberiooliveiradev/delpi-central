@@ -11,7 +11,8 @@ Ao alterar código em `plugins/` (microfrontends):
 1. Rodar build do plugin afetado antes de considerar a tarefa concluída.
 2. Corrigir erros de `tsc` e `vite build` antes de commitar.
 3. **CSS:** conferir escopo e tema — sem `body`/`:root` global; dark via `data-theme`; ver `plugins-visual-design-system.mdc` § Anti-vazamento CSS.
-4. Incluir no mesmo fluxo de entrega (commit quando o usuário pedir commit ou ao finalizar a alteração de front).
+4. **Documentação:** README do plugin atualizado; se API nova/alterada, doc em `api-delpi/docs/api/` — ver `plugins-documentation.mdc`.
+5. Incluir no mesmo fluxo de entrega (commit quando o usuário pedir commit ou ao finalizar a alteração de front).
 
 ## Strategic Indicators
 

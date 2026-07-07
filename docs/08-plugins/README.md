@@ -71,6 +71,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | plugin | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/cadastro-kaizen` | `cadastro-kaizen` | microfrontend | plugin | `/apps/cadastro-kaizen` | `delpi-cadastro-kaizen` |
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
+| `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
@@ -98,6 +99,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (Kaizen/5S: **Google Sheets**; PPM/NC: TOTVS) |
 | Cadastro de Kaizens | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação da planilha via `POST .../import-from-sheet` |
 | Inspeções de Entrada | `/apps/api-delpi/inspecoes-entrada/*` (TOTVS views) |
+| Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
@@ -146,6 +148,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | central-agendamento | `central-agendamento` |
 | cadastro-kaizen | `cadastro-kaizen` |
 | inspecoes-entrada | `inspecoes-entrada` |
+| controle-retrabalhos | `controle-retrabalhos` |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -163,6 +166,7 @@ Declaradas no manifesto e persistidas na Core API:
 | minha-delpi-chat | `minha-delpi.chat.access`, `minha-delpi.chat.ask`, … |
 | central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc` |
 | inspecoes-entrada | `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` |
+| controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |
 | cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
@@ -180,7 +184,8 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |
 | Central de Agendamento | [Plugin README](../../plugins/central-agendamento/README.md) |
 | Cadastro de Kaizens | [Plugin README](../../plugins/cadastro-kaizen/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md) · [Revisões (spec)](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md) · [Doc técnica](../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) |
-| Inspeções de Entrada | [Plugin README](../../plugins/inspecoes-entrada/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/inspecoes-entrada/ROADMAP.md) · [Status](../../docs/12-roadmap-e-volucao/inspecoes-entrada/status-atual.md) · [Doc técnica](../../plugins/inspecoes-entrada/docs/DOCUMENTACAO.md) · [API](../../api-delpi/docs/api/inspecoes-entrada.md) |
+| Inspeções de Entrada | [Plugin README](../../plugins/inspecoes-entrada/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ROADMAP.md) · [Status](../../docs/12-roadmap-e-volucao/inspecoes-entrada/status-atual.md) · [Doc técnica](../../plugins/inspecoes-entrada/docs/DOCUMENTACAO.md) · [API](../../api-delpi/docs/api/inspecoes-entrada.md) |
+| Controle de Retrabalhos | [Plugin README](../../plugins/controle-retrabalhos/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/controle-retrabalhos/README.md) · [API](../../api-delpi/docs/api/controle-retrabalhos.md) |
 
 ---
 
@@ -190,6 +195,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 2. Definir `delpi.manifest.json` (schema `1.0.0` hoje; `1.1.0` quando a Fase 0 do roadmap estiver em produção).
 3. Build → registrar na Core API.
 4. Adicionar serviço `delpi-<id>` no `docker-compose.dev.yml`.
-5. Validar `remoteEntry.js` via gateway.
+5. **Documentar** — ver regra `plugins-documentation.mdc` (README do plugin + doc API se consumir api-delpi + entrada em `docs/08-plugins/README.md`).
+6. Validar `remoteEntry.js` via gateway.
 
 Guia operacional: [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md).

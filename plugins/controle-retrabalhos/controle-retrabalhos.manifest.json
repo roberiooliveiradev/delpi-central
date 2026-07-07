@@ -18,9 +18,21 @@
       "module": "controle-retrabalhos"
     },
     {
+      "code": "controle-retrabalhos.view.filial-sc",
+      "name": "Controle de Retrabalhos — Filial SC",
+      "description": "Visualizar retrabalhos da Filial SC (01).",
+      "module": "controle-retrabalhos"
+    },
+    {
+      "code": "controle-retrabalhos.view.filial-es",
+      "name": "Controle de Retrabalhos — Filial ES",
+      "description": "Visualizar retrabalhos da Filial ES (02).",
+      "module": "controle-retrabalhos"
+    },
+    {
       "code": "controle-retrabalhos.view",
       "name": "Visualizar Controle de Retrabalhos",
-      "description": "Permite consultar resumo, gráficos, rankings e detalhes de retrabalho.",
+      "description": "Permite consultar resumo, gráficos, rankings e detalhes de retrabalho (ambas filiais).",
       "module": "controle-retrabalhos"
     },
     {
@@ -35,7 +47,7 @@
     {
       "path": "/apps/controle-retrabalhos/sc",
       "label": "Controle de Retrabalhos - SC",
-      "permission": "controle-retrabalhos.view",
+      "permission": "controle-retrabalhos.view.filial-sc",
       "icon": "factory-icon",
       "order": 19,
       "showInMenu": true
@@ -43,7 +55,7 @@
     {
       "path": "/apps/controle-retrabalhos/es",
       "label": "Controle de Retrabalhos - ES",
-      "permission": "controle-retrabalhos.view",
+      "permission": "controle-retrabalhos.view.filial-es",
       "icon": "factory-icon",
       "order": 20,
       "showInMenu": true

@@ -36,6 +36,7 @@ from app.interface.http.routes.retrabalho.retrabalho_route_helpers import (
     build_retrabalho_query_request,
     execute_retrabalho_route,
 )
+from app.interface.http.routes.retrabalho.retrabalho_branch_access import branch_access_error
 from app.utils.logger import log_error
 
 router = APIRouter(
@@ -82,6 +83,10 @@ def get_retrabalhos_filtros_route(
     data_inicio: Optional[str] = DATA_INICIO_QUERY,
     data_fim: Optional[str] = DATA_FIM_QUERY,
 ):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
     try:
         request = build_retrabalho_query_request(
             filial=filial,
@@ -117,6 +122,10 @@ def get_retrabalhos_resumo_route(
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY,
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY,
 ):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
     try:
         request = build_retrabalho_query_request(
             filial=filial,
@@ -155,6 +164,10 @@ def get_retrabalhos_mensal_route(
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY,
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY,
 ):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
     try:
         request = build_retrabalho_query_request(
             filial=filial,
@@ -195,6 +208,10 @@ def get_retrabalhos_recursos_route(
     order_by: str = ORDER_BY_RANKING_QUERY,
     limit: int = LIMIT_QUERY,
 ):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
     try:
         request = build_retrabalho_query_request(
             filial=filial,
@@ -237,6 +254,10 @@ def get_retrabalhos_colaboradores_route(
     order_by: str = ORDER_BY_RANKING_QUERY,
     limit: int = LIMIT_QUERY,
 ):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
     try:
         request = build_retrabalho_query_request(
             filial=filial,
@@ -281,6 +302,10 @@ def get_retrabalhos_detalhes_route(
     order_by: str = ORDER_BY_DETALHES_QUERY,
     order_dir: str = ORDER_DIR_QUERY,
 ):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
     try:
         request = build_retrabalho_detalhes_request(
             filial=filial,

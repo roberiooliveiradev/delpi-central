@@ -23,4 +23,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua controle-retrabalhos.access, .view e .export (conforme perfil) no RBAC."
+echo "[OK] Atribua controle-retrabalhos.access, .view.filial-sc, .view.filial-es, .view e .export (conforme perfil) no RBAC."

@@ -300,6 +300,28 @@ Parâmetro comum: `branch` (`01` \| `02`). Escopo por filial validado no router.
 
 Documentação completa: [inspecoes-entrada.md](./inspecoes-entrada.md) · views: [ESPECIFICACAO-VIEW.md](../../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ESPECIFICACAO-VIEW.md).
 
+---
+
+## Controle de Retrabalhos — `/retrabalhos`
+
+**Permissão:** `controle-retrabalhos.access`, `controle-retrabalhos.view`, `controle-retrabalhos.view.filial-sc`, `controle-retrabalhos.view.filial-es` ou `api-delpi.access`
+
+Painel de horas improdutivas de retrabalho (view TOTVS `dbo.VW_BI_RT_HORAS_IMPRODUTIVAS`, motivo `RT`). Plugin: `controle-retrabalhos`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/retrabalhos/health` | Health check da view. |
+| GET | `/retrabalhos/filtros` | Opções de recurso/colaborador no período. |
+| GET | `/retrabalhos/resumo` | KPIs agregados. |
+| GET | `/retrabalhos/mensal` | Série mensal horas/custo. |
+| GET | `/retrabalhos/recursos` | Ranking top N recursos. |
+| GET | `/retrabalhos/colaboradores` | Ranking top N colaboradores. |
+| GET | `/retrabalhos/detalhes` | Listagem paginada de apontamentos. |
+
+Parâmetro comum: `filial` (`01` \| `02`), `dataInicio`, `dataFim`. Escopo por filial validado no router.
+
+Documentação completa: [controle-retrabalhos.md](./controle-retrabalhos.md) · view: [ESPECIFICACAO-VIEW.md](../../../docs/12-roadmap-e-evolucao/controle-retrabalhos/ESPECIFICACAO-VIEW.md).
+
 ### GET /quality/nonconformities
 
 | Query | Descrição |

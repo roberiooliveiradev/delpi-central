@@ -165,3 +165,11 @@ Toda tela deve funcionar em **qualquer largura** — sem scroll horizontal invol
 3. Incluir media queries `1100px` e `768px` para grids, header, toolbars e tabelas.
 4. Validar visualmente em **claro e escuro** e em **mobile** (viewport ≤ 768px ou DevTools).
 5. `npm run build` do plugin antes de entregar (ver regra `plugins-frontend-build`).
+
+## Manifest multi-filial (menu + RBAC)
+
+Plugins com rotas por filial (`/sc`, `/es`, …) devem espelhar a API:
+
+- Declarar permissões `.view.filial-*` no `*.manifest.json`.
+- Cada entrada em `routes[]` usa a permissão **da filial**, não `.view` genérico — ver `eficiencia-fabril.manifest.json`.
+- A API **valida** filial no router (`branch_access_error`) — ver `new-api-route-checklist.mdc` § Dashboard MFE multi-filial.

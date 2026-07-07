@@ -36,7 +36,8 @@ Toda rota que usa o **envelope** `{ success, message, data }` deve retornar **`m
 7. **Playbook `summary`:** `branch_filter_applied`, `consolidated_across_branches`, `is_complete` — definir via `ProductionOperationalSummarySemanticsService` + `build_period_summary`; chat consome flags (ver `presentation-operational-decoupling.mdc`).
 8. **Teste:** smoke em `api-delpi/tests/` (meta presente + `operationId` esperado) quando a rota for chat-critical ou KPI exposto ao SI.
 9. **RBAC:** importar permissões de `app.application.security.api_delpi_permissions` — não hardcodar códigos nos routers.
-10. **Doc:** atualizar `api-delpi/docs/api/` se mudar contrato público; após deploy com OpenAPI novo → `12-procedimento-reimport-openapi.md`.
+10. **RBAC por filial (rotas com `filial`/`branch`):** mapa `{BRANCH}_VIEW_PERMS` + `branch_access_error()` no router **antes** do use case — padrão `inspecoes_entrada_router` / `scheduling_router`. Permissão `.view` genérica = ambas filiais; `.view.filial-*` = escopo único. **Teste 403** obrigatório.
+11. **Doc:** atualizar `api-delpi/docs/api/` se mudar contrato público; após deploy com OpenAPI novo → `12-procedimento-reimport-openapi.md`.
 
 ## Exceções (fora do envelope + meta)
 
@@ -51,6 +52,7 @@ Toda rota que usa o **envelope** `{ success, message, data }` deve retornar **`m
 - `return {"success": true, ...}` manual sem `responses.py`.
 - `operationId` diferente entre OpenAPI e `meta.operationId`.
 - Lógica de `meta.shape` só no prompt do chat — pertence ao builder/registry.
+- Declarar `*.view.filial-*` em `api_delpi_permissions.py` **sem** validar filial no router — usuário com permissão de uma filial não pode consultar a outra via query.
 - Breaking change em `data` sem `?legacy=true` / bump `dataVersion` (playbook § 4.4).
 
 ## Referência rápida

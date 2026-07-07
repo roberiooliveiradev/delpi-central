@@ -1,0 +1,65 @@
+---
+description: Documentação obrigatória de plugins MFE e APIs consumidas
+globs: plugins/**/*
+alwaysApply: false
+---
+
+# Plugins — documentação obrigatória
+
+## Princípio
+
+**Todo plugin novo ou alteração relevante** deve incluir documentação no monorepo — não basta manifest + código. Referência: `inspecoes-entrada`, `eficiencia-fabril`, `controle-retrabalhos`.
+
+---
+
+## Checklist — novo plugin MFE
+
+| # | Entrega | Onde |
+|---|---------|------|
+| 1 | **README do plugin** — visão geral, rotas UI, API, permissões, dev, smoke, estrutura | `plugins/{id}/README.md` |
+| 2 | **Doc API** (se consome api-delpi) — endpoints, params, meta, RBAC filial, curl | `api-delpi/docs/api/{id ou módulo}.md` |
+| 3 | **Índice departamental** — seção resumida + link para doc completa | `api-delpi/docs/api/06-modulos-departamentais.md` |
+| 4 | **Referência rápida** — tabela de endpoints | `api-delpi/docs/api/10-referencia-rapida-endpoints.md` |
+| 5 | **Roadmap / spec** — view TOTVS, regras de negócio, validação Fase 0 | `docs/12-roadmap-e-evolucao/{id}/` |
+| 6 | **Inventário plugins** — linha na tabela + backend + caller header + doc link | `docs/08-plugins/README.md` |
+| 7 | **Compose / infra** — serviço no docker-compose + exemplo em `infra/README-ambiente.md` (se aplicável) | `infra/docker-compose*.yml` |
+
+---
+
+## Conteúdo mínimo do `plugins/{id}/README.md`
+
+1. O que o plugin faz (1 parágrafo)
+2. Diagrama ou fluxo Portal → MFE → API
+3. Rotas da UI (`/apps/{id}/…`)
+4. Base HTTP da API + tabela de endpoints consumidos
+5. Permissões Portal (incl. `.view.filial-*` se multi-filial)
+6. Comandos: `npm run build`, docker compose, `register-manifest.sh`
+7. Smoke (`curl remoteEntry.js` + exemplo API com JWT)
+8. Estrutura `src/` (opcional, 1 bloco)
+
+---
+
+## Multi-filial
+
+Se o plugin tem rotas SC/ES (ou filiais TOTVS distintas):
+
+- Documentar mapa filial ↔ permissão ↔ código TOTVS
+- Documentar gate `403` na API (link para `controle-retrabalhos.md` ou equivalente)
+- Manifest: permissões granulares documentadas no README
+
+---
+
+## O que NÃO fazer
+
+- Entregar plugin só com `*.manifest.json` e código, sem README
+- API nova na api-delpi sem `docs/api/*.md` correspondente
+- Omitir plugin do inventário `docs/08-plugins/README.md`
+- Documentação só em comentário de PR (deve persistir no repo)
+
+---
+
+## Referências
+
+- [docs/08-plugins/README.md](../docs/08-plugins/README.md)
+- [registrar-plugin.md](../docs/10-guias-operacionais/registrar-plugin.md)
+- Exemplo completo: [plugins/controle-retrabalhos/README.md](../plugins/controle-retrabalhos/README.md)

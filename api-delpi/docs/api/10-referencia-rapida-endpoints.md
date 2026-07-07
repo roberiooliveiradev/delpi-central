@@ -260,6 +260,22 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 
 ---
 
+## Controle de Retrabalhos (`/retrabalhos`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/retrabalhos/health` | CR |
+| GET | `/retrabalhos/filtros` | CR |
+| GET | `/retrabalhos/resumo` | CR |
+| GET | `/retrabalhos/mensal` | CR |
+| GET | `/retrabalhos/recursos` | CR |
+| GET | `/retrabalhos/colaboradores` | CR |
+| GET | `/retrabalhos/detalhes` | CR |
+
+Permissões: `controle-retrabalhos.*` ou `api-delpi.access`. Legenda: **CR** = controle-retrabalhos.
+
+---
+
 
 ## Pedidos de venda em aberto (`/pedidos-venda-abertos`)
 
