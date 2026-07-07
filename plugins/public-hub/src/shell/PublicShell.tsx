@@ -93,6 +93,14 @@ type StageProps = {
 
 function Stage({ children, chrome = "default" }: StageProps) {
   useLayoutEffect(() => {
+    if (chrome === "fullpage") {
+      document.documentElement.classList.add("pub-fullpage");
+      document.body.classList.add("pub-fullpage");
+      return () => {
+        document.documentElement.classList.remove("pub-fullpage");
+        document.body.classList.remove("pub-fullpage");
+      };
+    }
     if (chrome !== "kiosk") return;
     document.documentElement.classList.add("pub-kiosk");
     document.body.classList.add("pub-kiosk");

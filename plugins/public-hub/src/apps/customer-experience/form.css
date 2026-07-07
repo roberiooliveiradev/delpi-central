@@ -16,11 +16,16 @@
   padding: 0;
   border-radius: 0;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
-.cxform--fullpage.cxform--has-bg {
-  border-radius: 16px;
-  padding: 20px 16px 16px;
+/* Imagem de fundo do formulário cobre a viewport inteira (camada fixa). */
+.cxform-viewport-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -140,19 +145,61 @@
 }
 
 .cxform-page-title {
-  margin: 8px 0 0;
+  margin: 0 0 16px;
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--pub-text);
+  text-align: left;
 }
 
-.cxform-page-point,
-.cxform-question-point {
+/* Ilustração por etapa/pergunta — destaque visual (estilo Google Forms). */
+.cxform-illustration {
+  margin: 0 0 20px;
+  padding: 0;
+  text-align: center;
+}
+
+.cxform-illustration__img {
   display: block;
-  max-width: 120px;
-  max-height: 120px;
-  margin: 0 auto 12px;
+  width: auto;
+  max-width: 100%;
+  max-height: 220px;
+  margin: 0 auto;
   object-fit: contain;
+  border-radius: 12px;
+}
+
+.cxform-illustration--section .cxform-illustration__img {
+  max-height: 260px;
+}
+
+.cxform-illustration--inline {
+  margin-bottom: 16px;
+}
+
+.cxform-illustration--inline .cxform-illustration__img {
+  max-height: 200px;
+}
+
+/* Wizard passo a passo — faixa hero com ilustração grande no topo do card. */
+.cxform--fullpage.cxform--wizard .cxform-illustration {
+  margin: -24px -24px 24px;
+  padding: clamp(20px, 5vw, 36px) clamp(16px, 4vw, 28px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pub-accent) 10%, var(--pub-card-bg)) 0%,
+    var(--pub-card-bg) 100%
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration__img {
+  width: min(100%, 520px);
+  max-width: none;
+  max-height: min(380px, 48vh);
+  min-height: clamp(160px, 28vw, 240px);
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
 }
 
 .cxform-step {

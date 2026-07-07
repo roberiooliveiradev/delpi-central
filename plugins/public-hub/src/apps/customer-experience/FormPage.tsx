@@ -203,11 +203,9 @@ export function FormView({ form }: { form: PublicForm }) {
     );
   }
 
-  const shellStyle = backgroundUrl
+  const viewportBgStyle = backgroundUrl
     ? ({
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.92)), url(${backgroundUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundImage: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${backgroundUrl})`,
       } as React.CSSProperties)
     : undefined;
 
@@ -261,13 +259,17 @@ export function FormView({ form }: { form: PublicForm }) {
                   }
                 >
                   {page.pointImageUrl && (
-                    <img className="cxform-page-point" src={page.pointImageUrl} alt="" />
+                    <figure className="cxform-illustration cxform-illustration--section" aria-hidden="true">
+                      <img className="cxform-illustration__img" src={page.pointImageUrl} alt="" />
+                    </figure>
                   )}
                   {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
                 </div>
               )}
               {!showPageHeader && q.pointImageUrl && (
-                <img className="cxform-question-point" src={q.pointImageUrl} alt="" />
+                <figure className="cxform-illustration cxform-illustration--inline" aria-hidden="true">
+                  <img className="cxform-illustration__img" src={q.pointImageUrl} alt="" />
+                </figure>
               )}
               <QuestionField
                 question={q}
@@ -287,10 +289,16 @@ export function FormView({ form }: { form: PublicForm }) {
       return renderIntroFields();
     }
     const pointImage = resolvePointImage(step);
+    const pageTitle = step.page?.title?.trim();
+    const showPageTitle = Boolean(pageTitle && pageTitle !== step.question.label.trim());
     return (
       <div className="cxform-step">
-        {step.page?.title && <h2 className="cxform-page-title">{step.page.title}</h2>}
-        {pointImage && <img className="cxform-page-point" src={pointImage} alt="" />}
+        {pointImage && (
+          <figure className="cxform-illustration" aria-hidden="true">
+            <img className="cxform-illustration__img" src={pointImage} alt="" />
+          </figure>
+        )}
+        {showPageTitle && <h2 className="cxform-page-title">{pageTitle}</h2>}
         <QuestionField
           question={step.question}
           answer={answers[step.question.id]}
@@ -303,10 +311,13 @@ export function FormView({ form }: { form: PublicForm }) {
   const isLastWizardStep = wizard && stepIndex === steps.length - 1;
 
   return (
-    <div
-      className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}${backgroundUrl ? " cxform--has-bg" : ""}`}
-      style={shellStyle}
-    >
+    <>
+      {backgroundUrl && (
+        <div className="cxform-viewport-bg" style={viewportBgStyle} aria-hidden="true" />
+      )}
+      <div
+        className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}`}
+      >
       <header className="cxform-header">
         <span className="cxform-eyebrow">Programa Experiência do Cliente · DELPI</span>
         <h1 className="cxform-title">{form.title}</h1>
@@ -352,7 +363,8 @@ export function FormView({ form }: { form: PublicForm }) {
           </button>
         )}
       </form>
-    </div>
+      </div>
+    </>
   );
 }
 
