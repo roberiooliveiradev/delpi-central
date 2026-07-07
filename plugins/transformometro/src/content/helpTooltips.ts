@@ -148,6 +148,8 @@ export const TM_HELP_TOOLTIPS = {
       "Checklist do cadastro completo: dados mestre, instâncias operacionais, diagrama macro, baseline, melhoria e medição com competências registradas.",
     preenchimentoLista:
       "Mesmo checklist do detalhe do processo: dados mestre, melhorias, mapeamento, diagrama macro, baseline, melhoria e medição.",
+    modosVisualizacao:
+      "Alterne entre ícones grandes, ícones médios, lista compacta e tabela detalhada — como no explorador de arquivos do Windows.",
   },
   decomposition: {
     mapeamento:

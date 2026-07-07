@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, Plus } from "lucide-react";
+import { Copy, Plus, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
-import { DataTableSection } from "../../components/DataTableSection";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -30,6 +29,7 @@ import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 const C = TM_HELP_TOOLTIPS.columns;
 const P = TM_HELP_TOOLTIPS.processos;
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
+import { ProcessoFolderBrowser } from "../processos/ProcessoFolderBrowser";
 import {
   emptyProcessoForm,
   masterPayloadFromProcessoForm,
@@ -115,47 +115,53 @@ export function ProcessosPage({
     }
   }
 
-  async function handleDuplicate(row: Processo) {
-    const label = `${row.codigo_processo} — ${row.nome_processo}`;
-    const confirmed = await confirm({
-      title: "Duplicar processo",
-      message: `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`,
-      confirmLabel: "Duplicar",
-    });
-    if (!confirmed) {
-      return;
-    }
-    setError(null);
-    try {
-      const result = await duplicateProcesso(row.processo_id, undefined, getAccessToken);
-      await load();
-      onOpenProcesso(result.processo.processo_id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
-    }
-  }
+  const handleDuplicate = useCallback(
+    async (row: Processo) => {
+      const label = `${row.codigo_processo} — ${row.nome_processo}`;
+      const confirmed = await confirm({
+        title: "Duplicar processo",
+        message: `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`,
+        confirmLabel: "Duplicar",
+      });
+      if (!confirmed) {
+        return;
+      }
+      setError(null);
+      try {
+        const result = await duplicateProcesso(row.processo_id, undefined, getAccessToken);
+        await load();
+        onOpenProcesso(result.processo.processo_id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
+      }
+    },
+    [confirm, getAccessToken, load, onOpenProcesso]
+  );
 
-  async function handleDelete(row: Processo) {
-    const label = `${row.codigo_processo} — ${row.nome_processo}`;
-    const confirmed = await confirm({
-      title: "Excluir processo",
-      message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica).`,
-      confirmLabel: "Excluir",
-      variant: "danger",
-    });
-    if (!confirmed) {
-      return;
-    }
-    setError(null);
-    try {
-      await deleteProcesso(row.processo_id, getAccessToken);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir processo");
-    }
-  }
+  const handleDelete = useCallback(
+    async (row: Processo) => {
+      const label = `${row.codigo_processo} — ${row.nome_processo}`;
+      const confirmed = await confirm({
+        title: "Excluir processo",
+        message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica).`,
+        confirmLabel: "Excluir",
+        variant: "danger",
+      });
+      if (!confirmed) {
+        return;
+      }
+      setError(null);
+      try {
+        await deleteProcesso(row.processo_id, getAccessToken);
+        await load();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao excluir processo");
+      }
+    },
+    [confirm, getAccessToken, load]
+  );
 
-  const columns = useMemo<DataTableColumn<Processo>[]>(
+  const detailColumns = useMemo<DataTableColumn<Processo>[]>(
     () => [
       { key: "codigo", header: "Código", headerHint: P.codigo, render: (row) => row.codigo_processo, sortable: true },
       {
@@ -172,6 +178,7 @@ export function ProcessosPage({
         header: "Preenchimento",
         headerHint: P.preenchimentoLista,
         className: "ds-table__col--progress",
+        sortable: true,
         render: (row) => (
           <ProcessoFormProgress
             compact
@@ -206,13 +213,14 @@ export function ProcessosPage({
                 void handleDelete(row);
               }}
             >
+              <Trash2 size={14} />
               Excluir
             </button>
           </TableRowActions>
         ),
       },
     ],
-    []
+    [handleDelete, handleDuplicate]
   );
 
   return (
@@ -265,9 +273,17 @@ export function ProcessosPage({
         </section>
       ) : null}
 
-      <DataTableSection
-        title="Lista de processos"
-        hint="Filtros acima aplicam na API · Duplicar/Excluir ou clique na linha para abrir"
+      <ProcessoFolderBrowser
+        title="Processos"
+        hint="Filtros acima aplicam na API · Duplicar/Excluir ou clique na pasta para abrir"
+        items={items}
+        loading={loading}
+        refreshing={refreshing}
+        emptyMessage="Nenhum processo. Use Novo processo para cadastrar."
+        detailColumns={detailColumns}
+        onOpen={(row) => onOpenProcesso(row.processo_id)}
+        onDuplicate={(row) => void handleDuplicate(row)}
+        onDelete={(row) => void handleDelete(row)}
         filters={
           <section className="ds-filters-row ds-filters-row--extended">
             <div className="ds-filter-box ds-filter-box--wide">
@@ -292,18 +308,9 @@ export function ProcessosPage({
             />
           </section>
         }
-        columns={columns}
-        rows={items}
-        rowKey={(row) => row.processo_id}
-        loading={loading}
-        refreshing={refreshing}
-        hideSearch
-        pageSize={15}
-        emptyMessage="Nenhum processo. Use Novo processo para cadastrar."
-        onRowClick={(row) => onOpenProcesso(row.processo_id)}
         footer={
           <p className="ds-hint">
-            Clique na linha para abrir revisões, medições e investimentos.
+            Clique na pasta para abrir revisões, medições e investimentos.
           </p>
         }
       />
