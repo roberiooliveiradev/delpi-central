@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Download, Eye, FileText, LinkIcon, Plus, Trash2, Upload } from "lucide-react";
 
 import { EvidenceDropzone } from "./EvidenceDropzone";
+import { PendingUploadCards, type PendingUploadItem } from "./PendingUploadCards";
 import {
   canPreviewEvidence,
   createPendingUploadId,
@@ -20,11 +21,7 @@ import { useConfirm } from "../ui/ConfirmDialogProvider";
 
 const R = TM_HELP_TOOLTIPS.revisao;
 
-type PendingUpload = {
-  id: string;
-  file: File;
-  descricao: string;
-};
+type PendingUpload = PendingUploadItem;
 
 type Props = {
   revisaoId: string;
@@ -380,28 +377,12 @@ export function RevisaoEvidencePanel({
           <EvidenceDropzone disabled={uploading} onFilesSelected={addFiles} />
 
           {pending.length ? (
-            <ul className="tm-evidence-pending">
-              {pending.map((item) => (
-                <li key={item.id} className="tm-evidence-pending__item">
-                  <span className="tm-evidence-pending__name">{item.file.name}</span>
-                  <input
-                    type="text"
-                    placeholder="Descrição (opcional)"
-                    value={item.descricao}
-                    disabled={uploading}
-                    onChange={(event) => updatePending(item.id, event.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="ds-ghost-btn"
-                    disabled={uploading}
-                    onClick={() => removePending(item.id)}
-                  >
-                    Remover
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <PendingUploadCards
+              items={pending}
+              disabled={uploading}
+              onUpdateDescription={updatePending}
+              onRemove={removePending}
+            />
           ) : null}
 
           {pending.length ? (

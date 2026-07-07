@@ -3449,6 +3449,127 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   font-size: 0.9rem;
 }
 
+.dashboard-transformometro .tm-evidence-pending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border: 1px solid var(--ds-border-subtle, #e2e8f0);
+  border-radius: 8px;
+  background: var(--ds-surface-raised, #fff);
+  min-width: 0;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__static-thumb {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__size {
+  color: var(--ds-text-muted, #64748b);
+  font-size: 0.72rem;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__desc {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__desc summary {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  color: var(--ds-text-muted, #64748b);
+  user-select: none;
+  list-style: none;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__desc summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__desc[open] .tm-evidence-pending-card__chevron {
+  transform: rotate(-180deg);
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__desc input {
+  width: 100%;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.dashboard-transformometro .tm-evidence__file-icon--pdf {
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-transformometro .ds-modal--evidence-preview {
+  width: min(920px, 96vw);
+  max-height: min(92vh, 860px);
+}
+
+.dashboard-transformometro .tm-evidence-preview-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.dashboard-transformometro .tm-evidence-preview-modal__img {
+  display: block;
+  max-width: 100%;
+  max-height: min(72vh, 760px);
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--ds-surface-muted, #f1f5f9);
+}
+
+.dashboard-transformometro .tm-evidence-preview-modal__pdf {
+  width: 100%;
+  height: min(72vh, 760px);
+  border: none;
+  border-radius: 6px;
+  background: var(--ds-surface-muted, #f1f5f9);
+}
+
 .dashboard-transformometro .tm-evidence-pending {
   list-style: none;
   margin: 0;
