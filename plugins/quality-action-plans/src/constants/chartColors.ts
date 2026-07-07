@@ -1,10 +1,4 @@
-export const CHART_COLORS = [
-  "var(--chart-1, #089bdb)",
-  "var(--chart-2, #003866)",
-  "var(--chart-3, #47bfff)",
-  "var(--chart-4, #7e14ff)",
-  "var(--chart-5, #2e7d32)",
-  "var(--chart-6, #f2a100)",
-];
-
-export const CHART_HEIGHT = 280;
+export {
+  CHART_COLORS_CSS_VARS as CHART_COLORS,
+  CHART_HEIGHT_DEFAULT as CHART_HEIGHT,
+} from "../../../plugin-ui/src/utils/chartColors";

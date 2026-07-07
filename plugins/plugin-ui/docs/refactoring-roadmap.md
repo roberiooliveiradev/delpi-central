@@ -232,16 +232,17 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | `PageHeader` | 7 plugins operacionais | ✅ F3.6 |
 | `SectionCard` | PAC | ✅ F3.2 |
 | `EmptyState` / `LoadingState` | controle-retrabalhos, financeiro-centro-custo | ✅ F3.7 |
-| `PageHeader` | 7 plugins operacionais | ⏳ |
-| `DetailCard` | LMP, commercial, production | ⏳ |
 
 ### Fase 4 — Utilitários compartilhados (1 sprint)
 
-Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber sem inflar o pacote UI:
+| Utilitário | Status | Destino |
+|------------|--------|---------|
+| `paginationPages.ts` | ✅ | `plugin-ui/src/utils/paginationPages.ts` |
+| `chartColors.ts` | ✅ | `plugin-ui/src/utils/chartColors.ts` |
+| `operationalUnitLabels.ts` | ✅ | `plugin-ui/src/utils/operationalUnitLabels.ts` |
+| `goalDisplay.ts` | ✅ | `plugin-ui/src/utils/goalDisplay.ts` |
 
-- `paginationPages.ts`
-- `chartColors.ts` (alinhar com `portal` / `CHART_COLORS`)
-- `goalDisplay.ts` (badges IDD — pode ficar utils separado por semântica de negócio)
+Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` (~1 linha).
 
 ### Fase 5 — Backlog / avaliar demanda
 
@@ -308,7 +309,8 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
 2. **Fase 2 concluída** nos dashboards departamentais.
 3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
-5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados; próximo: Fase 4 (utilitários) / Fase 5 (dropzones).
+5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados.
+6. **Fase 4 concluída** — `chartColors`, `goalDisplay`, `operationalUnitLabels` centralizados; próximo: Fase 5 (dropzones, confirm dialog).
 
 ---
 

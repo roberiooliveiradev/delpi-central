@@ -101,6 +101,8 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `readOnlyFieldKaizenBemClasses` / `createDashboardReadOnlyField` | Helpers BEM + factory |
 | `SelectField` / `SelectControl` | Dropdown single-select |
 | `selectControlBemClasses` / `createDashboardSelectField` | Helpers BEM + factory |
+| `CHART_COLORS_*` / `CHART_HEIGHT_DEFAULT` | Paletas de gráfico compartilhadas |
+| `goalDisplay` / `operationalUnitLabels` | Meta IDD e filiais TOTVS |
 | `DataTable` / `DataTableSection` | Tabela + seção com busca/paginação |
 | `dataTableBemClasses` / `createDashboardDataTableKit` | Helpers BEM + factory |
 

@@ -1,1 +1,1 @@
-export const CHART_COLORS = ["#1d8cf8", "#f97316", "#1e40af"];
+export { CHART_COLORS_LMPS as CHART_COLORS } from "../../../plugin-ui/src/utils/chartColors";

@@ -1,8 +1,1 @@
-export const CHART_COLORS = [
-  "#089bdb",
-  "#003866",
-  "#47bfff",
-  "#7e14ff",
-  "#2e7d32",
-  "#f2a100",
-];
+export { CHART_COLORS_DEPARTMENTAL as CHART_COLORS } from "../../../plugin-ui/src/utils/chartColors";

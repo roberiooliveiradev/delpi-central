@@ -68,7 +68,18 @@ Resumo (2+ consumidores):
 | `PageHeader` | 7 | F3 ✅ |
 | `DetailCard` | 3 | F3 ✅ |
 | `SectionCard` | 1 (PAC) | F3 ✅ |
-| `EmptyState` / `LoadingState` | 2 | F3 ✅ (controle-retrabalhos, financeiro-centro-custo) |
+| `EmptyState` / `LoadingState` | 2 | F3 ✅ |
+
+## Status — Fase 4 (utilitários)
+
+| Utilitário | Consumidores | Notas |
+|------------|--------------|-------|
+| `paginationPages` | plugin-ui Pagination | ✅ desde F2.4 |
+| `chartColors` | 8 dashboards + transformometro + PAC | Paletas `DEPARTMENTAL`, `LMPS`, `CSS_VARS` |
+| `operationalUnitLabels` | 8 dashboards | Filiais 01/02 TOTVS |
+| `goalDisplay` | 8 dashboards | Badges IDD / meta KPI |
+
+Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (imports existentes preservados).
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
