@@ -1066,6 +1066,12 @@
   overflow: hidden;
 }
 
+.dashboard-transformometro .tm-processo-workspace-sidebar__back {
+  flex-shrink: 0;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--ds-card-border);
+}
+
 .dashboard-transformometro .tm-processo-workspace-sidebar__search {
   display: flex;
   align-items: center;

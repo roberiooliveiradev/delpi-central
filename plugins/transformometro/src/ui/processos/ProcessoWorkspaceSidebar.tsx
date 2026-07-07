@@ -16,6 +16,7 @@ type Props = {
   nodes: ProcessoWorkspaceNavNode[];
   activeNodeId: string;
   onNavigate: (href: string) => void;
+  backActions?: ReactNode;
   processActions?: ReactNode;
 };
 
@@ -96,6 +97,7 @@ export function ProcessoWorkspaceSidebar({
   nodes,
   activeNodeId,
   onNavigate,
+  backActions,
   processActions,
 }: Props) {
   const [query, setQuery] = useState("");
@@ -132,6 +134,10 @@ export function ProcessoWorkspaceSidebar({
 
   return (
     <aside className="tm-processo-workspace-sidebar" aria-label="Navegação do processo">
+      {backActions ? (
+        <div className="tm-processo-workspace-sidebar__back">{backActions}</div>
+      ) : null}
+
       <div className="tm-processo-workspace-sidebar__search">
         <Search size={15} aria-hidden="true" />
         <input

@@ -165,12 +165,15 @@ export function ProcessoWorkspacePage({
     }
   }
 
+  const processBackAction = (
+    <button type="button" className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn" onClick={onBack}>
+      <ArrowLeft size={16} />
+      Lista
+    </button>
+  );
+
   const processSidebarActions = (
     <>
-      <button type="button" className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn" onClick={onBack}>
-        <ArrowLeft size={16} />
-        Lista
-      </button>
       <button
         type="button"
         className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
@@ -257,6 +260,7 @@ export function ProcessoWorkspacePage({
         instancias={instancias}
         revisoes={revisoes}
         processActions={processSidebarActions}
+        backActions={processBackAction}
       >
         {Array.from(visiblePanels).map((panelKey) => (
           <ProcessoWorkspacePanel

@@ -26,6 +26,7 @@ type Props = {
   processo?: Processo | null;
   instancias?: ProcessoInstancia[];
   revisoes?: Revisao[];
+  backActions?: ReactNode;
   processActions?: ReactNode;
 };
 
@@ -38,6 +39,7 @@ export function ProcessoWorkspaceShell({
   processo: processoProp,
   instancias: instanciasProp,
   revisoes: revisoesProp,
+  backActions,
   processActions,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(processoProp ?? null);
@@ -86,6 +88,7 @@ export function ProcessoWorkspaceShell({
           nodes={treeNodes}
           activeNodeId={activeNodeId}
           onNavigate={onNavigate}
+          backActions={backActions}
           processActions={processActions}
         />
         <div className="tm-processo-workspace__main">
