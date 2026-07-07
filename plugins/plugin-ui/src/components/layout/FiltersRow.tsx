@@ -5,13 +5,18 @@ import { FieldLabel } from "../help/FieldLabel";
 export type FiltersRowClassNames = {
   row: string;
   rowExtended: string;
+  rowCompact?: string;
+  trailingBox?: string;
 };
 
 export type FiltersRowProps = {
   children: ReactNode;
   classNames: FiltersRowClassNames;
-  ariaLabel: string;
+  ariaLabel?: string;
   variant?: "default" | "extended";
+  compact?: boolean;
+  trailing?: ReactNode;
+  as?: "section" | "div";
   className?: string;
 };
 
@@ -46,6 +51,8 @@ export function filtersRowBemClasses(prefix: string): FiltersRowClassNames & Fil
   return {
     row: `${prefix}-filters-row`,
     rowExtended: `${prefix}-filters-row ${prefix}-filters-row--extended`,
+    rowCompact: `${prefix}-filters-row ${prefix}-filters-row--compact`,
+    trailingBox: `${prefix}-filter-box ${prefix}-filter-box--action`,
     filterBox: `${prefix}-filter-box ${prefix}-field`,
     fieldLabel: `${prefix}-field__label`,
   };
@@ -56,15 +63,32 @@ export function FiltersRow({
   classNames,
   ariaLabel,
   variant = "default",
+  compact = false,
+  trailing,
+  as = "section",
   className,
 }: FiltersRowProps) {
-  const baseClass = variant === "extended" ? classNames.rowExtended : classNames.row;
-  const sectionClass = [baseClass, className].filter(Boolean).join(" ");
+  const baseClass =
+    variant === "extended"
+      ? classNames.rowExtended
+      : compact && classNames.rowCompact
+        ? classNames.rowCompact
+        : classNames.row;
+  const rootClass = [baseClass, className].filter(Boolean).join(" ");
+  const Tag = as;
 
   return (
-    <section className={sectionClass} aria-label={ariaLabel}>
+    <Tag
+      className={rootClass}
+      {...(Tag === "section" && ariaLabel ? { "aria-label": ariaLabel } : {})}
+    >
       {children}
-    </section>
+      {trailing
+        ? classNames.trailingBox
+          ? <div className={classNames.trailingBox}>{trailing}</div>
+          : trailing
+        : null}
+    </Tag>
   );
 }
 

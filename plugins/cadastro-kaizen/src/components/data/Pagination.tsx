@@ -1,3 +1,21 @@
+import {
+  CompactPagination,
+  compactPaginationBemClasses,
+  type CompactPaginationLabels,
+} from "@delpi/plugin-ui";
+
+const KZ_PAGINATION_CLASS_NAMES = compactPaginationBemClasses("kz", {
+  ghostBtn: "kz-ghost-btn",
+});
+
+const KZ_PAGINATION_LABELS = {
+  info: ({ page, totalPages, total }) =>
+    `Página ${page} de ${totalPages} · ${total} registro(s)`,
+  previous: "Anterior",
+  next: "Próxima",
+  navigationAriaLabel: "Paginação da tabela",
+} satisfies CompactPaginationLabels;
+
 type PaginationProps = {
   page: number;
   pageSize: number;
@@ -5,41 +23,16 @@ type PaginationProps = {
   onPageChange: (page: number) => void;
 };
 
-export function Pagination({
-  page,
-  pageSize,
-  total,
-  onPageChange,
-}: PaginationProps) {
-  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
-
-  if (total === 0) return null;
-
+export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
   return (
-    <div className="kz-pagination">
-      <span className="kz-pagination__info">
-        Página {page} de {totalPages} · {total} registro(s)
-      </span>
-      <div className="kz-pagination__actions">
-        <button
-          type="button"
-          className="kz-ghost-btn"
-          disabled={!canPrev}
-          onClick={() => onPageChange(page - 1)}
-        >
-          Anterior
-        </button>
-        <button
-          type="button"
-          className="kz-ghost-btn"
-          disabled={!canNext}
-          onClick={() => onPageChange(page + 1)}
-        >
-          Próxima
-        </button>
-      </div>
-    </div>
+    <CompactPagination
+      page={page}
+      pageSize={pageSize}
+      total={total}
+      onPageChange={onPageChange}
+      layout="flat"
+      classNames={KZ_PAGINATION_CLASS_NAMES}
+      labels={KZ_PAGINATION_LABELS}
+    />
   );
 }

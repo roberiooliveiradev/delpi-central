@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
 
+import { FiltersRow, filtersRowBemClasses, type FiltersRowClassNames } from "@delpi/plugin-ui";
+
+const PAC_FILTER_ROW_CLASSES: FiltersRowClassNames = filtersRowBemClasses("pac");
+
 type FilterBarProps = {
   children: ReactNode;
   compact?: boolean;
@@ -8,11 +12,8 @@ type FilterBarProps = {
 
 export function FilterBar({ children, compact = false, actions }: FilterBarProps) {
   return (
-    <div className={`pac-filters-row${compact ? " pac-filters-row--compact" : ""}`}>
+    <FiltersRow as="div" compact={compact} trailing={actions} classNames={PAC_FILTER_ROW_CLASSES}>
       {children}
-      {actions ? (
-        <div className="pac-filter-box pac-filter-box--action">{actions}</div>
-      ) : null}
-    </div>
+    </FiltersRow>
   );
 }

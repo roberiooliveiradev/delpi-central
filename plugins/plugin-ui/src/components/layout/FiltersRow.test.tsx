@@ -30,6 +30,27 @@ describe("FiltersRow", () => {
 
     expect(container.querySelector(".dp-filters-row--extended")).toBeTruthy();
   });
+
+  it("suporta trailing e layout div compact", () => {
+    const { container } = render(
+      <FiltersRow
+        as="div"
+        compact
+        trailing={<button type="button">Aplicar</button>}
+        classNames={{
+          row: "pac-filters-row",
+          rowExtended: "pac-filters-row pac-filters-row--extended",
+          rowCompact: "pac-filters-row pac-filters-row--compact",
+          trailingBox: "pac-filter-box pac-filter-box--action",
+        }}
+      >
+        <span>Campo</span>
+      </FiltersRow>,
+    );
+
+    expect(container.querySelector(".pac-filters-row--compact")).toBeTruthy();
+    expect(container.querySelector(".pac-filter-box--action")).toBeTruthy();
+  });
 });
 
 describe("FilterInputField", () => {

@@ -61,6 +61,7 @@ Resumo (2+ consumidores):
 | `MultiSelectField` | 13 | F2 ✅ (8 dept. + lmps) |
 | `FilterBar` | 12 | F2 ✅ (FiltersRow + FilterInputField) |
 | `FilterBarShell` | 2 | F2 ✅ (maintenance form/card; ef grid) |
+| `FiltersRow` trailing/compact | 1 | F2 ✅ (quality-action-plans) |
 
 ## Gate CI
 
@@ -119,7 +120,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination via CompactPagination |
-| `transformometro` | — | — | — | ✅ | ✅ | |
+| `transformometro` | ✅ | — | — | ✅ | ✅ | | CompactPagination + ChartCard |
 | `eficiencia-fabril` | — | — | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard + FilterBarShell F2 |
 | `maintenance` | ✅ | ✅ | — | — | — | — | TablePaginationNav + FilterBarShell + MultiSelect F2 |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
@@ -127,6 +128,8 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
 | `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `inspecoes-entrada` | ✅ | — | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
+| `quality-action-plans` | — | — | ✅ | ✅ | ✅ | — | FiltersRow + MetricKpiCard/ChartCard F2 |
+| `cadastro-kaizen` | ✅ | — | — | — | — | — | CompactPagination F2 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
