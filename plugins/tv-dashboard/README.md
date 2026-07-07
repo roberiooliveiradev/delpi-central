@@ -40,9 +40,10 @@ Base gateway: `/apps/tv-dashboard/`
 |---|---|
 | `tv-dashboard-api` | Backend (`/apps/tv-dashboard-api/`) |
 | `@delpi/tv-dashboard-presentation` | `usePresentationEngine`, `NativeSlideView`, CSS `tdp-*` |
+| `@delpi/plugin-ui` | Tooltips, labels, abas (`HelpTooltip`, `FieldLabel`, …) |
 | `public-hub` | View pública `present` (rebuild separado ao alterar apresentação) |
 
-Alias Vite: `../tv-dashboard-presentation/src/index.ts`  
+Alias Vite: `../tv-dashboard-presentation/src/index.ts`, `../plugin-ui/src/index.ts`  
 Module Federation: `shared: ["react", "react-dom"]` (React único via portal).
 
 ---
@@ -85,7 +86,7 @@ npm run build
 npm test          # routing vitest
 ```
 
-Docker: contexto `plugins/` (ver `Dockerfile`). Container: `delpi-tv-dashboard`.
+Docker: contexto `plugins/` (ver `Dockerfile`). Copiar **`plugin-ui`** + `tv-dashboard-presentation` no build. Container: `delpi-tv-dashboard`.
 
 ---
 

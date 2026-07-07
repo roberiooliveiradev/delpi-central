@@ -22,7 +22,10 @@ export default defineConfig({
         "../tv-dashboard-presentation/src/index.ts",
       ),
       "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
+      react: path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
+    dedupe: ["react", "react-dom"],
   },
   base: "/apps/tv-dashboard/",
   build: {

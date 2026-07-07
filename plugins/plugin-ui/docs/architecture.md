@@ -83,6 +83,22 @@ resolve: {
 
 `npm install` em `plugins/plugin-ui` é necessário para o TypeScript resolver `react` ao buildar consumidores que importam do source.
 
+### Docker (consumidores MFE)
+
+Contexto de build típico: `plugins/` (ver `tv-dashboard/Dockerfile`). Copiar **três** pastas no estágio builder:
+
+- `tv-dashboard-presentation/`
+- `plugin-ui/`
+- `{plugin}/` (ex.: `tv-dashboard/`)
+
+```dockerfile
+COPY plugin-ui/package*.json ./plugin-ui/
+RUN cd plugin-ui && npm install
+COPY plugin-ui ./plugin-ui
+```
+
+Sem `plugin-ui` no contexto, o build falha em `@delpi/plugin-ui` e em `import "../../plugin-ui/src/styles.css"`.
+
 ## HelpTooltip — decisão técnica
 
 O balão usa **`position: fixed` + `createPortal(document.body)`** porque ancestrais com `transform`, `overflow: hidden` ou filmstrip quebram tooltips só com CSS `:hover` relativo. Reposicionamento em scroll/resize via `visualViewport`.
