@@ -1,7 +1,7 @@
-export {
-  DataTableSection,
-  type DataTableSectionProps,
-  type ServerPaginationConfig,
-  type ServerSearchConfig,
-  type ServerSortConfig,
-} from "./table";
+export { DataTableSection } from "./dataTableUi";
+export type {
+  DataTableSectionProps,
+  ServerPaginationConfig,
+  ServerSearchConfig,
+  ServerSortConfig,
+} from "./dataTableUi";

@@ -212,7 +212,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | 2.5 | `MultiSelectField` | `forms/` | ✅ Fase 1 (`FieldLabel`) |
 | 2.6 | `FilterBar` | `layout/` | ✅ `FiltersRow` + `FilterInputField` |
 | 2.7 | `ChartToolbar` + `ChartGranularityToggle` | `layout/` | ✅ Fase 1 |
-| 2.8 | `DataTable` + `DataTableSection` | `data/` | Último — maior superfície |
+| 2.8 | `DataTable` + `DataTableSection` | `data/` | ✅ variante padrão (7 dept.) |
 
 **Estratégia KpiCard:** um componente com props opcionais (`goalScopeBadge`, `goalPerformanceBadges`, …). Plugins simples (`controle-retrabalhos`) usam subset mínimo.
 
@@ -301,7 +301,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 ## 7. Próximo passo recomendado
 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2.1–2.7** shell de dashboard — próximo: `DataTable` + `DataTableSection` (2.8).
+2. **Fase 2 concluída** nos dashboards departamentais — próximo: Fase 3 (formulários/detalhe).
 
 ---
 

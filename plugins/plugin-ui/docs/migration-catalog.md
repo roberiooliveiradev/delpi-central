@@ -60,7 +60,7 @@ Resumo (2+ consumidores):
 | `Pagination` (+ jump, page size) | 7 dashboards | F2 ✅ (7 dept.) |
 | `MultiSelectField` | 13 | F2 ✅ (8 dept. + lmps) |
 | `FilterBar` | 12 | F2 ✅ (FiltersRow + FilterInputField) |
-| `DataTable` / `DataTableSection` | ~25 | F2 (último) |
+| `DataTable` / `DataTableSection` | ~25 | F2 ✅ (7 dept. + lmps DataTable) |
 | `EditableSectionCard` | 3 | F3 |
 | `EmptyState` | 2+ | F3/F5 |
 

@@ -7,7 +7,7 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
-import { DataTable, type DataTableColumn } from "./DataTable";
+import { DataTable, type DataTableColumn } from "./dataTableUi";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination } from "./Pagination";
 import { sortTableRows } from "../utils/sortTableRows";

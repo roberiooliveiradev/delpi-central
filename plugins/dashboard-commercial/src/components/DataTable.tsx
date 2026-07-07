@@ -1,1 +1,2 @@
-export { DataTable, type DataTableColumn } from "./table";
+export { DataTable } from "./dataTableUi";
+export type { DataTableColumn } from "./dataTableUi";

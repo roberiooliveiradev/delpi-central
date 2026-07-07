@@ -14,6 +14,29 @@ export {
 } from "./Pagination";
 
 export {
+  DataTable,
+  dataTableBemClasses,
+  type DataTableClassNames,
+  type DataTableColumn,
+  type DataTableLabels,
+  type DataTableProps,
+  type DashboardDataTableProps,
+} from "./DataTable";
+
+export {
+  DataTableSection,
+  createDashboardDataTableKit,
+  dataTableSectionBemClasses,
+  type DashboardDataTableSectionProps,
+  type DataTableSectionClassNames,
+  type DataTableSectionLabels,
+  type DataTableSectionProps,
+  type ServerPaginationConfig,
+  type ServerSearchConfig,
+  type ServerSortConfig,
+} from "./DataTableSection";
+
+export {
   buildVisiblePageItems,
   parsePageJumpInput,
   TABLE_PAGE_SIZE_OPTIONS,
@@ -21,3 +44,6 @@ export {
   type PageJumpValidationReason,
   type PaginationPageItem,
 } from "../../utils/paginationPages";
+
+export { buildDataTableSearchText } from "../../utils/dataTableSearch";
+export { useClientPagination } from "../../utils/useClientPagination";

@@ -244,6 +244,19 @@ Barra de gráfico com toggle de agrupamento (segment), export CSV opcional e slo
 
 Helpers: `chartToolbarBemClasses(prefix)` e `createDashboardChartToolbarKit({ prefix, labels })`.
 
+### `DataTable` + `DataTableSection`
+
+Tabela genérica com sort, empty/loading e seção completa (busca, page size, paginação, loading cards).
+
+| Export | Descrição |
+|--------|-----------|
+| `DataTable` | `<table>` responsiva com colunas declarativas |
+| `DataTableSection` | Card + toolbar + tabela + paginação |
+| `useClientPagination` | Hook de paginação client-side |
+| `buildDataTableSearchText` | Haystack para filtro local |
+
+Helpers: `dataTableBemClasses`, `dataTableSectionBemClasses`, `createDashboardDataTableKit`.
+
 ---
 
 ## Estilos base (`styles.css`)
