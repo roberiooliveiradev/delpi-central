@@ -3,10 +3,17 @@ import type { CSSProperties } from "react";
 import type {
   ComunicadoBackground,
   ComunicadoBlock,
+  ComunicadoBlockStyle,
   ComunicadoConfig,
   ComunicadoFrame,
   ComunicadoShapeKind,
   ComunicadoTextAlign,
+  ComunicadoTextDecoration,
+  ComunicadoVerticalAlign,
+} from "./comunicadoTypes";
+import {
+  COMUNICADO_FONT_SIZE_MAX,
+  COMUNICADO_FONT_SIZE_MIN,
 } from "./comunicadoTypes";
 
 export function newBlockId(): string {
@@ -36,6 +43,8 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       color: "#ffffff",
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
+      verticalAlign: "middle" as const,
+      lineHeight: 1.15,
       fontWeight: "bold" as const,
       zIndex: 2,
     };
@@ -46,6 +55,8 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       color: "#cbd5e1",
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
+      verticalAlign: "top" as const,
+      lineHeight: 1.15,
       fontWeight: "normal" as const,
       zIndex: 2,
     };
@@ -264,13 +275,68 @@ export function frameStyle(frame: ComunicadoFrame): CSSProperties {
   };
 }
 
-/** h1/p usam flex + justify-content: inherit — o bloco precisa expor o alinhamento. */
-export function comunicadoTextAlignToJustifyContent(
-  textAlign: ComunicadoTextAlign,
+/** h1/p usam text-align: inherit no contêiner flex em coluna. */
+export function comunicadoVerticalAlignToJustifyContent(
+  verticalAlign: ComunicadoVerticalAlign,
 ): NonNullable<CSSProperties["justifyContent"]> {
-  if (textAlign === "center") return "center";
-  if (textAlign === "right") return "flex-end";
+  if (verticalAlign === "middle") return "center";
+  if (verticalAlign === "bottom") return "flex-end";
   return "flex-start";
+}
+
+export function defaultVerticalAlignForBlock(type: "heading" | "text"): ComunicadoVerticalAlign {
+  return type === "heading" ? "middle" : "top";
+}
+
+export function defaultTextBlockStyle(type: "heading" | "text"): ComunicadoBlockStyle {
+  return { ...(defaultStyle(type) as ComunicadoBlockStyle) };
+}
+
+export function clampFontSize(size: number): number {
+  return Math.max(
+    COMUNICADO_FONT_SIZE_MIN,
+    Math.min(COMUNICADO_FONT_SIZE_MAX, Math.round(size)),
+  );
+}
+
+export function parseTextDecorationFlags(
+  value?: ComunicadoTextDecoration,
+): { underline: boolean; strikethrough: boolean } {
+  return {
+    underline: value?.includes("underline") ?? false,
+    strikethrough: value?.includes("line-through") ?? false,
+  };
+}
+
+export function buildTextDecoration(
+  underline: boolean,
+  strikethrough: boolean,
+): ComunicadoTextDecoration {
+  if (underline && strikethrough) return "underline line-through";
+  if (underline) return "underline";
+  if (strikethrough) return "line-through";
+  return "none";
+}
+
+export function comunicadoTextInnerStyle(
+  block: Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>,
+  options?: { fontScale?: number },
+): CSSProperties {
+  const fontScale = options?.fontScale ?? 1;
+  const style = block.style ?? {};
+  const css: CSSProperties = {};
+
+  if (style.lineHeight != null) css.lineHeight = style.lineHeight;
+  if (style.letterSpacing != null) css.letterSpacing = `${style.letterSpacing}px`;
+  if (style.textHighlight) css.backgroundColor = style.textHighlight;
+  if (style.textDecoration) css.textDecoration = style.textDecoration;
+  if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
+  if (style.color) css.color = style.color;
+  if (style.fontFamily) css.fontFamily = style.fontFamily;
+  if (style.fontWeight) css.fontWeight = style.fontWeight;
+  if (style.fontStyle) css.fontStyle = style.fontStyle;
+
+  return css;
 }
 
 export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
@@ -283,14 +349,27 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     ...(style.rotation ? { transform: `rotate(${style.rotation}deg)` } : {}),
   };
 
-  if (block.type === "heading" || block.type === "text" || (block.type === "shape" && block.content)) {
+  if (block.type === "heading" || block.type === "text") {
+    css.display = "flex";
+    css.flexDirection = "column";
+    css.alignItems = "stretch";
+    const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForBlock(block.type);
+    css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
+    if (style.textAlign) css.textAlign = style.textAlign;
     if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
     if (style.color) css.color = style.color;
     if (style.fontFamily) css.fontFamily = style.fontFamily;
-    if (style.textAlign) {
-      css.textAlign = style.textAlign;
-      css.justifyContent = comunicadoTextAlignToJustifyContent(style.textAlign);
-    }
+    if (style.fontWeight) css.fontWeight = style.fontWeight;
+    if (style.fontStyle) css.fontStyle = style.fontStyle;
+    if (style.lineHeight != null) css.lineHeight = style.lineHeight;
+    return css;
+  }
+
+  if (block.type === "shape" && block.content) {
+    if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
+    if (style.color) css.color = style.color;
+    if (style.fontFamily) css.fontFamily = style.fontFamily;
+    if (style.textAlign) css.textAlign = style.textAlign;
     if (style.fontWeight) css.fontWeight = style.fontWeight;
     if (style.fontStyle) css.fontStyle = style.fontStyle;
     if (style.textDecoration) css.textDecoration = style.textDecoration;

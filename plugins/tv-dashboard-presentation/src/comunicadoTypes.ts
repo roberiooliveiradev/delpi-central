@@ -5,7 +5,15 @@ export type ComunicadoFrame = {
   h: number;
 };
 
-export type ComunicadoTextAlign = "left" | "center" | "right";
+export type ComunicadoTextAlign = "left" | "center" | "right" | "justify";
+
+export type ComunicadoVerticalAlign = "top" | "middle" | "bottom";
+
+export type ComunicadoTextDecoration =
+  | "none"
+  | "underline"
+  | "line-through"
+  | "underline line-through";
 
 export type ComunicadoShapeKind =
   | "rectangle"
@@ -20,9 +28,13 @@ export type ComunicadoBlockStyle = {
   color?: string;
   fontFamily?: string;
   textAlign?: ComunicadoTextAlign;
+  verticalAlign?: ComunicadoVerticalAlign;
+  lineHeight?: number;
+  letterSpacing?: number;
+  textHighlight?: string;
   fontWeight?: "normal" | "bold";
   fontStyle?: "normal" | "italic";
-  textDecoration?: "none" | "underline";
+  textDecoration?: ComunicadoTextDecoration;
   objectFit?: "cover" | "contain";
   backgroundColor?: string;
   borderColor?: string;
@@ -96,6 +108,12 @@ export const COMUNICADO_FONT_FAMILIES = [
   "Trebuchet MS, sans-serif",
   "Impact, Haettenschweiler, sans-serif",
 ] as const;
+
+export const COMUNICADO_FONT_SIZE_MIN = 12;
+export const COMUNICADO_FONT_SIZE_MAX = 120;
+export const COMUNICADO_FONT_SIZE_STEP = 2;
+
+export const COMUNICADO_LINE_HEIGHT_OPTIONS = [1, 1.15, 1.5, 2] as const;
 
 export const COMUNICADO_SHAPE_KINDS: Array<{ kind: ComunicadoShapeKind; label: string }> = [
   { kind: "rectangle", label: "Retângulo" },

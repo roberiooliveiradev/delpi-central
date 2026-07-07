@@ -494,17 +494,29 @@
 .td-composer__text-block--readonly p {
   margin: 0;
   width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: inherit;
-  line-height: 1.15;
+  flex: 1;
+  text-align: inherit;
+  line-height: inherit;
   white-space: pre-wrap;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-.td-composer__text-block--readonly.tdp-comunicado__block--text p {
-  align-items: flex-start;
+.td-composer__inline-text-wrap {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: inherit;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.td-composer__inline-text-wrap--text .td-composer__inline-text {
+  flex: 1;
+  min-height: 0;
+  field-sizing: normal;
 }
 
 .td-composer__text-placeholder {
@@ -517,19 +529,6 @@
 
 .td-composer__text-block--editing {
   pointer-events: auto;
-}
-
-.td-composer__inline-text-wrap {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: inherit;
-  box-sizing: border-box;
-}
-
-.td-composer__inline-text-wrap--text {
-  align-items: flex-start;
 }
 
 .td-composer__inline-text {
@@ -547,7 +546,8 @@
   font-style: inherit;
   text-align: inherit;
   text-decoration: inherit;
-  line-height: 1.15;
+  line-height: inherit;
+  letter-spacing: inherit;
   box-sizing: border-box;
   pointer-events: auto;
   outline: none;
@@ -555,11 +555,6 @@
   white-space: pre-wrap;
   caret-color: currentColor;
   field-sizing: content;
-}
-
-.td-composer__inline-text-wrap--text .td-composer__inline-text {
-  height: 100%;
-  field-sizing: normal;
 }
 
 .td-composer__inline-text::placeholder {
@@ -1185,6 +1180,44 @@
 
 .td-deck-ribbon__number {
   width: 64px;
+}
+
+.td-deck-ribbon__select--compact {
+  min-width: 88px;
+}
+
+.td-deck-ribbon__number--compact {
+  width: 56px;
+}
+
+.td-deck-ribbon__field-label {
+  font-size: 11px;
+  color: var(--td-muted);
+  white-space: nowrap;
+}
+
+.td-ribbon-tile--inline {
+  width: auto;
+  min-width: 0;
+  padding: 0;
+}
+
+.td-ribbon-tile--inline .td-ribbon-tile__icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+}
+
+.td-deck-ribbon__color--overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .td-composer--deck .td-composer__layout {

@@ -3,8 +3,12 @@ import { render, screen } from "@testing-library/react";
 
 import {
   blockCssStyle,
+  buildTextDecoration,
+  clampFontSize,
+  comunicadoTextInnerStyle,
   createShapeBlock,
   parseComunicadoConfig,
+  parseTextDecorationFlags,
   serializeComunicadoConfig,
 } from "./comunicadoHelpers";
 import { CustomMessageScreen } from "./NativeScreens";
@@ -46,16 +50,43 @@ describe("comunicadoHelpers", () => {
     expect(blocks[1].type).toBe("shape");
   });
 
-  it("mapeia textAlign para justifyContent no bloco (herdado por h1/p)", () => {
+  it("mapeia verticalAlign para justifyContent no bloco flex", () => {
     const block = {
       id: "1",
       type: "heading" as const,
       content: "Titulo",
       frame: { x: 0, y: 0, w: 50, h: 20 },
-      style: { textAlign: "right" as const },
+      style: { verticalAlign: "bottom" as const, textAlign: "right" as const },
     };
     expect(blockCssStyle(block).justifyContent).toBe("flex-end");
     expect(blockCssStyle(block).textAlign).toBe("right");
+  });
+
+  it("aplica estilo interno de texto com realce e tachado", () => {
+    const block = {
+      id: "1",
+      type: "text" as const,
+      content: "Corpo",
+      frame: { x: 0, y: 0, w: 50, h: 20 },
+      style: {
+        textHighlight: "#fef08a",
+        letterSpacing: 2,
+        textDecoration: buildTextDecoration(true, true),
+      },
+    };
+    const inner = comunicadoTextInnerStyle(block);
+    expect(inner.backgroundColor).toBe("#fef08a");
+    expect(inner.letterSpacing).toBe("2px");
+    expect(inner.textDecoration).toBe("underline line-through");
+    expect(parseTextDecorationFlags("underline line-through")).toEqual({
+      underline: true,
+      strikethrough: true,
+    });
+  });
+
+  it("limita tamanho da fonte", () => {
+    expect(clampFontSize(8)).toBe(12);
+    expect(clampFontSize(200)).toBe(120);
   });
 
   it("não persiste URL de mídia no native_config", () => {

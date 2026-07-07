@@ -4,6 +4,49 @@ import type { Slide } from "../api/tvDashboardApi";
 import { buildSlideThumbnailNative, externalSlideHost } from "./slideCardPreview";
 
 describe("slideCardPreview", () => {
+  it("comunicado ignora previewSlide.native stale e usa nativeConfig local", () => {
+    const slide: Slide = {
+      id: "s1",
+      playlistId: "p1",
+      sortOrder: 0,
+      slideType: "native",
+      title: "Comunicado",
+      nativeScreenKey: "custom_message",
+      nativeConfig: {
+        version: 2,
+        blocks: [
+          {
+            id: "b1",
+            type: "heading",
+            content: "Ao vivo",
+            frame: { x: 10, y: 10, w: 80, h: 20 },
+          },
+        ],
+      },
+      isActive: true,
+    };
+    const native = buildSlideThumbnailNative(slide, "playlist-1", {
+      id: "s1",
+      native: {
+        screenKey: "custom_message",
+        config: {},
+        data: {
+          version: 2,
+          blocks: [
+            {
+              id: "b1",
+              type: "heading",
+              content: "Desatualizado",
+              frame: { x: 0, y: 0, w: 100, h: 100 },
+            },
+          ],
+        },
+      },
+    });
+    const data = native?.data as { blocks?: Array<{ content?: string }> };
+    expect(data.blocks?.[0]?.content).toBe("Ao vivo");
+  });
+
   it("monta preview de comunicado com URL admin para mídia", () => {
     const slide: Slide = {
       id: "s1",

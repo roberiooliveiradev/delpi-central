@@ -221,12 +221,13 @@
 .tdp-comunicado__block--heading h1,
 .tdp-comunicado__block--text p {
   margin: 0;
-  line-height: 1.15;
+  line-height: inherit;
   width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: inherit;
+  flex: 1;
+  text-align: inherit;
+  white-space: pre-wrap;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .tdp-comunicado__block--heading h1 {
@@ -236,7 +237,6 @@
 
 .tdp-comunicado__block--text p {
   font-size: inherit;
-  white-space: pre-wrap;
 }
 
 .tdp-comunicado__block--media img,

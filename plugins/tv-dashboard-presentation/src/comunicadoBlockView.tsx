@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
-import { blockCssStyle } from "./comunicadoHelpers";
+import { blockCssStyle, comunicadoTextInnerStyle } from "./comunicadoHelpers";
 import type { ComunicadoBlock } from "./comunicadoTypes";
 
 type Props = {
@@ -99,7 +99,8 @@ export function ComunicadoBlockView({
   const blockClass = `tdp-comunicado__block tdp-comunicado__block--${block.type}${className ? ` ${className}` : ""}`;
 
   if (block.type === "heading") {
-    const content = <h1>{block.content}</h1>;
+    const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
+    const content = <h1 style={innerStyle}>{block.content}</h1>;
     return (
       <div className={`${blockClass} tdp-comunicado__block--heading`} style={style}>
         {wrapWithLink(content, block)}
@@ -108,7 +109,8 @@ export function ComunicadoBlockView({
   }
 
   if (block.type === "text") {
-    const content = <p>{block.content}</p>;
+    const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
+    const content = <p style={innerStyle}>{block.content}</p>;
     return (
       <div className={`${blockClass} tdp-comunicado__block--text`} style={style}>
         {wrapWithLink(content, block)}

@@ -1,16 +1,36 @@
 import {
   AlignCenter,
+  AlignJustify,
   AlignLeft,
   AlignRight,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
   ArrowDown,
   ArrowUp,
   Bold,
+  Highlighter,
   Italic,
+  Minus,
+  Plus,
+  RemoveFormatting,
+  Strikethrough,
   Trash2,
   Underline,
   Upload,
 } from "lucide-react";
-import { COMUNICADO_FONT_FAMILIES } from "@delpi/tv-dashboard-presentation";
+import {
+  COMUNICADO_FONT_FAMILIES,
+  COMUNICADO_FONT_SIZE_MAX,
+  COMUNICADO_FONT_SIZE_MIN,
+  COMUNICADO_FONT_SIZE_STEP,
+  COMUNICADO_LINE_HEIGHT_OPTIONS,
+  buildTextDecoration,
+  clampFontSize,
+  defaultTextBlockStyle,
+  parseTextDecorationFlags,
+  defaultVerticalAlignForBlock,
+} from "@delpi/tv-dashboard-presentation";
 import { HintAction } from "@delpi/plugin-ui";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -29,6 +49,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     uploading,
     background,
     updateSelectedStyle,
+    updateSelected,
     removeSelected,
     moveLayer,
     triggerUpload,
@@ -36,6 +57,10 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   } = useComunicadoEditor();
 
   const isTextBlock = selected?.type === "heading" || selected?.type === "text";
+  const textVerticalAlign =
+    isTextBlock && selected
+      ? selected.style?.verticalAlign ?? defaultVerticalAlignForBlock(selected.type)
+      : "top";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isShapeBlock = selected?.type === "shape";
 
@@ -67,96 +92,251 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       </DeckRibbonGroup>
 
       {isTextBlock && selected ? (
-        <DeckRibbonGroup label="Fonte" hint={H.font} wide>
-          <div className="td-deck-ribbon__toolbar">
-            <div className="td-deck-ribbon__toolbar-row">
-              <select
-                className="td-deck-ribbon__select"
-                aria-label="Família da fonte"
-                value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
-                onChange={(e) => updateSelectedStyle({ fontFamily: e.target.value })}
-              >
-                {COMUNICADO_FONT_FAMILIES.map((font) => (
-                  <option key={font} value={font}>
-                    {font.split(",")[0]}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                className="td-deck-ribbon__number"
-                aria-label="Tamanho da fonte"
-                min={12}
-                max={120}
-                value={selected.style?.fontSize ?? 32}
-                onChange={(e) => updateSelectedStyle({ fontSize: Number(e.target.value) })}
-              />
-            </div>
-            <div className="td-deck-ribbon__toolbar-row">
-              <button
-                type="button"
-                className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontWeight === "bold" ? " td-btn--active" : ""}`}
-                aria-label="Negrito"
-                onClick={() =>
-                  updateSelectedStyle({
-                    fontWeight: selected.style?.fontWeight === "bold" ? "normal" : "bold",
-                  })
-                }
-              >
-                <Bold size={15} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontStyle === "italic" ? " td-btn--active" : ""}`}
-                aria-label="Itálico"
-                onClick={() =>
-                  updateSelectedStyle({
-                    fontStyle: selected.style?.fontStyle === "italic" ? "normal" : "italic",
-                  })
-                }
-              >
-                <Italic size={15} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className={`td-btn td-btn--sm td-btn--icon${selected.style?.textDecoration === "underline" ? " td-btn--active" : ""}`}
-                aria-label="Sublinhado"
-                onClick={() =>
-                  updateSelectedStyle({
-                    textDecoration: selected.style?.textDecoration === "underline" ? "none" : "underline",
-                  })
-                }
-              >
-                <Underline size={15} aria-hidden="true" />
-              </button>
-              <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-              {(
-                [
-                  { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda" },
-                  { align: "center" as const, icon: AlignCenter, label: "Centralizar" },
-                  { align: "right" as const, icon: AlignRight, label: "Alinhar à direita" },
-                ] as const
-              ).map(({ align, icon: Icon, label }) => (
-                <button
-                  key={align}
-                  type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${selected.style?.textAlign === align ? " td-btn--active" : ""}`}
-                  aria-label={label}
-                  onClick={() => updateSelectedStyle({ textAlign: align })}
+        <>
+          <DeckRibbonGroup label="Fonte" hint={H.font} wide>
+            <div className="td-deck-ribbon__toolbar">
+              <div className="td-deck-ribbon__toolbar-row">
+                <select
+                  className="td-deck-ribbon__select"
+                  aria-label="Família da fonte"
+                  value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
+                  onChange={(e) => updateSelectedStyle({ fontFamily: e.target.value })}
                 >
-                  <Icon size={15} aria-hidden="true" />
+                  {COMUNICADO_FONT_FAMILIES.map((font) => (
+                    <option key={font} value={font}>
+                      {font.split(",")[0]}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm td-btn--icon"
+                  aria-label="Diminuir fonte"
+                  disabled={(selected.style?.fontSize ?? 32) <= COMUNICADO_FONT_SIZE_MIN}
+                  onClick={() =>
+                    updateSelectedStyle({
+                      fontSize: clampFontSize(
+                        (selected.style?.fontSize ?? 32) - COMUNICADO_FONT_SIZE_STEP,
+                      ),
+                    })
+                  }
+                >
+                  <Minus size={14} aria-hidden="true" />
                 </button>
-              ))}
-              <input
-                type="color"
-                className="td-deck-ribbon__color"
-                aria-label="Cor do texto"
-                value={selected.style?.color ?? "#ffffff"}
-                onChange={(e) => updateSelectedStyle({ color: e.target.value })}
-              />
+                <input
+                  type="number"
+                  className="td-deck-ribbon__number"
+                  aria-label="Tamanho da fonte"
+                  min={COMUNICADO_FONT_SIZE_MIN}
+                  max={COMUNICADO_FONT_SIZE_MAX}
+                  value={selected.style?.fontSize ?? 32}
+                  onChange={(e) =>
+                    updateSelectedStyle({ fontSize: clampFontSize(Number(e.target.value)) })
+                  }
+                />
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm td-btn--icon"
+                  aria-label="Aumentar fonte"
+                  disabled={(selected.style?.fontSize ?? 32) >= COMUNICADO_FONT_SIZE_MAX}
+                  onClick={() =>
+                    updateSelectedStyle({
+                      fontSize: clampFontSize(
+                        (selected.style?.fontSize ?? 32) + COMUNICADO_FONT_SIZE_STEP,
+                      ),
+                    })
+                  }
+                >
+                  <Plus size={14} aria-hidden="true" />
+                </button>
+              </div>
+              <div className="td-deck-ribbon__toolbar-row">
+                <button
+                  type="button"
+                  className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontWeight === "bold" ? " td-btn--active" : ""}`}
+                  aria-label="Negrito"
+                  onClick={() =>
+                    updateSelectedStyle({
+                      fontWeight: selected.style?.fontWeight === "bold" ? "normal" : "bold",
+                    })
+                  }
+                >
+                  <Bold size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontStyle === "italic" ? " td-btn--active" : ""}`}
+                  aria-label="Itálico"
+                  onClick={() =>
+                    updateSelectedStyle({
+                      fontStyle: selected.style?.fontStyle === "italic" ? "normal" : "italic",
+                    })
+                  }
+                >
+                  <Italic size={15} aria-hidden="true" />
+                </button>
+                {(() => {
+                  const flags = parseTextDecorationFlags(selected.style?.textDecoration);
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        className={`td-btn td-btn--sm td-btn--icon${flags.underline ? " td-btn--active" : ""}`}
+                        aria-label="Sublinhado"
+                        onClick={() =>
+                          updateSelectedStyle({
+                            textDecoration: buildTextDecoration(
+                              !flags.underline,
+                              flags.strikethrough,
+                            ),
+                          })
+                        }
+                      >
+                        <Underline size={15} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className={`td-btn td-btn--sm td-btn--icon${flags.strikethrough ? " td-btn--active" : ""}`}
+                        aria-label="Tachado"
+                        onClick={() =>
+                          updateSelectedStyle({
+                            textDecoration: buildTextDecoration(
+                              flags.underline,
+                              !flags.strikethrough,
+                            ),
+                          })
+                        }
+                      >
+                        <Strikethrough size={15} aria-hidden="true" />
+                      </button>
+                    </>
+                  );
+                })()}
+                <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+                <label className="td-ribbon-tile td-ribbon-tile--color td-ribbon-tile--inline" aria-label="Realce">
+                  <span className="td-ribbon-tile__icon">
+                    <Highlighter size={15} aria-hidden="true" />
+                    <input
+                      type="color"
+                      className="td-deck-ribbon__color td-deck-ribbon__color--overlay"
+                      value={selected.style?.textHighlight ?? "#fef08a"}
+                      onChange={(e) => updateSelectedStyle({ textHighlight: e.target.value })}
+                    />
+                  </span>
+                </label>
+                <input
+                  type="color"
+                  className="td-deck-ribbon__color"
+                  aria-label="Cor do texto"
+                  value={selected.style?.color ?? "#ffffff"}
+                  onChange={(e) => updateSelectedStyle({ color: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm td-btn--icon"
+                  aria-label="Limpar formatação"
+                  onClick={() => {
+                    const defaults = defaultTextBlockStyle(selected.type);
+                    updateSelected({
+                      style: { ...defaults, zIndex: selected.style?.zIndex ?? defaults.zIndex },
+                    } as Partial<typeof selected>);
+                  }}
+                >
+                  <RemoveFormatting size={15} aria-hidden="true" />
+                </button>
+              </div>
             </div>
-          </div>
-        </DeckRibbonGroup>
+          </DeckRibbonGroup>
+
+          <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} wide>
+            <div className="td-deck-ribbon__toolbar">
+              <div className="td-deck-ribbon__toolbar-row">
+                {(
+                  [
+                    { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda" },
+                    { align: "center" as const, icon: AlignCenter, label: "Centralizar" },
+                    { align: "right" as const, icon: AlignRight, label: "Alinhar à direita" },
+                    { align: "justify" as const, icon: AlignJustify, label: "Justificar" },
+                  ] as const
+                ).map(({ align, icon: Icon, label }) => (
+                  <button
+                    key={align}
+                    type="button"
+                    className={`td-btn td-btn--sm td-btn--icon${selected.style?.textAlign === align ? " td-btn--active" : ""}`}
+                    aria-label={label}
+                    onClick={() => updateSelectedStyle({ textAlign: align })}
+                  >
+                    <Icon size={15} aria-hidden="true" />
+                  </button>
+                ))}
+                <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+                {(
+                  [
+                    {
+                      align: "top" as const,
+                      icon: AlignVerticalJustifyStart,
+                      label: "Alinhar ao topo",
+                    },
+                    {
+                      align: "middle" as const,
+                      icon: AlignVerticalJustifyCenter,
+                      label: "Centralizar verticalmente",
+                    },
+                    {
+                      align: "bottom" as const,
+                      icon: AlignVerticalJustifyEnd,
+                      label: "Alinhar à base",
+                    },
+                  ] as const
+                ).map(({ align, icon: Icon, label }) => (
+                  <button
+                    key={align}
+                    type="button"
+                    className={`td-btn td-btn--sm td-btn--icon${textVerticalAlign === align ? " td-btn--active" : ""}`}
+                    aria-label={label}
+                    onClick={() => updateSelectedStyle({ verticalAlign: align })}
+                  >
+                    <Icon size={15} aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+              <div className="td-deck-ribbon__toolbar-row">
+                <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-line-height">
+                  Entrelinhas
+                </label>
+                <select
+                  id="td-ribbon-line-height"
+                  className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+                  aria-label="Entrelinhas"
+                  value={String(selected.style?.lineHeight ?? 1.15)}
+                  onChange={(e) => updateSelectedStyle({ lineHeight: Number(e.target.value) })}
+                >
+                  {COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => (
+                    <option key={value} value={value}>
+                      {value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value)}
+                    </option>
+                  ))}
+                </select>
+                <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-letter-spacing">
+                  Espaçamento
+                </label>
+                <input
+                  id="td-ribbon-letter-spacing"
+                  type="number"
+                  className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                  aria-label="Espaçamento entre caracteres (px)"
+                  min={-2}
+                  max={24}
+                  step={0.5}
+                  value={selected.style?.letterSpacing ?? 0}
+                  onChange={(e) =>
+                    updateSelectedStyle({ letterSpacing: Number(e.target.value) || 0 })
+                  }
+                />
+              </div>
+            </div>
+          </DeckRibbonGroup>
+        </>
       ) : null}
 
       {isShapeBlock && selected ? (

@@ -37,13 +37,9 @@ import {
 } from "../api/tvDashboardApi";
 import { getAccessToken } from "../api/httpClient";
 import { AddSlideModal } from "../components/AddSlideModal";
-import { ComunicadoComposerCanvas } from "../components/ComunicadoComposer";
-import { ComunicadoEditorProvider, useComunicadoEditor } from "../components/comunicadoEditorContext";
-import { ComunicadoEditorRibbon } from "../components/ComunicadoEditorRibbon";
-import {
-  DeckElementSidePanel,
-  DeckEditorHeaderActions,
-} from "../components/deck";
+import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
+import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
+import { DeckEditorHeaderActions } from "../components/deck";
 import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SlideStagePreview } from "../components/SlideStagePreview";
@@ -450,16 +446,11 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
           value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
-          <DeckEditorChrome {...chromeProps} />
-          <DeckWorkspace
-            {...workspaceProps}
-            selectedSlideId={selectedSlide.id}
-            rightPanel={<DeckElementSidePanel labels={admin} />}
-            stage={
-              <div className="td-deck-stage__editor">
-                <ComunicadoComposerCanvas />
-              </div>
-            }
+          <CustomSlideEditorLayout
+            selectedSlide={selectedSlide}
+            workspaceProps={workspaceProps}
+            chromeProps={chromeProps}
+            adminLabels={admin}
           />
         </ComunicadoEditorProvider>
       ) : (

@@ -11,16 +11,18 @@ export function buildSlideThumbnailNative(
 ): NativeSlidePayload | null {
   if (slide.slideType !== "native" || !slide.nativeScreenKey) return null;
 
-  if (previewSlide?.native) {
-    return previewSlide.native;
-  }
-
+  // Comunicado: sempre montar a partir do nativeConfig local (editor / save recente).
+  // previewSlide.native do servidor fica stale durante a edição.
   if (slide.nativeScreenKey === "custom_message") {
     return {
       screenKey: "custom_message",
       config: slide.nativeConfig ?? {},
       data: buildComunicadoPreviewData(slide.nativeConfig ?? {}, playlistId),
     };
+  }
+
+  if (previewSlide?.native) {
+    return previewSlide.native;
   }
 
   return {

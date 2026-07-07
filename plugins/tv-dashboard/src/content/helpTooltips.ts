@@ -14,7 +14,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Adiciona elementos ao slide personalizado: textos, mídias e formas. Clique no palco para selecionar e editar.",
     background:
       "Define a cor ou imagem de fundo do slide personalizado. A imagem cobre toda a área do palco.",
-    font: "Formata o texto selecionado: família, tamanho, estilo, alinhamento e cor.",
+    font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
+    paragraph:
+      "Alinhamento horizontal e vertical, justificação, entrelinhas e espaçamento entre caracteres.",
     shape: "Ajusta preenchimento e contorno da forma selecionada.",
     organize:
       "Controla camadas e mídia do elemento selecionado: ordem (frente/fundo), troca de arquivo ou remoção.",

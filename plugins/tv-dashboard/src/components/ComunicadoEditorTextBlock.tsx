@@ -1,4 +1,4 @@
-import { blockCssStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import { blockCssStyle, comunicadoTextInnerStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useRef, type CSSProperties } from "react";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -36,6 +36,7 @@ export function ComunicadoEditorTextBlock({
     width: "100%",
     height: "100%",
   };
+  const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
 
   const blockClass = [
     "tdp-comunicado__block",
@@ -73,6 +74,7 @@ export function ComunicadoEditorTextBlock({
           <textarea
             ref={inputRef}
             className="td-composer__inline-text"
+            style={innerStyle}
             value={block.content}
             placeholder={PLACEHOLDER[block.type]}
             rows={1}
@@ -106,9 +108,19 @@ export function ComunicadoEditorTextBlock({
       }}
     >
       {block.type === "heading" ? (
-        <h1 className={isPlaceholder ? "td-composer__text-placeholder" : undefined}>{label}</h1>
+        <h1
+          className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
+          style={innerStyle}
+        >
+          {label}
+        </h1>
       ) : (
-        <p className={isPlaceholder ? "td-composer__text-placeholder" : undefined}>{label}</p>
+        <p
+          className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
+          style={innerStyle}
+        >
+          {label}
+        </p>
       )}
     </div>
   );
