@@ -240,8 +240,16 @@ Uploads de evidências por revisão ficam em `/app/data/revisao-evidencias` no c
 |----------|----------------------|---------------|
 | `TM_REVISION_EVIDENCE_UPLOAD_DIR` | `/app/data/revisao-evidencias` | `${DELPI_DATA_HOST_DIR}/revisao-evidencias` |
 
+## Arquivos do processo-mestre (transformometro-api)
+
+Uploads gerais do processo (POP, instruções, planilhas) ficam em `/app/data/processo-arquivos` (metadado em `transformometro.processo_arquivos`).
+
+| Variável | Default no container | Host (volume) |
+|----------|----------------------|---------------|
+| `TM_PROCESSO_ARQUIVO_UPLOAD_DIR` | `/app/data/processo-arquivos` | `${DELPI_DATA_HOST_DIR}/processo-arquivos` |
+
 ```bash
-sudo mkdir -p /var/lib/delpi/revisao-evidencias
+sudo mkdir -p /var/lib/delpi/revisao-evidencias /var/lib/delpi/processo-arquivos
 docker compose -f docker-compose.yml up -d --force-recreate transformometro-api
 ```
 

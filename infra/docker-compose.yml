@@ -1110,11 +1110,13 @@ services:
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
 
       TM_REVISION_EVIDENCE_UPLOAD_DIR: ${TM_REVISION_EVIDENCE_UPLOAD_DIR:-/app/data/revisao-evidencias}
+      TM_PROCESSO_ARQUIVO_UPLOAD_DIR: ${TM_PROCESSO_ARQUIVO_UPLOAD_DIR:-/app/data/processo-arquivos}
 
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
 
     volumes:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/revisao-evidencias:/app/data/revisao-evidencias
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/processo-arquivos:/app/data/processo-arquivos
 
     depends_on:
       - keycloak

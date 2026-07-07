@@ -40,6 +40,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { fetchProcessoDiagrama } from "../../data/api/transformometroDiagramApi";
 import { fetchProcessoDecomposicao } from "../../data/api/transformometroDecompositionApi";
+import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArquivoApi";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
 import { buildInstanciaPath } from "../../utils/routeParser";
@@ -47,6 +48,7 @@ import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
 import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
+import { ProcessoArquivosSection } from "../processo/ProcessoArquivosSection";
 import {
   masterPayloadFromProcessoForm,
   processoFormFromEntity,
@@ -75,6 +77,7 @@ export function ProcessoDetailPage({
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
   const [diagramNodeCount, setDiagramNodeCount] = useState(0);
   const [decompositionNodeCount, setDecompositionNodeCount] = useState(0);
+  const [arquivosCount, setArquivosCount] = useState(0);
   const [comparativoItems, setComparativoItems] = useState<ProcessoComparativoItem[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +104,7 @@ export function ProcessoDetailPage({
     setRefreshing(true);
     setError(null);
     try {
-      const [proc, revs, opts, inst, diagram, comparativo, decomposicao] = await Promise.all([
+      const [proc, revs, opts, inst, diagram, comparativo, decomposicao, arquivos] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
         fetchRevisoes(processoId, getAccessToken),
         fetchOptions(getAccessToken),
@@ -109,6 +112,7 @@ export function ProcessoDetailPage({
         fetchProcessoDiagrama(processoId, getAccessToken).catch(() => null),
         fetchProcessoComparativo(processoId, getAccessToken).catch(() => ({ items: [] })),
         fetchProcessoDecomposicao(processoId, getAccessToken).catch(() => null),
+        fetchProcessoArquivos(processoId, getAccessToken).catch(() => []),
       ]);
       setProcesso(proc);
       setOptions(opts);
@@ -116,6 +120,7 @@ export function ProcessoDetailPage({
       setRevisoes(revs.items);
       setDiagramNodeCount(diagram?.conteudo?.nodes?.length ?? 0);
       setDecompositionNodeCount(decomposicao?.conteudo?.nodes?.length ?? 0);
+      setArquivosCount(arquivos.length);
       setComparativoItems(comparativo.items ?? []);
       setInstanciasComRevisao(
         Array.from(
@@ -384,6 +389,33 @@ export function ProcessoDetailPage({
             onError={setError}
             resyncVersion={sectionEdit.resyncVersion}
             onEntityChanged={() => void loadTimeline()}
+          />
+        }
+      />
+
+      <EditableSectionCard
+        title={`Arquivos do processo${arquivosCount ? ` (${arquivosCount})` : ""}`}
+        description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
+        hint={TM_HELP_TOOLTIPS.processos.arquivos}
+        isEditing={sectionEdit.isEditing("arquivos")}
+        onEdit={() => void sectionEdit.startEdit("arquivos")}
+        onCancel={() => sectionEdit.cancelEdit("arquivos")}
+        readContent={
+          <ProcessoArquivosSection
+            embeddedInCard
+            readOnly
+            processoId={processoId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+          />
+        }
+        editContent={
+          <ProcessoArquivosSection
+            embeddedInCard
+            processoId={processoId}
+            getAccessToken={getAccessToken}
+            onError={setError}
+            onChanged={() => void load()}
           />
         }
       />

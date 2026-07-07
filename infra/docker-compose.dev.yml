@@ -1094,11 +1094,13 @@ services:
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
 
       TM_REVISION_EVIDENCE_UPLOAD_DIR: ${TM_REVISION_EVIDENCE_UPLOAD_DIR:-/app/data/revisao-evidencias}
+      TM_PROCESSO_ARQUIVO_UPLOAD_DIR: ${TM_PROCESSO_ARQUIVO_UPLOAD_DIR:-/app/data/processo-arquivos}
 
     volumes:
       - ../transformometro-api:/app
       - ../shared:/shared
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/revisao-evidencias:/app/data/revisao-evidencias
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/processo-arquivos:/app/data/processo-arquivos
 
     depends_on:
       - keycloak

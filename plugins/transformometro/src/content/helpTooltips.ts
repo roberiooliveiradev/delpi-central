@@ -140,6 +140,10 @@ export const TM_HELP_TOOLTIPS = {
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
     diagramaMacro:
       "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas instâncias e revisões.",
+    arquivos:
+      "Documentos de referência do processo-mestre — POP, instruções, planilhas e links úteis (independente das evidências por revisão).",
+    arquivoUrl: "Endereço web externo do documento (SharePoint, drive, repositório…).",
+    arquivoDescription: "Rótulo curto para identificar o arquivo na grade.",
     preenchimento:
       "Checklist do cadastro completo: dados mestre, instâncias operacionais, diagrama macro, baseline, melhoria e medição com competências registradas.",
     preenchimentoLista:
