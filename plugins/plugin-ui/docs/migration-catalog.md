@@ -120,7 +120,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination via CompactPagination |
-| `transformometro` | ✅ | ✅ | — | ✅ | ✅ | | CompactPagination + ChartCard + MultiSelect + KpiCard F2 |
+| `transformometro` | ✅ | ✅ | — | ✅ | ✅ | | CompactPagination + ChartCard + MultiSelect + KpiCard + DataTable F2 |
 | `eficiencia-fabril` | — | ✅ | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard + FilterBarShell + MultiSelect F2 |
 | `maintenance` | ✅ | ✅ | — | — | — | — | TablePaginationNav + FilterBarShell + MultiSelect F2 |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |

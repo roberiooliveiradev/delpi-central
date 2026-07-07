@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { Search } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { buildDataTableSearchText } from "../../utils/dataTableSearch";
@@ -56,6 +56,9 @@ export type DataTableSectionClassNames = {
   searchInput: string;
   searchHelp: string;
   toolbarExtra: string;
+  footer: string;
+  embeddedSection: string;
+  interactiveModifier: string;
 };
 
 export type DataTableSectionLabels = {
@@ -122,6 +125,12 @@ export type DataTableSectionProps<T> = {
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
   headerActions?: ReactNode;
+  footer?: ReactNode;
+  embedded?: boolean;
+  interactive?: boolean;
+  hidePageSizeSelect?: boolean;
+  defaultSortKey?: string | null;
+  defaultSortDirection?: "asc" | "desc";
   sectionClassNames: DataTableSectionClassNames;
   tableClassNames: DataTableClassNames;
   labels: DataTableSectionLabels;
@@ -151,7 +160,52 @@ export function dataTableSectionBemClasses(prefix: string): DataTableSectionClas
     searchInput: `${prefix}-table-search__input`,
     searchHelp: `${prefix}-table-search__help`,
     toolbarExtra: `${prefix}-table-toolbar__extra`,
+    footer: `${prefix}-table-section__footer`,
+    embeddedSection: `${prefix}-table-section ${prefix}-table-section--embedded`,
+    interactiveModifier: `${prefix}-table-section--interactive`,
   };
+}
+
+function sortRowsClientSide<T>(
+  rows: T[],
+  columns: DataTableColumn<T>[],
+  sortKey: string | null,
+  sortDirection: "asc" | "desc",
+): T[] {
+  if (!sortKey) return rows;
+
+  const column = columns.find((item) => item.key === sortKey);
+  if (!column) return rows;
+
+  const getSortValue =
+    column.sortValue ??
+    ((row: T): string | number | boolean | null | undefined => {
+      const value = column.render(row);
+      if (value == null || value === false) return "";
+      if (typeof value === "number" || typeof value === "boolean") return value;
+      if (typeof value === "string") return value.toLowerCase();
+      return String(value).toLowerCase();
+    });
+
+  const directionFactor = sortDirection === "asc" ? 1 : -1;
+
+  return [...rows].sort((first, second) => {
+    const firstValue = getSortValue(first);
+    const secondValue = getSortValue(second);
+
+    if (firstValue == null && secondValue == null) return 0;
+    if (firstValue == null) return 1 * directionFactor;
+    if (secondValue == null) return -1 * directionFactor;
+    if (typeof firstValue === "number" && typeof secondValue === "number") {
+      return (firstValue - secondValue) * directionFactor;
+    }
+
+    const firstText = String(firstValue).toLowerCase();
+    const secondText = String(secondValue).toLowerCase();
+    if (firstText < secondText) return -1 * directionFactor;
+    if (firstText > secondText) return 1 * directionFactor;
+    return 0;
+  });
 }
 
 export function DataTableSection<T>({
@@ -176,6 +230,12 @@ export function DataTableSection<T>({
   onRowClick,
   getRowClassName,
   headerActions,
+  footer,
+  embedded = false,
+  interactive,
+  hidePageSizeSelect = false,
+  defaultSortKey = null,
+  defaultSortDirection = "asc",
   sectionClassNames,
   tableClassNames,
   labels,
@@ -189,11 +249,43 @@ export function DataTableSection<T>({
 }: DataTableSectionProps<T>) {
   const [localSearch, setLocalSearch] = useState("");
   const [localPageSize, setLocalPageSize] = useState(pageSize ?? defaultPageSize);
+  const [localSortKey, setLocalSortKey] = useState<string | null>(defaultSortKey);
+  const [localSortDirection, setLocalSortDirection] = useState<"asc" | "desc">(
+    defaultSortDirection,
+  );
   const search = serverSearch?.value ?? localSearch;
   const handleSearchChange = serverSearch?.onChange ?? setLocalSearch;
   const effectivePageSize = serverPagination?.pageSize ?? localPageSize;
   const pageSizeOptions = serverPagination?.pageSizeOptions ?? tablePageSizeOptions;
   const tableLabels: DataTableLabels = labels;
+  const resolvedInteractive = interactive ?? Boolean(onRowClick);
+
+  useEffect(() => {
+    setLocalSortKey(defaultSortKey);
+  }, [defaultSortKey]);
+
+  useEffect(() => {
+    setLocalSortDirection(defaultSortDirection);
+  }, [defaultSortDirection]);
+
+  const effectiveSortKey = serverSort?.sortKey ?? localSortKey;
+  const effectiveSortDirection = serverSort?.sortDirection ?? localSortDirection;
+
+  const handleSortChange = useCallback(
+    (columnKey: string) => {
+      if (serverSort) {
+        serverSort.onSortChange(columnKey);
+        return;
+      }
+
+      const isSameColumn = localSortKey === columnKey;
+      setLocalSortKey(columnKey);
+      setLocalSortDirection(
+        isSameColumn ? (localSortDirection === "asc" ? "desc" : "asc") : "asc",
+      );
+    },
+    [localSortDirection, localSortKey, serverSort],
+  );
 
   const filteredRows = useMemo(() => {
     if (serverPagination) return rows;
@@ -209,7 +301,31 @@ export function DataTableSection<T>({
     });
   }, [rows, search, columns, getSearchText, serverPagination]);
 
-  const { page, setPage, slice, total } = useClientPagination(filteredRows, effectivePageSize);
+  const sortedRows = useMemo(() => {
+    if (serverSort || serverPagination) return filteredRows;
+    return sortRowsClientSide(filteredRows, columns, effectiveSortKey, effectiveSortDirection);
+  }, [
+    columns,
+    effectiveSortDirection,
+    effectiveSortKey,
+    filteredRows,
+    serverPagination,
+    serverSort,
+  ]);
+
+  const { page, setPage, slice, total } = useClientPagination(sortedRows, effectivePageSize);
+
+  useEffect(() => {
+    if (!serverPagination) {
+      setPage(1);
+    }
+  }, [search, serverPagination, setPage]);
+
+  useEffect(() => {
+    if (!serverSort && !serverPagination) {
+      setPage(1);
+    }
+  }, [effectiveSortKey, effectiveSortDirection, serverPagination, serverSort, setPage]);
   const displayRows = serverPagination ? rows : slice;
   const paginationPage = serverPagination?.page ?? page;
   const paginationTotal = serverPagination?.total ?? total;
@@ -235,31 +351,49 @@ export function DataTableSection<T>({
   const initialLoadingProgress = useLoadingProgress(showInitialLoading, initialFetchProgress);
   const refreshLoadingProgress = useLoadingProgress(showRefreshLoading, refreshFetchProgress);
 
+  const sectionClass = [
+    embedded ? sectionClassNames.embeddedSection : sectionClassNames.section,
+    resolvedInteractive ? sectionClassNames.interactiveModifier : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const showHeader = Boolean(title.trim() || hint);
+  const showToolbar = !hidePageSizeSelect || !hideSearch || Boolean(toolbarExtra);
+
   return (
-    <section className={sectionClassNames.section} aria-busy={loading || refreshing}>
-      <div className={sectionClassNames.header}>
-        <h2 className={sectionClassNames.title}>
-          {title}
-          {titleHint ? (
-            <HelpTooltip
-              content={titleHint}
-              ariaLabel={labels.titleHelpAriaLabel(title)}
-              className={sectionClassNames.titleHelp}
-            />
-          ) : null}
-        </h2>
-        <div className={sectionClassNames.metaGroup}>
-          {hint ? <span className={sectionClassNames.meta}>{hint}</span> : null}
-          <span className={sectionClassNames.meta}>{labels.recordsCount(paginationTotal)}</span>
-          {headerActions ? (
-            <div
-              className={`${sectionClassNames.actions} ${sectionClassNames.noPrint}`.trim()}
-            >
-              {headerActions}
-            </div>
-          ) : null}
+    <section className={sectionClass || sectionClassNames.section} aria-busy={loading || refreshing}>
+      {showHeader ? (
+        <div className={sectionClassNames.header}>
+          {title.trim() ? (
+            <h2 className={sectionClassNames.title}>
+              {title}
+              {titleHint ? (
+                <HelpTooltip
+                  content={titleHint}
+                  ariaLabel={labels.titleHelpAriaLabel(title)}
+                  className={sectionClassNames.titleHelp}
+                />
+              ) : null}
+            </h2>
+          ) : (
+            <span />
+          )}
+          <div className={sectionClassNames.metaGroup}>
+            {hint ? <span className={sectionClassNames.meta}>{hint}</span> : null}
+            <span className={sectionClassNames.meta}>{labels.recordsCount(paginationTotal)}</span>
+            {headerActions ? (
+              <div
+                className={`${sectionClassNames.actions} ${sectionClassNames.noPrint}`.trim()}
+              >
+                {headerActions}
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {footer ? <div className={sectionClassNames.footer}>{footer}</div> : null}
 
       {showRefreshLoading ? (
         <LoadingActivityCard
@@ -279,14 +413,17 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          <div className={sectionClassNames.toolbar}>
-            <TablePageSizeSelect
-              pageSize={paginationSize}
-              pageSizeOptions={pageSizeOptions}
-              onPageSizeChange={handlePageSizeChange}
-            />
+          {showToolbar ? (
+            <div className={sectionClassNames.toolbar}>
+              {!hidePageSizeSelect ? (
+                <TablePageSizeSelect
+                  pageSize={paginationSize}
+                  pageSizeOptions={pageSizeOptions}
+                  onPageSizeChange={handlePageSizeChange}
+                />
+              ) : null}
 
-            {!hideSearch ? (
+              {!hideSearch ? (
               <div className={sectionClassNames.searchGroup}>
                 <div className={sectionClassNames.search} role="search">
                   <Search size={16} aria-hidden="true" className={sectionClassNames.searchIcon} />
@@ -312,7 +449,8 @@ export function DataTableSection<T>({
             {toolbarExtra ? (
               <div className={sectionClassNames.toolbarExtra}>{toolbarExtra}</div>
             ) : null}
-          </div>
+            </div>
+          ) : null}
 
           <DataTable
             columns={columns}
@@ -321,9 +459,11 @@ export function DataTableSection<T>({
             emptyMessage={emptyMessage}
             onRowClick={onRowClick}
             getRowClassName={getRowClassName}
-            sortKey={serverSort?.sortKey}
-            sortDirection={serverSort?.sortDirection}
-            onSortChange={serverSort?.onSortChange}
+            sortKey={effectiveSortKey}
+            sortDirection={effectiveSortDirection}
+            onSortChange={
+              serverSort?.onSortChange ?? (serverPagination ? undefined : handleSortChange)
+            }
             layout="section"
             classNames={tableClassNames}
             labels={tableLabels}
@@ -365,9 +505,14 @@ export function createDashboardDataTableKit(config: {
   useLoadingProgress: DataTableSectionProps<unknown>["useLoadingProgress"];
   useTrackedSingleFetchProgress: DataTableSectionProps<unknown>["useTrackedSingleFetchProgress"];
   defaultPageSize?: number;
+  sectionClassNames?: Partial<DataTableSectionClassNames>;
+  tableClassNames?: DataTableClassNames;
 }) {
-  const sectionClassNames = dataTableSectionBemClasses(config.prefix);
-  const tableClassNames = dataTableBemClasses(config.prefix);
+  const sectionClassNames = {
+    ...dataTableSectionBemClasses(config.prefix),
+    ...config.sectionClassNames,
+  };
+  const tableClassNames = config.tableClassNames ?? dataTableBemClasses(config.prefix);
 
   function DashboardDataTable<T>(props: DashboardDataTableProps<T>) {
     return <DataTable classNames={tableClassNames} labels={config.labels} {...props} />;

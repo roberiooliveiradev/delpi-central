@@ -270,7 +270,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ | Detail* | sim |
 | `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
-| `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ | EditableSectionCard ✅ PageHeader ✅ · DataTable* local | sim |
+| `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ DataTable ✅ | EditableSectionCard ✅ PageHeader ✅ | sim |
 | `cadastro-kaizen` | ✅ | Pagination ✅ MultiSelect ✅ | EditableSectionCard ✅ · DataTable* allowlist | sim |
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
