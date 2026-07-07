@@ -1092,6 +1092,20 @@
   gap: 14px;
 }
 
+.cx-question-list__hint {
+  margin: 0;
+}
+
+.cx-question--step {
+  border-color: color-mix(in srgb, var(--cx-accent) 35%, var(--cx-border));
+}
+
+.cx-question--step .cx-question__num {
+  min-width: 4.5rem;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+}
+
 .cx-question {
   transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }

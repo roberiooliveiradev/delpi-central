@@ -375,7 +375,7 @@ function FormsList({
 
 // ----- Editor de perguntas ---------------------------------------------------
 
-function FormPageEditorBlock({
+function PageVisualFields({
   page,
   pageIndex,
   pendingImages,
@@ -384,9 +384,7 @@ function FormPageEditorBlock({
   onPendingPoint,
   onClearBackground,
   onClearPoint,
-  onRemove,
-  canRemove,
-  linkedQuestionLabel,
+  mode = "page",
 }: {
   page: FormPage;
   pageIndex: number;
@@ -396,32 +394,14 @@ function FormPageEditorBlock({
   onPendingPoint: (index: number, file: File) => void;
   onClearBackground: (index: number) => void;
   onClearPoint: (index: number) => void;
-  onRemove?: (index: number) => void;
-  canRemove: boolean;
-  linkedQuestionLabel?: string | null;
+  mode?: "page" | "step";
 }) {
+  const titleLabel = mode === "step" ? "Título da etapa (opcional)" : "Título da página (opcional)";
+  const bgLabel = mode === "step" ? "Fundo da etapa" : "Fundo da página";
   return (
-    <div className="cx-page-block">
-      <div className="cx-page-block__head">
-        <strong>Página {pageIndex + 1}</strong>
-        {canRemove && onRemove && (
-          <button
-            className="cx-icon-btn cx-icon-btn--danger"
-            type="button"
-            onClick={() => onRemove(pageIndex)}
-            title="Remover página"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
-      {linkedQuestionLabel !== undefined && (
-        <p className="cx-page-block__link">
-          Pergunta vinculada: {linkedQuestionLabel?.trim() || "(defina o enunciado abaixo)"}
-        </p>
-      )}
+    <>
       <label className="cx-field">
-        <span>Título da página (opcional)</span>
+        <span>{titleLabel}</span>
         <input
           type="text"
           value={page.title ?? ""}
@@ -431,7 +411,7 @@ function FormPageEditorBlock({
       </label>
       <div className="cx-page-images">
         <div className="cx-field">
-          <span>Fundo da página</span>
+          <span>{bgLabel}</span>
           <PhotoDropzone
             previewUrl={
               pendingImages.pageBackground[pageIndex]
@@ -457,7 +437,7 @@ function FormPageEditorBlock({
           />
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -496,8 +476,6 @@ function FormEditor({
     if (!oneQuestionPerPage) return;
     setPages((prev) => ensurePageCount(prev, questions.length));
   }, [oneQuestionPerPage, questions.length]);
-
-  const wizardPages = oneQuestionPerPage ? ensurePageCount(pages, questions.length) : pages;
 
   const update = (index: number, patch: Partial<FormQuestion>) => {
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, ...patch } : q)));
@@ -732,54 +710,68 @@ function FormEditor({
         </div>
       </section>
 
+      {!oneQuestionPerPage && (
       <section className="cx-card">
         <div className="cx-card__title-row">
-          <h2 className="cx-card__title">
-            {oneQuestionPerPage ? "Páginas do passo a passo" : "Páginas do formulário"}
-          </h2>
-          {!oneQuestionPerPage && (
-            <button className="cx-button cx-button--ghost" type="button" onClick={addPage}>
-              <Plus size={14} /> Adicionar página
-            </button>
-          )}
+          <h2 className="cx-card__title">Páginas do formulário</h2>
+          <button className="cx-button cx-button--ghost" type="button" onClick={addPage}>
+            <Plus size={14} /> Adicionar página
+          </button>
         </div>
         <p className="cx-field-hint">
-          {oneQuestionPerPage
-            ? "Configure título, fundo e imagens de cada etapa separadamente. Cada página corresponde a uma pergunta, na mesma ordem."
-            : "Agrupe perguntas em páginas com fundo e imagens ilustrativas. Deixe vazio para um formulário contínuo em uma única tela."}
+          Agrupe perguntas em páginas com fundo e imagens ilustrativas. Deixe vazio para um
+          formulário contínuo em uma única tela.
         </p>
-        {oneQuestionPerPage && questions.length === 0 ? (
-          <p className="cx-state">Adicione perguntas para configurar as páginas do passo a passo.</p>
-        ) : wizardPages.length === 0 ? (
+        {pages.length === 0 ? (
           <p className="cx-state">Nenhuma página — todas as perguntas aparecem juntas.</p>
         ) : (
           <div className="cx-page-list">
-            {wizardPages.map((page, pageIndex) => (
-              <FormPageEditorBlock
-                key={pageIndex}
-                page={page}
-                pageIndex={pageIndex}
-                pendingImages={pendingImages}
-                onUpdatePage={updatePage}
-                onPendingBackground={setPendingPageBackground}
-                onPendingPoint={setPendingPagePoint}
-                onClearBackground={clearPendingPageBackground}
-                onClearPoint={clearPendingPagePoint}
-                onRemove={removePage}
-                canRemove={!oneQuestionPerPage}
-                linkedQuestionLabel={oneQuestionPerPage ? questions[pageIndex]?.label : undefined}
-              />
+            {pages.map((page, pageIndex) => (
+              <div className="cx-page-block" key={pageIndex}>
+                <div className="cx-page-block__head">
+                  <strong>Página {pageIndex + 1}</strong>
+                  <button
+                    className="cx-icon-btn cx-icon-btn--danger"
+                    type="button"
+                    onClick={() => removePage(pageIndex)}
+                    title="Remover página"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <PageVisualFields
+                  page={page}
+                  pageIndex={pageIndex}
+                  pendingImages={pendingImages}
+                  onUpdatePage={updatePage}
+                  onPendingBackground={setPendingPageBackground}
+                  onPendingPoint={setPendingPagePoint}
+                  onClearBackground={clearPendingPageBackground}
+                  onClearPoint={clearPendingPagePoint}
+                />
+              </div>
             ))}
           </div>
         )}
       </section>
+      )}
 
       <div className="cx-question-list">
-        {questions.map((q, index) => (
+        {oneQuestionPerPage && questions.length > 0 && (
+          <p className="cx-field-hint cx-question-list__hint">
+            Cada pergunta abaixo é uma etapa do passo a passo. Use arrastar ou as setas para
+            reordenar — título, fundo e imagens ficam no próprio card.
+          </p>
+        )}
+        {questions.map((q, index) => {
+          const stepPage = oneQuestionPerPage
+            ? ensurePageCount(pages, questions.length)[index] ?? blankPage()
+            : null;
+          return (
           <section
-            className={`cx-card cx-question${dragIndex === index ? " is-dragging" : ""}${
-              overIndex === index && dragIndex !== null && dragIndex !== index ? " is-over" : ""
-            }`}
+            className={`cx-card cx-question${oneQuestionPerPage ? " cx-question--step" : ""}${
+              dragIndex === index ? " is-dragging" : ""
+            }${overIndex === index && dragIndex !== null && dragIndex !== index ? " is-over" : ""}`}
             key={index}
             draggable={dragIndex === index}
             onDragStart={(e) => {
@@ -807,7 +799,9 @@ function FormEditor({
               >
                 <GripVertical size={16} />
               </span>
-              <span className="cx-question__num">{index + 1}</span>
+              <span className="cx-question__num">
+                {oneQuestionPerPage ? `Etapa ${index + 1}` : index + 1}
+              </span>
               <select
                 className="cx-select"
                 value={q.type}
@@ -844,11 +838,21 @@ function FormEditor({
               </div>
             </div>
 
-            {oneQuestionPerPage && (
-              <p className="cx-question__page-ref">
-                Exibida na <strong>página {index + 1}</strong>
-                {wizardPages[index]?.title ? ` · ${wizardPages[index].title}` : ""}
-              </p>
+            {oneQuestionPerPage && stepPage && (
+              <div className="cx-page-visual">
+                <span className="cx-page-visual__label">Visual da etapa</span>
+                <PageVisualFields
+                  page={stepPage}
+                  pageIndex={index}
+                  mode="step"
+                  pendingImages={pendingImages}
+                  onUpdatePage={updatePage}
+                  onPendingBackground={setPendingPageBackground}
+                  onPendingPoint={setPendingPagePoint}
+                  onClearBackground={clearPendingPageBackground}
+                  onClearPoint={clearPendingPagePoint}
+                />
+              </div>
             )}
 
             {!oneQuestionPerPage && pages.length > 0 && (
@@ -961,7 +965,8 @@ function FormEditor({
               <span>Resposta obrigatória</span>
             </label>
           </section>
-        ))}
+          );
+        })}
       </div>
 
       <button className="cx-button cx-button--dashed" type="button" onClick={addQuestion}>
