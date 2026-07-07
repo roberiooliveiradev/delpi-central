@@ -26,6 +26,16 @@ export {
 } from "./CompactPagination";
 
 export {
+  TablePaginationNav,
+  createTablePaginationNav,
+  tablePaginationNavBemClasses,
+  type DashboardTablePaginationNavProps,
+  type TablePaginationNavClassNames,
+  type TablePaginationNavLabels,
+  type TablePaginationNavProps,
+} from "./TablePaginationNav";
+
+export {
   DataTable,
   dataTableBemClasses,
   type DataTableClassNames,

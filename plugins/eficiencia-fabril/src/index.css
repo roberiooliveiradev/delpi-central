@@ -681,7 +681,8 @@
   min-width: 0;
 }
 
-.ef-chart-card__header h2 {
+.ef-chart-card__header h2,
+.ef-chart-card__title {
   margin: 0;
   font-size: 1rem;
   color: var(--ef-title);
@@ -704,7 +705,8 @@
   gap: 8px;
 }
 
-.ef-chart-card__subtitle {
+.ef-chart-card__subtitle,
+.ef-chart-card__hint {
   margin: 4px 0 0;
   color: var(--ef-muted);
   font-size: 0.82rem;

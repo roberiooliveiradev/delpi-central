@@ -109,6 +109,23 @@ export {
   type PanelCardProps,
 } from "./PanelCard";
 export {
+  ContentCard,
+  createContentCard,
+  contentCardBemClasses,
+  type DashboardContentCardProps,
+  type ContentCardClassNames,
+  type ContentCardProps,
+} from "./ContentCard";
+export {
+  MetricKpiCard,
+  createMetricKpiCard,
+  metricKpiCardBemClasses,
+  type DashboardMetricKpiCardProps,
+  type MetricKpiCardClassNames,
+  type MetricKpiCardProps,
+  type MetricKpiCardTone,
+} from "./MetricKpiCard";
+export {
   PageHeader,
   createDashboardPageHeader,
   pageHeaderBrandBemClasses,

@@ -273,8 +273,8 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `transformometro` | ✅ | LoadingActivity ✅ | EditableSectionCard ✅ PageHeader ✅ | sim |
 | `cadastro-kaizen` | ✅ | — | EditableSectionCard ✅ | sim |
 | `quality-action-plans` | ✅ | parcial | PageHeader ✅ SectionCard ✅ | sim |
-| `eficiencia-fabril` | ✅ | LoadingActivity ✅ | — | sim |
-| `maintenance` | ✅ | parcial | — | sim |
+| `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | DetailFieldGrid ✅ | sim |
+| `maintenance` | ✅ | Pagination ✅ | PageHeader ✅ | sim |
 | `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ | Empty/Loading ✅ | sim |
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |

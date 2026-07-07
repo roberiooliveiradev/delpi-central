@@ -110,7 +110,8 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination via CompactPagination |
 | `transformometro` | — | — | — | — | ✅ | |
-| `eficiencia-fabril` | — | — | — | — | ✅ | |
+| `eficiencia-fabril` | — | — | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard F2 |
+| `maintenance` | ✅ | — | — | — | — | — | TablePaginationNav F2 |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
 | `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
@@ -163,7 +164,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard |
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
-| `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline | `operationalUnitLabels` |
+| `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard | `operationalUnitLabels` |
 | `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity |
 | `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState |
 | `auditoria-5s` | — | ChartCard |
