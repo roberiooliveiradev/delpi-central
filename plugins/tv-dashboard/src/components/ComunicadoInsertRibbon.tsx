@@ -65,7 +65,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
         <div className="td-deck-ribbon__tiles">
           <DeckRibbonTile
             icon={BarChart3}
-            label={labels.comunicadoAddIndicator ?? "Indicador"}
+            label={labels.comunicadoAddIndicator ?? "Dados"}
             hint={H.insertIndicator ?? H.insert}
             onClick={() => setDataPickerOpen(true)}
           />

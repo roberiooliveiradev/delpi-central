@@ -205,18 +205,34 @@ export type TvDataRouteCatalogItem = {
   category: string;
   path?: string;
   allowedDisplayModes?: string[];
+  suggestedDisplayModes?: string[];
   defaultParams?: Record<string, unknown>;
   paramSchema?: Record<string, unknown>;
   tvConstraints?: Record<string, unknown>;
+  metaShape?: string;
 };
 
 export async function listDataRoutes() {
   const data = await unwrap(
-    httpGet<ApiEnvelope<{ items: TvDataRouteCatalogItem[] }>>(`${API_BASE}/data-routes`),
+    httpGet<ApiEnvelope<{ items: TvDataRouteCatalogItem[] }>>(`${API_BASE}/data/routes`),
   );
   return data.items;
 }
 
+export async function previewDataBlockV2(body: {
+  block: Record<string, unknown>;
+  nativeConfig: Record<string, unknown>;
+  playlistId?: string;
+}) {
+  return unwrap(
+    httpPost<ApiEnvelope<{ block: Record<string, unknown> }>>(
+      `${API_BASE}/data/preview-block`,
+      body,
+    ),
+  );
+}
+
+/** @deprecated Prefer previewDataBlockV2 — não exige slide persistido. */
 export async function previewDataBlock(
   playlistId: string,
   slideId: string,

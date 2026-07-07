@@ -36,6 +36,12 @@ export {
   COMUNICADO_SHAPE_KINDS,
 } from "./comunicadoTypes";
 export {
+  blockTypeForDisplayMode,
+  displayModeLabel,
+  listDataPresentationOptions,
+} from "./comunicadoDataPresentation";
+export type { DataPresentationOption } from "./comunicadoDataPresentation";
+export {
   blockCssStyle,
   buildTextDecoration,
   clampFontSize,

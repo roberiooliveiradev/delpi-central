@@ -17,7 +17,7 @@ function formatKpiValue(value: unknown): string {
 }
 
 function TvDataKpiWidget({ resolved }: { resolved: ComunicadoDataResolved }) {
-  const label = resolved.kpi?.label ?? resolved.label ?? "Indicador";
+  const label = resolved.kpi?.label ?? resolved.label ?? "Dados";
   const value = formatKpiValue(resolved.kpi?.value);
   return (
     <div className="tdp-data-kpi">
@@ -96,7 +96,7 @@ export function TvDataBlockView({ block, interactive = false, loading = false }:
       <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
         <span className="tdp-data-block__title">{label}</span>
         <span className="tdp-data-block__hint">
-          {loading ? "Carregando indicador…" : interactive ? "Indicador (preview ao publicar)" : "…"}
+          {loading ? "Carregando dados…" : interactive ? "Dados (preview ao publicar)" : "…"}
         </span>
       </div>
     );

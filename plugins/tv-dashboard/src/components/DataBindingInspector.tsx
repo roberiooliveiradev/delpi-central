@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { Copy, RefreshCw } from "lucide-react";
-import { isDataBlockType, type ComunicadoDataBinding } from "@delpi/tv-dashboard-presentation";
+import {
+  blockTypeForDisplayMode,
+  defaultFrame,
+  displayModeLabel,
+  isDataBlockType,
+  listDataPresentationOptions,
+  type ComunicadoDataBinding,
+  type ComunicadoDataDisplayMode,
+} from "@delpi/tv-dashboard-presentation";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -9,6 +17,11 @@ import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
 type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
+
+function routeDisplayModes(route: TvDataRouteCatalogItem | null): string[] | undefined {
+  if (!route) return undefined;
+  return route.suggestedDisplayModes ?? route.allowedDisplayModes;
+}
 
 function ParamFields({
   schema,
@@ -61,6 +74,9 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
   const inheritedKeys = new Set(
     Object.keys(slideFilters).filter((key) => blockParams[key] === undefined || blockParams[key] === ""),
   );
+  const displayModes = routeDisplayModes(route);
+  const presentationOptions = listDataPresentationOptions(displayModes);
+  const currentDisplayMode = (binding.displayMode ?? "auto") as ComunicadoDataDisplayMode;
 
   function updateParam(key: string, raw: string) {
     const nextParams = { ...(binding.params ?? {}) };
@@ -76,9 +92,18 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
     } as Partial<typeof selected>);
   }
 
+  function updateDisplayMode(displayMode: ComunicadoDataDisplayMode) {
+    const blockType = blockTypeForDisplayMode(displayMode, displayModes);
+    updateSelected({
+      type: blockType,
+      frame: defaultFrame(blockType),
+      dataBinding: { ...binding, displayMode },
+    } as Partial<typeof selected>);
+  }
+
   return (
     <>
-      <DeckPropertySection title="Indicador" hint="Parâmetros deste bloco sobrescrevem filtros do slide.">
+      <DeckPropertySection title="Dados" hint="Parâmetros deste bloco sobrescrevem filtros do slide.">
         <p className="td-deck-inspector__meta">{route?.label ?? binding.operationId}</p>
         <div className="td-deck-inspector__actions">
           <button type="button" className="td-btn td-btn--sm" onClick={() => duplicateSelected()}>
@@ -90,6 +115,23 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
             Trocar rota
           </button>
         </div>
+        {presentationOptions.length > 1 ? (
+          <DeckField id="td-data-display-mode" label="Formato de apresentação">
+            <select
+              id="td-data-display-mode"
+              value={currentDisplayMode}
+              onChange={(event) => updateDisplayMode(event.target.value as ComunicadoDataDisplayMode)}
+            >
+              {presentationOptions.map((option) => (
+                <option key={option.displayMode} value={option.displayMode}>
+                  {displayModeLabel(option.displayMode)}
+                </option>
+              ))}
+            </select>
+          </DeckField>
+        ) : (
+          <p className="td-deck-inspector__meta">{displayModeLabel(currentDisplayMode)}</p>
+        )}
         <DeckField id="td-data-label" label="Rótulo (opcional)">
           <input
             id="td-data-label"

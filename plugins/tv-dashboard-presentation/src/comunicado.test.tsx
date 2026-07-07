@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import {
+  blockTypeForDisplayMode,
+  listDataPresentationOptions,
+} from "./comunicadoDataPresentation";
+import {
   blockCssStyle,
   buildTextDecoration,
   clampFontSize,
@@ -138,6 +142,19 @@ describe("comunicadoHelpers", () => {
     expect(block.url).toBeUndefined();
     expect(block.assetId).toBe("asset-1");
     expect(serialized.background).toEqual({ type: "image", assetId: "bg-1" });
+  });
+});
+
+describe("comunicadoDataPresentation", () => {
+  it("lista modos permitidos por rota", () => {
+    const options = listDataPresentationOptions(["kpi", "line_chart", "auto"]);
+    expect(options.some((option) => option.displayMode === "kpi")).toBe(true);
+    expect(options.some((option) => option.displayMode === "auto")).toBe(true);
+  });
+
+  it("mapeia auto para data_metric", () => {
+    expect(blockTypeForDisplayMode("auto")).toBe("data_metric");
+    expect(blockTypeForDisplayMode("table")).toBe("data_table");
   });
 });
 

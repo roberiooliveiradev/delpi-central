@@ -35,7 +35,7 @@ export function SlideDataFiltersPanel({ branchScope = null }: Props) {
   if (Object.keys(schema).length === 0) return null;
 
   return (
-    <DeckPropertySection title="Filtros do slide" hint="Aplicam-se a todos os indicadores deste slide.">
+    <DeckPropertySection title="Filtros do slide" hint="Aplicam-se a todos os blocos de dados deste slide.">
       {Object.entries(schema).map(([key, field]) =>
         key === "branch" ? (
           <BranchField

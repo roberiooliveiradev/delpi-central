@@ -1,4 +1,3 @@
-import { defaultDataBlockTypeForRoute } from "./comunicadoHelpers";
 import type {
   ComunicadoDataBlockType,
   ComunicadoDataDisplayMode,
@@ -50,7 +49,7 @@ export function blockTypeForDisplayMode(
   allowedDisplayModes?: string[],
 ): ComunicadoDataBlockType {
   if (displayMode === "auto") {
-    return defaultDataBlockTypeForRoute(allowedDisplayModes);
+    return "data_metric";
   }
   if (displayMode === "kpi") return "data_kpi";
   if (displayMode === "table") return "data_table";
@@ -78,7 +77,7 @@ export function listDataPresentationOptions(
     if (mode === "auto") {
       options.push({
         displayMode: "auto",
-        blockType: defaultDataBlockTypeForRoute(allowedDisplayModes),
+        blockType: "data_metric",
         label: "Automático",
         description: "Escolhe KPI, gráfico ou listagem conforme a rota.",
       });
@@ -98,7 +97,7 @@ export function listDataPresentationOptions(
     return [
       {
         displayMode: "auto",
-        blockType: defaultDataBlockTypeForRoute(allowedDisplayModes),
+        blockType: "data_metric",
         label: "Automático",
         description: "Formato padrão para esta rota.",
       },

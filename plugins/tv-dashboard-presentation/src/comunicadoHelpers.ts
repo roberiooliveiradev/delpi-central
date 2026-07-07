@@ -84,7 +84,15 @@ export function createDataBlock(
     dataBinding: {
       operationId,
       params: { ...(options.defaultParams ?? {}) },
-      displayMode: options.displayMode ?? (blockType === "data_chart" ? "line_chart" : blockType === "data_table" ? "table" : "kpi"),
+      displayMode:
+        options.displayMode ??
+        (blockType === "data_metric"
+          ? "auto"
+          : blockType === "data_chart"
+            ? "line_chart"
+            : blockType === "data_table"
+              ? "table"
+              : "kpi"),
       label: options.label,
     },
   };

@@ -53,11 +53,11 @@ export function CustomSlideEditorLayout({
     <>
       {dataPreviewError ? (
         <p className="td-deck-preview-banner td-deck-preview-banner--error" role="status">
-          Preview de indicadores: {dataPreviewError}
+          Preview de dados: {dataPreviewError}
         </p>
       ) : dataPreviewLoading ? (
         <p className="td-deck-preview-banner" role="status">
-          Atualizando indicadores…
+          Atualizando dados…
         </p>
       ) : null}
       <DeckEditorChrome {...chromeWithSlideExtras} />

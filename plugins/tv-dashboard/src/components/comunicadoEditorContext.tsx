@@ -80,7 +80,7 @@ type ProviderProps = {
   children: ReactNode;
 };
 
-export function ComunicadoEditorProvider({ playlistId, slideId, value, onChange, children }: ProviderProps) {
+export function ComunicadoEditorProvider({ playlistId, value, onChange, children }: ProviderProps) {
   const [config, setConfig] = useState<ComunicadoConfig>(() =>
     enrichComunicadoConfigForEditor(value, playlistId),
   );
@@ -103,7 +103,6 @@ export function ComunicadoEditorProvider({ playlistId, slideId, value, onChange,
   const { resolvedByBlockId, loading: dataPreviewLoading, error: dataPreviewError } =
     useComunicadoDataPreview({
       playlistId,
-      slideId,
       config,
     });
 
@@ -220,6 +219,7 @@ export function ComunicadoEditorProvider({ playlistId, slideId, value, onChange,
     if (!("dataBinding" in selected) || !("dataBinding" in block)) return;
     updateSelected({
       type: block.type,
+      frame: block.frame,
       dataBinding: {
         ...selected.dataBinding,
         operationId: block.dataBinding.operationId,

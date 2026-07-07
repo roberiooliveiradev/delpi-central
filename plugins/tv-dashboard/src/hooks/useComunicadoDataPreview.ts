@@ -6,18 +6,16 @@ import {
   type ComunicadoDataResolved,
 } from "@delpi/tv-dashboard-presentation";
 
-import { previewDataBlock } from "../api/tvDashboardApi";
+import { previewDataBlockV2 } from "../api/tvDashboardApi";
 
 type Options = {
   playlistId: string;
-  slideId: string | undefined;
   config: ComunicadoConfig;
   debounceMs?: number;
 };
 
 export function useComunicadoDataPreview({
   playlistId,
-  slideId,
   config,
   debounceMs = 650,
 }: Options) {
@@ -27,11 +25,6 @@ export function useComunicadoDataPreview({
   const requestIdRef = useRef(0);
 
   useEffect(() => {
-    if (!slideId) {
-      setResolvedByBlockId({});
-      return;
-    }
-
     const dataBlocks = (config.blocks ?? []).filter((block) => isDataBlockType(block.type));
     if (dataBlocks.length === 0) {
       setResolvedByBlockId({});
@@ -50,7 +43,14 @@ export function useComunicadoDataPreview({
         try {
           const pairs = await Promise.all(
             dataBlocks.map(async (block) => {
-              const response = await previewDataBlock(playlistId, slideId, block.id, nativeConfig);
+              const { resolved: _resolved, ...blockPayload } = block as typeof block & {
+                resolved?: ComunicadoDataResolved;
+              };
+              const response = await previewDataBlockV2({
+                block: blockPayload as Record<string, unknown>,
+                nativeConfig,
+                playlistId,
+              });
               const resolved = response.block?.resolved;
               return [block.id, resolved] as const;
             }),
@@ -65,7 +65,7 @@ export function useComunicadoDataPreview({
           setResolvedByBlockId(next);
         } catch (err) {
           if (requestIdRef.current !== requestId) return;
-          setError(err instanceof Error ? err.message : "Falha ao carregar indicadores.");
+          setError(err instanceof Error ? err.message : "Falha ao carregar dados.");
           setResolvedByBlockId({});
         } finally {
           if (requestIdRef.current === requestId) {
@@ -76,7 +76,7 @@ export function useComunicadoDataPreview({
     }, debounceMs);
 
     return () => window.clearTimeout(timer);
-  }, [playlistId, slideId, config, debounceMs]);
+  }, [playlistId, config, debounceMs]);
 
   return { resolvedByBlockId, loading, error };
 }
