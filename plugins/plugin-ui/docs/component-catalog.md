@@ -221,17 +221,55 @@ Utils: `buildMultiSelectTriggerLabel` em `src/utils/multiSelectLabel.ts`.
 
 Helpers: `multiSelectBemClasses(prefix)` e `createDashboardMultiSelectField({ prefix, labels })`.
 
-### `FiltersRow` / `FilterInputField` (FilterBar)
+### `FiltersRow` / `FilterInputField` / `FilterSelectField` (FilterBar)
 
-Shell da linha de filtros (`{prefix}-filters-row`) e campo label+input reutilizável.
+Shell da linha de filtros (`{prefix}-filters-row`) e campos label+controle reutilizáveis.
 
 | Export | Descrição |
 |--------|-----------|
-| `FiltersRow` | `<section>` com `aria-label`, variante `extended` |
-| `FilterInputField` | Label + `FieldLabel` + input (`month`/`date`/`text`) |
+| `FiltersRow` | `<section>` com `aria-label`, variante `extended`, slot `trailing` |
+| `FilterInputField` | Label + `FieldLabel` + input (`month`/`date`/`text`/`search`) |
+| `FilterSelectField` | Label + `<select>` com `placeholderOption` opcional |
 | `FilterBar` | Alias de `FiltersRow` (roadmap F2.6) |
 
-Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels })`.
+Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels })` — retorna `FiltersRow`, `FilterInputField` e `FilterSelectField`.
+
+### `SimpleKpiCard` / `createKaizenKpiCard`
+
+Cartão KPI compacto com ícone. Variante kaizen usa BEM `{prefix}-kpi`, `{prefix}-kpi--{tone}` e props `label`/`sub` (alias de title/subtitle).
+
+| Export | Descrição |
+|--------|-----------|
+| `SimpleKpiCard` | Layout iconStart/iconEnd headless |
+| `createKaizenKpiCard(prefix)` | Wrapper kaizen: `tone`, `label`, `value`, `sub`, `icon` |
+| `simpleKpiKaizenBemClasses` | Mapa BEM `{prefix}-kpi__*` |
+| `simpleKpiKaizenToneClass` | Classe modificadora de tom |
+
+### `SectionCard`
+
+Seção estática com header (título, hint, subtítulo) — sem modo edição.
+
+Helpers: `sectionCardKaizenBemClasses`, `sectionCardPacBemClasses`, `createDashboardSectionCard({ classNames, labels })`.
+
+### `FormGrid` / `FormActions`
+
+Grade CSS grid para formulários e rodapé de botões.
+
+Helpers: `createDashboardFormGrid({ classNames })`, `createDashboardFormActions({ classNames })`.
+
+### `NativeFormFields` (`createDashboardNativeFormFields`)
+
+Campos nativos label+controle para plugins que estilizam `<input>`/`<select>`/`<textarea>` diretamente (ex.: kaizen `kz-field`).
+
+| Export | Descrição |
+|--------|-----------|
+| `TextField` / `SelectField` / `TextAreaField` | Campo com `FormFieldShell` |
+| `FormFieldShell` | Label + hint + slot children (participantes, multiselect custom) |
+| `formFieldShellKaizenClasses` | BEM `{prefix}-field`, `{prefix}-span-2` |
+
+### `StateBanner` / `PageHeader`
+
+Feedback inline (`createDashboardStateBanner`) e cabeçalho de página com slots (`createDashboardPageHeader` — variantes brand/compact documentadas no código).
 
 ### `ChartToolbar` + `ChartGranularityToggle`
 

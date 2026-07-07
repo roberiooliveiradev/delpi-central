@@ -15,7 +15,7 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | `dashboard-lmps` | — | ✅ Migrado | |
 | `dashboard-quality` | — | ✅ Migrado | |
 | `dashboard-supplies` | — | ✅ Migrado | |
-| `cadastro-kaizen` | — | ✅ Migrado | FormField nativo + SectionCard + Modal via plugin-ui |
+| `cadastro-kaizen` | — | ✅ Migrado | F2/F3 completo — ver [UI-PLUGIN-UI.md](../../cadastro-kaizen/docs/UI-PLUGIN-UI.md) |
 | `eficiencia-fabril` | — | ✅ Migrado | |
 | `transformometro` | — | ✅ Migrado | — |
 | `quality-action-plans` | — | ✅ Migrado | — |
@@ -190,3 +190,22 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity |
 | `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState |
 | `auditoria-5s` | — | ChartCard |
+
+## Referência — `cadastro-kaizen` (migração UI concluída)
+
+Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cadastro-kaizen/docs/UI-PLUGIN-UI.md).
+
+| Camada | Exports plugin-ui | Wrapper local |
+|--------|-------------------|---------------|
+| Help | `HelpTooltip`, `FieldLabel` (via factories) | — |
+| Formulário | `createDashboardNativeFormFields`, `DateField`, `FormGrid`, `FormActions` | `components/ui/kzFormFields`, `DateField`, `FormGrid` |
+| Filtros | `createDashboardFiltersKit` (+ `FilterSelectField`) | `FiltersKit.ts` |
+| KPI dashboard | `createKaizenKpiCard` | `KpiCard.tsx` |
+| Seções | `SectionCard`, `EditableSectionCard` | `SectionCard`, `EditableSectionCard` |
+| Lista/tabela | `createDashboardDataTableKit`, Pagination | `components/data/dataTableUi.ts` |
+| Multiselect | `createDashboardMultiSelectField`, creatable | `MultiSelectField`, `CategoryMultiSelectField` |
+| Feedback | `createDashboardStateBanner`, `PageHeader` | `StateAlert`, `KaizenPageHeader` |
+| Evidências | `createDashboardFileDropzone` | `KaizenEvidenceDropzone` |
+| Modal | `createModalShell` | `Modal.tsx` |
+
+Commits de referência (jul/2026): série `refactor(cadastro-kaizen): … via plugin-ui` até `refactor(cadastro-kaizen): concluir migração UI para @delpi/plugin-ui`.

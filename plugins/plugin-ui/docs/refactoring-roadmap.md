@@ -230,7 +230,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | `SelectField` | PAC, transformometro | ✅ F3.4 |
 | `DetailCard` | production, commercial, lmps | ✅ F3.5 |
 | `PageHeader` | 7 plugins operacionais | ✅ F3.6 |
-| `SectionCard` | PAC | ✅ F3.2 |
+| `SectionCard` | PAC + kaizen | ✅ F3.2 |
 | `EmptyState` / `LoadingState` | controle-retrabalhos, financeiro-centro-custo | ✅ F3.7 |
 
 ### Fase 4 — Utilitários compartilhados (1 sprint)
@@ -271,7 +271,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ DataTable ✅ | EditableSectionCard ✅ PageHeader ✅ | sim |
-| `cadastro-kaizen` | ✅ | Pagination ✅ MultiSelect ✅ DataTable ✅ | EditableSectionCard ✅ | sim |
+| `cadastro-kaizen` | ✅ | FiltersRow ✅ MultiSelect ✅ DataTable ✅ KpiCard ✅ | Forms ✅ SectionCard ✅ EditableSectionCard ✅ PageHeader ✅ StateBanner ✅ | sim |
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
 | `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · DataTableSection* allowlist | sim |

@@ -82,7 +82,9 @@ Body JSON (campos principais):
   "occurrences_per_day": 0.21,
   "hourly_cost": 127.16,
   "status": "implantado",
-  "date_implemented": "2026-01-16"
+  "date_idea_received": "2026-07-01",
+  "date_implemented": "2026-01-16",
+  "categories": ["Produção", "Segurança"]
 }
 ```
 
@@ -130,7 +132,37 @@ Mapeamento planilha → Postgres: `KaizenSheetImportMapper` (status normalizado,
 | `qualitativo` | — | `null` |
 | `misto` | combinação | soma das partes preenchidas |
 
-## 5. MFE — integração com o Portal
+### 4.1 Economia realizada
+
+Campos `realized_daily_savings` e `realized_annual_savings` (migration `V032`) registram medição pós-implantação.
+
+Quando **não informados**, a API e o painel usam **fallback para a estimativa calculada** (`resolve_realized_daily_savings` / `resolve_realized_annual_savings` em `kaizen_savings_calculator.py`) — evita exibir R$ 0 quando há parâmetros de economia preenchidos.
+
+A **validade de 1 ano** dos ganhos financeiros usa sempre `date_implemented` (`kaizen_savings_validity.py`), independentemente de haver medição realizada.
+
+## 5. Datas e vigência
+
+| Campo | Uso |
+|-------|-----|
+| `date_idea_received` | Recebimento/registro da ideia (V035). Opcional. |
+| `date_implemented` | **Data de implantação** — início da operação, validade de 1 ano da economia e vigência da revisão implantada. |
+| `date_discontinued` | Fim da operação; interrompe contabilização. |
+
+**Regra unificada (jul/2026):** o usuário informa apenas **Data implantação** no Estágio. Internamente, `effective_from` da revisão espelha `date_implemented` (`kaizen_revision_service.resolve_effective_from`). O body legado `effective_from` no PUT é ignorado. Ao implantar rascunho (`POST .../implement`), a API lê `date_implemented` do snapshot da versão.
+
+Se status = `implantado` sem data, `ensure_implantation_date` preenche com a data de hoje.
+
+Timeline de versões exibe «Implantação: … → …» a partir de `effective_from` (sincronizado com `date_implemented`).
+
+## 6. Categorias
+
+Migration `V036`: coluna `categories TEXT[]` (substitui uso exclusivo de `category` string).
+
+- Normalização: `kaizen_categories.normalize_categories` (trim, dedupe, legado `category` → array).
+- UI: `CategoryMultiSelectField` com `createDashboardCreatableMultiSelectField`; categorias customizadas em `localStorage` (`delpi-kaizen-custom-categories`).
+- `category` (singular) permanece como primeiro item do array (compatibilidade).
+
+## 7. MFE — integração com o Portal
 
 - **Manifesto:** `cadastro-kaizen.manifest.json`
 - **Federation:** expõe `./App` via `remoteEntry.js`
@@ -138,6 +170,12 @@ Mapeamento planilha → Postgres: `KaizenSheetImportMapper` (status normalizado,
 - **Auth:** Bearer JWT do Keycloak (mesmo fluxo dos demais plugins)
 
 O `httpClient.ts` centraliza token (via `configureHttpClient` no bootstrap) e tratamento de erros do envelope.
+
+### 5.1 Camada UI (`@delpi/plugin-ui`)
+
+Formulários, filtros, KPIs, tabelas e seções usam wrappers finos em `src/components/ui/` sobre [`@delpi/plugin-ui`](../../plugin-ui/README.md) (prefixo BEM `kz`). Textos de ajuda permanecem em `src/content/helpTooltips.ts`.
+
+Detalhes, mapa de wrappers e checklist para novos campos: **[UI-PLUGIN-UI.md](./UI-PLUGIN-UI.md)**.
 
 ## 6. Variáveis de ambiente (planilha — importação e dashboard)
 

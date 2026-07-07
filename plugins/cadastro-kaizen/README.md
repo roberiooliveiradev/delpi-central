@@ -113,12 +113,21 @@ src/
   api/kaizenApi.ts          # Cliente REST (base /apps/api-delpi/...)
   api/httpClient.ts         # JWT + X-Delpi-Caller-App
   pages/
-    CadastroKaizenPage.tsx  # Roteamento list | new | edit
+    CadastroKaizenPage.tsx  # Roteamento list | new | edit | dashboard | detail
     KaizenListPage.tsx      # Tabela + importar planilha
     KaizenFormPage.tsx      # Criar / editar
-  components/form/          # KaizenFormFields
+    KaizenDashboardPage.tsx # Painel KPI + filtros
+    KaizenDetailPage.tsx    # Ficha com revisões
+  components/ui/            # Wrappers finos @delpi/plugin-ui (prefixo kz)
+  components/form/          # KaizenFormFields, CategoryMultiSelect, domínio
   constants/kaizen.ts       # Status, filiais, payload do formulário
 ```
+
+### UI compartilhada (`@delpi/plugin-ui`)
+
+Primitivos de formulário, filtros, KPI, tabelas e seções foram centralizados no pacote [`@delpi/plugin-ui`](../plugin-ui/README.md). O plugin expõe wrappers em `src/components/ui/` (BEM `kz-*`).
+
+**Documentação completa:** [docs/UI-PLUGIN-UI.md](./docs/UI-PLUGIN-UI.md)
 
 ## Desenvolvimento local
 

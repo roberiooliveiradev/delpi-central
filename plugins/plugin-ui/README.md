@@ -89,8 +89,18 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `MultiSelectField` | Dropdown multiseleção com busca opcional |
 | `multiSelectBemClasses` / `createDashboardMultiSelectField` | Helpers BEM + factory |
 | `buildMultiSelectTriggerLabel` | Label do trigger conforme seleção |
-| `FiltersRow` / `FilterInputField` | Linha de filtros + campo input |
+| `FiltersRow` / `FilterInputField` / `FilterSelectField` | Linha de filtros + campos input/select |
 | `filtersRowBemClasses` / `createDashboardFiltersKit` | Helpers BEM + factory |
+| `SimpleKpiCard` / `createKaizenKpiCard` | KPI estilo kaizen (`{prefix}-kpi--{tone}`) |
+| `simpleKpiKaizenBemClasses` / `simpleKpiKaizenToneClass` | BEM kaizen para KPI |
+| `SectionCard` / `createDashboardSectionCard` | Seção estática com título + hint |
+| `sectionCardKaizenBemClasses` / `sectionCardPacBemClasses` | BEM por plugin |
+| `FormGrid` / `createDashboardFormGrid` | Grade de formulário (`{prefix}-form-grid`) |
+| `FormActions` / `createDashboardFormActions` | Rodapé de ações de formulário |
+| `createDashboardNativeFormFields` | Factory TextField/SelectField/TextAreaField/FormFieldShell |
+| `formFieldShellKaizenClasses` | BEM shell kaizen (`kz-field`) |
+| `StateBanner` / `createDashboardStateBanner` | Banner de estado (erro/sucesso/info) |
+| `PageHeader` / `createDashboardPageHeader` | Cabeçalho de página (variantes brand/compact) |
 | `ChartToolbar` / `ChartGranularityToggle` | Barra de gráfico + agrupamento |
 | `chartToolbarBemClasses` / `createDashboardChartToolbarKit` | Helpers BEM + factory |
 | `DetailFieldGrid` | Grade `<dl>` para fichas de detalhe |
@@ -141,7 +151,7 @@ src/
 | `dashboard-production` | ✅ Fase 1 |
 | `dashboard-quality` | ✅ Fase 1 |
 | `dashboard-supplies` | ✅ Fase 1 |
-| `cadastro-kaizen` | ✅ Fase 1 |
+| `cadastro-kaizen` | ✅ F1 + F2/F3 | Migração UI completa — [UI-PLUGIN-UI.md](../cadastro-kaizen/docs/UI-PLUGIN-UI.md) |
 | `transformometro` | ✅ Fase 1 |
 | `quality-action-plans` | ✅ Fase 1 |
 | `eficiencia-fabril` | ✅ Fase 1 |
