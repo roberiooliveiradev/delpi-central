@@ -1,3 +1,5 @@
+import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
+
 export type ComunicadoFrame = {
   x: number;
   y: number;
@@ -71,6 +73,7 @@ export type ComunicadoMediaBlock = ComunicadoBlockBase & {
   url?: string;
   href?: string;
   linkTarget?: "_blank" | "_self";
+  imageCrop?: ComunicadoImageCrop;
 };
 
 export type ComunicadoShapeBlock = ComunicadoBlockBase & {

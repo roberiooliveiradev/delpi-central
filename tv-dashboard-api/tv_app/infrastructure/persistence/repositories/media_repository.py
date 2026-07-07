@@ -5,11 +5,6 @@ from uuid import UUID
 
 from tv_app.infrastructure.persistence.plugins_postgres_connection import get_connection
 
-
-class MediaAssetNotFoundError(LookupError):
-    pass
-
-
 def _row_to_asset(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": str(row["id"]),
@@ -83,6 +78,35 @@ class MediaRepository:
                 )
                 row = cur.fetchone()
         return _row_to_asset(row) if row else None
+
+    def list_for_playlist(
+        self,
+        playlist_id: UUID,
+        *,
+        media_kind: str | None = None,
+    ) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                if media_kind:
+                    cur.execute(
+                        """
+                        SELECT * FROM tv_dashboard.media_assets
+                        WHERE playlist_id = %s AND media_kind = %s
+                        ORDER BY created_at DESC
+                        """,
+                        (str(playlist_id), media_kind),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT * FROM tv_dashboard.media_assets
+                        WHERE playlist_id = %s
+                        ORDER BY created_at DESC
+                        """,
+                        (str(playlist_id),),
+                    )
+                rows = cur.fetchall()
+        return [_row_to_asset(row) for row in rows]
 
     def get_for_token(self, token: str, asset_id: UUID) -> dict[str, Any] | None:
         with get_connection() as conn:

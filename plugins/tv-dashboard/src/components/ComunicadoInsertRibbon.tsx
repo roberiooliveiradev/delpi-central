@@ -57,7 +57,7 @@ function ShapeDropdownMenu({
 }
 
 export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
-  const { shapeMenuOpen, setShapeMenuOpen, addBlock, addShape, addIconBlock, addDataBlock } =
+  const { shapeMenuOpen, setShapeMenuOpen, addBlock, addShape, addIconBlock, addDataBlock, openMediaLibrary } =
     useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
   const iconAnchorRef = useRef<HTMLDivElement>(null);
@@ -90,13 +90,13 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             icon={ImageIcon}
             label={labels.comunicadoAddImage ?? "Imagem"}
             hint={H.insertImage}
-            onClick={() => addBlock("image")}
+            onClick={() => openMediaLibrary("insert-image")}
           />
           <DeckRibbonTile
             icon={Video}
             label={labels.comunicadoAddVideo ?? "Vídeo"}
             hint={H.insertVideo}
-            onClick={() => addBlock("video")}
+            onClick={() => openMediaLibrary("insert-video")}
           />
           <div ref={shapeAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile

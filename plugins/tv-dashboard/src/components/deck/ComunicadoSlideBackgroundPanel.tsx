@@ -1,4 +1,4 @@
-import { Upload } from "lucide-react";
+import { Upload, FolderOpen } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -17,7 +17,7 @@ const GRADIENT_PRESETS: Array<{ label: string; from: string; to: string }> = [
 ];
 
 export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Labels }) {
-  const { uploading, background, triggerUpload, setBackgroundColor, setBackgroundGradient } =
+  const { uploading, background, triggerUpload, openMediaLibrary, setBackgroundColor, setBackgroundGradient } =
     useComunicadoEditor();
 
   const gradientFrom = background?.type === "gradient" ? background.from : "#0f172a";
@@ -66,17 +66,25 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
         ))}
       </div>
 
-      <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: imagem de fundo">
-        <button
-          type="button"
-          className="td-btn td-btn--sm"
-          disabled={uploading}
-          onClick={() => triggerUpload("background")}
-        >
-          <Upload size={15} aria-hidden="true" />
-          {labels.comunicadoUpload ?? "Enviar imagem de fundo"}
-        </button>
-      </HintAction>
+      <div className="td-deck-inspector__actions">
+        <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: biblioteca de fundo">
+          <button type="button" className="td-btn td-btn--sm" onClick={() => openMediaLibrary("background")}>
+            <FolderOpen size={15} aria-hidden="true" />
+            Biblioteca
+          </button>
+        </HintAction>
+        <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: imagem de fundo">
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            disabled={uploading}
+            onClick={() => triggerUpload("background")}
+          >
+            <Upload size={15} aria-hidden="true" />
+            {labels.comunicadoUpload ?? "Enviar imagem de fundo"}
+          </button>
+        </HintAction>
+      </div>
     </DeckPropertySection>
   );
 }

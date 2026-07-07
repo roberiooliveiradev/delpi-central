@@ -1,4 +1,4 @@
-import { ComunicadoBlockView, ComunicadoMediaPlaceholder, blockCssStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import { ComunicadoBlockView, ComunicadoMediaPlaceholder, blockCssStyle, comunicadoImageCropCssProperties, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import type { CSSProperties } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -38,6 +38,8 @@ function EditorImageBlock({
     .filter(Boolean)
     .join(" ");
 
+  const fit = block.style?.objectFit ?? "contain";
+
   return (
     <div className={blockClass} style={style}>
       {src ? (
@@ -45,7 +47,7 @@ function EditorImageBlock({
           className="td-composer__media-preview"
           src={src}
           alt=""
-          style={{ objectFit: block.style?.objectFit ?? "contain" }}
+          style={comunicadoImageCropCssProperties(block.imageCrop, fit)}
         />
       ) : block.url && loading ? (
         <ComunicadoMediaPlaceholder kind="image" state="loading" />

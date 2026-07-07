@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { normalizeComunicadoImageCrop } from "./comunicadoImageCrop";
 import type {
   ComunicadoBackground,
   ComunicadoBlock,
@@ -312,6 +313,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     base.assetId = block.assetId;
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
+    if (block.type === "image" && block.imageCrop) base.imageCrop = block.imageCrop;
   } else if (block.type === "shape") {
     base.shape = block.shape;
     if (block.content) base.content = block.content;
@@ -458,6 +460,9 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       url: typeof block.url === "string" ? block.url : undefined,
       href: links.href,
       linkTarget: links.linkTarget,
+      ...(type === "image"
+        ? { imageCrop: normalizeComunicadoImageCrop(block.imageCrop) }
+        : {}),
     };
   }
   return createBlock("text", "");

@@ -13,6 +13,8 @@ import {
   AlignHorizontalJustifyStart,
   Bold,
   Copy,
+  Crop,
+  FolderOpen,
   Group,
   Highlighter,
   Italic,
@@ -71,6 +73,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     duplicateSelected,
     moveLayer,
     triggerUpload,
+    openMediaLibrary,
     setBackgroundColor,
     undo,
     redo,
@@ -95,6 +98,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       ? selected.style?.verticalAlign ?? defaultVerticalAlignForBlock(selected.type)
       : "top";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
+  const isImageBlock = selected?.type === "image";
   const isShapeBlock = selected?.type === "shape";
 
   return (
@@ -127,6 +131,12 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             hint={E.uploadBackground}
             disabled={uploading}
             onClick={() => triggerUpload("background")}
+          />
+          <DeckRibbonTile
+            icon={FolderOpen}
+            label="Biblioteca"
+            hint="Escolher imagem já enviada à playlist"
+            onClick={() => openMediaLibrary("background")}
           />
         </div>
       </DeckRibbonGroup>
@@ -482,14 +492,35 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
         <DeckRibbonGroup label="Organizar" hint={H.organize}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
             <DeckRibbonTile icon={Copy} label="Duplicar" hint="Duplicar elemento (Ctrl+D)" onClick={duplicateSelected} />
-            {isMediaBlock ? (
+            {isImageBlock && selected?.url ? (
               <DeckRibbonTile
-                icon={Upload}
-                label={uploading ? "…" : labels.comunicadoUpload ?? "Mídia"}
-                hint={E.uploadMedia}
-                disabled={uploading}
-                onClick={() => triggerUpload("block")}
+                icon={Crop}
+                label="Recorte"
+                hint="Ajustar recorte da imagem no inspetor"
+                onClick={() => {
+                  document.getElementById("td-comunicado-crop-panel")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                  });
+                }}
               />
+            ) : null}
+            {isMediaBlock ? (
+              <>
+                <DeckRibbonTile
+                  icon={FolderOpen}
+                  label="Biblioteca"
+                  hint="Escolher mídia da playlist"
+                  onClick={() => openMediaLibrary("block")}
+                />
+                <DeckRibbonTile
+                  icon={Upload}
+                  label={uploading ? "…" : labels.comunicadoUpload ?? "Mídia"}
+                  hint={E.uploadMedia}
+                  disabled={uploading}
+                  onClick={() => triggerUpload("block")}
+                />
+              </>
             ) : null}
             <DeckRibbonTile
               icon={ArrowUp}

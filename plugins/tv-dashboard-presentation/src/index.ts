@@ -28,6 +28,13 @@ export type {
   ComunicadoScreenData,
   ComunicadoShapeKind,
 } from "./comunicadoTypes";
+export type { ComunicadoImageCrop } from "./comunicadoImageCrop";
+export {
+  COMUNICADO_IMAGE_CROP_FULL,
+  comunicadoImageCropCssProperties,
+  isFullComunicadoImageCrop,
+  normalizeComunicadoImageCrop,
+} from "./comunicadoImageCrop";
 export {
   COMUNICADO_FONT_FAMILIES,
   COMUNICADO_FONT_SIZE_MAX,

@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Trash2, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, FolderOpen, Trash2, Upload } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui";
 import { isDataBlockType } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
@@ -7,6 +7,7 @@ import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboa
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { ComunicadoImageCropPanel } from "./ComunicadoImageCropPanel";
 import { DeckActionRow } from "./DeckActionRow";
 import { DeckField } from "./DeckField";
 import { DeckInspectorLayout } from "./DeckInspectorLayout";
@@ -44,6 +45,7 @@ export function ComunicadoElementInspector({
     removeSelected,
     moveLayer,
     triggerUpload,
+    openMediaLibrary,
   } = useComunicadoEditor();
 
   const multiSelect = selectedIds.length > 1;
@@ -112,19 +114,37 @@ export function ComunicadoElementInspector({
         ) : null}
 
         {!multiSelect && isMediaBlock ? (
-          <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: enviar arquivo">
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
-              disabled={uploading}
-              onClick={() => triggerUpload("block")}
-            >
-              <Upload size={15} aria-hidden="true" />
-              {uploading ? "Enviando…" : labels.comunicadoUpload ?? "Enviar arquivo"}
-            </button>
-          </HintAction>
+          <div className="td-deck-inspector__actions">
+            <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: biblioteca de mídia">
+              <button
+                type="button"
+                className="td-btn td-btn--sm"
+                onClick={() => openMediaLibrary("block")}
+              >
+                <FolderOpen size={15} aria-hidden="true" />
+                Biblioteca
+              </button>
+            </HintAction>
+            <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: enviar arquivo">
+              <button
+                type="button"
+                className="td-btn td-btn--sm"
+                disabled={uploading}
+                onClick={() => triggerUpload("block")}
+              >
+                <Upload size={15} aria-hidden="true" />
+                {uploading ? "Enviando…" : labels.comunicadoUpload ?? "Enviar arquivo"}
+              </button>
+            </HintAction>
+          </div>
         ) : null}
       </DeckPropertySection>
+
+      {!multiSelect && selected.type === "image" ? (
+        <div id="td-comunicado-crop-panel">
+          <ComunicadoImageCropPanel />
+        </div>
+      ) : null}
 
       {!multiSelect ? (
         <DeckPropertySection title="Posição e tamanho" hint={E.position}>

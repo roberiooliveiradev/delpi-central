@@ -60,6 +60,22 @@ async def upload_media(request: Request, playlist_id: UUID, file: UploadFile = F
     return ok(asset, message=message("mediaUploaded", "Mídia enviada."), status_code=201)
 
 
+@router.get("")
+def list_media(request: Request, playlist_id: UUID, media_kind: str | None = None):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not _ensure_playlist(playlist_id):
+        return fail(message("playlistNotFound"), 404)
+    kind = media_kind.strip() if isinstance(media_kind, str) and media_kind.strip() else None
+    if kind and kind not in {"image", "video"}:
+        return fail(message("mediaKindInvalid", "Tipo de mídia inválido."), 422)
+    items = _media_repo.list_for_playlist(playlist_id, media_kind=kind)
+    return ok({"items": items})
+
+
 @router.get("/{asset_id}")
 def serve_media(request: Request, playlist_id: UUID, asset_id: UUID):
     user = resolve_user(request)

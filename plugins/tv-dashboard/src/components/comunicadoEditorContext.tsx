@@ -28,6 +28,7 @@ import {
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
+import { MediaLibraryModal } from "./MediaLibraryModal";
 import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
 import { snapComunicadoFrame } from "../utils/comunicadoSnap";
@@ -41,6 +42,8 @@ import {
 import { applyComunicadoSlideTheme, type ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 
 const HISTORY_LIMIT = 50;
+
+export type MediaLibraryTarget = "block" | "background" | "insert-image" | "insert-video";
 
 function snapshotConfig(config: ComunicadoConfig): ComunicadoConfig {
   return parseComunicadoConfig(serializeComunicadoConfig(config));
@@ -88,6 +91,12 @@ type ComunicadoEditorContextValue = {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  playlistId: string;
+  mediaLibraryOpen: boolean;
+  mediaLibraryTarget: MediaLibraryTarget;
+  openMediaLibrary: (target: MediaLibraryTarget) => void;
+  closeMediaLibrary: () => void;
+  applyMediaAsset: (asset: MediaAsset) => void;
   triggerUpload: (target: "block" | "background") => void;
   setBackgroundColor: (value: string) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
@@ -194,8 +203,11 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   );
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
   const [stageZoom, setStageZoom] = useState(1);
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
+  const [mediaLibraryTarget, setMediaLibraryTarget] = useState<MediaLibraryTarget>("block");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<"block" | "background">("block");
+  const mediaLibraryTargetRef = useRef<MediaLibraryTarget>("block");
 
   useEffect(() => {
     const enriched = enrichComunicadoConfigForEditor(value, playlistId);
@@ -647,24 +659,67 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     setUploading(true);
     try {
       const asset: MediaAsset = await uploadPlaylistMedia(playlistId, file);
-      const url = adminMediaUrl(playlistId, asset.id);
-      if (target === "background") {
-        commitWithHistory({
-          ...configRef.current,
-          background: { type: "image", assetId: asset.id, url },
-        });
-        return;
-      }
-      if (!selected || (selected.type !== "image" && selected.type !== "video")) return;
-      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
-        block.id === selected.id
-          ? ({ ...block, assetId: asset.id, url } as ComunicadoBlock)
-          : block,
-      );
-      updateBlocks(nextBlocks);
+      applyMediaAsset(asset, target);
     } finally {
       setUploading(false);
     }
+  }
+
+  function applyMediaAsset(asset: MediaAsset, target?: MediaLibraryTarget) {
+    const resolvedTarget = target ?? mediaLibraryTargetRef.current;
+    const url = adminMediaUrl(playlistId, asset.id);
+
+    if (resolvedTarget === "background") {
+      commitWithHistory({
+        ...configRef.current,
+        background: { type: "image", assetId: asset.id, url },
+      });
+      return;
+    }
+
+    if (resolvedTarget === "insert-image") {
+      const block = createBlock("image");
+      const withMedia = { ...block, assetId: asset.id, url } as ComunicadoBlock;
+      const nextBlocks = [...(configRef.current.blocks ?? []), withMedia];
+      updateBlocks(nextBlocks);
+      setSelectedId(block.id);
+      return;
+    }
+
+    if (resolvedTarget === "insert-video") {
+      const block = createBlock("video");
+      const withMedia = { ...block, assetId: asset.id, url } as ComunicadoBlock;
+      const nextBlocks = [...(configRef.current.blocks ?? []), withMedia];
+      updateBlocks(nextBlocks);
+      setSelectedId(block.id);
+      return;
+    }
+
+    const currentSelected = configRef.current.blocks?.find((block) => block.id === selectedId) ?? selected;
+    if (!currentSelected || (currentSelected.type !== "image" && currentSelected.type !== "video")) {
+      return;
+    }
+    const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+      block.id === currentSelected.id
+        ? ({
+            ...block,
+            assetId: asset.id,
+            url,
+            ...(block.type === "image" ? { imageCrop: undefined } : {}),
+          } as ComunicadoBlock)
+        : block,
+    );
+    updateBlocks(nextBlocks);
+  }
+
+  function openMediaLibrary(target: MediaLibraryTarget) {
+    mediaLibraryTargetRef.current = target;
+    setMediaLibraryTarget(target);
+    setMediaLibraryOpen(true);
+  }
+
+  function closeMediaLibrary() {
+    setMediaLibraryOpen(false);
   }
 
   function triggerUpload(target: "block" | "background") {
@@ -727,6 +782,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     redo,
     canUndo,
     canRedo,
+    playlistId,
+    mediaLibraryOpen,
+    mediaLibraryTarget,
+    openMediaLibrary,
+    closeMediaLibrary,
+    applyMediaAsset,
     triggerUpload,
     setBackgroundColor,
     setBackgroundGradient,
@@ -753,6 +814,17 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
           const file = event.target.files?.[0];
           event.target.value = "";
           if (file) void handleUploadFile(file, uploadTargetRef.current);
+        }}
+      />
+      <MediaLibraryModal
+        open={mediaLibraryOpen}
+        target={mediaLibraryTarget}
+        playlistId={playlistId}
+        uploading={uploading}
+        onClose={closeMediaLibrary}
+        onPick={applyMediaAsset}
+        onUploaded={() => {
+          /* lista recarrega ao reabrir */
         }}
       />
       {children}

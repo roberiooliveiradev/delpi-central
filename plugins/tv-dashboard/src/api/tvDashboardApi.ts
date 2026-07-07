@@ -134,6 +134,16 @@ export async function uploadPlaylistMedia(playlistId: string, file: File) {
   );
 }
 
+export async function listPlaylistMedia(playlistId: string, mediaKind?: "image" | "video") {
+  const query = mediaKind ? `?media_kind=${encodeURIComponent(mediaKind)}` : "";
+  const data = await unwrap(
+    httpGet<ApiEnvelope<{ items: MediaAsset[] }>>(
+      `${API_BASE}/playlists/${playlistId}/media${query}`,
+    ),
+  );
+  return data.items;
+}
+
 export async function listPlaylists() {
   const data = await unwrap(httpGet<ApiEnvelope<{ items: Playlist[] }>>(`${API_BASE}/playlists`));
   return data.items;

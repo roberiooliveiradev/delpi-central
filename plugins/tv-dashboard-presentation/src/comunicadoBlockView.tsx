@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoIconGraphic } from "./comunicadoIconView";
+import { comunicadoImageCropCssProperties } from "./comunicadoImageCrop";
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 import { blockCssStyle, comunicadoTextInnerStyle, isDataBlockType } from "./comunicadoHelpers";
 import type { ComunicadoBlock, ComunicadoDataBlock } from "./comunicadoTypes";
@@ -180,8 +181,13 @@ export function ComunicadoBlockView({
   }
 
   if (block.type === "image" && (block.url || interactive)) {
+    const fit = block.style?.objectFit ?? "contain";
     const media = block.url ? (
-      <img src={block.url} alt="" style={{ objectFit: block.style?.objectFit ?? "contain" }} />
+      <img
+        src={block.url}
+        alt=""
+        style={comunicadoImageCropCssProperties(block.imageCrop, fit)}
+      />
     ) : (
       <ComunicadoMediaPlaceholder kind="image" />
     );
