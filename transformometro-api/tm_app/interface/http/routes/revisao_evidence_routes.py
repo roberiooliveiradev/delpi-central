@@ -28,8 +28,8 @@ class RevisaoEvidenceUpdateBody(BaseModel):
 
 
 def _actor(request: Request) -> tuple[str | None, str | None]:
-    user_id, email = actor_from_request(request)
-    return user_id, email
+    user_id, user_email, _user_name = actor_from_request(request)
+    return user_id, user_email
 
 
 def _ensure_revisao(revisao_id: str) -> dict | None:

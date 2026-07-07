@@ -80,7 +80,7 @@ class ContextoBody(BaseModel):
 
 
 def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
-    user_id, user_email = actor_from_request(request)
+    user_id, user_email, user_name = actor_from_request(request)
     try:
         AuditRepository().log(
             entity_type=entity_type,
@@ -88,7 +88,7 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
             action=action,
             user_id=user_id,
             user_email=user_email,
-            user_name=user_email,
+            user_name=user_name or user_email,
             payload=payload,
         )
     except Exception as exc:
