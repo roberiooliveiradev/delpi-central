@@ -11,14 +11,20 @@ from cx_app.infrastructure.persistence.plugins_postgres_connection import (
 
 _FORMS = f'"{CX_SCHEMA_NAME}".forms'
 _QUESTIONS = f'"{CX_SCHEMA_NAME}".form_questions'
+_PAGES = f'"{CX_SCHEMA_NAME}".form_pages'
 
 _FORM_COLUMNS = (
     "id, public_token, title, description, qr_filename, is_active, response_count, "
+    "one_question_per_page, background_image_filename, "
     "created_by, created_by_name, created_at, updated_at"
 )
 _QUESTION_COLUMNS = (
-    "id, form_id, position, question_type, label, help_text, is_required, "
-    "options, is_active, created_at, updated_at"
+    "id, form_id, page_id, position, question_type, label, help_text, is_required, "
+    "options, point_image_filename, is_active, created_at, updated_at"
+)
+_PAGE_COLUMNS = (
+    "id, form_id, position, title, background_image_filename, point_image_filename, "
+    "created_at, updated_at"
 )
 
 
@@ -110,6 +116,75 @@ class FormRepository:
             conn.commit()
         return deleted
 
+    # ----- páginas ---------------------------------------------------------
+
+    def list_pages(self, form_id: str) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_PAGE_COLUMNS} FROM {_PAGES}
+                    WHERE form_id = %s
+                    ORDER BY position ASC, created_at ASC
+                    """,
+                    (form_id,),
+                )
+                rows = cur.fetchall()
+        return [dict(r) for r in rows]
+
+    def replace_pages(
+        self, form_id: str, pages: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        keep_ids: list[str] = []
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                for position, page in enumerate(pages):
+                    bg = page.get("background_image_filename")
+                    point = page.get("point_image_filename")
+                    title = page.get("title")
+                    if page.get("id"):
+                        cur.execute(
+                            f"""
+                            UPDATE {_PAGES}
+                            SET position = %s, title = %s,
+                                background_image_filename = %s,
+                                point_image_filename = %s,
+                                updated_at = NOW()
+                            WHERE id = %s AND form_id = %s
+                            RETURNING id
+                            """,
+                            (position, title, bg, point, page["id"], form_id),
+                        )
+                        updated = cur.fetchone()
+                        if updated:
+                            keep_ids.append(str(updated["id"]))
+                            continue
+                    cur.execute(
+                        f"""
+                        INSERT INTO {_PAGES}
+                            (form_id, position, title,
+                             background_image_filename, point_image_filename)
+                        VALUES (%s, %s, %s, %s, %s)
+                        RETURNING id
+                        """,
+                        (form_id, position, title, bg, point),
+                    )
+                    inserted = cur.fetchone()
+                    keep_ids.append(str(inserted["id"]))
+
+                if keep_ids:
+                    cur.execute(
+                        f"""
+                        DELETE FROM {_PAGES}
+                        WHERE form_id = %s AND id <> ALL(%s::uuid[])
+                        """,
+                        (form_id, keep_ids),
+                    )
+                else:
+                    cur.execute(f"DELETE FROM {_PAGES} WHERE form_id = %s", (form_id,))
+            conn.commit()
+        return self.list_pages(form_id)
+
     # ----- perguntas -------------------------------------------------------
 
     def list_questions(
@@ -139,23 +214,28 @@ class FormRepository:
             with conn.cursor() as cur:
                 for position, q in enumerate(questions):
                     options = Json(q["options"]) if q.get("options") else None
+                    page_id = q.get("page_id")
+                    point_image = q.get("point_image_filename")
                     if q.get("id"):
                         cur.execute(
                             f"""
                             UPDATE {_QUESTIONS}
-                            SET position = %s, question_type = %s, label = %s,
+                            SET position = %s, page_id = %s, question_type = %s, label = %s,
                                 help_text = %s, is_required = %s, options = %s,
+                                point_image_filename = %s,
                                 is_active = TRUE, updated_at = NOW()
                             WHERE id = %s AND form_id = %s
                             RETURNING id
                             """,
                             (
                                 position,
+                                page_id,
                                 q["question_type"],
                                 q["label"],
                                 q.get("help_text"),
                                 bool(q.get("is_required")),
                                 options,
+                                point_image,
                                 q["id"],
                                 form_id,
                             ),
@@ -167,19 +247,21 @@ class FormRepository:
                     cur.execute(
                         f"""
                         INSERT INTO {_QUESTIONS}
-                            (form_id, position, question_type, label, help_text,
-                             is_required, options)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            (form_id, page_id, position, question_type, label, help_text,
+                             is_required, options, point_image_filename)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                         """,
                         (
                             form_id,
+                            page_id,
                             position,
                             q["question_type"],
                             q["label"],
                             q.get("help_text"),
                             bool(q.get("is_required")),
                             options,
+                            point_image,
                         ),
                     )
                     inserted = cur.fetchone()

@@ -25,12 +25,19 @@ import {
   getForm,
   listForms,
   listResponses,
+  removeFormBackground,
   setQuestions as apiSetQuestions,
   updateForm,
+  uploadFormBackground,
+  uploadPageBackground,
+  uploadPagePointImage,
+  uploadQuestionPointImage,
 } from "../api/formsApi";
+import { PhotoDropzone } from "../components/PhotoDropzone";
 import type {
   FormDashboard,
   FormDetail,
+  FormPage,
   FormQuestion,
   FormResponseList,
   FormSummary,
@@ -52,6 +59,24 @@ const CHOICE_TYPES: QuestionType[] = ["single_choice", "multi_choice"];
 function blankQuestion(): FormQuestion {
   return { type: "rating", label: "", helpText: null, required: false, options: [] };
 }
+
+function blankPage(): FormPage {
+  return { title: null, backgroundImageUrl: null, pointImageUrl: null };
+}
+
+function syncWizardPages(questions: FormQuestion[], pages: FormPage[]): FormPage[] {
+  return questions.map((q, index) => ({
+    ...(pages[index] ?? blankPage()),
+    title: (pages[index]?.title ?? q.label) || `Página ${index + 1}`,
+  }));
+}
+
+type PendingImages = {
+  formBackground?: File;
+  pageBackground: Record<number, File>;
+  pagePoint: Record<number, File>;
+  questionPoint: Record<number, File>;
+};
 
 type View = "list" | "editor" | "dashboard";
 
@@ -361,16 +386,46 @@ function FormEditor({
 }) {
   const [title, setTitle] = useState(form.title);
   const [description, setDescription] = useState(form.description ?? "");
+  const [oneQuestionPerPage, setOneQuestionPerPage] = useState(form.oneQuestionPerPage ?? false);
+  const [backgroundPreview, setBackgroundPreview] = useState<string | null>(
+    form.backgroundImageUrl ?? null,
+  );
+  const [pages, setPages] = useState<FormPage[]>(form.pages ?? []);
   const [questions, setQuestions] = useState<FormQuestion[]>(form.questions);
+  const [pendingImages, setPendingImages] = useState<PendingImages>({
+    pageBackground: {},
+    pagePoint: {},
+    questionPoint: {},
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Índice sendo arrastado (habilita `draggable` só ao segurar a alça, para não
-  // atrapalhar a seleção de texto nos inputs) e o índice sob o cursor.
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (!oneQuestionPerPage) return;
+    setPages((prev) => syncWizardPages(questions, prev));
+  }, [oneQuestionPerPage, questions]);
+
   const update = (index: number, patch: Partial<FormQuestion>) => {
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, ...patch } : q)));
+  };
+
+  const resolvePageIndex = (q: FormQuestion) => {
+    if (q.pageIndex != null) return q.pageIndex;
+    if (!q.pageId) return -1;
+    return pages.findIndex((p) => p.id === q.pageId);
+  };
+
+  const updatePage = (index: number, patch: Partial<FormPage>) => {
+    setPages((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)));
+  };
+
+  const setQuestionPageIndex = (qIndex: number, pageIndex: number | null) => {
+    update(qIndex, {
+      pageId: pageIndex != null && pageIndex >= 0 ? pages[pageIndex]?.id ?? null : null,
+      pageIndex,
+    });
   };
 
   const reorder = (from: number, to: number) => {
@@ -381,6 +436,15 @@ function FormEditor({
       next.splice(to, 0, moved);
       return next;
     });
+    if (oneQuestionPerPage) {
+      setPages((prev) => {
+        if (to < 0 || to >= prev.length || from === to) return prev;
+        const next = [...prev];
+        const [moved] = next.splice(from, 1);
+        next.splice(to, 0, moved);
+        return next;
+      });
+    }
   };
 
   const move = (index: number, delta: number) => reorder(index, index + delta);
@@ -390,29 +454,41 @@ function FormEditor({
     setOverIndex(null);
   };
 
-  const addQuestion = () => setQuestions((prev) => [...prev, blankQuestion()]);
-  const removeQuestion = (index: number) =>
-    setQuestions((prev) => prev.filter((_, i) => i !== index));
-
-  const changeType = (index: number, type: QuestionType) => {
-    const needsOptions = CHOICE_TYPES.includes(type);
-    update(index, {
-      type,
-      options: needsOptions && questions[index].options.length === 0
-        ? ["", ""]
-        : needsOptions
-          ? questions[index].options
-          : [],
-    });
+  const addQuestion = () => {
+    setQuestions((prev) => [...prev, blankQuestion()]);
+    if (oneQuestionPerPage) {
+      setPages((prev) => [...prev, blankPage()]);
+    }
   };
 
-  const setOption = (qi: number, oi: number, value: string) =>
-    update(qi, {
-      options: questions[qi].options.map((o, i) => (i === oi ? value : o)),
-    });
-  const addOption = (qi: number) => update(qi, { options: [...questions[qi].options, ""] });
-  const removeOption = (qi: number, oi: number) =>
-    update(qi, { options: questions[qi].options.filter((_, i) => i !== oi) });
+  const removeQuestion = (index: number) => {
+    setQuestions((prev) => prev.filter((_, i) => i !== index));
+    if (oneQuestionPerPage) {
+      setPages((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const addPage = () => setPages((prev) => [...prev, blankPage()]);
+
+  const removePage = (index: number) => {
+    const pageId = pages[index]?.id;
+    setPages((prev) => prev.filter((_, i) => i !== index));
+    if (pageId) {
+      setQuestions((prev) =>
+        prev.map((q) => (q.pageId === pageId ? { ...q, pageId: null } : q)),
+      );
+    }
+  };
+
+  const handleFormBackground = (file: File) => {
+    setPendingImages((prev) => ({ ...prev, formBackground: file }));
+    setBackgroundPreview(URL.createObjectURL(file));
+  };
+
+  const clearFormBackground = () => {
+    setPendingImages((prev) => ({ ...prev, formBackground: undefined }));
+    setBackgroundPreview(null);
+  };
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -422,14 +498,49 @@ function FormEditor({
     setSaving(true);
     setError(null);
     try {
-      await updateForm(form.id, { title: title.trim(), description: description.trim() || null });
+      await updateForm(form.id, {
+        title: title.trim(),
+        description: description.trim() || null,
+        oneQuestionPerPage,
+      });
+
+      const pagesPayload = oneQuestionPerPage
+        ? syncWizardPages(questions, pages)
+        : pages;
+
       const cleaned = questions.map((q) => ({
         ...q,
+        pageIndex: resolvePageIndex(q) >= 0 ? resolvePageIndex(q) : q.pageIndex ?? null,
         options: CHOICE_TYPES.includes(q.type)
           ? q.options.map((o) => o.trim()).filter(Boolean)
           : [],
       }));
-      await apiSetQuestions(form.id, cleaned);
+
+      let saved = await apiSetQuestions(form.id, {
+        questions: cleaned,
+        pages: pagesPayload,
+        oneQuestionPerPage,
+      });
+
+      if (pendingImages.formBackground) {
+        saved = await uploadFormBackground(form.id, pendingImages.formBackground);
+      } else if (!backgroundPreview && form.backgroundImageUrl) {
+        saved = await removeFormBackground(form.id);
+      }
+
+      for (const [indexStr, file] of Object.entries(pendingImages.pageBackground)) {
+        const pageId = saved.pages[Number(indexStr)]?.id;
+        if (pageId) saved = await uploadPageBackground(form.id, pageId, file);
+      }
+      for (const [indexStr, file] of Object.entries(pendingImages.pagePoint)) {
+        const pageId = saved.pages[Number(indexStr)]?.id;
+        if (pageId) saved = await uploadPagePointImage(form.id, pageId, file);
+      }
+      for (const [indexStr, file] of Object.entries(pendingImages.questionPoint)) {
+        const questionId = saved.questions[Number(indexStr)]?.id;
+        if (questionId) saved = await uploadQuestionPointImage(form.id, questionId, file);
+      }
+
       onSaved("Formulário salvo.");
       onBack();
     } catch (err) {
@@ -465,10 +576,128 @@ function FormEditor({
           <span>Descrição (opcional)</span>
           <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
+        <label className="cx-check">
+          <input
+            type="checkbox"
+            checked={oneQuestionPerPage}
+            onChange={(e) => setOneQuestionPerPage(e.target.checked)}
+          />
+          <span>Uma pergunta por página (modo passo a passo com barra de progresso)</span>
+        </label>
+        <div className="cx-field">
+          <span className="cx-field__label">Imagem de fundo do formulário</span>
+          <PhotoDropzone
+            previewUrl={backgroundPreview}
+            isExisting={Boolean(form.backgroundImageUrl && !pendingImages.formBackground)}
+            onSelect={handleFormBackground}
+            onClear={clearFormBackground}
+          />
+        </div>
       </section>
 
+      {!oneQuestionPerPage && (
+        <section className="cx-card">
+          <div className="cx-card__title-row">
+            <h2 className="cx-card__title">Páginas do formulário</h2>
+            <button className="cx-button cx-button--ghost" type="button" onClick={addPage}>
+              <Plus size={14} /> Adicionar página
+            </button>
+          </div>
+          <p className="cx-field-hint">
+            Agrupe perguntas em páginas com fundo e imagens ilustrativas. Deixe vazio para um
+            formulário contínuo em uma única tela.
+          </p>
+          {pages.length === 0 ? (
+            <p className="cx-state">Nenhuma página — todas as perguntas aparecem juntas.</p>
+          ) : (
+            <div className="cx-page-list">
+              {pages.map((page, pageIndex) => (
+                <div className="cx-page-block" key={pageIndex}>
+                  <div className="cx-page-block__head">
+                    <strong>Página {pageIndex + 1}</strong>
+                    <button
+                      className="cx-icon-btn cx-icon-btn--danger"
+                      type="button"
+                      onClick={() => removePage(pageIndex)}
+                      title="Remover página"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <label className="cx-field">
+                    <span>Título da página (opcional)</span>
+                    <input
+                      type="text"
+                      value={page.title ?? ""}
+                      onChange={(e) =>
+                        updatePage(pageIndex, { title: e.target.value || null })
+                      }
+                      placeholder="Ex.: Percepção"
+                    />
+                  </label>
+                  <div className="cx-page-images">
+                    <div className="cx-field">
+                      <span>Fundo da página</span>
+                      <PhotoDropzone
+                        previewUrl={
+                          pendingImages.pageBackground[pageIndex]
+                            ? URL.createObjectURL(pendingImages.pageBackground[pageIndex])
+                            : page.backgroundImageUrl ?? null
+                        }
+                        isExisting={Boolean(page.backgroundImageUrl)}
+                        onSelect={(file) =>
+                          setPendingImages((prev) => ({
+                            ...prev,
+                            pageBackground: { ...prev.pageBackground, [pageIndex]: file },
+                          }))
+                        }
+                        onClear={() => {
+                          updatePage(pageIndex, { backgroundImageUrl: null });
+                          setPendingImages((prev) => {
+                            const next = { ...prev.pageBackground };
+                            delete next[pageIndex];
+                            return { ...prev, pageBackground: next };
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="cx-field">
+                      <span>Imagem ilustrativa</span>
+                      <PhotoDropzone
+                        previewUrl={
+                          pendingImages.pagePoint[pageIndex]
+                            ? URL.createObjectURL(pendingImages.pagePoint[pageIndex])
+                            : page.pointImageUrl ?? null
+                        }
+                        isExisting={Boolean(page.pointImageUrl)}
+                        onSelect={(file) =>
+                          setPendingImages((prev) => ({
+                            ...prev,
+                            pagePoint: { ...prev.pagePoint, [pageIndex]: file },
+                          }))
+                        }
+                        onClear={() => {
+                          updatePage(pageIndex, { pointImageUrl: null });
+                          setPendingImages((prev) => {
+                            const next = { ...prev.pagePoint };
+                            delete next[pageIndex];
+                            return { ...prev, pagePoint: next };
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="cx-question-list">
-        {questions.map((q, index) => (
+        {questions.map((q, index) => {
+          const wizardPage = oneQuestionPerPage ? pages[index] : null;
+          return (
           <section
             className={`cx-card cx-question${dragIndex === index ? " is-dragging" : ""}${
               overIndex === index && dragIndex !== null && dragIndex !== index ? " is-over" : ""
@@ -537,6 +766,99 @@ function FormEditor({
               </div>
             </div>
 
+            {oneQuestionPerPage && wizardPage && (
+              <div className="cx-page-visual">
+                <span className="cx-page-visual__label">Visual da página {index + 1}</span>
+                <label className="cx-field">
+                  <span>Título da página (opcional)</span>
+                  <input
+                    type="text"
+                    value={wizardPage.title ?? ""}
+                    onChange={(e) =>
+                      updatePage(index, { title: e.target.value || null })
+                    }
+                    placeholder={q.label || `Página ${index + 1}`}
+                  />
+                </label>
+                <div className="cx-page-images">
+                  <div className="cx-field">
+                    <span>Fundo da página</span>
+                    <PhotoDropzone
+                      previewUrl={
+                        pendingImages.pageBackground[index]
+                          ? URL.createObjectURL(pendingImages.pageBackground[index])
+                          : wizardPage.backgroundImageUrl ?? null
+                      }
+                      isExisting={Boolean(wizardPage.backgroundImageUrl)}
+                      onSelect={(file) =>
+                        setPendingImages((prev) => ({
+                          ...prev,
+                          pageBackground: { ...prev.pageBackground, [index]: file },
+                        }))
+                      }
+                      onClear={() => {
+                        updatePage(index, { backgroundImageUrl: null });
+                        setPendingImages((prev) => {
+                          const next = { ...prev.pageBackground };
+                          delete next[index];
+                          return { ...prev, pageBackground: next };
+                        });
+                      }}
+                    />
+                  </div>
+                  <div className="cx-field">
+                    <span>Imagem ilustrativa (ícone / destaque)</span>
+                    <PhotoDropzone
+                      previewUrl={
+                        pendingImages.pagePoint[index]
+                          ? URL.createObjectURL(pendingImages.pagePoint[index])
+                          : wizardPage.pointImageUrl ?? null
+                      }
+                      isExisting={Boolean(wizardPage.pointImageUrl)}
+                      onSelect={(file) =>
+                        setPendingImages((prev) => ({
+                          ...prev,
+                          pagePoint: { ...prev.pagePoint, [index]: file },
+                        }))
+                      }
+                      onClear={() => {
+                        updatePage(index, { pointImageUrl: null });
+                        setPendingImages((prev) => {
+                          const next = { ...prev.pagePoint };
+                          delete next[index];
+                          return { ...prev, pagePoint: next };
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!oneQuestionPerPage && pages.length > 0 && (
+              <label className="cx-field">
+                <span>Página</span>
+                <select
+                  className="cx-select"
+                  value={resolvePageIndex(q) >= 0 ? String(resolvePageIndex(q)) : ""}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setQuestionPageIndex(
+                      index,
+                      raw === "" ? null : Number(raw),
+                    );
+                  }}
+                >
+                  <option value="">Sem página (formulário contínuo)</option>
+                  {pages.map((p, pi) => (
+                    <option key={p.id ?? pi} value={String(pi)}>
+                      {p.title || `Página ${pi + 1}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             <label className="cx-field">
               <span>Enunciado</span>
               <input
@@ -556,6 +878,34 @@ function FormEditor({
                 placeholder="Instrução curta exibida abaixo do enunciado."
               />
             </label>
+
+            {!oneQuestionPerPage && (
+              <div className="cx-field">
+                <span className="cx-field__label">Imagem ilustrativa da pergunta</span>
+                <PhotoDropzone
+                  previewUrl={
+                    pendingImages.questionPoint[index]
+                      ? URL.createObjectURL(pendingImages.questionPoint[index])
+                      : q.pointImageUrl ?? null
+                  }
+                  isExisting={Boolean(q.pointImageUrl)}
+                  onSelect={(file) =>
+                    setPendingImages((prev) => ({
+                      ...prev,
+                      questionPoint: { ...prev.questionPoint, [index]: file },
+                    }))
+                  }
+                  onClear={() => {
+                    update(index, { pointImageUrl: null });
+                    setPendingImages((prev) => {
+                      const next = { ...prev.questionPoint };
+                      delete next[index];
+                      return { ...prev, questionPoint: next };
+                    });
+                  }}
+                />
+              </div>
+            )}
 
             {CHOICE_TYPES.includes(q.type) && (
               <div className="cx-field">
@@ -595,7 +945,8 @@ function FormEditor({
               <span>Resposta obrigatória</span>
             </label>
           </section>
-        ))}
+        );
+        })}
       </div>
 
       <button className="cx-button cx-button--dashed" type="button" onClick={addQuestion}>
@@ -603,6 +954,32 @@ function FormEditor({
       </button>
     </div>
   );
+
+  function changeType(index: number, type: QuestionType) {
+    const needsOptions = CHOICE_TYPES.includes(type);
+    update(index, {
+      type,
+      options: needsOptions && questions[index].options.length === 0
+        ? ["", ""]
+        : needsOptions
+          ? questions[index].options
+          : [],
+    });
+  }
+
+  function setOption(qi: number, oi: number, value: string) {
+    update(qi, {
+      options: questions[qi].options.map((o, i) => (i === oi ? value : o)),
+    });
+  }
+
+  function addOption(qi: number) {
+    update(qi, { options: [...questions[qi].options, ""] });
+  }
+
+  function removeOption(qi: number, oi: number) {
+    update(qi, { options: questions[qi].options.filter((_, i) => i !== oi) });
+  }
 }
 
 // ----- Dashboard / respostas -------------------------------------------------

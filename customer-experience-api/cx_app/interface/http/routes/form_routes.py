@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, File, Query, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
@@ -11,6 +11,7 @@ from cx_app.application.services.form_service import (
     FormNotFoundError,
     FormValidationError,
 )
+from cx_app.application.services.photo_storage import PhotoValidationError
 from cx_app.composition.cx_composer import (
     build_form_response_service,
     build_form_service,
@@ -23,7 +24,14 @@ from cx_app.core.security import (
     CX_FORMS_WRITE,
     assert_permission,
 )
-from cx_app.domain.form import AnswerInput, FormInput, FormUpdate, QuestionInput, ResponseInput
+from cx_app.domain.form import (
+    AnswerInput,
+    FormInput,
+    FormUpdate,
+    PageInput,
+    QuestionInput,
+    ResponseInput,
+)
 from cx_app.interface.http.auth_http import resolve_user
 
 router = APIRouter(prefix="/forms", tags=["Forms"])
@@ -36,11 +44,20 @@ public_router = APIRouter(prefix="/public/forms", tags=["Public"])
 class FormPayload(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
+    oneQuestionPerPage: bool = False
 
 
 class FormUpdatePayload(BaseModel):
     title: str | None = Field(default=None, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
+    oneQuestionPerPage: bool | None = None
+
+
+class PagePayload(BaseModel):
+    id: str | None = None
+    title: str | None = Field(default=None, max_length=200)
+    backgroundImageFilename: str | None = None
+    pointImageFilename: str | None = None
 
 
 class QuestionPayload(BaseModel):
@@ -50,9 +67,14 @@ class QuestionPayload(BaseModel):
     helpText: str | None = Field(default=None, max_length=2000)
     required: bool = False
     options: list[str] = Field(default_factory=list)
+    pageId: str | None = None
+    pageIndex: int | None = Field(default=None, ge=0)
+    pointImageFilename: str | None = None
 
 
 class QuestionsPayload(BaseModel):
+    oneQuestionPerPage: bool | None = None
+    pages: list[PagePayload] = Field(default_factory=list)
     questions: list[QuestionPayload] = Field(default_factory=list)
 
 
@@ -88,7 +110,11 @@ def create_form(request: Request, payload: FormPayload):
         return denied
     try:
         data = build_form_service().create(
-            FormInput(title=payload.title, description=payload.description),
+            FormInput(
+                title=payload.title,
+                description=payload.description,
+                one_question_per_page=payload.oneQuestionPerPage,
+            ),
             created_by=actor_sub_from_request(request),
             created_by_name=actor_name_from_request(request),
         )
@@ -124,7 +150,12 @@ def update_form(request: Request, form_id: str, payload: FormUpdatePayload):
         return denied
     try:
         data = build_form_service().update(
-            form_id, FormUpdate(title=payload.title, description=payload.description)
+            form_id,
+            FormUpdate(
+                title=payload.title,
+                description=payload.description,
+                one_question_per_page=payload.oneQuestionPerPage,
+            ),
         )
     except FormNotFoundError:
         return fail("Formulário não encontrado.", 404)
@@ -139,9 +170,19 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
     if denied:
         return denied
     try:
-        data = build_form_service().set_questions(
+        data = build_form_service().set_structure(
             form_id,
-            [
+            one_question_per_page=payload.oneQuestionPerPage,
+            pages=[
+                PageInput(
+                    id=p.id,
+                    title=p.title,
+                    background_image_filename=p.backgroundImageFilename,
+                    point_image_filename=p.pointImageFilename,
+                )
+                for p in payload.pages
+            ],
+            questions=[
                 QuestionInput(
                     id=q.id,
                     label=q.label,
@@ -149,6 +190,9 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
                     help_text=q.helpText,
                     is_required=q.required,
                     options=q.options,
+                    page_id=q.pageId,
+                    page_index=q.pageIndex,
+                    point_image_filename=q.pointImageFilename,
                 )
                 for q in payload.questions
             ],
@@ -243,6 +287,92 @@ def form_dashboard(request: Request, form_id: str):
     return ok(data, message="Dashboard do formulário.")
 
 
+@router.post("/{form_id}/background-image")
+async def upload_form_background(request: Request, form_id: str, image: UploadFile = File(...)):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    content = await image.read()
+    try:
+        data = build_form_service().upload_background(
+            form_id, content=content, mime_type=image.content_type
+        )
+    except FormNotFoundError:
+        return fail("Formulário não encontrado.", 404)
+    except PhotoValidationError as exc:
+        return fail(str(exc), 422)
+    return ok(data, message="Imagem de fundo atualizada.")
+
+
+@router.delete("/{form_id}/background-image")
+def remove_form_background(request: Request, form_id: str):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    try:
+        data = build_form_service().remove_background(form_id)
+    except FormNotFoundError:
+        return fail("Formulário não encontrado.", 404)
+    return ok(data, message="Imagem de fundo removida.")
+
+
+@router.post("/{form_id}/pages/{page_id}/background-image")
+async def upload_page_background(
+    request: Request, form_id: str, page_id: str, image: UploadFile = File(...)
+):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    content = await image.read()
+    try:
+        data = build_form_service().upload_page_background(
+            form_id, page_id, content=content, mime_type=image.content_type
+        )
+    except FormNotFoundError:
+        return fail("Página não encontrada.", 404)
+    except PhotoValidationError as exc:
+        return fail(str(exc), 422)
+    return ok(data, message="Imagem de fundo da página atualizada.")
+
+
+@router.post("/{form_id}/pages/{page_id}/point-image")
+async def upload_page_point_image(
+    request: Request, form_id: str, page_id: str, image: UploadFile = File(...)
+):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    content = await image.read()
+    try:
+        data = build_form_service().upload_page_point_image(
+            form_id, page_id, content=content, mime_type=image.content_type
+        )
+    except FormNotFoundError:
+        return fail("Página não encontrada.", 404)
+    except PhotoValidationError as exc:
+        return fail(str(exc), 422)
+    return ok(data, message="Imagem ilustrativa da página atualizada.")
+
+
+@router.post("/{form_id}/questions/{question_id}/point-image")
+async def upload_question_point_image(
+    request: Request, form_id: str, question_id: str, image: UploadFile = File(...)
+):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    content = await image.read()
+    try:
+        data = build_form_service().upload_question_point_image(
+            form_id, question_id, content=content, mime_type=image.content_type
+        )
+    except FormNotFoundError:
+        return fail("Pergunta não encontrada.", 404)
+    except PhotoValidationError as exc:
+        return fail(str(exc), 422)
+    return ok(data, message="Imagem ilustrativa da pergunta atualizada.")
+
+
 # ----- público (sem login) ---------------------------------------------------
 
 
@@ -253,6 +383,54 @@ def get_public_form(token: str):
     except FormNotFoundError:
         return fail("Formulário não encontrado ou indisponível.", 404)
     return ok(data, message="OK")
+
+
+@public_router.get("/{token}/background")
+def get_public_form_background(token: str):
+    try:
+        result = build_form_service().read_public_background(token)
+    except FormNotFoundError:
+        return fail("Formulário não encontrado ou indisponível.", 404)
+    if result is None:
+        return fail("Imagem não encontrada.", 404)
+    content, mime = result
+    return Response(content=content, media_type=mime)
+
+
+@public_router.get("/{token}/pages/{page_id}/background")
+def get_public_page_background(token: str, page_id: str):
+    try:
+        result = build_form_service().read_public_page_background(token, page_id)
+    except FormNotFoundError:
+        return fail("Formulário não encontrado ou indisponível.", 404)
+    if result is None:
+        return fail("Imagem não encontrada.", 404)
+    content, mime = result
+    return Response(content=content, media_type=mime)
+
+
+@public_router.get("/{token}/pages/{page_id}/point-image")
+def get_public_page_point(token: str, page_id: str):
+    try:
+        result = build_form_service().read_public_page_point(token, page_id)
+    except FormNotFoundError:
+        return fail("Formulário não encontrado ou indisponível.", 404)
+    if result is None:
+        return fail("Imagem não encontrada.", 404)
+    content, mime = result
+    return Response(content=content, media_type=mime)
+
+
+@public_router.get("/{token}/questions/{question_id}/point-image")
+def get_public_question_point(token: str, question_id: str):
+    try:
+        result = build_form_service().read_public_question_point(token, question_id)
+    except FormNotFoundError:
+        return fail("Formulário não encontrado ou indisponível.", 404)
+    if result is None:
+        return fail("Imagem não encontrada.", 404)
+    content, mime = result
+    return Response(content=content, media_type=mime)
 
 
 @public_router.post("/{token}/responses")

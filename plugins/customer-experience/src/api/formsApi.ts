@@ -13,6 +13,7 @@ import type {
   CreateFormInput,
   FormDashboard,
   FormDetail,
+  FormPage,
   FormQuestion,
   FormResponseList,
   FormSummary,
@@ -35,13 +36,18 @@ export async function createForm(input: CreateFormInput): Promise<FormDetail> {
   const response = await httpPostJson<ApiEnvelope<FormDetail>>(FORMS, {
     title: input.title,
     description: input.description ?? null,
+    oneQuestionPerPage: input.oneQuestionPerPage ?? false,
   });
   return unwrapEnvelope(response, "Não foi possível criar o formulário.");
 }
 
 export async function updateForm(
   id: string,
-  input: { title?: string; description?: string | null },
+  input: {
+    title?: string;
+    description?: string | null;
+    oneQuestionPerPage?: boolean;
+  },
 ): Promise<FormDetail> {
   const response = await httpPatchJson<ApiEnvelope<FormDetail>>(`${FORMS}/${id}`, input);
   return unwrapEnvelope(response, "Não foi possível atualizar o formulário.");
@@ -49,16 +55,27 @@ export async function updateForm(
 
 export async function setQuestions(
   id: string,
-  questions: FormQuestion[],
+  input: {
+    questions: FormQuestion[];
+    pages?: FormPage[];
+    oneQuestionPerPage?: boolean;
+  },
 ): Promise<FormDetail> {
   const payload = {
-    questions: questions.map((q) => ({
+    oneQuestionPerPage: input.oneQuestionPerPage,
+    pages: (input.pages ?? []).map((p) => ({
+      id: p.id,
+      title: p.title,
+    })),
+    questions: input.questions.map((q) => ({
       id: q.id,
       type: q.type,
       label: q.label,
       helpText: q.helpText,
       required: q.required,
       options: q.options,
+      pageId: q.pageId,
+      pageIndex: q.pageIndex ?? undefined,
     })),
   };
   const response = await httpPutJson<ApiEnvelope<FormDetail>>(
@@ -66,6 +83,50 @@ export async function setQuestions(
     payload,
   );
   return unwrapEnvelope(response, "Não foi possível salvar as perguntas.");
+}
+
+async function uploadMultipart(url: string, file: File): Promise<FormDetail> {
+  const body = new FormData();
+  body.append("image", file);
+  const response = await fetch(url, { method: "POST", body, credentials: "include" });
+  const envelope = (await response.json()) as ApiEnvelope<FormDetail>;
+  if (!response.ok || envelope.success === false) {
+    throw new Error(envelope.message ?? "Não foi possível enviar a imagem.");
+  }
+  return envelope.data;
+}
+
+export async function uploadFormBackground(id: string, file: File): Promise<FormDetail> {
+  return uploadMultipart(`${FORMS}/${id}/background-image`, file);
+}
+
+export async function removeFormBackground(id: string): Promise<FormDetail> {
+  const response = await httpDelete<ApiEnvelope<FormDetail>>(`${FORMS}/${id}/background-image`);
+  return unwrapEnvelope(response, "Não foi possível remover a imagem de fundo.");
+}
+
+export async function uploadPageBackground(
+  formId: string,
+  pageId: string,
+  file: File,
+): Promise<FormDetail> {
+  return uploadMultipart(`${FORMS}/${formId}/pages/${pageId}/background-image`, file);
+}
+
+export async function uploadPagePointImage(
+  formId: string,
+  pageId: string,
+  file: File,
+): Promise<FormDetail> {
+  return uploadMultipart(`${FORMS}/${formId}/pages/${pageId}/point-image`, file);
+}
+
+export async function uploadQuestionPointImage(
+  formId: string,
+  questionId: string,
+  file: File,
+): Promise<FormDetail> {
+  return uploadMultipart(`${FORMS}/${formId}/questions/${questionId}/point-image`, file);
 }
 
 export async function activateForm(id: string): Promise<FormDetail> {

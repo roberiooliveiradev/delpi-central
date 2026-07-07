@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   submitFormResponse,
   type FormAnswerPayload,
   type PublicForm,
+  type PublicFormPage,
   type PublicQuestion,
 } from "./api";
 import "./form.css";
@@ -11,35 +12,127 @@ type Phase = "form" | "submitting" | "done";
 
 type AnswerState = Record<string, { rating?: number; text?: string; choices?: string[] }>;
 
+type WizardStep =
+  | { kind: "intro" }
+  | { kind: "question"; question: PublicQuestion; page?: PublicFormPage | null };
+
+function buildSteps(form: PublicForm): WizardStep[] {
+  if (!form.oneQuestionPerPage) {
+    return [{ kind: "intro" }];
+  }
+  const pageById = new Map(form.pages.map((p) => [p.id, p]));
+  return [
+    { kind: "intro" },
+    ...form.questions.map((question) => ({
+      kind: "question" as const,
+      question,
+      page: question.pageId ? pageById.get(question.pageId) ?? null : null,
+    })),
+  ];
+}
+
+function isAnswered(question: PublicQuestion, answer: AnswerState[string] | undefined): boolean {
+  if (!answer) return false;
+  if (question.type === "rating") return Boolean(answer.rating);
+  if (question.type === "multi_choice") return Boolean(answer.choices?.length);
+  return Boolean(answer.text?.trim());
+}
+
+function computeProgress(
+  form: PublicForm,
+  stepIndex: number,
+  answers: AnswerState,
+  name: string,
+): number {
+  if (!form.oneQuestionPerPage) {
+    const units = 1 + form.questions.filter((q) => q.required).length;
+    let done = name.trim() ? 1 : 0;
+    for (const q of form.questions) {
+      if (q.required && isAnswered(q, answers[q.id])) done += 1;
+    }
+    return Math.round((done / Math.max(units, 1)) * 100);
+  }
+  const steps = buildSteps(form);
+  const completed = steps.slice(0, stepIndex + 1).filter((step) => {
+    if (step.kind === "intro") return Boolean(name.trim());
+    return !step.question.required || isAnswered(step.question, answers[step.question.id]);
+  }).length;
+  return Math.round((completed / steps.length) * 100);
+}
+
+function resolveBackground(
+  form: PublicForm,
+  step: WizardStep | null,
+): string | null {
+  if (step?.kind === "question") {
+    return step.page?.backgroundImageUrl ?? form.backgroundImageUrl ?? null;
+  }
+  return form.backgroundImageUrl ?? null;
+}
+
+function resolvePointImage(step: WizardStep | null, question?: PublicQuestion): string | null {
+  if (step?.kind === "question") {
+    return (
+      step.page?.pointImageUrl ??
+      step.question.pointImageUrl ??
+      null
+    );
+  }
+  return question?.pointImageUrl ?? null;
+}
+
 export function FormView({ form }: { form: PublicForm }) {
+  const pages = form.pages ?? [];
+  const wizard = form.oneQuestionPerPage;
+  const steps = useMemo(
+    () => buildSteps({ ...form, pages }),
+    [form, pages, wizard],
+  );
+  const [stepIndex, setStepIndex] = useState(0);
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [answers, setAnswers] = useState<AnswerState>({});
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState<string | null>(null);
 
+  const currentStep = wizard ? steps[stepIndex] : null;
+  const progress = computeProgress(form, stepIndex, answers, name);
+  const backgroundUrl = resolveBackground(form, currentStep);
+
+  const pageById = useMemo(
+    () => new Map(pages.map((p) => [p.id, p])),
+    [pages],
+  );
+
   function patch(id: string, value: AnswerState[string]) {
     setAnswers((prev) => ({ ...prev, [id]: { ...prev[id], ...value } }));
   }
 
-  function validate(): string | null {
+  function validateAll(): string | null {
     if (!name.trim()) return "Informe seu nome.";
     for (const q of form.questions) {
       if (!q.required) continue;
-      const a = answers[q.id];
-      const empty =
-        !a ||
-        (q.type === "rating" && !a.rating) ||
-        (q.type === "multi_choice" && (!a.choices || a.choices.length === 0)) ||
-        (q.type !== "rating" && q.type !== "multi_choice" && !a.text?.trim());
-      if (empty) return `Responda: ${q.label}`;
+      if (!isAnswered(q, answers[q.id])) return `Responda: ${q.label}`;
+    }
+    return null;
+  }
+
+  function validateStep(): string | null {
+    if (!wizard) return validateAll();
+    const step = steps[stepIndex];
+    if (step.kind === "intro") {
+      return name.trim() ? null : "Informe seu nome.";
+    }
+    const q = step.question;
+    if (q.required && !isAnswered(q, answers[q.id])) {
+      return `Responda: ${q.label}`;
     }
     return null;
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const problem = validate();
+    const problem = validateAll();
     if (problem) {
       setError(problem);
       return;
@@ -72,6 +165,21 @@ export function FormView({ form }: { form: PublicForm }) {
     setPhase("form");
   }
 
+  function goNext() {
+    const problem = validateStep();
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError(null);
+    setStepIndex((prev) => Math.min(prev + 1, steps.length - 1));
+  }
+
+  function goPrev() {
+    setError(null);
+    setStepIndex((prev) => Math.max(prev - 1, 0));
+  }
+
   if (phase === "done") {
     const firstName = name.trim().split(/\s+/)[0];
     return (
@@ -89,51 +197,152 @@ export function FormView({ form }: { form: PublicForm }) {
     );
   }
 
+  const shellStyle = backgroundUrl
+    ? ({
+        backgroundImage: `linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.92)), url(${backgroundUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      } as React.CSSProperties)
+    : undefined;
+
+  const renderIntroFields = () => (
+    <>
+      <label className="cxform-field">
+        <span className="cxform-label">
+          Seu nome <em className="cxform-req">*</em>
+        </span>
+        <input
+          className="cxform-input"
+          value={name}
+          maxLength={200}
+          placeholder="Como podemos te chamar?"
+          onChange={(e) => setName(e.target.value)}
+        />
+      </label>
+      <label className="cxform-field">
+        <span className="cxform-label">Empresa</span>
+        <input
+          className="cxform-input"
+          value={company}
+          maxLength={200}
+          placeholder="Onde você trabalha? (opcional)"
+          onChange={(e) => setCompany(e.target.value)}
+        />
+      </label>
+    </>
+  );
+
+  const renderScrollForm = () => {
+    let lastPageId: string | null = null;
+    return (
+      <>
+        {renderIntroFields()}
+        {form.questions.map((q) => {
+          const page = q.pageId ? pageById.get(q.pageId) : null;
+          const showPageHeader = page && page.id !== lastPageId;
+          if (page?.id) lastPageId = page.id;
+          return (
+            <div key={q.id}>
+              {showPageHeader && page && (
+                <div
+                  className="cxform-page-header"
+                  style={
+                    page.backgroundImageUrl
+                      ? {
+                          backgroundImage: `linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.95)), url(${page.backgroundImageUrl})`,
+                        }
+                      : undefined
+                  }
+                >
+                  {page.pointImageUrl && (
+                    <img className="cxform-page-point" src={page.pointImageUrl} alt="" />
+                  )}
+                  {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
+                </div>
+              )}
+              {!showPageHeader && q.pointImageUrl && (
+                <img className="cxform-question-point" src={q.pointImageUrl} alt="" />
+              )}
+              <QuestionField
+                question={q}
+                answer={answers[q.id]}
+                onChange={(value) => patch(q.id, value)}
+              />
+            </div>
+          );
+        })}
+      </>
+    );
+  };
+
+  const renderWizardStep = () => {
+    const step = steps[stepIndex];
+    if (step.kind === "intro") {
+      return renderIntroFields();
+    }
+    const pointImage = resolvePointImage(step);
+    return (
+      <div className="cxform-step">
+        {step.page?.title && <h2 className="cxform-page-title">{step.page.title}</h2>}
+        {pointImage && <img className="cxform-page-point" src={pointImage} alt="" />}
+        <QuestionField
+          question={step.question}
+          answer={answers[step.question.id]}
+          onChange={(value) => patch(step.question.id, value)}
+        />
+      </div>
+    );
+  };
+
+  const isLastWizardStep = wizard && stepIndex === steps.length - 1;
+
   return (
-    <div className="cxform">
+    <div
+      className={`cxform${wizard ? " cxform--wizard" : ""}${backgroundUrl ? " cxform--has-bg" : ""}`}
+      style={shellStyle}
+    >
       <span className="cxform-eyebrow">Programa Experiência do Cliente · DELPI</span>
       <h1 className="cxform-title">{form.title}</h1>
-      {form.description && <p className="cxform-subtitle">{form.description}</p>}
+      {form.description && stepIndex === 0 && (
+        <p className="cxform-subtitle">{form.description}</p>
+      )}
+
+      {(wizard || form.questions.length > 0) && (
+        <div className="cxform-progress" aria-label={`Progresso: ${progress}%`}>
+          <div className="cxform-progress__track">
+            <div className="cxform-progress__fill" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="cxform-progress__label">{progress}%</span>
+        </div>
+      )}
 
       <form className="cxform-card" onSubmit={handleSubmit}>
-        <label className="cxform-field">
-          <span className="cxform-label">
-            Seu nome <em className="cxform-req">*</em>
-          </span>
-          <input
-            className="cxform-input"
-            value={name}
-            maxLength={200}
-            placeholder="Como podemos te chamar?"
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
-
-        <label className="cxform-field">
-          <span className="cxform-label">Empresa</span>
-          <input
-            className="cxform-input"
-            value={company}
-            maxLength={200}
-            placeholder="Onde você trabalha? (opcional)"
-            onChange={(e) => setCompany(e.target.value)}
-          />
-        </label>
-
-        {form.questions.map((q) => (
-          <QuestionField
-            key={q.id}
-            question={q}
-            answer={answers[q.id]}
-            onChange={(value) => patch(q.id, value)}
-          />
-        ))}
+        {wizard ? renderWizardStep() : renderScrollForm()}
 
         {error && <p className="cxform-error">{error}</p>}
 
-        <button type="submit" className="cxform-submit" disabled={phase === "submitting"}>
-          {phase === "submitting" ? "Enviando..." : "Enviar respostas"}
-        </button>
+        {wizard ? (
+          <div className="cxform-nav">
+            {stepIndex > 0 && (
+              <button type="button" className="cxform-nav__btn cxform-nav__btn--ghost" onClick={goPrev}>
+                Voltar
+              </button>
+            )}
+            {!isLastWizardStep ? (
+              <button type="button" className="cxform-nav__btn cxform-nav__btn--primary" onClick={goNext}>
+                Próxima
+              </button>
+            ) : (
+              <button type="submit" className="cxform-nav__btn cxform-nav__btn--primary" disabled={phase === "submitting"}>
+                {phase === "submitting" ? "Enviando..." : "Enviar respostas"}
+              </button>
+            )}
+          </div>
+        ) : (
+          <button type="submit" className="cxform-submit" disabled={phase === "submitting"}>
+            {phase === "submitting" ? "Enviando..." : "Enviar respostas"}
+          </button>
+        )}
       </form>
     </div>
   );
@@ -237,7 +446,6 @@ function QuestionField({
     );
   }
 
-  // multi_choice
   const selected = answer?.choices ?? [];
   const toggle = (opt: string) => {
     const next = selected.includes(opt)

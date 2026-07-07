@@ -54,12 +54,25 @@ export type PublicQuestion = {
   helpText: string | null;
   required: boolean;
   options: string[];
+  pageId?: string | null;
+  pointImageUrl?: string | null;
+};
+
+export type PublicFormPage = {
+  id: string;
+  title: string | null;
+  position?: number;
+  backgroundImageUrl?: string | null;
+  pointImageUrl?: string | null;
 };
 
 export type PublicForm = {
   token: string;
   title: string;
   description: string | null;
+  oneQuestionPerPage: boolean;
+  backgroundImageUrl?: string | null;
+  pages: PublicFormPage[];
   questions: PublicQuestion[];
 };
 

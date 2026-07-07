@@ -1189,6 +1189,7 @@ services:
 
       CUSTOMER_EXPERIENCE_PHOTO_UPLOAD_DIR: /app/data/customer-experience/photos
       CUSTOMER_EXPERIENCE_QR_DIR: /app/data/customer-experience/qr
+      CUSTOMER_EXPERIENCE_FORM_IMAGE_UPLOAD_DIR: /app/data/customer-experience/form-images
 
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
@@ -1203,6 +1204,7 @@ services:
       - ../shared:/shared
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/customer-experience/photos:/app/data/customer-experience/photos
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/customer-experience/qr:/app/data/customer-experience/qr
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/customer-experience/form-images:/app/data/customer-experience/form-images
 
     depends_on:
       - keycloak

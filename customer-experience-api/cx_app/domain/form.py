@@ -30,6 +30,28 @@ CHOICE_QUESTION_TYPES: frozenset[str] = frozenset(
 
 
 @dataclass(frozen=True)
+class FormInput:
+    title: str
+    description: str | None = None
+    one_question_per_page: bool = False
+
+
+@dataclass(frozen=True)
+class FormUpdate:
+    title: str | None = None
+    description: str | None = None
+    one_question_per_page: bool | None = None
+
+
+@dataclass(frozen=True)
+class PageInput:
+    title: str | None = None
+    id: str | None = None
+    background_image_filename: str | None = None
+    point_image_filename: str | None = None
+
+
+@dataclass(frozen=True)
 class QuestionInput:
     label: str
     question_type: str
@@ -37,18 +59,9 @@ class QuestionInput:
     help_text: str | None = None
     is_required: bool = False
     options: list[str] = field(default_factory=list)
-
-
-@dataclass(frozen=True)
-class FormInput:
-    title: str
-    description: str | None = None
-
-
-@dataclass(frozen=True)
-class FormUpdate:
-    title: str | None = None
-    description: str | None = None
+    page_id: str | None = None
+    page_index: int | None = None
+    point_image_filename: str | None = None
 
 
 @dataclass(frozen=True)

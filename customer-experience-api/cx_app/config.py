@@ -49,6 +49,10 @@ class Settings:
         default="/app/data/customer-experience/qr",
     )
     CX_MAX_PHOTO_BYTES: int = int(_get_env("CX_MAX_PHOTO_BYTES", default=str(10 * 1024 * 1024)))
+    CX_FORM_IMAGE_UPLOAD_DIR: str = _get_env(
+        "CUSTOMER_EXPERIENCE_FORM_IMAGE_UPLOAD_DIR",
+        default="/app/data/customer-experience/form-images",
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")

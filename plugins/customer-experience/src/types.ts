@@ -76,6 +76,17 @@ export type FormQuestion = {
   required: boolean;
   options: string[];
   position?: number;
+  pageId?: string | null;
+  pageIndex?: number | null;
+  pointImageUrl?: string | null;
+};
+
+export type FormPage = {
+  id?: string;
+  title: string | null;
+  position?: number;
+  backgroundImageUrl?: string | null;
+  pointImageUrl?: string | null;
 };
 
 export type FormSummary = {
@@ -85,6 +96,8 @@ export type FormSummary = {
   description: string | null;
   isActive: boolean;
   responseCount: number;
+  oneQuestionPerPage: boolean;
+  backgroundImageUrl?: string | null;
   qrUrl: string;
   publicUrl: string | null;
   createdByName: string | null;
@@ -94,11 +107,13 @@ export type FormSummary = {
 
 export type FormDetail = FormSummary & {
   questions: FormQuestion[];
+  pages: FormPage[];
 };
 
 export type CreateFormInput = {
   title: string;
   description?: string;
+  oneQuestionPerPage?: boolean;
 };
 
 export type DashboardQuestion = {

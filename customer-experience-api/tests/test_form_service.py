@@ -9,13 +9,14 @@ from cx_app.application.services.form_service import (
     FormService,
     FormValidationError,
 )
-from cx_app.domain.form import FormInput, FormUpdate, QuestionInput, QuestionType
+from cx_app.domain.form import FormInput, FormUpdate, PageInput, QuestionInput, QuestionType
 
 
 class FakeFormRepository:
     def __init__(self) -> None:
         self.forms: dict[str, dict] = {}
         self.questions: dict[str, list[dict]] = {}
+        self.pages: dict[str, list[dict]] = {}
         self.deleted: list[str] = []
 
     def create(self, data: dict) -> dict:
@@ -24,12 +25,15 @@ class FakeFormRepository:
             "id": fid,
             "is_active": True,
             "response_count": 0,
+            "one_question_per_page": False,
+            "background_image_filename": None,
             "created_at": "2026-07-01T12:00:00Z",
             "updated_at": "2026-07-01T12:00:00Z",
             **data,
         }
         self.forms[fid] = row
         self.questions[fid] = []
+        self.pages[fid] = []
         return dict(row)
 
     def get_by_id(self, form_id: str):
@@ -71,6 +75,25 @@ class FakeFormRepository:
             rows = [q for q in rows if q.get("is_active")]
         return [dict(q) for q in rows]
 
+    def list_pages(self, form_id: str):
+        return [dict(p) for p in self.pages.get(form_id, [])]
+
+    def replace_pages(self, form_id: str, pages: list[dict]):
+        stored = []
+        for pos, page in enumerate(pages):
+            stored.append(
+                {
+                    "id": page.get("id") or str(uuid.uuid4()),
+                    "form_id": form_id,
+                    "position": pos,
+                    "title": page.get("title"),
+                    "background_image_filename": page.get("background_image_filename"),
+                    "point_image_filename": page.get("point_image_filename"),
+                }
+            )
+        self.pages[form_id] = stored
+        return [dict(p) for p in stored]
+
     def replace_questions(self, form_id: str, questions: list[dict]):
         stored = []
         for pos, q in enumerate(questions):
@@ -78,12 +101,14 @@ class FakeFormRepository:
                 {
                     "id": q.get("id") or str(uuid.uuid4()),
                     "form_id": form_id,
+                    "page_id": q.get("page_id"),
                     "position": pos,
                     "question_type": q["question_type"],
                     "label": q["label"],
                     "help_text": q.get("help_text"),
                     "is_required": q.get("is_required", False),
                     "options": q.get("options") or [],
+                    "point_image_filename": q.get("point_image_filename"),
                     "is_active": True,
                 }
             )
@@ -181,13 +206,36 @@ def test_get_public_inactive_raises():
 def test_get_public_active_returns_questions():
     service, repo, _ = _service()
     view = _create(service)
-    service.set_questions(
-        view["id"], [QuestionInput(label="Nota", question_type=QuestionType.RATING)]
+    service.set_structure(
+        view["id"], questions=[QuestionInput(label="Nota", question_type=QuestionType.RATING)]
     )
     token = repo.get_by_id(view["id"])["public_token"]
     public = service.get_public(token)
     assert public["title"] == "Pesquisa de visita"
     assert len(public["questions"]) == 1
+    assert public["oneQuestionPerPage"] is False
+    assert public["pages"] == []
+
+
+def test_wizard_mode_creates_one_page_per_question():
+    service, repo, _ = _service()
+    view = _create(service)
+    service.repository.update(view["id"], {"one_question_per_page": True})
+    result = service.set_structure(
+        view["id"],
+        questions=[
+            QuestionInput(label="P1", question_type=QuestionType.RATING),
+            QuestionInput(label="P2", question_type=QuestionType.SHORT_TEXT),
+        ],
+    )
+    assert result["oneQuestionPerPage"] is True
+    assert len(result["pages"]) == 2
+    assert len(result["questions"]) == 2
+    assert result["questions"][0]["pageId"] == result["pages"][0]["id"]
+    token = repo.get_by_id(view["id"])["public_token"]
+    public = service.get_public(token)
+    assert public["oneQuestionPerPage"] is True
+    assert len(public["pages"]) == 2
 
 
 def test_delete_removes_qr_and_row():
