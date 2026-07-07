@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useComunicadoEditor } from "../components/comunicadoEditorContext";
+import type { ComunicadoEditorKeyboardActions } from "../components/comunicadoEditorTypes";
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -8,19 +8,18 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
 }
 
-export function useComunicadoEditorKeyboard() {
-  const {
-    selectedIds,
-    editingTextId,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    duplicateSelected,
-    removeSelected,
-    nudgeSelected,
-  } = useComunicadoEditor();
-
+/** Atalhos do editor — recebe ações do provider (sem importar o contexto, evita ciclo ESM). */
+export function useComunicadoEditorKeyboard({
+  selectedIds,
+  editingTextId,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  duplicateSelected,
+  removeSelected,
+  nudgeSelected,
+}: ComunicadoEditorKeyboardActions) {
   const hasSelection = selectedIds.length > 0;
 
   useEffect(() => {

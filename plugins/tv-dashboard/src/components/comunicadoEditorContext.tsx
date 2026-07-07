@@ -40,10 +40,11 @@ import {
   ungroupBlocks,
 } from "../utils/comunicadoGrouping";
 import { applyComunicadoSlideTheme, type ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
+import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
+
+export type { MediaLibraryTarget } from "./comunicadoEditorTypes";
 
 const HISTORY_LIMIT = 50;
-
-export type MediaLibraryTarget = "block" | "background" | "insert-image" | "insert-video";
 
 function snapshotConfig(config: ComunicadoConfig): ComunicadoConfig {
   return parseComunicadoConfig(serializeComunicadoConfig(config));
@@ -130,7 +131,28 @@ type ProviderProps = {
 };
 
 function ComunicadoEditorKeyboardBridge() {
-  useComunicadoEditorKeyboard();
+  const {
+    selectedIds,
+    editingTextId,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    duplicateSelected,
+    removeSelected,
+    nudgeSelected,
+  } = useComunicadoEditor();
+  useComunicadoEditorKeyboard({
+    selectedIds,
+    editingTextId,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    duplicateSelected,
+    removeSelected,
+    nudgeSelected,
+  });
   return null;
 }
 

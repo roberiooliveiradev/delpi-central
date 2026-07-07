@@ -8,7 +8,7 @@ import {
   type MediaAsset,
 } from "../api/tvDashboardApi";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import type { MediaLibraryTarget } from "./comunicadoEditorContext";
+import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
 
 type Props = {
   open: boolean;
