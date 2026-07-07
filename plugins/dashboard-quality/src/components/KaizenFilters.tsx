@@ -5,7 +5,7 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -55,7 +55,7 @@ export function KaizenFilters({
   return (
     <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de kaizen">
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} />
+        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label" />
         <input
           id="kz-competence"
           type="month"
@@ -65,7 +65,7 @@ export function KaizenFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} />
+        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label" />
         <input
           id="kz-date-start"
           type="date"
@@ -75,7 +75,7 @@ export function KaizenFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} />
+        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label" />
         <input
           id="kz-date-end"
           type="date"
@@ -96,7 +96,7 @@ export function KaizenFilters({
       />
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Título" />
+        <FieldLabel label="Título" className="dq-field__label" />
         <input
           id="kz-title"
           type="text"
@@ -107,7 +107,7 @@ export function KaizenFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Status" />
+        <FieldLabel label="Status" className="dq-field__label" />
         <input
           id="kz-status"
           type="text"

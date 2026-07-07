@@ -28,6 +28,11 @@
   --dq-font-hero: clamp(24px, 2vw, 36px);
   --dq-font-kpi: clamp(26px, 2.2vw, 38px);
   --dq-kpi-icon-size: 44px;
+  --delpi-ui-accent: var(--dq-accent);
+  --delpi-ui-surface: var(--dq-card-bg);
+  --delpi-ui-text: var(--dq-text);
+  --delpi-ui-border: var(--dq-card-border);
+  --delpi-ui-muted: var(--dq-text-muted);
 }
 
 .dashboard-quality button,
@@ -1362,7 +1367,6 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
 }
 
 /* Help tooltip — portal (padrão commercial/LMP) */
-.dashboard-quality .dq-help-tooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -1370,12 +1374,10 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   flex-shrink: 0;
 }
 
-.dashboard-quality .dq-help-tooltip--wrap {
   cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--dq-text-muted) 55%, transparent);
 }
 
-.dashboard-quality .dq-help-tooltip__trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1394,8 +1396,6 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
     background 0.15s ease;
 }
 
-.dashboard-quality .dq-help-tooltip__trigger:hover,
-.dashboard-quality .dq-help-tooltip__trigger:focus-visible {
   opacity: 1;
   color: var(--dq-accent);
   background: color-mix(in srgb, var(--dq-accent) 10%, transparent);
@@ -1403,7 +1403,6 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
 }
 
 /* Portal no body: layout mínimo antes de --ready (medição de largura do balão) */
-.dq-help-tooltip__bubble--fixed {
   position: fixed;
   z-index: 10000;
   max-width: min(280px, calc(100vw - 24px));
@@ -1412,7 +1411,6 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   pointer-events: none;
 }
 
-.dashboard-quality .dq-help-tooltip__bubble--fixed {
   position: fixed;
   bottom: auto;
   right: auto;
@@ -1425,12 +1423,10 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   transition: opacity 0.15s ease;
 }
 
-.dashboard-quality .dq-help-tooltip__bubble--fixed.dq-help-tooltip__bubble--ready {
   opacity: 1;
   visibility: visible;
 }
 
-.dq-help-tooltip__bubble--fixed.dq-help-tooltip__bubble--ready {
   position: fixed;
   z-index: 10000;
   min-width: 200px;

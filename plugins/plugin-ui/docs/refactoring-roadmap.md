@@ -254,11 +254,11 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 | `dashboard-production` | ✅ | piloto F2 | — | sim |
 | `dashboard-commercial` | ✅ | ⏳ | — | sim |
 | `dashboard-engineering` | ✅ | ⏳ | — | sim |
-| `dashboard-financial` | ⏳ | ⏳ | — | sim |
-| `dashboard-hr` | ⏳ | ⏳ | — | sim |
-| `dashboard-lmps` | ⏳ | ⏳ | Detail* | sim |
-| `dashboard-quality` | ⏳ | ⏳ | — | sim |
-| `dashboard-supplies` | ⏳ | ⏳ | — | sim |
+| `dashboard-financial` | ✅ | ⏳ | — | sim |
+| `dashboard-hr` | ✅ | ⏳ | — | sim |
+| `dashboard-lmps` | ✅ | ⏳ | Detail* | sim |
+| `dashboard-quality` | ✅ | ⏳ | — | sim |
+| `dashboard-supplies` | ✅ | ⏳ | — | sim |
 | `transformometro` | ⏳ | parcial | ⏳ | sim |
 | `cadastro-kaizen` | ⏳ | — | ⏳ | sim |
 | `quality-action-plans` | ⏳ | parcial | ⏳ | sim |

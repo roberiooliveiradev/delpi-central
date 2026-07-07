@@ -1,6 +1,6 @@
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -45,8 +45,7 @@ export function SuppliesFilters({
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Competência"
-              hint={SUPPLIES_HELP_TOOLTIPS.filters.competence}
-            />
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.competence} className="ds-field__label"      />
             <input
               id="ds-competence"
               type="month"
@@ -57,8 +56,7 @@ export function SuppliesFilters({
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Data inicial"
-              hint={SUPPLIES_HELP_TOOLTIPS.filters.dateStart}
-            />
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.dateStart} className="ds-field__label"      />
             <input
               id="ds-date-start"
               type="date"
@@ -69,8 +67,7 @@ export function SuppliesFilters({
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Data final"
-              hint={SUPPLIES_HELP_TOOLTIPS.filters.dateEnd}
-            />
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.dateEnd} className="ds-field__label"      />
             <input
               id="ds-date-end"
               type="date"
@@ -93,8 +90,7 @@ export function SuppliesFilters({
         <label className="ds-filter-box ds-field">
           <FieldLabel
             label="Localização (estoque)"
-            hint={SUPPLIES_HELP_TOOLTIPS.filters.location}
-          />
+            hint={SUPPLIES_HELP_TOOLTIPS.filters.location} className="ds-field__label"     />
           <input
             id="ds-location"
             type="text"

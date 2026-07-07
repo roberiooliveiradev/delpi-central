@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { ChartGranularityToggle } from "./ChartGranularityToggle";
 import type { ChartGranularity } from "../types/chart";
 
@@ -25,8 +25,7 @@ export function ChartToolbar({
       <div className="lmps-chart-toolbar__group">
         <FieldLabel
           label="Agrupamento"
-          hint={LMPS_HELP_TOOLTIPS.charts.evolutionGranularity}
-        />
+          hint={LMPS_HELP_TOOLTIPS.charts.evolutionGranularity} className="lmps-field__label"    />
         <ChartGranularityToggle
           idPrefix={idPrefix}
           value={granularity}

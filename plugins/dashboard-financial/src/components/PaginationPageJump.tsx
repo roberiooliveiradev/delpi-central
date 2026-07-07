@@ -5,7 +5,7 @@ import {
   parsePageJumpInput,
   type PageJumpValidationReason,
 } from "../utils/paginationPages";
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 
 type PaginationPageJumpProps = {
   page: number;

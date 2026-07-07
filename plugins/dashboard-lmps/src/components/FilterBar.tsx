@@ -8,7 +8,7 @@ import {
   LMPS_LISTING_TYPE_OPTIONS,
   LMPS_STATUS_OPTIONS,
 } from "../constants/filterOptions";
-import { FieldLabel, HelpTooltip } from "./HelpTooltip";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
@@ -91,7 +91,7 @@ export function FilterBar({
 
       <section className="lmps-filters-row" aria-label="Filtros do dashboard">
         <label className="lmps-filter-box lmps-field">
-          <FieldLabel label="Competência" hint={LMPS_HELP_TOOLTIPS.filters.competence} />
+          <FieldLabel label="Competência" hint={LMPS_HELP_TOOLTIPS.filters.competence} className="lmps-field__label" />
           <input
             id="lmps-competence"
             type="month"
@@ -102,7 +102,7 @@ export function FilterBar({
         </label>
 
         <label className="lmps-filter-box lmps-field">
-          <FieldLabel label="Data inicial" hint={LMPS_HELP_TOOLTIPS.filters.dateStart} />
+          <FieldLabel label="Data inicial" hint={LMPS_HELP_TOOLTIPS.filters.dateStart} className="lmps-field__label" />
           <input
             type="date"
             value={dateStart}
@@ -112,7 +112,7 @@ export function FilterBar({
         </label>
 
         <label className="lmps-filter-box lmps-field">
-          <FieldLabel label="Data final" hint={LMPS_HELP_TOOLTIPS.filters.dateEnd} />
+          <FieldLabel label="Data final" hint={LMPS_HELP_TOOLTIPS.filters.dateEnd} className="lmps-field__label" />
           <input
             type="date"
             value={dateEnd}

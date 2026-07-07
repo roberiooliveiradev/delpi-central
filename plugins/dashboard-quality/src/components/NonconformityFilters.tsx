@@ -6,7 +6,7 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -64,7 +64,7 @@ export function NonconformityFilters({
   return (
     <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de NC">
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} />
+        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label" />
         <input
           id="nc-competence"
           type="month"
@@ -74,7 +74,7 @@ export function NonconformityFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} />
+        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label" />
         <input
           id="nc-date-start"
           type="date"
@@ -84,7 +84,7 @@ export function NonconformityFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} />
+        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label" />
         <input
           id="nc-date-end"
           type="date"
@@ -105,7 +105,7 @@ export function NonconformityFilters({
       />
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Tipo" />
+        <FieldLabel label="Tipo" className="dq-field__label" />
         <select
           id="nc-type"
           value={type}
@@ -117,7 +117,7 @@ export function NonconformityFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Status" />
+        <FieldLabel label="Status" className="dq-field__label" />
         <input
           id="nc-status"
           type="text"
@@ -128,7 +128,7 @@ export function NonconformityFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Item" />
+        <FieldLabel label="Item" className="dq-field__label" />
         <input
           id="nc-item"
           type="text"
@@ -139,7 +139,7 @@ export function NonconformityFilters({
       </label>
 
       <label className="dq-filter-box dq-field dq-filter-box--wide">
-        <FieldLabel label="Descrição" />
+        <FieldLabel label="Descrição" className="dq-field__label" />
         <input
           id="nc-description"
           type="text"

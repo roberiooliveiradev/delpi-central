@@ -7,15 +7,15 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | Plugin | Arquivo local | Status | Notas |
 |--------|---------------|--------|-------|
 | `tv-dashboard` | — | ✅ Migrado | Referência de integração |
-| `dashboard-production` | — | ✅ Migrado | Piloto Fase 1 — `@delpi/plugin-ui` |
+| `dashboard-production` | — | ✅ Migrado | Piloto Fase 1 |
+| `dashboard-commercial` | — | ✅ Migrado | Fase 1 |
+| `dashboard-engineering` | — | ✅ Migrado | Fase 1 |
+| `dashboard-financial` | — | ✅ Migrado | Fase 1 |
+| `dashboard-hr` | — | ✅ Migrado | Fase 1 |
+| `dashboard-lmps` | — | ✅ Migrado | Fase 1 |
+| `dashboard-quality` | — | ✅ Migrado | Fase 1 |
+| `dashboard-supplies` | — | ✅ Migrado | Fase 1 |
 | `cadastro-kaizen` | `src/components/ui/HelpTooltip.tsx` | ⏳ Pendente | + `FieldLabel` |
-| `dashboard-lmps` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
-| `dashboard-commercial` | — | ✅ Migrado | Fase 1 — `@delpi/plugin-ui` |
-| `dashboard-engineering` | — | ✅ Migrado | Fase 1 — `@delpi/plugin-ui` |
-| `dashboard-financial` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
-| `dashboard-hr` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
-| `dashboard-quality` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
-| `dashboard-supplies` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `eficiencia-fabril` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `transformometro` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | + `FieldLabel` |
 | `quality-action-plans` | `src/components/ui/HelpTooltip.tsx` | ⏳ Pendente | |
@@ -32,9 +32,10 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 
 ## Ordem sugerida de migração
 
-1. **Dashboards departamentais** (mesmo padrão `HelpTooltip` + `FieldLabel`)
-2. **cadastro-kaizen** / **transformometro** (já usam `FieldLabel` local)
-3. **portal** (só se unificarmos API controlada `open` no pacote)
+1. ~~**Dashboards departamentais**~~ ✅ Concluído (8 plugins)
+2. **cadastro-kaizen** / **transformometro** / **quality-action-plans**
+3. **eficiencia-fabril** / **maintenance** (variante CSS hover simples)
+4. **portal** (só se unificarmos API controlada `open` no pacote)
 
 ## Após cada migração
 
@@ -42,10 +43,6 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 - [ ] Remover bloco CSS `*-help-tooltip` do `index.css` do plugin
 - [ ] Atualizar esta tabela para ✅
 - [ ] `npm run build` do plugin
-
-## Roadmap completo
-
-Fases 0–5, matriz por plugin, riscos e métricas: **[refactoring-roadmap.md](./refactoring-roadmap.md)**.
 
 ## Componentes futuros no pacote
 

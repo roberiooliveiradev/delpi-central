@@ -28,6 +28,11 @@
   --dh-font-hero: clamp(24px, 2vw, 36px);
   --dh-font-kpi: clamp(26px, 2.2vw, 38px);
   --dh-kpi-icon-size: 44px;
+  --delpi-ui-accent: var(--dh-accent);
+  --delpi-ui-surface: var(--dh-card-bg);
+  --delpi-ui-text: var(--dh-text);
+  --delpi-ui-border: var(--dh-card-border);
+  --delpi-ui-muted: var(--dh-text-muted);
 }
 
 .dashboard-hr button,
@@ -1224,7 +1229,6 @@ html.dh-printing .dashboard-hr .recharts-responsive-container {
 }
 
 /* Help tooltip — portal (padrão commercial/LMP) */
-.dashboard-hr .dh-help-tooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -1232,12 +1236,10 @@ html.dh-printing .dashboard-hr .recharts-responsive-container {
   flex-shrink: 0;
 }
 
-.dashboard-hr .dh-help-tooltip--wrap {
   cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--dh-text-muted) 55%, transparent);
 }
 
-.dashboard-hr .dh-help-tooltip__trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1256,8 +1258,6 @@ html.dh-printing .dashboard-hr .recharts-responsive-container {
     background 0.15s ease;
 }
 
-.dashboard-hr .dh-help-tooltip__trigger:hover,
-.dashboard-hr .dh-help-tooltip__trigger:focus-visible {
   opacity: 1;
   color: var(--dh-accent);
   background: color-mix(in srgb, var(--dh-accent) 10%, transparent);
@@ -1265,7 +1265,6 @@ html.dh-printing .dashboard-hr .recharts-responsive-container {
 }
 
 /* Portal no body: layout mínimo antes de --ready (medição de largura do balão) */
-.dh-help-tooltip__bubble--fixed {
   position: fixed;
   z-index: 10000;
   max-width: min(280px, calc(100vw - 24px));
@@ -1274,7 +1273,6 @@ html.dh-printing .dashboard-hr .recharts-responsive-container {
   pointer-events: none;
 }
 
-.dashboard-hr .dh-help-tooltip__bubble--fixed {
   position: fixed;
   bottom: auto;
   right: auto;
@@ -1287,12 +1285,10 @@ html.dh-printing .dashboard-hr .recharts-responsive-container {
   transition: opacity 0.15s ease;
 }
 
-.dashboard-hr .dh-help-tooltip__bubble--fixed.dh-help-tooltip__bubble--ready {
   opacity: 1;
   visibility: visible;
 }
 
-.dh-help-tooltip__bubble--fixed.dh-help-tooltip__bubble--ready {
   position: fixed;
   z-index: 10000;
   min-width: 200px;

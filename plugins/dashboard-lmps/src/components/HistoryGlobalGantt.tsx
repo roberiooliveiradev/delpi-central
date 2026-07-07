@@ -1,5 +1,5 @@
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import type { HistoryGlobalGanttLayout } from "../utils/historyGlobalGantt";
 
 type HistoryGlobalGanttProps = {

@@ -5,7 +5,7 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -49,8 +49,7 @@ export function HrFilters({
       <label className="dh-filter-box dh-field">
         <FieldLabel
           label="Competência"
-          hint={HR_HELP_TOOLTIPS.filters.competence}
-        />
+          hint={HR_HELP_TOOLTIPS.filters.competence} className="dh-field__label"    />
         <input
           id="hr-filter-competence"
           type="month"
@@ -59,7 +58,7 @@ export function HrFilters({
         />
       </label>
       <label className="dh-filter-box dh-field">
-        <FieldLabel label="Início" hint={HR_HELP_TOOLTIPS.filters.dateStart} />
+        <FieldLabel label="Início" hint={HR_HELP_TOOLTIPS.filters.dateStart} className="dh-field__label" />
         <input
           id="hr-filter-start"
           type="date"
@@ -68,7 +67,7 @@ export function HrFilters({
         />
       </label>
       <label className="dh-filter-box dh-field">
-        <FieldLabel label="Fim" hint={HR_HELP_TOOLTIPS.filters.dateEnd} />
+        <FieldLabel label="Fim" hint={HR_HELP_TOOLTIPS.filters.dateEnd} className="dh-field__label" />
         <input
           id="hr-filter-end"
           type="date"

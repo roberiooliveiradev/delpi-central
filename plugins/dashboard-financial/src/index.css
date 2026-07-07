@@ -28,6 +28,11 @@
   --ds-font-hero: clamp(24px, 2vw, 36px);
   --ds-font-kpi: clamp(26px, 2.2vw, 38px);
   --ds-kpi-icon-size: 44px;
+  --delpi-ui-accent: var(--ds-accent);
+  --delpi-ui-surface: var(--ds-card-bg);
+  --delpi-ui-text: var(--ds-text);
+  --delpi-ui-border: var(--ds-card-border);
+  --delpi-ui-muted: var(--ds-text-muted);
 }
 
 .dashboard-financial button,
@@ -1339,7 +1344,6 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
 }
 
 /* Help tooltip — portal (padrão commercial/LMP) */
-.dashboard-financial .ds-help-tooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -1347,12 +1351,10 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
   flex-shrink: 0;
 }
 
-.dashboard-financial .ds-help-tooltip--wrap {
   cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--ds-text-muted) 55%, transparent);
 }
 
-.dashboard-financial .ds-help-tooltip__trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1371,8 +1373,6 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
     background 0.15s ease;
 }
 
-.dashboard-financial .ds-help-tooltip__trigger:hover,
-.dashboard-financial .ds-help-tooltip__trigger:focus-visible {
   opacity: 1;
   color: var(--ds-accent);
   background: color-mix(in srgb, var(--ds-accent) 10%, transparent);
@@ -1380,7 +1380,6 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
 }
 
 /* Portal no body: layout mínimo antes de --ready (medição de largura do balão) */
-.ds-help-tooltip__bubble--fixed {
   position: fixed;
   z-index: 10000;
   max-width: min(280px, calc(100vw - 24px));
@@ -1389,7 +1388,6 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
   pointer-events: none;
 }
 
-.dashboard-financial .ds-help-tooltip__bubble--fixed {
   position: fixed;
   bottom: auto;
   right: auto;
@@ -1402,12 +1400,10 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
   transition: opacity 0.15s ease;
 }
 
-.dashboard-financial .ds-help-tooltip__bubble--fixed.ds-help-tooltip__bubble--ready {
   opacity: 1;
   visibility: visible;
 }
 
-.ds-help-tooltip__bubble--fixed.ds-help-tooltip__bubble--ready {
   position: fixed;
   z-index: 10000;
   min-width: 200px;

@@ -6,7 +6,7 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination, TablePageSizeSelect } from "./Pagination";

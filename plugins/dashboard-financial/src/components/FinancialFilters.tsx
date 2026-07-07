@@ -1,6 +1,6 @@
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -39,8 +39,7 @@ export function FinancialFilters({
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Competência"
-              hint={FINANCIAL_HELP_TOOLTIPS.filters.competence}
-            />
+              hint={FINANCIAL_HELP_TOOLTIPS.filters.competence} className="ds-field__label"      />
             <input
               id="ds-competence"
               type="month"
@@ -51,8 +50,7 @@ export function FinancialFilters({
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Data inicial"
-              hint={FINANCIAL_HELP_TOOLTIPS.filters.dateStart}
-            />
+              hint={FINANCIAL_HELP_TOOLTIPS.filters.dateStart} className="ds-field__label"      />
             <input
               id="ds-date-start"
               type="date"
@@ -63,8 +61,7 @@ export function FinancialFilters({
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Data final"
-              hint={FINANCIAL_HELP_TOOLTIPS.filters.dateEnd}
-            />
+              hint={FINANCIAL_HELP_TOOLTIPS.filters.dateEnd} className="ds-field__label"      />
             <input
               id="ds-date-end"
               type="date"

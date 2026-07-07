@@ -1,24 +1,22 @@
-# =========================
-# BUILD STAGE
-# =========================
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY plugin-ui/package*.json ./plugin-ui/
+RUN cd plugin-ui && npm install
 
-COPY . .
+COPY dashboard-lmps/package*.json ./dashboard-lmps/
+RUN cd dashboard-lmps && npm install
+
+COPY plugin-ui ./plugin-ui
+COPY dashboard-lmps ./dashboard-lmps
+
+WORKDIR /app/dashboard-lmps
 RUN npm run build
 
-
-# =========================
-# NGINX STAGE
-# =========================
 FROM nginx:alpine
 
-# copia build do vite
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dashboard-lmps/dist /usr/share/nginx/html
 
 EXPOSE 80
 

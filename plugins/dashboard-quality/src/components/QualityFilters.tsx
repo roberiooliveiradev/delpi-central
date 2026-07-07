@@ -5,7 +5,7 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -56,8 +56,7 @@ export function QualityFilters({
       <label className="dq-filter-box dq-field">
         <FieldLabel
           label="Competência"
-          hint={QUALITY_HELP_TOOLTIPS.filters.competence}
-        />
+          hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label"    />
         <input
           id={`${idPrefix}-competence`}
           type="month"
@@ -69,8 +68,7 @@ export function QualityFilters({
       <label className="dq-filter-box dq-field">
         <FieldLabel
           label="Data inicial"
-          hint={QUALITY_HELP_TOOLTIPS.filters.dateStart}
-        />
+          hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label"    />
         <input
           id={`${idPrefix}-date-start`}
           type="date"
@@ -82,8 +80,7 @@ export function QualityFilters({
       <label className="dq-filter-box dq-field">
         <FieldLabel
           label="Data final"
-          hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd}
-        />
+          hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label"    />
         <input
           id={`${idPrefix}-date-end`}
           type="date"

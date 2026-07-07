@@ -5,7 +5,7 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -47,7 +47,7 @@ export function Audit5sFilters({
   return (
     <section className="dq-filters-row" aria-label="Filtros de auditoria 5S">
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} />
+        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label" />
         <input
           id="a5s-competence"
           type="month"
@@ -57,7 +57,7 @@ export function Audit5sFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} />
+        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label" />
         <input
           id="a5s-date-start"
           type="date"
@@ -67,7 +67,7 @@ export function Audit5sFilters({
       </label>
 
       <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} />
+        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label" />
         <input
           id="a5s-date-end"
           type="date"

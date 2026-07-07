@@ -106,6 +106,11 @@ src/
 | `dashboard-production` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
 | `dashboard-commercial` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
 | `dashboard-engineering` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
+| `dashboard-financial` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
+| `dashboard-hr` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
+| `dashboard-lmps` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
+| `dashboard-quality` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
+| `dashboard-supplies` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
 | Demais plugins com `HelpTooltip.tsx` local | ⏳ Ver [migration-catalog.md](./docs/migration-catalog.md) |
 
 ---

@@ -64,6 +64,11 @@
   --lmps-chart-tick-font-size: 14px;
   --lmps-chart-tooltip-font-size: 14px;
   --lmps-chart-legend-font-size: 14px;
+  --delpi-ui-accent: var(--primary, #089bdb);
+  --delpi-ui-surface: var(--surface, #ffffff);
+  --delpi-ui-text: var(--text, #111111);
+  --delpi-ui-border: var(--border, #e6e6e6);
+  --delpi-ui-muted: color-mix(in srgb, var(--text, #111111) 55%, transparent);
 }
 
 .dashboard-lmps button,
@@ -265,19 +270,16 @@
   position: relative;
 }
 
-.dashboard-lmps .lmps-help-tooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
 }
 
-.dashboard-lmps .lmps-help-tooltip--wrap {
   cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--text-muted) 55%, transparent);
 }
 
-.dashboard-lmps .lmps-help-tooltip__trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -296,15 +298,12 @@
     background 0.15s ease;
 }
 
-.dashboard-lmps .lmps-help-tooltip__trigger:hover,
-.dashboard-lmps .lmps-help-tooltip__trigger:focus-visible {
   opacity: 1;
   color: var(--primary);
   background: color-mix(in srgb, var(--primary) 10%, transparent);
   outline: none;
 }
 
-.dashboard-lmps .lmps-help-tooltip__bubble {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 50%;
@@ -332,24 +331,18 @@
     visibility 0.18s ease;
 }
 
-.dashboard-lmps .lmps-help-tooltip:hover .lmps-help-tooltip__bubble,
-.dashboard-lmps .lmps-help-tooltip:focus-within .lmps-help-tooltip__bubble {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
 
-.dashboard-lmps .lmps-help-tooltip--wrap .lmps-help-tooltip__bubble {
   left: 0;
   transform: translateY(4px);
 }
 
-.dashboard-lmps .lmps-help-tooltip--wrap:hover .lmps-help-tooltip__bubble,
-.dashboard-lmps .lmps-help-tooltip--wrap:focus-within .lmps-help-tooltip__bubble {
   transform: translateY(0);
 }
 
-.dashboard-lmps .lmps-help-tooltip--bottom .lmps-help-tooltip__bubble {
   bottom: auto;
   top: calc(100% + 8px);
   left: 0;
@@ -357,13 +350,10 @@
   transform: translateY(-4px);
 }
 
-.dashboard-lmps .lmps-help-tooltip--bottom:hover .lmps-help-tooltip__bubble,
-.dashboard-lmps .lmps-help-tooltip--bottom:focus-within .lmps-help-tooltip__bubble {
   transform: translateY(0);
 }
 
 /* Portal no body: layout mínimo antes de --ready (medição de largura do balão) */
-.lmps-help-tooltip__bubble--fixed {
   position: fixed;
   z-index: 10000;
   max-width: min(280px, calc(100vw - 24px));
@@ -372,7 +362,6 @@
   pointer-events: none;
 }
 
-.dashboard-lmps .lmps-help-tooltip__bubble--fixed {
   position: fixed;
   bottom: auto;
   right: auto;
@@ -385,13 +374,11 @@
   transition: opacity 0.15s ease;
 }
 
-.dashboard-lmps .lmps-help-tooltip__bubble--fixed.lmps-help-tooltip__bubble--ready {
   opacity: 1;
   visibility: visible;
 }
 
 /* Portal pode renderizar no body quando o root do MFE não estiver disponível */
-.lmps-help-tooltip__bubble--fixed.lmps-help-tooltip__bubble--ready {
   position: fixed;
   z-index: 10000;
   min-width: 200px;
@@ -925,16 +912,13 @@
   word-break: break-word;
 }
 
-.dashboard-lmps .lmps-table__header-label .lmps-help-tooltip,
 .dashboard-lmps .lmps-table__header-help {
   flex-shrink: 0;
 }
 
-.dashboard-lmps .lmps-table thead th .lmps-help-tooltip {
   flex-shrink: 0;
 }
 
-.dashboard-lmps .lmps-table__header-help .lmps-help-tooltip__trigger {
   opacity: 0.9;
 }
 
@@ -2215,7 +2199,6 @@
   .dashboard-lmps .lmps-history-section__filters,
   .dashboard-lmps .lmps-table-toolbar,
   .dashboard-lmps .lmps-pagination,
-  .dashboard-lmps .lmps-help-tooltip__trigger {
     display: none !important;
   }
 
@@ -2237,7 +2220,6 @@
   .dashboard-lmps .lmps-history-section__filters,
   .dashboard-lmps .lmps-table-toolbar,
   .dashboard-lmps .lmps-pagination,
-  .dashboard-lmps .lmps-help-tooltip__trigger {
     display: none !important;
   }
 
@@ -2259,7 +2241,6 @@
   .dashboard-lmps .lmps-history-section__filters,
   .dashboard-lmps .lmps-table-toolbar,
   .dashboard-lmps .lmps-pagination,
-  .dashboard-lmps .lmps-help-tooltip__trigger {
     display: none !important;
   }
 

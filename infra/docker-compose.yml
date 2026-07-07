@@ -498,8 +498,8 @@ services:
 
   dashboard-lmps:
     build:
-      context: ../plugins/dashboard-lmps
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-lmps/Dockerfile
 
     container_name: delpi-dashboard-lmps
     restart: unless-stopped
@@ -507,27 +507,19 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/dashboard-lmps:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
   dashboard-quality:
     build:
-      context: ../plugins/dashboard-quality
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-quality/Dockerfile
 
     container_name: delpi-dashboard-quality
     restart: unless-stopped
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-quality:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -779,8 +771,8 @@ services:
 
   dashboard-supplies:
     build:
-      context: ../plugins/dashboard-supplies
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-supplies/Dockerfile
 
     container_name: delpi-dashboard-supplies
     restart: unless-stopped
@@ -788,27 +780,19 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/dashboard-supplies:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
   dashboard-financial:
     build:
-      context: ../plugins/dashboard-financial
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-financial/Dockerfile
 
     container_name: delpi-dashboard-financial
     restart: unless-stopped
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-financial:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -862,18 +846,14 @@ services:
 
   dashboard-hr:
     build:
-      context: ../plugins/dashboard-hr
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-hr/Dockerfile
 
     container_name: delpi-dashboard-hr
     restart: unless-stopped
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-hr:/app
-      - /app/node_modules
 
     networks:
       - delpi-network

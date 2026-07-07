@@ -3,7 +3,7 @@ import {
   TABLE_PAGE_SIZE_OPTIONS,
   buildVisiblePageItems,
 } from "../utils/paginationPages";
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import { PaginationPageJump } from "./PaginationPageJump";
 
 type TablePageSizeSelectProps = {
