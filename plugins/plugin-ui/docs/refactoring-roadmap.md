@@ -252,8 +252,9 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `useConfirmDialogController` | ✅ F5.2 | PAC hook + transformometro provider |
 | `strategic-indicators` utils | ✅ F5.3 | `operationalUnitLabels` reexport |
 | Dropzones restantes (chat, customer-experience) | ⏳ | Domínio/API distinta — fora de escopo imediato |
-| `ConfirmModalPanel` | ✅ F5.4 | Headless; `Modal` shell permanece local (PAC, transformometro) |
-| `Modal` base | ⏳ | Shell por plugin — não extrair sem contrato unificado |
+| `ConfirmModalPanel` | ✅ F5.4 | Headless; `ModalShell` + wrapper fino |
+| `ModalShell` | ✅ F5.5 | PAC + transformometro |
+| `Modal` base | ⏳ | Variantes SI/drawer fora de escopo |
 
 ---
 

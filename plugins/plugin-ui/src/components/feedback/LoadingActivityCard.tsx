@@ -20,7 +20,12 @@ export type LoadingActivityCardClassNames = {
 
 export type LoadingActivityCardLabels = {
   progressRemaining: (remainingPercent: number) => string;
+  /** Ex.: «Iniciando…» quando progresso = 0 (strategic-indicators). */
+  progressStarting?: string;
+  /** Só exibe «Faltam N%» após progresso > 0. */
+  progressRemainingOnlyAfterStart?: boolean;
   progressAriaDeterminate: (remainingPercent: number) => string;
+  progressAriaStarting?: string;
   progressAriaIndeterminate: string;
 };
 
@@ -38,9 +43,9 @@ export type LoadingActivityCardProps = {
 
 export function loadingActivityBemClasses(
   prefix: string,
-  options?: { withCopyWrapper?: boolean },
+  options?: { withCopyWrapper?: boolean; block?: string },
 ): LoadingActivityCardClassNames {
-  const base = `${prefix}-loading-activity`;
+  const base = `${prefix}-${options?.block ?? "loading-activity"}`;
 
   return {
     root: base,
@@ -60,16 +65,52 @@ export function loadingActivityBemClasses(
   };
 }
 
-function resolveProgress(progressPercent?: number) {
+function resolveProgress(progressPercent: number | undefined, labels: LoadingActivityCardLabels) {
   const hasProgress =
     typeof progressPercent === "number" && Number.isFinite(progressPercent);
   const clampedProgress = hasProgress
     ? Math.min(100, Math.max(0, Math.round(progressPercent)))
     : null;
-  const remainingPercent =
-    clampedProgress !== null ? Math.max(0, 100 - clampedProgress) : null;
+
+  let remainingPercent: number | null = null;
+  if (clampedProgress !== null) {
+    if (labels.progressRemainingOnlyAfterStart) {
+      remainingPercent =
+        clampedProgress > 0 ? Math.max(0, 100 - clampedProgress) : null;
+    } else {
+      remainingPercent = Math.max(0, 100 - clampedProgress);
+    }
+  }
 
   return { clampedProgress, remainingPercent };
+}
+
+function resolveProgressLabel(
+  clampedProgress: number | null,
+  remainingPercent: number | null,
+  labels: LoadingActivityCardLabels,
+): string | null {
+  if (clampedProgress !== null && clampedProgress <= 0 && labels.progressStarting) {
+    return labels.progressStarting;
+  }
+  if (remainingPercent !== null) {
+    return labels.progressRemaining(remainingPercent);
+  }
+  return null;
+}
+
+function resolveProgressAriaLabel(
+  progressLabel: string | null,
+  remainingPercent: number | null,
+  labels: LoadingActivityCardLabels,
+): string {
+  if (progressLabel && labels.progressStarting && progressLabel === labels.progressStarting) {
+    return labels.progressAriaStarting ?? `Carregamento: ${labels.progressStarting}`;
+  }
+  if (remainingPercent !== null) {
+    return labels.progressAriaDeterminate(remainingPercent);
+  }
+  return labels.progressAriaIndeterminate;
 }
 
 export function LoadingActivityCard({
@@ -83,7 +124,8 @@ export function LoadingActivityCard({
   labels,
   className,
 }: LoadingActivityCardProps) {
-  const { clampedProgress, remainingPercent } = resolveProgress(progressPercent);
+  const { clampedProgress, remainingPercent } = resolveProgress(progressPercent, labels);
+  const progressLabel = resolveProgressLabel(clampedProgress, remainingPercent, labels);
   const rootClass = [
     classNames.root,
     classNames.rootVariant(variant),
@@ -107,10 +149,8 @@ export function LoadingActivityCard({
       <div className={classNames.content}>
         {classNames.copy ? <div className={classNames.copy}>{copyBlock}</div> : copyBlock}
         <div className={classNames.progressWrap}>
-          {remainingPercent !== null ? (
-            <span className={classNames.progressLabel}>
-              {labels.progressRemaining(remainingPercent)}
-            </span>
+          {progressLabel ? (
+            <span className={classNames.progressLabel}>{progressLabel}</span>
           ) : null}
           <div
             className={classNames.progress}
@@ -118,11 +158,7 @@ export function LoadingActivityCard({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={clampedProgress ?? undefined}
-            aria-label={
-              remainingPercent !== null
-                ? labels.progressAriaDeterminate(remainingPercent)
-                : labels.progressAriaIndeterminate
-            }
+            aria-label={resolveProgressAriaLabel(progressLabel, remainingPercent, labels)}
           >
             <div
               className={[
@@ -151,14 +187,26 @@ export function createDashboardLoadingActivityCard(config: {
   prefix: string;
   labels: LoadingActivityCardLabels;
   withCopyWrapper?: boolean;
+  block?: string;
+  defaultTone?: LoadingActivityCardTone;
 }) {
   const classNames = loadingActivityBemClasses(config.prefix, {
     withCopyWrapper: config.withCopyWrapper,
+    block: config.block,
   });
+  const defaultTone = config.defaultTone ?? "info";
 
-  return function DashboardLoadingActivityCard(props: DashboardLoadingActivityCardProps) {
+  return function DashboardLoadingActivityCard({
+    tone,
+    ...props
+  }: DashboardLoadingActivityCardProps) {
     return (
-      <LoadingActivityCard classNames={classNames} labels={config.labels} {...props} />
+      <LoadingActivityCard
+        classNames={classNames}
+        labels={config.labels}
+        tone={tone ?? defaultTone}
+        {...props}
+      />
     );
   };
 }

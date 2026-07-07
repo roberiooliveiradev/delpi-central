@@ -92,7 +92,8 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 
 | Componente | Pacote | Notas |
 |------------|--------|-------|
-| `ConfirmModalPanel` | ✅ F5 | Headless; `Modal` permanece local (PAC, transformometro) |
+| `ConfirmModalPanel` | ✅ F5 | Headless; `ModalShell` local (PAC, transformometro) |
+| `ModalShell` | ✅ F5.5 | Portal + escape; overlay scope no wrapper |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
@@ -114,6 +115,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
 | `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
+| `inspecoes-entrada` | ✅ | — | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
@@ -161,7 +163,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard |
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
-| `strategic-indicators` | — | PageHeader | `operationalUnitLabels` |
+| `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline | `operationalUnitLabels` |
 | `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity |
 | `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState |
 | `auditoria-5s` | — | ChartCard |
