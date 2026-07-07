@@ -34,11 +34,13 @@ export type MultiSelectFieldLabels = {
   emptyOptions: string;
   multipleSelected: (count: number) => string;
   createOption?: (query: string) => string;
+  searchAriaLabel?: (label: string) => string;
 };
 
 export type MultiSelectFieldProps = {
   label: string;
   labelHint?: string;
+  id?: string;
   options: MultiSelectOption[];
   selectedValues: string[];
   onChange: (values: string[]) => void;
@@ -76,6 +78,7 @@ export function multiSelectBemClasses(prefix: string): MultiSelectFieldClassName
 export function MultiSelectField({
   label,
   labelHint,
+  id,
   options,
   selectedValues,
   onChange,
@@ -92,7 +95,9 @@ export function MultiSelectField({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const listId = useId();
+  const generatedId = useId();
+  const triggerId = id ?? generatedId;
+  const listId = `${triggerId}-list`;
   const resolvedEmptyLabel = emptyLabel ?? labels.emptyLabel;
   const normalizedQuery = query.trim();
 
@@ -176,6 +181,7 @@ export function MultiSelectField({
       <FieldLabel label={label} hint={labelHint} className={classNames.fieldLabel} />
       <div className={open ? classNames.multiSelectOpen : classNames.multiSelect}>
         <button
+          id={triggerId}
           type="button"
           className={classNames.trigger}
           aria-expanded={open}
@@ -196,6 +202,7 @@ export function MultiSelectField({
                 className={classNames.search}
                 placeholder={labels.searchPlaceholder}
                 value={query}
+                aria-label={labels.searchAriaLabel?.(label)}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && canCreate) {
