@@ -278,7 +278,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |
 | `financeiro-centro-custo` | — | Kpi/Chart/Empty | ChartCard ✅ Empty/Loading | sim |
-| `pedidos-venda-abertos` | — | Kpi/Filter | PageHeader | sim |
+| `pedidos-venda-abertos` | — | Pagination ✅ KpiCard ✅ | PageHeader | sim |
 | `auditoria-5s` | — | ChartCard | — | sim |
 | `tv-dashboard` | ✅ | — | — | sim |
 | `portal` | ❌ fora de escopo | — | — | N/A (shell) |

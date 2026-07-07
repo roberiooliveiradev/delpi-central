@@ -7,9 +7,11 @@ export type CompactPaginationClassNames = {
   ghostBtn: string;
 };
 
+export type CompactPaginationLayout = "grouped" | "flat";
+
 export type CompactPaginationLabels = {
   info: (args: { page: number; totalPages: number; total: number }) => string;
-  pageSizeLabel: string;
+  pageSizeLabel?: string;
   previous: string;
   next: string;
   navigationAriaLabel: string;
@@ -19,10 +21,11 @@ export type CompactPaginationProps = {
   page: number;
   pageSize: number;
   total: number;
-  totalPages: number;
-  pageSizeOptions: readonly number[];
+  totalPages?: number;
+  pageSizeOptions?: readonly number[];
   onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  layout?: CompactPaginationLayout;
   classNames: CompactPaginationClassNames;
   labels: CompactPaginationLabels;
 };
@@ -52,71 +55,103 @@ export function CompactPagination({
   pageSizeOptions,
   onPageChange,
   onPageSizeChange,
+  layout = "grouped",
   classNames,
   labels,
 }: CompactPaginationProps) {
+  const resolvedTotalPages =
+    totalPages ?? (pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1);
   const canPrev = page > 1;
-  const canNext = page < totalPages;
+  const canNext = page < resolvedTotalPages;
+  const showPageSize =
+    onPageSizeChange != null && pageSizeOptions != null && pageSizeOptions.length > 0;
 
   if (total === 0) return null;
+
+  const infoNode = (
+    <span className={classNames.info}>
+      {labels.info({ page, totalPages: resolvedTotalPages, total })}
+    </span>
+  );
+
+  const actionsNode = (
+    <div className={classNames.actions}>
+      <button
+        type="button"
+        className={classNames.ghostBtn}
+        disabled={!canPrev}
+        onClick={() => onPageChange(page - 1)}
+      >
+        {labels.previous}
+      </button>
+      <button
+        type="button"
+        className={classNames.ghostBtn}
+        disabled={!canNext}
+        onClick={() => onPageChange(page + 1)}
+      >
+        {labels.next}
+      </button>
+    </div>
+  );
+
+  if (layout === "flat") {
+    return (
+      <div className={classNames.root} role="navigation" aria-label={labels.navigationAriaLabel}>
+        {infoNode}
+        {actionsNode}
+      </div>
+    );
+  }
 
   return (
     <div className={classNames.root} role="navigation" aria-label={labels.navigationAriaLabel}>
       <div className={classNames.left}>
-        <span className={classNames.info}>
-          {labels.info({ page, totalPages, total })}
-        </span>
-        <label className={classNames.pageSize}>
-          <span>{labels.pageSizeLabel}</span>
-          <select
-            value={pageSize}
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-          >
-            {pageSizeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+        {infoNode}
+        {showPageSize ? (
+          <label className={classNames.pageSize}>
+            <span>{labels.pageSizeLabel}</span>
+            <select
+              value={pageSize}
+              onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            >
+              {pageSizeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
-      <div className={classNames.actions}>
-        <button
-          type="button"
-          className={classNames.ghostBtn}
-          disabled={!canPrev}
-          onClick={() => onPageChange(page - 1)}
-        >
-          {labels.previous}
-        </button>
-        <button
-          type="button"
-          className={classNames.ghostBtn}
-          disabled={!canNext}
-          onClick={() => onPageChange(page + 1)}
-        >
-          {labels.next}
-        </button>
-      </div>
+      {actionsNode}
     </div>
   );
 }
 
 export type DashboardCompactPaginationProps = Omit<
   CompactPaginationProps,
-  "classNames" | "labels"
+  "classNames" | "labels" | "layout"
 >;
 
 export function createCompactPagination(config: {
   prefix: string;
   labels: CompactPaginationLabels;
   ghostBtnModifier?: string;
+  layout?: CompactPaginationLayout;
 }) {
   const classNames = compactPaginationBemClasses(config.prefix, {
     ghostBtnModifier: config.ghostBtnModifier,
   });
 
   return function DashboardCompactPagination(props: DashboardCompactPaginationProps) {
-    return <CompactPagination classNames={classNames} labels={config.labels} {...props} />;
+    return (
+      <CompactPagination
+        classNames={classNames}
+        labels={config.labels}
+        layout={config.layout}
+        {...props}
+      />
+    );
   };
 }

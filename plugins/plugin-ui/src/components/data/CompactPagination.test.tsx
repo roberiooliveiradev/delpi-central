@@ -1,7 +1,11 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CompactPagination, compactPaginationBemClasses } from "./CompactPagination";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("CompactPagination", () => {
   const classNames = compactPaginationBemClasses("ie");
@@ -14,7 +18,25 @@ describe("CompactPagination", () => {
     navigationAriaLabel: "Paginação",
   };
 
-  it("renderiza info, seletor de página e botões", () => {
+  it("retorna null quando total é zero", () => {
+    const { container } = render(
+      <CompactPagination
+        page={1}
+        pageSize={25}
+        total={0}
+        totalPages={1}
+        pageSizeOptions={[25]}
+        onPageChange={vi.fn()}
+        onPageSizeChange={vi.fn()}
+        classNames={classNames}
+        labels={labels}
+      />,
+    );
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("layout grouped renderiza seletor de página quando configurado", () => {
     render(
       <CompactPagination
         page={2}
@@ -36,21 +58,26 @@ describe("CompactPagination", () => {
     expect(screen.getByRole("button", { name: "Próxima" })).toBeTruthy();
   });
 
-  it("retorna null quando total é zero", () => {
-    const { container } = render(
+  it("layout flat omite seletor de tamanho de página", () => {
+    render(
       <CompactPagination
         page={1}
-        pageSize={25}
-        total={0}
-        totalPages={1}
-        pageSizeOptions={[25]}
+        pageSize={20}
+        total={50}
         onPageChange={vi.fn()}
-        onPageSizeChange={vi.fn()}
+        layout="flat"
         classNames={classNames}
-        labels={labels}
+        labels={{
+          info: ({ page, totalPages, total }) =>
+            `Página ${page} de ${totalPages} · ${total} registro(s)`,
+          previous: "Anterior",
+          next: "Próxima",
+          navigationAriaLabel: "Paginação",
+        }}
       />,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.getByText("Página 1 de 3 · 50 registro(s)")).toBeTruthy();
   });
 });

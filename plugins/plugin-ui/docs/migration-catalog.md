@@ -113,7 +113,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
 | `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
-| `inspecoes-entrada` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
+| `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
@@ -158,7 +158,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 
 | Plugin | F1 help | F2/F3 componentes |
 |--------|---------|-------------------|
-| `pedidos-venda-abertos` | — | PageHeader |
+| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard |
 | `propostas-comerciais` | — | PageHeader |
 | `strategic-indicators` | — | PageHeader | `operationalUnitLabels` |

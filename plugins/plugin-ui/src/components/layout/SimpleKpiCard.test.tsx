@@ -59,4 +59,26 @@ describe("SimpleKpiCard", () => {
     expect(screen.getByText("No período")).toBeTruthy();
     expect(document.querySelector(".ie-kpi-card--success")).toBeTruthy();
   });
+
+  it("layout iconEnd posiciona ícone após o corpo", () => {
+    const classNames = simpleKpiCardBemClasses("pva", "kpi-card", {
+      withBody: true,
+      layout: "iconEnd",
+    });
+
+    render(
+      <SimpleKpiCard
+        title="Pedidos"
+        value="42"
+        icon={<span data-testid="icon">#</span>}
+        layout="iconEnd"
+        classNames={classNames}
+      />,
+    );
+
+    const header = document.querySelector(".pva-kpi-card__header");
+    expect(header).toBeTruthy();
+    expect(header?.querySelector(".pva-kpi-card__body")).toBeTruthy();
+    expect(header?.querySelector(".pva-kpi-card__icon")).toBeTruthy();
+  });
 });

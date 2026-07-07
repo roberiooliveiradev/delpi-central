@@ -36,8 +36,10 @@ export {
   createSimpleKpiCard,
   simpleKpiCardBemClasses,
   simpleKpiCardVariantClass,
+  simpleKpiCardWideClass,
   type DashboardSimpleKpiCardProps,
   type SimpleKpiCardClassNames,
+  type SimpleKpiCardLayout,
   type SimpleKpiCardProps,
 } from "./SimpleKpiCard";
 export {
