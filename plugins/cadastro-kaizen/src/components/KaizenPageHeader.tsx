@@ -1,6 +1,18 @@
 import type { ReactNode } from "react";
 import { ArrowLeft, Download, Sparkles, Upload } from "lucide-react";
 
+import {
+  PageHeader as PluginPageHeader,
+  pageHeaderBrandBemClasses,
+} from "@delpi/plugin-ui";
+
+const LABELS = {
+  refresh: "Atualizar",
+  refreshing: "Atualizando…",
+};
+
+const EYEBROW = "DELPI • Qualidade • Cadastro";
+
 type KaizenPageHeaderProps = {
   title: string;
   subtitle: string;
@@ -18,30 +30,31 @@ export function KaizenPageHeader({
   showBack,
   onBack,
 }: KaizenPageHeaderProps) {
-  return (
-    <header className="kz-page-header">
-      <div className="kz-page-header__brand">
-        <div className="kz-header__icon" aria-hidden="true">
-          <Sparkles size={28} strokeWidth={1.75} />
-        </div>
-        <div>
-          <p className="kz-eyebrow">DELPI • Qualidade • Cadastro</p>
-          <h1>{title}</h1>
-          <span className="kz-page-subtitle">{subtitle}</span>
-          {nav}
-        </div>
-      </div>
-
-      <div className="kz-header-actions">
-        {showBack && onBack ? (
-          <button type="button" className="kz-ghost-btn" onClick={onBack}>
-            <ArrowLeft size={16} aria-hidden="true" />
-            Voltar
-          </button>
-        ) : null}
+  const mergedActions =
+    showBack && onBack ? (
+      <>
+        <button type="button" className="kz-ghost-btn" onClick={onBack}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          Voltar
+        </button>
         {actions}
-      </div>
-    </header>
+      </>
+    ) : (
+      actions
+    );
+
+  return (
+    <PluginPageHeader
+      layout="brand"
+      classNames={pageHeaderBrandBemClasses("kz")}
+      labels={LABELS}
+      icon={<Sparkles size={28} strokeWidth={1.75} />}
+      eyebrow={EYEBROW}
+      title={title}
+      subtitle={subtitle}
+      nav={nav}
+      actions={mergedActions}
+    />
   );
 }
 

@@ -55,6 +55,16 @@ export {
   type InfoStatePanelProps,
 } from "./InfoStatePanel";
 export {
+  StateBanner,
+  createDashboardStateBanner,
+  stateBannerBemClasses,
+  stateBannerKaizenClasses,
+  type DashboardStateBannerProps,
+  type StateBannerClassNames,
+  type StateBannerProps,
+  type StateBannerVariant,
+} from "./StateBanner";
+export {
   ModalShell,
   createModalShell,
   modalShellBemClasses,
