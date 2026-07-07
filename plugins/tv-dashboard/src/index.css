@@ -778,14 +778,101 @@
   align-items: stretch;
 }
 
-@media (max-width: 1100px) {
-  .td-deck__workspace {
-    grid-template-columns: 180px minmax(0, 1fr);
-  }
+.td-deck__workspace--wide {
+  grid-template-columns: 196px minmax(0, 1fr);
+}
 
-  .td-deck-inspector {
-    grid-column: 1 / -1;
-    max-height: none;
+.td-deck-tabs {
+  border: 1px solid var(--td-border);
+  border-radius: 14px;
+  background: var(--td-surface);
+  overflow: hidden;
+}
+
+.td-deck-tabs--embedded {
+  margin-bottom: 12px;
+}
+
+.td-deck-tabs__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--td-border);
+  background: color-mix(in srgb, var(--td-text) 3%, var(--td-surface));
+}
+
+.td-deck-tabs__tab {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--td-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.td-deck-tabs__tab:hover:not(:disabled) {
+  color: var(--td-text);
+  background: color-mix(in srgb, var(--td-accent) 8%, transparent);
+}
+
+.td-deck-tabs__tab--active {
+  color: var(--td-text);
+  border-color: color-mix(in srgb, var(--td-accent) 35%, var(--td-border));
+  background: color-mix(in srgb, var(--td-accent) 12%, var(--td-surface));
+}
+
+.td-deck-tabs__tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.td-deck-tabs__panel {
+  padding: 14px 16px;
+}
+
+.td-deck-tabs__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px 16px;
+  align-items: start;
+}
+
+.td-deck-tabs__block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.td-deck-tabs__block-title {
+  margin: 0;
+  font-size: 13px;
+}
+
+.td-deck-tabs__field--wide {
+  grid-column: 1 / -1;
+}
+
+.td-deck-tabs__meta {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.td-composer__canvas-wrap--full {
+  width: 100%;
+}
+
+.td-composer--deck .td-composer__canvas-wrap--full .td-composer__canvas {
+  min-height: 360px;
+}
+
+@media (max-width: 1100px) {
+  .td-deck__workspace,
+  .td-deck__workspace--wide {
+    grid-template-columns: 180px minmax(0, 1fr);
   }
 
   .td-deck-stage__editor .td-composer__layout {

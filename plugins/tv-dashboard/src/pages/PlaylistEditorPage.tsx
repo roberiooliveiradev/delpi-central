@@ -47,13 +47,43 @@ import {
 } from "../api/tvDashboardApi";
 import { getAccessToken } from "../api/httpClient";
 import { AddSlideModal } from "../components/AddSlideModal";
-import { ComunicadoComposer } from "../components/ComunicadoComposer";
-import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
+import { ComunicadoComposerCanvas, ComunicadoElementPanel } from "../components/ComunicadoComposer";
+import { ComunicadoEditorProvider, useComunicadoEditor } from "../components/comunicadoEditorContext";
 import { ComunicadoEditorRibbon } from "../components/ComunicadoEditorRibbon";
+import { DeckSettingsTabs } from "../components/DeckSettingsTabs";
+import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SlideDeckRibbon } from "../components/SlideDeckRibbon";
-import { SlideFilmstrip } from "../components/SlideFilmstrip";
-import { SlideInspector } from "../components/SlideInspector";
 import { SlideStagePreview } from "../components/SlideStagePreview";
+
+type DeckSettingsProps = {
+  playlist: Playlist;
+  slide: Slide | null;
+  catalog: NativeScreenCatalogItem[];
+  branchScope: BranchScope | null;
+  adminLabels: Record<string, string>;
+  onSavePlaylistSettings: (field: string, value: string | number) => void;
+  onSaveSlide: (
+    slide: Slide,
+    payload: {
+      title: string;
+      durationSec: number;
+      nativeConfig?: Record<string, unknown>;
+      externalUrl?: string;
+    },
+  ) => void;
+};
+
+function CustomDeckSettingsTabs({ adminLabels, ...props }: DeckSettingsProps) {
+  const { selectedId } = useComunicadoEditor();
+  return (
+    <DeckSettingsTabs
+      {...props}
+      showElementTab
+      elementTab={<ComunicadoElementPanel labels={adminLabels} />}
+      selectedElementId={selectedId}
+    />
+  );
+}
 
 type Props = {
   playlistId: string;
@@ -385,6 +415,44 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const admin = uiContent?.admin ?? {};
   const isCustomSlide = selectedSlide?.nativeScreenKey === "custom_message";
 
+  const deckRibbon = (
+    <div className="td-deck-ribbon" role="toolbar" aria-label="Controles de slide">
+      <SlideDeckRibbon
+        slides={slides}
+        selectedSlide={selectedSlide}
+        onAdd={() => setAddModalOpen(true)}
+        onSelect={setSelectedSlideId}
+        onDuplicate={(slide) => void handleDuplicateSlide(slide)}
+        onToggleActive={(slide) => void handleToggleSlideActive(slide)}
+        onRemove={(slide) => void handleRemoveSlide(slide)}
+      />
+      {isCustomSlide ? <ComunicadoEditorRibbon labels={admin} /> : null}
+    </div>
+  );
+
+  const workspaceProps = {
+    slides,
+    playlistId,
+    selectedSlideId: selectedSlide?.id ?? null,
+    previewBySlideId,
+    dragIndex,
+    inactiveLabel: admin.slideInactive ?? "Pausada",
+    onSelect: setSelectedSlideId,
+    onDragStart: setDragIndex,
+    onDrop: (index: number) => void handleDropSlide(index),
+    onDragEnd: () => setDragIndex(null),
+  };
+
+  const settingsProps: DeckSettingsProps = {
+    playlist,
+    slide: selectedSlide,
+    catalog,
+    branchScope,
+    adminLabels: admin,
+    onSavePlaylistSettings: (field, value) => void saveSettings(field, value),
+    onSaveSlide: (slide, payload) => void handleSaveSlide(slide, payload),
+  };
+
   return (
     <div className="td-deck">
       <div className="td-toolbar td-deck__toolbar">
@@ -447,79 +515,26 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
           value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
-          <div className="td-deck-ribbon" role="toolbar" aria-label="Controles de slide">
-            <SlideDeckRibbon
-              slides={slides}
-              selectedSlide={selectedSlide}
-              onAdd={() => setAddModalOpen(true)}
-              onSelect={setSelectedSlideId}
-              onDuplicate={(slide) => void handleDuplicateSlide(slide)}
-              onToggleActive={(slide) => void handleToggleSlideActive(slide)}
-              onRemove={(slide) => void handleRemoveSlide(slide)}
-            />
-            <ComunicadoEditorRibbon labels={admin} />
-          </div>
-
-          <div className="td-deck__workspace">
-            <SlideFilmstrip
-              slides={slides}
-              playlistId={playlistId}
-              selectedSlideId={selectedSlide.id}
-              previewBySlideId={previewBySlideId}
-              dragIndex={dragIndex}
-              inactiveLabel={admin.slideInactive ?? "Pausada"}
-              onSelect={setSelectedSlideId}
-              onDragStart={setDragIndex}
-              onDrop={(index) => void handleDropSlide(index)}
-              onDragEnd={() => setDragIndex(null)}
-            />
-
-            <main className="td-deck-stage" aria-label="Palco da tela selecionada">
+          {deckRibbon}
+          <CustomDeckSettingsTabs {...settingsProps} />
+          <DeckWorkspace
+            {...workspaceProps}
+            selectedSlideId={selectedSlide.id}
+            stage={
               <div className="td-deck-stage__editor">
-                <ComunicadoComposer labels={admin} />
+                <ComunicadoComposerCanvas />
               </div>
-            </main>
-
-            <SlideInspector
-              playlist={playlist}
-              slide={selectedSlide}
-              catalog={catalog}
-              branchScope={branchScope}
-              onSavePlaylistSettings={(field, value) => void saveSettings(field, value)}
-              onSaveSlide={(slide, payload) => void handleSaveSlide(slide, payload)}
-            />
-          </div>
+            }
+          />
         </ComunicadoEditorProvider>
       ) : (
         <>
-          <div className="td-deck-ribbon" role="toolbar" aria-label="Controles de slide">
-            <SlideDeckRibbon
-              slides={slides}
-              selectedSlide={selectedSlide}
-              onAdd={() => setAddModalOpen(true)}
-              onSelect={setSelectedSlideId}
-              onDuplicate={(slide) => void handleDuplicateSlide(slide)}
-              onToggleActive={(slide) => void handleToggleSlideActive(slide)}
-              onRemove={(slide) => void handleRemoveSlide(slide)}
-            />
-          </div>
-
-          <div className="td-deck__workspace">
-            <SlideFilmstrip
-              slides={slides}
-              playlistId={playlistId}
-              selectedSlideId={selectedSlide?.id ?? null}
-              previewBySlideId={previewBySlideId}
-              dragIndex={dragIndex}
-              inactiveLabel={admin.slideInactive ?? "Pausada"}
-              onSelect={setSelectedSlideId}
-              onDragStart={setDragIndex}
-              onDrop={(index) => void handleDropSlide(index)}
-              onDragEnd={() => setDragIndex(null)}
-            />
-
-            <main className="td-deck-stage" aria-label="Palco da tela selecionada">
-              {!selectedSlide ? (
+          {deckRibbon}
+          <DeckSettingsTabs {...settingsProps} />
+          <DeckWorkspace
+            {...workspaceProps}
+            stage={
+              !selectedSlide ? (
                 <div className="td-deck-stage__empty">
                   <p className="td-subtitle">Adicione uma tela ou selecione um slide na coluna à esquerda.</p>
                 </div>
@@ -531,18 +546,9 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
                     previewSlide={previewBySlideId[selectedSlide.id]}
                   />
                 </div>
-              )}
-            </main>
-
-            <SlideInspector
-              playlist={playlist}
-              slide={selectedSlide}
-              catalog={catalog}
-              branchScope={branchScope}
-              onSavePlaylistSettings={(field, value) => void saveSettings(field, value)}
-              onSaveSlide={(slide, payload) => void handleSaveSlide(slide, payload)}
-            />
-          </div>
+              )
+            }
+          />
         </>
       )}
 
