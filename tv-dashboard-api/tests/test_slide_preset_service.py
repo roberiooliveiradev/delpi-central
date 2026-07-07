@@ -22,3 +22,27 @@ def test_resolve_native_preset():
 def test_resolve_unknown_preset():
     with pytest.raises(SlidePresetNotFoundError):
         resolve_preset_slide("does-not-exist")
+
+
+def test_resolve_comunicado_oee_panel_preset_v4():
+    payload = resolve_preset_slide("preset_comunicado_oee_panel")
+    assert payload["slideType"] == "native"
+    assert payload["nativeScreenKey"] == "custom_message"
+    cfg = payload["nativeConfig"]
+    assert cfg.get("version") == 4
+    blocks = cfg.get("blocks") or []
+    types = {block.get("type") for block in blocks}
+    assert "heading" in types
+    assert "data_kpi" in types
+    assert "data_chart" in types
+    assert cfg.get("dataFilters", {}).get("periodDays") == 7
+
+
+def test_resolve_comunicado_stock_panel_preset_v4():
+    payload = resolve_preset_slide("preset_comunicado_stock_panel")
+    cfg = payload["nativeConfig"]
+    blocks = cfg.get("blocks") or []
+    data_blocks = [block for block in blocks if str(block.get("type", "")).startswith("data_")]
+    assert len(data_blocks) == 2
+    table = next(block for block in data_blocks if block.get("type") == "data_table")
+    assert table["dataBinding"]["maxRows"] == 5
