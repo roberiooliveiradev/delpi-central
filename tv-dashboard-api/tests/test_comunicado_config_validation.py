@@ -53,7 +53,7 @@ def test_validate_rejects_disallowed_operation():
 
 def test_validate_enforces_max_data_blocks(monkeypatch):
     monkeypatch.setattr(
-        "tv_app.application.services.comunicado_config_validation_service.max_data_blocks_per_slide",
+        "tv_app.application.services.data.tv_data_config_validation_service.max_data_blocks_per_slide",
         lambda: 1,
     )
     cfg = {

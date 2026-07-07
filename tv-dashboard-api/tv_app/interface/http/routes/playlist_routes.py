@@ -36,6 +36,7 @@ class UpdatePlaylistBody(BaseModel):
     transitionStyle: str | None = None
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
     globalRefreshSec: int | None = Field(default=None, ge=30, le=3600)
+    dataDefaults: dict[str, Any] | None = None
 
 
 @router.get("")
@@ -112,6 +113,7 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
             transition_style=body.transitionStyle,
             default_duration_sec=body.defaultDurationSec,
             global_refresh_sec=body.globalRefreshSec,
+            data_defaults=body.dataDefaults,
         )
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)

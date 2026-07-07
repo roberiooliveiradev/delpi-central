@@ -2,6 +2,7 @@
   "routes": [
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
+      "httpMethod": "GET",
       "label": "OEE — visão geral",
       "category": "production",
       "path": "/production/overall_equipment_effectiveness_pct",
@@ -21,6 +22,7 @@
     },
     {
       "operationId": "get_production_oee_series",
+      "httpMethod": "GET",
       "label": "OEE — série temporal",
       "category": "production",
       "path": "/production/oee/series",
@@ -40,6 +42,7 @@
     },
     {
       "operationId": "get_on_time_delivery_pct",
+      "httpMethod": "GET",
       "label": "OTD — produção",
       "category": "production",
       "path": "/production/on_time_delivery_pct",
@@ -59,6 +62,7 @@
     },
     {
       "operationId": "get_supplies_stock_value",
+      "httpMethod": "GET",
       "label": "Suprimentos — valor de estoque",
       "category": "supplies",
       "path": "/supplies/stock-value",
@@ -79,6 +83,7 @@
     },
     {
       "operationId": "get_ppm_internal_summary",
+      "httpMethod": "GET",
       "label": "Qualidade — PPM interno",
       "category": "quality",
       "path": "/quality/ppm/internal/summary",
@@ -98,6 +103,7 @@
     },
     {
       "operationId": "get_production_otd_series",
+      "httpMethod": "GET",
       "label": "OTD — série temporal",
       "category": "production",
       "path": "/production/otd/series",
@@ -117,6 +123,7 @@
     },
     {
       "operationId": "get_ppm_external_summary",
+      "httpMethod": "GET",
       "label": "Qualidade — PPM externo",
       "category": "quality",
       "path": "/quality/ppm/external/summary",
@@ -132,6 +139,28 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "search_products",
+      "httpMethod": "GET",
+      "label": "Produtos — busca",
+      "category": "products",
+      "path": "/products/search",
+      "allowedDisplayModes": ["table", "auto"],
+      "defaultParams": { "page": 1, "page_size": 5 },
+      "paramSchema": {
+        "description": { "type": "string", "optional": true, "label": "Descrição contém" },
+        "group_code": { "type": "string", "optional": true, "label": "Grupo" },
+        "code": { "type": "string", "optional": true, "label": "Código" },
+        "page_size": { "type": "integer", "default": 5, "label": "Linhas (TOP N)" }
+      },
+      "paramStrategy": "direct",
+      "tableFields": "items",
+      "metaShape": "paged_list",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": false
       }
     }
   ]

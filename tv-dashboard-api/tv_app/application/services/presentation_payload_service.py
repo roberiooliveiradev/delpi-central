@@ -85,6 +85,7 @@ class PresentationPayloadService:
         default_duration = playlist.get("defaultDurationSec") or 30
         playlist_id = str(playlist["id"])
         public_token = str(playlist["publicToken"]) if public_media_urls else None
+        playlist_defaults = playlist.get("dataDefaults") if isinstance(playlist.get("dataDefaults"), dict) else {}
         rendered_slides: list[dict[str, Any]] = []
         for slide in slides:
             duration = slide.get("durationSec") or default_duration
@@ -106,6 +107,7 @@ class PresentationPayloadService:
                         playlist_id=playlist_id,
                         public_token=public_token,
                         user=user,
+                        playlist_defaults=playlist_defaults,
                     ),
                 }
             else:

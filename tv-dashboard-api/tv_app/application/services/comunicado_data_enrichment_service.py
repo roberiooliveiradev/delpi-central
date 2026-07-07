@@ -103,8 +103,8 @@ def _extract_table_rows(data: Any, table_field: str | None, max_rows: int) -> li
             continue
         rows.append(
             {
-                "productCode": row.get("product_code") or row.get("productCode"),
-                "description": row.get("product_description") or row.get("description"),
+                "productCode": row.get("product_code") or row.get("productCode") or row.get("code"),
+                "description": row.get("product_description") or row.get("description") or row.get("name"),
                 "stockValue": row.get("total_stock_value") or row.get("stockValue") or row.get("value"),
                 "stockQuantity": row.get("total_stock_quantity") or row.get("stockQuantity"),
             }
@@ -228,6 +228,32 @@ class ComunicadoDataEnrichmentService:
             resolved["table"] = {
                 "rows": _extract_table_rows(data, route_info.get("tableFields"), max_rows),
             }
+        elif block_type == "data_metric" or display_mode == "auto":
+            shape = str((payload.get("meta") or {}).get("shape") or route_info.get("metaShape") or "scalar")
+            if shape == "paged_list" or route_info.get("tableFields"):
+                max_rows = int(binding.get("maxRows") or route_info.get("tvConstraints", {}).get("maxRows") or 5)
+                resolved["table"] = {
+                    "rows": _extract_table_rows(data, route_info.get("tableFields"), max_rows),
+                }
+            elif route_info.get("seriesField") or shape in {"playbook_report", "composite_analysis"}:
+                branch = merged_params.get("branch")
+                points = _extract_series(
+                    data,
+                    route_info.get("seriesField"),
+                    branch=str(branch).strip() if branch else None,
+                )
+                if points:
+                    resolved["chart"] = {"points": points}
+                else:
+                    resolved["kpi"] = {
+                        "value": _extract_scalar_value(data, value_fields),
+                        "label": resolved.get("label"),
+                    }
+            else:
+                resolved["kpi"] = {
+                    "value": _extract_scalar_value(data, value_fields),
+                    "label": resolved.get("label"),
+                }
 
         result["resolved"] = resolved
         return result

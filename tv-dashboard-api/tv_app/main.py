@@ -12,6 +12,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from tv_app.config import settings
 from tv_app.core.responses import fail
+from tv_app.interface.http.routes.data_api_routes import router as data_api_router
 from tv_app.interface.http.routes.data_routes import router as data_routes_router
 from tv_app.interface.http.routes.content_routes import router as content_router
 from tv_app.interface.http.routes.media_routes import router as media_router
@@ -109,5 +110,6 @@ app.include_router(media_router)
 app.include_router(content_router)
 app.include_router(native_screen_router)
 app.include_router(data_routes_router)
+app.include_router(data_api_router)
 app.include_router(public_router)
 app.include_router(presentation_realtime_router)

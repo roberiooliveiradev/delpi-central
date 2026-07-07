@@ -7,6 +7,7 @@ from delpi_api_client import DelpiApiClient
 from delpi_auth.service_token import internal_service_authorization
 
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
+from tv_app.application.services.tv_dashboard_content_service import message
 
 
 def _date_range(period_days: int) -> tuple[str, str]:
@@ -71,7 +72,11 @@ class DelpiOperationalGateway:
     ) -> dict[str, Any]:
         route = self._catalog.get_route(operation_id)
         if not route:
-            raise ValueError(f"Rota não permitida na TV: {operation_id}")
+            raise ValueError(message("dataSourceUnavailable", "Fonte de dados indisponível."))
+
+        http_method = str(route.get("httpMethod") or "GET").upper()
+        if http_method != "GET":
+            raise ValueError(message("dataRouteMethodNotAllowed", "Somente rotas GET são permitidas na TV."))
 
         path = str(route.get("path") or "").strip()
         if not path.startswith("/"):

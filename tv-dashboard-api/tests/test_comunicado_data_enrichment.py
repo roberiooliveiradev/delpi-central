@@ -146,3 +146,40 @@ def test_enrich_rejects_branch_for_scoped_user():
     enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x", user=user)
     assert enriched[0]["resolved"]["error"]
     gateway.fetch_by_operation_id.assert_not_called()
+
+
+def test_enrich_data_metric_auto_resolves_table_for_paged_list():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "search_products", "shape": "paged_list"},
+        "data": {
+            "items": [
+                {"code": "90123456", "name": "Produto A", "value": 1200.5},
+            ]
+        },
+        "route": {
+            "label": "Produtos",
+            "tableFields": "items",
+            "metaShape": "paged_list",
+            "tvConstraints": {"maxRows": 5},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "tbl-1",
+            "type": "data_metric",
+            "dataBinding": {
+                "operationId": "search_products",
+                "params": {"limit": 5},
+                "displayMode": "auto",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert rows[0]["productCode"] == "90123456"
+    assert rows[0]["description"] == "Produto A"

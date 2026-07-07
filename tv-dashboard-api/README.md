@@ -27,8 +27,23 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 | Tempo real | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Catálogo nativo | `/native-screens` |
 | Conteúdo UI / presets | `/content/ui`, `/content/slide-presets`, `/content/branch-scope` |
+| **Dados (blocos api-delpi)** | `/data` — catálogo, preview, validação |
+| Dados (legado) | `/data-routes` — alias enriquecido do catálogo |
 
-Operações extras: ativar/desativar link, regenerar token, QR, reorder slides, duplicate.
+### API `/data` (admin — JWT + RBAC)
+
+| Método | Rota | Permissão | Descrição |
+|---|---|---|---|
+| `GET` | `/data/routes` | `TV_READ` | Catálogo allowlist com `suggestedDisplayModes` |
+| `GET` | `/data/routes/{operationId}` | `TV_READ` | Detalhe de uma rota |
+| `GET` | `/data/openapi/candidates` | `TV_MANAGE` | Rotas GET da api-delpi ainda fora da allowlist (curadoria) |
+| `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
+| `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
+
+Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
+
+Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gate CI `scripts/check_tv_data_routes.py --check`.
+
 
 ---
 
