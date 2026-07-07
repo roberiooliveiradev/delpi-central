@@ -24,6 +24,19 @@ def message(key: str, default: str = "") -> str:
     return str(messages.get(key) or default or key)
 
 
+def tv_dashboard_setting_int(key: str, default: int) -> int:
+    block_cfg = _load_settings().get("comunicadoDataBlocks") or {}
+    if key == "comunicadoDataBlocksMaxPerSlide":
+        try:
+            return max(1, int(block_cfg.get("maxPerSlide") or default))
+        except (TypeError, ValueError):
+            return default
+    try:
+        return int(_load_settings().get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
 def presentation_setting_int(key: str, default: int) -> int:
     presentation = _load_content().get("presentation") or {}
     try:

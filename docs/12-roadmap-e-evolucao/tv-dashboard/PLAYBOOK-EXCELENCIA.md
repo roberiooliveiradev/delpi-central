@@ -1249,8 +1249,11 @@ Exemplo no `native_config` (v4):
 - [ ] Cache reduz chamadas repetidas no polling de 5 min (mesma chave que telas nativas).
 - [ ] Tabela com TOP 5 renderiza **sem scroll** em 1080p.
 - [ ] WebSocket `presentation_updated` após editar slide recarrega indicadores no payload.
-- [ ] Filtro no **slide** (`dataFilters.branch`) aplica a todos os blocos; bloco com `params` próprio sobrescreve.
-- [ ] UI de filtros gerada a partir de `paramSchema` — sem hardcode por rota no React.
+- [x] Filtro no **slide** (`dataFilters.branch`) aplica a todos os blocos; bloco com `params` próprio sobrescreve.
+- [x] UI de filtros gerada a partir de `paramSchema` — sem hardcode por rota no React.
+- [x] Gate CI `--check-tv-data-routes` (script `scripts/check_tv_data_routes.py`).
+- [x] `native_config` sanitizado no save — sem `resolved` nem URLs de mídia runtime.
+- [x] Limite de blocos `data_*` por slide (settings `comunicadoDataBlocks.maxPerSlide`).
 
 ### 18.7 UI do editor (MFE)
 

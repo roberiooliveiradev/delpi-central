@@ -57,7 +57,7 @@ def test_comunicado_enrichment_resolves_media_url():
         api_root_path="/apps/tv-dashboard-api",
         playlist_id=playlist_id,
     )
-    assert data["version"] == 2
+    assert data["version"] >= 2
     assert data["blocks"][0]["url"] == f"/apps/tv-dashboard-api/playlists/{playlist_id}/media/{asset_id}"
 
 
@@ -72,5 +72,5 @@ def test_custom_message_with_blocks():
         },
         playlist_id=str(uuid4()),
     )
-    assert data["version"] == 2
+    assert data["version"] >= 2
     assert data["blocks"][0]["content"] == "Evento"

@@ -12,6 +12,8 @@ import {
 import {
   createBlock,
   createShapeBlock,
+  isDataBlockType,
+  newBlockId,
   nextZIndex,
   parseComunicadoConfig,
   serializeComunicadoConfig,
@@ -48,6 +50,8 @@ type ComunicadoEditorContextValue = {
   updateBlockContent: (blockId: string, content: string) => void;
   updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
   removeSelected: () => void;
+  duplicateSelected: () => void;
+  replaceSelectedDataRoute: (block: ComunicadoBlock) => void;
   moveLayer: (direction: "up" | "down") => void;
   triggerUpload: (target: "block" | "background") => void;
   setBackgroundColor: (value: string) => void;
@@ -172,6 +176,38 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateSelected({ style: { ...selected.style, ...patch } } as Partial<ComunicadoBlock>);
   }
 
+  function duplicateSelected() {
+    if (!selected) return;
+    const copy = {
+      ...selected,
+      id: newBlockId(),
+      frame: {
+        ...selected.frame,
+        x: Math.min(92, selected.frame.x + 2),
+        y: Math.min(92, selected.frame.y + 2),
+      },
+      style: { ...selected.style, zIndex: nextZIndex(config.blocks ?? []) },
+    } as ComunicadoBlock;
+    setSelectedId(copy.id);
+    updateBlocks([...(config.blocks ?? []), copy]);
+  }
+
+  function replaceSelectedDataRoute(block: ComunicadoBlock) {
+    if (!selected || !isDataBlockType(selected.type) || !isDataBlockType(block.type)) return;
+    if (!("dataBinding" in selected) || !("dataBinding" in block)) return;
+    updateSelected({
+      type: block.type,
+      dataBinding: {
+        ...selected.dataBinding,
+        operationId: block.dataBinding.operationId,
+        label: block.dataBinding.label,
+        displayMode: block.dataBinding.displayMode,
+        params: { ...(block.dataBinding.params ?? {}) },
+      },
+    } as Partial<typeof selected>);
+    setSelectedId(selected.id);
+  }
+
   function removeSelected() {
     if (!selected) return;
     const nextBlocks = (config.blocks ?? []).filter((block) => block.id !== selected.id);
@@ -239,6 +275,8 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateBlockContent,
     updateSelectedStyle,
     removeSelected,
+    duplicateSelected,
+    replaceSelectedDataRoute,
     moveLayer,
     triggerUpload,
     setBackgroundColor,

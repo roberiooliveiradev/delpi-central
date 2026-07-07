@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 
+import type { BranchScope } from "../api/tvDashboardApi";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { BranchField } from "./BranchField";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
 type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
 
-export function SlideDataFiltersPanel() {
+type Props = {
+  branchScope?: BranchScope | null;
+};
+
+export function SlideDataFiltersPanel({ branchScope = null }: Props) {
   const { config, setDataFilters } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const filters = config.dataFilters ?? {};
@@ -18,11 +24,11 @@ export function SlideDataFiltersPanel() {
 
   const schema = mergeParamSchemas(routes);
 
-  function updateFilter(key: string, raw: string) {
+  function updateFilter(key: string, raw: string | number) {
     const next = { ...filters };
-    if (!raw.trim()) delete next[key];
+    if (raw === "" || raw === null || raw === undefined) delete next[key];
     else if (schema[key]?.type === "integer") next[key] = Number(raw);
-    else next[key] = raw.trim();
+    else next[key] = String(raw).trim();
     setDataFilters(Object.keys(next).length > 0 ? next : undefined);
   }
 
@@ -30,17 +36,28 @@ export function SlideDataFiltersPanel() {
 
   return (
     <DeckPropertySection title="Filtros do slide" hint="Aplicam-se a todos os indicadores deste slide.">
-      {Object.entries(schema).map(([key, field]) => (
-        <DeckField key={key} id={`td-slide-filter-${key}`} label={field.label ?? key}>
-          <input
+      {Object.entries(schema).map(([key, field]) =>
+        key === "branch" ? (
+          <BranchField
+            key={key}
             id={`td-slide-filter-${key}`}
-            type={field.type === "integer" ? "number" : "text"}
-            placeholder={field.optional ? "Opcional" : ""}
-            value={filters[key] === undefined ? "" : String(filters[key])}
-            onChange={(event) => updateFilter(key, event.target.value)}
+            label={field.label ?? "Filial"}
+            scope={branchScope}
+            value={String(filters[key] ?? "")}
+            onChange={(value) => updateFilter(key, value)}
           />
-        </DeckField>
-      ))}
+        ) : (
+          <DeckField key={key} id={`td-slide-filter-${key}`} label={field.label ?? key}>
+            <input
+              id={`td-slide-filter-${key}`}
+              type={field.type === "integer" ? "number" : "text"}
+              placeholder={field.optional ? "Opcional" : ""}
+              value={filters[key] === undefined ? "" : String(filters[key])}
+              onChange={(event) => updateFilter(key, event.target.value)}
+            />
+          </DeckField>
+        ),
+      )}
     </DeckPropertySection>
   );
 }

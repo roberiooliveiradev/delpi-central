@@ -17,6 +17,9 @@
   "nativeDataCache": {
     "ttlSeconds": 120
   },
+  "comunicadoDataBlocks": {
+    "maxPerSlide": 6
+  },
   "presentationHeartbeat": {
     "intervalSec": 60
   },

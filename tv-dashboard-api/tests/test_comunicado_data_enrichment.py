@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock
 
-from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
+from tv_app.application.services.comunicado_data_enrichment_service import (
+    ComunicadoDataEnrichmentService,
+    reset_comunicado_data_block_cache,
+)
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 
 
@@ -51,3 +54,21 @@ def test_enrich_rejects_disallowed_route():
     ]
     enriched = service.enrich_blocks(blocks, cfg={})
     assert "error" in enriched[0]["resolved"]
+
+
+def test_fetch_cached_reuses_ttl_cache():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct"},
+        "data": {"summary": {"value": 1}},
+        "route": {"valueFields": ["value"], "tvConstraints": {}},
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    params = {"branch": "01", "periodDays": 7}
+    service._fetch_cached("get_overall_equipment_effectiveness_pct", params, "Bearer x")
+    service._fetch_cached("get_overall_equipment_effectiveness_pct", params, "Bearer x")
+    assert gateway.fetch_by_operation_id.call_count == 1

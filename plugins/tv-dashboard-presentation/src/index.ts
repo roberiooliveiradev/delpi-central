@@ -54,6 +54,7 @@ export {
   nextZIndex,
   parseComunicadoConfig,
   parseTextDecorationFlags,
+  newBlockId,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
 } from "./comunicadoHelpers";

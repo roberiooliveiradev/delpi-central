@@ -117,6 +117,7 @@ describe("comunicadoHelpers", () => {
     expect((blocks[0].dataBinding as Record<string, unknown>).operationId).toBe(
       "get_overall_equipment_effectiveness_pct",
     );
+    expect(blocks[0].resolved).toBeUndefined();
   });
 
   it("não persiste URL de mídia no native_config", () => {

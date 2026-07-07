@@ -42,7 +42,7 @@ export function CustomSlideEditorLayout({
   const slideTabExtra = (
     <>
       <ComunicadoSlideBackgroundPanel labels={adminLabels} />
-      <SlideDataFiltersPanel />
+      <SlideDataFiltersPanel branchScope={chromeProps.branchScope} />
     </>
   );
 

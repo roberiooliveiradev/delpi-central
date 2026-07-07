@@ -9,6 +9,7 @@
     "consolidatedNotAllowed": "Visão consolidada não autorizada para seu perfil.",
     "comunicadoDefaultHeadline": "Título",
     "dataIndicatorUnavailable": "Indicador indisponível.",
+    "dataBlocksLimitExceeded": "Limite de indicadores por slide excedido.",
     "mediaNotFound": "Mídia não encontrada.",
     "mediaUploaded": "Mídia enviada."
   },

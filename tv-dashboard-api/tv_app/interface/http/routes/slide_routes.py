@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field, field_validator
 
+from tv_app.application.services.comunicado_config_validation_service import (
+    sanitize_comunicado_config,
+    validate_comunicado_native_config,
+)
+from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
 from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.slide_preset_service import (
@@ -86,8 +92,25 @@ class FromPresetBody(BaseModel):
     branch: str | None = Field(default=None, max_length=20)
 
 
+class PreviewDataBlockBody(BaseModel):
+    blockId: str = Field(min_length=1, max_length=120)
+    nativeConfig: dict
+
+
 def _ensure_playlist(playlist_id: UUID) -> bool:
     return _repo.get_by_id(playlist_id) is not None
+
+
+def _prepare_native_config(
+    native_config: dict | None,
+    *,
+    user: Any,
+) -> dict | None:
+    if native_config is None:
+        return None
+    cleaned = sanitize_comunicado_config(native_config)
+    validate_comunicado_native_config(cleaned, user=user)
+    return cleaned
 
 
 @router.post("")
@@ -99,9 +122,10 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
         return fail(str(exc), 403)
     if not _ensure_playlist(playlist_id):
         return fail("Programação não encontrada.", 404)
+    native_config = body.nativeConfig
     try:
-        if body.slideType == "native" and body.nativeConfig:
-            validate_native_branch(body.nativeConfig, user=user)
+        if body.slideType == "native" and native_config is not None:
+            native_config = _prepare_native_config(native_config, user=user)
     except ValueError as exc:
         return fail(str(exc), 422)
     slide = _repo.add_slide(
@@ -112,7 +136,7 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
             "durationSec": body.durationSec,
             "sortOrder": body.sortOrder,
             "nativeScreenKey": body.nativeScreenKey,
-            "nativeConfig": body.nativeConfig,
+            "nativeConfig": native_config,
             "externalUrl": body.externalUrl,
             "externalSandbox": body.externalSandbox,
         },
@@ -185,15 +209,16 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
         return fail(str(exc), 403)
     if not _ensure_playlist(playlist_id):
         return fail("Programação não encontrada.", 404)
+    payload = body.model_dump(exclude_unset=True)
     try:
-        if body.nativeConfig is not None:
-            validate_native_branch(body.nativeConfig, user=user)
+        if payload.get("nativeConfig") is not None:
+            payload["nativeConfig"] = _prepare_native_config(payload["nativeConfig"], user=user)
     except ValueError as exc:
         return fail(str(exc), 422)
     try:
         slide = _repo.update_slide(
             slide_id,
-            body.model_dump(exclude_unset=True),
+            payload,
         )
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
@@ -202,6 +227,45 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
         reason="slide_updated",
     )
     return ok(slide, message="Tela atualizada.")
+
+
+@router.post("/{slide_id}/preview-data-block")
+def preview_data_block(
+    request: Request,
+    playlist_id: UUID,
+    slide_id: UUID,
+    body: PreviewDataBlockBody,
+):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not _ensure_playlist(playlist_id):
+        return fail("Programação não encontrada.", 404)
+    try:
+        _repo.get_slide(slide_id)
+    except SlideNotFoundError:
+        return fail("Tela não encontrada.", 404)
+    auth = request.headers.get("Authorization")
+    try:
+        cfg = _prepare_native_config(body.nativeConfig, user=user)
+    except ValueError as exc:
+        return fail(str(exc), 422)
+    blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
+    target = next(
+        (block for block in blocks if isinstance(block, dict) and str(block.get("id")) == body.blockId),
+        None,
+    )
+    if not isinstance(target, dict):
+        return fail("Bloco não encontrado.", 404)
+    enriched = ComunicadoDataEnrichmentService().enrich_blocks(
+        [target],
+        cfg=cfg,
+        authorization=auth,
+        user=user,
+    )
+    return ok({"block": enriched[0] if enriched else target})
 
 
 @router.delete("/{slide_id}")

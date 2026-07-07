@@ -1,7 +1,10 @@
+import { useState } from "react";
+import { Copy, RefreshCw } from "lucide-react";
 import { isDataBlockType, type ComunicadoDataBinding } from "@delpi/tv-dashboard-presentation";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DataRoutePickerModal } from "./DataRoutePickerModal";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
@@ -46,7 +49,10 @@ function ParamFields({
 }
 
 export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem | null }) {
-  const { selected, config, updateSelected } = useComunicadoEditor();
+  const { selected, config, updateSelected, duplicateSelected, replaceSelectedDataRoute } =
+    useComunicadoEditor();
+  const [routePickerOpen, setRoutePickerOpen] = useState(false);
+
   if (!selected || !isDataBlockType(selected.type) || !("dataBinding" in selected)) return null;
 
   const binding = selected.dataBinding;
@@ -71,25 +77,45 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
   }
 
   return (
-    <DeckPropertySection title="Indicador" hint="Parâmetros deste bloco sobrescrevem filtros do slide.">
-      <p className="td-deck-inspector__meta">{route?.label ?? binding.operationId}</p>
-      <DeckField id="td-data-label" label="Rótulo (opcional)">
-        <input
-          id="td-data-label"
-          value={binding.label ?? ""}
-          onChange={(event) =>
-            updateSelected({
-              dataBinding: { ...binding, label: event.target.value || undefined },
-            } as Partial<typeof selected>)
-          }
+    <>
+      <DeckPropertySection title="Indicador" hint="Parâmetros deste bloco sobrescrevem filtros do slide.">
+        <p className="td-deck-inspector__meta">{route?.label ?? binding.operationId}</p>
+        <div className="td-deck-inspector__actions">
+          <button type="button" className="td-btn td-btn--sm" onClick={() => duplicateSelected()}>
+            <Copy size={14} aria-hidden="true" />
+            Duplicar
+          </button>
+          <button type="button" className="td-btn td-btn--sm" onClick={() => setRoutePickerOpen(true)}>
+            <RefreshCw size={14} aria-hidden="true" />
+            Trocar rota
+          </button>
+        </div>
+        <DeckField id="td-data-label" label="Rótulo (opcional)">
+          <input
+            id="td-data-label"
+            value={binding.label ?? ""}
+            onChange={(event) =>
+              updateSelected({
+                dataBinding: { ...binding, label: event.target.value || undefined },
+              } as Partial<typeof selected>)
+            }
+          />
+        </DeckField>
+        <ParamFields
+          schema={(route?.paramSchema as ParamSchema) ?? {}}
+          values={blockParams}
+          inheritedKeys={inheritedKeys}
+          onChange={updateParam}
         />
-      </DeckField>
-      <ParamFields
-        schema={(route?.paramSchema as ParamSchema) ?? {}}
-        values={blockParams}
-        inheritedKeys={inheritedKeys}
-        onChange={updateParam}
+      </DeckPropertySection>
+      <DataRoutePickerModal
+        open={routePickerOpen}
+        onClose={() => setRoutePickerOpen(false)}
+        onSelect={(block) => {
+          replaceSelectedDataRoute(block);
+          setRoutePickerOpen(false);
+        }}
       />
-    </DeckPropertySection>
+    </>
   );
 }
