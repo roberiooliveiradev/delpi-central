@@ -14,7 +14,8 @@ import type {
   KaizenEvidenceType,
 } from "../../types/kaizen";
 import { StateAlert } from "../StateAlert";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui";
+import { FormGrid, SelectField, TextField } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
 import {
@@ -30,6 +31,12 @@ import {
   KaizenEvidencePreviewModal,
   type EvidencePreviewSource,
 } from "../evidence/KaizenEvidencePreviewModal";
+
+const EVIDENCE_STAGE_OPTIONS: Array<{ value: KaizenEvidenceStage; label: string }> = [
+  { value: "antes", label: "Antes" },
+  { value: "depois", label: "Depois" },
+  { value: "geral", label: "Geral" },
+];
 
 type KaizenEvidencePanelProps = {
   kaizenId: string;
@@ -446,43 +453,31 @@ export function KaizenEvidencePanel({
 
           {showLink ? (
             <div className="kz-evidence-link">
-              <div className="kz-field">
-                <FieldLabel
-                  label="Etapa"
-                  htmlFor="kz-ev-link-stage"
-                  hint={KAIZEN_HELP_TOOLTIPS.evidence.stage}
-                 className="kz-field__label" />
-                <select
+              <FormGrid>
+                <SelectField
                   id="kz-ev-link-stage"
+                  label="Etapa"
+                  hint={KAIZEN_HELP_TOOLTIPS.evidence.stage}
                   value={linkStage}
-                  disabled={uploading}
-                  onChange={(event) => setLinkStage(event.target.value as KaizenEvidenceStage)}
-                >
-                  <option value="antes">Antes</option>
-                  <option value="depois">Depois</option>
-                  <option value="geral">Geral</option>
-                </select>
-              </div>
-              <div className="kz-field">
-                <FieldLabel label="URL" htmlFor="kz-ev-url" hint={KAIZEN_HELP_TOOLTIPS.evidence.link}  className="kz-field__label" />
-                <input
+                  onChange={(value) => setLinkStage(value as KaizenEvidenceStage)}
+                  options={EVIDENCE_STAGE_OPTIONS}
+                />
+                <TextField
                   id="kz-ev-url"
-                  type="url"
+                  label="URL"
+                  hint={KAIZEN_HELP_TOOLTIPS.evidence.link}
                   placeholder="https://…"
                   value={externalUrl}
-                  disabled={uploading}
-                  onChange={(event) => setExternalUrl(event.target.value)}
+                  onChange={setExternalUrl}
                 />
-              </div>
-              <div className="kz-field kz-span-2">
-                <label htmlFor="kz-ev-link-desc">Descrição</label>
-                <input
+                <TextField
                   id="kz-ev-link-desc"
+                  label="Descrição"
+                  span
                   value={linkDescription}
-                  disabled={uploading}
-                  onChange={(event) => setLinkDescription(event.target.value)}
+                  onChange={setLinkDescription}
                 />
-              </div>
+              </FormGrid>
               <button
                 type="button"
                 className="kz-primary-btn"

@@ -59,6 +59,56 @@ export function simpleKpiCardWideClass(prefix: string, block = "kpi-card") {
   return `${prefix}-${block}--wide`;
 }
 
+export function simpleKpiKaizenBemClasses(prefix: string): SimpleKpiCardClassNames {
+  return {
+    article: `${prefix}-kpi`,
+    icon: `${prefix}-kpi__icon`,
+    body: `${prefix}-kpi__body`,
+    title: `${prefix}-kpi__label`,
+    value: `${prefix}-kpi__value`,
+    subtitle: `${prefix}-kpi__sub`,
+  };
+}
+
+export function simpleKpiKaizenToneClass(prefix: string, tone: string) {
+  return `${prefix}-kpi--${tone}`;
+}
+
+export function createKaizenKpiCard(prefix = "kz") {
+  const classNames = simpleKpiKaizenBemClasses(prefix);
+
+  return function KaizenStyleKpiCard({
+    tone,
+    label,
+    value,
+    sub,
+    icon,
+    className,
+  }: {
+    tone?: string;
+    label: string;
+    value: string;
+    sub?: string;
+    icon: ReactNode;
+    className?: string;
+  }) {
+    const toneClass = tone ? simpleKpiKaizenToneClass(prefix, tone) : undefined;
+    const mergedClassName = [toneClass, className].filter(Boolean).join(" ") || undefined;
+
+    return (
+      <SimpleKpiCard
+        title={label}
+        value={value}
+        subtitle={sub}
+        icon={icon}
+        valueTag="h3"
+        classNames={classNames}
+        className={mergedClassName}
+      />
+    );
+  };
+}
+
 export function SimpleKpiCard({
   title,
   value,

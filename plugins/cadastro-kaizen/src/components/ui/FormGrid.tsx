@@ -1,5 +1,9 @@
-import { createDashboardFormGrid, formGridBemClasses } from "@delpi/plugin-ui";
+import { createDashboardFormGrid } from "@delpi/plugin-ui";
 
 export const FormGrid = createDashboardFormGrid({
-  classNames: formGridBemClasses("kz"),
+  classNames: { root: "kz-form-grid" },
+});
+
+export const ReadOnlyGrid = createDashboardFormGrid({
+  classNames: { root: "kz-read-grid" },
 });

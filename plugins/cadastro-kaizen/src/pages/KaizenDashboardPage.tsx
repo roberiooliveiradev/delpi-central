@@ -14,7 +14,8 @@ import { fetchKaizenSummary } from "../api/kaizenApi";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { KpiCard } from "../components/ui/KpiCard";
+import { FilterInputField, FiltersRow } from "../components/ui/FiltersKit";
 import { MultiSelectField } from "../components/ui/MultiSelectField";
 import { BRANCHES, detailPath, newPath } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -93,33 +94,6 @@ function BarList({
         </li>
       ))}
     </ul>
-  );
-}
-
-function KpiCard({
-  icon,
-  tone,
-  label,
-  value,
-  sub,
-}: {
-  icon: React.ReactNode;
-  tone: Tone;
-  label: string;
-  value: string;
-  sub?: string;
-}) {
-  return (
-    <div className={`kz-kpi kz-kpi--${tone}`}>
-      <div className="kz-kpi__icon" aria-hidden="true">
-        {icon}
-      </div>
-      <div className="kz-kpi__body">
-        <span className="kz-kpi__label">{label}</span>
-        <strong className="kz-kpi__value">{value}</strong>
-        {sub ? <span className="kz-kpi__sub">{sub}</span> : null}
-      </div>
-    </div>
   );
 }
 
@@ -245,7 +219,16 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
         }
       />
 
-      <section className="kz-filters-row" aria-label="Filtros do painel">
+      <FiltersRow
+        ariaLabel="Filtros do painel"
+        trailing={
+          hasFilters ? (
+            <button type="button" className="kz-ghost-btn" onClick={clearFilters}>
+              Limpar filtros
+            </button>
+          ) : undefined
+        }
+      >
         <MultiSelectField
           label="Unidade"
           labelHint={KAIZEN_HELP_TOOLTIPS.fields.branch}
@@ -254,57 +237,31 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
           onChange={setUnits}
           emptyLabel="Todas"
         />
-
-        <div className="kz-filter-box">
-          <FieldLabel
-            label="Competência"
-            htmlFor="kz-dash-competence"
-            hint="Mês de referência. Preenche automaticamente as datas inicial e final."
-           className="kz-field__label" />
-          <input
-            id="kz-dash-competence"
-            type="month"
-            value={competence}
-            onChange={(event) => setCompetence(event.target.value)}
-          />
-        </div>
-
-        <div className="kz-filter-box">
-          <FieldLabel
-            label="Data inicial"
-            htmlFor="kz-dash-date-start"
-            hint="Início do período considerado nos indicadores."
-           className="kz-field__label" />
-          <input
-            id="kz-dash-date-start"
-            type="date"
-            value={dateStart}
-            onChange={(event) => setDateStart(event.target.value)}
-          />
-        </div>
-
-        <div className="kz-filter-box">
-          <FieldLabel
-            label="Data final"
-            htmlFor="kz-dash-date-end"
-            hint="Fim do período considerado nos indicadores."
-           className="kz-field__label" />
-          <input
-            id="kz-dash-date-end"
-            type="date"
-            value={dateEnd}
-            onChange={(event) => setDateEnd(event.target.value)}
-          />
-        </div>
-
-        {hasFilters ? (
-          <div className="kz-filter-box kz-filter-box--action">
-            <button type="button" className="kz-ghost-btn" onClick={clearFilters}>
-              Limpar filtros
-            </button>
-          </div>
-        ) : null}
-      </section>
+        <FilterInputField
+          id="kz-dash-competence"
+          label="Competência"
+          hint="Mês de referência. Preenche automaticamente as datas inicial e final."
+          type="month"
+          value={competence}
+          onChange={setCompetence}
+        />
+        <FilterInputField
+          id="kz-dash-date-start"
+          label="Data inicial"
+          hint="Início do período considerado nos indicadores."
+          type="date"
+          value={dateStart}
+          onChange={setDateStart}
+        />
+        <FilterInputField
+          id="kz-dash-date-end"
+          label="Data final"
+          hint="Fim do período considerado nos indicadores."
+          type="date"
+          value={dateEnd}
+          onChange={setDateEnd}
+        />
+      </FiltersRow>
 
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {loading && !summary ? <StateAlert>Carregando indicadores…</StateAlert> : null}

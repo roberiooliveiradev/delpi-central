@@ -87,7 +87,7 @@ python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em to
 | `TableHeaderCell` | PAC + transformometro | F3 ✅ |
 | `PageHeader` | 7 | F3 ✅ |
 | `DetailCard` | 3 | F3 ✅ |
-| `SectionCard` | 1 (PAC) | F3 ✅ |
+| `SectionCard` | PAC + kaizen | F3 ✅ |
 | `EmptyState` / `LoadingState` | 2 | F3 ✅ |
 
 ## Status — Fase 4 (utilitários)
@@ -138,7 +138,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `inspecoes-entrada` | ✅ | — | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + forms F3 (TextField, TableHeaderCell, FilterCheckbox) |
-| `cadastro-kaizen` | — | ✅ | CompactPagination + MultiSelect + DataTable + forms + PageHeader + StateBanner F2/F3 |
+| `cadastro-kaizen` | — | ✅ | FiltersRow + FilterSelectField + createKaizenKpiCard + SectionCard + forms F2/F3 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 

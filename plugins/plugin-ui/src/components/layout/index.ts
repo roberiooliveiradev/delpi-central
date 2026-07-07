@@ -33,10 +33,13 @@ export {
 } from "./KpiCard";
 export {
   SimpleKpiCard,
+  createKaizenKpiCard,
   createSimpleKpiCard,
   simpleKpiCardBemClasses,
   simpleKpiCardVariantClass,
   simpleKpiCardWideClass,
+  simpleKpiKaizenBemClasses,
+  simpleKpiKaizenToneClass,
   type DashboardSimpleKpiCardProps,
   type SimpleKpiCardClassNames,
   type SimpleKpiCardLayout,
@@ -45,6 +48,7 @@ export {
 export {
   FilterBar,
   FilterInputField,
+  FilterSelectField,
   FiltersRow,
   createDashboardFiltersKit,
   filtersRowBemClasses,
@@ -52,6 +56,8 @@ export {
   type DashboardFiltersLabels,
   type FilterInputFieldClassNames,
   type FilterInputFieldProps,
+  type FilterSelectFieldProps,
+  type FilterSelectOption,
   type FiltersRowClassNames,
   type FiltersRowProps,
 } from "./FiltersRow";

@@ -1,10 +1,9 @@
 import { FormSection } from "./FormSection";
 import { CategoryMultiSelectField } from "./CategoryMultiSelectField";
 import { DateField } from "./DateField";
-import { SelectField, TextAreaField, TextField } from "./FormField";
+import { FormFieldShell, SelectField, TextAreaField, TextField } from "./FormField";
 import { KaizenParticipantsField } from "./KaizenParticipantsField";
 import { SavingsParamFields } from "./SavingsParamFields";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   BRANCHES,
@@ -106,13 +105,17 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
           onChange={(value) => onChange("date_discontinued", value)}
         />
 
-        <div className="kz-field kz-span-2">
-          <FieldLabel label="Equipe / responsáveis" hint={KAIZEN_HELP_TOOLTIPS.sections.participants}  className="kz-field__label" />
+        <FormFieldShell
+          id="kz-participants"
+          label="Equipe / responsáveis"
+          hint={KAIZEN_HELP_TOOLTIPS.sections.participants}
+          span
+        >
           <KaizenParticipantsField
             participants={values.participants}
             onChange={(participants) => onChange("participants", participants)}
           />
-        </div>
+        </FormFieldShell>
 
         <TextAreaField
           id="kz-process"

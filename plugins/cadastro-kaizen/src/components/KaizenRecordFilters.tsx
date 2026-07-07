@@ -1,6 +1,6 @@
 import { BRANCHES, KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { FilterInputField, FilterSelectField, FiltersRow } from "./ui/FiltersKit";
 
 type KaizenRecordFiltersProps = {
   branch: string;
@@ -13,6 +13,8 @@ type KaizenRecordFiltersProps = {
   onTitleChange: (value: string) => void;
 };
 
+const BRANCH_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
+
 export function KaizenRecordFilters({
   branch,
   status,
@@ -24,73 +26,43 @@ export function KaizenRecordFilters({
   onTitleChange,
 }: KaizenRecordFiltersProps) {
   return (
-    <section className="kz-filters-row" aria-label="Filtros de kaizen">
-      <div className="kz-filter-box">
-        <FieldLabel label="Unidade" htmlFor="kz-filter-branch" hint={KAIZEN_HELP_TOOLTIPS.fields.branch}  className="kz-field__label" />
-        <select
-          id="kz-filter-branch"
-          value={branch}
-          onChange={(event) => onBranchChange(event.target.value)}
-        >
-          <option value="">Todas</option>
-          {BRANCHES.map((item) => (
-            <option key={item.code} value={item.code}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="kz-filter-box">
-        <FieldLabel label="Status" htmlFor="kz-filter-status" hint={KAIZEN_HELP_TOOLTIPS.fields.status}  className="kz-field__label" />
-        <select
-          id="kz-filter-status"
-          value={status}
-          onChange={(event) => onStatusChange(event.target.value)}
-        >
-          <option value="">Todos</option>
-          {KAIZEN_STATUSES.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="kz-filter-box">
-        <FieldLabel
-          label="Tipo de economia"
-          htmlFor="kz-filter-savings-type"
-          hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
-         className="kz-field__label" />
-        <select
-          id="kz-filter-savings-type"
-          value={savingsType}
-          onChange={(event) => onSavingsTypeChange(event.target.value)}
-        >
-          <option value="">Todos</option>
-          {SAVINGS_TYPES.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="kz-filter-box">
-        <FieldLabel
-          label="Título"
-          htmlFor="kz-filter-title"
-          hint="Filtra os cadastros cujo título contém o texto informado."
-         className="kz-field__label" />
-        <input
-          id="kz-filter-title"
-          type="text"
-          value={title}
-          placeholder="Buscar por título"
-          onChange={(event) => onTitleChange(event.target.value)}
-        />
-      </div>
-    </section>
+    <FiltersRow ariaLabel="Filtros de kaizen">
+      <FilterSelectField
+        id="kz-filter-branch"
+        label="Unidade"
+        hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+        value={branch}
+        onChange={onBranchChange}
+        options={BRANCH_OPTIONS}
+        placeholderOption="Todas"
+      />
+      <FilterSelectField
+        id="kz-filter-status"
+        label="Status"
+        hint={KAIZEN_HELP_TOOLTIPS.fields.status}
+        value={status}
+        onChange={onStatusChange}
+        options={KAIZEN_STATUSES}
+        placeholderOption="Todos"
+      />
+      <FilterSelectField
+        id="kz-filter-savings-type"
+        label="Tipo de economia"
+        hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
+        value={savingsType}
+        onChange={onSavingsTypeChange}
+        options={SAVINGS_TYPES}
+        placeholderOption="Todos"
+      />
+      <FilterInputField
+        id="kz-filter-title"
+        label="Título"
+        hint="Filtra os cadastros cujo título contém o texto informado."
+        type="text"
+        value={title}
+        placeholder="Buscar por título"
+        onChange={onTitleChange}
+      />
+    </FiltersRow>
   );
 }

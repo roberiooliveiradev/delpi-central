@@ -12,10 +12,19 @@ import {
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { EditableSectionCard } from "../components/ui/EditableSectionCard";
-import { DateField } from "../components/form/DateField";
 import { CategoryMultiSelectField } from "../components/form/CategoryMultiSelectField";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
-import { ReadOnlyField } from "../components/ui/ReadOnlyField";
+import { HelpTooltip } from "@delpi/plugin-ui";
+import { DateField } from "../components/ui/DateField";
+import {
+  FormFieldShell,
+  FormGrid,
+  ReadOnlyField,
+  ReadOnlyGrid,
+  SectionCard,
+  SelectField,
+  TextAreaField,
+  TextField,
+} from "../components/ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SavingsParamFields, SavingsParamReadFields } from "../components/form/SavingsParamFields";
 import { KaizenFormProgress } from "../components/form/KaizenFormProgress";
@@ -60,6 +69,8 @@ function versionStatusOf(revision: KaizenRevision | null): KaizenVersionStatus {
 const BRANCH_LABEL: Record<string, string> = Object.fromEntries(
   BRANCHES.map((item) => [item.code, item.label]),
 );
+
+const BRANCH_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
 
 const ROLE_LABEL: Record<string, string> = {
   responsavel: "Responsável",
@@ -376,7 +387,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         saving={saving}
         editable={editable}
         readContent={
-          <div className="kz-read-grid">
+          <ReadOnlyGrid>
             <ReadOnlyField
               label="Unidade"
               hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
@@ -461,123 +472,101 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               wide
               multiline
             />
-          </div>
+          </ReadOnlyGrid>
         }
         editContent={
-          <div className="kz-form-grid">
-            <div className="kz-field">
-              <FieldLabel label="Unidade *" htmlFor="kz-d-branch" hint={KAIZEN_HELP_TOOLTIPS.fields.branch}  className="kz-field__label" />
-              <select
-                id="kz-d-branch"
-                value={form.branch_code}
-                onChange={(event) => updateField("branch_code", event.target.value)}
-              >
-                {BRANCHES.map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="kz-field">
-              <FieldLabel label="Setor" htmlFor="kz-d-sector" hint={KAIZEN_HELP_TOOLTIPS.fields.sector}  className="kz-field__label" />
-              <input
-                id="kz-d-sector"
-                value={form.sector}
-                onChange={(event) => updateField("sector", event.target.value)}
-              />
-            </div>
+          <FormGrid>
+            <SelectField
+              id="kz-d-branch"
+              label="Unidade *"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+              required
+              value={form.branch_code}
+              onChange={(value) => updateField("branch_code", value)}
+              options={BRANCH_OPTIONS}
+            />
+            <TextField
+              id="kz-d-sector"
+              label="Setor"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.sector}
+              value={form.sector}
+              onChange={(value) => updateField("sector", value)}
+            />
             <CategoryMultiSelectField
               className="kz-field--multi-select"
               selectedValues={form.categories}
               onChange={(categories) => updateField("categories", categories)}
             />
-            <div className="kz-field">
-              <FieldLabel
-                label="Investimento (R$)"
-                htmlFor="kz-d-investment"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
-               className="kz-field__label" />
-              <input
-                id="kz-d-investment"
-                inputMode="decimal"
-                value={form.investment}
-                onChange={(event) => updateField("investment", event.target.value)}
-              />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel label="Título *" htmlFor="kz-d-title" hint={KAIZEN_HELP_TOOLTIPS.fields.title}  className="kz-field__label" />
-              <input
-                id="kz-d-title"
-                value={form.title}
-                maxLength={500}
-                onChange={(event) => updateField("title", event.target.value)}
-              />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel label="Equipe / responsáveis" hint={KAIZEN_HELP_TOOLTIPS.sections.participants}  className="kz-field__label" />
+            <TextField
+              id="kz-d-investment"
+              label="Investimento (R$)"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
+              inputMode="decimal"
+              value={form.investment}
+              onChange={(value) => updateField("investment", value)}
+            />
+            <TextField
+              id="kz-d-title"
+              label="Título *"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.title}
+              span
+              required
+              maxLength={500}
+              value={form.title}
+              onChange={(value) => updateField("title", value)}
+            />
+            <FormFieldShell
+              id="kz-d-participants"
+              label="Equipe / responsáveis"
+              hint={KAIZEN_HELP_TOOLTIPS.sections.participants}
+              span
+            >
               <KaizenParticipantsField
                 participants={form.participants}
                 onChange={(participants) => updateField("participants", participants)}
               />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel
-                label="Descrição do processo"
-                htmlFor="kz-d-process"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.processDescription}
-               className="kz-field__label" />
-              <textarea
-                id="kz-d-process"
-                value={form.process_description}
-                onChange={(event) => updateField("process_description", event.target.value)}
-              />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel
-                label="Problema / oportunidade"
-                htmlFor="kz-d-problem"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.problemDescription}
-               className="kz-field__label" />
-              <textarea
-                id="kz-d-problem"
-                value={form.problem_description}
-                onChange={(event) => updateField("problem_description", event.target.value)}
-              />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel
-                label="Melhoria realizada"
-                htmlFor="kz-d-improvement"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.improvementDescription}
-               className="kz-field__label" />
-              <textarea
-                id="kz-d-improvement"
-                value={form.improvement_description}
-                onChange={(event) => updateField("improvement_description", event.target.value)}
-              />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel
-                label="Resultado esperado"
-                htmlFor="kz-d-expected"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.expectedResult}
-               className="kz-field__label" />
-              <textarea
-                id="kz-d-expected"
-                value={form.expected_result}
-                onChange={(event) => updateField("expected_result", event.target.value)}
-              />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel label="Notas" htmlFor="kz-d-notes" hint={KAIZEN_HELP_TOOLTIPS.fields.notes}  className="kz-field__label" />
-              <textarea
-                id="kz-d-notes"
-                value={form.notes}
-                onChange={(event) => updateField("notes", event.target.value)}
-              />
-            </div>
-          </div>
+            </FormFieldShell>
+            <TextAreaField
+              id="kz-d-process"
+              label="Descrição do processo"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.processDescription}
+              span
+              value={form.process_description}
+              onChange={(value) => updateField("process_description", value)}
+            />
+            <TextAreaField
+              id="kz-d-problem"
+              label="Problema / oportunidade"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.problemDescription}
+              span
+              value={form.problem_description}
+              onChange={(value) => updateField("problem_description", value)}
+            />
+            <TextAreaField
+              id="kz-d-improvement"
+              label="Melhoria realizada"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.improvementDescription}
+              span
+              value={form.improvement_description}
+              onChange={(value) => updateField("improvement_description", value)}
+            />
+            <TextAreaField
+              id="kz-d-expected"
+              label="Resultado esperado"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.expectedResult}
+              span
+              value={form.expected_result}
+              onChange={(value) => updateField("expected_result", value)}
+            />
+            <TextAreaField
+              id="kz-d-notes"
+              label="Notas"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.notes}
+              span
+              value={form.notes}
+              onChange={(value) => updateField("notes", value)}
+            />
+          </FormGrid>
         }
       />
 
@@ -593,7 +582,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         saving={saving}
         editable={editable}
         readContent={
-          <div className="kz-read-grid">
+          <ReadOnlyGrid>
             <div className="kz-read-field kz-span-2">
               <span className="kz-read-field__label">Situação atual</span>
               <StatusPipeline status={view.status} />
@@ -613,26 +602,18 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
               value={formatDate(view.date_discontinued)}
             />
-          </div>
+          </ReadOnlyGrid>
         }
         editContent={
-          <div className="kz-form-grid">
-            <div className="kz-field">
-              <FieldLabel label="Status" htmlFor="kz-d-status" hint={KAIZEN_HELP_TOOLTIPS.fields.status}  className="kz-field__label" />
-              <select
-                id="kz-d-status"
-                value={form.status}
-                onChange={(event) =>
-                  updateField("status", event.target.value as KaizenFormValues["status"])
-                }
-              >
-                {KAIZEN_STATUSES.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <FormGrid>
+            <SelectField
+              id="kz-d-status"
+              label="Status"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.status}
+              value={form.status}
+              onChange={(value) => updateField("status", value as KaizenFormValues["status"])}
+              options={KAIZEN_STATUSES}
+            />
             <DateField
               id="kz-d-date-idea"
               label="Recebimento da ideia"
@@ -654,19 +635,15 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               value={form.date_discontinued}
               onChange={(value) => updateField("date_discontinued", value)}
             />
-            <div className="kz-field kz-span-2">
-              <FieldLabel
-                label="Motivo da correção (registra na auditoria)"
-                htmlFor="kz-d-reason"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
-               className="kz-field__label" />
-              <input
-                id="kz-d-reason"
-                value={changeReason}
-                onChange={(event) => setChangeReason(event.target.value)}
-              />
-            </div>
-          </div>
+            <TextField
+              id="kz-d-reason"
+              label="Motivo da correção (registra na auditoria)"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
+              span
+              value={changeReason}
+              onChange={setChangeReason}
+            />
+          </FormGrid>
         }
       />
 
@@ -682,7 +659,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         saving={saving}
         editable={editable}
         readContent={
-          <div className="kz-read-grid">
+          <ReadOnlyGrid>
             <ReadOnlyField
               label="Tipo de economia"
               hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
@@ -720,31 +697,21 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               wide
             />
             <SavingsParamReadFields savingsType={view.savings_type} record={view} />
-          </div>
+          </ReadOnlyGrid>
         }
         editContent={
-          <div className="kz-form-grid">
-            <div className="kz-field">
-              <FieldLabel
-                label="Tipo de economia"
-                htmlFor="kz-d-savings-type"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
-               className="kz-field__label" />
-              <select
-                id="kz-d-savings-type"
-                value={form.savings_type}
-                onChange={(event) =>
-                  updateField("savings_type", event.target.value as KaizenFormValues["savings_type"])
-                }
-              >
-                <option value="">Inferir automaticamente</option>
-                {SAVINGS_TYPES.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <FormGrid>
+            <SelectField
+              id="kz-d-savings-type"
+              label="Tipo de economia"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
+              value={form.savings_type}
+              onChange={(value) =>
+                updateField("savings_type", value as KaizenFormValues["savings_type"])
+              }
+              options={SAVINGS_TYPES}
+              placeholderOption="Inferir automaticamente"
+            />
 
             <SavingsParamFields
               savingsType={form.savings_type}
@@ -753,100 +720,62 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               idPrefix="kz-d"
             />
 
-            <div className="kz-field">
-              <FieldLabel
-                label="Economia realizada/dia (R$)"
-                htmlFor="kz-d-realized"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.realizedDailySavings}
-               className="kz-field__label" />
-              <input
-                id="kz-d-realized"
-                inputMode="decimal"
-                value={form.realized_daily_savings}
-                onChange={(event) => updateField("realized_daily_savings", event.target.value)}
-              />
-            </div>
-            <div className="kz-field kz-span-2">
-              <FieldLabel
-                label="Motivo da correção (registra na auditoria)"
-                htmlFor="kz-d-eco-reason"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
-               className="kz-field__label" />
-              <input
-                id="kz-d-eco-reason"
-                value={changeReason}
-                onChange={(event) => setChangeReason(event.target.value)}
-              />
-            </div>
-          </div>
+            <TextField
+              id="kz-d-realized"
+              label="Economia realizada/dia (R$)"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.realizedDailySavings}
+              inputMode="decimal"
+              value={form.realized_daily_savings}
+              onChange={(value) => updateField("realized_daily_savings", value)}
+            />
+            <TextField
+              id="kz-d-eco-reason"
+              label="Motivo da correção (registra na auditoria)"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
+              span
+              value={changeReason}
+              onChange={setChangeReason}
+            />
+          </FormGrid>
         }
       />
 
       {/* Evidências da versão selecionada */}
-      <section className="kz-card kz-section-card">
-        <header className="kz-section-card__header">
-          <div>
-            <h2 className="kz-section-card__title">
-              Evidências da versão{selectedRevision != null ? ` v${selectedRevision}` : ""}
-              <HelpTooltip
-                content={KAIZEN_HELP_TOOLTIPS.sections.evidences}
-                ariaLabel="Ajuda: evidências do processo"
-              />
-            </h2>
-            <p className="kz-section-card__desc">
-              {mode === "readonly"
-                ? "Evidências desta versão histórica (somente leitura)."
-                : `Registro visual Antes / Depois e anexos ${
-                    mode === "draft" ? "deste rascunho" : "da versão ativa"
-                  }. Cada versão tem suas próprias evidências.`}
-            </p>
-          </div>
-        </header>
+      <SectionCard
+        title={`Evidências da versão${selectedRevision != null ? ` v${selectedRevision}` : ""}`}
+        hint={KAIZEN_HELP_TOOLTIPS.sections.evidences}
+        subtitle={
+          mode === "readonly"
+            ? "Evidências desta versão histórica (somente leitura)."
+            : `Registro visual Antes / Depois e anexos ${
+                mode === "draft" ? "deste rascunho" : "da versão ativa"
+              }. Cada versão tem suas próprias evidências.`
+        }
+      >
         <KaizenEvidencePanel
           kaizenId={record.id}
           readOnly={mode === "readonly"}
           revisionId={evidenceRevisionId}
         />
-      </section>
+      </SectionCard>
 
       {/* Ganhos e validade */}
-      <section className="kz-card kz-section-card">
-        <header className="kz-section-card__header">
-          <div>
-            <h2 className="kz-section-card__title">
-              Ganhos e validade
-              <HelpTooltip
-                content={KAIZEN_HELP_TOOLTIPS.improvements.periodGain}
-                ariaLabel="Ajuda: ganhos e validade"
-              />
-            </h2>
-            <p className="kz-section-card__desc">
-              Economia ativa hoje e ganho acumulado por período — só a versão implantada
-              contabiliza, respeitando a validade de 1 ano.
-            </p>
-          </div>
-        </header>
+      <SectionCard
+        title="Ganhos e validade"
+        hint={KAIZEN_HELP_TOOLTIPS.improvements.periodGain}
+        subtitle="Economia ativa hoje e ganho acumulado por período — só a versão implantada contabiliza, respeitando a validade de 1 ano."
+      >
         <KaizenImprovementsPanel record={record} revisions={revisions} />
-      </section>
+      </SectionCard>
 
       {/* Registro de alterações */}
-      <section className="kz-card kz-section-card">
-        <header className="kz-section-card__header">
-          <div>
-            <h2 className="kz-section-card__title">
-              Registro de alterações
-              <HelpTooltip
-                content={KAIZEN_HELP_TOOLTIPS.sections.changelog}
-                ariaLabel="Ajuda: registro de alterações"
-              />
-            </h2>
-            <p className="kz-section-card__desc">
-              Auditoria do kaizen como um todo: linha do tempo, versões e governança.
-            </p>
-          </div>
-        </header>
+      <SectionCard
+        title="Registro de alterações"
+        hint={KAIZEN_HELP_TOOLTIPS.sections.changelog}
+        subtitle="Auditoria do kaizen como um todo: linha do tempo, versões e governança."
+      >
         <KaizenChangeLog kaizenId={record.id} revisions={revisions} reloadKey={reloadTick} />
-      </section>
+      </SectionCard>
     </>
   );
 }

@@ -1,22 +1,7 @@
 import type { ReactNode } from "react";
 
-import {
-  createDashboardFormGrid,
-  createDashboardSectionCard,
-  formGridBemClasses,
-  sectionCardKaizenBemClasses,
-} from "@delpi/plugin-ui";
-
-const SectionCard = createDashboardSectionCard({
-  classNames: sectionCardKaizenBemClasses("kz"),
-  labels: {
-    titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
-  },
-});
-
-const FormGrid = createDashboardFormGrid({
-  classNames: formGridBemClasses("kz"),
-});
+import { FormGrid } from "../ui/FormGrid";
+import { SectionCard } from "../ui/SectionCard";
 
 type FormSectionProps = {
   title: string;
@@ -35,12 +20,7 @@ export function FormSection({
   headerActions,
 }: FormSectionProps) {
   return (
-    <SectionCard
-      title={title}
-      hint={hint}
-      subtitle={description}
-      actions={headerActions}
-    >
+    <SectionCard title={title} hint={hint} subtitle={description} actions={headerActions}>
       <FormGrid>{children}</FormGrid>
     </SectionCard>
   );

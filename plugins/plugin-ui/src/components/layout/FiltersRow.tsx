@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
+import { useId } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
 
@@ -37,6 +38,23 @@ export type FilterInputFieldProps = {
   classNames: FilterInputFieldClassNames;
 };
 
+export type FilterSelectOption = {
+  value: string;
+  label: string;
+};
+
+export type FilterSelectFieldProps = {
+  label: string;
+  hint?: string;
+  id?: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly FilterSelectOption[];
+  placeholderOption?: string;
+  disabled?: boolean;
+  classNames: FilterInputFieldClassNames;
+};
+
 export type DashboardFiltersLabels = {
   filtersAriaLabel: string;
 };
@@ -44,6 +62,7 @@ export type DashboardFiltersLabels = {
 export type DashboardFiltersKit = {
   FiltersRow: (props: Omit<FiltersRowProps, "classNames" | "ariaLabel"> & { ariaLabel?: string }) => ReactNode;
   FilterInputField: (props: Omit<FilterInputFieldProps, "classNames">) => ReactNode;
+  FilterSelectField: (props: Omit<FilterSelectFieldProps, "classNames">) => ReactNode;
 };
 
 /** Monta classNames BEM `{prefix}-filters-row` dos dashboards departamentais. */
@@ -103,17 +122,54 @@ export function FilterInputField({
   placeholder,
   classNames,
 }: FilterInputFieldProps) {
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
+
   return (
-    <label className={classNames.filterBox} htmlFor={id}>
+    <label className={classNames.filterBox} htmlFor={fieldId}>
       <FieldLabel label={label} hint={hint} className={classNames.fieldLabel} />
       <input
-        id={id}
+        id={fieldId}
         type={type}
         value={value}
         disabled={disabled}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
       />
+    </label>
+  );
+}
+
+export function FilterSelectField({
+  label,
+  hint,
+  id,
+  value,
+  onChange,
+  options,
+  placeholderOption,
+  disabled = false,
+  classNames,
+}: FilterSelectFieldProps) {
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
+
+  return (
+    <label className={classNames.filterBox} htmlFor={fieldId}>
+      <FieldLabel label={label} hint={hint} className={classNames.fieldLabel} />
+      <select
+        id={fieldId}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {placeholderOption !== undefined ? <option value="">{placeholderOption}</option> : null}
+        {options.map((item) => (
+          <option key={item.value} value={item.value}>
+            {item.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -136,6 +192,9 @@ export function createDashboardFiltersKit(config: {
     },
     FilterInputField(props) {
       return <FilterInputField classNames={classNames} {...props} />;
+    },
+    FilterSelectField(props) {
+      return <FilterSelectField classNames={classNames} {...props} />;
     },
   };
 }
