@@ -1,9 +1,9 @@
 # Playbook de Excelência — TV Dashboard DELPI
 
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
-> **Versão:** 1.0
-> **Data:** 2026-07-05
-> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): `supplies_stock_alert`, `strategic_indicators_hero`. Backlog: gráficos Recharts, rate limit nginx.
+> **Versão:** 1.2
+> **Data:** 2026-07-07
+> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): `supplies_stock_alert`, `strategic_indicators_hero`. **v1.2 (jul/2026):** editor deck estilo PowerPoint (ribbon, filmstrip, formatação expandida). **Onda 4+ (backlog):** paridade Canva/PPT — ver §17. Backlog telas nativas: gráficos Recharts, rate limit nginx.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -95,6 +95,16 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 - Upload de mídia persistente + rota pública de serve.
 - WebSocket push (`presentation_updated`) — TV, preview e editor.
 - Miniaturas nos cards do editor.
+
+### Entregue em v1.2 (jul/2026) — editor deck
+
+- Layout **PowerPoint-like**: filmstrip, palco central, painel de propriedades, abas Página Inicial / Inserir / Formatar / Tela / Programação.
+- Interação canvas: seleção, drag (threshold 5px), resize **8 handles**, duplo-clique para editar texto inline.
+- Ribbon **Fonte** (família, A+/A−, negrito, itálico, sublinhado, tachado, realce, cor, limpar formatação).
+- Ribbon **Parágrafo** (alinhamento H/V, justificar, entrelinhas, espaçamento entre caracteres).
+- Blocos: `heading`, `text`, `image`, `video`, `shape` (6 formas SVG); links em texto; rotação numérica; camadas `zIndex ±1`.
+- Filmstrip com thumbnail **ao vivo** (`CustomSlideEditorLayout` + `serializeComunicadoConfig`).
+- Pacote compartilhado `@delpi/tv-dashboard-presentation` (`comunicadoTypes`, `comunicadoHelpers`, `ComunicadoBlockView`).
 
 ---
 
@@ -609,10 +619,22 @@ sequenceDiagram
 
 ---
 
-## 16. Próximo passo imediato (v2)
+## 16. Próximo passo imediato
+
+### Telas nativas (v2 restante)
 
 1. **Gráficos Recharts** — séries OEE/OTD/PPM no pacote `@delpi/tv-dashboard-presentation`.
 2. **Rate limit dedicado** em dev nginx para `GET /public/present/*`.
+
+### Editor personalizado (Onda 4 — ver §17)
+
+Prioridade sugerida para paridade PowerPoint/Canva:
+
+1. **Undo/redo + duplicar bloco + atalhos** (Ctrl+Z/Y, Del, setas).
+2. **Snap, guias e alinhar/distribuir** entre objetos.
+3. **Expor na UI** campos já existentes no schema (`opacity`, `objectFit`).
+4. **Biblioteca de mídia** da playlist (reutilizar uploads).
+5. **Rich text** (runs ou markdown controlado) — maior salto de UX.
 
 ### Concluído v2 (jul/2026)
 
@@ -621,7 +643,293 @@ sequenceDiagram
 
 ---
 
-## 16 (histórico v1)
+## 17. Editor de slides personalizados — paridade Canva / PowerPoint
+
+> **North star:** o gestor monta comunicados visuais na TV com a mesma fluidez de um slide deck — sem precisar de PowerPoint externo, Canva ou designer — mantendo **um único contrato** (`native_config` JSON) consumido pelo admin, preview e TV.
+
+### 17.1 Arquitetura atual (v1.2)
+
+```text
+PlaylistEditorPage (slide custom_message)
+  └── ComunicadoEditorProvider          ← estado + upload + drag
+        └── CustomSlideEditorLayout     ← filmstrip ao vivo
+              ├── DeckEditorChrome      ← abas + ribbons
+              ├── DeckWorkspace
+              │     ├── SlideFilmstrip
+              │     ├── ComunicadoComposerCanvas
+              │     └── DeckElementSidePanel → ComunicadoElementInspector
+              └── auto-save debounced (~700 ms) → PATCH slide.native_config
+
+Apresentação TV / preview
+  └── NativeSlideView → RichComunicadoScreen → ComunicadoBlockView (render-only)
+```
+
+| Camada | Pacote / pasta | Responsabilidade |
+|---|---|---|
+| Schema + CSS + parse | `plugins/tv-dashboard-presentation` | `comunicadoTypes`, `comunicadoHelpers`, `comunicadoBlockView` |
+| Editor WYSIWYG | `plugins/tv-dashboard` | Composer, ribbons, context, hooks de interação |
+| Persistência | `tv-dashboard-api` | `slides.native_config` JSONB; mídia em disco |
+| Enriquecimento TV | `comunicado_enrichment_service.py` | URLs de mídia por token; **não** persiste URL no config |
+
+**Regra de ouro (igual chat base):** evoluir comportamento transversal nos módulos canônicos (`comunicadoTypes` + helpers + `ComunicadoBlockView`) — **não** duplicar lógica de layout no ribbon, no composer ou no presenter por rota.
+
+### 17.2 Inventário — o que já temos (v1.2)
+
+| Domínio | Implementado |
+|---|---|
+| **Blocos** | `heading`, `text`, `image`, `video`, `shape` — posição `%` (frame x/y/w/h) |
+| **Texto** | 8 fontes, tamanho 12–120, negrito/itálico/sublinhado/tachado, cor, realce, entrelinhas, letter-spacing, alinhamento H (incl. justify) e V |
+| **Formas** | retângulo, arredondado, elipse, triângulo, seta, linha — fill/stroke; texto opcional dentro da forma |
+| **Mídia** | upload JPG/PNG/WEBP/GIF/MP4/WEBM; preview autenticado; TV autoplay muted loop |
+| **Fundo** | cor sólida ou imagem full-bleed |
+| **Interação** | seleção única, drag, 8 handles, duplo-clique → textarea inline, deselecionar ao clicar no palco |
+| **Camadas** | `zIndex` ±1 (frente/fundo); rotação −180…180 no inspector |
+| **Links** | URL em heading/text (`href`, `_blank` fixo na UI) |
+| **Chrome** | filmstrip + reorder slides; transição playlist (`fade`/`slide`/`none`); viewport presets |
+| **Sync** | WebSocket `presentation_updated`; thumbnail comunicado ao vivo no filmstrip |
+| **Versão config** | v2 legado headline/subtitle; v3 detectada (formas, links, estilos avançados) |
+
+### 17.3 Lacunas vs Canva / PowerPoint
+
+#### Produtividade do editor (prioridade alta)
+
+| Recurso | Canva/PPT | Status | Notas |
+|---|---|---|---|
+| Undo / redo | ✓ | ❌ | Histórico de ações no `ComunicadoEditorProvider` |
+| Duplicar bloco | ✓ | ❌ | Hoje só duplicar slide inteiro |
+| Copiar/colar bloco ou estilo | ✓ | ❌ | |
+| Multi-seleção | ✓ | ❌ | Shift+click, marquee |
+| Agrupar / desagrupar | ✓ | ❌ | |
+| Alinhar / distribuir objetos | ✓ | ❌ | Esquerda, centro, espaçamento igual |
+| Snap to grid / smart guides | ✓ | ❌ | |
+| Lock aspect ratio (Shift+resize) | ✓ | ❌ | |
+| Atalhos (Del, Ctrl+B, setas nudge) | ✓ | ❌ | Escape só ao editar texto |
+| Zoom do palco (50%–200%) | ✓ | ❌ | |
+| Painel de camadas ordenável | ✓ | ⚠ | Só ±1 no ribbon |
+
+#### Texto e tipografia (prioridade alta)
+
+| Recurso | Canva/PPT | Status | Notas |
+|---|---|---|---|
+| Rich text (runs, negrito parcial) | ✓ | ❌ | Textarea plano por bloco |
+| Bullets / listas numeradas | ✓ | ❌ | |
+| Estilos nomeados (Título 1, Corpo) | ✓ | ❌ | `heading`/`text` fixos |
+| Google Fonts / upload de fonte | ✓ | ❌ | 8 famílias em `COMUNICADO_FONT_FAMILIES` |
+| Sombra / contorno / reflexo texto | ✓ | ❌ | |
+| Hiperlink em imagem/forma | ✓ | ❌ | Só heading/text |
+
+#### Visual, mídia e assets (prioridade média)
+
+| Recurso | Canva/PPT | Status | Notas |
+|---|---|---|---|
+| Opacidade elemento | ✓ | ⚠ | Campo no tipo; **sem UI** |
+| objectFit cover/contain | ✓ | ⚠ | Campo no tipo; **sem UI** |
+| Crop / máscara imagem | ✓ | ❌ | |
+| Sombras e bordas em blocos | ✓ | ❌ | |
+| Gradientes de fundo | ✓ | ❌ | Cor sólida ou imagem |
+| Biblioteca de mídia da playlist | ✓ | ❌ | Só file picker por upload |
+| Ícones / stickers | ✓ | ❌ | Candidato: Lucide catalog |
+| Tabelas simples | ✓ | ❌ | |
+| Mais formas / conectores | ✓ | ❌ | 6 formas básicas |
+| Paleta / cores recentes / tema marca | ✓ | ❌ | |
+
+#### Apresentação e animação (prioridade média-baixa)
+
+| Recurso | Canva/PPT | Status | Notas |
+|---|---|---|---|
+| Transição **por slide** | ✓ | ❌ | Só playlist-level |
+| Animação por objeto | ✓ | ❌ | Requer extensão do `PresentationEngine` |
+| Build sequencial (aparecer um a um) | ✓ | ❌ | |
+| Master slide / layout mestre | ✓ | ❌ | Logo/fundo fixos em todos os custom |
+| Modo apresentador / notas | ✓ | ❌ | |
+
+#### Colaboração e export (prioridade baixa)
+
+| Recurso | Canva/PPT | Status |
+|---|---|---|
+| Export PNG/PDF do slide | ✓ | ❌ |
+| Import/export PPTX | ✓ | ❌ |
+| Colaboração tempo real | ✓ | ❌ |
+| Comentários / histórico de versões | ✓ | ❌ |
+
+### 17.4 Dívida técnica a resolver antes/durante Onda 4
+
+| Item | Situação | Ação |
+|---|---|---|
+| `ComunicadoEditorRibbon` | Legado; usado só no modal `ComunicadoComposerField` | Unificar com ribbons do deck ou deprecar modal |
+| `ComunicadoSlideBackgroundPanel` | Implementado, não referenciado | Usar no inspector ou remover |
+| `opacity`, `objectFit`, `linkTarget` | No schema, UI incompleta | Expor no ribbon/inspector (quick win) |
+| Enrichment `version` | Sempre retorna `2` | Alinhar com `detectConfigVersion` (v3) |
+| Texto em formas | Renderiza se estilo definido | Estender ribbon Fonte quando shape selecionada |
+
+### 17.5 Contrato `native_config` — evolução planejada
+
+Estrutura atual (v3):
+
+```json
+{
+  "version": 3,
+  "headline": "…",
+  "subtitle": "…",
+  "background": { "type": "color", "value": "#0f172a" },
+  "blocks": [
+    {
+      "id": "uuid",
+      "type": "heading|text|image|video|shape",
+      "frame": { "x": 5, "y": 12, "w": 90, "h": 18 },
+      "style": { "fontSize": 56, "textAlign": "center", "verticalAlign": "middle", "zIndex": 2 },
+      "content": "…",
+      "href": "https://…",
+      "assetId": "…",
+      "shape": "rectangle"
+    }
+  ]
+}
+```
+
+Extensões previstas (compatíveis — campos opcionais):
+
+| Campo / entidade | Onda | Uso |
+|---|---|---|
+| `style.opacity`, `style.objectFit` | 4A | UI imediata |
+| `style.boxShadow`, `style.borderRadius` (bloco) | 4B | Profundidade visual |
+| `background.type: "gradient"` | 4B | Fundos Canva-like |
+| `contentRuns[]` ou `contentHtml` sanitizado | 4C | Rich text |
+| `groupId` em blocos | 4D | Agrupar |
+| `animations[]` por bloco | 4E | `{ kind, delayMs, durationMs, easing }` |
+| `slideTemplateKey` | 4B | Preset de blocos iniciais |
+| `masterRef` (playlist-level) | 4E | Logo/fundo compartilhado |
+
+**Regras de serialização:**
+
+- URLs de mídia **nunca** persistidas — só `assetId` (já enforced nos testes).
+- Migração legado automática em `parseComunicadoConfig`.
+- Bump de `version` só quando breaking; preferir campos opcionais.
+
+### 17.6 Roadmap por ondas — editor
+
+Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
+
+#### Onda 4A — Editor «profissional básico»
+
+**Objetivo:** sensação de produto maduro sem mudar o schema de texto.
+
+| # | Entrega | Onde | Esforço |
+|---|---|---|---|
+| 4A.1 | Undo/redo (pilha no provider, limite ~50) | `comunicadoEditorContext.tsx` | M |
+| 4A.2 | Duplicar bloco + Ctrl+D | context + ribbon Organizar | S |
+| 4A.3 | Delete / setas nudge (1px / 10px com Shift) | `useCanvasBlockInteraction` + keyboard hook | S |
+| 4A.4 | Opacidade + objectFit na UI | `ComunicadoFormatRibbon` / inspector | S |
+| 4A.5 | Lock aspect ratio (Shift+resize) | `useCanvasBlockInteraction` | S |
+| 4A.6 | Snap 5% + guias ao centro do palco | hook de layout | M |
+| 4A.7 | Alinhar/distribuir (2+ seleção → fase 4D prep) | serviço `comunicadoLayoutAlign.ts` | M |
+| 4A.8 | Biblioteca de mídia da playlist | API list assets + modal picker | M |
+| 4A.9 | Unificar ribbon legado / remover painel morto | cleanup | S |
+
+**Critérios de aceite 4A:**
+
+- [ ] Ctrl+Z desfaz última alteração de bloco/fundo; Ctrl+Y refaz.
+- [ ] Duplicar bloco mantém frame deslocado (+2% x/y).
+- [ ] Imagem com objectFit `cover` preenche frame sem distorção visível na TV.
+- [ ] Snap evidente ao arrastar perto de 50% horizontal/vertical.
+- [ ] Testes unitários: undo stack, serialize após duplicar, helpers de snap.
+
+#### Onda 4B — Visual e templates (Canva-lite)
+
+| # | Entrega | Esforço |
+|---|---|---|
+| 4B.1 | Templates por preset (`dashboard_slide_presets.json` + blocos default) | M |
+| 4B.2 | Temas de cor (paleta 6 cores aplicável ao slide) | M |
+| 4B.3 | Gradiente de fundo (linear 2 stops) | M |
+| 4B.4 | Sombras/bordas em blocos (box-shadow, border) | S |
+| 4B.5 | Mais formas (estrela, chevron) + ícones Lucide como bloco | M |
+| 4B.6 | Crop imagem (viewport % dentro do frame) | L |
+
+**Critérios de aceite 4B:**
+
+- [ ] «Novo comunicado RH» insere título + corpo + faixa colorida pré-posicionados.
+- [ ] Fundo gradiente renderiza igual no editor, preview e TV.
+- [ ] Gate visual: template default 16:9 sem scroll.
+
+#### Onda 4C — Texto rico (PowerPoint-core)
+
+| # | Entrega | Esforço |
+|---|---|---|
+| 4C.1 | Modelo `contentRuns: { text, style? }[]` com fallback `content` string | M |
+| 4C.2 | Editor inline com toggles parciais (negrito só na seleção) | L |
+| 4C.3 | Bullets / listas numeradas | M |
+| 4C.4 | Estilos nomeados (Título 1, Subtítulo, Corpo) | M |
+| 4C.5 | Catálogo Google Fonts (subset curado + lazy load) | M |
+
+**Critérios de aceite 4C:**
+
+- [ ] Slide legado (string plana) abre e salva sem perda.
+- [ ] Lista com 3 itens renderiza na TV com marcadores.
+- [ ] Negrito parcial visível no editor e na apresentação.
+
+#### Onda 4D — Layout avançado
+
+| # | Entrega | Esforço |
+|---|---|---|
+| 4D.1 | Multi-seleção (Shift+click, marquee) | M |
+| 4D.2 | Agrupar / desagrupar (`groupId`) | M |
+| 4D.3 | Painel de camadas (lista drag-reorder z-index) | M |
+| 4D.4 | Rotação por handle (cantos) | M |
+| 4D.5 | Zoom palco 50–200% | S |
+| 4D.6 | Link em imagem e forma | S |
+
+#### Onda 4E — Apresentação e master
+
+| # | Entrega | Esforço |
+|---|---|---|
+| 4E.1 | Transição por slide (override playlist) | M |
+| 4E.2 | Animações entrada por bloco (fade/slide-in) | L |
+| 4E.3 | Master slide playlist (logo + fundo fixos) | M |
+| 4E.4 | Build order (timeline simples no inspector) | L |
+| 4E.5 | Export PNG do slide (html2canvas ou server render) | M |
+
+### 17.7 Priorização recomendada
+
+```text
+Impacto UX × esforço (jul/2026)
+
+  Alto impacto, baixo esforço     → 4A.4 opacity/objectFit, 4A.2 duplicar, 4A.3 atalhos
+  Alto impacto, médio esforço     → 4A.1 undo, 4A.6 snap, 4A.8 biblioteca mídia
+  Diferencial Canva               → 4B templates + temas + gradiente
+  Diferencial PowerPoint          → 4C rich text + bullets
+  Longo prazo                     → 4E animações, export PPTX (avaliar demanda)
+```
+
+### 17.8 Gates de teste — editor
+
+| Escopo | Comando / critério |
+|---|---|
+| Helpers comunicado | `cd plugins/tv-dashboard-presentation && npm test -- --run comunicado` |
+| Preview filmstrip | `cd plugins/tv-dashboard && npm test -- --run slideCardPreview` |
+| Build admin | `cd plugins/tv-dashboard && npm run build` |
+| Build TV | `cd plugins/public-hub && npm run build` |
+| Paridade editor/TV | Fixture JSON representativo: mesmo `renderPlan` visual admin vs `ComunicadoBlockView` |
+| Regressão mídia | `cd tv-dashboard-api && pytest tests/test_comunicado_media.py -q` |
+| Upload persistente | Volume `${DELPI_DATA_HOST_DIR}/tv-dashboard/media` — ver `persistent-upload-storage.mdc` |
+
+### 17.9 Referências de código (v1.2)
+
+| Área | Arquivo |
+|---|---|
+| Tipos | `plugins/tv-dashboard-presentation/src/comunicadoTypes.ts` |
+| Parse/CSS | `plugins/tv-dashboard-presentation/src/comunicadoHelpers.ts` |
+| Render TV | `plugins/tv-dashboard-presentation/src/comunicadoBlockView.tsx` |
+| Estado editor | `plugins/tv-dashboard/src/components/comunicadoEditorContext.tsx` |
+| Canvas | `plugins/tv-dashboard/src/components/ComunicadoComposer.tsx` |
+| Ribbons | `ComunicadoFormatRibbon.tsx`, `ComunicadoInsertRibbon.tsx` |
+| Filmstrip ao vivo | `CustomSlideEditorLayout.tsx`, `slideCardPreview.ts` |
+| Drag/resize | `useCanvasBlockInteraction.ts` |
+| Presets | `tv-dashboard-api/tv_app/content/dashboard_slide_presets.json` |
+| Catálogo nativo | `tv-dashboard-api/tv_app/content/native_screens.json` |
+
+---
+
+## 18. Histórico — kickoff v1
 
 1. Validar com stakeholders o **catálogo inicial** de telas nativas (§6.2).
 2. Decidir conta de serviço api-delpi para agregação server-side.

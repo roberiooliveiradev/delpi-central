@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
-> **Status:** v1.1 em produção (jul/2026)  
-> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md)
+> **Status:** v1.2 em produção (jul/2026) — editor deck + formatação expandida  
+> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** playbook §17
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -14,7 +14,7 @@ Sistema de **programações rotativas** para TVs corporativas: gestão autentica
 | **Admin** | Gestor (produção, qualidade, etc.) | Portal → «Painéis TV» | Sim (Keycloak) |
 | **Apresentação na TV** | Navegador da TV / totem | `/p/tv-dashboard/present/{token}` | Não |
 
-O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OTD, comunicado…) e/ou URLs externas (Power BI, sites). Gera um link ou QR; a TV abre o link e roda em autoplay com **atualização imediata via WebSocket** (fallback: polling `globalRefreshSec`).
+O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OTD, comunicado…) e/ou URLs externas (Power BI, sites). Slides **Personalizado** (`custom_message`) usam um **editor visual estilo PowerPoint** (blocos, formas, mídia, ribbon de formatação). Gera um link ou QR; a TV abre o link e roda em autoplay com **atualização imediata via WebSocket** (fallback: polling `globalRefreshSec`).
 
 ---
 
@@ -24,7 +24,7 @@ O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OT
 ┌──────────────────── PORTAL (JWT) ────────────────────────────────────┐
 │  Plugin MFE tv-dashboard                                            │
 │    • CRUD programações / telas / ordem                              │
-│    • Editor visual de comunicados (imagens, vídeos, layout)         │
+│    • Editor visual estilo PowerPoint (ribbon, filmstrip, formatação) │
 │    • Miniaturas ao vivo nos cards de tela                           │
 │    • Preview fullscreen (/apps/tv-dashboard/playlists/:id/preview)  │
 │    • Copiar link, QR, desativar token                               │
@@ -104,11 +104,15 @@ Envelope padrão: `{ success, message, data }`.
 
 Telas **externas**: URL + `sandbox` opcional em iframe.
 
-### Comunicados com mídia
+### Comunicados com mídia (`custom_message` v3)
 
+- Blocos posicionáveis: título, texto, imagem, vídeo, formas (6 tipos)
+- Ribbon **Fonte** e **Parágrafo** (alinhamento, entrelinhas, realce, tachado, etc.)
+- Drag, resize (8 handles), edição inline, camadas, links, rotação
 - Upload admin: `POST /playlists/{id}/media` (JPG, PNG, WEBP, GIF, MP4, WEBM)
 - Armazenamento persistente: `${DELPI_DATA_HOST_DIR}/tv-dashboard/media`
 - Apresentação pública: `GET /public/present/{token}/media/{assetId}`
+- Roadmap paridade Canva/PowerPoint: [PLAYBOOK-EXCELENCIA.md §17](./PLAYBOOK-EXCELENCIA.md#17-editor-de-slides-personalizados--paridade-canva--powerpoint)
 
 ---
 
@@ -166,11 +170,21 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 
 ---
 
-## Backlog v2 (não implementado)
+## Backlog
 
-- `supplies_stock_alert` — top itens críticos ✅
-- `strategic_indicators_hero` — hero executivo ✅
-- Gráficos Recharts em telas nativas OEE/OTD/PPM
+### Telas nativas (v2)
+
+- Gráficos Recharts em telas OEE/OTD/PPM
+
+### Editor personalizado — Onda 4 (ver playbook §17)
+
+| Fase | Foco |
+|------|------|
+| **4A** | Undo/redo, duplicar bloco, atalhos, snap, opacidade/objectFit, biblioteca de mídia |
+| **4B** | Templates, temas, gradientes, sombras, ícones |
+| **4C** | Rich text, bullets, estilos nomeados, Google Fonts |
+| **4D** | Multi-seleção, agrupar, camadas, rotação por handle |
+| **4E** | Animações, master slide, export PNG |
 
 ---
 
