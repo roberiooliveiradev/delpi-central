@@ -52,7 +52,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 | `TablePageSizeSelect` | (em `Pagination.tsx`) | `dashboard-production` | ✅ incorporado em `Pagination` |
 | `MultiSelectField` | 13 | `dashboard-production` | ✅ F2.5 — 8 dashboards + lmps |
 | `FilterBar` | 12 | `dashboard-production` | ✅ F2.6 — `FiltersRow` + `FilterInputField` (alias `FilterBar`) |
-| `ChartToolbar` | 6 | `dashboard-production` | |
+| `ChartToolbar` | 6 | `dashboard-production` | ✅ F2.7 + `ChartGranularityToggle` |
 | `DataTable` | ~12 dashboards | `dashboard-production` | Maior risco — colunas via props |
 | `DataTableSection` | ~12 | `dashboard-production` | Toolbar busca + paginação |
 
@@ -211,7 +211,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | 2.4 | `Pagination` + `PaginationPageJump` + `TablePageSizeSelect` | `data/` | ✅ Fase 1 + utils `paginationPages` |
 | 2.5 | `MultiSelectField` | `forms/` | ✅ Fase 1 (`FieldLabel`) |
 | 2.6 | `FilterBar` | `layout/` | ✅ `FiltersRow` + `FilterInputField` |
-| 2.7 | `ChartToolbar` | `layout/` | |
+| 2.7 | `ChartToolbar` + `ChartGranularityToggle` | `layout/` | ✅ Fase 1 |
 | 2.8 | `DataTable` + `DataTableSection` | `data/` | Último — maior superfície |
 
 **Estratégia KpiCard:** um componente com props opcionais (`goalScopeBadge`, `goalPerformanceBadges`, …). Plugins simples (`controle-retrabalhos`) usam subset mínimo.
@@ -301,7 +301,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 ## 7. Próximo passo recomendado
 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2.1–2.6** shell de dashboard nos consumidores dept. — próximo: `ChartToolbar` (2.7).
+2. **Fase 2.1–2.7** shell de dashboard — próximo: `DataTable` + `DataTableSection` (2.8).
 
 ---
 

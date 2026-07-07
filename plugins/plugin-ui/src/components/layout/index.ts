@@ -5,6 +5,22 @@ export {
   type ChartCardProps,
 } from "./ChartCard";
 export {
+  ChartGranularityToggle,
+  ChartToolbar,
+  chartToolbarBemClasses,
+  createDashboardChartToolbarKit,
+  type ChartGranularityOption,
+  type ChartGranularityToggleClassNames,
+  type ChartGranularityToggleLabels,
+  type ChartGranularityToggleProps,
+  type ChartToolbarClassNames,
+  type ChartToolbarLabels,
+  type ChartToolbarProps,
+  type DashboardChartGranularityToggleProps,
+  type DashboardChartToolbarLabels,
+  type DashboardChartToolbarProps,
+} from "./ChartToolbar";
+export {
   KpiCard,
   createDashboardKpiCard,
   kpiCardBemClasses,

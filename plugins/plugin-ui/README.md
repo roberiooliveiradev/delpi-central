@@ -91,6 +91,8 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `buildMultiSelectTriggerLabel` | Label do trigger conforme seleção |
 | `FiltersRow` / `FilterInputField` | Linha de filtros + campo input |
 | `filtersRowBemClasses` / `createDashboardFiltersKit` | Helpers BEM + factory |
+| `ChartToolbar` / `ChartGranularityToggle` | Barra de gráfico + agrupamento |
+| `chartToolbarBemClasses` / `createDashboardChartToolbarKit` | Helpers BEM + factory |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 

@@ -233,6 +233,17 @@ Shell da linha de filtros (`{prefix}-filters-row`) e campo label+input reutiliz�
 
 Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels })`.
 
+### `ChartToolbar` + `ChartGranularityToggle`
+
+Barra de gráfico com toggle de agrupamento (segment), export CSV opcional e slots `extra` / `exportActions`.
+
+| Export | Descrição |
+|--------|-----------|
+| `ChartGranularityToggle` | Botões Dia/Semana/Mês/Ano (`{prefix}-segment-toggle`) |
+| `ChartToolbar` | Layout toolbar + ações; suporta hints e `granularityField` (lmps) |
+
+Helpers: `chartToolbarBemClasses(prefix)` e `createDashboardChartToolbarKit({ prefix, labels })`.
+
 ---
 
 ## Estilos base (`styles.css`)
