@@ -34,12 +34,12 @@ type ComunicadoEditorContextValue = {
   shapeMenuOpen: boolean;
   setShapeMenuOpen: (open: boolean) => void;
   background: ComunicadoConfig["background"];
-  bgPreviewStyle: Record<string, string>;
   canvasRef: ReturnType<typeof useCanvasBlockInteraction>["canvasRef"];
   startDrag: ReturnType<typeof useCanvasBlockInteraction>["startDrag"];
   addBlock: (type: ComunicadoBlock["type"]) => void;
   addShape: (shape: ComunicadoShapeKind) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
+  updateBlockContent: (blockId: string, content: string) => void;
   updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
   removeSelected: () => void;
   moveLayer: (direction: "up" | "down") => void;
@@ -131,6 +131,17 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateBlocks(nextBlocks);
   }
 
+  function updateBlockContent(blockId: string, content: string) {
+    const nextBlocks = (config.blocks ?? []).map((block) => {
+      if (block.id !== blockId) return block;
+      if (block.type === "heading" || block.type === "text" || block.type === "shape") {
+        return { ...block, content } as ComunicadoBlock;
+      }
+      return block;
+    });
+    updateBlocks(nextBlocks);
+  }
+
   function updateSelectedStyle(patch: NonNullable<ComunicadoBlock["style"]>) {
     if (!selected) return;
     updateSelected({ style: { ...selected.style, ...patch } } as Partial<ComunicadoBlock>);
@@ -180,16 +191,6 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   }
 
   const background = config.background ?? { type: "color", value: "#0f172a" };
-  const bgPreviewStyle =
-    background.type === "image" && (background.url || background.value)
-      ? {
-          backgroundImage: `url(${background.url ?? background.value})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }
-      : {
-          backgroundColor: background.type === "color" ? background.value : "#0f172a",
-        };
 
   const ctxValue: ComunicadoEditorContextValue = {
     config,
@@ -201,12 +202,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     shapeMenuOpen,
     setShapeMenuOpen,
     background,
-    bgPreviewStyle,
     canvasRef,
     startDrag,
     addBlock,
     addShape,
     updateSelected,
+    updateBlockContent,
     updateSelectedStyle,
     removeSelected,
     moveLayer,

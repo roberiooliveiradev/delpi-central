@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 import { blockCssStyle } from "./comunicadoHelpers";
 import type { ComunicadoBlock } from "./comunicadoTypes";
 
@@ -121,7 +122,7 @@ export function ComunicadoBlockView({
         {block.url ? (
           <img src={block.url} alt="" style={{ objectFit: block.style?.objectFit ?? "contain" }} />
         ) : (
-          <span className="tdp-comunicado__placeholder">Imagem</span>
+          <ComunicadoMediaPlaceholder kind="image" />
         )}
       </div>
     );
@@ -140,7 +141,7 @@ export function ComunicadoBlockView({
             style={{ objectFit: block.style?.objectFit ?? "contain" }}
           />
         ) : (
-          <span className="tdp-comunicado__placeholder">Vídeo</span>
+          <ComunicadoMediaPlaceholder kind="video" />
         )}
       </div>
     );

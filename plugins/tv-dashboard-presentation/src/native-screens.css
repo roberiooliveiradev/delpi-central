@@ -283,12 +283,51 @@
 }
 
 .tdp-comunicado__placeholder {
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
   width: 100%;
   height: 100%;
+  padding: 0.4em;
   color: #94a3b8;
   font-size: 12px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.tdp-comunicado__placeholder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(28px, 22%, 64px);
+  height: clamp(28px, 22%, 64px);
+  color: #cbd5e1;
+}
+
+.tdp-comunicado__placeholder-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tdp-comunicado__placeholder-label {
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+.tdp-comunicado__placeholder--loading .tdp-comunicado__placeholder-icon {
+  animation: tdp-placeholder-spin 0.9s linear infinite;
+}
+
+.tdp-comunicado__placeholder--error .tdp-comunicado__placeholder-icon {
+  color: #f87171;
+}
+
+@keyframes tdp-placeholder-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .tdp-empty {

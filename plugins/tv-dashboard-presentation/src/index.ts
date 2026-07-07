@@ -38,4 +38,5 @@ export {
   sortBlocksByZIndex,
 } from "./comunicadoHelpers";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
+export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";
