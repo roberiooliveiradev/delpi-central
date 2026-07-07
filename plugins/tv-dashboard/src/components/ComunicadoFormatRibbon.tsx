@@ -9,14 +9,17 @@ import {
   ArrowDown,
   ArrowUp,
   Bold,
+  Copy,
   Highlighter,
   Italic,
   Minus,
   Plus,
+  Redo2,
   RemoveFormatting,
   Strikethrough,
   Trash2,
   Underline,
+  Undo2,
   Upload,
 } from "lucide-react";
 import {
@@ -51,9 +54,14 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     updateSelectedStyle,
     updateSelected,
     removeSelected,
+    duplicateSelected,
     moveLayer,
     triggerUpload,
     setBackgroundColor,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useComunicadoEditor();
 
   const isTextBlock = selected?.type === "heading" || selected?.type === "text";
@@ -66,6 +74,13 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
 
   return (
     <div className="td-deck-ribbon__groups">
+      <DeckRibbonGroup label="Histórico" hint="Desfazer ou refazer alterações no slide (Ctrl+Z / Ctrl+Y).">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile icon={Undo2} label="Desfazer" disabled={!canUndo} onClick={undo} />
+          <DeckRibbonTile icon={Redo2} label="Refazer" disabled={!canRedo} onClick={redo} />
+        </div>
+      </DeckRibbonGroup>
+
       <DeckRibbonGroup label="Fundo do slide" hint={H.background}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <HintAction hint={E.backgroundColor} ariaLabel="Ajuda: Cor de fundo">
@@ -371,6 +386,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       {selected ? (
         <DeckRibbonGroup label="Organizar" hint={H.organize}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTile icon={Copy} label="Duplicar" hint="Duplicar elemento (Ctrl+D)" onClick={duplicateSelected} />
             {isMediaBlock ? (
               <DeckRibbonTile
                 icon={Upload}
@@ -398,6 +414,42 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               hint={E.remove}
               onClick={removeSelected}
             />
+          </div>
+          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--compact">
+            <label className="td-deck-ribbon__field-label" htmlFor="td-block-opacity">
+              Opacidade
+            </label>
+            <input
+              id="td-block-opacity"
+              type="range"
+              min={10}
+              max={100}
+              step={5}
+              value={Math.round((selected.style?.opacity ?? 1) * 100)}
+              onChange={(e) =>
+                updateSelectedStyle({ opacity: Number(e.target.value) / 100 })
+              }
+            />
+            {isMediaBlock ? (
+              <>
+                <label className="td-deck-ribbon__field-label" htmlFor="td-block-object-fit">
+                  Ajuste
+                </label>
+                <select
+                  id="td-block-object-fit"
+                  className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+                  value={selected.style?.objectFit ?? "cover"}
+                  onChange={(e) =>
+                    updateSelectedStyle({
+                      objectFit: e.target.value as "cover" | "contain",
+                    })
+                  }
+                >
+                  <option value="cover">Preencher</option>
+                  <option value="contain">Conter</option>
+                </select>
+              </>
+            ) : null}
           </div>
         </DeckRibbonGroup>
       ) : (

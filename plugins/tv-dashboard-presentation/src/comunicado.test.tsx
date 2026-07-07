@@ -124,6 +124,20 @@ describe("comunicadoHelpers", () => {
     expect(blocks[0].resolved).toBeUndefined();
   });
 
+  it("serializa fundo gradiente", () => {
+    const serialized = serializeComunicadoConfig({
+      version: 3,
+      background: { type: "gradient", from: "#111827", to: "#089bdb", angle: 135 },
+      blocks: [],
+    });
+    expect(serialized.background).toEqual({
+      type: "gradient",
+      from: "#111827",
+      to: "#089bdb",
+      angle: 135,
+    });
+  });
+
   it("não persiste URL de mídia no native_config", () => {
     const parsed = parseComunicadoConfig({
       blocks: [

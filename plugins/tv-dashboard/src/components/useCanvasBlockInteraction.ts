@@ -20,6 +20,7 @@ type DragState = {
   startX: number;
   startY: number;
   startFrame: ComunicadoFrame;
+  aspectRatio: number;
 };
 
 type PendingDragState = DragState & {
@@ -28,39 +29,77 @@ type PendingDragState = DragState & {
 
 type Options = {
   onUpdateFrame: (blockId: string, frame: ComunicadoFrame) => void;
+  onInteractionStart?: () => void;
+  onInteractionEnd?: (blockId: string, frame: ComunicadoFrame, mode: "move" | "resize") => void;
 };
 
 const DRAG_THRESHOLD_PX = 5;
 
-function resizeFrame(frame: ComunicadoFrame, dx: number, dy: number, mode: BlockDragMode): ComunicadoFrame {
+function resizeFrame(
+  frame: ComunicadoFrame,
+  dx: number,
+  dy: number,
+  mode: BlockDragMode,
+  aspectRatio: number,
+  lockAspect: boolean,
+): ComunicadoFrame {
+  let next: ComunicadoFrame;
   switch (mode) {
     case "resize-se":
-      return { ...frame, w: frame.w + dx, h: frame.h + dy };
+      next = { ...frame, w: frame.w + dx, h: frame.h + dy };
+      break;
     case "resize-e":
-      return { ...frame, w: frame.w + dx };
+      next = { ...frame, w: frame.w + dx };
+      break;
     case "resize-s":
-      return { ...frame, h: frame.h + dy };
+      next = { ...frame, h: frame.h + dy };
+      break;
     case "resize-n":
-      return { ...frame, y: frame.y + dy, h: frame.h - dy };
+      next = { ...frame, y: frame.y + dy, h: frame.h - dy };
+      break;
     case "resize-w":
-      return { ...frame, x: frame.x + dx, w: frame.w - dx };
+      next = { ...frame, x: frame.x + dx, w: frame.w - dx };
+      break;
     case "resize-ne":
-      return { ...frame, y: frame.y + dy, w: frame.w + dx, h: frame.h - dy };
+      next = { ...frame, y: frame.y + dy, w: frame.w + dx, h: frame.h - dy };
+      break;
     case "resize-nw":
-      return { ...frame, x: frame.x + dx, y: frame.y + dy, w: frame.w - dx, h: frame.h - dy };
+      next = { ...frame, x: frame.x + dx, y: frame.y + dy, w: frame.w - dx, h: frame.h - dy };
+      break;
     case "resize-sw":
-      return { ...frame, x: frame.x + dx, w: frame.w - dx, h: frame.h + dy };
+      next = { ...frame, x: frame.x + dx, w: frame.w - dx, h: frame.h + dy };
+      break;
     default:
       return frame;
   }
+
+  if (!lockAspect || aspectRatio <= 0) {
+    return next;
+  }
+
+  const dominant = Math.abs(dx) >= Math.abs(dy) ? "w" : "h";
+  if (dominant === "w") {
+    next.h = next.w / aspectRatio;
+  } else {
+    next.w = next.h * aspectRatio;
+  }
+  return next;
 }
 
-export function useCanvasBlockInteraction({ onUpdateFrame }: Options) {
+export function useCanvasBlockInteraction({
+  onUpdateFrame,
+  onInteractionStart,
+  onInteractionEnd,
+}: Options) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const pendingRef = useRef<PendingDragState | null>(null);
   const onUpdateFrameRef = useRef(onUpdateFrame);
+  const onInteractionStartRef = useRef(onInteractionStart);
+  const onInteractionEndRef = useRef(onInteractionEnd);
   onUpdateFrameRef.current = onUpdateFrame;
+  onInteractionStartRef.current = onInteractionStart;
+  onInteractionEndRef.current = onInteractionEnd;
 
   const pointerToPercent = useCallback((clientX: number, clientY: number) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -80,6 +119,7 @@ export function useCanvasBlockInteraction({ onUpdateFrame }: Options) {
     const dx = current.x - start.x;
     const dy = current.y - start.y;
     const frame = drag.startFrame;
+    const lockAspect = event.shiftKey && drag.mode !== "move";
 
     if (drag.mode === "move") {
       onUpdateFrameRef.current(
@@ -93,38 +133,55 @@ export function useCanvasBlockInteraction({ onUpdateFrame }: Options) {
       return;
     }
 
-    onUpdateFrameRef.current(drag.blockId, clampFrame(resizeFrame(frame, dx, dy, drag.mode)));
+    onUpdateFrameRef.current(
+      drag.blockId,
+      clampFrame(resizeFrame(frame, dx, dy, drag.mode, drag.aspectRatio, lockAspect)),
+    );
   };
 
   const onPointerMove = useCallback((event: PointerEvent) => {
     applyDragMoveRef.current(event);
   }, []);
 
-  const onPointerUp = useCallback(() => {
+  const finishInteraction = useCallback(() => {
+    const drag = dragRef.current;
+    if (drag && onInteractionEndRef.current) {
+      const mode: "move" | "resize" = drag.mode === "move" ? "move" : "resize";
+      onInteractionEndRef.current(drag.blockId, drag.startFrame, mode);
+    }
     pendingRef.current = null;
     dragRef.current = null;
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("pointerup", onPointerUp);
     window.removeEventListener("pointermove", onPendingMove);
     window.removeEventListener("pointerup", onPendingUp);
-  }, []);
+  }, [onPointerMove, onPendingMove, onPendingUp]);
 
-  const onPendingMove = useCallback((event: PointerEvent) => {
-    const pending = pendingRef.current;
-    if (!pending || event.pointerId !== pending.pointerId) return;
-    const dx = event.clientX - pending.startX;
-    const dy = event.clientY - pending.startY;
-    if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return;
+  const onPointerUp = useCallback(() => {
+    finishInteraction();
+  }, [finishInteraction]);
 
-    const { pointerId: _pointerId, ...dragState } = pending;
-    pendingRef.current = null;
-    window.removeEventListener("pointermove", onPendingMove);
-    window.removeEventListener("pointerup", onPendingUp);
-    dragRef.current = dragState;
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-    applyDragMoveRef.current(event);
-  }, [onPointerMove]);
+  const onPendingMove = useCallback(
+    (event: PointerEvent) => {
+      const pending = pendingRef.current;
+      if (!pending || event.pointerId !== pending.pointerId) return;
+      const dx = event.clientX - pending.startX;
+      const dy = event.clientY - pending.startY;
+      if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return;
+
+      onInteractionStartRef.current?.();
+
+      const { pointerId: _pointerId, ...dragState } = pending;
+      pendingRef.current = null;
+      window.removeEventListener("pointermove", onPendingMove);
+      window.removeEventListener("pointerup", onPendingUp);
+      dragRef.current = dragState;
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      applyDragMoveRef.current(event);
+    },
+    [onPointerMove],
+  );
 
   const onPendingUp = useCallback(
     (event: PointerEvent) => {
@@ -150,15 +207,18 @@ export function useCanvasBlockInteraction({ onUpdateFrame }: Options) {
       event.preventDefault();
       event.stopPropagation();
 
+      const aspectRatio = block.frame.w / Math.max(block.frame.h, 0.1);
       const dragState: DragState = {
         mode,
         blockId: block.id,
         startX: event.clientX,
         startY: event.clientY,
         startFrame: { ...block.frame },
+        aspectRatio,
       };
 
       if (mode !== "move") {
+        onInteractionStartRef.current?.();
         pendingRef.current = null;
         window.removeEventListener("pointermove", onPendingMove);
         window.removeEventListener("pointerup", onPendingUp);

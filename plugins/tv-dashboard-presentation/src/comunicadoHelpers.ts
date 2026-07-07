@@ -241,7 +241,14 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
   const serializedBackground =
     background.type === "image"
       ? { type: "image", assetId: background.assetId }
-      : { type: "color", value: background.value || "#0f172a" };
+      : background.type === "gradient"
+        ? {
+            type: "gradient",
+            from: background.from,
+            to: background.to,
+            angle: background.angle ?? 180,
+          }
+        : { type: "color", value: background.value || "#0f172a" };
   const blocks = (config.blocks ?? []).map(serializeBlock);
   const version = config.version ?? detectConfigVersion(config.blocks ?? []);
   const payload: Record<string, unknown> = {
@@ -312,6 +319,12 @@ function normalizeBackground(value: unknown): ComunicadoBackground {
       url: typeof bg.url === "string" ? bg.url : undefined,
       value: typeof bg.value === "string" ? bg.value : undefined,
     };
+  }
+  if (bg.type === "gradient") {
+    const from = typeof bg.from === "string" && bg.from.trim() ? bg.from : "#0f172a";
+    const to = typeof bg.to === "string" && bg.to.trim() ? bg.to : "#1e3a5f";
+    const angle = typeof bg.angle === "number" ? bg.angle : 180;
+    return { type: "gradient", from, to, angle };
   }
   const color = typeof bg.value === "string" && bg.value.trim() ? bg.value : "#0f172a";
   return { type: "color", value: color };

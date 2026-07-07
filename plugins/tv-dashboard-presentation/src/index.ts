@@ -35,6 +35,7 @@ export {
   COMUNICADO_LINE_HEIGHT_OPTIONS,
   COMUNICADO_SHAPE_KINDS,
 } from "./comunicadoTypes";
+export { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 export {
   blockTypeForDisplayMode,
   displayModeLabel,

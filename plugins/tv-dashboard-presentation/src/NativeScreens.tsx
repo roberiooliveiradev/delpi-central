@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 import { ComunicadoBlockView } from "./comunicadoBlockView";
 import { hasRichComunicado, sortBlocksByZIndex, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
 import type { ComunicadoBackground } from "./comunicadoTypes";
@@ -278,17 +279,9 @@ function RichComunicadoScreen({
   data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
 }) {
   const background = data.background ?? { type: "color", value: "#0f172a" };
-  const bgStyle: CSSProperties =
-    background.type === "image" && (background.url || background.value)
-      ? {
-          backgroundImage: `url(${background.url ?? background.value})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }
-      : {
-          backgroundColor:
-            background.type === "color" ? background.value || "#0f172a" : "#0f172a",
-        };
+  const imageUrl =
+    background.type === "image" ? background.url ?? background.value : undefined;
+  const bgStyle: CSSProperties = comunicadoBackgroundCssProperties(background, imageUrl);
 
   const blocks = sortBlocksByZIndex(data.blocks ?? []);
 

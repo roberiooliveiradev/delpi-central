@@ -1,4 +1,4 @@
-import { frameStyle } from "@delpi/tv-dashboard-presentation";
+import { comunicadoBackgroundCssProperties, frameStyle } from "@delpi/tv-dashboard-presentation";
 import { useMemo } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -25,22 +25,13 @@ const BLOCK_RESIZE_HANDLES: Array<{
 
 function useCanvasBackgroundStyle() {
   const { background } = useComunicadoEditor();
-  const imageApiUrl = background.type === "image" ? background.url : undefined;
+  const imageApiUrl = background?.type === "image" ? background.url : undefined;
   const { src: imageBlobUrl } = useAuthenticatedBlobUrl(imageApiUrl);
 
-  return useMemo(() => {
-    if (background.type === "image" && imageBlobUrl) {
-      return {
-        backgroundImage: `url(${imageBlobUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      };
-    }
-    if (background.type === "color") {
-      return { backgroundColor: background.value };
-    }
-    return { backgroundColor: "#0f172a" };
-  }, [background, imageBlobUrl]);
+  return useMemo(
+    () => comunicadoBackgroundCssProperties(background, imageBlobUrl),
+    [background, imageBlobUrl],
+  );
 }
 
 export function ComunicadoComposerCanvas() {

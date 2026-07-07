@@ -26,8 +26,16 @@ import {
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
+import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
+import { snapComunicadoFrame } from "../utils/comunicadoSnap";
+
+const HISTORY_LIMIT = 50;
+
+function snapshotConfig(config: ComunicadoConfig): ComunicadoConfig {
+  return parseComunicadoConfig(serializeComunicadoConfig(config));
+}
 
 type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
@@ -54,8 +62,14 @@ type ComunicadoEditorContextValue = {
   duplicateSelected: () => void;
   replaceSelectedDataRoute: (block: ComunicadoBlock) => void;
   moveLayer: (direction: "up" | "down") => void;
+  nudgeSelected: (dx: number, dy: number) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
   triggerUpload: (target: "block" | "background") => void;
   setBackgroundColor: (value: string) => void;
+  setBackgroundGradient: (from: string, to: string, angle?: number) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleUploadFile: (file: File, target: "block" | "background") => void;
   dataPreviewLoading: boolean;
@@ -80,6 +94,11 @@ type ProviderProps = {
   children: ReactNode;
 };
 
+function ComunicadoEditorKeyboardBridge() {
+  useComunicadoEditorKeyboard();
+  return null;
+}
+
 export function ComunicadoEditorProvider({ playlistId, value, onChange, children }: ProviderProps) {
   const [config, setConfig] = useState<ComunicadoConfig>(() =>
     enrichComunicadoConfigForEditor(value, playlistId),
@@ -87,6 +106,13 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const [selectedId, setSelectedIdState] = useState<string | null>(config.blocks?.[0]?.id ?? null);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [historyTick, setHistoryTick] = useState(0);
+
+  const pastRef = useRef<ComunicadoConfig[]>([]);
+  const futureRef = useRef<ComunicadoConfig[]>([]);
+  const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
+  const configRef = useRef(config);
+  configRef.current = config;
 
   const setSelectedId = useCallback((id: string | null) => {
     setSelectedIdState(id);
@@ -97,7 +123,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const uploadTargetRef = useRef<"block" | "background">("block");
 
   useEffect(() => {
-    setConfig(enrichComunicadoConfigForEditor(value, playlistId));
+    const enriched = enrichComunicadoConfigForEditor(value, playlistId);
+    setConfig(enriched);
+    pastRef.current = [];
+    futureRef.current = [];
+    dragSnapshotRef.current = null;
+    setHistoryTick((tick) => tick + 1);
   }, [value, playlistId]);
 
   const { resolvedByBlockId, loading: dataPreviewLoading, error: dataPreviewError } =
@@ -121,65 +152,157 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     [blocks, selectedId],
   );
 
-  function commit(next: ComunicadoConfig) {
-    setConfig(next);
-    onChange(serializeComunicadoConfig(next));
-  }
+  const applyConfig = useCallback(
+    (next: ComunicadoConfig) => {
+      setConfig(next);
+      onChange(serializeComunicadoConfig(next));
+    },
+    [onChange],
+  );
+
+  const pushPast = useCallback((snapshot: ComunicadoConfig) => {
+    pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), snapshot];
+    futureRef.current = [];
+    setHistoryTick((tick) => tick + 1);
+  }, []);
+
+  const commitWithHistory = useCallback(
+    (next: ComunicadoConfig) => {
+      pushPast(snapshotConfig(configRef.current));
+      applyConfig(next);
+    },
+    [applyConfig, pushPast],
+  );
+
+  const undo = useCallback(() => {
+    const previous = pastRef.current.pop();
+    if (!previous) return;
+    futureRef.current.push(snapshotConfig(configRef.current));
+    applyConfig(previous);
+    setHistoryTick((tick) => tick + 1);
+  }, [applyConfig]);
+
+  const redo = useCallback(() => {
+    const next = futureRef.current.pop();
+    if (!next) return;
+    pastRef.current.push(snapshotConfig(configRef.current));
+    applyConfig(next);
+    setHistoryTick((tick) => tick + 1);
+  }, [applyConfig]);
+
+  const canUndo = pastRef.current.length > 0;
+  const canRedo = futureRef.current.length > 0;
+  void historyTick;
 
   function updateBlocks(nextBlocks: ComunicadoBlock[]) {
-    commit({ ...config, blocks: nextBlocks });
+    commitWithHistory({ ...configRef.current, blocks: nextBlocks });
   }
 
-  const handleUpdateFrame = (blockId: string, frame: ComunicadoBlock["frame"]) => {
-    const nextBlocks = (config.blocks ?? []).map((block) =>
-      block.id === blockId ? { ...block, frame } : block,
-    );
-    updateBlocks(nextBlocks);
-  };
+  function updateBlocksSilent(nextBlocks: ComunicadoBlock[]) {
+    applyConfig({ ...configRef.current, blocks: nextBlocks });
+  }
 
-  const { canvasRef, startDrag } = useCanvasBlockInteraction({ onUpdateFrame: handleUpdateFrame });
+  const handleUpdateFrame = useCallback(
+    (blockId: string, frame: ComunicadoBlock["frame"]) => {
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        block.id === blockId ? { ...block, frame } : block,
+      );
+      updateBlocksSilent(nextBlocks);
+    },
+    [applyConfig],
+  );
+
+  const handleInteractionStart = useCallback(() => {
+    dragSnapshotRef.current = snapshotConfig(configRef.current);
+  }, []);
+
+  const handleInteractionEnd = useCallback(
+    (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize") => {
+      const before = dragSnapshotRef.current;
+      dragSnapshotRef.current = null;
+      if (!before) return;
+
+      const currentBlock = configRef.current.blocks?.find((block) => block.id === blockId);
+      if (!currentBlock) return;
+
+      const snappedFrame = snapComunicadoFrame(currentBlock.frame, mode);
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        block.id === blockId ? { ...block, frame: snappedFrame } : block,
+      );
+      const nextConfig = { ...configRef.current, blocks: nextBlocks };
+
+      const beforeBlock = before.blocks?.find((block) => block.id === blockId);
+      const unchanged =
+        beforeBlock &&
+        beforeBlock.frame.x === snappedFrame.x &&
+        beforeBlock.frame.y === snappedFrame.y &&
+        beforeBlock.frame.w === snappedFrame.w &&
+        beforeBlock.frame.h === snappedFrame.h;
+
+      if (unchanged) {
+        applyConfig(nextConfig);
+        return;
+      }
+
+      pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), before];
+      futureRef.current = [];
+      applyConfig(nextConfig);
+      setHistoryTick((tick) => tick + 1);
+    },
+    [applyConfig],
+  );
+
+  const { canvasRef, startDrag } = useCanvasBlockInteraction({
+    onUpdateFrame: handleUpdateFrame,
+    onInteractionStart: handleInteractionStart,
+    onInteractionEnd: handleInteractionEnd,
+  });
 
   function addBlock(type: ComunicadoBlock["type"]) {
     const block = createBlock(
       type,
       type === "heading" ? "Novo título" : type === "text" ? "Texto" : "",
     );
-    block.style = { ...block.style, zIndex: nextZIndex(config.blocks ?? []) };
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     setSelectedId(block.id);
-    updateBlocks([...(config.blocks ?? []), block]);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
   }
 
   function addDataBlock(block: ComunicadoBlock) {
     const withZ = {
       ...block,
-      style: { ...block.style, zIndex: nextZIndex(config.blocks ?? []) },
+      style: { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) },
     };
     setSelectedId(withZ.id);
-    updateBlocks([...(config.blocks ?? []), withZ]);
+    updateBlocks([...(configRef.current.blocks ?? []), withZ]);
   }
 
   function setDataFilters(filters: ComunicadoDataFilters | undefined) {
-    commit({ ...config, dataFilters: filters, version: Math.max(config.version ?? 3, 4) });
+    commitWithHistory({
+      ...configRef.current,
+      dataFilters: filters,
+      version: Math.max(configRef.current.version ?? 3, 4),
+    });
   }
 
   function addShape(shape: ComunicadoShapeKind) {
     const block = createShapeBlock(shape);
-    block.style = { ...block.style, zIndex: nextZIndex(config.blocks ?? []) };
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     setSelectedId(block.id);
     setShapeMenuOpen(false);
-    updateBlocks([...(config.blocks ?? []), block]);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
   }
 
   function updateSelected(patch: Partial<ComunicadoBlock>) {
     if (!selected) return;
-    const nextBlocks = (config.blocks ?? []).map((block) =>
+    const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
       block.id === selected.id ? ({ ...block, ...patch } as ComunicadoBlock) : block,
     );
     updateBlocks(nextBlocks);
   }
 
   function updateBlockContent(blockId: string, content: string) {
-    const nextBlocks = (config.blocks ?? []).map((block) => {
+    const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
       if (block.id !== blockId) return block;
       if (block.type === "heading" || block.type === "text" || block.type === "shape") {
         return { ...block, content } as ComunicadoBlock;
@@ -208,10 +331,10 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
         x: Math.min(92, selected.frame.x + 2),
         y: Math.min(92, selected.frame.y + 2),
       },
-      style: { ...selected.style, zIndex: nextZIndex(config.blocks ?? []) },
+      style: { ...selected.style, zIndex: nextZIndex(configRef.current.blocks ?? []) },
     } as ComunicadoBlock;
     setSelectedId(copy.id);
-    updateBlocks([...(config.blocks ?? []), copy]);
+    updateBlocks([...(configRef.current.blocks ?? []), copy]);
   }
 
   function replaceSelectedDataRoute(block: ComunicadoBlock) {
@@ -233,7 +356,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
 
   function removeSelected() {
     if (!selected) return;
-    const nextBlocks = (config.blocks ?? []).filter((block) => block.id !== selected.id);
+    const nextBlocks = (configRef.current.blocks ?? []).filter((block) => block.id !== selected.id);
     setSelectedId(nextBlocks[0]?.id ?? null);
     updateBlocks(nextBlocks);
   }
@@ -244,17 +367,31 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateSelectedStyle({ zIndex: Math.max(1, currentZ + (direction === "up" ? 1 : -1)) });
   }
 
+  function nudgeSelected(dx: number, dy: number) {
+    if (!selected) return;
+    updateSelected({
+      frame: {
+        ...selected.frame,
+        x: Math.max(0, Math.min(100 - selected.frame.w, selected.frame.x + dx)),
+        y: Math.max(0, Math.min(100 - selected.frame.h, selected.frame.y + dy)),
+      },
+    } as Partial<ComunicadoBlock>);
+  }
+
   async function handleUploadFile(file: File, target: "block" | "background") {
     setUploading(true);
     try {
       const asset: MediaAsset = await uploadPlaylistMedia(playlistId, file);
       const url = adminMediaUrl(playlistId, asset.id);
       if (target === "background") {
-        commit({ ...config, background: { type: "image", assetId: asset.id, url } });
+        commitWithHistory({
+          ...configRef.current,
+          background: { type: "image", assetId: asset.id, url },
+        });
         return;
       }
       if (!selected || (selected.type !== "image" && selected.type !== "video")) return;
-      const nextBlocks = (config.blocks ?? []).map((block) =>
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
         block.id === selected.id
           ? ({ ...block, assetId: asset.id, url } as ComunicadoBlock)
           : block,
@@ -271,7 +408,14 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   }
 
   function setBackgroundColor(color: string) {
-    commit({ ...config, background: { type: "color", value: color } });
+    commitWithHistory({ ...configRef.current, background: { type: "color", value: color } });
+  }
+
+  function setBackgroundGradient(from: string, to: string, angle = 180) {
+    commitWithHistory({
+      ...configRef.current,
+      background: { type: "gradient", from, to, angle },
+    });
   }
 
   const background = config.background ?? { type: "color", value: "#0f172a" };
@@ -301,8 +445,14 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     duplicateSelected,
     replaceSelectedDataRoute,
     moveLayer,
+    nudgeSelected,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     triggerUpload,
     setBackgroundColor,
+    setBackgroundGradient,
     fileInputRef,
     handleUploadFile,
     dataPreviewLoading,
@@ -311,6 +461,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
 
   return (
     <ComunicadoEditorContext.Provider value={ctxValue}>
+      <ComunicadoEditorKeyboardBridge />
       <input
         ref={fileInputRef}
         type="file"
