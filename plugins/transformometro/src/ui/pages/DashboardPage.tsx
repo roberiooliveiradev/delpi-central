@@ -13,9 +13,10 @@ import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { ChartCard } from "../../components/ChartCard";
 import { KpiCard } from "../../components/KpiCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
@@ -149,38 +150,6 @@ function chartHint(
     parts.push("navegue com os botões ou a rolagem do mouse no gráfico");
   }
   return parts.join(" · ");
-}
-
-function ChartCard({
-  title,
-  titleHint,
-  hint,
-  toolbar,
-  children,
-}: {
-  title: string;
-  titleHint?: string;
-  hint?: string;
-  toolbar?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="ds-card ds-chart-card">
-      <div className="ds-chart-card__header">
-        <div>
-          <h2 className="ds-section-title">
-            {title}
-            {titleHint ? (
-              <HelpTooltip content={titleHint} ariaLabel={`Ajuda: ${title}`} />
-            ) : null}
-          </h2>
-          {hint ? <p className="ds-hint">{hint}</p> : null}
-        </div>
-        {toolbar}
-      </div>
-      {children}
-    </section>
-  );
 }
 
 export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {

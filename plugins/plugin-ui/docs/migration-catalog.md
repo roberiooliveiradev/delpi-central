@@ -60,6 +60,16 @@ Resumo (2+ consumidores):
 | `Pagination` (+ jump, page size) | 7 dashboards | F2 ✅ (7 dept.) |
 | `MultiSelectField` | 13 | F2 ✅ (8 dept. + lmps) |
 | `FilterBar` | 12 | F2 ✅ (FiltersRow + FilterInputField) |
+| `FilterBarShell` | 2 | F2 ✅ (maintenance form/card; ef grid) |
+
+## Gate CI
+
+```bash
+python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
+python3 scripts/ci/audit_plugin_ui_duplication.py --check          # bloqueia HelpTooltip local + integração
+python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em toda duplicata catalogada
+```
+
 | `DataTable` / `DataTableSection` | ~25 | F2 ✅ (7 dept. + lmps DataTable) |
 | `DetailFieldGrid` | 5 | F3 ✅ (5 consumidores) |
 | `EditableSectionCard` | 3 | F3 ✅ |
@@ -109,9 +119,9 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination via CompactPagination |
-| `transformometro` | — | — | — | — | ✅ | |
-| `eficiencia-fabril` | — | — | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard F2 |
-| `maintenance` | ✅ | — | — | — | — | — | TablePaginationNav F2 |
+| `transformometro` | — | — | — | ✅ | ✅ | |
+| `eficiencia-fabril` | — | — | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard + FilterBarShell F2 |
+| `maintenance` | ✅ | ✅ | — | — | — | — | TablePaginationNav + FilterBarShell + MultiSelect F2 |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
 | `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |

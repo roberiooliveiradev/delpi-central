@@ -1,36 +1,27 @@
-import { useId, type ReactNode } from "react";
+import type { ReactNode } from "react";
+
+import { ChartCard as PluginChartCard, chartCardBemClasses } from "@delpi/plugin-ui";
+
+const DS_CHART_CARD_CLASSES = chartCardBemClasses("ds");
 
 type ChartCardProps = {
   title: string;
   children: ReactNode;
   hint?: string;
+  titleHint?: string;
   toolbar?: ReactNode;
 };
 
-export function ChartCard({ title, children, hint, toolbar }: ChartCardProps) {
-  const titleId = useId();
-
+export function ChartCard({ title, children, hint, titleHint, toolbar }: ChartCardProps) {
   return (
-    <section className="ds-card ds-chart-card" aria-labelledby={titleId} role="region">
-      <div className="ds-chart-card__header">
-        <div className="ds-chart-card__header-main">
-          <h2 id={titleId} className="ds-chart-card__title">
-            {title}
-          </h2>
-          {hint ? (
-            <p className="ds-chart-card__hint" id={`${titleId}-hint`}>
-              {hint}
-            </p>
-          ) : null}
-        </div>
-        {toolbar ? <div className="ds-chart-card__toolbar">{toolbar}</div> : null}
-      </div>
-      <div
-        className="ds-chart-card__body"
-        aria-describedby={hint ? `${titleId}-hint` : undefined}
-      >
-        {children}
-      </div>
-    </section>
+    <PluginChartCard
+      title={title}
+      titleHint={titleHint}
+      hint={hint}
+      headerActions={toolbar}
+      classNames={DS_CHART_CARD_CLASSES}
+    >
+      {children}
+    </PluginChartCard>
   );
 }

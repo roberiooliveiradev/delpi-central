@@ -56,6 +56,14 @@ export {
   type FiltersRowProps,
 } from "./FiltersRow";
 export {
+  FilterBarShell,
+  createFilterBarShell,
+  filterBarShellBemClasses,
+  type DashboardFilterBarShellProps,
+  type FilterBarShellClassNames,
+  type FilterBarShellProps,
+} from "./FilterBarShell";
+export {
   DetailFieldGrid,
   createDashboardDetailFieldGrid,
   createInfoGrid,

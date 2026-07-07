@@ -1,9 +1,15 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
 import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { MultiSelectOption } from "./MultiSelectField";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel, createFilterBarShell } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
+
+const FilterBarShell = createFilterBarShell({
+  prefix: "ef",
+  withGrid: true,
+  defaultAriaLabel: "Filtros do dashboard",
+});
 
 type FilterBarProps = {
   dateStart: string;
@@ -51,8 +57,7 @@ export function FilterBar({
   disabled = false,
 }: FilterBarProps) {
   return (
-    <section className="ef-filter-bar" aria-label="Filtros do dashboard">
-      <div className="ef-filter-bar__grid">
+    <FilterBarShell ariaLabel="Filtros do dashboard">
         <label className="ef-field">
           <FieldLabel label="Data início" hint={EF_HELP_TOOLTIPS.filters.dateStart}  className="ef-field__label" />
           <input
@@ -127,7 +132,6 @@ export function FilterBar({
           }
           disabled={disabled}
         />
-      </div>
-    </section>
+    </FilterBarShell>
   );
 }

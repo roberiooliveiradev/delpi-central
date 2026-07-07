@@ -27,6 +27,7 @@ Se alguma resposta for não, o componente pertence ao plugin específico — nã
 2. Adicionar `COPY <biblioteca>/` no Dockerfile — ver `plugins/docker/shared-libraries.Dockerfile.fragment`.
 3. Garantir `context: ../plugins` no `infra/docker-compose*.yml`.
 4. Rodar `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`.
+5. Rodar `python3 scripts/ci/audit_plugin_ui_duplication.py --check` (duplicatas bloqueantes + integração Vite).
 ```
 
 ## Convenções de código

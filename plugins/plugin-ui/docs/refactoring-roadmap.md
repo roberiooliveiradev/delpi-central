@@ -161,7 +161,7 @@ Modelo: `plugins/tv-dashboard/Dockerfile`.
 | 0.2 | Fragmento Docker reutilizável (`plugins/docker/shared-libraries.Dockerfile.fragment`) — validar em 2 plugins piloto | infra |
 | 0.3 | Estender `HelpTooltip` com `placement: "right"` e `open?: boolean` (portal) **ou** documentar exceção permanente do portal | plugin-ui |
 | 0.4 | Export `TitleWithHelp` → alias de `SectionHintLabel` ou helper fino | plugin-ui |
-| 0.5 | Script opcional: detectar `HelpTooltip.tsx` local (`scripts/ci/audit_plugin_ui_duplication.py`) | CI |
+| 0.5 | Script opcional: detectar `HelpTooltip.tsx` local (`scripts/ci/audit_plugin_ui_duplication.py`) | CI ✅ |
 
 ### Fase 1 — Família `help` (quick win, ~2–3 sprints)
 

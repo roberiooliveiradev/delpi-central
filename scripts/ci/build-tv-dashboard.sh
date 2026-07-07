@@ -7,6 +7,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 echo "[CI] Gate bibliotecas compartilhadas (Docker)"
 python3 "$ROOT/scripts/ci/check_plugin_docker_shared_libraries.py" --check
 
+echo "[CI] Gate duplicação @delpi/plugin-ui"
+python3 "$ROOT/scripts/ci/audit_plugin_ui_duplication.py" --check
+
 PLUGIN_DIR="${PLUGIN_DIR:-$ROOT/plugins/tv-dashboard}"
 PRESENTATION_DIR="$ROOT/plugins/tv-dashboard-presentation"
 PLUGIN_UI_DIR="$ROOT/plugins/plugin-ui"
