@@ -80,6 +80,8 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `chartCardBemClasses` | Helper para mapa BEM `{prefix}-chart-card__*` |
 | `KpiCard` | Cartão KPI departamental (meta, badges IDD, ícone) |
 | `kpiCardBemClasses` / `createDashboardKpiCard` | Helpers BEM + factory de wrapper |
+| `LoadingActivityCard` | Spinner + barra de progresso de carregamento |
+| `loadingActivityBemClasses` / `createDashboardLoadingActivityCard` | Helpers BEM + factory |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 

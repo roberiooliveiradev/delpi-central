@@ -251,18 +251,18 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 
 | Plugin | F1 help | F2 shell | F3 forms | Docker hoje |
 |--------|---------|----------|----------|-------------|
-| `dashboard-production` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
-| `dashboard-commercial` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
-| `dashboard-engineering` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
-| `dashboard-financial` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
-| `dashboard-hr` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
-| `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ | Detail* | sim |
-| `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
-| `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
-| `transformometro` | ✅ | parcial | ⏳ | sim |
+| `dashboard-production` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | — | sim |
+| `dashboard-commercial` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | — | sim |
+| `dashboard-engineering` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | — | sim |
+| `dashboard-financial` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | — | sim |
+| `dashboard-hr` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | — | sim |
+| `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | Detail* | sim |
+| `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | — | sim |
+| `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | — | sim |
+| `transformometro` | ✅ | LoadingActivity ✅ | ⏳ | sim |
 | `cadastro-kaizen` | ✅ | — | ⏳ | sim |
 | `quality-action-plans` | ✅ | parcial | ⏳ | sim |
-| `eficiencia-fabril` | ✅ | parcial | — | sim |
+| `eficiencia-fabril` | ✅ | LoadingActivity ✅ | — | sim |
 | `maintenance` | ✅ | parcial | — | sim |
 | `controle-retrabalhos` | — | Kpi/Chart simples | — | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination | PageHeader | sim |
@@ -301,7 +301,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 ## 7. Próximo passo recomendado
 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2.2–2.3** ChartCard e KpiCard concluídos nos 8 dashboards — próximo: `LoadingActivityCard` (2.1) ou `Pagination` (2.4).
+2. **Fase 2.1–2.3** ChartCard, KpiCard e LoadingActivityCard nos dashboards — próximo: `Pagination` (2.4) ou `MultiSelectField` (2.5).
 
 ---
 

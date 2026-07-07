@@ -172,6 +172,22 @@ Cartão KPI departamental com valor, meta, badges IDD e ícone. Textos fixos (`M
 
 Helpers: `kpiCardBemClasses(prefix)` e `createDashboardKpiCard({ prefix, labels })` para wrapper de uma linha nos dashboards.
 
+### `LoadingActivityCard`
+
+Feedback de carregamento com spinner, barra de progresso (determinada ou indeterminada) e variantes `compact` / `panel`.
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `title` / `description` | `string` | Textos do plugin |
+| `variant` | `"compact" \| "panel"` | Densidade |
+| `tone` | `"neutral" \| "info"` | Estilo |
+| `sticky` | `boolean?` | Default: `true` quando `compact` |
+| `progressPercent` | `number?` | 0–100 para barra determinada |
+| `classNames` | `LoadingActivityCardClassNames` | BEM do plugin |
+| `labels` | `LoadingActivityCardLabels` | Textos PT (progresso restante, aria) |
+
+Helpers: `loadingActivityBemClasses(prefix, { withCopyWrapper? })` e `createDashboardLoadingActivityCard`.
+
 ---
 
 ## Estilos base (`styles.css`)
