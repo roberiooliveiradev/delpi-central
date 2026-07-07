@@ -99,6 +99,8 @@ COPY plugin-ui ./plugin-ui
 
 Sem `plugin-ui` no contexto, o build falha em `@delpi/plugin-ui` e em `import "../../plugin-ui/src/styles.css"`.
 
+**Gate CI (regressão):** `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check` — manifesto em `plugins/shared-libraries.manifest.json`. Doc: `plugins/docker/README.md`.
+
 ## HelpTooltip — decisão técnica
 
 O balão usa **`position: fixed` + `createPortal(document.body)`** porque ancestrais com `transform`, `overflow: hidden` ou filmstrip quebram tooltips só com CSS `:hover` relativo. Reposicionamento em scroll/resize via `visualViewport`.

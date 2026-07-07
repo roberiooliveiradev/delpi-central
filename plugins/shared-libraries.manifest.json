@@ -1,0 +1,28 @@
+{
+  "$schema": "./shared-libraries.manifest.schema.json",
+  "description": "Bibliotecas TypeScript em plugins/ consumidas via alias Vite. Todo plugin que importar uma delas deve copiá-la no Dockerfile e usar contexto de build plugins/.",
+  "requiredBuildContext": "../plugins",
+  "libraries": [
+    {
+      "id": "plugin-ui",
+      "directory": "plugin-ui",
+      "packageName": "@delpi/plugin-ui",
+      "markers": [
+        "@delpi/plugin-ui",
+        "plugin-ui/src/styles.css",
+        "../plugin-ui/",
+        "\"../plugin-ui"
+      ]
+    },
+    {
+      "id": "tv-dashboard-presentation",
+      "directory": "tv-dashboard-presentation",
+      "packageName": "@delpi/tv-dashboard-presentation",
+      "markers": [
+        "@delpi/tv-dashboard-presentation",
+        "tv-dashboard-presentation/",
+        "../tv-dashboard-presentation/"
+      ]
+    }
+  ]
+}

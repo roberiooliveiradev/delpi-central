@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shared libraries manifest",
+  "type": "object",
+  "required": ["libraries", "requiredBuildContext"],
+  "properties": {
+    "requiredBuildContext": { "type": "string" },
+    "libraries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "directory", "markers"],
+        "properties": {
+          "id": { "type": "string" },
+          "directory": { "type": "string" },
+          "packageName": { "type": "string" },
+          "markers": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

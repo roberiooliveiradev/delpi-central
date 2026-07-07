@@ -1,5 +1,7 @@
 import { HelpCircle } from "lucide-react";
 import {
+  cloneElement,
+  isValidElement,
   useCallback,
   useEffect,
   useId,
@@ -7,6 +9,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactElement,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -119,6 +122,51 @@ function bubbleLayoutStyle(position: BubblePosition | null, positioned: boolean)
     visibility: positioned ? "visible" : "hidden",
     opacity: positioned ? 1 : 0,
   };
+}
+
+function mergeHandler<T extends (...args: never[]) => void>(
+  existing: T | undefined,
+  next: T,
+): T {
+  return ((...args) => {
+    existing?.(...args);
+    next(...args);
+  }) as T;
+}
+
+function mergeDescribedBy(existing: string | undefined, tooltipId: string): string {
+  if (!existing) return tooltipId;
+  if (existing.split(/\s+/).includes(tooltipId)) return existing;
+  return `${existing} ${tooltipId}`;
+}
+
+function wrapChildWithHint(
+  child: ReactNode,
+  handlers: {
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+    onFocus: () => void;
+    onBlur: () => void;
+  },
+  tooltipId: string,
+): ReactNode {
+  if (!isValidElement(child)) return child;
+
+  const element = child as ReactElement<{
+    onMouseEnter?: (event: React.MouseEvent) => void;
+    onMouseLeave?: (event: React.MouseEvent) => void;
+    onFocus?: (event: React.FocusEvent) => void;
+    onBlur?: (event: React.FocusEvent) => void;
+    "aria-describedby"?: string;
+  }>;
+
+  return cloneElement(element, {
+    onMouseEnter: mergeHandler(element.props.onMouseEnter, handlers.onMouseEnter),
+    onMouseLeave: mergeHandler(element.props.onMouseLeave, handlers.onMouseLeave),
+    onFocus: mergeHandler(element.props.onFocus, handlers.onFocus),
+    onBlur: mergeHandler(element.props.onBlur, handlers.onBlur),
+    "aria-describedby": mergeDescribedBy(element.props["aria-describedby"], tooltipId),
+  });
 }
 
 /** Balão explicativo com portal no body (seguro em layouts com transform/overflow). */
@@ -250,16 +298,9 @@ export function HelpTooltip({
   };
 
   return (
-    <span
-      ref={rootRef}
-      className={rootClass}
-      tabIndex={wrap ? 0 : undefined}
-      aria-label={wrap ? ariaLabel : undefined}
-      aria-describedby={wrap ? tooltipId : undefined}
-      {...(wrap ? interactionHandlers : {})}
-    >
+    <span ref={rootRef} className={rootClass}>
       {wrap ? (
-        children
+        wrapChildWithHint(children, interactionHandlers, tooltipId)
       ) : (
         <button
           ref={triggerRef}

@@ -1,6 +1,7 @@
-import { ComunicadoComposerCanvas, ComunicadoElementPanel } from "./ComunicadoComposer";
+import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
 import { ComunicadoEditorProvider } from "./comunicadoEditorContext";
 import { ComunicadoEditorRibbon } from "./ComunicadoEditorRibbon";
+import { ComunicadoElementInspector, DeckRibbonShell } from "./deck";
 
 type Props = {
   playlistId: string;
@@ -12,15 +13,15 @@ type Props = {
 export function ComunicadoComposerField({ playlistId, value, onChange, labels = {} }: Props) {
   return (
     <ComunicadoEditorProvider playlistId={playlistId} value={value} onChange={onChange}>
-      <div className="td-deck-ribbon td-deck-ribbon--embedded">
+      <DeckRibbonShell embedded>
         <ComunicadoEditorRibbon labels={labels} />
-      </div>
+      </DeckRibbonShell>
       <div className="td-deck-tabs td-deck-tabs--embedded">
-        <ComunicadoElementPanel labels={labels} />
+        <ComunicadoElementInspector labels={labels} />
       </div>
       <ComunicadoComposerCanvas />
     </ComunicadoEditorProvider>
   );
 }
 
-export { ComunicadoComposerCanvas, ComunicadoElementPanel };
+export { ComunicadoComposerCanvas, ComunicadoElementInspector };

@@ -7,22 +7,24 @@ export type FieldLabelProps = {
   className?: string;
 };
 
-/** Rótulo de formulário com balão de ajuda opcional (?). */
+/** Rótulo de formulário com balão de ajuda no hover do próprio texto. */
 export function FieldLabel({ label, hint, htmlFor, className = "delpi-ui-field-label" }: FieldLabelProps) {
-  const content = (
-    <>
-      {label}
-      {hint ? <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} /> : null}
-    </>
-  );
+  const labelText =
+    hint != null && hint !== "" ? (
+      <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} wrap placement="bottom">
+        <span className="delpi-ui-field-label__text">{label}</span>
+      </HelpTooltip>
+    ) : (
+      label
+    );
 
   if (htmlFor) {
     return (
       <label className={className} htmlFor={htmlFor}>
-        {content}
+        {labelText}
       </label>
     );
   }
 
-  return <span className={className}>{content}</span>;
+  return <span className={className}>{labelText}</span>;
 }

@@ -20,6 +20,13 @@ Se alguma resposta for não, o componente pertence ao plugin específico — nã
 6. Adicionar estilos em src/styles.css (ou src/styles/{familia}.css importado)
 7. Migrar um segundo consumidor ou remover duplicata local
 8. Atualizar migration-catalog.md
+
+### Plugin com `Dockerfile` que importa biblioteca irmã
+
+1. Registrar markers em `plugins/shared-libraries.manifest.json` (se biblioteca nova).
+2. Adicionar `COPY <biblioteca>/` no Dockerfile — ver `plugins/docker/shared-libraries.Dockerfile.fragment`.
+3. Garantir `context: ../plugins` no `infra/docker-compose*.yml`.
+4. Rodar `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`.
 ```
 
 ## Convenções de código

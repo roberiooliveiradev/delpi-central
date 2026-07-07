@@ -4,6 +4,7 @@ import { FieldLabel, TabHintCell } from "@delpi/plugin-ui";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DeckInspectorLayout } from "./deck";
 import { BranchField } from "./BranchField";
 
 type TabId = "element" | "slide" | "playlist";
@@ -15,6 +16,7 @@ type Props = {
   branchScope: BranchScope | null;
   showElementTab?: boolean;
   elementTab?: ReactNode;
+  slideTabExtra?: ReactNode;
   selectedElementId?: string | null;
   onSavePlaylistSettings: (field: string, value: string | number) => void;
   onSaveSlide: (
@@ -68,6 +70,7 @@ export function DeckSettingsTabs({
   branchScope,
   showElementTab = false,
   elementTab,
+  slideTabExtra,
   selectedElementId,
   onSavePlaylistSettings,
   onSaveSlide,
@@ -151,9 +154,6 @@ export function DeckSettingsTabs({
     { id: "playlist" },
   ];
 
-  const activeMeta = TAB_META[activeTab];
-  const ActiveTabIcon = activeMeta.icon;
-
   return (
     <section className="td-deck-tabs" aria-label="Configurações">
       <div className="td-deck-tabs__nav" role="tablist">
@@ -177,15 +177,11 @@ export function DeckSettingsTabs({
       </div>
 
       <div className="td-deck-tabs__panel" role="tabpanel">
-        <p className="td-deck-tabs__intro">
-          <ActiveTabIcon size={14} aria-hidden="true" />
-          {activeMeta.hint}
-        </p>
-
         {activeTab === "element" && showElementTab ? elementTab : null}
 
         {activeTab === "slide" && slide ? (
-          <div className="td-deck-tabs__grid">
+          <>
+            <div className="td-deck-tabs__grid">
             <div className="td-field">
               <FieldLabel htmlFor="td-slide-title" label="Título" hint={F.slideTitle} className="td-field__label" />
               <input
@@ -259,7 +255,9 @@ export function DeckSettingsTabs({
             {catalogItem ? (
               <p className="td-subtitle td-deck-tabs__meta">Tipo: {catalogItem.label}</p>
             ) : null}
-          </div>
+            </div>
+            {slideTabExtra ? <DeckInspectorLayout>{slideTabExtra}</DeckInspectorLayout> : null}
+          </>
         ) : null}
 
         {activeTab === "slide" && !slide ? (

@@ -8,7 +8,9 @@
 }
 
 .delpi-ui-help-tooltip--wrap {
-  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
 }
 
 .delpi-ui-help-tooltip__trigger {
@@ -46,16 +48,28 @@
 }
 
 .delpi-ui-field-label {
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
-  gap: 6px;
+  display: block;
+}
+
+.delpi-ui-field-label__text {
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 3px;
+}
+
+.delpi-ui-section-hint-label {
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 3px;
 }
 
 .delpi-ui-tab-cell {
   display: inline-flex;
-  align-items: center;
-  gap: 2px;
+  align-items: stretch;
 }
 
 .delpi-ui-tab {
@@ -70,7 +84,7 @@
   font-weight: 600;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
   background: transparent;
-  cursor: pointer;
+  cursor: help;
 }
 
 .delpi-ui-tab--active {

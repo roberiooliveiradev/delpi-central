@@ -17,10 +17,7 @@ export type TabHintCellProps = {
   children?: ReactNode;
 };
 
-/**
- * Aba + ícone de ajuda como irmãos (evita botão aninhado em botão).
- * Estilize via className; o pacote só fornece estrutura e acessibilidade.
- */
+/** Aba com balão de ajuda no hover do próprio botão da aba. */
 export function TabHintCell({
   label,
   hint,
@@ -38,22 +35,23 @@ export function TabHintCell({
 
   return (
     <div className={cellClassName} role="presentation">
-      <button
-        type="button"
-        role="tab"
-        className={tabClass}
-        aria-selected={active}
-        disabled={disabled}
-        onClick={onSelect}
-      >
-        {children ?? (
-          <>
-            {Icon ? <Icon size={15} aria-hidden="true" /> : null}
-            {label}
-          </>
-        )}
-      </button>
-      <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} placement={hintPlacement} />
+      <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} wrap placement={hintPlacement}>
+        <button
+          type="button"
+          role="tab"
+          className={tabClass}
+          aria-selected={active}
+          disabled={disabled}
+          onClick={onSelect}
+        >
+          {children ?? (
+            <>
+              {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+              {label}
+            </>
+          )}
+        </button>
+      </HelpTooltip>
     </div>
   );
 }

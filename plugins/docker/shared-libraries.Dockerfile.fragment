@@ -1,0 +1,33 @@
+# Fragmento Docker — bibliotecas compartilhadas em `plugins/`
+
+Coloque **após** `WORKDIR /app` e **antes** do `COPY` do plugin consumidor.
+Contexto de build no Compose: `context: ../plugins` (não `../plugins/meu-plugin`).
+
+```dockerfile
+# --- bibliotecas compartilhadas (manifesto: plugins/shared-libraries.manifest.json) ---
+COPY tv-dashboard-presentation/package*.json ./tv-dashboard-presentation/
+RUN cd tv-dashboard-presentation && npm install
+
+COPY plugin-ui/package*.json ./plugin-ui/
+RUN cd plugin-ui && npm install
+# --- fim bibliotecas compartilhadas ---
+
+COPY tv-dashboard-presentation ./tv-dashboard-presentation
+COPY plugin-ui ./plugin-ui
+
+COPY meu-plugin/package*.json ./meu-plugin/
+RUN cd meu-plugin && npm install
+
+COPY meu-plugin ./meu-plugin
+
+WORKDIR /app/meu-plugin
+RUN npm run build
+```
+
+Inclua **somente** as pastas que o plugin importa (detectado pelo gate CI).
+
+Gate:
+
+```bash
+python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
+```

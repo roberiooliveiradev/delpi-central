@@ -60,6 +60,20 @@ import "../../plugin-ui/src/styles.css";
 
 Ficam em `src/content/helpTooltips.ts` **do plugin** — nunca hardcoded no pacote compartilhado.
 
+### 5. Docker (obrigatório se o plugin tem `Dockerfile`)
+
+Consumidor de `@delpi/plugin-ui` (ou outra bib. em `plugins/shared-libraries.manifest.json`):
+
+1. `COPY plugin-ui` + `npm install` no `Dockerfile` — fragmento: `plugins/docker/shared-libraries.Dockerfile.fragment`
+2. Compose com **`context: ../plugins`** (não só a pasta do plugin)
+3. Gate CI antes do merge:
+
+```bash
+python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
+```
+
+Doc: [plugins/docker/README.md](../plugins/docker/README.md).
+
 ---
 
 ## O que NÃO fazer
@@ -116,6 +130,7 @@ Na dúvida: preferir extrair — duplicação entre dashboards é o anti-padrão
 - [ ] Textos de ajuda em `content/helpTooltips.ts` do plugin?
 - [ ] Novo primitivo transversal documentado em `plugin-ui` (se aplicável)?
 - [ ] `npm run build` do plugin verde?
+- [ ] Consumidor com Docker: `COPY` das bibliotecas + gate `check_plugin_docker_shared_libraries.py --check`?
 
 ---
 

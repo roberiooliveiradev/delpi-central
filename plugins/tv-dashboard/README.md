@@ -99,3 +99,10 @@ Alterou **preview + link público** (pacote `tv-dashboard-presentation` ou view 
 cd infra
 docker compose -f docker-compose.dev.yml up --build -d tv-dashboard public-hub tv-dashboard-api
 ```
+
+Antes do merge (regressão Docker):
+
+```bash
+python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
+bash scripts/ci/build-tv-dashboard.sh
+```

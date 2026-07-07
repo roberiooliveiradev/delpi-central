@@ -47,9 +47,14 @@ import {
 } from "../api/tvDashboardApi";
 import { getAccessToken } from "../api/httpClient";
 import { AddSlideModal } from "../components/AddSlideModal";
-import { ComunicadoComposerCanvas, ComunicadoElementPanel } from "../components/ComunicadoComposer";
+import { ComunicadoComposerCanvas } from "../components/ComunicadoComposer";
 import { ComunicadoEditorProvider, useComunicadoEditor } from "../components/comunicadoEditorContext";
 import { ComunicadoEditorRibbon } from "../components/ComunicadoEditorRibbon";
+import {
+  ComunicadoElementInspector,
+  ComunicadoSlideBackgroundPanel,
+  DeckRibbonShell,
+} from "../components/deck";
 import { DeckSettingsTabs } from "../components/DeckSettingsTabs";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SlideDeckRibbon } from "../components/SlideDeckRibbon";
@@ -79,7 +84,8 @@ function CustomDeckSettingsTabs({ adminLabels, ...props }: DeckSettingsProps) {
     <DeckSettingsTabs
       {...props}
       showElementTab
-      elementTab={<ComunicadoElementPanel labels={adminLabels} />}
+      elementTab={<ComunicadoElementInspector labels={adminLabels} />}
+      slideTabExtra={<ComunicadoSlideBackgroundPanel labels={adminLabels} />}
       selectedElementId={selectedId}
     />
   );
@@ -416,7 +422,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const isCustomSlide = selectedSlide?.nativeScreenKey === "custom_message";
 
   const deckRibbon = (
-    <div className="td-deck-ribbon" role="toolbar" aria-label="Controles de slide">
+    <DeckRibbonShell>
       <SlideDeckRibbon
         slides={slides}
         selectedSlide={selectedSlide}
@@ -427,7 +433,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         onRemove={(slide) => void handleRemoveSlide(slide)}
       />
       {isCustomSlide ? <ComunicadoEditorRibbon labels={admin} /> : null}
-    </div>
+    </DeckRibbonShell>
   );
 
   const workspaceProps = {

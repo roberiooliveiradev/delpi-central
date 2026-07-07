@@ -11,9 +11,10 @@ Ao alterar código em `plugins/` (microfrontends):
 1. Rodar build do plugin afetado antes de considerar a tarefa concluída.
 2. Corrigir erros de `tsc` e `vite build` antes de commitar.
 3. **Componentes reutilizáveis:** tooltips/labels/abas via `@delpi/plugin-ui` — ver `plugins-reusable-components.mdc`.
-4. **CSS:** conferir escopo e tema — sem `body`/`:root` global; dark via `data-theme`; ver `plugins-visual-design-system.mdc` § Anti-vazamento CSS.
-5. **Documentação:** README do plugin atualizado; se API nova/alterada, doc em `api-delpi/docs/api/` — ver `plugins-documentation.mdc`.
-5. Incluir no mesmo fluxo de entrega (commit quando o usuário pedir commit ou ao finalizar a alteração de front).
+4. **Bibliotecas compartilhadas no Docker:** se o plugin importa `@delpi/plugin-ui` ou pacote irmão em `plugins/`, rodar `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check` — ver `plugins/docker/README.md`.
+5. **CSS:** conferir escopo e tema — sem `body`/`:root` global; dark via `data-theme`; ver `plugins-visual-design-system.mdc` § Anti-vazamento CSS.
+6. **Documentação:** README do plugin atualizado; se API nova/alterada, doc em `api-delpi/docs/api/` — ver `plugins-documentation.mdc`.
+7. Incluir no mesmo fluxo de entrega (commit quando o usuário pedir commit ou ao finalizar a alteração de front).
 
 ## Strategic Indicators
 
@@ -26,5 +27,11 @@ cd plugins/strategic-indicators && npm run build
 ## Outros plugins
 
 Usar o script `build` do `package.json` do plugin correspondente.
+
+**Painéis TV:**
+
+```bash
+bash scripts/ci/build-tv-dashboard.sh
+```
 
 Não commitar alterações de front com build quebrado.
