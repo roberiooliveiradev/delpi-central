@@ -23,7 +23,7 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 |---|---|
 | Programações | `/playlists` |
 | Telas | `/playlists/{id}/slides` |
-| Mídia | `/playlists/{id}/media` |
+| Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload, `GET /{assetId}` serve |
 | Tempo real | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Catálogo nativo | `/native-screens` |
 | Conteúdo UI / presets | `/content/ui`, `/content/slide-presets`, `/content/branch-scope` |

@@ -15,6 +15,10 @@ import {
   NativeSlideView,
   formatPct,
   formatNumber,
+  parseComunicadoConfig,
+  serializeComunicadoConfig,
+  ComunicadoBlockView,
+  comunicadoImageCropCssProperties,
 } from "@delpi/tv-dashboard-presentation";
 ```
 
@@ -23,6 +27,9 @@ import {
 | `usePresentationEngine` | Autoplay, transições, refresh periódico, pausa por visibilidade |
 | `useFullscreenStage` | Duplo-clique → fullscreen (preview admin) |
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
+| `ComunicadoBlockView` | Render blocos comunicado (texto, mídia, crop, formas, dados) |
+| `parseComunicadoConfig` / `serializeComunicadoConfig` | Schema v2–v4 (`imageCrop`, `groupId`, `dataBinding`, …) |
+| `comunicadoImageCropCssProperties` | CSS viewport para recorte de imagem |
 | `native-screens.css` | Layout viewport-fit (`tdp-*`) |
 
 ---

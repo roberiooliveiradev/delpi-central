@@ -1,6 +1,6 @@
 # Painéis TV — documentação da aplicação
 
-> **Status:** v1.2 em produção (jul/2026) — editor deck + formatação expandida  
+> **Status:** v1.3 em produção (jul/2026) — editor deck + Onda 4A/4B/4D (produtividade, visual, layout)  
 > **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
@@ -179,14 +179,16 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 
 ### Editor personalizado — Onda 4 (ver playbook §17)
 
-| Fase | Foco |
-|------|------|
-| **4A** | Undo/redo, duplicar bloco, atalhos, snap, opacidade/objectFit, biblioteca de mídia |
-| **4B** | Templates, temas, gradientes, sombras, ícones |
-| **4C** | Rich text, bullets, estilos nomeados, Google Fonts |
-| **4D** | Multi-seleção, agrupar, camadas, rotação por handle |
-| **4E** | Animações, master slide, export PNG |
-| **4F** | **Indicadores live api-delpi** — KPI, gráfico, tabela em blocos no slide personalizado (§18) |
+**Concluído v1.3:** undo/redo, duplicar, atalhos, snap, alinhar, biblioteca de mídia, templates, temas, gradientes, sombras, crop, ícones, multi-seleção, agrupar, camadas, rotação, zoom, links em mídia/forma.
+
+| Fase | Foco | Status |
+|------|------|--------|
+| **4A** | Produtividade editor | ✅ exc. 4A.9 cleanup |
+| **4B** | Templates, temas, visual | ✅ |
+| **4C** | Rich text, bullets, estilos nomeados | ❌ backlog |
+| **4D** | Layout avançado | ✅ |
+| **4E** | Animações, master slide, export PNG | ❌ backlog |
+| **4F** | **Indicadores live api-delpi** — KPI, gráfico, tabela em blocos | ⚠ parcial (§18) |
 
 ---
 

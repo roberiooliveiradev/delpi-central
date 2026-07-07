@@ -19,6 +19,7 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 - Status «TV online» via heartbeat na rota pública
 - Catálogo de presets e importação de telas prontas
 - RBAC por filial e visão consolidada
+- **Editor visual v1.3** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide, indicadores api-delpi (parcial)
 
 ---
 
@@ -64,6 +65,9 @@ POST   /apps/tv-dashboard-api/playlists/{id}/slides
 PATCH  /apps/tv-dashboard-api/playlists/{id}/slides/{slideId}
 DELETE /apps/tv-dashboard-api/playlists/{id}/slides/{slideId}
 POST   /apps/tv-dashboard-api/playlists/{id}/slides/reorder
+GET    /apps/tv-dashboard-api/playlists/{id}/media          # listar assets (biblioteca)
+POST   /apps/tv-dashboard-api/playlists/{id}/media          # upload
+GET    /apps/tv-dashboard-api/playlists/{id}/media/{assetId}
 GET    /apps/tv-dashboard-api/content/ui
 GET    /apps/tv-dashboard-api/native-screens
 ```
@@ -85,7 +89,7 @@ Permissões: `tv-dashboard.read`, `.write`, `.manage`, `.view.filial-*`, `.view.
 ```bash
 npm install
 npm run build
-npm test          # routing vitest
+npm test          # vitest (routing, snap, alinhar, grouping, slideCardPreview)
 ```
 
 Docker: contexto `plugins/` (ver `Dockerfile`). Copiar **`plugin-ui`** + `tv-dashboard-presentation` no build. Container: `delpi-tv-dashboard`.

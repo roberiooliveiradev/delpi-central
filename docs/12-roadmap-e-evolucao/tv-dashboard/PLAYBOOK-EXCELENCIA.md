@@ -1,9 +1,9 @@
 # Playbook de Excelência — TV Dashboard DELPI
 
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
-> **Versão:** 1.2
+> **Versão:** 1.3
 > **Data:** 2026-07-07
-> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **Onda 4+ (backlog):** §17 Canva/PPT, **§18 indicadores live api-delpi** no slide personalizado.
+> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **Backlog:** 4A.9 cleanup, 4C rich text, 4E animações; **4F** indicadores live api-delpi (§18 — parcial).
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -105,6 +105,52 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 - Blocos: `heading`, `text`, `image`, `video`, `shape` (6 formas SVG); links em texto; rotação numérica; camadas `zIndex ±1`.
 - Filmstrip com thumbnail **ao vivo** (`CustomSlideEditorLayout` + `serializeComunicadoConfig`).
 - Pacote compartilhado `@delpi/tv-dashboard-presentation` (`comunicadoTypes`, `comunicadoHelpers`, `ComunicadoBlockView`).
+
+### Entregue em v1.3 (jul/2026) — Onda 4A / 4B / 4D (parcial)
+
+**Produtividade (4A):**
+
+| Item | Entrega |
+|---|---|
+| 4A.1 | Undo/redo (pilha ~50) + Ctrl+Z / Ctrl+Y |
+| 4A.2 | Duplicar bloco + Ctrl+D |
+| 4A.3 | Delete, setas nudge (1px / 10px com Shift), atalhos teclado |
+| 4A.4 | Opacidade + objectFit (cover/contain) no ribbon |
+| 4A.5 | Lock aspect ratio (Shift+resize) |
+| 4A.6 | Snap 5% + guias ao centro do palco |
+| 4A.7 | Alinhar / distribuir (`comunicadoLayoutAlign.ts`) |
+| 4A.8 | Biblioteca de mídia da playlist — `GET /playlists/{id}/media` + `MediaLibraryModal` |
+
+**Visual e templates (4B):**
+
+| Item | Entrega |
+|---|---|
+| 4B.1 | Painel templates (`ComunicadoSlideTemplatesPanel`) + `GET /content/slide-presets/{preset_key}` |
+| 4B.2 | Temas de cor (`comunicadoSlideThemes.ts`) |
+| 4B.3 | Fundo gradiente (linear 2 stops) |
+| 4B.4 | Sombras, bordas e raio (`boxShadow`, `borderWidth`, `borderRadius`) |
+| 4B.5 | Formas `star`, `chevron-right` + bloco `icon` (Lucide) |
+| 4B.6 | Crop de imagem (`imageCrop` x/y/w/h % + `comunicadoImageCrop.ts`) |
+
+**Layout avançado (4D):**
+
+| Item | Entrega |
+|---|---|
+| 4D.1 | Multi-seleção (Shift+click, marquee) |
+| 4D.2 | Agrupar / desagrupar (`groupId`, `comunicadoGrouping.ts`) |
+| 4D.3 | Painel de camadas com drag-reorder (`ComunicadoLayersPanel`) |
+| 4D.4 | Rotação por handle no canvas |
+| 4D.5 | Zoom do palco 50–200% |
+| 4D.6 | Link em imagem, vídeo, forma e ícone |
+
+**UX editor (transversal):**
+
+- Texto e link editados **no palco** (`ComunicadoEditorTextBlock`, `ComunicadoEditorLinkChrome`) — inspector sem duplicar Conteúdo/Link.
+- Aba **Camadas** no painel lateral (`DeckElementSidePanel`).
+
+**Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
+
+**Ainda pendente:** 4A.9 (unificar ribbon legado), 4C (rich text), 4E (animações/master), 4F completo (§18).
 
 ---
 
@@ -628,14 +674,14 @@ sequenceDiagram
 
 ### Editor personalizado (Onda 4 — ver §17)
 
-Prioridade sugerida para paridade PowerPoint/Canva:
+**Concluído v1.3:** 4A.1–4A.8 (exc. 4A.9), 4B.1–4B.6, 4D.1–4D.6 — ver § «Entregue em v1.3».
 
-1. **Undo/redo + duplicar bloco + atalhos** (Ctrl+Z/Y, Del, setas).
-2. **Snap, guias e alinhar/distribuir** entre objetos.
-3. **Expor na UI** campos já existentes no schema (`opacity`, `objectFit`).
-4. **Biblioteca de mídia** da playlist (reutilizar uploads).
-5. **Rich text** (runs ou markdown controlado) — maior salto de UX.
-6. **Indicadores live api-delpi** no slide personalizado — composição mista texto + KPI/gráfico (§18, Onda 4F).
+**Próximo backlog editor:**
+
+1. **4A.9** — unificar `ComunicadoEditorRibbon` legado / cleanup painéis mortos.
+2. **Rich text** (4C) — runs ou markdown controlado.
+3. **Animações / master slide** (4E).
+4. **Indicadores live api-delpi** (4F) — composição mista texto + KPI/gráfico (§18; parcial).
 
 ### Concluído v2 (jul/2026)
 
@@ -648,21 +694,26 @@ Prioridade sugerida para paridade PowerPoint/Canva:
 
 > **North star:** o gestor monta comunicados visuais na TV com a mesma fluidez de um slide deck — **misturando texto, formas, mídia e indicadores ao vivo da api-delpi** (KPI, gráfico, tabela) no mesmo slide — sem PowerPoint externo, Canva ou designer, mantendo **um único contrato** (`native_config` JSON) consumido pelo admin, preview e TV.
 
-### 17.1 Arquitetura atual (v1.2)
+### 17.1 Arquitetura atual (v1.3)
 
 ```text
 PlaylistEditorPage (slide custom_message)
-  └── ComunicadoEditorProvider          ← estado + upload + drag
+  └── ComunicadoEditorProvider          ← estado, histórico, upload, biblioteca mídia, drag
+        ├── MediaLibraryModal           ← picker assets da playlist (4A.8)
         └── CustomSlideEditorLayout     ← filmstrip ao vivo
               ├── DeckEditorChrome      ← abas + ribbons
               ├── DeckWorkspace
               │     ├── SlideFilmstrip
-              │     ├── ComunicadoComposerCanvas
-              │     └── DeckElementSidePanel → ComunicadoElementInspector
+              │     ├── ComunicadoComposerCanvas (+ marquee, zoom, rotação handle)
+              │     └── DeckElementSidePanel
+              │           ├── ComunicadoElementInspector (+ crop imagem)
+              │           ├── ComunicadoLayersPanel (4D.3)
+              │           ├── ComunicadoSlideTemplatesPanel (4B.1)
+              │           └── ComunicadoSlideBackgroundPanel
               └── auto-save debounced (~700 ms) → PATCH slide.native_config
 
 Apresentação TV / preview
-  └── NativeSlideView → RichComunicadoScreen → ComunicadoBlockView (render-only)
+  └── NativeSlideView → RichComunicadoScreen → ComunicadoBlockView (render-only, crop, links)
 ```
 
 | Camada | Pacote / pasta | Responsabilidade |
@@ -674,22 +725,26 @@ Apresentação TV / preview
 
 **Regra de ouro (igual chat base):** evoluir comportamento transversal nos módulos canônicos (`comunicadoTypes` + helpers + `ComunicadoBlockView`) — **não** duplicar lógica de layout no ribbon, no composer ou no presenter por rota.
 
-### 17.2 Inventário — o que já temos (v1.2)
+### 17.2 Inventário — o que já temos (v1.3)
 
 | Domínio | Implementado |
 |---|---|
-| **Blocos** | `heading`, `text`, `image`, `video`, `shape` — posição `%` (frame x/y/w/h) |
-| **Texto** | 8 fontes, tamanho 12–120, negrito/itálico/sublinhado/tachado, cor, realce, entrelinhas, letter-spacing, alinhamento H (incl. justify) e V |
-| **Formas** | retângulo, arredondado, elipse, triângulo, seta, linha — fill/stroke; texto opcional dentro da forma |
-| **Mídia** | upload JPG/PNG/WEBP/GIF/MP4/WEBM; preview autenticado; TV autoplay muted loop |
-| **Fundo** | cor sólida ou imagem full-bleed |
-| **Interação** | seleção única, drag, 8 handles, duplo-clique → textarea inline, deselecionar ao clicar no palco |
-| **Camadas** | `zIndex` ±1 (frente/fundo); rotação −180…180 no inspector |
-| **Links** | URL em heading/text (`href`, `_blank` fixo na UI) |
+| **Blocos** | `heading`, `text`, `image`, `video`, `shape`, `icon`, `data_kpi`, `data_chart`, `data_table`, `data_metric` — frame % (x/y/w/h) |
+| **Texto** | 8 fontes, tamanho 12–120, negrito/itálico/sublinhado/tachado, cor, realce, entrelinhas, letter-spacing, alinhamento H (incl. justify) e V; edição inline no palco |
+| **Formas** | retângulo, arredondado, elipse, triângulo, seta, chevron, estrela, linha — fill/stroke; texto opcional; link |
+| **Ícones** | bloco `icon` com catálogo Lucide (`COMUNICADO_ICON_OPTIONS`) |
+| **Mídia** | upload + **biblioteca da playlist**; JPG/PNG/WEBP/GIF/MP4/WEBM; preview autenticado; **crop** (`imageCrop`); link em imagem/vídeo |
+| **Fundo** | cor sólida, **gradiente** linear ou imagem full-bleed |
+| **Interação** | seleção única e **multi** (Shift+click, marquee); drag; 8 handles; **rotação por handle**; duplo-clique → textarea; **zoom palco 50–200%** |
+| **Produtividade** | **undo/redo**, duplicar bloco, atalhos (Del, Ctrl+Z/Y/D, setas nudge), **snap 5%**, **alinhar/distribuir**, **agrupar/desagrupar** |
+| **Camadas** | painel ordenável drag-reorder + ±1 no ribbon |
+| **Visual bloco** | opacidade, objectFit, box-shadow, borda, border-radius |
+| **Templates / temas** | presets de slide + paletas aplicáveis (`ComunicadoSlideTemplatesPanel`) |
+| **Links** | URL em heading/text/**image/video/shape/icon** |
 | **Chrome** | filmstrip + reorder slides; transição playlist (`fade`/`slide`/`none`); viewport presets |
 | **Sync** | WebSocket `presentation_updated`; thumbnail comunicado ao vivo no filmstrip |
-| **Versão config** | v2 legado headline/subtitle; v3 detectada (formas, links, estilos avançados) |
-| **Dados live api-delpi** | ❌ (backlog §18) | Hoje só telas nativas **inteiras**; slide personalizado é estático |
+| **Versão config** | v2 legado headline/subtitle; v3 formas/links; **v4** icon/crop/group/data (campos opcionais) |
+| **Dados live api-delpi** | ⚠ parcial (§18) — blocos `data_*`, catálogo `/data/routes`, preview admin; enrichment server-side |
 
 ### 17.3 Lacunas vs Canva / PowerPoint
 
@@ -697,17 +752,17 @@ Apresentação TV / preview
 
 | Recurso | Canva/PPT | Status | Notas |
 |---|---|---|---|
-| Undo / redo | ✓ | ❌ | Histórico de ações no `ComunicadoEditorProvider` |
-| Duplicar bloco | ✓ | ❌ | Hoje só duplicar slide inteiro |
+| Undo / redo | ✓ | ✅ v1.3 | Pilha ~50 no `ComunicadoEditorProvider` |
+| Duplicar bloco | ✓ | ✅ v1.3 | Ctrl+D + ribbon Organizar |
 | Copiar/colar bloco ou estilo | ✓ | ❌ | |
-| Multi-seleção | ✓ | ❌ | Shift+click, marquee |
-| Agrupar / desagrupar | ✓ | ❌ | |
-| Alinhar / distribuir objetos | ✓ | ❌ | Esquerda, centro, espaçamento igual |
-| Snap to grid / smart guides | ✓ | ❌ | |
-| Lock aspect ratio (Shift+resize) | ✓ | ❌ | |
-| Atalhos (Del, Ctrl+B, setas nudge) | ✓ | ❌ | Escape só ao editar texto |
-| Zoom do palco (50%–200%) | ✓ | ❌ | |
-| Painel de camadas ordenável | ✓ | ⚠ | Só ±1 no ribbon |
+| Multi-seleção | ✓ | ✅ v1.3 | Shift+click, marquee |
+| Agrupar / desagrupar | ✓ | ✅ v1.3 | `groupId` + `comunicadoGrouping.ts` |
+| Alinhar / distribuir objetos | ✓ | ✅ v1.3 | `comunicadoLayoutAlign.ts` |
+| Snap to grid / smart guides | ✓ | ✅ v1.3 | Snap 5% + guias centro palco |
+| Lock aspect ratio (Shift+resize) | ✓ | ✅ v1.3 | `useCanvasBlockInteraction` |
+| Atalhos (Del, Ctrl+B, setas nudge) | ✓ | ✅ v1.3 | `useComunicadoEditorKeyboard` |
+| Zoom do palco (50%–200%) | ✓ | ✅ v1.3 | Ribbon Formatar |
+| Painel de camadas ordenável | ✓ | ✅ v1.3 | `ComunicadoLayersPanel` drag-reorder |
 
 #### Texto e tipografia (prioridade alta)
 
@@ -718,33 +773,33 @@ Apresentação TV / preview
 | Estilos nomeados (Título 1, Corpo) | ✓ | ❌ | `heading`/`text` fixos |
 | Google Fonts / upload de fonte | ✓ | ❌ | 8 famílias em `COMUNICADO_FONT_FAMILIES` |
 | Sombra / contorno / reflexo texto | ✓ | ❌ | |
-| Hiperlink em imagem/forma | ✓ | ❌ | Só heading/text |
+| Hiperlink em imagem/forma | ✓ | ✅ v1.3 | Também vídeo e ícone |
 
 #### Visual, mídia e assets (prioridade média)
 
 | Recurso | Canva/PPT | Status | Notas |
 |---|---|---|---|
-| Opacidade elemento | ✓ | ⚠ | Campo no tipo; **sem UI** |
-| objectFit cover/contain | ✓ | ⚠ | Campo no tipo; **sem UI** |
-| Crop / máscara imagem | ✓ | ❌ | |
-| Sombras e bordas em blocos | ✓ | ❌ | |
-| Gradientes de fundo | ✓ | ❌ | Cor sólida ou imagem |
-| Biblioteca de mídia da playlist | ✓ | ❌ | Só file picker por upload |
-| Ícones / stickers | ✓ | ❌ | Candidato: Lucide catalog |
+| Opacidade elemento | ✓ | ✅ v1.3 | Ribbon + inspector |
+| objectFit cover/contain | ✓ | ✅ v1.3 | Ribbon Organizar |
+| Crop / máscara imagem | ✓ | ✅ v1.3 | `imageCrop` % + painel Recorte |
+| Sombras e bordas em blocos | ✓ | ✅ v1.3 | `boxShadow`, `borderWidth`, `borderRadius` |
+| Gradientes de fundo | ✓ | ✅ v1.3 | `background.type: gradient` |
+| Biblioteca de mídia da playlist | ✓ | ✅ v1.3 | `GET …/media` + `MediaLibraryModal` |
+| Ícones / stickers | ✓ | ✅ v1.3 | Bloco `icon` (Lucide) |
 | Tabelas simples | ✓ | ❌ | |
-| Mais formas / conectores | ✓ | ❌ | 6 formas básicas |
-| Paleta / cores recentes / tema marca | ✓ | ❌ | |
+| Mais formas / conectores | ✓ | ⚠ | 8 formas + ícones; conectores ❌ |
+| Paleta / cores recentes / tema marca | ✓ | ⚠ | Temas de slide (4B.2); paleta recente ❌ |
 
 #### Dados operacionais live (prioridade alta — ver §18)
 
 | Recurso | Canva/PPT | Status | Notas |
 |---|---|---|---|
-| KPI / número vinculado a fonte de dados | ✓ (Power BI) | ❌ | Rotas api-delpi não expostas no editor |
-| Gráfico live no slide misto | ✓ | ❌ | Telas nativas são slide **100%** dados |
-| Tabela resumida no compositor | ✓ | ❌ | |
-| Parâmetros filial/período por bloco | ✓ | ⚠ | Só em telas nativas pré-definidas |
-| Refresh automático por indicador | ✓ | ⚠ | `globalRefreshSec` recarrega payload inteiro |
-| Catálogo de rotas permitidas (RBAC) | — | ❌ | Reuso OpenAPI + allowlist TV |
+| KPI / número vinculado a fonte de dados | ✓ (Power BI) | ⚠ v1.3 | Bloco `data_kpi` + catálogo `/data/routes` |
+| Gráfico live no slide misto | ✓ | ⚠ v1.3 | Bloco `data_chart` + preview admin |
+| Tabela resumida no compositor | ✓ | ⚠ v1.3 | Bloco `data_table` |
+| Parâmetros filial/período por bloco | ✓ | ⚠ | `dataFilters` + `dataDefaults` playlist |
+| Refresh automático por indicador | ✓ | ⚠ | `globalRefreshSec` + `dataBinding.refreshSec` |
+| Catálogo de rotas permitidas (RBAC) | — | ✅ v1.3 | `tv_data_routes.json` + gate CI |
 
 #### Apresentação e animação (prioridade média-baixa)
 
@@ -765,36 +820,49 @@ Apresentação TV / preview
 | Colaboração tempo real | ✓ | ❌ |
 | Comentários / histórico de versões | ✓ | ❌ |
 
-### 17.4 Dívida técnica a resolver antes/durante Onda 4
+### 17.4 Dívida técnica a resolver (pós v1.3)
 
 | Item | Situação | Ação |
 |---|---|---|
-| `ComunicadoEditorRibbon` | Legado; usado só no modal `ComunicadoComposerField` | Unificar com ribbons do deck ou deprecar modal |
-| `ComunicadoSlideBackgroundPanel` | Implementado, não referenciado | Usar no inspector ou remover |
-| `opacity`, `objectFit`, `linkTarget` | No schema, UI incompleta | Expor no ribbon/inspector (quick win) |
-| Enrichment `version` | Sempre retorna `2` | Alinhar com `detectConfigVersion` (v3) |
+| `ComunicadoEditorRibbon` | Legado; usado só no modal `ComunicadoComposerField` | **4A.9** — unificar com ribbons do deck ou deprecar modal |
+| `opacity`, `objectFit`, `linkTarget` | ✅ expostos na UI v1.3 | Manter paridade editor/TV |
+| Enrichment `version` | Sempre retorna `2` em alguns paths | Alinhar com `detectConfigVersion` (v3/v4) |
 | Texto em formas | Renderiza se estilo definido | Estender ribbon Fonte quando shape selecionada |
+| Bundle admin > 500 KB | Lucide + editor | Code-split futuro (aviso Rollup) |
 
 ### 17.5 Contrato `native_config` — evolução planejada
 
-Estrutura atual (v3):
+Estrutura atual (v4 — campos opcionais retrocompatíveis):
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "headline": "…",
   "subtitle": "…",
-  "background": { "type": "color", "value": "#0f172a" },
+  "background": { "type": "gradient", "from": "#0f172a", "to": "#1e3a5f", "angle": 180 },
   "blocks": [
     {
       "id": "uuid",
-      "type": "heading|text|image|video|shape",
+      "type": "heading|text|image|video|shape|icon|data_kpi|…",
       "frame": { "x": 5, "y": 12, "w": 90, "h": 18 },
-      "style": { "fontSize": 56, "textAlign": "center", "verticalAlign": "middle", "zIndex": 2 },
+      "style": {
+        "fontSize": 56,
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "zIndex": 2,
+        "opacity": 1,
+        "objectFit": "cover",
+        "boxShadow": "0 4px 12px rgba(0,0,0,0.25)",
+        "borderRadius": 8
+      },
       "content": "…",
       "href": "https://…",
       "assetId": "…",
-      "shape": "rectangle"
+      "imageCrop": { "x": 10, "y": 5, "w": 80, "h": 90 },
+      "shape": "rectangle",
+      "iconName": "Star",
+      "groupId": "grp-uuid",
+      "dataBinding": { "operationId": "…", "params": {}, "displayMode": "kpi" }
     }
   ]
 }
@@ -802,19 +870,21 @@ Estrutura atual (v3):
 
 Extensões previstas (compatíveis — campos opcionais):
 
-| Campo / entidade | Onda | Uso |
-|---|---|---|
-| `style.opacity`, `style.objectFit` | 4A | UI imediata |
-| `style.boxShadow`, `style.borderRadius` (bloco) | 4B | Profundidade visual |
-| `background.type: "gradient"` | 4B | Fundos Canva-like |
-| `contentRuns[]` ou `contentHtml` sanitizado | 4C | Rich text |
-| `groupId` em blocos | 4D | Agrupar |
-| `animations[]` por bloco | 4E | `{ kind, delayMs, durationMs, easing }` |
-| `slideTemplateKey` | 4B | Preset de blocos iniciais |
-| `masterRef` (playlist-level) | 4E | Logo/fundo compartilhado |
-| Blocos `data_*` (operationId + params) | 4F | Indicadores api-delpi — §18 |
-| `dataBinding.refreshSec` por bloco | 4F | Override do refresh global |
-| `dataBinding.displayMode` | 4F | `kpi` \| `chart` \| `table` \| `auto` (por `meta.shape`) |
+| Campo / entidade | Onda | Status | Uso |
+|---|---|---|---|
+| `style.opacity`, `style.objectFit` | 4A | ✅ | UI ribbon |
+| `style.boxShadow`, `style.borderRadius` (bloco) | 4B | ✅ | Profundidade visual |
+| `background.type: "gradient"` | 4B | ✅ | Fundos Canva-like |
+| `imageCrop` em bloco `image` | 4B | ✅ | Viewport % dentro do frame |
+| `iconName` + bloco `icon` | 4B | ✅ | Lucide |
+| `groupId` em blocos | 4D | ✅ | Agrupar |
+| `contentRuns[]` ou `contentHtml` sanitizado | 4C | ❌ | Rich text |
+| `animations[]` por bloco | 4E | ❌ | `{ kind, delayMs, durationMs, easing }` |
+| `slideTemplateKey` | 4B | ⚠ | Presets via painel templates (sem campo persistido) |
+| `masterRef` (playlist-level) | 4E | ❌ | Logo/fundo compartilhado |
+| Blocos `data_*` (operationId + params) | 4F | ⚠ | Indicadores api-delpi — §18 |
+| `dataBinding.refreshSec` por bloco | 4F | ⚠ | Override do refresh global |
+| `dataBinding.displayMode` | 4F | ⚠ | `kpi` \| `chart` \| `table` \| `auto` |
 
 **Regras de serialização:**
 
@@ -830,42 +900,42 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 
 **Objetivo:** sensação de produto maduro sem mudar o schema de texto.
 
-| # | Entrega | Onde | Esforço |
-|---|---|---|---|
-| 4A.1 | Undo/redo (pilha no provider, limite ~50) | `comunicadoEditorContext.tsx` | M |
-| 4A.2 | Duplicar bloco + Ctrl+D | context + ribbon Organizar | S |
-| 4A.3 | Delete / setas nudge (1px / 10px com Shift) | `useCanvasBlockInteraction` + keyboard hook | S |
-| 4A.4 | Opacidade + objectFit na UI | `ComunicadoFormatRibbon` / inspector | S |
-| 4A.5 | Lock aspect ratio (Shift+resize) | `useCanvasBlockInteraction` | S |
-| 4A.6 | Snap 5% + guias ao centro do palco | hook de layout | M |
-| 4A.7 | Alinhar/distribuir (2+ seleção → fase 4D prep) | serviço `comunicadoLayoutAlign.ts` | M |
-| 4A.8 | Biblioteca de mídia da playlist | API list assets + modal picker | M |
-| 4A.9 | Unificar ribbon legado / remover painel morto | cleanup | S |
+| # | Entrega | Onde | Esforço | Status |
+|---|---|---|---|---|
+| 4A.1 | Undo/redo (pilha no provider, limite ~50) | `comunicadoEditorContext.tsx` | M | ✅ v1.3 |
+| 4A.2 | Duplicar bloco + Ctrl+D | context + ribbon Organizar | S | ✅ v1.3 |
+| 4A.3 | Delete / setas nudge (1px / 10px com Shift) | `useCanvasBlockInteraction` + keyboard hook | S | ✅ v1.3 |
+| 4A.4 | Opacidade + objectFit na UI | `ComunicadoFormatRibbon` / inspector | S | ✅ v1.3 |
+| 4A.5 | Lock aspect ratio (Shift+resize) | `useCanvasBlockInteraction` | S | ✅ v1.3 |
+| 4A.6 | Snap 5% + guias ao centro do palco | `comunicadoSnap.ts` | M | ✅ v1.3 |
+| 4A.7 | Alinhar/distribuir (2+ seleção) | `comunicadoLayoutAlign.ts` | M | ✅ v1.3 |
+| 4A.8 | Biblioteca de mídia da playlist | API + `MediaLibraryModal` | M | ✅ v1.3 |
+| 4A.9 | Unificar ribbon legado / remover painel morto | cleanup | S | ❌ backlog |
 
 **Critérios de aceite 4A:**
 
-- [ ] Ctrl+Z desfaz última alteração de bloco/fundo; Ctrl+Y refaz.
-- [ ] Duplicar bloco mantém frame deslocado (+2% x/y).
-- [ ] Imagem com objectFit `cover` preenche frame sem distorção visível na TV.
-- [ ] Snap evidente ao arrastar perto de 50% horizontal/vertical.
-- [ ] Testes unitários: undo stack, serialize após duplicar, helpers de snap.
+- [x] Ctrl+Z desfaz última alteração de bloco/fundo; Ctrl+Y refaz.
+- [x] Duplicar bloco mantém frame deslocado (+2% x/y).
+- [x] Imagem com objectFit `cover` preenche frame sem distorção visível na TV.
+- [x] Snap evidente ao arrastar perto de 50% horizontal/vertical.
+- [x] Testes unitários: undo stack, serialize após duplicar, helpers de snap/alinhar/crop.
 
 #### Onda 4B — Visual e templates (Canva-lite)
 
-| # | Entrega | Esforço |
-|---|---|---|
-| 4B.1 | Templates por preset (`dashboard_slide_presets.json` + blocos default) | M |
-| 4B.2 | Temas de cor (paleta 6 cores aplicável ao slide) | M |
-| 4B.3 | Gradiente de fundo (linear 2 stops) | M |
-| 4B.4 | Sombras/bordas em blocos (box-shadow, border) | S |
-| 4B.5 | Mais formas (estrela, chevron) + ícones Lucide como bloco | M |
-| 4B.6 | Crop imagem (viewport % dentro do frame) | L |
+| # | Entrega | Esforço | Status |
+|---|---|---|---|
+| 4B.1 | Templates por preset (`dashboard_slide_presets.json` + blocos default) | M | ✅ v1.3 |
+| 4B.2 | Temas de cor (paleta 6 cores aplicável ao slide) | M | ✅ v1.3 |
+| 4B.3 | Gradiente de fundo (linear 2 stops) | M | ✅ v1.3 |
+| 4B.4 | Sombras/bordas em blocos (box-shadow, border) | S | ✅ v1.3 |
+| 4B.5 | Mais formas (estrela, chevron) + ícones Lucide como bloco | M | ✅ v1.3 |
+| 4B.6 | Crop imagem (viewport % dentro do frame) | L | ✅ v1.3 |
 
 **Critérios de aceite 4B:**
 
-- [ ] «Novo comunicado RH» insere título + corpo + faixa colorida pré-posicionados.
-- [ ] Fundo gradiente renderiza igual no editor, preview e TV.
-- [ ] Gate visual: template default 16:9 sem scroll.
+- [x] Template insere blocos pré-posicionados via painel.
+- [x] Fundo gradiente renderiza igual no editor, preview e TV.
+- [x] Crop persiste em `imageCrop` e renderiza na TV.
 
 #### Onda 4C — Texto rico (PowerPoint-core)
 
@@ -885,14 +955,14 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 
 #### Onda 4D — Layout avançado
 
-| # | Entrega | Esforço |
-|---|---|---|
-| 4D.1 | Multi-seleção (Shift+click, marquee) | M |
-| 4D.2 | Agrupar / desagrupar (`groupId`) | M |
-| 4D.3 | Painel de camadas (lista drag-reorder z-index) | M |
-| 4D.4 | Rotação por handle (cantos) | M |
-| 4D.5 | Zoom palco 50–200% | S |
-| 4D.6 | Link em imagem e forma | S |
+| # | Entrega | Esforço | Status |
+|---|---|---|---|
+| 4D.1 | Multi-seleção (Shift+click, marquee) | M | ✅ v1.3 |
+| 4D.2 | Agrupar / desagrupar (`groupId`) | M | ✅ v1.3 |
+| 4D.3 | Painel de camadas (lista drag-reorder z-index) | M | ✅ v1.3 |
+| 4D.4 | Rotação por handle (cantos) | M | ✅ v1.3 |
+| 4D.5 | Zoom palco 50–200% | S | ✅ v1.3 |
+| 4D.6 | Link em imagem e forma | S | ✅ v1.3 |
 
 #### Onda 4E — Apresentação e master
 
@@ -924,45 +994,52 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 ### 17.7 Priorização recomendada
 
 ```text
-Impacto UX × esforço (jul/2026)
+Impacto UX × esforço (jul/2026, pós v1.3)
 
-  Alto impacto, baixo esforço     → 4A.4 opacity/objectFit, 4A.2 duplicar, 4A.3 atalhos
-  Alto impacto, médio esforço     → 4A.1 undo, 4A.6 snap, 4A.8 biblioteca mídia
-  Diferencial Canva               → 4B templates + temas + gradiente
+  Concluído v1.3                  → 4A (exc. 4A.9), 4B, 4D
+  Próximo                         → 4A.9 cleanup ribbon legado
   Diferencial PowerPoint          → 4C rich text + bullets
-  Diferencial DELPI (dados live)  → 4F indicadores api-delpi no custom_message (§18)
-  Longo prazo                     → 4E animações, export PPTX (avaliar demanda)
+  Diferencial DELPI (dados live)  → 4F completar §18 (parcial)
+  Longo prazo                     → 4E animações, export PPTX
 ```
 
 ### 17.8 Gates de teste — editor
 
 | Escopo | Comando / critério |
 |---|---|
-| Helpers comunicado | `cd plugins/tv-dashboard-presentation && npm test -- --run comunicado` |
+| Helpers comunicado | `cd plugins/tv-dashboard-presentation && npm test -- --run` |
+| Crop imagem | `npm test -- --run comunicadoImageCrop` |
+| Layout editor | `cd plugins/tv-dashboard && npm test -- --run comunicadoLayoutAlign comunicadoGrouping comunicadoSnap` |
 | Preview filmstrip | `cd plugins/tv-dashboard && npm test -- --run slideCardPreview` |
 | Build admin | `cd plugins/tv-dashboard && npm run build` |
 | Build TV | `cd plugins/public-hub && npm run build` |
-| Paridade editor/TV | Fixture JSON representativo: mesmo `renderPlan` visual admin vs `ComunicadoBlockView` |
-| Regressão mídia | `cd tv-dashboard-api && pytest tests/test_comunicado_media.py -q` |
+| Paridade editor/TV | Fixture JSON: mesmo visual admin (`ComunicadoEditorBlockView`) vs `ComunicadoBlockView` |
+| Regressão mídia | `pytest tv-dashboard-api/tests/test_comunicado_media.py tests/test_media_list_route.py -q` |
 | Regressão enrichment dados | `pytest tv-dashboard-api/tests/test_comunicado_data_enrichment.py -q` (Onda 4F) |
 | Catálogo rotas TV | Gate `--check-tv-data-routes` (Onda 4F) |
 
-### 17.9 Referências de código (v1.2)
+### 17.9 Referências de código (v1.3)
 
 | Área | Arquivo |
 |---|---|
 | Tipos | `plugins/tv-dashboard-presentation/src/comunicadoTypes.ts` |
 | Parse/CSS | `plugins/tv-dashboard-presentation/src/comunicadoHelpers.ts` |
+| Crop imagem | `plugins/tv-dashboard-presentation/src/comunicadoImageCrop.ts` |
 | Render TV | `plugins/tv-dashboard-presentation/src/comunicadoBlockView.tsx` |
 | Estado editor | `plugins/tv-dashboard/src/components/comunicadoEditorContext.tsx` |
+| Biblioteca mídia | `plugins/tv-dashboard/src/components/MediaLibraryModal.tsx` |
+| Crop UI | `plugins/tv-dashboard/src/components/deck/ComunicadoImageCropPanel.tsx` |
+| Camadas | `plugins/tv-dashboard/src/components/deck/ComunicadoLayersPanel.tsx` |
+| Templates / temas | `ComunicadoSlideTemplatesPanel.tsx`, `content/comunicadoSlideThemes.ts` |
 | Canvas | `plugins/tv-dashboard/src/components/ComunicadoComposer.tsx` |
 | Ribbons | `ComunicadoFormatRibbon.tsx`, `ComunicadoInsertRibbon.tsx` |
+| Alinhar / agrupar / snap | `utils/comunicadoLayoutAlign.ts`, `comunicadoGrouping.ts`, `comunicadoSnap.ts` |
 | Filmstrip ao vivo | `CustomSlideEditorLayout.tsx`, `slideCardPreview.ts` |
-| Drag/resize | `useCanvasBlockInteraction.ts` |
+| Drag/resize/rotação | `useCanvasBlockInteraction.ts` |
+| API mídia list | `tv-dashboard-api/.../routes/media_routes.py`, `media_repository.py` |
 | Presets | `tv-dashboard-api/tv_app/content/dashboard_slide_presets.json` |
 | Catálogo nativo | `tv-dashboard-api/tv_app/content/native_screens.json` |
-
-| Catálogo nativo | `tv-dashboard-api/tv_app/content/native_screens.json` |
+| Catálogo dados TV | `tv-dashboard-api/tv_app/content/tv_data_routes.json` |
 
 ---
 
