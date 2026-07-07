@@ -78,6 +78,8 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `HintAction` | Botão/controle com balão ao hover |
 | `ChartCard` | Cartão de gráfico (layout headless + `classNames` BEM) |
 | `chartCardBemClasses` | Helper para mapa BEM `{prefix}-chart-card__*` |
+| `KpiCard` | Cartão KPI departamental (meta, badges IDD, ícone) |
+| `kpiCardBemClasses` / `createDashboardKpiCard` | Helpers BEM + factory de wrapper |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 

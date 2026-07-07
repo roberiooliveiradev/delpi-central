@@ -251,14 +251,14 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 
 | Plugin | F1 help | F2 shell | F3 forms | Docker hoje |
 |--------|---------|----------|----------|-------------|
-| `dashboard-production` | ✅ | ChartCard ✅ | — | sim |
-| `dashboard-commercial` | ✅ | ChartCard ✅ | — | sim |
-| `dashboard-engineering` | ✅ | ChartCard ✅ | — | sim |
-| `dashboard-financial` | ✅ | ChartCard ✅ | — | sim |
-| `dashboard-hr` | ✅ | ChartCard ✅ | — | sim |
-| `dashboard-lmps` | ✅ | ChartCard ✅ | Detail* | sim |
-| `dashboard-quality` | ✅ | ChartCard ✅ | — | sim |
-| `dashboard-supplies` | ✅ | ChartCard ✅ | — | sim |
+| `dashboard-production` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
+| `dashboard-commercial` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
+| `dashboard-engineering` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
+| `dashboard-financial` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
+| `dashboard-hr` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
+| `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ | Detail* | sim |
+| `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
+| `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ | — | sim |
 | `transformometro` | ✅ | parcial | ⏳ | sim |
 | `cadastro-kaizen` | ✅ | — | ⏳ | sim |
 | `quality-action-plans` | ✅ | parcial | ⏳ | sim |
@@ -301,8 +301,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 ## 7. Próximo passo recomendado
 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2.2 ChartCard** concluída nos 8 dashboards departamentais — próximo: `KpiCard` (2.3) ou `LoadingActivityCard` (2.1).
-3. Consolidar `KpiCard` com props opcionais de badges IDD antes de extrair CSS de marca.
+2. **Fase 2.2–2.3** ChartCard e KpiCard concluídos nos 8 dashboards — próximo: `LoadingActivityCard` (2.1) ou `Pagination` (2.4).
 
 ---
 

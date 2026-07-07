@@ -154,6 +154,24 @@ const classNames = chartCardBemClasses("dp", { withHeading: false, withActions: 
 
 **Padrão nos dashboards:** wrapper fino local reexporta `ChartCard` com `classNames` fixo do prefixo do plugin.
 
+### `KpiCard`
+
+Cartão KPI departamental com valor, meta, badges IDD e ícone. Textos fixos (`Meta`, `Nota IDD`, aria de badges) vêm do plugin via `labels`.
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `title` / `titleHint` | `string` | Rótulo e balão |
+| `value` | `string` | Valor principal |
+| `valueVariant` | `"default" \| "per-unit"` | Modificador CSS do valor |
+| `goalLabel` / badges | ver tipos `KpiScopeBadge`, `KpiPerformanceBadge` | Metas e IDD |
+| `icon` | `ReactNode` | Ícone à direita |
+| `footer` | `ReactNode?` | Slot inferior |
+| `loading` | `boolean?` | Placeholder `…` |
+| `classNames` | `KpiCardClassNames` | BEM do plugin |
+| `labels` | `KpiCardLabels` | Textos PT do plugin |
+
+Helpers: `kpiCardBemClasses(prefix)` e `createDashboardKpiCard({ prefix, labels })` para wrapper de uma linha nos dashboards.
+
 ---
 
 ## Estilos base (`styles.css`)
