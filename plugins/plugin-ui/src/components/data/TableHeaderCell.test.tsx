@@ -1,7 +1,16 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { TableHeaderCell, tableHeaderCellPacClasses } from "./TableHeaderCell";
+import {
+  TableHeaderCell,
+  TableHeaderContent,
+  tableHeaderCellPacClasses,
+  tableHeaderContentTransformometroClasses,
+} from "./TableHeaderCell";
+
+const LABELS = {
+  hintAriaLabel: (label: string) => `Ajuda: ${label}`,
+};
 
 afterEach(() => {
   cleanup();
@@ -13,7 +22,11 @@ describe("TableHeaderCell", () => {
       <table>
         <thead>
           <tr>
-            <TableHeaderCell label="Código" classNames={tableHeaderCellPacClasses("pac")} />
+            <TableHeaderCell
+              label="Código"
+              classNames={tableHeaderCellPacClasses("pac")}
+              labels={LABELS}
+            />
           </tr>
         </thead>
       </table>,
@@ -33,6 +46,7 @@ describe("TableHeaderCell", () => {
               label="Status"
               hint="Situação da ação"
               classNames={tableHeaderCellPacClasses("pac")}
+              labels={LABELS}
             />
           </tr>
         </thead>
@@ -41,5 +55,23 @@ describe("TableHeaderCell", () => {
 
     expect(container.querySelector(".pac-field__label-row")).toBeTruthy();
     expect(screen.getByText("Status")).toBeTruthy();
+  });
+});
+
+describe("TableHeaderContent", () => {
+  it("renderiza label com ícone de ajuda", () => {
+    render(
+      <TableHeaderContent
+        label="Recurso"
+        hint="Nome do recurso"
+        classNames={tableHeaderContentTransformometroClasses("ds")}
+        labels={LABELS}
+        hintPresentation="icon"
+      />,
+    );
+
+    expect(screen.getByText("Recurso")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ajuda: Recurso" })).toBeTruthy();
+    expect(document.querySelector(".ds-table__header-cell")).toBeTruthy();
   });
 });

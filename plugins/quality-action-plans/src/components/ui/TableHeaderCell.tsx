@@ -2,4 +2,7 @@ import { createDashboardTableHeaderCell, tableHeaderCellPacClasses } from "@delp
 
 export const TableHeaderCell = createDashboardTableHeaderCell({
   classNames: tableHeaderCellPacClasses("pac"),
+  labels: {
+    hintAriaLabel: (label) => `Ajuda: ${label}`,
+  },
 });

@@ -72,10 +72,18 @@ export { useClientPagination } from "../../utils/useClientPagination";
 
 export {
   TableHeaderCell,
+  TableHeaderContent,
   createDashboardTableHeaderCell,
+  createDashboardTableHeaderContent,
   tableHeaderCellBemClasses,
   tableHeaderCellPacClasses,
+  tableHeaderContentBemClasses,
+  tableHeaderContentTransformometroClasses,
   type DashboardTableHeaderCellProps,
+  type DashboardTableHeaderContentProps,
   type TableHeaderCellClassNames,
+  type TableHeaderCellLabels,
   type TableHeaderCellProps,
+  type TableHeaderHintPresentation,
+  type TableHeaderHintProps,
 } from "./TableHeaderCell";

@@ -17,7 +17,7 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | `dashboard-supplies` | — | ✅ Migrado | |
 | `cadastro-kaizen` | — | ✅ Migrado | `FieldLabel` + tokens `--delpi-ui-*` |
 | `eficiencia-fabril` | — | ✅ Migrado | |
-| `transformometro` | — | ✅ Migrado | `TableHeader` local (tabelas HTML) |
+| `transformometro` | — | ✅ Migrado | — |
 | `quality-action-plans` | — | ✅ Migrado | — |
 | `maintenance` | — | ✅ Migrado | re-export em `components/data/index.ts` |
 | `portal` | `src/components/HelpTooltip.tsx` | ❌ Fora de escopo | Shell do host; API controlada (`open`, placement) diferente |
@@ -79,7 +79,7 @@ python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em to
 | `TextField` / `TextAreaField` | 1 (PAC) | F3 ✅ |
 | `TitleWithHelp` | 1 (PAC) | F3 ✅ |
 | `FilterCheckboxField` | 1 (PAC) | F3 ✅ |
-| `TableHeaderCell` | 1 (PAC) | F3 ✅ |
+| `TableHeaderCell` | PAC + transformometro | F3 ✅ |
 | `PageHeader` | 7 | F3 ✅ |
 | `DetailCard` | 3 | F3 ✅ |
 | `SectionCard` | 1 (PAC) | F3 ✅ |
@@ -124,7 +124,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination via CompactPagination |
-| `transformometro` | ✅ | ✅ | — | ✅ | ✅ | | CompactPagination + ChartCard + MultiSelect + KpiCard + DataTable F2 |
+| `transformometro` | ✅ | ✅ | — | ✅ | ✅ | | CompactPagination + ChartCard + MultiSelect + KpiCard + DataTable + TableHeader F2/F3 |
 | `eficiencia-fabril` | — | ✅ | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard + FilterBarShell + MultiSelect F2 |
 | `maintenance` | ✅ | ✅ | — | — | — | — | TablePaginationNav + FilterBarShell + MultiSelect + DataTable F2 |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
