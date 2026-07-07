@@ -12,12 +12,25 @@ const currencyCompactFormatter = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 1,
 });
 
+/** Percentual já em escala 0–100 (ex.: 85,5 = 85,5%). */
 export function formatPercent(
   value: number | null | undefined,
   fractionDigits = 2
 ): string {
   if (value == null || Number.isNaN(value)) return "—";
   return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })}%`;
+}
+
+/** ROI da transformometro-api: razão (ex.: 3,36 = 336% de retorno sobre investimento). */
+export function formatRoiRatio(
+  value: number | null | undefined,
+  fractionDigits = 1
+): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${(value * 100).toLocaleString("pt-BR", {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   })}%`;

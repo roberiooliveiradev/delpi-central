@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from tm_app.application.services.dashboard_live_service import load_raw_cached
+from tm_app.application.services.dashboard_live_service import (
+    DashboardLiveService,
+    load_raw_cached,
+)
 from tm_app.application.services.dashboard_view_scope_service import count_active_filiais
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 
@@ -15,6 +18,9 @@ class EngineeringProcessFilters:
     filial_id: str | None = None
     sector_name: str | None = None
     status: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    limit: int = 200
 
 
 class EngineeringTransformaMaisService:
@@ -29,9 +35,29 @@ class EngineeringTransformaMaisService:
         self._calculator = DashboardCalculatorService()
 
     def list_processes(self, filters: EngineeringProcessFilters) -> dict[str, Any]:
-        raw = load_raw_cached()
-        items = self._calculator.build_instancia_list(raw)
-        mapped = [_map_process_row(row) for row in items]
+        """Lista processos no mesmo grão do dashboard Transformômetro (ranking por processo).
+
+        Usa ``query_ranking_processos`` — economia diária prorrateada no recorte — em vez de
+        uma linha por instância/melhoria, que duplicava nomes no gráfico de engenharia.
+        """
+        rows = DashboardLiveService().query_ranking_processos(
+            filial_id=filters.filial_id,
+            competencia_inicio=filters.start_date,
+            competencia_fim=filters.end_date,
+            limit=max(1, min(int(filters.limit or 200), 500)),
+        )
+        processos_by_id = {
+            str(processo.get("processo_id")): processo
+            for processo in load_raw_cached().processos
+            if processo.get("processo_id")
+        }
+        mapped = [
+            _map_ranking_row(
+                row,
+                processos_by_id.get(str(row.get("processo_id") or ""), {}),
+            )
+            for row in rows
+        ]
         filtered = _apply_process_filters(mapped, filters)
         return {"total": len(filtered), "items": filtered}
 
@@ -54,25 +80,23 @@ class EngineeringTransformaMaisService:
         return _map_summary(summary)
 
 
-def _map_process_row(row: dict) -> dict:
+def _map_ranking_row(row: dict, process_row: dict) -> dict:
+    processo_id = str(row.get("processo_id") or "")
     implantacao = row.get("data_implantacao")
     if hasattr(implantacao, "isoformat"):
         implantacao = implantacao.isoformat()
 
-    instancia_id = row.get("instancia_id") or row.get("processo_id")
-    processo_id = row.get("processo_id")
-
     return {
-        "id": instancia_id,
+        "id": processo_id,
         "processo_id": processo_id,
-        "instancia_id": instancia_id,
-        "codigo_processo": row.get("codigo_processo"),
-        "name_process": row.get("nome_processo") or "",
-        "filial_id": row.get("filial_id"),
-        "sector_name": row.get("setor_id"),
+        "instancia_id": processo_id,
+        "codigo_processo": row.get("codigo_processo") or process_row.get("codigo_processo"),
+        "name_process": row.get("nome_processo") or process_row.get("nome_processo") or "",
+        "filial_id": row.get("filial_id") or process_row.get("filial_id"),
+        "sector_name": row.get("setor_id") or process_row.get("setor_id"),
         "daily_savings": row.get("economia_diaria"),
-        "payback_months": row.get("payback_meses"),
-        "status": row.get("status_processo"),
+        "payback_months": None,
+        "status": process_row.get("status_processo"),
         "implementetion_date": implantacao,
     }
 

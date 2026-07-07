@@ -11,6 +11,8 @@ from tm_app.domain.raw_data import TransformometroRawData
 FIXTURES = Path(__file__).parent / "fixtures"
 
 _LOAD_RAW = "tm_app.application.integrations.engineering_transforma_mais.load_raw_cached"
+_LIVE_SERVICE = "tm_app.application.integrations.engineering_transforma_mais.DashboardLiveService"
+_COUNT_FILIAIS = "tm_app.application.integrations.engineering_transforma_mais.count_active_filiais"
 
 
 def _load_fixture(name: str) -> TransformometroRawData:
@@ -18,24 +20,44 @@ def _load_fixture(name: str) -> TransformometroRawData:
     return TransformometroRawData(**payload)
 
 
-@patch(_LOAD_RAW)
-def test_list_processes_legacy_contract(mock_load):
-    mock_load.return_value = _load_fixture("golden_baseline_melhoria.json")
+def _ranking_row(**overrides):
+    base = {
+        "processo_id": "p1",
+        "codigo_processo": "PROC-1",
+        "nome_processo": "Processo teste",
+        "filial_id": "01",
+        "setor_id": "engenharia",
+        "economia_diaria": 12.5,
+        "data_implantacao": "2025-02-01",
+    }
+    base.update(overrides)
+    return base
 
-    result = EngineeringTransformaMaisService().list_processes(EngineeringProcessFilters())
+
+@patch(_LIVE_SERVICE)
+@patch(_LOAD_RAW)
+def test_list_processes_legacy_contract(mock_load, mock_live_cls):
+    mock_load.return_value = _load_fixture("golden_baseline_melhoria.json")
+    mock_live_cls.return_value.query_ranking_processos.return_value = [_ranking_row()]
+
+    result = EngineeringTransformaMaisService().list_processes(
+        EngineeringProcessFilters(start_date="2025-02-01", end_date="2025-02-28")
+    )
 
     assert result["total"] == 1
     item = result["items"][0]
-    assert item["id"] == "p1"
-    assert item["processo_id"] == "p1"
-    assert item["instancia_id"] == "p1"
+    assert item["id"] == item["processo_id"] == "p1"
     assert item["name_process"] == "Processo teste"
-    assert item["daily_savings"] is not None
-    assert item["daily_savings"] > 0
+    assert item["daily_savings"] == 12.5
+    mock_live_cls.return_value.query_ranking_processos.assert_called_once()
+    call_kwargs = mock_live_cls.return_value.query_ranking_processos.call_args.kwargs
+    assert call_kwargs["competencia_inicio"] == "2025-02-01"
+    assert call_kwargs["competencia_fim"] == "2025-02-28"
 
 
+@patch(_LIVE_SERVICE)
 @patch(_LOAD_RAW)
-def test_list_processes_one_row_per_instancia(mock_load):
+def test_list_processes_one_row_per_processo_with_multiple_instancias(mock_load, mock_live_cls):
     mock_load.return_value = TransformometroRawData(
         processos=[
             {
@@ -46,92 +68,32 @@ def test_list_processes_one_row_per_instancia(mock_load):
             }
         ],
         processo_instancias=[
-            {
-                "instancia_id": "i1",
-                "processo_id": "p1",
-                "codigo_filial": "01",
-                "codigo_setor": "engenharia",
-            },
-            {
-                "instancia_id": "i2",
-                "processo_id": "p1",
-                "codigo_filial": "02",
-                "codigo_setor": "producao",
-            },
-        ],
-        revisoes=[
-            {
-                "revisao_id": "r1",
-                "processo_id": "p1",
-                "instancia_id": "i1",
-                "versao_revisao": "1.0",
-                "cenario_tipo": "baseline",
-                "data_inicio_vigencia": "2025-01-01",
-                "revisao_ativa": False,
-                "deletado": False,
-            },
-            {
-                "revisao_id": "r2",
-                "processo_id": "p1",
-                "instancia_id": "i1",
-                "versao_revisao": "2.0",
-                "cenario_tipo": "melhoria",
-                "data_inicio_vigencia": "2025-02-01",
-                "revisao_ativa": True,
-                "deletado": False,
-            },
-            {
-                "revisao_id": "r3",
-                "processo_id": "p1",
-                "instancia_id": "i2",
-                "versao_revisao": "1.0",
-                "cenario_tipo": "baseline",
-                "data_inicio_vigencia": "2025-01-01",
-                "revisao_ativa": False,
-                "deletado": False,
-            },
-        ],
-        medicoes=[
-            {
-                "revisao_id": "r1",
-                "volume_mensal": 100,
-                "tempo_medio_execucao_min": 60,
-                "percentual_retrabalho": 0.1,
-                "custo_hora_mao_obra": 50,
-                "deletado": False,
-            },
-            {
-                "revisao_id": "r2",
-                "volume_mensal": 100,
-                "tempo_medio_execucao_min": 30,
-                "percentual_retrabalho": 0.05,
-                "custo_hora_mao_obra": 50,
-                "deletado": False,
-            },
-            {
-                "revisao_id": "r3",
-                "volume_mensal": 50,
-                "tempo_medio_execucao_min": 40,
-                "percentual_retrabalho": 0.1,
-                "custo_hora_mao_obra": 50,
-                "deletado": False,
-            },
+            {"instancia_id": "i1", "processo_id": "p1", "codigo_filial": "01"},
+            {"instancia_id": "i2", "processo_id": "p1", "codigo_filial": "02"},
         ],
     )
+    mock_live_cls.return_value.query_ranking_processos.return_value = [
+        _ranking_row(
+            nome_processo="Processo multi",
+            economia_diaria=215.0,
+        )
+    ]
 
-    result = EngineeringTransformaMaisService().list_processes(EngineeringProcessFilters())
+    result = EngineeringTransformaMaisService().list_processes(
+        EngineeringProcessFilters(start_date="2025-06-01", end_date="2025-06-30")
+    )
 
-    assert result["total"] == 2
-    ids = {item["id"] for item in result["items"]}
-    assert ids == {"i1", "i2"}
-    assert all(item["processo_id"] == "p1" for item in result["items"])
-    by_inst = {item["id"]: item for item in result["items"]}
-    assert by_inst["i1"]["filial_id"] == "01"
-    assert by_inst["i2"]["filial_id"] == "02"
+    assert result["total"] == 1
+    item = result["items"][0]
+    assert item["id"] == "p1"
+    assert item["processo_id"] == "p1"
+    assert item["instancia_id"] == "p1"
+    assert item["daily_savings"] == 215.0
 
 
+@patch(_COUNT_FILIAIS, return_value=1)
 @patch(_LOAD_RAW)
-def test_summary_legacy_contract_fields(mock_load):
+def test_summary_legacy_contract_fields(mock_load, _mock_filiais):
     mock_load.return_value = _load_fixture("golden_baseline_melhoria.json")
 
     data = EngineeringTransformaMaisService().get_summary(
@@ -150,9 +112,11 @@ def test_summary_legacy_contract_fields(mock_load):
         assert "net_savings_month" in month
 
 
+@patch(_LIVE_SERVICE)
 @patch(_LOAD_RAW)
-def test_list_processes_filter_by_filial(mock_load):
+def test_list_processes_filter_by_filial(mock_load, mock_live_cls):
     mock_load.return_value = _load_fixture("golden_baseline_melhoria.json")
+    mock_live_cls.return_value.query_ranking_processos.return_value = [_ranking_row(filial_id="01")]
 
     empty = EngineeringTransformaMaisService().list_processes(
         EngineeringProcessFilters(filial_id="99")
@@ -160,13 +124,18 @@ def test_list_processes_filter_by_filial(mock_load):
     assert empty["total"] == 0
 
     hit = EngineeringTransformaMaisService().list_processes(
-        EngineeringProcessFilters(filial_id="01")
+        EngineeringProcessFilters(
+            filial_id="01",
+            start_date="2025-02-01",
+            end_date="2025-02-28",
+        )
     )
     assert hit["total"] == 1
 
 
+@patch(_COUNT_FILIAIS, return_value=1)
 @patch(_LOAD_RAW)
-def test_summary_supports_day_level_period(mock_load):
+def test_summary_supports_day_level_period(mock_load, _mock_filiais):
     """Fonte única (live) suporta faixa de tempo por dia — não só competência mensal."""
     mock_load.return_value = _load_fixture("golden_baseline_melhoria.json")
 

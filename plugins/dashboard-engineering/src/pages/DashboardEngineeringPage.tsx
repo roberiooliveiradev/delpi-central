@@ -19,7 +19,7 @@ import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClient
 import {
   formatDecimal,
   formatInteger,
-  formatPercent,
+  formatRoiRatio,
 } from "../utils/format";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
@@ -117,7 +117,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
       },
       {
         indicador: "ROI médio TRANSFORMA+",
-        valor: formatPercent(transforma?.average_roi, 1),
+        valor: formatRoiRatio(transforma?.average_roi, 1),
         contexto: `${branchLabel} · ${periodLabel}`,
       },
     ],
@@ -247,11 +247,11 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         <KpiCard
           title="ROI médio TRANSFORMA+"
           titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.averageRoi}
-          value={formatPercent(transforma?.average_roi, 1)}
+          value={formatRoiRatio(transforma?.average_roi, 1)}
           {...buildKpiGoalPresentation(
             "No período filtrado",
             transforma,
-            (v) => formatPercent(v, 1),
+            (v) => formatRoiRatio(v, 1),
             {
               realizedValue: transforma?.average_roi,
               showGoal: false,

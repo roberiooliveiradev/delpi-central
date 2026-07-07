@@ -41,7 +41,7 @@ import {
   formatCurrency,
   formatDecimal,
   formatInteger,
-  formatPercent,
+  formatRoiRatio,
 } from "../utils/format";
 
 const LINE_CHART_HEIGHT = 320;
@@ -294,11 +294,11 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         <KpiCard
           title="ROI médio"
           titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.averageRoi}
-          value={formatPercent(summary?.average_roi, 1)}
+          value={formatRoiRatio(summary?.average_roi, 1)}
           {...buildKpiGoalPresentation(
             "Média no período",
             summary,
-            (v) => formatPercent(v, 1),
+            (v) => formatRoiRatio(v, 1),
             {
               realizedValue: summary?.average_roi,
               showGoal: false,

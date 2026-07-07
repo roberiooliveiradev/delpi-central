@@ -29,6 +29,8 @@ class TransformometroTransformaMaisGateway(TransformaMaisIntegrationPort):
                 "filial_id": request.filial_id,
                 "sector_name": request.sector_name,
                 "status": request.status,
+                "start_date": request.start_date,
+                "end_date": request.end_date,
             },
             authorization=authorization,
         )
