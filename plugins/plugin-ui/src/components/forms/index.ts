@@ -60,4 +60,24 @@ export {
   type DateFieldProps,
 } from "./DateField";
 
+export {
+  TextField,
+  createDashboardTextField,
+  textFieldBemClasses,
+  textFieldPacClasses,
+  type DashboardTextFieldProps,
+  type TextFieldClassNames,
+  type TextFieldProps,
+} from "./TextField";
+
+export {
+  TextAreaField,
+  createDashboardTextAreaField,
+  textAreaFieldBemClasses,
+  textAreaFieldPacClasses,
+  type DashboardTextAreaFieldProps,
+  type TextAreaFieldClassNames,
+  type TextAreaFieldProps,
+} from "./TextAreaField";
+
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";

@@ -18,7 +18,7 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | `cadastro-kaizen` | — | ✅ Migrado | `FieldLabel` + tokens `--delpi-ui-*` |
 | `eficiencia-fabril` | — | ✅ Migrado | |
 | `transformometro` | — | ✅ Migrado | `TableHeader` local (tabelas HTML) |
-| `quality-action-plans` | — | ✅ Migrado | `TitleWithHelp` / `TableHeaderCell` locais (UX com ícone `?`) |
+| `quality-action-plans` | — | ✅ Migrado | `TableHeaderCell` local (cabeçalho `<th>`) |
 | `maintenance` | — | ✅ Migrado | re-export em `components/data/index.ts` |
 | `portal` | `src/components/HelpTooltip.tsx` | ❌ Fora de escopo | Shell do host; API controlada (`open`, placement) diferente |
 
@@ -76,6 +76,8 @@ python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em to
 | `EditableSectionCard` | 3 | F3 ✅ |
 | `ReadOnlyField` | 2 | F3 ✅ |
 | `SelectField` | 2 | F3 ✅ |
+| `TextField` / `TextAreaField` | 1 (PAC) | F3 ✅ |
+| `TitleWithHelp` | 1 (PAC) | F3 ✅ |
 | `PageHeader` | 7 | F3 ✅ |
 | `DetailCard` | 3 | F3 ✅ |
 | `SectionCard` | 1 (PAC) | F3 ✅ |
@@ -128,7 +130,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
 | `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `inspecoes-entrada` | ✅ | — | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
-| `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + MultiSelect creatable + MetricKpiCard F2 |
+| `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + MultiSelect creatable + MetricKpiCard + TextField/TextArea/TitleWithHelp F3 |
 | `cadastro-kaizen` | ✅ | ✅ | — | — | — | — | CompactPagination + MultiSelect + DataTable F2 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
