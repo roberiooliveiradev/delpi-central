@@ -147,6 +147,14 @@ Toda tela deve funcionar em **qualquer largura** — sem scroll horizontal invol
 - Biblioteca: **`lucide-react`** (única no ecossistema).
 - Tamanhos: header **28** (`strokeWidth={1.75}`), KPI **22**, botão/toolbar **16**, banner **18**.
 - Container decorativo: `aria-hidden="true"`; fundo accent 10–12%, `border-radius: 14px`.
+
+### Balões explicativos e labels de ajuda
+
+Ver regra dedicada **`plugins-reusable-components.mdc`** — resumo:
+
+- **Obrigatório:** `@delpi/plugin-ui` para tooltips, `FieldLabel`, abas com ajuda.
+- **Proibido:** `HelpTooltip.tsx` local; copiar componente de outro plugin.
+- Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md).
 - **Não** usar outras libs de ícone nem emojis como substituto visual.
 
 ## O que NÃO fazer
@@ -161,10 +169,11 @@ Toda tela deve funcionar em **qualquer largura** — sem scroll horizontal invol
 ## O que fazer (novo plugin)
 
 1. Copiar esqueleto de `dashboard-production` (`index.css`, header, shell, KPI/chart cards).
-2. Definir tokens locais mapeando para vars do portal.
-3. Incluir media queries `1100px` e `768px` para grids, header, toolbars e tabelas.
-4. Validar visualmente em **claro e escuro** e em **mobile** (viewport ≤ 768px ou DevTools).
-5. `npm run build` do plugin antes de entregar (ver regra `plugins-frontend-build`).
+2. Integrar **`@delpi/plugin-ui`** — alias Vite, `styles.css`, tokens `--delpi-ui-*` (ver `plugins-reusable-components.mdc`).
+3. Definir tokens locais mapeando para vars do portal.
+4. Incluir media queries `1100px` e `768px` para grids, header, toolbars e tabelas.
+5. Validar visualmente em **claro e escuro** e em **mobile** (viewport ≤ 768px ou DevTools).
+6. `npm run build` do plugin antes de entregar (ver regra `plugins-frontend-build`).
 
 ## Manifest multi-filial (menu + RBAC)
 

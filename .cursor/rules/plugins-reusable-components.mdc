@@ -1,0 +1,127 @@
+---
+description: Plugins MFE devem consumir @delpi/plugin-ui — proibir duplicação de componentes transversais
+globs: plugins/**/*
+alwaysApply: false
+---
+
+# Plugins — componentes reutilizáveis (`@delpi/plugin-ui`)
+
+## Princípio
+
+**Plugins MFE devem usar componentes compartilhados** antes de criar UI local. A fonte canônica de primitivos transversais é **`plugins/plugin-ui/`** (`@delpi/plugin-ui` via alias Vite).
+
+Complementa: `plugins-visual-design-system.mdc`, `plugins-frontend-build.mdc`, `clean-code-architecture-guardrails.mdc`.
+
+---
+
+## O que usar do pacote (hoje)
+
+| Export | Uso |
+|--------|-----|
+| `HelpTooltip` | Balão explicativo (? ou `wrap`) |
+| `FieldLabel` | Rótulo de campo + ajuda |
+| `SectionHintLabel` | Rótulo de seção (ribbon, painel) |
+| `TabHintCell` | Aba + ? sem botão aninhado |
+| `HintAction` | Botão/controle com balão ao hover |
+
+Catálogo completo: [plugins/plugin-ui/docs/component-catalog.md](../plugins/plugin-ui/docs/component-catalog.md).
+
+---
+
+## Integração obrigatória no plugin
+
+### 1. Alias Vite
+
+```ts
+"@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
+```
+
+Incluir `dedupe: ["react", "react-dom"]` quando o pacote é bundlado do source.
+
+### 2. CSS (uma vez no entry)
+
+```ts
+import "../../plugin-ui/src/styles.css";
+```
+
+### 3. Tokens no dashboard
+
+```css
+.dashboard-{nome} {
+  --delpi-ui-accent: var(--{prefix}-accent, var(--primary, #089bdb));
+  --delpi-ui-surface: var(--{prefix}-surface, var(--surface, #fff));
+  --delpi-ui-text: var(--{prefix}-text, var(--text, #111));
+  --delpi-ui-border: var(--{prefix}-border, var(--border, #e5e7eb));
+  --delpi-ui-muted: var(--{prefix}-muted);
+}
+```
+
+### 4. Textos PT-BR
+
+Ficam em `src/content/helpTooltips.ts` **do plugin** — nunca hardcoded no pacote compartilhado.
+
+---
+
+## O que NÃO fazer
+
+- Criar **`HelpTooltip.tsx`** (ou cópia renomeada) dentro do plugin.
+- Copiar componente de outro plugin (`dashboard-lmps` → `dashboard-hr`) em vez de extrair para `@delpi/plugin-ui`.
+- Duplicar lógica de posicionamento de tooltip, `FieldLabel` ou padrão aba+ajuda.
+- Embutir strings PT de ajuda no pacote `plugin-ui`.
+- Bypass do pacote «só neste PR» quando o componente já existe ou será o segundo consumidor.
+
+---
+
+## O que fazer
+
+### UI nova em plugin existente
+
+1. Verificar [component-catalog.md](../plugins/plugin-ui/docs/component-catalog.md) — já existe export?
+2. Se sim → importar de `@delpi/plugin-ui`.
+3. Se não, mas **igual ou muito parecido** com outro plugin → **extrair** para `plugin-ui` e migrar os dois.
+4. Se **específico do domínio** (ex.: card de OEE, árvore de estrutura) → fica no plugin.
+
+### Segundo plugin precisa do mesmo primitivo
+
+1. Implementar **uma vez** em `plugins/plugin-ui/src/components/{familia}/`.
+2. Documentar em `component-catalog.md` + `contributing.md`.
+3. Adicionar teste mínimo em `plugin-ui`.
+4. Atualizar [migration-catalog.md](../plugins/plugin-ui/docs/migration-catalog.md).
+
+### Plugin com cópia legada
+
+Migrar conforme [migration-catalog.md](../plugins/plugin-ui/docs/migration-catalog.md) — remover arquivo local e CSS `*-help-tooltip*`.
+
+---
+
+## Quando estender `plugin-ui` vs manter no plugin
+
+| Critério | `plugin-ui` | Plugin local |
+|----------|-------------|--------------|
+| 2+ consumidores (ou duplicata no monorepo) | ✅ | ❌ |
+| Sem dependência de API/domínio | ✅ | — |
+| Textos configuráveis via props | ✅ | — |
+| Layout/card de entidade de negócio | — | ✅ |
+| Uso único e sem duplicata conhecida | — | ✅ |
+
+Na dúvida: preferir extrair — duplicação entre dashboards é o anti-padrão mais comum.
+
+---
+
+## Checklist antes de merge (plugin UI)
+
+- [ ] Tooltips/labels/abas usam `@delpi/plugin-ui` (não cópia local)?
+- [ ] `styles.css` do pacote importado no `main.tsx`?
+- [ ] Tokens `--delpi-ui-*` mapeados no `.dashboard-{nome}`?
+- [ ] Textos de ajuda em `content/helpTooltips.ts` do plugin?
+- [ ] Novo primitivo transversal documentado em `plugin-ui` (se aplicável)?
+- [ ] `npm run build` do plugin verde?
+
+---
+
+## Referências
+
+- [plugins/plugin-ui/README.md](../plugins/plugin-ui/README.md)
+- [plugins/plugin-ui/docs/architecture.md](../plugins/plugin-ui/docs/architecture.md)
+- [plugins/plugin-ui/docs/contributing.md](../plugins/plugin-ui/docs/contributing.md)
+- [docs/08-plugins/README.md](../docs/08-plugins/README.md) — inventário + bibliotecas TS

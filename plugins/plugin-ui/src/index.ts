@@ -1,5 +1,7 @@
-export { HelpTooltip, type HelpTooltipPlacement, type HelpTooltipProps } from "./HelpTooltip";
-export { FieldLabel, type FieldLabelProps } from "./FieldLabel";
-export { SectionHintLabel, type SectionHintLabelProps } from "./SectionHintLabel";
-export { TabHintCell, type TabHintCellProps } from "./TabHintCell";
-export { HintAction, type HintActionProps } from "./HintAction";
+/**
+ * @delpi/plugin-ui — componentes React reutilizáveis para plugins MFE.
+ *
+ * Catálogo: docs/component-catalog.md
+ * Como contribuir: docs/contributing.md
+ */
+export * from "./components/help";

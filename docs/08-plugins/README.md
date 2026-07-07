@@ -82,6 +82,9 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/tv-dashboard` | `tv-dashboard` | microfrontend | plugin | `/apps/tv-dashboard` | `delpi-tv-dashboard` |
 | `plugins/public-hub` | `public-hub` | microfrontend | plugin | `/p/*` (rotas públicas) | `delpi-public-hub` |
 | `plugins/tv-dashboard-presentation` | — | biblioteca TS | — | (alias Vite nos MFEs) | — |
+| `plugins/plugin-ui` | — | biblioteca TS | — | (alias Vite nos MFEs) | — |
+
+**`@delpi/plugin-ui`:** componentes React compartilhados (tooltips, labels, abas). Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md) · Migração: [plugins/plugin-ui/docs/migration-catalog.md](../../plugins/plugin-ui/docs/migration-catalog.md).
 
 **Painéis TV:** gestão em `/apps/tv-dashboard`; apresentação pública em `/p/tv-dashboard/present/{token}` (sem login). API dedicada: `/apps/tv-dashboard-api/*`. Playbook: [../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md](../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md).
 

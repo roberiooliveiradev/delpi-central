@@ -23,6 +23,7 @@ alwaysApply: false
 | 5 | **Roadmap / spec** — view TOTVS, regras de negócio, validação Fase 0 | `docs/12-roadmap-e-evolucao/{id}/` |
 | 6 | **Inventário plugins** — linha na tabela + backend + caller header + doc link | `docs/08-plugins/README.md` |
 | 7 | **Compose / infra** — serviço no docker-compose + exemplo em `infra/README-ambiente.md` (se aplicável) | `infra/docker-compose*.yml` |
+| 8 | **UI compartilhada** — `@delpi/plugin-ui` para tooltips/labels; sem `HelpTooltip.tsx` local | `plugins-reusable-components.mdc` |
 
 ---
 
@@ -55,6 +56,7 @@ Se o plugin tem rotas SC/ES (ou filiais TOTVS distintas):
 - API nova na api-delpi sem `docs/api/*.md` correspondente
 - Omitir plugin do inventário `docs/08-plugins/README.md`
 - Documentação só em comentário de PR (deve persistir no repo)
+- Duplicar `HelpTooltip` ou primitivos de UI que já existem em `@delpi/plugin-ui`
 
 ---
 
@@ -62,4 +64,5 @@ Se o plugin tem rotas SC/ES (ou filiais TOTVS distintas):
 
 - [docs/08-plugins/README.md](../docs/08-plugins/README.md)
 - [registrar-plugin.md](../docs/10-guias-operacionais/registrar-plugin.md)
+- [plugins/plugin-ui/README.md](../plugins/plugin-ui/README.md) — componentes reutilizáveis
 - Exemplo completo: [plugins/controle-retrabalhos/README.md](../plugins/controle-retrabalhos/README.md)
