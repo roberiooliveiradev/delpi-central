@@ -183,7 +183,7 @@ export function FormView({ form }: { form: PublicForm }) {
   if (phase === "done") {
     const firstName = name.trim().split(/\s+/)[0];
     return (
-      <div className="cxform cxform--message">
+      <div className="cxform cxform--fullpage cxform--message">
         <div className="cxform-check" aria-hidden="true">✓</div>
         <h1 className="cxform-title">Obrigado{firstName ? `, ${firstName}` : ""}!</h1>
         <p className="cxform-subtitle">
@@ -298,7 +298,7 @@ export function FormView({ form }: { form: PublicForm }) {
 
   return (
     <div
-      className={`cxform${wizard ? " cxform--wizard" : ""}${backgroundUrl ? " cxform--has-bg" : ""}`}
+      className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}${backgroundUrl ? " cxform--has-bg" : ""}`}
       style={shellStyle}
     >
       <span className="cxform-eyebrow">Programa Experiência do Cliente · DELPI</span>

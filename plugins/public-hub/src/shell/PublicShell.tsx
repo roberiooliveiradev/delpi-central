@@ -88,7 +88,7 @@ export function PublicShell() {
 
 type StageProps = {
   children: ReactNode;
-  chrome?: "default" | "kiosk";
+  chrome?: "default" | "kiosk" | "fullpage";
 };
 
 function Stage({ children, chrome = "default" }: StageProps) {
@@ -104,6 +104,18 @@ function Stage({ children, chrome = "default" }: StageProps) {
 
   if (chrome === "kiosk") {
     return <div className="pub-kiosk-root">{children}</div>;
+  }
+
+  if (chrome === "fullpage") {
+    return (
+      <main className="pub-stage pub-stage--fullpage">
+        <ThemeToggle />
+        <div className="pub-logo pub-logo--compact">
+          <img src="/p/logoMinhaDelpi.svg" alt="Minha DELPI" draggable={false} />
+        </div>
+        <div className="pub-content pub-content--fullpage">{children}</div>
+      </main>
+    );
   }
 
   return (

@@ -168,6 +168,30 @@ body {
   flex: 1 1 auto;
 }
 
+/* Formulários e views imersivas — conteúdo preenche a viewport abaixo do logo. */
+.pub-stage--fullpage {
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+}
+
+.pub-logo--compact {
+  width: 72px;
+  height: 72px;
+  margin: 14px auto 0;
+  flex: none;
+}
+
+.pub-content--fullpage {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
 html.pub-kiosk,
 html.pub-kiosk body,
 html.pub-kiosk #root {

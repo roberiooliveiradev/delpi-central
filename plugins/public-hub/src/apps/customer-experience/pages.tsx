@@ -17,6 +17,7 @@ export const customerExperiencePages: AppPublicPages = {
   },
   form: {
     documentTitle: "Formulário — DELPI",
+    chrome: "fullpage",
     notFoundMessage: "Este formulário não está mais disponível.",
     load: ({ token }) => fetchPublicForm(token),
     render: (data) => <FormView form={data as PublicForm} />,

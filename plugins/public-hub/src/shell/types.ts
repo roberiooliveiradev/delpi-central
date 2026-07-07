@@ -14,8 +14,8 @@ export interface PublicPageContext {
 export interface PublicPageDefinition {
   /** Título do documento (opcional). */
   documentTitle?: string;
-  /** `kiosk` oculta logo e preenche viewport (TV wall). */
-  chrome?: "default" | "kiosk";
+  /** `kiosk` oculta logo e preenche viewport (TV wall). `fullpage` estica o conteúdo na viewport. */
+  chrome?: "default" | "kiosk" | "fullpage";
   /** Mensagem exibida quando `load` retorna null/undefined. */
   notFoundMessage?: string;
   /** Carrega os dados da página. Retorne null/undefined para "não encontrado". */
