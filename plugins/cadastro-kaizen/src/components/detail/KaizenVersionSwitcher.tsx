@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Check, History, PencilLine, Plus, Rocket, Trash2 } from "lucide-react";
 
 import type { KaizenRevision, KaizenVersionStatus } from "../../types/kaizen";
@@ -12,8 +11,6 @@ const STATUS_LABELS: Record<KaizenVersionStatus, string> = {
   cancelado: "Cancelada",
   substituido: "Substituída",
 };
-
-const TODAY = new Date().toISOString().slice(0, 10);
 
 function versionStatus(revision: KaizenRevision): KaizenVersionStatus {
   return (revision.version_status as KaizenVersionStatus) ?? "implantado";
@@ -30,7 +27,7 @@ type Props = {
   onCreateVersion: () => void;
   creating: boolean;
   mode: SelectionMode;
-  onImplement: (effectiveFrom: string) => void;
+  onImplement: () => void;
   implementing: boolean;
   onDelete: () => void;
   deleting: boolean;
@@ -49,8 +46,6 @@ export function KaizenVersionSwitcher({
   onDelete,
   deleting,
 }: Props) {
-  const [implementDate, setImplementDate] = useState(TODAY);
-
   const ordered = [...revisions].sort((a, b) => a.revision_number - b.revision_number);
   const selected = ordered.find((r) => r.revision_number === selectedRevision);
 
@@ -132,18 +127,10 @@ export function KaizenVersionSwitcher({
             <strong>salve e torne esta versão ativa</strong>.
           </div>
           <div className="kz-versions__implement">
-            <label className="kz-versions__implement-date">
-              Implantar em
-              <input
-                type="date"
-                value={implementDate}
-                onChange={(event) => setImplementDate(event.target.value)}
-              />
-            </label>
             <button
               type="button"
               className="kz-primary-btn"
-              onClick={() => onImplement(implementDate || TODAY)}
+              onClick={onImplement}
               disabled={implementing || deleting}
             >
               <Rocket size={14} aria-hidden="true" />

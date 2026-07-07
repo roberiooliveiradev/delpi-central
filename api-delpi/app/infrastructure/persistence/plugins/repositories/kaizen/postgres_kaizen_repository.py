@@ -836,10 +836,9 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         enriched = enrich_savings_fields(fields)
         enriched = self._apply_category_fields(enriched)
+        enriched = revision_service.ensure_implantation_date(enriched)
         submodule_id = self._kaizen_submodule_id()
-        effective_from = revision_service.resolve_effective_from(
-            enriched, provided=fields.get("effective_from")
-        )
+        effective_from = revision_service.resolve_effective_from(enriched)
 
         row = self.execute_returning_one(
             """
@@ -953,7 +952,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         if not current:
             return None
 
-        effective_from_input = fields.pop("effective_from", None)
+        fields.pop("effective_from", None)  # legado — vigência vem de date_implemented
         change_reason = fields.pop("change_reason", None)
         participants_input = fields.pop("participants", None)
         participants = (
@@ -969,6 +968,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             )
         enriched = enrich_savings_fields(merged)
         enriched = self._apply_category_fields(enriched)
+        enriched = revision_service.ensure_implantation_date(enriched)
 
         changed_fields = revision_service.changed_trigger_fields(current, enriched)
 
@@ -1055,7 +1055,6 @@ class PostgresKaizenRepository(PluginBaseRepository):
             current=current,
             enriched=enriched,
             changed_fields=changed_fields,
-            effective_from_input=effective_from_input,
             actor_user_id=updated_by_user_id,
             actor_name=actor_name,
         )
@@ -1070,7 +1069,6 @@ class PostgresKaizenRepository(PluginBaseRepository):
         current: dict[str, Any],
         enriched: dict[str, Any],
         changed_fields: list[str],
-        effective_from_input: str | None,
         actor_user_id: str,
         actor_name: str | None,
     ) -> None:
@@ -1086,9 +1084,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         if status_changed:
             if new_status == "implantado" and active.get("version_status") == "em_andamento":
-                effective_from = revision_service.resolve_effective_from(
-                    enriched, provided=effective_from_input
-                )
+                effective_from = revision_service.resolve_effective_from(enriched)
                 self._set_version_status(revision_id, "implantado", effective_from=effective_from)
             elif new_status in ("descontinuado", "cancelado"):
                 effective_until = (
@@ -1118,6 +1114,13 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 actor_name=actor_name,
             )
         elif changed_fields:
+            if (
+                "date_implemented" in changed_fields
+                and new_status == "implantado"
+                and active.get("version_status") == "implantado"
+            ):
+                effective_from = revision_service.resolve_effective_from(enriched)
+                self._set_version_status(revision_id, "implantado", effective_from=effective_from)
             self._append_history(
                 kaizen_id,
                 event_type="kaizen_corrected",
@@ -1186,9 +1189,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
         enriched = enrich_savings_fields(merged)
 
         revision_number = self._next_revision_number(kaizen_id)
-        effective_from = revision_service.resolve_effective_from(
-            enriched, provided=fields.get("effective_from")
-        )
+        enriched = revision_service.ensure_implantation_date(enriched)
+        effective_from = revision_service.resolve_effective_from(enriched)
         revision_id = self._create_revision(
             kaizen_id=kaizen_id,
             record=enriched,
@@ -1273,7 +1275,12 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 "Só é possível implantar uma versão em andamento."
             )
 
-        effective = self._normalize_date(effective_from) or date.today().isoformat()
+        snapshot = dict(revision.get("snapshot") or {})
+        effective = (
+            self._normalize_date(snapshot.get("date_implemented"))
+            or self._normalize_date(effective_from)
+            or date.today().isoformat()
+        )
 
         # Fecha a versão implantada vigente (se houver).
         self.execute(

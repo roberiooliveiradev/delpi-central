@@ -121,7 +121,7 @@ export function KaizenRevisionTimeline({ revisions }: KaizenRevisionTimelineProp
                 </ul>
               ) : null}
               <p className="kz-timeline__dates">
-                Vigência: {formatDate(revision.effective_from)}
+                Implantação: {formatDate(revision.effective_from)}
                 {" → "}
                 {revision.effective_until ? formatDate(revision.effective_until) : "atual"}
               </p>

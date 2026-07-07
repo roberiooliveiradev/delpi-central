@@ -129,16 +129,26 @@ def build_snapshot(record: dict[str, Any]) -> dict[str, Any]:
     return {field: _normalize(record.get(field)) for field in SNAPSHOT_FIELDS}
 
 
+def ensure_implantation_date(record: dict[str, Any]) -> dict[str, Any]:
+    """Garante data de implantação quando o status é implantado (base dos cálculos)."""
+    if _normalize(record.get("status")) != "implantado":
+        return record
+    if _normalize(record.get("date_implemented")):
+        return record
+    return {**record, "date_implemented": date.today().isoformat()}
+
+
 def resolve_effective_from(
     merged: dict[str, Any],
     *,
     provided: str | None = None,
 ) -> str:
-    """Data de início de vigência da nova revisão."""
+    """Data de início de vigência da revisão — espelha ``date_implemented``."""
+    implemented = _normalize(merged.get("date_implemented"))
+    if isinstance(implemented, str) and implemented:
+        return implemented
     if provided:
-        return provided
-    implemented = merged.get("date_implemented")
-    normalized = _normalize(implemented)
-    if isinstance(normalized, str) and normalized:
-        return normalized
+        normalized = _normalize(provided)
+        if isinstance(normalized, str) and normalized:
+            return normalized
     return date.today().isoformat()

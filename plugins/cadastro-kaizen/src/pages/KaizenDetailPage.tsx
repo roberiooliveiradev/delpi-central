@@ -96,7 +96,6 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
   const [deletingVersion, setDeletingVersion] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [effectiveFrom, setEffectiveFrom] = useState("");
   const [changeReason, setChangeReason] = useState("");
 
   const { isEditing, startEdit, stopEdit, stopAll } = useKaizenSectionEdit();
@@ -175,7 +174,6 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       setForm(recordToFormValues(record));
     }
     stopAll();
-    setEffectiveFrom("");
     setChangeReason("");
   }, [record, selectedVersion, usesSnapshotView, stopAll]);
 
@@ -196,7 +194,6 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
 
   function cancelSection(key: string) {
     resetForm();
-    setEffectiveFrom("");
     setChangeReason("");
     stopEdit(key);
   }
@@ -213,14 +210,12 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
           await updateKaizenVersion(record.id, selectedRevision, payload);
           setSuccess(`Rascunho v${selectedRevision} atualizado.`);
         } else {
-          if (withRevisionMeta) {
-            if (effectiveFrom) payload.effective_from = effectiveFrom;
-            if (changeReason.trim()) payload.change_reason = changeReason.trim();
+          if (withRevisionMeta && changeReason.trim()) {
+            payload.change_reason = changeReason.trim();
           }
           await updateKaizenRecord(record.id, payload);
           setSuccess("Correção salva na versão ativa.");
         }
-        setEffectiveFrom("");
         setChangeReason("");
         stopEdit(key);
         await load();
@@ -230,7 +225,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         setSaving(false);
       }
     },
-    [form, record, mode, selectedRevision, effectiveFrom, changeReason, stopEdit, load],
+    [form, record, mode, selectedRevision, changeReason, stopEdit, load],
   );
 
   const handleCreateVersion = useCallback(async () => {
@@ -278,15 +273,15 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
     }
   }, [record, selectedRevision, mode, load]);
 
-  const handleImplement = useCallback(
-    async (effectiveFromDate: string) => {
-      if (!record || selectedRevision == null) return;
+  const handleImplement = useCallback(async () => {
+      if (!record || selectedRevision == null || !form) return;
       setImplementing(true);
       setError(null);
       setSuccess(null);
       const target = selectedRevision;
       try {
-        await implementKaizenVersion(record.id, target, { effective_from: effectiveFromDate });
+        await updateKaizenVersion(record.id, target, formValuesToPayload(form));
+        await implementKaizenVersion(record.id, target);
         await load();
         setSelectedRevision(target);
         setSuccess(`Versão v${target} implantada — agora é a versão ativa.`);
@@ -296,7 +291,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         setImplementing(false);
       }
     },
-    [record, selectedRevision, load],
+    [record, selectedRevision, form, load],
   );
 
   if (loading || !record || !form) {
@@ -357,7 +352,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
           onCreateVersion={() => void handleCreateVersion()}
           creating={creating}
           mode={mode}
-          onImplement={(date) => void handleImplement(date)}
+          onImplement={() => void handleImplement()}
           implementing={implementing}
           onDelete={() => void handleDeleteVersion()}
           deleting={deletingVersion}
@@ -638,13 +633,6 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 ))}
               </select>
             </div>
-            <DateField
-              id="kz-d-eff"
-              label="Vigente a partir de"
-              hint={KAIZEN_HELP_TOOLTIPS.fields.effectiveFrom}
-              value={effectiveFrom}
-              onChange={setEffectiveFrom}
-            />
             <DateField
               id="kz-d-date-idea"
               label="Recebimento da ideia"

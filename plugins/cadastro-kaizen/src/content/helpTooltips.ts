@@ -33,7 +33,6 @@ export const KAIZEN_HELP_TOOLTIPS = {
     notes: "Notas livres, observações e detalhes que não se encaixam nos demais campos.",
     changeReason:
       "Descreva o porquê da correção. O texto fica registrado na trilha de auditoria da versão.",
-    effectiveFrom: "Data a partir da qual esta versão passa a valer como implantada.",
     processDescription: "Como o processo funcionava antes da melhoria.",
     problemDescription: "Problema, desperdício ou risco que motivou o kaizen.",
     improvementDescription: "O que foi alterado no processo.",
@@ -41,7 +40,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     status:
       "Estágio da versão vigente: em andamento, implantado, descontinuado ou cancelado. Alterar aqui corrige a versão atual, sem criar uma nova.",
     dateImplemented:
-      "Data em que a melhoria entrou em operação. A partir dela conta a validade de 1 ano da economia.",
+      "Data em que a melhoria entrou em operação. Define a vigência da versão implantada e a validade de 1 ano da economia.",
     savingsType:
       "Como a economia é medida: tempo (segundos/ocorrências), material, financeira fixa, qualitativa ou mista.",
     realizedDailySavings:
@@ -75,7 +74,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     currentSavings:
       "Economia contabilizada hoje: a versão implantada vigente, dentro da sua validade de 1 ano.",
     implement:
-      "Torna esta versão a vigente. A versão implantada anterior passa a Substituída e para de contabilizar; a nova assume a partir da data informada.",
+      "Torna esta versão a vigente usando a data implantação informada no estágio. A versão implantada anterior passa a Substituída e para de contabilizar.",
     editDraft:
       "Ajusta o rascunho antes de implantar. Só versões Em andamento podem ser editadas por aqui.",
   },

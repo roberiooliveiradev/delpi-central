@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from app.domain.services.kaizen import kaizen_revision_service as svc
 
 
@@ -73,9 +75,28 @@ def test_build_snapshot_contains_business_fields():
     assert "created_at" not in snapshot
 
 
-def test_resolve_effective_from_uses_provided():
+def test_resolve_effective_from_uses_provided_when_no_implantation_date():
     assert svc.resolve_effective_from({}, provided="2026-05-01") == "2026-05-01"
+
+
+def test_resolve_effective_from_prefers_date_implemented_over_provided():
+    assert (
+        svc.resolve_effective_from({"date_implemented": "2026-03-03"}, provided="2026-05-01")
+        == "2026-03-03"
+    )
 
 
 def test_resolve_effective_from_falls_back_to_date_implemented():
     assert svc.resolve_effective_from({"date_implemented": "2026-03-03"}) == "2026-03-03"
+
+
+def test_ensure_implantation_date_fills_today_when_implanted_without_date():
+    result = svc.ensure_implantation_date({"status": "implantado"})
+    assert result["date_implemented"] == date.today().isoformat()
+
+
+def test_ensure_implantation_date_keeps_existing():
+    result = svc.ensure_implantation_date(
+        {"status": "implantado", "date_implemented": "2026-01-15"}
+    )
+    assert result["date_implemented"] == "2026-01-15"

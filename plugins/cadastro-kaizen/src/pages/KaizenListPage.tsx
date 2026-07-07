@@ -186,6 +186,18 @@ export function KaizenListPage({ onNavigate }: Props) {
         sortAccessor: (row) => statusLabel(row.status),
       },
       {
+        key: "date_idea_received",
+        header: "Recebimento da ideia",
+        render: (row) => formatDate(row.date_idea_received),
+        sortAccessor: (row) => row.date_idea_received ?? "",
+      },
+      {
+        key: "date_implemented",
+        header: "Implantação",
+        render: (row) => formatDate(row.date_implemented),
+        sortAccessor: (row) => row.date_implemented ?? "",
+      },
+      {
         key: "date",
         header: "Atualizado em",
         render: (row) => formatDate(row.updated_at),
@@ -278,6 +290,8 @@ export function KaizenListPage({ onNavigate }: Props) {
             row.sector,
             savingsTypeLabel(row.savings_type),
             statusLabel(row.status),
+            row.date_idea_received,
+            row.date_implemented,
           ]
             .filter(Boolean)
             .join(" ")
