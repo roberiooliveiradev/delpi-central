@@ -131,6 +131,7 @@ export type DataTableSectionProps<T> = {
   hidePageSizeSelect?: boolean;
   defaultSortKey?: string | null;
   defaultSortDirection?: "asc" | "desc";
+  clearClientSortOnThirdClick?: boolean;
   sectionClassNames: DataTableSectionClassNames;
   tableClassNames: DataTableClassNames;
   labels: DataTableSectionLabels;
@@ -200,11 +201,14 @@ function sortRowsClientSide<T>(
       return (firstValue - secondValue) * directionFactor;
     }
 
-    const firstText = String(firstValue).toLowerCase();
-    const secondText = String(secondValue).toLowerCase();
-    if (firstText < secondText) return -1 * directionFactor;
-    if (firstText > secondText) return 1 * directionFactor;
-    return 0;
+    const firstText = String(firstValue);
+    const secondText = String(secondValue);
+    return (
+      firstText.localeCompare(secondText, "pt-BR", {
+        numeric: true,
+        sensitivity: "base",
+      }) * directionFactor
+    );
   });
 }
 
@@ -236,6 +240,7 @@ export function DataTableSection<T>({
   hidePageSizeSelect = false,
   defaultSortKey = null,
   defaultSortDirection = "asc",
+  clearClientSortOnThirdClick = false,
   sectionClassNames,
   tableClassNames,
   labels,
@@ -279,12 +284,17 @@ export function DataTableSection<T>({
       }
 
       const isSameColumn = localSortKey === columnKey;
+      if (clearClientSortOnThirdClick && isSameColumn && localSortDirection === "desc") {
+        setLocalSortKey(null);
+        return;
+      }
+
       setLocalSortKey(columnKey);
       setLocalSortDirection(
         isSameColumn ? (localSortDirection === "asc" ? "desc" : "asc") : "asc",
       );
     },
-    [localSortDirection, localSortKey, serverSort],
+    [clearClientSortOnThirdClick, localSortDirection, localSortKey, serverSort],
   );
 
   const filteredRows = useMemo(() => {
