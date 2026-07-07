@@ -478,6 +478,45 @@ body:has(.app-shell) {
 }
 
 /*
+ * Painéis TV — editor em tela cheia na área do app.
+ */
+html.tv-dashboard-deck-active .main-area,
+html:has(.dashboard-page--deck-edit) .main-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html.tv-dashboard-deck-active .content,
+.content:has(.dashboard-page--deck-edit) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+html.tv-dashboard-deck-active .content > .app-host,
+html.tv-dashboard-deck-active .content > .app-host-federated,
+.content:has(.dashboard-page--deck-edit) > .app-host,
+.content:has(.dashboard-page--deck-edit) > .app-host-federated {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+html.tv-dashboard-deck-active .app-host-federated__mount,
+.content:has(.dashboard-page--deck-edit) .app-host-federated__mount {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  height: auto !important;
+  overflow: hidden;
+}
+
+/*
  * Manutenção geral (MFE): formulário Google em tela cheia na área do app.
  */
 html.maintenance-embed-active .main-area {

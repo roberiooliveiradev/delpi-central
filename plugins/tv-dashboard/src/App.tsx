@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
+import { useTvDashboardDeckLayout } from "./hooks/useTvDashboardDeckLayout";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
 import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
@@ -30,6 +31,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
 
   const isFullscreenView = route.view === "preview";
   const isDeckEditor = route.view === "edit";
+
+  useTvDashboardDeckLayout(isDeckEditor);
 
   function navigate(next: string) {
     if (typeof window === "undefined") return;

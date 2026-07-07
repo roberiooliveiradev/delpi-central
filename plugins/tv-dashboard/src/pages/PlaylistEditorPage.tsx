@@ -7,16 +7,6 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import {
-  ArrowLeft,
-  Copy,
-  Eye,
-  Link2,
-  QrCode,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
-
-import {
   activatePlaylist,
   addSlide,
   addSlideFromPreset,
@@ -52,6 +42,7 @@ import { ComunicadoEditorProvider, useComunicadoEditor } from "../components/com
 import { ComunicadoEditorRibbon } from "../components/ComunicadoEditorRibbon";
 import {
   DeckElementSidePanel,
+  DeckEditorHeaderActions,
 } from "../components/deck";
 import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
@@ -417,6 +408,22 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     isCustomSlide,
     adminLabels: admin,
     slideDeck: slideDeckProps,
+    headerActions: (
+      <DeckEditorHeaderActions
+        playlistName={playlist.name}
+        tvStatusLabel={tvStatusLabel()}
+        tvStatusClass={tvStatusClass()}
+        linkActive={playlist.isActive}
+        onBack={onBack}
+        onPreview={onPreview}
+        onShare={onShare}
+        onCopyLink={copyLink}
+        onQr={openQr}
+        onRegenerateToken={() => void handleRegenerateToken()}
+        onToggleLink={() => void handleToggleActive()}
+        onDelete={() => void handleDelete()}
+      />
+    ),
     onSavePlaylistSettings: (field: string, value: string | number) => void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
       void handleSaveSlide(slide, payload),
@@ -437,64 +444,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   return (
     <div className="td-deck td-deck--editor">
-      <div className="td-deck__compact-bar">
-        <button type="button" className="td-btn td-btn--compact" onClick={onBack}>
-          <ArrowLeft size={16} />
-          Voltar
-        </button>
-        <div className="td-deck__compact-meta">
-          <span className="td-deck__compact-title">{playlist.name}</span>
-          {tvStatusLabel() ? <span className={tvStatusClass()}>{tvStatusLabel()}</span> : null}
-        </div>
-        <div className="td-deck__compact-actions">
-          <button type="button" className="td-btn td-btn--compact" onClick={onPreview} title="Pré-visualizar">
-            <Eye size={16} />
-            <span className="td-deck__compact-action-label">Pré-visualizar</span>
-          </button>
-          <button type="button" className="td-btn td-btn--compact" onClick={onShare} title="Compartilhar">
-            <Link2 size={16} />
-            <span className="td-deck__compact-action-label">Compartilhar</span>
-          </button>
-          <button type="button" className="td-btn td-btn--compact" onClick={copyLink} title="Copiar link">
-            <Copy size={16} />
-            <span className="td-deck__compact-action-label">Copiar link</span>
-          </button>
-          <button type="button" className="td-btn td-btn--compact" onClick={openQr} title="QR code">
-            <QrCode size={16} />
-            <span className="td-deck__compact-action-label">QR code</span>
-          </button>
-          <button
-            type="button"
-            className="td-btn td-btn--compact"
-            onClick={() => void handleRegenerateToken()}
-            title="Novo link"
-          >
-            <RefreshCw size={16} />
-            <span className="td-deck__compact-action-label">Novo link</span>
-          </button>
-          <button
-            type="button"
-            className="td-btn td-btn--compact"
-            onClick={() => void handleToggleActive()}
-            title={playlist.isActive ? "Desativar link" : "Reativar link"}
-          >
-            <Link2 size={16} />
-            <span className="td-deck__compact-action-label">
-              {playlist.isActive ? "Desativar link" : "Reativar link"}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="td-btn td-btn--compact td-btn--danger"
-            onClick={() => void handleDelete()}
-            title="Excluir"
-          >
-            <Trash2 size={16} />
-            <span className="td-deck__compact-action-label">Excluir</span>
-          </button>
-        </div>
-      </div>
-
       {isCustomSlide && selectedSlide ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}

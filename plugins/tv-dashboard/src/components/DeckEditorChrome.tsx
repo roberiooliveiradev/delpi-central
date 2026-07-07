@@ -30,6 +30,7 @@ type Props = {
   isCustomSlide: boolean;
   adminLabels?: Record<string, string>;
   slideTabExtra?: ReactNode;
+  headerActions?: ReactNode;
   slideDeck: SlideDeckProps;
   onSavePlaylistSettings: (field: string, value: string | number) => void;
   onSaveSlide: (
@@ -60,6 +61,7 @@ export function DeckEditorChrome({
   isCustomSlide,
   adminLabels = {},
   slideTabExtra,
+  headerActions,
   slideDeck,
   onSavePlaylistSettings,
   onSaveSlide,
@@ -81,20 +83,23 @@ export function DeckEditorChrome({
 
   return (
     <section className="td-deck-chrome" aria-label="Editor da programação">
-      <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
-        {tabs.map((tab) => (
-          <TabHintCell
-            key={tab.id}
-            label={tab.label}
-            hint={tab.hint}
-            active={activeTab === tab.id}
-            disabled={tab.disabledWhenNoSlide ? !slide : false}
-            onSelect={() => setActiveTab(tab.id)}
-            cellClassName="td-deck-chrome__tab-cell"
-            tabClassName="td-deck-chrome__tab"
-            tabActiveClassName="td-deck-chrome__tab--active"
-          />
-        ))}
+      <div className="td-deck-chrome__head">
+        <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
+          {tabs.map((tab) => (
+            <TabHintCell
+              key={tab.id}
+              label={tab.label}
+              hint={tab.hint}
+              active={activeTab === tab.id}
+              disabled={tab.disabledWhenNoSlide ? !slide : false}
+              onSelect={() => setActiveTab(tab.id)}
+              cellClassName="td-deck-chrome__tab-cell"
+              tabClassName="td-deck-chrome__tab"
+              tabActiveClassName="td-deck-chrome__tab--active"
+            />
+          ))}
+        </div>
+        {headerActions}
       </div>
 
       {isRibbonTab(activeTab) ? (
