@@ -13,7 +13,7 @@ import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { OtdEvolutionChart } from "../components/OtdEvolutionChart";
 import { OtdStatusBadge } from "../components/OtdStatusBadge";
-import { FieldLabel } from "../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";
@@ -369,7 +369,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
       <div className="dp-ppm-toolbar" role="toolbar" aria-label="Filtro de status">
         <div className="dp-ppm-toolbar__group">
-          <FieldLabel label="Status da OP" hint={DP_HELP_TOOLTIPS.otd.filters.status} />
+          <FieldLabel label="Status da OP" hint={DP_HELP_TOOLTIPS.otd.filters.status} className="dp-field__label" />
           <div className="dp-ppm-toggle" role="group" aria-label="Status da OP">
           {[
             { value: "", label: "Todas" },

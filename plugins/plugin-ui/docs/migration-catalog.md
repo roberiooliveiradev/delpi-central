@@ -7,13 +7,13 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | Plugin | Arquivo local | Status | Notas |
 |--------|---------------|--------|-------|
 | `tv-dashboard` | — | ✅ Migrado | Referência de integração |
+| `dashboard-production` | — | ✅ Migrado | Piloto Fase 1 — `@delpi/plugin-ui` |
 | `cadastro-kaizen` | `src/components/ui/HelpTooltip.tsx` | ⏳ Pendente | + `FieldLabel` |
 | `dashboard-lmps` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-commercial` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-engineering` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-financial` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-hr` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
-| `dashboard-production` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-quality` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-supplies` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `eficiencia-fabril` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
@@ -43,15 +43,26 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 - [ ] Atualizar esta tabela para ✅
 - [ ] `npm run build` do plugin
 
+## Roadmap completo
+
+Fases 0–5, matriz por plugin, riscos e métricas: **[refactoring-roadmap.md](./refactoring-roadmap.md)**.
+
 ## Componentes futuros no pacote
 
-Candidatos quando houver 2+ consumidores:
+Ver inventário detalhado em [refactoring-roadmap.md § 1.3](./refactoring-roadmap.md#13-componentes-duplicados--candidatos-a-extrair-2-consumidores).
 
-| Componente | Onde existe hoje |
-|------------|------------------|
-| `EmptyState` | vários dashboards |
-| `ChartCard` shell | `dashboard-production`, clones |
-| `KpiCard` shell | dashboards departamentais |
-| `DataTable` toolbar | `dashboard-lmps`, `dashboard-commercial` |
+Resumo (2+ consumidores):
+
+| Componente | Ocorrências | Fase sugerida |
+|------------|-------------|---------------|
+| `KpiCard` | 15 | F2 |
+| `ChartCard` | 14 | F2 |
+| `LoadingActivityCard` | 12 | F2 |
+| `Pagination` (+ jump, page size) | 14–20 | F2 |
+| `MultiSelectField` | 13 | F2 |
+| `FilterBar` | 12 | F2 |
+| `DataTable` / `DataTableSection` | ~25 | F2 (último) |
+| `EditableSectionCard` | 3 | F3 |
+| `EmptyState` | 2+ | F3/F5 |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).

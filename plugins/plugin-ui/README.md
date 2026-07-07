@@ -103,6 +103,7 @@ src/
 | Plugin | Status |
 |--------|--------|
 | `tv-dashboard` | ✅ Integrado (referência) |
+| `dashboard-production` | ✅ Fase 1 — `HelpTooltip`, `FieldLabel` |
 | Demais plugins com `HelpTooltip.tsx` local | ⏳ Ver [migration-catalog.md](./docs/migration-catalog.md) |
 
 ---

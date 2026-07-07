@@ -8,5 +8,6 @@
 | [component-catalog.md](./component-catalog.md) | Inventário de exports, props e exemplos |
 | [contributing.md](./contributing.md) | Como adicionar componente, testes, checklist de merge |
 | [migration-catalog.md](./migration-catalog.md) | Plugins com cópias locais a migrar |
+| [refactoring-roadmap.md](./refactoring-roadmap.md) | Roadmap completo (fases, matriz, riscos) |
 
 **Início rápido:** [README.md](../README.md) na raiz do pacote.

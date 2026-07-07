@@ -4,7 +4,7 @@ import {
 } from "../constants/efficiencyBands";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ProductionOrderProductType } from "../types/production";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField, type MultiSelectOption } from "./MultiSelectField";
 
 type ProductTypeFilter = ProductionOrderProductType | "";
@@ -96,6 +96,7 @@ export function OeeAppointmentToolbar({
         <FieldLabel
           label="Tipo de produto"
           hint={DP_HELP_TOOLTIPS.oee.filters.productType}
+          className="dp-field__label"
         />
         <div className="dp-ppm-toggle" role="group" aria-label="Tipo de produto">
           {[

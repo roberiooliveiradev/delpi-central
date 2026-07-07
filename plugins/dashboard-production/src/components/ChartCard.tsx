@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
 
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 
 type ChartCardProps = {
   title: string;

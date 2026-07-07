@@ -1,6 +1,6 @@
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -30,7 +30,7 @@ export function ProductionFilters({
   return (
     <section className={`dp-filters-row ${className}`.trim()} aria-label="Filtros do dashboard">
       <label className="dp-filter-box dp-field" htmlFor="dp-competence">
-        <FieldLabel label="Competência" hint={DP_HELP_TOOLTIPS.filters.competence} />
+        <FieldLabel label="Competência" hint={DP_HELP_TOOLTIPS.filters.competence} className="dp-field__label" />
         <input
           id="dp-competence"
           type="month"
@@ -39,7 +39,7 @@ export function ProductionFilters({
         />
       </label>
       <label className="dp-filter-box dp-field" htmlFor="dp-date-start">
-        <FieldLabel label="Data inicial" hint={DP_HELP_TOOLTIPS.filters.dateStart} />
+        <FieldLabel label="Data inicial" hint={DP_HELP_TOOLTIPS.filters.dateStart} className="dp-field__label" />
         <input
           id="dp-date-start"
           type="date"
@@ -48,7 +48,7 @@ export function ProductionFilters({
         />
       </label>
       <label className="dp-filter-box dp-field" htmlFor="dp-date-end">
-        <FieldLabel label="Data final" hint={DP_HELP_TOOLTIPS.filters.dateEnd} />
+        <FieldLabel label="Data final" hint={DP_HELP_TOOLTIPS.filters.dateEnd} className="dp-field__label" />
         <input
           id="dp-date-end"
           type="date"

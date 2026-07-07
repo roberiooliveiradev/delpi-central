@@ -547,8 +547,8 @@ services:
   dashboard-production:
     <<: *plugin-profile
     build:
-      context: ../plugins/dashboard-production
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-production/Dockerfile
 
     container_name: delpi-dashboard-production
     restart: unless-stopped

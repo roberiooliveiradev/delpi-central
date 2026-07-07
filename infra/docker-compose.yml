@@ -552,18 +552,14 @@ services:
 
   dashboard-production:
     build:
-      context: ../plugins/dashboard-production
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-production/Dockerfile
 
     container_name: delpi-dashboard-production
     restart: unless-stopped
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-production:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
