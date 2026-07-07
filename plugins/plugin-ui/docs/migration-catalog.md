@@ -128,7 +128,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
 | `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `inspecoes-entrada` | ✅ | — | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
-| `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + MultiSelect + MetricKpiCard F2 |
+| `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + MultiSelect creatable + MetricKpiCard F2 |
 | `cadastro-kaizen` | ✅ | — | — | — | — | — | CompactPagination F2 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.

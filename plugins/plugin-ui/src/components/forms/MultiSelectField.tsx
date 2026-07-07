@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
@@ -24,6 +24,9 @@ export type MultiSelectFieldClassNames = {
   empty: string;
   option: string;
   createOption?: string;
+  tagList?: string;
+  tagChip?: string;
+  tagRemove?: string;
 };
 
 export type MultiSelectFieldLabels = {
@@ -35,6 +38,9 @@ export type MultiSelectFieldLabels = {
   multipleSelected: (count: number) => string;
   createOption?: (query: string) => string;
   searchAriaLabel?: (label: string) => string;
+  selectedCountLabel?: (count: number) => string;
+  emptyOptionsCreatable?: string;
+  removeTagAriaLabel?: (value: string) => string;
 };
 
 export type MultiSelectFieldProps = {
@@ -53,6 +59,9 @@ export type MultiSelectFieldProps = {
   creatable?: boolean;
   maxCreateLength?: number;
   onCreateOption?: (value: string) => void;
+  showSelectedTags?: boolean;
+  includeSelectedInOptions?: boolean;
+  showBulkActions?: boolean;
 };
 
 /** Monta classNames BEM `{prefix}-multi-select__*` dos dashboards departamentais. */
@@ -91,6 +100,9 @@ export function MultiSelectField({
   creatable = false,
   maxCreateLength = 50,
   onCreateOption,
+  showSelectedTags = false,
+  includeSelectedInOptions = false,
+  showBulkActions = true,
 }: MultiSelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -101,13 +113,44 @@ export function MultiSelectField({
   const resolvedEmptyLabel = emptyLabel ?? labels.emptyLabel;
   const normalizedQuery = query.trim();
 
+  const optionLabelByValue = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const option of options) {
+      map.set(option.value.toLocaleLowerCase("pt-BR"), option.label);
+    }
+    for (const value of selectedValues) {
+      const key = value.toLocaleLowerCase("pt-BR");
+      if (!map.has(key)) map.set(key, value);
+    }
+    return map;
+  }, [options, selectedValues]);
+
+  const listOptions = useMemo(() => {
+    if (!includeSelectedInOptions) return options;
+
+    const merged = new Map<string, MultiSelectOption>();
+    for (const option of options) {
+      merged.set(option.value.toLocaleLowerCase("pt-BR"), option);
+    }
+    for (const value of selectedValues) {
+      const key = value.toLocaleLowerCase("pt-BR");
+      if (!merged.has(key)) {
+        merged.set(key, { value, label: optionLabelByValue.get(key) ?? value });
+      }
+    }
+    return Array.from(merged.values());
+  }, [includeSelectedInOptions, optionLabelByValue, options, selectedValues]);
+
   const filteredOptions = useMemo(() => {
     const normalizedSearch = normalizedQuery.toLocaleLowerCase("pt-BR");
-    if (!normalizedSearch) return options;
-    return options.filter((option) =>
-      option.label.toLocaleLowerCase("pt-BR").includes(normalizedSearch),
+    const source = includeSelectedInOptions ? listOptions : options;
+    if (!normalizedSearch) return source;
+    return source.filter(
+      (option) =>
+        option.label.toLocaleLowerCase("pt-BR").includes(normalizedSearch) ||
+        option.value.toLocaleLowerCase("pt-BR").includes(normalizedSearch),
     );
-  }, [normalizedQuery, options]);
+  }, [includeSelectedInOptions, listOptions, normalizedQuery, options]);
 
   const canCreate = useMemo(() => {
     if (!creatable || !searchable || !normalizedQuery) return false;
@@ -150,16 +193,22 @@ export function MultiSelectField({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const triggerLabel = useMemo(
-    () =>
-      buildMultiSelectTriggerLabel(
-        selectedValues,
-        options,
-        resolvedEmptyLabel,
-        labels.multipleSelected,
-      ),
-    [labels.multipleSelected, options, resolvedEmptyLabel, selectedValues],
-  );
+  const triggerLabel = useMemo(() => {
+    if (selectedValues.length > 0 && labels.selectedCountLabel) {
+      return labels.selectedCountLabel(selectedValues.length);
+    }
+
+    return buildMultiSelectTriggerLabel(
+      selectedValues,
+      options,
+      resolvedEmptyLabel,
+      labels.multipleSelected,
+    );
+  }, [labels, options, resolvedEmptyLabel, selectedValues]);
+
+  const removeValue = (value: string) => {
+    onChange(selectedValues.filter((selected) => selected !== value));
+  };
 
   const toggleValue = (value: string) => {
     if (selectedValues.includes(value)) {
@@ -175,10 +224,36 @@ export function MultiSelectField({
   };
 
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const emptyListMessage =
+    filteredOptions.length === 0 && canCreate && labels.emptyOptionsCreatable
+      ? labels.emptyOptionsCreatable
+      : labels.emptyOptions;
 
   return (
     <div className={rootClass} ref={wrapperRef}>
       <FieldLabel label={label} hint={labelHint} className={classNames.fieldLabel} />
+
+      {showSelectedTags && selectedValues.length > 0 && classNames.tagList ? (
+        <div className={classNames.tagList} aria-label={`${label} selecionados`}>
+          {selectedValues.map((value) => (
+            <span key={value} className={classNames.tagChip}>
+              <span>{optionLabelByValue.get(value.toLocaleLowerCase("pt-BR")) ?? value}</span>
+              {classNames.tagRemove ? (
+                <button
+                  type="button"
+                  className={classNames.tagRemove}
+                  aria-label={labels.removeTagAriaLabel?.(value) ?? `Remover ${value}`}
+                  onClick={() => removeValue(value)}
+                  disabled={disabled}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              ) : null}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
       <div className={open ? classNames.multiSelectOpen : classNames.multiSelect}>
         <button
           id={triggerId}
@@ -213,7 +288,17 @@ export function MultiSelectField({
               />
             ) : null}
 
-            {canCreate && classNames.createOption ? (
+            {!showBulkActions && canCreate ? (
+              <div className={classNames.actions}>
+                <button type="button" className={classNames.actionButton} onClick={handleCreate}>
+                  {(labels.createOption ?? ((value: string) => `Adicionar "${value}"`))(
+                    normalizedQuery,
+                  )}
+                </button>
+              </div>
+            ) : null}
+
+            {showBulkActions && canCreate && classNames.createOption ? (
               <button
                 type="button"
                 className={classNames.createOption}
@@ -225,18 +310,20 @@ export function MultiSelectField({
               </button>
             ) : null}
 
-            <div className={classNames.actions}>
-              <button type="button" className={classNames.actionButton} onClick={selectVisible}>
-                {labels.selectVisible}
-              </button>
-              <button type="button" className={classNames.actionButton} onClick={() => onChange([])}>
-                {labels.clear}
-              </button>
-            </div>
+            {showBulkActions ? (
+              <div className={classNames.actions}>
+                <button type="button" className={classNames.actionButton} onClick={selectVisible}>
+                  {labels.selectVisible}
+                </button>
+                <button type="button" className={classNames.actionButton} onClick={() => onChange([])}>
+                  {labels.clear}
+                </button>
+              </div>
+            ) : null}
 
             <ul id={listId} className={classNames.list} role="listbox" aria-multiselectable="true">
               {filteredOptions.length === 0 ? (
-                <li className={classNames.empty}>{labels.emptyOptions}</li>
+                <li className={classNames.empty}>{emptyListMessage}</li>
               ) : (
                 filteredOptions.map((option) => (
                   <li key={option.value}>
