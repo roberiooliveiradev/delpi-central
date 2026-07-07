@@ -1241,14 +1241,14 @@ Exemplo no `native_config` (v4):
 
 ### 18.6 Critérios de aceite (Onda 4F)
 
-- [ ] Usuário insere bloco KPI de OEE no slide personalizado e posiciona ao lado de um título.
-- [ ] Preview admin e TV pública exibem **o mesmo valor** após refresh.
-- [ ] `native_config` salvo **não contém** arrays de linhas SQL nem tokens — só binding.
-- [ ] Rota fora da allowlist → bloqueada no editor; no runtime → bloco «Indicador indisponível».
-- [ ] Filial sem permissão no token → 403 server-side; bloco de erro sem vazar dados.
-- [ ] Cache reduz chamadas repetidas no polling de 5 min (mesma chave que telas nativas).
-- [ ] Tabela com TOP 5 renderiza **sem scroll** em 1080p.
-- [ ] WebSocket `presentation_updated` após editar slide recarrega indicadores no payload.
+- [x] Usuário insere bloco KPI de OEE no slide personalizado e posiciona ao lado de um título.
+- [x] Preview admin e TV pública exibem **o mesmo valor** após refresh.
+- [x] `native_config` salvo **não contém** arrays de linhas SQL nem tokens — só binding.
+- [x] Rota fora da allowlist → bloqueada no editor; no runtime → bloco «Indicador indisponível».
+- [x] Filial sem permissão no token → 403 server-side; bloco de erro sem vazar dados.
+- [x] Cache reduz chamadas repetidas no polling de 5 min (mesma chave que telas nativas).
+- [x] Tabela com TOP 5 renderiza **sem scroll** em 1080p.
+- [x] WebSocket `presentation_updated` após editar slide recarrega indicadores no payload.
 - [x] Filtro no **slide** (`dataFilters.branch`) aplica a todos os blocos; bloco com `params` próprio sobrescreve.
 - [x] UI de filtros gerada a partir de `paramSchema` — sem hardcode por rota no React.
 - [x] Gate CI `--check-tv-data-routes` (script `scripts/check_tv_data_routes.py`).

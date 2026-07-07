@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from tv_app.application.services.branch_access_scope_service import BranchAccessScopeService
+from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.application.services.native_screen_cache_service import (
     native_data_cache_ttl_seconds,
@@ -119,11 +119,9 @@ class ComunicadoDataEnrichmentService:
         self,
         catalog: TvDataRouteCatalogService | None = None,
         gateway: DelpiOperationalGateway | None = None,
-        branch_scope: BranchAccessScopeService | None = None,
     ) -> None:
         self._catalog = catalog or TvDataRouteCatalogService()
         self._gateway = gateway or DelpiOperationalGateway(catalog=self._catalog)
-        self._branch_scope = branch_scope or BranchAccessScopeService()
 
     def enrich_blocks(
         self,
@@ -135,7 +133,6 @@ class ComunicadoDataEnrichmentService:
         user: Any | None = None,
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
-        scope = self._branch_scope.resolve(user) if user is not None else None
         enriched: list[dict[str, Any]] = []
         for block in blocks:
             if not isinstance(block, dict):
@@ -150,7 +147,7 @@ class ComunicadoDataEnrichmentService:
                     slide_filters=slide_filters,
                     playlist_defaults=playlist_defaults,
                     authorization=authorization,
-                    scope=scope,
+                    user=user,
                 )
             )
         return enriched
@@ -162,7 +159,7 @@ class ComunicadoDataEnrichmentService:
         slide_filters: dict[str, Any],
         playlist_defaults: dict[str, Any] | None,
         authorization: str | None,
-        scope: Any | None,
+        user: Any | None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -183,12 +180,11 @@ class ComunicadoDataEnrichmentService:
         )
 
         branch = merged_params.get("branch")
-        if scope is not None:
-            try:
-                self._branch_scope.assert_branch_allowed(scope, str(branch).strip() if branch else None)
-            except ValueError as exc:
-                result["resolved"] = {"error": str(exc)}
-                return result
+        try:
+            validate_native_branch({"branch": branch}, user=user)
+        except ValueError as exc:
+            result["resolved"] = {"error": str(exc)}
+            return result
 
         try:
             payload = self._fetch_cached(operation_id, merged_params, authorization)

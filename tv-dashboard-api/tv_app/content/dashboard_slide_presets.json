@@ -133,6 +133,61 @@
       "durationSec": 45
     },
     {
+      "key": "preset_comunicado_stock_panel",
+      "label": "Personalizado — estoque TOP 5",
+      "description": "Slide misto com KPI de valor de estoque e tabela TOP 5 itens.",
+      "slideType": "native",
+      "title": "Suprimentos — Estoque",
+      "nativeScreenKey": "custom_message",
+      "nativeConfig": {
+        "version": 4,
+        "background": { "type": "color", "value": "#0f172a" },
+        "dataFilters": { "top_limit": 5 },
+        "blocks": [
+          {
+            "id": "preset-stock-heading",
+            "type": "heading",
+            "content": "Suprimentos — Estoque",
+            "frame": { "x": 5, "y": 6, "w": 90, "h": 12 },
+            "style": {
+              "fontSize": 44,
+              "color": "#ffffff",
+              "textAlign": "center",
+              "verticalAlign": "middle",
+              "fontWeight": "bold",
+              "zIndex": 2
+            }
+          },
+          {
+            "id": "preset-stock-kpi",
+            "type": "data_kpi",
+            "frame": { "x": 5, "y": 22, "w": 30, "h": 22 },
+            "style": { "zIndex": 2 },
+            "dataBinding": {
+              "operationId": "get_supplies_stock_value",
+              "params": {},
+              "displayMode": "kpi",
+              "label": "Valor total em estoque"
+            }
+          },
+          {
+            "id": "preset-stock-table",
+            "type": "data_table",
+            "frame": { "x": 38, "y": 22, "w": 57, "h": 58 },
+            "style": { "zIndex": 2 },
+            "dataBinding": {
+              "operationId": "get_supplies_stock_value",
+              "params": {},
+              "displayMode": "table",
+              "maxRows": 5,
+              "label": "TOP produtos"
+            }
+          }
+        ]
+      },
+      "durationSec": 45
+    },
+    {
       "key": "preset_comunicado",
       "label": "Personalizado",
       "description": "Slide livre com texto, formas, mídia e links.",

@@ -97,3 +97,52 @@ def test_extract_series_otd_branch_fallback():
     }
     points = _extract_series(payload, "points", branch="2")
     assert points[0]["value"] == 88.0
+
+
+def test_enrich_rejects_branch_outside_static_policy(monkeypatch):
+    monkeypatch.setattr(
+        "tv_app.application.services.branch_policy_service.allowed_branches",
+        lambda: ["01", "02"],
+    )
+    gateway = MagicMock()
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "kpi-1",
+            "type": "data_kpi",
+            "dataBinding": {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "params": {},
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={"dataFilters": {"branch": "99"}}, authorization="Bearer x")
+    assert enriched[0]["resolved"]["error"]
+    gateway.fetch_by_operation_id.assert_not_called()
+
+
+def test_enrich_rejects_branch_for_scoped_user():
+    gateway = MagicMock()
+    user = MagicMock()
+    user.is_superadmin = False
+    user.permissions = ["tv-dashboard.view.filial-01"]
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "kpi-1",
+            "type": "data_kpi",
+            "dataBinding": {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "params": {"branch": "02"},
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x", user=user)
+    assert enriched[0]["resolved"]["error"]
+    gateway.fetch_by_operation_id.assert_not_called()

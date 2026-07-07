@@ -111,13 +111,13 @@ export function TvDataBlockView({ block, interactive = false, loading = false }:
   }
 
   if (block.type === "data_table" || resolved.table) {
-  return (
-    <div className="tdp-data-block tdp-data-block--table">
-      <div className="tdp-data-table-wrap">
-        <TvDataTableWidget resolved={resolved} />
+    return (
+      <div className="tdp-data-block tdp-data-block--table">
+        <div className="tdp-data-table-wrap">
+          <TvDataTableWidget resolved={resolved} />
+        </div>
       </div>
-    </div>
-  );
+    );
   }
 
   return (
