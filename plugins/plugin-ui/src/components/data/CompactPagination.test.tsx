@@ -10,7 +10,7 @@ afterEach(() => {
 describe("CompactPagination", () => {
   const classNames = compactPaginationBemClasses("ie");
   const labels = {
-    info: ({ page, totalPages, total }: { page: number; totalPages: number; total: number }) =>
+    info: ({ page, totalPages, total }: { page: number; totalPages: number; total: number; pageSize: number }) =>
       `Página ${page} de ${totalPages} · ${total} registro(s)`,
     pageSizeLabel: "Itens por página",
     previous: "Anterior",
@@ -68,7 +68,7 @@ describe("CompactPagination", () => {
         layout="flat"
         classNames={classNames}
         labels={{
-          info: ({ page, totalPages, total }) =>
+          info: ({ page, totalPages, total }: { page: number; totalPages: number; total: number; pageSize: number }) =>
             `Página ${page} de ${totalPages} · ${total} registro(s)`,
           previous: "Anterior",
           next: "Próxima",
@@ -79,5 +79,21 @@ describe("CompactPagination", () => {
 
     expect(screen.queryByRole("combobox")).toBeNull();
     expect(screen.getByText("Página 1 de 3 · 50 registro(s)")).toBeTruthy();
+  });
+
+  it("hideWhenSinglePage oculta paginação com uma página", () => {
+    const { container } = render(
+      <CompactPagination
+        page={1}
+        pageSize={25}
+        total={10}
+        hideWhenSinglePage
+        onPageChange={vi.fn()}
+        classNames={classNames}
+        labels={labels}
+      />,
+    );
+
+    expect(container.firstChild).toBeNull();
   });
 });

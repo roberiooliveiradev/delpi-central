@@ -30,6 +30,7 @@ export type KaizenRecord = {
   realized_daily_savings: number | null;
   realized_annual_savings: number | null;
   status: KaizenStatus;
+  date_idea_received: string | null;
   date_implemented: string | null;
   date_discontinued: string | null;
   notes: string | null;
@@ -38,6 +39,7 @@ export type KaizenRecord = {
   improvement_description: string | null;
   expected_result: string | null;
   category: string | null;
+  categories: string[];
   current_revision_number: number | null;
   savings_valid_until: string | null;
   savings_active: boolean;
@@ -199,7 +201,7 @@ export type KaizenFormValues = {
   branch_code: string;
   title: string;
   sector: string;
-  category: string;
+  categories: string[];
   investment: string;
   savings_type: SavingsType | "";
   seconds_per_occurrence: string;
@@ -210,6 +212,7 @@ export type KaizenFormValues = {
   fixed_daily_savings: string;
   realized_daily_savings: string;
   status: KaizenStatus;
+  date_idea_received: string;
   date_implemented: string;
   date_discontinued: string;
   notes: string;

@@ -23,6 +23,7 @@ export type MultiSelectFieldClassNames = {
   list: string;
   empty: string;
   option: string;
+  createOption?: string;
 };
 
 export type MultiSelectFieldLabels = {
@@ -32,6 +33,7 @@ export type MultiSelectFieldLabels = {
   clear: string;
   emptyOptions: string;
   multipleSelected: (count: number) => string;
+  createOption?: (query: string) => string;
 };
 
 export type MultiSelectFieldProps = {
@@ -46,6 +48,9 @@ export type MultiSelectFieldProps = {
   className?: string;
   classNames: MultiSelectFieldClassNames;
   labels: MultiSelectFieldLabels;
+  creatable?: boolean;
+  maxCreateLength?: number;
+  onCreateOption?: (value: string) => void;
 };
 
 /** Monta classNames BEM `{prefix}-multi-select__*` dos dashboards departamentais. */
@@ -64,6 +69,7 @@ export function multiSelectBemClasses(prefix: string): MultiSelectFieldClassName
     list: `${prefix}-multi-select__list`,
     empty: `${prefix}-multi-select__empty`,
     option: `${prefix}-multi-select__option`,
+    createOption: `${prefix}-multi-select__create`,
   };
 }
 
@@ -79,20 +85,49 @@ export function MultiSelectField({
   className,
   classNames,
   labels,
+  creatable = false,
+  maxCreateLength = 50,
+  onCreateOption,
 }: MultiSelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listId = useId();
   const resolvedEmptyLabel = emptyLabel ?? labels.emptyLabel;
+  const normalizedQuery = query.trim();
 
   const filteredOptions = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("pt-BR");
-    if (!normalizedQuery) return options;
+    const normalizedSearch = normalizedQuery.toLocaleLowerCase("pt-BR");
+    if (!normalizedSearch) return options;
     return options.filter((option) =>
-      option.label.toLocaleLowerCase("pt-BR").includes(normalizedQuery),
+      option.label.toLocaleLowerCase("pt-BR").includes(normalizedSearch),
     );
-  }, [options, query]);
+  }, [normalizedQuery, options]);
+
+  const canCreate = useMemo(() => {
+    if (!creatable || !searchable || !normalizedQuery) return false;
+    if (normalizedQuery.length > maxCreateLength) return false;
+    const key = normalizedQuery.toLocaleLowerCase("pt-BR");
+    const exists =
+      options.some((option) => option.value.toLocaleLowerCase("pt-BR") === key) ||
+      selectedValues.some((value) => value.toLocaleLowerCase("pt-BR") === key);
+    return !exists;
+  }, [
+    creatable,
+    maxCreateLength,
+    normalizedQuery,
+    options,
+    searchable,
+    selectedValues,
+  ]);
+
+  const handleCreate = () => {
+    if (!canCreate) return;
+    const next = [...selectedValues, normalizedQuery];
+    onChange(next);
+    onCreateOption?.(normalizedQuery);
+    setQuery("");
+  };
 
   useEffect(() => {
     if (!open) {
@@ -162,7 +197,25 @@ export function MultiSelectField({
                 placeholder={labels.searchPlaceholder}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && canCreate) {
+                    event.preventDefault();
+                    handleCreate();
+                  }
+                }}
               />
+            ) : null}
+
+            {canCreate && classNames.createOption ? (
+              <button
+                type="button"
+                className={classNames.createOption}
+                onClick={handleCreate}
+              >
+                {(labels.createOption ?? ((value: string) => `Adicionar "${value}"`))(
+                  normalizedQuery,
+                )}
+              </button>
             ) : null}
 
             <div className={classNames.actions}>

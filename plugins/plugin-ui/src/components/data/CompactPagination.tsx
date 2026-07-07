@@ -15,7 +15,7 @@ export type CompactPaginationClassNames = {
 export type CompactPaginationLayout = "grouped" | "flat";
 
 export type CompactPaginationLabels = {
-  info: (args: { page: number; totalPages: number; total: number }) => string;
+  info: (args: { page: number; totalPages: number; total: number; pageSize: number }) => string;
   pageSizeLabel?: string;
   previous: string;
   next: string;
@@ -38,6 +38,7 @@ export type CompactPaginationProps = {
   onPageSizeChange?: (pageSize: number) => void;
   layout?: CompactPaginationLayout;
   hints?: CompactPaginationHints;
+  hideWhenSinglePage?: boolean;
   classNames: CompactPaginationClassNames;
   labels: CompactPaginationLabels;
 };
@@ -73,6 +74,7 @@ export function CompactPagination({
   onPageSizeChange,
   layout = "grouped",
   hints,
+  hideWhenSinglePage = false,
   classNames,
   labels,
 }: CompactPaginationProps) {
@@ -84,10 +86,11 @@ export function CompactPagination({
     onPageSizeChange != null && pageSizeOptions != null && pageSizeOptions.length > 0;
 
   if (total === 0) return null;
+  if (hideWhenSinglePage && resolvedTotalPages <= 1) return null;
 
   const infoNode = (
     <span className={classNames.info}>
-      {labels.info({ page, totalPages: resolvedTotalPages, total })}
+      {labels.info({ page, totalPages: resolvedTotalPages, total, pageSize })}
       {hints?.info && classNames.infoHelp ? (
         <HelpTooltip
           content={hints.info}

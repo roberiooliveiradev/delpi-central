@@ -51,4 +51,13 @@ export {
   type SelectOption,
 } from "./SelectField";
 
+export {
+  DateField,
+  createDashboardDateField,
+  dateFieldBemClasses,
+  type DashboardDateFieldProps,
+  type DateFieldClassNames,
+  type DateFieldProps,
+} from "./DateField";
+
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";

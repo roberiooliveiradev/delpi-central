@@ -22,6 +22,7 @@ SNAPSHOT_FIELDS = (
     "realized_daily_savings",
     "realized_annual_savings",
     "status",
+    "date_idea_received",
     "date_implemented",
     "date_discontinued",
     "notes",
@@ -29,7 +30,7 @@ SNAPSHOT_FIELDS = (
     "problem_description",
     "improvement_description",
     "expected_result",
-    "category",
+    "categories",
 )
 
 # Campos cujo valor, ao mudar, obriga a criação de uma nova revisão.

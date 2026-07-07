@@ -50,7 +50,6 @@ LOCAL_IMPLEMENTATION_ALLOWLIST: dict[tuple[str, str], str] = {
     ("cadastro-kaizen", "Pagination.tsx"): "paginação kz-* específica do cadastro",
     ("cadastro-kaizen", "DataTable.tsx"): "tabela kz-* com sort local",
     ("cadastro-kaizen", "DataTableSection.tsx"): "seção kz-* acoplada à tabela local",
-    ("transformometro", "Pagination.tsx"): "paginação compacta do transformômetro",
     ("pedidos-venda-abertos", "FilterBar.tsx"): "filtros de domínio com cabeçalho próprio",
 }
 

@@ -1,4 +1,6 @@
 import { FormSection } from "./FormSection";
+import { CategoryMultiSelectField } from "./CategoryMultiSelectField";
+import { DateField } from "./DateField";
 import { SelectField, TextAreaField, TextField } from "./FormField";
 import { KaizenParticipantsField } from "./KaizenParticipantsField";
 import { SavingsParamFields } from "./SavingsParamFields";
@@ -6,7 +8,6 @@ import { FieldLabel } from "@delpi/plugin-ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   BRANCHES,
-  KAIZEN_CATEGORIES,
   KAIZEN_STATUSES,
   SAVINGS_TYPES,
 } from "../../constants/kaizen";
@@ -18,7 +19,6 @@ type KaizenFormFieldsProps = {
 };
 
 const BRANCH_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
-const CATEGORY_OPTIONS = KAIZEN_CATEGORIES.map((cat) => ({ value: cat, label: cat }));
 
 export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
   const isQualitative = values.savings_type === "qualitativo";
@@ -68,14 +68,9 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
           onChange={(value) => onChange("sector", value)}
         />
 
-        <SelectField
-          id="kz-category"
-          label="Categoria"
-          hint={KAIZEN_HELP_TOOLTIPS.fields.category}
-          value={values.category}
-          onChange={(value) => onChange("category", value)}
-          options={CATEGORY_OPTIONS}
-          placeholderOption="Sem categoria"
+        <CategoryMultiSelectField
+          selectedValues={values.categories}
+          onChange={(categories) => onChange("categories", categories)}
         />
 
         <TextField
@@ -87,20 +82,26 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
           onChange={(value) => onChange("investment", value)}
         />
 
-        <TextField
+        <DateField
+          id="kz-date-idea-received"
+          label="Recebimento da ideia"
+          hint={KAIZEN_HELP_TOOLTIPS.fields.dateIdeaReceived}
+          value={values.date_idea_received}
+          onChange={(value) => onChange("date_idea_received", value)}
+        />
+
+        <DateField
           id="kz-date-implemented"
           label="Data implantação"
           hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
-          type="date"
           value={values.date_implemented}
           onChange={(value) => onChange("date_implemented", value)}
         />
 
-        <TextField
+        <DateField
           id="kz-date-discontinued"
           label="Data descontinuação"
           hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
-          type="date"
           value={values.date_discontinued}
           onChange={(value) => onChange("date_discontinued", value)}
         />

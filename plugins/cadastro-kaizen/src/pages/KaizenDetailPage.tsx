@@ -12,6 +12,8 @@ import {
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { EditableSectionCard } from "../components/ui/EditableSectionCard";
+import { DateField } from "../components/form/DateField";
+import { CategoryMultiSelectField } from "../components/form/CategoryMultiSelectField";
 import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
 import { ReadOnlyField } from "../components/ui/ReadOnlyField";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -28,7 +30,6 @@ import { KaizenChangeLog } from "../components/detail/KaizenChangeLog";
 import { KaizenParticipantsField } from "../components/form/KaizenParticipantsField";
 import {
   BRANCHES,
-  KAIZEN_CATEGORIES,
   KAIZEN_STATUSES,
   SAVINGS_TYPES,
   formValuesToPayload,
@@ -43,6 +44,7 @@ import type {
   KaizenVersionStatus,
 } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
+import { categoriesFromRecord } from "../utils/kaizenCategories";
 import { savingsTypeLabel } from "../utils/labels";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
 
@@ -386,7 +388,23 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               value={BRANCH_LABEL[view.branch_code] ?? view.branch_code}
             />
             <ReadOnlyField label="Setor" hint={KAIZEN_HELP_TOOLTIPS.fields.sector} value={view.sector} />
-            <ReadOnlyField label="Categoria" hint={KAIZEN_HELP_TOOLTIPS.fields.category} value={view.category} />
+            <div className="kz-read-field">
+              <span className="kz-read-field__label">
+                Categoria
+                <HelpTooltip content={KAIZEN_HELP_TOOLTIPS.fields.category} ariaLabel="Ajuda: categoria" />
+              </span>
+              <div className="kz-chips">
+                {categoriesFromRecord(view).length === 0 ? (
+                  <span className="kz-read-field__value kz-read-field__value--empty">—</span>
+                ) : (
+                  categoriesFromRecord(view).map((category) => (
+                    <span key={category} className="kz-chip">
+                      {category}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
             <ReadOnlyField
               label="Investimento"
               hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
@@ -474,21 +492,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 onChange={(event) => updateField("sector", event.target.value)}
               />
             </div>
-            <div className="kz-field">
-              <FieldLabel label="Categoria" htmlFor="kz-d-category" hint={KAIZEN_HELP_TOOLTIPS.fields.category}  className="kz-field__label" />
-              <select
-                id="kz-d-category"
-                value={form.category}
-                onChange={(event) => updateField("category", event.target.value)}
-              >
-                <option value="">Sem categoria</option>
-                {KAIZEN_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CategoryMultiSelectField
+              className="kz-field--multi-select"
+              selectedValues={form.categories}
+              onChange={(categories) => updateField("categories", categories)}
+            />
             <div className="kz-field">
               <FieldLabel
                 label="Investimento (R$)"
@@ -596,14 +604,19 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               <StatusPipeline status={view.status} />
             </div>
             <ReadOnlyField
+              label="Recebimento da ideia"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateIdeaReceived}
+              value={formatDate(view.date_idea_received)}
+            />
+            <ReadOnlyField
               label="Data implantação"
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
-              value={view.date_implemented}
+              value={formatDate(view.date_implemented)}
             />
             <ReadOnlyField
               label="Data descontinuação"
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
-              value={view.date_discontinued}
+              value={formatDate(view.date_discontinued)}
             />
           </div>
         }
@@ -625,45 +638,34 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 ))}
               </select>
             </div>
-            <div className="kz-field">
-              <FieldLabel
-                label="Vigente a partir de"
-                htmlFor="kz-d-eff"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.effectiveFrom}
-               className="kz-field__label" />
-              <input
-                id="kz-d-eff"
-                type="date"
-                value={effectiveFrom}
-                onChange={(event) => setEffectiveFrom(event.target.value)}
-              />
-            </div>
-            <div className="kz-field">
-              <FieldLabel
-                label="Data implantação"
-                htmlFor="kz-d-date-impl"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
-               className="kz-field__label" />
-              <input
-                id="kz-d-date-impl"
-                type="date"
-                value={form.date_implemented}
-                onChange={(event) => updateField("date_implemented", event.target.value)}
-              />
-            </div>
-            <div className="kz-field">
-              <FieldLabel
-                label="Data descontinuação"
-                htmlFor="kz-d-date-disc"
-                hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
-               className="kz-field__label" />
-              <input
-                id="kz-d-date-disc"
-                type="date"
-                value={form.date_discontinued}
-                onChange={(event) => updateField("date_discontinued", event.target.value)}
-              />
-            </div>
+            <DateField
+              id="kz-d-eff"
+              label="Vigente a partir de"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.effectiveFrom}
+              value={effectiveFrom}
+              onChange={setEffectiveFrom}
+            />
+            <DateField
+              id="kz-d-date-idea"
+              label="Recebimento da ideia"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateIdeaReceived}
+              value={form.date_idea_received}
+              onChange={(value) => updateField("date_idea_received", value)}
+            />
+            <DateField
+              id="kz-d-date-impl"
+              label="Data implantação"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
+              value={form.date_implemented}
+              onChange={(value) => updateField("date_implemented", value)}
+            />
+            <DateField
+              id="kz-d-date-disc"
+              label="Data descontinuação"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
+              value={form.date_discontinued}
+              onChange={(value) => updateField("date_discontinued", value)}
+            />
             <div className="kz-field kz-span-2">
               <FieldLabel
                 label="Motivo da correção (registra na auditoria)"

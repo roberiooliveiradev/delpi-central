@@ -59,12 +59,14 @@ class KaizenRecordBody(BaseModel):
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
+    date_idea_received: str | None = None
     notes: str | None = None
     process_description: str | None = None
     problem_description: str | None = None
     improvement_description: str | None = None
     expected_result: str | None = None
     category: str | None = Field(default=None, max_length=50)
+    categories: list[str] | None = Field(default=None, max_length=10)
     participants: list[KaizenParticipantBody] | None = None
     effective_from: str | None = None
     change_reason: str | None = None
@@ -102,12 +104,14 @@ class UpdateKaizenRecordBody(BaseModel):
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
+    date_idea_received: str | None = None
     notes: str | None = None
     process_description: str | None = None
     problem_description: str | None = None
     improvement_description: str | None = None
     expected_result: str | None = None
     category: str | None = Field(default=None, max_length=50)
+    categories: list[str] | None = Field(default=None, max_length=10)
     participants: list[KaizenParticipantBody] | None = None
     effective_from: str | None = None
     change_reason: str | None = None

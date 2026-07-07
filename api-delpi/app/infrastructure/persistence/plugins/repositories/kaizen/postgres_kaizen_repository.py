@@ -8,6 +8,10 @@ from typing import Any
 from app.domain.services.kaizen import kaizen_revision_service as revision_service
 from app.domain.services.kaizen import kaizen_savings_timeline as savings_timeline_service
 from app.domain.services.kaizen import kaizen_savings_validity
+from app.domain.services.kaizen.kaizen_categories import (
+    categories_from_row,
+    normalize_categories,
+)
 from app.domain.services.kaizen.kaizen_savings_calculator import (
     enrich_savings_fields,
     resolve_realized_annual_savings,
@@ -38,6 +42,7 @@ _KAIZEN_SELECT = """
            k.realized_daily_savings,
            k.realized_annual_savings,
            k.status,
+           k.date_idea_received,
            k.date_implemented,
            k.date_discontinued,
            k.notes,
@@ -46,6 +51,7 @@ _KAIZEN_SELECT = """
            k.improvement_description,
            k.expected_result,
            k.category,
+           k.categories,
            k.current_revision_number,
            k.created_by_user_id,
            k.updated_by_user_id,
@@ -99,6 +105,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         )
         if realized_annual is not None:
             record["realized_annual_savings"] = realized_annual
+        record["categories"] = categories_from_row(record)
         return record
 
     # ------------------------------------------------------------------ listagem
@@ -380,7 +387,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "by_status": tally(period_rows, lambda row: row.get("status") or "—"),
             "by_branch": tally(period_rows, lambda row: row.get("branch_code") or "—"),
             "by_savings_type": tally(period_rows, lambda row: row.get("savings_type") or "—"),
-            "by_category": tally(period_rows, lambda row: row.get("category") or "sem_categoria"),
+            "by_category": self._tally_categories(period_rows),
             "top_accountables": tally(
                 [row for row in period_rows if row.get("accountable")],
                 lambda row: row.get("accountable"),
@@ -389,6 +396,21 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "expiring_soon": expiring_soon,
             "recent": recent,
         }
+
+    @staticmethod
+    def _tally_categories(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        counts: dict[str, int] = {}
+        for row in items:
+            categories = categories_from_row(row)
+            if not categories:
+                counts["sem_categoria"] = counts.get("sem_categoria", 0) + 1
+                continue
+            for category in categories:
+                counts[category] = counts.get(category, 0) + 1
+        return [
+            {"key": key, "value": value}
+            for key, value in sorted(counts.items(), key=lambda item: item[1], reverse=True)
+        ]
 
     # ------------------------------------------------------------------ exportação (backup/migração)
 
@@ -407,6 +429,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         "fixed_daily_savings",
         "realized_daily_savings",
         "status",
+        "date_idea_received",
         "date_implemented",
         "date_discontinued",
         "notes",
@@ -414,6 +437,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         "problem_description",
         "improvement_description",
         "expected_result",
+        "categories",
         "category",
     )
 
@@ -788,6 +812,16 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
     # ------------------------------------------------------------------ create
 
+    @staticmethod
+    def _apply_category_fields(record: dict[str, Any]) -> dict[str, Any]:
+        categories = normalize_categories(
+            record.get("categories"),
+            legacy_category=record.get("category"),
+        )
+        record["categories"] = categories
+        record["category"] = categories[0] if categories else None
+        return record
+
     def create_record(
         self,
         *,
@@ -801,6 +835,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             fields["accountable"] = self._principal_accountable(participants, fields.get("accountable"))
 
         enriched = enrich_savings_fields(fields)
+        enriched = self._apply_category_fields(enriched)
         submodule_id = self._kaizen_submodule_id()
         effective_from = revision_service.resolve_effective_from(
             enriched, provided=fields.get("effective_from")
@@ -813,13 +848,13 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 savings_type, seconds_per_occurrence, occurrences_per_day, hourly_cost,
                 quantity_saved_per_day, unit_material_cost, fixed_daily_savings,
                 daily_savings, annual_savings, realized_daily_savings, realized_annual_savings,
-                status, date_implemented, date_discontinued,
+                status, date_idea_received, date_implemented, date_discontinued,
                 notes, process_description, problem_description, improvement_description,
-                expected_result, category, current_revision_number, created_by_user_id
+                expected_result, category, categories, current_revision_number, created_by_user_id
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, 1, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, 1, %s
             )
             RETURNING id
             """,
@@ -842,6 +877,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("realized_daily_savings"),
                 enriched.get("realized_annual_savings"),
                 enriched.get("status", "em_andamento"),
+                enriched.get("date_idea_received"),
                 enriched.get("date_implemented"),
                 enriched.get("date_discontinued"),
                 enriched.get("notes"),
@@ -850,6 +886,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("improvement_description"),
                 enriched.get("expected_result"),
                 enriched.get("category"),
+                enriched.get("categories"),
                 created_by_user_id,
             ),
             auto_commit=False,
@@ -931,6 +968,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 participants, merged.get("accountable")
             )
         enriched = enrich_savings_fields(merged)
+        enriched = self._apply_category_fields(enriched)
 
         changed_fields = revision_service.changed_trigger_fields(current, enriched)
 
@@ -954,6 +992,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                    realized_daily_savings = %s,
                    realized_annual_savings = %s,
                    status = %s,
+                   date_idea_received = %s,
                    date_implemented = %s,
                    date_discontinued = %s,
                    notes = %s,
@@ -962,6 +1001,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                    improvement_description = %s,
                    expected_result = %s,
                    category = %s,
+                   categories = %s,
                    updated_by_user_id = %s,
                    updated_at = NOW()
              WHERE id = %s
@@ -986,6 +1026,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("realized_daily_savings"),
                 enriched.get("realized_annual_savings"),
                 enriched.get("status", "em_andamento"),
+                enriched.get("date_idea_received"),
                 enriched.get("date_implemented"),
                 enriched.get("date_discontinued"),
                 enriched.get("notes"),
@@ -994,6 +1035,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("improvement_description"),
                 enriched.get("expected_result"),
                 enriched.get("category"),
+                enriched.get("categories"),
                 updated_by_user_id,
                 record_id,
             ),
@@ -1290,6 +1332,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         updated_by_user_id: str,
     ) -> None:
         enriched = enrich_savings_fields({**snapshot})
+        enriched = self._apply_category_fields(enriched)
         self.execute(
             """
             UPDATE quality.kaizens
@@ -1310,6 +1353,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                    realized_daily_savings = %s,
                    realized_annual_savings = %s,
                    status = 'implantado',
+                   date_idea_received = %s,
                    date_implemented = %s,
                    notes = %s,
                    process_description = %s,
@@ -1317,6 +1361,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                    improvement_description = %s,
                    expected_result = %s,
                    category = %s,
+                   categories = %s,
                    current_revision_number = current_revision_number + 1,
                    updated_by_user_id = %s,
                    updated_at = NOW()
@@ -1340,6 +1385,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("annual_savings"),
                 enriched.get("realized_daily_savings"),
                 enriched.get("realized_annual_savings"),
+                enriched.get("date_idea_received"),
                 enriched.get("date_implemented") or effective,
                 enriched.get("notes"),
                 enriched.get("process_description"),
@@ -1347,6 +1393,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("improvement_description"),
                 enriched.get("expected_result"),
                 enriched.get("category"),
+                enriched.get("categories"),
                 updated_by_user_id,
                 kaizen_id,
             ),

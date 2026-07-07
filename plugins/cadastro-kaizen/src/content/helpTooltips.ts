@@ -24,10 +24,12 @@ export const KAIZEN_HELP_TOOLTIPS = {
     title: "Nome curto e objetivo da melhoria (ex.: 'Suporte para tablet no carrinho').",
     branch: "Unidade onde o kaizen foi implantado.",
     sector: "Área ou setor responsável pela melhoria.",
-    category: "Classificação da melhoria (segurança, qualidade, produtividade, ergonomia…).",
+    category: "Classificação da melhoria (segurança, qualidade, produtividade, ergonomia…). Selecione uma ou mais categorias ou crie novas digitando no campo.",
     investment: "Valor investido para implantar a melhoria (materiais, mão de obra, dispositivos).",
     dateDiscontinued:
       "Data em que a melhoria deixou de operar, quando aplicável. Interrompe a contabilização dos ganhos.",
+    dateIdeaReceived:
+      "Data em que a ideia de melhoria foi recebida ou registrada, antes da implantação.",
     notes: "Notas livres, observações e detalhes que não se encaixam nos demais campos.",
     changeReason:
       "Descreva o porquê da correção. O texto fica registrado na trilha de auditoria da versão.",

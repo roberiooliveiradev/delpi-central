@@ -28,7 +28,7 @@ export function computeKaizenFormCompletion(values: KaizenFormValues): FormCompl
     { id: "title", label: "Título", done: filled(values.title) },
     { id: "branch", label: "Unidade", done: filled(values.branch_code) },
     { id: "sector", label: "Setor", done: filled(values.sector) },
-    { id: "category", label: "Categoria", done: filled(values.category) },
+    { id: "category", label: "Categoria", done: values.categories.length > 0 },
     {
       id: "team",
       label: "Equipe",
@@ -36,6 +36,7 @@ export function computeKaizenFormCompletion(values: KaizenFormValues): FormCompl
     },
     { id: "process", label: "Processo", done: filled(values.process_description) },
     { id: "improvement", label: "Melhoria", done: filled(values.improvement_description) },
+    { id: "idea", label: "Recebimento da ideia", done: filled(values.date_idea_received) },
     { id: "date", label: "Implantação", done: filled(values.date_implemented) },
     { id: "savings", label: "Economia", done: isSavingsFilled(values) },
   ];

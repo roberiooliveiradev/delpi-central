@@ -6,6 +6,8 @@ const DIFF_FIELDS: Array<{ key: string; label: string; kind?: "status" }> = [
   { key: "savings_type", label: "Tipo economia" },
   { key: "daily_savings", label: "Economia/dia" },
   { key: "realized_daily_savings", label: "Realizada/dia" },
+  { key: "date_idea_received", label: "Recebimento da ideia" },
+  { key: "categories", label: "Categorias" },
   { key: "date_implemented", label: "Implantação" },
   { key: "title", label: "Título" },
   { key: "branch_code", label: "Unidade" },
@@ -13,6 +15,10 @@ const DIFF_FIELDS: Array<{ key: string; label: string; kind?: "status" }> = [
 
 function formatSnapshotValue(value: unknown, kind?: "status"): string {
   if (value == null || value === "") return "—";
+  if (Array.isArray(value)) {
+    const items = value.map((item) => String(item).trim()).filter(Boolean);
+    return items.length > 0 ? items.join(", ") : "—";
+  }
   if (kind === "status") return statusLabel(String(value));
   return String(value);
 }
