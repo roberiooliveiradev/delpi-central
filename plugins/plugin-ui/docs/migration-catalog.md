@@ -81,6 +81,15 @@ Resumo (2+ consumidores):
 
 Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (imports existentes preservados).
 
+## Status — Fase 5 (evidências / confirm / SI)
+
+| Plugin | FileDropzone | Confirm | Notas |
+|--------|--------------|---------|-------|
+| `cadastro-kaizen` | ✅ | — | `fileDropzoneKaizenClasses` |
+| `quality-action-plans` | ✅ | ✅ | `useConfirmDialogController` |
+| `transformometro` | ✅ | ✅ | Provider + `useConfirm` |
+| `strategic-indicators` | — | — | `operationalUnitLabels` reexport |
+
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
 ## Status — Fase 2 (shell de dashboard)
@@ -146,6 +155,6 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `pedidos-venda-abertos` | — | PageHeader |
 | `inspecoes-entrada` | — | PageHeader |
 | `propostas-comerciais` | — | PageHeader |
-| `strategic-indicators` | — | PageHeader |
+| `strategic-indicators` | — | PageHeader | `operationalUnitLabels` |
 | `controle-retrabalhos` | — | EmptyState, LoadingState |
 | `financeiro-centro-custo` | — | EmptyState, LoadingState |

@@ -5,7 +5,7 @@ import {
   calculateIndicatorIddScore,
   isGoalOnTrack,
 } from "./goalDisplay";
-import { formatGoalScopeUnitLabel } from "./operationalUnitLabels";
+import { formatGoalScopeUnitLabel, formatFilterViewScopeLabel } from "./operationalUnitLabels";
 
 describe("goalDisplay", () => {
   it("calcula nota IDD 10 quando realizado atinge meta (higher is better)", () => {
@@ -38,5 +38,7 @@ describe("goalDisplay", () => {
   it("formata escopo consolidado por unidade", () => {
     expect(formatGoalScopeUnitLabel(null, "per_unit")).toBe("Meta por unidade");
     expect(formatGoalScopeUnitLabel("01", null)).toBe("Meta Santa Catarina");
+    expect(formatFilterViewScopeLabel("consolidated", "")).toBe("Consolidado");
+    expect(formatFilterViewScopeLabel("branch", "01")).toBe("Santa Catarina");
   });
 });

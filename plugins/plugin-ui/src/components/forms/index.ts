@@ -22,6 +22,17 @@ export {
 } from "./ReadOnlyField";
 
 export {
+  FileDropzone,
+  createDashboardFileDropzone,
+  fileDropzoneBemClasses,
+  fileDropzoneKaizenClasses,
+  type DashboardFileDropzoneProps,
+  type FileDropzoneClassNames,
+  type FileDropzoneLabels,
+  type FileDropzoneProps,
+} from "./FileDropzone";
+
+export {
   SelectControl,
   SelectField,
   createDashboardSelectControl,

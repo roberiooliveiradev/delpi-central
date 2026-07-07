@@ -1,25 +1,14 @@
 import {
   createContext,
-  useCallback,
   useContext,
-  useRef,
-  useState,
   type ReactNode,
 } from "react";
 
+import { useConfirmDialogController, type ConfirmDialogOptions } from "@delpi/plugin-ui";
+
 import { ConfirmModal } from "./ConfirmModal";
 
-export type ConfirmDialogOptions = {
-  title?: string;
-  message: ReactNode;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  variant?: "default" | "danger";
-};
-
-type PendingConfirm = ConfirmDialogOptions & {
-  resolve: (confirmed: boolean) => void;
-};
+export type { ConfirmDialogOptions };
 
 type ConfirmDialogContextValue = {
   confirm: (options: ConfirmDialogOptions) => Promise<boolean>;
@@ -28,24 +17,7 @@ type ConfirmDialogContextValue = {
 const ConfirmDialogContext = createContext<ConfirmDialogContextValue | null>(null);
 
 export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
-  const [pending, setPending] = useState<PendingConfirm | null>(null);
-  const pendingRef = useRef<PendingConfirm | null>(null);
-
-  const confirm = useCallback((options: ConfirmDialogOptions) => {
-    return new Promise<boolean>((resolve) => {
-      const next: PendingConfirm = { ...options, resolve };
-      pendingRef.current = next;
-      setPending(next);
-    });
-  }, []);
-
-  const settle = useCallback((confirmed: boolean) => {
-    const current = pendingRef.current;
-    if (!current) return;
-    pendingRef.current = null;
-    setPending(null);
-    current.resolve(confirmed);
-  }, []);
+  const { confirm, pending, confirmPending, cancelPending } = useConfirmDialogController();
 
   return (
     <ConfirmDialogContext.Provider value={{ confirm }}>
@@ -57,8 +29,8 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
         confirmLabel={pending?.confirmLabel}
         cancelLabel={pending?.cancelLabel}
         variant={pending?.variant}
-        onConfirm={() => settle(true)}
-        onCancel={() => settle(false)}
+        onConfirm={confirmPending}
+        onCancel={cancelPending}
       />
     </ConfirmDialogContext.Provider>
   );

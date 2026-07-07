@@ -24,3 +24,8 @@ export {
   type LoadingStateClassNames,
   type LoadingStateProps,
 } from "./EmptyState";
+export {
+  useConfirmDialogController,
+  type ConfirmDialogOptions,
+  type PendingConfirmDialog,
+} from "./useConfirmDialog";

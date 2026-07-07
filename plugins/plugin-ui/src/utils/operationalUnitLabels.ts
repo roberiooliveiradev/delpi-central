@@ -112,3 +112,14 @@ export function formatOperationalUnitsPrintLabel(
     .map((branch) => formatOperationalUnitCode(branch, branch))
     .join(", ");
 }
+
+/** Rótulo de escopo para filtros SI / dashboards (consolidado vs filial). */
+export function formatFilterViewScopeLabel(
+  viewMode: "consolidated" | "branch",
+  branch: string,
+): string {
+  if (viewMode === "branch" && branch.trim()) {
+    return formatOperationalUnitCode(branch.trim(), branch.trim());
+  }
+  return "Consolidado";
+}

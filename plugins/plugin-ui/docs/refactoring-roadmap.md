@@ -246,10 +246,13 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 ### Fase 5 — Backlog / avaliar demanda
 
-- Dropzones de evidência (API unificada de props: `accept`, `maxSize`, `onUpload`)
-- Confirm dialog headless
-- `EmptyState` / `LoadingState` genéricos
-- Integração `strategic-indicators` onde houver overlap real
+| Item | Status | Notas |
+|------|--------|-------|
+| `FileDropzone` | ✅ F5.1 | kaizen, PAC, transformometro |
+| `useConfirmDialogController` | ✅ F5.2 | PAC hook + transformometro provider |
+| `strategic-indicators` utils | ✅ F5.3 | `operationalUnitLabels` reexport |
+| Dropzones restantes (chat, customer-experience) | ⏳ | Domínio/API distinta — fora de escopo imediato |
+| `ConfirmModal` / `Modal` | ⏳ | Depende de shell modal local por plugin |
 
 ---
 
@@ -310,7 +313,8 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 2. **Fase 2 concluída** nos dashboards departamentais.
 3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
 5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados.
-6. **Fase 4 concluída** — `chartColors`, `goalDisplay`, `operationalUnitLabels` centralizados; próximo: Fase 5 (dropzones, confirm dialog).
+6. **Fase 4 concluída** — utilitários centralizados.
+7. **Fase 5 parcial** — `FileDropzone`, confirm controller, SI `operationalUnitLabels`; backlog: modais e dropzones chat/CE.
 
 ---
 
