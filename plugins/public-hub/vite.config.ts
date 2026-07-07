@@ -9,10 +9,11 @@ export default defineConfig({
   resolve: {
     // Pacote compartilhado é compilado do source; sem dedupe o Vite pode
     // puxar react de tv-dashboard-presentation/node_modules → hooks quebram.
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom", "lucide-react"],
     alias: {
       react: path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "lucide-react": path.resolve(__dirname, "node_modules/lucide-react"),
       "@delpi/tv-dashboard-presentation": path.resolve(
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",
