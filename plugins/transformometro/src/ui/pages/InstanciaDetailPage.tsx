@@ -151,6 +151,7 @@ export function InstanciaDetailPage({
     entityType: "processo_instancia",
     entityId: instanciaId,
     getAccessToken,
+    enabled: !embedded || embeddedActive,
     onResync: () => void load(),
   });
 

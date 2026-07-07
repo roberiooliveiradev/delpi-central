@@ -205,6 +205,7 @@ export function ProcessoWorkspacePage({
       return (
         <ProcessoDetailPage
           embedded
+          embeddedActive={isActive}
           getAccessToken={getAccessToken}
           processoId={processoId}
           pathname={pathname ?? `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}`}
@@ -232,6 +233,7 @@ export function ProcessoWorkspacePage({
       return (
         <RevisaoDetailPage
           embedded
+          embeddedActive={isActive}
           getAccessToken={getAccessToken}
           processoId={processoId}
           instanciaId={instanciaId}

@@ -71,6 +71,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate: (path: string) => void;
   onBack: () => void;
   embedded?: boolean;
+  embeddedActive?: boolean;
 };
 
 export function ProcessoDetailPage({
@@ -80,6 +81,7 @@ export function ProcessoDetailPage({
   onNavigate,
   onBack,
   embedded = false,
+  embeddedActive = true,
 }: Props) {
   const confirm = useConfirm();
   const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
@@ -154,6 +156,7 @@ export function ProcessoDetailPage({
     entityType: "processo",
     entityId: processoId,
     getAccessToken,
+    enabled: !embedded || embeddedActive,
     onResync: () => void load(),
   });
 

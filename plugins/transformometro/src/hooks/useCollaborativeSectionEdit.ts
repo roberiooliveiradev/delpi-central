@@ -87,11 +87,23 @@ export function useCollaborativeSectionEdit({
   });
 
   useEffect(() => {
-    if (!enabled || !entityId || wsConnected) return;
+    if (!enabled || !entityId) {
+      setPresence(null);
+      return;
+    }
     void refreshPresence();
+  }, [enabled, entityId, refreshPresence]);
+
+  useEffect(() => {
+    if (!enabled || !entityId || wsConnected) return;
     const timer = window.setInterval(() => void refreshPresence(), POLL_MS);
     return () => window.clearInterval(timer);
   }, [enabled, entityId, refreshPresence, wsConnected]);
+
+  useEffect(() => {
+    if (!enabled || !entityId || !wsConnected) return;
+    void refreshPresence();
+  }, [enabled, entityId, wsConnected, refreshPresence]);
 
   useEffect(() => {
     if (!enabled || !entityId || wsConnected || !onResync) return;
@@ -104,15 +116,18 @@ export function useCollaborativeSectionEdit({
 
   useEffect(() => {
     if (!enabled || !entityId || editingSection) return;
-    void sendCollaborationHeartbeat(
-      {
-        entity_type: entityType,
-        entity_id: entityId,
-        section_key: "",
-        mode: "viewing",
-      },
-      getAccessToken
-    );
+    void (async () => {
+      await sendCollaborationHeartbeat(
+        {
+          entity_type: entityType,
+          entity_id: entityId,
+          section_key: "",
+          mode: "viewing",
+        },
+        getAccessToken
+      );
+      await refreshPresence();
+    })();
     const timer = window.setInterval(() => {
       void sendCollaborationHeartbeat(
         {
@@ -125,7 +140,7 @@ export function useCollaborativeSectionEdit({
       );
     }, VIEW_HEARTBEAT_MS);
     return () => window.clearInterval(timer);
-  }, [enabled, entityId, entityType, editingSection, getAccessToken]);
+  }, [enabled, entityId, entityType, editingSection, getAccessToken, refreshPresence]);
 
   useEffect(() => {
     if (!enabled || !entityId || !editingSection) return;

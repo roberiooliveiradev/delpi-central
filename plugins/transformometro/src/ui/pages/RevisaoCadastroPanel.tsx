@@ -88,6 +88,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   revisao: Revisao;
   revisoesReferencia?: Revisao[];
   options: OptionsData;
+  collaborationActive?: boolean;
   onError: (message: string | null) => void;
   onRevisaoUpdated: () => void;
   onRevisaoDeleted?: () => void;
@@ -98,6 +99,7 @@ export function RevisaoCadastroPanel({
   revisoesReferencia = [],
   options,
   getAccessToken,
+  collaborationActive = true,
   onError,
   onRevisaoUpdated,
   onRevisaoDeleted,
@@ -164,6 +166,7 @@ export function RevisaoCadastroPanel({
     entityType: "revisao",
     entityId: revisao.revisao_id,
     getAccessToken,
+    enabled: collaborationActive,
     onResync: () => {
       void load();
       onRevisaoUpdated();

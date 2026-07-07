@@ -34,6 +34,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
   embedded?: boolean;
+  embeddedActive?: boolean;
 };
 
 export function RevisaoDetailPage({
@@ -45,6 +46,7 @@ export function RevisaoDetailPage({
   pathname,
   onNavigate,
   embedded = false,
+  embeddedActive = true,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [revisao, setRevisao] = useState<Revisao | null>(null);
@@ -129,6 +131,7 @@ export function RevisaoDetailPage({
       revisoesReferencia={revisoesInstancia}
       options={options}
       getAccessToken={getAccessToken}
+      collaborationActive={!embedded || embeddedActive}
       onError={setError}
       onRevisaoUpdated={load}
       onRevisaoDeleted={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}

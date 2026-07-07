@@ -14,8 +14,12 @@ export function CollaborativePresenceBanner({
   realtimeNotice,
   onDismissRealtimeNotice,
 }: Props) {
-  if (!presence && !lockError && !realtimeNotice) {
-    return null;
+  if (!lockError && !realtimeNotice) {
+    const editors = presence?.editors.filter((item) => item.lock_active) ?? [];
+    const viewers = presence?.viewers ?? [];
+    if (!editors.length && !viewers.length) {
+      return null;
+    }
   }
 
   const editors = presence?.editors.filter((item) => item.lock_active) ?? [];
