@@ -205,6 +205,22 @@ Utils: `buildVisiblePageItems`, `parsePageJumpInput` em `src/utils/paginationPag
 
 Helpers: `paginationBemClasses(prefix)` e `createDashboardPaginationKit({ prefix, labels, hints, tablePageSizeLabels })` — wrapper fino nos dashboards (~50 linhas) com textos de `helpTooltips.pagination`.
 
+### `MultiSelectField`
+
+Dropdown multiseleção com busca opcional, ações «Marcar visíveis» / «Limpar» e label via `FieldLabel`.
+
+| Prop / export | Tipo | Descrição |
+|---------------|------|-----------|
+| `options` / `selectedValues` | `MultiSelectOption[]` / `string[]` | Opções e seleção |
+| `onChange` | `(values: string[]) => void` | Callback |
+| `searchable` / `disabled` | `boolean?` | Comportamento |
+| `classNames` | `MultiSelectFieldClassNames` | BEM do plugin |
+| `labels` | `MultiSelectFieldLabels` | Textos PT (Todos, Buscar…, ações) |
+
+Utils: `buildMultiSelectTriggerLabel` em `src/utils/multiSelectLabel.ts`.
+
+Helpers: `multiSelectBemClasses(prefix)` e `createDashboardMultiSelectField({ prefix, labels })`.
+
 ---
 
 ## Estilos base (`styles.css`)

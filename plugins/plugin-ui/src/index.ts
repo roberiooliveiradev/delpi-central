@@ -8,3 +8,4 @@ export * from "./components/help";
 export * from "./components/layout";
 export * from "./components/feedback";
 export * from "./components/data";
+export * from "./components/forms";

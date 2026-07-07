@@ -58,7 +58,7 @@ Resumo (2+ consumidores):
 | `ChartCard` | 14 | F2 ✅ |
 | `LoadingActivityCard` | 12 | F2 ✅ |
 | `Pagination` (+ jump, page size) | 7 dashboards | F2 ✅ (7 dept.) |
-| `MultiSelectField` | 13 | F2 |
+| `MultiSelectField` | 13 | F2 ✅ (8 dept. + lmps) |
 | `FilterBar` | 12 | F2 |
 | `DataTable` / `DataTableSection` | ~25 | F2 (último) |
 | `EditableSectionCard` | 3 | F3 |
@@ -68,19 +68,21 @@ Resumo (2+ consumidores):
 
 ## Status — Fase 2 (shell de dashboard)
 
-| Plugin | Pagination | ChartCard | KpiCard | LoadingActivity | Notas |
-|--------|------------|-----------|---------|-----------------|-------|
-| `dashboard-production` | ✅ | ✅ | ✅ | ✅ | Piloto F2 |
-| `dashboard-commercial` | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-engineering` | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-financial` | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-hr` | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-lmps` | — | ✅ | ✅ | ✅ | Pagination simplificado (local) |
-| `transformometro` | — | — | — | ✅ | |
-| `eficiencia-fabril` | — | — | — | ✅ | |
-| `inspecoes-entrada` | ⏳ | — | — | — | Variante local |
-| `controle-retrabalhos` | — | — | — | — | Sem `@delpi/plugin-ui` ainda |
+| Plugin | Pagination | MultiSelect | ChartCard | KpiCard | LoadingActivity | Notas |
+|--------|------------|-------------|-----------|---------|-----------------|-------|
+| `dashboard-production` | ✅ | ✅ | ✅ | ✅ | ✅ | Piloto F2 |
+| `dashboard-commercial` | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-engineering` | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-financial` | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-hr` | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | Pagination simplificado (local) |
+| `transformometro` | — | — | — | — | ✅ | |
+| `eficiencia-fabril` | — | — | — | — | ✅ | |
+| `inspecoes-entrada` | ⏳ | ⏳ | — | — | — | Variante local |
+| `controle-retrabalhos` | — | — | — | — | — | Sem `@delpi/plugin-ui` ainda |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
+
+Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField` (~20 linhas); CSS permanece no plugin.

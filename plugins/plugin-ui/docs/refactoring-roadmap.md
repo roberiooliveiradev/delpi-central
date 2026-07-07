@@ -50,7 +50,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 | `Pagination` | 14 | `dashboard-production` | ✅ F2.4 — 7 dashboards dept.; `createDashboardPaginationKit` |
 | `PaginationPageJump` | 8 | `dashboard-production` | ✅ incorporado em `Pagination` |
 | `TablePageSizeSelect` | (em `Pagination.tsx`) | `dashboard-production` | ✅ incorporado em `Pagination` |
-| `MultiSelectField` | 13 | `dashboard-production` | Usa `FieldLabel` local |
+| `MultiSelectField` | 13 | `dashboard-production` | ✅ F2.5 — 8 dashboards + lmps |
 | `FilterBar` | 12 | `dashboard-production` | Layout flex; conteúdo = children |
 | `ChartToolbar` | 6 | `dashboard-production` | |
 | `DataTable` | ~12 dashboards | `dashboard-production` | Maior risco — colunas via props |
@@ -209,7 +209,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | 2.2 | `ChartCard` | `layout/` | Fase 1 |
 | 2.3 | `KpiCard` | `layout/` | Fase 1; props para badges IDD opcionais |
 | 2.4 | `Pagination` + `PaginationPageJump` + `TablePageSizeSelect` | `data/` | ✅ Fase 1 + utils `paginationPages` |
-| 2.5 | `MultiSelectField` | `forms/` | `FieldLabel` do pacote |
+| 2.5 | `MultiSelectField` | `forms/` | ✅ Fase 1 (`FieldLabel`) |
 | 2.6 | `FilterBar` | `layout/` | Shell vazio + slots |
 | 2.7 | `ChartToolbar` | `layout/` | |
 | 2.8 | `DataTable` + `DataTableSection` | `data/` | Último — maior superfície |
@@ -251,14 +251,14 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 
 | Plugin | F1 help | F2 shell | F3 forms | Docker hoje |
 |--------|---------|----------|----------|-------------|
-| `dashboard-production` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ | — | sim |
-| `dashboard-commercial` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ | — | sim |
-| `dashboard-engineering` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ | — | sim |
-| `dashboard-financial` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ | — | sim |
-| `dashboard-hr` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ | — | sim |
-| `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ | Detail* | sim |
-| `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ | — | sim |
-| `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ | — | sim |
+| `dashboard-production` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
+| `dashboard-commercial` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
+| `dashboard-engineering` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
+| `dashboard-financial` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
+| `dashboard-hr` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
+| `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ | Detail* | sim |
+| `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
+| `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `transformometro` | ✅ | LoadingActivity ✅ | ⏳ | sim |
 | `cadastro-kaizen` | ✅ | — | ⏳ | sim |
 | `quality-action-plans` | ✅ | parcial | ⏳ | sim |
@@ -301,7 +301,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 ## 7. Próximo passo recomendado
 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2.1–2.4** ChartCard, KpiCard, LoadingActivityCard e Pagination nos 7 dashboards departamentais — próximo: `MultiSelectField` (2.5) ou `FilterBar` (2.6).
+2. **Fase 2.1–2.5** ChartCard, KpiCard, LoadingActivityCard, Pagination e MultiSelectField — próximo: `FilterBar` (2.6).
 
 ---
 

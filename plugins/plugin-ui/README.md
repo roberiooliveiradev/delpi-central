@@ -86,6 +86,9 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `paginationBemClasses` / `createDashboardPaginationKit` | Helpers BEM + factory |
 | `buildVisiblePageItems` / `parsePageJumpInput` | Utils de paginação |
 | `TABLE_PAGE_SIZE_OPTIONS` | Opções default de itens por página |
+| `MultiSelectField` | Dropdown multiseleção com busca opcional |
+| `multiSelectBemClasses` / `createDashboardMultiSelectField` | Helpers BEM + factory |
+| `buildMultiSelectTriggerLabel` | Label do trigger conforme seleção |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 
@@ -101,7 +104,8 @@ src/
     ├── help/             # balões explicativos
     ├── layout/           # ChartCard, KpiCard
     ├── feedback/         # LoadingActivityCard
-    └── data/             # Pagination, TablePageSizeSelect
+    ├── data/             # Pagination, TablePageSizeSelect
+    └── forms/            # MultiSelectField
 └── utils/
     └── paginationPages.ts
 ```
