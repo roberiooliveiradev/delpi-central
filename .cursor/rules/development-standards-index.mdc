@@ -47,13 +47,13 @@ alwaysApply: true
 | `sql-query-development.mdc` | SQL TOTVS — práticas, medição de latência/peso, NOLOCK, cache |
 | `persistent-upload-storage.mdc` | Evidências PAC, anexos NC, qualquer `*_UPLOAD_DIR` |
 
-## Frontend (`plugins/minha-delpi-chat`)
+## Frontend (plugins MFE + chat)
 
 | Regra | Escopo |
 |-------|--------|
-| `chat-prose-rendering.mdc` | Markdown, streaming, títulos do assistente |
-| `plugins-visual-design-system.mdc` | Tokens, layout, componentes |
-| `plugins-frontend-build.mdc` | Build MFE, sync de conteúdo |
+| `chat-prose-rendering.mdc` | Markdown, streaming, títulos do assistente (`minha-delpi-chat`) |
+| `plugins-visual-design-system.mdc` | Tokens, layout, **escopo CSS anti-vazamento**, claro/escuro |
+| `plugins-frontend-build.mdc` | Build MFE, checklist CSS antes de commit |
 
 ## Fluxo por tipo de tarefa
 
@@ -67,6 +67,7 @@ Nova intenção operacional → operational-api-routing → api_route_domains.js
 Texto novo ao usuário   → assistant-content-json
 Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)
 Upload / anexo em disco     → persistent-upload-storage → volume Compose + DELPI_DATA_HOST_DIR
+Novo plugin / UI MFE        → plugins-visual-design-system (escopo CSS + data-theme) → plugins-frontend-build
 ```
 
 ## Ordem de prioridade em conflito
