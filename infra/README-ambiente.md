@@ -291,10 +291,11 @@ Fotos dos participantes e imagens de QR do plugin **customer-experience** ficam 
 |----------|----------------------|---------------|
 | `CUSTOMER_EXPERIENCE_PHOTO_UPLOAD_DIR` | `/app/data/customer-experience/photos` | `${DELPI_DATA_HOST_DIR}/customer-experience/photos` |
 | `CUSTOMER_EXPERIENCE_QR_DIR` | `/app/data/customer-experience/qr` | `${DELPI_DATA_HOST_DIR}/customer-experience/qr` |
+| `CUSTOMER_EXPERIENCE_FORM_IMAGE_UPLOAD_DIR` | `/app/data/customer-experience/form-images` | `${DELPI_DATA_HOST_DIR}/customer-experience/form-images` |
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/customer-experience/photos /var/lib/delpi/customer-experience/qr
+sudo mkdir -p /var/lib/delpi/customer-experience/photos /var/lib/delpi/customer-experience/qr /var/lib/delpi/customer-experience/form-images
 # em infra/.env: DELPI_DATA_HOST_DIR=/var/lib/delpi
 
 cd ~/projetos/delpi-central/infra

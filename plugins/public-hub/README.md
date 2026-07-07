@@ -178,6 +178,8 @@ Páginas **públicas separadas e independentes**, cada uma com seu QR próprio:
 | Agradecimento | `/p/customer-experience/thanks/{token}` (alias `/welcome/{token}`) | `GET /apps/customer-experience-api/public/participants/{token}` |
 | Formulário | `/p/customer-experience/form/{token}` | `GET /apps/customer-experience-api/public/forms/{token}` |
 
+O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), páginas com fundo/ilustração, barra de progresso, layout centralizado, fundo em viewport e modo escuro. Ver `FormPage.tsx` + `form.css`.
+
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
 ### Painéis TV (`tv-dashboard`)
