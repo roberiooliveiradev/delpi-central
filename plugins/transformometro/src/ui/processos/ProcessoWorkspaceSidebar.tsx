@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 
@@ -6,6 +7,7 @@ import {
   filterWorkspaceTree,
   type ProcessoWorkspaceNavNode,
 } from "./processoWorkspaceNav";
+import { ProcessoWorkspaceSidebarActions } from "./ProcessoWorkspaceSidebarActions";
 import { ProcessoWorkspaceTreeIcon } from "./ProcessoWorkspaceTreeIcon";
 
 type Props = {
@@ -14,6 +16,7 @@ type Props = {
   nodes: ProcessoWorkspaceNavNode[];
   activeNodeId: string;
   onNavigate: (href: string) => void;
+  processActions?: ReactNode;
 };
 
 function TreeNode({
@@ -93,6 +96,7 @@ export function ProcessoWorkspaceSidebar({
   nodes,
   activeNodeId,
   onNavigate,
+  processActions,
 }: Props) {
   const [query, setQuery] = useState("");
   const filteredNodes = useMemo(() => filterWorkspaceTree(nodes, query), [nodes, query]);
@@ -164,6 +168,8 @@ export function ProcessoWorkspaceSidebar({
           <p className="ds-hint tm-processo-workspace-sidebar__empty">Nenhum item encontrado.</p>
         ) : null}
       </nav>
+
+      <ProcessoWorkspaceSidebarActions processActions={processActions} />
     </aside>
   );
 }

@@ -1252,6 +1252,32 @@
   margin: 0;
 }
 
+.dashboard-transformometro .tm-processo-workspace-sidebar__footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .tm-processo-workspace-sidebar__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dashboard-transformometro .tm-processo-workspace-sidebar__actions--panel {
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .tm-processo-workspace-sidebar__action-btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
 @media (max-width: 900px) {
   .dashboard-transformometro .tm-processo-workspace {
     grid-template-columns: 1fr;

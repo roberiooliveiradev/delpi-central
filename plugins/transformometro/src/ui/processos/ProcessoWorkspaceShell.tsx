@@ -15,6 +15,7 @@ import {
   parseProcessoSectionFromHash,
   type ProcessoWorkspaceSectionId,
 } from "./processoWorkspaceNav";
+import { ProcessoWorkspacePanelActionsProvider } from "./processoWorkspacePanelActions";
 
 type Props = {
   processoId: string;
@@ -25,6 +26,7 @@ type Props = {
   processo?: Processo | null;
   instancias?: ProcessoInstancia[];
   revisoes?: Revisao[];
+  processActions?: ReactNode;
 };
 
 export function ProcessoWorkspaceShell({
@@ -36,6 +38,7 @@ export function ProcessoWorkspaceShell({
   processo: processoProp,
   instancias: instanciasProp,
   revisoes: revisoesProp,
+  processActions,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(processoProp ?? null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>(instanciasProp ?? []);
@@ -75,18 +78,21 @@ export function ProcessoWorkspaceShell({
   }, [instancias, processo, revisoes]);
 
   return (
-    <div className="tm-processo-workspace">
-      <ProcessoWorkspaceSidebar
-        processoCode={processo?.codigo_processo ?? "…"}
-        processoLabel={processo?.nome_processo ?? "Processo"}
-        nodes={treeNodes}
-        activeNodeId={activeNodeId}
-        onNavigate={onNavigate}
-      />
-      <div className="tm-processo-workspace__main">
-        <div className="tm-processo-workspace__sections">{children}</div>
+    <ProcessoWorkspacePanelActionsProvider>
+      <div className="tm-processo-workspace">
+        <ProcessoWorkspaceSidebar
+          processoCode={processo?.codigo_processo ?? "…"}
+          processoLabel={processo?.nome_processo ?? "Processo"}
+          nodes={treeNodes}
+          activeNodeId={activeNodeId}
+          onNavigate={onNavigate}
+          processActions={processActions}
+        />
+        <div className="tm-processo-workspace__main">
+          <div className="tm-processo-workspace__sections">{children}</div>
+        </div>
       </div>
-    </div>
+    </ProcessoWorkspacePanelActionsProvider>
   );
 }
 

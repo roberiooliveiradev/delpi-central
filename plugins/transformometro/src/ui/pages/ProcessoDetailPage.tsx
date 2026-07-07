@@ -547,40 +547,42 @@ export function ProcessoDetailPage({
 
   const pageBody = (
     <>
-      <PageHeader
-        title={`${processo.codigo_processo} — ${processo.nome_processo}`}
-        subtitle={[processo.status_processo, processo.familia_processo ? `família ${processo.familia_processo}` : null]
-          .filter(Boolean)
-          .join(" · ")}
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
-        onNavigate={onNavigate}
-        actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
-              <ArrowLeft size={16} />
-              Lista
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={refreshing}
-              onClick={() => void handleDuplicateProcesso()}
-            >
-              <Copy size={16} />
-              Duplicar processo
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn ds-ghost-btn--danger"
-              disabled={refreshing}
-              onClick={() => void handleDeleteProcesso()}
-            >
-              <Trash2 size={16} />
-              Excluir processo
-            </button>
-          </>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title={`${processo.codigo_processo} — ${processo.nome_processo}`}
+          subtitle={[processo.status_processo, processo.familia_processo ? `família ${processo.familia_processo}` : null]
+            .filter(Boolean)
+            .join(" · ")}
+          currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
+          onNavigate={onNavigate}
+          actions={
+            <>
+              <button type="button" className="ds-ghost-btn" onClick={onBack}>
+                <ArrowLeft size={16} />
+                Lista
+              </button>
+              <button
+                type="button"
+                className="ds-ghost-btn"
+                disabled={refreshing}
+                onClick={() => void handleDuplicateProcesso()}
+              >
+                <Copy size={16} />
+                Duplicar processo
+              </button>
+              <button
+                type="button"
+                className="ds-ghost-btn ds-ghost-btn--danger"
+                disabled={refreshing}
+                onClick={() => void handleDeleteProcesso()}
+              >
+                <Trash2 size={16} />
+                Excluir processo
+              </button>
+            </>
+          }
+        />
+      ) : null}
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 

@@ -137,22 +137,24 @@ export function RevisaoDetailPage({
 
   const pageBody = (
     <>
-      <PageHeader
-        title={`Revisão v${revisao.versao_revisao} · ${cenarioLabel(revisao.cenario_tipo)}`}
-        subtitle={`${processo.codigo_processo} — ${processo.nome_processo}${revisao.revisao_ativa ? " · ativa" : ""}`}
-        currentPath={pathname ?? buildProcessoPath(processoId, revisaoId, resolvedInstanciaId)}
-        onNavigate={onNavigate}
-        actions={
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            onClick={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
-          >
-            <ArrowLeft size={16} />
-            Instância
-          </button>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title={`Revisão v${revisao.versao_revisao} · ${cenarioLabel(revisao.cenario_tipo)}`}
+          subtitle={`${processo.codigo_processo} — ${processo.nome_processo}${revisao.revisao_ativa ? " · ativa" : ""}`}
+          currentPath={pathname ?? buildProcessoPath(processoId, revisaoId, resolvedInstanciaId)}
+          onNavigate={onNavigate}
+          actions={
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
+            >
+              <ArrowLeft size={16} />
+              Instância
+            </button>
+          }
+        />
+      ) : null}
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 

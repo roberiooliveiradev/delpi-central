@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Copy, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
+  deleteProcesso,
+  duplicateProcesso,
   fetchProcesso,
   fetchProcessoInstancias,
   fetchRevisoes,
@@ -11,6 +15,7 @@ import {
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import { buildProcessoPath } from "../../utils/routeParser";
 import type { ParsedTransformometroRoute } from "../../utils/routeParser";
 import { InstanciaDetailPage } from "../pages/InstanciaDetailPage";
 import { ProcessoDetailPage } from "../pages/ProcessoDetailPage";
@@ -55,6 +60,7 @@ export function ProcessoWorkspacePage({
   onNavigate,
   onBack,
 }: Props) {
+  const confirm = useConfirm();
   const processoId = route.processoId;
   const activeSection = useProcessoWorkspaceSection();
 
@@ -124,7 +130,70 @@ export function ProcessoWorkspacePage({
     return next;
   }, [activePanelKey, mountedPanels]);
 
+  async function handleDuplicateProcesso() {
+    if (!processo) return;
+    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
+    const confirmed = await confirm({
+      title: "Duplicar processo",
+      message: `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`,
+      confirmLabel: "Duplicar",
+    });
+    if (!confirmed) return;
+    try {
+      const result = await duplicateProcesso(processoId, undefined, getAccessToken);
+      onNavigate(buildProcessoPath(result.processo.processo_id));
+    } catch {
+      // erro exibido pelo painel ativo via StatusAlerts
+    }
+  }
+
+  async function handleDeleteProcesso() {
+    if (!processo) return;
+    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
+    const confirmed = await confirm({
+      title: "Excluir processo",
+      message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica). Você será redirecionado à lista.`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+    try {
+      await deleteProcesso(processoId, getAccessToken);
+      onBack();
+    } catch {
+      // erro exibido pelo painel ativo via StatusAlerts
+    }
+  }
+
+  const processSidebarActions = (
+    <>
+      <button type="button" className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn" onClick={onBack}>
+        <ArrowLeft size={16} />
+        Lista
+      </button>
+      <button
+        type="button"
+        className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
+        disabled={!processo}
+        onClick={() => void handleDuplicateProcesso()}
+      >
+        <Copy size={16} />
+        Duplicar processo
+      </button>
+      <button
+        type="button"
+        className="ds-ghost-btn ds-ghost-btn--danger tm-processo-workspace-sidebar__action-btn"
+        disabled={!processo}
+        onClick={() => void handleDeleteProcesso()}
+      >
+        <Trash2 size={16} />
+        Excluir processo
+      </button>
+    </>
+  );
+
   function renderPanel(panelKey: string) {
+    const isActive = panelKey === activePanelKey;
     const view = panelViewFromKey(panelKey);
     const instanciaId = panelInstanciaId(panelKey) ?? route.instanciaId ?? "";
     const revisaoId = panelRevisaoId(panelKey) ?? route.revisaoId ?? "";
@@ -146,6 +215,7 @@ export function ProcessoWorkspacePage({
       return (
         <InstanciaDetailPage
           embedded
+          embeddedActive={isActive}
           getAccessToken={getAccessToken}
           processoId={processoId}
           instanciaId={instanciaId}
@@ -186,6 +256,7 @@ export function ProcessoWorkspacePage({
         processo={processo}
         instancias={instancias}
         revisoes={revisoes}
+        processActions={processSidebarActions}
       >
         {Array.from(visiblePanels).map((panelKey) => (
           <ProcessoWorkspacePanel

@@ -52,6 +52,7 @@ import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { processoEscopoFromEntity } from "../processos/processoEscopo";
 import { ProcessoWorkspaceShell } from "../processos/ProcessoWorkspaceShell";
 import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
+import { useProcessoWorkspacePanelActions } from "../processos/processoWorkspacePanelActions";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
 import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
@@ -62,6 +63,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
   embedded?: boolean;
+  embeddedActive?: boolean;
 };
 
 export function InstanciaDetailPage({
@@ -71,6 +73,7 @@ export function InstanciaDetailPage({
   pathname,
   onNavigate,
   embedded = false,
+  embeddedActive = true,
 }: Props) {
   const confirm = useConfirm();
   const [processo, setProcesso] = useState<Processo | null>(null);
@@ -177,9 +180,9 @@ export function InstanciaDetailPage({
     setShowRevisaoForm(true);
   }
 
-  function closeNovaRevisaoForm() {
+  const closeNovaRevisaoForm = useCallback(() => {
     setShowRevisaoForm(false);
-  }
+  }, []);
 
   useEffect(() => {
     if (!showRevisaoForm || !pendingRevisaoScroll.current) return;
@@ -254,6 +257,66 @@ export function InstanciaDetailPage({
 
   const fetchProgress = useTrackedSingleFetchProgress(loading && !instancia);
   const loadingProgress = useLoadingProgress(loading && !instancia, fetchProgress);
+
+  const panelSidebarActions = useMemo(
+    () =>
+      embedded && instancia ? (
+        <>
+          {showRevisaoForm ? (
+            <button
+              type="button"
+              className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
+              onClick={closeNovaRevisaoForm}
+            >
+              Cancelar revisão
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ds-primary-btn tm-processo-workspace-sidebar__action-btn"
+              onClick={openNovaRevisaoForm}
+            >
+              <Plus size={16} />
+              Nova revisão
+            </button>
+          )}
+          <button
+            type="button"
+            className="ds-ghost-btn ds-ghost-btn--danger tm-processo-workspace-sidebar__action-btn"
+            onClick={() => {
+              void (async () => {
+                const confirmed = await confirm({
+                  title: "Excluir melhoria",
+                  message: "Excluir esta instância operacional?",
+                  confirmLabel: "Excluir",
+                  variant: "danger",
+                });
+                if (!confirmed) return;
+                await deleteInstancia(instanciaId, getAccessToken);
+                onNavigate(buildProcessoPath(processoId));
+              })();
+            }}
+          >
+            <Trash2 size={16} />
+            Excluir instância
+          </button>
+        </>
+      ) : null,
+    [
+      closeNovaRevisaoForm,
+      confirm,
+      embedded,
+      getAccessToken,
+      instancia,
+      instanciaId,
+      onNavigate,
+      openNovaRevisaoForm,
+      processoId,
+      showRevisaoForm,
+    ]
+  );
+
+  useProcessoWorkspacePanelActions(panelSidebarActions, embedded && embeddedActive);
 
   if (loading && !instancia) {
     const loader = (
@@ -509,44 +572,46 @@ export function InstanciaDetailPage({
 
   const pageBody = (
     <>
-      <PageHeader
-        title={instanciaLabel}
-        subtitle={`${processo.codigo_processo} — ${processo.nome_processo} · ${instancia.status_instancia ?? "ativo"}`}
-        currentPath={pathname ?? buildInstanciaPath(processoId, instanciaId)}
-        onNavigate={onNavigate}
-        actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
-              <ArrowLeft size={16} />
-              Processo
-            </button>
-            <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
-              <Plus size={16} />
-              Nova revisão
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={() => {
-                void (async () => {
-                  const confirmed = await confirm({
-                    title: "Excluir melhoria",
-                    message: "Excluir esta instância operacional?",
-                    confirmLabel: "Excluir",
-                    variant: "danger",
-                  });
-                  if (!confirmed) return;
-                  await deleteInstancia(instanciaId, getAccessToken);
-                  onNavigate(buildProcessoPath(processoId));
-                })();
-              }}
-            >
-              <Trash2 size={16} />
-              Excluir instância
-            </button>
-          </>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title={instanciaLabel}
+          subtitle={`${processo.codigo_processo} — ${processo.nome_processo} · ${instancia.status_instancia ?? "ativo"}`}
+          currentPath={pathname ?? buildInstanciaPath(processoId, instanciaId)}
+          onNavigate={onNavigate}
+          actions={
+            <>
+              <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
+                <ArrowLeft size={16} />
+                Processo
+              </button>
+              <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
+                <Plus size={16} />
+                Nova revisão
+              </button>
+              <button
+                type="button"
+                className="ds-ghost-btn"
+                onClick={() => {
+                  void (async () => {
+                    const confirmed = await confirm({
+                      title: "Excluir melhoria",
+                      message: "Excluir esta instância operacional?",
+                      confirmLabel: "Excluir",
+                      variant: "danger",
+                    });
+                    if (!confirmed) return;
+                    await deleteInstancia(instanciaId, getAccessToken);
+                    onNavigate(buildProcessoPath(processoId));
+                  })();
+                }}
+              >
+                <Trash2 size={16} />
+                Excluir instância
+              </button>
+            </>
+          }
+        />
+      ) : null}
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
