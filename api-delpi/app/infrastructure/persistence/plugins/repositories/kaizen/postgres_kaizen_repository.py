@@ -8,7 +8,11 @@ from typing import Any
 from app.domain.services.kaizen import kaizen_revision_service as revision_service
 from app.domain.services.kaizen import kaizen_savings_timeline as savings_timeline_service
 from app.domain.services.kaizen import kaizen_savings_validity
-from app.domain.services.kaizen.kaizen_savings_calculator import enrich_savings_fields
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    enrich_savings_fields,
+    resolve_realized_annual_savings,
+    resolve_realized_daily_savings,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -87,6 +91,14 @@ class PostgresKaizenRepository(PluginBaseRepository):
             implemented,
             status=record.get("status"),
         )
+        realized_daily = resolve_realized_daily_savings(record)
+        if realized_daily is not None:
+            record["realized_daily_savings"] = realized_daily
+        realized_annual = resolve_realized_annual_savings(
+            record, calculated_daily=realized_daily
+        )
+        if realized_annual is not None:
+            record["realized_annual_savings"] = realized_annual
         return record
 
     # ------------------------------------------------------------------ listagem
@@ -354,7 +366,10 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 sum(self._as_float(row.get("annual_savings")) for row in active_rows), 2
             ),
             "realized_annual_savings": round(
-                sum(self._as_float(row.get("realized_annual_savings")) for row in active_rows),
+                sum(
+                    self._as_float(resolve_realized_annual_savings(row))
+                    for row in active_rows
+                ),
                 2,
             ),
             "active_count": len(active_rows),

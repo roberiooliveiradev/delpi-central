@@ -123,6 +123,36 @@ def calculate_annual_savings(daily_savings: Optional[float]) -> Optional[float]:
     return round(daily_savings * 365, 2)
 
 
+def resolve_realized_daily_savings(
+    fields: Mapping[str, Any],
+    *,
+    calculated_daily: Optional[float] = None,
+) -> Optional[float]:
+    """Economia realizada/dia: medida informada ou, se ausente, estimativa calculada."""
+    explicit = _to_float(fields.get("realized_daily_savings"))
+    if explicit is not None:
+        return round(explicit, 2)
+    daily = (
+        calculated_daily
+        if calculated_daily is not None
+        else _to_float(fields.get("daily_savings"))
+    )
+    if daily is None:
+        daily = calculate_daily_savings(fields)
+    return round(daily, 2) if daily is not None else None
+
+
+def resolve_realized_annual_savings(
+    fields: Mapping[str, Any],
+    *,
+    calculated_daily: Optional[float] = None,
+) -> Optional[float]:
+    realized_daily = resolve_realized_daily_savings(
+        fields, calculated_daily=calculated_daily
+    )
+    return calculate_annual_savings(realized_daily)
+
+
 def hours_saved_per_day(
     seconds_per_occurrence: Optional[float],
     occurrences_per_day: Optional[float],
@@ -151,10 +181,9 @@ def enrich_savings_fields(fields: dict[str, Any]) -> dict[str, Any]:
         _to_float(enriched.get("occurrences_per_day")),
     )
 
-    # F5: economia realizada (medida). O anual deriva do diário informado.
-    realized_daily = _to_float(enriched.get("realized_daily_savings"))
-    enriched["realized_daily_savings"] = (
-        round(realized_daily, 2) if realized_daily is not None else None
+    realized_daily = resolve_realized_daily_savings(enriched, calculated_daily=daily)
+    enriched["realized_daily_savings"] = realized_daily
+    enriched["realized_annual_savings"] = resolve_realized_annual_savings(
+        enriched, calculated_daily=realized_daily
     )
-    enriched["realized_annual_savings"] = calculate_annual_savings(realized_daily)
     return enriched

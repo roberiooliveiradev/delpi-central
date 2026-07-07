@@ -3,6 +3,8 @@ from decimal import Decimal
 from unittest.mock import MagicMock
 from uuid import UUID
 
+import pytest
+
 from app.infrastructure.persistence.plugins.repositories.kaizen.postgres_kaizen_repository import (
     PostgresKaizenRepository,
 )
@@ -62,3 +64,4 @@ def test_summary_keeps_period_savings_and_active_when_no_new_implants_in_period(
     assert result["period_savings"] > 0
     assert result["active_count"] == 1
     assert result["active_annual_savings"] > 0
+    assert result["realized_annual_savings"] == pytest.approx(3040.45, rel=1e-2)

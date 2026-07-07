@@ -43,12 +43,13 @@ export const KAIZEN_HELP_TOOLTIPS = {
     savingsType:
       "Como a economia é medida: tempo (segundos/ocorrências), material, financeira fixa, qualitativa ou mista.",
     realizedDailySavings:
-      "Economia diária efetivamente medida após a implantação. Usada para calcular a efetividade vs. a estimativa.",
+      "Economia diária realizada. Se não informada, usa a mesma estimativa calculada pelos parâmetros; informe um valor distinto quando houver medição após a implantação.",
     savingsValidity:
       "O kaizen contabiliza ganhos financeiros por 1 ano a partir da implantação; depois disso deixa de somar no run-rate.",
     estimatedDaily: "Economia diária estimada pela API a partir dos parâmetros informados.",
     estimatedAnnual: "Projeção anual da economia estimada (diária × dias úteis do ano).",
-    realizedAnnual: "Projeção anual da economia realizada, dentro da validade de 1 ano.",
+    realizedAnnual:
+      "Projeção anual da economia realizada (diária × 365). Sem medição informada, espelha a estimada calculada.",
     effectiveness: "Relação entre a economia realizada e a estimada (quão perto do previsto o ganho ficou).",
   },
   savingsParams: {

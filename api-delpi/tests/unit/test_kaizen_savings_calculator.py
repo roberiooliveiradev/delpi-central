@@ -7,6 +7,8 @@ from app.domain.services.kaizen.kaizen_savings_calculator import (
     calculate_daily_savings,
     enrich_savings_fields,
     infer_savings_type,
+    resolve_realized_annual_savings,
+    resolve_realized_daily_savings,
 )
 
 
@@ -81,9 +83,33 @@ def test_enrich_realized_savings_computes_annual():
     assert enriched["realized_annual_savings"] == 5475.0
 
 
-def test_enrich_realized_savings_absent_is_none():
+def test_enrich_realized_savings_absent_falls_back_to_calculated():
+    enriched = enrich_savings_fields(
+        {
+            "branch_code": "01",
+            "title": "Teste",
+            "savings_type": "financeiro",
+            "fixed_daily_savings": 20,
+        }
+    )
+    assert enriched["daily_savings"] == 20.0
+    assert enriched["realized_daily_savings"] == 20.0
+    assert enriched["realized_annual_savings"] == 7300.0
+
+
+def test_enrich_realized_savings_absent_qualitativo_is_none():
     enriched = enrich_savings_fields(
         {"branch_code": "01", "title": "Teste", "savings_type": "qualitativo"}
     )
     assert enriched["realized_daily_savings"] is None
     assert enriched["realized_annual_savings"] is None
+
+
+def test_resolve_realized_savings_prefers_explicit_measurement():
+    row = {
+        "daily_savings": 100.0,
+        "annual_savings": 36500.0,
+        "realized_daily_savings": 80.0,
+    }
+    assert resolve_realized_daily_savings(row) == 80.0
+    assert resolve_realized_annual_savings(row) == 29200.0
