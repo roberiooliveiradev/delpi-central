@@ -87,7 +87,10 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `buildVisiblePageItems` / `parsePageJumpInput` | Utils de paginação |
 | `TABLE_PAGE_SIZE_OPTIONS` | Opções default de itens por página |
 | `MultiSelectField` | Dropdown multiseleção com busca opcional |
+| `createDashboardCreatableMultiSelectField` | Multi-select com opção de criar valores (ex.: categorias kaizen) |
 | `multiSelectBemClasses` / `createDashboardMultiSelectField` | Helpers BEM + factory |
+| `DateField` / `createDashboardDateField` | Input `type="date"` com label + hint |
+| `dateFieldBemClasses` | Helper BEM para DateField |
 | `buildMultiSelectTriggerLabel` | Label do trigger conforme seleção |
 | `FiltersRow` / `FilterInputField` / `FilterSelectField` | Linha de filtros + campos input/select |
 | `filtersRowBemClasses` / `createDashboardFiltersKit` | Helpers BEM + factory |

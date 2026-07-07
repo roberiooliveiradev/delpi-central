@@ -171,13 +171,13 @@ Migration `V036`: coluna `categories TEXT[]` (substitui uso exclusivo de `catego
 
 O `httpClient.ts` centraliza token (via `configureHttpClient` no bootstrap) e tratamento de erros do envelope.
 
-### 5.1 Camada UI (`@delpi/plugin-ui`)
+### 7.1 Camada UI (`@delpi/plugin-ui`)
 
 Formulários, filtros, KPIs, tabelas e seções usam wrappers finos em `src/components/ui/` sobre [`@delpi/plugin-ui`](../../plugin-ui/README.md) (prefixo BEM `kz`). Textos de ajuda permanecem em `src/content/helpTooltips.ts`.
 
 Detalhes, mapa de wrappers e checklist para novos campos: **[UI-PLUGIN-UI.md](./UI-PLUGIN-UI.md)**.
 
-## 6. Variáveis de ambiente (planilha — importação e dashboard)
+## 8. Variáveis de ambiente (planilha — importação e dashboard)
 
 | Variável | Uso |
 |----------|-----|
@@ -187,7 +187,27 @@ Detalhes, mapa de wrappers e checklist para novos campos: **[UI-PLUGIN-UI.md](./
 
 Definidas em `infra/.env` e repassadas ao container `delpi-api-delpi`.
 
-## 7. Evolução planejada
+## 9. Revisões, versões e rotas estendidas
+
+Implementado (migrations `V029`–`V034`, rotas em `kaizen_records_router.py`):
+
+| Rota | Descrição |
+|------|-----------|
+| `GET /records/{id}/revisions` | Lista revisões/snapshots |
+| `GET /records/{id}/at?date=` | Estado vigente em uma data |
+| `POST/PUT/DELETE /records/{id}/versions/{n}` | Ciclo de vida (rascunho → implantar) |
+| `POST /records/{id}/versions/{n}/implement` | Torna versão ativa (usa `date_implemented` do snapshot) |
+| `GET /records/{id}/savings-timeline` | Ganhos por segmento de vigência |
+| `GET/POST/DELETE /records/{id}/evidences` | Evidências (volume persistente) |
+| `GET /records/{id}/history`, `/audit-log` | Trilhas operacional e governança |
+
+Edição inline na ficha ativa = **correção** da versão vigente (não cria revisão nova). Nova melhoria = **Nova versão** (clone em rascunho) + **Salvar e tornar ativa**.
+
+PUT aceita `change_reason` (auditoria). Campo `effective_from` no body é **legado** — vigência deriva de `date_implemented`.
+
+Especificação de cálculo temporal para dashboard: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).
+
+## 10. Evolução planejada
 
 Ver [ROADMAP.md](./ROADMAP.md) e documento canônico [docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md) (Fases 4–10).
 
@@ -195,29 +215,19 @@ Resumo dos próximos passos:
 
 1. **Fase 4** — Registro Core API, RBAC, go-live staging/prod
 2. **Fase 5** — Scripts CI/homologação (`check-cadastro-kaizen.sh`)
-3. **Fase 6** — Revisões temporais (`quality.kaizen_revisions`) + `summary` Postgres — ver [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md)
+3. **Fase 6b/6c** — `summary` Postgres com cálculo temporal — ver [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md)
 4. **Fases 7–9** — Dashboard, agente chat, cutover planilha
 5. **Fase 10** — Export, anexos (backlog)
 
-### 7.1 Revisões temporais (proposta)
+Status detalhado: [status-atual.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/status-atual.md).
 
-Cada alteração relevante (status, economia, datas de implantação/descontinuação) gera um **snapshot imutável** com `effective_from` / `effective_until`. O dashboard calcula ganhos e contagens por competência usando a revisão vigente em cada dia — não o estado atual sobrescrito.
-
-| Conceito | Detalhe |
-|----------|---------|
-| Tabela | `quality.kaizen_revisions` (migration `V028` planejada) |
-| API futura | `GET /records/{id}/revisions`, `GET /records/{id}/at?date=` |
-| PUT estendido | `effective_from`, `change_reason` quando campos de cálculo mudam |
-| UI futura | Timeline de histórico + campo «Vigente a partir de» |
-
-Especificação completa: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).
-
-## 8. Testes automatizados
+## 11. Testes automatizados
 
 ```bash
 cd api-delpi
 PYTHONPATH="../shared:.:." pytest \
   tests/unit/test_kaizen_savings_calculator.py \
+  tests/unit/test_kaizen_revision_service.py \
   tests/unit/test_import_kaizens_from_sheet_use_case.py \
   tests/test_route_meta_smoke.py -k "kaizen" -q
 

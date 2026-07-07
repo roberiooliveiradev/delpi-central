@@ -213,14 +213,14 @@ Body estendido no `PUT` / `POST`:
 {
   "status": "implantado",
   "date_implemented": "2026-01-16",
-  "effective_from": "2026-01-16",
   "change_reason": "Implantação em produção"
 }
 ```
 
 | Campo | Obrigatório | Uso |
 |-------|-------------|-----|
-| `effective_from` | Quando muda status/economia | Início de vigência da nova revisão |
+| `date_implemented` | Recomendado ao implantar | **Fonte única na UI** — espelha `effective_from` da revisão (`resolve_effective_from`) |
+| `effective_from` | Legado (body) | Ignorado quando `date_implemented` informado; mantido só para compatibilidade de API |
 | `change_reason` | Opcional | Texto livre / auditoria |
 
 **operationIds** (registrar em `route_contract_registry`):
@@ -258,13 +258,15 @@ Fixtures: `tests/fixtures/kaizen_revision_regression_cases.py`
 
 ## 9. Frontend (MFE)
 
-| Tela | Entrega |
-|------|---------|
-| Formulário edição | Campo **«Vigente a partir de»** quando status ou economia mudam |
-| Detalhe / edição | Aba ou seção **«Histórico de revisões»** (timeline) |
-| Listagem | Sem mudança obrigatória (cabeça = estado atual) |
+> **Implementado (jul/2026):** ficha `KaizenDetailPage` com timeline, seletor de versões e **Data implantação** no Estágio (sem campo separado «Vigente a partir de»). Implantar rascunho usa a data do Estágio.
 
-Componente sugerido: `KaizenRevisionTimeline` (padrão `LmpHistoryTimeline` / auditoria 5S).
+| Tela | Entrega | Status |
+|------|---------|--------|
+| Ficha / Estágio | **Data implantação** (vigência + validade 1 ano) | ✅ |
+| Detalhe | Timeline `KaizenRevisionTimeline` + versões | ✅ |
+| Listagem | Colunas recebimento da ideia e implantação | ✅ |
+
+Componente: `KaizenRevisionTimeline` (padrão timeline de auditoria 5S / LMP).
 
 ---
 
@@ -290,7 +292,7 @@ Sem revisão retroativa fabricada: não inventar histórico pré-import; apenas 
 | **6a** | Schema `kaizen_revisions` + revisão automática no POST/PUT + API list/get |
 | **6b** | `KaizenTemporalSavingsCalculator` + testes fixtures |
 | **6c** | `GET /quality/kaizens/summary` lendo Postgres com revisões |
-| **6d** | UI timeline + campo `effective_from` |
+| **6d** | UI timeline + **Data implantação** (vigência unificada) — ✅ entregue |
 | **6e** | SI / dashboard-quality validados contra cenários históricos |
 
 A Fase 6 original do [ROADMAP.md](./ROADMAP.md) deve ser **desdobrada** em 6a–6e; não implementar summary Postgres **sem** revisões.

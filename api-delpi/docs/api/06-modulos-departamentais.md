@@ -455,13 +455,10 @@ Código: `ImportKaizensFromSheetUseCase`, `kaizen_sheet_import_mapper.py`, `kaiz
 
 Testes: `tests/unit/test_import_kaizens_from_sheet_use_case.py`, smoke `test_quality_kaizen_*` em `test_route_meta_smoke.py`.
 
-#### Revisões temporais (planejado — Fase 6)
+#### Revisões, versões e evidências (implementado)
 
-> Especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md)
+Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo de vida de versões, evidências e trilhas de auditoria. Ver [plugins/cadastro-kaizen/docs/DOCUMENTACAO.md](../../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) § 9.
 
-O cadastro atual guarda só o **estado corrente** em `quality.kaizens`. A evolução prevê `quality.kaizen_revisions` com snapshots por alteração (`effective_from` / `effective_until`), para:
+**Vigência:** `effective_from` da revisão espelha `date_implemented` informado no Estágio. O PUT não exige campo separado «Vigente a partir de» — body legado `effective_from` é ignorado.
 
-- Calcular `total_savings` e `total_kaizens` em `GET /quality/kaizens/summary` com fidelidade histórica
-- Auditar mudanças de status e economia na UI
-
-Rotas planejadas: `GET /quality/kaizens/records/{id}/revisions`, `GET .../at?date=YYYY-MM-DD`. O `PUT` passará a aceitar `effective_from` e `change_reason` quando campos de cálculo mudarem.
+**Pendente (Fase 6b/6c):** migrar `GET /quality/kaizens/summary` para Postgres com cálculo temporal por revisão — especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).

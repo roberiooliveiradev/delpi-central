@@ -55,7 +55,7 @@ import "./index.css";
 | `KaizenListPage` | DataTable kit, Pagination, `StateAlert` |
 | `KaizenRecordFilters` | `FiltersKit` completo |
 | `KaizenDashboardPage` | `KpiCard`, `FiltersRow`, `FilterInputField`, `MultiSelectField` |
-| `KaizenDetailPage` | `EditableSectionCard`, `FormGrid`, `ReadOnlyGrid`, campos nativos, `SectionCard` |
+| `KaizenDetailPage` | `EditableSectionCard`, `FormGrid`, `ReadOnlyGrid`, `DateField`, campos nativos, `SectionCard` — Estágio com data implantação única |
 | `KaizenFormPage` / `KaizenFormFields` | `FormSection` → `SectionCard` + `FormGrid` + campos nativos |
 | `KaizenEvidencePanel` (link externo) | `FormGrid`, `SelectField`, `TextField` |
 

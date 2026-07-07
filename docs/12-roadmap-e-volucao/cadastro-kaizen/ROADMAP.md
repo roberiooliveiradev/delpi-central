@@ -4,7 +4,7 @@
 > **Status:** Fases 0–3 concluídas em dev; Fases 4–10 planejadas  
 > **Produto:** Minha DELPI  
 > **Escopo:** plugin `cadastro-kaizen` + rotas `api-delpi/quality/kaizens/records` + schema `quality` (postgres-plugins)  
-> **Atualizado:** 2026-06-15
+> **Atualizado:** 2026-07-07
 
 ---
 
@@ -25,11 +25,13 @@ Documentação operacional: [plugins/cadastro-kaizen/README.md](../../../plugins
 
 | Área | Situação | Observação |
 |------|----------|------------|
-| Migrations `quality` V026/V027 | ✅ Aplicadas | `quality.submodules` + `quality.kaizens` |
-| CRUD Postgres `/kaizens/records` | ✅ | List, create, get, update, delete lógico |
-| Cálculo de economia | ✅ | `KaizenSavingsCalculator` (tempo/material/financeiro/misto/qualitativo) |
-| Importação planilha → Postgres | ✅ | `POST .../import-from-sheet` + botão na UI |
-| MFE listagem + formulário | ✅ | Filtros, paginação client-side, rotas `/novo` e `/editar/{uuid}` |
+| Migrations `quality` V026–V036 | ✅ Aplicadas | Revisões, evidências, versões, `date_idea_received`, `categories[]` |
+| CRUD Postgres `/kaizens/records` | ✅ | List, create, get, update, delete + rotas estendidas |
+| Revisões + versões + evidências (API/MFE) | ✅ | V029–V034; ficha `KaizenDetailPage` |
+| Ganho realizado + fallback calculado | ✅ | V032 + `resolve_realized_*` |
+| Data implantação = vigência | ✅ | `date_implemented` → `effective_from`; UI unificada (jul/2026) |
+| Categorias múltiplas + data ideia | ✅ | V035/V036 + multi-select creatable |
+| MFE listagem + ficha + dashboard | ✅ | Colunas implantação/recebimento; `KaizenDashboardPage` |
 | Docker dev | ✅ | `delpi-cadastro-kaizen`, gateway `/apps/cadastro-kaizen` |
 | Dados piloto | ✅ | 21 kaizens importados via API em ambiente local |
 | Registro Core API / RBAC prod | ⏳ Pendente | Manifesto existe; falta registrar e atribuir perfis |
@@ -193,11 +195,11 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 
 ### Fase 6a — Schema e revisão automática
 
-- [ ] Migration `V028__create_kaizen_revisions.sql`
-- [ ] `KaizenRevisionRepository` + `KaizenRevisionService` (POST/PUT criam revisão; fecham `effective_until`)
-- [ ] Backfill: revisão `1` para kaizens já importados
-- [ ] `GET /records/{id}/revisions`, `GET /records/{id}/at?date=`
-- [ ] Testes unitários de vigência e diff de campos gatilho
+- [x] Migrations `V029`–`V034` (`kaizen_revisions`, evidências, versões, auditoria)
+- [x] Repositório + serviço de revisão (`kaizen_revision_service`, `PostgresKaizenRepository`)
+- [x] `GET /records/{id}/revisions`, `GET /records/{id}/at?date=`
+- [x] Rotas `/versions`, `/implement`, `/evidences`, `/history`, `/audit-log`, `/savings-timeline`
+- [x] Testes unitários de vigência e diff de campos gatilho
 
 ### Fase 6b — Cálculo temporal
 
@@ -214,8 +216,9 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 
 ### Fase 6d — UI histórico
 
-- [ ] Campo «Vigente a partir de» no formulário quando status/economia mudam
-- [ ] Timeline `KaizenRevisionTimeline` na edição
+- [x] Timeline `KaizenRevisionTimeline` na ficha
+- [x] Campo **Data implantação** no Estágio (vigência unificada — sem «Vigente a partir de» separado)
+- [x] Seletor de versões + implantar rascunho usando data do Estágio
 
 **Critério de pronto:** dashboard-quality exibe totais coerentes para meses passados após mudança de status/economia; `summary` com `postgres` não depende da planilha.
 
@@ -346,7 +349,8 @@ cd plugins/cadastro-kaizen && npm run ci
 | 2026-06 | Cadastro operacional em Postgres; planilha permanece para dashboard até cutover |
 | 2026-06 | Rotas de leitura Sheets em `/quality/kaizens/summary`; CRUD em `/quality/kaizens/records` |
 | 2026-06 | Importação via API (`import-from-sheet`), não script offline em produção |
-| 2026-06 | IDs legados da planilha com `/` suportados via `{kaizen_id:path}` |
+| 2026-07 | `date_implemented` único na UI; `effective_from` espelha implantação na revisão |
+| 2026-07 | `date_idea_received`, `categories[]`, ganho realizado com fallback calculado |
 
 ---
 

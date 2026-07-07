@@ -29,7 +29,8 @@ Dashboard qualidade → /apps/api-delpi/quality/kaizens/summary (Google Sheets)
 |------|------|
 | `/apps/cadastro-kaizen` | Listagem com filtros e tabela paginada |
 | `/apps/cadastro-kaizen/novo` | Formulário de criação |
-| `/apps/cadastro-kaizen/editar/{uuid}` | Formulário de edição |
+| `/apps/cadastro-kaizen/detalhe/{uuid}` | Ficha visual com edição por seção, versões, evidências |
+| `/apps/cadastro-kaizen/editar/{uuid}` | Formulário legado de edição (redireciona ao detalhe quando aplicável) |
 
 Navegação interna via estado do MFE (`CadastroKaizenPage`); o Portal monta o plugin em `basePath` do manifesto.
 
@@ -53,7 +54,13 @@ Base HTTP: **`/apps/api-delpi/quality/kaizens/records`**
 | GET | `/quality/kaizens/summary` | Google Sheets |
 | GET | `/quality/kaizens/{kaizen_id}` | Google Sheets (`{kaizen_id:path}` — aceita `/` no ID) |
 
-Documentação detalhada da API: [api-delpi/docs/api/06-modulos-departamentais.md](../../api-delpi/docs/api/06-modulos-departamentais.md) (§ Cadastro operacional).
+| GET | `/quality/kaizens/records/{id}/revisions` | Revisões / snapshots |
+| POST | `/quality/kaizens/records/{id}/versions` | Nova versão (rascunho) |
+| POST | `/quality/kaizens/records/{id}/versions/{n}/implement` | Implantar versão |
+| GET | `/quality/kaizens/records/{id}/evidences` | Evidências (Antes/Depois) |
+| GET | `/quality/kaizens/records/{id}/savings-timeline` | Ganhos por período |
+
+Documentação detalhada: [docs/DOCUMENTACAO.md](./docs/DOCUMENTACAO.md) · [api-delpi/docs/api/06-modulos-departamentais.md](../../api-delpi/docs/api/06-modulos-departamentais.md) (§ Cadastro operacional).
 
 ### Exemplo — listar
 
@@ -98,11 +105,18 @@ Tabela: `quality.kaizens` (migration `V027__create_kaizens.sql`).
 | `branch_code` | `01`, `02` | Obrigatório |
 | `title` | string | Obrigatório |
 | `status` | `em_andamento`, `implantado`, `descontinuado`, `cancelado` | Default `em_andamento` |
+| `date_idea_received` | date | Recebimento da ideia (V035) |
+| `date_implemented` | date | Implantação — vigência da revisão + validade 1 ano da economia |
+| `date_discontinued` | date | Fim da operação |
+| `categories` | `TEXT[]` | Multi-categoria (V036); `category` = primeiro item |
 | `savings_type` | `tempo`, `material`, `financeiro`, `qualitativo`, `misto` | Inferido se omitido no POST |
 | `seconds_per_occurrence`, `occurrences_per_day`, `hourly_cost` | numérico | Tipo **tempo** |
 | `quantity_saved_per_day`, `unit_material_cost` | numérico | Tipo **material** |
 | `fixed_daily_savings` | numérico | Tipo **financeiro** |
 | `daily_savings`, `annual_savings` | calculados | `KaizenSavingsCalculator` na API |
+| `realized_daily_savings`, `realized_annual_savings` | numérico | V032; fallback = estimativa calculada se omitido |
+
+Tabelas relacionadas: `kaizen_revisions`, `kaizen_participants`, `kaizen_evidences`, `kaizen_history`, `kaizen_audit_log` (V029–V034).
 
 Cálculo de economia (domínio): `api-delpi/app/domain/services/kaizen/kaizen_savings_calculator.py`.
 
@@ -121,7 +135,10 @@ src/
   components/ui/            # Wrappers finos @delpi/plugin-ui (prefixo kz)
   components/form/          # KaizenFormFields, CategoryMultiSelect, domínio
   constants/kaizen.ts       # Status, filiais, payload do formulário
+  content/helpTooltips.ts   # Textos PT-BR (balões de ajuda)
 ```
+
+UI compartilhada: [docs/UI-PLUGIN-UI.md](./docs/UI-PLUGIN-UI.md).
 
 ### UI compartilhada (`@delpi/plugin-ui`)
 
@@ -166,7 +183,17 @@ Após o registro, atribua `cadastro-kaizen.view` e `cadastro-kaizen.manage` aos 
 
 ## Migrations
 
-Pasta: `api-delpi/migrations/plugins/quality/` (`V026` submodules, `V027` kaizens).
+Pasta: `api-delpi/migrations/plugins/quality/` — principais:
+
+| Migration | Conteúdo |
+|-----------|----------|
+| V026 | `quality.submodules` |
+| V027 | `quality.kaizens` |
+| V029–V031 | Revisões, evidências, campos ricos, participantes |
+| V032 | Economia realizada |
+| V033–V034 | Auditoria, ciclo de vida de versões |
+| V035 | `date_idea_received` |
+| V036 | `categories TEXT[]` |
 
 ```bash
 # Status (container)
