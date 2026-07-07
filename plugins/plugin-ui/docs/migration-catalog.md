@@ -11,7 +11,7 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | `cadastro-kaizen` | `src/components/ui/HelpTooltip.tsx` | ⏳ Pendente | + `FieldLabel` |
 | `dashboard-lmps` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-commercial` | — | ✅ Migrado | Fase 1 — `@delpi/plugin-ui` |
-| `dashboard-engineering` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
+| `dashboard-engineering` | — | ✅ Migrado | Fase 1 — `@delpi/plugin-ui` |
 | `dashboard-financial` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-hr` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |
 | `dashboard-quality` | `src/components/HelpTooltip.tsx` | ⏳ Pendente | |

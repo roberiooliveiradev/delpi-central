@@ -253,7 +253,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 |--------|---------|----------|----------|-------------|
 | `dashboard-production` | ✅ | piloto F2 | — | sim |
 | `dashboard-commercial` | ✅ | ⏳ | — | sim |
-| `dashboard-engineering` | ⏳ | ⏳ | — | sim |
+| `dashboard-engineering` | ✅ | ⏳ | — | sim |
 | `dashboard-financial` | ⏳ | ⏳ | — | sim |
 | `dashboard-hr` | ⏳ | ⏳ | — | sim |
 | `dashboard-lmps` | ⏳ | ⏳ | Detail* | sim |

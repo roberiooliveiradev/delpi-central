@@ -1,6 +1,6 @@
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -40,6 +40,7 @@ export function EngineeringFilters({
             <FieldLabel
               label="Competência"
               hint={ENGINEERING_HELP_TOOLTIPS.filters.competence}
+              className="ds-field__label"
             />
             <input
               id="ds-competence"
@@ -52,6 +53,7 @@ export function EngineeringFilters({
             <FieldLabel
               label="Data inicial"
               hint={ENGINEERING_HELP_TOOLTIPS.filters.dateStart}
+              className="ds-field__label"
             />
             <input
               id="ds-date-start"
@@ -64,6 +66,7 @@ export function EngineeringFilters({
             <FieldLabel
               label="Data final"
               hint={ENGINEERING_HELP_TOOLTIPS.filters.dateEnd}
+              className="ds-field__label"
             />
             <input
               id="ds-date-end"

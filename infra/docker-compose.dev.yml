@@ -831,8 +831,8 @@ services:
   dashboard-engineering:
     <<: *plugin-profile
     build:
-      context: ../plugins/dashboard-engineering
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-engineering/Dockerfile
 
     container_name: delpi-dashboard-engineering
     restart: unless-stopped
