@@ -7,6 +7,7 @@ import {
   ChevronUp,
   ClipboardList,
   Copy,
+  Eye,
   FileText,
   GripVertical,
   Plus,
@@ -37,6 +38,7 @@ import {
   uploadQuestionPointImage,
 } from "../api/formsApi";
 import { PhotoDropzone } from "../components/PhotoDropzone";
+import { FormPreviewModal } from "../components/FormPreviewModal";
 import type {
   FormDashboard,
   FormDetail,
@@ -53,6 +55,11 @@ import {
   formsListPath,
   type FormsView,
 } from "../constants/routes";
+import {
+  buildEditorPreview,
+  buildPreviewFormFromDetail,
+  type PreviewForm,
+} from "../utils/formPreviewModel";
 
 const TYPE_LABELS: Record<QuestionType, string> = {
   rating: "Nota (estrelas 1–5)",
@@ -116,6 +123,8 @@ export function FormsPanel({
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [selected, setSelected] = useState<FormDetail | null>(null);
+  const [previewForm, setPreviewForm] = useState<PreviewForm | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -182,22 +191,48 @@ export function FormsPanel({
     await load();
   };
 
+  const openPreviewFromList = async (id: string) => {
+    setPreviewLoadingId(id);
+    setError(null);
+    try {
+      const detail = await getForm(id);
+      setPreviewForm(buildPreviewFormFromDetail(detail));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao abrir prévia.");
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  };
+
   if (loadingForm && (view === "editor" || view === "dashboard")) {
     return <p className="cx-state">Carregando formulário...</p>;
   }
 
+  const previewOverlay = previewForm ? (
+    <FormPreviewModal form={previewForm} onClose={() => setPreviewForm(null)} />
+  ) : null;
+
   if (view === "editor" && selected) {
     return (
-      <FormEditor
-        form={selected}
-        onBack={backToList}
-        onSaved={(msg) => setFeedback(msg)}
-      />
+      <>
+        {previewOverlay}
+        <FormEditor
+          form={selected}
+          onBack={backToList}
+          onSaved={(msg) => setFeedback(msg)}
+          onPreview={(model) => setPreviewForm(model)}
+        />
+      </>
     );
   }
 
   if (view === "dashboard" && selected) {
-    return <FormDashboardView form={selected} onBack={backToList} />;
+    return (
+      <>
+        {previewOverlay}
+        <FormDashboardView form={selected} onBack={backToList} />
+      </>
+    );
   }
 
   if ((view === "editor" || view === "dashboard") && formId && !selected && !loadingForm) {
@@ -217,6 +252,7 @@ export function FormsPanel({
 
   return (
     <>
+      {previewOverlay}
       {feedback && (
         <div className="cx-banner cx-banner--success" role="status">
           <CheckCircle2 size={18} /> {feedback}
@@ -231,9 +267,11 @@ export function FormsPanel({
       <FormsList
         forms={forms}
         loading={loading}
+        previewLoadingId={previewLoadingId}
         onCreated={(form) => onNavigate(formEditPath(form.id))}
         onEdit={openEditor}
         onDashboard={openDashboard}
+        onPreview={(id) => void openPreviewFromList(id)}
         onChanged={(msg) => {
           setFeedback(msg);
           void load();
@@ -249,17 +287,21 @@ export function FormsPanel({
 function FormsList({
   forms,
   loading,
+  previewLoadingId,
   onCreated,
   onEdit,
   onDashboard,
+  onPreview,
   onChanged,
   onError,
 }: {
   forms: FormSummary[];
   loading: boolean;
+  previewLoadingId: string | null;
   onCreated: (form: FormDetail) => void;
   onEdit: (id: string) => void;
   onDashboard: (id: string) => void;
+  onPreview: (id: string) => void;
   onChanged: (msg: string) => void;
   onError: (msg: string) => void;
 }) {
@@ -406,6 +448,14 @@ function FormsList({
                   <button className="cx-button cx-button--ghost" type="button" onClick={() => copyLink(form)}>
                     <Copy size={16} /> Link
                   </button>
+                  <button
+                    className="cx-button cx-button--ghost"
+                    type="button"
+                    onClick={() => onPreview(form.id)}
+                    disabled={previewLoadingId === form.id}
+                  >
+                    <Eye size={16} /> {previewLoadingId === form.id ? "Abrindo..." : "Prévia"}
+                  </button>
                   {canWriteForms && (
                     <button className="cx-button cx-button--ghost" type="button" onClick={() => onEdit(form.id)}>
                       <ClipboardList size={16} /> Perguntas
@@ -507,10 +557,12 @@ function FormEditor({
   form,
   onBack,
   onSaved,
+  onPreview,
 }: {
   form: FormDetail;
   onBack: () => void;
   onSaved: (msg: string) => void;
+  onPreview: (model: PreviewForm) => void;
 }) {
   const [title, setTitle] = useState(form.title);
   const [description, setDescription] = useState(form.description ?? "");
@@ -800,9 +852,31 @@ function FormEditor({
         <button className="cx-button cx-button--ghost" type="button" onClick={onBack}>
           <ArrowLeft size={16} /> Voltar
         </button>
-        <button className="cx-button cx-button--primary" type="button" onClick={handleSave} disabled={saving}>
-          <Save size={16} /> {saving ? "Salvando..." : "Salvar formulário"}
-        </button>
+        <div className="cx-editor__bar-actions">
+          <button
+            className="cx-button cx-button--ghost"
+            type="button"
+            onClick={() =>
+              onPreview(
+                buildEditorPreview({
+                  publicToken: form.publicToken,
+                  title,
+                  description,
+                  oneQuestionPerPage,
+                  backgroundPreview,
+                  pages,
+                  questions,
+                  pendingImages,
+                }),
+              )
+            }
+          >
+            <Eye size={16} /> Prévia
+          </button>
+          <button className="cx-button cx-button--primary" type="button" onClick={handleSave} disabled={saving}>
+            <Save size={16} /> {saving ? "Salvando..." : "Salvar formulário"}
+          </button>
+        </div>
       </div>
 
       {error && (

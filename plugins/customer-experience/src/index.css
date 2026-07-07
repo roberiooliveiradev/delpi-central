@@ -1078,6 +1078,13 @@
   flex-wrap: wrap;
 }
 
+.cx-editor__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .cx-field__label {
   display: block;
   font-size: 13px;

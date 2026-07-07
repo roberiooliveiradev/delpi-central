@@ -1,0 +1,592 @@
+/* Tokens do public-hub (tema claro) — prévia fiel no admin. */
+.cx-form-preview-stage {
+  --pub-primary: #089bdb;
+  --pub-secondary: #003866;
+  --pub-accent: #0c6fb0;
+  --pub-text: #003866;
+  --pub-text-body: #33475a;
+  --pub-text-soft: #5a6b7d;
+  --pub-text-faint: #8595a5;
+  --pub-card-bg: #ffffff;
+  --pub-card-border: #e4e7ec;
+  --pub-card-shadow: 0 20px 50px rgba(3, 40, 70, 0.12);
+  --pub-input-bg: #ffffff;
+  --pub-input-border: #d0d7de;
+  --pub-input-text: #0d1b2a;
+  --pub-placeholder: #98a6b3;
+  --pub-option-bg: #f5f8fb;
+  --pub-star-off: rgba(0, 56, 102, 0.18);
+  --pub-danger: #b42318;
+  --pub-viewport-scrim: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.88) 45%,
+    rgba(255, 255, 255, 0.96) 100%
+  );
+  --pub-stage-bg:
+    radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 14%, transparent), transparent),
+    #f3f7fb;
+
+  min-height: 100%;
+  padding: 24px 16px 48px;
+  background: var(--pub-stage-bg);
+  color: var(--pub-text-body);
+  overflow-y: auto;
+}
+
+.cx-form-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 24, 48, 0.45);
+}
+
+.cx-form-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--cx-surface, #1a2332);
+  border-bottom: 1px solid var(--cx-border, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+}
+
+.cx-form-preview-badge {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cx-text-muted, #9aa8b8);
+}
+
+/* View de formulário dinâmico (customer-experience). Fundo transversal (pub-stage). */
+
+.cxform {
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+  color: var(--pub-text-body);
+  border-radius: 24px;
+  padding: 8px 0 16px;
+}
+
+.cxform--fullpage {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0;
+  border-radius: 0;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Imagem de fundo do formulário cobre a viewport inteira (camada fixa). */
+.cxform-viewport-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cxform-viewport-bg__photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.cxform-viewport-bg__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--pub-viewport-scrim);
+}
+
+.cxform--fullpage .cxform-header {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-top: 8px solid var(--pub-accent);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 24px 18px;
+  box-shadow: var(--pub-card-shadow);
+  text-align: center;
+}
+
+.cxform--fullpage .cxform-header .cxform-progress {
+  margin-bottom: 0;
+}
+
+.cxform--fullpage .cxform-title {
+  margin-bottom: 6px;
+}
+
+.cxform--fullpage .cxform-subtitle {
+  margin-bottom: 16px;
+}
+
+.cxform--fullpage .cxform-card {
+  width: 100%;
+  margin-top: 0;
+  border-radius: 0 0 16px 16px;
+  border-top: 0;
+  padding: 24px 24px 20px;
+  box-shadow: var(--pub-card-shadow);
+}
+
+.cxform--fullpage:not(:has(.cxform-header)) .cxform-card {
+  margin-top: 12px;
+  border-radius: 16px;
+  border-top: 1px solid var(--pub-card-border);
+}
+
+.cxform--fullpage.cxform--wizard .cxform-card {
+  min-height: 0;
+}
+
+.cxform--fullpage .cxform-nav {
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.cxform--fullpage .cxform-nav__btn {
+  flex: 0 1 auto;
+  min-width: 112px;
+}
+
+.cxform--fullpage .cxform-nav__btn--primary:only-child {
+  min-width: 140px;
+}
+
+.cxform--fullpage .cxform-submit {
+  margin-top: 20px;
+}
+
+.cxform--fullpage.cxform--message {
+  max-width: 520px;
+  padding: clamp(24px, 6vw, 48px) 16px;
+}
+
+.cxform--has-bg {
+  padding: 20px 16px 24px;
+}
+
+.cxform--wizard .cxform-card {
+  min-height: 220px;
+}
+
+.cxform-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto 18px;
+  max-width: 420px;
+}
+
+.cxform-progress__track {
+  flex: 1;
+  min-width: 120px;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pub-accent) 22%, var(--pub-input-bg));
+  border: 1px solid color-mix(in srgb, var(--pub-accent) 28%, var(--pub-card-border));
+  overflow: hidden;
+}
+
+.cxform-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--pub-accent), var(--pub-primary));
+  transition: width 0.25s ease;
+}
+
+.cxform-progress__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pub-accent);
+  min-width: 36px;
+}
+
+.cxform-page-header {
+  margin: 8px 0 16px;
+  padding: 16px 14px;
+  border-radius: 16px;
+  background-size: cover;
+  background-position: center;
+  text-align: center;
+}
+
+.cxform-page-header--photo {
+  background-image: var(--pub-surface-scrim), var(--cxform-page-photo);
+}
+
+.cxform-page-title {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--pub-text);
+  text-align: left;
+}
+
+/* Ilustração por etapa/pergunta — destaque visual (estilo Google Forms). */
+.cxform-illustration {
+  margin: 0 0 20px;
+  padding: 0;
+  text-align: center;
+}
+
+.cxform-illustration__img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 220px;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.cxform-illustration--section .cxform-illustration__img {
+  max-height: 260px;
+}
+
+.cxform-illustration--inline {
+  margin-bottom: 16px;
+}
+
+.cxform-illustration--inline .cxform-illustration__img {
+  max-height: 200px;
+}
+
+/* Wizard passo a passo — faixa hero com ilustração grande no topo do card. */
+.cxform--fullpage.cxform--wizard .cxform-illustration {
+  margin: -24px -24px 24px;
+  padding: clamp(20px, 5vw, 36px) clamp(16px, 4vw, 28px);
+  background: var(--pub-illustration-band);
+  border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration__img {
+  width: min(100%, 520px);
+  max-width: none;
+  max-height: min(380px, 48vh);
+  min-height: clamp(160px, 28vw, 240px);
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
+}
+
+.cxform-step {
+  animation: cxform-rise 0.35s ease both;
+}
+
+.cxform-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.cxform-nav__btn {
+  flex: 1;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.cxform-nav__btn--ghost {
+  border: 1px solid var(--pub-input-border);
+  background: var(--pub-option-bg);
+  color: var(--pub-text);
+}
+
+.cxform-nav__btn--primary {
+  border: 0;
+  color: var(--pub-on-brand);
+  background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
+  box-shadow: 0 14px 30px rgba(8, 155, 219, 0.4);
+}
+
+.cxform-nav__btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.cxform-nav__btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.cxform-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--pub-accent);
+  margin-bottom: 14px;
+}
+
+.cxform-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.5rem, 5.2vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--pub-text);
+}
+
+.cxform-subtitle {
+  margin: 0 auto 22px;
+  max-width: 460px;
+  font-size: clamp(0.95rem, 2.6vw, 1.05rem);
+  line-height: 1.55;
+  color: var(--pub-text-soft);
+}
+
+.cxform-card {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 22px;
+  padding: 24px 22px;
+  text-align: left;
+  box-shadow: var(--pub-card-shadow);
+  backdrop-filter: blur(6px);
+}
+
+:root[data-theme="dark"] .cxform-card,
+:root[data-theme="dark"] .cxform--fullpage .cxform-header {
+  backdrop-filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cxform-card,
+  :root:not([data-theme="light"]) .cxform--fullpage .cxform-header {
+    backdrop-filter: none;
+  }
+}
+
+.cxform-field {
+  display: block;
+  border: 0;
+  margin: 0 0 20px;
+  padding: 0;
+}
+
+.cxform-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.cxform-label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--pub-text);
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.cxform-req {
+  color: var(--pub-danger);
+  font-style: normal;
+}
+
+.cxform-help {
+  display: block;
+  font-size: 12.5px;
+  color: var(--pub-text-faint);
+  margin: -2px 0 10px;
+}
+
+.cxform-input,
+.cxform-textarea {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--pub-input-border);
+  background: var(--pub-input-bg);
+  color: var(--pub-input-text);
+  font: inherit;
+  font-size: 15px;
+  padding: 12px 14px;
+  color-scheme: inherit;
+}
+
+.cxform-input:-webkit-autofill,
+.cxform-input:-webkit-autofill:hover,
+.cxform-input:-webkit-autofill:focus,
+.cxform-textarea:-webkit-autofill,
+.cxform-textarea:-webkit-autofill:hover,
+.cxform-textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--pub-input-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--pub-input-bg) inset;
+  box-shadow: 0 0 0 1000px var(--pub-input-bg) inset;
+  transition: background-color 99999s ease-out 0s;
+}
+
+.cxform-textarea {
+  resize: vertical;
+  min-height: 74px;
+}
+
+.cxform-input::placeholder,
+.cxform-textarea::placeholder {
+  color: var(--pub-placeholder);
+}
+
+.cxform-input:focus,
+.cxform-textarea:focus {
+  outline: none;
+  border-color: var(--pub-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pub-accent) 25%, transparent);
+}
+
+/* Estrelas */
+.cxform-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.cxform-star {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: clamp(1.8rem, 8vw, 2.4rem);
+  line-height: 1;
+  padding: 2px 4px;
+  color: var(--pub-star-off);
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.cxform-star:hover,
+.cxform-star:focus-visible {
+  transform: scale(1.12);
+  outline: none;
+}
+
+.cxform-star.is-on {
+  color: #ffce4d;
+  text-shadow: 0 4px 14px rgba(255, 206, 77, 0.45);
+}
+
+/* Opções (rádio / checkbox) */
+.cxform-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cxform-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--pub-input-border);
+  background: var(--pub-option-bg);
+  color: var(--pub-text-body);
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.cxform-option:hover {
+  border-color: color-mix(in srgb, var(--pub-accent) 55%, transparent);
+}
+
+.cxform-option.is-on {
+  border-color: var(--pub-accent);
+  background: color-mix(in srgb, var(--pub-accent) 16%, var(--pub-option-bg));
+}
+
+.cxform-option input {
+  accent-color: var(--pub-accent);
+  width: 18px;
+  height: 18px;
+}
+
+.cxform-error {
+  margin: 16px 0 0;
+  color: var(--pub-danger);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.cxform-submit {
+  width: 100%;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--pub-on-brand);
+  cursor: pointer;
+  background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
+  box-shadow: 0 14px 30px rgba(8, 155, 219, 0.4);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.cxform-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.cxform-submit:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* Estado de mensagem (sucesso) */
+.cxform--message {
+  animation: cxform-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cxform-check {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 38px;
+  font-weight: 800;
+  color: #05263a;
+  background: linear-gradient(140deg, #ffffff, #d9f2fb);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+}
+
+.cxform-signature {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--pub-accent);
+}
+
+.cxform-signature__line {
+  width: 36px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--pub-accent));
+}
+
+@keyframes cxform-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cxform--message {
+    animation: none;
+  }
+  .cxform-star {
+    transition: none;
+  }
+}

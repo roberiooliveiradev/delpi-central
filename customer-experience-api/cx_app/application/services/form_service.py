@@ -380,7 +380,7 @@ class FormService:
         return content, "image/png"
 
     def read_public_background(self, token: str) -> tuple[bytes, str] | None:
-        row = self._require_public(token)
+        row = self._require_public_row(token)
         filename = row.get("background_image_filename")
         if not filename:
             return None
@@ -390,7 +390,7 @@ class FormService:
         return content, _mime_from_filename(filename)
 
     def read_public_page_background(self, token: str, page_id: str) -> tuple[bytes, str] | None:
-        row = self._require_public(token)
+        row = self._require_public_row(token)
         page = self._require_page(row["id"], page_id)
         filename = page.get("background_image_filename")
         if not filename:
@@ -401,7 +401,7 @@ class FormService:
         return content, _mime_from_filename(filename)
 
     def read_public_page_point(self, token: str, page_id: str) -> tuple[bytes, str] | None:
-        row = self._require_public(token)
+        row = self._require_public_row(token)
         page = self._require_page(row["id"], page_id)
         filename = page.get("point_image_filename")
         if not filename:
@@ -414,7 +414,7 @@ class FormService:
     def read_public_question_point(
         self, token: str, question_id: str
     ) -> tuple[bytes, str] | None:
-        row = self._require_public(token)
+        row = self._require_public_row(token)
         question = self._require_question(row["id"], question_id)
         filename = question.get("point_image_filename")
         if not filename:
@@ -435,6 +435,13 @@ class FormService:
     def _require_public(self, token: str) -> dict[str, Any]:
         row = self.repository.get_by_token(token)
         if not row or not row.get("is_active"):
+            raise FormNotFoundError(token)
+        return row
+
+    def _require_public_row(self, token: str) -> dict[str, Any]:
+        """Formulário por token (ativo ou rascunho) — usado só para assets de prévia."""
+        row = self.repository.get_by_token(token)
+        if not row:
             raise FormNotFoundError(token)
         return row
 
