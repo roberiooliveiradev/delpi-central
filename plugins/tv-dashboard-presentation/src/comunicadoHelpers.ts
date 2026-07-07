@@ -168,7 +168,13 @@ export function createBlock(
     const kind = shape ?? "rectangle";
     return { ...base, type, shape: kind, content: content || "" };
   }
-  return { ...base, type };
+  if (type === "image" || type === "video") {
+    return { ...base, type };
+  }
+  if (isDataBlockType(type)) {
+    return createDataBlock("", { blockType: type });
+  }
+  return { ...base, type: "text", content };
 }
 
 export function createShapeBlock(shape: ComunicadoShapeKind): ComunicadoBlock {
@@ -361,14 +367,17 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
           : undefined,
     } as ComunicadoBlock;
   }
-  return {
-    id,
-    type,
-    frame,
-    style,
-    assetId: typeof block.assetId === "string" ? block.assetId : undefined,
-    url: typeof block.url === "string" ? block.url : undefined,
-  };
+  if (type === "image" || type === "video") {
+    return {
+      id,
+      type,
+      frame,
+      style,
+      assetId: typeof block.assetId === "string" ? block.assetId : undefined,
+      url: typeof block.url === "string" ? block.url : undefined,
+    };
+  }
+  return createBlock("text", "");
 }
 
 function isShapeKind(value: string): value is ComunicadoShapeKind {
