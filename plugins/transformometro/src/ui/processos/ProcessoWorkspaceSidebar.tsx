@@ -6,6 +6,7 @@ import {
   filterWorkspaceTree,
   type ProcessoWorkspaceNavNode,
 } from "./processoWorkspaceNav";
+import { ProcessoWorkspaceTreeIcon } from "./ProcessoWorkspaceTreeIcon";
 
 type Props = {
   processoLabel: string;
@@ -31,6 +32,7 @@ function TreeNode({
   const hasChildren = Boolean(node.children?.length);
   const isExpanded = expandedIds.has(node.id);
   const isActive = node.id === activeNodeId;
+  const folderVariant = hasChildren ? "filled" : "empty";
 
   return (
     <li className="tm-processo-workspace-tree__item">
@@ -56,23 +58,30 @@ function TreeNode({
           className="tm-processo-workspace-tree__link"
           onClick={() => onNavigate(node.href)}
         >
-          <span className="tm-processo-workspace-tree__label">{node.label}</span>
+          <span className="tm-processo-workspace-tree__link-main">
+            <ProcessoWorkspaceTreeIcon variant={folderVariant} />
+            <span className="tm-processo-workspace-tree__label">{node.label}</span>
+          </span>
           {node.badge ? <span className="tm-processo-workspace-tree__badge">{node.badge}</span> : null}
         </button>
       </div>
-      {hasChildren && isExpanded ? (
-        <ul className="tm-processo-workspace-tree__children" role="group">
-          {node.children!.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              activeNodeId={activeNodeId}
-              expandedIds={expandedIds}
-              onToggle={onToggle}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </ul>
+      {hasChildren ? (
+        <div
+          className={`tm-processo-workspace-tree__children-wrap${isExpanded ? " tm-processo-workspace-tree__children-wrap--expanded" : ""}`}
+        >
+          <ul className="tm-processo-workspace-tree__children" role="group">
+            {node.children!.map((child) => (
+              <TreeNode
+                key={child.id}
+                node={child}
+                activeNodeId={activeNodeId}
+                expandedIds={expandedIds}
+                onToggle={onToggle}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </ul>
+        </div>
       ) : null}
     </li>
   );
@@ -112,6 +121,11 @@ export function ProcessoWorkspaceSidebar({
     });
   }, []);
 
+  const rootHasChildren = useMemo(
+    () => nodes.some((node) => (node.children?.length ?? 0) > 0),
+    [nodes]
+  );
+
   return (
     <aside className="tm-processo-workspace-sidebar" aria-label="Navegação do processo">
       <div className="tm-processo-workspace-sidebar__search">
@@ -126,8 +140,11 @@ export function ProcessoWorkspaceSidebar({
       </div>
 
       <div className="tm-processo-workspace-sidebar__root">
-        <span className="tm-processo-workspace-sidebar__root-code">{processoCode}</span>
-        <span className="tm-processo-workspace-sidebar__root-title">{processoLabel}</span>
+        <ProcessoWorkspaceTreeIcon variant={rootHasChildren ? "filled" : "empty"} />
+        <div className="tm-processo-workspace-sidebar__root-text">
+          <span className="tm-processo-workspace-sidebar__root-code">{processoCode}</span>
+          <span className="tm-processo-workspace-sidebar__root-title">{processoLabel}</span>
+        </div>
       </div>
 
       <nav className="tm-processo-workspace-tree" aria-label="Árvore do processo">

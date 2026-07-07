@@ -82,7 +82,11 @@ export function ProcessoWorkspaceShell({
         activeNodeId={activeNodeId}
         onNavigate={onNavigate}
       />
-      <div className="tm-processo-workspace__main">{children}</div>
+      <div className="tm-processo-workspace__main">
+        <div key={activeNodeId} className="tm-processo-workspace__panel">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
