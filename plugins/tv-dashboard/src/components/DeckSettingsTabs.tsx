@@ -18,6 +18,7 @@ type Props = {
   elementTab?: ReactNode;
   slideTabExtra?: ReactNode;
   selectedElementId?: string | null;
+  ribbon?: ReactNode;
   onSavePlaylistSettings: (field: string, value: string | number) => void;
   onSaveSlide: (
     slide: Slide,
@@ -72,6 +73,7 @@ export function DeckSettingsTabs({
   elementTab,
   slideTabExtra,
   selectedElementId,
+  ribbon,
   onSavePlaylistSettings,
   onSaveSlide,
 }: Props) {
@@ -155,7 +157,10 @@ export function DeckSettingsTabs({
   ];
 
   return (
-    <section className="td-deck-tabs" aria-label="Configurações">
+    <section
+      className={["td-deck-tabs", ribbon ? "td-deck-tabs--chrome" : null].filter(Boolean).join(" ")}
+      aria-label="Configurações"
+    >
       <div className="td-deck-tabs__nav" role="tablist">
         {tabs.map((tab) => {
           const meta = TAB_META[tab.id];
@@ -175,6 +180,8 @@ export function DeckSettingsTabs({
           );
         })}
       </div>
+
+      {ribbon ? <div className="td-deck-tabs__ribbon">{ribbon}</div> : null}
 
       <div className="td-deck-tabs__panel" role="tabpanel">
         {activeTab === "element" && showElementTab ? elementTab : null}

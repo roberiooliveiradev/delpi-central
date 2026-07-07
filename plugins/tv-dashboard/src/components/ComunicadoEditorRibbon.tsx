@@ -19,9 +19,11 @@ import {
   COMUNICADO_FONT_FAMILIES,
   COMUNICADO_SHAPE_KINDS,
 } from "@delpi/tv-dashboard-presentation";
-import { HintAction, SectionHintLabel } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
+import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Labels = Record<string, string>;
@@ -51,34 +53,40 @@ export function ComunicadoEditorRibbon({ labels = {} }: { labels?: Labels }) {
 
   return (
     <div className="td-deck-ribbon__groups">
-      <div className="td-deck-ribbon__group">
-        <SectionHintLabel label="Inserir" hint={H.insert} className="td-deck-ribbon__label" />
-        <div className="td-deck-ribbon__controls">
-          <button type="button" className="td-btn td-btn--sm" onClick={() => addBlock("heading")}>
-            <Heading size={15} aria-hidden="true" />
-            {labels.comunicadoAddHeading ?? "Título"}
-          </button>
-          <button type="button" className="td-btn td-btn--sm" onClick={() => addBlock("text")}>
-            <Text size={15} aria-hidden="true" />
-            {labels.comunicadoAddText ?? "Texto"}
-          </button>
-          <button type="button" className="td-btn td-btn--sm" onClick={() => addBlock("image")}>
-            <ImageIcon size={15} aria-hidden="true" />
-            {labels.comunicadoAddImage ?? "Imagem"}
-          </button>
-          <button type="button" className="td-btn td-btn--sm" onClick={() => addBlock("video")}>
-            <Video size={15} aria-hidden="true" />
-            {labels.comunicadoAddVideo ?? "Vídeo"}
-          </button>
+      <DeckRibbonGroup label="Inserir" hint={H.insert}>
+        <div className="td-deck-ribbon__tiles">
+          <DeckRibbonTile
+            icon={Heading}
+            label={labels.comunicadoAddHeading ?? "Título"}
+            hint={H.insertHeading}
+            onClick={() => addBlock("heading")}
+          />
+          <DeckRibbonTile
+            icon={Text}
+            label={labels.comunicadoAddText ?? "Texto"}
+            hint={H.insertText}
+            onClick={() => addBlock("text")}
+          />
+          <DeckRibbonTile
+            icon={ImageIcon}
+            label={labels.comunicadoAddImage ?? "Imagem"}
+            hint={H.insertImage}
+            onClick={() => addBlock("image")}
+          />
+          <DeckRibbonTile
+            icon={Video}
+            label={labels.comunicadoAddVideo ?? "Vídeo"}
+            hint={H.insertVideo}
+            onClick={() => addBlock("video")}
+          />
           <div className="td-composer__dropdown">
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
+            <DeckRibbonTile
+              icon={Shapes}
+              label={labels.comunicadoAddShape ?? "Forma"}
+              hint={H.insertShape}
+              active={shapeMenuOpen}
               onClick={() => setShapeMenuOpen(!shapeMenuOpen)}
-            >
-              <Shapes size={15} aria-hidden="true" />
-              {labels.comunicadoAddShape ?? "Forma"}
-            </button>
+            />
             {shapeMenuOpen ? (
               <div className="td-composer__dropdown-menu" role="menu">
                 {COMUNICADO_SHAPE_KINDS.map((item) => (
@@ -96,182 +104,187 @@ export function ComunicadoEditorRibbon({ labels = {} }: { labels?: Labels }) {
             ) : null}
           </div>
         </div>
-      </div>
+      </DeckRibbonGroup>
 
-      <div className="td-deck-ribbon__group">
-        <SectionHintLabel label="Fundo" hint={H.background} className="td-deck-ribbon__label" />
-        <div className="td-deck-ribbon__controls">
+      <DeckRibbonGroup label="Fundo" hint={H.background}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <HintAction hint={E.backgroundColor} ariaLabel="Ajuda: Cor de fundo">
-            <input
-              type="color"
-              className="td-deck-ribbon__color"
-              aria-label="Cor de fundo"
-              value={background?.type === "color" ? background.value : "#0f172a"}
-              onChange={(e) => setBackgroundColor(e.target.value)}
-            />
+            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Cor de fundo">
+              <span className="td-ribbon-tile__icon">
+                <input
+                  type="color"
+                  className="td-deck-ribbon__color"
+                  value={background?.type === "color" ? background.value : "#0f172a"}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                />
+              </span>
+              <span className="td-ribbon-tile__label">Cor</span>
+            </label>
           </HintAction>
-          <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: Imagem de fundo">
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
-              disabled={uploading}
-              onClick={() => triggerUpload("background")}
-            >
-              <Upload size={15} aria-hidden="true" />
-              {labels.comunicadoUpload ?? "Imagem"}
-            </button>
-          </HintAction>
+          <DeckRibbonTile
+            icon={Upload}
+            label={labels.comunicadoUpload ?? "Imagem"}
+            hint={E.uploadBackground}
+            disabled={uploading}
+            onClick={() => triggerUpload("background")}
+          />
         </div>
-      </div>
+      </DeckRibbonGroup>
 
       {isTextBlock && selected ? (
-        <div className="td-deck-ribbon__group td-deck-ribbon__group--wide">
-          <SectionHintLabel label="Fonte" hint={H.font} className="td-deck-ribbon__label" />
-          <div className="td-deck-ribbon__controls">
-            <select
-              className="td-deck-ribbon__select"
-              aria-label="Família da fonte"
-              value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
-              onChange={(e) => updateSelectedStyle({ fontFamily: e.target.value })}
-            >
-              {COMUNICADO_FONT_FAMILIES.map((font) => (
-                <option key={font} value={font}>
-                  {font.split(",")[0]}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              className="td-deck-ribbon__number"
-              aria-label="Tamanho da fonte"
-              min={12}
-              max={120}
-              value={selected.style?.fontSize ?? 32}
-              onChange={(e) => updateSelectedStyle({ fontSize: Number(e.target.value) })}
-            />
-            <button
-              type="button"
-              className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontWeight === "bold" ? " td-btn--active" : ""}`}
-              aria-label="Negrito"
-              onClick={() =>
-                updateSelectedStyle({
-                  fontWeight: selected.style?.fontWeight === "bold" ? "normal" : "bold",
-                })
-              }
-            >
-              <Bold size={15} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontStyle === "italic" ? " td-btn--active" : ""}`}
-              aria-label="Itálico"
-              onClick={() =>
-                updateSelectedStyle({
-                  fontStyle: selected.style?.fontStyle === "italic" ? "normal" : "italic",
-                })
-              }
-            >
-              <Italic size={15} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className={`td-btn td-btn--sm td-btn--icon${selected.style?.textDecoration === "underline" ? " td-btn--active" : ""}`}
-              aria-label="Sublinhado"
-              onClick={() =>
-                updateSelectedStyle({
-                  textDecoration: selected.style?.textDecoration === "underline" ? "none" : "underline",
-                })
-              }
-            >
-              <Underline size={15} aria-hidden="true" />
-            </button>
-            {(
-              [
-                { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda" },
-                { align: "center" as const, icon: AlignCenter, label: "Centralizar" },
-                { align: "right" as const, icon: AlignRight, label: "Alinhar à direita" },
-              ] as const
-            ).map(({ align, icon: Icon, label }) => (
-              <button
-                key={align}
-                type="button"
-                className={`td-btn td-btn--sm td-btn--icon${selected.style?.textAlign === align ? " td-btn--active" : ""}`}
-                aria-label={label}
-                onClick={() => updateSelectedStyle({ textAlign: align })}
+        <DeckRibbonGroup label="Fonte" hint={H.font} wide>
+          <div className="td-deck-ribbon__toolbar">
+            <div className="td-deck-ribbon__toolbar-row">
+              <select
+                className="td-deck-ribbon__select"
+                aria-label="Família da fonte"
+                value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
+                onChange={(e) => updateSelectedStyle({ fontFamily: e.target.value })}
               >
-                <Icon size={15} aria-hidden="true" />
+                {COMUNICADO_FONT_FAMILIES.map((font) => (
+                  <option key={font} value={font}>
+                    {font.split(",")[0]}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                className="td-deck-ribbon__number"
+                aria-label="Tamanho da fonte"
+                min={12}
+                max={120}
+                value={selected.style?.fontSize ?? 32}
+                onChange={(e) => updateSelectedStyle({ fontSize: Number(e.target.value) })}
+              />
+            </div>
+            <div className="td-deck-ribbon__toolbar-row">
+              <button
+                type="button"
+                className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontWeight === "bold" ? " td-btn--active" : ""}`}
+                aria-label="Negrito"
+                onClick={() =>
+                  updateSelectedStyle({
+                    fontWeight: selected.style?.fontWeight === "bold" ? "normal" : "bold",
+                  })
+                }
+              >
+                <Bold size={15} aria-hidden="true" />
               </button>
-            ))}
-            <input
-              type="color"
-              className="td-deck-ribbon__color"
-              aria-label="Cor do texto"
-              value={selected.style?.color ?? "#ffffff"}
-              onChange={(e) => updateSelectedStyle({ color: e.target.value })}
-            />
+              <button
+                type="button"
+                className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontStyle === "italic" ? " td-btn--active" : ""}`}
+                aria-label="Itálico"
+                onClick={() =>
+                  updateSelectedStyle({
+                    fontStyle: selected.style?.fontStyle === "italic" ? "normal" : "italic",
+                  })
+                }
+              >
+                <Italic size={15} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className={`td-btn td-btn--sm td-btn--icon${selected.style?.textDecoration === "underline" ? " td-btn--active" : ""}`}
+                aria-label="Sublinhado"
+                onClick={() =>
+                  updateSelectedStyle({
+                    textDecoration: selected.style?.textDecoration === "underline" ? "none" : "underline",
+                  })
+                }
+              >
+                <Underline size={15} aria-hidden="true" />
+              </button>
+              <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+              {(
+                [
+                  { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda" },
+                  { align: "center" as const, icon: AlignCenter, label: "Centralizar" },
+                  { align: "right" as const, icon: AlignRight, label: "Alinhar à direita" },
+                ] as const
+              ).map(({ align, icon: Icon, label }) => (
+                <button
+                  key={align}
+                  type="button"
+                  className={`td-btn td-btn--sm td-btn--icon${selected.style?.textAlign === align ? " td-btn--active" : ""}`}
+                  aria-label={label}
+                  onClick={() => updateSelectedStyle({ textAlign: align })}
+                >
+                  <Icon size={15} aria-hidden="true" />
+                </button>
+              ))}
+              <input
+                type="color"
+                className="td-deck-ribbon__color"
+                aria-label="Cor do texto"
+                value={selected.style?.color ?? "#ffffff"}
+                onChange={(e) => updateSelectedStyle({ color: e.target.value })}
+              />
+            </div>
           </div>
-        </div>
+        </DeckRibbonGroup>
       ) : null}
 
       {isShapeBlock && selected ? (
-        <div className="td-deck-ribbon__group">
-          <SectionHintLabel label="Forma" hint={H.shape} className="td-deck-ribbon__label" />
-          <div className="td-deck-ribbon__controls">
-            <input
-              type="color"
-              className="td-deck-ribbon__color"
-              aria-label="Preenchimento"
-              value={selected.style?.fill ?? "#089bdb"}
-              onChange={(e) => updateSelectedStyle({ fill: e.target.value })}
-            />
-            <input
-              type="color"
-              className="td-deck-ribbon__color"
-              aria-label="Contorno"
-              value={selected.style?.stroke ?? "#ffffff"}
-              onChange={(e) => updateSelectedStyle({ stroke: e.target.value })}
-            />
+        <DeckRibbonGroup label="Forma" hint={H.shape}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Preenchimento">
+              <span className="td-ribbon-tile__icon">
+                <input
+                  type="color"
+                  className="td-deck-ribbon__color"
+                  value={selected.style?.fill ?? "#089bdb"}
+                  onChange={(e) => updateSelectedStyle({ fill: e.target.value })}
+                />
+              </span>
+              <span className="td-ribbon-tile__label">Preench.</span>
+            </label>
+            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Contorno">
+              <span className="td-ribbon-tile__icon">
+                <input
+                  type="color"
+                  className="td-deck-ribbon__color"
+                  value={selected.style?.stroke ?? "#ffffff"}
+                  onChange={(e) => updateSelectedStyle({ stroke: e.target.value })}
+                />
+              </span>
+              <span className="td-ribbon-tile__label">Contorno</span>
+            </label>
           </div>
-        </div>
+        </DeckRibbonGroup>
       ) : null}
 
       {selected ? (
-        <div className="td-deck-ribbon__group">
-          <SectionHintLabel label="Organizar" hint={H.organize} className="td-deck-ribbon__label" />
-          <div className="td-deck-ribbon__controls">
+        <DeckRibbonGroup label="Organizar" hint={H.organize}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
             {isMediaBlock ? (
-              <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: Trocar mídia">
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm"
-                  disabled={uploading}
-                  onClick={() => triggerUpload("block")}
-                >
-                  <Upload size={15} aria-hidden="true" />
-                  {uploading ? "…" : labels.comunicadoUpload ?? "Mídia"}
-                </button>
-              </HintAction>
+              <DeckRibbonTile
+                icon={Upload}
+                label={uploading ? "…" : labels.comunicadoUpload ?? "Mídia"}
+                hint={E.uploadMedia}
+                disabled={uploading}
+                onClick={() => triggerUpload("block")}
+              />
             ) : null}
-            <HintAction hint={E.layerUp} ariaLabel="Ajuda: Trazer frente">
-              <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("up")}>
-                <ArrowUp size={15} aria-hidden="true" />
-                Frente
-              </button>
-            </HintAction>
-            <HintAction hint={E.layerDown} ariaLabel="Ajuda: Enviar fundo">
-              <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("down")}>
-                <ArrowDown size={15} aria-hidden="true" />
-                Fundo
-              </button>
-            </HintAction>
-            <HintAction hint={E.remove} ariaLabel="Ajuda: Remover">
-              <button type="button" className="td-btn td-btn--danger td-btn--sm" onClick={removeSelected}>
-                <Trash2 size={15} aria-hidden="true" />
-                Remover
-              </button>
-            </HintAction>
+            <DeckRibbonTile
+              icon={ArrowUp}
+              label="Frente"
+              hint={E.layerUp}
+              onClick={() => moveLayer("up")}
+            />
+            <DeckRibbonTile
+              icon={ArrowDown}
+              label="Fundo"
+              hint={E.layerDown}
+              onClick={() => moveLayer("down")}
+            />
+            <DeckRibbonTile
+              icon={Trash2}
+              label="Remover"
+              hint={E.remove}
+              onClick={removeSelected}
+            />
           </div>
-        </div>
+        </DeckRibbonGroup>
       ) : null}
     </div>
   );

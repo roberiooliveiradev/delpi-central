@@ -18,6 +18,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     shape: "Ajusta preenchimento e contorno da forma selecionada.",
     organize:
       "Controla camadas e mídia do elemento selecionado: ordem (frente/fundo), troca de arquivo ou remoção.",
+    insertHeading: "Caixa de título em destaque para comunicados e chamadas principais.",
+    insertText: "Bloco de texto livre para mensagens e legendas.",
+    insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
+    insertVideo: "Vídeo em loop no slide; envie o arquivo após inserir.",
+    insertShape: "Formas geométricas com preenchimento e contorno configuráveis.",
   },
   tabs: {
     element:

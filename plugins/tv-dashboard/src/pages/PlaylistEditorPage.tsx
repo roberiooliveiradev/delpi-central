@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   buildAdminPresentationWsUrl,
   parseComunicadoConfig,
@@ -76,6 +76,7 @@ type DeckSettingsProps = {
       externalUrl?: string;
     },
   ) => void;
+  ribbon?: ReactNode;
 };
 
 function CustomDeckSettingsTabs({ adminLabels, ...props }: DeckSettingsProps) {
@@ -521,8 +522,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
           value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
-          {deckRibbon}
-          <CustomDeckSettingsTabs {...settingsProps} />
+          <CustomDeckSettingsTabs {...settingsProps} ribbon={deckRibbon} />
           <DeckWorkspace
             {...workspaceProps}
             selectedSlideId={selectedSlide.id}
@@ -535,8 +535,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         </ComunicadoEditorProvider>
       ) : (
         <>
-          {deckRibbon}
-          <DeckSettingsTabs {...settingsProps} />
+          <DeckSettingsTabs {...settingsProps} ribbon={deckRibbon} />
           <DeckWorkspace
             {...workspaceProps}
             stage={

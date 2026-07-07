@@ -7,10 +7,13 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { HintAction, SectionHintLabel } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui";
 
 import type { Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
+import { DeckRibbonLargeButton } from "./deck/DeckRibbonLargeButton";
+import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 type Props = {
   slides: Slide[];
@@ -46,78 +49,68 @@ export function SlideDeckRibbon({
 
   return (
     <div className="td-deck-ribbon__groups">
-      <div className="td-deck-ribbon__group">
-        <SectionHintLabel label="Slides" hint={H.slides} className="td-deck-ribbon__label" />
-        <div className="td-deck-ribbon__controls">
-          <HintAction hint={H.newSlide} ariaLabel="Ajuda: Nova tela">
-            <button type="button" className="td-btn td-btn--primary td-btn--sm" onClick={onAdd}>
-              <Plus size={15} aria-hidden="true" />
-              Nova tela
-            </button>
-          </HintAction>
-          <HintAction hint={H.prevSlide} ariaLabel="Ajuda: Anterior">
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--icon"
-              disabled={slides.length < 2}
-              onClick={() => goTo(-1)}
-              aria-label="Slide anterior"
-            >
-              <ChevronLeft size={15} aria-hidden="true" />
-            </button>
-          </HintAction>
-          <span className="td-deck-ribbon__counter">
-            {slides.length ? `${selectedIndex + 1} / ${slides.length}` : "0 / 0"}
-          </span>
-          <HintAction hint={H.nextSlide} ariaLabel="Ajuda: Próximo">
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--icon"
-              disabled={slides.length < 2}
-              onClick={() => goTo(1)}
-              aria-label="Próximo slide"
-            >
-              <ChevronRight size={15} aria-hidden="true" />
-            </button>
-          </HintAction>
-        </div>
-      </div>
-
-      {selectedSlide ? (
-        <div className="td-deck-ribbon__group">
-          <SectionHintLabel label="Tela atual" hint={H.currentSlide} className="td-deck-ribbon__label" />
-          <div className="td-deck-ribbon__controls">
-            <HintAction
-              hint={selectedSlide.isActive ? H.pause : H.activate}
-              ariaLabel={selectedSlide.isActive ? "Ajuda: Pausar" : "Ajuda: Ativar"}
-            >
+      <DeckRibbonGroup label="Slides" hint={H.slides}>
+        <div className="td-deck-ribbon__split">
+          <DeckRibbonLargeButton
+            icon={Plus}
+            label="Nova tela"
+            hint={H.newSlide}
+            primary
+            onClick={onAdd}
+          />
+          <div className="td-deck-ribbon__split-side">
+            <HintAction hint={H.prevSlide} ariaLabel="Ajuda: Anterior">
               <button
                 type="button"
-                className="td-btn td-btn--sm"
-                onClick={() => onToggleActive(selectedSlide)}
+                className="td-btn td-btn--sm td-btn--icon"
+                disabled={slides.length < 2}
+                onClick={() => goTo(-1)}
+                aria-label="Slide anterior"
               >
-                {selectedSlide.isActive ? <Eye size={15} aria-hidden="true" /> : <EyeOff size={15} aria-hidden="true" />}
-                {selectedSlide.isActive ? "Pausar" : "Ativar"}
+                <ChevronLeft size={15} aria-hidden="true" />
               </button>
             </HintAction>
-            <HintAction hint={H.duplicate} ariaLabel="Ajuda: Duplicar">
-              <button type="button" className="td-btn td-btn--sm" onClick={() => onDuplicate(selectedSlide)}>
-                <Copy size={15} aria-hidden="true" />
-                Duplicar
-              </button>
-            </HintAction>
-            <HintAction hint={H.delete} ariaLabel="Ajuda: Excluir">
+            <span className="td-deck-ribbon__counter">
+              {slides.length ? `${selectedIndex + 1} / ${slides.length}` : "0 / 0"}
+            </span>
+            <HintAction hint={H.nextSlide} ariaLabel="Ajuda: Próximo">
               <button
                 type="button"
-                className="td-btn td-btn--danger td-btn--sm"
-                onClick={() => onRemove(selectedSlide)}
+                className="td-btn td-btn--sm td-btn--icon"
+                disabled={slides.length < 2}
+                onClick={() => goTo(1)}
+                aria-label="Próximo slide"
               >
-                <Trash2 size={15} aria-hidden="true" />
-                Excluir
+                <ChevronRight size={15} aria-hidden="true" />
               </button>
             </HintAction>
           </div>
         </div>
+      </DeckRibbonGroup>
+
+      {selectedSlide ? (
+        <DeckRibbonGroup label="Tela atual" hint={H.currentSlide}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTile
+              icon={selectedSlide.isActive ? Eye : EyeOff}
+              label={selectedSlide.isActive ? "Pausar" : "Ativar"}
+              hint={selectedSlide.isActive ? H.pause : H.activate}
+              onClick={() => onToggleActive(selectedSlide)}
+            />
+            <DeckRibbonTile
+              icon={Copy}
+              label="Duplicar"
+              hint={H.duplicate}
+              onClick={() => onDuplicate(selectedSlide)}
+            />
+            <DeckRibbonTile
+              icon={Trash2}
+              label="Excluir"
+              hint={H.delete}
+              onClick={() => onRemove(selectedSlide)}
+            />
+          </div>
+        </DeckRibbonGroup>
       ) : null}
     </div>
   );
