@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { ConfirmModalPanel, confirmModalTransformometroClasses } from "@delpi/plugin-ui";
+
 import { Modal } from "./Modal";
 
 export type ConfirmModalProps = {
@@ -27,20 +29,16 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Modal open={open} title={title} onClose={onCancel} className="ds-modal--confirm">
-      <p className="ds-confirm-modal__message">{message}</p>
-      <div className="ds-cadastro-form__actions ds-form-actions--end">
-        <button type="button" className="ds-ghost-btn" disabled={confirmBusy} onClick={onCancel}>
-          {cancelLabel}
-        </button>
-        <button
-          type="button"
-          className={variant === "danger" ? "ds-danger-btn" : "ds-primary-btn"}
-          disabled={confirmBusy}
-          onClick={onConfirm}
-        >
-          {confirmBusy ? "Aguarde…" : confirmLabel}
-        </button>
-      </div>
+      <ConfirmModalPanel
+        message={message}
+        confirmLabel={confirmLabel}
+        cancelLabel={cancelLabel}
+        confirmBusy={confirmBusy}
+        variant={variant}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+        classNames={confirmModalTransformometroClasses()}
+      />
     </Modal>
   );
 }

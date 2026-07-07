@@ -29,3 +29,11 @@ export {
   type ConfirmDialogOptions,
   type PendingConfirmDialog,
 } from "./useConfirmDialog";
+export {
+  ConfirmModalPanel,
+  confirmModalBemClasses,
+  confirmModalPacClasses,
+  confirmModalTransformometroClasses,
+  type ConfirmModalClassNames,
+  type ConfirmModalPanelProps,
+} from "./ConfirmModalPanel";

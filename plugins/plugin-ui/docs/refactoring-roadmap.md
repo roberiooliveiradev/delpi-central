@@ -252,7 +252,8 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `useConfirmDialogController` | ✅ F5.2 | PAC hook + transformometro provider |
 | `strategic-indicators` utils | ✅ F5.3 | `operationalUnitLabels` reexport |
 | Dropzones restantes (chat, customer-experience) | ⏳ | Domínio/API distinta — fora de escopo imediato |
-| `ConfirmModal` / `Modal` | ⏳ | Depende de shell modal local por plugin |
+| `ConfirmModalPanel` | ✅ F5.4 | Headless; `Modal` shell permanece local (PAC, transformometro) |
+| `Modal` base | ⏳ | Shell por plugin — não extrair sem contrato unificado |
 
 ---
 
@@ -268,9 +269,9 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ | Detail* | sim |
 | `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
-| `transformometro` | ✅ | LoadingActivity ✅ | ⏳ | sim |
-| `cadastro-kaizen` | ✅ | — | ⏳ | sim |
-| `quality-action-plans` | ✅ | parcial | ⏳ | sim |
+| `transformometro` | ✅ | LoadingActivity ✅ | EditableSectionCard ✅ PageHeader ✅ | sim |
+| `cadastro-kaizen` | ✅ | — | EditableSectionCard ✅ | sim |
+| `quality-action-plans` | ✅ | parcial | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | LoadingActivity ✅ | — | sim |
 | `maintenance` | ✅ | parcial | — | sim |
 | `controle-retrabalhos` | — | Kpi/Chart simples | — | sim |
@@ -314,7 +315,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
 5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados.
 6. **Fase 4 concluída** — utilitários centralizados.
-7. **Fase 5 parcial** — `FileDropzone`, confirm controller, SI `operationalUnitLabels`; backlog: modais e dropzones chat/CE.
+7. **Fase 5 parcial** — `FileDropzone`, confirm controller, `ConfirmModalPanel`, SI `operationalUnitLabels`; backlog: `Modal` base, dropzones chat/CE.
 
 ---
 

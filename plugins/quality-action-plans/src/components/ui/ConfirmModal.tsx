@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
-import { FormActions } from "./FormActions";
+import { ConfirmModalPanel, confirmModalPacClasses } from "@delpi/plugin-ui";
+
 import { Modal } from "./Modal";
 
 export type ConfirmModalProps = {
@@ -28,25 +29,16 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Modal open={open} title={title} onClose={onCancel} className="pac-modal--confirm">
-      <p className="pac-confirm-modal__message">{message}</p>
-      <FormActions align="end">
-        <button
-          type="button"
-          className="pac-ghost-btn"
-          disabled={confirmBusy}
-          onClick={onCancel}
-        >
-          {cancelLabel}
-        </button>
-        <button
-          type="button"
-          className={variant === "danger" ? "pac-danger-btn" : "pac-primary-btn"}
-          disabled={confirmBusy}
-          onClick={onConfirm}
-        >
-          {confirmBusy ? "Aguarde…" : confirmLabel}
-        </button>
-      </FormActions>
+      <ConfirmModalPanel
+        message={message}
+        confirmLabel={confirmLabel}
+        cancelLabel={cancelLabel}
+        confirmBusy={confirmBusy}
+        variant={variant}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+        classNames={confirmModalPacClasses()}
+      />
     </Modal>
   );
 }

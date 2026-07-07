@@ -2735,13 +2735,15 @@
   padding: 14px 16px 0;
 }
 
-.a5s-chart-card__header h3 {
+.a5s-chart-card__header h3,
+.a5s-chart-card__title {
   margin: 0;
   font-size: 1rem;
   color: var(--a5s-title);
 }
 
-.a5s-chart-card__header p {
+.a5s-chart-card__header p,
+.a5s-chart-card__hint {
   margin: 4px 0 0;
   font-size: 0.82rem;
   color: var(--a5s-muted);

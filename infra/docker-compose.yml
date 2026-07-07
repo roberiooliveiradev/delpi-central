@@ -650,8 +650,8 @@ services:
 
   auditoria-5s:
     build:
-      context: ../plugins/auditoria-5s
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: auditoria-5s/Dockerfile
       target: production
 
     container_name: delpi-auditoria-5s

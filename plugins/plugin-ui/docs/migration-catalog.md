@@ -86,9 +86,13 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | Plugin | FileDropzone | Confirm | Notas |
 |--------|--------------|---------|-------|
 | `cadastro-kaizen` | ✅ | — | `fileDropzoneKaizenClasses` |
-| `quality-action-plans` | ✅ | ✅ | `useConfirmDialogController` |
-| `transformometro` | ✅ | ✅ | Provider + `useConfirm` |
+| `quality-action-plans` | ✅ | ✅ | `useConfirmDialogController` + `ConfirmModalPanel` |
+| `transformometro` | ✅ | ✅ | Provider + `ConfirmModalPanel` |
 | `strategic-indicators` | — | — | `operationalUnitLabels` reexport |
+
+| Componente | Pacote | Notas |
+|------------|--------|-------|
+| `ConfirmModalPanel` | ✅ F5 | Headless; `Modal` permanece local (PAC, transformometro) |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
@@ -108,6 +112,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `eficiencia-fabril` | — | — | — | — | ✅ | |
 | `inspecoes-entrada` | — | — | — | — | — | — | `@delpi/plugin-ui` + PageHeader F3 |
 | `controle-retrabalhos` | — | — | — | — | — | — | `@delpi/plugin-ui` + Empty/Loading F3 |
+| `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
@@ -158,3 +163,4 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `strategic-indicators` | — | PageHeader | `operationalUnitLabels` |
 | `controle-retrabalhos` | — | EmptyState, LoadingState |
 | `financeiro-centro-custo` | — | EmptyState, LoadingState |
+| `auditoria-5s` | — | ChartCard |
