@@ -1,6 +1,22 @@
 import type { ReactNode } from "react";
 
-import { HelpTooltip } from "@delpi/plugin-ui";
+import {
+  createDashboardFormGrid,
+  createDashboardSectionCard,
+  formGridBemClasses,
+  sectionCardKaizenBemClasses,
+} from "@delpi/plugin-ui";
+
+const SectionCard = createDashboardSectionCard({
+  classNames: sectionCardKaizenBemClasses("kz"),
+  labels: {
+    titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
+  },
+});
+
+const FormGrid = createDashboardFormGrid({
+  classNames: formGridBemClasses("kz"),
+});
 
 type FormSectionProps = {
   title: string;
@@ -11,20 +27,21 @@ type FormSectionProps = {
 };
 
 /** Seção de formulário em card, no mesmo padrão visual da ficha de edição. */
-export function FormSection({ title, hint, description, children, headerActions }: FormSectionProps) {
+export function FormSection({
+  title,
+  hint,
+  description,
+  children,
+  headerActions,
+}: FormSectionProps) {
   return (
-    <section className="kz-card kz-section-card">
-      <header className="kz-section-card__header">
-        <div>
-          <h2 className="kz-section-card__title">
-            {title}
-            {hint ? <HelpTooltip content={hint} ariaLabel={`Ajuda: ${title}`} /> : null}
-          </h2>
-          {description ? <p className="kz-section-card__desc">{description}</p> : null}
-        </div>
-        {headerActions ? <div className="kz-section-card__actions">{headerActions}</div> : null}
-      </header>
-      <div className="kz-form-grid">{children}</div>
-    </section>
+    <SectionCard
+      title={title}
+      hint={hint}
+      subtitle={description}
+      actions={headerActions}
+    >
+      <FormGrid>{children}</FormGrid>
+    </SectionCard>
   );
 }

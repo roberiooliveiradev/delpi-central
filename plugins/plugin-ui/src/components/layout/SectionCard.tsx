@@ -38,6 +38,18 @@ export function sectionCardPacBemClasses(prefix: string): SectionCardClassNames 
   };
 }
 
+export function sectionCardKaizenBemClasses(prefix: string): SectionCardClassNames {
+  const section = `${prefix}-section-card`;
+  return {
+    section: `${prefix}-card ${section}`,
+    header: `${section}__header`,
+    title: `${section}__title`,
+    titleWithHelp: `${prefix}-title-with-help`,
+    subtitle: `${section}__desc`,
+    actions: `${section}__actions`,
+  };
+}
+
 export function SectionCard({
   title,
   subtitle,

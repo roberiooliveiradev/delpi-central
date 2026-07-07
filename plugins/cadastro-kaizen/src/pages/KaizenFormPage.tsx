@@ -8,6 +8,7 @@ import {
 } from "../api/kaizenApi";
 import { KaizenFormFields } from "../components/form/KaizenFormFields";
 import { KaizenFormProgress } from "../components/form/KaizenFormProgress";
+import { FormActions } from "../components/ui/FormActions";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import {
@@ -119,7 +120,7 @@ export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props)
 
         <KaizenFormFields values={values} onChange={updateField} />
 
-        <div className="kz-form-actions">
+        <FormActions>
           <button type="submit" className="kz-primary-btn" disabled={saving}>
             <Save size={16} aria-hidden="true" />
             {saving ? "Salvando…" : "Salvar"}
@@ -131,7 +132,7 @@ export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props)
           >
             Cancelar
           </button>
-        </div>
+        </FormActions>
       </form>
     </>
   );
