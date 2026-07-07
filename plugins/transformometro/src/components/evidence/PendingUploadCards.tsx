@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, FileText, Trash2 } from "lucide-react";
+import { ChevronDown, FileText, X } from "lucide-react";
 
 import { formatEvidenceFileSize } from "../../data/api/transformometroEvidenceApi";
 import { Modal } from "../ui/Modal";
@@ -96,6 +96,16 @@ function PendingUploadCard({
 
   return (
     <article className="tm-evidence-pending-card">
+      <button
+        type="button"
+        className="tm-evidence-pending-card__remove"
+        disabled={disabled}
+        onClick={() => onRemove(item.id)}
+        aria-label={`Remover ${item.file.name}`}
+      >
+        <X size={14} aria-hidden="true" />
+      </button>
+
       {previewable ? (
         <button
           type="button"
@@ -134,19 +144,6 @@ function PendingUploadCard({
           onChange={(event) => onUpdateDescription(item.id, event.target.value)}
         />
       </details>
-
-      <div className="tm-evidence-pending-card__footer">
-        <button
-          type="button"
-          className="ds-danger-btn"
-          disabled={disabled}
-          onClick={() => onRemove(item.id)}
-          aria-label={`Remover ${item.file.name}`}
-        >
-          <Trash2 size={12} aria-hidden="true" />
-          Remover
-        </button>
-      </div>
 
       <Modal
         open={previewOpen}

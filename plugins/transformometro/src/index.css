@@ -3461,15 +3461,45 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-evidence-pending-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  padding: 0.5rem;
+  padding: 0.45rem 2rem 0.55rem 0.5rem;
   border: 1px solid var(--ds-border-subtle);
   border-radius: 8px;
   background: var(--ds-surface-raised);
   min-width: 0;
   color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--ds-card-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ds-danger-bg) 55%, var(--ds-card-bg));
+  color: var(--ds-danger-fg);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__remove:hover:not(:disabled) {
+  background: var(--ds-danger-bg);
+  border-color: color-mix(in srgb, var(--ds-danger-fg) 35%, var(--ds-card-border));
+}
+
+.dashboard-transformometro .tm-evidence-pending-card__remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .dashboard-transformometro .tm-evidence-pending-card__static-thumb {
@@ -3501,6 +3531,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-evidence-pending-card__desc {
   margin: 0;
   font-size: 0.75rem;
+  flex: 1;
 }
 
 .dashboard-transformometro .tm-evidence-pending-card__desc summary {
@@ -3539,12 +3570,6 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-evidence-pending-card__desc input::placeholder {
   color: var(--ds-text-muted);
-}
-
-.dashboard-transformometro .tm-evidence-pending-card__footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: auto;
 }
 
 .dashboard-transformometro .tm-evidence__file-icon--pdf {
