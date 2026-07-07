@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -9,8 +9,6 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createProcesso,
-  deleteProcesso,
-  duplicateProcesso,
   fetchOptions,
   fetchProcessos,
   type OptionsData,
@@ -20,8 +18,6 @@ import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { TableRowActions } from "../../components/ui/TableRowActions";
-import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
 import { computeProcessoListCompletion } from "../../utils/processoCompletion";
@@ -49,7 +45,6 @@ export function ProcessosPage({
   onNavigate,
   onOpenProcesso,
 }: Props) {
-  const confirm = useConfirm();
   const [items, setItems] = useState<Processo[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,52 +110,6 @@ export function ProcessosPage({
     }
   }
 
-  const handleDuplicate = useCallback(
-    async (row: Processo) => {
-      const label = `${row.codigo_processo} — ${row.nome_processo}`;
-      const confirmed = await confirm({
-        title: "Duplicar processo",
-        message: `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`,
-        confirmLabel: "Duplicar",
-      });
-      if (!confirmed) {
-        return;
-      }
-      setError(null);
-      try {
-        const result = await duplicateProcesso(row.processo_id, undefined, getAccessToken);
-        await load();
-        onOpenProcesso(result.processo.processo_id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
-      }
-    },
-    [confirm, getAccessToken, load, onOpenProcesso]
-  );
-
-  const handleDelete = useCallback(
-    async (row: Processo) => {
-      const label = `${row.codigo_processo} — ${row.nome_processo}`;
-      const confirmed = await confirm({
-        title: "Excluir processo",
-        message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica).`,
-        confirmLabel: "Excluir",
-        variant: "danger",
-      });
-      if (!confirmed) {
-        return;
-      }
-      setError(null);
-      try {
-        await deleteProcesso(row.processo_id, getAccessToken);
-        await load();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao excluir processo");
-      }
-    },
-    [confirm, getAccessToken, load]
-  );
-
   const detailColumns = useMemo<DataTableColumn<Processo>[]>(
     () => [
       { key: "codigo", header: "Código", headerHint: P.codigo, render: (row) => row.codigo_processo, sortable: true },
@@ -187,40 +136,8 @@ export function ProcessosPage({
           />
         ),
       },
-      {
-        key: "acoes",
-        header: "Ações",
-        headerHint: C.acoes,
-        className: "ds-table__actions-col",
-        render: (row) => (
-          <TableRowActions>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                void handleDuplicate(row);
-              }}
-            >
-              <Copy size={14} />
-              Duplicar
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn ds-ghost-btn--danger"
-              onClick={(event) => {
-                event.stopPropagation();
-                void handleDelete(row);
-              }}
-            >
-              <Trash2 size={14} />
-              Excluir
-            </button>
-          </TableRowActions>
-        ),
-      },
     ],
-    [handleDelete, handleDuplicate]
+    []
   );
 
   return (
@@ -275,15 +192,13 @@ export function ProcessosPage({
 
       <ProcessoFolderBrowser
         title="Processos"
-        hint="Filtros acima aplicam na API · Duplicar/Excluir ou clique na pasta para abrir"
+        hint="Filtros acima aplicam na API · clique na pasta para abrir o processo"
         items={items}
         loading={loading}
         refreshing={refreshing}
         emptyMessage="Nenhum processo. Use Novo processo para cadastrar."
         detailColumns={detailColumns}
         onOpen={(row) => onOpenProcesso(row.processo_id)}
-        onDuplicate={(row) => void handleDuplicate(row)}
-        onDelete={(row) => void handleDelete(row)}
         filters={
           <section className="ds-filters-row ds-filters-row--extended">
             <div className="ds-filter-box ds-filter-box--wide">

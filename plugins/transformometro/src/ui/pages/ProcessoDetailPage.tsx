@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
@@ -24,6 +24,7 @@ import {
   deleteInstancia,
   deleteProcesso,
   duplicateInstancia,
+  duplicateProcesso,
   fetchOptions,
   fetchProcesso,
   fetchProcessoComparativo,
@@ -43,7 +44,7 @@ import { fetchProcessoDecomposicao } from "../../data/api/transformometroDecompo
 import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArquivoApi";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
-import { buildInstanciaPath } from "../../utils/routeParser";
+import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
@@ -56,6 +57,11 @@ import {
   type ProcessoFormState,
 } from "../processos/processoForm";
 import { processoEscopoFromEntity } from "../processos/processoEscopo";
+import {
+  ProcessoWorkspaceShell,
+  useProcessoWorkspaceSection,
+} from "../processos/ProcessoWorkspaceShell";
+import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -191,12 +197,30 @@ export function ProcessoDetailPage({
     }
   }
 
+  async function handleDuplicateProcesso() {
+    if (!processo) return;
+    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
+    const confirmed = await confirm({
+      title: "Duplicar processo",
+      message: `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`,
+      confirmLabel: "Duplicar",
+    });
+    if (!confirmed) return;
+    setError(null);
+    try {
+      const result = await duplicateProcesso(processoId, undefined, getAccessToken);
+      onNavigate(buildProcessoPath(result.processo.processo_id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
+    }
+  }
+
   async function handleDeleteProcesso() {
     if (!processo) return;
     const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
     const confirmed = await confirm({
       title: "Excluir processo",
-      message: `Excluir o processo ${label}? Você será redirecionado à lista.`,
+      message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica). Você será redirecionado à lista.`,
       confirmLabel: "Excluir",
       variant: "danger",
     });
@@ -211,6 +235,10 @@ export function ProcessoDetailPage({
       setError(err instanceof Error ? err.message : "Erro ao excluir processo");
     }
   }
+
+  const activeSection = useProcessoWorkspaceSection();
+  const activeNodeId = resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
+  const showMelhoriasForm = openInstanciaForm || activeSection === "melhorias";
 
   const setupCompletion = useMemo(() => {
     if (!processo) {
@@ -278,7 +306,21 @@ export function ProcessoDetailPage({
               <ArrowLeft size={16} />
               Lista
             </button>
-            <button type="button" className="ds-ghost-btn" disabled={refreshing} onClick={() => void handleDeleteProcesso()}>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={refreshing}
+              onClick={() => void handleDuplicateProcesso()}
+            >
+              <Copy size={16} />
+              Duplicar processo
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn ds-ghost-btn--danger"
+              disabled={refreshing}
+              onClick={() => void handleDeleteProcesso()}
+            >
               <Trash2 size={16} />
               Excluir processo
             </button>
@@ -295,176 +337,221 @@ export function ProcessoDetailPage({
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />
 
-      <ProcessoFormProgress
-        completion={setupCompletion}
-        title="Preenchimento do cadastro"
-      />
-
-      <EditableSectionCard
-        title="Dados do processo"
-        hint={TM_HELP_TOOLTIPS.processos.nome}
-        description="Informações mestre do processo. Instâncias operacionais e revisões ficam nos níveis abaixo."
-        isEditing={sectionEdit.isEditing("processo")}
-        onEdit={() => void handleStartEditProcesso()}
-        onCancel={() => {
-          sectionEdit.cancelEdit("processo");
-          setProcessoForm(null);
-        }}
-        onSave={() => void handleSaveProcesso()}
-        saving={savingProcesso}
-        readContent={<ProcessoReadView processo={processo} activeFilialCount={options?.filiais.length ?? 1} />}
-        editContent={
-          processoForm && options ? (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void handleSaveProcesso();
-              }}
-            >
-              <ProcessoFormFields
-                form={processoForm}
-                options={options}
-                codigoProcesso={processo.codigo_processo}
-                showInstanciaFields={false}
-                onChange={setProcessoForm}
-              />
-              <div className="tm-inst-form tm-inst-form--spaced">
-                <h3 className="ds-subsection-title">Unidades e departamentos do processo</h3>
-                <p className="ds-hint">
-                  Escopo operacional do processo-mestre. Ao criar melhorias, você pode replicar esta
-                  amarração ou definir outra.
-                </p>
-                <ProcessoEscopoFields
-                  value={processoForm.escopo}
-                  options={options}
-                  onChange={(escopo) => setProcessoForm({ ...processoForm, escopo })}
-                  activeFilialCount={options.filiais.length}
-                />
-              </div>
-            </form>
-          ) : null
-        }
-      />
-
-      <EditableSectionCard
-        title="Mapeamento do processo"
-        description="Árvore WBS — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento."
-        hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
-        isEditing={sectionEdit.isEditing("decomposicao")}
-        onEdit={() => void sectionEdit.startEdit("decomposicao")}
-        onCancel={() => sectionEdit.cancelEdit("decomposicao")}
-        readContent={
-          <ProcessoDecompositionSection
-            embeddedInCard
-            readOnly
-            processoId={processoId}
-            processoNome={processo.nome_processo}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-            onEntityChanged={() => void loadTimeline()}
-          />
-        }
-        editContent={
-          <ProcessoDecompositionSection
-            embeddedInCard
-            processoId={processoId}
-            processoNome={processo.nome_processo}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-            onEntityChanged={() => void loadTimeline()}
-          />
-        }
-      />
-
-      <EditableSectionCard
-        title="Diagrama macro"
-        description="Mapa canônico do fluxo end-to-end deste processo-mestre."
-        hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
-        isEditing={sectionEdit.isEditing("diagrama_macro")}
-        onEdit={() => void sectionEdit.startEdit("diagrama_macro")}
-        onCancel={() => sectionEdit.cancelEdit("diagrama_macro")}
-        readContent={
-          <ProcessoDiagramSection
-            embeddedInCard
-            readOnly
-            processoId={processoId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-            onEntityChanged={() => void loadTimeline()}
-          />
-        }
-        editContent={
-          <ProcessoDiagramSection
-            embeddedInCard
-            processoId={processoId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-            onEntityChanged={() => void loadTimeline()}
-          />
-        }
-      />
-
-      <EditableSectionCard
-        title={`Arquivos do processo${arquivosCount ? ` (${arquivosCount})` : ""}`}
-        description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
-        hint={TM_HELP_TOOLTIPS.processos.arquivos}
-        isEditing={sectionEdit.isEditing("arquivos")}
-        onEdit={() => void sectionEdit.startEdit("arquivos")}
-        onCancel={() => sectionEdit.cancelEdit("arquivos")}
-        readContent={
-          <ProcessoArquivosSection
-            embeddedInCard
-            readOnly
-            processoId={processoId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-          />
-        }
-        editContent={
-          <ProcessoArquivosSection
-            embeddedInCard
-            processoId={processoId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            onChanged={() => void load()}
-          />
-        }
-      />
-
-      <ProcessoInstanciasPanel
+      <ProcessoWorkspaceShell
+        processoId={processoId}
+        activeNodeId={activeNodeId}
+        getAccessToken={getAccessToken}
+        onNavigate={onNavigate}
+        processo={processo}
         instancias={instancias}
-        selectedInstanciaId={null}
-        options={options}
-        processoEscopo={processo ? processoEscopoFromEntity(processo) : null}
-        busy={refreshing}
-        initialShowForm={openInstanciaForm}
-        instanciasComRevisao={instanciasComRevisao}
-        navigateOnSelect
-        onSelect={(instanciaId) => onNavigate(buildInstanciaPath(processoId, instanciaId))}
-        onCreate={async (payload) => {
-          await createProcessoInstancia(processoId, payload, getAccessToken);
-          setOpenInstanciaForm(false);
-          await load();
-        }}
-        onUpdate={async (instanciaId, payload) => {
-          await updateInstancia(instanciaId, payload, getAccessToken);
-          await load();
-        }}
-        onDelete={async (instanciaId) => {
-          await deleteInstancia(instanciaId, getAccessToken);
-          await load();
-        }}
-        onDuplicate={async ({ origemInstanciaId, ...payload }) => {
-          await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
-          await load();
-        }}
-      />
+        revisoes={revisoes}
+      >
+        {activeSection === "visao-geral" ? (
+          <section className="ds-card tm-processo-workspace-panel">
+            <h2 className="ds-section-title">Visão geral</h2>
+            <p className="ds-hint">
+              Resumo do cadastro do processo-mestre. Use a árvore à esquerda para abrir cada tópico,
+              melhoria ou revisão.
+            </p>
+            <ProcessoFormProgress completion={setupCompletion} title="Preenchimento do cadastro" />
+            <div className="tm-processo-workspace-overview">
+              <ProcessoReadView processo={processo} activeFilialCount={options.filiais.length} />
+              <dl className="ds-dl-grid tm-processo-workspace-overview__stats">
+                <div>
+                  <dt>Melhorias</dt>
+                  <dd>{instancias.length}</dd>
+                </div>
+                <div>
+                  <dt>Revisões</dt>
+                  <dd>{revisoes.length}</dd>
+                </div>
+                <div>
+                  <dt>Arquivos</dt>
+                  <dd>{arquivosCount}</dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+        ) : null}
 
-      <ProcessoTimeline entries={timelineEntries} loading={timelineLoading} />
+        {activeSection === "dados" ? (
+          <EditableSectionCard
+            title="Dados do processo"
+            hint={TM_HELP_TOOLTIPS.processos.nome}
+            description="Informações mestre do processo. Instâncias operacionais e revisões ficam nos níveis abaixo."
+            isEditing={sectionEdit.isEditing("processo")}
+            onEdit={() => void handleStartEditProcesso()}
+            onCancel={() => {
+              sectionEdit.cancelEdit("processo");
+              setProcessoForm(null);
+            }}
+            onSave={() => void handleSaveProcesso()}
+            saving={savingProcesso}
+            readContent={<ProcessoReadView processo={processo} activeFilialCount={options.filiais.length} />}
+            editContent={
+              processoForm ? (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSaveProcesso();
+                  }}
+                >
+                  <ProcessoFormFields
+                    form={processoForm}
+                    options={options}
+                    codigoProcesso={processo.codigo_processo}
+                    showInstanciaFields={false}
+                    onChange={setProcessoForm}
+                  />
+                  <div className="tm-inst-form tm-inst-form--spaced">
+                    <h3 className="ds-subsection-title">Unidades e departamentos do processo</h3>
+                    <p className="ds-hint">
+                      Escopo operacional do processo-mestre. Ao criar melhorias, você pode replicar esta
+                      amarração ou definir outra.
+                    </p>
+                    <ProcessoEscopoFields
+                      value={processoForm.escopo}
+                      options={options}
+                      onChange={(escopo) => setProcessoForm({ ...processoForm, escopo })}
+                      activeFilialCount={options.filiais.length}
+                    />
+                  </div>
+                </form>
+              ) : null
+            }
+          />
+        ) : null}
+
+        {activeSection === "mapeamento" ? (
+          <EditableSectionCard
+            title="Mapeamento do processo"
+            description="Árvore WBS — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento."
+            hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
+            isEditing={sectionEdit.isEditing("decomposicao")}
+            onEdit={() => void sectionEdit.startEdit("decomposicao")}
+            onCancel={() => sectionEdit.cancelEdit("decomposicao")}
+            readContent={
+              <ProcessoDecompositionSection
+                embeddedInCard
+                readOnly
+                processoId={processoId}
+                processoNome={processo.nome_processo}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={sectionEdit.resyncVersion}
+                onEntityChanged={() => void loadTimeline()}
+              />
+            }
+            editContent={
+              <ProcessoDecompositionSection
+                embeddedInCard
+                processoId={processoId}
+                processoNome={processo.nome_processo}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={sectionEdit.resyncVersion}
+                onEntityChanged={() => void loadTimeline()}
+              />
+            }
+          />
+        ) : null}
+
+        {activeSection === "diagrama" ? (
+          <EditableSectionCard
+            title="Diagrama macro"
+            description="Mapa canônico do fluxo end-to-end deste processo-mestre."
+            hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
+            isEditing={sectionEdit.isEditing("diagrama_macro")}
+            onEdit={() => void sectionEdit.startEdit("diagrama_macro")}
+            onCancel={() => sectionEdit.cancelEdit("diagrama_macro")}
+            readContent={
+              <ProcessoDiagramSection
+                embeddedInCard
+                readOnly
+                processoId={processoId}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={sectionEdit.resyncVersion}
+                onEntityChanged={() => void loadTimeline()}
+              />
+            }
+            editContent={
+              <ProcessoDiagramSection
+                embeddedInCard
+                processoId={processoId}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={sectionEdit.resyncVersion}
+                onEntityChanged={() => void loadTimeline()}
+              />
+            }
+          />
+        ) : null}
+
+        {activeSection === "arquivos" ? (
+          <EditableSectionCard
+            title={`Arquivos do processo${arquivosCount ? ` (${arquivosCount})` : ""}`}
+            description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
+            hint={TM_HELP_TOOLTIPS.processos.arquivos}
+            isEditing={sectionEdit.isEditing("arquivos")}
+            onEdit={() => void sectionEdit.startEdit("arquivos")}
+            onCancel={() => sectionEdit.cancelEdit("arquivos")}
+            readContent={
+              <ProcessoArquivosSection
+                embeddedInCard
+                readOnly
+                processoId={processoId}
+                getAccessToken={getAccessToken}
+                onError={setError}
+              />
+            }
+            editContent={
+              <ProcessoArquivosSection
+                embeddedInCard
+                processoId={processoId}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                onChanged={() => void load()}
+              />
+            }
+          />
+        ) : null}
+
+        {activeSection === "melhorias" ? (
+          <ProcessoInstanciasPanel
+            instancias={instancias}
+            selectedInstanciaId={null}
+            options={options}
+            processoEscopo={processoEscopoFromEntity(processo)}
+            busy={refreshing}
+            initialShowForm={showMelhoriasForm}
+            instanciasComRevisao={instanciasComRevisao}
+            navigateOnSelect
+            onSelect={(instanciaId) => onNavigate(buildInstanciaPath(processoId, instanciaId))}
+            onCreate={async (payload) => {
+              await createProcessoInstancia(processoId, payload, getAccessToken);
+              setOpenInstanciaForm(false);
+              await load();
+            }}
+            onUpdate={async (instanciaId, payload) => {
+              await updateInstancia(instanciaId, payload, getAccessToken);
+              await load();
+            }}
+            onDelete={async (instanciaId) => {
+              await deleteInstancia(instanciaId, getAccessToken);
+              await load();
+            }}
+            onDuplicate={async ({ origemInstanciaId, ...payload }) => {
+              await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
+              await load();
+            }}
+          />
+        ) : null}
+
+        {activeSection === "timeline" ? (
+          <ProcessoTimeline entries={timelineEntries} loading={timelineLoading} />
+        ) : null}
+      </ProcessoWorkspaceShell>
     </TransformometroShell>
   );
 }

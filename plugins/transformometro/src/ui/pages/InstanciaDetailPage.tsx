@@ -50,6 +50,8 @@ import {
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { processoEscopoFromEntity } from "../processos/processoEscopo";
+import { ProcessoWorkspaceShell } from "../processos/ProcessoWorkspaceShell";
+import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
 import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
@@ -72,6 +74,8 @@ export function InstanciaDetailPage({
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancia, setInstancia] = useState<ProcessoInstancia | null>(null);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  const [allRevisoes, setAllRevisoes] = useState<Revisao[]>([]);
+  const [allInstancias, setAllInstancias] = useState<ProcessoInstancia[]>([]);
   const [comparativo, setComparativo] = useState<ProcessoComparativoItem[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +127,8 @@ export function InstanciaDetailPage({
       const row = inst.items.find((item) => item.instancia_id === instanciaId) ?? null;
       setProcesso(proc);
       setInstancia(row);
+      setAllInstancias(inst.items);
+      setAllRevisoes(revs.items);
       setRevisoes(revs.items.filter((item) => item.instancia_id === instanciaId));
       const revisaoIds = new Set(
         revs.items.filter((item) => item.instancia_id === instanciaId).map((item) => item.revisao_id)
@@ -333,8 +339,17 @@ export function InstanciaDetailPage({
         </p>
       ) : null}
 
-      <EditableSectionCard
-        title="Instância operacional"
+      <ProcessoWorkspaceShell
+        processoId={processoId}
+        activeNodeId={resolveActiveWorkspaceNodeId({ view: "instancia", instanciaId })}
+        getAccessToken={getAccessToken}
+        onNavigate={onNavigate}
+        processo={processo}
+        instancias={allInstancias}
+        revisoes={allRevisoes}
+      >
+        <EditableSectionCard
+          title="Instância operacional"
         hint={TM_HELP_TOOLTIPS.instancias.escopo}
         isEditing={sectionEdit.isEditing("instancia")}
         onEdit={() => void sectionEdit.startEdit("instancia")}
@@ -551,6 +566,7 @@ export function InstanciaDetailPage({
         }
       />
       </section>
+      </ProcessoWorkspaceShell>
     </TransformometroShell>
   );
 }

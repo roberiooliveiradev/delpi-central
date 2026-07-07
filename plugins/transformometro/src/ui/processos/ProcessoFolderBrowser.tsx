@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  Copy,
-  Grid2X2,
-  LayoutGrid,
-  LayoutList,
-  Rows3,
-  Trash2,
-} from "lucide-react";
+import { Grid2X2, LayoutGrid, LayoutList, Rows3 } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTable } from "../../components/DataTable";
@@ -14,7 +7,6 @@ import { HelpTooltip } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { Pagination } from "../../components/Pagination";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
-import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useClientPagination } from "../../hooks/useClientPagination";
 import type { Processo } from "../../data/api/transformometroApi";
 import { computeProcessoListCompletion } from "../../utils/processoCompletion";
@@ -39,8 +31,6 @@ type Props = {
   footer?: ReactNode;
   detailColumns: DataTableColumn<Processo>[];
   onOpen: (processo: Processo) => void;
-  onDuplicate: (processo: Processo) => void;
-  onDelete: (processo: Processo) => void;
 };
 
 function viewModeIcon(mode: ProcessoListViewMode) {
@@ -65,47 +55,6 @@ function folderMeta(processo: Processo): string {
   return parts.join(" · ") || processo.status_processo;
 }
 
-function ProcessoFolderActions({
-  processo,
-  onDuplicate,
-  onDelete,
-  compact = false,
-}: {
-  processo: Processo;
-  onDuplicate: (processo: Processo) => void;
-  onDelete: (processo: Processo) => void;
-  compact?: boolean;
-}) {
-  return (
-    <div className={compact ? "tm-processo-folder__actions--compact" : undefined}>
-      <TableRowActions>
-      <button
-        type="button"
-        className="ds-ghost-btn"
-        onClick={(event) => {
-          event.stopPropagation();
-          onDuplicate(processo);
-        }}
-      >
-        <Copy size={14} />
-        {!compact ? "Duplicar" : null}
-      </button>
-      <button
-        type="button"
-        className="ds-ghost-btn ds-ghost-btn--danger"
-        onClick={(event) => {
-          event.stopPropagation();
-          onDelete(processo);
-        }}
-      >
-        <Trash2 size={14} />
-        {!compact ? "Excluir" : null}
-      </button>
-      </TableRowActions>
-    </div>
-  );
-}
-
 export function ProcessoFolderBrowser({
   title = "Processos",
   hint,
@@ -117,8 +66,6 @@ export function ProcessoFolderBrowser({
   footer,
   detailColumns,
   onOpen,
-  onDuplicate,
-  onDelete,
 }: Props) {
   const [viewMode, setViewMode] = useState<ProcessoListViewMode>(() => readProcessoListViewMode());
   const [sortKey, setSortKey] = useState<string>("codigo");
@@ -240,12 +187,6 @@ export function ProcessoFolderBrowser({
                   completion={computeProcessoListCompletion(processo)}
                   title={`Preenchimento — ${processo.codigo_processo}`}
                 />
-                <ProcessoFolderActions
-                  compact
-                  processo={processo}
-                  onDuplicate={onDuplicate}
-                  onDelete={onDelete}
-                />
               </button>
             </li>
           ))}
@@ -278,13 +219,6 @@ export function ProcessoFolderBrowser({
                   title={`Preenchimento — ${processo.codigo_processo}`}
                 />
               </button>
-              <div className="tm-processo-folder__actions">
-                <ProcessoFolderActions
-                  processo={processo}
-                  onDuplicate={onDuplicate}
-                  onDelete={onDelete}
-                />
-              </div>
             </article>
           ))}
         </div>
