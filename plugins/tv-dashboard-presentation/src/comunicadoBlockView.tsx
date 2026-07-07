@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { ComunicadoIconGraphic } from "./comunicadoIconView";
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 import { blockCssStyle, comunicadoTextInnerStyle, isDataBlockType } from "./comunicadoHelpers";
 import type { ComunicadoBlock, ComunicadoDataBlock } from "./comunicadoTypes";
@@ -21,7 +22,8 @@ function blockLinkHref(block: ComunicadoBlock): string | undefined {
     block.type === "text" ||
     block.type === "image" ||
     block.type === "video" ||
-    block.type === "shape"
+    block.type === "shape" ||
+    block.type === "icon"
   ) {
     return block.href;
   }
@@ -34,7 +36,8 @@ function blockLinkTarget(block: ComunicadoBlock): "_blank" | "_self" | undefined
     block.type === "text" ||
     block.type === "image" ||
     block.type === "video" ||
-    block.type === "shape"
+    block.type === "shape" ||
+    block.type === "icon"
   ) {
     return block.linkTarget;
   }
@@ -87,6 +90,34 @@ function ShapeGraphic({ block }: { block: Extract<ComunicadoBlock, { type: "shap
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  if (block.shape === "chevron-right") {
+    return (
+      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
+        <path
+          d="M28 12 L72 50 L28 88 Z"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (block.shape === "star") {
+    return (
+      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
+        <polygon
+          points="50,6 61,38 96,38 68,58 79,92 50,72 21,92 32,58 4,38 39,38"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
         />
       </svg>
     );
@@ -195,6 +226,15 @@ export function ComunicadoBlockView({
     return (
       <div className={`${blockClass} tdp-comunicado__block--shape`} style={style}>
         {wrapWithLink(shapeContent, block)}
+      </div>
+    );
+  }
+
+  if (block.type === "icon") {
+    const iconNode = <ComunicadoIconGraphic block={block} />;
+    return (
+      <div className={`${blockClass} tdp-comunicado__block--icon`} style={style}>
+        {wrapWithLink(iconNode, block)}
       </div>
     );
   }

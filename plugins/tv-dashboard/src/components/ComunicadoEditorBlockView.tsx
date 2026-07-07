@@ -118,6 +118,22 @@ export function ComunicadoEditorBlockView({
     );
   }
 
+  if (block.type === "icon") {
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <ComunicadoBlockView
+          block={block}
+          fontScale={fontScale}
+          interactive
+          embedded
+          className={className}
+          dataLoading={dataLoading}
+        />
+        {isSelected ? <ComunicadoEditorLinkChrome blockId={block.id} href={block.href} /> : null}
+      </div>
+    );
+  }
+
   return (
     <ComunicadoBlockView
       block={block}

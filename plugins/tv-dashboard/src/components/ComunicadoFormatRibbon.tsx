@@ -13,6 +13,7 @@ import {
   AlignHorizontalJustifyStart,
   Bold,
   Copy,
+  Group,
   Highlighter,
   Italic,
   Minus,
@@ -22,6 +23,7 @@ import {
   Strikethrough,
   Trash2,
   Underline,
+  Ungroup,
   Undo2,
   Upload,
   ZoomIn,
@@ -47,6 +49,7 @@ import {
   matchBoxShadowPreset,
 } from "../content/comunicadoVisualPresets";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
+import { selectedHasGroup } from "../utils/comunicadoGrouping";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -76,10 +79,15 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     alignSelected,
     stageZoom,
     setStageZoom,
+    groupSelected,
+    ungroupSelected,
+    blocks,
   } = useComunicadoEditor();
 
   const multiSelected = selectedIds.length >= 2;
   const canDistribute = selectedIds.length >= 3;
+  const canGroup = selectedIds.length >= 2;
+  const canUngroup = selectedHasGroup(blocks, selectedIds);
 
   const isTextBlock = selected?.type === "heading" || selected?.type === "text";
   const textVerticalAlign =
@@ -174,6 +182,20 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               hint="Distribuir verticalmente (3+)"
               disabled={!canDistribute}
               onClick={() => alignSelected("distribute-v")}
+            />
+            <DeckRibbonTile
+              icon={Group}
+              label="Agrupar"
+              hint="Agrupar seleção"
+              disabled={!canGroup}
+              onClick={groupSelected}
+            />
+            <DeckRibbonTile
+              icon={Ungroup}
+              label="Desagrupar"
+              hint="Remover grupo da seleção"
+              disabled={!canUngroup}
+              onClick={ungroupSelected}
             />
           </div>
         </DeckRibbonGroup>

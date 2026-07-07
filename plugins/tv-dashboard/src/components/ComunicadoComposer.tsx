@@ -206,6 +206,12 @@ export function ComunicadoComposerCanvas() {
                 />
                 {showResizeHandles(block.id) ? (
                   <>
+                    <button
+                      type="button"
+                      className="td-composer__rotate"
+                      aria-label="Girar elemento"
+                      onPointerDown={(event) => startDrag(event, block, "rotate")}
+                    />
                     {BLOCK_RESIZE_HANDLES.map(({ mode, position, label }) => (
                       <button
                         key={mode}

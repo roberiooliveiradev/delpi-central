@@ -21,6 +21,8 @@ export type ComunicadoShapeKind =
   | "ellipse"
   | "triangle"
   | "arrow-right"
+  | "chevron-right"
+  | "star"
   | "line";
 
 export type ComunicadoBlockStyle = {
@@ -53,6 +55,7 @@ export type ComunicadoBlockBase = {
   id: string;
   frame: ComunicadoFrame;
   style?: ComunicadoBlockStyle;
+  groupId?: string;
 };
 
 export type ComunicadoTextBlock = ComunicadoBlockBase & {
@@ -74,6 +77,13 @@ export type ComunicadoShapeBlock = ComunicadoBlockBase & {
   type: "shape";
   shape: ComunicadoShapeKind;
   content?: string;
+  href?: string;
+  linkTarget?: "_blank" | "_self";
+};
+
+export type ComunicadoIconBlock = ComunicadoBlockBase & {
+  type: "icon";
+  iconName: string;
   href?: string;
   linkTarget?: "_blank" | "_self";
 };
@@ -113,6 +123,7 @@ export type ComunicadoBlock =
   | ComunicadoTextBlock
   | ComunicadoMediaBlock
   | ComunicadoShapeBlock
+  | ComunicadoIconBlock
   | ComunicadoDataBlock;
 
 export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
@@ -163,5 +174,18 @@ export const COMUNICADO_SHAPE_KINDS: Array<{ kind: ComunicadoShapeKind; label: s
   { kind: "ellipse", label: "Elipse" },
   { kind: "triangle", label: "Triângulo" },
   { kind: "arrow-right", label: "Seta" },
+  { kind: "chevron-right", label: "Chevron" },
+  { kind: "star", label: "Estrela" },
   { kind: "line", label: "Linha" },
+];
+
+export const COMUNICADO_ICON_OPTIONS: Array<{ name: string; label: string }> = [
+  { name: "Star", label: "Estrela" },
+  { name: "Factory", label: "Fábrica" },
+  { name: "TrendingUp", label: "Tendência" },
+  { name: "Users", label: "Equipe" },
+  { name: "Shield", label: "Segurança" },
+  { name: "AlertTriangle", label: "Alerta" },
+  { name: "CheckCircle2", label: "Concluído" },
+  { name: "BarChart3", label: "Gráfico" },
 ];

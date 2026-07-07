@@ -272,6 +272,19 @@
   pointer-events: none;
 }
 
+.tdp-comunicado__icon-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tdp-comunicado__icon-svg {
+  width: 72%;
+  height: 72%;
+}
+
 .tdp-comunicado__link {
   color: inherit;
   text-decoration: inherit;

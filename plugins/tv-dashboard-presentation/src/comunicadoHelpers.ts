@@ -108,7 +108,9 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
   if (shape === "line") return { x: 10, y: 48, w: 80, h: 2 };
-  if (shape === "arrow-right") return { x: 35, y: 40, w: 30, h: 20 };
+  if (shape === "arrow-right" || shape === "chevron-right") return { x: 35, y: 40, w: 30, h: 20 };
+  if (shape === "star") return { x: 38, y: 35, w: 24, h: 24 };
+  if (type === "icon") return { x: 42, y: 40, w: 16, h: 16 };
   return { x: 30, y: 30, w: 40, h: 40 };
 }
 
@@ -152,6 +154,9 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     if (shape === "ellipse") return { ...base, borderRadius: 9999 };
     return base;
   }
+  if (type === "icon") {
+    return { zIndex: 2, color: "#ffffff", strokeWidth: 2 };
+  }
   if (isDataBlockType(type)) {
     return { zIndex: 2, color: "#ffffff" };
   }
@@ -179,6 +184,9 @@ export function createBlock(
   if (type === "image" || type === "video") {
     return { ...base, type };
   }
+  if (type === "icon") {
+    return { ...base, type: "icon", iconName: content || "Star" };
+  }
   if (isDataBlockType(type)) {
     return createDataBlock("", { blockType: type });
   }
@@ -187,6 +195,22 @@ export function createBlock(
 
 export function createShapeBlock(shape: ComunicadoShapeKind): ComunicadoBlock {
   return createBlock("shape", "", shape);
+}
+
+export function createIconBlock(iconName: string): ComunicadoBlock {
+  return createBlock("icon", iconName);
+}
+
+function readGroupId(block: Record<string, unknown>): string | undefined {
+  return typeof block.groupId === "string" && block.groupId.trim() ? block.groupId.trim() : undefined;
+}
+
+function readLinkFields(block: Record<string, unknown>) {
+  return {
+    href: typeof block.href === "string" && block.href.trim() ? block.href.trim() : undefined,
+    linkTarget:
+      block.linkTarget === "_self" ? ("_self" as const) : block.linkTarget === "_blank" ? ("_blank" as const) : undefined,
+  };
 }
 
 export function parseComunicadoConfig(raw: Record<string, unknown> | undefined | null): ComunicadoConfig {
@@ -219,7 +243,8 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
 function detectConfigVersion(blocks: ComunicadoBlock[]): number {
   if (blocks.some((block) => isDataBlockType(block.type))) return 4;
   const hasV3 = blocks.some((block) => {
-    if (block.type === "shape") return true;
+    if (block.type === "shape" || block.type === "icon") return true;
+    if (block.groupId) return true;
     if (block.type === "heading" || block.type === "text") {
       if (block.href) return true;
     } else if (block.type === "image" || block.type === "video") {
@@ -278,6 +303,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     frame: block.frame,
     style: block.style ?? {},
   };
+  if (block.groupId) base.groupId = block.groupId;
   if (block.type === "heading" || block.type === "text") {
     base.content = block.content;
     if (block.href) base.href = block.href;
@@ -289,6 +315,10 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "shape") {
     base.shape = block.shape;
     if (block.content) base.content = block.content;
+    if (block.href) base.href = block.href;
+    if (block.linkTarget) base.linkTarget = block.linkTarget;
+  } else if (block.type === "icon") {
+    base.iconName = block.iconName;
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
   } else if (isDataBlockType(block.type) && "dataBinding" in block) {
@@ -348,15 +378,18 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   const shape = typeof block.shape === "string" ? (block.shape as ComunicadoShapeKind) : undefined;
   const style = (block.style as ComunicadoBlock["style"]) ?? defaultStyle(type, shape);
   const id = typeof block.id === "string" ? block.id : newBlockId();
+  const groupId = readGroupId(block);
+  const links = readLinkFields(block);
   if (type === "heading" || type === "text") {
     return {
       id,
       type,
       frame,
       style,
+      groupId,
       content: String(block.content ?? ""),
-      href: typeof block.href === "string" && block.href.trim() ? block.href.trim() : undefined,
-      linkTarget: block.linkTarget === "_self" ? "_self" : block.linkTarget === "_blank" ? "_blank" : undefined,
+      href: links.href,
+      linkTarget: links.linkTarget,
     };
   }
   if (type === "shape") {
@@ -367,9 +400,24 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       frame,
       style: { ...defaultStyle("shape", kind), ...style },
       shape: kind,
+      groupId,
       content: typeof block.content === "string" ? block.content : "",
-      href: typeof block.href === "string" && block.href.trim() ? block.href.trim() : undefined,
-      linkTarget: block.linkTarget === "_self" ? "_self" : block.linkTarget === "_blank" ? "_blank" : undefined,
+      href: links.href,
+      linkTarget: links.linkTarget,
+    };
+  }
+  if (type === "icon") {
+    const iconName =
+      typeof block.iconName === "string" && block.iconName.trim() ? block.iconName.trim() : "Star";
+    return {
+      id,
+      type: "icon",
+      frame,
+      style: { ...defaultStyle("icon"), ...style },
+      iconName,
+      groupId,
+      href: links.href,
+      linkTarget: links.linkTarget,
     };
   }
   if (isDataBlockType(type)) {
@@ -383,6 +431,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       type,
       frame,
       style: { ...defaultStyle(type), ...style },
+      groupId,
       dataBinding: {
         operationId: String(binding.operationId ?? ""),
         params: (binding.params as ComunicadoDataBinding["params"]) ?? {},
@@ -404,17 +453,27 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       type,
       frame,
       style,
+      groupId,
       assetId: typeof block.assetId === "string" ? block.assetId : undefined,
       url: typeof block.url === "string" ? block.url : undefined,
-      href: typeof block.href === "string" && block.href.trim() ? block.href.trim() : undefined,
-      linkTarget: block.linkTarget === "_self" ? "_self" : block.linkTarget === "_blank" ? "_blank" : undefined,
+      href: links.href,
+      linkTarget: links.linkTarget,
     };
   }
   return createBlock("text", "");
 }
 
 function isShapeKind(value: string): value is ComunicadoShapeKind {
-  return ["rectangle", "rounded-rect", "ellipse", "triangle", "arrow-right", "line"].includes(value);
+  return [
+    "rectangle",
+    "rounded-rect",
+    "ellipse",
+    "triangle",
+    "arrow-right",
+    "chevron-right",
+    "star",
+    "line",
+  ].includes(value);
 }
 
 function normalizeFrame(value: unknown, type: ComunicadoBlock["type"]): ComunicadoFrame {
@@ -556,6 +615,13 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     if (style.borderColor) css.borderColor = style.borderColor;
     if (style.borderWidth != null) css.borderWidth = style.borderWidth;
     if (style.borderRadius != null) css.borderRadius = style.borderRadius;
+  }
+
+  if (block.type === "icon") {
+    css.display = "flex";
+    css.alignItems = "center";
+    css.justifyContent = "center";
+    if (style.color) css.color = style.color;
   }
 
   return css;

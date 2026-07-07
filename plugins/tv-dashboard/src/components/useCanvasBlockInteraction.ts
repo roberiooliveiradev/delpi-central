@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 
-import type { ComunicadoBlock, ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoBlock, ComunicadoBlockStyle, ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
 import { clampFrame } from "@delpi/tv-dashboard-presentation";
 
 export type BlockDragMode =
   | "move"
+  | "rotate"
   | "resize-nw"
   | "resize-n"
   | "resize-ne"
@@ -21,6 +22,10 @@ type DragState = {
   startY: number;
   startFrame: ComunicadoFrame;
   aspectRatio: number;
+  startRotation?: number;
+  startPointerAngle?: number;
+  centerX?: number;
+  centerY?: number;
 };
 
 type PendingDragState = DragState & {
@@ -29,8 +34,9 @@ type PendingDragState = DragState & {
 
 type Options = {
   onUpdateFrame: (blockId: string, frame: ComunicadoFrame) => void;
+  onUpdateStyle?: (blockId: string, patch: Partial<ComunicadoBlockStyle>) => void;
   onInteractionStart?: () => void;
-  onInteractionEnd?: (blockId: string, frame: ComunicadoFrame, mode: "move" | "resize") => void;
+  onInteractionEnd?: (blockId: string, frame: ComunicadoFrame, mode: "move" | "resize" | "rotate") => void;
 };
 
 const DRAG_THRESHOLD_PX = 5;
@@ -86,8 +92,16 @@ function resizeFrame(
   return next;
 }
 
+function normalizeRotation(value: number): number {
+  let next = value % 360;
+  if (next > 180) next -= 360;
+  if (next <= -180) next += 360;
+  return Math.round(next);
+}
+
 export function useCanvasBlockInteraction({
   onUpdateFrame,
+  onUpdateStyle,
   onInteractionStart,
   onInteractionEnd,
 }: Options) {
@@ -95,9 +109,11 @@ export function useCanvasBlockInteraction({
   const dragRef = useRef<DragState | null>(null);
   const pendingRef = useRef<PendingDragState | null>(null);
   const onUpdateFrameRef = useRef(onUpdateFrame);
+  const onUpdateStyleRef = useRef(onUpdateStyle);
   const onInteractionStartRef = useRef(onInteractionStart);
   const onInteractionEndRef = useRef(onInteractionEnd);
   onUpdateFrameRef.current = onUpdateFrame;
+  onUpdateStyleRef.current = onUpdateStyle;
   onInteractionStartRef.current = onInteractionStart;
   onInteractionEndRef.current = onInteractionEnd;
 
@@ -120,6 +136,16 @@ export function useCanvasBlockInteraction({
     const dy = current.y - start.y;
     const frame = drag.startFrame;
     const lockAspect = event.shiftKey && drag.mode !== "move";
+
+    if (drag.mode === "rotate") {
+      if (drag.centerX == null || drag.centerY == null || drag.startPointerAngle == null) return;
+      const angle = Math.atan2(current.y - drag.centerY, current.x - drag.centerX);
+      const deltaDeg = ((angle - drag.startPointerAngle) * 180) / Math.PI;
+      onUpdateStyleRef.current?.(drag.blockId, {
+        rotation: normalizeRotation((drag.startRotation ?? 0) + deltaDeg),
+      });
+      return;
+    }
 
     if (drag.mode === "move") {
       onUpdateFrameRef.current(
@@ -146,7 +172,8 @@ export function useCanvasBlockInteraction({
   const finishInteraction = useCallback(() => {
     const drag = dragRef.current;
     if (drag && onInteractionEndRef.current) {
-      const mode: "move" | "resize" = drag.mode === "move" ? "move" : "resize";
+      const mode: "move" | "resize" | "rotate" =
+        drag.mode === "move" ? "move" : drag.mode === "rotate" ? "rotate" : "resize";
       onInteractionEndRef.current(drag.blockId, drag.startFrame, mode);
     }
     pendingRef.current = null;
@@ -217,6 +244,23 @@ export function useCanvasBlockInteraction({
         aspectRatio,
       };
 
+      if (mode === "rotate") {
+        const centerX = block.frame.x + block.frame.w / 2;
+        const centerY = block.frame.y + block.frame.h / 2;
+        const startPt = pointerToPercent(event.clientX, event.clientY);
+        onInteractionStartRef.current?.();
+        dragRef.current = {
+          ...dragState,
+          centerX,
+          centerY,
+          startRotation: block.style?.rotation ?? 0,
+          startPointerAngle: Math.atan2(startPt.y - centerY, startPt.x - centerX),
+        };
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", onPointerUp);
+        return;
+      }
+
       if (mode !== "move") {
         onInteractionStartRef.current?.();
         pendingRef.current = null;
@@ -232,8 +276,8 @@ export function useCanvasBlockInteraction({
       window.addEventListener("pointermove", onPendingMove);
       window.addEventListener("pointerup", onPendingUp);
     },
-    [onPointerMove, onPendingMove, onPendingUp],
+    [onPointerMove, onPendingMove, onPendingUp, onPointerUp, pointerToPercent],
   );
 
   return { canvasRef, startDrag };
-}
+};

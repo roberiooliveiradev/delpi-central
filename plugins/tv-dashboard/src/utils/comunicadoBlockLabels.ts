@@ -10,6 +10,7 @@ const TYPE_LABELS: Record<string, string> = {
   data_chart: "Dados — Gráfico",
   data_table: "Dados — Tabela",
   data_metric: "Dados",
+  icon: "Ícone",
 };
 
 export function comunicadoBlockTypeLabel(type: string): string {
@@ -26,6 +27,9 @@ export function comunicadoBlockSummary(block: ComunicadoBlock): string {
   }
   if (isDataBlockType(block.type) && "dataBinding" in block) {
     return block.dataBinding.label ?? block.dataBinding.operationId;
+  }
+  if (block.type === "icon") {
+    return block.iconName;
   }
   return comunicadoBlockTypeLabel(block.type);
 }

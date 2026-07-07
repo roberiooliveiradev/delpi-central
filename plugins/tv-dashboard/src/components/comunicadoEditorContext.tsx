@@ -11,6 +11,7 @@ import {
 
 import {
   createBlock,
+  createIconBlock,
   createShapeBlock,
   isDataBlockType,
   newBlockId,
@@ -31,6 +32,12 @@ import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
 import { snapComunicadoFrame } from "../utils/comunicadoSnap";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
+import {
+  expandSelectionWithGroups,
+  groupBlocks,
+  selectedHasGroup,
+  ungroupBlocks,
+} from "../utils/comunicadoGrouping";
 import { applyComunicadoSlideTheme, type ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 
 const HISTORY_LIMIT = 50;
@@ -62,6 +69,9 @@ type ComunicadoEditorContextValue = {
   addBlock: (type: ComunicadoBlock["type"]) => void;
   addDataBlock: (block: ComunicadoBlock) => void;
   addShape: (shape: ComunicadoShapeKind) => void;
+  addIconBlock: (iconName: string) => void;
+  groupSelected: () => void;
+  ungroupSelected: () => void;
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
@@ -157,7 +167,16 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
           return [...set];
         });
       } else {
-        setSelectedIds([blockId]);
+        const block = configRef.current.blocks?.find((item) => item.id === blockId);
+        if (block?.groupId) {
+          const memberIds =
+            configRef.current.blocks
+              ?.filter((item) => item.groupId === block.groupId)
+              .map((item) => item.id) ?? [blockId];
+          setSelectedIds(memberIds);
+        } else {
+          setSelectedIds([blockId]);
+        }
       }
       setEditingTextId(null);
     },
@@ -263,6 +282,16 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     applyConfig({ ...configRef.current, blocks: nextBlocks });
   }
 
+  const handleUpdateStyle = useCallback(
+    (blockId: string, patch: NonNullable<ComunicadoBlock["style"]>) => {
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        block.id === blockId ? ({ ...block, style: { ...block.style, ...patch } } as ComunicadoBlock) : block,
+      );
+      updateBlocksSilent(nextBlocks);
+    },
+    [applyConfig],
+  );
+
   const handleUpdateFrame = useCallback(
     (blockId: string, frame: ComunicadoBlock["frame"]) => {
       const multi = multiDragRef.current;
@@ -302,8 +331,8 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
 
   const handleInteractionStart = useCallback(() => {
     dragSnapshotRef.current = snapshotConfig(configRef.current);
-    const activeIds =
-      selectedIds.length > 0 ? selectedIds : selectedId ? [selectedId] : [];
+    const baseIds = selectedIds.length > 0 ? selectedIds : selectedId ? [selectedId] : [];
+    const activeIds = expandSelectionWithGroups(configRef.current.blocks ?? [], baseIds);
     if (activeIds.length > 1) {
       const startFrames = new Map<string, ComunicadoBlock["frame"]>();
       for (const id of activeIds) {
@@ -317,12 +346,28 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   }, [selectedId, selectedIds]);
 
   const handleInteractionEnd = useCallback(
-    (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize") => {
+    (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize" | "rotate") => {
       const before = dragSnapshotRef.current;
       dragSnapshotRef.current = null;
       const multi = multiDragRef.current;
       multiDragRef.current = null;
       if (!before) return;
+
+      if (mode === "rotate") {
+        const beforeBlock = before.blocks?.find((block) => block.id === blockId);
+        const afterBlock = configRef.current.blocks?.find((block) => block.id === blockId);
+        const unchanged =
+          (beforeBlock?.style?.rotation ?? 0) === (afterBlock?.style?.rotation ?? 0);
+        if (unchanged) {
+          applyConfig(configRef.current);
+          return;
+        }
+        pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), before];
+        futureRef.current = [];
+        applyConfig(configRef.current);
+        setHistoryTick((tick) => tick + 1);
+        return;
+      }
 
       const idsToFinalize =
         multi && multi.startFrames.size > 1
@@ -365,6 +410,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
 
   const { canvasRef, startDrag } = useCanvasBlockInteraction({
     onUpdateFrame: handleUpdateFrame,
+    onUpdateStyle: handleUpdateStyle,
     onInteractionStart: handleInteractionStart,
     onInteractionEnd: handleInteractionEnd,
   });
@@ -404,6 +450,23 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateBlocks([...(configRef.current.blocks ?? []), block]);
   }
 
+  function addIconBlock(iconName: string) {
+    const block = createIconBlock(iconName);
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    setSelectedId(block.id);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }
+
+  function groupSelected() {
+    if (selectedIds.length < 2) return;
+    updateBlocks(groupBlocks(configRef.current.blocks ?? [], selectedIds));
+  }
+
+  function ungroupSelected() {
+    if (selectedIds.length === 0) return;
+    updateBlocks(ungroupBlocks(configRef.current.blocks ?? [], selectedIds));
+  }
+
   function updateSelected(patch: Partial<ComunicadoBlock>) {
     if (selectedIds.length === 0) return;
     const idSet = new Set(selectedIds);
@@ -439,7 +502,8 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
         block.type !== "text" &&
         block.type !== "image" &&
         block.type !== "video" &&
-        block.type !== "shape"
+        block.type !== "shape" &&
+        block.type !== "icon"
       ) {
         return block;
       }
@@ -644,6 +708,9 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     addBlock,
     addDataBlock,
     addShape,
+    addIconBlock,
+    groupSelected,
+    ungroupSelected,
     setDataFilters,
     updateSelected,
     updateBlock,

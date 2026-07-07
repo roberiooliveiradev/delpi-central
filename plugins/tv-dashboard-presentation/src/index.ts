@@ -24,6 +24,7 @@ export type {
   ComunicadoDataBinding,
   ComunicadoDataBlock,
   ComunicadoDataFilters,
+  ComunicadoIconBlock,
   ComunicadoScreenData,
   ComunicadoShapeKind,
 } from "./comunicadoTypes";
@@ -32,6 +33,7 @@ export {
   COMUNICADO_FONT_SIZE_MAX,
   COMUNICADO_FONT_SIZE_MIN,
   COMUNICADO_FONT_SIZE_STEP,
+  COMUNICADO_ICON_OPTIONS,
   COMUNICADO_LINE_HEIGHT_OPTIONS,
   COMUNICADO_SHAPE_KINDS,
 } from "./comunicadoTypes";
@@ -50,6 +52,7 @@ export {
   comunicadoTextInnerStyle,
   createBlock,
   createDataBlock,
+  createIconBlock,
   createShapeBlock,
   defaultDataBlockTypeForRoute,
   defaultFrame,

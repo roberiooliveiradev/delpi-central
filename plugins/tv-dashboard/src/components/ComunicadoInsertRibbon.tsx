@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { BarChart3, Heading, Image as ImageIcon, Shapes, Text, Video } from "lucide-react";
-import { COMUNICADO_SHAPE_KINDS } from "@delpi/tv-dashboard-presentation";
+import { BarChart3, Heading, Image as ImageIcon, Shapes, Sparkles, Text, Video } from "lucide-react";
+import { COMUNICADO_ICON_OPTIONS, COMUNICADO_SHAPE_KINDS, type ComunicadoShapeKind } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DataRoutePickerModal } from "./DataRoutePickerModal";
@@ -16,9 +16,11 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 function ShapeDropdownMenu({
   anchorRef,
   onSelect,
+  items = COMUNICADO_SHAPE_KINDS.map((item) => ({ kind: item.kind, label: item.label })),
 }: {
   anchorRef: RefObject<HTMLDivElement | null>;
-  onSelect: (kind: (typeof COMUNICADO_SHAPE_KINDS)[number]["kind"]) => void;
+  onSelect: (kind: string) => void;
+  items?: Array<{ kind: string; label: string }>;
 }) {
   const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
 
@@ -38,7 +40,7 @@ function ShapeDropdownMenu({
 
   return createPortal(
     <div className="td-composer__dropdown-menu td-composer__dropdown-menu--portal" role="menu" style={style}>
-      {COMUNICADO_SHAPE_KINDS.map((item) => (
+      {items.map((item) => (
         <button
           key={item.kind}
           type="button"
@@ -55,9 +57,12 @@ function ShapeDropdownMenu({
 }
 
 export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
-  const { shapeMenuOpen, setShapeMenuOpen, addBlock, addShape, addDataBlock } = useComunicadoEditor();
+  const { shapeMenuOpen, setShapeMenuOpen, addBlock, addShape, addIconBlock, addDataBlock } =
+    useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
+  const iconAnchorRef = useRef<HTMLDivElement>(null);
   const [dataPickerOpen, setDataPickerOpen] = useState(false);
+  const [iconMenuOpen, setIconMenuOpen] = useState(false);
 
   return (
     <div className="td-deck-ribbon__groups">
@@ -105,9 +110,31 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               <ShapeDropdownMenu
                 anchorRef={shapeAnchorRef}
                 onSelect={(kind) => {
-                  addShape(kind);
+                  addShape(kind as ComunicadoShapeKind);
                   setShapeMenuOpen(false);
                 }}
+              />
+            ) : null}
+          </div>
+          <div ref={iconAnchorRef} className="td-composer__dropdown">
+            <DeckRibbonTile
+              icon={Sparkles}
+              label={labels.comunicadoAddIcon ?? "Ícone"}
+              hint={H.insertShape}
+              active={iconMenuOpen}
+              onClick={() => setIconMenuOpen((open) => !open)}
+            />
+            {iconMenuOpen ? (
+              <ShapeDropdownMenu
+                anchorRef={iconAnchorRef}
+                onSelect={(name) => {
+                  addIconBlock(name);
+                  setIconMenuOpen(false);
+                }}
+                items={COMUNICADO_ICON_OPTIONS.map((item) => ({
+                  kind: item.name,
+                  label: item.label,
+                }))}
               />
             ) : null}
           </div>
