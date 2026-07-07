@@ -44,7 +44,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 
 | Componente | Ocorrências | Referência canônica | Notas |
 |------------|-------------|---------------------|-------|
-| `KpiCard` | 15 | `dashboard-production` | 2 perfis: completo (metas IDD) vs simplificado (`controle-retrabalhos`) |
+| `KpiCard` | 15 | `dashboard-production` | Completo (metas IDD) + `SimpleKpiCard` compacto (fcc, cr) |
 | `ChartCard` | 14 | `dashboard-production` | Variantes com/sem `titleHint`, `actions` |
 | `LoadingActivityCard` | 12 | `dashboard-production` | Lógica idêntica; classes `dp-*` vs `dc-*` etc. |
 | `Pagination` | 14 | `dashboard-production` | ✅ F2.4 — 7 dashboards dept.; `createDashboardPaginationKit` |
