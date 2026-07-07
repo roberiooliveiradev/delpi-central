@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+
+import { PageHeader as PluginPageHeader, pageHeaderBrandBemClasses } from "@delpi/plugin-ui";
+
 import { MaintenanceNav } from "./MaintenanceNav";
 import "./PageHeader.css";
 
@@ -8,13 +11,17 @@ type PageHeaderProps = {
   subtitle: string;
   icon: LucideIcon;
   eyebrow?: string;
-  /** Mantido por compatibilidade com chamadas existentes; a nav usa filialScope. */
   currentPath?: string;
   filialScope?: string;
   onNavigate: (path: string) => void;
   actions?: ReactNode;
   showNav?: boolean;
   compact?: boolean;
+};
+
+const LABELS = {
+  refresh: "Atualizar",
+  refreshing: "Atualizando…",
 };
 
 export function PageHeader({
@@ -29,21 +36,17 @@ export function PageHeader({
   compact = false,
 }: PageHeaderProps) {
   return (
-    <header className={["dm-page-header", compact ? "dm-page-header--compact" : ""].filter(Boolean).join(" ")}>
-      <div className="dm-page-header__brand">
-        <div className="dm-header__icon" aria-hidden="true">
-          <Icon size={28} strokeWidth={1.75} />
-        </div>
-        <div className="dm-page-header__content">
-          <p className="dm-eyebrow">{eyebrow}</p>
-          <h1>{title}</h1>
-          <span className="dm-page-subtitle">{subtitle}</span>
-          {showNav ? (
-            <MaintenanceNav filialScope={filialScope} onNavigate={onNavigate} />
-          ) : null}
-        </div>
-      </div>
-      {actions ? <div className="dm-header-actions">{actions}</div> : null}
-    </header>
+    <PluginPageHeader
+      layout="brand"
+      classNames={pageHeaderBrandBemClasses("dm")}
+      labels={LABELS}
+      compact={compact}
+      icon={<Icon size={28} strokeWidth={1.75} />}
+      eyebrow={eyebrow}
+      title={title}
+      subtitle={subtitle}
+      nav={showNav ? <MaintenanceNav filialScope={filialScope} onNavigate={onNavigate} /> : null}
+      actions={actions}
+    />
   );
 }

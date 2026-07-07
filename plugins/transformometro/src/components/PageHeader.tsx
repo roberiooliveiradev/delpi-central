@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
-import { Gauge, RefreshCw } from "lucide-react";
+import { Gauge } from "lucide-react";
+
+import { PageHeader as PluginPageHeader, pageHeaderBrandBemClasses } from "@delpi/plugin-ui";
+
 import { TransformometroNav } from "./TransformometroNav";
 import "./PageHeader.css";
 
@@ -13,6 +16,11 @@ type PageHeaderProps = {
   actions?: ReactNode;
 };
 
+const LABELS = {
+  refresh: "Atualizar",
+  refreshing: "Atualizando…",
+};
+
 export function PageHeader({
   title,
   subtitle,
@@ -23,35 +31,18 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <header className="ds-page-header">
-      <div className="ds-page-header__brand">
-        <div className="ds-header__icon" aria-hidden="true">
-          <Gauge size={28} strokeWidth={1.75} />
-        </div>
-        <div className="ds-page-header__content">
-          <p className="ds-eyebrow">DELPI • Transformômetro</p>
-          <h1>{title}</h1>
-          <span className="ds-page-subtitle">{subtitle}</span>
-          <TransformometroNav currentPath={currentPath} onNavigate={onNavigate} />
-        </div>
-      </div>
-
-      {(actions || onRefresh) ? (
-        <div className="ds-header-actions">
-          {actions}
-          {onRefresh ? (
-            <button
-              className="ds-primary-btn"
-              type="button"
-              onClick={onRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw size={16} />
-              {refreshing ? "Atualizando…" : "Atualizar"}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-    </header>
+    <PluginPageHeader
+      layout="brand"
+      classNames={pageHeaderBrandBemClasses("ds")}
+      labels={LABELS}
+      icon={<Gauge size={28} strokeWidth={1.75} />}
+      eyebrow="DELPI • Transformômetro"
+      title={title}
+      subtitle={subtitle}
+      nav={<TransformometroNav currentPath={currentPath} onNavigate={onNavigate} />}
+      actions={actions}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+    />
   );
 }

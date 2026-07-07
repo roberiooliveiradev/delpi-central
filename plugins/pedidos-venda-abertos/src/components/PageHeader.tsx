@@ -1,4 +1,6 @@
-import { ClipboardList, RefreshCw } from "lucide-react";
+import { ClipboardList } from "lucide-react";
+
+import { PageHeader as PluginPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui";
 
 type PageHeaderProps = {
   loading: boolean;
@@ -6,30 +8,27 @@ type PageHeaderProps = {
   totalLoaded: number;
 };
 
+const LABELS = {
+  refresh: "Atualizar",
+  refreshing: "Atualizando…",
+};
+
 export function PageHeader({ loading, onRefresh, totalLoaded }: PageHeaderProps) {
+  const subtitle =
+    totalLoaded > 0
+      ? `Consulta operacional de carteira em aberto · ${totalLoaded.toLocaleString("pt-BR")} linha(s) carregadas`
+      : "Consulta operacional de carteira em aberto";
+
   return (
-    <header className="pva-page-header">
-      <div className="pva-page-header__title">
-        <span className="pva-page-header__icon" aria-hidden="true">
-          <ClipboardList size={28} strokeWidth={1.75} />
-        </span>
-        <div>
-          <h1>Pedidos de Venda em Aberto</h1>
-          <p>
-            Consulta operacional de carteira em aberto
-            {totalLoaded > 0 ? ` · ${totalLoaded.toLocaleString("pt-BR")} linha(s) carregadas` : ""}
-          </p>
-        </div>
-      </div>
-      <button
-        type="button"
-        className="pva-btn pva-btn--primary"
-        onClick={onRefresh}
-        disabled={loading}
-      >
-        <RefreshCw size={16} aria-hidden="true" className={loading ? "pva-spin" : undefined} />
-        Atualizar
-      </button>
-    </header>
+    <PluginPageHeader
+      layout="titleRow"
+      classNames={pageHeaderTitleRowBemClasses("pva")}
+      labels={LABELS}
+      icon={<ClipboardList size={28} strokeWidth={1.75} />}
+      title="Pedidos de Venda em Aberto"
+      subtitle={subtitle}
+      onRefresh={onRefresh}
+      refreshing={loading}
+    />
   );
 }

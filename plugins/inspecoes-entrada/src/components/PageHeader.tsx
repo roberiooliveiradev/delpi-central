@@ -1,4 +1,6 @@
-import { ClipboardCheck, RefreshCw } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
+
+import { PageHeader as PluginPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui";
 
 type PageHeaderProps = {
   loading: boolean;
@@ -7,30 +9,27 @@ type PageHeaderProps = {
   onRefresh: () => void;
 };
 
+const LABELS = {
+  refresh: "Atualizar",
+  refreshing: "Atualizando…",
+};
+
 export function PageHeader({ loading, branch, total, onRefresh }: PageHeaderProps) {
+  const subtitle =
+    total > 0
+      ? `Inspeções de entrada — filial ${branch} · ${total.toLocaleString("pt-BR")} registro(s)`
+      : `Inspeções de entrada — filial ${branch}`;
+
   return (
-    <header className="ie-page-header">
-      <div className="ie-page-header__title">
-        <span className="ie-page-header__icon" aria-hidden="true">
-          <ClipboardCheck size={28} strokeWidth={1.75} />
-        </span>
-        <div>
-          <h1>Histórico de Inspeções</h1>
-          <p>
-            Inspeções de entrada — filial {branch}
-            {total > 0 ? ` · ${total.toLocaleString("pt-BR")} registro(s)` : ""}
-          </p>
-        </div>
-      </div>
-      <button
-        type="button"
-        className="ie-btn ie-btn--primary"
-        onClick={onRefresh}
-        disabled={loading}
-      >
-        <RefreshCw size={16} aria-hidden="true" className={loading ? "ie-spin" : undefined} />
-        Atualizar
-      </button>
-    </header>
+    <PluginPageHeader
+      layout="titleRow"
+      classNames={pageHeaderTitleRowBemClasses("ie")}
+      labels={LABELS}
+      icon={<ClipboardCheck size={28} strokeWidth={1.75} />}
+      title="Histórico de Inspeções"
+      subtitle={subtitle}
+      onRefresh={onRefresh}
+      refreshing={loading}
+    />
   );
 }

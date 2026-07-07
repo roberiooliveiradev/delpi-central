@@ -1,16 +1,17 @@
-type EmptyStateProps = {
-  title?: string;
-  message?: string;
-};
+import {
+  createDashboardEmptyState,
+  createDashboardLoadingState,
+  emptyStatePanelBemClasses,
+  loadingStatePanelBemClasses,
+} from "@delpi/plugin-ui";
 
-export function EmptyState({
-  title = "Nenhum dado encontrado",
-  message = "Ajuste os filtros ou o período para visualizar resultados.",
-}: EmptyStateProps) {
-  return (
-    <div className="fcc-state fcc-state--empty">
-      <h3>{title}</h3>
-      <p>{message}</p>
-    </div>
-  );
-}
+export const EmptyState = createDashboardEmptyState({
+  classNames: emptyStatePanelBemClasses("fcc"),
+  defaultTitle: "Nenhum dado encontrado",
+  defaultMessage: "Ajuste os filtros ou o período para visualizar resultados.",
+});
+
+export const LoadingState = createDashboardLoadingState({
+  classNames: loadingStatePanelBemClasses("fcc"),
+  defaultMessage: "Carregando…",
+});

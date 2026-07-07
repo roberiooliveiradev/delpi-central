@@ -56,11 +56,47 @@ export {
 } from "./DetailFieldGrid";
 export {
   EditableSectionCard,
+  EditableSectionCardPac,
   createDashboardEditableSectionCard,
+  createDashboardEditableSectionCardPac,
   editableSectionCardBemClasses,
   editableSectionCardTransformometroClasses,
+  type DashboardEditableSectionCardPacProps,
   type DashboardEditableSectionCardProps,
   type EditableSectionCardClassNames,
   type EditableSectionCardLabels,
+  type EditableSectionCardPacProps,
   type EditableSectionCardProps,
 } from "./EditableSectionCard";
+export {
+  DetailCard,
+  createDashboardDetailCard,
+  detailCardProductionBemClasses,
+  detailCardRichBemClasses,
+  type DashboardDetailCardProps,
+  type DetailCardClassNames,
+  type DetailCardLabels,
+  type DetailCardProps,
+} from "./DetailCard";
+export {
+  SectionCard,
+  createDashboardSectionCard,
+  sectionCardPacBemClasses,
+  type DashboardSectionCardProps,
+  type SectionCardClassNames,
+  type SectionCardLabels,
+  type SectionCardProps,
+} from "./SectionCard";
+export {
+  PageHeader,
+  createDashboardPageHeader,
+  pageHeaderBrandBemClasses,
+  pageHeaderPacBrandBemClasses,
+  pageHeaderStackBemClasses,
+  pageHeaderTitleRowBemClasses,
+  type DashboardPageHeaderProps,
+  type PageHeaderClassNames,
+  type PageHeaderLabels,
+  type PageHeaderLayout,
+  type PageHeaderProps,
+} from "./PageHeader";

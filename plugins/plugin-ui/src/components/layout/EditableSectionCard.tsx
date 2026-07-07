@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Pencil, Save, X, type LucideIcon } from "lucide-react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { SectionCard, sectionCardPacBemClasses, type SectionCardLabels } from "./SectionCard";
 
 export type EditableSectionCardClassNames = {
   section: string;
@@ -166,6 +167,123 @@ export function createDashboardEditableSectionCard(config: {
       <EditableSectionCard
         classNames={config.classNames}
         labels={config.labels}
+        {...props}
+      />
+    );
+  };
+}
+
+export type EditableSectionCardPacProps = {
+  title: string;
+  subtitle?: string;
+  hint?: string;
+  className?: string;
+  isEditing: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  readContent: ReactNode;
+  editContent: ReactNode;
+  headerExtra?: ReactNode;
+  editable?: boolean;
+  editLabel?: string;
+  cancelLabel?: string;
+  EditIcon?: LucideIcon;
+  ghostButtonClassName: string;
+  readContentClassName: string;
+  editContentClassName: string;
+  sectionClassNames: ReturnType<typeof sectionCardPacBemClasses>;
+  sectionLabels: SectionCardLabels;
+  defaultEditLabel: string;
+  defaultCancelLabel: string;
+};
+
+export function EditableSectionCardPac({
+  title,
+  subtitle,
+  hint,
+  className,
+  isEditing,
+  onEdit,
+  onCancelEdit,
+  readContent,
+  editContent,
+  headerExtra,
+  editable = true,
+  editLabel,
+  cancelLabel,
+  EditIcon = Pencil,
+  ghostButtonClassName,
+  readContentClassName,
+  editContentClassName,
+  sectionClassNames,
+  sectionLabels,
+  defaultEditLabel,
+  defaultCancelLabel,
+}: EditableSectionCardPacProps) {
+  const resolvedEditLabel = editLabel ?? defaultEditLabel;
+  const resolvedCancelLabel = cancelLabel ?? defaultCancelLabel;
+
+  return (
+    <SectionCard
+      title={title}
+      subtitle={subtitle}
+      hint={hint}
+      className={className}
+      classNames={sectionClassNames}
+      labels={sectionLabels}
+      actions={
+        <>
+          {headerExtra}
+          {editable ? (
+            isEditing ? (
+              <button type="button" className={ghostButtonClassName} onClick={onCancelEdit}>
+                <X size={16} aria-hidden={true} />
+                {resolvedCancelLabel}
+              </button>
+            ) : (
+              <button type="button" className={ghostButtonClassName} onClick={onEdit}>
+                <EditIcon size={16} aria-hidden={true} />
+                {resolvedEditLabel}
+              </button>
+            )
+          ) : null}
+        </>
+      }
+    >
+      <div className={isEditing ? editContentClassName : readContentClassName}>
+        {isEditing ? editContent : readContent}
+      </div>
+    </SectionCard>
+  );
+}
+
+export type DashboardEditableSectionCardPacProps = Omit<
+  EditableSectionCardPacProps,
+  | "sectionClassNames"
+  | "sectionLabels"
+  | "ghostButtonClassName"
+  | "readContentClassName"
+  | "editContentClassName"
+  | "defaultEditLabel"
+  | "defaultCancelLabel"
+>;
+
+export function createDashboardEditableSectionCardPac(config: {
+  prefix: string;
+  labels: SectionCardLabels & { edit: string; cancel: string };
+}) {
+  const sectionClassNames = sectionCardPacBemClasses(config.prefix);
+
+  return function DashboardEditableSectionCardPac(props: DashboardEditableSectionCardPacProps) {
+    return (
+      <EditableSectionCardPac
+        sectionClassNames={sectionClassNames}
+        sectionLabels={config.labels}
+        ghostButtonClassName={`${config.prefix}-ghost-btn`}
+        readContentClassName={`${config.prefix}-section-read`}
+        editContentClassName={`${config.prefix}-section-edit`}
+        defaultEditLabel={config.labels.edit}
+        defaultCancelLabel={config.labels.cancel}
         {...props}
       />
     );

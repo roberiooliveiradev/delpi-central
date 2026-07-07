@@ -1,24 +1,22 @@
-# =========================
-# BUILD STAGE
-# =========================
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY plugin-ui/package*.json ./plugin-ui/
+RUN cd plugin-ui && npm install
 
-COPY . .
+COPY strategic-indicators/package*.json ./strategic-indicators/
+RUN cd strategic-indicators && npm install
+
+COPY plugin-ui ./plugin-ui
+COPY strategic-indicators ./strategic-indicators
+
+WORKDIR /app/strategic-indicators
 RUN npm run build
 
-
-# =========================
-# NGINX STAGE
-# =========================
 FROM nginx:alpine
 
-# copia build do vite
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/strategic-indicators/dist /usr/share/nginx/html
 
 EXPOSE 80
 

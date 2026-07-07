@@ -62,10 +62,13 @@ Resumo (2+ consumidores):
 | `FilterBar` | 12 | F2 ✅ (FiltersRow + FilterInputField) |
 | `DataTable` / `DataTableSection` | ~25 | F2 ✅ (7 dept. + lmps DataTable) |
 | `DetailFieldGrid` | 5 | F3 ✅ (5 consumidores) |
-| `EditableSectionCard` | 3 | F3 ⏳ (2/3 — kaizen, transformometro) |
-| `ReadOnlyField` | 2 | F3 ✅ (kaizen, PAC) |
-| `SelectField` | 2 | F3 ✅ (transformometro, PAC) |
-| `EmptyState` | 2+ | F3/F5 |
+| `EditableSectionCard` | 3 | F3 ✅ |
+| `ReadOnlyField` | 2 | F3 ✅ |
+| `SelectField` | 2 | F3 ✅ |
+| `PageHeader` | 7 | F3 ✅ |
+| `DetailCard` | 3 | F3 ✅ |
+| `SectionCard` | 1 (PAC) | F3 ✅ |
+| `EmptyState` / `LoadingState` | 2 | F3 ✅ (controle-retrabalhos, financeiro-centro-custo) |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
@@ -83,8 +86,8 @@ Resumo (2+ consumidores):
 | `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination simplificado (local) |
 | `transformometro` | — | — | — | — | ✅ | |
 | `eficiencia-fabril` | — | — | — | — | ✅ | |
-| `inspecoes-entrada` | ⏳ | ⏳ | — | — | — | Variante local |
-| `controle-retrabalhos` | — | — | — | — | — | Sem `@delpi/plugin-ui` ainda |
+| `inspecoes-entrada` | — | — | — | — | — | — | `@delpi/plugin-ui` + PageHeader F3 |
+| `controle-retrabalhos` | — | — | — | — | — | — | `@delpi/plugin-ui` + Empty/Loading F3 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
@@ -106,10 +109,32 @@ Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGr
 |--------|---------------------|-------|
 | `cadastro-kaizen` | ✅ | `editableSectionCardBemClasses("kz")` |
 | `transformometro` | ✅ | `editableSectionCardTransformometroClasses("ds")` |
-| `quality-action-plans` | ⏳ | Depende de `SectionCard` local — API distinta (sem Salvar) |
+| `quality-action-plans` | ✅ | `SectionCard` + `createDashboardEditableSectionCardPac` |
 
-| Plugin | ReadOnlyField | SelectField | Notas |
-|--------|---------------|-------------|-------|
-| `cadastro-kaizen` | ✅ | — | `readOnlyFieldKaizenBemClasses` |
-| `quality-action-plans` | ✅ | ✅ | PAC ficha/field + `selectFieldPacClasses` |
-| `transformometro` | — | ✅ | `SelectControl` + `selectFieldTransformometroClasses` |
+| Plugin | DetailCard | PageHeader | Empty/Loading |
+|--------|------------|------------|---------------|
+| `dashboard-production` | ✅ | — | — |
+| `dashboard-commercial` | ✅ | — | — |
+| `dashboard-lmps` | ✅ | — | — |
+| `quality-action-plans` | — | ✅ | — |
+| `transformometro` | — | ✅ | — |
+| `maintenance` | — | ✅ | — |
+| `pedidos-venda-abertos` | — | ✅ | — |
+| `inspecoes-entrada` | — | ✅ | — |
+| `propostas-comerciais` | — | ✅ | — |
+| `strategic-indicators` | — | ✅ | — |
+| `controle-retrabalhos` | — | — | ✅ |
+| `financeiro-centro-custo` | — | — | ✅ |
+
+## Integração `@delpi/plugin-ui` (Vite + Docker)
+
+Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plugins`:
+
+| Plugin | F1 help | F2/F3 componentes |
+|--------|---------|-------------------|
+| `pedidos-venda-abertos` | — | PageHeader |
+| `inspecoes-entrada` | — | PageHeader |
+| `propostas-comerciais` | — | PageHeader |
+| `strategic-indicators` | — | PageHeader |
+| `controle-retrabalhos` | — | EmptyState, LoadingState |
+| `financeiro-centro-custo` | — | EmptyState, LoadingState |

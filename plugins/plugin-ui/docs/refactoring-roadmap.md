@@ -225,9 +225,13 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | Componente | Consumidores-alvo | Status |
 |------------|-------------------|--------|
 | `DetailFieldGrid` | production, commercial, quality, lmps, eficiencia-fabril | ✅ F3.1 |
-| `EditableSectionCard` | kaizen, transformometro, PAC | ⏳ F3.2 (2/3) |
+| `EditableSectionCard` | kaizen, transformometro, PAC | ✅ F3.2 |
 | `ReadOnlyField` | kaizen, PAC | ✅ F3.3 |
 | `SelectField` | PAC, transformometro | ✅ F3.4 |
+| `DetailCard` | production, commercial, lmps | ✅ F3.5 |
+| `PageHeader` | 7 plugins operacionais | ✅ F3.6 |
+| `SectionCard` | PAC | ✅ F3.2 |
+| `EmptyState` / `LoadingState` | controle-retrabalhos, financeiro-centro-custo | ✅ F3.7 |
 | `PageHeader` | 7 plugins operacionais | ⏳ |
 | `DetailCard` | LMP, commercial, production | ⏳ |
 
@@ -304,8 +308,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
 2. **Fase 2 concluída** nos dashboards departamentais.
 3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
-4. **Fase 3.2 em andamento** — `EditableSectionCard` em kaizen + transformometro; PAC pendente (`SectionCard`).
-5. **Fase 3.3–3.4 concluídas** — `ReadOnlyField` e `SelectField`/`SelectControl`; próximo: `PageHeader`.
+5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados; próximo: Fase 4 (utilitários) / Fase 5 (dropzones).
 
 ---
 

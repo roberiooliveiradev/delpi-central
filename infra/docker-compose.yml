@@ -389,8 +389,8 @@ services:
 
   strategic-indicators:
     build:
-      context: ../plugins/strategic-indicators
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: strategic-indicators/Dockerfile
 
     container_name: delpi-strategic-indicators
     restart: unless-stopped
@@ -622,8 +622,8 @@ services:
 
   pedidos-venda-abertos:
     build:
-      context: ../plugins/pedidos-venda-abertos
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: pedidos-venda-abertos/Dockerfile
 
     container_name: delpi-pedidos-venda-abertos
     restart: unless-stopped
@@ -636,9 +636,8 @@ services:
 
   propostas-comerciais:
     build:
-      context: ../plugins/propostas-comerciais
-      dockerfile: Dockerfile
-      target: production
+      context: ../plugins
+      dockerfile: propostas-comerciais/Dockerfile
 
     container_name: delpi-propostas-comerciais
     restart: unless-stopped
@@ -726,9 +725,8 @@ services:
 
   inspecoes-entrada:
     build:
-      context: ../plugins/inspecoes-entrada
-      dockerfile: Dockerfile
-      target: production
+      context: ../plugins
+      dockerfile: inspecoes-entrada/Dockerfile
 
     container_name: delpi-inspecoes-entrada
     restart: unless-stopped
@@ -756,9 +754,8 @@ services:
 
   controle-retrabalhos:
     build:
-      context: ../plugins/controle-retrabalhos
-      dockerfile: Dockerfile
-      target: production
+      context: ../plugins
+      dockerfile: controle-retrabalhos/Dockerfile
 
     container_name: delpi-controle-retrabalhos
     restart: unless-stopped
@@ -799,9 +796,8 @@ services:
 
   financeiro-centro-custo:
     build:
-      context: ../plugins/financeiro-centro-custo
-      dockerfile: Dockerfile
-      target: production
+      context: ../plugins
+      dockerfile: financeiro-centro-custo/Dockerfile
 
     container_name: delpi-financeiro-centro-custo
     restart: unless-stopped
