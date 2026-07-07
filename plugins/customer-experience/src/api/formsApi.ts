@@ -4,6 +4,7 @@ import {
   httpGet,
   httpPatchJson,
   httpPost,
+  httpPostForm,
   httpPostJson,
   httpPutJson,
   unwrapEnvelope,
@@ -88,12 +89,8 @@ export async function setQuestions(
 async function uploadMultipart(url: string, file: File): Promise<FormDetail> {
   const body = new FormData();
   body.append("image", file);
-  const response = await fetch(url, { method: "POST", body, credentials: "include" });
-  const envelope = (await response.json()) as ApiEnvelope<FormDetail>;
-  if (!response.ok || envelope.success === false) {
-    throw new Error(envelope.message ?? "Não foi possível enviar a imagem.");
-  }
-  return envelope.data;
+  const response = await httpPostForm<ApiEnvelope<FormDetail>>(url, body);
+  return unwrapEnvelope(response, "Não foi possível enviar a imagem.");
 }
 
 export async function uploadFormBackground(id: string, file: File): Promise<FormDetail> {
