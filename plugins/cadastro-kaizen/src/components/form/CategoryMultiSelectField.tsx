@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import {
-  createDashboardMultiSelectField,
+  createDashboardCreatableMultiSelectField,
   type MultiSelectFieldLabels,
 } from "@delpi/plugin-ui";
 
@@ -18,7 +18,13 @@ const LABELS = {
   createOption: (query: string) => `Adicionar "${query}"`,
 } satisfies MultiSelectFieldLabels;
 
-const MultiSelect = createDashboardMultiSelectField({ prefix: "kz", labels: LABELS });
+const CreatableMultiSelect = createDashboardCreatableMultiSelectField({
+  prefix: "kz",
+  labels: LABELS,
+  showSelectedTags: false,
+  includeSelectedInOptions: false,
+  showBulkActions: true,
+});
 
 type CategoryMultiSelectFieldProps = {
   selectedValues: string[];
@@ -45,15 +51,13 @@ export function CategoryMultiSelectField({
   };
 
   return (
-    <MultiSelect
+    <CreatableMultiSelect
       label="Categoria"
-      labelHint={KAIZEN_HELP_TOOLTIPS.fields.category}
+      hint={KAIZEN_HELP_TOOLTIPS.fields.category}
       options={options}
       selectedValues={selectedValues}
       onChange={handleChange}
       onCreateOption={handleCreateOption}
-      searchable
-      creatable
       maxCreateLength={50}
       disabled={disabled}
       className={className}

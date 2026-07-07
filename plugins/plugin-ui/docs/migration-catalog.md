@@ -79,7 +79,8 @@ python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em to
 | `TextField` / `TextAreaField` | 1 (PAC) | F3 ✅ |
 | `TitleWithHelp` | 1 (PAC) | F3 ✅ |
 | `FilterCheckboxField` | 1 (PAC) | F3 ✅ |
-| `CreatableMultiSelectField` | PAC (+ kaizen inline) | F3 ✅ |
+| `FormGrid` / `FormActions` | PAC | F3 ✅ |
+| `CreatableMultiSelectField` | PAC + kaizen categorias | F3 ✅ |
 | `TableHeaderCell` | PAC + transformometro | F3 ✅ |
 | `PageHeader` | 7 | F3 ✅ |
 | `DetailCard` | 3 | F3 ✅ |
@@ -134,7 +135,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `inspecoes-entrada` | ✅ | — | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + forms F3 (TextField, TableHeaderCell, FilterCheckbox) |
-| `cadastro-kaizen` | ✅ | ✅ | — | — | — | — | CompactPagination + MultiSelect + DataTable F2 |
+| `cadastro-kaizen` | ✅ | ✅ | — | — | — | — | CompactPagination + MultiSelect + DataTable + CategoryCreatable F2/F3 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
