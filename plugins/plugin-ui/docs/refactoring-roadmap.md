@@ -64,7 +64,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 | `ReadOnlyField` | 2 | **A** |
 | `SelectField` | 2 (`quality-action-plans`, `transformometro`) | **A** |
 | `PageHeader` | 7 | Avaliar diff; provável **A** com slots |
-| `DetailFieldGrid` | 5 | **A** |
+| `DetailFieldGrid` | 5 | **A** ✅ F3.1 |
 | `DetailCard` | 3 | **A** |
 | `StructureLegend` | 2 | **L** ou **A** se unificar com LMP/commercial |
 | `EmptyState` | 2 (+ chat próprio) | **A** variante mínima |
@@ -222,13 +222,14 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 
 ### Fase 3 — Formulários e detalhe (2–3 sprints)
 
-| Componente | Consumidores-alvo |
-|------------|-------------------|
-| `EditableSectionCard` | kaizen, transformometro, PAC |
-| `ReadOnlyField` | kaizen, PAC |
-| `SelectField` | PAC, transformometro |
-| `PageHeader` | 7 plugins operacionais |
-| `DetailFieldGrid` / `DetailCard` | LMP, commercial, production |
+| Componente | Consumidores-alvo | Status |
+|------------|-------------------|--------|
+| `DetailFieldGrid` | production, commercial, quality, lmps, eficiencia-fabril | ✅ F3.1 |
+| `EditableSectionCard` | kaizen, transformometro, PAC | ⏳ F3.2 (2/3) |
+| `ReadOnlyField` | kaizen, PAC | ⏳ |
+| `SelectField` | PAC, transformometro | ⏳ |
+| `PageHeader` | 7 plugins operacionais | ⏳ |
+| `DetailCard` | LMP, commercial, production | ⏳ |
 
 ### Fase 4 — Utilitários compartilhados (1 sprint)
 
@@ -301,7 +302,9 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 ## 7. Próximo passo recomendado
 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2 concluída** nos dashboards departamentais — próximo: Fase 3 (formulários/detalhe).
+2. **Fase 2 concluída** nos dashboards departamentais.
+3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
+4. **Fase 3.2 em andamento** — `EditableSectionCard` em kaizen + transformometro; PAC pendente (`SectionCard`).
 
 ---
 

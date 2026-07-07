@@ -93,6 +93,12 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `filtersRowBemClasses` / `createDashboardFiltersKit` | Helpers BEM + factory |
 | `ChartToolbar` / `ChartGranularityToggle` | Barra de gráfico + agrupamento |
 | `chartToolbarBemClasses` / `createDashboardChartToolbarKit` | Helpers BEM + factory |
+| `DetailFieldGrid` | Grade `<dl>` para fichas de detalhe |
+| `detailFieldGridBemClasses` / `createDashboardDetailFieldGrid` | Helpers BEM + factory |
+| `EditableSectionCard` | Seção editável (read/edit + ações) |
+| `editableSectionCardBemClasses` / `createDashboardEditableSectionCard` | Helpers BEM + factory |
+| `DataTable` / `DataTableSection` | Tabela + seção com busca/paginação |
+| `dataTableBemClasses` / `createDashboardDataTableKit` | Helpers BEM + factory |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 
@@ -106,7 +112,7 @@ src/
 ├── styles.css            # classes delpi-ui-*
 └── components/
     ├── help/             # balões explicativos
-    ├── layout/           # ChartCard, KpiCard, FiltersRow
+    ├── layout/           # ChartCard, KpiCard, FiltersRow, DetailFieldGrid
     ├── feedback/         # LoadingActivityCard
     ├── data/             # Pagination, TablePageSizeSelect
     └── forms/            # MultiSelectField

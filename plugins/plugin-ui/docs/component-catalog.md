@@ -257,6 +257,34 @@ Tabela genérica com sort, empty/loading e seção completa (busca, page size, p
 
 Helpers: `dataTableBemClasses`, `dataTableSectionBemClasses`, `createDashboardDataTableKit`.
 
+### `DetailFieldGrid`
+
+Grade de detalhe (`<dl>`) para fichas operacionais — rótulos, valores, hint opcional e coluna wide.
+
+| Export | Descrição |
+|--------|-----------|
+| `DetailFieldGrid` | Lista de campos `{ label, value, hint?, wide? }` |
+| `DetailField` | Tipo de item da grade |
+
+Helpers: `detailFieldGridBemClasses(prefix)` e `createDashboardDetailFieldGrid({ prefix, labels, valueFallback?, wrapLabels? })`.
+
+Opções do factory:
+- `labels.emptyMessage` — exibe parágrafo vazio quando `fields.length === 0` (omitir em production)
+- `valueFallback` — texto para valores `null`/`undefined` (ex.: `"—"`)
+- `wrapLabels` — envolve rótulos em `<span className="{prefix}-detail-grid__label">` (commercial, lmps)
+
+### `EditableSectionCard`
+
+Seção editável com header (título, hint, ações Editar/Salvar/Cancelar) e conteúdo read/edit.
+
+| Export | Descrição |
+|--------|-----------|
+| `EditableSectionCard` | Card de seção com toggle leitura/edição |
+| `editableSectionCardBemClasses` | BEM kaizen-style (`{prefix}-section-card`) |
+| `editableSectionCardTransformometroClasses` | BEM transformometro (`{prefix}-editable-section`) |
+
+Helper: `createDashboardEditableSectionCard({ classNames, labels })`.
+
 ---
 
 ## Estilos base (`styles.css`)

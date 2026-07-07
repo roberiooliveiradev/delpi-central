@@ -44,3 +44,23 @@ export {
   type FiltersRowClassNames,
   type FiltersRowProps,
 } from "./FiltersRow";
+export {
+  DetailFieldGrid,
+  createDashboardDetailFieldGrid,
+  detailFieldGridBemClasses,
+  type DashboardDetailFieldGridProps,
+  type DetailField,
+  type DetailFieldGridClassNames,
+  type DetailFieldGridLabels,
+  type DetailFieldGridProps,
+} from "./DetailFieldGrid";
+export {
+  EditableSectionCard,
+  createDashboardEditableSectionCard,
+  editableSectionCardBemClasses,
+  editableSectionCardTransformometroClasses,
+  type DashboardEditableSectionCardProps,
+  type EditableSectionCardClassNames,
+  type EditableSectionCardLabels,
+  type EditableSectionCardProps,
+} from "./EditableSectionCard";

@@ -61,7 +61,8 @@ Resumo (2+ consumidores):
 | `MultiSelectField` | 13 | F2 ✅ (8 dept. + lmps) |
 | `FilterBar` | 12 | F2 ✅ (FiltersRow + FilterInputField) |
 | `DataTable` / `DataTableSection` | ~25 | F2 ✅ (7 dept. + lmps DataTable) |
-| `EditableSectionCard` | 3 | F3 |
+| `DetailFieldGrid` | 5 | F3 ✅ (5 consumidores) |
+| `EditableSectionCard` | 3 | F3 ⏳ (2/3 — kaizen, transformometro) |
 | `EmptyState` | 2+ | F3/F5 |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
@@ -86,3 +87,21 @@ Resumo (2+ consumidores):
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
 Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField` (~20 linhas); CSS permanece no plugin.
+
+## Status — Fase 3 (formulários e detalhe)
+
+| Plugin | DetailFieldGrid | Notas |
+|--------|-----------------|-------|
+| `dashboard-production` | ✅ | `valueFallback: "—"`; sem empty state |
+| `dashboard-commercial` | ✅ | hints + `wrapLabels` |
+| `dashboard-quality` | ✅ | empty state "Sem dados." |
+| `dashboard-lmps` | ✅ | hints + `wrapLabels` |
+| `eficiencia-fabril` | ✅ | empty state "Sem dados." |
+
+Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGrid` (~12 linhas); CSS `{prefix}-detail-grid*` permanece no plugin.
+
+| Plugin | EditableSectionCard | Notas |
+|--------|---------------------|-------|
+| `cadastro-kaizen` | ✅ | `editableSectionCardBemClasses("kz")` |
+| `transformometro` | ✅ | `editableSectionCardTransformometroClasses("ds")` |
+| `quality-action-plans` | ⏳ | Depende de `SectionCard` local — API distinta (sem Salvar) |
