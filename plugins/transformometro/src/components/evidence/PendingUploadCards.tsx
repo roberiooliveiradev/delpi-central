@@ -96,31 +96,36 @@ function PendingUploadCard({
 
   return (
     <article className="tm-evidence-pending-card">
-      <button
-        type="button"
-        className="tm-evidence-pending-card__remove"
-        disabled={disabled}
-        onClick={() => onRemove(item.id)}
-        aria-label={`Remover ${item.file.name}`}
-      >
-        <X size={14} aria-hidden="true" />
-      </button>
-
-      {previewable ? (
+      <div className="tm-evidence-pending-card__thumb">
         <button
           type="button"
-          className="tm-evidence__thumb-btn"
+          className="tm-evidence-pending-card__remove"
           disabled={disabled}
-          onClick={() => setPreviewOpen(true)}
-          aria-label={`Pré-visualizar ${item.file.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove(item.id);
+          }}
+          aria-label={`Remover ${item.file.name}`}
         >
-          <PendingFilePreview file={item.file} previewUrl={previewUrl} />
+          <X size={14} aria-hidden="true" />
         </button>
-      ) : (
-        <div className="tm-evidence-pending-card__static-thumb">
-          <PendingFilePreview file={item.file} previewUrl={previewUrl} />
-        </div>
-      )}
+
+        {previewable ? (
+          <button
+            type="button"
+            className="tm-evidence__thumb-btn tm-evidence-pending-card__thumb-btn"
+            disabled={disabled}
+            onClick={() => setPreviewOpen(true)}
+            aria-label={`Pré-visualizar ${item.file.name}`}
+          >
+            <PendingFilePreview file={item.file} previewUrl={previewUrl} />
+          </button>
+        ) : (
+          <div className="tm-evidence-pending-card__static-thumb">
+            <PendingFilePreview file={item.file} previewUrl={previewUrl} />
+          </div>
+        )}
+      </div>
 
       <div className="tm-evidence-pending-card__meta">
         <span className="tm-evidence-pending-card__name" title={item.file.name}>
