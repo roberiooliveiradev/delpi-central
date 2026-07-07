@@ -79,6 +79,7 @@ python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em to
 | `TextField` / `TextAreaField` | 1 (PAC) | F3 ✅ |
 | `TitleWithHelp` | 1 (PAC) | F3 ✅ |
 | `FilterCheckboxField` | 1 (PAC) | F3 ✅ |
+| `CreatableMultiSelectField` | PAC (+ kaizen inline) | F3 ✅ |
 | `TableHeaderCell` | PAC + transformometro | F3 ✅ |
 | `PageHeader` | 7 | F3 ✅ |
 | `DetailCard` | 3 | F3 ✅ |

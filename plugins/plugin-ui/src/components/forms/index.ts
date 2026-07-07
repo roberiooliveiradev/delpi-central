@@ -1,7 +1,11 @@
 export {
   MultiSelectField,
+  createDashboardCreatableMultiSelectField,
   createDashboardMultiSelectField,
   multiSelectBemClasses,
+  multiSelectCreatablePacClasses,
+  multiSelectPacClasses,
+  type DashboardCreatableMultiSelectFieldProps,
   type DashboardMultiSelectFieldProps,
   type MultiSelectFieldClassNames,
   type MultiSelectFieldLabels,

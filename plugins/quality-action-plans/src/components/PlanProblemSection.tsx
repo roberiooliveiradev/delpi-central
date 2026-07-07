@@ -12,7 +12,7 @@ import {
   toProductLookupMeta,
   type DelpiProductLookupMeta,
 } from "../utils/delpiProductLookup";
-import { CreatableMultiSelectField } from "./ui/CreatableMultiSelectField";
+import { CreatableMultiSelectField } from "./ui/MultiSelectField";
 import { DelpiAsyncLookupField } from "./ui/DelpiAsyncLookupField";
 import { DelpiCustomerSearchModal } from "./ui/DelpiCustomerSearchModal";
 import { FormActions } from "./ui/FormActions";

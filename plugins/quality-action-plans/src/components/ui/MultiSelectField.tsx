@@ -1,20 +1,13 @@
 import {
-  MultiSelectField as BaseMultiSelectField,
-  multiSelectBemClasses,
-  type DashboardMultiSelectFieldProps,
-  type MultiSelectFieldClassNames,
+  createDashboardCreatableMultiSelectField,
+  createDashboardMultiSelectField,
+  multiSelectCreatablePacClasses,
+  multiSelectPacClasses,
   type MultiSelectFieldLabels,
   type MultiSelectOption,
 } from "@delpi/plugin-ui";
 
-import type { SelectOption } from "./types";
-
-const PAC_MULTI_SELECT_CLASS_NAMES: MultiSelectFieldClassNames = {
-  ...multiSelectBemClasses("pac"),
-  root: "pac-field pac-field--multi",
-};
-
-const LABELS = {
+const MULTI_LABELS = {
   emptyLabel: "Todos",
   searchPlaceholder: "Buscar…",
   selectVisible: "Marcar visíveis",
@@ -24,27 +17,28 @@ const LABELS = {
   searchAriaLabel: (label: string) => `Buscar ${label}`,
 } satisfies MultiSelectFieldLabels;
 
-type MultiSelectFieldProps = Omit<DashboardMultiSelectFieldProps, "labelHint" | "options"> & {
-  hint?: string;
-  options: SelectOption[];
-};
+const CREATABLE_LABELS = {
+  emptyLabel: "Selecione ou digite…",
+  searchPlaceholder: "Buscar ou adicionar…",
+  selectVisible: "Marcar visíveis",
+  clear: "Limpar",
+  emptyOptions: "Nenhuma opção encontrada.",
+  emptyOptionsCreatable: "Pressione Enter ou use o botão acima.",
+  multipleSelected: (count: number) => `${count} item(ns) selecionado(s)`,
+  selectedCountLabel: (count: number) => `${count} item(ns) selecionado(s)`,
+  createOption: (value: string) => `Adicionar «${value.trim()}»`,
+  searchAriaLabel: (label: string) => `Buscar ou adicionar em ${label}`,
+  removeTagAriaLabel: (value: string) => `Remover ${value}`,
+} satisfies MultiSelectFieldLabels;
 
-export function MultiSelectField({
-  hint,
-  options,
-  searchable = true,
-  ...props
-}: MultiSelectFieldProps) {
-  return (
-    <BaseMultiSelectField
-      labelHint={hint}
-      options={options}
-      searchable={searchable}
-      classNames={PAC_MULTI_SELECT_CLASS_NAMES}
-      labels={LABELS}
-      {...props}
-    />
-  );
-}
+export const MultiSelectField = createDashboardMultiSelectField({
+  classNames: multiSelectPacClasses("pac"),
+  labels: MULTI_LABELS,
+});
+
+export const CreatableMultiSelectField = createDashboardCreatableMultiSelectField({
+  classNames: multiSelectCreatablePacClasses("pac"),
+  labels: CREATABLE_LABELS,
+});
 
 export type { MultiSelectOption };

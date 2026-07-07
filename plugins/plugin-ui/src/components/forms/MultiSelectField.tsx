@@ -84,6 +84,25 @@ export function multiSelectBemClasses(prefix: string): MultiSelectFieldClassName
   };
 }
 
+/** Multi-select em formulário PAC (sem filter-box). */
+export function multiSelectPacClasses(prefix: string): MultiSelectFieldClassNames {
+  return {
+    ...multiSelectBemClasses(prefix),
+    root: `${prefix}-field ${prefix}-field--multi`,
+  };
+}
+
+/** Multi-select creatable PAC com chips de tags selecionadas. */
+export function multiSelectCreatablePacClasses(prefix: string): MultiSelectFieldClassNames {
+  return {
+    ...multiSelectBemClasses(prefix),
+    root: `${prefix}-field ${prefix}-field--creatable-multi`,
+    tagList: `${prefix}-tag-list`,
+    tagChip: `${prefix}-tag-chip`,
+    tagRemove: `${prefix}-tag-chip__remove`,
+  };
+}
+
 export function MultiSelectField({
   label,
   labelHint,
@@ -349,15 +368,92 @@ export function MultiSelectField({
 export type DashboardMultiSelectFieldProps = Omit<
   MultiSelectFieldProps,
   "classNames" | "labels"
->;
+> & {
+  hint?: string;
+  placeholder?: string;
+};
+
+function resolveMultiSelectClassNames(config: {
+  prefix?: string;
+  classNames?: MultiSelectFieldClassNames;
+}): MultiSelectFieldClassNames {
+  if (config.classNames) return config.classNames;
+  if (config.prefix) return multiSelectBemClasses(config.prefix);
+  throw new Error("createDashboardMultiSelectField: informe prefix ou classNames");
+}
 
 export function createDashboardMultiSelectField(config: {
-  prefix: string;
+  prefix?: string;
+  classNames?: MultiSelectFieldClassNames;
   labels: MultiSelectFieldLabels;
 }) {
-  const classNames = multiSelectBemClasses(config.prefix);
+  const classNames = resolveMultiSelectClassNames(config);
 
-  return function DashboardMultiSelectField(props: DashboardMultiSelectFieldProps) {
-    return <MultiSelectField classNames={classNames} labels={config.labels} {...props} />;
+  return function DashboardMultiSelectField({
+    hint,
+    placeholder,
+    labelHint,
+    ...props
+  }: DashboardMultiSelectFieldProps) {
+    return (
+      <MultiSelectField
+        classNames={classNames}
+        labels={{
+          ...config.labels,
+          searchPlaceholder: placeholder ?? config.labels.searchPlaceholder,
+        }}
+        labelHint={hint ?? labelHint}
+        {...props}
+      />
+    );
+  };
+}
+
+export type DashboardCreatableMultiSelectFieldProps = Omit<
+  DashboardMultiSelectFieldProps,
+  | "searchable"
+  | "creatable"
+  | "showSelectedTags"
+  | "includeSelectedInOptions"
+  | "showBulkActions"
+  | "options"
+> & {
+  options?: MultiSelectOption[];
+};
+
+export function createDashboardCreatableMultiSelectField(config: {
+  prefix?: string;
+  classNames?: MultiSelectFieldClassNames;
+  labels: MultiSelectFieldLabels;
+  showSelectedTags?: boolean;
+  includeSelectedInOptions?: boolean;
+  showBulkActions?: boolean;
+}) {
+  const classNames = resolveMultiSelectClassNames(config);
+
+  return function DashboardCreatableMultiSelectField({
+    hint,
+    placeholder,
+    labelHint,
+    options = [],
+    ...props
+  }: DashboardCreatableMultiSelectFieldProps) {
+    return (
+      <MultiSelectField
+        classNames={classNames}
+        labels={{
+          ...config.labels,
+          searchPlaceholder: placeholder ?? config.labels.searchPlaceholder,
+        }}
+        labelHint={hint ?? labelHint}
+        options={options}
+        searchable
+        creatable
+        showSelectedTags={config.showSelectedTags ?? true}
+        includeSelectedInOptions={config.includeSelectedInOptions ?? true}
+        showBulkActions={config.showBulkActions ?? false}
+        {...props}
+      />
+    );
   };
 }
