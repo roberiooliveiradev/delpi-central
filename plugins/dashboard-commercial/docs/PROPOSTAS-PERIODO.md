@@ -89,7 +89,7 @@ Implementação: `CommercialProposalListSearchService` (api-delpi).
 | `src/components/PaginationPageJump.tsx` | Campo «Ir para» com validação (vazio, não numérico, fora do intervalo) |
 | `src/utils/paginationPages.ts` | Cálculo de páginas visíveis (reticências) + `parsePageJumpInput` |
 | `src/hooks/useDebouncedValue.ts` | Debounce da busca (350 ms) |
-| `src/components/table/DataTableSection.tsx` | `serverPagination`, `serverSort`, `serverSearch`, `toolbarExtra` |
+| `src/components/dataTableUi.ts` | `serverPagination`, `serverSort`, `serverSearch`, `toolbarExtra` |
 | `src/api/commercialApi.ts` | `getCommercialProposals`, `getCommercialProposalsForExport`, `resolveProposalSortApiKey` |
 | `src/export/CommercialExportButtons.tsx` | `resolvePayload` / `resolveContext` para exportação assíncrona |
 

@@ -1,4 +1,4 @@
-import type { DataTableColumn } from "../components/table";
+import type { DataTableColumn } from "../components/dataTableUi";
 
 function compareSortValues(
   left: string | number | null | undefined,

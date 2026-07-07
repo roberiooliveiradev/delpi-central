@@ -1,41 +1,23 @@
-import type { ReactNode } from "react";
+import {
+  KpiCard as BaseKpiCard,
+  kpiCardBemClasses,
+  type DashboardKpiCardProps,
+  type KpiCardLabels,
+} from "@delpi/plugin-ui";
 
-import { HelpTooltip } from "@delpi/plugin-ui";
+const LABELS = {
+  goalPrefix: "Meta",
+  iddScorePrefix: "Nota",
+  badgesStatus: "Metas e indicadores",
+} satisfies KpiCardLabels;
 
-type KpiCardProps = {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: ReactNode;
-  loading?: boolean;
-  titleHint?: string;
+const CLASS_NAMES = {
+  ...kpiCardBemClasses("ds"),
+  context: "ds-kpi-subtitle",
 };
 
-export function KpiCard({
-  title,
-  value,
-  subtitle,
-  icon,
-  loading = false,
-  titleHint,
-}: KpiCardProps) {
-  return (
-    <article className="ds-card ds-kpi-card">
-      <div className="ds-kpi-header">
-        <div>
-          <p className="ds-kpi-title">
-            {title}
-            {titleHint ? (
-              <HelpTooltip content={titleHint} ariaLabel={`Ajuda: ${title}`} />
-            ) : null}
-          </p>
-          <h3 className="ds-kpi-value">{loading ? "…" : value}</h3>
-          <span className="ds-kpi-subtitle">{subtitle}</span>
-        </div>
-        <div className="ds-kpi-icon" aria-hidden="true">
-          {icon}
-        </div>
-      </div>
-    </article>
-  );
+export function KpiCard(props: DashboardKpiCardProps) {
+  return <BaseKpiCard classNames={CLASS_NAMES} labels={LABELS} {...props} />;
 }
+
+export type KpiCardProps = DashboardKpiCardProps;

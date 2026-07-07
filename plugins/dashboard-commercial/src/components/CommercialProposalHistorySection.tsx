@@ -12,7 +12,7 @@ import {
 } from "../utils/proposalHistoryFormatting";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { CommercialProposalTimeline } from "./CommercialProposalTimeline";
-import { DataTable, type DataTableColumn } from "./table";
+import { DataTable, type DataTableColumn } from "./dataTableUi";
 import { HelpTooltip } from "@delpi/plugin-ui";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 

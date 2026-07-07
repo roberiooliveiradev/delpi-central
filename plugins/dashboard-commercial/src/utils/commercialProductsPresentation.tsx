@@ -1,4 +1,4 @@
-import type { DataTableColumn } from "../components/table";
+import type { DataTableColumn } from "../components/dataTableUi";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { CommercialProduct } from "../types/commercial";
 

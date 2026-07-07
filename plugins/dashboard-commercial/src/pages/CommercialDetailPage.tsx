@@ -16,7 +16,7 @@ import { HelpTooltip } from "@delpi/plugin-ui";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
-import { DataTable } from "../components/table";
+import { DataTable } from "../components/dataTableUi";
 import { COMMERCIAL_ROUTES } from "../constants/routes";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {

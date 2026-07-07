@@ -1,4 +1,4 @@
-import type { DataTableColumn } from "../components/table";
+import type { DataTableColumn } from "../components/dataTableUi";
 import type {
   ClosingRateData,
   CommercialProposal,
