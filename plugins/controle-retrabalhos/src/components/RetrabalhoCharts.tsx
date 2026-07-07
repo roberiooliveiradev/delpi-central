@@ -14,8 +14,10 @@ import {
 } from "recharts";
 
 import {
+  CHART_AXIS_TICK,
+  CHART_COLORS,
   CHART_EXPANDED_HEIGHT,
-  CHART_FONT_SIZE,
+  CHART_GRID_STROKE,
   CHART_HEIGHT,
   CHART_RANKING_HEIGHT,
   LABEL_LIST_STYLE,
@@ -42,18 +44,18 @@ type RetrabalhoChartsProps = {
 
 type ExpandedChartKey = "recursos" | "colaboradores";
 
-const MONTHLY_AXIS_TICK = { fontSize: CHART_FONT_SIZE, fill: "#64748b" };
-
 const MONTHLY_X_AXIS = {
   dataKey: "label" as const,
   interval: 0 as const,
   angle: 0 as const,
   textAnchor: "middle" as const,
   height: 36,
-  tick: MONTHLY_AXIS_TICK,
+  tick: CHART_AXIS_TICK,
 };
 
-const CHART_GRID = <CartesianGrid strokeDasharray="3 3" vertical={false} />;
+const CHART_GRID = (
+  <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" vertical={false} />
+);
 
 function sortMensalChronological(items: RetrabalhoMensalItem[]): RetrabalhoMensalItem[] {
   return [...items].sort((a, b) => {
@@ -107,9 +109,9 @@ export function RetrabalhoCharts({ mensal, recursos, colaboradores }: Retrabalho
         <Line
           type="monotone"
           dataKey="custo"
-          stroke="#2563eb"
+          stroke={CHART_COLORS.primary}
           strokeWidth={2}
-          dot={{ r: 3, fill: "#2563eb" }}
+          dot={{ r: 3, fill: CHART_COLORS.primary }}
           activeDot={{ r: 5 }}
         >
           <LabelList
@@ -130,7 +132,7 @@ export function RetrabalhoCharts({ mensal, recursos, colaboradores }: Retrabalho
         <XAxis {...MONTHLY_X_AXIS} />
         <YAxis tickFormatter={(value) => formatHours(Number(value))} />
         <Tooltip formatter={(value) => formatHours(Number(value))} />
-        <Bar dataKey="horas" fill="#2563eb" radius={[4, 4, 0, 0]}>
+        <Bar dataKey="horas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]}>
           <LabelList
             dataKey="horas"
             position="top"
@@ -155,13 +157,13 @@ export function RetrabalhoCharts({ mensal, recursos, colaboradores }: Retrabalho
           type="category"
           dataKey="label"
           width={useFullLabels ? 220 : 120}
-          tick={{ fontSize: CHART_FONT_SIZE, fill: "#64748b" }}
+          tick={CHART_AXIS_TICK}
         />
         <Tooltip
           formatter={(value) => formatHours(Number(value))}
           labelFormatter={(_, payload) => payload?.[0]?.payload?.fullLabel ?? ""}
         />
-        <Bar dataKey="horas" fill="#2563eb" radius={[0, 4, 4, 0]}>
+        <Bar dataKey="horas" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]}>
           <LabelList
             dataKey="horas"
             position="right"
@@ -186,13 +188,13 @@ export function RetrabalhoCharts({ mensal, recursos, colaboradores }: Retrabalho
           type="category"
           dataKey="label"
           width={useFullLabels ? 220 : 120}
-          tick={{ fontSize: CHART_FONT_SIZE, fill: "#64748b" }}
+          tick={CHART_AXIS_TICK}
         />
         <Tooltip
           formatter={(value) => formatHours(Number(value))}
           labelFormatter={(_, payload) => payload?.[0]?.payload?.fullLabel ?? ""}
         />
-        <Bar dataKey="horas" fill="#7c3aed" radius={[0, 4, 4, 0]}>
+        <Bar dataKey="horas" fill={CHART_COLORS.accent} radius={[0, 4, 4, 0]}>
           <LabelList
             dataKey="horas"
             position="right"

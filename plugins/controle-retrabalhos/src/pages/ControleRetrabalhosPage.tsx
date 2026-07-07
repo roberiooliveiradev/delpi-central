@@ -107,7 +107,7 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
   const permissionDenied = isPermissionError(dashboardError);
 
   return (
-    <div className="dashboard-controle-retrabalhos cr-page">
+    <div className="dashboard-controle-retrabalhos dashboard-page cr-page">
       <header className="cr-page__header">
         <div>
           <h1 className="cr-page__title">Controle de Retrabalhos</h1>
