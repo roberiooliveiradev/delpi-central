@@ -1,6 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { LayoutTemplate, MousePointer2, Settings2 } from "lucide-react";
+import { FieldLabel, TabHintCell } from "@delpi/plugin-ui";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BranchField } from "./BranchField";
 
 type TabId = "element" | "slide" | "playlist";
@@ -37,6 +40,26 @@ const TRANSITION_OPTIONS = [
   { value: "slide", label: "Deslizar" },
   { value: "none", label: "Sem transição" },
 ];
+
+const TAB_META: Record<TabId, { label: string; hint: string; icon: typeof LayoutTemplate }> = {
+  element: {
+    label: "Elemento",
+    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.element,
+    icon: MousePointer2,
+  },
+  slide: {
+    label: "Tela",
+    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.slide,
+    icon: LayoutTemplate,
+  },
+  playlist: {
+    label: "Programação",
+    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.playlist,
+    icon: Settings2,
+  },
+};
+
+const F = TV_DASHBOARD_HELP_TOOLTIPS.fields;
 
 export function DeckSettingsTabs({
   playlist,
@@ -122,37 +145,49 @@ export function DeckSettingsTabs({
     });
   }
 
-  const tabs: Array<{ id: TabId; label: string; disabled?: boolean }> = [
-    ...(showElementTab ? [{ id: "element" as const, label: "Elemento" }] : []),
-    { id: "slide", label: "Tela", disabled: !slide },
-    { id: "playlist", label: "Programação" },
+  const tabs: Array<{ id: TabId; disabled?: boolean }> = [
+    ...(showElementTab ? [{ id: "element" as const }] : []),
+    { id: "slide", disabled: !slide },
+    { id: "playlist" },
   ];
+
+  const activeMeta = TAB_META[activeTab];
+  const ActiveTabIcon = activeMeta.icon;
 
   return (
     <section className="td-deck-tabs" aria-label="Configurações">
       <div className="td-deck-tabs__nav" role="tablist">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            className={`td-deck-tabs__tab${activeTab === tab.id ? " td-deck-tabs__tab--active" : ""}`}
-            aria-selected={activeTab === tab.id}
-            disabled={tab.disabled}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const meta = TAB_META[tab.id];
+          return (
+            <TabHintCell
+              key={tab.id}
+              label={meta.label}
+              hint={meta.hint}
+              icon={meta.icon}
+              active={activeTab === tab.id}
+              disabled={tab.disabled}
+              onSelect={() => setActiveTab(tab.id)}
+              cellClassName="td-deck-tabs__tab-cell"
+              tabClassName="td-deck-tabs__tab"
+              tabActiveClassName="td-deck-tabs__tab--active"
+            />
+          );
+        })}
       </div>
 
       <div className="td-deck-tabs__panel" role="tabpanel">
+        <p className="td-deck-tabs__intro">
+          <ActiveTabIcon size={14} aria-hidden="true" />
+          {activeMeta.hint}
+        </p>
+
         {activeTab === "element" && showElementTab ? elementTab : null}
 
         {activeTab === "slide" && slide ? (
           <div className="td-deck-tabs__grid">
             <div className="td-field">
-              <label htmlFor="td-slide-title">Título</label>
+              <FieldLabel htmlFor="td-slide-title" label="Título" hint={F.slideTitle} className="td-field__label" />
               <input
                 id="td-slide-title"
                 value={title}
@@ -161,7 +196,7 @@ export function DeckSettingsTabs({
               />
             </div>
             <div className="td-field">
-              <label htmlFor="td-slide-duration">Duração (s)</label>
+              <FieldLabel htmlFor="td-slide-duration" label="Duração (s)" hint={F.slideDuration} className="td-field__label" />
               <input
                 id="td-slide-duration"
                 type="number"
@@ -174,7 +209,7 @@ export function DeckSettingsTabs({
             </div>
             {slide.slideType === "external" ? (
               <div className="td-field td-deck-tabs__field--wide">
-                <label htmlFor="td-slide-url">URL (https://)</label>
+                <FieldLabel htmlFor="td-slide-url" label="URL (https://)" hint={F.slideUrl} className="td-field__label" />
                 <input
                   id="td-slide-url"
                   value={externalUrl}
@@ -187,6 +222,7 @@ export function DeckSettingsTabs({
                 <BranchField
                   id="td-slide-branch"
                   label="Filial (opcional)"
+                  hint={F.slideBranch}
                   scope={branchScope}
                   value={branch}
                   onChange={(value) => {
@@ -195,7 +231,7 @@ export function DeckSettingsTabs({
                   }}
                 />
                 <div className="td-field">
-                  <label htmlFor="td-slide-period">Período (dias)</label>
+                  <FieldLabel htmlFor="td-slide-period" label="Período (dias)" hint={F.slidePeriod} className="td-field__label" />
                   <input
                     id="td-slide-period"
                     type="number"
@@ -211,6 +247,7 @@ export function DeckSettingsTabs({
               <BranchField
                 id="td-slide-branch-stock"
                 label="Filial (opcional)"
+                hint={F.slideBranch}
                 scope={branchScope}
                 value={branch}
                 onChange={(value) => {
@@ -232,7 +269,7 @@ export function DeckSettingsTabs({
         {activeTab === "playlist" ? (
           <div className="td-deck-tabs__grid">
             <div className="td-field">
-              <label htmlFor="td-viewport">Resolução alvo</label>
+              <FieldLabel htmlFor="td-viewport" label="Resolução alvo" hint={F.viewport} className="td-field__label" />
               <select
                 id="td-viewport"
                 value={playlist.viewportProfile}
@@ -246,7 +283,7 @@ export function DeckSettingsTabs({
               </select>
             </div>
             <div className="td-field">
-              <label htmlFor="td-transition">Transição</label>
+              <FieldLabel htmlFor="td-transition" label="Transição" hint={F.transition} className="td-field__label" />
               <select
                 id="td-transition"
                 value={playlist.transitionStyle}
@@ -260,7 +297,7 @@ export function DeckSettingsTabs({
               </select>
             </div>
             <div className="td-field">
-              <label htmlFor="td-duration-default">Duração padrão (s)</label>
+              <FieldLabel htmlFor="td-duration-default" label="Duração padrão (s)" hint={F.defaultDuration} className="td-field__label" />
               <input
                 id="td-duration-default"
                 type="number"
@@ -271,7 +308,7 @@ export function DeckSettingsTabs({
               />
             </div>
             <div className="td-field">
-              <label htmlFor="td-refresh">Atualizar dados a cada (s)</label>
+              <FieldLabel htmlFor="td-refresh" label="Atualizar dados a cada (s)" hint={F.refreshInterval} className="td-field__label" />
               <input
                 id="td-refresh"
                 type="number"
@@ -282,7 +319,7 @@ export function DeckSettingsTabs({
               />
             </div>
             <div className="td-field td-deck-tabs__field--wide">
-              <label htmlFor="td-public-url">Link público</label>
+              <FieldLabel htmlFor="td-public-url" label="Link público" hint={F.publicUrl} className="td-field__label" />
               <input id="td-public-url" readOnly value={playlist.publicUrl ?? ""} />
             </div>
           </div>

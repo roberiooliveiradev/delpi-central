@@ -21,6 +21,7 @@ export default defineConfig({
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",
       ),
+      "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
     },
   },
   base: "/apps/tv-dashboard/",

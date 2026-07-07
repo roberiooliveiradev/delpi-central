@@ -1,8 +1,12 @@
+import { ArrowDown, ArrowUp, Image as ImageIcon, Trash2, Upload } from "lucide-react";
 import { ComunicadoBlockView, frameStyle } from "@delpi/tv-dashboard-presentation";
+import { FieldLabel, HelpTooltip, HintAction } from "@delpi/plugin-ui";
 
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 const FONT_SCALE = 0.35;
+const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 type Labels = Record<string, string>;
 
@@ -83,7 +87,10 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
   return (
     <div className="td-deck-tabs__grid">
       <div className="td-deck-tabs__block">
-        <h4 className="td-deck-tabs__block-title">{labels.comunicadoBlocks ?? "Elemento selecionado"}</h4>
+        <h4 className="td-deck-tabs__block-title">
+          {labels.comunicadoBlocks ?? "Elemento selecionado"}
+          <HelpTooltip content={E.panel} ariaLabel="Ajuda: elemento selecionado" />
+        </h4>
         {!selected ? (
           <p className="td-subtitle">Selecione um elemento no slide ou arraste para posicionar.</p>
         ) : (
@@ -93,7 +100,7 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
             {isTextBlock && (
               <>
                 <div className="td-field">
-                  <label htmlFor="td-block-content">Conteúdo</label>
+                  <FieldLabel htmlFor="td-block-content" label="Conteúdo" hint={E.content} className="td-field__label" />
                   <textarea
                     id="td-block-content"
                     rows={2}
@@ -102,7 +109,7 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
                   />
                 </div>
                 <div className="td-field">
-                  <label htmlFor="td-block-link">Link (URL)</label>
+                  <FieldLabel htmlFor="td-block-link" label="Link (URL)" hint={E.link} className="td-field__label" />
                   <input
                     id="td-block-link"
                     type="url"
@@ -122,7 +129,7 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
             {isShapeBlock && (
               <>
                 <div className="td-field">
-                  <label htmlFor="td-shape-content">Texto na forma</label>
+                  <FieldLabel htmlFor="td-shape-content" label="Texto na forma" hint={E.shapeText} className="td-field__label" />
                   <input
                     id="td-shape-content"
                     type="text"
@@ -131,7 +138,12 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
                   />
                 </div>
                 <div className="td-field">
-                  <label htmlFor="td-shape-stroke-width">Espessura do contorno</label>
+                  <FieldLabel
+                    htmlFor="td-shape-stroke-width"
+                    label="Espessura do contorno"
+                    hint={E.strokeWidth}
+                    className="td-field__label"
+                  />
                   <input
                     id="td-shape-stroke-width"
                     type="number"
@@ -145,20 +157,28 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
             )}
 
             {isMediaBlock && (
-              <button
-                type="button"
-                className="td-btn td-btn--sm"
-                disabled={uploading}
-                onClick={() => triggerUpload("block")}
-              >
-                {uploading ? "Enviando…" : labels.comunicadoUpload ?? "Enviar arquivo"}
-              </button>
+              <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: enviar arquivo">
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm"
+                  disabled={uploading}
+                  onClick={() => triggerUpload("block")}
+                >
+                  <Upload size={15} aria-hidden="true" />
+                  {uploading ? "Enviando…" : labels.comunicadoUpload ?? "Enviar arquivo"}
+                </button>
+              </HintAction>
             )}
 
             <div className="td-composer__grid">
               {(["x", "y", "w", "h"] as const).map((key) => (
                 <div className="td-field" key={key}>
-                  <label htmlFor={`td-frame-${key}`}>{key.toUpperCase()} %</label>
+                  <FieldLabel
+                    htmlFor={`td-frame-${key}`}
+                    label={key.toUpperCase()}
+                    hint={E.position}
+                    className="td-field__label"
+                  />
                   <input
                     id={`td-frame-${key}`}
                     type="number"
@@ -176,7 +196,7 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
             </div>
 
             <div className="td-field">
-              <label htmlFor="td-rotation">Rotação (°)</label>
+              <FieldLabel htmlFor="td-rotation" label="Rotação (°)" hint={E.rotation} className="td-field__label" />
               <input
                 id="td-rotation"
                 type="number"
@@ -188,24 +208,36 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
             </div>
 
             <div className="td-composer__format-row">
-              <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("up")}>
-                Trazer frente
-              </button>
-              <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("down")}>
-                Enviar fundo
-              </button>
-              <button type="button" className="td-btn td-btn--danger td-btn--sm" onClick={removeSelected}>
-                Remover
-              </button>
+              <HintAction hint={E.layerUp} ariaLabel="Ajuda: trazer frente">
+                <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("up")}>
+                  <ArrowUp size={15} aria-hidden="true" />
+                  Trazer frente
+                </button>
+              </HintAction>
+              <HintAction hint={E.layerDown} ariaLabel="Ajuda: enviar fundo">
+                <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("down")}>
+                  <ArrowDown size={15} aria-hidden="true" />
+                  Enviar fundo
+                </button>
+              </HintAction>
+              <HintAction hint={E.remove} ariaLabel="Ajuda: remover">
+                <button type="button" className="td-btn td-btn--danger td-btn--sm" onClick={removeSelected}>
+                  <Trash2 size={15} aria-hidden="true" />
+                  Remover
+                </button>
+              </HintAction>
             </div>
           </>
         )}
       </div>
 
       <div className="td-deck-tabs__block">
-        <h4 className="td-deck-tabs__block-title">{labels.comunicadoBackground ?? "Fundo do slide"}</h4>
+        <h4 className="td-deck-tabs__block-title">
+          <ImageIcon size={14} aria-hidden="true" />
+          {labels.comunicadoBackground ?? "Fundo do slide"}
+        </h4>
         <div className="td-field">
-          <label htmlFor="td-bg-color">Cor</label>
+          <FieldLabel htmlFor="td-bg-color" label="Cor" hint={E.backgroundColor} className="td-field__label" />
           <input
             id="td-bg-color"
             type="color"
@@ -213,14 +245,17 @@ export function ComunicadoElementPanel({ labels = {} }: { labels?: Labels }) {
             onChange={(e) => setBackgroundColor(e.target.value)}
           />
         </div>
-        <button
-          type="button"
-          className="td-btn td-btn--sm"
-          disabled={uploading}
-          onClick={() => triggerUpload("background")}
-        >
-          {labels.comunicadoUpload ?? "Enviar imagem de fundo"}
-        </button>
+        <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: imagem de fundo">
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            disabled={uploading}
+            onClick={() => triggerUpload("background")}
+          >
+            <Upload size={15} aria-hidden="true" />
+            {labels.comunicadoUpload ?? "Enviar imagem de fundo"}
+          </button>
+        </HintAction>
       </div>
     </div>
   );
