@@ -132,6 +132,12 @@ export function FormView({ form }: { form: PublicForm }) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    // Enter em campos de texto dispara submit nativo do <form>; no wizard isso
+    // não pode enviar antes da última etapa (perguntas opcionais seriam puladas).
+    if (wizard && stepIndex < steps.length - 1) {
+      goNext();
+      return;
+    }
     const problem = validateAll();
     if (problem) {
       setError(problem);
