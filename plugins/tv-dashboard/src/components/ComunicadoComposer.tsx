@@ -49,6 +49,7 @@ export function ComunicadoComposerCanvas() {
     canvasRef,
     startDrag,
     dataPreviewLoading,
+    stageZoom,
   } = useComunicadoEditor();
   const canvasStyle = useCanvasBackgroundStyle();
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
@@ -159,10 +160,13 @@ export function ComunicadoComposerCanvas() {
 
   return (
     <div className="td-composer td-composer--deck">
-      <div className="td-composer__canvas-wrap td-composer__canvas-wrap--full">
+      <div
+        className="td-composer__canvas-wrap td-composer__canvas-wrap--full td-composer__canvas-wrap--zoom"
+        style={{ "--td-composer-zoom": stageZoom } as React.CSSProperties}
+      >
         <div
           ref={canvasRef}
-          className="td-composer__canvas"
+          className="td-composer__canvas td-composer__canvas--zoomed"
           style={canvasStyle}
           onPointerDown={handleCanvasPointerDown}
         >

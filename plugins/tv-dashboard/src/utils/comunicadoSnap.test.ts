@@ -9,7 +9,7 @@ describe("comunicadoSnap", () => {
   });
 
   it("snap move centraliza no eixo quando perto do centro", () => {
-    const frame = { x: 49, y: 10, w: 20, h: 20 };
+    const frame = { x: 41, y: 10, w: 20, h: 20 };
     const snapped = snapComunicadoFrame(frame, "move");
     expect(snapped.x).toBe(40);
   });

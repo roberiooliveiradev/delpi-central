@@ -15,14 +15,41 @@ type Props = {
   dataLoading?: boolean;
 };
 
+function blockLinkHref(block: ComunicadoBlock): string | undefined {
+  if (
+    block.type === "heading" ||
+    block.type === "text" ||
+    block.type === "image" ||
+    block.type === "video" ||
+    block.type === "shape"
+  ) {
+    return block.href;
+  }
+  return undefined;
+}
+
+function blockLinkTarget(block: ComunicadoBlock): "_blank" | "_self" | undefined {
+  if (
+    block.type === "heading" ||
+    block.type === "text" ||
+    block.type === "image" ||
+    block.type === "video" ||
+    block.type === "shape"
+  ) {
+    return block.linkTarget;
+  }
+  return undefined;
+}
+
 function wrapWithLink(node: ReactNode, block: ComunicadoBlock) {
-  if (block.type !== "heading" && block.type !== "text") return node;
-  if (!block.href) return node;
+  const href = blockLinkHref(block);
+  if (!href) return node;
+  const target = blockLinkTarget(block) ?? "_blank";
   return (
     <a
-      href={block.href}
-      target={block.linkTarget ?? "_blank"}
-      rel={block.linkTarget === "_blank" ? "noopener noreferrer" : undefined}
+      href={href}
+      target={target}
+      rel={target === "_blank" ? "noopener noreferrer" : undefined}
       className="tdp-comunicado__link"
     >
       {node}
@@ -122,45 +149,52 @@ export function ComunicadoBlockView({
   }
 
   if (block.type === "image" && (block.url || interactive)) {
+    const media = block.url ? (
+      <img src={block.url} alt="" style={{ objectFit: block.style?.objectFit ?? "contain" }} />
+    ) : (
+      <ComunicadoMediaPlaceholder kind="image" />
+    );
     return (
       <div className={`${blockClass} tdp-comunicado__block--media`} style={style}>
-        {block.url ? (
-          <img src={block.url} alt="" style={{ objectFit: block.style?.objectFit ?? "contain" }} />
-        ) : (
-          <ComunicadoMediaPlaceholder kind="image" />
-        )}
+        {wrapWithLink(media, block)}
       </div>
     );
   }
 
   if (block.type === "video" && (block.url || interactive)) {
+    const media = block.url ? (
+      <video
+        src={block.url}
+        autoPlay={!interactive}
+        muted
+        loop
+        playsInline
+        style={{ objectFit: block.style?.objectFit ?? "contain" }}
+      />
+    ) : (
+      <ComunicadoMediaPlaceholder kind="video" />
+    );
     return (
       <div className={`${blockClass} tdp-comunicado__block--media`} style={style}>
-        {block.url ? (
-          <video
-            src={block.url}
-            autoPlay={!interactive}
-            muted
-            loop
-            playsInline
-            style={{ objectFit: block.style?.objectFit ?? "contain" }}
-          />
-        ) : (
-          <ComunicadoMediaPlaceholder kind="video" />
-        )}
+        {wrapWithLink(media, block)}
       </div>
     );
   }
 
   if (block.type === "shape") {
-    return (
-      <div className={`${blockClass} tdp-comunicado__block--shape`} style={style}>
+    const shapeContent = (
+      <>
         <ShapeGraphic block={block} />
         {block.content ? (
           <div className="tdp-comunicado__shape-text">
             <span>{block.content}</span>
           </div>
         ) : null}
+      </>
+    );
+    return (
+      <div className={`${blockClass} tdp-comunicado__block--shape`} style={style}>
+        {wrapWithLink(shapeContent, block)}
       </div>
     );
   }

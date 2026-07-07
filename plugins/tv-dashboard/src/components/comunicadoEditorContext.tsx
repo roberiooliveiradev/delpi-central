@@ -30,6 +30,7 @@ import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboar
 import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
 import { snapComunicadoFrame } from "../utils/comunicadoSnap";
+import { alignComunicadoBlocks, type LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import { applyComunicadoSlideTheme, type ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 
 const HISTORY_LIMIT = 50;
@@ -82,6 +83,9 @@ type ComunicadoEditorContextValue = {
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
   applySlideTemplate: (nativeConfig: Record<string, unknown>) => void;
   applySlideTheme: (theme: ComunicadoSlideTheme) => void;
+  alignSelected: (command: LayoutAlignCommand) => void;
+  stageZoom: number;
+  setStageZoom: (zoom: number) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleUploadFile: (file: File, target: "block" | "background") => void;
   dataPreviewLoading: boolean;
@@ -170,6 +174,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     [selectedIds],
   );
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
+  const [stageZoom, setStageZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<"block" | "background">("block");
 
@@ -429,7 +434,15 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   function updateBlockLink(blockId: string, href: string | undefined) {
     const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
       if (block.id !== blockId) return block;
-      if (block.type !== "heading" && block.type !== "text") return block;
+      if (
+        block.type !== "heading" &&
+        block.type !== "text" &&
+        block.type !== "image" &&
+        block.type !== "video" &&
+        block.type !== "shape"
+      ) {
+        return block;
+      }
       return {
         ...block,
         href: href?.trim() || undefined,
@@ -560,6 +573,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     commitWithHistory(applyComunicadoSlideTheme(configRef.current, theme));
   }
 
+  function alignSelected(command: LayoutAlignCommand) {
+    if (selectedIds.length === 0) return;
+    const nextBlocks = alignComunicadoBlocks(configRef.current.blocks ?? [], selectedIds, command);
+    updateBlocks(nextBlocks);
+  }
+
   async function handleUploadFile(file: File, target: "block" | "background") {
     setUploading(true);
     try {
@@ -646,6 +665,9 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     setBackgroundGradient,
     applySlideTemplate,
     applySlideTheme,
+    alignSelected,
+    stageZoom,
+    setStageZoom,
     fileInputRef,
     handleUploadFile,
     dataPreviewLoading,

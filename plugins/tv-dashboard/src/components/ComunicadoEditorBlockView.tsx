@@ -2,6 +2,7 @@ import { ComunicadoBlockView, ComunicadoMediaPlaceholder, blockCssStyle, type Co
 import type { CSSProperties } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
+import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
 import { ComunicadoEditorTextBlock } from "./ComunicadoEditorTextBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
 
@@ -18,10 +19,12 @@ function EditorImageBlock({
   block,
   style,
   className,
+  isSelected,
 }: {
   block: Extract<ComunicadoBlock, { type: "image" }>;
   style: CSSProperties;
   className?: string;
+  isSelected?: boolean;
 }) {
   const { src, loading, error } = useAuthenticatedBlobUrl(block.url);
 
@@ -51,6 +54,7 @@ function EditorImageBlock({
       ) : (
         <ComunicadoMediaPlaceholder kind="image" />
       )}
+      {isSelected ? <ComunicadoEditorLinkChrome blockId={block.id} href={block.href} /> : null}
     </div>
   );
 }
@@ -86,11 +90,32 @@ export function ComunicadoEditorBlockView({
   }
 
   if (block.type === "image") {
-    return <EditorImageBlock block={block} style={style} className={className} />;
+    return <EditorImageBlock block={block} style={style} className={className} isSelected={isSelected} />;
   }
 
   if (block.type === "video") {
-    return <ComunicadoEditorVideoPreview block={block} style={style} className={className} />;
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <ComunicadoEditorVideoPreview block={block} style={style} className={className} />
+        {isSelected ? <ComunicadoEditorLinkChrome blockId={block.id} href={block.href} /> : null}
+      </div>
+    );
+  }
+
+  if (block.type === "shape") {
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <ComunicadoBlockView
+          block={block}
+          fontScale={fontScale}
+          interactive
+          embedded
+          className={className}
+          dataLoading={dataLoading}
+        />
+        {isSelected ? <ComunicadoEditorLinkChrome blockId={block.id} href={block.href} /> : null}
+      </div>
+    );
   }
 
   return (

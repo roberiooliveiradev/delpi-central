@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from "react";
-import { Link2 } from "lucide-react";
 import { blockCssStyle, comunicadoTextInnerStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
+import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type TextBlock = Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>;
@@ -26,7 +26,7 @@ export function ComunicadoEditorTextBlock({
   isSelected,
   isEditing,
 }: Props) {
-  const { updateBlockContent, updateBlockLink, setEditingTextId, selectBlock } = useComunicadoEditor();
+  const { updateBlockContent, setEditingTextId, selectBlock } = useComunicadoEditor();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const style: CSSProperties = {
@@ -123,21 +123,11 @@ export function ComunicadoEditorTextBlock({
         )}
       </div>
       {showInlineChrome ? (
-        <div
-          className="td-composer__text-inline-chrome"
-          onPointerDown={(event) => event.stopPropagation()}
-        >
-          <span className="td-composer__text-inline-hint">Duplo-clique para editar</span>
-          <label className="td-composer__text-link-field">
-            <Link2 size={12} aria-hidden="true" />
-            <input
-              type="url"
-              placeholder="Link (URL)"
-              value={block.href ?? ""}
-              onChange={(event) => updateBlockLink(block.id, event.target.value)}
-            />
-          </label>
-        </div>
+        <ComunicadoEditorLinkChrome
+          blockId={block.id}
+          href={block.href}
+          hint="Duplo-clique para editar"
+        />
       ) : null}
     </div>
   );

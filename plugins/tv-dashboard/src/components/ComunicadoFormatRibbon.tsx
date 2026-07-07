@@ -8,6 +8,9 @@ import {
   AlignVerticalJustifyStart,
   ArrowDown,
   ArrowUp,
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalJustifyEnd,
+  AlignHorizontalJustifyStart,
   Bold,
   Copy,
   Highlighter,
@@ -21,6 +24,8 @@ import {
   Underline,
   Undo2,
   Upload,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import {
   COMUNICADO_FONT_FAMILIES,
@@ -37,6 +42,11 @@ import {
 import { HintAction } from "@delpi/plugin-ui";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  COMUNICADO_BOX_SHADOW_PRESETS,
+  matchBoxShadowPreset,
+} from "../content/comunicadoVisualPresets";
+import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -49,6 +59,7 @@ const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const {
     selected,
+    selectedIds,
     uploading,
     background,
     updateSelectedStyle,
@@ -62,7 +73,13 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     redo,
     canUndo,
     canRedo,
+    alignSelected,
+    stageZoom,
+    setStageZoom,
   } = useComunicadoEditor();
+
+  const multiSelected = selectedIds.length >= 2;
+  const canDistribute = selectedIds.length >= 3;
 
   const isTextBlock = selected?.type === "heading" || selected?.type === "text";
   const textVerticalAlign =
@@ -105,6 +122,62 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
           />
         </div>
       </DeckRibbonGroup>
+
+      <DeckRibbonGroup label="Visualização" hint="Zoom do palco (50% a 200%).">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile
+            icon={ZoomOut}
+            label="−"
+            disabled={stageZoom <= 0.5}
+            onClick={() => setStageZoom(Math.max(0.5, Math.round((stageZoom - 0.1) * 10) / 10))}
+          />
+          <span className="td-deck-ribbon__zoom-label">{Math.round(stageZoom * 100)}%</span>
+          <DeckRibbonTile
+            icon={ZoomIn}
+            label="+"
+            disabled={stageZoom >= 2}
+            onClick={() => setStageZoom(Math.min(2, Math.round((stageZoom + 0.1) * 10) / 10))}
+          />
+        </div>
+      </DeckRibbonGroup>
+
+      {multiSelected ? (
+        <DeckRibbonGroup label="Alinhar" hint="Alinhar ou distribuir os elementos selecionados.">
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            {(
+              [
+                ["align-left", AlignHorizontalJustifyStart, "Esquerda"],
+                ["align-center-h", AlignHorizontalJustifyCenter, "Centro H"],
+                ["align-right", AlignHorizontalJustifyEnd, "Direita"],
+                ["align-top", AlignVerticalJustifyStart, "Topo"],
+                ["align-center-v", AlignVerticalJustifyCenter, "Centro V"],
+                ["align-bottom", AlignVerticalJustifyEnd, "Base"],
+              ] as const
+            ).map(([command, Icon, label]) => (
+              <DeckRibbonTile
+                key={command}
+                icon={Icon}
+                label={label}
+                onClick={() => alignSelected(command as LayoutAlignCommand)}
+              />
+            ))}
+            <DeckRibbonTile
+              icon={AlignHorizontalJustifyCenter}
+              label="Dist. H"
+              hint="Distribuir horizontalmente (3+)"
+              disabled={!canDistribute}
+              onClick={() => alignSelected("distribute-h")}
+            />
+            <DeckRibbonTile
+              icon={AlignVerticalJustifyCenter}
+              label="Dist. V"
+              hint="Distribuir verticalmente (3+)"
+              disabled={!canDistribute}
+              onClick={() => alignSelected("distribute-v")}
+            />
+          </div>
+        </DeckRibbonGroup>
+      ) : null}
 
       {isTextBlock && selected ? (
         <>
@@ -450,6 +523,63 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 </select>
               </>
             ) : null}
+            <label className="td-deck-ribbon__field-label" htmlFor="td-block-border-width">
+              Borda
+            </label>
+            <input
+              id="td-block-border-width"
+              type="number"
+              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+              min={0}
+              max={12}
+              value={selected.style?.borderWidth ?? 0}
+              onChange={(e) =>
+                updateSelectedStyle({
+                  borderWidth: Number(e.target.value) || 0,
+                  borderColor: selected.style?.borderColor ?? "#ffffff",
+                })
+              }
+            />
+            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Cor da borda">
+              <span className="td-ribbon-tile__icon">
+                <input
+                  type="color"
+                  className="td-deck-ribbon__color"
+                  value={selected.style?.borderColor ?? "#ffffff"}
+                  onChange={(e) => updateSelectedStyle({ borderColor: e.target.value })}
+                />
+              </span>
+            </label>
+            <label className="td-deck-ribbon__field-label" htmlFor="td-block-radius">
+              Raio
+            </label>
+            <input
+              id="td-block-radius"
+              type="number"
+              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+              min={0}
+              max={64}
+              value={selected.style?.borderRadius ?? 0}
+              onChange={(e) => updateSelectedStyle({ borderRadius: Number(e.target.value) || 0 })}
+            />
+            <label className="td-deck-ribbon__field-label" htmlFor="td-block-shadow">
+              Sombra
+            </label>
+            <select
+              id="td-block-shadow"
+              className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+              value={matchBoxShadowPreset(selected.style?.boxShadow)}
+              onChange={(e) => {
+                const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => item.key === e.target.value);
+                updateSelectedStyle({ boxShadow: preset?.value });
+              }}
+            >
+              {COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => (
+                <option key={preset.key} value={preset.key}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
           </div>
         </DeckRibbonGroup>
       ) : (

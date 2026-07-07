@@ -40,6 +40,7 @@ export type ComunicadoBlockStyle = {
   borderColor?: string;
   borderWidth?: number;
   borderRadius?: number;
+  boxShadow?: string;
   opacity?: number;
   rotation?: number;
   zIndex?: number;
@@ -65,12 +66,16 @@ export type ComunicadoMediaBlock = ComunicadoBlockBase & {
   type: "image" | "video";
   assetId?: string;
   url?: string;
+  href?: string;
+  linkTarget?: "_blank" | "_self";
 };
 
 export type ComunicadoShapeBlock = ComunicadoBlockBase & {
   type: "shape";
   shape: ComunicadoShapeKind;
   content?: string;
+  href?: string;
+  linkTarget?: "_blank" | "_self";
 };
 
 export type ComunicadoDataDisplayMode = "kpi" | "line_chart" | "bar_chart" | "table" | "auto";

@@ -220,7 +220,11 @@ function detectConfigVersion(blocks: ComunicadoBlock[]): number {
   if (blocks.some((block) => isDataBlockType(block.type))) return 4;
   const hasV3 = blocks.some((block) => {
     if (block.type === "shape") return true;
-    if ((block.type === "heading" || block.type === "text") && block.href) return true;
+    if (block.type === "heading" || block.type === "text") {
+      if (block.href) return true;
+    } else if (block.type === "image" || block.type === "video") {
+      if (block.href) return true;
+    }
     const style = block.style ?? {};
     return Boolean(
       style.fontFamily ||
@@ -280,9 +284,13 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.linkTarget) base.linkTarget = block.linkTarget;
   } else if (block.type === "image" || block.type === "video") {
     base.assetId = block.assetId;
+    if (block.href) base.href = block.href;
+    if (block.linkTarget) base.linkTarget = block.linkTarget;
   } else if (block.type === "shape") {
     base.shape = block.shape;
     if (block.content) base.content = block.content;
+    if (block.href) base.href = block.href;
+    if (block.linkTarget) base.linkTarget = block.linkTarget;
   } else if (isDataBlockType(block.type) && "dataBinding" in block) {
     base.dataBinding = {
       operationId: block.dataBinding.operationId,
@@ -360,6 +368,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       style: { ...defaultStyle("shape", kind), ...style },
       shape: kind,
       content: typeof block.content === "string" ? block.content : "",
+      href: typeof block.href === "string" && block.href.trim() ? block.href.trim() : undefined,
+      linkTarget: block.linkTarget === "_self" ? "_self" : block.linkTarget === "_blank" ? "_blank" : undefined,
     };
   }
   if (isDataBlockType(type)) {
@@ -396,6 +406,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       style,
       assetId: typeof block.assetId === "string" ? block.assetId : undefined,
       url: typeof block.url === "string" ? block.url : undefined,
+      href: typeof block.href === "string" && block.href.trim() ? block.href.trim() : undefined,
+      linkTarget: block.linkTarget === "_self" ? "_self" : block.linkTarget === "_blank" ? "_blank" : undefined,
     };
   }
   return createBlock("text", "");
@@ -494,6 +506,14 @@ export function comunicadoTextInnerStyle(
   return css;
 }
 
+function applySharedBlockVisualStyle(style: NonNullable<ComunicadoBlock["style"]>, css: CSSProperties) {
+  if (style.borderWidth != null && style.borderWidth > 0 && style.borderColor) {
+    css.border = `${style.borderWidth}px solid ${style.borderColor}`;
+  }
+  if (style.borderRadius != null) css.borderRadius = style.borderRadius;
+  if (style.boxShadow) css.boxShadow = style.boxShadow;
+}
+
 export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
   const fontScale = options?.fontScale ?? 1;
   const style = block.style ?? {};
@@ -503,6 +523,7 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     opacity: style.opacity ?? 1,
     ...(style.rotation ? { transform: `rotate(${style.rotation}deg)` } : {}),
   };
+  applySharedBlockVisualStyle(style, css);
 
   if (block.type === "heading" || block.type === "text") {
     css.display = "flex";
