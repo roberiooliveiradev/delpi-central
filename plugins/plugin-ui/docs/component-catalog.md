@@ -144,5 +144,6 @@ Consumidores podem **só** passar `className` nas props sem usar as classes defa
 |--------|-------------------|
 | `tv-dashboard` | Todos os exports `help` |
 | `dashboard-production` | `HelpTooltip`, `FieldLabel` |
+| `dashboard-commercial` | `HelpTooltip`, `FieldLabel` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.

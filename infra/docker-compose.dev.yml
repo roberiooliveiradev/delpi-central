@@ -532,8 +532,8 @@ services:
   dashboard-commercial:
     <<: *plugin-profile
     build:
-      context: ../plugins/dashboard-commercial
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-commercial/Dockerfile
 
     container_name: delpi-dashboard-commercial
     restart: unless-stopped

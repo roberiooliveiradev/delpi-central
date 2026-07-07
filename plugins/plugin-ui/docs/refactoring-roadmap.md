@@ -251,8 +251,8 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 
 | Plugin | F1 help | F2 shell | F3 forms | Docker hoje |
 |--------|---------|----------|----------|-------------|
-| `dashboard-production` | F1 help, F2 shell piloto | ✅ F1 | sim |
-| `dashboard-commercial` | ⏳ | ⏳ | — | sim |
+| `dashboard-production` | ✅ | piloto F2 | — | sim |
+| `dashboard-commercial` | ✅ | ⏳ | — | sim |
 | `dashboard-engineering` | ⏳ | ⏳ | — | sim |
 | `dashboard-financial` | ⏳ | ⏳ | — | sim |
 | `dashboard-hr` | ⏳ | ⏳ | — | sim |

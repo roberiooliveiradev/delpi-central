@@ -1,5 +1,5 @@
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 
 export function StructureLegend() {
   return (
@@ -7,15 +7,22 @@ export function StructureLegend() {
       <FieldLabel
         label="Código"
         hint={COMMERCIAL_HELP_TOOLTIPS.detail.structureCode}
+        className="dc-field__label"
       />
       <FieldLabel
         label="Descrição"
         hint={COMMERCIAL_HELP_TOOLTIPS.detail.structureDescription}
+        className="dc-field__label"
       />
-      <FieldLabel label="Tipo" hint={COMMERCIAL_HELP_TOOLTIPS.detail.structureType} />
+      <FieldLabel
+        label="Tipo"
+        hint={COMMERCIAL_HELP_TOOLTIPS.detail.structureType}
+        className="dc-field__label"
+      />
       <FieldLabel
         label="Quantidade"
         hint={COMMERCIAL_HELP_TOOLTIPS.detail.structureQuantity}
+        className="dc-field__label"
       />
     </div>
   );

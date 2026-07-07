@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { GoalPerformanceBadge, GoalScopeBadge } from "../utils/goalDisplay";
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 
 type KpiCardProps = {
   title: string;

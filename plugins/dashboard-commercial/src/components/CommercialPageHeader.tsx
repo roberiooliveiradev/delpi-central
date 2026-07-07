@@ -5,7 +5,7 @@ import { formatCommercialBranchPrintLabel } from "../utils/commercialClientFilte
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
-import { HelpTooltip } from "./HelpTooltip";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import { PrintReportSummary } from "./PrintReportSummary";
 
 type CommercialPageHeaderProps = {

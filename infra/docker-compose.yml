@@ -534,18 +534,14 @@ services:
 
   dashboard-commercial:
     build:
-      context: ../plugins/dashboard-commercial
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: dashboard-commercial/Dockerfile
 
     container_name: delpi-dashboard-commercial
     restart: unless-stopped
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-commercial:/app
-      - /app/node_modules
 
     networks:
       - delpi-network

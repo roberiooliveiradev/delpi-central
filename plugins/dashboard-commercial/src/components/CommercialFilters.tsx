@@ -1,6 +1,6 @@
 import { COMMERCIAL_BRANCH_OPTIONS } from "../constants/filterOptions";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
@@ -43,6 +43,7 @@ export function CommercialFilters({
         <FieldLabel
           label="Competência"
           hint={COMMERCIAL_HELP_TOOLTIPS.filters.competence}
+          className="dc-field__label"
         />
         <input
           id="dc-competence"
@@ -55,6 +56,7 @@ export function CommercialFilters({
         <FieldLabel
           label="Data inicial"
           hint={COMMERCIAL_HELP_TOOLTIPS.filters.dateStart}
+          className="dc-field__label"
         />
         <input
           id="dc-date-start"
@@ -67,6 +69,7 @@ export function CommercialFilters({
         <FieldLabel
           label="Data final"
           hint={COMMERCIAL_HELP_TOOLTIPS.filters.dateEnd}
+          className="dc-field__label"
         />
         <input
           id="dc-date-end"
@@ -88,6 +91,7 @@ export function CommercialFilters({
         <FieldLabel
           label="Clientes"
           hint={COMMERCIAL_HELP_TOOLTIPS.filters.customerSegment}
+          className="dc-field__label"
         />
         <select
           id="dc-customer-segment"

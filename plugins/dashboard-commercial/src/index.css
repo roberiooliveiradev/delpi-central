@@ -33,6 +33,11 @@
   --dc-surface: var(--dc-card-bg);
   --dc-border: var(--dc-card-border);
   --dc-radius-md: var(--dc-control-radius);
+  --delpi-ui-accent: var(--dc-accent);
+  --delpi-ui-surface: var(--dc-card-bg);
+  --delpi-ui-text: var(--dc-text);
+  --delpi-ui-border: var(--dc-card-border);
+  --delpi-ui-muted: var(--dc-text-muted);
 }
 
 .dashboard-commercial button,
@@ -280,153 +285,6 @@
   font-size: var(--dc-font-sm);
   font-weight: 600;
   color: var(--dc-text-muted);
-}
-
-.dashboard-commercial .dc-help-tooltip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-
-.dashboard-commercial .dc-help-tooltip--wrap {
-  cursor: help;
-  border-bottom: 1px dotted color-mix(in srgb, var(--dc-text-muted) 55%, transparent);
-}
-
-.dashboard-commercial .dc-help-tooltip__trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--dc-text-muted);
-  cursor: help;
-  opacity: 0.72;
-  transition:
-    opacity 0.15s ease,
-    color 0.15s ease,
-    background 0.15s ease;
-}
-
-.dashboard-commercial .dc-help-tooltip__trigger:hover,
-.dashboard-commercial .dc-help-tooltip__trigger:focus-visible {
-  opacity: 1;
-  color: var(--dc-accent);
-  background: color-mix(in srgb, var(--dc-accent) 10%, transparent);
-  outline: none;
-}
-
-.dashboard-commercial .dc-help-tooltip__bubble {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  z-index: 50;
-  min-width: 200px;
-  max-width: min(280px, 70vw);
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--dc-card-border);
-  background: color-mix(in srgb, var(--dc-card-bg) 96%, var(--dc-accent));
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-  font-size: var(--dc-font-xs, 12px);
-  font-weight: 400;
-  line-height: 1.45;
-  color: var(--dc-text);
-  white-space: normal;
-  text-align: left;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-50%) translateY(4px);
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease,
-    visibility 0.18s ease;
-}
-
-.dashboard-commercial .dc-help-tooltip:hover .dc-help-tooltip__bubble,
-.dashboard-commercial .dc-help-tooltip:focus-within .dc-help-tooltip__bubble {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-.dashboard-commercial .dc-help-tooltip--wrap .dc-help-tooltip__bubble {
-  left: 0;
-  transform: translateY(4px);
-}
-
-.dashboard-commercial .dc-help-tooltip--wrap:hover .dc-help-tooltip__bubble,
-.dashboard-commercial .dc-help-tooltip--wrap:focus-within .dc-help-tooltip__bubble {
-  transform: translateY(0);
-}
-
-.dashboard-commercial .dc-help-tooltip--bottom .dc-help-tooltip__bubble {
-  bottom: auto;
-  top: calc(100% + 8px);
-  left: 0;
-  transform: translateY(-4px);
-}
-
-.dashboard-commercial .dc-help-tooltip--bottom:hover .dc-help-tooltip__bubble,
-.dashboard-commercial .dc-help-tooltip--bottom:focus-within .dc-help-tooltip__bubble {
-  transform: translateY(0);
-}
-
-/* Portal no body: layout mínimo antes de --ready (medição de largura do balão) */
-.dc-help-tooltip__bubble--fixed {
-  position: fixed;
-  z-index: 10000;
-  max-width: min(280px, calc(100vw - 24px));
-  min-width: 200px;
-  box-sizing: border-box;
-  pointer-events: none;
-}
-
-.dashboard-commercial .dc-help-tooltip__bubble--fixed {
-  position: fixed;
-  bottom: auto;
-  right: auto;
-  z-index: 10000;
-  opacity: 0;
-  visibility: hidden;
-  transform: none;
-  pointer-events: none;
-  max-width: min(280px, calc(100vw - 24px));
-  transition: opacity 0.15s ease;
-}
-
-.dashboard-commercial .dc-help-tooltip__bubble--fixed.dc-help-tooltip__bubble--ready {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Portal pode renderizar no body quando o root do MFE não estiver disponível */
-.dc-help-tooltip__bubble--fixed.dc-help-tooltip__bubble--ready {
-  position: fixed;
-  z-index: 10000;
-  min-width: 200px;
-  max-width: min(280px, calc(100vw - 24px));
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border, #e6e6e6);
-  background: color-mix(in srgb, var(--surface, #ffffff) 96%, var(--primary, #089bdb));
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.45;
-  color: var(--text, #111111);
-  white-space: normal;
-  text-align: left;
-  pointer-events: none;
-  opacity: 1;
-  visibility: visible;
 }
 
 .dashboard-commercial .dc-totvs-banner__title {
@@ -2435,7 +2293,7 @@
   .dashboard-commercial .dc-shortcuts-section,
   .dashboard-commercial .dc-chart-card__hint,
   .dashboard-commercial .dc-chart-card__hint--below,
-  .dashboard-commercial .dc-help-tooltip__trigger,
+  .dashboard-commercial .delpi-ui-help-tooltip__trigger,
   .dashboard-commercial .dc-state--loading,
   .dashboard-commercial .dc-state--error,
   .dashboard-commercial .dc-state--warning,

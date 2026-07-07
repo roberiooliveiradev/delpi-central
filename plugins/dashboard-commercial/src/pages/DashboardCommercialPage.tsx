@@ -18,7 +18,7 @@ import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/table";
 import { DataTableSection } from "../components/table";
 import { FilterBar } from "../components/FilterBar";
-import { FieldLabel } from "../components/HelpTooltip";
+import { FieldLabel } from "@delpi/plugin-ui";
 import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
@@ -861,6 +861,7 @@ export function DashboardCommercialPage({
                 <FieldLabel
                   label="Status da proposta"
                   hint={COMMERCIAL_HELP_TOOLTIPS.filters.proposalStatus}
+                  className="dc-field__label"
                 />
                 <select
                   value={proposalStatusFilter}
