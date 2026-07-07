@@ -1371,6 +1371,28 @@
   box-sizing: border-box;
 }
 
+.dashboard-cadastro-kaizen .kz-multi-select__create {
+  display: block;
+  width: calc(100% - 16px);
+  margin: 0 8px 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--kz-input-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--kz-accent);
+  font-size: var(--kz-font-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__create:hover {
+  background: color-mix(in srgb, var(--kz-accent) 10%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-field--multi-select {
+  min-width: 0;
+}
+
 .dashboard-cadastro-kaizen .kz-multi-select__actions {
   display: flex;
   gap: 6px;
