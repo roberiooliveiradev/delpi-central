@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import {
   fetchProcesso,
@@ -8,6 +8,7 @@ import {
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
 import { ProcessoWorkspaceSidebar } from "./ProcessoWorkspaceSidebar";
 import {
   buildProcessoWorkspaceTree,
@@ -89,19 +90,25 @@ export function ProcessoWorkspaceShell({
   );
 }
 
+function subscribeWorkspaceSection(onStoreChange: () => void) {
+  window.addEventListener("hashchange", onStoreChange);
+  window.addEventListener("popstate", onStoreChange);
+  window.addEventListener(TRANSFORMOMETRO_WORKSPACE_HASH_EVENT, onStoreChange);
+  return () => {
+    window.removeEventListener("hashchange", onStoreChange);
+    window.removeEventListener("popstate", onStoreChange);
+    window.removeEventListener(TRANSFORMOMETRO_WORKSPACE_HASH_EVENT, onStoreChange);
+  };
+}
+
+function readWorkspaceSectionSnapshot(): ProcessoWorkspaceSectionId {
+  return parseProcessoSectionFromHash(window.location.hash);
+}
+
 export function useProcessoWorkspaceSection(): ProcessoWorkspaceSectionId {
-  const readHash = () => (typeof window !== "undefined" ? window.location.hash : "");
-
-  const [section, setSection] = useState<ProcessoWorkspaceSectionId>(() =>
-    parseProcessoSectionFromHash(readHash())
+  return useSyncExternalStore(
+    subscribeWorkspaceSection,
+    readWorkspaceSectionSnapshot,
+    () => "visao-geral"
   );
-
-  useEffect(() => {
-    const sync = () => setSection(parseProcessoSectionFromHash(readHash()));
-    sync();
-    window.addEventListener("hashchange", sync);
-    return () => window.removeEventListener("hashchange", sync);
-  }, []);
-
-  return section;
 }

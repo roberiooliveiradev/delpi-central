@@ -241,18 +241,24 @@ export function ProcessoDetailPage({
   const activeSection = useProcessoWorkspaceSection();
   const activeNodeId = resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
   const showMelhoriasForm = openInstanciaForm || activeSection === "melhorias";
-  const [visitedSections, setVisitedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
+  const [mountedSections, setMountedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
     () => new Set([activeSection])
   );
 
   useEffect(() => {
-    setVisitedSections((current) => {
+    setMountedSections((current) => {
       if (current.has(activeSection)) return current;
       const next = new Set(current);
       next.add(activeSection);
       return next;
     });
   }, [activeSection]);
+
+  const visibleSections = useMemo(() => {
+    const next = new Set(mountedSections);
+    next.add(activeSection);
+    return next;
+  }, [activeSection, mountedSections]);
 
   const setupCompletion = useMemo(() => {
     if (!processo) {
@@ -360,7 +366,7 @@ export function ProcessoDetailPage({
         instancias={instancias}
         revisoes={revisoes}
       >
-        {visitedSections.has("visao-geral") ? (
+        {visibleSections.has("visao-geral") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "visao-geral"} sectionId="visao-geral">
           <section className="ds-card tm-processo-workspace-panel">
             <h2 className="ds-section-title">Visão geral</h2>
@@ -390,7 +396,7 @@ export function ProcessoDetailPage({
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {visitedSections.has("dados") ? (
+        {visibleSections.has("dados") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "dados"} sectionId="dados">
           <EditableSectionCard
             title="Dados do processo"
@@ -440,7 +446,7 @@ export function ProcessoDetailPage({
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {visitedSections.has("mapeamento") ? (
+        {visibleSections.has("mapeamento") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
           <EditableSectionCard
             title="Mapeamento do processo"
@@ -476,7 +482,7 @@ export function ProcessoDetailPage({
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {visitedSections.has("diagrama") ? (
+        {visibleSections.has("diagrama") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
           <EditableSectionCard
             title="Diagrama macro"
@@ -510,7 +516,7 @@ export function ProcessoDetailPage({
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {visitedSections.has("arquivos") ? (
+        {visibleSections.has("arquivos") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "arquivos"} sectionId="arquivos">
           <EditableSectionCard
             title={`Arquivos do processo${arquivosCount ? ` (${arquivosCount})` : ""}`}
@@ -541,7 +547,7 @@ export function ProcessoDetailPage({
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {visitedSections.has("melhorias") ? (
+        {visibleSections.has("melhorias") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "melhorias"} sectionId="melhorias">
           <ProcessoInstanciasPanel
             instancias={instancias}
@@ -574,7 +580,7 @@ export function ProcessoDetailPage({
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {visitedSections.has("timeline") ? (
+        {visibleSections.has("timeline") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "timeline"} sectionId="timeline">
           <ProcessoTimeline entries={timelineEntries} loading={timelineLoading} />
           </ProcessoWorkspaceSectionPanel>
