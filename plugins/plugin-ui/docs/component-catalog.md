@@ -221,6 +221,18 @@ Utils: `buildMultiSelectTriggerLabel` em `src/utils/multiSelectLabel.ts`.
 
 Helpers: `multiSelectBemClasses(prefix)` e `createDashboardMultiSelectField({ prefix, labels })`.
 
+### `FiltersRow` / `FilterInputField` (FilterBar)
+
+Shell da linha de filtros (`{prefix}-filters-row`) e campo label+input reutilizável.
+
+| Export | Descrição |
+|--------|-----------|
+| `FiltersRow` | `<section>` com `aria-label`, variante `extended` |
+| `FilterInputField` | Label + `FieldLabel` + input (`month`/`date`/`text`) |
+| `FilterBar` | Alias de `FiltersRow` (roadmap F2.6) |
+
+Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels })`.
+
 ---
 
 ## Estilos base (`styles.css`)

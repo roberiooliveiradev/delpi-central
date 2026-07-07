@@ -5,8 +5,8 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
+import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type QualityFiltersProps = {
@@ -49,46 +49,31 @@ export function QualityFilters({
   );
 
   return (
-    <section
-      className={["dq-filters-row", className].filter(Boolean).join(" ")}
-      aria-label="Filtros do dashboard"
-    >
-      <label className="dq-filter-box dq-field">
-        <FieldLabel
-          label="Competência"
-          hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label"    />
-        <input
-          id={`${idPrefix}-competence`}
-          type="month"
-          value={competence}
-          onChange={(e) => onCompetenceChange(e.target.value)}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel
-          label="Data inicial"
-          hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label"    />
-        <input
-          id={`${idPrefix}-date-start`}
-          type="date"
-          value={dateStart}
-          onChange={(e) => onDateStartChange(e.target.value)}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel
-          label="Data final"
-          hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label"    />
-        <input
-          id={`${idPrefix}-date-end`}
-          type="date"
-          value={dateEnd}
-          onChange={(e) => onDateEndChange(e.target.value)}
-        />
-      </label>
-
+    <FiltersRow className={className}>
+      <FilterInputField
+        id={`${idPrefix}-competence`}
+        label="Competência"
+        hint={QUALITY_HELP_TOOLTIPS.filters.competence}
+        type="month"
+        value={competence}
+        onChange={onCompetenceChange}
+      />
+      <FilterInputField
+        id={`${idPrefix}-date-start`}
+        label="Data inicial"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateStart}
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id={`${idPrefix}-date-end`}
+        label="Data final"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd}
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
+      />
       <MultiSelectField
         label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={QUALITY_HELP_TOOLTIPS.filters.branch}
@@ -99,6 +84,6 @@ export function QualityFilters({
         searchable
         disabled={branchesLoading}
       />
-    </section>
+    </FiltersRow>
   );
 }

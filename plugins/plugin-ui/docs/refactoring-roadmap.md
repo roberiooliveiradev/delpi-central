@@ -51,7 +51,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 | `PaginationPageJump` | 8 | `dashboard-production` | ✅ incorporado em `Pagination` |
 | `TablePageSizeSelect` | (em `Pagination.tsx`) | `dashboard-production` | ✅ incorporado em `Pagination` |
 | `MultiSelectField` | 13 | `dashboard-production` | ✅ F2.5 — 8 dashboards + lmps |
-| `FilterBar` | 12 | `dashboard-production` | Layout flex; conteúdo = children |
+| `FilterBar` | 12 | `dashboard-production` | ✅ F2.6 — `FiltersRow` + `FilterInputField` (alias `FilterBar`) |
 | `ChartToolbar` | 6 | `dashboard-production` | |
 | `DataTable` | ~12 dashboards | `dashboard-production` | Maior risco — colunas via props |
 | `DataTableSection` | ~12 | `dashboard-production` | Toolbar busca + paginação |
@@ -210,7 +210,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | 2.3 | `KpiCard` | `layout/` | Fase 1; props para badges IDD opcionais |
 | 2.4 | `Pagination` + `PaginationPageJump` + `TablePageSizeSelect` | `data/` | ✅ Fase 1 + utils `paginationPages` |
 | 2.5 | `MultiSelectField` | `forms/` | ✅ Fase 1 (`FieldLabel`) |
-| 2.6 | `FilterBar` | `layout/` | Shell vazio + slots |
+| 2.6 | `FilterBar` | `layout/` | ✅ `FiltersRow` + `FilterInputField` |
 | 2.7 | `ChartToolbar` | `layout/` | |
 | 2.8 | `DataTable` + `DataTableSection` | `data/` | Último — maior superfície |
 
@@ -301,7 +301,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 ## 7. Próximo passo recomendado
 
 1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2.1–2.5** ChartCard, KpiCard, LoadingActivityCard, Pagination e MultiSelectField — próximo: `FilterBar` (2.6).
+2. **Fase 2.1–2.6** shell de dashboard nos consumidores dept. — próximo: `ChartToolbar` (2.7).
 
 ---
 

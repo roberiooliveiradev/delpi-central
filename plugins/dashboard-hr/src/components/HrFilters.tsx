@@ -5,8 +5,8 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
+import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type HrFiltersProps = {
@@ -45,36 +45,31 @@ export function HrFilters({
   );
 
   return (
-    <section className="dh-filters-row" aria-label="Filtros do dashboard de RH">
-      <label className="dh-filter-box dh-field">
-        <FieldLabel
-          label="Competência"
-          hint={HR_HELP_TOOLTIPS.filters.competence} className="dh-field__label"    />
-        <input
-          id="hr-filter-competence"
-          type="month"
-          value={competence}
-          onChange={(event) => onCompetenceChange(event.target.value)}
-        />
-      </label>
-      <label className="dh-filter-box dh-field">
-        <FieldLabel label="Início" hint={HR_HELP_TOOLTIPS.filters.dateStart} className="dh-field__label" />
-        <input
-          id="hr-filter-start"
-          type="date"
-          value={dateStart}
-          onChange={(event) => onDateStartChange(event.target.value)}
-        />
-      </label>
-      <label className="dh-filter-box dh-field">
-        <FieldLabel label="Fim" hint={HR_HELP_TOOLTIPS.filters.dateEnd} className="dh-field__label" />
-        <input
-          id="hr-filter-end"
-          type="date"
-          value={dateEnd}
-          onChange={(event) => onDateEndChange(event.target.value)}
-        />
-      </label>
+    <FiltersRow>
+      <FilterInputField
+        id="hr-filter-competence"
+        label="Competência"
+        hint={HR_HELP_TOOLTIPS.filters.competence}
+        type="month"
+        value={competence}
+        onChange={onCompetenceChange}
+      />
+      <FilterInputField
+        id="hr-filter-start"
+        label="Início"
+        hint={HR_HELP_TOOLTIPS.filters.dateStart}
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id="hr-filter-end"
+        label="Fim"
+        hint={HR_HELP_TOOLTIPS.filters.dateEnd}
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
+      />
       <MultiSelectField
         label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={HR_HELP_TOOLTIPS.filters.branch}
@@ -85,6 +80,6 @@ export function HrFilters({
         searchable
         disabled={branchesLoading}
       />
-    </section>
+    </FiltersRow>
   );
 }

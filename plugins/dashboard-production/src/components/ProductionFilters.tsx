@@ -1,7 +1,7 @@
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
+import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type ProductionFiltersProps = {
@@ -28,34 +28,31 @@ export function ProductionFilters({
   className = "",
 }: ProductionFiltersProps) {
   return (
-    <section className={`dp-filters-row ${className}`.trim()} aria-label="Filtros do dashboard">
-      <label className="dp-filter-box dp-field" htmlFor="dp-competence">
-        <FieldLabel label="Competência" hint={DP_HELP_TOOLTIPS.filters.competence} className="dp-field__label" />
-        <input
-          id="dp-competence"
-          type="month"
-          value={competence}
-          onChange={(e) => onCompetenceChange(e.target.value)}
-        />
-      </label>
-      <label className="dp-filter-box dp-field" htmlFor="dp-date-start">
-        <FieldLabel label="Data inicial" hint={DP_HELP_TOOLTIPS.filters.dateStart} className="dp-field__label" />
-        <input
-          id="dp-date-start"
-          type="date"
-          value={dateStart}
-          onChange={(e) => onDateStartChange(e.target.value)}
-        />
-      </label>
-      <label className="dp-filter-box dp-field" htmlFor="dp-date-end">
-        <FieldLabel label="Data final" hint={DP_HELP_TOOLTIPS.filters.dateEnd} className="dp-field__label" />
-        <input
-          id="dp-date-end"
-          type="date"
-          value={dateEnd}
-          onChange={(e) => onDateEndChange(e.target.value)}
-        />
-      </label>
+    <FiltersRow className={className}>
+      <FilterInputField
+        id="dp-competence"
+        label="Competência"
+        hint={DP_HELP_TOOLTIPS.filters.competence}
+        type="month"
+        value={competence}
+        onChange={onCompetenceChange}
+      />
+      <FilterInputField
+        id="dp-date-start"
+        label="Data inicial"
+        hint={DP_HELP_TOOLTIPS.filters.dateStart}
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id="dp-date-end"
+        label="Data final"
+        hint={DP_HELP_TOOLTIPS.filters.dateEnd}
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
+      />
       <MultiSelectField
         label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={DP_HELP_TOOLTIPS.filters.branch}
@@ -65,6 +62,6 @@ export function ProductionFilters({
         emptyLabel="Consolidado (média)"
         searchable
       />
-    </section>
+    </FiltersRow>
   );
 }

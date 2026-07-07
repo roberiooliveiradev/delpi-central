@@ -8,9 +8,10 @@ import {
   LMPS_LISTING_TYPE_OPTIONS,
   LMPS_STATUS_OPTIONS,
 } from "../constants/filterOptions";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { MultiSelectField } from "./MultiSelectField";
+import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type FilterBarProps = {
@@ -89,37 +90,32 @@ export function FilterBar({
         </div>
       </header>
 
-      <section className="lmps-filters-row" aria-label="Filtros do dashboard">
-        <label className="lmps-filter-box lmps-field">
-          <FieldLabel label="Competência" hint={LMPS_HELP_TOOLTIPS.filters.competence} className="lmps-field__label" />
-          <input
-            id="lmps-competence"
-            type="month"
-            value={competence}
-            disabled={disabled}
-            onChange={(event) => onCompetenceChange(event.target.value)}
-          />
-        </label>
-
-        <label className="lmps-filter-box lmps-field">
-          <FieldLabel label="Data inicial" hint={LMPS_HELP_TOOLTIPS.filters.dateStart} className="lmps-field__label" />
-          <input
-            type="date"
-            value={dateStart}
-            disabled={disabled}
-            onChange={(event) => onDateStartChange(event.target.value)}
-          />
-        </label>
-
-        <label className="lmps-filter-box lmps-field">
-          <FieldLabel label="Data final" hint={LMPS_HELP_TOOLTIPS.filters.dateEnd} className="lmps-field__label" />
-          <input
-            type="date"
-            value={dateEnd}
-            disabled={disabled}
-            onChange={(event) => onDateEndChange(event.target.value)}
-          />
-        </label>
+      <FiltersRow>
+        <FilterInputField
+          id="lmps-competence"
+          label="Competência"
+          hint={LMPS_HELP_TOOLTIPS.filters.competence}
+          type="month"
+          value={competence}
+          disabled={disabled}
+          onChange={onCompetenceChange}
+        />
+        <FilterInputField
+          label="Data inicial"
+          hint={LMPS_HELP_TOOLTIPS.filters.dateStart}
+          type="date"
+          value={dateStart}
+          disabled={disabled}
+          onChange={onDateStartChange}
+        />
+        <FilterInputField
+          label="Data final"
+          hint={LMPS_HELP_TOOLTIPS.filters.dateEnd}
+          type="date"
+          value={dateEnd}
+          disabled={disabled}
+          onChange={onDateEndChange}
+        />
 
         <MultiSelectField
           label={OPERATIONAL_UNIT_FIELD_LABEL}
@@ -153,7 +149,7 @@ export function FilterBar({
           onChange={onStatusesChange}
           disabled={disabled}
         />
-      </section>
+      </FiltersRow>
     </>
   );
 }

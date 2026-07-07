@@ -59,7 +59,7 @@ Resumo (2+ consumidores):
 | `LoadingActivityCard` | 12 | F2 ✅ |
 | `Pagination` (+ jump, page size) | 7 dashboards | F2 ✅ (7 dept.) |
 | `MultiSelectField` | 13 | F2 ✅ (8 dept. + lmps) |
-| `FilterBar` | 12 | F2 |
+| `FilterBar` | 12 | F2 ✅ (FiltersRow + FilterInputField) |
 | `DataTable` / `DataTableSection` | ~25 | F2 (último) |
 | `EditableSectionCard` | 3 | F3 |
 | `EmptyState` | 2+ | F3/F5 |
@@ -68,16 +68,16 @@ Resumo (2+ consumidores):
 
 ## Status — Fase 2 (shell de dashboard)
 
-| Plugin | Pagination | MultiSelect | ChartCard | KpiCard | LoadingActivity | Notas |
-|--------|------------|-------------|-----------|---------|-----------------|-------|
-| `dashboard-production` | ✅ | ✅ | ✅ | ✅ | ✅ | Piloto F2 |
-| `dashboard-commercial` | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-engineering` | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-financial` | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-hr` | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | Pagination simplificado (local) |
+| Plugin | Pagination | MultiSelect | FiltersRow | ChartCard | KpiCard | LoadingActivity | Notas |
+|--------|------------|-------------|------------|-----------|---------|-----------------|-------|
+| `dashboard-production` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Piloto F2 |
+| `dashboard-commercial` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-engineering` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-financial` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-hr` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination simplificado (local) |
 | `transformometro` | — | — | — | — | ✅ | |
 | `eficiencia-fabril` | — | — | — | — | ✅ | |
 | `inspecoes-entrada` | ⏳ | ⏳ | — | — | — | Variante local |

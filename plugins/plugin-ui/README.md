@@ -89,6 +89,8 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `MultiSelectField` | Dropdown multiseleção com busca opcional |
 | `multiSelectBemClasses` / `createDashboardMultiSelectField` | Helpers BEM + factory |
 | `buildMultiSelectTriggerLabel` | Label do trigger conforme seleção |
+| `FiltersRow` / `FilterInputField` | Linha de filtros + campo input |
+| `filtersRowBemClasses` / `createDashboardFiltersKit` | Helpers BEM + factory |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 
@@ -102,7 +104,7 @@ src/
 ├── styles.css            # classes delpi-ui-*
 └── components/
     ├── help/             # balões explicativos
-    ├── layout/           # ChartCard, KpiCard
+    ├── layout/           # ChartCard, KpiCard, FiltersRow
     ├── feedback/         # LoadingActivityCard
     ├── data/             # Pagination, TablePageSizeSelect
     └── forms/            # MultiSelectField
