@@ -165,8 +165,20 @@ export function useCanvasBlockInteraction({
     );
   };
 
-  const onPointerMove = useCallback((event: PointerEvent) => {
-    applyDragMoveRef.current(event);
+  /** Refs evitam TDZ entre finishInteraction ↔ onPointerUp ↔ onPendingMove. */
+  const pointerListenersRef = useRef({
+    onPointerMove: (_event: PointerEvent) => {},
+    onPointerUp: () => {},
+    onPendingMove: (_event: PointerEvent) => {},
+    onPendingUp: (_event: PointerEvent) => {},
+  });
+
+  const removePointerListeners = useCallback(() => {
+    const listeners = pointerListenersRef.current;
+    window.removeEventListener("pointermove", listeners.onPointerMove);
+    window.removeEventListener("pointerup", listeners.onPointerUp);
+    window.removeEventListener("pointermove", listeners.onPendingMove);
+    window.removeEventListener("pointerup", listeners.onPendingUp);
   }, []);
 
   const finishInteraction = useCallback(() => {
@@ -178,56 +190,47 @@ export function useCanvasBlockInteraction({
     }
     pendingRef.current = null;
     dragRef.current = null;
-    window.removeEventListener("pointermove", onPointerMove);
-    window.removeEventListener("pointerup", onPointerUp);
-    window.removeEventListener("pointermove", onPendingMove);
-    window.removeEventListener("pointerup", onPendingUp);
-  }, [onPointerMove, onPendingMove, onPendingUp]);
+    removePointerListeners();
+  }, [removePointerListeners]);
 
-  const onPointerUp = useCallback(() => {
+  pointerListenersRef.current.onPointerMove = (event: PointerEvent) => {
+    applyDragMoveRef.current(event);
+  };
+
+  pointerListenersRef.current.onPointerUp = () => {
     finishInteraction();
-  }, [finishInteraction]);
+  };
 
-  const onPendingMove = useCallback(
-    (event: PointerEvent) => {
-      const pending = pendingRef.current;
-      if (!pending || event.pointerId !== pending.pointerId) return;
-      const dx = event.clientX - pending.startX;
-      const dy = event.clientY - pending.startY;
-      if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return;
+  pointerListenersRef.current.onPendingMove = (event: PointerEvent) => {
+    const pending = pendingRef.current;
+    if (!pending || event.pointerId !== pending.pointerId) return;
+    const dx = event.clientX - pending.startX;
+    const dy = event.clientY - pending.startY;
+    if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return;
 
-      onInteractionStartRef.current?.();
+    onInteractionStartRef.current?.();
 
-      const { pointerId: _pointerId, ...dragState } = pending;
-      pendingRef.current = null;
-      window.removeEventListener("pointermove", onPendingMove);
-      window.removeEventListener("pointerup", onPendingUp);
-      dragRef.current = dragState;
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      applyDragMoveRef.current(event);
-    },
-    [onPointerMove],
-  );
+    const { pointerId: _pointerId, ...dragState } = pending;
+    pendingRef.current = null;
+    removePointerListeners();
+    dragRef.current = dragState;
+    const listeners = pointerListenersRef.current;
+    window.addEventListener("pointermove", listeners.onPointerMove);
+    window.addEventListener("pointerup", listeners.onPointerUp);
+    applyDragMoveRef.current(event);
+  };
 
-  const onPendingUp = useCallback(
-    (event: PointerEvent) => {
-      if (pendingRef.current && event.pointerId !== pendingRef.current.pointerId) return;
-      pendingRef.current = null;
-      window.removeEventListener("pointermove", onPendingMove);
-      window.removeEventListener("pointerup", onPendingUp);
-    },
-    [onPendingMove],
-  );
+  pointerListenersRef.current.onPendingUp = (event: PointerEvent) => {
+    if (pendingRef.current && event.pointerId !== pendingRef.current.pointerId) return;
+    pendingRef.current = null;
+    removePointerListeners();
+  };
 
   useEffect(() => {
     return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointermove", onPendingMove);
-      window.removeEventListener("pointerup", onPendingUp);
+      removePointerListeners();
     };
-  }, [onPointerMove, onPointerUp, onPendingMove, onPendingUp]);
+  }, [removePointerListeners]);
 
   const startDrag = useCallback(
     (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => {
@@ -244,6 +247,8 @@ export function useCanvasBlockInteraction({
         aspectRatio,
       };
 
+      const listeners = pointerListenersRef.current;
+
       if (mode === "rotate") {
         const centerX = block.frame.x + block.frame.w / 2;
         const centerY = block.frame.y + block.frame.h / 2;
@@ -256,27 +261,26 @@ export function useCanvasBlockInteraction({
           startRotation: block.style?.rotation ?? 0,
           startPointerAngle: Math.atan2(startPt.y - centerY, startPt.x - centerX),
         };
-        window.addEventListener("pointermove", onPointerMove);
-        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointermove", listeners.onPointerMove);
+        window.addEventListener("pointerup", listeners.onPointerUp);
         return;
       }
 
       if (mode !== "move") {
         onInteractionStartRef.current?.();
         pendingRef.current = null;
-        window.removeEventListener("pointermove", onPendingMove);
-        window.removeEventListener("pointerup", onPendingUp);
+        removePointerListeners();
         dragRef.current = dragState;
-        window.addEventListener("pointermove", onPointerMove);
-        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointermove", listeners.onPointerMove);
+        window.addEventListener("pointerup", listeners.onPointerUp);
         return;
       }
 
       pendingRef.current = { ...dragState, pointerId: event.pointerId };
-      window.addEventListener("pointermove", onPendingMove);
-      window.addEventListener("pointerup", onPendingUp);
+      window.addEventListener("pointermove", listeners.onPendingMove);
+      window.addEventListener("pointerup", listeners.onPendingUp);
     },
-    [onPointerMove, onPendingMove, onPendingUp, onPointerUp, pointerToPercent],
+    [pointerToPercent, removePointerListeners],
   );
 
   return { canvasRef, startDrag };

@@ -1,5 +1,6 @@
 import ReactDOM from "react-dom/client";
 import App, { type AppProps } from "./App";
+import "../../plugin-ui/src/styles.css";
 import "./index.css";
 
 /** Legado: removida do portal; limpa instalações com classe presa no html. */
