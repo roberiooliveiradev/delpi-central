@@ -97,6 +97,10 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `detailFieldGridBemClasses` / `createDashboardDetailFieldGrid` | Helpers BEM + factory |
 | `EditableSectionCard` | Seção editável (read/edit + ações) |
 | `editableSectionCardBemClasses` / `createDashboardEditableSectionCard` | Helpers BEM + factory |
+| `ReadOnlyField` | Campo somente leitura (kaizen/PAC) |
+| `readOnlyFieldKaizenBemClasses` / `createDashboardReadOnlyField` | Helpers BEM + factory |
+| `SelectField` / `SelectControl` | Dropdown single-select |
+| `selectControlBemClasses` / `createDashboardSelectField` | Helpers BEM + factory |
 | `DataTable` / `DataTableSection` | Tabela + seção com busca/paginação |
 | `dataTableBemClasses` / `createDashboardDataTableKit` | Helpers BEM + factory |
 
@@ -115,7 +119,7 @@ src/
     ├── layout/           # ChartCard, KpiCard, FiltersRow, DetailFieldGrid
     ├── feedback/         # LoadingActivityCard
     ├── data/             # Pagination, TablePageSizeSelect
-    └── forms/            # MultiSelectField
+    └── forms/            # MultiSelectField, ReadOnlyField, SelectField
 └── utils/
     └── paginationPages.ts
 ```

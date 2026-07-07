@@ -226,8 +226,8 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 |------------|-------------------|--------|
 | `DetailFieldGrid` | production, commercial, quality, lmps, eficiencia-fabril | ✅ F3.1 |
 | `EditableSectionCard` | kaizen, transformometro, PAC | ⏳ F3.2 (2/3) |
-| `ReadOnlyField` | kaizen, PAC | ⏳ |
-| `SelectField` | PAC, transformometro | ⏳ |
+| `ReadOnlyField` | kaizen, PAC | ✅ F3.3 |
+| `SelectField` | PAC, transformometro | ✅ F3.4 |
 | `PageHeader` | 7 plugins operacionais | ⏳ |
 | `DetailCard` | LMP, commercial, production | ⏳ |
 
@@ -305,6 +305,7 @@ Criar `@delpi/dashboard-utils` **ou** subpasta `plugin-ui/src/utils/` se couber 
 2. **Fase 2 concluída** nos dashboards departamentais.
 3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
 4. **Fase 3.2 em andamento** — `EditableSectionCard` em kaizen + transformometro; PAC pendente (`SectionCard`).
+5. **Fase 3.3–3.4 concluídas** — `ReadOnlyField` e `SelectField`/`SelectControl`; próximo: `PageHeader`.
 
 ---
 

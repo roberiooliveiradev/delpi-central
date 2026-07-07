@@ -63,6 +63,8 @@ Resumo (2+ consumidores):
 | `DataTable` / `DataTableSection` | ~25 | F2 ✅ (7 dept. + lmps DataTable) |
 | `DetailFieldGrid` | 5 | F3 ✅ (5 consumidores) |
 | `EditableSectionCard` | 3 | F3 ⏳ (2/3 — kaizen, transformometro) |
+| `ReadOnlyField` | 2 | F3 ✅ (kaizen, PAC) |
+| `SelectField` | 2 | F3 ✅ (transformometro, PAC) |
 | `EmptyState` | 2+ | F3/F5 |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
@@ -105,3 +107,9 @@ Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGr
 | `cadastro-kaizen` | ✅ | `editableSectionCardBemClasses("kz")` |
 | `transformometro` | ✅ | `editableSectionCardTransformometroClasses("ds")` |
 | `quality-action-plans` | ⏳ | Depende de `SectionCard` local — API distinta (sem Salvar) |
+
+| Plugin | ReadOnlyField | SelectField | Notas |
+|--------|---------------|-------------|-------|
+| `cadastro-kaizen` | ✅ | — | `readOnlyFieldKaizenBemClasses` |
+| `quality-action-plans` | ✅ | ✅ | PAC ficha/field + `selectFieldPacClasses` |
+| `transformometro` | — | ✅ | `SelectControl` + `selectFieldTransformometroClasses` |

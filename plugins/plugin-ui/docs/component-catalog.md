@@ -285,6 +285,18 @@ Seção editável com header (título, hint, ações Editar/Salvar/Cancelar) e c
 
 Helper: `createDashboardEditableSectionCard({ classNames, labels })`.
 
+### `ReadOnlyField`
+
+Campo somente leitura — modos kaizen (`HelpTooltip` + span) e PAC (`FieldLabel` + ficha/field).
+
+Helpers: `readOnlyFieldKaizenBemClasses`, `readOnlyFieldPacBemClasses`, `createDashboardReadOnlyField`.
+
+### `SelectField` + `SelectControl`
+
+Dropdown single-select com busca opcional. `SelectControl` é o trigger/painel reutilizável (ex.: diagram toolbar).
+
+Helpers: `selectControlBemClasses`, `selectFieldPacClasses`, `selectFieldTransformometroClasses`, `createDashboardSelectField`, `createDashboardSelectControl`.
+
 ---
 
 ## Estilos base (`styles.css`)
