@@ -47,6 +47,7 @@ DUPLICATE_COMPONENT_BASENAMES = frozenset(
 
 # Implementação local legítima (domínio ou design system) — não falha em --strict.
 LOCAL_IMPLEMENTATION_ALLOWLIST: dict[tuple[str, str], str] = {
+    ("maintenance", "DataTableSection.tsx"): "serverTable + cabeçalho dm-section-header",
     ("pedidos-venda-abertos", "FilterBar.tsx"): "filtros de domínio com cabeçalho próprio",
 }
 

@@ -274,7 +274,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `cadastro-kaizen` | ✅ | Pagination ✅ MultiSelect ✅ DataTable ✅ | EditableSectionCard ✅ | sim |
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
-| `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ | PageHeader ✅ · DataTable* local | sim |
+| `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · DataTableSection* allowlist | sim |
 | `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ | Empty/Loading ✅ | sim |
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |

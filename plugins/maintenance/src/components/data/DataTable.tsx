@@ -1,6 +1,38 @@
+import {
+  DataTable as BaseDataTable,
+  dataTableBemClasses,
+  type DataTableClassNames,
+  type DataTableLabels,
+} from "@delpi/plugin-ui";
+
 import type { DataTableColumn } from "./types";
-import { HelpTooltip } from "@delpi/plugin-ui";
 import "./DataTable.css";
+
+const DM_TABLE_CLASS_NAMES: DataTableClassNames = {
+  ...dataTableBemClasses("dm"),
+  outerRoot: "dm-datatable",
+  scrollWrap: "dm-datatable__scroll",
+  wrapSection: "dm-datatable__scroll",
+  wrapEmbedded: "dm-datatable__scroll",
+  table: "dm-datatable__table",
+  tableClickable: "dm-datatable__table dm-datatable__table--clickable",
+  sortableColumn: "dm-datatable__col--sortable",
+  empty: "dm-datatable__empty",
+  emptyInnerWrapper: true,
+  headerLabel: "dm-datatable__header-label",
+  headerText: "dm-datatable__header-label",
+  sortButton: "dm-datatable__sort-button",
+  sortButtonActive: "dm-datatable__sort-button",
+  sortIndicator: "dm-datatable__sort-indicator",
+  rowClickable: "is-clickable",
+};
+
+const LABELS = {
+  emptyMessage: "Nenhum registro encontrado.",
+  loadingMessage: "Carregando…",
+  sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
+  headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
+} satisfies DataTableLabels;
 
 type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
@@ -16,140 +48,19 @@ type DataTableProps<T> = {
 };
 
 export function DataTable<T>({
-  columns,
-  rows,
-  loading = false,
-  emptyMessage = "Nenhum registro encontrado.",
   getRowKey,
-  getRowClassName,
-  onRowClick,
-  sortKey = null,
-  sortDirection = "asc",
-  onSortChange,
+  ...props
 }: DataTableProps<T>) {
-  const tableClass = onRowClick ? "dm-datatable__table dm-datatable__table--clickable" : "dm-datatable__table";
-
   return (
-    <div className="dm-datatable">
-      <div className="dm-datatable__scroll">
-        <table className={tableClass}>
-          <thead>
-            <tr>
-              {columns.map((column) => {
-                const isSorted = sortKey === column.key;
-                const sortClass = column.sortable ? "dm-datatable__col--sortable" : "";
-                const headerClass = [column.className, sortClass].filter(Boolean).join(" ");
-
-                return (
-                  <th
-                    key={column.key}
-                    className={headerClass || undefined}
-                    data-align={column.align}
-                    aria-sort={
-                      column.sortable
-                        ? isSorted
-                          ? sortDirection === "asc"
-                            ? "ascending"
-                            : "descending"
-                          : "none"
-                        : undefined
-                    }
-                  >
-                    {column.sortable && onSortChange ? (
-                      <button
-                        type="button"
-                        className="dm-datatable__sort-button"
-                        onClick={() => onSortChange(column.key)}
-                        aria-label={`Ordenar por ${column.header}`}
-                      >
-                        <span className="dm-datatable__header-label">
-                          <span>{column.header}</span>
-                          {column.headerHint ? (
-                            <HelpTooltip
-                              content={column.headerHint}
-                              ariaLabel={`Ajuda: ${column.header}`}
-                            />
-                          ) : null}
-                        </span>
-                        <span className="dm-datatable__sort-indicator" aria-hidden="true">
-                          {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
-                        </span>
-                      </button>
-                    ) : (
-                      <span className="dm-datatable__header-label">
-                        {column.header}
-                        {column.headerHint ? (
-                          <HelpTooltip content={column.headerHint} ariaLabel={`Ajuda: ${column.header}`} />
-                        ) : null}
-                      </span>
-                    )}
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={columns.length}>
-                  <div className="dm-datatable__empty">Carregando…</div>
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length}>
-                  <div className="dm-datatable__empty">{emptyMessage}</div>
-                </td>
-              </tr>
-            ) : (
-              rows.map((row, index) => {
-                const rowClass = [getRowClassName?.(row), onRowClick ? "is-clickable" : ""]
-                  .filter(Boolean)
-                  .join(" ");
-
-                return (
-                  <tr
-                    key={getRowKey(row, index)}
-                    className={rowClass || undefined}
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    onKeyDown={
-                      onRowClick
-                        ? (event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              onRowClick(row);
-                            }
-                          }
-                        : undefined
-                    }
-                    tabIndex={onRowClick ? 0 : undefined}
-                    role={onRowClick ? "button" : undefined}
-                  >
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        className={column.className}
-                        data-label={column.header}
-                        data-align={column.align}
-                        data-interactive={column.interactive ? "true" : undefined}
-                        onClick={
-                          column.interactive
-                            ? (event) => {
-                                event.stopPropagation();
-                              }
-                            : undefined
-                        }
-                      >
-                        {column.render(row)}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <BaseDataTable
+      layout="scroll"
+      rowClickRole="button"
+      rowKey={getRowKey}
+      classNames={DM_TABLE_CLASS_NAMES}
+      labels={LABELS}
+      {...props}
+    />
   );
 }
+
+export type { DataTableColumn };

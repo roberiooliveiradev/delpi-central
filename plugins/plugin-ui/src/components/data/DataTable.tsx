@@ -8,6 +8,9 @@ export type DataTableColumn<T> = {
   headerHint?: string;
   render: (row: T) => ReactNode;
   className?: string;
+  align?: "left" | "right" | "center";
+  /** Impede propagação do clique da linha (ex.: coluna de ações). */
+  interactive?: boolean;
   sortable?: boolean;
   sortValue?: (row: T) => string | number | null | undefined;
   mobileLabel?: string;
@@ -16,8 +19,18 @@ export type DataTableColumn<T> = {
 export type DataTableClassNames = {
   wrapSection: string;
   wrapEmbedded: string;
+  /** Container externo opcional (ex.: dm-datatable). */
+  outerRoot?: string;
+  /** Área com scroll horizontal opcional (ex.: dm-datatable__scroll). */
+  scrollWrap?: string;
   table: string;
+  /** Classe completa da tabela quando há onRowClick (substitui modificadores --clickable). */
+  tableClickable?: string;
+  /** Classe extra em th sortable (ex.: dm-datatable__col--sortable). */
+  sortableColumn?: string;
   empty: string;
+  /** Quando true, envolve o texto vazio em div dentro do td. */
+  emptyInnerWrapper?: boolean;
   headerLabel: string;
   headerText: string;
   headerHelp: string;
@@ -37,7 +50,7 @@ export type DataTableLabels = {
 export type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
   rows: T[];
-  rowKey: (row: T) => string;
+  rowKey: (row: T, index: number) => string;
   emptyMessage?: string;
   loading?: boolean;
   onRowClick?: (row: T) => void;
@@ -45,7 +58,8 @@ export type DataTableProps<T> = {
   sortKey?: string | null;
   sortDirection?: "asc" | "desc";
   onSortChange?: (columnKey: string) => void;
-  layout?: "section" | "embedded";
+  layout?: "section" | "embedded" | "scroll";
+  rowClickRole?: "button" | "none";
   classNames: DataTableClassNames;
   labels: DataTableLabels;
 };
@@ -69,10 +83,14 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
 
 function buildTableClassName(
   classNames: DataTableClassNames,
-  layout: "section" | "embedded",
+  layout: "section" | "embedded" | "scroll",
   isSortable: boolean,
   clickable: boolean,
 ): string {
+  if (clickable && classNames.tableClickable) {
+    return classNames.tableClickable;
+  }
+
   return [
     classNames.table,
     layout === "section" ? `${classNames.table}--section` : "",
@@ -81,6 +99,37 @@ function buildTableClassName(
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function renderEmptyCell(message: string, colSpan: number, classNames: DataTableClassNames) {
+  const content = classNames.emptyInnerWrapper ? (
+    <div className={classNames.empty}>{message}</div>
+  ) : (
+    message
+  );
+
+  return (
+    <tr>
+      <td colSpan={colSpan} className={classNames.emptyInnerWrapper ? undefined : classNames.empty}>
+        {content}
+      </td>
+    </tr>
+  );
+}
+
+function wrapTableMarkup(
+  classNames: DataTableClassNames,
+  layout: "section" | "embedded" | "scroll",
+  table: ReactNode,
+): ReactNode {
+  if (layout === "scroll" && classNames.scrollWrap) {
+    const scroll = <div className={classNames.scrollWrap}>{table}</div>;
+    return classNames.outerRoot ? <div className={classNames.outerRoot}>{scroll}</div> : scroll;
+  }
+
+  const wrapClass = layout === "section" ? classNames.wrapSection : classNames.wrapEmbedded;
+  const inner = <div className={wrapClass}>{table}</div>;
+  return classNames.outerRoot ? <div className={classNames.outerRoot}>{inner}</div> : inner;
 }
 
 function renderColumnHeader<T>(
@@ -114,12 +163,12 @@ export function DataTable<T>({
   sortDirection = "asc",
   onSortChange,
   layout = "embedded",
+  rowClickRole = "none",
   classNames,
   labels,
 }: DataTableProps<T>) {
   const isSortable = Boolean(onSortChange && columns.some((column) => column.sortable));
   const resolvedEmptyMessage = emptyMessage ?? labels.emptyMessage;
-  const wrapClass = layout === "section" ? classNames.wrapSection : classNames.wrapEmbedded;
   const tableClassName = buildTableClassName(
     classNames,
     layout,
@@ -128,118 +177,123 @@ export function DataTable<T>({
   );
 
   if (loading) {
-    return (
-      <div className={wrapClass}>
-        <table className={tableClassName}>
-          <tbody>
-            <tr>
-              <td colSpan={columns.length} className={classNames.empty}>
-                {labels.loadingMessage}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    return wrapTableMarkup(
+      classNames,
+      layout,
+      <table className={tableClassName}>
+        <tbody>{renderEmptyCell(labels.loadingMessage, columns.length, classNames)}</tbody>
+      </table>,
     );
   }
 
   if (rows.length === 0) {
-    return (
-      <div className={wrapClass}>
-        <table className={tableClassName}>
-          <tbody>
-            <tr>
-              <td colSpan={columns.length} className={classNames.empty}>
-                {resolvedEmptyMessage}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    return wrapTableMarkup(
+      classNames,
+      layout,
+      <table className={tableClassName}>
+        <tbody>{renderEmptyCell(resolvedEmptyMessage, columns.length, classNames)}</tbody>
+      </table>,
     );
   }
 
-  return (
-    <div className={wrapClass}>
-      <table className={tableClassName}>
-        <thead>
-          <tr>
-            {columns.map((column) => {
-              const isSorted = sortKey === column.key;
-
-              return (
-                <th
-                  key={column.key}
-                  scope="col"
-                  className={column.className}
-                  aria-sort={
-                    column.sortable
-                      ? isSorted
-                        ? sortDirection === "asc"
-                          ? "ascending"
-                          : "descending"
-                        : "none"
-                      : undefined
-                  }
-                >
-                  {column.sortable && onSortChange ? (
-                    <button
-                      type="button"
-                      className={isSorted ? classNames.sortButtonActive : classNames.sortButton}
-                      onClick={() => onSortChange(column.key)}
-                      aria-label={labels.sortByAriaLabel(column.header)}
-                    >
-                      {renderColumnHeader(column, classNames, labels)}
-                      <span className={classNames.sortIndicator} aria-hidden="true">
-                        {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
-                      </span>
-                    </button>
-                  ) : (
-                    renderColumnHeader(column, classNames, labels)
-                  )}
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const rowClass = [getRowClassName?.(row), onRowClick ? classNames.rowClickable : ""]
+  return wrapTableMarkup(
+    classNames,
+    layout,
+    <table className={tableClassName}>
+      <thead>
+        <tr>
+          {columns.map((column) => {
+            const isSorted = sortKey === column.key;
+            const headerClass = [
+              column.className,
+              column.sortable && classNames.sortableColumn ? classNames.sortableColumn : "",
+            ]
               .filter(Boolean)
               .join(" ");
 
             return (
-              <tr
-                key={rowKey(row)}
-                className={rowClass || undefined}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                tabIndex={onRowClick ? 0 : undefined}
-                onKeyDown={
-                  onRowClick
-                    ? (event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          onRowClick(row);
-                        }
-                      }
+              <th
+                key={column.key}
+                scope="col"
+                className={headerClass || undefined}
+                data-align={column.align}
+                aria-sort={
+                  column.sortable
+                    ? isSorted
+                      ? sortDirection === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
                     : undefined
                 }
               >
-                {columns.map((column) => (
-                  <td
-                    key={column.key}
-                    className={column.className}
-                    data-label={column.mobileLabel ?? column.header}
+                {column.sortable && onSortChange ? (
+                  <button
+                    type="button"
+                    className={isSorted ? classNames.sortButtonActive : classNames.sortButton}
+                    onClick={() => onSortChange(column.key)}
+                    aria-label={labels.sortByAriaLabel(column.header)}
                   >
-                    {column.render(row)}
-                  </td>
-                ))}
-              </tr>
+                    {renderColumnHeader(column, classNames, labels)}
+                    <span className={classNames.sortIndicator} aria-hidden="true">
+                      {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                    </span>
+                  </button>
+                ) : (
+                  renderColumnHeader(column, classNames, labels)
+                )}
+              </th>
             );
           })}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, index) => {
+          const rowClass = [getRowClassName?.(row), onRowClick ? classNames.rowClickable : ""]
+            .filter(Boolean)
+            .join(" ");
+
+          return (
+            <tr
+              key={rowKey(row, index)}
+              className={rowClass || undefined}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              role={onRowClick && rowClickRole === "button" ? "button" : undefined}
+              onKeyDown={
+                onRowClick
+                  ? (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onRowClick(row);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              {columns.map((column) => (
+                <td
+                  key={column.key}
+                  className={column.className}
+                  data-label={column.mobileLabel ?? column.header}
+                  data-align={column.align}
+                  data-interactive={column.interactive ? "true" : undefined}
+                  onClick={
+                    column.interactive
+                      ? (event) => {
+                          event.stopPropagation();
+                        }
+                      : undefined
+                  }
+                >
+                  {column.render(row)}
+                </td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>,
   );
 }
 

@@ -465,7 +465,7 @@ export function DataTableSection<T>({
           <DataTable
             columns={columns}
             rows={displayRows}
-            rowKey={rowKey}
+            rowKey={(row, _index) => rowKey(row)}
             emptyMessage={emptyMessage}
             onRowClick={onRowClick}
             getRowClassName={getRowClassName}
