@@ -250,3 +250,65 @@ def test_delete_unknown_raises():
     service, _, _ = _service()
     with pytest.raises(FormNotFoundError):
         service.delete("nope")
+
+
+class FakeImageStorage:
+    def __init__(self) -> None:
+        self.deleted: list[str | None] = []
+
+    def save(self, *, content: bytes, mime_type: str | None) -> tuple[str, str]:
+        return ("saved.jpg", mime_type or "image/jpeg")
+
+    def delete(self, filename: str | None) -> None:
+        self.deleted.append(filename)
+
+    def read(self, filename: str) -> bytes:
+        return b"img"
+
+
+def test_remove_page_and_question_images():
+    repo = FakeFormRepository()
+    storage = FakeImageStorage()
+    service = FormService(repository=repo, qr_service=FakeQr(), image_storage=storage)
+    view = _create(service)
+    fid = view["id"]
+    page_id = str(uuid.uuid4())
+    question_id = str(uuid.uuid4())
+    repo.pages[fid] = [
+        {
+            "id": page_id,
+            "form_id": fid,
+            "position": 0,
+            "title": "Etapa",
+            "background_image_filename": "page-bg.jpg",
+            "point_image_filename": "page-point.jpg",
+        }
+    ]
+    repo.questions[fid] = [
+        {
+            "id": question_id,
+            "form_id": fid,
+            "page_id": page_id,
+            "position": 0,
+            "question_type": "rating",
+            "label": "Nota",
+            "help_text": None,
+            "is_required": True,
+            "options": [],
+            "point_image_filename": "q-point.jpg",
+            "is_active": True,
+        }
+    ]
+
+    service.remove_page_background(fid, page_id)
+    service.remove_page_point_image(fid, page_id)
+    service.remove_question_point_image(fid, question_id)
+
+    page = repo.pages[fid][0]
+    question = repo.questions[fid][0]
+    assert page["background_image_filename"] is None
+    assert page["point_image_filename"] is None
+    assert question["point_image_filename"] is None
+    assert "page-bg.jpg" in storage.deleted
+    assert "page-point.jpg" in storage.deleted
+    assert "q-point.jpg" in storage.deleted

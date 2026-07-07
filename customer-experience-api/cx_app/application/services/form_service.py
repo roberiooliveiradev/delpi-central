@@ -225,6 +225,67 @@ class FormService:
         )
         return self._admin_full(self.repository.get_by_id(form_id) or {})
 
+    def remove_page_background(self, form_id: str, page_id: str) -> dict[str, Any]:
+        self._require(form_id)
+        page = self._require_page(form_id, page_id)
+        self.image_storage.delete(page.get("background_image_filename"))
+        self.repository.replace_pages(
+            form_id,
+            [
+                {
+                    **p,
+                    "background_image_filename": None
+                    if str(p["id"]) == page_id
+                    else p.get("background_image_filename"),
+                }
+                for p in self.repository.list_pages(form_id)
+            ],
+        )
+        return self._admin_full(self.repository.get_by_id(form_id) or {})
+
+    def remove_page_point_image(self, form_id: str, page_id: str) -> dict[str, Any]:
+        self._require(form_id)
+        page = self._require_page(form_id, page_id)
+        self.image_storage.delete(page.get("point_image_filename"))
+        self.repository.replace_pages(
+            form_id,
+            [
+                {
+                    **p,
+                    "point_image_filename": None
+                    if str(p["id"]) == page_id
+                    else p.get("point_image_filename"),
+                }
+                for p in self.repository.list_pages(form_id)
+            ],
+        )
+        return self._admin_full(self.repository.get_by_id(form_id) or {})
+
+    def remove_question_point_image(self, form_id: str, question_id: str) -> dict[str, Any]:
+        self._require(form_id)
+        question = self._require_question(form_id, question_id)
+        self.image_storage.delete(question.get("point_image_filename"))
+        questions = self.repository.list_questions(form_id, active_only=True)
+        self.repository.replace_questions(
+            form_id,
+            [
+                {
+                    "id": str(q["id"]),
+                    "label": q["label"],
+                    "question_type": q["question_type"],
+                    "help_text": q.get("help_text"),
+                    "is_required": q.get("is_required"),
+                    "options": q.get("options") or [],
+                    "page_id": str(q["page_id"]) if q.get("page_id") else None,
+                    "point_image_filename": None
+                    if str(q["id"]) == question_id
+                    else q.get("point_image_filename"),
+                }
+                for q in questions
+            ],
+        )
+        return self._admin_full(self.repository.get_by_id(form_id) or {})
+
     def upload_question_point_image(
         self,
         form_id: str,

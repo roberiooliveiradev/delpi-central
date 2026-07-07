@@ -43,15 +43,13 @@ export function PhotoDropzone({
             >
               <Upload size={15} /> Trocar
             </button>
-            {!isExisting && (
-              <button
-                type="button"
-                className="cx-button cx-button--danger-ghost"
-                onClick={onClear}
-              >
-                <X size={15} /> Remover
-              </button>
-            )}
+            <button
+              type="button"
+              className="cx-button cx-button--danger-ghost"
+              onClick={onClear}
+            >
+              <X size={15} /> Remover
+            </button>
           </div>
         </div>
         <input

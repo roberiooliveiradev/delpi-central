@@ -26,9 +26,20 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+}
+
+.cxform-viewport-bg__photo {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.cxform-viewport-bg__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--pub-viewport-scrim);
 }
 
 .cxform--fullpage .cxform-header {
@@ -116,8 +127,8 @@
   min-width: 120px;
   height: 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--pub-accent) 22%, var(--pub-card-bg));
-  border: 1px solid color-mix(in srgb, var(--pub-accent) 28%, transparent);
+  background: color-mix(in srgb, var(--pub-accent) 22%, var(--pub-input-bg));
+  border: 1px solid color-mix(in srgb, var(--pub-accent) 28%, var(--pub-card-border));
   overflow: hidden;
 }
 
@@ -142,6 +153,10 @@
   background-size: cover;
   background-position: center;
   text-align: center;
+}
+
+.cxform-page-header--photo {
+  background-image: var(--pub-surface-scrim), var(--cxform-page-photo);
 }
 
 .cxform-page-title {
@@ -185,11 +200,7 @@
 .cxform--fullpage.cxform--wizard .cxform-illustration {
   margin: -24px -24px 24px;
   padding: clamp(20px, 5vw, 36px) clamp(16px, 4vw, 28px);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--pub-accent) 10%, var(--pub-card-bg)) 0%,
-    var(--pub-card-bg) 100%
-  );
+  background: var(--pub-illustration-band);
   border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
 }
 
@@ -280,6 +291,18 @@
   backdrop-filter: blur(6px);
 }
 
+:root[data-theme="dark"] .cxform-card,
+:root[data-theme="dark"] .cxform--fullpage .cxform-header {
+  backdrop-filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cxform-card,
+  :root:not([data-theme="light"]) .cxform--fullpage .cxform-header {
+    backdrop-filter: none;
+  }
+}
+
 .cxform-field {
   display: block;
   border: 0;
@@ -323,6 +346,19 @@
   font: inherit;
   font-size: 15px;
   padding: 12px 14px;
+  color-scheme: inherit;
+}
+
+.cxform-input:-webkit-autofill,
+.cxform-input:-webkit-autofill:hover,
+.cxform-input:-webkit-autofill:focus,
+.cxform-textarea:-webkit-autofill,
+.cxform-textarea:-webkit-autofill:hover,
+.cxform-textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--pub-input-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--pub-input-bg) inset;
+  box-shadow: 0 0 0 1000px var(--pub-input-bg) inset;
+  transition: background-color 99999s ease-out 0s;
 }
 
 .cxform-textarea {

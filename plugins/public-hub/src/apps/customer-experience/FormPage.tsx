@@ -203,10 +203,8 @@ export function FormView({ form }: { form: PublicForm }) {
     );
   }
 
-  const viewportBgStyle = backgroundUrl
-    ? ({
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${backgroundUrl})`,
-      } as React.CSSProperties)
+  const viewportPhotoStyle = backgroundUrl
+    ? ({ backgroundImage: `url(${backgroundUrl})` } as React.CSSProperties)
     : undefined;
 
   const renderIntroFields = () => (
@@ -249,12 +247,12 @@ export function FormView({ form }: { form: PublicForm }) {
             <div key={q.id}>
               {showPageHeader && page && (
                 <div
-                  className="cxform-page-header"
+                  className={`cxform-page-header${page.backgroundImageUrl ? " cxform-page-header--photo" : ""}`}
                   style={
                     page.backgroundImageUrl
-                      ? {
-                          backgroundImage: `linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.95)), url(${page.backgroundImageUrl})`,
-                        }
+                      ? ({
+                          ["--cxform-page-photo" as string]: `url(${page.backgroundImageUrl})`,
+                        } as React.CSSProperties)
                       : undefined
                   }
                 >
@@ -313,7 +311,10 @@ export function FormView({ form }: { form: PublicForm }) {
   return (
     <>
       {backgroundUrl && (
-        <div className="cxform-viewport-bg" style={viewportBgStyle} aria-hidden="true" />
+        <div className="cxform-viewport-bg" aria-hidden="true">
+          <div className="cxform-viewport-bg__photo" style={viewportPhotoStyle} />
+          <div className="cxform-viewport-bg__scrim" />
+        </div>
       )}
       <div
         className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}`}

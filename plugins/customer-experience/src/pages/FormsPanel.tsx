@@ -26,6 +26,9 @@ import {
   listForms,
   listResponses,
   removeFormBackground,
+  removePageBackground,
+  removePagePointImage,
+  removeQuestionPointImage,
   setQuestions as apiSetQuestions,
   updateForm,
   uploadFormBackground,
@@ -76,6 +79,18 @@ type PendingImages = {
   pageBackground: Record<number, File>;
   pagePoint: Record<number, File>;
   questionPoint: Record<number, File>;
+};
+
+type RemovedImages = {
+  pageBackground: Record<number, true>;
+  pagePoint: Record<number, true>;
+  questionPoint: Record<number, true>;
+};
+
+const EMPTY_REMOVED: RemovedImages = {
+  pageBackground: {},
+  pagePoint: {},
+  questionPoint: {},
 };
 
 type View = "list" | "editor" | "dashboard";
@@ -418,7 +433,7 @@ function PageVisualFields({
                 ? URL.createObjectURL(pendingImages.pageBackground[pageIndex])
                 : page.backgroundImageUrl ?? null
             }
-            isExisting={Boolean(page.backgroundImageUrl)}
+            isExisting={Boolean(page.backgroundImageUrl && !pendingImages.pageBackground[pageIndex])}
             onSelect={(file) => onPendingBackground(pageIndex, file)}
             onClear={() => onClearBackground(pageIndex)}
           />
@@ -431,7 +446,7 @@ function PageVisualFields({
                 ? URL.createObjectURL(pendingImages.pagePoint[pageIndex])
                 : page.pointImageUrl ?? null
             }
-            isExisting={Boolean(page.pointImageUrl)}
+            isExisting={Boolean(page.pointImageUrl && !pendingImages.pagePoint[pageIndex])}
             onSelect={(file) => onPendingPoint(pageIndex, file)}
             onClear={() => onClearPoint(pageIndex)}
           />
@@ -467,6 +482,7 @@ function FormEditor({
     pagePoint: {},
     questionPoint: {},
   });
+  const [removedImages, setRemovedImages] = useState<RemovedImages>(EMPTY_REMOVED);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -495,6 +511,11 @@ function FormEditor({
   };
 
   const setPendingPageBackground = (index: number, file: File) => {
+    setRemovedImages((prev) => {
+      const next = { ...prev.pageBackground };
+      delete next[index];
+      return { ...prev, pageBackground: next };
+    });
     setPendingImages((prev) => ({
       ...prev,
       pageBackground: { ...prev.pageBackground, [index]: file },
@@ -502,7 +523,16 @@ function FormEditor({
   };
 
   const clearPendingPageBackground = (index: number) => {
-    updatePage(index, { backgroundImageUrl: null });
+    setPages((prev) => {
+      const page = prev[index];
+      if (page?.id && page.backgroundImageUrl) {
+        setRemovedImages((r) => ({
+          ...r,
+          pageBackground: { ...r.pageBackground, [index]: true },
+        }));
+      }
+      return prev.map((p, i) => (i === index ? { ...p, backgroundImageUrl: null } : p));
+    });
     setPendingImages((prev) => {
       const next = { ...prev.pageBackground };
       delete next[index];
@@ -511,6 +541,11 @@ function FormEditor({
   };
 
   const setPendingPagePoint = (index: number, file: File) => {
+    setRemovedImages((prev) => {
+      const next = { ...prev.pagePoint };
+      delete next[index];
+      return { ...prev, pagePoint: next };
+    });
     setPendingImages((prev) => ({
       ...prev,
       pagePoint: { ...prev.pagePoint, [index]: file },
@@ -518,7 +553,16 @@ function FormEditor({
   };
 
   const clearPendingPagePoint = (index: number) => {
-    updatePage(index, { pointImageUrl: null });
+    setPages((prev) => {
+      const page = prev[index];
+      if (page?.id && page.pointImageUrl) {
+        setRemovedImages((r) => ({
+          ...r,
+          pagePoint: { ...r.pagePoint, [index]: true },
+        }));
+      }
+      return prev.map((p, i) => (i === index ? { ...p, pointImageUrl: null } : p));
+    });
     setPendingImages((prev) => {
       const next = { ...prev.pagePoint };
       delete next[index];
@@ -601,6 +645,34 @@ function FormEditor({
     setBackgroundPreview(null);
   };
 
+  const setPendingQuestionPoint = (index: number, file: File) => {
+    setRemovedImages((prev) => {
+      const next = { ...prev.questionPoint };
+      delete next[index];
+      return { ...prev, questionPoint: next };
+    });
+    setPendingImages((prev) => ({
+      ...prev,
+      questionPoint: { ...prev.questionPoint, [index]: file },
+    }));
+  };
+
+  const clearPendingQuestionPoint = (index: number) => {
+    const question = questions[index];
+    if (question?.id && question.pointImageUrl) {
+      setRemovedImages((r) => ({
+        ...r,
+        questionPoint: { ...r.questionPoint, [index]: true },
+      }));
+    }
+    update(index, { pointImageUrl: null });
+    setPendingImages((prev) => {
+      const next = { ...prev.questionPoint };
+      delete next[index];
+      return { ...prev, questionPoint: next };
+    });
+  };
+
   const handleSave = async () => {
     if (!title.trim()) {
       setError("Informe um título para o formulário.");
@@ -635,6 +707,22 @@ function FormEditor({
         saved = await uploadFormBackground(form.id, pendingImages.formBackground);
       } else if (!backgroundPreview && form.backgroundImageUrl) {
         saved = await removeFormBackground(form.id);
+      }
+
+      for (const [indexStr, mark] of Object.entries(removedImages.pageBackground)) {
+        if (!mark || pendingImages.pageBackground[Number(indexStr)]) continue;
+        const pageId = saved.pages[Number(indexStr)]?.id;
+        if (pageId) saved = await removePageBackground(form.id, pageId);
+      }
+      for (const [indexStr, mark] of Object.entries(removedImages.pagePoint)) {
+        if (!mark || pendingImages.pagePoint[Number(indexStr)]) continue;
+        const pageId = saved.pages[Number(indexStr)]?.id;
+        if (pageId) saved = await removePagePointImage(form.id, pageId);
+      }
+      for (const [indexStr, mark] of Object.entries(removedImages.questionPoint)) {
+        if (!mark || pendingImages.questionPoint[Number(indexStr)]) continue;
+        const questionId = saved.questions[Number(indexStr)]?.id;
+        if (questionId) saved = await removeQuestionPointImage(form.id, questionId);
       }
 
       for (const [indexStr, file] of Object.entries(pendingImages.pageBackground)) {
@@ -908,21 +996,9 @@ function FormEditor({
                       ? URL.createObjectURL(pendingImages.questionPoint[index])
                       : q.pointImageUrl ?? null
                   }
-                  isExisting={Boolean(q.pointImageUrl)}
-                  onSelect={(file) =>
-                    setPendingImages((prev) => ({
-                      ...prev,
-                      questionPoint: { ...prev.questionPoint, [index]: file },
-                    }))
-                  }
-                  onClear={() => {
-                    update(index, { pointImageUrl: null });
-                    setPendingImages((prev) => {
-                      const next = { ...prev.questionPoint };
-                      delete next[index];
-                      return { ...prev, questionPoint: next };
-                    });
-                  }}
+                  isExisting={Boolean(q.pointImageUrl && !pendingImages.questionPoint[index])}
+                  onSelect={(file) => setPendingQuestionPoint(index, file)}
+                  onClear={() => clearPendingQuestionPoint(index)}
                 />
               </div>
             )}

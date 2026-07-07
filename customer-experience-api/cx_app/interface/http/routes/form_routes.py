@@ -335,6 +335,18 @@ async def upload_page_background(
     return ok(data, message="Imagem de fundo da página atualizada.")
 
 
+@router.delete("/{form_id}/pages/{page_id}/background-image")
+def remove_page_background(request: Request, form_id: str, page_id: str):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    try:
+        data = build_form_service().remove_page_background(form_id, page_id)
+    except FormNotFoundError:
+        return fail("Página não encontrada.", 404)
+    return ok(data, message="Imagem de fundo da página removida.")
+
+
 @router.post("/{form_id}/pages/{page_id}/point-image")
 async def upload_page_point_image(
     request: Request, form_id: str, page_id: str, image: UploadFile = File(...)
@@ -354,6 +366,18 @@ async def upload_page_point_image(
     return ok(data, message="Imagem ilustrativa da página atualizada.")
 
 
+@router.delete("/{form_id}/pages/{page_id}/point-image")
+def remove_page_point_image(request: Request, form_id: str, page_id: str):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    try:
+        data = build_form_service().remove_page_point_image(form_id, page_id)
+    except FormNotFoundError:
+        return fail("Página não encontrada.", 404)
+    return ok(data, message="Imagem ilustrativa da página removida.")
+
+
 @router.post("/{form_id}/questions/{question_id}/point-image")
 async def upload_question_point_image(
     request: Request, form_id: str, question_id: str, image: UploadFile = File(...)
@@ -371,6 +395,18 @@ async def upload_question_point_image(
     except PhotoValidationError as exc:
         return fail(str(exc), 422)
     return ok(data, message="Imagem ilustrativa da pergunta atualizada.")
+
+
+@router.delete("/{form_id}/questions/{question_id}/point-image")
+def remove_question_point_image(request: Request, form_id: str, question_id: str):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    try:
+        data = build_form_service().remove_question_point_image(form_id, question_id)
+    except FormNotFoundError:
+        return fail("Pergunta não encontrada.", 404)
+    return ok(data, message="Imagem ilustrativa da pergunta removida.")
 
 
 # ----- público (sem login) ---------------------------------------------------

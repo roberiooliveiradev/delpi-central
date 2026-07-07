@@ -126,6 +126,36 @@ export async function uploadQuestionPointImage(
   return uploadMultipart(`${FORMS}/${formId}/questions/${questionId}/point-image`, file);
 }
 
+export async function removePageBackground(
+  formId: string,
+  pageId: string,
+): Promise<FormDetail> {
+  const response = await httpDelete<ApiEnvelope<FormDetail>>(
+    `${FORMS}/${formId}/pages/${pageId}/background-image`,
+  );
+  return unwrapEnvelope(response, "Não foi possível remover o fundo da página.");
+}
+
+export async function removePagePointImage(
+  formId: string,
+  pageId: string,
+): Promise<FormDetail> {
+  const response = await httpDelete<ApiEnvelope<FormDetail>>(
+    `${FORMS}/${formId}/pages/${pageId}/point-image`,
+  );
+  return unwrapEnvelope(response, "Não foi possível remover a imagem ilustrativa da página.");
+}
+
+export async function removeQuestionPointImage(
+  formId: string,
+  questionId: string,
+): Promise<FormDetail> {
+  const response = await httpDelete<ApiEnvelope<FormDetail>>(
+    `${FORMS}/${formId}/questions/${questionId}/point-image`,
+  );
+  return unwrapEnvelope(response, "Não foi possível remover a imagem ilustrativa da pergunta.");
+}
+
 export async function activateForm(id: string): Promise<FormDetail> {
   const response = await httpPost<ApiEnvelope<FormDetail>>(`${FORMS}/${id}/activate`);
   return unwrapEnvelope(response, "Não foi possível publicar o formulário.");
