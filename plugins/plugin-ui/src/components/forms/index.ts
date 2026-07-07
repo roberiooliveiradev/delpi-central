@@ -80,4 +80,15 @@ export {
   type TextAreaFieldProps,
 } from "./TextAreaField";
 
+export {
+  FilterCheckboxField,
+  createDashboardFilterCheckboxField,
+  filterCheckboxFieldBemClasses,
+  filterCheckboxFieldPacClasses,
+  type DashboardFilterCheckboxFieldProps,
+  type FilterCheckboxFieldClassNames,
+  type FilterCheckboxFieldLabels,
+  type FilterCheckboxFieldProps,
+} from "./FilterCheckboxField";
+
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";

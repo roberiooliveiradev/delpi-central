@@ -69,3 +69,13 @@ export {
 
 export { buildDataTableSearchText } from "../../utils/dataTableSearch";
 export { useClientPagination } from "../../utils/useClientPagination";
+
+export {
+  TableHeaderCell,
+  createDashboardTableHeaderCell,
+  tableHeaderCellBemClasses,
+  tableHeaderCellPacClasses,
+  type DashboardTableHeaderCellProps,
+  type TableHeaderCellClassNames,
+  type TableHeaderCellProps,
+} from "./TableHeaderCell";
