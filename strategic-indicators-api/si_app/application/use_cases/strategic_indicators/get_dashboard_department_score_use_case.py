@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from si_app.application.use_cases.strategic_indicators.get_departments_real_use_case import (
-    GetStrategicIndicatorsDepartmentsRealRequest,
-    GetStrategicIndicatorsDepartmentsRealUseCase,
+from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    StrategicIndicatorsSnapshotService,
 )
 
 
@@ -10,9 +9,9 @@ class GetDashboardDepartmentScoreUseCase:
     def __init__(
         self,
         *,
-        departments_use_case: GetStrategicIndicatorsDepartmentsRealUseCase,
+        snapshot_service: StrategicIndicatorsSnapshotService,
     ) -> None:
-        self._departments_use_case = departments_use_case
+        self._snapshot_service = snapshot_service
 
     def execute(
         self,
@@ -27,30 +26,24 @@ class GetDashboardDepartmentScoreUseCase:
         if not normalized_id:
             return None
 
-        result = self._departments_use_case.execute(
-            GetStrategicIndicatorsDepartmentsRealRequest(
+        department, measurement_errors = (
+            self._snapshot_service.get_dashboard_department_snapshot(
                 department_id=normalized_id,
-                branch=branch,
+                competence=competence,
                 start_date=start_date,
                 end_date=end_date,
-                competence=competence,
+                branch=branch,
             )
         )
-
-        items = result.get("items") or []
-        match = next(
-            (item for item in items if item.get("id") == normalized_id),
-            items[0] if items else None,
-        )
-        if match is None:
+        if department is None:
             return None
 
         return {
-            "department_id": match["id"],
-            "department_name": match.get("name"),
-            "score": match.get("score"),
-            "classification": match.get("classification"),
-            "contribution": match.get("contribution"),
-            "variation": match.get("variation"),
-            "partial_success": bool(result.get("partial_success")),
+            "department_id": department.department_id,
+            "department_name": department.department_name,
+            "score": department.score,
+            "classification": department.classification,
+            "contribution": department.contribution,
+            "variation": None,
+            "partial_success": len(measurement_errors) > 0,
         }

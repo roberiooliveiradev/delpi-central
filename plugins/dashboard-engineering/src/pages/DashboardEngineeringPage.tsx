@@ -197,7 +197,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
             },
           )}
           icon={<CircleGauge size={22} />}
-          loading={isBusy && !lmpSummary}
+          loading={isBusy}
         />
         <KpiCard
           title="Lead time médio (dias úteis)"
@@ -205,7 +205,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
           value={formatDecimal(lmpSummary?.avg_lead_time, 2)}
           contextLabel="Média no período"
           icon={<Clock size={22} />}
-          loading={isBusy && !lmpSummary}
+          loading={isBusy}
         />
         <KpiCard
           title="Total de propostas"
@@ -215,7 +215,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
           )}
           contextLabel="LMPs / amostras no recorte"
           icon={<BarChart3 size={22} />}
-          loading={isBusy && !lmpSummary}
+          loading={isBusy}
         />
         <KpiCard
           title="Ganhos brutos TRANSFORMA+"
@@ -234,7 +234,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
             },
           )}
           icon={<Coins size={22} />}
-          loading={isBusy && !transforma}
+          loading={isBusy}
         />
         <KpiCard
           title="Soluções implementadas"
@@ -242,7 +242,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
           value={formatInteger(transforma?.implemented_solutions_count)}
           contextLabel="Melhorias na planilha"
           icon={<Lightbulb size={22} />}
-          loading={isBusy && !transforma}
+          loading={isBusy}
         />
         <KpiCard
           title="ROI médio TRANSFORMA+"
@@ -258,7 +258,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
             },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !transforma}
+          loading={isBusy}
         />
       </section>
       <section className="ds-shortcuts-grid">

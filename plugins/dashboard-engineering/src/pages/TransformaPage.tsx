@@ -265,7 +265,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
             { realizedValue: summary?.total_gross_savings_in_period },
           )}
           icon={<Coins size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="Economia líquida"
@@ -273,7 +273,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
           value={formatCurrency(summary?.total_net_savings_until_now)}
           contextLabel="Acumulado no recorte"
           icon={<Coins size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="Soluções implementadas"
@@ -281,7 +281,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
           value={formatInteger(summary?.implemented_solutions_count)}
           contextLabel="Cenários de melhoria"
           icon={<Lightbulb size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="Horas economizadas"
@@ -289,7 +289,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
           value={formatDecimal(summary?.total_hours_saved_until_now, 1)}
           contextLabel={periodLabel}
           icon={<Clock size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="ROI médio"
@@ -305,7 +305,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
             },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="Processos listados"
@@ -313,7 +313,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
           value={String(processesData?.total ?? items.length)}
           contextLabel="Com filtros aplicados"
           icon={<Lightbulb size={22} />}
-          loading={isBusy && !processesData}
+          loading={isBusy}
         />
       </section>
 

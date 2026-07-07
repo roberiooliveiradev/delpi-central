@@ -16,10 +16,10 @@ export function DepartmentIddBadge({
   classPrefix = "dc",
 }: DepartmentIddBadgeProps) {
   const { item, loading } = useDepartmentIdd(departmentId, filters);
-  const scoreLabel = formatDepartmentIddScore(item?.score);
-  const classification = item?.classification?.trim();
+  const scoreLabel = loading ? null : formatDepartmentIddScore(item?.score);
+  const classification = loading ? null : item?.classification?.trim();
 
-  if (loading && !scoreLabel) {
+  if (loading) {
     return (
       <div
         className={`${classPrefix}-dept-idd ${classPrefix}-dept-idd--loading`}

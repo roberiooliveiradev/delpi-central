@@ -637,7 +637,7 @@ export function DashboardCommercialPage({
           goalPerformanceBadges={rolKpi.goalPerformanceBadges}
           iddScoreLabel={rolKpi.iddScoreLabel}
           icon={<Banknote size={22} />}
-          loading={isBusy && !headOfficeRol && !branchRol}
+          loading={isBusy}
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.rolWeg}
@@ -653,7 +653,7 @@ export function DashboardCommercialPage({
           goalPerformanceBadges={wegRolKpi.goalPerformanceBadges}
           iddScoreLabel={wegRolKpi.iddScoreLabel}
           icon={<Building2 size={22} />}
-          loading={isBusy && !headOfficeWegRol && !branchWegRol}
+          loading={isBusy}
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.rolNewBusiness}
@@ -690,7 +690,7 @@ export function DashboardCommercialPage({
             },
           )}
           icon={<PackageCheck size={22} />}
-          loading={isBusy && !salesOrderOtd}
+          loading={isBusy}
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.closingRate}
@@ -709,7 +709,7 @@ export function DashboardCommercialPage({
             },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !closingRate}
+          loading={isBusy}
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.newBusinessRol}
@@ -728,7 +728,7 @@ export function DashboardCommercialPage({
             },
           )}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !newBusinessRol}
+          loading={isBusy}
         />
       </section>
 
@@ -809,7 +809,7 @@ export function DashboardCommercialPage({
         >
           <ConversionFunnelChart
             data={closingRate}
-            loading={isBusy && !closingRate}
+            loading={isBusy}
           />
         </ChartCard>
       </section>

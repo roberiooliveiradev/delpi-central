@@ -400,7 +400,7 @@ export function DashboardHrPage() {
             },
           )}
           icon={<UserMinus size={22} />}
-          loading={loading}
+          loading={isBusy}
         />
         <KpiCard
           title="Turnover"
@@ -419,7 +419,7 @@ export function DashboardHrPage() {
             },
           )}
           icon={<TrendingDown size={22} />}
-          loading={loading}
+          loading={isBusy}
         />
         <KpiCard
           title="Satisfação interna"
@@ -438,7 +438,7 @@ export function DashboardHrPage() {
             },
           )}
           icon={<Smile size={22} />}
-          loading={loading}
+          loading={isBusy}
         />
         <KpiCard
           title="Número de PDIs ativos"
@@ -461,7 +461,7 @@ export function DashboardHrPage() {
             },
           )}
           icon={<Award size={22} />}
-          loading={loading}
+          loading={isBusy}
         />
         <KpiCard
           title="% de Avaliações de Desempenho Concluídas"
@@ -484,7 +484,7 @@ export function DashboardHrPage() {
             },
           )}
           icon={<ClipboardCheck size={22} />}
-          loading={loading}
+          loading={isBusy}
         />
         <KpiCard
           title="Horas treinamento / colaborador"
@@ -503,7 +503,7 @@ export function DashboardHrPage() {
             },
           )}
           icon={<BookOpen size={22} />}
-          loading={loading}
+          loading={isBusy}
         />
       </section>
 

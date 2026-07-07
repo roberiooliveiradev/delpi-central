@@ -465,7 +465,7 @@ export function OeePage({ pathname }: OeePageProps) {
             { realizedValue: data?.summary.oee_pct }
           )}
           icon={<CircleGauge size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Apontamentos"
@@ -473,7 +473,7 @@ export function OeePage({ pathname }: OeePageProps) {
           value={formatInteger(data?.summary.total_appointments)}
           subtitle={`${formatInteger(data?.summary.outlier_appointments)} a avaliar (Verificar)`}
           icon={<Factory size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Na faixa (indicador)"
@@ -481,7 +481,7 @@ export function OeePage({ pathname }: OeePageProps) {
           value={formatInteger(data?.summary.valid_appointments)}
           subtitle={formatPercent(data?.summary.oee_pct)}
           icon={<Activity size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
 

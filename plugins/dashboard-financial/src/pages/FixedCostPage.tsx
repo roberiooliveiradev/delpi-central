@@ -142,7 +142,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
             { realizedValue: data?.fixed_cost_over_rol_pct },
           )}
           icon={<Landmark size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         {data?.fixed_cost_value != null ? (
           <KpiCard
@@ -151,7 +151,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
             value={formatCurrency(data.fixed_cost_value)}
             subtitle={`ROL ${formatCurrency(data.rol_with_ipi)}`}
             icon={<Landmark size={22} />}
-            loading={isBusy && !data}
+            loading={isBusy}
           />
         ) : null}
       </section>

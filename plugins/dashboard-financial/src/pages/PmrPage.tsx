@@ -127,7 +127,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
             { realizedValue: data?.pmr_days },
           )}
           icon={<Clock size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
 

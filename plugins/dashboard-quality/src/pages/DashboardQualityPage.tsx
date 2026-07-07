@@ -261,7 +261,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             },
           )}
           icon={<Factory size={22} />}
-          loading={isBusy && !ppmInternal}
+          loading={isBusy}
           footer={
             <PpmSparkline
               data={internalSparkline.points}
@@ -283,7 +283,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             },
           )}
           icon={<Truck size={22} />}
-          loading={isBusy && !ppmExternal}
+          loading={isBusy}
           footer={
             <PpmSparkline
               data={externalSparkline.points}
@@ -312,7 +312,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             },
           )}
           icon={<Lightbulb size={22} />}
-          loading={isBusy && !kaizen}
+          loading={isBusy}
         />
         <KpiCard
           title="Ganhos financeiros do kaizen"
@@ -324,7 +324,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             branches: kaizenSavingsBranches,
           })}
           icon={<Wallet size={22} />}
-          loading={isBusy && !kaizen}
+          loading={isBusy}
         />
         <KpiCard
           title="Auditoria 5S"
@@ -336,7 +336,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             branches: audit5sBranches,
           })}
           icon={<ClipboardCheck size={22} />}
-          loading={isBusy && !audit5s}
+          loading={isBusy}
         />
       </section>
 

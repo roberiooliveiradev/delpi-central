@@ -119,7 +119,7 @@ export function RolPage({ pathname }: RolPageProps) {
           value={formatCurrency(data?.rol)}
           subtitle={periodLabel}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="ROL"
@@ -127,7 +127,7 @@ export function RolPage({ pathname }: RolPageProps) {
           value={formatCurrency(data?.rol_with_ipi)}
           subtitle={formatBranchFilterLabel(branches)}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
       <DataTableSection

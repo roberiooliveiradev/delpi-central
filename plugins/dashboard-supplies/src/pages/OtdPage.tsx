@@ -212,7 +212,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
             realizedValue: data?.summary.otd_percentage,
           })}
           icon={<CircleGauge size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Linhas no prazo"
@@ -220,7 +220,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
           value={formatInteger(data?.summary.on_time_lines)}
           subtitle={`De ${formatInteger(data?.summary.total_lines)} linhas`}
           icon={<Truck size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Linhas em atraso"
@@ -228,7 +228,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
           value={formatInteger(data?.summary.late_lines)}
           subtitle={formatPercent(data?.summary.late_percentage)}
           icon={<Truck size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
 

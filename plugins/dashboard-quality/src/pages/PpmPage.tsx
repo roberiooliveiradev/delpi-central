@@ -379,7 +379,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
               <Truck size={22} />
             )
           }
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="Total devolvido"
@@ -387,7 +387,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
           value={formatDecimal(summary?.total_devolvido_un)}
           subtitle={`Milheiro produzido: ${formatDecimal(summary?.total_produzido_milheiro)}`}
           icon={ppmType === "internal" ? <Factory size={22} /> : <Truck size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
       </section>
 

@@ -146,7 +146,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
             { realizedValue: data?.ebitda_over_rol_pct },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         {data?.ebitda_value != null ? (
           <KpiCard
@@ -155,7 +155,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
             value={formatCurrency(data.ebitda_value)}
             subtitle={`ROL ${formatCurrency(data.rol_with_ipi)}`}
             icon={<Percent size={22} />}
-            loading={isBusy && !data}
+            loading={isBusy}
           />
         ) : null}
       </section>

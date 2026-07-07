@@ -389,7 +389,7 @@ def build_get_dashboard_goals_by_source_keys_use_case():
 
 def build_get_dashboard_department_score_use_case():
     return GetDashboardDepartmentScoreUseCase(
-        departments_use_case=build_get_strategic_indicators_departments_use_case(),
+        snapshot_service=build_strategic_indicators_snapshot_service(),
     )
 
 

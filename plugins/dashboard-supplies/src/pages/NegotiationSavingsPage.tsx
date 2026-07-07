@@ -183,7 +183,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
             { realizedValue },
           )}
           icon={<HandCoins size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Lançamentos no período"
@@ -191,7 +191,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
           value={formatInteger(data?.entries.length)}
           subtitle="Registros na planilha IDD"
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
 

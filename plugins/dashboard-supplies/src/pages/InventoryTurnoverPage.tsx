@@ -126,7 +126,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
             { realizedValue: data?.summary.inventory_turnover_times },
           )}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Giro (meses)"
@@ -134,7 +134,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
           value={formatDecimal(data?.summary.inventory_turnover_months, 2)}
           subtitle="Estoque ÷ CPV médio mensal"
           icon={<Package size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Estoque"
@@ -150,7 +150,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
             { realizedValue: data?.summary.total_stock_value },
           )}
           icon={<Warehouse size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="CPV médio mensal"
@@ -158,7 +158,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
           value={formatCurrency(data?.summary.cpv_average_monthly)}
           subtitle={periodLabel}
           icon={<Percent size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
     </div>

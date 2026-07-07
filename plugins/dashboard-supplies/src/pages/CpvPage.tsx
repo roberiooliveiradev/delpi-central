@@ -173,7 +173,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
             showGoal: false,
           })}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="CPV / ROL"
@@ -189,7 +189,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
             { realizedValue: data?.summary.cpv_percentage },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Movimentos"
@@ -197,7 +197,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
           value={formatInteger(data?.summary.total_movements)}
           subtitle={`Qtd ${formatDecimal(data?.summary.total_quantity, 0)}`}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Custo médio / unidade"
@@ -205,7 +205,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
           value={formatCurrency(data?.summary.average_cost_per_unit)}
           subtitle={`Por movimento ${formatCurrency(data?.summary.average_cost_per_movement)}`}
           icon={<Percent size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
 

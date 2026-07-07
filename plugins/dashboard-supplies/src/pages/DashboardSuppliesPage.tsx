@@ -223,7 +223,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             { showGoal: false },
           )}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !cpv}
+          loading={isBusy}
         />
         <KpiCard
           title="CPV / ROL"
@@ -242,7 +242,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !cpv}
+          loading={isBusy}
         />
         <KpiCard
           title="OTD compras"
@@ -261,7 +261,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             },
           )}
           icon={<CircleGauge size={22} />}
-          loading={isBusy && !otd}
+          loading={isBusy}
         />
         <KpiCard
           title="Valor de estoque"
@@ -280,7 +280,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             },
           )}
           icon={<Warehouse size={22} />}
-          loading={isBusy && !stockValue}
+          loading={isBusy}
         />
         <KpiCard
           title="Giro de estoque"
@@ -299,7 +299,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             },
           )}
           icon={<Package size={22} />}
-          loading={isBusy && !inventoryTurnover}
+          loading={isBusy}
         />
         <KpiCard
           title="Economia em negociações"
@@ -321,7 +321,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             },
           )}
           icon={<HandCoins size={22} />}
-          loading={isBusy && !negotiationSavings}
+          loading={isBusy}
         />
       </section>
       <section className="ds-shortcuts-grid">

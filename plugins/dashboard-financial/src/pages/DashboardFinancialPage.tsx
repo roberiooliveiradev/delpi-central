@@ -206,7 +206,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
           value={formatCurrency(rol?.rol_with_ipi)}
           subtitle={`${branchLabel} · ${periodLabel}`}
           icon={<TrendingUp size={22} />}
-          loading={isBusy && !rol}
+          loading={isBusy}
         />
         <KpiCard
           title="EBITDA / ROL"
@@ -227,7 +227,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
             },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !ebitda}
+          loading={isBusy}
         />
         <KpiCard
           title="Custos fixos / ROL"
@@ -248,7 +248,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
             },
           )}
           icon={<Landmark size={22} />}
-          loading={isBusy && !fixedCost}
+          loading={isBusy}
         />
         <KpiCard
           title="PMR (dias)"
@@ -260,7 +260,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
             branches: pmrBranches,
           })}
           icon={<Clock size={22} />}
-          loading={isBusy && !pmr}
+          loading={isBusy}
         />
       </section>
 

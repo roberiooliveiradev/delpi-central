@@ -222,7 +222,7 @@ export function StockPage({ pathname }: StockPageProps) {
             { realizedValue: data?.summary.total_stock_value },
           )}
           icon={<Warehouse size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Quantidade"
@@ -230,7 +230,7 @@ export function StockPage({ pathname }: StockPageProps) {
           value={formatDecimal(data?.summary.total_stock_quantity, 0)}
           subtitle={`${formatInteger(data?.summary.total_products)} produtos`}
           icon={<Warehouse size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Localizações"
@@ -238,7 +238,7 @@ export function StockPage({ pathname }: StockPageProps) {
           value={formatInteger(data?.summary.total_locations)}
           subtitle={`${formatInteger(data?.summary.total_records)} registros`}
           icon={<Warehouse size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
         <KpiCard
           title="Valor médio / unidade"
@@ -246,7 +246,7 @@ export function StockPage({ pathname }: StockPageProps) {
           value={formatCurrency(data?.summary.average_unit_value)}
           subtitle="Custo unitário médio"
           icon={<Warehouse size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy}
         />
       </section>
 

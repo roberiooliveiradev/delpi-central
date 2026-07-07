@@ -30,6 +30,7 @@ export function useDepartmentIdd(
     const controller = new AbortController();
 
     async function load() {
+      setItem(null);
       setLoading(true);
       setError(null);
 

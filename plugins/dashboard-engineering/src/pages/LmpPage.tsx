@@ -356,7 +356,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
             { realizedValue: summary?.percent_dentro_prazo },
           )}
           icon={<CircleGauge size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="Lead time médio útil"
@@ -364,7 +364,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
           value={`${formatDecimal(summary?.avg_lead_time, 2)} dias`}
           contextLabel="Média no período"
           icon={<Clock3 size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
         <KpiCard
           title="Total de propostas"
@@ -376,7 +376,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
               : "Período filtrado"
           }
           icon={<BarChart3 size={22} />}
-          loading={isBusy && !summary}
+          loading={isBusy}
         />
       </section>
 

@@ -7,37 +7,63 @@ type KpiCardProps = {
   title: string;
   titleHint?: string;
   value: string;
+  valueVariant?: "default" | "per-unit";
   contextLabel?: string;
   goalLabel?: string | null;
   goalScopeBadge?: GoalScopeBadge | null;
   goalScopeHint?: string | null;
   goalPerformanceBadge?: GoalPerformanceBadge | null;
+  goalPerformanceBadges?: GoalPerformanceBadge[];
   iddScoreLabel?: string | null;
+  goalVariant?: "default" | "per-unit";
   subtitle?: string;
   icon: ReactNode;
-  loading?: boolean;
   footer?: ReactNode;
+  loading?: boolean;
 };
 
 export function KpiCard({
   title,
   titleHint,
   value,
+  valueVariant = "default",
   contextLabel,
   goalLabel = null,
   goalScopeBadge = null,
   goalScopeHint = null,
   goalPerformanceBadge = null,
+  goalPerformanceBadges = [],
   iddScoreLabel = null,
+  goalVariant = "default",
   subtitle,
   icon,
+  footer = null,
   loading = false,
-  footer,
 }: KpiCardProps) {
-  const resolvedGoal = goalLabel ?? null;
+  const showMeta = !loading;
+  const resolvedGoal = showMeta ? goalLabel ?? null : null;
   const resolvedContext = subtitle ?? contextLabel ?? "";
-  const resolvedScopeHint = goalScopeHint?.trim() || null;
-  const hasBadges = Boolean(goalScopeBadge || resolvedScopeHint || goalPerformanceBadge);
+  const resolvedScopeHint = showMeta ? goalScopeHint?.trim() || null : null;
+  const resolvedScopeBadge = showMeta ? goalScopeBadge : null;
+  const resolvedIddScore = showMeta ? iddScoreLabel ?? null : null;
+  const performanceBadges = showMeta
+    ? goalPerformanceBadges.length > 0
+      ? goalPerformanceBadges
+      : goalPerformanceBadge
+        ? [goalPerformanceBadge]
+        : []
+    : [];
+  const hasBadges = Boolean(
+    resolvedScopeBadge || resolvedScopeHint || performanceBadges.length > 0,
+  );
+  const valueClassName =
+    valueVariant === "per-unit"
+      ? "dq-kpi-value dq-kpi-value--per-unit"
+      : "dq-kpi-value";
+  const goalClassName =
+    goalVariant === "per-unit"
+      ? "dq-kpi-goal dq-kpi-goal--per-unit"
+      : "dq-kpi-goal";
 
   return (
     <article className="dq-card dq-kpi-card">
@@ -53,15 +79,15 @@ export function KpiCard({
               />
             ) : null}
           </p>
-          <h3 className="dq-kpi-value">{loading ? "…" : value}</h3>
+          <h3 className={valueClassName}>{loading ? "…" : value}</h3>
           {resolvedGoal ? (
-            <p className="dq-kpi-goal">
+            <p className={goalClassName}>
               <span className="dq-kpi-goal-prefix">Meta</span> {resolvedGoal}
             </p>
           ) : null}
-          {iddScoreLabel ? (
-            <p className="dq-kpi-goal dq-kpi-goal--idd">
-              <span className="dq-kpi-goal-prefix">Nota IDD</span> {iddScoreLabel}
+          {resolvedIddScore ? (
+            <p className={`${goalClassName} dq-kpi-goal--idd`}>
+              <span className="dq-kpi-goal-prefix">Nota IDD</span> {resolvedIddScore}
             </p>
           ) : null}
           {hasBadges ? (
@@ -70,24 +96,24 @@ export function KpiCard({
               role="status"
               aria-label="Escopo e desempenho em relação à meta"
             >
-              {goalScopeBadge ? (
-                <span className="dq-kpi-badge dq-kpi-badge--scope">{goalScopeBadge.label}</span>
+              {resolvedScopeBadge ? (
+                <span className="dq-kpi-badge dq-kpi-badge--scope">{resolvedScopeBadge.label}</span>
               ) : null}
               {resolvedScopeHint ? (
                 <span className="dq-kpi-badge dq-kpi-badge--info">{resolvedScopeHint}</span>
               ) : null}
-              {goalPerformanceBadge ? (
-                <>
+              {performanceBadges.map((badge, index) => (
+                <span key={`${badge.statusLabel}-${index}`} className="dq-kpi-badge-group">
                   <span
-                    className={`dq-kpi-badge dq-kpi-badge--${goalPerformanceBadge.tone}`}
+                    className={`dq-kpi-badge dq-kpi-badge--${badge.tone}`}
                   >
-                    {goalPerformanceBadge.statusLabel}
+                    {badge.statusLabel}
                   </span>
                   <span className="dq-kpi-badge dq-kpi-badge--direction">
-                    {goalPerformanceBadge.directionLabel}
+                    {badge.directionLabel}
                   </span>
-                </>
-              ) : null}
+                </span>
+              ))}
             </div>
           ) : null}
           <span className="dq-kpi-context">{resolvedContext}</span>
@@ -96,7 +122,7 @@ export function KpiCard({
           {icon}
         </div>
       </div>
-      {footer ? <div className="dq-kpi-footer">{footer}</div> : null}
+      {footer}
     </article>
   );
 }

@@ -355,7 +355,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             },
           )}
           icon={<Users size={22} />}
-          loading={isBusy && !directLabor}
+          loading={isBusy}
         />
         <KpiCard
           title="Custo de produção / ROL"
@@ -374,7 +374,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             },
           )}
           icon={<Coins size={22} />}
-          loading={isBusy && !productionCost}
+          loading={isBusy}
         />
         <KpiCard
           title="Depreciação / ROL"
@@ -393,7 +393,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             },
           )}
           icon={<Percent size={22} />}
-          loading={isBusy && !depreciation}
+          loading={isBusy}
         />
         <KpiCard
           title="OEE"
@@ -412,7 +412,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             },
           )}
           icon={<CircleGauge size={22} />}
-          loading={isBusy && !oee}
+          loading={isBusy}
         />
         <KpiCard
           title="OTD — entrega no prazo"
@@ -431,7 +431,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             },
           )}
           icon={<Truck size={22} />}
-          loading={isBusy && !otd}
+          loading={isBusy}
         />
       </section>
 

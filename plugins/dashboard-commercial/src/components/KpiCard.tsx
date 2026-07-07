@@ -18,6 +18,7 @@ type KpiCardProps = {
   goalVariant?: "default" | "per-unit";
   subtitle?: string;
   icon: ReactNode;
+  footer?: ReactNode;
   loading?: boolean;
 };
 
@@ -36,19 +37,24 @@ export function KpiCard({
   goalVariant = "default",
   subtitle,
   icon,
+  footer = null,
   loading = false,
 }: KpiCardProps) {
-  const resolvedGoal = goalLabel ?? null;
+  const showMeta = !loading;
+  const resolvedGoal = showMeta ? goalLabel ?? null : null;
   const resolvedContext = subtitle ?? contextLabel ?? "";
-  const resolvedScopeHint = goalScopeHint?.trim() || null;
-  const performanceBadges =
-    goalPerformanceBadges.length > 0
+  const resolvedScopeHint = showMeta ? goalScopeHint?.trim() || null : null;
+  const resolvedScopeBadge = showMeta ? goalScopeBadge : null;
+  const resolvedIddScore = showMeta ? iddScoreLabel ?? null : null;
+  const performanceBadges = showMeta
+    ? goalPerformanceBadges.length > 0
       ? goalPerformanceBadges
       : goalPerformanceBadge
         ? [goalPerformanceBadge]
-        : [];
+        : []
+    : [];
   const hasBadges = Boolean(
-    goalScopeBadge || resolvedScopeHint || performanceBadges.length > 0,
+    resolvedScopeBadge || resolvedScopeHint || performanceBadges.length > 0,
   );
   const valueClassName =
     valueVariant === "per-unit"
@@ -79,9 +85,9 @@ export function KpiCard({
               <span className="dc-kpi-goal-prefix">Meta</span> {resolvedGoal}
             </p>
           ) : null}
-          {iddScoreLabel ? (
+          {resolvedIddScore ? (
             <p className={`${goalClassName} dc-kpi-goal--idd`}>
-              <span className="dc-kpi-goal-prefix">Nota IDD</span> {iddScoreLabel}
+              <span className="dc-kpi-goal-prefix">Nota IDD</span> {resolvedIddScore}
             </p>
           ) : null}
           {hasBadges ? (
@@ -90,8 +96,8 @@ export function KpiCard({
               role="status"
               aria-label="Escopo e desempenho em relação à meta"
             >
-              {goalScopeBadge ? (
-                <span className="dc-kpi-badge dc-kpi-badge--scope">{goalScopeBadge.label}</span>
+              {resolvedScopeBadge ? (
+                <span className="dc-kpi-badge dc-kpi-badge--scope">{resolvedScopeBadge.label}</span>
               ) : null}
               {resolvedScopeHint ? (
                 <span className="dc-kpi-badge dc-kpi-badge--info">{resolvedScopeHint}</span>
@@ -116,6 +122,7 @@ export function KpiCard({
           {icon}
         </div>
       </div>
+      {footer}
     </article>
   );
 }

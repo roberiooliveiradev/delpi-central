@@ -286,6 +286,78 @@ class StrategicIndicatorsSnapshotService:
         )
         return snapshot
 
+    def get_dashboard_department_snapshot(
+        self,
+        *,
+        department_id: str,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+    ) -> tuple[StrategicDepartmentCalculatedValue | None, list[dict]]:
+        """Snapshot departamental para dashboards (IDD no header).
+
+        1. Tenta ``period_scores`` global (``scope_department_id=""``) e filtra o
+           departamento — mesmo contrato das telas do SI, sem recalcular tudo.
+        2. Em cache miss ou período não padrão, calcula só o departamento pedido
+           (medições + nota em tempo real).
+        """
+        normalized_id = department_id.strip()
+        if not normalized_id:
+            return None, []
+
+        period = resolve_period(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        stored_global = self._load_stored_period_snapshot(
+            period=period,
+            department_id=None,
+            branch=branch,
+        )
+        if stored_global is not None and not has_stale_period_snapshot_errors(
+            stored_global.measurement_errors
+        ):
+            match = next(
+                (
+                    item
+                    for item in stored_global.calculated_departments
+                    if item.department_id == normalized_id
+                ),
+                None,
+            )
+            if match is not None:
+                logger.info(
+                    (
+                        "si_dashboard_dept_score_hit_global_cache "
+                        "competence=%s department_id=%s branch=%s"
+                    ),
+                    period.competence,
+                    normalized_id,
+                    branch,
+                )
+                return match, list(stored_global.measurement_errors)
+
+        snapshot = self.get_period_snapshot(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            department_id=normalized_id,
+            branch=branch,
+            force_compute=True,
+        )
+        match = next(
+            (
+                item
+                for item in snapshot.calculated_departments
+                if item.department_id == normalized_id
+            ),
+            snapshot.calculated_departments[0] if snapshot.calculated_departments else None,
+        )
+        return match, list(snapshot.measurement_errors)
+
     def get_current_and_previous_snapshot(
         self,
         *,
