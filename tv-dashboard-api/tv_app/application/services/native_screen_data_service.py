@@ -50,6 +50,8 @@ class NativeScreenDataService:
         authorization: str | None = None,
         playlist_id: str | None = None,
         public_token: str | None = None,
+        user: Any | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         cfg = config or {}
         if screen_key != "custom_message":
@@ -68,6 +70,8 @@ class NativeScreenDataService:
             authorization=authorization,
             playlist_id=playlist_id,
             public_token=public_token,
+            user=user,
+            playlist_defaults=playlist_defaults,
         )
         if screen_key != "custom_message" and not result.get("error"):
             cache_key = build_native_data_cache_key(
@@ -86,6 +90,8 @@ class NativeScreenDataService:
         authorization: str | None,
         playlist_id: str | None = None,
         public_token: str | None = None,
+        user: Any | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         try:
             if screen_key == "production_oee_overview":
@@ -132,6 +138,9 @@ class NativeScreenDataService:
                         api_root_path=settings.TV_DASHBOARD_API_ROOT_PATH,
                         playlist_id=playlist_id,
                         public_token=public_token,
+                        authorization=authorization,
+                        playlist_defaults=playlist_defaults,
+                        user=user,
                     )
                 return {
                     "headline": str(cfg.get("headline") or message("comunicadoDefaultHeadline", "Comunicado")),

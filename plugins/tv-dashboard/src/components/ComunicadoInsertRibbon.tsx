@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { Heading, Image as ImageIcon, Shapes, Text, Video } from "lucide-react";
+import { BarChart3, Heading, Image as ImageIcon, Shapes, Text, Video } from "lucide-react";
 import { COMUNICADO_SHAPE_KINDS } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DataRoutePickerModal } from "./DataRoutePickerModal";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -54,13 +55,20 @@ function ShapeDropdownMenu({
 }
 
 export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
-  const { shapeMenuOpen, setShapeMenuOpen, addBlock, addShape } = useComunicadoEditor();
+  const { shapeMenuOpen, setShapeMenuOpen, addBlock, addShape, addDataBlock } = useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
+  const [dataPickerOpen, setDataPickerOpen] = useState(false);
 
   return (
     <div className="td-deck-ribbon__groups">
       <DeckRibbonGroup label="Inserir" hint={H.insert}>
         <div className="td-deck-ribbon__tiles">
+          <DeckRibbonTile
+            icon={BarChart3}
+            label={labels.comunicadoAddIndicator ?? "Indicador"}
+            hint={H.insertIndicator ?? H.insert}
+            onClick={() => setDataPickerOpen(true)}
+          />
           <DeckRibbonTile
             icon={Heading}
             label={labels.comunicadoAddHeading ?? "Título"}
@@ -105,6 +113,11 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
           </div>
         </div>
       </DeckRibbonGroup>
+      <DataRoutePickerModal
+        open={dataPickerOpen}
+        onClose={() => setDataPickerOpen(false)}
+        onSelect={(block) => addDataBlock(block)}
+      />
     </div>
   );
 }

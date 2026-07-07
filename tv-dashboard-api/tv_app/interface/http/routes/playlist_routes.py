@@ -189,7 +189,7 @@ def preview_payload(request: Request, playlist_id: UUID):
         return fail(str(exc), 403)
     auth = request.headers.get("Authorization")
     try:
-        payload = _present.build_by_id(playlist_id, authorization=auth)
+        payload = _present.build_by_id(playlist_id, authorization=auth, user=user)
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)
     return ok(payload)

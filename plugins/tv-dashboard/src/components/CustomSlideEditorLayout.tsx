@@ -7,7 +7,8 @@ import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckEditorChrome } from "./DeckEditorChrome";
 import { DeckWorkspace } from "./DeckWorkspace";
-import { DeckElementSidePanel } from "./deck";
+import { ComunicadoSlideBackgroundPanel } from "./deck/ComunicadoSlideBackgroundPanel";
+import { SlideDataFiltersPanel } from "./SlideDataFiltersPanel";
 
 type WorkspaceProps = ComponentProps<typeof DeckWorkspace>;
 type ChromeProps = ComponentProps<typeof DeckEditorChrome>;
@@ -38,9 +39,18 @@ export function CustomSlideEditorLayout({
     [workspaceProps.slides, selectedSlide.id, config],
   );
 
+  const slideTabExtra = (
+    <>
+      <ComunicadoSlideBackgroundPanel labels={adminLabels} />
+      <SlideDataFiltersPanel />
+    </>
+  );
+
+  const chromeWithSlideExtras = { ...chromeProps, slideTabExtra };
+
   return (
     <>
-      <DeckEditorChrome {...chromeProps} />
+      <DeckEditorChrome {...chromeWithSlideExtras} />
       <DeckWorkspace
         {...workspaceProps}
         slides={slidesForFilmstrip}

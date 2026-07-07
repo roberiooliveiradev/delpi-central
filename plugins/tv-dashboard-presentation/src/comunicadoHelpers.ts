@@ -5,6 +5,10 @@ import type {
   ComunicadoBlock,
   ComunicadoBlockStyle,
   ComunicadoConfig,
+  ComunicadoDataBinding,
+  ComunicadoDataBlockType,
+  ComunicadoDataFilters,
+  ComunicadoDataResolved,
   ComunicadoFrame,
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
@@ -25,7 +29,72 @@ export function newBlockId(): string {
 const DEFAULT_BACKGROUND: ComunicadoBackground = { type: "color", value: "#0f172a" };
 const DEFAULT_HEADLINE = "Título";
 
+const DATA_BLOCK_TYPES = new Set(["data_kpi", "data_chart", "data_table", "data_metric"]);
+
+export function isDataBlockType(type: string): type is ComunicadoDataBlockType {
+  return DATA_BLOCK_TYPES.has(type);
+}
+
+export function mergeDataFilters(
+  slideFilters?: ComunicadoDataFilters,
+  blockParams?: ComunicadoDataBinding["params"],
+): ComunicadoDataFilters {
+  const merged: ComunicadoDataFilters = { ...(slideFilters ?? {}) };
+  if (blockParams) {
+    for (const [key, value] of Object.entries(blockParams)) {
+      if (value !== null && value !== undefined && value !== "") {
+        merged[key] = value;
+      }
+    }
+  }
+  return merged;
+}
+
+export function defaultDataBlockTypeForRoute(
+  allowedModes: string[] | undefined,
+): ComunicadoDataBlockType {
+  const modes = allowedModes ?? [];
+  if (modes.includes("kpi")) return "data_kpi";
+  if (modes.includes("line_chart") || modes.includes("bar_chart")) return "data_chart";
+  if (modes.includes("table")) return "data_table";
+  return "data_kpi";
+}
+
+export function createDataBlock(
+  operationId: string,
+  options: {
+    blockType?: ComunicadoDataBlockType;
+    label?: string;
+    displayMode?: ComunicadoDataBinding["displayMode"];
+    defaultParams?: Record<string, string | number>;
+  } = {},
+): ComunicadoBlock {
+  const blockType = options.blockType ?? "data_kpi";
+  const frame =
+    blockType === "data_chart"
+      ? { x: 10, y: 28, w: 80, h: 45 }
+      : blockType === "data_table"
+        ? { x: 5, y: 55, w: 90, h: 35 }
+        : { x: 5, y: 28, w: 28, h: 22 };
+  return {
+    id: newBlockId(),
+    type: blockType,
+    frame,
+    style: { zIndex: 2, color: "#ffffff" },
+    dataBinding: {
+      operationId,
+      params: { ...(options.defaultParams ?? {}) },
+      displayMode: options.displayMode ?? (blockType === "data_chart" ? "line_chart" : blockType === "data_table" ? "table" : "kpi"),
+      label: options.label,
+    },
+  };
+}
+
 export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoShapeKind): ComunicadoFrame {
+  if (type === "data_kpi") return { x: 5, y: 28, w: 28, h: 22 };
+  if (type === "data_chart") return { x: 10, y: 28, w: 80, h: 45 };
+  if (type === "data_table") return { x: 5, y: 55, w: 90, h: 35 };
+  if (type === "data_metric") return { x: 5, y: 28, w: 28, h: 22 };
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
@@ -75,6 +144,9 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     if (shape === "ellipse") return { ...base, borderRadius: 9999 };
     return base;
   }
+  if (isDataBlockType(type)) {
+    return { zIndex: 2, color: "#ffffff" };
+  }
   return {};
 }
 
@@ -113,6 +185,7 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
       subtitle: String(cfg.subtitle ?? ""),
       background: normalizeBackground(cfg.background),
       blocks: blocks.map(normalizeBlock),
+      dataFilters: normalizeDataFilters(cfg.dataFilters),
     };
   }
   const headline = String(cfg.headline ?? DEFAULT_HEADLINE);
@@ -130,6 +203,7 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
 }
 
 function detectConfigVersion(blocks: ComunicadoBlock[]): number {
+  if (blocks.some((block) => isDataBlockType(block.type))) return 4;
   const hasV3 = blocks.some((block) => {
     if (block.type === "shape") return true;
     if ((block.type === "heading" || block.type === "text") && block.href) return true;
@@ -156,7 +230,7 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
       : { type: "color", value: background.value || "#0f172a" };
   const blocks = (config.blocks ?? []).map(serializeBlock);
   const version = config.version ?? detectConfigVersion(config.blocks ?? []);
-  return {
+  const payload: Record<string, unknown> = {
     version,
     headline:
       headingBlock && "content" in headingBlock
@@ -166,6 +240,10 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
     background: serializedBackground,
     blocks,
   };
+  if (config.dataFilters && Object.keys(config.dataFilters).length > 0) {
+    payload.dataFilters = config.dataFilters;
+  }
+  return payload;
 }
 
 function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
@@ -184,8 +262,30 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "shape") {
     base.shape = block.shape;
     if (block.content) base.content = block.content;
+  } else if (isDataBlockType(block.type) && "dataBinding" in block) {
+    base.dataBinding = {
+      operationId: block.dataBinding.operationId,
+      params: block.dataBinding.params ?? {},
+      displayMode: block.dataBinding.displayMode,
+      label: block.dataBinding.label,
+      valueField: block.dataBinding.valueField,
+      maxRows: block.dataBinding.maxRows,
+      refreshSec: block.dataBinding.refreshSec,
+    };
   }
   return base;
+}
+
+function normalizeDataFilters(value: unknown): ComunicadoDataFilters | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const filters: ComunicadoDataFilters = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (raw === null || raw === undefined || raw === "") continue;
+    if (typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean") {
+      filters[key] = raw;
+    }
+  }
+  return Object.keys(filters).length > 0 ? filters : undefined;
 }
 
 function normalizeBackground(value: unknown): ComunicadoBackground {
@@ -234,6 +334,32 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       shape: kind,
       content: typeof block.content === "string" ? block.content : "",
     };
+  }
+  if (isDataBlockType(type)) {
+    const bindingRaw = block.dataBinding;
+    const binding =
+      bindingRaw && typeof bindingRaw === "object"
+        ? (bindingRaw as ComunicadoDataBinding)
+        : { operationId: "" };
+    return {
+      id,
+      type,
+      frame,
+      style: { ...defaultStyle(type), ...style },
+      dataBinding: {
+        operationId: String(binding.operationId ?? ""),
+        params: (binding.params as ComunicadoDataBinding["params"]) ?? {},
+        displayMode: binding.displayMode,
+        label: binding.label,
+        valueField: binding.valueField,
+        maxRows: binding.maxRows,
+        refreshSec: binding.refreshSec,
+      },
+      resolved:
+        block.resolved && typeof block.resolved === "object"
+          ? (block.resolved as ComunicadoDataResolved)
+          : undefined,
+    } as ComunicadoBlock;
   }
   return {
     id,

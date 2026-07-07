@@ -1,0 +1,99 @@
+{
+  "routes": [
+    {
+      "operationId": "get_overall_equipment_effectiveness_pct",
+      "label": "OEE — visão geral",
+      "category": "production",
+      "path": "/production/overall_equipment_effectiveness_pct",
+      "allowedDisplayModes": ["kpi", "auto"],
+      "defaultParams": { "periodDays": 7 },
+      "paramSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 7, "label": "Período (dias)" }
+      },
+      "paramStrategy": "date_range",
+      "valueFields": ["overall_equipment_effectiveness_pct", "value", "oeePct"],
+      "metaShape": "scalar",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_production_oee_series",
+      "label": "OEE — série temporal",
+      "category": "production",
+      "path": "/production/oee/series",
+      "allowedDisplayModes": ["line_chart", "auto"],
+      "defaultParams": { "periodDays": 7 },
+      "paramSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 7, "label": "Período (dias)" }
+      },
+      "paramStrategy": "date_range",
+      "seriesField": "points",
+      "metaShape": "scalar",
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_on_time_delivery_pct",
+      "label": "OTD — produção",
+      "category": "production",
+      "path": "/production/on_time_delivery_pct",
+      "allowedDisplayModes": ["kpi", "auto"],
+      "defaultParams": { "periodDays": 30 },
+      "paramSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+      },
+      "paramStrategy": "date_range",
+      "valueFields": ["on_time_delivery_pct", "value", "otdPct"],
+      "metaShape": "scalar",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_supplies_stock_value",
+      "label": "Suprimentos — valor de estoque",
+      "category": "supplies",
+      "path": "/supplies/stock-value",
+      "allowedDisplayModes": ["kpi", "table", "auto"],
+      "defaultParams": {},
+      "paramSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "top_limit": { "type": "integer", "default": 5, "label": "TOP N itens", "optional": true }
+      },
+      "paramStrategy": "direct",
+      "valueFields": ["value", "stockValue", "total"],
+      "tableFields": "top_products",
+      "metaShape": "scalar",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_ppm_internal_summary",
+      "label": "Qualidade — PPM interno",
+      "category": "quality",
+      "path": "/quality/ppm/internal/summary",
+      "allowedDisplayModes": ["kpi", "auto"],
+      "defaultParams": { "periodDays": 30 },
+      "paramSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+      },
+      "paramStrategy": "date_range",
+      "valueFields": ["value", "ppm", "ppmValue"],
+      "metaShape": "scalar",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
+    }
+  ]
+}

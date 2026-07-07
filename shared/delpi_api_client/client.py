@@ -91,6 +91,16 @@ class DelpiApiClient:
         data, _meta, _error = parse_envelope(body)
         return data if data is not None else body
 
+    def get_path(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        """GET genérico por path (consumido por tv-dashboard-api / gateways operacionais)."""
+        return self._get(path, params=params, authorization=authorization)
+
     @staticmethod
     def parse_envelope(body: Any) -> tuple[Any, dict[str, Any] | None, dict[str, Any] | None]:
         return parse_envelope(body)

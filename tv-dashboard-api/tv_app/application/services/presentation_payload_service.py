@@ -35,6 +35,7 @@ class PresentationPayloadService:
         *,
         authorization: str | None = None,
         track_view: bool = False,
+        user: Any | None = None,
     ) -> dict[str, Any] | None:
         playlist = self._repo.get_by_token(token)
         if not playlist or not playlist.get("isActive"):
@@ -48,6 +49,7 @@ class PresentationPayloadService:
             playlist,
             authorization=authorization,
             public_media_urls=True,
+            user=user,
         )
 
     def build_by_id(
@@ -55,6 +57,7 @@ class PresentationPayloadService:
         playlist_id: UUID,
         *,
         authorization: str | None = None,
+        user: Any | None = None,
     ) -> dict[str, Any]:
         playlist = self._repo.get_by_id(playlist_id)
         if not playlist:
@@ -63,6 +66,7 @@ class PresentationPayloadService:
             playlist,
             authorization=authorization,
             public_media_urls=False,
+            user=user,
         )
 
     def _assemble_payload(
@@ -71,6 +75,7 @@ class PresentationPayloadService:
         *,
         authorization: str | None,
         public_media_urls: bool = False,
+        user: Any | None = None,
     ) -> dict[str, Any]:
         slides = [
             slide
@@ -100,6 +105,7 @@ class PresentationPayloadService:
                         authorization=authorization,
                         playlist_id=playlist_id,
                         public_token=public_token,
+                        user=user,
                     ),
                 }
             else:

@@ -21,6 +21,9 @@ export type { UsePresentationEngineOptions } from "./usePresentationEngine";
 export type {
   ComunicadoBlock,
   ComunicadoConfig,
+  ComunicadoDataBinding,
+  ComunicadoDataBlock,
+  ComunicadoDataFilters,
   ComunicadoScreenData,
   ComunicadoShapeKind,
 } from "./comunicadoTypes";
@@ -39,11 +42,15 @@ export {
   clampFrame,
   comunicadoTextInnerStyle,
   createBlock,
+  createDataBlock,
   createShapeBlock,
+  defaultDataBlockTypeForRoute,
   defaultFrame,
   defaultTextBlockStyle,
   defaultVerticalAlignForBlock,
   frameStyle,
+  isDataBlockType,
+  mergeDataFilters,
   nextZIndex,
   parseComunicadoConfig,
   parseTextDecorationFlags,
@@ -51,5 +58,6 @@ export {
   sortBlocksByZIndex,
 } from "./comunicadoHelpers";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
+export { TvDataBlockView } from "./tvDataBlockView";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

@@ -89,6 +89,36 @@ describe("comunicadoHelpers", () => {
     expect(clampFontSize(200)).toBe(120);
   });
 
+  it("serializa blocos data_* e dataFilters (v4)", () => {
+    const parsed = parseComunicadoConfig({
+      version: 4,
+      dataFilters: { branch: "01", periodDays: 30 },
+      blocks: [
+        {
+          id: "kpi-1",
+          type: "data_kpi",
+          frame: { x: 5, y: 28, w: 28, h: 22 },
+          dataBinding: {
+            operationId: "get_overall_equipment_effectiveness_pct",
+            params: { periodDays: 7 },
+            displayMode: "kpi",
+            label: "OEE",
+          },
+        },
+      ],
+    });
+    expect(parsed.version).toBe(4);
+    expect(parsed.dataFilters?.branch).toBe("01");
+    const serialized = serializeComunicadoConfig(parsed);
+    expect(serialized.version).toBe(4);
+    expect(serialized.dataFilters).toEqual({ branch: "01", periodDays: 30 });
+    const blocks = serialized.blocks as Array<Record<string, unknown>>;
+    expect(blocks[0].type).toBe("data_kpi");
+    expect((blocks[0].dataBinding as Record<string, unknown>).operationId).toBe(
+      "get_overall_equipment_effectiveness_pct",
+    );
+  });
+
   it("não persiste URL de mídia no native_config", () => {
     const parsed = parseComunicadoConfig({
       blocks: [

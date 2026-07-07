@@ -73,14 +73,44 @@ export type ComunicadoShapeBlock = ComunicadoBlockBase & {
   content?: string;
 };
 
+export type ComunicadoDataDisplayMode = "kpi" | "line_chart" | "bar_chart" | "table" | "auto";
+
+export type ComunicadoDataBinding = {
+  operationId: string;
+  params?: Record<string, string | number | boolean | null>;
+  displayMode?: ComunicadoDataDisplayMode;
+  label?: string;
+  valueField?: string;
+  maxRows?: number;
+  refreshSec?: number;
+};
+
+export type ComunicadoDataBlockType = "data_kpi" | "data_chart" | "data_table" | "data_metric";
+
+export type ComunicadoDataBlock = ComunicadoBlockBase & {
+  type: ComunicadoDataBlockType;
+  dataBinding: ComunicadoDataBinding;
+  resolved?: ComunicadoDataResolved;
+};
+
+export type ComunicadoDataResolved = {
+  meta?: Record<string, unknown>;
+  data?: unknown;
+  error?: string | null;
+  displayMode?: string;
+  label?: string;
+  kpi?: { value?: unknown; label?: string };
+  chart?: { points?: Array<{ label?: unknown; value?: unknown }> };
+  table?: { rows?: Array<Record<string, unknown>> };
+};
+
 export type ComunicadoBlock =
   | ComunicadoTextBlock
   | ComunicadoMediaBlock
-  | ComunicadoShapeBlock;
+  | ComunicadoShapeBlock
+  | ComunicadoDataBlock;
 
-export type ComunicadoBackground =
-  | { type: "color"; value: string }
-  | { type: "image"; assetId?: string; url?: string; value?: string };
+export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
 
 export type ComunicadoConfig = {
   version?: number;
@@ -88,6 +118,7 @@ export type ComunicadoConfig = {
   subtitle?: string;
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
+  dataFilters?: ComunicadoDataFilters;
 };
 
 export type ComunicadoScreenData = {
@@ -96,7 +127,12 @@ export type ComunicadoScreenData = {
   subtitle?: string;
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
+  dataFilters?: ComunicadoDataFilters;
 };
+
+export type ComunicadoBackground =
+  | { type: "color"; value: string }
+  | { type: "image"; assetId?: string; url?: string; value?: string };
 
 export const COMUNICADO_FONT_FAMILIES = [
   "Inter, system-ui, sans-serif",

@@ -199,6 +199,24 @@ export async function getPreviewPayload(id: string) {
   );
 }
 
+export type TvDataRouteCatalogItem = {
+  operationId: string;
+  label: string;
+  category: string;
+  path?: string;
+  allowedDisplayModes?: string[];
+  defaultParams?: Record<string, unknown>;
+  paramSchema?: Record<string, unknown>;
+  tvConstraints?: Record<string, unknown>;
+};
+
+export async function listDataRoutes() {
+  const data = await unwrap(
+    httpGet<ApiEnvelope<{ items: TvDataRouteCatalogItem[] }>>(`${API_BASE}/data-routes`),
+  );
+  return data.items;
+}
+
 export async function listNativeScreens() {
   const data = await unwrap(
     httpGet<ApiEnvelope<{ items: NativeScreenCatalogItem[] }>>(`${API_BASE}/native-screens`),

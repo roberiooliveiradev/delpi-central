@@ -1,7 +1,11 @@
 import { ArrowDown, ArrowUp, Trash2, Upload } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui";
+import { isDataBlockType } from "@delpi/tv-dashboard-presentation";
+import { useEffect, useMemo, useState } from "react";
 
+import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { DataBindingInspector } from "../DataBindingInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckActionRow } from "./DeckActionRow";
 import { DeckField } from "./DeckField";
@@ -44,6 +48,18 @@ export function ComunicadoElementInspector({
   const isTextBlock = selected?.type === "heading" || selected?.type === "text";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isShapeBlock = selected?.type === "shape";
+  const isDataBlock = selected ? isDataBlockType(selected.type) : false;
+  const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
+
+  useEffect(() => {
+    if (!isDataBlock) return;
+    void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
+  }, [isDataBlock]);
+
+  const selectedRoute = useMemo(() => {
+    if (!isDataBlock || !selected || !("dataBinding" in selected)) return null;
+    return routes.find((route) => route.operationId === selected.dataBinding.operationId) ?? null;
+  }, [isDataBlock, routes, selected]);
 
   if (!selected) {
     return (
@@ -62,6 +78,8 @@ export function ComunicadoElementInspector({
         hint={E.panel}
       >
         <p className="td-deck-inspector__meta">Tipo: {selected.type}</p>
+
+        {isDataBlock ? <DataBindingInspector route={selectedRoute} /> : null}
 
         {isTextBlock ? (
           <>

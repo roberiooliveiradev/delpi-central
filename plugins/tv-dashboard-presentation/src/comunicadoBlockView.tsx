@@ -1,8 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
-import { blockCssStyle, comunicadoTextInnerStyle } from "./comunicadoHelpers";
-import type { ComunicadoBlock } from "./comunicadoTypes";
+import { blockCssStyle, comunicadoTextInnerStyle, isDataBlockType } from "./comunicadoHelpers";
+import type { ComunicadoBlock, ComunicadoDataBlock } from "./comunicadoTypes";
+import { TvDataBlockView } from "./tvDataBlockView";
 
 type Props = {
   block: ComunicadoBlock;
@@ -158,6 +159,14 @@ export function ComunicadoBlockView({
             <span>{block.content}</span>
           </div>
         ) : null}
+      </div>
+    );
+  }
+
+  if (isDataBlockType(block.type)) {
+    return (
+      <div className={`${blockClass} tdp-comunicado__block--data`} style={style}>
+        <TvDataBlockView block={block as ComunicadoDataBlock} interactive={interactive} />
       </div>
     );
   }

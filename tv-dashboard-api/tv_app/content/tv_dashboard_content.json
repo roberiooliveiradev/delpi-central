@@ -8,6 +8,7 @@
     "branchNotAllowed": "Filial não autorizada para Painéis TV.",
     "consolidatedNotAllowed": "Visão consolidada não autorizada para seu perfil.",
     "comunicadoDefaultHeadline": "Título",
+    "dataIndicatorUnavailable": "Indicador indisponível.",
     "mediaNotFound": "Mídia não encontrada.",
     "mediaUploaded": "Mídia enviada."
   },
@@ -47,6 +48,7 @@
     "comunicadoAddImage": "Imagem",
     "comunicadoAddVideo": "Vídeo",
     "comunicadoAddShape": "Forma",
+    "comunicadoAddIndicator": "Indicador",
     "comunicadoBackground": "Fundo",
     "comunicadoBlocks": "Elementos",
     "comunicadoUpload": "Enviar arquivo",

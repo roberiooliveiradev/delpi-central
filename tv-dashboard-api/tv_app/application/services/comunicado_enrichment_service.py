@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
 
@@ -10,8 +11,13 @@ from tv_app.infrastructure.persistence.repositories.media_repository import Medi
 class ComunicadoEnrichmentService:
     """Resolve blocos de comunicado e URLs de mídia para apresentação."""
 
-    def __init__(self, media_repo: MediaRepository | None = None) -> None:
+    def __init__(
+        self,
+        media_repo: MediaRepository | None = None,
+        data_enrichment: ComunicadoDataEnrichmentService | None = None,
+    ) -> None:
         self._media_repo = media_repo or MediaRepository()
+        self._data_enrichment = data_enrichment or ComunicadoDataEnrichmentService()
 
     @staticmethod
     def build_media_url(
@@ -33,6 +39,9 @@ class ComunicadoEnrichmentService:
         api_root_path: str,
         playlist_id: str,
         public_token: str | None = None,
+        authorization: str | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
+        user: Any | None = None,
     ) -> dict[str, Any]:
         blocks_raw = cfg.get("blocks")
         if not isinstance(blocks_raw, list) or not blocks_raw:
@@ -59,13 +68,33 @@ class ComunicadoEnrichmentService:
         ]
         headline = str(cfg.get("headline") or self._headline_from_blocks(blocks_raw) or message("comunicadoDefaultHeadline", "Título"))
         subtitle = str(cfg.get("subtitle") or "")
-        return {
-            "version": 2,
+        version = int(cfg.get("version") or 0) or self._detect_version(blocks)
+        data_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else None
+        blocks = self._data_enrichment.enrich_blocks(
+            blocks,
+            cfg=cfg,
+            authorization=authorization,
+            playlist_defaults=playlist_defaults,
+            user=user,
+        )
+        payload: dict[str, Any] = {
+            "version": version,
             "headline": headline,
             "subtitle": subtitle,
             "background": background,
             "blocks": blocks,
         }
+        if data_filters:
+            payload["dataFilters"] = data_filters
+        return payload
+
+    @staticmethod
+    def _detect_version(blocks: list[dict[str, Any]]) -> int:
+        for block in blocks:
+            block_type = str(block.get("type") or "")
+            if block_type.startswith("data_"):
+                return 4
+        return 3 if blocks else 2
 
     def _headline_from_blocks(self, blocks: list[Any]) -> str:
         for block in blocks:
@@ -142,6 +171,13 @@ class ComunicadoEnrichmentService:
                 if url:
                     enriched["url"] = url
                 enriched["assetId"] = asset_id.strip()
+        elif block_type in {"data_kpi", "data_chart", "data_table", "data_metric"}:
+            binding = block.get("dataBinding")
+            if isinstance(binding, dict):
+                enriched["dataBinding"] = binding
+            resolved = block.get("resolved")
+            if isinstance(resolved, dict):
+                enriched["resolved"] = resolved
         return enriched
 
     def _resolve_asset_url(

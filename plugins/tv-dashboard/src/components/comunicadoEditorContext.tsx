@@ -18,6 +18,7 @@ import {
   sortBlocksByZIndex,
   type ComunicadoBlock,
   type ComunicadoConfig,
+  type ComunicadoDataFilters,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -40,7 +41,9 @@ type ComunicadoEditorContextValue = {
   canvasRef: ReturnType<typeof useCanvasBlockInteraction>["canvasRef"];
   startDrag: ReturnType<typeof useCanvasBlockInteraction>["startDrag"];
   addBlock: (type: ComunicadoBlock["type"]) => void;
+  addDataBlock: (block: ComunicadoBlock) => void;
   addShape: (shape: ComunicadoShapeKind) => void;
+  setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlockContent: (blockId: string, content: string) => void;
   updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
@@ -122,6 +125,19 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     block.style = { ...block.style, zIndex: nextZIndex(config.blocks ?? []) };
     setSelectedId(block.id);
     updateBlocks([...(config.blocks ?? []), block]);
+  }
+
+  function addDataBlock(block: ComunicadoBlock) {
+    const withZ = {
+      ...block,
+      style: { ...block.style, zIndex: nextZIndex(config.blocks ?? []) },
+    };
+    setSelectedId(withZ.id);
+    updateBlocks([...(config.blocks ?? []), withZ]);
+  }
+
+  function setDataFilters(filters: ComunicadoDataFilters | undefined) {
+    commit({ ...config, dataFilters: filters, version: Math.max(config.version ?? 3, 4) });
   }
 
   function addShape(shape: ComunicadoShapeKind) {
@@ -216,7 +232,9 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     canvasRef,
     startDrag,
     addBlock,
+    addDataBlock,
     addShape,
+    setDataFilters,
     updateSelected,
     updateBlockContent,
     updateSelectedStyle,
