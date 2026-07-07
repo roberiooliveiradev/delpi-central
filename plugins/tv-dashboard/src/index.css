@@ -394,7 +394,39 @@
 .td-data-route-list__meta {
   font-size: 12px;
   color: var(--td-muted, #64748b);
-  text-transform: capitalize;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.td-data-route-groups {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.td-data-route-group__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--td-muted, #64748b);
+}
+
+.td-deck-preview-banner {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #64748b;
+  background: color-mix(in srgb, #089bdb 8%, var(--td-surface));
+  border-bottom: 1px solid var(--td-border);
+}
+
+.td-deck-preview-banner--error {
+  color: #b91c1c;
+  background: color-mix(in srgb, #ef4444 10%, var(--td-surface));
 }
 
 .td-deck-inspector__actions {

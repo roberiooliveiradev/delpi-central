@@ -11,6 +11,7 @@ type Props = {
   className?: string;
   isSelected?: boolean;
   isEditingText?: boolean;
+  dataLoading?: boolean;
 };
 
 function EditorImageBlock({
@@ -61,6 +62,7 @@ export function ComunicadoEditorBlockView({
   className = "",
   isSelected = false,
   isEditingText = false,
+  dataLoading = false,
 }: Props) {
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
@@ -98,6 +100,7 @@ export function ComunicadoEditorBlockView({
       interactive
       embedded
       className={className}
+      dataLoading={dataLoading}
     />
   );
 }

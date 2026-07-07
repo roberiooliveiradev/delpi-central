@@ -8,6 +8,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckEditorChrome } from "./DeckEditorChrome";
 import { DeckWorkspace } from "./DeckWorkspace";
 import { ComunicadoSlideBackgroundPanel } from "./deck/ComunicadoSlideBackgroundPanel";
+import { DeckElementSidePanel } from "./deck";
 import { SlideDataFiltersPanel } from "./SlideDataFiltersPanel";
 
 type WorkspaceProps = ComponentProps<typeof DeckWorkspace>;
@@ -27,7 +28,7 @@ export function CustomSlideEditorLayout({
   chromeProps,
   adminLabels,
 }: Props) {
-  const { config } = useComunicadoEditor();
+  const { config, dataPreviewLoading, dataPreviewError } = useComunicadoEditor();
 
   const slidesForFilmstrip = useMemo(
     () =>
@@ -50,6 +51,15 @@ export function CustomSlideEditorLayout({
 
   return (
     <>
+      {dataPreviewError ? (
+        <p className="td-deck-preview-banner td-deck-preview-banner--error" role="status">
+          Preview de indicadores: {dataPreviewError}
+        </p>
+      ) : dataPreviewLoading ? (
+        <p className="td-deck-preview-banner" role="status">
+          Atualizando indicadores…
+        </p>
+      ) : null}
       <DeckEditorChrome {...chromeWithSlideExtras} />
       <DeckWorkspace
         {...workspaceProps}

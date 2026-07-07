@@ -25,6 +25,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
+import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
 
@@ -57,6 +58,8 @@ type ComunicadoEditorContextValue = {
   setBackgroundColor: (value: string) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleUploadFile: (file: File, target: "block" | "background") => void;
+  dataPreviewLoading: boolean;
+  dataPreviewError: string | null;
 };
 
 const ComunicadoEditorContext = createContext<ComunicadoEditorContextValue | null>(null);
@@ -71,12 +74,13 @@ export function useComunicadoEditor() {
 
 type ProviderProps = {
   playlistId: string;
+  slideId?: string;
   value: Record<string, unknown>;
   onChange: (config: Record<string, unknown>) => void;
   children: ReactNode;
 };
 
-export function ComunicadoEditorProvider({ playlistId, value, onChange, children }: ProviderProps) {
+export function ComunicadoEditorProvider({ playlistId, slideId, value, onChange, children }: ProviderProps) {
   const [config, setConfig] = useState<ComunicadoConfig>(() =>
     enrichComunicadoConfigForEditor(value, playlistId),
   );
@@ -96,11 +100,26 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     setConfig(enrichComunicadoConfigForEditor(value, playlistId));
   }, [value, playlistId]);
 
-  const blocks = useMemo(() => sortBlocksByZIndex(config.blocks ?? []), [config.blocks]);
+  const { resolvedByBlockId, loading: dataPreviewLoading, error: dataPreviewError } =
+    useComunicadoDataPreview({
+      playlistId,
+      slideId,
+      config,
+    });
+
+  const blocks = useMemo(() => {
+    const sorted = sortBlocksByZIndex(config.blocks ?? []);
+    return sorted.map((block) => {
+      if (!isDataBlockType(block.type)) return block;
+      const preview = resolvedByBlockId[block.id];
+      if (!preview) return block;
+      return { ...block, resolved: preview };
+    });
+  }, [config.blocks, resolvedByBlockId]);
 
   const selected = useMemo(
-    () => config.blocks?.find((block) => block.id === selectedId) ?? null,
-    [config.blocks, selectedId],
+    () => blocks.find((block) => block.id === selectedId) ?? null,
+    [blocks, selectedId],
   );
 
   function commit(next: ComunicadoConfig) {
@@ -178,8 +197,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
 
   function duplicateSelected() {
     if (!selected) return;
+    const { resolved: _omit, url: _url, ...rest } = selected as ComunicadoBlock & {
+      resolved?: unknown;
+      url?: string;
+    };
     const copy = {
-      ...selected,
+      ...rest,
       id: newBlockId(),
       frame: {
         ...selected.frame,
@@ -282,6 +305,8 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     setBackgroundColor,
     fileInputRef,
     handleUploadFile,
+    dataPreviewLoading,
+    dataPreviewError,
   };
 
   return (

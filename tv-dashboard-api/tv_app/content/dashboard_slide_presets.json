@@ -79,6 +79,60 @@
       "durationSec": 60
     },
     {
+      "key": "preset_comunicado_oee_panel",
+      "label": "Personalizado — painel OEE",
+      "description": "Slide misto com título, KPI OEE e série temporal (filtros no slide).",
+      "slideType": "native",
+      "title": "Produção — OEE",
+      "nativeScreenKey": "custom_message",
+      "nativeConfig": {
+        "version": 4,
+        "background": { "type": "color", "value": "#0f172a" },
+        "dataFilters": { "periodDays": 7 },
+        "blocks": [
+          {
+            "id": "preset-oee-heading",
+            "type": "heading",
+            "content": "Produção — OEE",
+            "frame": { "x": 5, "y": 6, "w": 90, "h": 14 },
+            "style": {
+              "fontSize": 48,
+              "color": "#ffffff",
+              "textAlign": "center",
+              "verticalAlign": "middle",
+              "fontWeight": "bold",
+              "zIndex": 2
+            }
+          },
+          {
+            "id": "preset-oee-kpi",
+            "type": "data_kpi",
+            "frame": { "x": 5, "y": 24, "w": 28, "h": 24 },
+            "style": { "zIndex": 2 },
+            "dataBinding": {
+              "operationId": "get_overall_equipment_effectiveness_pct",
+              "params": {},
+              "displayMode": "kpi",
+              "label": "OEE — visão geral"
+            }
+          },
+          {
+            "id": "preset-oee-chart",
+            "type": "data_chart",
+            "frame": { "x": 36, "y": 24, "w": 59, "h": 52 },
+            "style": { "zIndex": 2 },
+            "dataBinding": {
+              "operationId": "get_production_oee_series",
+              "params": {},
+              "displayMode": "line_chart",
+              "label": "OEE — série temporal"
+            }
+          }
+        ]
+      },
+      "durationSec": 45
+    },
+    {
       "key": "preset_comunicado",
       "label": "Personalizado",
       "description": "Slide livre com texto, formas, mídia e links.",

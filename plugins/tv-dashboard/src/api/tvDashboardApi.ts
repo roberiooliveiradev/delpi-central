@@ -217,6 +217,20 @@ export async function listDataRoutes() {
   return data.items;
 }
 
+export async function previewDataBlock(
+  playlistId: string,
+  slideId: string,
+  blockId: string,
+  nativeConfig: Record<string, unknown>,
+) {
+  return unwrap(
+    httpPost<ApiEnvelope<{ block: Record<string, unknown> }>>(
+      `${API_BASE}/playlists/${playlistId}/slides/${slideId}/preview-data-block`,
+      { blockId, nativeConfig },
+    ),
+  );
+}
+
 export async function listNativeScreens() {
   const data = await unwrap(
     httpGet<ApiEnvelope<{ items: NativeScreenCatalogItem[] }>>(`${API_BASE}/native-screens`),

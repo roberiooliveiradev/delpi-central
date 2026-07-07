@@ -49,7 +49,12 @@ def _extract_scalar_value(data: Any, value_fields: list[Any]) -> Any:
     return None
 
 
-def _extract_series(data: Any, series_field: str | None) -> list[dict[str, Any]]:
+def _extract_series(
+    data: Any,
+    series_field: str | None,
+    *,
+    branch: str | None = None,
+) -> list[dict[str, Any]]:
     if not isinstance(data, dict):
         return []
     key = series_field or "points"
@@ -58,14 +63,27 @@ def _extract_series(data: Any, series_field: str | None) -> list[dict[str, Any]]
         raw = data.get("series")
     if not isinstance(raw, list):
         return []
+    branch_code = str(branch).strip() if branch else ""
     points: list[dict[str, Any]] = []
     for row in raw:
         if not isinstance(row, dict):
             continue
-        label = row.get("label") or row.get("bucket") or row.get("date")
+        label = row.get("label") or row.get("bucket") or row.get("periodo") or row.get("date")
         value = row.get("value")
+        if value is None and branch_code:
+            branch_key = branch_code.zfill(2)
+            value = (
+                row.get(f"oee_filial_{branch_key}")
+                or row.get(f"otd_filial_{branch_key}")
+                or row.get(f"oee_pct_filial_{branch_key}")
+            )
         if value is None:
-            value = row.get("oee_pct") or row.get("oeePct")
+            for field_key, field_value in row.items():
+                if not isinstance(field_key, str) or field_value is None:
+                    continue
+                if field_key.startswith(("oee_", "otd_")) and field_key not in {"oee_pct", "otd_pct"}:
+                    value = field_value
+                    break
         points.append({"label": label, "value": value})
     return points
 
@@ -201,8 +219,13 @@ class ComunicadoDataEnrichmentService:
                 "label": resolved.get("label"),
             }
         elif block_type == "data_chart" or display_mode in {"line_chart", "bar_chart", "chart"}:
+            branch = merged_params.get("branch")
             resolved["chart"] = {
-                "points": _extract_series(data, route_info.get("seriesField")),
+                "points": _extract_series(
+                    data,
+                    route_info.get("seriesField"),
+                    branch=str(branch).strip() if branch else None,
+                ),
             }
         elif block_type == "data_table" or display_mode == "table":
             max_rows = int(binding.get("maxRows") or route_info.get("tvConstraints", {}).get("maxRows") or 5)

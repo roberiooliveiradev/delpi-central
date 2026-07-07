@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from tv_app.application.services.comunicado_data_enrichment_service import (
     ComunicadoDataEnrichmentService,
+    _extract_series,
     reset_comunicado_data_block_cache,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
@@ -72,3 +73,27 @@ def test_fetch_cached_reuses_ttl_cache():
     service._fetch_cached("get_overall_equipment_effectiveness_pct", params, "Bearer x")
     service._fetch_cached("get_overall_equipment_effectiveness_pct", params, "Bearer x")
     assert gateway.fetch_by_operation_id.call_count == 1
+
+
+def test_extract_series_periodo_and_branch_specific_field():
+    payload = {
+        "points": [
+            {"periodo": "2026-07-01", "oee_filial_01": 72.1},
+            {"periodo": "2026-07-02", "oee_filial_01": 74.5},
+        ]
+    }
+    points = _extract_series(payload, "points", branch="01")
+    assert len(points) == 2
+    assert points[0]["label"] == "2026-07-01"
+    assert points[0]["value"] == 72.1
+    assert points[1]["value"] == 74.5
+
+
+def test_extract_series_otd_branch_fallback():
+    payload = {
+        "points": [
+            {"periodo": "2026-07-01", "otd_filial_02": 88.0},
+        ]
+    }
+    points = _extract_series(payload, "points", branch="2")
+    assert points[0]["value"] == 88.0

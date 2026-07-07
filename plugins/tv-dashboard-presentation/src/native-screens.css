@@ -608,6 +608,34 @@
   text-align: center;
 }
 
+.tdp-data-block--loading .tdp-data-block__hint {
+  animation: tdp-data-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes tdp-data-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.tdp-data-block--table {
+  padding: 0.35em 0.45em;
+  overflow: hidden;
+}
+
+.tdp-data-table-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .tdp-data-block__title {
   font-weight: 600;
   color: #e2e8f0;
@@ -648,6 +676,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: clamp(9px, 1vw, 12px);
+  table-layout: fixed;
 }
 
 .tdp-data-table th,

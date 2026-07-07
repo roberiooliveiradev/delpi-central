@@ -443,6 +443,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       {isCustomSlide && selectedSlide ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}
+          slideId={selectedSlide.id}
           value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >

@@ -4,6 +4,7 @@ import type { ComunicadoDataBlock, ComunicadoDataResolved } from "./comunicadoTy
 type Props = {
   block: ComunicadoDataBlock;
   interactive?: boolean;
+  loading?: boolean;
 };
 
 function formatKpiValue(value: unknown): string {
@@ -77,7 +78,7 @@ function TvDataTableWidget({ resolved }: { resolved: ComunicadoDataResolved }) {
   );
 }
 
-export function TvDataBlockView({ block, interactive = false }: Props) {
+export function TvDataBlockView({ block, interactive = false, loading = false }: Props) {
   const binding = block.dataBinding;
   const resolved = block.resolved;
   const label = binding.label ?? binding.operationId;
@@ -92,9 +93,11 @@ export function TvDataBlockView({ block, interactive = false }: Props) {
 
   if (!resolved) {
     return (
-      <div className="tdp-data-block tdp-data-block--placeholder">
+      <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
         <span className="tdp-data-block__title">{label}</span>
-        <span className="tdp-data-block__hint">{interactive ? "Indicador (preview ao publicar)" : "…"}</span>
+        <span className="tdp-data-block__hint">
+          {loading ? "Carregando indicador…" : interactive ? "Indicador (preview ao publicar)" : "…"}
+        </span>
       </div>
     );
   }
@@ -108,11 +111,13 @@ export function TvDataBlockView({ block, interactive = false }: Props) {
   }
 
   if (block.type === "data_table" || resolved.table) {
-    return (
-      <div className="tdp-data-block tdp-data-block--table">
+  return (
+    <div className="tdp-data-block tdp-data-block--table">
+      <div className="tdp-data-table-wrap">
         <TvDataTableWidget resolved={resolved} />
       </div>
-    );
+    </div>
+  );
   }
 
   return (

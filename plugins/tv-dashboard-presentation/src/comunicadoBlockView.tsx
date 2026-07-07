@@ -12,6 +12,7 @@ type Props = {
   interactive?: boolean;
   /** Quando true, o pai controla left/top/width/height. */
   embedded?: boolean;
+  dataLoading?: boolean;
 };
 
 function wrapWithLink(node: ReactNode, block: ComunicadoBlock) {
@@ -86,6 +87,7 @@ export function ComunicadoBlockView({
   className = "",
   interactive = false,
   embedded = false,
+  dataLoading = false,
 }: Props) {
   const style = embedded
     ? {
@@ -166,7 +168,11 @@ export function ComunicadoBlockView({
   if (isDataBlockType(block.type)) {
     return (
       <div className={`${blockClass} tdp-comunicado__block--data`} style={style}>
-        <TvDataBlockView block={block as ComunicadoDataBlock} interactive={interactive} />
+        <TvDataBlockView
+          block={block as ComunicadoDataBlock}
+          interactive={interactive}
+          loading={dataLoading}
+        />
       </div>
     );
   }

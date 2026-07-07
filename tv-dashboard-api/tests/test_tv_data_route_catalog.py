@@ -5,9 +5,12 @@ from tv_app.application.services.tv_data_route_catalog_service import TvDataRout
 def test_catalog_lists_allowlist_routes():
     catalog = TvDataRouteCatalogService()
     routes = catalog.list_routes()
-    assert len(routes) >= 4
+    assert len(routes) >= 7
     ids = {item["operationId"] for item in routes}
     assert "get_overall_equipment_effectiveness_pct" in ids
+    assert "get_production_oee_series" in ids
+    assert "get_production_otd_series" in ids
+    assert "get_ppm_external_summary" in ids
     assert "get_supplies_stock_value" in ids
 
 

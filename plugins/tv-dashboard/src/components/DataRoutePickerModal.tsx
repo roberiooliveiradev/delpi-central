@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { Factory, Package, ShieldCheck, X } from "lucide-react";
 import {
   createDataBlock,
   defaultDataBlockTypeForRoute,
@@ -13,6 +13,21 @@ type Props = {
   onClose: () => void;
   onSelect: (block: ReturnType<typeof createDataBlock>) => void;
 };
+
+const CATEGORY_ORDER = ["production", "quality", "supplies", "strategic"] as const;
+
+const CATEGORY_LABELS: Record<string, string> = {
+  production: "Produção",
+  quality: "Qualidade",
+  supplies: "Suprimentos",
+  strategic: "Estratégico",
+};
+
+function CategoryIcon({ category }: { category: string }) {
+  if (category === "quality") return <ShieldCheck size={16} aria-hidden />;
+  if (category === "supplies") return <Package size={16} aria-hidden />;
+  return <Factory size={16} aria-hidden />;
+}
 
 export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
@@ -40,6 +55,25 @@ export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
         route.category.toLowerCase().includes(q),
     );
   }, [query, routes]);
+
+  const grouped = useMemo(() => {
+    const buckets = new Map<string, TvDataRouteCatalogItem[]>();
+    for (const route of filtered) {
+      const key = route.category || "outros";
+      const list = buckets.get(key) ?? [];
+      list.push(route);
+      buckets.set(key, list);
+    }
+    const orderedKeys = [
+      ...CATEGORY_ORDER.filter((key) => buckets.has(key)),
+      ...[...buckets.keys()].filter((key) => !CATEGORY_ORDER.includes(key as (typeof CATEGORY_ORDER)[number])),
+    ];
+    return orderedKeys.map((key) => ({
+      key,
+      label: CATEGORY_LABELS[key] ?? key,
+      routes: buckets.get(key) ?? [],
+    }));
+  }, [filtered]);
 
   if (!open) return null;
 
@@ -87,16 +121,26 @@ export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
           />
           {loading ? <p className="td-subtitle">Carregando catálogo…</p> : null}
           {error ? <p className="td-error">{error}</p> : null}
-          <ul className="td-data-route-list">
-            {filtered.map((route) => (
-              <li key={route.operationId}>
-                <button type="button" className="td-data-route-list__item" onClick={() => handlePick(route)}>
-                  <span className="td-data-route-list__label">{route.label}</span>
-                  <span className="td-data-route-list__meta">{route.category}</span>
-                </button>
-              </li>
+          <div className="td-data-route-groups">
+            {grouped.map((group) => (
+              <section key={group.key} className="td-data-route-group">
+                <h3 className="td-data-route-group__title">
+                  <CategoryIcon category={group.key} />
+                  {group.label}
+                </h3>
+                <ul className="td-data-route-list">
+                  {group.routes.map((route) => (
+                    <li key={route.operationId}>
+                      <button type="button" className="td-data-route-list__item" onClick={() => handlePick(route)}>
+                        <span className="td-data-route-list__label">{route.label}</span>
+                        <span className="td-data-route-list__meta">{route.operationId}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
     </div>

@@ -31,6 +31,7 @@
         "periodDays": { "type": "integer", "default": 7, "label": "Período (dias)" }
       },
       "paramStrategy": "date_range",
+      "fixedQueryParams": { "granularity": "day" },
       "seriesField": "points",
       "metaShape": "scalar",
       "tvConstraints": {
@@ -81,6 +82,44 @@
       "label": "Qualidade — PPM interno",
       "category": "quality",
       "path": "/quality/ppm/internal/summary",
+      "allowedDisplayModes": ["kpi", "auto"],
+      "defaultParams": { "periodDays": 30 },
+      "paramSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+      },
+      "paramStrategy": "date_range",
+      "valueFields": ["value", "ppm", "ppmValue"],
+      "metaShape": "scalar",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_production_otd_series",
+      "label": "OTD — série temporal",
+      "category": "production",
+      "path": "/production/otd/series",
+      "allowedDisplayModes": ["line_chart", "auto"],
+      "defaultParams": { "periodDays": 30 },
+      "paramSchema": {
+        "branch": { "type": "string", "optional": true, "label": "Filial" },
+        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+      },
+      "paramStrategy": "date_range",
+      "fixedQueryParams": { "granularity": "day" },
+      "seriesField": "points",
+      "metaShape": "scalar",
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_ppm_external_summary",
+      "label": "Qualidade — PPM externo",
+      "category": "quality",
+      "path": "/quality/ppm/external/summary",
       "allowedDisplayModes": ["kpi", "auto"],
       "defaultParams": { "periodDays": 30 },
       "paramSchema": {

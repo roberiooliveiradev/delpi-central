@@ -23,6 +23,12 @@ def _build_query_params(
     merged = dict(params)
     query: dict[str, str] = {}
 
+    fixed = route.get("fixedQueryParams")
+    if isinstance(fixed, dict):
+        for key, value in fixed.items():
+            if value is not None and value != "":
+                query[str(key)] = str(value)
+
     if strategy == "date_range":
         period_days = int(merged.get("periodDays") or route.get("defaultParams", {}).get("periodDays") or 7)
         start, end = _date_range(period_days)

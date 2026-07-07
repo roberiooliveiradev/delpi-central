@@ -44,7 +44,7 @@ function useCanvasBackgroundStyle() {
 }
 
 export function ComunicadoComposerCanvas() {
-  const { blocks, selectedId, setSelectedId, editingTextId, canvasRef, startDrag } =
+  const { blocks, selectedId, setSelectedId, editingTextId, canvasRef, startDrag, dataPreviewLoading } =
     useComunicadoEditor();
   const canvasStyle = useCanvasBackgroundStyle();
 
@@ -85,6 +85,7 @@ export function ComunicadoComposerCanvas() {
                   isSelected={isSelected}
                   isEditingText={editingTextId === block.id}
                   className={isSelected ? "td-composer__block--selected" : ""}
+                  dataLoading={dataPreviewLoading}
                 />
                 {isSelected && editingTextId !== block.id ? (
                   <>
