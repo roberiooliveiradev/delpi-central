@@ -46,7 +46,7 @@ const MODE_ORDER: ComunicadoDataDisplayMode[] = [
 
 export function blockTypeForDisplayMode(
   displayMode: ComunicadoDataDisplayMode,
-  allowedDisplayModes?: string[],
+  _allowedDisplayModes?: string[],
 ): ComunicadoDataBlockType {
   if (displayMode === "auto") {
     return "data_metric";
