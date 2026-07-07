@@ -3235,6 +3235,79 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   }
 }
 
+/* ── Balões explicativos (HelpTooltip) ───────────────────────────── */
+.dashboard-transformometro .tm-help-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.dashboard-transformometro .tm-help-tooltip--wrap {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--ds-text-muted) 55%, transparent);
+}
+
+.dashboard-transformometro .tm-help-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ds-text-muted);
+  cursor: help;
+  opacity: 0.72;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.dashboard-transformometro .tm-help-tooltip__trigger:hover,
+.dashboard-transformometro .tm-help-tooltip__trigger:focus-visible {
+  opacity: 1;
+  color: var(--ds-accent);
+  background: color-mix(in srgb, var(--ds-accent) 10%, transparent);
+  outline: none;
+}
+
+/* Balão renderizado via portal no body (fora do escopo .dashboard-transformometro) */
+.tm-help-tooltip__bubble--fixed {
+  position: fixed;
+  z-index: 10000;
+  max-width: min(280px, calc(100vw - 24px));
+  min-width: 200px;
+  box-sizing: border-box;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+}
+
+.tm-help-tooltip__bubble--fixed.tm-help-tooltip__bubble--ready {
+  min-width: 200px;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #e6e6e6);
+  background: color-mix(in srgb, var(--surface, #ffffff) 96%, var(--primary, #089bdb));
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text, #111111);
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+  opacity: 1;
+  visibility: visible;
+}
+
 /* Alinha o ícone (i) inline com títulos e rótulos */
 .dashboard-transformometro .ds-section-title,
 .dashboard-transformometro .ds-kpi-title,
