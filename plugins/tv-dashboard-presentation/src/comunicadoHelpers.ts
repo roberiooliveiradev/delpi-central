@@ -7,7 +7,6 @@ import type {
   ComunicadoConfig,
   ComunicadoFrame,
   ComunicadoShapeKind,
-  ComunicadoTextAlign,
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
 } from "./comunicadoTypes";
