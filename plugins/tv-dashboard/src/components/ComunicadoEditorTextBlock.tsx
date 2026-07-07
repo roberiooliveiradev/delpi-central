@@ -41,9 +41,8 @@ export function ComunicadoEditorTextBlock({
     "tdp-comunicado__block",
     `tdp-comunicado__block--${block.type}`,
     "td-composer__text-block",
-    isEditing
-      ? "td-composer__text-block--editing"
-      : "td-composer__text-block--readonly",
+    "td-composer__text-block--readonly",
+    isEditing ? "td-composer__text-block--editing" : "",
     isSelected && !isEditing ? "td-composer__text-block--selected" : "",
     className,
   ]
@@ -70,23 +69,25 @@ export function ComunicadoEditorTextBlock({
         style={style}
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <textarea
-          ref={inputRef}
-          className="td-composer__inline-text"
-          value={block.content}
-          placeholder={PLACEHOLDER[block.type]}
-          rows={block.type === "heading" ? 2 : 4}
-          aria-label={PLACEHOLDER[block.type]}
-          onChange={(event) => updateBlockContent(block.id, event.target.value)}
-          onBlur={exitEditing}
-          onKeyDown={(event) => {
-            event.stopPropagation();
-            if (event.key === "Escape") {
-              event.preventDefault();
-              exitEditing();
-            }
-          }}
-        />
+        <div className={`td-composer__inline-text-wrap td-composer__inline-text-wrap--${block.type}`}>
+          <textarea
+            ref={inputRef}
+            className="td-composer__inline-text"
+            value={block.content}
+            placeholder={PLACEHOLDER[block.type]}
+            rows={1}
+            aria-label={PLACEHOLDER[block.type]}
+            onChange={(event) => updateBlockContent(block.id, event.target.value)}
+            onBlur={exitEditing}
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              if (event.key === "Escape") {
+                event.preventDefault();
+                exitEditing();
+              }
+            }}
+          />
+        </div>
       </div>
     );
   }

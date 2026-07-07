@@ -4,8 +4,24 @@ import { useMemo } from "react";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
+import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const FONT_SCALE = 0.35;
+
+const BLOCK_RESIZE_HANDLES: Array<{
+  mode: Exclude<BlockDragMode, "move">;
+  position: string;
+  label: string;
+}> = [
+  { mode: "resize-nw", position: "nw", label: "Redimensionar canto superior esquerdo" },
+  { mode: "resize-n", position: "n", label: "Redimensionar borda superior" },
+  { mode: "resize-ne", position: "ne", label: "Redimensionar canto superior direito" },
+  { mode: "resize-w", position: "w", label: "Redimensionar borda esquerda" },
+  { mode: "resize-e", position: "e", label: "Redimensionar borda direita" },
+  { mode: "resize-sw", position: "sw", label: "Redimensionar canto inferior esquerdo" },
+  { mode: "resize-s", position: "s", label: "Redimensionar borda inferior" },
+  { mode: "resize-se", position: "se", label: "Redimensionar canto inferior direito" },
+];
 
 function useCanvasBackgroundStyle() {
   const { background } = useComunicadoEditor();
@@ -35,7 +51,15 @@ export function ComunicadoComposerCanvas() {
   return (
     <div className="td-composer td-composer--deck">
       <div className="td-composer__canvas-wrap td-composer__canvas-wrap--full">
-        <div ref={canvasRef} className="td-composer__canvas" style={canvasStyle}>
+        <div
+          ref={canvasRef}
+          className="td-composer__canvas"
+          style={canvasStyle}
+          onPointerDown={(event) => {
+            if (event.target !== event.currentTarget) return;
+            setSelectedId(null);
+          }}
+        >
           {blocks.map((block) => {
             const isSelected = block.id === selectedId;
             return (
@@ -44,6 +68,7 @@ export function ComunicadoComposerCanvas() {
                 className={`td-composer__block-wrap${isSelected ? " td-composer__block-wrap--selected" : ""}`}
                 style={frameStyle(block.frame)}
                 onPointerDown={(event) => {
+                  event.stopPropagation();
                   setSelectedId(block.id);
                   if (
                     editingTextId === block.id &&
@@ -61,26 +86,17 @@ export function ComunicadoComposerCanvas() {
                   isEditingText={editingTextId === block.id}
                   className={isSelected ? "td-composer__block--selected" : ""}
                 />
-                {isSelected ? (
+                {isSelected && editingTextId !== block.id ? (
                   <>
-                    <button
-                      type="button"
-                      className="td-composer__resize td-composer__resize--se"
-                      aria-label="Redimensionar"
-                      onPointerDown={(event) => startDrag(event, block, "resize-se")}
-                    />
-                    <button
-                      type="button"
-                      className="td-composer__resize td-composer__resize--e"
-                      aria-label="Redimensionar largura"
-                      onPointerDown={(event) => startDrag(event, block, "resize-e")}
-                    />
-                    <button
-                      type="button"
-                      className="td-composer__resize td-composer__resize--s"
-                      aria-label="Redimensionar altura"
-                      onPointerDown={(event) => startDrag(event, block, "resize-s")}
-                    />
+                    {BLOCK_RESIZE_HANDLES.map(({ mode, position, label }) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        className={`td-composer__resize td-composer__resize--${position}`}
+                        aria-label={label}
+                        onPointerDown={(event) => startDrag(event, block, mode)}
+                      />
+                    ))}
                   </>
                 ) : null}
               </div>

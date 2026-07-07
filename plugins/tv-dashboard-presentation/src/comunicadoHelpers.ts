@@ -6,6 +6,7 @@ import type {
   ComunicadoConfig,
   ComunicadoFrame,
   ComunicadoShapeKind,
+  ComunicadoTextAlign,
 } from "./comunicadoTypes";
 
 export function newBlockId(): string {
@@ -263,6 +264,15 @@ export function frameStyle(frame: ComunicadoFrame): CSSProperties {
   };
 }
 
+/** h1/p usam flex + justify-content: inherit — o bloco precisa expor o alinhamento. */
+export function comunicadoTextAlignToJustifyContent(
+  textAlign: ComunicadoTextAlign,
+): NonNullable<CSSProperties["justifyContent"]> {
+  if (textAlign === "center") return "center";
+  if (textAlign === "right") return "flex-end";
+  return "flex-start";
+}
+
 export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
   const fontScale = options?.fontScale ?? 1;
   const style = block.style ?? {};
@@ -277,7 +287,10 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
     if (style.color) css.color = style.color;
     if (style.fontFamily) css.fontFamily = style.fontFamily;
-    if (style.textAlign) css.textAlign = style.textAlign;
+    if (style.textAlign) {
+      css.textAlign = style.textAlign;
+      css.justifyContent = comunicadoTextAlignToJustifyContent(style.textAlign);
+    }
     if (style.fontWeight) css.fontWeight = style.fontWeight;
     if (style.fontStyle) css.fontStyle = style.fontStyle;
     if (style.textDecoration) css.textDecoration = style.textDecoration;

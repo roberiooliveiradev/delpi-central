@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import {
+  blockCssStyle,
   createShapeBlock,
   parseComunicadoConfig,
   serializeComunicadoConfig,
@@ -43,6 +44,18 @@ describe("comunicadoHelpers", () => {
     const blocks = serialized.blocks as Array<Record<string, unknown>>;
     expect(blocks[0].href).toBe("https://example.com");
     expect(blocks[1].type).toBe("shape");
+  });
+
+  it("mapeia textAlign para justifyContent no bloco (herdado por h1/p)", () => {
+    const block = {
+      id: "1",
+      type: "heading" as const,
+      content: "Titulo",
+      frame: { x: 0, y: 0, w: 50, h: 20 },
+      style: { textAlign: "right" as const },
+    };
+    expect(blockCssStyle(block).justifyContent).toBe("flex-end");
+    expect(blockCssStyle(block).textAlign).toBe("right");
   });
 
   it("não persiste URL de mídia no native_config", () => {

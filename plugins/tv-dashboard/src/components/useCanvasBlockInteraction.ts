@@ -3,10 +3,19 @@ import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent 
 import type { ComunicadoBlock, ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
 import { clampFrame } from "@delpi/tv-dashboard-presentation";
 
-type DragMode = "move" | "resize-se" | "resize-e" | "resize-s";
+export type BlockDragMode =
+  | "move"
+  | "resize-nw"
+  | "resize-n"
+  | "resize-ne"
+  | "resize-e"
+  | "resize-se"
+  | "resize-s"
+  | "resize-sw"
+  | "resize-w";
 
 type DragState = {
-  mode: DragMode;
+  mode: BlockDragMode;
   blockId: string;
   startX: number;
   startY: number;
@@ -22,6 +31,29 @@ type Options = {
 };
 
 const DRAG_THRESHOLD_PX = 5;
+
+function resizeFrame(frame: ComunicadoFrame, dx: number, dy: number, mode: BlockDragMode): ComunicadoFrame {
+  switch (mode) {
+    case "resize-se":
+      return { ...frame, w: frame.w + dx, h: frame.h + dy };
+    case "resize-e":
+      return { ...frame, w: frame.w + dx };
+    case "resize-s":
+      return { ...frame, h: frame.h + dy };
+    case "resize-n":
+      return { ...frame, y: frame.y + dy, h: frame.h - dy };
+    case "resize-w":
+      return { ...frame, x: frame.x + dx, w: frame.w - dx };
+    case "resize-ne":
+      return { ...frame, y: frame.y + dy, w: frame.w + dx, h: frame.h - dy };
+    case "resize-nw":
+      return { ...frame, x: frame.x + dx, y: frame.y + dy, w: frame.w - dx, h: frame.h - dy };
+    case "resize-sw":
+      return { ...frame, x: frame.x + dx, w: frame.w - dx, h: frame.h + dy };
+    default:
+      return frame;
+  }
+}
 
 export function useCanvasBlockInteraction({ onUpdateFrame }: Options) {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -61,36 +93,7 @@ export function useCanvasBlockInteraction({ onUpdateFrame }: Options) {
       return;
     }
 
-    if (drag.mode === "resize-se") {
-      onUpdateFrameRef.current(
-        drag.blockId,
-        clampFrame({
-          ...frame,
-          w: frame.w + dx,
-          h: frame.h + dy,
-        }),
-      );
-      return;
-    }
-
-    if (drag.mode === "resize-e") {
-      onUpdateFrameRef.current(
-        drag.blockId,
-        clampFrame({
-          ...frame,
-          w: frame.w + dx,
-        }),
-      );
-      return;
-    }
-
-    onUpdateFrameRef.current(
-      drag.blockId,
-      clampFrame({
-        ...frame,
-        h: frame.h + dy,
-      }),
-    );
+    onUpdateFrameRef.current(drag.blockId, clampFrame(resizeFrame(frame, dx, dy, drag.mode)));
   };
 
   const onPointerMove = useCallback((event: PointerEvent) => {
@@ -143,7 +146,7 @@ export function useCanvasBlockInteraction({ onUpdateFrame }: Options) {
   }, [onPointerMove, onPointerUp, onPendingMove, onPendingUp]);
 
   const startDrag = useCallback(
-    (event: ReactPointerEvent, block: ComunicadoBlock, mode: DragMode) => {
+    (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => {
       event.preventDefault();
       event.stopPropagation();
 
