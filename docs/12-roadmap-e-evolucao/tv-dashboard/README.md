@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.2 em produção (jul/2026) — editor deck + formatação expandida  
-> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** playbook §17
+> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -113,6 +113,7 @@ Telas **externas**: URL + `sandbox` opcional em iframe.
 - Armazenamento persistente: `${DELPI_DATA_HOST_DIR}/tv-dashboard/media`
 - Apresentação pública: `GET /public/present/{token}/media/{assetId}`
 - Roadmap paridade Canva/PowerPoint: [PLAYBOOK-EXCELENCIA.md §17](./PLAYBOOK-EXCELENCIA.md#17-editor-de-slides-personalizados--paridade-canva--powerpoint)
+- **Backlog:** indicadores live (KPI/gráfico/tabela) de rotas api-delpi no mesmo slide — [§18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados)
 
 ---
 
@@ -185,6 +186,7 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 | **4C** | Rich text, bullets, estilos nomeados, Google Fonts |
 | **4D** | Multi-seleção, agrupar, camadas, rotação por handle |
 | **4E** | Animações, master slide, export PNG |
+| **4F** | **Indicadores live api-delpi** — KPI, gráfico, tabela em blocos no slide personalizado (§18) |
 
 ---
 
