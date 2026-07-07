@@ -941,31 +941,41 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
 }
 
-@keyframes tm-workspace-panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.dashboard-transformometro .tm-processo-workspace__sections {
+  position: relative;
+  isolation: isolate;
 }
 
-.dashboard-transformometro .tm-processo-workspace__panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  animation: tm-workspace-panel-in 0.24s ease-out;
+.dashboard-transformometro .tm-processo-workspace-section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition:
+    opacity 0.22s ease,
+    visibility 0.22s ease,
+    transform 0.22s ease;
+}
+
+.dashboard-transformometro .tm-processo-workspace-section--active {
+  position: relative;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  z-index: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dashboard-transformometro .tm-processo-workspace__panel {
-    animation: none;
+  .dashboard-transformometro .tm-processo-workspace-section {
+    transform: none;
+    transition: none;
   }
 
   .dashboard-transformometro .tm-processo-workspace-tree__children-wrap {

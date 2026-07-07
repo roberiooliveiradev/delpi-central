@@ -62,6 +62,8 @@ import {
   useProcessoWorkspaceSection,
 } from "../processos/ProcessoWorkspaceShell";
 import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
+import type { ProcessoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
+import { ProcessoWorkspaceSectionPanel } from "../processos/ProcessoWorkspaceSectionPanel";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -239,6 +241,18 @@ export function ProcessoDetailPage({
   const activeSection = useProcessoWorkspaceSection();
   const activeNodeId = resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
   const showMelhoriasForm = openInstanciaForm || activeSection === "melhorias";
+  const [visitedSections, setVisitedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
+    () => new Set([activeSection])
+  );
+
+  useEffect(() => {
+    setVisitedSections((current) => {
+      if (current.has(activeSection)) return current;
+      const next = new Set(current);
+      next.add(activeSection);
+      return next;
+    });
+  }, [activeSection]);
 
   const setupCompletion = useMemo(() => {
     if (!processo) {
@@ -346,7 +360,8 @@ export function ProcessoDetailPage({
         instancias={instancias}
         revisoes={revisoes}
       >
-        {activeSection === "visao-geral" ? (
+        {visitedSections.has("visao-geral") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "visao-geral"} sectionId="visao-geral">
           <section className="ds-card tm-processo-workspace-panel">
             <h2 className="ds-section-title">Visão geral</h2>
             <p className="ds-hint">
@@ -372,9 +387,11 @@ export function ProcessoDetailPage({
               </dl>
             </div>
           </section>
+          </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {activeSection === "dados" ? (
+        {visitedSections.has("dados") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "dados"} sectionId="dados">
           <EditableSectionCard
             title="Dados do processo"
             hint={TM_HELP_TOOLTIPS.processos.nome}
@@ -420,9 +437,11 @@ export function ProcessoDetailPage({
               ) : null
             }
           />
+          </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {activeSection === "mapeamento" ? (
+        {visitedSections.has("mapeamento") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
           <EditableSectionCard
             title="Mapeamento do processo"
             description="Árvore WBS — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento."
@@ -454,9 +473,11 @@ export function ProcessoDetailPage({
               />
             }
           />
+          </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {activeSection === "diagrama" ? (
+        {visitedSections.has("diagrama") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
           <EditableSectionCard
             title="Diagrama macro"
             description="Mapa canônico do fluxo end-to-end deste processo-mestre."
@@ -486,9 +507,11 @@ export function ProcessoDetailPage({
               />
             }
           />
+          </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {activeSection === "arquivos" ? (
+        {visitedSections.has("arquivos") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "arquivos"} sectionId="arquivos">
           <EditableSectionCard
             title={`Arquivos do processo${arquivosCount ? ` (${arquivosCount})` : ""}`}
             description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
@@ -515,9 +538,11 @@ export function ProcessoDetailPage({
               />
             }
           />
+          </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {activeSection === "melhorias" ? (
+        {visitedSections.has("melhorias") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "melhorias"} sectionId="melhorias">
           <ProcessoInstanciasPanel
             instancias={instancias}
             selectedInstanciaId={null}
@@ -546,10 +571,13 @@ export function ProcessoDetailPage({
               await load();
             }}
           />
+          </ProcessoWorkspaceSectionPanel>
         ) : null}
 
-        {activeSection === "timeline" ? (
+        {visitedSections.has("timeline") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "timeline"} sectionId="timeline">
           <ProcessoTimeline entries={timelineEntries} loading={timelineLoading} />
+          </ProcessoWorkspaceSectionPanel>
         ) : null}
       </ProcessoWorkspaceShell>
     </TransformometroShell>
