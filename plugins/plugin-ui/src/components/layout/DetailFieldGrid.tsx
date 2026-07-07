@@ -110,13 +110,27 @@ export type DashboardDetailFieldGridProps = Omit<
   "classNames" | "labels"
 >;
 
+export function infoGridBemClasses(prefix: string): DetailFieldGridClassNames {
+  const grid = `${prefix}-info-grid`;
+
+  return {
+    grid,
+    item: `${grid}__item`,
+    itemWide: `${grid}__item ${grid}__item--wide`,
+    label: `${grid}__label`,
+    empty: `${prefix}-detail__empty`,
+  };
+}
+
 export function createDashboardDetailFieldGrid(config: {
-  prefix: string;
+  prefix?: string;
+  classNames?: DetailFieldGridClassNames;
   labels: DetailFieldGridLabels;
   valueFallback?: string;
   wrapLabels?: boolean;
 }) {
-  const classNames = detailFieldGridBemClasses(config.prefix);
+  const classNames =
+    config.classNames ?? detailFieldGridBemClasses(config.prefix ?? "dp");
 
   return function DashboardDetailFieldGrid(props: DashboardDetailFieldGridProps) {
     return (
@@ -126,6 +140,31 @@ export function createDashboardDetailFieldGrid(config: {
         valueFallback={config.valueFallback}
         wrapLabels={config.wrapLabels}
         {...props}
+      />
+    );
+  };
+}
+
+export function createInfoGrid(prefix: string) {
+  const Grid = createDashboardDetailFieldGrid({
+    classNames: infoGridBemClasses(prefix),
+    labels: {
+      fieldHelpAriaLabel: (label) => `Ajuda: ${label}`,
+    },
+  });
+
+  return function InfoGrid({
+    items,
+  }: {
+    items: Array<{ label: string; value: string; wide?: boolean }>;
+  }) {
+    return (
+      <Grid
+        fields={items.map((item) => ({
+          label: item.label,
+          value: item.value,
+          wide: item.wide,
+        }))}
       />
     );
   };

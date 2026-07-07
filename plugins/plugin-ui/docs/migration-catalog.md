@@ -107,7 +107,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `dashboard-hr` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-quality` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | `dashboard-supplies` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination simplificado (local) |
+| `dashboard-lmps` | — | ✅ | ✅ | ✅ | ✅ | ✅ | Pagination via CompactPagination |
 | `transformometro` | — | — | — | — | ✅ | |
 | `eficiencia-fabril` | — | — | — | — | ✅ | |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
@@ -160,7 +160,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 |--------|---------|-------------------|
 | `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard |
-| `propostas-comerciais` | — | PageHeader |
+| `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
 | `strategic-indicators` | — | PageHeader | `operationalUnitLabels` |
 | `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity |
 | `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState |

@@ -1,3 +1,5 @@
+import { HelpTooltip } from "../help/HelpTooltip";
+
 export type CompactPaginationClassNames = {
   root: string;
   left: string;
@@ -5,6 +7,9 @@ export type CompactPaginationClassNames = {
   pageSize: string;
   actions: string;
   ghostBtn: string;
+  action?: string;
+  infoHelp?: string;
+  actionHelp?: string;
 };
 
 export type CompactPaginationLayout = "grouped" | "flat";
@@ -17,6 +22,12 @@ export type CompactPaginationLabels = {
   navigationAriaLabel: string;
 };
 
+export type CompactPaginationHints = {
+  info?: string;
+  previous?: string;
+  next?: string;
+};
+
 export type CompactPaginationProps = {
   page: number;
   pageSize: number;
@@ -26,16 +37,18 @@ export type CompactPaginationProps = {
   onPageChange: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   layout?: CompactPaginationLayout;
+  hints?: CompactPaginationHints;
   classNames: CompactPaginationClassNames;
   labels: CompactPaginationLabels;
 };
 
 export function compactPaginationBemClasses(
   prefix: string,
-  options?: { ghostBtnModifier?: string },
+  options?: { ghostBtnModifier?: string; ghostBtn?: string; withHints?: boolean },
 ): CompactPaginationClassNames {
   const base = `${prefix}-pagination`;
   const ghostModifier = options?.ghostBtnModifier ?? "ghost";
+  const withHints = options?.withHints ?? false;
 
   return {
     root: base,
@@ -43,7 +56,10 @@ export function compactPaginationBemClasses(
     info: `${base}__info`,
     pageSize: `${base}__size`,
     actions: `${base}__actions`,
-    ghostBtn: `${prefix}-btn ${prefix}-btn--${ghostModifier}`,
+    ghostBtn: options?.ghostBtn ?? `${prefix}-btn ${prefix}-btn--${ghostModifier}`,
+    action: withHints ? `${base}__action` : undefined,
+    infoHelp: withHints ? `${base}__help` : undefined,
+    actionHelp: withHints ? `${base}__action-help` : undefined,
   };
 }
 
@@ -56,6 +72,7 @@ export function CompactPagination({
   onPageChange,
   onPageSizeChange,
   layout = "grouped",
+  hints,
   classNames,
   labels,
 }: CompactPaginationProps) {
@@ -71,27 +88,61 @@ export function CompactPagination({
   const infoNode = (
     <span className={classNames.info}>
       {labels.info({ page, totalPages: resolvedTotalPages, total })}
+      {hints?.info && classNames.infoHelp ? (
+        <HelpTooltip
+          content={hints.info}
+          ariaLabel="Ajuda: paginação"
+          className={classNames.infoHelp}
+        />
+      ) : null}
     </span>
   );
 
+  function renderNavButton(
+    label: string,
+    disabled: boolean,
+    onClick: () => void,
+    hint?: string,
+    hintAriaLabel?: string,
+  ) {
+    const button = (
+      <button type="button" className={classNames.ghostBtn} disabled={disabled} onClick={onClick}>
+        {label}
+      </button>
+    );
+
+    if (hint && classNames.action && classNames.actionHelp) {
+      return (
+        <div className={classNames.action}>
+          {button}
+          <HelpTooltip
+            content={hint}
+            ariaLabel={hintAriaLabel ?? `Ajuda: ${label.toLowerCase()}`}
+            className={classNames.actionHelp}
+          />
+        </div>
+      );
+    }
+
+    return button;
+  }
+
   const actionsNode = (
     <div className={classNames.actions}>
-      <button
-        type="button"
-        className={classNames.ghostBtn}
-        disabled={!canPrev}
-        onClick={() => onPageChange(page - 1)}
-      >
-        {labels.previous}
-      </button>
-      <button
-        type="button"
-        className={classNames.ghostBtn}
-        disabled={!canNext}
-        onClick={() => onPageChange(page + 1)}
-      >
-        {labels.next}
-      </button>
+      {renderNavButton(
+        labels.previous,
+        !canPrev,
+        () => onPageChange(page - 1),
+        hints?.previous,
+        "Ajuda: página anterior",
+      )}
+      {renderNavButton(
+        labels.next,
+        !canNext,
+        () => onPageChange(page + 1),
+        hints?.next,
+        "Ajuda: próxima página",
+      )}
     </div>
   );
 
@@ -131,17 +182,22 @@ export function CompactPagination({
 
 export type DashboardCompactPaginationProps = Omit<
   CompactPaginationProps,
-  "classNames" | "labels" | "layout"
+  "classNames" | "labels" | "layout" | "hints"
 >;
 
 export function createCompactPagination(config: {
   prefix: string;
   labels: CompactPaginationLabels;
+  hints?: CompactPaginationHints;
   ghostBtnModifier?: string;
+  ghostBtn?: string;
+  withHints?: boolean;
   layout?: CompactPaginationLayout;
 }) {
   const classNames = compactPaginationBemClasses(config.prefix, {
     ghostBtnModifier: config.ghostBtnModifier,
+    ghostBtn: config.ghostBtn,
+    withHints: config.withHints,
   });
 
   return function DashboardCompactPagination(props: DashboardCompactPaginationProps) {
@@ -149,6 +205,7 @@ export function createCompactPagination(config: {
       <CompactPagination
         classNames={classNames}
         labels={config.labels}
+        hints={config.hints}
         layout={config.layout}
         {...props}
       />

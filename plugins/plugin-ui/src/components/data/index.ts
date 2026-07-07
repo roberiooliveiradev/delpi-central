@@ -18,6 +18,7 @@ export {
   createCompactPagination,
   compactPaginationBemClasses,
   type CompactPaginationClassNames,
+  type CompactPaginationHints,
   type CompactPaginationLabels,
   type CompactPaginationLayout,
   type CompactPaginationProps,

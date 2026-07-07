@@ -37,3 +37,12 @@ export {
   type ConfirmModalClassNames,
   type ConfirmModalPanelProps,
 } from "./ConfirmModalPanel";
+export {
+  StateBoxPanel,
+  createStateBoxPanel,
+  stateBoxBemClasses,
+  type DashboardStateBoxPanelProps,
+  type StateBoxClassNames,
+  type StateBoxPanelProps,
+  type StateBoxVariant,
+} from "./StateBoxPanel";

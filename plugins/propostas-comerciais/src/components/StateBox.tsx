@@ -1,26 +1,21 @@
-import type { ReactNode } from "react";
 import { AlertCircle, FileSearch, LoaderCircle } from "lucide-react";
 
-type StateBoxProps = {
-  variant: "loading" | "error" | "empty";
-  title: string;
-  message?: string;
-  action?: ReactNode;
-};
+import { createStateBoxPanel, type StateBoxVariant } from "@delpi/plugin-ui";
 
-export function StateBox({ variant, title, message, action }: StateBoxProps) {
-  const Icon = variant === "loading" ? LoaderCircle : variant === "error" ? AlertCircle : FileSearch;
-
-  return (
-    <div className={`pc-state-box pc-state-box--${variant}`} role="status">
-      <span className="pc-state-box__icon" aria-hidden="true">
-        <Icon size={28} strokeWidth={1.75} className={variant === "loading" ? "pc-spin" : undefined} />
-      </span>
-      <div>
-        <h2>{title}</h2>
-        {message ? <p>{message}</p> : null}
-      </div>
-      {action}
-    </div>
-  );
+function renderStateIcon(variant: StateBoxVariant) {
+  if (variant === "loading") {
+    return <LoaderCircle size={28} strokeWidth={1.75} />;
+  }
+  if (variant === "error") {
+    return <AlertCircle size={28} strokeWidth={1.75} />;
+  }
+  return <FileSearch size={28} strokeWidth={1.75} />;
 }
+
+export const StateBox = createStateBoxPanel({
+  prefix: "pc",
+  renderIcon: renderStateIcon,
+  iconClassName: (variant) => (variant === "loading" ? "pc-spin" : undefined),
+});
+
+export type { DashboardStateBoxPanelProps as StateBoxProps } from "@delpi/plugin-ui";

@@ -58,7 +58,9 @@ export {
 export {
   DetailFieldGrid,
   createDashboardDetailFieldGrid,
+  createInfoGrid,
   detailFieldGridBemClasses,
+  infoGridBemClasses,
   type DashboardDetailFieldGridProps,
   type DetailField,
   type DetailFieldGridClassNames,
@@ -98,6 +100,14 @@ export {
   type SectionCardLabels,
   type SectionCardProps,
 } from "./SectionCard";
+export {
+  PanelCard,
+  createPanelCard,
+  panelCardBemClasses,
+  type DashboardPanelCardProps,
+  type PanelCardClassNames,
+  type PanelCardProps,
+} from "./PanelCard";
 export {
   PageHeader,
   createDashboardPageHeader,
