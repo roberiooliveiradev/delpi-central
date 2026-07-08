@@ -631,10 +631,20 @@ a.sidebar-footer-item {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  padding: 8px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  aspect-ratio: 1;
+  line-height: 1;
+  padding: 0;
 }
 
 .avatar.small {
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
   font-size: 14px;
 }
 
