@@ -417,6 +417,13 @@
   background: transparent;
 }
 
+/* Tamanho fixo: altura acompanha a imagem (sem cortar). */
+.cxform-illustration--fixed .cxform-illustration__frame {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
 .cxform-illustration__img {
   display: block;
   max-width: 100%;
@@ -437,13 +444,13 @@
   object-position: center;
 }
 
-/* Tamanho fixo: proporção original, centrada, sem esticar. */
+/* Tamanho fixo: tamanho nativo; se passar da largura, reduz proporcionalmente. */
 .cxform-illustration__img--fixed {
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 100%;
-  object-fit: none;
+  max-height: none;
+  object-fit: contain;
   object-position: center;
 }
 
@@ -502,8 +509,14 @@
 }
 
 .cxform--fullpage.cxform--wizard .cxform-illustration--fixed .cxform-illustration__frame {
-  height: min(280px, 36vh);
-  min-height: clamp(120px, 20vw, 180px);
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--fixed .cxform-illustration__img--fixed {
+  max-width: 100%;
+  max-height: none;
 }
 
 .cxform-step {
