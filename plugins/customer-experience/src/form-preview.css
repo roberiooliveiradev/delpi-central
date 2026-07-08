@@ -39,6 +39,9 @@
   color-scheme: light;
   display: flex;
   flex-direction: column;
+  /* Containing block: fixed do mosaico cobre a área visível do stage, não a janela. */
+  transform: translateZ(0);
+  isolation: isolate;
 }
 
 /* Tokens claros forçados (prévia independente do tema do portal). */
@@ -128,7 +131,7 @@
   backdrop-filter: none;
 }
 
-/* Shell da prévia: altura mínima do stage; cresce com o conteúdo. */
+/* Shell da prévia: empilha o card acima do mosaico. */
 .cxform-preview-shell {
   position: relative;
   z-index: 1;
@@ -139,13 +142,13 @@
   flex-direction: column;
 }
 
-/* Fundo na prévia: absoluto no shell (não no stage), acompanha o scroll. */
+/*
+ * Fundo na prévia: fixed relativo ao stage (transform no pai).
+ * absolute/sticky no shell só cobria a altura do card e cortava o mosaico.
+ */
 .cx-form-preview-stage .cxform-preview-shell > .cxform-viewport-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  width: auto;
-  height: auto;
-  min-height: 100%;
   z-index: 0;
   pointer-events: none;
 }
