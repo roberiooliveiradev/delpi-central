@@ -21,7 +21,7 @@ export type ImpactEffortPoint = {
 export type ImpactEffortQuadrantLabels = Record<ImpactEffortQuadrant, string>;
 
 export const DEFAULT_IMPACT_EFFORT_QUADRANT_LABELS: ImpactEffortQuadrantLabels = {
-  quick_win: "Quick wins",
+  quick_win: "Ganhos rápidos",
   strategic: "Estratégicos",
   fill_in: "Complementares",
   rethink: "Reavaliar",

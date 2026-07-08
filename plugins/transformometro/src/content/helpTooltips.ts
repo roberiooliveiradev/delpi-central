@@ -238,7 +238,21 @@ export const TM_HELP_TOOLTIPS = {
     confianca:
       "Indica a robustez do score automático conforme completude de medição, referência, investimentos e recursos.",
     quadrantes:
-      "Quick win = alto impacto e baixo esforço; Estratégico = alto em ambos; Complementar = baixo em ambos; Reavaliar = baixo impacto e alto esforço.",
+      "Ganho rápido = alto impacto e baixo esforço; Estratégico = alto em ambos; Complementar = baixo em ambos; Reavaliar = baixo impacto e alto esforço.",
+    modoLabel: "Modo de cálculo",
+    confiancaLabel: "Confiança do score",
+    posicaoAtual:
+      "Impacto e esforço (0–100) desta revisão e quadrante correspondente na matriz.",
+    liquidaAnualResumo:
+      "Economia líquida anualizada com base na medição, investimentos e recursos rateados.",
+    rateioExcedeGanho:
+      "O rateio de recursos compartilhados excede a economia bruta desta revisão.",
+    impactoScore: "Score de benefício (0–100) — quanto a revisão gera de ganho.",
+    esforcoScore: "Score de esforço (0–100) — custo/complexidade de implantação e adoção.",
+    quadranteColuna: "Classificação na matriz impacto × esforço.",
+    liquidaAnualColuna: "Economia líquida projetada para 12 meses.",
+    revisaoAtivaColuna: "Revisão marcada como vigente na melhoria.",
+    rankingTabela: "Ranking das revisões por prioridade (impacto alto e esforço baixo primeiro).",
     ajustesManuais:
       "Campos qualitativos e observações usados nos modos Híbrido e Manual. No Automático ficam colapsados.",
     impactoQualitativo: "Percepção de benefício quando a economia ainda não está consolidada (escala 1–5).",

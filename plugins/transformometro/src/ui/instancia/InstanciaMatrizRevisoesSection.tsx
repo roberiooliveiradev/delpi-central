@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  FieldLabel,
   ImpactEffortMatrix,
   ImpactEffortMatrixLegend,
   impactEffortMatrixTransformometroClasses,
@@ -9,11 +10,13 @@ import {
 
 import { ChartCard } from "../../components/ChartCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { TableHeader } from "../../components/TableHeader";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   MATRIZ_QUADRANTE_BADGE_CLASS,
   MATRIZ_QUADRANTE_LABELS,
+  MATRIZ_QUADRANTE_LABELS_GRAFICO,
 } from "../../content/matrizImpactoLabels";
 import {
   fetchInstanciaMatrizImpactoEsforco,
@@ -34,6 +37,7 @@ type Props = {
 };
 
 const M = TM_HELP_TOOLTIPS.matriz;
+const C = TM_HELP_TOOLTIPS.columns;
 
 function formatScore(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
@@ -95,7 +99,11 @@ export function InstanciaMatrizRevisoesSection({
 
   return (
     <section className="tm-instancia-matrix-section">
-      <ChartCard title={`Priorização das revisões — ${instanciaLabel}`} hint={M.instanciaPriorizacao}>
+      <ChartCard
+        title={`Priorização das revisões — ${instanciaLabel}`}
+        titleHint={M.instanciaPriorizacao}
+        hint="Ranking e posicionamento de todas as revisões desta melhoria."
+      >
         {loading ? (
           <LoadingActivityCard
             title="Carregando priorização"
@@ -104,28 +112,47 @@ export function InstanciaMatrizRevisoesSection({
           />
         ) : (
           <>
-            <ImpactEffortMatrix
-              points={scatterPoints}
-              activePointId={activeRevisaoId}
-              threshold={threshold}
-              classNames={impactEffortMatrixTransformometroClasses()}
-              onPointSelect={onNavigateToRevisao ? handlePointSelect : undefined}
-              emptyMessage={M.semDados}
-              ariaLabel={M.graficoInstanciaAria}
-            />
-            <ImpactEffortMatrixLegend quadrantLabels={MATRIZ_QUADRANTE_LABELS} />
+            <div className="tm-impact-effort-section__plot-wrap">
+              <ImpactEffortMatrix
+                points={scatterPoints}
+                activePointId={activeRevisaoId}
+                threshold={threshold}
+                classNames={impactEffortMatrixTransformometroClasses()}
+                quadrantLabels={MATRIZ_QUADRANTE_LABELS_GRAFICO}
+                onPointSelect={onNavigateToRevisao ? handlePointSelect : undefined}
+                emptyMessage={M.semDados}
+                ariaLabel={M.graficoInstanciaAria}
+              />
+            </div>
+
+            <div className="tm-impact-effort-section__legend-wrap">
+              <FieldLabel
+                className="tm-field__label tm-impact-effort-section__legend-label"
+                label="Quadrantes"
+                hint={M.quadrantes}
+              />
+              <ImpactEffortMatrixLegend
+                className="tm-impact-effort-section__legend"
+                quadrantLabels={MATRIZ_QUADRANTE_LABELS}
+              />
+            </div>
 
             <div className="tm-instancia-matrix-section__table-wrap">
+              <FieldLabel
+                className="tm-field__label tm-instancia-matrix-section__table-label"
+                label="Ranking por prioridade"
+                hint={M.rankingTabela}
+              />
               <table className="tm-instancia-matrix-section__table">
                 <thead>
                   <tr>
-                    <th scope="col">Versão</th>
-                    <th scope="col">Cenário</th>
-                    <th scope="col">Impacto</th>
-                    <th scope="col">Esforço</th>
-                    <th scope="col">Quadrante</th>
-                    <th scope="col">Líquida anual</th>
-                    <th scope="col">Ativa</th>
+                    <th scope="col"><TableHeader label="Versão" hint={C.versao} /></th>
+                    <th scope="col"><TableHeader label="Cenário" hint={C.cenario} /></th>
+                    <th scope="col"><TableHeader label="Impacto" hint={M.impactoScore} /></th>
+                    <th scope="col"><TableHeader label="Esforço" hint={M.esforcoScore} /></th>
+                    <th scope="col"><TableHeader label="Quadrante" hint={M.quadranteColuna} /></th>
+                    <th scope="col"><TableHeader label="Líquida anual" hint={M.liquidaAnualColuna} /></th>
+                    <th scope="col"><TableHeader label="Ativa" hint={M.revisaoAtivaColuna} /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -165,7 +192,7 @@ export function InstanciaMatrizRevisoesSection({
                             className={`tm-matrix-badge ${badgeClass}`}
                             title={
                               isBaseline
-                                ? "Referência (baseline)"
+                                ? "Referência (linha de base)"
                                 : `Impacto ${formatScore(ponto.impacto)} · Esforço ${formatScore(ponto.esforco)} · ${MATRIZ_QUADRANTE_LABELS[ponto.quadrante]}`
                             }
                           >

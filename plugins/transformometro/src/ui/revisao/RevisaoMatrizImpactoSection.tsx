@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   FieldLabel,
+  HelpTooltip,
   ImpactEffortMatrix,
   ImpactEffortMatrixLegend,
   impactEffortMatrixTransformometroClasses,
@@ -29,6 +30,7 @@ import { formatCurrency, formatHours } from "../../utils/format";
 import {
   MATRIZ_CONFIANCA_LABELS,
   MATRIZ_QUADRANTE_LABELS,
+  MATRIZ_QUADRANTE_LABELS_GRAFICO,
 } from "../../content/matrizImpactoLabels";
 
 type Props = {
@@ -220,11 +222,20 @@ export function RevisaoMatrizImpactoSection({
     <section className="tm-impact-effort-section">
       <ChartCard
         title="Matriz impacto × esforço"
-        hint={M.titulo}
+        titleHint={M.titulo}
+        hint="Posicionamento desta revisão frente às demais comparáveis da melhoria."
         toolbar={
           rateioExcedeGanho ? (
-            <span className="tm-matrix-rateio-chip" role="status">
+            <span
+              className="tm-matrix-rateio-chip"
+              role="status"
+              title={M.rateioExcedeGanho}
+            >
               Rateio &gt; ganho
+              <HelpTooltip
+                content={M.rateioExcedeGanho}
+                ariaLabel="Ajuda: rateio excede ganho"
+              />
             </span>
           ) : null
         }
@@ -240,16 +251,26 @@ export function RevisaoMatrizImpactoSection({
         ) : (
           <>
             <div className="tm-impact-effort-section__toolbar">
-              <SegmentToggle
-                ariaLabel={M.modo}
-                idPrefix="tm-matrix-modo"
-                value={modo}
-                onChange={setModo}
-                options={MODO_OPTIONS}
-              />
+              <div className="tm-impact-effort-section__modo">
+                <FieldLabel
+                  className="tm-field__label tm-impact-effort-section__modo-label"
+                  label={M.modoLabel}
+                  hint={M.modo}
+                />
+                <SegmentToggle
+                  ariaLabel={M.modo}
+                  idPrefix="tm-matrix-modo"
+                  value={modo}
+                  onChange={setModo}
+                  options={MODO_OPTIONS}
+                />
+              </div>
               <p className="tm-impact-effort-section__confianca">
-                <span className="tm-impact-effort-section__confianca-label">{M.confianca}:</span>{" "}
-                {confiancaLabel}
+                <FieldLabel
+                  className="tm-impact-effort-section__confianca-label"
+                  label={`${M.confiancaLabel}: ${confiancaLabel}`}
+                  hint={M.confianca}
+                />
               </p>
             </div>
 
@@ -265,6 +286,7 @@ export function RevisaoMatrizImpactoSection({
                 activePointId={revisao.revisao_id}
                 threshold={data?.threshold ?? 50}
                 classNames={impactEffortMatrixTransformometroClasses()}
+                quadrantLabels={MATRIZ_QUADRANTE_LABELS_GRAFICO}
                 onPointSelect={onNavigate ? handlePointSelect : undefined}
                 emptyMessage={M.semDados}
                 ariaLabel={M.graficoAria}
@@ -272,13 +294,26 @@ export function RevisaoMatrizImpactoSection({
             </div>
 
             <div className="tm-impact-effort-section__summary">
-              <p className="tm-impact-effort-section__headline">
-                Impacto {ponto.impacto.toLocaleString("pt-BR")} · Esforço{" "}
-                {ponto.esforco.toLocaleString("pt-BR")} · {quadranteLabel}
-              </p>
+              <div className="tm-impact-effort-section__summary-head">
+                <FieldLabel
+                  className="tm-field__label tm-impact-effort-section__summary-label"
+                  label="Posição na matriz"
+                  hint={M.posicaoAtual}
+                />
+                <p className="tm-impact-effort-section__headline">
+                  Impacto {ponto.impacto.toLocaleString("pt-BR")} · Esforço{" "}
+                  {ponto.esforco.toLocaleString("pt-BR")} · {quadranteLabel}
+                </p>
+              </div>
               {metricas ? (
-                <p className="ds-hint">
-                  {M.resumoEconomia} {formatCurrency(metricas.economia_liquida_anual)}
+                <p className="ds-hint tm-impact-effort-section__metricas">
+                  <FieldLabel
+                    className="tm-field__label tm-impact-effort-section__metricas-label"
+                    label={M.resumoEconomia}
+                    hint={M.liquidaAnualResumo}
+                  />
+                  {" "}
+                  {formatCurrency(metricas.economia_liquida_anual)}
                   {metricas.roi_medio != null ? ` · ROI ${metricas.roi_medio.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}×` : ""}
                   {metricas.payback_meses != null
                     ? ` · Payback ${metricas.payback_meses.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} meses`
@@ -290,16 +325,31 @@ export function RevisaoMatrizImpactoSection({
               ) : null}
             </div>
 
-            <ImpactEffortMatrixLegend
-              className="tm-impact-effort-section__legend"
-              quadrantLabels={MATRIZ_QUADRANTE_LABELS}
-            />
+            <div className="tm-impact-effort-section__legend-wrap">
+              <FieldLabel
+                className="tm-field__label tm-impact-effort-section__legend-label"
+                label="Quadrantes"
+                hint={M.quadrantes}
+              />
+              <ImpactEffortMatrixLegend
+                className="tm-impact-effort-section__legend"
+                quadrantLabels={MATRIZ_QUADRANTE_LABELS}
+              />
+            </div>
 
             <CollapsiblePanel
               className="tm-matrix-manual"
               triggerClassName="tm-matrix-manual__trigger"
               defaultOpen={modo !== "auto"}
-              header={<span className="tm-matrix-manual__trigger-text">{M.ajustesManuais}</span>}
+              header={
+                <span className="tm-matrix-manual__trigger-inner">
+                  Ajustes qualitativos
+                  <HelpTooltip
+                    content={M.ajustesManuais}
+                    ariaLabel="Ajuda: ajustes qualitativos"
+                  />
+                </span>
+              }
               bodyClassName="tm-matrix-manual__body"
             >
               <div className="tm-matrix-manual__grid">
@@ -369,7 +419,13 @@ export function RevisaoMatrizImpactoSection({
                   </button>
                 </div>
               ) : (
-                <p className="ds-hint">{M.modoAutomaticoHint}</p>
+                <p className="ds-hint tm-matrix-manual__hint">
+                  {M.modoAutomaticoHint}
+                  <HelpTooltip
+                    content={M.modo}
+                    ariaLabel="Ajuda: modo automático"
+                  />
+                </p>
               )}
             </CollapsiblePanel>
           </>

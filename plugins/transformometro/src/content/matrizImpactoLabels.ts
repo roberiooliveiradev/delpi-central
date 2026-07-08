@@ -7,9 +7,17 @@ import type {
 } from "../data/api/transformometroMatrixApi";
 
 export const MATRIZ_QUADRANTE_LABELS: ImpactEffortQuadrantLabels = {
-  quick_win: "Quick win",
+  quick_win: "Ganho rápido",
   strategic: "Estratégico",
   fill_in: "Complementar",
+  rethink: "Reavaliar",
+};
+
+/** Rótulos no gráfico (plural, como nos eixos da matriz). */
+export const MATRIZ_QUADRANTE_LABELS_GRAFICO: ImpactEffortQuadrantLabels = {
+  quick_win: "Ganhos rápidos",
+  strategic: "Estratégicos",
+  fill_in: "Complementares",
   rethink: "Reavaliar",
 };
 
@@ -49,7 +57,7 @@ export function resolveMatrixTreeBadge(input: {
     return {
       label: "—",
       className: "tm-matrix-badge--neutral",
-      title: "Referência (baseline)",
+      title: "Referência (linha de base)",
     };
   }
   const ponto = input.ponto;

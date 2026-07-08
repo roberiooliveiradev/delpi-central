@@ -1299,9 +1299,17 @@
 
 .dashboard-transformometro .tm-instancia-matrix-section__table-wrap {
   margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   overflow-x: auto;
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
+  padding: 10px 12px 12px;
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__table-label {
+  padding: 0 2px;
 }
 
 .dashboard-transformometro .tm-instancia-matrix-section__table {
@@ -4548,10 +4556,21 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-impact-effort-section__toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
+  gap: 12px 16px;
   margin-bottom: 12px;
+}
+
+.dashboard-transformometro .tm-impact-effort-section__modo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(100%, 20rem);
+}
+
+.dashboard-transformometro .tm-impact-effort-section__modo-label {
+  margin: 0;
 }
 
 .dashboard-transformometro .tm-impact-effort-section__confianca {
@@ -4561,8 +4580,42 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-impact-effort-section__confianca-label {
+  margin: 0;
   font-weight: 600;
   color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-impact-effort-section__summary-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-transformometro .tm-impact-effort-section__summary-label,
+.dashboard-transformometro .tm-impact-effort-section__metricas-label,
+.dashboard-transformometro .tm-impact-effort-section__legend-label,
+.dashboard-transformometro .tm-instancia-matrix-section__table-label {
+  margin: 0;
+  font-size: var(--ds-font-xs);
+}
+
+.dashboard-transformometro .tm-impact-effort-section__metricas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 6px 0 0;
+}
+
+.dashboard-transformometro .tm-impact-effort-section__legend-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.dashboard-transformometro .tm-impact-effort-section__legend {
+  margin-top: 0;
 }
 
 .dashboard-transformometro .tm-impact-effort-section__plot-wrap {
@@ -4603,6 +4656,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-matrix-rateio-chip {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
@@ -4626,13 +4680,22 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   color: var(--ds-title);
 }
 
-.dashboard-transformometro .tm-matrix-manual__trigger-text {
+.dashboard-transformometro .tm-matrix-manual__trigger-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex: 1;
   min-width: 0;
-  font-size: var(--ds-font-sm);
-  font-weight: 500;
-  color: var(--ds-text-muted);
-  line-height: 1.4;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ds-title);
+}
+
+.dashboard-transformometro .tm-matrix-manual__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .dashboard-transformometro .tm-matrix-manual__body {
