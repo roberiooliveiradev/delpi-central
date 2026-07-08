@@ -45,7 +45,9 @@ import "./index.css";
 | `StateAlert.tsx` | `createDashboardStateBanner` | Alertas de erro/sucesso |
 | `index.ts` | barrel | Import único para páginas |
 
-`KaizenPageHeader` (`src/components/KaizenPageHeader.tsx`) usa `PageHeader` brand do pacote.
+`KaizenPageHeader` (`src/components/KaizenPageHeader.tsx`) usa `PageHeader` brand via `ui/PageHeader.tsx`.
+
+Barrel `components/data/index.ts` — DataTable, DataTableSection, Pagination, LoadingActivityCard.
 
 `CategoryMultiSelectField` (`src/components/form/`) usa `createDashboardCreatableMultiSelectField`.
 

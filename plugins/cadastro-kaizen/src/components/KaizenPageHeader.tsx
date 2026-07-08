@@ -4,7 +4,7 @@ import { ArrowLeft, Download, Sparkles, Upload } from "lucide-react";
 import {
   PageHeader as PluginPageHeader,
   pageHeaderBrandBemClasses,
-} from "@delpi/plugin-ui";
+} from "./ui/PageHeader";
 
 const LABELS = {
   refresh: "Atualizar",

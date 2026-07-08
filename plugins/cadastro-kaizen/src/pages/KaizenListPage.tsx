@@ -8,8 +8,8 @@ import {
   importKaizenRecords,
   type KaizenExportFile,
 } from "../api/kaizenApi";
-import type { DataTableColumn } from "../components/data/DataTable";
-import { DataTableSection } from "../components/data/DataTableSection";
+import type { DataTableColumn } from "../components/data";
+import { DataTableSection } from "../components/data";
 import {
   KaizenListHeaderActions,
   KaizenPageHeader,
