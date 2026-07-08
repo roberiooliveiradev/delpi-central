@@ -1,10 +1,11 @@
-import { useMemo, useState, type CSSProperties, type ComponentType } from "react";
-import { Search, X } from "lucide-react";
+import { useMemo, useState, type CSSProperties } from "react";
+import { Search, X, type LucideIcon } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 
 import {
-  CURATED_LUCIDE_ICON_NAMES,
-  listLucideIconNames,
+  countGroupedLucideIcons,
+  countLucideCatalogSize,
+  groupLucideIconsBySection,
   resolveLucideIcon,
   toKebabCase,
   toPascalCaseFromKebab,
@@ -18,6 +19,8 @@ export type LucideIconPickerLabels = {
   clear?: string;
   close?: string;
   showingLimit?: string;
+  catalogHint?: string;
+  noResults?: string;
 };
 
 export type LucideIconPickerProps = {
@@ -25,7 +28,10 @@ export type LucideIconPickerProps = {
   /** kebab-case Lucide, ex.: "eye". `null` = remover. */
   onChange: (iconKebab: string | null) => void;
   onClose?: () => void;
-  /** Se false, só a lista curada. Default true. */
+  /**
+   * Se true, a busca fica limitada ao catálogo curado.
+   * Se false (recomendado no CX), a busca cobre o Lucide completo.
+   */
   curatedOnly?: boolean;
   maxResults?: number;
   title?: string;
@@ -41,9 +47,7 @@ type IconCardProps = {
 };
 
 function IconCard({ name, active, onSelect }: IconCardProps) {
-  const Icon = (LucideIcons as unknown as Record<string, ComponentType<{ size?: number }> | undefined>)[
-    name
-  ];
+  const Icon = (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[name];
   if (!Icon) return null;
   const kebab = toKebabCase(name);
 
@@ -57,9 +61,11 @@ function IconCard({ name, active, onSelect }: IconCardProps) {
       }
       onClick={onSelect}
       title={kebab}
+      aria-label={kebab}
+      aria-pressed={active}
     >
       <span className="delpi-ui-lucide-icon-card__icon" aria-hidden="true">
-        <Icon size={22} />
+        <Icon size={32} strokeWidth={1.75} />
       </span>
       <span className="delpi-ui-lucide-icon-card__label">{kebab}</span>
     </button>
@@ -68,21 +74,23 @@ function IconCard({ name, active, onSelect }: IconCardProps) {
 
 const DEFAULT_LABELS: Required<LucideIconPickerLabels> = {
   title: "Selecionar ícone",
-  searchPlaceholder: "Buscar ícone (ex: eye, heart, star…)",
+  searchPlaceholder: "Buscar ícone (ex: eye, heart…)",
   selectedHint: "Selecionado:",
-  emptyHint: "(sem ícone)",
+  emptyHint: "Nenhum ícone selecionado",
   clear: "Remover ícone",
   close: "Fechar",
   showingLimit: "Mostrando {limit} resultados. Refine a busca.",
+  catalogHint: "Browse por seção ou busque entre {count} ícones Lucide.",
+  noResults: "Nenhum ícone encontrado para essa busca.",
 };
 
-/** Painel de seleção Lucide (lista curada ou completa). */
+/** Painel de seleção Lucide (seções + busca no catálogo completo). */
 export function LucideIconPicker({
   value,
   onChange,
   onClose,
-  curatedOnly = true,
-  maxResults = 360,
+  curatedOnly = false,
+  maxResults = 480,
   title,
   labels,
   className,
@@ -91,14 +99,22 @@ export function LucideIconPicker({
   const [query, setQuery] = useState("");
   const L = { ...DEFAULT_LABELS, ...labels };
 
-  const allIcons = useMemo(() => {
-    if (curatedOnly) {
-      return CURATED_LUCIDE_ICON_NAMES.map((kebab) => toPascalCaseFromKebab(kebab)).filter(
-        (pascal) => Boolean((LucideIcons as Record<string, unknown>)[pascal]),
-      );
-    }
-    return listLucideIconNames();
-  }, [curatedOnly]);
+  const catalogSize = useMemo(
+    () => (curatedOnly ? 0 : countLucideCatalogSize()),
+    [curatedOnly],
+  );
+
+  const sections = useMemo(
+    () =>
+      groupLucideIconsBySection({
+        curatedOnly,
+        query,
+        maxResults,
+      }),
+    [curatedOnly, query, maxResults],
+  );
+
+  const visibleCount = useMemo(() => countGroupedLucideIcons(sections), [sections]);
 
   const normalizedSelectedPascal = useMemo(() => {
     const current = String(value ?? "").trim();
@@ -107,18 +123,9 @@ export function LucideIconPicker({
   }, [value]);
 
   const SelectedIcon = useMemo(() => resolveLucideIcon(value), [value]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return allIcons;
-    return allIcons.filter((pascal) => {
-      const kebab = toKebabCase(pascal);
-      return kebab.includes(q) || pascal.toLowerCase().includes(q);
-    });
-  }, [allIcons, query]);
-
-  const visible = filtered.slice(0, maxResults);
   const rootClass = ["delpi-ui-lucide-icon-picker", className].filter(Boolean).join(" ");
+  const hasQuery = Boolean(query.trim());
+  const truncated = hasQuery && !curatedOnly && catalogSize > 0 && visibleCount >= maxResults;
 
   return (
     <div className={rootClass} style={style} role="dialog" aria-label={title ?? L.title}>
@@ -131,49 +138,77 @@ export function LucideIconPicker({
             onClick={onClose}
             aria-label={L.close}
           >
-            <X size={17} aria-hidden="true" />
+            <X size={18} aria-hidden="true" />
           </button>
         ) : null}
       </header>
 
       <div className="delpi-ui-lucide-icon-picker__body">
         <label className="delpi-ui-lucide-icon-picker__search-wrap">
-          <Search size={16} aria-hidden="true" />
+          <Search size={18} className="delpi-ui-lucide-icon-picker__search-icon" aria-hidden="true" />
           <input
             className="delpi-ui-lucide-icon-picker__search"
             placeholder={L.searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
           />
+          {query ? (
+            <button
+              type="button"
+              className="delpi-ui-lucide-icon-picker__search-clear"
+              onClick={() => setQuery("")}
+              aria-label="Limpar busca"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          ) : null}
         </label>
 
         <div className="delpi-ui-lucide-icon-picker__meta">
           {value ? (
             <div className="delpi-ui-lucide-icon-picker__selected">
               <span>{L.selectedHint}</span>
-              {SelectedIcon ? <SelectedIcon size={18} aria-hidden="true" /> : null}
+              {SelectedIcon ? <SelectedIcon size={20} aria-hidden="true" /> : null}
               <code>{value.includes("-") ? value : toKebabCase(value)}</code>
             </div>
           ) : (
             <span className="delpi-ui-lucide-icon-picker__empty">{L.emptyHint}</span>
           )}
+          {!hasQuery && !curatedOnly && catalogSize > 0 ? (
+            <span className="delpi-ui-lucide-icon-picker__catalog-hint">
+              {L.catalogHint.replace("{count}", String(catalogSize))}
+            </span>
+          ) : null}
         </div>
 
-        <div className="delpi-ui-lucide-icon-picker__grid">
-          {visible.map((pascal) => (
-            <IconCard
-              key={pascal}
-              name={pascal}
-              active={pascal === normalizedSelectedPascal}
-              onSelect={() => {
-                onChange(toKebabCase(pascal));
-                onClose?.();
-              }}
-            />
-          ))}
-        </div>
+        {sections.length === 0 ? (
+          <p className="delpi-ui-lucide-icon-picker__hint">{L.noResults}</p>
+        ) : (
+          <div className="delpi-ui-lucide-icon-picker__sections">
+            {sections.map((section) => (
+              <section key={section.id} className="delpi-ui-lucide-icon-picker__section">
+                <h3 className="delpi-ui-lucide-icon-picker__section-title">{section.label}</h3>
+                <div className="delpi-ui-lucide-icon-picker__grid">
+                  {section.icons.map((pascal) => (
+                    <IconCard
+                      key={`${section.id}-${pascal}`}
+                      name={pascal}
+                      active={pascal === normalizedSelectedPascal}
+                      onSelect={() => {
+                        onChange(toKebabCase(pascal));
+                        onClose?.();
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
 
-        {filtered.length > maxResults ? (
+        {truncated ? (
           <p className="delpi-ui-lucide-icon-picker__hint">
             {L.showingLimit.replace("{limit}", String(maxResults))}
           </p>

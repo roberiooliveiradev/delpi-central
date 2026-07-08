@@ -129,7 +129,7 @@ export function PointIllustrationEditor({
             <div className="cx-icon-attach__picker">
               <LucideIconPicker
                 value={pointIcon}
-                curatedOnly
+                curatedOnly={false}
                 onChange={(next) => {
                   if (next) onClearImage();
                   onChangeIcon(next);

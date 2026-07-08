@@ -149,10 +149,16 @@ export {
 
 export {
   CURATED_LUCIDE_ICON_NAMES,
+  LUCIDE_ICON_SECTIONS,
+  countGroupedLucideIcons,
+  countLucideCatalogSize,
+  groupLucideIconsBySection,
   isLucideIconName,
   listLucideIconNames,
   resolveLucideIcon,
   toKebabCase,
   toPascalCaseFromKebab,
   type CuratedLucideIconName,
+  type LucideIconSectionDef,
+  type LucideIconSectionView,
 } from "./lucideIconResolver";

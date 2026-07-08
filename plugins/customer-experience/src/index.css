@@ -6,6 +6,11 @@
   --cx-border: var(--border, #e4e7ec);
   --cx-radius: 18px;
   --cx-pad: 20px;
+  --delpi-ui-accent: var(--cx-accent);
+  --delpi-ui-surface: var(--cx-card-bg);
+  --delpi-ui-text: var(--cx-text);
+  --delpi-ui-border: var(--cx-border);
+  --delpi-ui-muted: var(--cx-muted);
   color: var(--cx-text);
   font-family: Inter, system-ui, sans-serif;
 }
@@ -1626,6 +1631,11 @@
 
 .cx-icon-attach__picker {
   margin-top: 4px;
+  min-width: 0;
+}
+
+.cx-icon-attach__picker .delpi-ui-lucide-icon-picker {
+  max-height: min(72vh, 38rem);
 }
 
 .cx-muted {

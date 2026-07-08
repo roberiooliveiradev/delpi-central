@@ -362,16 +362,20 @@ Consumidores podem **só** passar `className` nas props sem usar as classes defa
 
 ### `LucideIconPicker`
 
-Painel centralizado para escolher ícones Lucide (lista curada por padrão). Valor em **kebab-case** (ex.: `eye`).
+Painel centralizado para escolher ícones Lucide com **seções** e busca no catálogo completo. Valor em **kebab-case** (ex.: `eye`).
 
 | Prop | Tipo | Default | Descrição |
 |------|------|---------|-----------|
 | `value` | `string \| null` | — | Ícone atual (kebab ou Pascal) |
 | `onChange` | `(icon: string \| null) => void` | — | `null` remove |
 | `onClose` | `() => void` | — | Fecha (botão / após escolher) |
-| `curatedOnly` | `boolean` | `true` | Só catálogo de negócio (~50) |
-| `maxResults` | `number` | `360` | Limite na lista completa |
+| `curatedOnly` | `boolean` | `false` | Se `true`, busca só no catálogo curado |
+| `maxResults` | `number` | `480` | Limite de matches na busca completa |
 | `labels` | `LucideIconPickerLabels` | PT-BR | Textos do painel |
+
+Tokens: `--delpi-ui-surface`, `--delpi-ui-text`, `--delpi-ui-border`, `--delpi-ui-muted`, `--delpi-ui-accent` (claro/escuro via tema do plugin).
+
+Helpers: `resolveLucideIcon`, `groupLucideIconsBySection`, `LUCIDE_ICON_SECTIONS`, `CURATED_LUCIDE_ICON_NAMES`, `listLucideIconNames`.
 
 ### `LucideIconByName`
 
@@ -380,8 +384,6 @@ Renderiza um ícone Lucide pelo nome.
 ```ts
 import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 ```
-
-Helpers: `resolveLucideIcon`, `CURATED_LUCIDE_ICON_NAMES`, `toKebabCase`, `toPascalCaseFromKebab`.
 
 ---
 
