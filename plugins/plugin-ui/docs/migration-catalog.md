@@ -135,7 +135,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
 | `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
 | `auditoria-5s` | — | — | ✅ | ✅ | ✅ | — | ChartCard + AnalyticsKpi + FilterBarShell F2 |
-| `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
+| `pedidos-venda-abertos` | — | ✅ | ✅ | — | ✅ | — | PageHeader F3 + Pagination/KpiCard/MultiSelect/FilterBarShell F2 |
 | `inspecoes-entrada` | ✅ | — | ✅ | — | ✅ | — | PageHeader + Pagination + KpiCard + FilterBarShell F2/F3 |
 | `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + forms F3 (TextField, TableHeaderCell, FilterCheckbox) |
 | `cadastro-kaizen` | — | ✅ | FiltersRow + FilterSelectField + createKaizenKpiCard + SectionCard + forms F2/F3 |
@@ -183,7 +183,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 
 | Plugin | F1 help | F2/F3 componentes |
 |--------|---------|-------------------|
-| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard |
+| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard, FilterBarShell |
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
 | `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard | `operationalUnitLabels` |

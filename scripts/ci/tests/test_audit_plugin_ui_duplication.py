@@ -71,12 +71,11 @@ class AuditPluginUiDuplicationTest(unittest.TestCase):
         self.assertTrue(any("alias Vite" in f.message for f in findings))
 
     def test_audit_respects_allowlist(self) -> None:
-        manifest = {"libraries": [{"directory": "plugin-ui"}]}
         with tempfile.TemporaryDirectory() as tmp:
-            plugin_dir = Path(tmp) / "pedidos-venda-abertos"
-            target = plugin_dir / "src/components/FilterBar.tsx"
+            plugin_dir = Path(tmp) / "maintenance"
+            target = plugin_dir / "src/components/DataTableSection.tsx"
             target.parent.mkdir(parents=True)
-            target.write_text("export function FilterBar() { return null; }\n", encoding="utf-8")
+            target.write_text("export function DataTableSection() { return null; }\n", encoding="utf-8")
             (plugin_dir / "package.json").write_text("{}", encoding="utf-8")
 
             with mock.patch(
