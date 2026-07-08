@@ -234,6 +234,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | `EmptyState` / `LoadingState` | controle-retrabalhos, financeiro-centro-custo | ✅ F3.7 |
 | `EditableTableCell` / `NativeSelectControl` | maintenance, PAC, kaizen | ✅ F3.8 |
 | Forms residual (a5s / QL / CA Native*) | auditoria-5s, quality-labels, central-agendamento | ✅ F3.8 |
+| `BookingModal` Native* + `datetime-local` | central-agendamento | ✅ F3.9 |
 
 ### Fase 4 — Utilitários compartilhados (1 sprint)
 
@@ -283,8 +284,8 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `financeiro-centro-custo` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ CompactPagination ✅ | PageHeader ✅ Empty/Loading ✅ | sim |
 | `pedidos-venda-abertos` | — | Pagination ✅ KpiCard ✅ MultiSelect ✅ FilterBarShell ✅ | PageHeader | sim |
 | `auditoria-5s` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ | AuditHeaderForm Native* ✅ | sim |
-| `quality-labels` | — | — | CertificateFormFields Native* ✅ | sim |
-| `central-agendamento` | — | — | ResourceFormModal Native* ✅ | sim |
+| `quality-labels` | — | — | CertificateFormFields + Admin form Native* ✅ | sim |
+| `central-agendamento` | — | — | ResourceFormModal + BookingModal Native* ✅ | sim |
 | `tv-dashboard` | ✅ | — | — | sim |
 | `portal` | ❌ fora de escopo | — | — | N/A (shell) |
 

@@ -269,7 +269,7 @@ Campos nativos label+controle para plugins que estilizam `<input>`/`<select>`/`<
 
 | Export | Descrição |
 |--------|-----------|
-| `TextField` / `SelectField` / `TextAreaField` | Campo com `FormFieldShell` |
+| `TextField` / `SelectField` / `TextAreaField` | Campo com `FormFieldShell` (`type`: `text` \| `date` \| `datetime-local` \| `number`) |
 | `FormFieldShell` | Label + hint + slot children (participantes, multiselect custom) |
 | `formFieldShellKaizenClasses` | BEM `{prefix}-field`, `{prefix}-span-2` |
 

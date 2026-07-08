@@ -45,6 +45,11 @@ import { AuditMetadataModal } from "../components/AuditMetadataModal";
 import { CertificateEditor } from "../components/CertificateEditor";
 import { CertificateFormFields } from "../components/CertificateFormFields";
 import {
+  QlNativeSelectField,
+  QlNativeTextAreaField,
+  QlNativeTextField,
+} from "../components/qlFormFields";
+import {
   buildEmptyDraft,
   formToSavePayload,
   syncDraftFromInspection,
@@ -423,62 +428,51 @@ export function QualityLabelsAdminPage() {
                   </div>
                 </label>
 
-                <label className="ql-field">
-                  <span className="ql-label-text">Unidade (opcional)</span>
-                  <select
-                    className="ql-input"
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                  >
-                    <option value="">Todas as unidades</option>
-                    {OPERATIONAL_UNIT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <QlNativeSelectField
+                  id="ql-admin-branch"
+                  label="Unidade (opcional)"
+                  value={branch}
+                  onChange={setBranch}
+                  controlClassName="ql-input"
+                  placeholderOption="Todas as unidades"
+                  options={OPERATIONAL_UNIT_OPTIONS.map((opt) => ({
+                    value: opt.value,
+                    label: opt.label,
+                  }))}
+                />
 
-                <label className="ql-field">
-                  <span className="ql-label-text">Resultado</span>
-                  <select
-                    className="ql-input"
-                    value={result}
-                    onChange={(e) => setResult(e.target.value as QualityLabelResult)}
-                  >
-                    {RESULT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <QlNativeSelectField
+                  id="ql-admin-result"
+                  label="Resultado"
+                  value={result}
+                  onChange={(value) => setResult(value as QualityLabelResult)}
+                  controlClassName="ql-input"
+                  options={RESULT_OPTIONS}
+                />
 
-                <label className="ql-field">
-                  <span className="ql-label-text">Peças inspecionadas (opcional)</span>
-                  <input
-                    className="ql-input"
-                    type="number"
-                    min={0}
-                    step={1}
-                    inputMode="numeric"
-                    value={inspectedQuantity}
-                    onChange={(e) => setInspectedQuantity(e.target.value)}
-                    placeholder="Ex.: 10"
-                  />
-                </label>
+                <QlNativeTextField
+                  id="ql-admin-inspected"
+                  label="Peças inspecionadas (opcional)"
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  value={inspectedQuantity}
+                  onChange={setInspectedQuantity}
+                  placeholder="Ex.: 10"
+                  controlClassName="ql-input"
+                />
               </div>
 
-              <label className="ql-field">
-                <span className="ql-label-text">Observações (opcional)</span>
-                <textarea
-                  className="ql-input ql-textarea"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={2}
-                  placeholder="Notas da inspeção"
-                />
-              </label>
+              <QlNativeTextAreaField
+                id="ql-admin-notes"
+                label="Observações (opcional)"
+                value={notes}
+                onChange={setNotes}
+                rows={2}
+                span={false}
+                placeholder="Notas da inspeção"
+                controlClassName="ql-input ql-textarea"
+              />
 
               {lookup && (
                 <div className="ql-lookup">
