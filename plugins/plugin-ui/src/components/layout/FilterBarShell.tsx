@@ -19,14 +19,16 @@ export type FilterBarShellProps = {
 
 export function filterBarShellBemClasses(
   prefix: string,
-  options?: { withGrid?: boolean },
+  options?: { withGrid?: boolean; block?: string },
 ): FilterBarShellClassNames {
-  const bar = `${prefix}-filter-bar`;
+  const block = options?.block ?? "filter-bar";
+  const bar = `${prefix}-${block}`;
   const card = `${prefix}-card`;
+  const useCard = block === "filter-bar";
 
   return {
     root: bar,
-    rootWithCard: `${card} ${bar}`,
+    rootWithCard: useCard ? `${card} ${bar}` : bar,
     grid: options?.withGrid ? `${bar}__grid` : undefined,
   };
 }
@@ -79,14 +81,20 @@ export type DashboardFilterBarShellProps = Omit<FilterBarShellProps, "classNames
 export function createFilterBarShell(config: {
   prefix: string;
   withGrid?: boolean;
+  /** BEM block (default `filter-bar`). Ex.: `analytics-filters`. */
+  block?: string;
+  /** Se true, usa só `root` (sem classe de card). */
+  embeddedByDefault?: boolean;
   defaultAriaLabel?: string;
 }) {
   const classNames = filterBarShellBemClasses(config.prefix, {
     withGrid: config.withGrid,
+    block: config.block,
   });
 
   return function DashboardFilterBarShell({
     ariaLabel,
+    embedded,
     ...props
   }: DashboardFilterBarShellProps) {
     return (
@@ -94,6 +102,7 @@ export function createFilterBarShell(config: {
         classNames={classNames}
         ariaLabel={ariaLabel ?? config.defaultAriaLabel}
         layout={config.withGrid ? "grid" : "inline"}
+        embedded={embedded ?? config.embeddedByDefault ?? false}
         {...props}
       />
     );

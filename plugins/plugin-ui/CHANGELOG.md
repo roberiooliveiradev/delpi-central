@@ -9,6 +9,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 - `FilterSelectField` em `createDashboardFiltersKit` (filtros com `<select>`).
 - `createKaizenKpiCard`, `simpleKpiKaizenBemClasses` e `simpleKpiKaizenToneClass` (`SimpleKpiCard` estilo kaizen).
 - `createAnalyticsKpiCard` / `simpleKpiAnalyticsBemClasses` (KPI `analytics-kpi` — consumidor `auditoria-5s`).
+- `createFilterBarShell`: opção `block` BEM + `embeddedByDefault` (ex.: `a5s-analytics-filters`).
 - Documentação da migração completa de `cadastro-kaizen`: [UI-PLUGIN-UI.md](../cadastro-kaizen/docs/UI-PLUGIN-UI.md).
 - Manifesto `plugins/shared-libraries.manifest.json` e gate CI `check_plugin_docker_shared_libraries.py`.
 - Documentação Docker em `plugins/docker/README.md` e fragmento de Dockerfile.

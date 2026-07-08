@@ -2628,16 +2628,26 @@
   gap: 14px;
 }
 
-.a5s-analytics-filters__grid label {
+.a5s-analytics-filters__grid label,
+.a5s-analytics-filter-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-size: 0.85rem;
   color: var(--a5s-muted);
+  min-width: 0;
+}
+
+.a5s-analytics-filter-field__label {
+  font-size: inherit;
+  color: inherit;
+  font-weight: 500;
 }
 
 .a5s-analytics-filters__grid input,
-.a5s-analytics-filters__grid select {
+.a5s-analytics-filters__grid select,
+.a5s-analytics-filter-field input,
+.a5s-analytics-filter-field select {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--a5s-border);
@@ -2648,8 +2658,10 @@
 .a5s-analytics-filters__actions {
   display: flex;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 0;
   flex-wrap: wrap;
+  grid-column: 1 / -1;
+  align-items: end;
 }
 
 .a5s-analytics-kpis {

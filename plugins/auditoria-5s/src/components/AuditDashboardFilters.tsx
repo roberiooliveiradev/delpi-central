@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 import type { AuditArea } from "../api/audit5sApi";
 import { SENSOS, SHIFTS } from "../constants/audit5s";
 import type { ChartGranularity } from "../types/auditDashboard";
+import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
 
 const STATUS_OPTIONS = [
   { value: "closed", label: "Encerradas" },
@@ -57,74 +58,66 @@ export function AuditDashboardFilters({
   onGranularityChange,
   onReload,
 }: Props) {
+  const areaOptions = areas.map((area) => ({ value: area.id, label: area.name }));
+  const sensoOptions = SENSOS.map((senso) => ({
+    value: String(senso.order),
+    label: `${senso.order} — ${senso.name}`,
+  }));
+
   return (
-    <section className="a5s-analytics-filters">
-      <div className="a5s-analytics-filters__grid">
-        <label>
-          Data inicial
-          <input type="date" value={dateStart} onChange={(e) => onDateStartChange(e.target.value)} />
-        </label>
-        <label>
-          Data final
-          <input type="date" value={dateEnd} onChange={(e) => onDateEndChange(e.target.value)} />
-        </label>
-        <label>
-          Área
-          <select value={areaId} onChange={(e) => onAreaIdChange(e.target.value)}>
-            <option value="">Todas</option>
-            {areas.map((area) => (
-              <option key={area.id} value={area.id}>
-                {area.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Turno
-          <select value={shift} onChange={(e) => onShiftChange(e.target.value)}>
-            <option value="">Todos</option>
-            {SHIFTS.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Senso
-          <select value={sensoOrder} onChange={(e) => onSensoOrderChange(e.target.value)}>
-            <option value="">Todos (nota geral)</option>
-            {SENSOS.map((senso) => (
-              <option key={senso.order} value={String(senso.order)}>
-                {senso.order} — {senso.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Status auditoria
-          <select value={auditStatus} onChange={(e) => onAuditStatusChange(e.target.value)}>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Granularidade
-          <select
-            value={granularity}
-            onChange={(e) => onGranularityChange(e.target.value as ChartGranularity)}
-          >
-            {GRANULARITY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+    <FilterBarShell>
+      <FilterInputField
+        id="a5s-filter-date-start"
+        label="Data inicial"
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id="a5s-filter-date-end"
+        label="Data final"
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
+      />
+      <FilterSelectField
+        id="a5s-filter-area"
+        label="Área"
+        value={areaId}
+        onChange={onAreaIdChange}
+        options={areaOptions}
+        placeholderOption="Todas"
+      />
+      <FilterSelectField
+        id="a5s-filter-shift"
+        label="Turno"
+        value={shift}
+        onChange={onShiftChange}
+        options={SHIFTS}
+        placeholderOption="Todos"
+      />
+      <FilterSelectField
+        id="a5s-filter-senso"
+        label="Senso"
+        value={sensoOrder}
+        onChange={onSensoOrderChange}
+        options={sensoOptions}
+        placeholderOption="Todos (nota geral)"
+      />
+      <FilterSelectField
+        id="a5s-filter-status"
+        label="Status auditoria"
+        value={auditStatus}
+        onChange={onAuditStatusChange}
+        options={STATUS_OPTIONS}
+      />
+      <FilterSelectField
+        id="a5s-filter-granularity"
+        label="Granularidade"
+        value={granularity}
+        onChange={(value) => onGranularityChange(value as ChartGranularity)}
+        options={GRANULARITY_OPTIONS}
+      />
       <div className="a5s-analytics-filters__actions">
         <button
           type="button"
@@ -136,6 +129,6 @@ export function AuditDashboardFilters({
           Atualizar
         </button>
       </div>
-    </section>
+    </FilterBarShell>
   );
 }
