@@ -11,7 +11,7 @@
 |--------|--------|--------|
 | S0 | Design lock — playbook, contrato API, schema, wireframe, `ImpactEffortMatrix` plugin-ui | ✅ doc + componente headless |
 | S1 | `RevisaoImpactEffortMatrixService` + GET instância/revisão | ✅ |
-| S2 | PUT overrides + migration V038 + audit | ⏳ pendente |
+| S2 | PUT overrides + migration V038 + audit | ✅ |
 | S3 | Seção no `RevisaoCadastroPanel` + API client | ⏳ pendente |
 | S4 | Badge árvore workspace + scatter instância | ⏳ pendente |
 | S5 | Visão processo multi-melhoria + export PNG | ⏳ backlog |
@@ -40,8 +40,18 @@
 - `GET /transformometro/revisoes/{revisao_id}/matriz-impacto-esforco`
 - Testes: `tests/test_revisao_impact_effort_matrix_service.py`
 
-## Próximo passo (S2)
+## Entregas S2
 
-1. Migration V038 `matriz_impacto_esforco` JSONB
-2. `PUT /revisoes/{id}/matriz-impacto-esforco` + audit
-3. Validação schema `revisao_matriz_impacto_esforco_v1`
+### API
+
+- Migration **V038** — coluna `revisoes.matriz_impacto_esforco` JSONB
+- Validação domínio `validate_revisao_matriz_impacto_esforco_v1` / `build_persisted_matriz_payload`
+- `PUT /transformometro/revisoes/{revisao_id}/matriz-impacto-esforco` + audit `revisao.matrix.updated`
+- `RevisaoRepository.update_matriz_impacto_esforco`
+- Testes: `tests/test_revisao_matriz_impacto_esforco_v1.py`
+
+## Próximo passo (S3)
+
+1. `transformometroMatrixApi.ts` — client GET/PUT
+2. `RevisaoMatrizImpactoSection` no `RevisaoCadastroPanel`
+3. Consumir `ImpactEffortMatrix` do `@delpi/plugin-ui` (render-only)

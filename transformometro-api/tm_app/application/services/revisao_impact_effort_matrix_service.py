@@ -8,6 +8,10 @@ from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
 from tm_app.domain import calc_rules
+from tm_app.domain.matrix.revisao_matriz_impacto_esforco_v1 import (
+    MatrizImpactoEsforcoValidationError,
+    build_persisted_matriz_payload,
+)
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
@@ -227,6 +231,34 @@ class RevisaoImpactEffortMatrixService:
             "vizinhos": vizinhos,
             "inputs_persistidos": persisted,
         }
+
+    def save_for_revisao(
+        self,
+        revisao_id: str,
+        body: dict[str, Any],
+        *,
+        atualizado_por: str,
+        competencia: str | None = None,
+        horizonte_meses: int = 12,
+    ) -> dict[str, Any] | None:
+        revisao = RevisaoRepository().get(revisao_id)
+        if not revisao:
+            return None
+
+        try:
+            persisted = build_persisted_matriz_payload(body, atualizado_por=atualizado_por)
+        except MatrizImpactoEsforcoValidationError as exc:
+            raise ValueError(str(exc)) from exc
+
+        updated = RevisaoRepository().update_matriz_impacto_esforco(revisao_id, persisted)
+        if not updated:
+            return None
+
+        return self.build_for_revisao(
+            revisao_id,
+            competencia=competencia,
+            horizonte_meses=horizonte_meses,
+        )
 
     def _select_revisoes(
         self,

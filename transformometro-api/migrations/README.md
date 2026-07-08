@@ -39,6 +39,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V033 | `V033__instancia_contexto.sql` | Contexto operacional da melhoria (metadados de escopo) |
 | V034 | `V034__melhoria_campos_e_escopo_livre.sql` | Campos rollout em `processo_instancias`; remove unique `(processo, filial)` |
 | V035 | `V035__revisao_referencia_comparacao.sql` | `revisoes.revisao_referencia_id` — referência de comparação entre revisões |
+| V038 | `V038__revisao_matriz_impacto_esforco.sql` | `revisoes.matriz_impacto_esforco` JSONB — overrides Playbook 21 |
 
 ## Notas V019–V020
 

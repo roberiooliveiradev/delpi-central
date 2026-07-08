@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 from typing import Any
 
@@ -197,6 +198,25 @@ class RevisaoRepository(PluginBaseRepository):
                 motivo_rejeicao if status == "rejeitada" else None,
                 revisao_id,
             ),
+        )
+
+    def update_matriz_impacto_esforco(
+        self,
+        revisao_id: str,
+        payload: dict[str, Any],
+        *,
+        auto_commit: bool = True,
+    ) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            """
+            UPDATE transformometro.revisoes
+            SET matriz_impacto_esforco = %s::jsonb,
+                updated_at = NOW()
+            WHERE revisao_id = %s AND deletado = FALSE
+            RETURNING *
+            """,
+            (json.dumps(payload), revisao_id),
+            auto_commit=auto_commit,
         )
 
     def activate(self, revisao_id: str) -> dict[str, Any] | None:

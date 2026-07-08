@@ -216,6 +216,12 @@ class RevisaoBody(BaseModel):
         return self
 
 
+class RevisaoMatrizImpactoBody(BaseModel):
+    modo: str = "auto"
+    inputs_manuais: dict = Field(default_factory=dict)
+    overrides: dict = Field(default_factory=dict)
+
+
 class MedicaoBody(BaseModel):
     revisao_id: str
     volume_mensal: float = 0

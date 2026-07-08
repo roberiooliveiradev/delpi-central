@@ -91,6 +91,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     RecursoCustoBody,
     RecursoCustoReajusteBody,
     RevisaoBody,
+    RevisaoMatrizImpactoBody,
     SetorBody,
     SetorUpdateBody,
     VinculoBody,
@@ -814,6 +815,53 @@ def revisao_matriz_impacto_esforco(
     if not data:
         return fail("Revisão não encontrada.", 404)
     return ok(data, "Matriz impacto × esforço da revisão.")
+
+
+@router.put("/revisoes/{revisao_id}/matriz-impacto-esforco")
+def put_revisao_matriz_impacto_esforco(
+    revisao_id: str,
+    body: RevisaoMatrizImpactoBody,
+    request: Request,
+    competencia: str | None = None,
+    horizonte_meses: int = Query(12, ge=1, le=36),
+):
+    revisao = RevisaoRepository().get(revisao_id)
+    if not revisao:
+        return fail("Revisão não encontrada.", 404)
+    instancia_id = str(revisao.get("instancia_id") or "")
+    if instancia_id:
+        if err := check_instancia_view_access(request, instancia_id):
+            return err
+
+    user_id, user_email, user_name = actor_from_request(request)
+    atualizado_por = user_name or user_email or user_id or "sistema"
+
+    try:
+        data = RevisaoImpactEffortMatrixService().save_for_revisao(
+            revisao_id,
+            body.model_dump(),
+            atualizado_por=atualizado_por,
+            competencia=competencia,
+            horizonte_meses=horizonte_meses,
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not data:
+        return fail("Revisão não encontrada.", 404)
+
+    _audit(
+        request,
+        "revisao",
+        revisao_id,
+        "matrix.updated",
+        {
+            "modo": body.modo,
+            "inputs_manuais": list((body.inputs_manuais or {}).keys()),
+            "overrides": list((body.overrides or {}).keys()),
+        },
+    )
+    return ok(data, "Matriz impacto × esforço atualizada.")
 
 
 # --- Medições ---
