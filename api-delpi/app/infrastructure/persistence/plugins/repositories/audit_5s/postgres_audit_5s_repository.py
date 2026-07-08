@@ -16,6 +16,12 @@ from app.application.services.audit_5s.catalog_service import (
     DEFAULT_CATALOG_VERSION,
     fallback_catalog_version,
 )
+from app.application.services.audit_5s.nc_attachment_storage import (
+    Audit5sNcAttachmentStorage,
+)
+from app.application.services.audit_5s.response_attachment_storage import (
+    Audit5sResponseAttachmentStorage,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -187,6 +193,13 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             """,
             (audit_id,),
         )
+        attachments_by_response = {
+            str(item["response_id"]): item
+            for item in self.list_response_attachments_for_audit(audit_id)
+        }
+        for response in responses:
+            response["attachment"] = attachments_by_response.get(str(response["id"]))
+
         response_by_criterion = {str(row["criterion_id"]): row for row in responses}
 
         progress = self._build_progress(criteria, response_by_criterion)
@@ -283,9 +296,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not audit:
             raise PluginsRepositoryError("Auditoria não encontrada.")
-        if audit["status"] != "draft":
+        if audit["status"] == "closed":
             raise PluginsRepositoryError(
-                "Somente auditorias em avaliação podem ter o cabeçalho editado."
+                "Auditoria encerrada — o cabeçalho não pode mais ser editado."
             )
 
         if area_id is not None:
@@ -474,7 +487,343 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         self.commit()
         if not row:
             raise PluginsRepositoryError("Falha ao salvar resposta.")
-        return row
+        attachment = self.get_response_attachment_by_response_id(str(row["id"]))
+        return {**row, "attachment": attachment}
+
+    def list_response_attachments_for_audit(self, audit_id: str) -> list[dict[str, Any]]:
+        try:
+            return self.fetch_all(
+                """
+                SELECT a.id,
+                       a.response_id,
+                       r.criterion_id,
+                       a.file_name,
+                       a.original_name,
+                       a.mime_type,
+                       a.size_bytes,
+                       a.storage_path,
+                       a.uploaded_by_user_id,
+                       a.uploaded_at
+                  FROM quality.audit_5s_response_attachments a
+                  JOIN quality.audit_5s_responses r ON r.id = a.response_id
+                 WHERE r.audit_id = %s
+                 ORDER BY a.uploaded_at DESC
+                """,
+                (audit_id,),
+            )
+        except PluginsRepositoryError:
+            return []
+
+    def get_response_attachment(self, attachment_id: str) -> dict[str, Any] | None:
+        try:
+            return self.fetch_one(
+                """
+                SELECT a.id,
+                       a.response_id,
+                       r.audit_id,
+                       r.criterion_id,
+                       a.file_name,
+                       a.original_name,
+                       a.mime_type,
+                       a.size_bytes,
+                       a.storage_path,
+                       a.uploaded_by_user_id,
+                       a.uploaded_at
+                  FROM quality.audit_5s_response_attachments a
+                  JOIN quality.audit_5s_responses r ON r.id = a.response_id
+                 WHERE a.id = %s
+                """,
+                (attachment_id,),
+            )
+        except PluginsRepositoryError:
+            return None
+
+    def get_response_attachment_by_response_id(
+        self, response_id: str
+    ) -> dict[str, Any] | None:
+        try:
+            return self.fetch_one(
+                """
+                SELECT id,
+                       response_id,
+                       file_name,
+                       original_name,
+                       mime_type,
+                       size_bytes,
+                       storage_path,
+                       uploaded_by_user_id,
+                       uploaded_at
+                  FROM quality.audit_5s_response_attachments
+                 WHERE response_id = %s
+                 ORDER BY uploaded_at DESC
+                 LIMIT 1
+                """,
+                (response_id,),
+            )
+        except PluginsRepositoryError:
+            return None
+
+    def get_response_for_criterion(
+        self, *, audit_id: str, criterion_id: str
+    ) -> dict[str, Any] | None:
+        return self.fetch_one(
+            """
+            SELECT id, score, is_not_applicable, observation, version
+              FROM quality.audit_5s_responses
+             WHERE audit_id = %s AND criterion_id = %s
+            """,
+            (audit_id, criterion_id),
+        )
+
+    def get_response_attachment_for_criterion(
+        self, *, audit_id: str, criterion_id: str
+    ) -> dict[str, Any] | None:
+        response = self.get_response_for_criterion(
+            audit_id=audit_id, criterion_id=criterion_id
+        )
+        if not response:
+            return None
+        return self.get_response_attachment_by_response_id(str(response["id"]))
+
+    def upsert_response_attachment(
+        self,
+        *,
+        audit_id: str,
+        criterion_id: str,
+        original_name: str,
+        file_name: str,
+        storage_path: str,
+        mime_type: str | None,
+        size_bytes: int,
+        uploaded_by_user_id: str,
+    ) -> dict[str, Any]:
+        audit = self.fetch_one(
+            "SELECT id, status FROM quality.audit_5s_audits WHERE id = %s",
+            (audit_id,),
+        )
+        if not audit:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+        if audit["status"] != "draft":
+            raise PluginsRepositoryError(
+                "Foto do critério só pode ser anexada durante a avaliação."
+            )
+
+        response = self.fetch_one(
+            """
+            SELECT id, score, is_not_applicable
+              FROM quality.audit_5s_responses
+             WHERE audit_id = %s AND criterion_id = %s
+            """,
+            (audit_id, criterion_id),
+        )
+        if not response:
+            raise PluginsRepositoryError(
+                "Salve a nota do critério antes de anexar a foto."
+            )
+        if not is_nc_candidate(response.get("score"), bool(response.get("is_not_applicable"))):
+            raise PluginsRepositoryError(
+                "Foto do critério disponível apenas para notas Ruim (1) ou Médio (3)."
+            )
+
+        response_id = str(response["id"])
+        existing = self.get_response_attachment_by_response_id(response_id)
+        if existing:
+            try:
+                Audit5sResponseAttachmentStorage().delete_file(
+                    response_id=response_id,
+                    file_name=str(existing["file_name"]),
+                )
+            except Exception:
+                pass
+            self.execute(
+                "DELETE FROM quality.audit_5s_response_attachments WHERE response_id = %s",
+                (response_id,),
+                auto_commit=False,
+            )
+
+        row = self.execute_returning_one(
+            """
+            INSERT INTO quality.audit_5s_response_attachments (
+                response_id,
+                file_name,
+                original_name,
+                mime_type,
+                size_bytes,
+                storage_path,
+                uploaded_by_user_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id,
+                      response_id,
+                      file_name,
+                      original_name,
+                      mime_type,
+                      size_bytes,
+                      storage_path,
+                      uploaded_by_user_id,
+                      uploaded_at
+            """,
+            (
+                response_id,
+                file_name,
+                original_name,
+                mime_type,
+                size_bytes,
+                storage_path,
+                uploaded_by_user_id,
+            ),
+            auto_commit=False,
+        )
+        if not row:
+            raise PluginsRepositoryError("Falha ao salvar foto do critério.")
+        self.commit()
+        return {**row, "criterion_id": criterion_id}
+
+    def delete_response_attachment(
+        self, *, audit_id: str, criterion_id: str, attachment_id: str
+    ) -> None:
+        audit = self.fetch_one(
+            "SELECT id, status FROM quality.audit_5s_audits WHERE id = %s",
+            (audit_id,),
+        )
+        if not audit:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+        if audit["status"] != "draft":
+            raise PluginsRepositoryError(
+                "Foto do critério só pode ser removida durante a avaliação."
+            )
+
+        attachment = self.get_response_attachment(attachment_id)
+        if (
+            not attachment
+            or str(attachment["audit_id"]) != audit_id
+            or str(attachment["criterion_id"]) != criterion_id
+        ):
+            raise PluginsRepositoryError("Foto do critério não encontrada.")
+
+        response_id = str(attachment["response_id"])
+        try:
+            Audit5sResponseAttachmentStorage().delete_file(
+                response_id=response_id,
+                file_name=str(attachment["file_name"]),
+            )
+        except Exception:
+            pass
+
+        self.execute(
+            "DELETE FROM quality.audit_5s_response_attachments WHERE id = %s",
+            (attachment_id,),
+        )
+
+    def seed_nc_before_from_response_attachment(
+        self,
+        *,
+        nonconformity_id: str,
+        response_id: str,
+        uploaded_by_user_id: str,
+    ) -> dict[str, Any] | None:
+        existing_before = any(
+            item.get("attachment_type") == "before"
+            for item in self.list_nc_attachments(nonconformity_id)
+        )
+        if existing_before:
+            return None
+
+        source = self.get_response_attachment_by_response_id(response_id)
+        if not source:
+            return None
+
+        response_storage = Audit5sResponseAttachmentStorage()
+        nc_storage = Audit5sNcAttachmentStorage()
+        try:
+            source_path = response_storage.resolve_file(
+                response_id=response_id,
+                file_name=str(source["file_name"]),
+            )
+            content = source_path.read_bytes()
+        except Exception as exc:
+            raise PluginsRepositoryError(
+                f"Não foi possível reutilizar a foto da avaliação: {exc}"
+            ) from exc
+
+        original_name = str(source.get("original_name") or source["file_name"])
+        mime_type = source.get("mime_type")
+        size_bytes = len(content)
+        stored_name = nc_storage.save(
+            nonconformity_id=nonconformity_id,
+            attachment_type="before",
+            original_name=original_name,
+            content=content,
+            mime_type=mime_type,
+        )
+
+        try:
+            row = self.execute_returning_one(
+                """
+                INSERT INTO quality.audit_5s_nc_attachments (
+                    nonconformity_id,
+                    attachment_type,
+                    original_name,
+                    stored_name,
+                    mime_type,
+                    size_bytes,
+                    uploaded_by_user_id
+                ) VALUES (%s, 'before', %s, %s, %s, %s, %s)
+                ON CONFLICT (nonconformity_id, attachment_type)
+                DO NOTHING
+                RETURNING id,
+                          nonconformity_id,
+                          attachment_type,
+                          original_name,
+                          stored_name,
+                          mime_type,
+                          size_bytes,
+                          uploaded_by_user_id,
+                          created_at
+                """,
+                (
+                    nonconformity_id,
+                    original_name,
+                    stored_name,
+                    mime_type,
+                    size_bytes,
+                    uploaded_by_user_id,
+                ),
+                auto_commit=False,
+            )
+            if not row:
+                return None
+
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'attachment_uploaded', %s::jsonb, %s)
+                """,
+                (
+                    nonconformity_id,
+                    self._json_dumps(
+                        {
+                            "attachment_id": str(row["id"]),
+                            "attachment_type": "before",
+                            "original_name": original_name,
+                            "seeded_from_evaluation": True,
+                        }
+                    ),
+                    uploaded_by_user_id,
+                ),
+                auto_commit=False,
+            )
+            self.commit()
+            return row
+        except PluginsRepositoryError:
+            try:
+                nc_storage.resolve_file(
+                    nonconformity_id=nonconformity_id,
+                    stored_name=stored_name,
+                ).unlink(missing_ok=True)
+            except Exception:
+                pass
+            raise
 
     def complete_evaluation(self, audit_id: str) -> dict[str, Any]:
         audit = self.get_audit(audit_id)
@@ -661,6 +1010,15 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         row = self._maybe_promote_nc_to_in_progress(nc_id, row)
         self.commit()
+        try:
+            self.seed_nc_before_from_response_attachment(
+                nonconformity_id=nc_id,
+                response_id=response_id,
+                uploaded_by_user_id=created_by_user_id,
+            )
+        except Exception:
+            # Plano da NC já foi criado; evidência "antes" permanece opcional até o upload manual.
+            pass
         return row
 
     def _insert_nonconformity_row(

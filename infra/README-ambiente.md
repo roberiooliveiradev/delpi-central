@@ -204,7 +204,7 @@ Guia completo: [`minha-delpi-ai-api/docs/operations/chat-attachment-storage.md`]
 
 ## Evidências PAC e anexos Auditoria 5S (api-delpi)
 
-Uploads de evidências do plugin **quality-action-plans** e anexos de NC da **auditoria-5s** ficam no filesystem do container `api-delpi`, path padrão `/app/data/pac-evidences` e `/app/data/audit-5s-nc`.
+Uploads de evidências do plugin **quality-action-plans** e anexos da **auditoria-5s** (foto por critério na avaliação + evidências NC antes/depois) ficam no filesystem do container `api-delpi`, paths padrão `/app/data/pac-evidences`, `/app/data/audit-5s-responses` e `/app/data/audit-5s-nc`.
 
 **Sem volume no host**, `docker compose up -d --force-recreate api-delpi` apaga os binários — o Postgres (`plugins_hub`) mantém o registro e o download retorna **«Arquivo não encontrado»**.
 
@@ -212,6 +212,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos de NC da **au
 |----------|----------------------|---------------|
 | `PAC_EVIDENCE_UPLOAD_DIR` | `/app/data/pac-evidences` | `${DELPI_DATA_HOST_DIR}/pac-evidences` |
 | `KAIZEN_EVIDENCE_UPLOAD_DIR` | `/app/data/kaizen-evidences` | `${DELPI_DATA_HOST_DIR}/kaizen-evidences` |
+| `AUDIT_5S_RESPONSE_UPLOAD_DIR` | `/app/data/audit-5s-responses` | `${DELPI_DATA_HOST_DIR}/audit-5s-responses` |
 | `AUDIT_5S_NC_UPLOAD_DIR` | `/app/data/audit-5s-nc` | `${DELPI_DATA_HOST_DIR}/audit-5s-nc` |
 | `QUALITY_LABELS_QR_DIR` | `/app/data/quality-labels/qr` | `${DELPI_DATA_HOST_DIR}/quality-labels/qr` |
 | `QUALITY_LABELS_SIGNATURE_DIR` | `/app/data/quality-labels/signatures` | `${DELPI_DATA_HOST_DIR}/quality-labels/signatures` |
@@ -221,7 +222,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos de NC da **au
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/kaizen-evidences /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/kaizen-evidences /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 

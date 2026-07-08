@@ -159,6 +159,12 @@ export function AuditNcPanel({
 
         upsertItemNc(responseId, created);
         onAuditUpdated({ ...audit, status: "nc_in_progress" });
+        try {
+          const attachmentItems = await fetchAuditNcAttachments(audit.id);
+          setAttachmentsByNcId(groupAttachmentsByResponse(attachmentItems));
+        } catch {
+          // Plano já salvo; anexos podem ser atualizados no próximo refresh.
+        }
       } else {
         const updated = await updateNonconformity(item.nc.id, {
           description: form.description.trim(),

@@ -16,6 +16,11 @@ from app.application.services.audit_5s.nc_attachment_storage import (
     Audit5sNcAttachmentStorage,
     Audit5sNcAttachmentStorageError,
 )
+from app.application.services.audit_5s.response_attachment_storage import (
+    Audit5sResponseAttachmentStorage,
+    Audit5sResponseAttachmentStorageError,
+)
+from app.application.services.audit_5s.scoring_service import is_nc_candidate
 from app.composition.audit_5s_composer import (
     build_audit_5s_repository,
     build_get_audit_5s_dashboard_use_case,
@@ -389,6 +394,135 @@ async def upsert_response(
     except Exception as exc:
         log_error(f"Erro ao salvar resposta 5S: {exc}")
         return error_response("Erro interno ao salvar resposta.", status_code=500)
+
+
+@router.get("/audits/{audit_id}/responses/{criterion_id}/attachments")
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
+def list_response_attachments(audit_id: str, criterion_id: str):
+    try:
+        repo = build_audit_5s_repository()
+        attachment = repo.get_response_attachment_for_criterion(
+            audit_id=audit_id,
+            criterion_id=criterion_id,
+        )
+        data = [attachment] if attachment else []
+        return api_delpi_success(
+            data,
+            operation_id="list_audit_5s_response_attachments",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar foto do critério 5S: {exc}")
+        return error_response("Erro interno ao listar foto do critério.", status_code=500)
+
+
+@router.post("/audits/{audit_id}/responses/{criterion_id}/attachments")
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+async def upload_response_attachment(
+    audit_id: str,
+    criterion_id: str,
+    file: UploadFile = File(...),
+):
+    try:
+        content = await file.read()
+        storage = Audit5sResponseAttachmentStorage()
+        storage.validate_upload(
+            mime_type=file.content_type,
+            size_bytes=len(content),
+        )
+        repo = build_audit_5s_repository()
+        response = repo.get_response_for_criterion(
+            audit_id=audit_id,
+            criterion_id=criterion_id,
+        )
+        if not response:
+            return error_response(
+                "Salve a nota do critério antes de anexar a foto.",
+                status_code=422,
+            )
+        if not is_nc_candidate(response.get("score"), bool(response.get("is_not_applicable"))):
+            return error_response(
+                "Foto do critério disponível apenas para notas Ruim (1) ou Médio (3).",
+                status_code=422,
+            )
+
+        file_name, storage_path = storage.save(
+            response_id=str(response["id"]),
+            original_name=file.filename or "criterion.jpg",
+            content=content,
+            mime_type=file.content_type,
+        )
+        data = repo.upsert_response_attachment(
+            audit_id=audit_id,
+            criterion_id=criterion_id,
+            original_name=file.filename or "criterion.jpg",
+            file_name=file_name,
+            storage_path=storage_path,
+            mime_type=file.content_type,
+            size_bytes=len(content),
+            uploaded_by_user_id=_current_user_id(),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="attach_audit_5s_response_photo",
+            message="Foto do critério anexada com sucesso.",
+        )
+    except (PluginsRepositoryError, Audit5sResponseAttachmentStorageError) as exc:
+        return error_response(str(exc), status_code=422)
+    except Exception as exc:
+        log_error(f"Erro ao anexar foto do critério 5S: {exc}")
+        return error_response("Erro interno ao anexar foto do critério.", status_code=500)
+
+
+@router.get("/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}/file")
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
+def download_response_attachment(audit_id: str, criterion_id: str, attachment_id: str):
+    try:
+        repo = build_audit_5s_repository()
+        attachment = repo.get_response_attachment(attachment_id)
+        if (
+            not attachment
+            or str(attachment["audit_id"]) != audit_id
+            or str(attachment["criterion_id"]) != criterion_id
+        ):
+            return error_response("Foto do critério não encontrada.", status_code=404)
+
+        storage = Audit5sResponseAttachmentStorage()
+        file_path = storage.resolve_file(
+            response_id=str(attachment["response_id"]),
+            file_name=str(attachment["file_name"]),
+        )
+        return FileResponse(
+            path=file_path,
+            media_type=attachment.get("mime_type") or "application/octet-stream",
+            filename=str(attachment.get("original_name") or attachment["file_name"]),
+        )
+    except (PluginsRepositoryError, Audit5sResponseAttachmentStorageError) as exc:
+        return error_response(str(exc), status_code=404)
+    except Exception as exc:
+        log_error(f"Erro ao baixar foto do critério 5S: {exc}")
+        return error_response("Erro interno ao baixar foto do critério.", status_code=500)
+
+
+@router.delete("/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}")
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+def delete_response_attachment(audit_id: str, criterion_id: str, attachment_id: str):
+    try:
+        repo = build_audit_5s_repository()
+        repo.delete_response_attachment(
+            audit_id=audit_id,
+            criterion_id=criterion_id,
+            attachment_id=attachment_id,
+        )
+        return api_delpi_success(
+            {"deleted": True},
+            operation_id="delete_audit_5s_response_photo",
+            message="Foto do critério removida.",
+        )
+    except PluginsRepositoryError as exc:
+        return error_response(str(exc), status_code=422)
+    except Exception as exc:
+        log_error(f"Erro ao remover foto do critério 5S: {exc}")
+        return error_response("Erro interno ao remover foto do critério.", status_code=500)
 
 
 @router.post("/audits/{audit_id}/complete-evaluation")

@@ -33,7 +33,7 @@
 | Evidências NC (antes/depois) | Upload JPG/PNG/WEBP; finalização só com as duas fotos | Implementado — validar |
 | Encerramento auditoria | Exige todas NCs com status `closed` | Implementado — validar |
 | Colaboração realtime | Socket.IO na avaliação e eventos de NC | Pendente validação 2 usuários |
-| Foto por critério (avaliação) | — | **Adiado** (decisão piloto) |
+| Foto por critério (avaliação) | Upload JPG/PNG/WEBP na nota 1/3; reuso como evidência `before` da NC | Implementado — validar |
 | Dashboard gerencial | Botão na lista; filtros; KPIs; 4 gráficos; tabela paginada (PG) | Implementado — validar |
 | RBAC filial (não-superadmin) | Manifesto OK | Pendente Keycloak |
 
@@ -308,7 +308,10 @@ Base: `/apps/api-delpi/quality/audit-5s`
 | GET | `/audits/{id}` | Detalhe + respostas + scores |
 | PATCH | `/audits/{id}` | Cabeçalho / transição de fase |
 | PUT | `/audits/{id}/responses/{criterionId}` | Upsert nota/observação (com `version`) |
-| POST | `/audits/{id}/responses/{criterionId}/attachments` | Upload foto |
+| GET | `/audits/{id}/responses/{criterionId}/attachments` | Metadado da foto do critério |
+| POST | `/audits/{id}/responses/{criterionId}/attachments` | Upload foto (nota 1/3; auditoria `draft`) |
+| GET | `/audits/{id}/responses/{criterionId}/attachments/{id}/file` | Preview/download da foto do critério |
+| DELETE | `/audits/{id}/responses/{criterionId}/attachments/{id}` | Remover foto do critério |
 | GET | `/audits/{id}/nc-candidates` | Critérios com score 1 ou 3 |
 | POST | `/audits/{id}/nonconformities` | Cria NC a partir do critério |
 | PATCH | `/nonconformities/{ncId}` | Atualiza plano (sem alterar `status` diretamente) |
@@ -440,7 +443,7 @@ Registro: `POST /core-api/admin/apps/register` — ver [registrar-plugin.md](../
 | Observação por critério | Texto opcional (salva no blur) | ✅ validado manual |
 | Hero / layout | Cabeçalho gradiente, KPIs, barra de progresso | ✅ implementado |
 | % por senso em tempo real | Cards clicáveis (`AuditSensoScoreCards`) | ✅ implementado |
-| Foto por critério | Câmera/upload | ⏸️ **adiado** (decisão piloto) |
+| Foto por critério | Câmera/upload na nota 1/3; seed automático do `before` na NC | ✅ implementado |
 | Conclusão fase avaliação | Retorna à lista + alerta; status `evaluation_complete` | ✅ implementado |
 | Polling fallback | Sync a cada 5–10s até Fase 4 | Pendente |
 | Branch da rota | `filial-01` → `01`; sem seletor de filial | ✅ |
@@ -687,7 +690,7 @@ cd ../plugins/auditoria-5s && npm run build
 | Walkthrough com equipe de qualidade | Alta | Fechar Fase 0 |
 | Permissões Keycloak filial 01/02 | Alta | Hoje só superadmin em dev |
 | Colaboração multi-auditor (Fase 4) | Média | Validar 2 usuários; sync de anexos entre abas |
-| Foto por critério (avaliação) | Média | Adiado por decisão piloto — independente das evidências NC |
+| Foto por critério (avaliação) | Média | Implementado — validar walkthrough (nota baixa → foto → NC com `before` preenchido) |
 | Polling fallback (Fase 3) | Média | Alternativa até realtime estável |
 | `ESPECIFICACAO-PLUGIN.md` | Média | Documentar telas finais incluindo workflow NC |
 | Script homologação Fase 5 | Baixa | Automatizar upload + `complete-action` via curl |

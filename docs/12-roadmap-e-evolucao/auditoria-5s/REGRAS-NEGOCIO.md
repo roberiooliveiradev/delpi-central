@@ -146,6 +146,10 @@ Critérios com nota 1 ou 3 **não exigem** NC obrigatória para fechar a auditor
 | Responsável pela área | Sim | Texto no cabeçalho |
 | Auditores | Sim (≥1) | Usuários vinculados à auditoria |
 
+### 7.1 Edição do cabeçalho
+
+O cabeçalho permanece **editável** enquanto a auditoria **não** estiver `closed` (`draft`, `evaluation_complete`, `nc_in_progress`). Após o encerramento, a edição é bloqueada na UI e na API.
+
 ---
 
 ## 8. Status da auditoria

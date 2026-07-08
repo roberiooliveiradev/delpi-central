@@ -26,8 +26,11 @@ export function AuditSensoScoreCards({
   );
 
   return (
-    <section className="a5s-senso-scores" aria-label="Média por senso">
-      <div className="a5s-senso-scores__header">
+    <section
+      id="a5s-senso-nav"
+      className="a5s-senso-scores"
+      aria-label="Média por senso"
+    >      <div className="a5s-senso-scores__header">
         <h3 className="a5s-senso-scores__title">Média por senso</h3>
         <p className="a5s-senso-scores__subtitle">
           Percentual atualizado em tempo real conforme os auditores preenchem.

@@ -122,7 +122,11 @@ Portal conecta em `io("/", { path: "/socket.io" })` — mesma origem do gateway.
 
 Path dedicado: `/apps/api-delpi/socket.io/` → `api-delpi:8000/socket.io/`.
 
-HTTP e Socket usam `set $upstream_api_delpi` + `proxy_pass http://$upstream_api_delpi` para o `resolver 127.0.0.11` re-resolver o container após `docker compose up --force-recreate api-delpi`. Com hostname fixo em `proxy_pass`, o Nginx guarda o IP na subida do gateway e devolve **502** até reiniciar `delpi-gateway`.
+**Importante:** use `proxy_pass http://api-delpi:8000/socket.io;` **sem** `set $upstream_api_delpi` neste location. Variável dinâmica quebra o upgrade WebSocket (Engine.IO) — sintoma em prod: `WebSocket connection to wss://…/apps/api-delpi/socket.io/… failed` e colaboração 5S offline.
+
+Rotas HTTP `/apps/api-delpi/*` podem continuar com `$upstream_api_delpi` + resolver para sobreviver a `force-recreate` sem 502. Após recreate da api-delpi, reinicie o gateway: `docker restart delpi-gateway`.
+
+**Dev (`nginx.dev.conf`):** mesma regra — `proxy_pass` estático no socket; Core API em `location ^~ /socket.io` com `proxy_pass http://core-api:8000;` **sem** variável.
 
 ---
 
@@ -179,6 +183,7 @@ delpi-strategic-indicators, delpi-dashboard-lmps, delpi-minha-delpi-chat
 | 404 em `/apps/X/assets/remoteEntry.js` | Container `delpi-X` inexistente ou id do manifesto ≠ segmento URL |
 | Login Keycloak errado | `KC_HOSTNAME` / `VITE_KC_URL` divergentes da URL pública |
 | Socket não conecta | Falta token em `socket.auth`; path errado |
+| `WebSocket … /apps/api-delpi/socket.io` failed (Auditoria 5S) | Location socket com `proxy_pass http://$upstream…` — usar hostname estático `http://api-delpi:8000/socket.io` e `docker restart delpi-gateway` |
 | Plugin antigo em cache | Só `remoteEntry` é no-store; hard refresh ou versão no build |
 
 ---
