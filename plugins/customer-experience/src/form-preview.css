@@ -36,6 +36,94 @@
   overflow-x: hidden;
   overflow-y: auto;
   z-index: 1;
+  color-scheme: light;
+}
+
+/* Tokens claros forçados (prévia independente do tema do portal). */
+.cx-form-preview-stage[data-theme="light"] {
+  color-scheme: light;
+  --pub-accent: #0c6fb0;
+  --pub-text: #003866;
+  --pub-text-body: #33475a;
+  --pub-text-soft: #5a6b7d;
+  --pub-text-faint: #8595a5;
+  --pub-card-bg: #ffffff;
+  --pub-card-border: #e4e7ec;
+  --pub-card-shadow: 0 20px 50px rgba(3, 40, 70, 0.12);
+  --pub-input-bg: #ffffff;
+  --pub-input-border: #d0d7de;
+  --pub-input-text: #0d1b2a;
+  --pub-placeholder: #98a6b3;
+  --pub-option-bg: #f5f8fb;
+  --pub-star-off: rgba(0, 56, 102, 0.18);
+  --pub-danger: #b42318;
+  --pub-toggle-bg: rgba(255, 255, 255, 0.85);
+  --pub-toggle-border: #d8e1e9;
+  --pub-toggle-text: #003866;
+  --pub-viewport-scrim: linear-gradient(
+    180deg,
+    rgba(234, 243, 251, 0.84) 0%,
+    rgba(255, 255, 255, 0.92) 100%
+  );
+  --pub-surface-scrim: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.96) 100%
+  );
+  --pub-illustration-band: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pub-accent) 10%, var(--pub-card-bg)) 0%,
+    var(--pub-card-bg) 100%
+  );
+  --pub-stage-bg:
+    radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 14%, transparent), transparent),
+    #f3f7fb;
+}
+
+/* Tema escuro só no stage da prévia (igual public-hub). */
+.cx-form-preview-stage[data-theme="dark"] {
+  color-scheme: dark;
+  --pub-accent: #30b8ec;
+  --pub-text: #f4f8fc;
+  --pub-text-body: #dbe6ef;
+  --pub-text-soft: #b8c9d9;
+  --pub-text-faint: #8fa3b5;
+  --pub-card-bg: #0a2438;
+  --pub-card-border: rgba(255, 255, 255, 0.14);
+  --pub-card-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --pub-input-bg: #061622;
+  --pub-input-border: rgba(255, 255, 255, 0.22);
+  --pub-input-text: #f4f8fc;
+  --pub-placeholder: #8fa3b5;
+  --pub-option-bg: #0c2234;
+  --pub-star-off: rgba(255, 255, 255, 0.28);
+  --pub-danger: #ff9d9d;
+  --pub-toggle-bg: rgba(255, 255, 255, 0.1);
+  --pub-toggle-border: rgba(255, 255, 255, 0.22);
+  --pub-toggle-text: #eaf2f8;
+  --pub-viewport-scrim: linear-gradient(
+    180deg,
+    rgba(4, 27, 46, 0.88) 0%,
+    rgba(3, 56, 102, 0.94) 100%
+  );
+  --pub-surface-scrim: linear-gradient(
+    180deg,
+    rgba(4, 27, 46, 0.82) 0%,
+    rgba(6, 22, 34, 0.94) 100%
+  );
+  --pub-illustration-band: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pub-accent) 16%, var(--pub-card-bg)) 0%,
+    var(--pub-card-bg) 100%
+  );
+  --pub-stage-bg:
+    radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 38%, transparent), transparent),
+    linear-gradient(160deg, #041b2e, #003866 55%, #041b2e);
+}
+
+.cx-form-preview-stage[data-theme="dark"] .cxform-card,
+.cx-form-preview-stage[data-theme="dark"] .cxform--fullpage .cxform-header {
+  backdrop-filter: none;
 }
 
 /* Fundo do formulário na prévia: absoluto na área do stage — não cobre a toolbar. */
@@ -65,6 +153,31 @@
   background: var(--cx-surface, #1a2332);
   border-bottom: 1px solid var(--cx-border, rgba(255, 255, 255, 0.08));
   flex-shrink: 0;
+}
+
+.cx-form-preview-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cx-form-preview-theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e8eef5;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.cx-form-preview-theme-toggle:hover {
+  transform: scale(1.05);
+  border-color: #089bdb;
+  background: rgba(8, 155, 219, 0.18);
 }
 
 .cx-form-preview-badge {
@@ -267,33 +380,53 @@
   text-align: left;
 }
 
-/* Ilustração por etapa/pergunta — destaque visual (estilo Google Forms). */
+/* Ilustração por etapa/pergunta — mesma lógica de fit do fundo (fixed/scale/tile). */
 .cxform-illustration {
   margin: 0 0 20px;
   padding: 0;
   text-align: center;
 }
 
-.cxform-illustration__img {
+.cxform-illustration__photo {
   display: block;
-  width: auto;
+  width: 100%;
+  height: 220px;
   max-width: 100%;
-  max-height: 220px;
   margin: 0 auto;
-  object-fit: contain;
   border-radius: 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
-.cxform-illustration--section .cxform-illustration__img {
-  max-height: 260px;
+.cxform-illustration__photo--scale {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.cxform-illustration__photo--fixed {
+  background-size: auto;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.cxform-illustration__photo--tile {
+  background-size: auto;
+  background-repeat: repeat;
+  background-position: top left;
+}
+
+.cxform-illustration--section .cxform-illustration__photo {
+  height: 260px;
 }
 
 .cxform-illustration--inline {
   margin-bottom: 16px;
 }
 
-.cxform-illustration--inline .cxform-illustration__img {
-  max-height: 200px;
+.cxform-illustration--inline .cxform-illustration__photo {
+  height: 200px;
 }
 
 /* Wizard passo a passo — faixa hero com ilustração grande no topo do card. */
@@ -304,12 +437,11 @@
   border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
 }
 
-.cxform--fullpage.cxform--wizard .cxform-illustration__img {
+.cxform--fullpage.cxform--wizard .cxform-illustration__photo {
   width: min(100%, 420px);
-  max-width: none;
-  max-height: min(280px, 36vh);
+  height: min(280px, 36vh);
   min-height: clamp(120px, 20vw, 180px);
-  object-fit: contain;
+  margin: 0 auto;
   filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
 }
 

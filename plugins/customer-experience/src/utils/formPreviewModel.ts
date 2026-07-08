@@ -18,6 +18,7 @@ export type PreviewFormPage = {
   position?: number;
   backgroundImageUrl?: string | null;
   pointImageUrl?: string | null;
+  pointImageFit?: BackgroundFit;
 };
 
 export type PreviewFormQuestion = {
@@ -29,6 +30,7 @@ export type PreviewFormQuestion = {
   options: string[];
   pageId?: string | null;
   pointImageUrl?: string | null;
+  pointImageFit?: BackgroundFit;
 };
 
 type PendingImages = {
@@ -78,6 +80,7 @@ export function buildPreviewForm(input: BuildPreviewInput): PreviewForm {
     pointImageUrl: pendingImages?.pagePoint[index]
       ? URL.createObjectURL(pendingImages.pagePoint[index])
       : page.pointImageUrl ?? null,
+    pointImageFit: normalizeBackgroundFit(page.pointImageFit),
   }));
 
   const previewQuestions: PreviewFormQuestion[] = questions.map((question, index) => {
@@ -97,6 +100,7 @@ export function buildPreviewForm(input: BuildPreviewInput): PreviewForm {
       pointImageUrl: pendingImages?.questionPoint[index]
         ? URL.createObjectURL(pendingImages.questionPoint[index])
         : question.pointImageUrl ?? null,
+      pointImageFit: normalizeBackgroundFit(question.pointImageFit),
     };
   });
 
@@ -134,6 +138,7 @@ function ensurePageCount(pages: FormPage[], count: number): FormPage[] {
     title: null,
     backgroundImageUrl: null,
     pointImageUrl: null,
+    pointImageFit: "scale",
   });
   return [...pages, ...Array.from({ length: count - pages.length }, blank)];
 }

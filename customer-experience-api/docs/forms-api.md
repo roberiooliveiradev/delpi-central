@@ -18,6 +18,7 @@ Permissões: `customer-experience.forms.read` | `.write` | `.manage`.
 | Método | Rota | Permissão | Descrição |
 |--------|------|-----------|-----------|
 | `POST` | `/forms` | write | Cria formulário (título, descrição, `oneQuestionPerPage`, `backgroundFit`) |
+| `POST` | `/forms/{id}/duplicate` | write | Duplica estrutura (páginas, perguntas, imagens); **sem** respostas; novo token/QR; nasce como rascunho |
 | `GET` | `/forms` | read | Lista resumos (`publicUrl`, `isActive`, `responseCount`, `backgroundFit`, …) |
 | `GET` | `/forms/{id}` | read | Detalhe com `questions[]`, `pages[]` e `backgroundFit` |
 | `PATCH` | `/forms/{id}` | write | Atualiza metadados (incl. `backgroundFit`: `fixed` \| `scale` \| `tile`) |
@@ -50,6 +51,8 @@ Armazenamento: `CUSTOMER_EXPERIENCE_FORM_IMAGE_UPLOAD_DIR` (volume persistente).
 | `DELETE` | `/forms/{id}/questions/{question_id}/point-image` | Remove ilustração da pergunta |
 
 Respostas de detalhe incluem URLs públicas resolvidas (`backgroundImageUrl`, `pointImageUrl`) apontando para os endpoints abaixo.
+
+Em `PUT /forms/{id}/questions`, páginas e perguntas aceitam `pointImageFit` (`fixed` | `scale` | `tile`) — mesmos modos do fundo do formulário (`backgroundFit`), aplicados à área da imagem ilustrativa.
 
 ---
 

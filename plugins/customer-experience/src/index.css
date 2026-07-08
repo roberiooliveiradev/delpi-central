@@ -1085,6 +1085,24 @@
   flex-wrap: wrap;
 }
 
+.cx-export-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.cx-export-actions__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cx-muted);
+  margin-right: 4px;
+}
+
 .cx-field__label {
   display: block;
   font-size: 13px;

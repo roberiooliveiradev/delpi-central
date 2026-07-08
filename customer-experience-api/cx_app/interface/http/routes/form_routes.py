@@ -60,6 +60,7 @@ class PagePayload(BaseModel):
     title: str | None = Field(default=None, max_length=200)
     backgroundImageFilename: str | None = None
     pointImageFilename: str | None = None
+    pointImageFit: str | None = None
 
 
 class QuestionPayload(BaseModel):
@@ -72,6 +73,7 @@ class QuestionPayload(BaseModel):
     pageId: str | None = None
     pageIndex: int | None = Field(default=None, ge=0)
     pointImageFilename: str | None = None
+    pointImageFit: str | None = None
 
 
 class QuestionsPayload(BaseModel):
@@ -124,6 +126,24 @@ def create_form(request: Request, payload: FormPayload):
     except FormValidationError as exc:
         return fail(str(exc), 422)
     return ok(data, message="Formulário criado.", status_code=201)
+
+
+@router.post("/{form_id}/duplicate")
+def duplicate_form(request: Request, form_id: str):
+    denied = _guard(request, CX_FORMS_WRITE)
+    if denied:
+        return denied
+    try:
+        data = build_form_service().duplicate(
+            form_id,
+            created_by=actor_sub_from_request(request),
+            created_by_name=actor_name_from_request(request),
+        )
+    except FormNotFoundError:
+        return fail("Formulário não encontrado.", 404)
+    except FormValidationError as exc:
+        return fail(str(exc), 422)
+    return ok(data, message="Formulário duplicado.", status_code=201)
 
 
 @router.get("")
@@ -183,6 +203,7 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
                     title=p.title,
                     background_image_filename=p.backgroundImageFilename,
                     point_image_filename=p.pointImageFilename,
+                    point_image_fit=p.pointImageFit,
                 )
                 for p in payload.pages
             ],
@@ -197,6 +218,7 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
                     page_id=q.pageId,
                     page_index=q.pageIndex,
                     point_image_filename=q.pointImageFilename,
+                    point_image_fit=q.pointImageFit,
                 )
                 for q in payload.questions
             ],

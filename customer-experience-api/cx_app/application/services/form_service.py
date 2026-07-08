@@ -116,6 +116,9 @@ class FormService:
                     or existing.get("background_image_filename"),
                     "point_image_filename": page.get("point_image_filename")
                     or existing.get("point_image_filename"),
+                    "point_image_fit": page.get("point_image_fit")
+                    or existing.get("point_image_fit")
+                    or "scale",
                 }
             )
 
@@ -126,6 +129,7 @@ class FormService:
                     "title": q["label"],
                     "background_image_filename": None,
                     "point_image_filename": None,
+                    "point_image_fit": "scale",
                 }
                 for q in normalized_questions
             ]
@@ -140,6 +144,8 @@ class FormService:
             existing = existing_questions.get(str(q.get("id") or ""), {})
             if not q.get("point_image_filename"):
                 q["point_image_filename"] = existing.get("point_image_filename")
+            if not q.get("point_image_fit"):
+                q["point_image_fit"] = existing.get("point_image_fit") or "scale"
 
         page_ids = [str(p["id"]) for p in stored_pages]
         for index, q in enumerate(normalized_questions):
@@ -337,6 +343,93 @@ class FormService:
             raise FormNotFoundError(form_id)
         return self._admin_full(updated)
 
+    def duplicate(
+        self,
+        form_id: str,
+        *,
+        created_by: str | None,
+        created_by_name: str | None,
+    ) -> dict[str, Any]:
+        """Copia estrutura (páginas, perguntas, imagens). Não copia respostas."""
+        source = self._require(form_id)
+        pages = self.repository.list_pages(form_id)
+        questions = self.repository.list_questions(form_id, active_only=True)
+
+        base_title = _clean(source.get("title")) or "Formulário"
+        copy_title = f"{base_title} (cópia)"[:MAX_TITLE_LEN]
+        token = generate_public_token()
+        qr_filename = self.qr_service.generate_form(token=token)
+
+        row = self.repository.create(
+            {
+                "public_token": token,
+                "title": copy_title,
+                "description": source.get("description"),
+                "qr_filename": qr_filename,
+                "one_question_per_page": bool(source.get("one_question_per_page")),
+                "background_fit": _normalize_background_fit(source.get("background_fit")),
+                "created_by": created_by,
+                "created_by_name": created_by_name,
+            }
+        )
+        new_id = str(row["id"])
+
+        background_name = self._clone_stored_image(source.get("background_image_filename"))
+        if background_name:
+            updated = self.repository.update(
+                new_id, {"background_image_filename": background_name}
+            )
+            if updated:
+                row = updated
+
+        page_id_map: dict[str, str] = {}
+        cloned_pages: list[dict[str, Any]] = [
+            {
+                "title": page.get("title"),
+                "background_image_filename": self._clone_stored_image(
+                    page.get("background_image_filename")
+                ),
+                "point_image_filename": self._clone_stored_image(
+                    page.get("point_image_filename")
+                ),
+                "point_image_fit": _normalize_background_fit(page.get("point_image_fit")),
+            }
+            for page in pages
+        ]
+        new_pages = self.repository.replace_pages(new_id, cloned_pages)
+        for old, new in zip(pages, new_pages):
+            page_id_map[str(old["id"])] = str(new["id"])
+
+        cloned_questions: list[dict[str, Any]] = []
+        for q in questions:
+            old_page = str(q["page_id"]) if q.get("page_id") else None
+            cloned_questions.append(
+                {
+                    "label": q["label"],
+                    "question_type": q["question_type"],
+                    "help_text": q.get("help_text"),
+                    "is_required": q.get("is_required"),
+                    "options": list(q.get("options") or []),
+                    "page_id": page_id_map.get(old_page) if old_page else None,
+                    "point_image_filename": self._clone_stored_image(
+                        q.get("point_image_filename")
+                    ),
+                    "point_image_fit": _normalize_background_fit(q.get("point_image_fit")),
+                }
+            )
+        self.repository.replace_questions(new_id, cloned_questions)
+        return self._admin_full(self.repository.get_by_id(new_id) or row)
+
+    def _clone_stored_image(self, filename: str | None) -> str | None:
+        if not filename:
+            return None
+        content = self.image_storage.read(str(filename))
+        if content is None:
+            return None
+        mime = _mime_from_filename(str(filename))
+        stored_name, _ = self.image_storage.save(content=content, mime_type=mime)
+        return stored_name
+
     def delete(self, form_id: str) -> None:
         row = self.repository.get_by_id(form_id)
         if not row:
@@ -473,6 +566,7 @@ class FormService:
             "title": _clean(p.title),
             "background_image_filename": _clean(p.background_image_filename),
             "point_image_filename": _clean(p.point_image_filename),
+            "point_image_fit": _normalize_background_fit(p.point_image_fit),
         }
 
     def _validate_question(self, q: QuestionInput) -> dict[str, Any]:
@@ -498,6 +592,7 @@ class FormService:
             "page_id": _clean(q.page_id),
             "page_index": q.page_index,
             "point_image_filename": _clean(q.point_image_filename),
+            "point_image_fit": _normalize_background_fit(q.point_image_fit),
         }
 
     # ----- apresentação ----------------------------------------------------
@@ -564,6 +659,7 @@ class FormService:
             "title": p.get("title"),
             "backgroundImageUrl": self._page_background_url(token, page_id) if bg else None,
             "pointImageUrl": self._page_point_url(token, page_id) if point else None,
+            "pointImageFit": _normalize_background_fit(p.get("point_image_fit")),
         }
 
     def to_question_view(self, q: dict[str, Any], token: str | None = None) -> dict[str, Any]:
@@ -579,6 +675,7 @@ class FormService:
             "required": q.get("is_required"),
             "options": q.get("options") or [],
             "pointImageUrl": self._question_point_url(token, question_id) if point else None,
+            "pointImageFit": _normalize_background_fit(q.get("point_image_fit")),
         }
 
     def _form_background_url(self, token: str | None) -> str | None:

@@ -195,33 +195,53 @@
   text-align: left;
 }
 
-/* Ilustração por etapa/pergunta — destaque visual (estilo Google Forms). */
+/* Ilustração por etapa/pergunta — mesma lógica de fit do fundo (fixed/scale/tile). */
 .cxform-illustration {
   margin: 0 0 20px;
   padding: 0;
   text-align: center;
 }
 
-.cxform-illustration__img {
+.cxform-illustration__photo {
   display: block;
-  width: auto;
+  width: 100%;
+  height: 220px;
   max-width: 100%;
-  max-height: 220px;
   margin: 0 auto;
-  object-fit: contain;
   border-radius: 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
-.cxform-illustration--section .cxform-illustration__img {
-  max-height: 260px;
+.cxform-illustration__photo--scale {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.cxform-illustration__photo--fixed {
+  background-size: auto;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.cxform-illustration__photo--tile {
+  background-size: auto;
+  background-repeat: repeat;
+  background-position: top left;
+}
+
+.cxform-illustration--section .cxform-illustration__photo {
+  height: 260px;
 }
 
 .cxform-illustration--inline {
   margin-bottom: 16px;
 }
 
-.cxform-illustration--inline .cxform-illustration__img {
-  max-height: 200px;
+.cxform-illustration--inline .cxform-illustration__photo {
+  height: 200px;
 }
 
 /* Wizard passo a passo — faixa hero com ilustração grande no topo do card. */
@@ -232,12 +252,11 @@
   border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
 }
 
-.cxform--fullpage.cxform--wizard .cxform-illustration__img {
+.cxform--fullpage.cxform--wizard .cxform-illustration__photo {
   width: min(100%, 420px);
-  max-width: none;
-  max-height: min(280px, 36vh);
+  height: min(280px, 36vh);
   min-height: clamp(120px, 20vw, 180px);
-  object-fit: contain;
+  margin: 0 auto;
   filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
 }
 

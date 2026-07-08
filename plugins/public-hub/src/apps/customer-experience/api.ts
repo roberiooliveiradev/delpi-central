@@ -47,6 +47,8 @@ export type PublicQuestionType =
   | "multi_choice"
   | "yes_no";
 
+export type BackgroundFit = "fixed" | "scale" | "tile";
+
 export type PublicQuestion = {
   id: string;
   type: PublicQuestionType;
@@ -56,6 +58,7 @@ export type PublicQuestion = {
   options: string[];
   pageId?: string | null;
   pointImageUrl?: string | null;
+  pointImageFit?: BackgroundFit | null;
 };
 
 export type PublicFormPage = {
@@ -64,9 +67,8 @@ export type PublicFormPage = {
   position?: number;
   backgroundImageUrl?: string | null;
   pointImageUrl?: string | null;
+  pointImageFit?: BackgroundFit | null;
 };
-
-export type BackgroundFit = "fixed" | "scale" | "tile";
 
 export type PublicForm = {
   token: string;

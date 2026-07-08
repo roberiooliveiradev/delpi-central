@@ -79,6 +79,40 @@ function resolvePointImage(step: WizardStep | null, question?: PreviewFormQuesti
   return question?.pointImageUrl ?? null;
 }
 
+function resolvePointImageFit(
+  step: WizardStep | null,
+  question?: PreviewFormQuestion,
+  page?: PreviewFormPage | null,
+): BackgroundFit {
+  if (step?.kind === "question") {
+    return resolveBackgroundFit(step.page?.pointImageFit ?? step.question.pointImageFit);
+  }
+  return resolveBackgroundFit(page?.pointImageFit ?? question?.pointImageFit);
+}
+
+function PointIllustration({
+  url,
+  fit,
+  variant,
+}: {
+  url: string;
+  fit?: BackgroundFit | null;
+  variant?: "section" | "inline";
+}) {
+  const resolved = resolveBackgroundFit(fit);
+  const className = ["cxform-illustration", variant ? `cxform-illustration--${variant}` : ""]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <figure className={className} aria-hidden="true">
+      <div
+        className={`cxform-illustration__photo cxform-illustration__photo--${resolved}`}
+        style={{ backgroundImage: `url(${url})` }}
+      />
+    </figure>
+  );
+}
+
 export default function FormPreviewView({ form }: FormPreviewViewProps) {
   const pages = form.pages ?? [];
   const wizard = form.oneQuestionPerPage;
@@ -227,17 +261,17 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
               {showPageHeader && page && (
                 <div className="cxform-page-header">
                   {page.pointImageUrl && (
-                    <figure className="cxform-illustration cxform-illustration--section" aria-hidden="true">
-                      <img className="cxform-illustration__img" src={page.pointImageUrl} alt="" />
-                    </figure>
+                    <PointIllustration
+                      url={page.pointImageUrl}
+                      fit={page.pointImageFit}
+                      variant="section"
+                    />
                   )}
                   {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
                 </div>
               )}
               {!showPageHeader && q.pointImageUrl && (
-                <figure className="cxform-illustration cxform-illustration--inline" aria-hidden="true">
-                  <img className="cxform-illustration__img" src={q.pointImageUrl} alt="" />
-                </figure>
+                <PointIllustration url={q.pointImageUrl} fit={q.pointImageFit} variant="inline" />
               )}
               <QuestionField
                 question={q}
@@ -257,15 +291,12 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
       return renderIntroFields();
     }
     const pointImage = resolvePointImage(step);
+    const pointFit = resolvePointImageFit(step);
     const pageTitle = step.page?.title?.trim();
     const showPageTitle = Boolean(pageTitle && pageTitle !== step.question.label.trim());
     return (
       <div className="cxform-step">
-        {pointImage && (
-          <figure className="cxform-illustration" aria-hidden="true">
-            <img className="cxform-illustration__img" src={pointImage} alt="" />
-          </figure>
-        )}
+        {pointImage && <PointIllustration url={pointImage} fit={pointFit} />}
         {showPageTitle && <h2 className="cxform-page-title">{pageTitle}</h2>}
         <QuestionField
           question={step.question}

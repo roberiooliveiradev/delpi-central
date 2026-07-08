@@ -48,6 +48,8 @@ Visitante (sem login) → /p/customer-experience/{thanks|form}/{token}
 - Imagens ilustrativas por etapa/página ou pergunta
 - Publicar / despublicar; QR e link público próprios por formulário
 - Dashboard de respostas (resumo por pergunta + lista de envios)
+- **Duplicar** formulário (estrutura, imagens e layout; sem respostas; rascunho com novo link/QR)
+- **Exportar respostas** em CSV, Excel ou PDF (tela de respostas)
 - **Prévia** no admin (lista e editor): visualização local como o visitante verá, sem gravar respostas — inclui rascunhos e alterações não salvas
 - **Rotas na URL** do plugin (deep link e voltar do navegador)
 

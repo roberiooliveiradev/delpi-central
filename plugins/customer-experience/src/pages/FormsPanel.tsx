@@ -7,8 +7,10 @@ import {
   ChevronUp,
   ClipboardList,
   Copy,
+  Download,
   Eye,
   FileText,
+  Files,
   GripVertical,
   Plus,
   Power,
@@ -22,6 +24,7 @@ import {
   deactivateForm,
   deleteForm,
   downloadFormQr,
+  duplicateForm,
   getDashboard,
   getForm,
   listForms,
@@ -44,13 +47,19 @@ import type {
   FormDetail,
   FormPage,
   FormQuestion,
+  FormResponseItem,
   FormResponseList,
   FormSummary,
   QuestionType,
 } from "../types";
 import {
+  exportFormResponses,
+  type ResponseExportFormat,
+} from "../utils/formResponsesExport";
+import {
   BACKGROUND_FIT_LABELS,
   BACKGROUND_FITS,
+  POINT_IMAGE_FIT_LABELS,
   normalizeBackgroundFit,
 } from "../types";
 import { useCxPermissions } from "../context/CxPermissionsContext";
@@ -78,11 +87,18 @@ const TYPE_LABELS: Record<QuestionType, string> = {
 const CHOICE_TYPES: QuestionType[] = ["single_choice", "multi_choice"];
 
 function blankQuestion(): FormQuestion {
-  return { type: "rating", label: "", helpText: null, required: false, options: [] };
+  return {
+    type: "rating",
+    label: "",
+    helpText: null,
+    required: false,
+    options: [],
+    pointImageFit: "scale",
+  };
 }
 
 function blankPage(): FormPage {
-  return { title: null, backgroundImageUrl: null, pointImageUrl: null };
+  return { title: null, backgroundImageUrl: null, pointImageUrl: null, pointImageFit: "scale" };
 }
 
 function ensurePageCount(pages: FormPage[], count: number): FormPage[] {
@@ -311,6 +327,7 @@ function FormsList({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -378,6 +395,19 @@ function FormsList({
       onChanged("Formulário excluído.");
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao excluir formulário.");
+    }
+  };
+
+  const duplicate = async (form: FormSummary) => {
+    setDuplicatingId(form.id);
+    try {
+      const copy = await duplicateForm(form.id);
+      onChanged(`Formulário duplicado: "${copy.title}".`);
+      onCreated(copy);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao duplicar formulário.");
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -459,9 +489,20 @@ function FormsList({
                     <Eye size={16} /> {previewLoadingId === form.id ? "Abrindo..." : "Prévia"}
                   </button>
                   {canWriteForms && (
-                    <button className="cx-button cx-button--ghost" type="button" onClick={() => onEdit(form.id)}>
-                      <ClipboardList size={16} /> Perguntas
-                    </button>
+                    <>
+                      <button
+                        className="cx-button cx-button--ghost"
+                        type="button"
+                        onClick={() => void duplicate(form)}
+                        disabled={duplicatingId === form.id}
+                      >
+                        <Files size={16} />{" "}
+                        {duplicatingId === form.id ? "Duplicando..." : "Duplicar"}
+                      </button>
+                      <button className="cx-button cx-button--ghost" type="button" onClick={() => onEdit(form.id)}>
+                        <ClipboardList size={16} /> Perguntas
+                      </button>
+                    </>
                   )}
                   {canManageForms && (
                     <>
@@ -531,6 +572,24 @@ function PageVisualFields({
           onClear={() => onClearPoint(pageIndex)}
         />
       </div>
+      {(pendingImages.pagePoint[pageIndex] || page.pointImageUrl) && (
+        <label className="cx-field">
+          <span>Exibição da ilustrativa</span>
+          <select
+            className="cx-select"
+            value={normalizeBackgroundFit(page.pointImageFit)}
+            onChange={(e) =>
+              onUpdatePage(pageIndex, { pointImageFit: normalizeBackgroundFit(e.target.value) })
+            }
+          >
+            {BACKGROUND_FITS.map((fit) => (
+              <option key={fit} value={fit}>
+                {POINT_IMAGE_FIT_LABELS[fit]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
     </>
   );
 }
@@ -1079,19 +1138,39 @@ function FormEditor({
             </label>
 
             {!oneQuestionPerPage && (
-              <div className="cx-field">
-                <span className="cx-field__label">Imagem ilustrativa da pergunta</span>
-                <PhotoDropzone
-                  previewUrl={
-                    pendingImages.questionPoint[index]
-                      ? URL.createObjectURL(pendingImages.questionPoint[index])
-                      : q.pointImageUrl ?? null
-                  }
-                  isExisting={Boolean(q.pointImageUrl && !pendingImages.questionPoint[index])}
-                  onSelect={(file) => setPendingQuestionPoint(index, file)}
-                  onClear={() => clearPendingQuestionPoint(index)}
-                />
-              </div>
+              <>
+                <div className="cx-field">
+                  <span className="cx-field__label">Imagem ilustrativa da pergunta</span>
+                  <PhotoDropzone
+                    previewUrl={
+                      pendingImages.questionPoint[index]
+                        ? URL.createObjectURL(pendingImages.questionPoint[index])
+                        : q.pointImageUrl ?? null
+                    }
+                    isExisting={Boolean(q.pointImageUrl && !pendingImages.questionPoint[index])}
+                    onSelect={(file) => setPendingQuestionPoint(index, file)}
+                    onClear={() => clearPendingQuestionPoint(index)}
+                  />
+                </div>
+                {(pendingImages.questionPoint[index] || q.pointImageUrl) && (
+                  <label className="cx-field">
+                    <span>Exibição da ilustrativa</span>
+                    <select
+                      className="cx-select"
+                      value={normalizeBackgroundFit(q.pointImageFit)}
+                      onChange={(e) =>
+                        update(index, { pointImageFit: normalizeBackgroundFit(e.target.value) })
+                      }
+                    >
+                      {BACKGROUND_FITS.map((fit) => (
+                        <option key={fit} value={fit}>
+                          {POINT_IMAGE_FIT_LABELS[fit]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </>
             )}
 
             {CHOICE_TYPES.includes(q.type) && (
@@ -1176,6 +1255,7 @@ function FormDashboardView({ form, onBack }: { form: FormDetail; onBack: () => v
   const [responses, setResponses] = useState<FormResponseList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"summary" | "responses">("summary");
+  const [exporting, setExporting] = useState<ResponseExportFormat | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -1197,6 +1277,38 @@ function FormDashboardView({ form, onBack }: { form: FormDetail; onBack: () => v
     };
   }, [form.id]);
 
+  const loadAllResponses = async (): Promise<FormResponseItem[]> => {
+    const pageSize = 500;
+    const first = await listResponses(form.id, { limit: pageSize, offset: 0 });
+    if (first.total <= first.items.length) return first.items;
+    const items = [...first.items];
+    let offset = first.items.length;
+    while (offset < first.total) {
+      const page = await listResponses(form.id, { limit: pageSize, offset });
+      items.push(...page.items);
+      if (page.items.length === 0) break;
+      offset += page.items.length;
+    }
+    return items;
+  };
+
+  const handleExport = async (format: ResponseExportFormat) => {
+    setExporting(format);
+    setError(null);
+    try {
+      const items = await loadAllResponses();
+      if (items.length === 0) {
+        setError("Não há respostas para exportar.");
+        return;
+      }
+      await exportFormResponses(form, items, format);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao exportar respostas.");
+    } finally {
+      setExporting(null);
+    }
+  };
+
   return (
     <div className="cx-editor">
       <div className="cx-editor__bar">
@@ -1217,6 +1329,35 @@ function FormDashboardView({ form, onBack }: { form: FormDetail; onBack: () => v
             onClick={() => setTab("responses")}
           >
             Respostas
+          </button>
+        </div>
+        <div className="cx-export-actions">
+          <span className="cx-export-actions__label">
+            <Download size={14} /> Exportar
+          </span>
+          <button
+            className="cx-button cx-button--ghost"
+            type="button"
+            disabled={exporting !== null}
+            onClick={() => void handleExport("csv")}
+          >
+            {exporting === "csv" ? "..." : "CSV"}
+          </button>
+          <button
+            className="cx-button cx-button--ghost"
+            type="button"
+            disabled={exporting !== null}
+            onClick={() => void handleExport("xlsx")}
+          >
+            {exporting === "xlsx" ? "..." : "Excel"}
+          </button>
+          <button
+            className="cx-button cx-button--ghost"
+            type="button"
+            disabled={exporting !== null}
+            onClick={() => void handleExport("pdf")}
+          >
+            {exporting === "pdf" ? "..." : "PDF"}
           </button>
         </div>
       </div>

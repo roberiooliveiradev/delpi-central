@@ -43,6 +43,11 @@ export async function createForm(input: CreateFormInput): Promise<FormDetail> {
   return unwrapEnvelope(response, "Não foi possível criar o formulário.");
 }
 
+export async function duplicateForm(id: string): Promise<FormDetail> {
+  const response = await httpPost<ApiEnvelope<FormDetail>>(`${FORMS}/${id}/duplicate`);
+  return unwrapEnvelope(response, "Não foi possível duplicar o formulário.");
+}
+
 export async function updateForm(
   id: string,
   input: {
@@ -69,6 +74,7 @@ export async function setQuestions(
     pages: (input.pages ?? []).map((p) => ({
       id: p.id,
       title: p.title,
+      pointImageFit: p.pointImageFit ?? "scale",
     })),
     questions: input.questions.map((q) => ({
       id: q.id,
@@ -79,6 +85,7 @@ export async function setQuestions(
       options: q.options,
       pageId: q.pageId,
       pageIndex: q.pageIndex ?? undefined,
+      pointImageFit: q.pointImageFit ?? "scale",
     })),
   };
   const response = await httpPutJson<ApiEnvelope<FormDetail>>(

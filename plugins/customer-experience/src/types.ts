@@ -77,6 +77,13 @@ export const BACKGROUND_FIT_LABELS: Record<BackgroundFit, string> = {
   tile: "Repetir (mosaico)",
 };
 
+/** Mesmos modos, rótulos para imagem ilustrativa. */
+export const POINT_IMAGE_FIT_LABELS: Record<BackgroundFit, string> = {
+  fixed: "Tamanho fixo (original)",
+  scale: "Escalável (preenche a área)",
+  tile: "Repetir (mosaico)",
+};
+
 export const BACKGROUND_FITS: BackgroundFit[] = ["fixed", "scale", "tile"];
 
 export function normalizeBackgroundFit(value: string | null | undefined): BackgroundFit {
@@ -95,6 +102,7 @@ export type FormQuestion = {
   pageId?: string | null;
   pageIndex?: number | null;
   pointImageUrl?: string | null;
+  pointImageFit?: BackgroundFit;
 };
 
 export type FormPage = {
@@ -103,6 +111,7 @@ export type FormPage = {
   position?: number;
   backgroundImageUrl?: string | null;
   pointImageUrl?: string | null;
+  pointImageFit?: BackgroundFit;
 };
 
 export type FormSummary = {
