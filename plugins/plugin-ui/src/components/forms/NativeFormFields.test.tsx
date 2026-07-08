@@ -57,4 +57,19 @@ describe("NativeTextField", () => {
     expect(input.getAttribute("type")).toBe("datetime-local");
     expect(screen.getByDisplayValue("2026-07-08T10:00")).toBeTruthy();
   });
+
+  it("renderiza afterControl após o input", () => {
+    const { container } = render(
+      <NativeTextField
+        id="dm-peca"
+        label="Peça"
+        value=""
+        onChange={() => undefined}
+        afterControl={<span className="dm-field__error">Obrigatório</span>}
+        classNames={formFieldShellKaizenClasses("dm")}
+      />,
+    );
+
+    expect(container.querySelector(".dm-field__error")?.textContent).toBe("Obrigatório");
+  });
 });

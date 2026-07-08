@@ -14,6 +14,8 @@ export type FormFieldShellProps = {
   hint?: string;
   span?: boolean;
   className?: string;
+  /** Conteúdo após o controle (ex.: mensagem de erro do plugin). */
+  afterControl?: ReactNode;
   classNames: FormFieldShellClassNames;
   children: ReactNode;
 };
@@ -35,6 +37,7 @@ export function FormFieldShell({
   hint,
   span = false,
   className,
+  afterControl,
   classNames,
   children,
 }: FormFieldShellProps) {
@@ -46,6 +49,7 @@ export function FormFieldShell({
     <div className={rootClass}>
       <FieldLabel label={label} htmlFor={id} hint={hint} className={classNames.fieldLabel} />
       {children}
+      {afterControl}
     </div>
   );
 }

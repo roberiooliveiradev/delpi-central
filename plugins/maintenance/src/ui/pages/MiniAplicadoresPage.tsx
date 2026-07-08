@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hammer, Loader2, Lock, PlusCircle, RefreshCw } from "lucide-react";
 
-import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FieldLabel, FilterBar, MultiSelectField, StateBox } from "../../components/data";
+import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FilterBar, MultiSelectField, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
@@ -15,6 +15,10 @@ import { FerramentaOndeUsadoSection } from "../../components/FerramentaOndeUsado
 import { FerramentaRevisaoProgramadaSection } from "../../components/FerramentaRevisaoProgramadaSection";
 import { ReposicoesGolpesChart } from "../../components/ReposicoesGolpesChart";
 import { FerramentaReposicaoIndicadores } from "../../components/FerramentaReposicaoIndicadores";
+import {
+  DmNativeSelectField,
+  DmNativeTextAreaField,
+} from "../../components/dmFormFields";
 import {
   createReposicao,
   deleteReposicao,
@@ -1039,35 +1043,34 @@ export function MiniAplicadoresPage({
                 lang="pt-BR"
                 onSubmit={handleSubmitReposicao}
               >
-                <label
-                  className={`dm-field dm-field--span-full${reposicaoFormErrors.codigoPeca ? " dm-field--invalid" : ""}`}
-                >
-                  <span>Peça</span>
-                  <select
-                    className="dm-select-peca"
-                    value={codigoPeca}
-                    aria-invalid={Boolean(reposicaoFormErrors.codigoPeca)}
-                    onChange={(event) => {
-                      clearReposicaoFieldError("codigoPeca");
-                      setCodigoPeca(event.target.value);
-                      if (!editingReposicaoId) {
-                        setDataUltimaReposicao("");
-                      }
-                    }}
-                  >
-                    {pecasReposicao.length === 0 ? (
-                      <option value="">Nenhuma peça 3019 amarrada ao mini-aplicador</option>
-                    ) : null}
-                    {pecasReposicao.map((peca) => (
-                      <option key={peca.codigo} value={peca.codigo}>
-                        {formatPecaLabel(peca)}
-                      </option>
-                    ))}
-                  </select>
-                  {reposicaoFormErrors.codigoPeca ? (
-                    <span className="dm-field__error">{reposicaoFormErrors.codigoPeca}</span>
-                  ) : null}
-                </label>
+                <DmNativeSelectField
+                  id="dm-reposicao-peca"
+                  label="Peça"
+                  className={`dm-field--span-full${reposicaoFormErrors.codigoPeca ? " dm-field--invalid" : ""}`}
+                  controlClassName="dm-select-peca"
+                  value={codigoPeca}
+                  onChange={(value) => {
+                    clearReposicaoFieldError("codigoPeca");
+                    setCodigoPeca(value);
+                    if (!editingReposicaoId) {
+                      setDataUltimaReposicao("");
+                    }
+                  }}
+                  placeholderOption={
+                    pecasReposicao.length === 0
+                      ? "Nenhuma peça 3019 amarrada ao mini-aplicador"
+                      : undefined
+                  }
+                  options={pecasReposicao.map((peca) => ({
+                    value: peca.codigo,
+                    label: formatPecaLabel(peca),
+                  }))}
+                  afterControl={
+                    reposicaoFormErrors.codigoPeca ? (
+                      <span className="dm-field__error">{reposicaoFormErrors.codigoPeca}</span>
+                    ) : null
+                  }
+                />
 
                 <label
                   className={`dm-field dm-field--span-4${reposicaoFormErrors.dataReposicao ? " dm-field--invalid" : ""}`}
@@ -1141,39 +1144,37 @@ export function MiniAplicadoresPage({
                   {golpesLoading ? "Calculando…" : "Sugerir golpes"}
                 </button>
 
-                <label
-                  className={`dm-field dm-field--span-full${reposicaoFormErrors.motivoId ? " dm-field--invalid" : ""}`}
-                >
-                  <span>Motivo</span>
-                  <select
-                    value={motivoId}
-                    aria-invalid={Boolean(reposicaoFormErrors.motivoId)}
-                    onChange={(event) => {
-                      clearReposicaoFieldError("motivoId");
-                      setMotivoId(event.target.value);
-                    }}
-                  >
-                    <option value="">Selecione…</option>
-                    {motivos.map((motivo) => (
-                      <option key={motivo.motivo_id} value={motivo.motivo_id}>
-                        {motivo.descricao}
-                      </option>
-                    ))}
-                  </select>
-                  {reposicaoFormErrors.motivoId ? (
-                    <span className="dm-field__error">{reposicaoFormErrors.motivoId}</span>
-                  ) : null}
-                </label>
+                <DmNativeSelectField
+                  id="dm-reposicao-motivo"
+                  label="Motivo"
+                  className={`dm-field--span-full${reposicaoFormErrors.motivoId ? " dm-field--invalid" : ""}`}
+                  value={motivoId}
+                  onChange={(value) => {
+                    clearReposicaoFieldError("motivoId");
+                    setMotivoId(value);
+                  }}
+                  placeholderOption="Selecione…"
+                  options={motivos.map((motivo) => ({
+                    value: String(motivo.motivo_id),
+                    label: motivo.descricao,
+                  }))}
+                  afterControl={
+                    reposicaoFormErrors.motivoId ? (
+                      <span className="dm-field__error">{reposicaoFormErrors.motivoId}</span>
+                    ) : null
+                  }
+                />
 
-                <label className="dm-field dm-field--span-full dm-field--textarea">
-                  <FieldLabel label="Observação"  className="dm-field__label" />
-                  <textarea
-                    rows={4}
-                    value={observacao}
-                    placeholder="Detalhes da troca, condição da peça, etc."
-                    onChange={(event) => setObservacao(event.target.value)}
-                  />
-                </label>
+                <DmNativeTextAreaField
+                  id="dm-reposicao-observacao"
+                  label="Observação"
+                  className="dm-field--span-full dm-field--textarea"
+                  span={false}
+                  rows={4}
+                  value={observacao}
+                  onChange={setObservacao}
+                  placeholder="Detalhes da troca, condição da peça, etc."
+                />
 
                 <div className="dm-form-grid__buttons dm-field--span-full">
                   <button type="submit" className="dm-primary-btn" disabled={!codigoPeca}>

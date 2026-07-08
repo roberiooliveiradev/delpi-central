@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import {
   createDashboardFormFieldShell,
   FormFieldShell,
@@ -13,6 +15,7 @@ type BaseNativeFieldProps = {
   disabled?: boolean;
   className?: string;
   controlClassName?: string;
+  afterControl?: ReactNode;
   classNames: FormFieldShellClassNames;
 };
 
@@ -35,6 +38,7 @@ export function NativeTextField({
   disabled,
   className,
   controlClassName,
+  afterControl,
   classNames,
   value,
   onChange,
@@ -51,6 +55,7 @@ export function NativeTextField({
       hint={hint}
       span={span}
       className={className}
+      afterControl={afterControl}
       classNames={classNames}
     >
       <input
@@ -91,6 +96,7 @@ export function NativeSelectField({
   disabled,
   className,
   controlClassName,
+  afterControl,
   classNames,
   value,
   onChange,
@@ -104,6 +110,7 @@ export function NativeSelectField({
       hint={hint}
       span={span}
       className={className}
+      afterControl={afterControl}
       classNames={classNames}
     >
       <select
@@ -141,6 +148,7 @@ export function NativeTextAreaField({
   disabled,
   className,
   controlClassName,
+  afterControl,
   classNames,
   value,
   onChange,
@@ -154,6 +162,7 @@ export function NativeTextAreaField({
       hint={hint}
       span={span}
       className={className}
+      afterControl={afterControl}
       classNames={classNames}
     >
       <textarea

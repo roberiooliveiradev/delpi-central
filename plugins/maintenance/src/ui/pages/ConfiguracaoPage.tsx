@@ -4,13 +4,16 @@ import { Settings } from "lucide-react";
 import {
   type DataTableColumn,
   DataTableSection,
-  FieldLabel,
   FilterBar,
   HelpTooltip,
   PendingChangeBadge,
   StateBox,
 } from "../../components/data";
 import { EditableCell } from "../../components/EditableCell";
+import {
+  DmNativeSelectField,
+  DmNativeTextField,
+} from "../../components/dmFormFields";
 import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
@@ -542,14 +545,14 @@ export function ConfiguracaoPage({
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded className="dm-filter-bar--motivo-create" onSubmit={handleCreateMotivo}>
-              <label className="dm-field">
-                <FieldLabel label="Novo motivo" hint={CONFIG_TOOLTIPS.motivoDescricao}  className="dm-field__label" />
-                <input
-                  value={novoMotivo}
-                  onChange={(event) => setNovoMotivo(event.target.value)}
-                  placeholder="Ex.: DESGASTE"
-                />
-              </label>
+              <DmNativeTextField
+                id="dm-config-novo-motivo"
+                label="Novo motivo"
+                hint={CONFIG_TOOLTIPS.motivoDescricao}
+                value={novoMotivo}
+                onChange={setNovoMotivo}
+                placeholder="Ex.: DESGASTE"
+              />
               <label className="dm-checkbox-field">
                 <input
                   type="checkbox"
@@ -589,49 +592,44 @@ export function ConfiguracaoPage({
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded className="dm-filter-bar--status-create" onSubmit={handleCreateStatus}>
-              <label className="dm-field">
-                <FieldLabel label="Novo status" hint={CONFIG_TOOLTIPS.statusDescricao}  className="dm-field__label" />
-                <input
-                  value={novoStatus.descricao}
-                  onChange={(event) =>
-                    setNovoStatus((prev) => ({ ...prev, descricao: event.target.value }))
-                  }
-                  placeholder="Ex.: CRÍTICO"
-                />
-              </label>
-              <label className="dm-field">
-                <FieldLabel label="Operador" hint={CONFIG_TOOLTIPS.statusOperador}  className="dm-field__label" />
-                <select
-                  value={novoStatus.operador}
-                  onChange={(event) =>
-                    setNovoStatus((prev) => ({
-                      ...prev,
-                      operador: event.target.value as NovoStatusDraft["operador"],
-                    }))
-                  }
-                >
-                  {STATUS_OPERATORS.map((operador) => (
-                    <option key={operador} value={operador}>
-                      {operador}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="dm-field">
-                <FieldLabel label="Percentual" hint={CONFIG_TOOLTIPS.statusPercentual}  className="dm-field__label" />
-                <input
-                  type="number"
-                  min={0}
-                  max={200}
-                  value={novoStatus.percentual}
-                  onChange={(event) =>
-                    setNovoStatus((prev) => ({
-                      ...prev,
-                      percentual: Number(event.target.value),
-                    }))
-                  }
-                />
-              </label>
+              <DmNativeTextField
+                id="dm-config-novo-status"
+                label="Novo status"
+                hint={CONFIG_TOOLTIPS.statusDescricao}
+                value={novoStatus.descricao}
+                onChange={(descricao) => setNovoStatus((prev) => ({ ...prev, descricao }))}
+                placeholder="Ex.: CRÍTICO"
+              />
+              <DmNativeSelectField
+                id="dm-config-status-operador"
+                label="Operador"
+                hint={CONFIG_TOOLTIPS.statusOperador}
+                value={novoStatus.operador}
+                onChange={(operador) =>
+                  setNovoStatus((prev) => ({
+                    ...prev,
+                    operador: operador as NovoStatusDraft["operador"],
+                  }))
+                }
+                options={STATUS_OPERATORS.map((operador) => ({
+                  value: operador,
+                  label: operador,
+                }))}
+              />
+              <DmNativeTextField
+                id="dm-config-status-percentual"
+                label="Percentual"
+                hint={CONFIG_TOOLTIPS.statusPercentual}
+                type="number"
+                min={0}
+                value={String(novoStatus.percentual)}
+                onChange={(value) =>
+                  setNovoStatus((prev) => ({
+                    ...prev,
+                    percentual: Number(value),
+                  }))
+                }
+              />
               <button type="submit" className="dm-primary-btn">
                 Adicionar
               </button>

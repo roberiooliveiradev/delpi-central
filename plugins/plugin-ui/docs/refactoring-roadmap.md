@@ -235,6 +235,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | `EditableTableCell` / `NativeSelectControl` | maintenance, PAC, kaizen | ✅ F3.8 |
 | Forms residual (a5s / QL / CA Native*) | auditoria-5s, quality-labels, central-agendamento | ✅ F3.8 |
 | `BookingModal` Native* + `datetime-local` | central-agendamento | ✅ F3.9 |
+| Maintenance Native* (`dmFormFields` + `afterControl`) | Configuração, MiniAplicadores, revisão programada | ✅ F3.10 |
 
 ### Fase 4 — Utilitários compartilhados (1 sprint)
 
@@ -277,7 +278,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `cadastro-kaizen` | ✅ | FiltersRow ✅ MultiSelect ✅ DataTable ✅ KpiCard ✅ | Forms ✅ SectionCard ✅ EditableSectionCard ✅ PageHeader ✅ StateBanner ✅ | sim |
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
-| `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · DataTableSection* allowlist | sim |
+| `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · EditableCell ✅ · Native* forms ✅ | sim |
 | `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ FilterBarShell ✅ CompactPagination ✅ | PageHeader ✅ Empty/Loading ✅ | sim |
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ FilterBarShell ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |
