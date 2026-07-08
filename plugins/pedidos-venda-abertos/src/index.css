@@ -278,6 +278,109 @@
   position: relative;
 }
 
+/* SelectControl (FilterSelectField Filial / Status) — mesma família BEM do multi-select */
+.pva-select {
+  position: relative;
+  min-width: 0;
+}
+
+.pva-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--pva-control-height);
+  padding: 0 12px;
+  border: 1px solid var(--pva-border);
+  border-radius: var(--pva-control-radius);
+  background: var(--pva-surface);
+  color: var(--pva-text);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.pva-select__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pva-select--open .pva-select__trigger {
+  border-color: color-mix(in srgb, var(--pva-accent) 45%, var(--pva-border));
+}
+
+.pva-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pva-select__panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--pva-border);
+  border-radius: var(--pva-control-radius);
+  background: var(--pva-surface);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--pva-text) 12%, transparent);
+}
+
+.pva-select__search {
+  min-height: var(--pva-control-height);
+  padding: 0 12px;
+  border: 1px solid var(--pva-border);
+  border-radius: var(--pva-control-radius);
+  background: var(--pva-surface);
+  color: var(--pva-text);
+  font: inherit;
+}
+
+.pva-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow: auto;
+  display: grid;
+  gap: 2px;
+}
+
+.pva-select__list li {
+  margin: 0;
+  list-style: none;
+}
+
+.pva-select__option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--pva-text);
+  font: inherit;
+  font-size: var(--pva-font-sm);
+}
+
+.pva-select__option:hover,
+.pva-select__option--active {
+  background: color-mix(in srgb, var(--pva-accent) 10%, transparent);
+  color: var(--pva-accent);
+}
+
+.pva-select__empty {
+  padding: 8px;
+  color: var(--pva-muted);
+  font-size: var(--pva-font-sm);
+}
+
 .pva-multi-select__trigger {
   display: flex;
   align-items: center;
