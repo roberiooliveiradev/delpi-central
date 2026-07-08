@@ -1,6 +1,6 @@
 import { BRANCHES, KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FilterInputField, FilterSelectField, FiltersRow } from "./ui/FiltersKit";
+import { FilterInputField, FilterSelectField, FiltersRow } from "./ui";
 
 type KaizenRecordFiltersProps = {
   branch: string;

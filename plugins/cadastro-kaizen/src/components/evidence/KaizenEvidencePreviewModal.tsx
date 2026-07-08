@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { fetchKaizenEvidenceObjectUrl } from "../../api/kaizenApi";
 import type { KaizenEvidence } from "../../types/kaizen";
-import { Modal } from "../ui/Modal";
-import { EmptyHint, LoadingHint } from "../ui";
+import { EmptyHint, LoadingHint, Modal } from "../ui";
 import { formatEvidenceFileSize } from "./kaizenEvidenceUtils";
 import {
   evidencePreviewTitle,

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
-import { TextField } from "../ui";
-import { ReadOnlyField } from "../ui/ReadOnlyField";
+import { ReadOnlyField, TextField } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { visibleSavingsParamFields, type SavingsParamField } from "../../constants/kaizen";
 import type { KaizenFormValues } from "../../types/kaizen";

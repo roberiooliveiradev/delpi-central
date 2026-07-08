@@ -74,7 +74,7 @@ Não duplicam primitivos do pacote — são regras de negócio ou layout especí
 
 - `KaizenParticipantsField` (layout de linha nome+papel)
 - `KaizenEvidencePanel` (galeria/preview), `KaizenChangeLog`, `StatusPipeline`
-- `KaizenFormProgress`, `KaizenNavTabs`, `BarList` (dashboard)
+- `KaizenFormProgress`, `KaizenNavTabs`, `KaizenListHeaderActions`, `BarList` (dashboard)
 
 ## Adicionar um campo novo
 

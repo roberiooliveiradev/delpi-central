@@ -12,8 +12,8 @@ import type { DataTableColumn } from "../components/data";
 import { DataTableSection } from "../components/data";
 import {
   KaizenListHeaderActions,
-  KaizenPageHeader,
-} from "../components/KaizenPageHeader";
+} from "../components/KaizenListHeaderActions";
+import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenRecordFilters } from "../components/KaizenRecordFilters";
 import { StateAlert } from "../components/ui";

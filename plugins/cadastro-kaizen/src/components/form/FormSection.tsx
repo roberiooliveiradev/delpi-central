@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
-import { FormGrid } from "../ui/FormGrid";
-import { SectionCard } from "../ui/SectionCard";
+import { FormGrid, SectionCard } from "../ui";
 
 type FormSectionProps = {
   title: string;
