@@ -253,6 +253,9 @@ export const TM_HELP_TOOLTIPS = {
     graficoAria: "Matriz impacto por esforço das revisões da melhoria",
     resumoEconomia: "Economia líquida anual",
     modoAutomaticoHint: "Selecione Híbrido ou Manual para salvar ajustes qualitativos.",
+    instanciaPriorizacao:
+      "Compara todas as revisões desta melhoria no mesmo gráfico impacto × esforço e ranking por prioridade.",
+    graficoInstanciaAria: "Matriz impacto por esforço de todas as revisões da melhoria",
   },
   investimentos: {
     tipo: "Natureza do investimento (software, equipamento, horas, etc.).",

@@ -8,6 +8,10 @@ import {
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import {
+  fetchInstanciaMatrizImpactoEsforco,
+  type MatrizImpactoPonto,
+} from "../../data/api/transformometroMatrixApi";
 import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
 import { ProcessoWorkspaceSidebar } from "./ProcessoWorkspaceSidebar";
 import {
@@ -45,6 +49,7 @@ export function ProcessoWorkspaceShell({
   const [processo, setProcesso] = useState<Processo | null>(processoProp ?? null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>(instanciasProp ?? []);
   const [revisoes, setRevisoes] = useState<Revisao[]>(revisoesProp ?? []);
+  const [matrixByRevisaoId, setMatrixByRevisaoId] = useState<Record<string, MatrizImpactoPonto>>({});
 
   const loadSidebarData = useCallback(async () => {
     if (processoProp && instanciasProp && revisoesProp) return;
@@ -74,10 +79,42 @@ export function ProcessoWorkspaceShell({
     void loadSidebarData();
   }, [loadSidebarData]);
 
+  useEffect(() => {
+    if (instancias.length === 0) {
+      setMatrixByRevisaoId({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const responses = await Promise.all(
+          instancias.map((instancia) =>
+            fetchInstanciaMatrizImpactoEsforco(instancia.instancia_id, getAccessToken, {
+              incluir_baseline: true,
+            })
+          )
+        );
+        if (cancelled) return;
+        const next: Record<string, MatrizImpactoPonto> = {};
+        for (const response of responses) {
+          for (const ponto of response.pontos) {
+            next[ponto.revisao_id] = ponto;
+          }
+        }
+        setMatrixByRevisaoId(next);
+      } catch {
+        if (!cancelled) setMatrixByRevisaoId({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [getAccessToken, instancias]);
+
   const treeNodes = useMemo(() => {
     if (!processo) return [];
-    return buildProcessoWorkspaceTree({ processo, instancias, revisoes });
-  }, [instancias, processo, revisoes]);
+    return buildProcessoWorkspaceTree({ processo, instancias, revisoes, matrixByRevisaoId });
+  }, [instancias, matrixByRevisaoId, processo, revisoes]);
 
   return (
     <ProcessoWorkspacePanelActionsProvider>

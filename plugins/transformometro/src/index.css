@@ -1236,6 +1236,113 @@
   color: var(--ds-accent);
 }
 
+.dashboard-transformometro .tm-processo-workspace-tree__badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.dashboard-transformometro .tm-processo-workspace-tree__matrix-badge {
+  font-size: 0.62rem;
+  min-width: 1.5rem;
+  padding: 0.05rem 0.3rem;
+}
+
+.dashboard-transformometro .tm-matrix-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid transparent;
+}
+
+.dashboard-transformometro .tm-matrix-badge--quick-win {
+  color: var(--ds-success, #16a34a);
+  background: color-mix(in srgb, var(--ds-success, #16a34a) 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-success, #16a34a) 35%, transparent);
+}
+
+.dashboard-transformometro .tm-matrix-badge--strategic {
+  color: var(--ds-accent, #089bdb);
+  background: color-mix(in srgb, var(--ds-accent, #089bdb) 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-accent, #089bdb) 35%, transparent);
+}
+
+.dashboard-transformometro .tm-matrix-badge--fill-in {
+  color: var(--ds-text-muted);
+  background: color-mix(in srgb, var(--ds-text-muted) 12%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-text-muted) 28%, transparent);
+}
+
+.dashboard-transformometro .tm-matrix-badge--rethink {
+  color: var(--ds-warning, #d97706);
+  background: color-mix(in srgb, var(--ds-warning, #d97706) 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-warning, #d97706) 35%, transparent);
+}
+
+.dashboard-transformometro .tm-matrix-badge--neutral {
+  color: var(--ds-text-muted);
+  background: color-mix(in srgb, var(--ds-text-muted) 10%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-text-muted) 22%, transparent);
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__table-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__table th,
+.dashboard-transformometro .tm-instancia-matrix-section__table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--ds-card-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ds-text-muted);
+  background: color-mix(in srgb, var(--ds-card-bg) 92%, var(--ds-text) 8%);
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__row--active {
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ds-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-transformometro .tm-instancia-matrix-section__link:hover {
+  text-decoration: underline;
+}
+
 .dashboard-transformometro .tm-processo-workspace-tree__children-wrap {
   display: grid;
   grid-template-rows: 0fr;

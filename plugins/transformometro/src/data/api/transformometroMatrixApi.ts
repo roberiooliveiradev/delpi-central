@@ -90,6 +90,23 @@ export type MatrizImpactoSaveBody = {
 export type MatrizImpactoQuery = {
   competencia?: string;
   horizonte_meses?: number;
+  incluir_baseline?: boolean;
+  incluir_rejeitadas?: boolean;
+};
+
+export type InstanciaMatrizImpactoResponse = {
+  instancia_id: string;
+  processo_id: string;
+  competencia: string;
+  horizonte_meses: number;
+  threshold: number;
+  pontos: MatrizImpactoPonto[];
+  ativo: {
+    revisao_id: string;
+    impacto: number;
+    esforco: number;
+    quadrante: ImpactEffortQuadrant;
+  } | null;
 };
 
 async function parseEnvelope<T>(response: Response): Promise<T> {
@@ -105,6 +122,10 @@ function buildQuery(params?: MatrizImpactoQuery): string {
   const qs = new URLSearchParams();
   if (params.competencia) qs.set("competencia", params.competencia);
   if (params.horizonte_meses != null) qs.set("horizonte_meses", String(params.horizonte_meses));
+  if (params.incluir_baseline != null) qs.set("incluir_baseline", String(params.incluir_baseline));
+  if (params.incluir_rejeitadas != null) {
+    qs.set("incluir_rejeitadas", String(params.incluir_rejeitadas));
+  }
   const encoded = qs.toString();
   return encoded ? `?${encoded}` : "";
 }
@@ -123,6 +144,17 @@ async function request<T>(
     },
   });
   return parseEnvelope<T>(response);
+}
+
+export async function fetchInstanciaMatrizImpactoEsforco(
+  instanciaId: string,
+  getAccessToken?: () => string | undefined,
+  params?: MatrizImpactoQuery
+): Promise<InstanciaMatrizImpactoResponse> {
+  return request(
+    `/instancias/${instanciaId}/matriz-impacto-esforco${buildQuery(params)}`,
+    getAccessToken
+  );
 }
 
 export async function fetchRevisaoMatrizImpactoEsforco(

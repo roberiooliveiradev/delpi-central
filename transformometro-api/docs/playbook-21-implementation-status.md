@@ -13,7 +13,7 @@
 | S1 | `RevisaoImpactEffortMatrixService` + GET instância/revisão | ✅ |
 | S2 | PUT overrides + migration V038 + audit | ✅ |
 | S3 | Seção no `RevisaoCadastroPanel` + API client | ✅ |
-| S4 | Badge árvore workspace + scatter instância | ⏳ pendente |
+| S4 | Badge árvore workspace + scatter instância | ✅ |
 | S5 | Visão processo multi-melhoria + export PNG | ⏳ backlog |
 
 ## Entregas S0
@@ -60,7 +60,15 @@
 - `TM_HELP_TOOLTIPS.matriz` + `matrizImpactoLabels.ts`
 - Estilos `.tm-impact-effort-section` em `index.css`
 
-## Próximo passo (S4)
+## Entregas S4
 
-1. `InstanciaMatrizRevisoesSection` — scatter + tabela ranking na melhoria
-2. Badge quadrante em `processoWorkspaceNav.ts`
+### MFE
+
+- `InstanciaMatrizRevisoesSection` — scatter + tabela ranking na melhoria
+- Badge quadrante na árvore (`processoWorkspaceNav`, `ProcessoWorkspaceShell`, sidebar)
+- `fetchInstanciaMatrizImpactoEsforco` + `matrizImpactoPoints.ts`
+
+## Próximo passo (S5 — backlog)
+
+1. `GET /processos/{id}/matriz-impacto-esforco` (multi-melhoria)
+2. Export PNG da matriz

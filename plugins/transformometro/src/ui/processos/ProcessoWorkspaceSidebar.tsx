@@ -66,7 +66,17 @@ function TreeNode({
             <ProcessoWorkspaceTreeIcon variant={folderVariant} />
             <span className="tm-processo-workspace-tree__label">{node.label}</span>
           </span>
-          {node.badge ? <span className="tm-processo-workspace-tree__badge">{node.badge}</span> : null}
+          <span className="tm-processo-workspace-tree__badges">
+            {node.matrixBadge ? (
+              <span
+                className={`tm-matrix-badge tm-processo-workspace-tree__matrix-badge ${node.matrixBadge.className}`}
+                title={node.matrixBadge.title}
+              >
+                {node.matrixBadge.label}
+              </span>
+            ) : null}
+            {node.badge ? <span className="tm-processo-workspace-tree__badge">{node.badge}</span> : null}
+          </span>
         </button>
       </div>
       {hasChildren ? (

@@ -56,6 +56,7 @@ import { useProcessoWorkspacePanelActions } from "../processos/processoWorkspace
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
 import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
+import { InstanciaMatrizRevisoesSection } from "../instancia/InstanciaMatrizRevisoesSection";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -534,6 +535,18 @@ export function InstanciaDetailPage({
             </div>
           </form>
         </section>
+      ) : null}
+
+      {revisoes.length > 0 ? (
+        <InstanciaMatrizRevisoesSection
+          instanciaId={instanciaId}
+          instanciaLabel={instanciaLabel}
+          getAccessToken={getAccessToken}
+          onError={setError}
+          onNavigateToRevisao={(revisaoId) =>
+            onNavigate(buildProcessoPath(processoId, revisaoId, instanciaId))
+          }
+        />
       ) : null}
 
       {comparativo.length > 0 ? (

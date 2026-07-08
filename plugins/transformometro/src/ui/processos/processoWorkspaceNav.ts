@@ -1,4 +1,6 @@
 import type { Processo, ProcessoInstancia, Revisao } from "../../data/api/transformometroApi";
+import type { MatrizImpactoPonto } from "../../data/api/transformometroMatrixApi";
+import { resolveMatrixTreeBadge, type ProcessoWorkspaceMatrixBadge } from "../../content/matrizImpactoLabels";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 
@@ -22,6 +24,7 @@ export type ProcessoWorkspaceNavNode = {
   depth: number;
   children?: ProcessoWorkspaceNavNode[];
   badge?: string;
+  matrixBadge?: ProcessoWorkspaceMatrixBadge;
 };
 
 export const PROCESSO_WORKSPACE_SECTIONS: Array<{
@@ -69,8 +72,9 @@ export function buildProcessoWorkspaceTree(input: {
   processo: Processo;
   instancias: ProcessoInstancia[];
   revisoes: Revisao[];
+  matrixByRevisaoId?: Record<string, MatrizImpactoPonto>;
 }): ProcessoWorkspaceNavNode[] {
-  const { processo, instancias, revisoes } = input;
+  const { processo, instancias, revisoes, matrixByRevisaoId } = input;
   const processoId = processo.processo_id;
 
   const melhoriaChildren: ProcessoWorkspaceNavNode[] = instancias.map((instancia) => {
@@ -86,6 +90,10 @@ export function buildProcessoWorkspaceTree(input: {
       badge: instanciaRevisoes.length > 0 ? String(instanciaRevisoes.length) : undefined,
       children: instanciaRevisoes.map((revisao) => {
         const revLabel = revisaoDisplayLabel(revisao);
+        const matrixBadge = resolveMatrixTreeBadge({
+          cenario_tipo: revisao.cenario_tipo,
+          ponto: matrixByRevisaoId?.[revisao.revisao_id],
+        });
         return {
           id: `revisao:${revisao.revisao_id}`,
           kind: "revisao" as const,
@@ -93,6 +101,7 @@ export function buildProcessoWorkspaceTree(input: {
           searchText: `${revLabel} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
           href: buildProcessoPath(processoId, revisao.revisao_id, instancia.instancia_id),
           depth: 3,
+          matrixBadge,
         };
       }),
     };
