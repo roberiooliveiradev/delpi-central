@@ -5,7 +5,7 @@ import {
   formatHours,
   joinMotivoObservacao,
 } from "./formatters";
-import { exportTableExcel, type ExportTable } from "./exportDocument";
+import { exportMatrixToXlsx, type MatrixExportTable } from "@delpi/plugin-ui";
 
 export const RETRABALHO_DETALHES_HEADERS = [
   "Data",
@@ -32,7 +32,7 @@ function buildFilename(filters: RetrabalhoQueryFilters): string {
   return `controle-retrabalhos_${filters.filial}_${safe(filters.dataInicio)}_${safe(filters.dataFim)}`;
 }
 
-function buildExportTable(items: RetrabalhoDetalheItem[]): ExportTable {
+function buildExportTable(items: RetrabalhoDetalheItem[]): MatrixExportTable {
   return {
     title: "Controle de Retrabalhos — Detalhes",
     sheetName: "Detalhes",
@@ -45,5 +45,5 @@ export async function exportDetalhesExcel(
   items: RetrabalhoDetalheItem[],
   filters: RetrabalhoQueryFilters,
 ): Promise<void> {
-  await exportTableExcel(buildExportTable(items), buildFilename(filters));
+  exportMatrixToXlsx(buildExportTable(items), buildFilename(filters));
 }

@@ -146,7 +146,7 @@ function PaginationPageJump({
   const commitJump = () => {
     const result = parsePageJumpInput(draft, totalPages);
 
-    if (!result.ok) {
+    if (result.ok === false) {
       setError(labels.jumpError(result.reason, totalPages));
       return;
     }

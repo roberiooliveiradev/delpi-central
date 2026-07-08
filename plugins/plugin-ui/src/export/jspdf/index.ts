@@ -1,9 +1,9 @@
 /**
- * Reexporta o motor jsPDF / matrix Excel de `@delpi/plugin-ui`.
+ * Motor jsPDF / autoTable para exportação de apontamentos e documentos seccionados.
+ * Peer opcional: `jspdf` + `jspdf-autotable`. Separado do PDF DELPI (print HTML).
  */
+
 export {
-  sanitizeFilename,
-  sanitizeSheetName,
   sanitizePdfText,
   exportTableExcel,
   exportTablePdf,
@@ -13,4 +13,4 @@ export {
   type ExportFieldSection,
   type ExportTableSection,
   type ExportDocument,
-} from "@delpi/plugin-ui";
+} from "./exportDocument";

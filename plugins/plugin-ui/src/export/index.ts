@@ -74,7 +74,33 @@ export {
 export {
   tableExportPayloadFromMatrix,
   tableExportPayloadsFromMatrix,
+  exportMatrixToXlsx,
+  exportMatrixToCsv,
+  exportMatrixTableFormat,
+  exportMatrixesToXlsx,
+  exportMatrixesToCsv,
+  stripExportFilenameExtension,
   type MatrixExportTable,
 } from "./matrixAdapter";
 
 export { runTabularExport, type TabularExportRequest } from "./runTabularExport";
+
+export {
+  sanitizePdfText,
+  exportTableExcel,
+  exportTablePdf,
+  exportDocumentExcel,
+  exportDocumentPdf,
+  type ExportTable,
+  type ExportFieldSection,
+  type ExportTableSection,
+  type ExportDocument,
+} from "./jspdf";
+
+export {
+  prepareSvgCloneForRasterExport,
+  rasterizeSvgElement,
+  exportSvgElementToPng,
+  type RasterSvgOptions,
+  type ExportSvgPngOptions,
+} from "./chartPngExport";

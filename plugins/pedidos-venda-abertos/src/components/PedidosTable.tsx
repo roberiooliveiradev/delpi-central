@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
-import { FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
+import { ExcelExportButton } from "@delpi/plugin-ui";
 
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
@@ -173,15 +173,13 @@ export function PedidosTable({
             Previsão (OP) = data em que o saldo faltante da linha seria coberto pelas OPs abertas (FIFO).
           </p>
           <div className="pva-table-card__actions">
-            <button
-              type="button"
-              className="pva-btn pva-btn--ghost pva-btn--sm"
-              disabled={exportRows.length === 0 || exporting}
-              onClick={() => void handleExportExcel()}
-            >
-              <FileSpreadsheet size={16} aria-hidden="true" />
-              {exporting ? "Exportando…" : "Excel"}
-            </button>
+            <ExcelExportButton
+              className="pva-export-actions"
+              buttonClassName="pva-btn pva-btn--ghost pva-btn--sm"
+              disabled={exportRows.length === 0}
+              exporting={exporting}
+              onExport={handleExportExcel}
+            />
             <TableFontSizeControls
               fontSize={fontSize}
               canIncrease={canIncrease}

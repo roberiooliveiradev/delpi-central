@@ -318,7 +318,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados.
 6. **Fase 4 concluída** — utilitários centralizados.
 7. **Fase 5 parcial** — `FileDropzone`, confirm controller, `ConfirmModalPanel`, SI `operationalUnitLabels`; backlog: `Modal` base, dropzones chat/CE.
-8. **Exportação (Fases E1–E2)** — motor CSV/XLSX/PDF DELPI + `TabularExportButtons` / `DocumentExportActions` / `ExcelExportButton` em `plugin-ui/src/export/`; catálogo [export-catalog.md](./export-catalog.md); dashboards reexportam motor; chat PNG / jsPDF ainda na E3.
+8. **Exportação (Fases E1–E3)** — motor tabular + PDF DELPI + botões + jsPDF (`export/jspdf`) + PNG chart + matrix/PVA; catálogo [export-catalog.md](./export-catalog.md).
 
 ---
 
