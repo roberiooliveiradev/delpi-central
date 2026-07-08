@@ -38,6 +38,8 @@ import "./index.css";
 | `MultiSelectField.tsx` | `createDashboardMultiSelectField` | Filtro de unidade, multiselect genérico |
 | `FiltersKit.ts` | `createDashboardFiltersKit` | `FiltersRow`, `FilterInputField`, `FilterSelectField` |
 | `KpiCard.tsx` | `createKaizenKpiCard("kz")` | KPIs do painel dashboard |
+| `TitleWithHelp.tsx` | `createDashboardTitleWithHelp` | Títulos inline com ? (métricas, versões, upload) |
+| `ReadOnlyChipsField.tsx` | composição sobre `ReadOnlyField` | Categorias, participantes (chips) |
 | `Modal.tsx` | `createModalShell` | Modais do plugin |
 | `StateAlert.tsx` | `createDashboardStateBanner` | Alertas de erro/sucesso |
 | `index.ts` | barrel | Import único para páginas |
@@ -55,17 +57,19 @@ import "./index.css";
 | `KaizenListPage` | DataTable kit, Pagination, `StateAlert` |
 | `KaizenRecordFilters` | `FiltersKit` completo |
 | `KaizenDashboardPage` | `KpiCard`, `FiltersRow`, `FilterInputField`, `MultiSelectField` |
-| `KaizenDetailPage` | `EditableSectionCard`, `FormGrid`, `ReadOnlyGrid`, `DateField`, campos nativos, `SectionCard` — Estágio com data implantação única |
+| `KaizenDetailPage` | `EditableSectionCard`, `FormGrid`, `ReadOnlyGrid`, `ReadOnlyChipsField`, campos nativos, `SectionCard` |
 | `KaizenFormPage` / `KaizenFormFields` | `FormSection` → `SectionCard` + `FormGrid` + campos nativos |
-| `KaizenEvidencePanel` (link externo) | `FormGrid`, `SelectField`, `TextField` |
+| `KaizenEvidencePanel` | `FormGrid`, campos nativos, `TitleWithHelp`, etapa padrão `SelectField` |
+| `KaizenEvidencePendingList` | `SelectField` + `TextAreaField` na fila de upload |
+| `KaizenImprovementsPanel` | `TitleWithHelp` + `DateField` (período) |
+| `KaizenVersionSwitcher` | `TitleWithHelp` no cabeçalho |
 
 ## Permanece local (domínio kaizen)
 
 Não duplicam primitivos do pacote — são regras de negócio ou layout específico:
 
-- `KaizenNavTabs`, `KaizenParticipantsField`, `SavingsParamFields`, `StatusPipeline`
-- `KaizenEvidencePanel` (upload, preview, filas), `KaizenImprovementsPanel`, `KaizenChangeLog`
-- `KaizenVersionSwitcher`, `KaizenFormProgress`, `BarList` (dashboard)
+- `KaizenParticipantsField` (layout de linha nome+papel — domínio)
+- `KaizenEvidencePanel` (galeria, preview), `KaizenChangeLog`
 
 ## Adicionar um campo novo
 

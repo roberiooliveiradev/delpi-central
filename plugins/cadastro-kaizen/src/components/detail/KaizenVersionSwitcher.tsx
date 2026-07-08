@@ -1,6 +1,7 @@
 import { Check, History, PencilLine, Plus, Rocket, Trash2 } from "lucide-react";
 
 import type { KaizenRevision, KaizenVersionStatus } from "../../types/kaizen";
+import { TitleWithHelp } from "../ui";
 import { HelpTooltip } from "@delpi/plugin-ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
@@ -54,10 +55,9 @@ export function KaizenVersionSwitcher({
       <header className="kz-versions__header">
         <div className="kz-versions__heading">
           <h2 className="kz-versions__title">
-            Versões do kaizen
-            <HelpTooltip
-              content={KAIZEN_HELP_TOOLTIPS.sections.improvements}
-              ariaLabel="Ajuda: versões do kaizen"
+            <TitleWithHelp
+              title="Versões do kaizen"
+              hint={KAIZEN_HELP_TOOLTIPS.sections.improvements}
             />
           </h2>
           <span className="kz-versions__count">

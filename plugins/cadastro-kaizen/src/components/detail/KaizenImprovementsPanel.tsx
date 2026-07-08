@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchKaizenSavingsTimeline } from "../../api/kaizenApi";
 import type { KaizenRecord, KaizenRevision, KaizenSavingsTimeline } from "../../types/kaizen";
 import { formatCurrency, formatDate } from "../../utils/format";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { DateField, TitleWithHelp } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -40,10 +40,9 @@ export function KaizenImprovementsPanel({ record, revisions }: Props) {
       <div className="kz-improvements__summary">
         <div className="kz-improvements__metric">
           <span className="kz-improvements__metric-label">
-            Economia vigente hoje
-            <HelpTooltip
-              content={KAIZEN_HELP_TOOLTIPS.improvements.currentSavings}
-              ariaLabel="Ajuda: economia vigente"
+            <TitleWithHelp
+              title="Economia vigente hoje"
+              hint={KAIZEN_HELP_TOOLTIPS.improvements.currentSavings}
             />
           </span>
           <strong className="kz-improvements__metric-value">
@@ -61,27 +60,23 @@ export function KaizenImprovementsPanel({ record, revisions }: Props) {
 
         <div className="kz-improvements__metric">
           <span className="kz-improvements__metric-label">
-            Ganho no período
-            <HelpTooltip
-              content={KAIZEN_HELP_TOOLTIPS.improvements.periodGain}
-              ariaLabel="Ajuda: ganho no período"
+            <TitleWithHelp
+              title="Ganho no período"
+              hint={KAIZEN_HELP_TOOLTIPS.improvements.periodGain}
             />
           </span>
           <strong className="kz-improvements__metric-value">
             {formatCurrency(timeline?.period_savings ?? null)}
           </strong>
           <div className="kz-improvements__period">
-            <input
-              type="date"
+            <DateField
+              id="kz-imp-date-start"
+              label="De"
               value={dateStart}
-              onChange={(event) => setDateStart(event.target.value)}
+              onChange={setDateStart}
             />
-            <span>→</span>
-            <input
-              type="date"
-              value={dateEnd}
-              onChange={(event) => setDateEnd(event.target.value)}
-            />
+            <span aria-hidden="true">→</span>
+            <DateField id="kz-imp-date-end" label="Até" value={dateEnd} onChange={setDateEnd} />
           </div>
         </div>
       </div>

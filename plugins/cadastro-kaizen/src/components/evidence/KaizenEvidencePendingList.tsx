@@ -2,6 +2,8 @@ import { ChevronDown, Eye, FileText, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { KaizenEvidenceStage } from "../../types/kaizen";
+import { EVIDENCE_STAGE_LABELS, EVIDENCE_STAGE_OPTIONS } from "../../constants/evidenceStages";
+import { SelectField, TextAreaField } from "../ui";
 import { formatEvidenceFileSize, isImageFile } from "./kaizenEvidenceUtils";
 import { canPreviewLocalFile } from "./kaizenEvidencePreview";
 
@@ -18,12 +20,6 @@ type Props = {
   onChange: (id: string, patch: Partial<KaizenPendingUpload>) => void;
   onRemove: (id: string) => void;
   onPreview?: (file: File) => void;
-};
-
-const STAGE_LABELS: Record<KaizenEvidenceStage, string> = {
-  antes: "Antes",
-  depois: "Depois",
-  geral: "Geral",
 };
 
 function PendingThumb({ file }: { file: File }) {
@@ -86,7 +82,7 @@ function PendingItem({
             </span>
             <span className="kz-pending__size">{formatEvidenceFileSize(item.file.size)}</span>
           </div>
-          <span className="kz-pending__badge">{STAGE_LABELS[item.stage]}</span>
+          <span className="kz-pending__badge">{EVIDENCE_STAGE_LABELS[item.stage]}</span>
         </div>
 
         <div className="kz-pending__actions">
@@ -125,30 +121,23 @@ function PendingItem({
 
       {open ? (
         <div className="kz-pending__details" id={detailsId}>
-          <label className="kz-pending__field kz-pending__field--stage">
-            <span>Etapa</span>
-            <select
-              value={item.stage}
-              disabled={disabled}
-              onChange={(event) =>
-                onChange(item.id, { stage: event.target.value as KaizenEvidenceStage })
-              }
-            >
-              <option value="antes">Antes</option>
-              <option value="depois">Depois</option>
-              <option value="geral">Geral</option>
-            </select>
-          </label>
-          <label className="kz-pending__field kz-pending__field--desc">
-            <span>Descrição</span>
-            <textarea
-              rows={3}
-              placeholder="Descreva o que a evidência mostra (opcional)"
-              value={item.description}
-              disabled={disabled}
-              onChange={(event) => onChange(item.id, { description: event.target.value })}
-            />
-          </label>
+          <SelectField
+            id={`${item.id}-stage`}
+            label="Etapa"
+            value={item.stage}
+            onChange={(value) => onChange(item.id, { stage: value as KaizenEvidenceStage })}
+            options={EVIDENCE_STAGE_OPTIONS}
+            className="kz-pending__field kz-pending__field--stage"
+          />
+          <TextAreaField
+            id={`${item.id}-desc`}
+            label="Descrição"
+            rows={3}
+            span={false}
+            value={item.description}
+            onChange={(value) => onChange(item.id, { description: value })}
+            className="kz-pending__field kz-pending__field--desc"
+          />
         </div>
       ) : null}
     </li>

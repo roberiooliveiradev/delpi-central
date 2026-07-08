@@ -13,11 +13,11 @@ import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { EditableSectionCard } from "../components/ui/EditableSectionCard";
 import { CategoryMultiSelectField } from "../components/form/CategoryMultiSelectField";
-import { HelpTooltip } from "@delpi/plugin-ui";
-import { DateField } from "../components/ui/DateField";
 import {
+  DateField,
   FormFieldShell,
   FormGrid,
+  ReadOnlyChipsField,
   ReadOnlyField,
   ReadOnlyGrid,
   SectionCard,
@@ -394,49 +394,33 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               value={BRANCH_LABEL[view.branch_code] ?? view.branch_code}
             />
             <ReadOnlyField label="Setor" hint={KAIZEN_HELP_TOOLTIPS.fields.sector} value={view.sector} />
-            <div className="kz-read-field">
-              <span className="kz-read-field__label">
-                Categoria
-                <HelpTooltip content={KAIZEN_HELP_TOOLTIPS.fields.category} ariaLabel="Ajuda: categoria" />
-              </span>
-              <div className="kz-chips">
-                {categoriesFromRecord(view).length === 0 ? (
-                  <span className="kz-read-field__value kz-read-field__value--empty">—</span>
-                ) : (
-                  categoriesFromRecord(view).map((category) => (
-                    <span key={category} className="kz-chip">
-                      {category}
-                    </span>
-                  ))
-                )}
-              </div>
-            </div>
+            <ReadOnlyChipsField
+              label="Categoria"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.category}
+              items={categoriesFromRecord(view)}
+              renderChip={(category) => (
+                <span key={category} className="kz-chip">
+                  {category}
+                </span>
+              )}
+            />
             <ReadOnlyField
               label="Investimento"
               hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
               value={formatCurrency(view.investment)}
             />
-            <div className="kz-read-field kz-span-2">
-              <span className="kz-read-field__label">
-                Equipe / responsáveis
-                <HelpTooltip
-                  content={KAIZEN_HELP_TOOLTIPS.sections.participants}
-                  ariaLabel="Ajuda: equipe e responsáveis"
-                />
-              </span>
-              <div className="kz-chips">
-                {viewParticipants.length === 0 ? (
-                  <span className="kz-read-field__value kz-read-field__value--empty">—</span>
-                ) : (
-                  viewParticipants.map((p, index) => (
-                    <span key={index} className={`kz-chip kz-chip--${p.role}`}>
-                      {p.name}
-                      <em>{ROLE_LABEL[p.role] ?? p.role}</em>
-                    </span>
-                  ))
-                )}
-              </div>
-            </div>
+            <ReadOnlyChipsField
+              label="Equipe / responsáveis"
+              hint={KAIZEN_HELP_TOOLTIPS.sections.participants}
+              wide
+              items={viewParticipants}
+              renderChip={(participant, index) => (
+                <span key={index} className={`kz-chip kz-chip--${participant.role}`}>
+                  {participant.name}
+                  <em>{ROLE_LABEL[participant.role] ?? participant.role}</em>
+                </span>
+              )}
+            />
             <ReadOnlyField
               label="Descrição do processo"
               hint={KAIZEN_HELP_TOOLTIPS.fields.processDescription}
@@ -583,10 +567,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         editable={editable}
         readContent={
           <ReadOnlyGrid>
-            <div className="kz-read-field kz-span-2">
-              <span className="kz-read-field__label">Situação atual</span>
-              <StatusPipeline status={view.status} />
-            </div>
+            <ReadOnlyField
+              label="Situação atual"
+              wide
+              value={<StatusPipeline status={view.status} />}
+            />
             <ReadOnlyField
               label="Recebimento da ideia"
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateIdeaReceived}

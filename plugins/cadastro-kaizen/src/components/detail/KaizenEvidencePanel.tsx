@@ -14,8 +14,8 @@ import type {
   KaizenEvidenceType,
 } from "../../types/kaizen";
 import { StateAlert } from "../StateAlert";
-import { HelpTooltip } from "@delpi/plugin-ui";
-import { FormGrid, SelectField, TextField } from "../ui";
+import { EVIDENCE_STAGE_GALLERY_LABELS, EVIDENCE_STAGE_OPTIONS } from "../../constants/evidenceStages";
+import { FormGrid, SelectField, TextField, TitleWithHelp } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
 import {
@@ -32,12 +32,6 @@ import {
   type EvidencePreviewSource,
 } from "../evidence/KaizenEvidencePreviewModal";
 
-const EVIDENCE_STAGE_OPTIONS: Array<{ value: KaizenEvidenceStage; label: string }> = [
-  { value: "antes", label: "Antes" },
-  { value: "depois", label: "Depois" },
-  { value: "geral", label: "Geral" },
-];
-
 type KaizenEvidencePanelProps = {
   kaizenId: string;
   readOnly: boolean;
@@ -48,12 +42,6 @@ type KaizenEvidencePanelProps = {
    */
   revisionId?: string | null;
   compact?: boolean;
-};
-
-const STAGE_LABELS: Record<KaizenEvidenceStage, string> = {
-  antes: "Antes",
-  depois: "Depois",
-  geral: "Gerais",
 };
 
 function isImage(mime: string | null): boolean {
@@ -351,7 +339,7 @@ export function KaizenEvidencePanel({
       <div className="kz-evidence-gallery">
         {(["antes", "depois"] as KaizenEvidenceStage[]).map((stageKey) => (
           <div className="kz-evidence-column" key={stageKey}>
-            <h3 className="kz-evidence-column__title">{STAGE_LABELS[stageKey]}</h3>
+            <h3 className="kz-evidence-column__title">{EVIDENCE_STAGE_GALLERY_LABELS[stageKey]}</h3>
             <div className="kz-evidence-column__items">
               {grouped[stageKey].length === 0 ? (
                 <p className="kz-empty-hint">Sem registros.</p>
@@ -374,7 +362,7 @@ export function KaizenEvidencePanel({
 
       {grouped.geral.length > 0 ? (
         <div className="kz-evidence-general">
-          <h3 className="kz-evidence-column__title">{STAGE_LABELS.geral}</h3>
+          <h3 className="kz-evidence-column__title">{EVIDENCE_STAGE_GALLERY_LABELS.geral}</h3>
           <div className="kz-evidence-column__items kz-evidence-column__items--row">
             {grouped.geral.map((evidence) => (
               <EvidenceCard
@@ -396,30 +384,20 @@ export function KaizenEvidencePanel({
         <div className="kz-evidence-upload">
           <div className="kz-evidence-upload__head">
             <span className="kz-evidence-upload__title">
-              Adicionar evidências
-              <HelpTooltip
-                content={KAIZEN_HELP_TOOLTIPS.evidence.upload}
-                ariaLabel="Ajuda: enviar evidências"
+              <TitleWithHelp
+                title="Adicionar evidências"
+                hint={KAIZEN_HELP_TOOLTIPS.evidence.upload}
               />
             </span>
-            <label className="kz-evidence-upload__default-stage">
-              <span className="kz-evidence-upload__default-stage-label">
-                Etapa padrão
-                <HelpTooltip
-                  content={KAIZEN_HELP_TOOLTIPS.evidence.stage}
-                  ariaLabel="Ajuda: etapa da evidência"
-                />
-              </span>
-              <select
-                value={defaultStage}
-                disabled={uploading}
-                onChange={(event) => setDefaultStage(event.target.value as KaizenEvidenceStage)}
-              >
-                <option value="antes">Antes</option>
-                <option value="depois">Depois</option>
-                <option value="geral">Geral</option>
-              </select>
-            </label>
+            <SelectField
+              id="kz-ev-default-stage"
+              label="Etapa padrão"
+              hint={KAIZEN_HELP_TOOLTIPS.evidence.stage}
+              value={defaultStage}
+              onChange={(value) => setDefaultStage(value as KaizenEvidenceStage)}
+              options={EVIDENCE_STAGE_OPTIONS}
+              className="kz-evidence-upload__default-stage"
+            />
           </div>
 
           <KaizenEvidenceDropzone disabled={uploading} onFilesSelected={addFiles} />

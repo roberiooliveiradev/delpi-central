@@ -1138,13 +1138,19 @@
 
 .dashboard-cadastro-kaizen .kz-evidence-upload__default-stage {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   font-size: var(--kz-font-xs);
   color: var(--kz-text-muted);
+  min-width: 0;
 }
 
-.dashboard-cadastro-kaizen .kz-evidence-upload__default-stage select {
+.dashboard-cadastro-kaizen .kz-evidence-upload__default-stage .kz-field__label {
+  font-size: var(--kz-font-xs);
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-upload__default-stage select,
+.dashboard-cadastro-kaizen .kz-evidence-upload__default-stage .kz-field select {
   min-height: 34px;
 }
 
@@ -1644,12 +1650,25 @@
 
 .dashboard-cadastro-kaizen .kz-improvements__period {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 4px;
 }
 
-.dashboard-cadastro-kaizen .kz-improvements__period input {
+.dashboard-cadastro-kaizen .kz-improvements__period .kz-field {
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-improvements__period .kz-field__label {
+  font-size: var(--kz-font-xs);
+  font-weight: 600;
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-improvements__period input,
+.dashboard-cadastro-kaizen .kz-improvements__period .kz-field input {
   height: 32px;
   border-radius: 8px;
   border: 1px solid var(--kz-card-border);
