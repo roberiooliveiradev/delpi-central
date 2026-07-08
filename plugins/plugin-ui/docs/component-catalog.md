@@ -429,7 +429,7 @@ import "@delpi/plugin-ui/styles.css";
 <ImpactEffortMatrixLegend />
 ```
 
-Classes BEM: `delpi-ui-impact-effort-matrix`, `__quadrant--quick-win`, `__point--active`, `__legend`, etc. Alias Transformômetro: prefixo `tm-impact-effort-matrix`.
+Classes BEM: `delpi-ui-impact-effort-matrix`, `__quadrant--quick-win`, `__point--active`, `__legend`, etc. Alias Transformômetro: classe extra `tm-impact-effort-matrix` no root (tokens); SVG interno permanece `delpi-ui-*`.
 
 ---
 

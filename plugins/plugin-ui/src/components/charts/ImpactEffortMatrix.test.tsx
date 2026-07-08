@@ -2,6 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ImpactEffortMatrix } from "./ImpactEffortMatrix";
+import {
+  impactEffortMatrixTransformometroClasses,
+} from "./impactEffortMatrixClasses";
 import { resolveImpactEffortQuadrant, type ImpactEffortPoint } from "./impactEffortTypes";
 
 const SAMPLE: ImpactEffortPoint[] = [
@@ -37,5 +40,21 @@ describe("ImpactEffortMatrix", () => {
   it("mostra mensagem vazia sem pontos", () => {
     render(<ImpactEffortMatrix points={[]} emptyMessage="Sem revisões" />);
     expect(screen.getByText("Sem revisões")).toBeTruthy();
+  });
+
+  it("classes Transformômetro usam BEM delpi-ui no SVG (CSS canônico)", () => {
+    const classNames = impactEffortMatrixTransformometroClasses();
+    expect(classNames.root).toContain("delpi-ui-impact-effort-matrix");
+    expect(classNames.root).toContain("tm-impact-effort-matrix");
+    expect(classNames.quadrantQuickWin).toBe("delpi-ui-impact-effort-matrix__quadrant--quick-win");
+    expect(classNames.axisLabel).toBe("delpi-ui-impact-effort-matrix__axis-label");
+
+    const { container } = render(
+      <ImpactEffortMatrix points={SAMPLE} classNames={classNames} />,
+    );
+    const quadrant = container.querySelector(".delpi-ui-impact-effort-matrix__quadrant--quick-win");
+    expect(quadrant).toBeTruthy();
+    const effortLabel = container.querySelector(".delpi-ui-impact-effort-matrix__axis-label--effort");
+    expect(effortLabel?.getAttribute("font-size")).toBe("3.6");
   });
 });

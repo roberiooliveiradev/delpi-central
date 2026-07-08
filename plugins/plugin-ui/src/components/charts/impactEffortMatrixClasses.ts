@@ -8,6 +8,7 @@ export type ImpactEffortMatrixClassNames = {
   quadrantStrategic: string;
   quadrantFillIn: string;
   quadrantRethink: string;
+  quadrantLabel: string;
   axisLine: string;
   thresholdLine: string;
   axisLabel: string;
@@ -30,6 +31,7 @@ export function impactEffortMatrixBemClasses(prefix = "delpi-ui"): ImpactEffortM
     quadrantStrategic: `${base}__quadrant--strategic`,
     quadrantFillIn: `${base}__quadrant--fill-in`,
     quadrantRethink: `${base}__quadrant--rethink`,
+    quadrantLabel: `${base}__quadrant-label`,
     axisLine: `${base}__axis-line`,
     thresholdLine: `${base}__threshold-line`,
     axisLabel: `${base}__axis-label`,
@@ -43,8 +45,13 @@ export function impactEffortMatrixBemClasses(prefix = "delpi-ui"): ImpactEffortM
   };
 }
 
+/** Classes internas `delpi-ui-*` (CSS em plugin-ui) + alias `tm-impact-effort-matrix` no root para tokens do Transformômetro. */
 export function impactEffortMatrixTransformometroClasses(): ImpactEffortMatrixClassNames {
-  return impactEffortMatrixBemClasses("tm");
+  const base = impactEffortMatrixBemClasses("delpi-ui");
+  return {
+    ...base,
+    root: `${base.root} tm-impact-effort-matrix`,
+  };
 }
 
 export function quadrantClassName(

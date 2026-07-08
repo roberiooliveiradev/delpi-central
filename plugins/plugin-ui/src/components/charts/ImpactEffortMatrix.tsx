@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import {
   clampImpactEffortScore,
-  resolveImpactEffortQuadrant,
   type ImpactEffortAxisLabels,
   type ImpactEffortPoint,
   type ImpactEffortQuadrantLabels,
@@ -75,6 +74,7 @@ export function ImpactEffortMatrix({
       >
         <QuadrantRect
           className={quadrantClassName(classNames, "fill_in")}
+          labelClassName={classNames.quadrantLabel}
           x={PLOT.x0}
           y={thresholdY}
           width={thresholdX - PLOT.x0}
@@ -83,6 +83,7 @@ export function ImpactEffortMatrix({
         />
         <QuadrantRect
           className={quadrantClassName(classNames, "quick_win")}
+          labelClassName={classNames.quadrantLabel}
           x={PLOT.x0}
           y={PLOT.y0}
           width={thresholdX - PLOT.x0}
@@ -91,6 +92,7 @@ export function ImpactEffortMatrix({
         />
         <QuadrantRect
           className={quadrantClassName(classNames, "rethink")}
+          labelClassName={classNames.quadrantLabel}
           x={thresholdX}
           y={thresholdY}
           width={PLOT.x0 + PLOT.w - thresholdX}
@@ -99,6 +101,7 @@ export function ImpactEffortMatrix({
         />
         <QuadrantRect
           className={quadrantClassName(classNames, "strategic")}
+          labelClassName={classNames.quadrantLabel}
           x={thresholdX}
           y={PLOT.y0}
           width={PLOT.x0 + PLOT.w - thresholdX}
@@ -140,6 +143,7 @@ export function ImpactEffortMatrix({
           x={PLOT.x0 + PLOT.w / 2}
           y={99}
           textAnchor="middle"
+          fontSize={3.6}
         >
           {axisLabels.esforco}
         </text>
@@ -148,6 +152,7 @@ export function ImpactEffortMatrix({
           x={2}
           y={PLOT.y0 + PLOT.h / 2}
           textAnchor="middle"
+          fontSize={3.6}
           transform={`rotate(-90 2 ${PLOT.y0 + PLOT.h / 2})`}
         >
           {axisLabels.impacto}
@@ -157,10 +162,8 @@ export function ImpactEffortMatrix({
           const cx = toPlotX(point.esforco);
           const cy = toPlotY(point.impacto);
           const isActive = point.id === activePointId;
-          const quadrant = point.quadrante ?? resolveImpactEffortQuadrant(point.impacto, point.esforco, threshold);
           const pointClass = [
             classNames.point,
-            quadrantClassName(classNames, quadrant),
             isActive ? classNames.pointActive : "",
             point.muted ? classNames.pointMuted : "",
           ]
@@ -187,7 +190,7 @@ export function ImpactEffortMatrix({
                   }}
                 />
                 {isActive ? (
-                  <text className={classNames.pointLabel} x={cx + 4} y={cy - 4}>
+                  <text className={classNames.pointLabel} x={cx + 4} y={cy - 4} fontSize={3.4}>
                     {point.label}
                   </text>
                 ) : null}
@@ -212,6 +215,7 @@ export function ImpactEffortMatrix({
 
 function QuadrantRect({
   className,
+  labelClassName,
   x,
   y,
   width,
@@ -219,6 +223,7 @@ function QuadrantRect({
   label,
 }: {
   className: string;
+  labelClassName: string;
   x: number;
   y: number;
   width: number;
@@ -229,7 +234,14 @@ function QuadrantRect({
   return (
     <g aria-hidden="true">
       <rect className={className} x={x} y={y} width={width} height={height} rx={0.8} />
-      <text className="delpi-ui-impact-effort-matrix__quadrant-label" x={x + width / 2} y={y + height / 2} textAnchor="middle">
+      <text
+        className={labelClassName}
+        x={x + width / 2}
+        y={y + height / 2}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={3.2}
+      >
         {label}
       </text>
     </g>

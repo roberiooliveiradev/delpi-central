@@ -95,7 +95,7 @@ type ScaleFieldProps = {
 
 function ScaleField({ label, hint, value, onChange, idPrefix }: ScaleFieldProps) {
   return (
-    <div className="tm-matrix-scale-field">
+    <div className="tm-matrix-scale-field ds-filter-box">
       <FieldLabel className="tm-field__label" label={label} hint={hint} />
       <div className="ds-segment-toggle tm-matrix-scale-field__buttons" role="group" aria-label={label}>
         {[1, 2, 3, 4, 5].map((score) => (
@@ -259,16 +259,17 @@ export function RevisaoMatrizImpactoSection({
               </p>
             ) : null}
 
-            <ImpactEffortMatrix
-              points={scatterPoints}
-              activePointId={revisao.revisao_id}
-              threshold={data?.threshold ?? 50}
-              classNames={impactEffortMatrixTransformometroClasses()}
-              onPointSelect={onNavigate ? handlePointSelect : undefined}
-              emptyMessage={M.semDados}
-              ariaLabel={M.graficoAria}
-            />
-            <ImpactEffortMatrixLegend quadrantLabels={MATRIZ_QUADRANTE_LABELS} />
+            <div className="tm-impact-effort-section__plot-wrap">
+              <ImpactEffortMatrix
+                points={scatterPoints}
+                activePointId={revisao.revisao_id}
+                threshold={data?.threshold ?? 50}
+                classNames={impactEffortMatrixTransformometroClasses()}
+                onPointSelect={onNavigate ? handlePointSelect : undefined}
+                emptyMessage={M.semDados}
+                ariaLabel={M.graficoAria}
+              />
+            </div>
 
             <div className="tm-impact-effort-section__summary">
               <p className="tm-impact-effort-section__headline">
@@ -289,10 +290,16 @@ export function RevisaoMatrizImpactoSection({
               ) : null}
             </div>
 
+            <ImpactEffortMatrixLegend
+              className="tm-impact-effort-section__legend"
+              quadrantLabels={MATRIZ_QUADRANTE_LABELS}
+            />
+
             <CollapsiblePanel
               className="tm-matrix-manual"
+              triggerClassName="tm-matrix-manual__trigger"
               defaultOpen={modo !== "auto"}
-              header={<span>{M.ajustesManuais}</span>}
+              header={<span className="tm-matrix-manual__trigger-text">{M.ajustesManuais}</span>}
               bodyClassName="tm-matrix-manual__body"
             >
               <div className="tm-matrix-manual__grid">
@@ -324,10 +331,9 @@ export function RevisaoMatrizImpactoSection({
                   value={inputs.dependencias_externas}
                   onChange={(value) => setInputs((prev) => ({ ...prev, dependencias_externas: value }))}
                 />
-                <div className="tm-field">
+                <label className="ds-filter-box tm-field">
                   <FieldLabel className="tm-field__label" label="Pessoas afetadas" hint={M.pessoasAfetadas} />
                   <input
-                    className="ds-input"
                     type="number"
                     min={0}
                     value={inputs.pessoas_afetadas ?? ""}
@@ -338,11 +344,10 @@ export function RevisaoMatrizImpactoSection({
                       }))
                     }
                   />
-                </div>
-                <div className="tm-field tm-field--full">
+                </label>
+                <label className="ds-filter-box ds-filter-box--wide tm-field tm-field--full">
                   <FieldLabel className="tm-field__label" label="Observação" hint={M.observacao} />
                   <textarea
-                    className="ds-input ds-input--textarea"
                     rows={3}
                     maxLength={2000}
                     value={inputs.observacao ?? ""}
@@ -350,7 +355,7 @@ export function RevisaoMatrizImpactoSection({
                       setInputs((prev) => ({ ...prev, observacao: event.target.value || undefined }))
                     }
                   />
-                </div>
+                </label>
               </div>
               {modo !== "auto" ? (
                 <div className="tm-matrix-manual__actions">
