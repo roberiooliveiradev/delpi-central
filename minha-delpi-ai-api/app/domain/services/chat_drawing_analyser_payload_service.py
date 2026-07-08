@@ -8,6 +8,56 @@ from typing import Any
 
 class ChatDrawingAnalyserPayloadService:
     @classmethod
+    def flatten_guide_rows(cls, guide_items: list) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+
+        for item in guide_items:
+            if not isinstance(item, dict):
+                continue
+
+            product_code = str(item.get("product_code") or "?").strip()
+            bom_level = item.get("bom_level", 0)
+            operations = item.get("operations")
+
+            if not isinstance(operations, list) or not operations:
+                op_desc = str(item.get("operation_description") or "").strip()
+
+                if not op_desc:
+                    continue
+
+                rows.append(
+                    {
+                        "product_code": product_code,
+                        "bom_level": bom_level,
+                        "operation_code": item.get("operation_code") or "",
+                        "operation_description": op_desc,
+                        "work_center": item.get("work_center") or "",
+                    }
+                )
+                continue
+
+            for operation in operations:
+                if not isinstance(operation, dict):
+                    continue
+
+                op_desc = str(operation.get("operation_description") or "").strip()
+
+                if not op_desc:
+                    continue
+
+                rows.append(
+                    {
+                        "product_code": product_code,
+                        "bom_level": bom_level,
+                        "operation_code": operation.get("operation_code") or "",
+                        "operation_description": op_desc,
+                        "work_center": operation.get("work_center") or "",
+                    }
+                )
+
+        return rows
+
+    @classmethod
     def resolve_root_from_data(cls, data: Any) -> dict[str, Any]:
         if not isinstance(data, dict):
             return {}

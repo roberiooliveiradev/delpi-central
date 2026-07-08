@@ -13,6 +13,42 @@ from tests.unit.domain.services.test_external_action_result_presenter_analyser_h
 )
 
 
+def test_flatten_guide_rows_expands_nested_operations():
+    guide_items = [
+        {
+            "product_code": "90260140",
+            "bom_level": 0,
+            "operations": [
+                {
+                    "operation_code": "01",
+                    "operation_description": "CORTAR TUBO MAIOR E MENOR",
+                    "work_center": "CT-19",
+                },
+                {
+                    "operation_code": "05",
+                    "operation_description": "INSPECIONAR",
+                    "work_center": "CT-70",
+                },
+            ],
+        },
+        {
+            "product_code": "50212194",
+            "bom_level": 1,
+            "operation_code": "01",
+            "operation_description": "CORTAR E DECAPAR",
+            "work_center": "CT-33",
+        },
+    ]
+
+    rows = ChatDrawingAnalyserPayloadService.flatten_guide_rows(guide_items)
+
+    assert len(rows) == 3
+    assert rows[0]["operation_code"] == "01"
+    assert rows[0]["work_center"] == "CT-19"
+    assert rows[1]["operation_code"] == "05"
+    assert rows[2]["product_code"] == "50212194"
+
+
 def test_resolve_root_from_response_preview():
     payload = _analyser_payload_with_guide_and_inspection()
     tool_call = {

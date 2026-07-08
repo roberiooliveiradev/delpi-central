@@ -11,6 +11,33 @@ from app.domain.services.chat_drawing_validation_presentation_service import (
 configure_domain_infrastructure_ports()
 
 
+def test_export_guide_rows_without_legacy_analyser_presenter():
+    root = {
+        "guide": {
+            "items": [
+                {
+                    "product_code": "90260140",
+                    "bom_level": 0,
+                    "operations": [
+                        {
+                            "operation_code": "01",
+                            "operation_description": "CORTAR TUBO",
+                            "work_center": "CT-19",
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+
+    rows = ChatDrawingValidationPresentationService._export_guide_rows(root)
+
+    assert len(rows) == 1
+    assert rows[0]["product"] == "`90260140`"
+    assert rows[0]["operation"] == "01"
+    assert rows[0]["center"] == "CT-19"
+
+
 def test_status_display_from_json():
     assert "OK" in ChatDrawingValidationPresentationService.status_display("ok")
     assert ChatDrawingValidationPresentationService.status_label("error") == "Erro"

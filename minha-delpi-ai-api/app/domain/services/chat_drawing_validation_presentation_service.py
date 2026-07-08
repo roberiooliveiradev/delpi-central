@@ -333,7 +333,7 @@ class ChatDrawingValidationPresentationService:
                     )
                 )
 
-        guide_lines = cls._format_guide_section(root, presenter)
+        guide_lines = cls._format_guide_section(root)
 
         if guide_lines:
             lines.extend(guide_lines)
@@ -441,14 +441,18 @@ class ChatDrawingValidationPresentationService:
         return lines
 
     @classmethod
-    def _format_guide_section(cls, root: dict, presenter: Any) -> list[str]:
+    def _format_guide_section(cls, root: dict) -> list[str]:
+        from app.domain.services.chat_drawing_analyser_payload_service import (
+            ChatDrawingAnalyserPayloadService,
+        )
+
         guide = root.get("guide") if isinstance(root.get("guide"), dict) else {}
         guide_items = guide.get("items") if isinstance(guide.get("items"), list) else []
 
         if not guide_items:
             return []
 
-        flattened = presenter._analyser()._flatten_analyser_guide_rows(guide_items)
+        flattened = ChatDrawingAnalyserPayloadService.flatten_guide_rows(guide_items)
         rows = flattened if flattened else guide_items
 
         lines = [
@@ -1066,12 +1070,11 @@ class ChatDrawingValidationPresentationService:
         if not guide_items:
             return []
 
-        from app.domain.services.external_actions.external_action_result_presenter import (
-            ExternalActionResultPresenter,
+        from app.domain.services.chat_drawing_analyser_payload_service import (
+            ChatDrawingAnalyserPayloadService,
         )
 
-        presenter = ExternalActionResultPresenter()
-        flattened = presenter._analyser()._flatten_analyser_guide_rows(guide_items)
+        flattened = ChatDrawingAnalyserPayloadService.flatten_guide_rows(guide_items)
         rows_source = flattened if flattened else guide_items
         dash = ChatDrawingValidationContentService.evidence("dash")
         max_rows = int(
