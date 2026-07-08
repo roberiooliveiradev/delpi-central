@@ -1,3 +1,24 @@
+/** PDF DELPI — motor canônico em @delpi/plugin-ui. */
+import {
+  exportChartPayloadToPdf as sharedExportChartPayloadToPdf,
+  exportTablePayloadToPdf as sharedExportTablePayloadToPdf,
+  exportTablePayloadsToPdf as sharedExportTablePayloadsToPdf,
+  type TableExportPayload,
+  type ExportPdfOptions,
+} from "@delpi/plugin-ui";
+
+export {
+  buildDelpiDocumentStyles,
+  buildDelpiBrandBarHtml,
+  buildDelpiDocumentHtml,
+  buildDelpiDocumentTableSection,
+  buildDefaultExportSummaryLines,
+  escapeDelpiDocumentHtml,
+  resolveDelpiLogoUrl,
+  printDelpiDocumentHtml,
+  printDelpiDocumentSpec,
+} from "@delpi/plugin-ui";
+
 export type {
   DelpiDocumentBadgeTone,
   DelpiDocumentColumn,
@@ -5,23 +26,36 @@ export type {
   DelpiDocumentSpec,
   DelpiDocumentSummaryLine,
   DelpiDocumentTable,
-} from "./types";
+} from "@delpi/plugin-ui";
 
-export { buildDelpiDocumentStyles, buildDelpiBrandBarHtml } from "./delpiDocumentStyles";
+const PDF_SUBTITLE = "Minha DELPI · Dashboard Produção";
 
-export {
-  buildDelpiDocumentHtml,
-  buildDelpiDocumentTableSection,
-  buildDefaultExportSummaryLines,
-  escapeDelpiDocumentHtml,
-  resolveDelpiLogoUrl,
-} from "./delpiDocumentHtml";
+export function exportTablePayloadToPdf(
+  payload: TableExportPayload,
+  options?: ExportPdfOptions,
+): void {
+  sharedExportTablePayloadToPdf(payload, {
+    subtitle: options?.subtitle ?? PDF_SUBTITLE,
+  });
+}
 
-export { printDelpiDocumentHtml } from "./delpiDocumentPrint";
+export function exportTablePayloadsToPdf(
+  title: string,
+  payloads: TableExportPayload[],
+  options?: ExportPdfOptions,
+): void {
+  sharedExportTablePayloadsToPdf(title, payloads, {
+    subtitle: options?.subtitle ?? PDF_SUBTITLE,
+  });
+}
 
-export {
-  exportChartPayloadToPdf,
-  exportTablePayloadToPdf,
-  exportTablePayloadsToPdf,
-  printDelpiDocumentSpec,
-} from "./tablePdfExport";
+export function exportChartPayloadToPdf(
+  title: string,
+  payload: TableExportPayload,
+  chartDataUrl: string | null,
+  options?: ExportPdfOptions,
+): void {
+  sharedExportChartPayloadToPdf(title, payload, chartDataUrl, {
+    subtitle: options?.subtitle ?? PDF_SUBTITLE,
+  });
+}

@@ -2,7 +2,7 @@
 
 Exports públicos de `@delpi/plugin-ui`. Import único.
 
-Exportação tabular (CSV / Excel / PDF DELPI): ver [export-catalog.md](./export-catalog.md) — `exportTableFormat`, `exportPayloadsToXlsx`, `printDelpiDocumentSpec`, etc.
+Exportação tabular (CSV / Excel / PDF DELPI) e botões (`TabularExportButtons`, `DocumentExportActions`, `ExcelExportButton`): ver [export-catalog.md](./export-catalog.md).
 
 Imports:
 

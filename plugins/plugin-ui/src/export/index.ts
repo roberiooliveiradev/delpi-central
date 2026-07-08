@@ -60,3 +60,21 @@ export type {
   DelpiDocumentSummaryLine,
   DelpiDocumentTable,
 } from "./pdf";
+
+export {
+  TabularExportButtons,
+  DocumentExportActions,
+  ExcelExportButton,
+  createDashboardTabularExportButtons,
+  type TabularExportButtonsProps,
+  type DocumentExportActionsProps,
+  type ExcelExportButtonProps,
+} from "./ExportButtons";
+
+export {
+  tableExportPayloadFromMatrix,
+  tableExportPayloadsFromMatrix,
+  type MatrixExportTable,
+} from "./matrixAdapter";
+
+export { runTabularExport, type TabularExportRequest } from "./runTabularExport";

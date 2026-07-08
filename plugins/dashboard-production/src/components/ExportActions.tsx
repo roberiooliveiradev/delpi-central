@@ -1,4 +1,4 @@
-import { FileSpreadsheet, FileText } from "lucide-react";
+import { DocumentExportActions } from "@delpi/plugin-ui";
 
 type ExportActionsProps = {
   disabled?: boolean;
@@ -19,30 +19,16 @@ export function ExportActions({
   excelLabel = "Excel",
   pdfLabel = "PDF",
 }: ExportActionsProps) {
-  const isDisabled = disabled || exporting;
-
   return (
-    <div className={`dp-export-actions${className ? ` ${className}` : ""}`}>
-      <button
-        type="button"
-        className="dp-ghost-btn"
-        onClick={() => void onExportExcel()}
-        disabled={isDisabled}
-        aria-busy={exporting}
-      >
-        <FileSpreadsheet size={16} aria-hidden="true" />
-        {exporting ? "Exportando…" : excelLabel}
-      </button>
-      <button
-        type="button"
-        className="dp-ghost-btn"
-        onClick={() => void onExportPdf()}
-        disabled={isDisabled}
-        aria-busy={exporting}
-      >
-        <FileText size={16} aria-hidden="true" />
-        {pdfLabel}
-      </button>
-    </div>
+    <DocumentExportActions
+      disabled={disabled}
+      exporting={exporting}
+      onExportExcel={onExportExcel}
+      onExportPdf={onExportPdf}
+      className={`dp-export-actions${className ? ` ${className}` : ""}`}
+      buttonClassName="dp-ghost-btn"
+      excelLabel={excelLabel}
+      pdfLabel={pdfLabel}
+    />
   );
 }

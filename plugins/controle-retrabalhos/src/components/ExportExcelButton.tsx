@@ -1,4 +1,4 @@
-import { FileSpreadsheet } from "lucide-react";
+import { ExcelExportButton as SharedExcelExportButton } from "@delpi/plugin-ui";
 
 type ExportExcelButtonProps = {
   disabled?: boolean;
@@ -13,20 +13,14 @@ export function ExportExcelButton({
   onExport,
   label = "Excel",
 }: ExportExcelButtonProps) {
-  const isDisabled = disabled || exporting;
-
   return (
-    <div className="cr-export-actions">
-      <button
-        type="button"
-        className="cr-btn cr-btn--secondary"
-        onClick={() => void onExport()}
-        disabled={isDisabled}
-        aria-busy={exporting}
-      >
-        <FileSpreadsheet size={16} aria-hidden />
-        {exporting ? "Exportando…" : label}
-      </button>
-    </div>
+    <SharedExcelExportButton
+      disabled={disabled}
+      exporting={exporting}
+      onExport={onExport}
+      className="cr-export-actions"
+      buttonClassName="cr-btn cr-btn--secondary"
+      label={label}
+    />
   );
 }
