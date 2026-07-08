@@ -61,6 +61,7 @@ class PagePayload(BaseModel):
     backgroundImageFilename: str | None = None
     pointImageFilename: str | None = None
     pointImageFit: str | None = None
+    pointIcon: str | None = None
 
 
 class QuestionPayload(BaseModel):
@@ -74,6 +75,7 @@ class QuestionPayload(BaseModel):
     pageIndex: int | None = Field(default=None, ge=0)
     pointImageFilename: str | None = None
     pointImageFit: str | None = None
+    pointIcon: str | None = None
 
 
 class QuestionsPayload(BaseModel):

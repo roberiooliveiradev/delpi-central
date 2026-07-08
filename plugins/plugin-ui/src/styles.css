@@ -100,3 +100,181 @@
     var(--delpi-ui-surface, var(--surface, #fff))
   );
 }
+
+/* --- LucideIconPicker --- */
+.delpi-ui-lucide-icon-picker {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: min(88vh, 36rem);
+  border: 1px solid var(--delpi-ui-border, var(--border, #d8e1e9));
+  border-radius: 14px;
+  background: var(--delpi-ui-surface, var(--surface, #fff));
+  color: var(--delpi-ui-text, var(--text, #111));
+  overflow: hidden;
+}
+
+.delpi-ui-lucide-icon-picker__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 0.55rem;
+}
+
+.delpi-ui-lucide-icon-picker__header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.delpi-ui-lucide-icon-picker__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #d8e1e9));
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.delpi-ui-lucide-icon-picker__body {
+  display: grid;
+  gap: 0.7rem;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 1rem 0.85rem;
+}
+
+.delpi-ui-lucide-icon-picker__search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--delpi-ui-border, var(--border, #d8e1e9));
+  border-radius: 10px;
+  padding: 0 0.7rem;
+  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 88%, #000 4%);
+  color: var(--delpi-ui-muted, #8595a5);
+}
+
+.delpi-ui-lucide-icon-picker__search {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111));
+  font: inherit;
+  padding: 0.55rem 0;
+  outline: none;
+}
+
+.delpi-ui-lucide-icon-picker__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--delpi-ui-muted, #8595a5);
+}
+
+.delpi-ui-lucide-icon-picker__selected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-lucide-icon-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+@media (max-width: 920px) {
+  .delpi-ui-lucide-icon-picker__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .delpi-ui-lucide-icon-picker__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.delpi-ui-lucide-icon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 5.6rem;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #d8e1e9) 80%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 70%, transparent);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.55rem 0.3rem 0.45rem;
+  transition:
+    transform 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.delpi-ui-lucide-icon-card:hover,
+.delpi-ui-lucide-icon-card--active {
+  transform: translateY(-1px);
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 55%,
+    var(--delpi-ui-border, #d8e1e9)
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    var(--delpi-ui-surface, #fff)
+  );
+}
+
+.delpi-ui-lucide-icon-card__label {
+  font-size: 0.65rem;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-all;
+  opacity: 0.85;
+}
+
+.delpi-ui-lucide-icon-picker__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--delpi-ui-muted, #8595a5);
+}
+
+.delpi-ui-lucide-icon-picker__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem 0.85rem;
+  border-top: 1px solid var(--delpi-ui-border, var(--border, #d8e1e9));
+}
+
+.delpi-ui-lucide-icon-picker__btn {
+  border-radius: 10px;
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.delpi-ui-lucide-icon-picker__btn--ghost {
+  border: 1px solid var(--delpi-ui-border, #d8e1e9);
+  background: transparent;
+  color: inherit;
+}
+
+.delpi-ui-lucide-icon-picker__btn--primary {
+  border: 0;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: #fff;
+}

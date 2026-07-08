@@ -123,3 +123,21 @@ export {
 } from "./NativeFormFields";
 
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
+
+export {
+  LucideIconPicker,
+  LucideIconByName,
+  type LucideIconByNameProps,
+  type LucideIconPickerLabels,
+  type LucideIconPickerProps,
+} from "./LucideIconPicker";
+
+export {
+  CURATED_LUCIDE_ICON_NAMES,
+  isLucideIconName,
+  listLucideIconNames,
+  resolveLucideIcon,
+  toKebabCase,
+  toPascalCaseFromKebab,
+  type CuratedLucideIconName,
+} from "./lucideIconResolver";
