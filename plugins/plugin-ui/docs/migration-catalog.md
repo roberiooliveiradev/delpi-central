@@ -134,7 +134,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `maintenance` | ✅ | ✅ | — | — | — | — | TablePaginationNav + FilterBarShell + MultiSelect + DataTable F2 |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
 | `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
-| `auditoria-5s` | — | — | — | ✅ | — | — | `@delpi/plugin-ui` + ChartCard F2 |
+| `auditoria-5s` | — | — | — | ✅ | ✅ | — | ChartCard + createAnalyticsKpiCard F2 |
 | `pedidos-venda-abertos` | — | ✅ | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `inspecoes-entrada` | ✅ | — | — | — | ✅ | — | PageHeader F3 + Pagination/KpiCard F2 |
 | `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + forms F3 (TextField, TableHeaderCell, FilterCheckbox) |
@@ -189,7 +189,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard | `operationalUnitLabels` |
 | `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity |
 | `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState |
-| `auditoria-5s` | — | ChartCard |
+| `auditoria-5s` | — | ChartCard, createAnalyticsKpiCard |
 
 ## Referência — `cadastro-kaizen` (migração UI concluída)
 

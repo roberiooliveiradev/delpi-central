@@ -1,7 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SimpleKpiCard, simpleKpiCardBemClasses } from "./SimpleKpiCard";
+import {
+  createAnalyticsKpiCard,
+  SimpleKpiCard,
+  simpleKpiAnalyticsBemClasses,
+  simpleKpiCardBemClasses,
+} from "./SimpleKpiCard";
 
 afterEach(() => {
   cleanup();
@@ -58,6 +63,26 @@ describe("SimpleKpiCard", () => {
     expect(document.querySelector(".ie-kpi-card__body")).toBeTruthy();
     expect(screen.getByText("No período")).toBeTruthy();
     expect(document.querySelector(".ie-kpi-card--success")).toBeTruthy();
+  });
+
+  it("createAnalyticsKpiCard usa BEM analytics-kpi e variante", () => {
+    const AnalyticsKpiCard = createAnalyticsKpiCard("a5s");
+    expect(simpleKpiAnalyticsBemClasses("a5s").title).toBe("a5s-analytics-kpi__label");
+
+    render(
+      <AnalyticsKpiCard
+        title="NC pendentes"
+        value="3"
+        subtitle="1 em atraso"
+        variant="warning"
+        icon={<span data-testid="icon">!</span>}
+      />,
+    );
+
+    expect(document.querySelector(".a5s-analytics-kpi--warning")).toBeTruthy();
+    expect(document.querySelector(".a5s-analytics-kpi__label")).toBeTruthy();
+    expect(document.querySelector(".a5s-analytics-kpi__hint")).toBeTruthy();
+    expect(screen.getByText("NC pendentes")).toBeTruthy();
   });
 
   it("layout iconEnd posiciona ícone após o corpo", () => {

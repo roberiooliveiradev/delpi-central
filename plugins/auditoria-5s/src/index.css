@@ -2686,14 +2686,16 @@
 
 .a5s-analytics-kpi__label {
   display: block;
+  margin: 0;
   font-size: 0.82rem;
   color: var(--a5s-muted);
 }
 
 .a5s-analytics-kpi__value {
   display: block;
-  margin-top: 4px;
+  margin: 4px 0 0;
   font-size: var(--a5s-font-kpi);
+  font-weight: 700;
   line-height: 1.1;
   color: var(--a5s-title);
 }

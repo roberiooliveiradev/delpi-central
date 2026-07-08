@@ -33,8 +33,11 @@ export {
 } from "./KpiCard";
 export {
   SimpleKpiCard,
+  createAnalyticsKpiCard,
   createKaizenKpiCard,
   createSimpleKpiCard,
+  simpleKpiAnalyticsBemClasses,
+  simpleKpiAnalyticsVariantClass,
   simpleKpiCardBemClasses,
   simpleKpiCardVariantClass,
   simpleKpiCardWideClass,

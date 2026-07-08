@@ -22,7 +22,7 @@ export type SimpleKpiCardProps = {
   variant?: string;
   wide?: boolean;
   valueTone?: "default" | "danger";
-  valueTag?: "h3" | "p";
+  valueTag?: "h3" | "p" | "strong";
   layout?: SimpleKpiCardLayout;
   classNames: SimpleKpiCardClassNames;
   className?: string;
@@ -72,6 +72,57 @@ export function simpleKpiKaizenBemClasses(prefix: string): SimpleKpiCardClassNam
 
 export function simpleKpiKaizenToneClass(prefix: string, tone: string) {
   return `${prefix}-kpi--${tone}`;
+}
+
+/** BEM `{prefix}-analytics-kpi` (auditoria-5s e dashboards com KPI compacto + ícone). */
+export function simpleKpiAnalyticsBemClasses(prefix: string): SimpleKpiCardClassNames {
+  const kpi = `${prefix}-analytics-kpi`;
+  return {
+    article: kpi,
+    icon: `${kpi}__icon`,
+    title: `${kpi}__label`,
+    value: `${kpi}__value`,
+    subtitle: `${kpi}__hint`,
+  };
+}
+
+export function simpleKpiAnalyticsVariantClass(prefix: string, variant: string) {
+  return `${prefix}-analytics-kpi--${variant}`;
+}
+
+export function createAnalyticsKpiCard(prefix = "a5s") {
+  const classNames = simpleKpiAnalyticsBemClasses(prefix);
+
+  return function AnalyticsKpiCard({
+    title,
+    value,
+    subtitle,
+    icon,
+    variant,
+    className,
+  }: {
+    title: string;
+    value: string;
+    subtitle?: string;
+    icon: ReactNode;
+    variant?: string;
+    className?: string;
+  }) {
+    const variantClass = variant ? simpleKpiAnalyticsVariantClass(prefix, variant) : undefined;
+    const mergedClassName = [variantClass, className].filter(Boolean).join(" ") || undefined;
+
+    return (
+      <SimpleKpiCard
+        title={title}
+        value={value}
+        subtitle={subtitle}
+        icon={icon}
+        valueTag="strong"
+        classNames={classNames}
+        className={mergedClassName}
+      />
+    );
+  };
 }
 
 export function createKaizenKpiCard(prefix = "kz") {
@@ -168,7 +219,7 @@ export function createSimpleKpiCard(
   options?: {
     withBody?: boolean;
     withSubtitle?: boolean;
-    defaultValueTag?: "h3" | "p";
+    defaultValueTag?: "h3" | "p" | "strong";
     layout?: SimpleKpiCardLayout;
   },
 ) {

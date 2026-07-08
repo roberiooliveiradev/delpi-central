@@ -234,16 +234,18 @@ Shell da linha de filtros (`{prefix}-filters-row`) e campos label+controle reuti
 
 Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels })` — retorna `FiltersRow`, `FilterInputField` e `FilterSelectField`.
 
-### `SimpleKpiCard` / `createKaizenKpiCard`
+### `SimpleKpiCard` / `createKaizenKpiCard` / `createAnalyticsKpiCard`
 
-Cartão KPI compacto com ícone. Variante kaizen usa BEM `{prefix}-kpi`, `{prefix}-kpi--{tone}` e props `label`/`sub` (alias de title/subtitle).
+Cartão KPI compacto com ícone. Variante kaizen usa BEM `{prefix}-kpi`; analytics usa `{prefix}-analytics-kpi` (rótulo `__label`, hint `__hint`).
 
 | Export | Descrição |
 |--------|-----------|
 | `SimpleKpiCard` | Layout iconStart/iconEnd headless |
 | `createKaizenKpiCard(prefix)` | Wrapper kaizen: `tone`, `label`, `value`, `sub`, `icon` |
+| `createAnalyticsKpiCard(prefix)` | Wrapper analytics: `title`, `value`, `subtitle`, `variant`, `icon` |
 | `simpleKpiKaizenBemClasses` | Mapa BEM `{prefix}-kpi__*` |
 | `simpleKpiKaizenToneClass` | Classe modificadora de tom |
+| `simpleKpiAnalyticsBemClasses` | Mapa BEM `{prefix}-analytics-kpi__*` |
 
 ### `SectionCard`
 

@@ -95,6 +95,7 @@ import { MEU_HELP } from "./content/helpTooltips";
 | `FiltersRow` / `FilterInputField` / `FilterSelectField` | Linha de filtros + campos input/select |
 | `filtersRowBemClasses` / `createDashboardFiltersKit` | Helpers BEM + factory |
 | `SimpleKpiCard` / `createKaizenKpiCard` | KPI estilo kaizen (`{prefix}-kpi--{tone}`) |
+| `createAnalyticsKpiCard` | KPI `{prefix}-analytics-kpi` (auditoria-5s) |
 | `simpleKpiKaizenBemClasses` / `simpleKpiKaizenToneClass` | BEM kaizen para KPI |
 | `SectionCard` / `createDashboardSectionCard` | Seção estática com título + hint |
 | `sectionCardKaizenBemClasses` / `sectionCardPacBemClasses` | BEM por plugin |
