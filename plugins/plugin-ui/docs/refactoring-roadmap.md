@@ -276,7 +276,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
 | `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · DataTableSection* allowlist | sim |
 | `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ | Empty/Loading ✅ | sim |
-| `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ | PageHeader ✅ | sim |
+| `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ FilterBarShell ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |
 | `financeiro-centro-custo` | — | Kpi/Chart/Empty | ChartCard ✅ Empty/Loading | sim |
 | `pedidos-venda-abertos` | — | Pagination ✅ KpiCard ✅ | PageHeader | sim |
