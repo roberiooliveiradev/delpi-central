@@ -157,7 +157,8 @@ export function useAudit5sRealtime({
 
     const socket = io(window.location.origin, {
       path: AUDIT_5S_SOCKET_PATH,
-      transports: ["websocket", "polling"],
+      // Polling primeiro: mais estável atrás de proxy/LB; upgrade para WS quando possível.
+      transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: Infinity,
       autoConnect: true,
