@@ -119,6 +119,9 @@ class FormService:
                     "point_image_fit": page.get("point_image_fit")
                     or existing.get("point_image_fit")
                     or "scale",
+                    "point_icon": page.get("point_icon")
+                    if "point_icon" in page
+                    else existing.get("point_icon"),
                 }
             )
 
@@ -130,6 +133,7 @@ class FormService:
                     "background_image_filename": None,
                     "point_image_filename": None,
                     "point_image_fit": "scale",
+                    "point_icon": None,
                 }
                 for q in normalized_questions
             ]
@@ -146,6 +150,14 @@ class FormService:
                 q["point_image_filename"] = existing.get("point_image_filename")
             if not q.get("point_image_fit"):
                 q["point_image_fit"] = existing.get("point_image_fit") or "scale"
+            if "point_icon" not in q or q.get("point_icon") is None:
+                if "point_icon" not in q:
+                    q["point_icon"] = existing.get("point_icon")
+            # Ícone e imagem são mutuamente exclusivos: ícone limpa imagem e vice-versa.
+            if q.get("point_icon"):
+                q["point_image_filename"] = None
+            elif q.get("point_image_filename"):
+                q["point_icon"] = None
 
         page_ids = [str(p["id"]) for p in stored_pages]
         for index, q in enumerate(normalized_questions):
