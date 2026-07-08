@@ -41,3 +41,7 @@
 - Testes: `tests/test_revisao_impact_effort_matrix_service.py`
 
 ## Próximo passo (S2)
+
+1. Migration V038 `matriz_impacto_esforco` JSONB
+2. `PUT /revisoes/{id}/matriz-impacto-esforco` + audit
+3. Validação schema `revisao_matriz_impacto_esforco_v1`
