@@ -33,9 +33,10 @@ const C = TM_HELP_TOOLTIPS.columns;
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
+  embedded?: boolean;
 };
 
-export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
+export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = false }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<RecursoCompartilhado[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -174,38 +175,19 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   const catalogLoadingProgress = useLoadingProgress(loading && items.length === 0, catalogFetchProgress);
 
   if (loading && items.length === 0) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando catálogo de recursos"
-          description="Licenças, assinaturas e ferramentas compartilhadas."
-          progressPercent={catalogLoadingProgress}
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando catálogo de recursos"
+        description="Licenças, assinaturas e ferramentas compartilhadas."
+        progressPercent={catalogLoadingProgress}
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title="Recursos compartilhados"
-        subtitle="Catálogo global — vincule às revisões em Processos para rateio no dashboard"
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.recursos}
-        onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
-        actions={
-          <button
-            type="button"
-            className="ds-primary-btn"
-            onClick={() => onNavigate(buildRecursoPath(CATALOG_CREATE.recurso))}
-          >
-            <Plus size={16} />
-            Novo recurso
-          </button>
-        }
-      />
-
+  const pageBody = (
+    <>
       <StatusAlerts
         error={error}
         loading={loading}
@@ -247,6 +229,32 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
         onRowClick={(r) => onNavigate(buildRecursoPath(r.recurso_compartilhado_id))}
         emptyMessage="Nenhum recurso no catálogo. Cadastre licenças e ferramentas compartilhadas."
       />
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title="Recursos compartilhados"
+        subtitle="Catálogo global — vincule às revisões em Processos para rateio no dashboard"
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.recursos}
+        onNavigate={onNavigate}
+        onRefresh={() => void load()}
+        refreshing={refreshing}
+        actions={
+          <button
+            type="button"
+            className="ds-primary-btn"
+            onClick={() => onNavigate(buildRecursoPath(CATALOG_CREATE.recurso))}
+          >
+            <Plus size={16} />
+            Novo recurso
+          </button>
+        }
+      />
+      {pageBody}
     </TransformometroShell>
   );
 }

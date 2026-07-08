@@ -108,30 +108,12 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/filiais",
-      "label": "Unidades",
+      "path": "/apps/transformometro/configuracoes/unidades",
+      "label": "Configurações",
       "permission": "transformometro.processes.manage",
-      "icon": "building",
+      "icon": "folder-tree",
       "entry": null,
       "order": 23,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/transformometro/setores",
-      "label": "Departamentos",
-      "permission": "transformometro.processes.manage",
-      "icon": "building",
-      "entry": null,
-      "order": 24,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/transformometro/recursos",
-      "label": "Recursos",
-      "permission": "transformometro.shared-resources.manage",
-      "icon": "layers",
-      "entry": null,
-      "order": 25,
       "showInMenu": false
     },
     {

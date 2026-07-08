@@ -24,6 +24,7 @@ import {
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { buildConfiguracoesSectionPath } from "../../ui/configuracoes/configuracoesWorkspaceNav";
 import { buildSetorPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
@@ -35,9 +36,10 @@ const S = TM_HELP_TOOLTIPS.setores;
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
+  embedded?: boolean;
 };
 
-export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
+export function SetoresPage({ getAccessToken, pathname, onNavigate, embedded = false }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<Setor[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
@@ -161,38 +163,19 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   const catalogLoadingProgress = useLoadingProgress(loading && !options, catalogFetchProgress);
 
   if (loading && !options) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando departamentos"
-          description="Catálogo de departamentos vinculados às unidades."
-          progressPercent={catalogLoadingProgress}
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando departamentos"
+        description="Catálogo de departamentos vinculados às unidades."
+        progressPercent={catalogLoadingProgress}
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title="Departamentos"
-        subtitle="Cadastro de departamentos e vínculo com unidades — usado nos processos"
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.setores}
-        onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
-        actions={
-          <button
-            type="button"
-            className="ds-primary-btn"
-            onClick={() => onNavigate(buildSetorPath(CATALOG_CREATE.setor))}
-          >
-            <Plus size={16} />
-            Novo departamento
-          </button>
-        }
-      />
-
+  const pageBody = (
+    <>
       <StatusAlerts
         error={error}
         loading={loading}
@@ -205,7 +188,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
         <button
           type="button"
           className="ds-ghost-btn"
-          onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.filiais)}
+          onClick={() => onNavigate(buildConfiguracoesSectionPath("unidades"))}
         >
           Unidades
         </button>
@@ -256,6 +239,32 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
           </p>
         }
       />
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title="Departamentos"
+        subtitle="Cadastro de departamentos e vínculo com unidades — usado nos processos"
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.setores}
+        onNavigate={onNavigate}
+        onRefresh={() => void load()}
+        refreshing={refreshing}
+        actions={
+          <button
+            type="button"
+            className="ds-primary-btn"
+            onClick={() => onNavigate(buildSetorPath(CATALOG_CREATE.setor))}
+          >
+            <Plus size={16} />
+            Novo departamento
+          </button>
+        }
+      />
+      {pageBody}
     </TransformometroShell>
   );
 }

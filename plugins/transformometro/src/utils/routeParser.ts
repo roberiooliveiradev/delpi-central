@@ -1,8 +1,11 @@
 import { TRANSFORMOMETRO_ROUTES } from "../constants/routes";
+import type { RecursoWorkspaceSectionId } from "../ui/configuracoes/configuracoesWorkspaceNav";
+import { defaultRecursoSection } from "../ui/configuracoes/configuracoesWorkspaceNav";
 
 export type TransformometroView =
   | "dashboard"
   | "dados"
+  | "configuracoes"
   | "filiais"
   | "filial"
   | "setores"
@@ -31,6 +34,22 @@ export function normalizeTransformometroPath(pathname: string): string {
     return pathname.slice(0, -1);
   }
   return pathname;
+}
+
+function matchConfiguracoesRecurso(path: string) {
+  return path.match(
+    /^\/apps\/transformometro\/(?:configuracoes|cadastros)\/recursos\/([^/]+)$/
+  );
+}
+
+function matchConfiguracoesSetor(path: string) {
+  return path.match(
+    /^\/apps\/transformometro\/(?:configuracoes|cadastros)\/departamentos\/([^/]+)$/
+  );
+}
+
+function matchConfiguracoesFilial(path: string) {
+  return path.match(/^\/apps\/transformometro\/(?:configuracoes|cadastros)\/unidades\/([^/]+)$/);
 }
 
 export function parseTransformometroPath(pathname: string): ParsedTransformometroRoute {
@@ -76,19 +95,34 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
     return { view: "processo", processoId: processoMatch[1] };
   }
 
-  const recursoMatch = path.match(/^\/apps\/transformometro\/recursos\/([^/]+)$/);
-  if (recursoMatch) {
-    return { view: "recurso", recursoId: recursoMatch[1] };
+  const configuracoesRecursoMatch = matchConfiguracoesRecurso(path);
+  if (configuracoesRecursoMatch) {
+    return { view: "recurso", recursoId: configuracoesRecursoMatch[1] };
   }
 
-  const filialMatch = path.match(/^\/apps\/transformometro\/filiais\/([^/]+)$/);
-  if (filialMatch) {
-    return { view: "filial", filialId: filialMatch[1] };
+  const configuracoesSetorMatch = matchConfiguracoesSetor(path);
+  if (configuracoesSetorMatch) {
+    return { view: "setor", setorId: configuracoesSetorMatch[1] };
   }
 
-  const setorMatch = path.match(/^\/apps\/transformometro\/setores\/([^/]+)$/);
-  if (setorMatch) {
-    return { view: "setor", setorId: setorMatch[1] };
+  const configuracoesFilialMatch = matchConfiguracoesFilial(path);
+  if (configuracoesFilialMatch) {
+    return { view: "filial", filialId: configuracoesFilialMatch[1] };
+  }
+
+  const legacyRecursoMatch = path.match(/^\/apps\/transformometro\/recursos\/([^/]+)$/);
+  if (legacyRecursoMatch) {
+    return { view: "recurso", recursoId: legacyRecursoMatch[1] };
+  }
+
+  const legacyFilialMatch = path.match(/^\/apps\/transformometro\/filiais\/([^/]+)$/);
+  if (legacyFilialMatch) {
+    return { view: "filial", filialId: legacyFilialMatch[1] };
+  }
+
+  const legacySetorMatch = path.match(/^\/apps\/transformometro\/setores\/([^/]+)$/);
+  if (legacySetorMatch) {
+    return { view: "setor", setorId: legacySetorMatch[1] };
   }
 
   if (
@@ -103,16 +137,37 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
     return { view: "dados" };
   }
 
-  if (path === TRANSFORMOMETRO_ROUTES.setores || path.endsWith("/setores")) {
-    return { view: "setores" };
+  if (
+    path === TRANSFORMOMETRO_ROUTES.configuracoesDepartamentos ||
+    path.endsWith("/configuracoes/departamentos") ||
+    path.endsWith("/cadastros/departamentos") ||
+    path === TRANSFORMOMETRO_ROUTES.setores ||
+    path.endsWith("/setores")
+  ) {
+    return { view: "configuracoes" };
   }
 
-  if (path === TRANSFORMOMETRO_ROUTES.filiais || path.endsWith("/filiais")) {
-    return { view: "filiais" };
+  if (
+    path === TRANSFORMOMETRO_ROUTES.configuracoesRecursos ||
+    path.endsWith("/configuracoes/recursos") ||
+    path.endsWith("/cadastros/recursos") ||
+    path === TRANSFORMOMETRO_ROUTES.recursos ||
+    path.endsWith("/recursos")
+  ) {
+    return { view: "configuracoes" };
   }
 
-  if (path === TRANSFORMOMETRO_ROUTES.recursos || path.endsWith("/recursos")) {
-    return { view: "recursos" };
+  if (
+    path === TRANSFORMOMETRO_ROUTES.configuracoesUnidades ||
+    path.endsWith("/configuracoes/unidades") ||
+    path.endsWith("/cadastros/unidades") ||
+    path === TRANSFORMOMETRO_ROUTES.filiais ||
+    path.endsWith("/filiais") ||
+    path === TRANSFORMOMETRO_ROUTES.configuracoes ||
+    path.endsWith("/configuracoes") ||
+    path.endsWith("/cadastros")
+  ) {
+    return { view: "configuracoes" };
   }
 
   if (path === TRANSFORMOMETRO_ROUTES.processos || path.endsWith("/processos")) {
@@ -120,6 +175,15 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
   }
 
   return { view: "dashboard" };
+}
+
+export function isConfiguracoesWorkspaceRoute(route: ParsedTransformometroRoute): boolean {
+  return (
+    route.view === "configuracoes" ||
+    route.view === "filial" ||
+    route.view === "setor" ||
+    route.view === "recurso"
+  );
 }
 
 export function buildInstanciaPath(processoId: string, instanciaId: string): string {
@@ -141,13 +205,22 @@ export function buildProcessoPath(
 }
 
 export function buildRecursoPath(recursoId: string): string {
-  return `${TRANSFORMOMETRO_ROUTES.recursos}/${recursoId}`;
+  return `${TRANSFORMOMETRO_ROUTES.configuracoesRecursos}/${recursoId}`;
+}
+
+export function buildRecursoSectionPath(
+  recursoId: string,
+  section: RecursoWorkspaceSectionId
+): string {
+  const base = buildRecursoPath(recursoId);
+  if (section === defaultRecursoSection()) return base;
+  return `${base}#${section}`;
 }
 
 export function buildFilialPath(filialId: string): string {
-  return `${TRANSFORMOMETRO_ROUTES.filiais}/${filialId}`;
+  return `${TRANSFORMOMETRO_ROUTES.configuracoesUnidades}/${filialId}`;
 }
 
 export function buildSetorPath(setorId: string): string {
-  return `${TRANSFORMOMETRO_ROUTES.setores}/${setorId}`;
+  return `${TRANSFORMOMETRO_ROUTES.configuracoesDepartamentos}/${setorId}`;
 }

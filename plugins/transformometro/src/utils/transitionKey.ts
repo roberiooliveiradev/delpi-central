@@ -10,5 +10,13 @@ export function buildTransformometroTransitionKey(pathname: string): string {
   ) {
     return normalizeTransformometroPath(`${TRANSFORMOMETRO_ROUTES.processos}/${route.processoId}`);
   }
+  if (
+    route.view === "configuracoes" ||
+    route.view === "filial" ||
+    route.view === "setor" ||
+    route.view === "recurso"
+  ) {
+    return normalizeTransformometroPath(TRANSFORMOMETRO_ROUTES.configuracoes);
+  }
   return normalizeTransformometroPath(pathname);
 }

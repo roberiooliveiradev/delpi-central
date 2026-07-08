@@ -31,6 +31,9 @@ import {
 } from "../../data/api/transformometroApi";
 import { optionalDateField, toDateInputValue } from "../../utils/dateInputs";
 import { buildProcessoPath, buildRecursoPath } from "../../utils/routeParser";
+import { RecursoWorkspaceSectionPanel } from "../configuracoes/RecursoWorkspaceSectionPanel";
+import type { RecursoWorkspaceSectionId } from "../configuracoes/configuracoesWorkspaceNav";
+import { defaultRecursoSection } from "../configuracoes/configuracoesWorkspaceNav";
 import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
 import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
 import {
@@ -48,6 +51,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
   onBack: () => void;
+  embedded?: boolean;
+  activeSection?: RecursoWorkspaceSectionId;
 };
 
 type VinculoEditForm = {
@@ -74,6 +79,8 @@ export function RecursoDetailPage({
   getAccessToken,
   onNavigate,
   onBack,
+  embedded = false,
+  activeSection = defaultRecursoSection(),
 }: Props) {
   const confirm = useConfirm();
   const isCreate = isCatalogCreateId("recurso", recursoId);
@@ -275,61 +282,56 @@ export function RecursoDetailPage({
   }
 
   if (loading && !isCreate && !recurso) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando detalhe do recurso"
-          description="Buscando cadastro, custos e processos vinculados."
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando detalhe do recurso"
+        description="Buscando cadastro, custos e processos vinculados."
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
   if (!isCreate && !recurso && !loading) {
-    return (
-      <TransformometroShell>
-        <div className="ds-state ds-state--error" role="alert">
-          <p>{error ?? "Recurso não encontrado."}</p>
-          <button type="button" className="ds-ghost-btn" onClick={onBack}>
-            Voltar à lista
-          </button>
-        </div>
-      </TransformometroShell>
+    const errorView = (
+      <div className="ds-state ds-state--error" role="alert">
+        <p>{error ?? "Recurso não encontrado."}</p>
+        <button type="button" className="ds-ghost-btn" onClick={onBack}>
+          Voltar à lista
+        </button>
+      </div>
     );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
   }
 
   const title = isCreate
     ? "Novo recurso"
     : `${recurso?.codigo_recurso ?? ""} — ${recurso?.nome_recurso ?? ""}`;
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title={title}
-        subtitle={
-          isCreate
-            ? "Cadastre licenças e ferramentas compartilhadas do catálogo global"
-            : "Detalhes, histórico de custos e processos vinculados"
-        }
-        currentPath={
-          pathname ?? (isCreate ? buildRecursoPath(CATALOG_CREATE.recurso) : buildRecursoPath(recursoId))
-        }
-        onNavigate={onNavigate}
-        actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
-              <ArrowLeft size={16} />
-              Lista
+  const showSection = (sectionId: RecursoWorkspaceSectionId) =>
+    !embedded || isCreate || activeSection === sectionId;
+
+  const pageBody = (
+    <>
+      {embedded ? (
+        <div className="tm-cadastro-detail-toolbar">
+          <div>
+            <h2 className="ds-section-title">{title}</h2>
+            <p className="ds-hint">
+              {isCreate
+                ? "Cadastre licenças e ferramentas compartilhadas do catálogo global"
+                : "Detalhes, histórico de custos e processos vinculados"}
+            </p>
+          </div>
+          {!isCreate ? (
+            <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRecurso()}>
+              <Trash2 size={16} />
+              Excluir
             </button>
-            {!isCreate ? (
-              <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRecurso()}>
-                <Trash2 size={16} />
-                Excluir
-              </button>
-            ) : null}
-          </>
-        }
-      />
+          ) : null}
+        </div>
+      ) : null}
 
       <StatusAlerts
         error={error}
@@ -345,41 +347,46 @@ export function RecursoDetailPage({
         onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
       />
 
-      <div className="ds-cadastro-panel ds-cadastro-panel--cards">
-        {options ? (
-          <EditableSectionCard
-            title="Dados do recurso"
-            description="Cadastro principal — rateio, escopo e vigência."
-            isEditing={isCreate || sectionEdit.isEditing("recurso")}
-            onEdit={() => void sectionEdit.startEdit("recurso")}
-            onCancel={cancelRecursoEdit}
-            onSave={() => void handleSaveRecurso()}
-            saving={saving}
-            editable={!isCreate}
-            readContent={
-              recurso ? <RecursoReadView recurso={recurso} vinculosAtivos={ativos} /> : null
-            }
-            editContent={
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void handleSaveRecurso();
-                }}
-              >
-                <RecursoCatalogFormFields
-                  form={form}
-                  options={options}
-                  onChange={setForm}
-                  submitLabel="Salvar alterações"
-                  hideSubmit
-                />
-              </form>
-            }
-          />
+      <div className={`ds-cadastro-panel ds-cadastro-panel--cards${embedded ? " ds-cadastro-panel--workspace" : ""}`}>
+        {options && showSection("identificacao") ? (
+          <RecursoWorkspaceSectionPanel
+            active={!embedded || isCreate || activeSection === "identificacao"}
+            sectionId="identificacao"
+          >
+            <EditableSectionCard
+              title="Dados do recurso"
+              description="Cadastro principal — rateio, escopo e vigência."
+              isEditing={isCreate || sectionEdit.isEditing("recurso")}
+              onEdit={() => void sectionEdit.startEdit("recurso")}
+              onCancel={cancelRecursoEdit}
+              onSave={() => void handleSaveRecurso()}
+              saving={saving}
+              editable={!isCreate}
+              readContent={
+                recurso ? <RecursoReadView recurso={recurso} vinculosAtivos={ativos} /> : null
+              }
+              editContent={
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSaveRecurso();
+                  }}
+                >
+                  <RecursoCatalogFormFields
+                    form={form}
+                    options={options}
+                    onChange={setForm}
+                    submitLabel="Salvar alterações"
+                    hideSubmit
+                  />
+                </form>
+              }
+            />
+          </RecursoWorkspaceSectionPanel>
         ) : null}
 
-        {!isCreate ? (
-          <>
+        {!isCreate && showSection("custos") ? (
+          <RecursoWorkspaceSectionPanel active={!embedded || activeSection === "custos"} sectionId="custos">
             <EditableSectionCard
               title="Custos ao longo do tempo"
               description="Histórico de vigências de custo mensal usado no dashboard."
@@ -406,7 +413,11 @@ export function RecursoDetailPage({
                 />
               }
             />
+          </RecursoWorkspaceSectionPanel>
+        ) : null}
 
+        {!isCreate && showSection("vinculos") ? (
+          <RecursoWorkspaceSectionPanel active={!embedded || activeSection === "vinculos"} sectionId="vinculos">
             <section className="ds-card ds-table-section" aria-busy={loading || refreshing}>
               <div className="ds-table-section__header">
                 <h2 className="ds-section-title">Processos vinculados</h2>
@@ -592,9 +603,43 @@ export function RecursoDetailPage({
                 </div>
               )}
             </section>
-          </>
+          </RecursoWorkspaceSectionPanel>
         ) : null}
       </div>
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title={title}
+        subtitle={
+          isCreate
+            ? "Cadastre licenças e ferramentas compartilhadas do catálogo global"
+            : "Detalhes, histórico de custos e processos vinculados"
+        }
+        currentPath={
+          pathname ?? (isCreate ? buildRecursoPath(CATALOG_CREATE.recurso) : buildRecursoPath(recursoId))
+        }
+        onNavigate={onNavigate}
+        actions={
+          <>
+            <button type="button" className="ds-ghost-btn" onClick={onBack}>
+              <ArrowLeft size={16} />
+              Lista
+            </button>
+            {!isCreate ? (
+              <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRecurso()}>
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            ) : null}
+          </>
+        }
+      />
+      {pageBody}
     </TransformometroShell>
   );
 }

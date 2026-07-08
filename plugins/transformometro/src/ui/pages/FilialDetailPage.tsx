@@ -40,6 +40,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
   onBack: () => void;
+  embedded?: boolean;
 };
 
 export function FilialDetailPage({
@@ -48,6 +49,7 @@ export function FilialDetailPage({
   pathname,
   onNavigate,
   onBack,
+  embedded = false,
 }: Props) {
   const confirm = useConfirm();
   const isCreate = isCatalogCreateId("filial", filialId);
@@ -167,60 +169,54 @@ export function FilialDetailPage({
   const loadingProgress = useLoadingProgress(loading && !isCreate && !filial, fetchProgress);
 
   if (loading && !isCreate && !filial) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando unidade"
-          description="Dados da unidade operacional."
-          progressPercent={loadingProgress}
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando unidade"
+        description="Dados da unidade operacional."
+        progressPercent={loadingProgress}
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
   if (!isCreate && !filial && !loading) {
-    return (
-      <TransformometroShell>
-        <div className="ds-state ds-state--error" role="alert">
-          <p>{error ?? "Unidade não encontrada."}</p>
-          <button type="button" className="ds-ghost-btn" onClick={onBack}>
-            Voltar à lista
-          </button>
-        </div>
-      </TransformometroShell>
+    const errorView = (
+      <div className="ds-state ds-state--error" role="alert">
+        <p>{error ?? "Unidade não encontrada."}</p>
+        <button type="button" className="ds-ghost-btn" onClick={onBack}>
+          Voltar à lista
+        </button>
+      </div>
     );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
   }
 
   const title = isCreate
     ? "Nova unidade"
     : `${filial?.codigo_filial ?? filialId} — ${filial?.nome_filial ?? ""}`;
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title={title}
-        subtitle={
-          isCreate
-            ? "Cadastre uma unidade para instâncias, departamentos e escopo do dashboard"
-            : `Status: ${filial?.status_filial ?? "ativo"}`
-        }
-        currentPath={pathname ?? (isCreate ? buildFilialPath(CATALOG_CREATE.filial) : buildFilialPath(filialId))}
-        onNavigate={onNavigate}
-        actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
-              <ArrowLeft size={16} />
-              Lista
-            </button>
+  const pageBody = (
+    <>
+      {!embedded ? null : (
+        <div className="tm-cadastro-detail-toolbar">
+          <div>
+            <h2 className="ds-section-title">{title}</h2>
             {!isCreate ? (
-              <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
-                <Trash2 size={16} />
-                Excluir
-              </button>
-            ) : null}
-          </>
-        }
-      />
+              <p className="ds-hint">Status: {filial?.status_filial ?? "ativo"}</p>
+            ) : (
+              <p className="ds-hint">Cadastre uma unidade para instâncias, departamentos e escopo do dashboard</p>
+            )}
+          </div>
+          {!isCreate ? (
+            <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
+              <Trash2 size={16} />
+              Excluir
+            </button>
+          ) : null}
+        </div>
+      )}
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
@@ -260,6 +256,38 @@ export function FilialDetailPage({
           }
         />
       ) : null}
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title={title}
+        subtitle={
+          isCreate
+            ? "Cadastre uma unidade para instâncias, departamentos e escopo do dashboard"
+            : `Status: ${filial?.status_filial ?? "ativo"}`
+        }
+        currentPath={pathname ?? (isCreate ? buildFilialPath(CATALOG_CREATE.filial) : buildFilialPath(filialId))}
+        onNavigate={onNavigate}
+        actions={
+          <>
+            <button type="button" className="ds-ghost-btn" onClick={onBack}>
+              <ArrowLeft size={16} />
+              Lista
+            </button>
+            {!isCreate ? (
+              <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            ) : null}
+          </>
+        }
+      />
+      {pageBody}
     </TransformometroShell>
   );
 }

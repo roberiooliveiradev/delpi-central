@@ -14,6 +14,7 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { buildConfiguracoesSectionPath } from "../../ui/configuracoes/configuracoesWorkspaceNav";
 import {
   deleteFilial,
   fetchFiliais,
@@ -34,9 +35,10 @@ const F = TM_HELP_TOOLTIPS.filiais;
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
+  embedded?: boolean;
 };
 
-export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
+export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = false }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<Filial[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
@@ -148,38 +150,19 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
   const catalogLoadingProgress = useLoadingProgress(loading && !options, catalogFetchProgress);
 
   if (loading && !options) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando unidades"
-          description="Catálogo de unidades operacionais."
-          progressPercent={catalogLoadingProgress}
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando unidades"
+        description="Catálogo de unidades operacionais."
+        progressPercent={catalogLoadingProgress}
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title="Unidades"
-        subtitle="Cadastro de unidades — base para instâncias, departamentos e escopo do dashboard"
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.filiais}
-        onNavigate={onNavigate}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
-        actions={
-          <button
-            type="button"
-            className="ds-primary-btn"
-            onClick={() => onNavigate(buildFilialPath(CATALOG_CREATE.filial))}
-          >
-            <Plus size={16} />
-            Nova unidade
-          </button>
-        }
-      />
-
+  const pageBody = (
+    <>
       <StatusAlerts
         error={error}
         loading={loading}
@@ -192,7 +175,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
         <button
           type="button"
           className="ds-ghost-btn"
-          onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.setores)}
+          onClick={() => onNavigate(buildConfiguracoesSectionPath("departamentos"))}
         >
           Departamentos
         </button>{" "}
@@ -233,6 +216,32 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
         onRowClick={(row) => onNavigate(buildFilialPath(row.filial_id))}
         footer={<p className="ds-hint">{items.length} registro(s)</p>}
       />
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title="Unidades"
+        subtitle="Cadastro de unidades — base para instâncias, departamentos e escopo do dashboard"
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.filiais}
+        onNavigate={onNavigate}
+        onRefresh={() => void load()}
+        refreshing={refreshing}
+        actions={
+          <button
+            type="button"
+            className="ds-primary-btn"
+            onClick={() => onNavigate(buildFilialPath(CATALOG_CREATE.filial))}
+          >
+            <Plus size={16} />
+            Nova unidade
+          </button>
+        }
+      />
+      {pageBody}
     </TransformometroShell>
   );
 }

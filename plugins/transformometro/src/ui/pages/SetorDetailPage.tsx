@@ -40,6 +40,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
   onBack: () => void;
+  embedded?: boolean;
 };
 
 export function SetorDetailPage({
@@ -48,6 +49,7 @@ export function SetorDetailPage({
   pathname,
   onNavigate,
   onBack,
+  embedded = false,
 }: Props) {
   const confirm = useConfirm();
   const isCreate = isCatalogCreateId("setor", setorId);
@@ -178,60 +180,54 @@ export function SetorDetailPage({
   const loadingProgress = useLoadingProgress(loading && !isCreate && !setor, fetchProgress);
 
   if (loading && !isCreate && !setor) {
-    return (
-      <TransformometroShell>
-        <LoadingActivityCard
-          title="Carregando departamento"
-          description="Dados do departamento e unidades vinculadas."
-          progressPercent={loadingProgress}
-        />
-      </TransformometroShell>
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando departamento"
+        description="Dados do departamento e unidades vinculadas."
+        progressPercent={loadingProgress}
+      />
     );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
   if (!isCreate && !setor && !loading) {
-    return (
-      <TransformometroShell>
-        <div className="ds-state ds-state--error" role="alert">
-          <p>{error ?? "Departamento não encontrado."}</p>
-          <button type="button" className="ds-ghost-btn" onClick={onBack}>
-            Voltar à lista
-          </button>
-        </div>
-      </TransformometroShell>
+    const errorView = (
+      <div className="ds-state ds-state--error" role="alert">
+        <p>{error ?? "Departamento não encontrado."}</p>
+        <button type="button" className="ds-ghost-btn" onClick={onBack}>
+          Voltar à lista
+        </button>
+      </div>
     );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
   }
 
   const title = isCreate
     ? "Novo departamento"
     : `${setor?.codigo_setor ?? setorId} — ${setor?.nome_setor ?? ""}`;
 
-  return (
-    <TransformometroShell>
-      <PageHeader
-        title={title}
-        subtitle={
-          isCreate
-            ? "Cadastre departamento e vínculo com unidades"
-            : `Status: ${setor?.status_setor ?? "ativo"}`
-        }
-        currentPath={pathname ?? (isCreate ? buildSetorPath(CATALOG_CREATE.setor) : buildSetorPath(setorId))}
-        onNavigate={onNavigate}
-        actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
-              <ArrowLeft size={16} />
-              Lista
+  const pageBody = (
+    <>
+      {embedded ? (
+        <div className="tm-cadastro-detail-toolbar">
+          <div>
+            <h2 className="ds-section-title">{title}</h2>
+            <p className="ds-hint">
+              {isCreate
+                ? "Cadastre departamento e vínculo com unidades"
+                : `Status: ${setor?.status_setor ?? "ativo"}`}
+            </p>
+          </div>
+          {!isCreate ? (
+            <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
+              <Trash2 size={16} />
+              Excluir
             </button>
-            {!isCreate ? (
-              <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
-                <Trash2 size={16} />
-                Excluir
-              </button>
-            ) : null}
-          </>
-        }
-      />
+          ) : null}
+        </div>
+      ) : null}
 
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
@@ -273,6 +269,38 @@ export function SetorDetailPage({
           }
         />
       ) : null}
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title={title}
+        subtitle={
+          isCreate
+            ? "Cadastre departamento e vínculo com unidades"
+            : `Status: ${setor?.status_setor ?? "ativo"}`
+        }
+        currentPath={pathname ?? (isCreate ? buildSetorPath(CATALOG_CREATE.setor) : buildSetorPath(setorId))}
+        onNavigate={onNavigate}
+        actions={
+          <>
+            <button type="button" className="ds-ghost-btn" onClick={onBack}>
+              <ArrowLeft size={16} />
+              Lista
+            </button>
+            {!isCreate ? (
+              <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            ) : null}
+          </>
+        }
+      />
+      {pageBody}
     </TransformometroShell>
   );
 }
