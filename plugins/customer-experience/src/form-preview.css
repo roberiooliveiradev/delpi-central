@@ -374,10 +374,26 @@
 
 .cxform-page-title {
   margin: 0 0 16px;
-  font-size: 1.15rem;
+  font-size: clamp(1.35rem, 4.2vw, 1.75rem);
   font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
   color: var(--pub-text);
   text-align: left;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-page-title {
+  margin: 0 0 18px;
+  font-size: clamp(1.45rem, 4.6vw, 1.9rem);
+}
+
+.cxform--fullpage.cxform--wizard .cxform-step .cxform-label,
+.cxform--fullpage.cxform--wizard .cxform-step legend.cxform-label {
+  font-size: clamp(1.05rem, 3.2vw, 1.2rem);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
 }
 
 /* Ilustração por etapa/pergunta — mesma lógica de fit do fundo (fixed/scale/tile). */
@@ -429,20 +445,37 @@
   height: 200px;
 }
 
-/* Wizard passo a passo — faixa hero com ilustração grande no topo do card. */
+/* Wizard: faixa hero sob o título da etapa (ou no topo se não houver título). */
 .cxform--fullpage.cxform--wizard .cxform-illustration {
-  margin: -24px -24px 24px;
+  margin: 0 -24px 24px;
   padding: clamp(20px, 5vw, 36px) clamp(16px, 4vw, 28px);
   background: var(--pub-illustration-band);
   border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
 }
 
+.cxform--fullpage.cxform--wizard .cxform-step > .cxform-illustration:first-child {
+  margin-top: -24px;
+}
+
 .cxform--fullpage.cxform--wizard .cxform-illustration__photo {
-  width: min(100%, 420px);
+  width: 100%;
   height: min(280px, 36vh);
   min-height: clamp(120px, 20vw, 180px);
   margin: 0 auto;
   filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
+}
+
+/* Escalável: preenche toda a faixa (sem faixa lateral vazia). */
+.cxform--fullpage.cxform--wizard .cxform-illustration:has(.cxform-illustration__photo--scale) {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration__photo--scale {
+  width: 100%;
+  border-radius: 0;
+  background-size: cover;
+  background-position: center;
 }
 
 .cxform-step {
@@ -499,9 +532,10 @@
 
 .cxform-title {
   margin: 0 0 8px;
-  font-size: clamp(1.5rem, 5.2vw, 2.1rem);
+  font-size: clamp(1.65rem, 5.6vw, 2.25rem);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
   color: var(--pub-text);
 }
 
@@ -548,9 +582,10 @@
 
 .cxform-label {
   display: block;
-  font-size: 13.5px;
+  font-size: clamp(0.98rem, 2.8vw, 1.08rem);
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
+  line-height: 1.35;
   color: var(--pub-text);
   margin-bottom: 8px;
   padding: 0;

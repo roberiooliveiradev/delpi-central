@@ -287,6 +287,7 @@ export function FormView({ form }: { form: PublicForm }) {
             <div key={q.id}>
               {showPageHeader && page && (
                 <div className="cxform-page-header">
+                  {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
                   {page.pointImageUrl && (
                     <PointIllustration
                       url={page.pointImageUrl}
@@ -294,7 +295,6 @@ export function FormView({ form }: { form: PublicForm }) {
                       variant="section"
                     />
                   )}
-                  {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
                 </div>
               )}
               {!showPageHeader && q.pointImageUrl && (
@@ -323,8 +323,8 @@ export function FormView({ form }: { form: PublicForm }) {
     const showPageTitle = Boolean(pageTitle && pageTitle !== step.question.label.trim());
     return (
       <div className="cxform-step">
-        {pointImage && <PointIllustration url={pointImage} fit={pointFit} />}
         {showPageTitle && <h2 className="cxform-page-title">{pageTitle}</h2>}
+        {pointImage && <PointIllustration url={pointImage} fit={pointFit} />}
         <QuestionField
           question={step.question}
           answer={answers[step.question.id]}
