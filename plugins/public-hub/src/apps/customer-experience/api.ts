@@ -59,6 +59,7 @@ export type PublicQuestion = {
   pageId?: string | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit | null;
+  pointIcon?: string | null;
 };
 
 export type PublicFormPage = {
@@ -68,6 +69,7 @@ export type PublicFormPage = {
   backgroundImageUrl?: string | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit | null;
+  pointIcon?: string | null;
 };
 
 export type PublicForm = {

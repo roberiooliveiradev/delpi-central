@@ -358,6 +358,33 @@ Consumidores podem **só** passar `className` nas props sem usar as classes defa
 
 ---
 
+## Família `forms` — Lucide icon picker
+
+### `LucideIconPicker`
+
+Painel centralizado para escolher ícones Lucide (lista curada por padrão). Valor em **kebab-case** (ex.: `eye`).
+
+| Prop | Tipo | Default | Descrição |
+|------|------|---------|-----------|
+| `value` | `string \| null` | — | Ícone atual (kebab ou Pascal) |
+| `onChange` | `(icon: string \| null) => void` | — | `null` remove |
+| `onClose` | `() => void` | — | Fecha (botão / após escolher) |
+| `curatedOnly` | `boolean` | `true` | Só catálogo de negócio (~50) |
+| `maxResults` | `number` | `360` | Limite na lista completa |
+| `labels` | `LucideIconPickerLabels` | PT-BR | Textos do painel |
+
+### `LucideIconByName`
+
+Renderiza um ícone Lucide pelo nome.
+
+```ts
+import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
+```
+
+Helpers: `resolveLucideIcon`, `CURATED_LUCIDE_ICON_NAMES`, `toKebabCase`, `toPascalCaseFromKebab`.
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |
@@ -366,5 +393,7 @@ Consumidores podem **só** passar `className` nas props sem usar as classes defa
 | `dashboard-production` | `HelpTooltip`, `FieldLabel` |
 | `dashboard-commercial` | `HelpTooltip`, `FieldLabel` |
 | `dashboard-engineering` | `HelpTooltip`, `FieldLabel` |
+| `customer-experience` | `LucideIconPicker`, `LucideIconByName` |
+| `public-hub` | `LucideIconByName` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.

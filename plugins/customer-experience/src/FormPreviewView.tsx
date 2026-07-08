@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { PreviewForm, PreviewFormPage, PreviewFormQuestion } from "./utils/formPreviewModel";
+import { LucideIconByName } from "@delpi/plugin-ui";
 import type { BackgroundFit } from "./types";
 import "./form-preview.css";
 
@@ -92,13 +93,33 @@ function resolvePointImageFit(
 
 function PointIllustration({
   url,
+  icon,
   fit,
   variant,
 }: {
-  url: string;
+  url?: string | null;
+  icon?: string | null;
   fit?: BackgroundFit | null;
   variant?: "section" | "inline";
 }) {
+  if (!url && !icon) return null;
+  if (icon && !url) {
+    const className = [
+      "cxform-illustration",
+      "cxform-illustration--icon",
+      variant ? `cxform-illustration--${variant}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return (
+      <figure className={className} aria-hidden="true">
+        <div className="cxform-illustration__icon-wrap">
+          <LucideIconByName name={icon} size={72} className="cxform-illustration__icon" />
+        </div>
+      </figure>
+    );
+  }
+
   const resolved = resolveBackgroundFit(fit);
   const className = [
     "cxform-illustration",
@@ -124,7 +145,7 @@ function PointIllustration({
       <div className="cxform-illustration__frame">
         <img
           className={`cxform-illustration__img cxform-illustration__img--${resolved}`}
-          src={url}
+          src={url!}
           alt=""
         />
       </div>
@@ -280,17 +301,23 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
               {showPageHeader && page && (
                 <div className="cxform-page-header">
                   {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
-                  {page.pointImageUrl && (
+                  {(page.pointImageUrl || page.pointIcon) && (
                     <PointIllustration
                       url={page.pointImageUrl}
+                      icon={page.pointIcon}
                       fit={page.pointImageFit}
                       variant="section"
                     />
                   )}
                 </div>
               )}
-              {!showPageHeader && q.pointImageUrl && (
-                <PointIllustration url={q.pointImageUrl} fit={q.pointImageFit} variant="inline" />
+              {!showPageHeader && (q.pointImageUrl || q.pointIcon) && (
+                <PointIllustration
+                  url={q.pointImageUrl}
+                  icon={q.pointIcon}
+                  fit={q.pointImageFit}
+                  variant="inline"
+                />
               )}
               <QuestionField
                 question={q}
@@ -310,13 +337,19 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
       return renderIntroFields();
     }
     const pointImage = resolvePointImage(step);
+    const pointIcon =
+      step.kind === "question"
+        ? step.page?.pointIcon ?? step.question.pointIcon ?? null
+        : null;
     const pointFit = resolvePointImageFit(step);
     const pageTitle = step.page?.title?.trim();
     const showPageTitle = Boolean(pageTitle && pageTitle !== step.question.label.trim());
     return (
       <div className="cxform-step">
         {showPageTitle && <h2 className="cxform-page-title">{pageTitle}</h2>}
-        {pointImage && <PointIllustration url={pointImage} fit={pointFit} />}
+        {(pointImage || pointIcon) && (
+          <PointIllustration url={pointImage} icon={pointIcon} fit={pointFit} />
+        )}
         <QuestionField
           question={step.question}
           answer={answers[step.question.id]}

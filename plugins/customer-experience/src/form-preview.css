@@ -860,3 +860,37 @@
     transition: none;
   }
 }
+
+.cxform-illustration--icon {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 20px;
+}
+
+.cxform-illustration__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 220px);
+  min-height: 140px;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--pub-accent) 10%, var(--pub-card-bg));
+}
+
+.cxform-illustration__icon {
+  color: var(--pub-accent);
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--icon {
+  margin: 0 -24px 24px;
+  padding: clamp(20px, 5vw, 36px);
+  background: var(--pub-illustration-band);
+  border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--icon .cxform-illustration__icon-wrap {
+  width: min(100%, 280px);
+  min-height: clamp(140px, 24vw, 200px);
+  background: transparent;
+}

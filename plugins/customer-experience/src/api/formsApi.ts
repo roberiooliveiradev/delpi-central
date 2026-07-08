@@ -75,6 +75,7 @@ export async function setQuestions(
       id: p.id,
       title: p.title,
       pointImageFit: p.pointImageFit ?? "scale",
+      pointIcon: p.pointIcon ?? null,
     })),
     questions: input.questions.map((q) => ({
       id: q.id,
@@ -86,6 +87,7 @@ export async function setQuestions(
       pageId: q.pageId,
       pageIndex: q.pageIndex ?? undefined,
       pointImageFit: q.pointImageFit ?? "scale",
+      pointIcon: q.pointIcon ?? null,
     })),
   };
   const response = await httpPutJson<ApiEnvelope<FormDetail>>(

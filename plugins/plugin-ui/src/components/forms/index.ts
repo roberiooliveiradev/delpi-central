@@ -122,6 +122,21 @@ export {
   type NativeTextFieldProps,
 } from "./NativeFormFields";
 
+export {
+  NativeSelectControl,
+  type NativeSelectControlProps,
+} from "./NativeSelectControl";
+
+export {
+  EditableTableCell,
+  createDashboardEditableTableCell,
+  editableTableCellBemClasses,
+  type DashboardEditableTableCellProps,
+  type EditableTableCellClassNames,
+  type EditableTableCellOption,
+  type EditableTableCellProps,
+} from "./EditableTableCell";
+
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
 
 export {

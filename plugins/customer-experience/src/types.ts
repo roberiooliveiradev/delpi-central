@@ -103,6 +103,7 @@ export type FormQuestion = {
   pageIndex?: number | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit;
+  pointIcon?: string | null;
 };
 
 export type FormPage = {
@@ -112,6 +113,7 @@ export type FormPage = {
   backgroundImageUrl?: string | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit;
+  pointIcon?: string | null;
 };
 
 export type FormSummary = {

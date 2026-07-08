@@ -20,6 +20,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
+      "@delpi/plugin-ui": ["../plugin-ui/src/index.ts"],
       "@delpi/tv-dashboard-presentation": ["../tv-dashboard-presentation/src/index.ts"]
     }
   },

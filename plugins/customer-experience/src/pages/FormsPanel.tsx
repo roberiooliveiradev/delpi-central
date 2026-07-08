@@ -40,6 +40,7 @@ import {
   uploadQuestionPointImage,
 } from "../api/formsApi";
 import { PhotoDropzone } from "../components/PhotoDropzone";
+import { PointIllustrationEditor } from "../components/PointIllustrationEditor";
 import { FormPreviewModal } from "../components/FormPreviewModal";
 import type {
   BackgroundFit,
@@ -59,7 +60,6 @@ import {
 import {
   BACKGROUND_FIT_LABELS,
   BACKGROUND_FITS,
-  POINT_IMAGE_FIT_LABELS,
   normalizeBackgroundFit,
 } from "../types";
 import { useCxPermissions } from "../context/CxPermissionsContext";
@@ -559,37 +559,17 @@ function PageVisualFields({
           placeholder="Ex.: Percepção"
         />
       </label>
-      <div className="cx-field">
-        <span>Imagem ilustrativa</span>
-        <PhotoDropzone
-          previewUrl={
-            pendingImages.pagePoint[pageIndex]
-              ? URL.createObjectURL(pendingImages.pagePoint[pageIndex])
-              : page.pointImageUrl ?? null
-          }
-          isExisting={Boolean(page.pointImageUrl && !pendingImages.pagePoint[pageIndex])}
-          onSelect={(file) => onPendingPoint(pageIndex, file)}
-          onClear={() => onClearPoint(pageIndex)}
-        />
-      </div>
-      {(pendingImages.pagePoint[pageIndex] || page.pointImageUrl) && (
-        <label className="cx-field">
-          <span>Exibição da ilustrativa</span>
-          <select
-            className="cx-select"
-            value={normalizeBackgroundFit(page.pointImageFit)}
-            onChange={(e) =>
-              onUpdatePage(pageIndex, { pointImageFit: normalizeBackgroundFit(e.target.value) })
-            }
-          >
-            {BACKGROUND_FITS.map((fit) => (
-              <option key={fit} value={fit}>
-                {POINT_IMAGE_FIT_LABELS[fit]}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+      <PointIllustrationEditor
+        label="Ilustrativa da etapa"
+        pointImageUrl={page.pointImageUrl}
+        pointImageFit={page.pointImageFit}
+        pointIcon={page.pointIcon}
+        pendingFile={pendingImages.pagePoint[pageIndex] ?? null}
+        onSelectImage={(file) => onPendingPoint(pageIndex, file)}
+        onClearImage={() => onClearPoint(pageIndex)}
+        onChangeFit={(fit) => onUpdatePage(pageIndex, { pointImageFit: fit })}
+        onChangeIcon={(icon) => onUpdatePage(pageIndex, { pointIcon: icon })}
+      />
     </>
   );
 }
@@ -1138,39 +1118,17 @@ function FormEditor({
             </label>
 
             {!oneQuestionPerPage && (
-              <>
-                <div className="cx-field">
-                  <span className="cx-field__label">Imagem ilustrativa da pergunta</span>
-                  <PhotoDropzone
-                    previewUrl={
-                      pendingImages.questionPoint[index]
-                        ? URL.createObjectURL(pendingImages.questionPoint[index])
-                        : q.pointImageUrl ?? null
-                    }
-                    isExisting={Boolean(q.pointImageUrl && !pendingImages.questionPoint[index])}
-                    onSelect={(file) => setPendingQuestionPoint(index, file)}
-                    onClear={() => clearPendingQuestionPoint(index)}
-                  />
-                </div>
-                {(pendingImages.questionPoint[index] || q.pointImageUrl) && (
-                  <label className="cx-field">
-                    <span>Exibição da ilustrativa</span>
-                    <select
-                      className="cx-select"
-                      value={normalizeBackgroundFit(q.pointImageFit)}
-                      onChange={(e) =>
-                        update(index, { pointImageFit: normalizeBackgroundFit(e.target.value) })
-                      }
-                    >
-                      {BACKGROUND_FITS.map((fit) => (
-                        <option key={fit} value={fit}>
-                          {POINT_IMAGE_FIT_LABELS[fit]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-              </>
+              <PointIllustrationEditor
+                label="Ilustrativa da pergunta"
+                pointImageUrl={q.pointImageUrl}
+                pointImageFit={q.pointImageFit}
+                pointIcon={q.pointIcon}
+                pendingFile={pendingImages.questionPoint[index] ?? null}
+                onSelectImage={(file) => setPendingQuestionPoint(index, file)}
+                onClearImage={() => clearPendingQuestionPoint(index)}
+                onChangeFit={(fit) => update(index, { pointImageFit: fit })}
+                onChangeIcon={(icon) => update(index, { pointIcon: icon })}
+              />
             )}
 
             {CHOICE_TYPES.includes(q.type) && (

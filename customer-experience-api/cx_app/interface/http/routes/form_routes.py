@@ -206,6 +206,7 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
                     background_image_filename=p.backgroundImageFilename,
                     point_image_filename=p.pointImageFilename,
                     point_image_fit=p.pointImageFit,
+                    point_icon=p.pointIcon,
                 )
                 for p in payload.pages
             ],
@@ -221,6 +222,7 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
                     page_index=q.pageIndex,
                     point_image_filename=q.pointImageFilename,
                     point_image_fit=q.pointImageFit,
+                    point_icon=q.pointIcon,
                 )
                 for q in payload.questions
             ],
