@@ -1,5 +1,6 @@
 import type { FilterFormState, DespesasFiltrosData } from "../types/despesasCentroCusto";
 import { formatCostCenterLabel, formatSupplierLabel } from "../utils/formatters";
+import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
 
 type DespesasFiltersProps = {
   filters: FilterFormState;
@@ -16,86 +17,73 @@ export function DespesasFilters({
   onChange,
   onClear,
 }: DespesasFiltersProps) {
-  const update = (patch: Partial<FilterFormState>) => {
-    onChange(patch);
-  };
+  const filialOptions = (options?.filiais ?? []).map((filial) => ({
+    value: filial.codigo,
+    label: `Filial ${filial.codigo}`,
+  }));
+
+  const centroOptions = (options?.centros_custo ?? []).map((centro) => ({
+    value: centro.codigo,
+    label: formatCostCenterLabel(centro.codigo, centro.descricao),
+  }));
+
+  const fornecedorOptions = (options?.fornecedores ?? []).map((fornecedor) => {
+    const key = `${fornecedor.codigo}|${fornecedor.loja}`;
+    return {
+      value: key,
+      label: formatSupplierLabel(
+        fornecedor.codigo,
+        fornecedor.loja,
+        fornecedor.razao_social,
+      ),
+    };
+  });
 
   return (
-    <section className="fcc-card fcc-filters" aria-label="Filtros">
-      <div className="fcc-filters__grid">
-        <label className="fcc-field">
-          <span>Período inicial</span>
-          <input
-            type="date"
-            value={filters.startDate}
-            onChange={(event) => update({ startDate: event.target.value })}
-          />
-        </label>
-
-        <label className="fcc-field">
-          <span>Período final</span>
-          <input
-            type="date"
-            value={filters.endDate}
-            onChange={(event) => update({ endDate: event.target.value })}
-          />
-        </label>
-
-        <label className="fcc-field">
-          <span>Filial</span>
-          <select
-            value={filters.branch}
-            onChange={(event) => update({ branch: event.target.value })}
-          >
-            <option value="">Todas</option>
-            {(options?.filiais ?? []).map((filial) => (
-              <option key={filial.codigo} value={filial.codigo}>
-                Filial {filial.codigo}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="fcc-field">
-          <span>Centro de custo</span>
-          <select
-            value={filters.costCenter}
-            onChange={(event) => update({ costCenter: event.target.value })}
-          >
-            <option value="">Todos</option>
-            {(options?.centros_custo ?? []).map((centro) => (
-              <option key={centro.codigo} value={centro.codigo}>
-                {formatCostCenterLabel(centro.codigo, centro.descricao)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="fcc-field">
-          <span>Fornecedor</span>
-          <select
-            value={filters.supplierKey}
-            onChange={(event) => update({ supplierKey: event.target.value })}
-            disabled={loading && !options?.fornecedores?.length}
-          >
-            <option value="">Todos</option>
-            {(options?.fornecedores ?? []).map((fornecedor) => {
-              const key = `${fornecedor.codigo}|${fornecedor.loja}`;
-              return (
-                <option key={key} value={key}>
-                  {formatSupplierLabel(
-                    fornecedor.codigo,
-                    fornecedor.loja,
-                    fornecedor.razao_social,
-                  )}
-                </option>
-              );
-            })}
-          </select>
-        </label>
+    <FilterBarShell>
+      <div className="fcc-filter-bar__grid fcc-filters__grid">
+        <FilterInputField
+          id="fcc-filter-start"
+          label="Período inicial"
+          type="date"
+          value={filters.startDate}
+          onChange={(value) => onChange({ startDate: value })}
+        />
+        <FilterInputField
+          id="fcc-filter-end"
+          label="Período final"
+          type="date"
+          value={filters.endDate}
+          onChange={(value) => onChange({ endDate: value })}
+        />
+        <FilterSelectField
+          id="fcc-filter-branch"
+          label="Filial"
+          value={filters.branch}
+          onChange={(value) => onChange({ branch: value })}
+          options={filialOptions}
+          placeholderOption="Todas"
+        />
+        <FilterSelectField
+          id="fcc-filter-cost-center"
+          label="Centro de custo"
+          value={filters.costCenter}
+          onChange={(value) => onChange({ costCenter: value })}
+          options={centroOptions}
+          placeholderOption="Todos"
+        />
+        <FilterSelectField
+          id="fcc-filter-supplier"
+          label="Fornecedor"
+          value={filters.supplierKey}
+          onChange={(value) => onChange({ supplierKey: value })}
+          options={fornecedorOptions}
+          placeholderOption="Todos"
+          disabled={loading && !options?.fornecedores?.length}
+        />
       </div>
 
-      <div className="fcc-filters__actions">
+      <div className="fcc-filter-bar__actions fcc-filters__actions">
         <button
           type="button"
           className="fcc-btn fcc-btn--secondary"
@@ -105,6 +93,6 @@ export function DespesasFilters({
           Limpar filtros
         </button>
       </div>
-    </section>
+    </FilterBarShell>
   );
 }

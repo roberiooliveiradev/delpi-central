@@ -9,6 +9,7 @@ import { DespesasFilters } from "../components/DespesasFilters";
 import { ErrorState } from "../components/ErrorState";
 import { LancamentosTable } from "../components/LancamentosTable";
 import { LoadingState } from "../components/LoadingState";
+import { PageHeader } from "../components/PageHeader";
 import { SummaryCards } from "../components/SummaryCards";
 import {
   defaultLancamentosTableState,
@@ -64,14 +65,10 @@ export function DespesasCentroCustoPage() {
 
   return (
     <div className="fcc-page">
-      <header className="fcc-page__header">
-        <div>
-          <h1 className="fcc-page__title">Despesas por Centro de Custo</h1>
-          <p className="fcc-page__subtitle">
-            Acompanhe gastos, evolução mensal, centros de custo e fornecedores com maior impacto.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Despesas por Centro de Custo"
+        subtitle="Acompanhe gastos, evolução mensal, centros de custo e fornecedores com maior impacto."
+      />
 
       <DespesasFilters
         filters={filters}

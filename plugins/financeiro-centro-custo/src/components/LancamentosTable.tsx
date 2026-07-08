@@ -15,6 +15,7 @@ import {
 import { EmptyState } from "./EmptyState";
 import { ErrorState } from "./ErrorState";
 import { LoadingState } from "./LoadingState";
+import { Pagination } from "./Pagination";
 
 type ColumnDef = {
   label: string;
@@ -172,28 +173,15 @@ export function LancamentosTable({
         </div>
       ) : null}
 
-      {pagination && totalPages > 1 ? (
-        <footer className="fcc-pagination">
-          <button
-            type="button"
-            className="fcc-btn fcc-btn--secondary"
-            disabled={currentPage <= 1 || loading}
-            onClick={() => onPageChange(currentPage - 1)}
-          >
-            Anterior
-          </button>
-          <span>
-            Página {currentPage} de {totalPages}
-          </span>
-          <button
-            type="button"
-            className="fcc-btn fcc-btn--secondary"
-            disabled={currentPage >= totalPages || loading}
-            onClick={() => onPageChange(currentPage + 1)}
-          >
-            Próxima
-          </button>
-        </footer>
+      {pagination ? (
+        <Pagination
+          page={currentPage}
+          pageSize={pagination.page_size}
+          total={pagination.total_items}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          hideWhenSinglePage
+        />
       ) : null}
     </section>
   );

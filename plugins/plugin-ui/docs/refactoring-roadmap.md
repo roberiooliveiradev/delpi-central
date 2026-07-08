@@ -278,7 +278,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ | Empty/Loading ✅ | sim |
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ FilterBarShell ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |
-| `financeiro-centro-custo` | — | Kpi/Chart/Empty | ChartCard ✅ Empty/Loading | sim |
+| `financeiro-centro-custo` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ CompactPagination ✅ | PageHeader ✅ Empty/Loading ✅ | sim |
 | `pedidos-venda-abertos` | — | Pagination ✅ KpiCard ✅ MultiSelect ✅ FilterBarShell ✅ | PageHeader | sim |
 | `auditoria-5s` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ | — | sim |
 | `tv-dashboard` | ✅ | — | — | sim |

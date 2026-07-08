@@ -133,7 +133,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `eficiencia-fabril` | — | ✅ | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard + FilterBarShell + MultiSelect F2 |
 | `maintenance` | ✅ | ✅ | — | — | — | — | TablePaginationNav + FilterBarShell + MultiSelect + DataTable F2 |
 | `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
-| `financeiro-centro-custo` | — | — | — | ✅ | ✅ | — | `@delpi/plugin-ui` + ChartCard/KpiCard F2 |
+| `financeiro-centro-custo` | ✅ | — | ✅ | ✅ | ✅ | — | ChartCard/KpiCard + FilterBarShell + CompactPagination + PageHeader F2/F3 |
 | `auditoria-5s` | — | — | ✅ | ✅ | ✅ | — | ChartCard + AnalyticsKpi + FilterBarShell F2 |
 | `pedidos-venda-abertos` | — | ✅ | ✅ | — | ✅ | — | PageHeader F3 + Pagination/KpiCard/MultiSelect/FilterBarShell F2 |
 | `inspecoes-entrada` | ✅ | — | ✅ | — | ✅ | — | PageHeader + Pagination + KpiCard + FilterBarShell F2/F3 |
@@ -175,7 +175,7 @@ Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGr
 | `propostas-comerciais` | — | ✅ | — |
 | `strategic-indicators` | — | ✅ | — |
 | `controle-retrabalhos` | — | — | ✅ |
-| `financeiro-centro-custo` | — | — | ✅ |
+| `financeiro-centro-custo` | — | ✅ | ✅ |
 
 ## Integração `@delpi/plugin-ui` (Vite + Docker)
 
@@ -188,7 +188,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
 | `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard | `operationalUnitLabels` |
 | `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity |
-| `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState |
+| `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState, FilterBarShell, PageHeader, CompactPagination |
 | `auditoria-5s` | — | ChartCard, createAnalyticsKpiCard, FilterBarShell |
 
 ## Referência — `cadastro-kaizen` (migração UI concluída)
