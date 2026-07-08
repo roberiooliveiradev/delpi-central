@@ -1,4 +1,5 @@
 import type { KaizenRevision, KaizenRevisionChangeType } from "../../types/kaizen";
+import { EmptyHint } from "../ui";
 import { statusLabel } from "../../utils/labels";
 
 const DIFF_FIELDS: Array<{ key: string; label: string; kind?: "status" }> = [
@@ -76,7 +77,7 @@ type KaizenRevisionTimelineProps = {
 
 export function KaizenRevisionTimeline({ revisions }: KaizenRevisionTimelineProps) {
   if (revisions.length === 0) {
-    return <p className="kz-empty-hint">Nenhuma revisão registrada.</p>;
+    return <EmptyHint>Nenhuma revisão registrada.</EmptyHint>;
   }
 
   const byNumber = new Map<number, KaizenRevision>();

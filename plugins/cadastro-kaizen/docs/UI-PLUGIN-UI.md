@@ -7,7 +7,7 @@ O plugin **cadastro-kaizen** concluiu a migração de primitivos duplicados para
 1. **Factory no pacote** — `createDashboard*` / `createKaizenKpiCard` com `classNames` BEM.
 2. **Wrapper fino local** — arquivo em `src/components/ui/` (~5–15 linhas).
 3. **CSS no plugin** — classes `kz-*` em `src/index.css`; tokens `--delpi-ui-*` no root `.dashboard-cadastro-kaizen`.
-4. **Import canônico** — páginas e formulários importam de `../components/ui` (barrel), não de `@delpi/plugin-ui` diretamente (exceto `HelpTooltip` pontual).
+4. **Import canônico** — consumir primitivos via `components/ui` (barrel), incluindo `HelpTooltip` e `HintAction`.
 
 Alias Vite (obrigatório):
 
@@ -40,6 +40,7 @@ import "./index.css";
 | `KpiCard.tsx` | `createKaizenKpiCard("kz")` | KPIs do painel dashboard |
 | `TitleWithHelp.tsx` | `createDashboardTitleWithHelp` | Títulos inline com ? (métricas, versões, upload) |
 | `ReadOnlyChipsField.tsx` | composição sobre `ReadOnlyField` | Categorias, participantes (chips) |
+| `EmptyHint.tsx` / `LoadingHint.tsx` | BEM `kz-empty-hint` | Mensagens vazias e carregamento inline |
 | `Modal.tsx` | `createModalShell` | Modais do plugin |
 | `StateAlert.tsx` | `createDashboardStateBanner` | Alertas de erro/sucesso |
 | `index.ts` | barrel | Import único para páginas |

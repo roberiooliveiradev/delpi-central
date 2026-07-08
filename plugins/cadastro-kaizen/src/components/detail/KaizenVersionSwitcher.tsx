@@ -1,8 +1,7 @@
 import { Check, History, PencilLine, Plus, Rocket, Trash2 } from "lucide-react";
 
 import type { KaizenRevision, KaizenVersionStatus } from "../../types/kaizen";
-import { TitleWithHelp } from "../ui";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip, TitleWithHelp } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 const STATUS_LABELS: Record<KaizenVersionStatus, string> = {

@@ -17,6 +17,7 @@ import { StateAlert } from "../components/StateAlert";
 import { KpiCard } from "../components/ui/KpiCard";
 import { FilterInputField, FiltersRow } from "../components/ui/FiltersKit";
 import { MultiSelectField } from "../components/ui/MultiSelectField";
+import { EmptyHint } from "../components/ui";
 import { BRANCHES, detailPath, newPath } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
@@ -75,7 +76,7 @@ function BarList({
 }) {
   const max = Math.max(1, ...buckets.map((b) => b.value));
   if (buckets.length === 0) {
-    return <p className="kz-empty-hint">Sem dados.</p>;
+    return <EmptyHint>Sem dados.</EmptyHint>;
   }
   return (
     <ul className="kz-barlist">
@@ -367,7 +368,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
                 </p>
               ) : null}
               {summary.expiring_soon.length === 0 ? (
-                <p className="kz-empty-hint">Nenhum ganho expira nos próximos 90 dias.</p>
+                <EmptyHint>Nenhum ganho expira nos próximos 90 dias.</EmptyHint>
               ) : (
                 <ul className="kz-validity-list">
                   {summary.expiring_soon.map((item) => (

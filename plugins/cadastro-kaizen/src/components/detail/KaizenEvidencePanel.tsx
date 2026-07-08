@@ -15,7 +15,7 @@ import type {
 } from "../../types/kaizen";
 import { StateAlert } from "../StateAlert";
 import { EVIDENCE_STAGE_GALLERY_LABELS, EVIDENCE_STAGE_OPTIONS } from "../../constants/evidenceStages";
-import { FormGrid, SelectField, TextField, TitleWithHelp } from "../ui";
+import { EmptyHint, FormGrid, LoadingHint, SelectField, TextField, TitleWithHelp } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
 import {
@@ -342,7 +342,7 @@ export function KaizenEvidencePanel({
             <h3 className="kz-evidence-column__title">{EVIDENCE_STAGE_GALLERY_LABELS[stageKey]}</h3>
             <div className="kz-evidence-column__items">
               {grouped[stageKey].length === 0 ? (
-                <p className="kz-empty-hint">Sem registros.</p>
+                <EmptyHint>Sem registros.</EmptyHint>
               ) : (
                 grouped[stageKey].map((evidence) => (
                   <EvidenceCard
@@ -378,7 +378,7 @@ export function KaizenEvidencePanel({
         </div>
       ) : null}
 
-      {loading ? <p className="kz-empty-hint">Carregando evidências…</p> : null}
+      {loading ? <LoadingHint>Carregando evidências…</LoadingHint> : null}
 
       {!readOnly ? (
         <div className="kz-evidence-upload">

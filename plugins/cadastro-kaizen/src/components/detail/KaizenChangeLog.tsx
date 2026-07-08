@@ -7,6 +7,7 @@ import type {
   KaizenRevision,
 } from "../../types/kaizen";
 import { statusLabel } from "../../utils/labels";
+import { EmptyHint } from "../ui";
 import { KaizenRevisionTimeline } from "./KaizenRevisionTimeline";
 
 const EVENT_LABELS: Record<string, string> = {
@@ -67,7 +68,7 @@ export function KaizenChangeLog({ kaizenId, revisions, reloadKey }: Props) {
       <div className="kz-changelog__block">
         <h3 className="kz-changelog__subtitle">Linha do tempo</h3>
         {history.length === 0 ? (
-          <p className="kz-empty-hint">Nenhum evento registrado.</p>
+          <EmptyHint>Nenhum evento registrado.</EmptyHint>
         ) : (
           <ol className="kz-history">
             {history.map((event) => {
@@ -100,7 +101,7 @@ export function KaizenChangeLog({ kaizenId, revisions, reloadKey }: Props) {
       <div className="kz-changelog__block">
         <h3 className="kz-changelog__subtitle">Auditoria (governança)</h3>
         {audit.length === 0 ? (
-          <p className="kz-empty-hint">Sem eventos de governança.</p>
+          <EmptyHint>Sem eventos de governança.</EmptyHint>
         ) : (
           <ul className="kz-audit">
             {audit.map((entry) => (

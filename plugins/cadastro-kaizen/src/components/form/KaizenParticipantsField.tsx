@@ -2,6 +2,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { PARTICIPANT_ROLES } from "../../constants/kaizen";
 import type { KaizenParticipant, ParticipantRole } from "../../types/kaizen";
+import { EmptyHint } from "../ui";
 
 type KaizenParticipantsFieldProps = {
   participants: KaizenParticipant[];
@@ -24,7 +25,9 @@ export function KaizenParticipantsField({ participants, onChange }: KaizenPartic
   return (
     <div className="kz-participants">
       {participants.length === 0 ? (
-        <p className="kz-participants__empty">Nenhum participante. Adicione o responsável e a equipe.</p>
+        <EmptyHint className="kz-participants__empty">
+          Nenhum participante. Adicione o responsável e a equipe.
+        </EmptyHint>
       ) : null}
 
       {participants.map((participant, index) => (
@@ -32,12 +35,14 @@ export function KaizenParticipantsField({ participants, onChange }: KaizenPartic
           <input
             className="kz-participant-row__name"
             placeholder="Nome"
+            aria-label={`Nome do participante ${index + 1}`}
             value={participant.name}
             maxLength={200}
             onChange={(event) => update(index, { name: event.target.value })}
           />
           <select
             className="kz-participant-row__role"
+            aria-label={`Papel do participante ${index + 1}`}
             value={participant.role}
             onChange={(event) => update(index, { role: event.target.value as ParticipantRole })}
           >

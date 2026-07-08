@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchKaizenEvidenceObjectUrl } from "../../api/kaizenApi";
 import type { KaizenEvidence } from "../../types/kaizen";
 import { Modal } from "../ui/Modal";
+import { EmptyHint, LoadingHint } from "../ui";
 import { formatEvidenceFileSize } from "./kaizenEvidenceUtils";
 import {
   evidencePreviewTitle,
@@ -105,17 +106,17 @@ export function KaizenEvidencePreviewModal({ source, onClose }: Props) {
     >
       <div className="kz-evidence-preview">
         {loading ? (
-          <p className="kz-empty-hint kz-evidence-preview__status">Carregando pré-visualização…</p>
+          <LoadingHint className="kz-evidence-preview__status">Carregando pré-visualização…</LoadingHint>
         ) : error ? (
-          <p className="kz-empty-hint kz-evidence-preview__status">{error}</p>
+          <EmptyHint className="kz-evidence-preview__status">{error}</EmptyHint>
         ) : mode === "image" && url ? (
           <img className="kz-evidence-preview__image" src={url} alt={title} />
         ) : mode === "pdf" && url ? (
           <iframe className="kz-evidence-preview__pdf" src={url} title={`Pré-visualização: ${title}`} />
         ) : (
-          <p className="kz-empty-hint kz-evidence-preview__status">
+          <EmptyHint className="kz-evidence-preview__status">
             Pré-visualização não disponível para este tipo de arquivo. Use o download.
-          </p>
+          </EmptyHint>
         )}
 
         {source ? (
