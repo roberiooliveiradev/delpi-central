@@ -1638,6 +1638,27 @@
   max-height: min(72vh, 38rem);
 }
 
+/* Isola a busca do picker: `.cx-field input` força borda/bloco e empilha a lupa. */
+.dashboard-customer-experience .cx-field .delpi-ui-lucide-icon-picker__search-wrap {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.dashboard-customer-experience .cx-field .delpi-ui-lucide-icon-picker input.delpi-ui-lucide-icon-picker__search {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.7rem 0;
+  box-shadow: none;
+}
+
+.dashboard-customer-experience .cx-field .delpi-ui-lucide-icon-picker input.delpi-ui-lucide-icon-picker__search:focus {
+  outline: none;
+  border-color: transparent;
+}
+
 .cx-muted {
   color: var(--cx-muted);
   font-size: 13px;

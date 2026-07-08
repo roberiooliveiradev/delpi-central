@@ -144,15 +144,21 @@ export function LucideIconPicker({
       </header>
 
       <div className="delpi-ui-lucide-icon-picker__body">
-        <label className="delpi-ui-lucide-icon-picker__search-wrap">
+        {/*
+          div (não label): hosts com `.cx-field { flex-direction: column }` /
+          estilo em inputs aninhados quebravam a barra em coluna (lupa acima do campo).
+        */}
+        <div className="delpi-ui-lucide-icon-picker__search-wrap" role="search">
           <Search size={18} className="delpi-ui-lucide-icon-picker__search-icon" aria-hidden="true" />
           <input
+            type="search"
             className="delpi-ui-lucide-icon-picker__search"
             placeholder={L.searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoComplete="off"
             spellCheck={false}
+            aria-label={L.searchPlaceholder}
           />
           {query ? (
             <button
@@ -164,7 +170,7 @@ export function LucideIconPicker({
               <X size={16} aria-hidden="true" />
             </button>
           ) : null}
-        </label>
+        </div>
 
         <div className="delpi-ui-lucide-icon-picker__meta">
           {value ? (
