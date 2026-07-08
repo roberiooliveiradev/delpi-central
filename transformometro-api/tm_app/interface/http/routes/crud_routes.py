@@ -67,6 +67,9 @@ from tm_app.application.services.instancia_duplicate_service import (
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
+from tm_app.application.services.revisao_impact_effort_matrix_service import (
+    RevisaoImpactEffortMatrixService,
+)
 from tm_app.domain.services.filial_catalog_service import assert_filial_ativa
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from tm_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
@@ -764,6 +767,53 @@ def revisao_diagnostico_rateio(revisao_id: str, competencia: str | None = None):
     if not data:
         return fail("Revisão não encontrada.", 404)
     return ok(data, "Diagnóstico de rateio.")
+
+
+@router.get("/instancias/{instancia_id}/matriz-impacto-esforco")
+def instancia_matriz_impacto_esforco(
+    instancia_id: str,
+    request: Request,
+    competencia: str | None = None,
+    horizonte_meses: int = Query(12, ge=1, le=36),
+    incluir_rejeitadas: bool = False,
+    incluir_baseline: bool = False,
+):
+    if err := check_instancia_view_access(request, instancia_id):
+        return err
+    data = RevisaoImpactEffortMatrixService().build_for_instancia(
+        instancia_id,
+        competencia=competencia,
+        horizonte_meses=horizonte_meses,
+        incluir_rejeitadas=incluir_rejeitadas,
+        incluir_baseline=incluir_baseline,
+    )
+    if not data:
+        return fail("Instância não encontrada.", 404)
+    return ok(data, "Matriz impacto × esforço da melhoria.")
+
+
+@router.get("/revisoes/{revisao_id}/matriz-impacto-esforco")
+def revisao_matriz_impacto_esforco(
+    revisao_id: str,
+    request: Request,
+    competencia: str | None = None,
+    horizonte_meses: int = Query(12, ge=1, le=36),
+):
+    revisao = RevisaoRepository().get(revisao_id)
+    if not revisao:
+        return fail("Revisão não encontrada.", 404)
+    instancia_id = str(revisao.get("instancia_id") or "")
+    if instancia_id:
+        if err := check_instancia_view_access(request, instancia_id):
+            return err
+    data = RevisaoImpactEffortMatrixService().build_for_revisao(
+        revisao_id,
+        competencia=competencia,
+        horizonte_meses=horizonte_meses,
+    )
+    if not data:
+        return fail("Revisão não encontrada.", 404)
+    return ok(data, "Matriz impacto × esforço da revisão.")
 
 
 # --- Medições ---
