@@ -10,7 +10,21 @@ import {
   updateKaizenVersion,
 } from "../api/kaizenApi";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
-import { CategoryMultiSelectField } from "../components/form/CategoryMultiSelectField";
+import {
+  CategoryMultiSelectField,
+  KaizenFormProgress,
+  KaizenParticipantsField,
+  SavingsParamFields,
+  SavingsParamReadFields,
+} from "../components/form";
+import {
+  KaizenChangeLog,
+  KaizenEvidencePanel,
+  KaizenImprovementsPanel,
+  KaizenVersionSwitcher,
+  StatusPipeline,
+  type SelectionMode,
+} from "../components/detail";
 import {
   DateField,
   EditableSectionCard,
@@ -26,17 +40,6 @@ import {
   TextField,
 } from "../components/ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { SavingsParamFields, SavingsParamReadFields } from "../components/form/SavingsParamFields";
-import { KaizenFormProgress } from "../components/form/KaizenFormProgress";
-import { StatusPipeline } from "../components/detail/StatusPipeline";
-import { KaizenEvidencePanel } from "../components/detail/KaizenEvidencePanel";
-import { KaizenImprovementsPanel } from "../components/detail/KaizenImprovementsPanel";
-import {
-  KaizenVersionSwitcher,
-  type SelectionMode,
-} from "../components/detail/KaizenVersionSwitcher";
-import { KaizenChangeLog } from "../components/detail/KaizenChangeLog";
-import { KaizenParticipantsField } from "../components/form/KaizenParticipantsField";
 import {
   BRANCHES,
   KAIZEN_STATUSES,

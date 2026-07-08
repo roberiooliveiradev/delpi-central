@@ -6,8 +6,7 @@ import {
   fetchKaizenRecord,
   updateKaizenRecord,
 } from "../api/kaizenApi";
-import { KaizenFormFields } from "../components/form/KaizenFormFields";
-import { KaizenFormProgress } from "../components/form/KaizenFormProgress";
+import { KaizenFormFields, KaizenFormProgress } from "../components/form";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { FormActions, StateAlert } from "../components/ui";
 import {
