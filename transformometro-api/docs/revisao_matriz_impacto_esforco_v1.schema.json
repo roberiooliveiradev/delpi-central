@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://delpi.local/schemas/transformometro/revisao_matriz_impacto_esforco_v1.json",
+  "title": "revisao_matriz_impacto_esforco_v1",
+  "description": "Overrides e inputs manuais da matriz impacto×esforço por revisão (Playbook 21). Scores calculados permanecem voláteis na API.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "revisao_matriz_impacto_esforco_v1"
+    },
+    "format_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "modo": {
+      "type": "string",
+      "enum": ["auto", "manual", "hibrido"],
+      "default": "auto"
+    },
+    "inputs_manuais": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "impacto_qualitativo": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Percepção de benefício quando economia ainda não existe"
+        },
+        "esforco_qualitativo": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Percepção de esforço de implantação"
+        },
+        "alinhamento_estrategico": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "dependencias_externas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "TI, fornecedor, regulatório"
+        },
+        "mudanca_comportamental": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "pessoas_afetadas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "esforco_implantacao_semanas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "esforco_horas_equipe": {
+          "type": "number",
+          "minimum": 0
+        },
+        "observacao": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "impacto": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "esforco": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "atualizado_em": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "atualizado_por": {
+      "type": "string",
+      "maxLength": 320
+    }
+  },
+  "required": ["format", "format_version", "modo"]
+}

@@ -387,6 +387,52 @@ import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 
 ---
 
+## Família `charts` — matriz impacto × esforço
+
+Scatter SVG headless para priorização de revisões (Playbook 21 Transformômetro). **Cálculo na API** — o MFE só passa pontos já normalizados.
+
+### `ImpactEffortMatrix`
+
+| Prop | Tipo | Default | Descrição |
+|------|------|---------|-----------|
+| `points` | `ImpactEffortPoint[]` | — | Coordenadas 0–100 + metadados |
+| `activePointId` | `string \| null` | — | Destaque + rótulo |
+| `threshold` | `number` | `50` | Divisor dos quadrantes |
+| `onPointSelect` | `(point) => void` | — | Clique/teclado em ponto interativo |
+| `quadrantLabels` | `ImpactEffortQuadrantLabels` | PT-BR default | Rótulos dos quadrantes |
+| `axisLabels` | `ImpactEffortAxisLabels` | Impacto / Esforço | Eixos |
+| `classNames` | `ImpactEffortMatrixClassNames` | `delpi-ui-impact-effort-matrix__*` | BEM override |
+| `emptyMessage` | `string` | — | Sem pontos visíveis |
+
+Tipos: `ImpactEffortPoint`, `ImpactEffortQuadrant`, `ImpactEffortConfidence`, `ImpactEffortMatrixMode`.
+
+Helpers: `resolveImpactEffortQuadrant`, `clampImpactEffortScore`, `impactEffortMatrixBemClasses`, `impactEffortMatrixTransformometroClasses`.
+
+### `ImpactEffortMatrixLegend`
+
+Lista horizontal dos quatro quadrantes (swatch + rótulo).
+
+```tsx
+import {
+  ImpactEffortMatrix,
+  ImpactEffortMatrixLegend,
+  impactEffortMatrixTransformometroClasses,
+} from "@delpi/plugin-ui";
+import "@delpi/plugin-ui/styles.css";
+
+<ImpactEffortMatrix
+  points={scatter}
+  activePointId={revisaoId}
+  classNames={impactEffortMatrixTransformometroClasses()}
+  onPointSelect={(p) => navigateToRevision(p.id)}
+/>
+<ImpactEffortMatrixLegend />
+```
+
+Classes BEM: `delpi-ui-impact-effort-matrix`, `__quadrant--quick-win`, `__point--active`, `__legend`, etc. Alias Transformômetro: prefixo `tm-impact-effort-matrix`.
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |
@@ -397,5 +443,6 @@ import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 | `dashboard-engineering` | `HelpTooltip`, `FieldLabel` |
 | `customer-experience` | `LucideIconPicker`, `LucideIconByName` |
 | `public-hub` | `LucideIconByName` |
+| `transformometro` (S3+) | `ImpactEffortMatrix`, `ImpactEffortMatrixLegend` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.

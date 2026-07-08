@@ -60,6 +60,7 @@ Atualizado: **jul/2026** (V035 referência de comparação entre revisões; edit
 | **Campos melhoria** (resumo, fase, prioridade, go-live) | ✅ V034 |
 | Documentação Playbook 19 | ✅ playbook, ADR, schemas, [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) |
 | Documentação Playbook 20 | ✅ [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) |
+| **Matriz impacto × esforço (Playbook 21)** | 🟡 S0 — playbook, contrato API, schema JSON, wireframe, `ImpactEffortMatrix` em `@delpi/plugin-ui`; S1+ pendente |
 | **MFE UX jul/2026** | ✅ SelectField (padrão PAC), modal de confirmação centralizado, transições suaves, linha do tempo |
 
 ## Migrations automáticas

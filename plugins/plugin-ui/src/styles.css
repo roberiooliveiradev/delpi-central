@@ -399,3 +399,148 @@
 .delpi-ui-lucide-icon-picker__btn--primary:hover {
   filter: brightness(1.05);
 }
+
+/* --- ImpactEffortMatrix (Playbook 21 Transformômetro) --- */
+.delpi-ui-impact-effort-matrix {
+  --impact-effort-surface: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --impact-effort-border: var(--delpi-ui-border, var(--border, #e5e7eb));
+  --impact-effort-text: var(--delpi-ui-text, var(--text, #0f172a));
+  --impact-effort-muted: var(--delpi-ui-muted, color-mix(in srgb, var(--impact-effort-text) 55%, transparent));
+  --impact-effort-quick-win: #16a34a;
+  --impact-effort-strategic: #2563eb;
+  --impact-effort-fill-in: #94a3b8;
+  --impact-effort-rethink: #dc2626;
+  --impact-effort-point: var(--delpi-ui-accent, var(--primary, #089bdb));
+  width: 100%;
+  color: var(--impact-effort-text);
+}
+
+.delpi-ui-impact-effort-matrix__plot {
+  display: block;
+  width: 100%;
+  max-width: 28rem;
+  height: auto;
+}
+
+.delpi-ui-impact-effort-matrix__quadrant {
+  fill-opacity: 0.12;
+  stroke: none;
+}
+
+.delpi-ui-impact-effort-matrix__quadrant--quick-win {
+  fill: var(--impact-effort-quick-win);
+}
+
+.delpi-ui-impact-effort-matrix__quadrant--strategic {
+  fill: var(--impact-effort-strategic);
+}
+
+.delpi-ui-impact-effort-matrix__quadrant--fill-in {
+  fill: var(--impact-effort-fill-in);
+}
+
+.delpi-ui-impact-effort-matrix__quadrant--rethink {
+  fill: var(--impact-effort-rethink);
+}
+
+.delpi-ui-impact-effort-matrix__quadrant-label {
+  fill: var(--impact-effort-muted);
+  font-size: 3.2px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.delpi-ui-impact-effort-matrix__axis-line {
+  stroke: var(--impact-effort-border);
+  stroke-width: 0.35;
+}
+
+.delpi-ui-impact-effort-matrix__threshold-line {
+  stroke: color-mix(in srgb, var(--impact-effort-text) 28%, transparent);
+  stroke-width: 0.25;
+  stroke-dasharray: 1.2 1.2;
+}
+
+.delpi-ui-impact-effort-matrix__axis-label {
+  fill: var(--impact-effort-muted);
+  font-size: 3.6px;
+  font-weight: 600;
+}
+
+.delpi-ui-impact-effort-matrix__point {
+  fill: var(--impact-effort-point);
+  stroke: var(--impact-effort-surface);
+  stroke-width: 0.35;
+  cursor: default;
+}
+
+.delpi-ui-impact-effort-matrix__point--active {
+  fill: var(--impact-effort-point);
+  stroke-width: 0.55;
+}
+
+.delpi-ui-impact-effort-matrix__point--muted {
+  fill: var(--impact-effort-muted);
+  opacity: 0.55;
+}
+
+.delpi-ui-impact-effort-matrix__point-label {
+  fill: var(--impact-effort-text);
+  font-size: 3.4px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.delpi-ui-impact-effort-matrix__empty {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--impact-effort-border);
+  border-radius: 10px;
+  color: var(--impact-effort-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.delpi-ui-impact-effort-matrix__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--impact-effort-muted);
+}
+
+.delpi-ui-impact-effort-matrix__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.delpi-ui-impact-effort-matrix__legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.delpi-ui-impact-effort-matrix__legend-swatch--quick-win {
+  background: var(--impact-effort-quick-win);
+}
+
+.delpi-ui-impact-effort-matrix__legend-swatch--strategic {
+  background: var(--impact-effort-strategic);
+}
+
+.delpi-ui-impact-effort-matrix__legend-swatch--fill-in {
+  background: var(--impact-effort-fill-in);
+}
+
+.delpi-ui-impact-effort-matrix__legend-swatch--rethink {
+  background: var(--impact-effort-rethink);
+}
+
+/* Alias Transformômetro — sobrescrever tokens no escopo do plugin */
+.tm-impact-effort-matrix {
+  --impact-effort-point: var(--tm-accent, var(--primary, #089bdb));
+}
