@@ -16,7 +16,7 @@ import {
 } from "../components/KaizenPageHeader";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenRecordFilters } from "../components/KaizenRecordFilters";
-import { StateAlert } from "../components/StateAlert";
+import { StateAlert } from "../components/ui";
 import { detailPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";

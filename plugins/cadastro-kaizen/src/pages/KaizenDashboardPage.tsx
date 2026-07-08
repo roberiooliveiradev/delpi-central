@@ -11,13 +11,17 @@ import {
 } from "lucide-react";
 
 import { fetchKaizenSummary } from "../api/kaizenApi";
+import { BarList, type BarListBucket, type BarListTone } from "../components/BarList";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
-import { StateAlert } from "../components/StateAlert";
-import { KpiCard } from "../components/ui/KpiCard";
-import { FilterInputField, FiltersRow } from "../components/ui/FiltersKit";
-import { MultiSelectField } from "../components/ui/MultiSelectField";
-import { EmptyHint } from "../components/ui";
+import {
+  EmptyHint,
+  FilterInputField,
+  FiltersRow,
+  KpiCard,
+  MultiSelectField,
+  StateAlert,
+} from "../components/ui";
 import { BRANCHES, detailPath, newPath } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
@@ -34,9 +38,9 @@ type Props = {
   onNavigate: (path: string) => void;
 };
 
-type Tone = "accent" | "success" | "warning" | "danger" | "muted";
+type Tone = BarListTone;
 
-type Bucket = { key: string; label: string; value: number };
+type Bucket = BarListBucket;
 
 const STATUS_TONE: Record<string, Tone> = {
   implantado: "success",
@@ -65,37 +69,6 @@ function categoryLabel(key: string): string {
 
 function withLabels(buckets: KaizenSummaryBucket[], labelOf: (key: string) => string): Bucket[] {
   return buckets.map((bucket) => ({ key: bucket.key, label: labelOf(bucket.key), value: bucket.value }));
-}
-
-function BarList({
-  buckets,
-  toneOf,
-}: {
-  buckets: Bucket[];
-  toneOf?: (bucket: Bucket) => Tone;
-}) {
-  const max = Math.max(1, ...buckets.map((b) => b.value));
-  if (buckets.length === 0) {
-    return <EmptyHint>Sem dados.</EmptyHint>;
-  }
-  return (
-    <ul className="kz-barlist">
-      {buckets.map((bucket) => (
-        <li className="kz-barlist__row" key={bucket.key}>
-          <span className="kz-barlist__label" title={bucket.label}>
-            {bucket.label}
-          </span>
-          <span className="kz-barlist__track">
-            <span
-              className={`kz-barlist__fill kz-barlist__fill--${toneOf?.(bucket) ?? "accent"}`}
-              style={{ width: `${Math.round((bucket.value / max) * 100)}%` }}
-            />
-          </span>
-          <span className="kz-barlist__value">{formatInteger(bucket.value)}</span>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 export function KaizenDashboardPage({ onNavigate }: Props) {

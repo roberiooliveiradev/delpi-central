@@ -1,7 +1,7 @@
 import { Check, History, PencilLine, Plus, Rocket, Trash2 } from "lucide-react";
 
 import type { KaizenRevision, KaizenVersionStatus } from "../../types/kaizen";
-import { HelpTooltip, TitleWithHelp } from "../ui";
+import { HintAction, TitleWithHelp } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 const STATUS_LABELS: Record<KaizenVersionStatus, string> = {
@@ -126,15 +126,20 @@ export function KaizenVersionSwitcher({
             <strong>salve e torne esta versão ativa</strong>.
           </div>
           <div className="kz-versions__implement">
-            <button
-              type="button"
-              className="kz-primary-btn"
-              onClick={onImplement}
-              disabled={implementing || deleting}
+            <HintAction
+              hint={KAIZEN_HELP_TOOLTIPS.improvements.implement}
+              ariaLabel="Ajuda: tornar versão ativa"
             >
-              <Rocket size={14} aria-hidden="true" />
-              {implementing ? "Ativando…" : "Salvar e tornar ativa"}
-            </button>
+              <button
+                type="button"
+                className="kz-primary-btn"
+                onClick={onImplement}
+                disabled={implementing || deleting}
+              >
+                <Rocket size={14} aria-hidden="true" />
+                {implementing ? "Ativando…" : "Salvar e tornar ativa"}
+              </button>
+            </HintAction>
             <button
               type="button"
               className="kz-danger-btn"
@@ -144,10 +149,6 @@ export function KaizenVersionSwitcher({
               <Trash2 size={14} aria-hidden="true" />
               {deleting ? "Excluindo…" : "Excluir rascunho"}
             </button>
-            <HelpTooltip
-              content={KAIZEN_HELP_TOOLTIPS.improvements.implement}
-              ariaLabel="Ajuda: tornar versão ativa"
-            />
           </div>
         </div>
       ) : null}

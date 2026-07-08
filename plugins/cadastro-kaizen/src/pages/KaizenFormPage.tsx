@@ -8,9 +8,8 @@ import {
 } from "../api/kaizenApi";
 import { KaizenFormFields } from "../components/form/KaizenFormFields";
 import { KaizenFormProgress } from "../components/form/KaizenFormProgress";
-import { FormActions } from "../components/ui/FormActions";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
-import { StateAlert } from "../components/StateAlert";
+import { FormActions, StateAlert } from "../components/ui";
 import {
   emptyFormValues,
   formValuesToPayload,

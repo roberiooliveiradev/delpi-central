@@ -41,9 +41,10 @@ import "./index.css";
 | `TitleWithHelp.tsx` | `createDashboardTitleWithHelp` | Títulos inline com ? (métricas, versões, upload) |
 | `ReadOnlyChipsField.tsx` | composição sobre `ReadOnlyField` | Categorias, participantes (chips) |
 | `EmptyHint.tsx` / `LoadingHint.tsx` | BEM `kz-empty-hint` | Mensagens vazias e carregamento inline |
+| `PageHeader.tsx` | re-export brand | Usado por `KaizenPageHeader` |
 | `Modal.tsx` | `createModalShell` | Modais do plugin |
 | `StateAlert.tsx` | `createDashboardStateBanner` | Alertas de erro/sucesso |
-| `index.ts` | barrel | Import único para páginas |
+| `index.ts` | barrel | Import único para páginas e painéis |
 
 `KaizenPageHeader` (`src/components/KaizenPageHeader.tsx`) usa `PageHeader` brand via `ui/PageHeader.tsx`.
 
@@ -65,14 +66,15 @@ Barrel `components/data/index.ts` — DataTable, DataTableSection, Pagination, L
 | `KaizenEvidencePanel` | `FormGrid`, campos nativos, `TitleWithHelp`, etapa padrão `SelectField` |
 | `KaizenEvidencePendingList` | `SelectField` + `TextAreaField` na fila de upload |
 | `KaizenImprovementsPanel` | `TitleWithHelp` + `DateField` (período) |
-| `KaizenVersionSwitcher` | `TitleWithHelp` no cabeçalho |
+| `KaizenVersionSwitcher` | `TitleWithHelp` + `HintAction` no botão «tornar ativa» |
 
 ## Permanece local (domínio kaizen)
 
 Não duplicam primitivos do pacote — são regras de negócio ou layout específico:
 
-- `KaizenParticipantsField` (layout de linha nome+papel — domínio)
-- `KaizenEvidencePanel` (galeria, preview), `KaizenChangeLog`
+- `KaizenParticipantsField` (layout de linha nome+papel)
+- `KaizenEvidencePanel` (galeria/preview), `KaizenChangeLog`, `StatusPipeline`
+- `KaizenFormProgress`, `KaizenNavTabs`, `BarList` (dashboard)
 
 ## Adicionar um campo novo
 

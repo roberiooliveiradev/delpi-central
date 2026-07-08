@@ -10,11 +10,10 @@ import {
   updateKaizenVersion,
 } from "../api/kaizenApi";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
-import { StateAlert } from "../components/StateAlert";
-import { EditableSectionCard } from "../components/ui/EditableSectionCard";
 import { CategoryMultiSelectField } from "../components/form/CategoryMultiSelectField";
 import {
   DateField,
+  EditableSectionCard,
   FormFieldShell,
   FormGrid,
   ReadOnlyChipsField,
@@ -22,6 +21,7 @@ import {
   ReadOnlyGrid,
   SectionCard,
   SelectField,
+  StateAlert,
   TextAreaField,
   TextField,
 } from "../components/ui";

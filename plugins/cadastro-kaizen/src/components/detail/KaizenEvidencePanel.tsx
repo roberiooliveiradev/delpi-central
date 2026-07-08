@@ -13,9 +13,16 @@ import type {
   KaizenEvidenceStage,
   KaizenEvidenceType,
 } from "../../types/kaizen";
-import { StateAlert } from "../StateAlert";
 import { EVIDENCE_STAGE_GALLERY_LABELS, EVIDENCE_STAGE_OPTIONS } from "../../constants/evidenceStages";
-import { EmptyHint, FormGrid, LoadingHint, SelectField, TextField, TitleWithHelp } from "../ui";
+import {
+  EmptyHint,
+  FormGrid,
+  LoadingHint,
+  SelectField,
+  StateAlert,
+  TextField,
+  TitleWithHelp,
+} from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
 import {
