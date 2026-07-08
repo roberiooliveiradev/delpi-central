@@ -27,6 +27,7 @@ class FakeFormRepository:
             "response_count": 0,
             "one_question_per_page": False,
             "background_image_filename": None,
+            "background_fit": "scale",
             "created_at": "2026-07-01T12:00:00Z",
             "updated_at": "2026-07-01T12:00:00Z",
             **data,
@@ -214,7 +215,17 @@ def test_get_public_active_returns_questions():
     assert public["title"] == "Pesquisa de visita"
     assert len(public["questions"]) == 1
     assert public["oneQuestionPerPage"] is False
+    assert public["backgroundFit"] == "scale"
     assert public["pages"] == []
+
+
+def test_update_background_fit():
+    service, _, _ = _service()
+    view = _create(service)
+    updated = service.update(view["id"], FormUpdate(background_fit="tile"))
+    assert updated["backgroundFit"] == "tile"
+    with pytest.raises(FormValidationError):
+        service.update(view["id"], FormUpdate(background_fit="stretch"))
 
 
 def test_wizard_mode_creates_one_page_per_question():

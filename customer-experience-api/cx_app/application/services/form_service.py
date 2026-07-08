@@ -7,8 +7,10 @@ from cx_app.application.services.qr_service import QrService, build_form_url
 from cx_app.application.services.token_service import generate_public_token
 from cx_app.config import settings
 from cx_app.domain.form import (
+    ALL_BACKGROUND_FITS,
     ALL_QUESTION_TYPES,
     CHOICE_QUESTION_TYPES,
+    DEFAULT_BACKGROUND_FIT,
     FormInput,
     FormUpdate,
     PageInput,
@@ -63,6 +65,7 @@ class FormService:
                 "description": _clean(data.description),
                 "qr_filename": qr_filename,
                 "one_question_per_page": bool(data.one_question_per_page),
+                "background_fit": _normalize_background_fit(data.background_fit),
                 "created_by": created_by,
                 "created_by_name": created_by_name,
             }
@@ -81,6 +84,8 @@ class FormService:
             fields["description"] = _clean(data.description)
         if data.one_question_per_page is not None:
             fields["one_question_per_page"] = bool(data.one_question_per_page)
+        if data.background_fit is not None:
+            fields["background_fit"] = _normalize_background_fit(data.background_fit)
         updated = self.repository.update(form_id, fields)
         return self._admin_full(updated or {})
 
@@ -513,6 +518,7 @@ class FormService:
             "isActive": row.get("is_active"),
             "responseCount": row.get("response_count"),
             "oneQuestionPerPage": bool(row.get("one_question_per_page")),
+            "backgroundFit": _normalize_background_fit(row.get("background_fit")),
             "backgroundImageUrl": self._form_background_url(token)
             if row.get("background_image_filename")
             else None,
@@ -540,6 +546,7 @@ class FormService:
             "title": row.get("title"),
             "description": row.get("description"),
             "oneQuestionPerPage": bool(row.get("one_question_per_page")),
+            "backgroundFit": _normalize_background_fit(row.get("background_fit")),
             "backgroundImageUrl": self._form_background_url(token)
             if row.get("background_image_filename")
             else None,
@@ -600,6 +607,17 @@ def _clean(value: str | None) -> str | None:
         return None
     stripped = value.strip()
     return stripped[:MAX_TEXT_LEN] if stripped else None
+
+
+def _normalize_background_fit(value: str | None) -> str:
+    raw = (value or "").strip().lower()
+    if not raw:
+        return DEFAULT_BACKGROUND_FIT
+    if raw not in ALL_BACKGROUND_FITS:
+        raise FormValidationError(
+            "Modo de fundo inválido. Use fixed, scale ou tile."
+        )
+    return raw
 
 
 def _mime_from_filename(filename: str) -> str:

@@ -36,6 +36,27 @@
   background-repeat: no-repeat;
 }
 
+/* Escalável (padrão): cobre a tela proporcionalmente. */
+.cxform-viewport-bg__photo--scale {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Tamanho fixo: pixel-perfect, centrado; não estica. */
+.cxform-viewport-bg__photo--fixed {
+  background-size: auto;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Mosaico: várias cópias da imagem. */
+.cxform-viewport-bg__photo--tile {
+  background-size: auto;
+  background-repeat: repeat;
+  background-position: top left;
+}
+
 .cxform-viewport-bg__scrim {
   position: absolute;
   inset: 0;

@@ -22,6 +22,7 @@ Este documento registra a evolução do módulo de **formulários personalizáve
 | 8 | Rotas na URL do admin (`/formularios`, `/formularios/{id}`, `/respostas`) | `routes.ts`, `useCxRouterPath` |
 | 9 | **Prévia** no admin (lista + editor), sem gravar respostas | `FormPreviewView`, `FormPreviewModal` |
 | 10 | Assets de imagem para rascunho (token válido, sem `is_active`) | `FormService._require_public_row` |
+| 11 | Modo de fundo: fixo / escalável / repetir (`backgroundFit`) | migration `V007` + editor + CSS público |
 
 ---
 

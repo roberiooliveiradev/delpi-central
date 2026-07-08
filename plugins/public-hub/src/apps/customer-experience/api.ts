@@ -66,11 +66,14 @@ export type PublicFormPage = {
   pointImageUrl?: string | null;
 };
 
+export type BackgroundFit = "fixed" | "scale" | "tile";
+
 export type PublicForm = {
   token: string;
   title: string;
   description: string | null;
   oneQuestionPerPage: boolean;
+  backgroundFit?: BackgroundFit | null;
   backgroundImageUrl?: string | null;
   pages: PublicFormPage[];
   questions: PublicQuestion[];

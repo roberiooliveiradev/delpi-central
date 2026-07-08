@@ -1,10 +1,12 @@
-import type { FormDetail, FormPage, FormQuestion } from "../types";
+import type { BackgroundFit, FormDetail, FormPage, FormQuestion } from "../types";
+import { normalizeBackgroundFit } from "../types";
 
 export type PreviewForm = {
   token: string;
   title: string;
   description: string | null;
   oneQuestionPerPage: boolean;
+  backgroundFit: BackgroundFit;
   backgroundImageUrl?: string | null;
   pages: PreviewFormPage[];
   questions: PreviewFormQuestion[];
@@ -41,6 +43,7 @@ type BuildPreviewInput = {
   title: string;
   description: string | null;
   oneQuestionPerPage: boolean;
+  backgroundFit?: BackgroundFit | null;
   backgroundImageUrl: string | null;
   pages: FormPage[];
   questions: FormQuestion[];
@@ -57,6 +60,7 @@ export function buildPreviewForm(input: BuildPreviewInput): PreviewForm {
     title,
     description,
     oneQuestionPerPage,
+    backgroundFit,
     backgroundImageUrl,
     pages,
     questions,
@@ -104,6 +108,7 @@ export function buildPreviewForm(input: BuildPreviewInput): PreviewForm {
     title: title.trim() || "Formulário sem título",
     description: description?.trim() || null,
     oneQuestionPerPage,
+    backgroundFit: normalizeBackgroundFit(backgroundFit),
     backgroundImageUrl: resolvedBackground,
     pages: previewPages,
     questions: previewQuestions,
@@ -116,6 +121,7 @@ export function buildPreviewFormFromDetail(form: FormDetail): PreviewForm {
     title: form.title,
     description: form.description,
     oneQuestionPerPage: form.oneQuestionPerPage,
+    backgroundFit: form.backgroundFit,
     backgroundImageUrl: form.backgroundImageUrl ?? null,
     pages: form.pages ?? [],
     questions: form.questions,
@@ -140,6 +146,7 @@ export function buildEditorPreview(input: {
   title: string;
   description: string;
   oneQuestionPerPage: boolean;
+  backgroundFit: BackgroundFit;
   backgroundPreview: string | null;
   pages: FormPage[];
   questions: FormQuestion[];
@@ -159,6 +166,7 @@ export function buildEditorPreview(input: {
     title: input.title,
     description: input.description || null,
     oneQuestionPerPage: input.oneQuestionPerPage,
+    backgroundFit: input.backgroundFit,
     backgroundImageUrl: input.backgroundPreview,
     pages,
     questions,

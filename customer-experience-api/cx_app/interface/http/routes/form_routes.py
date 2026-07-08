@@ -45,12 +45,14 @@ class FormPayload(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
     oneQuestionPerPage: bool = False
+    backgroundFit: str | None = None
 
 
 class FormUpdatePayload(BaseModel):
     title: str | None = Field(default=None, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
     oneQuestionPerPage: bool | None = None
+    backgroundFit: str | None = None
 
 
 class PagePayload(BaseModel):
@@ -114,6 +116,7 @@ def create_form(request: Request, payload: FormPayload):
                 title=payload.title,
                 description=payload.description,
                 one_question_per_page=payload.oneQuestionPerPage,
+                background_fit=payload.backgroundFit or "scale",
             ),
             created_by=actor_sub_from_request(request),
             created_by_name=actor_name_from_request(request),
@@ -155,6 +158,7 @@ def update_form(request: Request, form_id: str, payload: FormUpdatePayload):
                 title=payload.title,
                 description=payload.description,
                 one_question_per_page=payload.oneQuestionPerPage,
+                background_fit=payload.backgroundFit,
             ),
         )
     except FormNotFoundError:

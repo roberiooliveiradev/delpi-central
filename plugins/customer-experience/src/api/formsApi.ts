@@ -11,6 +11,7 @@ import {
   type ApiEnvelope,
 } from "./httpClient";
 import type {
+  BackgroundFit,
   CreateFormInput,
   FormDashboard,
   FormDetail,
@@ -48,6 +49,7 @@ export async function updateForm(
     title?: string;
     description?: string | null;
     oneQuestionPerPage?: boolean;
+    backgroundFit?: BackgroundFit;
   },
 ): Promise<FormDetail> {
   const response = await httpPatchJson<ApiEnvelope<FormDetail>>(`${FORMS}/${id}`, input);

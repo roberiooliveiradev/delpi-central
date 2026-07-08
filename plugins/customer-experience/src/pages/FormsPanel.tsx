@@ -40,6 +40,7 @@ import {
 import { PhotoDropzone } from "../components/PhotoDropzone";
 import { FormPreviewModal } from "../components/FormPreviewModal";
 import type {
+  BackgroundFit,
   FormDashboard,
   FormDetail,
   FormPage,
@@ -47,6 +48,11 @@ import type {
   FormResponseList,
   FormSummary,
   QuestionType,
+} from "../types";
+import {
+  BACKGROUND_FIT_LABELS,
+  BACKGROUND_FITS,
+  normalizeBackgroundFit,
 } from "../types";
 import { useCxPermissions } from "../context/CxPermissionsContext";
 import {
@@ -567,6 +573,9 @@ function FormEditor({
   const [title, setTitle] = useState(form.title);
   const [description, setDescription] = useState(form.description ?? "");
   const [oneQuestionPerPage, setOneQuestionPerPage] = useState(form.oneQuestionPerPage ?? false);
+  const [backgroundFit, setBackgroundFit] = useState<BackgroundFit>(
+    normalizeBackgroundFit(form.backgroundFit),
+  );
   const [backgroundPreview, setBackgroundPreview] = useState<string | null>(
     form.backgroundImageUrl ?? null,
   );
@@ -784,6 +793,7 @@ function FormEditor({
         title: title.trim(),
         description: description.trim() || null,
         oneQuestionPerPage,
+        backgroundFit,
       });
 
       const pagesPayload = oneQuestionPerPage ? ensurePageCount(pages, questions.length) : pages;
@@ -863,6 +873,7 @@ function FormEditor({
                   title,
                   description,
                   oneQuestionPerPage,
+                  backgroundFit,
                   backgroundPreview,
                   pages,
                   questions,
@@ -917,6 +928,25 @@ function FormEditor({
             onClear={clearFormBackground}
           />
         </div>
+        {(backgroundPreview || form.backgroundImageUrl) && (
+          <label className="cx-field">
+            <span>Exibição do fundo</span>
+            <select
+              className="cx-select"
+              value={backgroundFit}
+              onChange={(e) => setBackgroundFit(normalizeBackgroundFit(e.target.value))}
+            >
+              {BACKGROUND_FITS.map((fit) => (
+                <option key={fit} value={fit}>
+                  {BACKGROUND_FIT_LABELS[fit]}
+                </option>
+              ))}
+            </select>
+            <span className="cx-field-hint">
+              Fixo mantém o tamanho original; escalável preenche a tela; repetir monta um mosaico.
+            </span>
+          </label>
+        )}
       </section>
 
       {!oneQuestionPerPage && (

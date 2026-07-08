@@ -29,11 +29,27 @@ CHOICE_QUESTION_TYPES: frozenset[str] = frozenset(
 )
 
 
+class BackgroundFit:
+    """Como a imagem de fundo do formulário preenche a viewport."""
+
+    FIXED = "fixed"  # tamanho natural (px)
+    SCALE = "scale"  # escalável — preenche a tela (cover)
+    TILE = "tile"  # várias imagens repetidas
+
+
+ALL_BACKGROUND_FITS: frozenset[str] = frozenset(
+    {BackgroundFit.FIXED, BackgroundFit.SCALE, BackgroundFit.TILE}
+)
+
+DEFAULT_BACKGROUND_FIT = BackgroundFit.SCALE
+
+
 @dataclass(frozen=True)
 class FormInput:
     title: str
     description: str | None = None
     one_question_per_page: bool = False
+    background_fit: str = DEFAULT_BACKGROUND_FIT
 
 
 @dataclass(frozen=True)
@@ -41,6 +57,7 @@ class FormUpdate:
     title: str | None = None
     description: str | None = None
     one_question_per_page: bool | None = None
+    background_fit: str | None = None
 
 
 @dataclass(frozen=True)

@@ -15,7 +15,7 @@ _PAGES = f'"{CX_SCHEMA_NAME}".form_pages'
 
 _FORM_COLUMNS = (
     "id, public_token, title, description, qr_filename, is_active, response_count, "
-    "one_question_per_page, background_image_filename, "
+    "one_question_per_page, background_image_filename, background_fit, "
     "created_by, created_by_name, created_at, updated_at"
 )
 _QUESTION_COLUMNS = (
@@ -38,13 +38,24 @@ class FormRepository:
                     f"""
                     INSERT INTO {_FORMS}
                         (public_token, title, description, qr_filename,
+                         one_question_per_page, background_fit,
                          created_by, created_by_name)
                     VALUES
                         (%(public_token)s, %(title)s, %(description)s, %(qr_filename)s,
+                         %(one_question_per_page)s, %(background_fit)s,
                          %(created_by)s, %(created_by_name)s)
                     RETURNING {_FORM_COLUMNS}
                     """,
-                    data,
+                    {
+                        "public_token": data["public_token"],
+                        "title": data["title"],
+                        "description": data.get("description"),
+                        "qr_filename": data.get("qr_filename"),
+                        "one_question_per_page": bool(data.get("one_question_per_page", False)),
+                        "background_fit": data.get("background_fit") or "scale",
+                        "created_by": data.get("created_by"),
+                        "created_by_name": data.get("created_by_name"),
+                    },
                 )
                 row = cur.fetchone()
             conn.commit()

@@ -17,10 +17,10 @@ Permissões: `customer-experience.forms.read` | `.write` | `.manage`.
 
 | Método | Rota | Permissão | Descrição |
 |--------|------|-----------|-----------|
-| `POST` | `/forms` | write | Cria formulário (título, descrição, `oneQuestionPerPage`) |
-| `GET` | `/forms` | read | Lista resumos (`publicUrl`, `isActive`, `responseCount`, …) |
-| `GET` | `/forms/{id}` | read | Detalhe com `questions[]` e `pages[]` |
-| `PATCH` | `/forms/{id}` | write | Atualiza metadados |
+| `POST` | `/forms` | write | Cria formulário (título, descrição, `oneQuestionPerPage`, `backgroundFit`) |
+| `GET` | `/forms` | read | Lista resumos (`publicUrl`, `isActive`, `responseCount`, `backgroundFit`, …) |
+| `GET` | `/forms/{id}` | read | Detalhe com `questions[]`, `pages[]` e `backgroundFit` |
+| `PATCH` | `/forms/{id}` | write | Atualiza metadados (incl. `backgroundFit`: `fixed` \| `scale` \| `tile`) |
 | `PUT` | `/forms/{id}/questions` | write | Substitui perguntas e páginas (ordem, tipos, opções) |
 | `POST` | `/forms/{id}/activate` | manage | Publica (`is_active=true`) |
 | `POST` | `/forms/{id}/deactivate` | manage | Despublica |
@@ -88,7 +88,7 @@ Validação por tipo: obrigatoriedade, opções válidas, rating 1–5.
 
 | Tabela | Campos relevantes (jul/2026) |
 |--------|------------------------------|
-| `forms` | `public_token`, `is_active`, `one_question_per_page`, `background_image_filename` |
+| `forms` | `public_token`, `is_active`, `one_question_per_page`, `background_image_filename`, `background_fit` (`fixed` \| `scale` \| `tile`) |
 | `form_pages` | `position`, `title`, `background_image_filename`, `point_image_filename` |
 | `form_questions` | `type`, `label`, `page_id`, `point_image_filename`, `is_active` (soft-delete) |
 | `form_responses` / `form_answers` | Respostas do visitante |

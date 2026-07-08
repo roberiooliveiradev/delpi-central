@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import type { PreviewForm, PreviewFormPage, PreviewFormQuestion } from "./utils/formPreviewModel";
+import type { BackgroundFit } from "./types";
 import "./form-preview.css";
+
+function resolveBackgroundFit(value: string | null | undefined): BackgroundFit {
+  if (value === "fixed" || value === "tile" || value === "scale") return value;
+  return "scale";
+}
 
 type Phase = "form" | "submitting" | "done";
 
@@ -96,6 +102,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
   const currentStep = wizard ? steps[stepIndex] : null;
   const progress = computeProgress(form, stepIndex, answers, name);
   const backgroundUrl = resolveBackground(form, currentStep);
+  const backgroundFit = resolveBackgroundFit(form.backgroundFit);
 
   const pageById = useMemo(
     () => new Map(pages.map((p) => [p.id, p])),
@@ -128,6 +135,16 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
     return null;
   }
 
+  function finalizePreview() {
+    const problem = validateAll();
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError(null);
+    setPhase("done");
+  }
+
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     // Enter em campos de texto dispara submit nativo do <form>; no wizard isso
@@ -136,13 +153,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
       goNext();
       return;
     }
-    const problem = validateAll();
-    if (problem) {
-      setError(problem);
-      return;
-    }
-    setError(null);
-    setPhase("done");
+    finalizePreview();
   }
 
   function goNext() {
@@ -286,7 +297,10 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
     <>
       {backgroundUrl && (
         <div className="cxform-viewport-bg" aria-hidden="true">
-          <div className="cxform-viewport-bg__photo" style={viewportPhotoStyle} />
+          <div
+            className={`cxform-viewport-bg__photo cxform-viewport-bg__photo--${backgroundFit}`}
+            style={viewportPhotoStyle}
+          />
           <div className="cxform-viewport-bg__scrim" />
         </div>
       )}
@@ -327,7 +341,13 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
                 Próxima
               </button>
             ) : (
-              <button type="submit" className="cxform-nav__btn cxform-nav__btn--primary">
+              // type="button" evita o clique de "Próxima" reativar submit quando o
+              // botão é trocado no mesmo lugar ao chegar na última etapa.
+              <button
+                type="button"
+                className="cxform-nav__btn cxform-nav__btn--primary"
+                onClick={finalizePreview}
+              >
                 Concluir prévia
               </button>
             )}

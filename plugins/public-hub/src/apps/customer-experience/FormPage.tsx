@@ -1,12 +1,18 @@
 import { useMemo, useState } from "react";
 import {
   submitFormResponse,
+  type BackgroundFit,
   type FormAnswerPayload,
   type PublicForm,
   type PublicFormPage,
   type PublicQuestion,
 } from "./api";
 import "./form.css";
+
+function resolveBackgroundFit(value: string | null | undefined): BackgroundFit {
+  if (value === "fixed" || value === "tile" || value === "scale") return value;
+  return "scale";
+}
 
 type Phase = "form" | "submitting" | "done";
 
@@ -98,6 +104,7 @@ export function FormView({ form }: { form: PublicForm }) {
   const currentStep = wizard ? steps[stepIndex] : null;
   const progress = computeProgress(form, stepIndex, answers, name);
   const backgroundUrl = resolveBackground(form, currentStep);
+  const backgroundFit = resolveBackgroundFit(form.backgroundFit);
 
   const pageById = useMemo(
     () => new Map(pages.map((p) => [p.id, p])),
@@ -130,14 +137,7 @@ export function FormView({ form }: { form: PublicForm }) {
     return null;
   }
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    // Enter em campos de texto dispara submit nativo do <form>; no wizard isso
-    // não pode enviar antes da última etapa (perguntas opcionais seriam puladas).
-    if (wizard && stepIndex < steps.length - 1) {
-      goNext();
-      return;
-    }
+  async function finalizeSubmit() {
     const problem = validateAll();
     if (problem) {
       setError(problem);
@@ -169,6 +169,17 @@ export function FormView({ form }: { form: PublicForm }) {
     }
     setError(result.message);
     setPhase("form");
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    // Enter em campos de texto dispara submit nativo do <form>; no wizard isso
+    // não pode enviar antes da última etapa (perguntas opcionais seriam puladas).
+    if (wizard && stepIndex < steps.length - 1) {
+      goNext();
+      return;
+    }
+    await finalizeSubmit();
   }
 
   function goNext() {
@@ -312,7 +323,10 @@ export function FormView({ form }: { form: PublicForm }) {
     <>
       {backgroundUrl && (
         <div className="cxform-viewport-bg" aria-hidden="true">
-          <div className="cxform-viewport-bg__photo" style={viewportPhotoStyle} />
+          <div
+            className={`cxform-viewport-bg__photo cxform-viewport-bg__photo--${backgroundFit}`}
+            style={viewportPhotoStyle}
+          />
           <div className="cxform-viewport-bg__scrim" />
         </div>
       )}
@@ -353,7 +367,14 @@ export function FormView({ form }: { form: PublicForm }) {
                 Próxima
               </button>
             ) : (
-              <button type="submit" className="cxform-nav__btn cxform-nav__btn--primary" disabled={phase === "submitting"}>
+              // type="button" evita o clique de "Próxima" reativar submit quando o
+              // botão é trocado no mesmo lugar ao chegar na última etapa.
+              <button
+                type="button"
+                className="cxform-nav__btn cxform-nav__btn--primary"
+                disabled={phase === "submitting"}
+                onClick={() => void finalizeSubmit()}
+              >
                 {phase === "submitting" ? "Enviando..." : "Enviar respostas"}
               </button>
             )}

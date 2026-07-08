@@ -68,6 +68,22 @@ export type QuestionType =
   | "multi_choice"
   | "yes_no";
 
+/** Como a imagem de fundo preenche a viewport pública. */
+export type BackgroundFit = "fixed" | "scale" | "tile";
+
+export const BACKGROUND_FIT_LABELS: Record<BackgroundFit, string> = {
+  fixed: "Tamanho fixo (original)",
+  scale: "Escalável (preenche a tela)",
+  tile: "Repetir (mosaico)",
+};
+
+export const BACKGROUND_FITS: BackgroundFit[] = ["fixed", "scale", "tile"];
+
+export function normalizeBackgroundFit(value: string | null | undefined): BackgroundFit {
+  if (value === "fixed" || value === "tile" || value === "scale") return value;
+  return "scale";
+}
+
 export type FormQuestion = {
   id?: string;
   type: QuestionType;
@@ -97,6 +113,7 @@ export type FormSummary = {
   isActive: boolean;
   responseCount: number;
   oneQuestionPerPage: boolean;
+  backgroundFit: BackgroundFit;
   backgroundImageUrl?: string | null;
   qrUrl: string;
   publicUrl: string | null;
@@ -114,6 +131,7 @@ export type CreateFormInput = {
   title: string;
   description?: string;
   oneQuestionPerPage?: boolean;
+  backgroundFit?: BackgroundFit;
 };
 
 export type DashboardQuestion = {
