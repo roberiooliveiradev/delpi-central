@@ -168,7 +168,9 @@ body {
   flex: 1 1 auto;
 }
 
-/* Formulários — fundo em tela cheia, conteúdo em coluna central (estilo Google Forms). */
+/* Formulários — fundo em tela cheia, conteúdo em coluna central (estilo Google Forms).
+   Centraliza com margin auto nos filhos quando cabe; NÃO usar justify-content:center
+   (corta o topo e impede rolar até o botão quando o conteúdo é mais alto que a tela). */
 .pub-stage--fullpage {
   min-height: 100vh;
   min-height: 100dvh;
@@ -176,7 +178,9 @@ body {
   padding: 16px 16px 32px;
   gap: 12px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--pub-stage-bg);
   background-size: cover;
   background-position: center top;
@@ -187,6 +191,7 @@ body {
   width: 64px;
   height: 64px;
   margin: 0 auto;
+  margin-block: auto 0;
   flex: none;
   position: relative;
   z-index: 1;
@@ -196,7 +201,7 @@ body {
   flex: 0 1 auto;
   width: 100%;
   max-width: 680px;
-  margin: 0 auto;
+  margin: 0 auto auto;
   align-items: center;
   display: flex;
   flex-direction: column;
@@ -209,6 +214,8 @@ html.pub-fullpage body,
 html.pub-fullpage #root {
   min-height: 100%;
   min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 html.pub-kiosk,

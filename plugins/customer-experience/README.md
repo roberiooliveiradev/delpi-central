@@ -43,9 +43,9 @@ Visitante (sem login) → /p/customer-experience/{thanks|form}/{token}
 
 - CRUD de formulários com tipos de pergunta: nota (estrelas), texto curto/longo, escolha única/múltipla, sim/não
 - **Modo passo a passo** (`oneQuestionPerPage`): uma pergunta por etapa com barra de progresso
-- **Páginas** com título, fundo e imagem ilustrativa (modo scroll ou uma etapa por pergunta)
+- **Páginas** com título e imagem ilustrativa (modo scroll ou uma etapa por pergunta)
 - Imagem de fundo do formulário com modo de exibição: **fixo**, **escalável** ou **repetir** (`backgroundFit`)
-- Imagens ilustrativas por página ou pergunta
+- Imagens ilustrativas por etapa/página ou pergunta
 - Publicar / despublicar; QR e link público próprios por formulário
 - Dashboard de respostas (resumo por pergunta + lista de envios)
 - **Prévia** no admin (lista e editor): visualização local como o visitante verá, sem gravar respostas — inclui rascunhos e alterações não salvas

@@ -33,7 +33,6 @@ export type PreviewFormQuestion = {
 
 type PendingImages = {
   formBackground?: File;
-  pageBackground: Record<number, File>;
   pagePoint: Record<number, File>;
   questionPoint: Record<number, File>;
 };
@@ -75,9 +74,7 @@ export function buildPreviewForm(input: BuildPreviewInput): PreviewForm {
     id: pageIdAt(pages, index),
     title: page.title,
     position: page.position ?? index,
-    backgroundImageUrl: pendingImages?.pageBackground[index]
-      ? URL.createObjectURL(pendingImages.pageBackground[index])
-      : page.backgroundImageUrl ?? null,
+    backgroundImageUrl: null,
     pointImageUrl: pendingImages?.pagePoint[index]
       ? URL.createObjectURL(pendingImages.pagePoint[index])
       : page.pointImageUrl ?? null,

@@ -33,7 +33,6 @@ import {
   setQuestions as apiSetQuestions,
   updateForm,
   uploadFormBackground,
-  uploadPageBackground,
   uploadPagePointImage,
   uploadQuestionPointImage,
 } from "../api/formsApi";
@@ -95,19 +94,16 @@ function ensurePageCount(pages: FormPage[], count: number): FormPage[] {
 
 type PendingImages = {
   formBackground?: File;
-  pageBackground: Record<number, File>;
   pagePoint: Record<number, File>;
   questionPoint: Record<number, File>;
 };
 
 type RemovedImages = {
-  pageBackground: Record<number, true>;
   pagePoint: Record<number, true>;
   questionPoint: Record<number, true>;
 };
 
 const EMPTY_REMOVED: RemovedImages = {
-  pageBackground: {},
   pagePoint: {},
   questionPoint: {},
 };
@@ -498,9 +494,7 @@ function PageVisualFields({
   pageIndex,
   pendingImages,
   onUpdatePage,
-  onPendingBackground,
   onPendingPoint,
-  onClearBackground,
   onClearPoint,
   mode = "page",
 }: {
@@ -508,14 +502,11 @@ function PageVisualFields({
   pageIndex: number;
   pendingImages: PendingImages;
   onUpdatePage: (index: number, patch: Partial<FormPage>) => void;
-  onPendingBackground: (index: number, file: File) => void;
   onPendingPoint: (index: number, file: File) => void;
-  onClearBackground: (index: number) => void;
   onClearPoint: (index: number) => void;
   mode?: "page" | "step";
 }) {
   const titleLabel = mode === "step" ? "Título da etapa (opcional)" : "Título da página (opcional)";
-  const bgLabel = mode === "step" ? "Fundo da etapa" : "Fundo da página";
   return (
     <>
       <label className="cx-field">
@@ -527,33 +518,18 @@ function PageVisualFields({
           placeholder="Ex.: Percepção"
         />
       </label>
-      <div className="cx-page-images">
-        <div className="cx-field">
-          <span>{bgLabel}</span>
-          <PhotoDropzone
-            previewUrl={
-              pendingImages.pageBackground[pageIndex]
-                ? URL.createObjectURL(pendingImages.pageBackground[pageIndex])
-                : page.backgroundImageUrl ?? null
-            }
-            isExisting={Boolean(page.backgroundImageUrl && !pendingImages.pageBackground[pageIndex])}
-            onSelect={(file) => onPendingBackground(pageIndex, file)}
-            onClear={() => onClearBackground(pageIndex)}
-          />
-        </div>
-        <div className="cx-field">
-          <span>Imagem ilustrativa</span>
-          <PhotoDropzone
-            previewUrl={
-              pendingImages.pagePoint[pageIndex]
-                ? URL.createObjectURL(pendingImages.pagePoint[pageIndex])
-                : page.pointImageUrl ?? null
-            }
-            isExisting={Boolean(page.pointImageUrl && !pendingImages.pagePoint[pageIndex])}
-            onSelect={(file) => onPendingPoint(pageIndex, file)}
-            onClear={() => onClearPoint(pageIndex)}
-          />
-        </div>
+      <div className="cx-field">
+        <span>Imagem ilustrativa</span>
+        <PhotoDropzone
+          previewUrl={
+            pendingImages.pagePoint[pageIndex]
+              ? URL.createObjectURL(pendingImages.pagePoint[pageIndex])
+              : page.pointImageUrl ?? null
+          }
+          isExisting={Boolean(page.pointImageUrl && !pendingImages.pagePoint[pageIndex])}
+          onSelect={(file) => onPendingPoint(pageIndex, file)}
+          onClear={() => onClearPoint(pageIndex)}
+        />
       </div>
     </>
   );
@@ -586,7 +562,6 @@ function FormEditor({
   );
   const [questions, setQuestions] = useState<FormQuestion[]>(form.questions);
   const [pendingImages, setPendingImages] = useState<PendingImages>({
-    pageBackground: {},
     pagePoint: {},
     questionPoint: {},
   });
@@ -615,36 +590,6 @@ function FormEditor({
     setPages((prev) => {
       const next = prev.map((p, i) => (i === index ? { ...p, ...patch } : p));
       return oneQuestionPerPage ? ensurePageCount(next, questions.length) : next;
-    });
-  };
-
-  const setPendingPageBackground = (index: number, file: File) => {
-    setRemovedImages((prev) => {
-      const next = { ...prev.pageBackground };
-      delete next[index];
-      return { ...prev, pageBackground: next };
-    });
-    setPendingImages((prev) => ({
-      ...prev,
-      pageBackground: { ...prev.pageBackground, [index]: file },
-    }));
-  };
-
-  const clearPendingPageBackground = (index: number) => {
-    setPages((prev) => {
-      const page = prev[index];
-      if (page?.id && page.backgroundImageUrl) {
-        setRemovedImages((r) => ({
-          ...r,
-          pageBackground: { ...r.pageBackground, [index]: true },
-        }));
-      }
-      return prev.map((p, i) => (i === index ? { ...p, backgroundImageUrl: null } : p));
-    });
-    setPendingImages((prev) => {
-      const next = { ...prev.pageBackground };
-      delete next[index];
-      return { ...prev, pageBackground: next };
     });
   };
 
@@ -818,11 +763,6 @@ function FormEditor({
         saved = await removeFormBackground(form.id);
       }
 
-      for (const [indexStr, mark] of Object.entries(removedImages.pageBackground)) {
-        if (!mark || pendingImages.pageBackground[Number(indexStr)]) continue;
-        const pageId = saved.pages[Number(indexStr)]?.id;
-        if (pageId) saved = await removePageBackground(form.id, pageId);
-      }
       for (const [indexStr, mark] of Object.entries(removedImages.pagePoint)) {
         if (!mark || pendingImages.pagePoint[Number(indexStr)]) continue;
         const pageId = saved.pages[Number(indexStr)]?.id;
@@ -834,10 +774,13 @@ function FormEditor({
         if (questionId) saved = await removeQuestionPointImage(form.id, questionId);
       }
 
-      for (const [indexStr, file] of Object.entries(pendingImages.pageBackground)) {
-        const pageId = saved.pages[Number(indexStr)]?.id;
-        if (pageId) saved = await uploadPageBackground(form.id, pageId, file);
+      // Fundos por página/etapa deixaram de existir no editor — limpa restos legados.
+      for (const page of saved.pages ?? []) {
+        if (page.backgroundImageUrl && page.id) {
+          saved = await removePageBackground(form.id, page.id);
+        }
       }
+
       for (const [indexStr, file] of Object.entries(pendingImages.pagePoint)) {
         const pageId = saved.pages[Number(indexStr)]?.id;
         if (pageId) saved = await uploadPagePointImage(form.id, pageId, file);
@@ -958,8 +901,9 @@ function FormEditor({
           </button>
         </div>
         <p className="cx-field-hint">
-          Agrupe perguntas em páginas com fundo e imagens ilustrativas. Deixe vazio para um
-          formulário contínuo em uma única tela.
+          Agrupe perguntas em páginas com título e imagem ilustrativa. Deixe vazio para um
+          formulário contínuo em uma única tela. O fundo geral fica em «Imagem de fundo do
+          formulário».
         </p>
         {pages.length === 0 ? (
           <p className="cx-state">Nenhuma página — todas as perguntas aparecem juntas.</p>
@@ -983,9 +927,7 @@ function FormEditor({
                   pageIndex={pageIndex}
                   pendingImages={pendingImages}
                   onUpdatePage={updatePage}
-                  onPendingBackground={setPendingPageBackground}
                   onPendingPoint={setPendingPagePoint}
-                  onClearBackground={clearPendingPageBackground}
                   onClearPoint={clearPendingPagePoint}
                 />
               </div>
@@ -999,7 +941,7 @@ function FormEditor({
         {oneQuestionPerPage && questions.length > 0 && (
           <p className="cx-field-hint cx-question-list__hint">
             Cada pergunta abaixo é uma etapa do passo a passo. Use arrastar ou as setas para
-            reordenar — título, fundo e imagens ficam no próprio card.
+            reordenar — título e imagem ilustrativa ficam no próprio card.
           </p>
         )}
         {questions.map((q, index) => {
@@ -1086,9 +1028,7 @@ function FormEditor({
                   mode="step"
                   pendingImages={pendingImages}
                   onUpdatePage={updatePage}
-                  onPendingBackground={setPendingPageBackground}
                   onPendingPoint={setPendingPagePoint}
-                  onClearBackground={clearPendingPageBackground}
                   onClearPoint={clearPendingPagePoint}
                 />
               </div>

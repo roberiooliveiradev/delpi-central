@@ -226,10 +226,10 @@
 }
 
 .cxform--fullpage.cxform--wizard .cxform-illustration__img {
-  width: min(100%, 520px);
+  width: min(100%, 420px);
   max-width: none;
-  max-height: min(380px, 48vh);
-  min-height: clamp(160px, 28vw, 240px);
+  max-height: min(280px, 36vh);
+  min-height: clamp(120px, 20vw, 180px);
   object-fit: contain;
   filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
 }

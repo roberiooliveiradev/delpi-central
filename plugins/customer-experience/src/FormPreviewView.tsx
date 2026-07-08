@@ -64,13 +64,7 @@ function computeProgress(
   return Math.round((completed / steps.length) * 100);
 }
 
-function resolveBackground(
-  form: PreviewForm,
-  step: WizardStep | null,
-): string | null {
-  if (step?.kind === "question") {
-    return step.page?.backgroundImageUrl ?? form.backgroundImageUrl ?? null;
-  }
+function resolveBackground(form: PreviewForm, _step: WizardStep | null): string | null {
   return form.backgroundImageUrl ?? null;
 }
 
@@ -231,16 +225,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
           return (
             <div key={q.id}>
               {showPageHeader && page && (
-                <div
-                  className={`cxform-page-header${page.backgroundImageUrl ? " cxform-page-header--photo" : ""}`}
-                  style={
-                    page.backgroundImageUrl
-                      ? ({
-                          ["--cxform-page-photo" as string]: `url(${page.backgroundImageUrl})`,
-                        } as React.CSSProperties)
-                      : undefined
-                  }
-                >
+                <div className="cxform-page-header">
                   {page.pointImageUrl && (
                     <figure className="cxform-illustration cxform-illustration--section" aria-hidden="true">
                       <img className="cxform-illustration__img" src={page.pointImageUrl} alt="" />
