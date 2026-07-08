@@ -275,7 +275,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
 | `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · DataTableSection* allowlist | sim |
-| `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ | Empty/Loading ✅ | sim |
+| `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ FilterBarShell ✅ CompactPagination ✅ | PageHeader ✅ Empty/Loading ✅ | sim |
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ FilterBarShell ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |
 | `financeiro-centro-custo` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ CompactPagination ✅ | PageHeader ✅ Empty/Loading ✅ | sim |

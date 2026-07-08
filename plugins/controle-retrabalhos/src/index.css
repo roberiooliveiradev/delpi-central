@@ -67,6 +67,7 @@
   outline-offset: 2px;
 }
 
+.dashboard-controle-retrabalhos .cr-page-header,
 .dashboard-controle-retrabalhos .cr-page__header {
   display: flex;
   align-items: flex-start;
@@ -74,6 +75,7 @@
   gap: var(--cr-grid-gap);
 }
 
+.dashboard-controle-retrabalhos .cr-page-header__title h1,
 .dashboard-controle-retrabalhos .cr-page__title {
   margin: 0;
   font-size: var(--cr-font-hero);
@@ -82,6 +84,7 @@
   color: var(--cr-title);
 }
 
+.dashboard-controle-retrabalhos .cr-page-header__title p,
 .dashboard-controle-retrabalhos .cr-page__subtitle {
   margin: 0.35rem 0 0;
   color: var(--cr-text-muted);
@@ -95,10 +98,12 @@
   box-shadow: 0 1px 2px color-mix(in srgb, var(--cr-title) 6%, transparent);
 }
 
+.dashboard-controle-retrabalhos .cr-filter-bar,
 .dashboard-controle-retrabalhos .cr-filters {
   padding: 1rem 1.25rem;
 }
 
+.dashboard-controle-retrabalhos .cr-filter-bar__grid,
 .dashboard-controle-retrabalhos .cr-filters__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -110,9 +115,11 @@
   flex-direction: column;
   gap: 0.35rem;
   font-size: var(--cr-font-md);
+  min-width: 0;
 }
 
-.dashboard-controle-retrabalhos .cr-field span {
+.dashboard-controle-retrabalhos .cr-field span,
+.dashboard-controle-retrabalhos .cr-field__label {
   color: var(--cr-text-muted);
   font-weight: 500;
 }
@@ -136,6 +143,7 @@
   font-size: var(--cr-font-md);
 }
 
+.dashboard-controle-retrabalhos .cr-filter-bar__actions,
 .dashboard-controle-retrabalhos .cr-filters__actions {
   display: flex;
   flex-wrap: wrap;
@@ -445,6 +453,7 @@
   color: var(--cr-text-muted);
 }
 
+.dashboard-controle-retrabalhos .cr-pagination.cr-table-card__footer,
 .dashboard-controle-retrabalhos .cr-table-card__footer {
   display: flex;
   align-items: center;
@@ -452,6 +461,12 @@
   gap: 0.75rem;
   padding: 0.85rem 1.25rem 1rem;
   border-top: 1px solid var(--cr-border);
+}
+
+.dashboard-controle-retrabalhos .cr-pagination__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 /* Recharts — tooltip legível nos dois temas */
@@ -477,24 +492,29 @@
     --cr-page-padding: 16px;
   }
 
+  .dashboard-controle-retrabalhos .cr-page-header,
   .dashboard-controle-retrabalhos .cr-page__header {
     flex-direction: column;
   }
 
   .dashboard-controle-retrabalhos .cr-kpi-grid,
   .dashboard-controle-retrabalhos .cr-charts-grid,
+  .dashboard-controle-retrabalhos .cr-filter-bar__grid,
   .dashboard-controle-retrabalhos .cr-filters__grid {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-controle-retrabalhos .cr-filter-bar__actions,
   .dashboard-controle-retrabalhos .cr-filters__actions,
   .dashboard-controle-retrabalhos .cr-table-card__header,
+  .dashboard-controle-retrabalhos .cr-pagination.cr-table-card__footer,
   .dashboard-controle-retrabalhos .cr-table-card__footer,
   .dashboard-controle-retrabalhos .cr-table-card__actions {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .dashboard-controle-retrabalhos .cr-filter-bar__actions .cr-btn,
   .dashboard-controle-retrabalhos .cr-filters__actions .cr-btn,
   .dashboard-controle-retrabalhos .cr-export-actions,
   .dashboard-controle-retrabalhos .cr-export-actions .cr-btn {

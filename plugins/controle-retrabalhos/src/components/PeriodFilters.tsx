@@ -1,5 +1,6 @@
 import type { FilterFormState } from "../types/retrabalho";
 import { validatePeriodRange } from "../utils/dateRange";
+import { FilterBarShell, FilterInputField } from "./filtersUi";
 
 export type QuickRangePreset = "12m" | "6m" | "thisMonth";
 
@@ -23,30 +24,35 @@ export function PeriodFilters({
   const localError = validatePeriodRange(filters.dataInicio, filters.dataFim);
 
   return (
-    <section className="cr-card cr-filters">
-      <div className="cr-filters__grid">
-        <label className="cr-field">
-          <span>Data inicial</span>
-          <input
-            type="date"
-            value={filters.dataInicio}
-            onChange={(event) => onChange({ dataInicio: event.target.value })}
-          />
-        </label>
-        <label className="cr-field">
-          <span>Data final</span>
-          <input
-            type="date"
-            value={filters.dataFim}
-            onChange={(event) => onChange({ dataFim: event.target.value })}
-          />
-        </label>
+    <FilterBarShell>
+      <div className="cr-filter-bar__grid cr-filters__grid">
+        <FilterInputField
+          id="cr-filter-start"
+          label="Data inicial"
+          type="date"
+          value={filters.dataInicio}
+          onChange={(value) => onChange({ dataInicio: value })}
+        />
+        <FilterInputField
+          id="cr-filter-end"
+          label="Data final"
+          type="date"
+          value={filters.dataFim}
+          onChange={(value) => onChange({ dataFim: value })}
+        />
       </div>
       {validationError || localError ? (
-        <p className="cr-filters__error" role="alert">{validationError ?? localError}</p>
+        <p className="cr-filters__error" role="alert">
+          {validationError ?? localError}
+        </p>
       ) : null}
-      <div className="cr-filters__actions">
-        <button type="button" className="cr-btn cr-btn--primary" onClick={onApply} disabled={loading || Boolean(localError)}>
+      <div className="cr-filter-bar__actions cr-filters__actions">
+        <button
+          type="button"
+          className="cr-btn cr-btn--primary"
+          onClick={onApply}
+          disabled={loading || Boolean(localError)}
+        >
           Aplicar período
         </button>
         <button
@@ -74,6 +80,6 @@ export function PeriodFilters({
           Este mês
         </button>
       </div>
-    </section>
+    </FilterBarShell>
   );
 }

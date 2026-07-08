@@ -132,7 +132,7 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 | `transformometro` | ✅ | ✅ | — | ✅ | ✅ | | CompactPagination + ChartCard + MultiSelect + KpiCard + DataTable + TableHeader F2/F3 |
 | `eficiencia-fabril` | — | ✅ | — | ✅ | ✅ | ✅ | ChartCard + MetricKpiCard + FilterBarShell + MultiSelect F2 |
 | `maintenance` | ✅ | ✅ | — | — | — | — | TablePaginationNav + FilterBarShell + MultiSelect + DataTable F2 |
-| `controle-retrabalhos` | — | — | — | ✅ | ✅ | ✅ | Empty/Loading F3 + KpiCard/ChartCard/LoadingActivity F2 |
+| `controle-retrabalhos` | ✅ | — | ✅ | ✅ | ✅ | ✅ | Empty/Loading F3 + Kpi/Chart/LoadingActivity + FilterBarShell + PageHeader + CompactPagination |
 | `financeiro-centro-custo` | ✅ | — | ✅ | ✅ | ✅ | — | ChartCard/KpiCard + FilterBarShell + CompactPagination + PageHeader F2/F3 |
 | `auditoria-5s` | — | — | ✅ | ✅ | ✅ | — | ChartCard + AnalyticsKpi + FilterBarShell F2 |
 | `pedidos-venda-abertos` | — | ✅ | ✅ | — | ✅ | — | PageHeader F3 + Pagination/KpiCard/MultiSelect/FilterBarShell F2 |
@@ -174,7 +174,7 @@ Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGr
 | `inspecoes-entrada` | — | ✅ | — |
 | `propostas-comerciais` | — | ✅ | — |
 | `strategic-indicators` | — | ✅ | — |
-| `controle-retrabalhos` | — | — | ✅ |
+| `controle-retrabalhos` | — | ✅ | ✅ |
 | `financeiro-centro-custo` | — | ✅ | ✅ |
 
 ## Integração `@delpi/plugin-ui` (Vite + Docker)
@@ -187,7 +187,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard, FilterBarShell |
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
 | `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard | `operationalUnitLabels` |
-| `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity |
+| `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity, FilterBarShell, PageHeader, CompactPagination |
 | `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState, FilterBarShell, PageHeader, CompactPagination |
 | `auditoria-5s` | — | ChartCard, createAnalyticsKpiCard, FilterBarShell |
 

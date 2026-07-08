@@ -4,6 +4,7 @@ import { DetalhesTable } from "../components/DetalhesTable";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { PageHeader } from "../components/PageHeader";
 import { PeriodFilters, type QuickRangePreset } from "../components/PeriodFilters";
 import { RetrabalhoCharts } from "../components/RetrabalhoCharts";
 import { SummaryCards } from "../components/SummaryCards";
@@ -119,17 +120,21 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
 
   return (
     <div className="dashboard-controle-retrabalhos dashboard-page cr-page">
-      <header className="cr-page__header">
-        <div>
-          <h1 className="cr-page__title">Controle de Retrabalhos</h1>
-          <p className="cr-page__subtitle">
+      <PageHeader
+        title="Controle de Retrabalhos"
+        subtitle={
+          <>
             Filial {BRANCH_ROUTE_LABELS[branchRoute]} ({totvsBranch})
             {resumo?.periodo ? (
-              <> · {formatDatePtBr(resumo.periodo.dataInicio)} a {formatDatePtBr(resumo.periodo.dataFim)}</>
+              <>
+                {" "}
+                · {formatDatePtBr(resumo.periodo.dataInicio)} a{" "}
+                {formatDatePtBr(resumo.periodo.dataFim)}
+              </>
             ) : null}
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <PeriodFilters
         filters={draftFilters}

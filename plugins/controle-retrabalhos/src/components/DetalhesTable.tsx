@@ -11,6 +11,7 @@ import {
 } from "../utils/formatters";
 import { ExportExcelButton } from "./ExportExcelButton";
 import { LoadingActivityCard } from "./LoadingActivityCard";
+import { Pagination } from "./Pagination";
 import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
@@ -131,27 +132,15 @@ export function DetalhesTable({
       </div>
       )}
 
-      <footer className="cr-table-card__footer">
-        <button
-          type="button"
-          className="cr-btn cr-btn--secondary"
-          disabled={loading || page <= 1}
-          onClick={() => onPageChange(page - 1)}
-        >
-          Anterior
-        </button>
-        <span>
-          Página {page} / {totalPages}
-        </span>
-        <button
-          type="button"
-          className="cr-btn cr-btn--secondary"
-          disabled={loading || page >= totalPages}
-          onClick={() => onPageChange(page + 1)}
-        >
-          Próxima
-        </button>
-      </footer>
+      {data ? (
+        <Pagination
+          page={page}
+          pageSize={data.pageSize}
+          total={total}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      ) : null}
     </section>
   );
 }
