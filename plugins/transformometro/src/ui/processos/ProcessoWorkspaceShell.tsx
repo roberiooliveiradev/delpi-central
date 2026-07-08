@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 
 import {
   fetchProcesso,
@@ -16,10 +24,14 @@ import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
 import { ProcessoWorkspaceSidebar } from "./ProcessoWorkspaceSidebar";
 import {
   buildProcessoWorkspaceTree,
+  defaultRevisaoSection,
   parseProcessoSectionFromHash,
+  parseRevisaoSectionFromHash,
   type ProcessoWorkspaceSectionId,
+  type RevisaoWorkspaceSectionId,
 } from "./processoWorkspaceNav";
 import { ProcessoWorkspacePanelActionsProvider } from "./processoWorkspacePanelActions";
+import { useProcessoWorkspaceSidebarLayout } from "./useProcessoWorkspaceSidebarLayout";
 
 type Props = {
   processoId: string;
@@ -116,18 +128,43 @@ export function ProcessoWorkspaceShell({
     return buildProcessoWorkspaceTree({ processo, instancias, revisoes, matrixByRevisaoId });
   }, [instancias, matrixByRevisaoId, processo, revisoes]);
 
+  const { collapsed, toggleCollapsed, startResize, sidebarWidthPx } = useProcessoWorkspaceSidebarLayout();
+
+  const workspaceStyle = {
+    "--tm-workspace-sidebar-width": `${sidebarWidthPx}px`,
+  } as CSSProperties;
+
   return (
     <ProcessoWorkspacePanelActionsProvider>
-      <div className="tm-processo-workspace">
-        <ProcessoWorkspaceSidebar
-          processoCode={processo?.codigo_processo ?? "…"}
-          processoLabel={processo?.nome_processo ?? "Processo"}
-          nodes={treeNodes}
-          activeNodeId={activeNodeId}
-          onNavigate={onNavigate}
-          backActions={backActions}
-          processActions={processActions}
-        />
+      <div
+        className={`tm-processo-workspace${collapsed ? " tm-processo-workspace--sidebar-collapsed" : ""}`}
+        style={workspaceStyle}
+      >
+        <div className="tm-processo-workspace-sidebar-shell">
+          <ProcessoWorkspaceSidebar
+            processoCode={processo?.codigo_processo ?? "…"}
+            processoLabel={processo?.nome_processo ?? "Processo"}
+            nodes={treeNodes}
+            activeNodeId={activeNodeId}
+            onNavigate={onNavigate}
+            backActions={backActions}
+            processActions={processActions}
+            collapsed={collapsed}
+            onToggleCollapsed={toggleCollapsed}
+          />
+          {!collapsed ? (
+            <div
+              className="tm-processo-workspace-sidebar__resize-handle"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Redimensionar barra lateral"
+              aria-valuenow={sidebarWidthPx}
+              aria-valuemin={220}
+              aria-valuemax={480}
+              onPointerDown={startResize}
+            />
+          ) : null}
+        </div>
         <div className="tm-processo-workspace__main">
           <div className="tm-processo-workspace__sections">{children}</div>
         </div>
@@ -156,5 +193,17 @@ export function useProcessoWorkspaceSection(): ProcessoWorkspaceSectionId {
     subscribeWorkspaceSection,
     readWorkspaceSectionSnapshot,
     () => "visao-geral"
+  );
+}
+
+function readRevisaoSectionSnapshot(cenarioTipo?: string | null): RevisaoWorkspaceSectionId {
+  return parseRevisaoSectionFromHash(window.location.hash, cenarioTipo);
+}
+
+export function useRevisaoWorkspaceSection(cenarioTipo?: string | null): RevisaoWorkspaceSectionId {
+  return useSyncExternalStore(
+    subscribeWorkspaceSection,
+    () => readRevisaoSectionSnapshot(cenarioTipo),
+    () => defaultRevisaoSection(cenarioTipo)
   );
 }

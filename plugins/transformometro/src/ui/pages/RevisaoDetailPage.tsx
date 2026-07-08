@@ -23,8 +23,8 @@ import {
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
-import { ProcessoWorkspaceShell } from "../processos/ProcessoWorkspaceShell";
-import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
+import { ProcessoWorkspaceShell, useRevisaoWorkspaceSection } from "../processos/ProcessoWorkspaceShell";
+import { resolveActiveWorkspaceNodeId, type RevisaoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -35,6 +35,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate: (path: string) => void;
   embedded?: boolean;
   embeddedActive?: boolean;
+  activeSection?: RevisaoWorkspaceSectionId;
 };
 
 export function RevisaoDetailPage({
@@ -47,6 +48,7 @@ export function RevisaoDetailPage({
   onNavigate,
   embedded = false,
   embeddedActive = true,
+  activeSection: activeSectionProp,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [revisao, setRevisao] = useState<Revisao | null>(null);
@@ -93,6 +95,8 @@ export function RevisaoDetailPage({
 
   const fetchProgress = useTrackedSingleFetchProgress(loading && !revisao);
   const loadingProgress = useLoadingProgress(loading && !revisao, fetchProgress);
+  const fallbackSection = useRevisaoWorkspaceSection(revisao?.cenario_tipo);
+  const activeSection = activeSectionProp ?? fallbackSection;
 
   if (loading && !revisao) {
     const loader = (
@@ -132,6 +136,7 @@ export function RevisaoDetailPage({
       options={options}
       getAccessToken={getAccessToken}
       collaborationActive={!embedded || embeddedActive}
+      activeSection={activeSection}
       onError={setError}
       onRevisaoUpdated={load}
       onRevisaoDeleted={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
@@ -171,6 +176,7 @@ export function RevisaoDetailPage({
             view: "revisao",
             revisaoId,
             instanciaId: resolvedInstanciaId,
+            revisaoSection: activeSection,
           })}
           getAccessToken={getAccessToken}
           onNavigate={onNavigate}

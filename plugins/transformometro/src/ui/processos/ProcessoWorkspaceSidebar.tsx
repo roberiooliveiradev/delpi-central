@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 
 import {
   collectExpandedNodeIds,
@@ -18,6 +18,8 @@ type Props = {
   onNavigate: (href: string) => void;
   backActions?: ReactNode;
   processActions?: ReactNode;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 };
 
 function TreeNode({
@@ -64,7 +66,9 @@ function TreeNode({
         >
           <span className="tm-processo-workspace-tree__link-main">
             <ProcessoWorkspaceTreeIcon variant={folderVariant} />
-            <span className="tm-processo-workspace-tree__label">{node.label}</span>
+            <span className="tm-processo-workspace-tree__label" title={node.label}>
+              {node.label}
+            </span>
           </span>
           <span className="tm-processo-workspace-tree__badges">
             {node.matrixBadge ? (
@@ -109,6 +113,8 @@ export function ProcessoWorkspaceSidebar({
   onNavigate,
   backActions,
   processActions,
+  collapsed = false,
+  onToggleCollapsed,
 }: Props) {
   const [query, setQuery] = useState("");
   const filteredNodes = useMemo(() => filterWorkspaceTree(nodes, query), [nodes, query]);
@@ -142,11 +148,57 @@ export function ProcessoWorkspaceSidebar({
     [nodes]
   );
 
+  if (collapsed) {
+    return (
+      <aside
+        className="tm-processo-workspace-sidebar tm-processo-workspace-sidebar--collapsed"
+        aria-label="Navegação do processo"
+      >
+        <button
+          type="button"
+          className="tm-processo-workspace-sidebar__rail-btn"
+          onClick={onToggleCollapsed}
+          aria-label="Expandir barra lateral"
+          title="Expandir"
+        >
+          <PanelLeftOpen size={18} aria-hidden="true" />
+        </button>
+
+        {backActions ? (
+          <div className="tm-processo-workspace-sidebar__back tm-processo-workspace-sidebar__back--rail">
+            {backActions}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          className="tm-processo-workspace-sidebar__rail-btn"
+          onClick={onToggleCollapsed}
+          aria-label="Pesquisar na árvore do processo"
+          title="Pesquisar"
+        >
+          <Search size={18} aria-hidden="true" />
+        </button>
+      </aside>
+    );
+  }
+
   return (
     <aside className="tm-processo-workspace-sidebar" aria-label="Navegação do processo">
-      {backActions ? (
-        <div className="tm-processo-workspace-sidebar__back">{backActions}</div>
-      ) : null}
+      <div className="tm-processo-workspace-sidebar__header">
+        {backActions ? (
+          <div className="tm-processo-workspace-sidebar__back">{backActions}</div>
+        ) : null}
+        <button
+          type="button"
+          className="tm-processo-workspace-sidebar__collapse-btn"
+          onClick={onToggleCollapsed}
+          aria-label="Recolher barra lateral"
+          title="Recolher"
+        >
+          <PanelLeftClose size={16} aria-hidden="true" />
+        </button>
+      </div>
 
       <div className="tm-processo-workspace-sidebar__search">
         <Search size={15} aria-hidden="true" />
@@ -163,7 +215,9 @@ export function ProcessoWorkspaceSidebar({
         <ProcessoWorkspaceTreeIcon variant={rootHasChildren ? "filled" : "empty"} />
         <div className="tm-processo-workspace-sidebar__root-text">
           <span className="tm-processo-workspace-sidebar__root-code">{processoCode}</span>
-          <span className="tm-processo-workspace-sidebar__root-title">{processoLabel}</span>
+          <span className="tm-processo-workspace-sidebar__root-title" title={processoLabel}>
+            {processoLabel}
+          </span>
         </div>
       </div>
 

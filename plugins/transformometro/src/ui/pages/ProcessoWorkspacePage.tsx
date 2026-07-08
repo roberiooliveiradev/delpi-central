@@ -24,6 +24,7 @@ import { ProcessoWorkspacePanel } from "../processos/ProcessoWorkspacePanel";
 import {
   ProcessoWorkspaceShell,
   useProcessoWorkspaceSection,
+  useRevisaoWorkspaceSection,
 } from "../processos/ProcessoWorkspaceShell";
 import {
   resolveActiveWorkspaceNodeId,
@@ -63,6 +64,16 @@ export function ProcessoWorkspacePage({
   const confirm = useConfirm();
   const processoId = route.processoId;
   const activeSection = useProcessoWorkspaceSection();
+  const [mountedPanels, setMountedPanels] = useState<Set<string>>(() => new Set());
+  const [processo, setProcesso] = useState<Processo | null>(null);
+  const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
+  const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+
+  const activeRevisao = useMemo(
+    () => revisoes.find((row) => row.revisao_id === route.revisaoId) ?? null,
+    [revisoes, route.revisaoId]
+  );
+  const activeRevisaoSection = useRevisaoWorkspaceSection(activeRevisao?.cenario_tipo);
 
   const activePanelKey = useMemo(
     () =>
@@ -80,18 +91,14 @@ export function ProcessoWorkspacePage({
         view: "revisao",
         revisaoId: route.revisaoId,
         instanciaId: route.instanciaId,
+        revisaoSection: activeRevisaoSection,
       });
     }
     if (route.view === "instancia" && route.instanciaId) {
       return resolveActiveWorkspaceNodeId({ view: "instancia", instanciaId: route.instanciaId });
     }
     return resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
-  }, [activeSection, route.instanciaId, route.revisaoId, route.view]);
-
-  const [mountedPanels, setMountedPanels] = useState<Set<string>>(() => new Set([activePanelKey]));
-  const [processo, setProcesso] = useState<Processo | null>(null);
-  const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
-  const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  }, [activeRevisaoSection, activeSection, route.instanciaId, route.revisaoId, route.view]);
 
   useEffect(() => {
     setMountedPanels((current) => {
@@ -234,6 +241,7 @@ export function ProcessoWorkspacePage({
         <RevisaoDetailPage
           embedded
           embeddedActive={isActive}
+          activeSection={activeRevisaoSection}
           getAccessToken={getAccessToken}
           processoId={processoId}
           instanciaId={instanciaId}

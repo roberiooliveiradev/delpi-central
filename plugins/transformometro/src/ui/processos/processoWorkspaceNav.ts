@@ -13,7 +13,17 @@ export type ProcessoWorkspaceSectionId =
   | "melhorias"
   | "timeline";
 
-export type ProcessoWorkspaceNodeKind = "section" | "instancia" | "revisao";
+export type RevisaoWorkspaceSectionId =
+  | "matriz"
+  | "vigencia"
+  | "mapeamento"
+  | "diagrama"
+  | "medicao"
+  | "investimentos"
+  | "recursos"
+  | "evidencias";
+
+export type ProcessoWorkspaceNodeKind = "section" | "instancia" | "revisao" | "revisao-section";
 
 export type ProcessoWorkspaceNavNode = {
   id: string;
@@ -40,10 +50,82 @@ export const PROCESSO_WORKSPACE_SECTIONS: Array<{
   { id: "timeline", label: "Linha do tempo" },
 ];
 
+export const REVISAO_WORKSPACE_SECTIONS: Array<{
+  id: RevisaoWorkspaceSectionId;
+  label: string;
+}> = [
+  { id: "matriz", label: "Matriz impacto × esforço" },
+  { id: "vigencia", label: "Vigência e identificação" },
+  { id: "mapeamento", label: "Mapeamento da revisão" },
+  { id: "diagrama", label: "Diagrama da revisão" },
+  { id: "medicao", label: "Medição operacional" },
+  { id: "investimentos", label: "Investimentos" },
+  { id: "recursos", label: "Recursos compartilhados" },
+  { id: "evidencias", label: "Evidências" },
+];
+
 const SECTION_IDS = new Set<string>(PROCESSO_WORKSPACE_SECTIONS.map((item) => item.id));
+const REVISAO_SECTION_IDS = new Set<string>(REVISAO_WORKSPACE_SECTIONS.map((item) => item.id));
 
 export function isProcessoWorkspaceSectionId(value: string): value is ProcessoWorkspaceSectionId {
   return SECTION_IDS.has(value);
+}
+
+export function isRevisaoWorkspaceSectionId(value: string): value is RevisaoWorkspaceSectionId {
+  return REVISAO_SECTION_IDS.has(value);
+}
+
+export function revisaoSectionsForCenario(cenarioTipo?: string | null): Array<{
+  id: RevisaoWorkspaceSectionId;
+  label: string;
+}> {
+  const isBaseline = String(cenarioTipo ?? "").toLowerCase() === "baseline";
+  return REVISAO_WORKSPACE_SECTIONS.filter((section) => section.id !== "matriz" || !isBaseline);
+}
+
+export function defaultRevisaoSection(cenarioTipo?: string | null): RevisaoWorkspaceSectionId {
+  const sections = revisaoSectionsForCenario(cenarioTipo);
+  return sections[0]?.id ?? "vigencia";
+}
+
+export function parseRevisaoSectionFromHash(
+  hash: string,
+  cenarioTipo?: string | null
+): RevisaoWorkspaceSectionId {
+  const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim().toLowerCase();
+  const allowed = new Set(revisaoSectionsForCenario(cenarioTipo).map((section) => section.id));
+  if (raw && isRevisaoWorkspaceSectionId(raw) && allowed.has(raw)) {
+    return raw;
+  }
+  return defaultRevisaoSection(cenarioTipo);
+}
+
+export function buildRevisaoSectionHref(
+  processoId: string,
+  instanciaId: string,
+  revisaoId: string,
+  section: RevisaoWorkspaceSectionId,
+  cenarioTipo?: string | null
+): string {
+  const base = buildProcessoPath(processoId, revisaoId, instanciaId);
+  if (section === defaultRevisaoSection(cenarioTipo)) return base;
+  return `${base}#${section}`;
+}
+
+function buildRevisaoSectionNodes(input: {
+  processoId: string;
+  instanciaId: string;
+  revisao: Revisao;
+}): ProcessoWorkspaceNavNode[] {
+  const { processoId, instanciaId, revisao } = input;
+  return revisaoSectionsForCenario(revisao.cenario_tipo).map((section) => ({
+    id: `revisao-section:${revisao.revisao_id}:${section.id}`,
+    kind: "revisao-section" as const,
+    label: section.label,
+    searchText: `${section.label} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
+    href: buildRevisaoSectionHref(processoId, instanciaId, revisao.revisao_id, section.id, revisao.cenario_tipo),
+    depth: 4,
+  }));
 }
 
 export function parseProcessoSectionFromHash(hash: string): ProcessoWorkspaceSectionId {
@@ -94,14 +176,20 @@ export function buildProcessoWorkspaceTree(input: {
           cenario_tipo: revisao.cenario_tipo,
           ponto: matrixByRevisaoId?.[revisao.revisao_id],
         });
+        const defaultSection = defaultRevisaoSection(revisao.cenario_tipo);
         return {
           id: `revisao:${revisao.revisao_id}`,
           kind: "revisao" as const,
           label: revLabel,
           searchText: `${revLabel} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
-          href: buildProcessoPath(processoId, revisao.revisao_id, instancia.instancia_id),
+          href: buildRevisaoSectionHref(processoId, instancia.instancia_id, revisao.revisao_id, defaultSection),
           depth: 3,
           matrixBadge,
+          children: buildRevisaoSectionNodes({
+            processoId,
+            instanciaId: instancia.instancia_id,
+            revisao,
+          }),
         };
       }),
     };
@@ -134,8 +222,12 @@ export function resolveActiveWorkspaceNodeId(input: {
   section?: ProcessoWorkspaceSectionId;
   instanciaId?: string;
   revisaoId?: string;
+  revisaoSection?: RevisaoWorkspaceSectionId;
 }): string {
   if (input.view === "revisao" && input.revisaoId) {
+    if (input.revisaoSection) {
+      return `revisao-section:${input.revisaoId}:${input.revisaoSection}`;
+    }
     return `revisao:${input.revisaoId}`;
   }
   if (input.view === "instancia" && input.instanciaId) {
@@ -201,6 +293,10 @@ export function collectExpandedNodeIds(
   }
 
   if (activeNodeId.startsWith("section:") || activeNodeId.startsWith("instancia:")) {
+    expanded.add(`section:melhorias`);
+  }
+
+  if (activeNodeId.startsWith("revisao-section:") || activeNodeId.startsWith("revisao:")) {
     expanded.add(`section:melhorias`);
   }
 
