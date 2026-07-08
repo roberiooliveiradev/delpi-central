@@ -172,12 +172,14 @@ export function ImpactEffortMatrix({
           ]
             .filter(Boolean)
             .join(" ");
+          const pointStyle = point.accentColor ? { stroke: point.accentColor, fill: point.accentColor } : undefined;
 
           if (onPointSelect && !point.muted) {
             return (
               <g key={point.id}>
                 <circle
                   className={pointClass}
+                  style={pointStyle}
                   cx={cx}
                   cy={cy}
                   r={isActive ? 3.2 : 2.6}
@@ -202,6 +204,7 @@ export function ImpactEffortMatrix({
             <circle
               key={point.id}
               className={pointClass}
+              style={pointStyle}
               cx={cx}
               cy={cy}
               r={isActive ? 3.2 : 2.6}

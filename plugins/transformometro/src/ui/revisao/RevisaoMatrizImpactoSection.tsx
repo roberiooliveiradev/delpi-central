@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ImageDown } from "lucide-react";
 
 import {
   FieldLabel,
@@ -32,6 +33,7 @@ import {
   MATRIZ_QUADRANTE_LABELS,
   MATRIZ_QUADRANTE_LABELS_GRAFICO,
 } from "../../content/matrizImpactoLabels";
+import { exportImpactEffortMatrixPlotPng } from "../../utils/exportImpactEffortMatrixPng";
 
 type Props = {
   revisao: Revisao;
@@ -127,6 +129,7 @@ export function RevisaoMatrizImpactoSection({
   onNavigate,
   rateioExcedeGanho = false,
 }: Props) {
+  const plotRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<RevisaoMatrizImpactoResponse | null>(null);
@@ -225,19 +228,36 @@ export function RevisaoMatrizImpactoSection({
         titleHint={M.titulo}
         hint="Posicionamento desta revisão frente às demais comparáveis da melhoria."
         toolbar={
-          rateioExcedeGanho ? (
-            <span
-              className="tm-matrix-rateio-chip"
-              role="status"
-              title={M.rateioExcedeGanho}
+          <>
+            {rateioExcedeGanho ? (
+              <span
+                className="tm-matrix-rateio-chip"
+                role="status"
+                title={M.rateioExcedeGanho}
+              >
+                Rateio &gt; ganho
+                <HelpTooltip
+                  content={M.rateioExcedeGanho}
+                  ariaLabel="Ajuda: rateio excede ganho"
+                />
+              </span>
+            ) : null}
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={loading || !ponto}
+              onClick={() =>
+                exportImpactEffortMatrixPlotPng(
+                  plotRef.current,
+                  `matriz-revisao-${revisao.revisao_id}`,
+                  () => onError("Não foi possível exportar a matriz como PNG.")
+                )
+              }
             >
-              Rateio &gt; ganho
-              <HelpTooltip
-                content={M.rateioExcedeGanho}
-                ariaLabel="Ajuda: rateio excede ganho"
-              />
-            </span>
-          ) : null
+              <ImageDown size={16} aria-hidden="true" />
+              Exportar PNG
+            </button>
+          </>
         }
       >
         {loading ? (
@@ -280,7 +300,7 @@ export function RevisaoMatrizImpactoSection({
               </p>
             ) : null}
 
-            <div className="tm-impact-effort-section__plot-wrap">
+            <div className="tm-impact-effort-section__plot-wrap" ref={plotRef}>
               <ImpactEffortMatrix
                 points={scatterPoints}
                 activePointId={revisao.revisao_id}

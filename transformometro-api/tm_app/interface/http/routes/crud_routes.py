@@ -709,6 +709,29 @@ def processo_comparativo_revisoes(processo_id: str):
     return ok(data, "Comparativo de revisões.")
 
 
+@router.get("/processos/{processo_id}/matriz-impacto-esforco")
+def processo_matriz_impacto_esforco(
+    processo_id: str,
+    request: Request,
+    competencia: str | None = None,
+    horizonte_meses: int = Query(12, ge=1, le=36),
+    incluir_rejeitadas: bool = False,
+    incluir_baseline: bool = False,
+):
+    if err := check_processo_view_access(request, processo_id):
+        return err
+    data = RevisaoImpactEffortMatrixService().build_for_processo(
+        processo_id,
+        competencia=competencia,
+        horizonte_meses=horizonte_meses,
+        incluir_rejeitadas=incluir_rejeitadas,
+        incluir_baseline=incluir_baseline,
+    )
+    if not data:
+        return fail("Processo não encontrado.", 404)
+    return ok(data, "Matriz impacto × esforço do processo.")
+
+
 @router.get("/processos/{processo_id}/revisoes")
 def list_revisoes(processo_id: str):
     rows = RevisaoRepository().list_by_processo(processo_id)

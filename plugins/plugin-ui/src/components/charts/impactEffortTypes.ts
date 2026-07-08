@@ -16,6 +16,8 @@ export type ImpactEffortPoint = {
   revisaoAtiva?: boolean;
   /** Ex.: baseline — estilo secundário, não clicável */
   muted?: boolean;
+  /** Cor de destaque opcional (ex.: série por melhoria no processo). */
+  accentColor?: string;
 };
 
 export type ImpactEffortQuadrantLabels = Record<ImpactEffortQuadrant, string>;

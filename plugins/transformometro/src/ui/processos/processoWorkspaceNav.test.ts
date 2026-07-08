@@ -67,6 +67,6 @@ describe("revisao workspace sections", () => {
   it("omite matriz no hash para baseline", () => {
     expect(parseRevisaoSectionFromHash("#matriz", "baseline")).toBe("vigencia");
     expect(defaultRevisaoSection("baseline")).toBe("vigencia");
-    expect(defaultRevisaoSection("melhoria")).toBe("matriz");
+    expect(defaultRevisaoSection("melhoria")).toBe("vigencia");
   });
 });

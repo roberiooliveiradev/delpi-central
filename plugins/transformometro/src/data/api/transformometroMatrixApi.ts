@@ -34,6 +34,9 @@ export type MatrizImpactoPonto = {
   modo: ImpactEffortMatrixMode;
   incluir_na_matriz: boolean;
   metricas: MatrizImpactoMetricas;
+  instancia_id?: string;
+  instancia_label?: string;
+  instancia_color_index?: number;
 };
 
 export type MatrizImpactoVizinho = {
@@ -109,6 +112,28 @@ export type InstanciaMatrizImpactoResponse = {
   } | null;
 };
 
+export type ProcessoMatrizMelhoria = {
+  instancia_id: string;
+  label: string;
+  color_index: number;
+};
+
+export type ProcessoMatrizImpactoResponse = {
+  processo_id: string;
+  competencia: string;
+  horizonte_meses: number;
+  threshold: number;
+  melhorias: ProcessoMatrizMelhoria[];
+  pontos: MatrizImpactoPonto[];
+  ativo: {
+    revisao_id: string;
+    instancia_id?: string;
+    impacto: number;
+    esforco: number;
+    quadrante: ImpactEffortQuadrant;
+  } | null;
+};
+
 async function parseEnvelope<T>(response: Response): Promise<T> {
   const body = (await response.json()) as ApiEnvelope<T>;
   if (!response.ok || !body.success) {
@@ -153,6 +178,17 @@ export async function fetchInstanciaMatrizImpactoEsforco(
 ): Promise<InstanciaMatrizImpactoResponse> {
   return request(
     `/instancias/${instanciaId}/matriz-impacto-esforco${buildQuery(params)}`,
+    getAccessToken
+  );
+}
+
+export async function fetchProcessoMatrizImpactoEsforco(
+  processoId: string,
+  getAccessToken?: () => string | undefined,
+  params?: MatrizImpactoQuery
+): Promise<ProcessoMatrizImpactoResponse> {
+  return request(
+    `/processos/${processoId}/matriz-impacto-esforco${buildQuery(params)}`,
     getAccessToken
   );
 }

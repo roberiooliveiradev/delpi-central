@@ -14,7 +14,7 @@
 | S2 | PUT overrides + migration V038 + audit | ✅ |
 | S3 | Seção no `RevisaoCadastroPanel` + API client | ✅ |
 | S4 | Badge árvore workspace + scatter instância | ✅ |
-| S5 | Visão processo multi-melhoria + export PNG | ⏳ backlog |
+| S5 | Visão processo multi-melhoria + export PNG | ✅ |
 
 ## Entregas S0
 
@@ -69,7 +69,21 @@
 - Subpastas de revisão na árvore (`#matriz`, `#vigencia`, …) — `RevisaoWorkspaceSectionPanel`
 - `fetchInstanciaMatrizImpactoEsforco` + `matrizImpactoPoints.ts`
 
-## Próximo passo (S5 — backlog)
+## Entregas S5
 
-1. `GET /processos/{id}/matriz-impacto-esforco` (multi-melhoria)
-2. Export PNG da matriz
+### API
+
+- `RevisaoImpactEffortMatrixService.build_for_processo()` — percentil entre todas as revisões comparáveis do processo
+- `GET /transformometro/processos/{processo_id}/matriz-impacto-esforco`
+- Testes: `test_build_for_processo_aggregates_melhorias` em `test_revisao_impact_effort_matrix_service.py`
+
+### MFE
+
+- `ProcessoMatrizImpactoSection` — scatter multi-melhoria + ranking + legenda por série
+- Seção workspace `#priorizacao` em `ProcessoDetailPage`
+- Export PNG (`exportImpactEffortMatrixPlotPng`) nas três visões: revisão, melhoria e processo
+- `matrizImpactoSeriesColors.ts` + `accentColor` em `ImpactEffortPoint` (plugin-ui)
+
+## Concluído (Playbook 21)
+
+Sprints S0–S5 entregues. Evoluções futuras (fora do escopo original): filtros por cenário, comparação entre processos, export PDF.

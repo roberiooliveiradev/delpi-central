@@ -250,3 +250,93 @@ def test_hibrido_modo_blends_manual_scores(mock_inst, mock_rev, mock_data, _mock
     quick = next(p for p in result["pontos"] if p["revisao_id"] == "r-quick")
     assert quick["modo"] == "hibrido"
     assert quick["impacto"] >= 50
+
+
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.count_active_filiais", return_value=1)
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.DashboardDataRepository")
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.RevisaoRepository")
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.ProcessoInstanciaRepository")
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.ProcessoRepository")
+def test_build_for_processo_aggregates_melhorias(
+    mock_processo,
+    mock_inst,
+    mock_rev,
+    mock_data,
+    _mock_filiais,
+):
+    raw = _matrix_fixture()
+    instancia_2 = {
+        **raw.processo_instancias[0],
+        "instancia_id": "i2",
+        "rotulo_instancia": "Piloto ES",
+    }
+    revisao_other = {
+        **raw.revisoes[1],
+        "revisao_id": "r-other",
+        "instancia_id": "i2",
+        "versao_revisao": "1.0.0",
+        "revisao_referencia_id": "r-baseline-2",
+        "revisao_ativa": True,
+    }
+    baseline_2 = {
+        **raw.revisoes[0],
+        "revisao_id": "r-baseline-2",
+        "instancia_id": "i2",
+        "versao_revisao": "1.0.0",
+    }
+    raw.processo_instancias.append(instancia_2)
+    raw.revisoes.extend([baseline_2, revisao_other])
+    raw.medicoes.extend(
+        [
+            {
+                **raw.medicoes[0],
+                "revisao_id": "r-baseline-2",
+            },
+            {
+                **raw.medicoes[1],
+                "revisao_id": "r-other",
+            },
+        ]
+    )
+    raw.investimentos.append(
+        {
+            **raw.investimentos[0],
+            "investimento_id": "inv-other",
+            "revisao_id": "r-other",
+        }
+    )
+
+    mock_processo.return_value.get.return_value = raw.processos[0]
+    mock_inst.return_value.list_by_processo.return_value = raw.processo_instancias
+
+    def list_by_instancia(instancia_id: str):
+        return [r for r in raw.revisoes if r["instancia_id"] == instancia_id]
+
+    mock_rev.return_value.list_by_instancia.side_effect = list_by_instancia
+
+    def find_reference(revisao_id: str, **_: object):
+        revisao = next((r for r in raw.revisoes if r["revisao_id"] == revisao_id), None)
+        if not revisao:
+            return None
+        ref_id = revisao.get("revisao_referencia_id")
+        if ref_id:
+            return next((r for r in raw.revisoes if r["revisao_id"] == ref_id), None)
+        return next(
+            (
+                r
+                for r in raw.revisoes
+                if r["instancia_id"] == revisao.get("instancia_id") and r["cenario_tipo"] == "baseline"
+            ),
+            None,
+        )
+
+    mock_rev.return_value.find_reference_for_revisao.side_effect = find_reference
+    mock_data.return_value.load_raw.return_value = raw
+
+    result = RevisaoImpactEffortMatrixService().build_for_processo("p1", competencia="2026-07")
+    assert result is not None
+    assert result["processo_id"] == "p1"
+    assert len(result["melhorias"]) == 2
+    assert len(result["pontos"]) >= 2
+    instancia_ids = {p["instancia_id"] for p in result["pontos"] if p.get("instancia_id")}
+    assert instancia_ids == {"i1", "i2"}

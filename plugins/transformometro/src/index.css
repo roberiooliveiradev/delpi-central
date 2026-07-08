@@ -1403,6 +1403,36 @@
   gap: 12px;
 }
 
+.dashboard-transformometro .tm-processo-matrix-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-transformometro .tm-processo-matrix-section__series-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-processo-matrix-section__series-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-transformometro .tm-processo-matrix-section__series-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
 .dashboard-transformometro .tm-instancia-matrix-section__table-wrap {
   margin-top: 16px;
   display: flex;

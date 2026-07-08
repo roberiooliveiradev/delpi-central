@@ -270,6 +270,13 @@ export const TM_HELP_TOOLTIPS = {
     instanciaPriorizacao:
       "Compara todas as revisões desta melhoria no mesmo gráfico impacto × esforço e ranking por prioridade.",
     graficoInstanciaAria: "Matriz impacto por esforço de todas as revisões da melhoria",
+    processoPriorizacao:
+      "Visão consolidada do processo-mestre: todas as melhorias e revisões comparáveis no mesmo scatter (normalização entre melhorias).",
+    semDadosProcesso: "Sem revisões comparáveis em nenhuma melhoria deste processo.",
+    graficoProcessoAria: "Matriz impacto por esforço de todas as melhorias do processo",
+    rankingTabelaProcesso: "Ranking global das revisões do processo (impacto alto e esforço baixo primeiro).",
+    melhoriaColuna: "Melhoria operacional (instância) à qual a revisão pertence.",
+    exportarPng: "Baixa o gráfico da matriz como imagem PNG.",
   },
   investimentos: {
     tipo: "Natureza do investimento (software, equipamento, horas, etc.).",

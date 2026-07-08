@@ -45,7 +45,7 @@ make test
 | Filiais / setores | `/filiais`, `/setores`, `GET /options` (UUID + `codigo_*`) |
 | Instâncias | `GET/POST /processos/{id}/instancias`, `POST /instancias/{id}/duplicar` |
 | Processos / revisões | `/processos`, `/revisoes`, `POST /revisoes/{id}/ativar`, `POST /revisoes/{id}/duplicar` |
-| Matriz impacto×esforço | `GET/PUT /revisoes/{id}/matriz-impacto-esforco`, `GET /instancias/{id}/matriz-impacto-esforco` |
+| Matriz impacto×esforço | `GET/PUT /revisoes/{id}/matriz-impacto-esforco`, `GET /instancias/{id}/matriz-impacto-esforco`, `GET /processos/{id}/matriz-impacto-esforco` |
 | Recursos | `/recursos-compartilhados` (`escopo_recurso`), vínculos |
 | Dashboard | `/dashboard/*` (`view`, `filial_id`, `setor_id`), `POST /recalcular`, snapshot |
 | Options | `GET /options` — catálogos + `access_scope` (RBAC filial) |

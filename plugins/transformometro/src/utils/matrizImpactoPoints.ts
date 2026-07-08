@@ -1,17 +1,27 @@
 import type { ImpactEffortPoint } from "@delpi/plugin-ui";
 
 import type { MatrizImpactoPonto } from "../data/api/transformometroMatrixApi";
+import { matrizSeriesColor } from "./matrizImpactoSeriesColors";
 
-export function matrizPontoToImpactEffortPoint(ponto: MatrizImpactoPonto): ImpactEffortPoint {
+export function matrizPontoToImpactEffortPoint(
+  ponto: MatrizImpactoPonto,
+  options?: { includeMelhoriaInLabel?: boolean }
+): ImpactEffortPoint {
+  const label =
+    options?.includeMelhoriaInLabel && ponto.instancia_label
+      ? `${ponto.instancia_label} · v${ponto.versao_revisao}`
+      : ponto.label;
+
   return {
     id: ponto.revisao_id,
-    label: ponto.label,
+    label,
     impacto: ponto.impacto,
     esforco: ponto.esforco,
     quadrante: ponto.quadrante,
     confianca: ponto.confianca,
     revisaoAtiva: ponto.revisao_ativa,
     muted: !ponto.incluir_na_matriz || ponto.cenario_tipo === "baseline",
+    accentColor: matrizSeriesColor(ponto.instancia_color_index),
   };
 }
 

@@ -48,6 +48,7 @@ import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
+import { ProcessoMatrizImpactoSection } from "../processos/ProcessoMatrizImpactoSection";
 import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
 import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
 import { ProcessoArquivosSection } from "../processo/ProcessoArquivosSection";
@@ -537,6 +538,18 @@ export function ProcessoDetailPage({
               await load();
             }}
           />
+          </ProcessoWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("priorizacao") ? (
+          <ProcessoWorkspaceSectionPanel active={activeSection === "priorizacao"} sectionId="priorizacao">
+            <ProcessoMatrizImpactoSection
+              processoId={processoId}
+              processoLabel={processo.nome_processo}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              onNavigate={onNavigate}
+            />
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 

@@ -20,6 +20,9 @@ from tm_app.infrastructure.persistence.repositories.dashboard_data_repository im
 from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
     ProcessoInstanciaRepository,
 )
+from tm_app.infrastructure.persistence.repositories.processo_repository import (
+    ProcessoRepository,
+)
 from tm_app.infrastructure.persistence.repositories.revisao_repository import (
     RevisaoRepository,
 )
@@ -166,6 +169,114 @@ class RevisaoImpactEffortMatrixService:
             "ativo": (
                 {
                     "revisao_id": ativo["revisao_id"],
+                    "impacto": ativo["impacto"],
+                    "esforco": ativo["esforco"],
+                    "quadrante": ativo["quadrante"],
+                }
+                if ativo
+                else None
+            ),
+        }
+
+    def build_for_processo(
+        self,
+        processo_id: str,
+        *,
+        competencia: str | None = None,
+        horizonte_meses: int = 12,
+        incluir_rejeitadas: bool = False,
+        incluir_baseline: bool = False,
+        threshold: float = THRESHOLD_DEFAULT,
+    ) -> dict[str, Any] | None:
+        processo = ProcessoRepository().get(processo_id)
+        if not processo:
+            return None
+
+        instancias = [
+            row
+            for row in ProcessoInstanciaRepository().list_by_processo(processo_id)
+            if not row.get("deletado")
+        ]
+
+        competencia = competencia or date.today().strftime("%Y-%m")
+        horizonte_meses = max(1, min(int(horizonte_meses), 36))
+        raw = DashboardDataRepository().load_raw()
+        raw_filtered = self._filter_raw_for_processo(raw, processo_id)
+
+        rows = self._calc.build_dashboard_rows(
+            raw_filtered,
+            escopo_unidades=count_active_filiais(),
+        )
+        rows_by_revisao = self._group_rows_by_revisao(rows)
+
+        melhorias: list[dict[str, Any]] = []
+        prepared: list[dict[str, Any]] = []
+
+        for color_index, instancia in enumerate(instancias):
+            instancia_id = str(instancia.get("instancia_id") or "")
+            if not instancia_id:
+                continue
+
+            melhorias.append(
+                {
+                    "instancia_id": instancia_id,
+                    "label": self._instancia_label(instancia),
+                    "color_index": color_index % 8,
+                }
+            )
+
+            revisoes = RevisaoRepository().list_by_instancia(instancia_id)
+            candidates = self._select_revisoes(
+                revisoes,
+                incluir_rejeitadas=incluir_rejeitadas,
+                incluir_baseline=incluir_baseline,
+            )
+            for revisao in candidates:
+                item = self._prepare_revision(
+                    revisao,
+                    rows_by_revisao=rows_by_revisao,
+                    raw=raw_filtered,
+                    competencia=competencia,
+                    horizonte_meses=horizonte_meses,
+                )
+                item["instancia_id"] = instancia_id
+                item["instancia_label"] = self._instancia_label(instancia)
+                item["instancia_color_index"] = color_index % 8
+                prepared.append(item)
+
+        scoring_pool = [
+            item
+            for item in prepared
+            if item["incluir_na_matriz"] and item["cenario_tipo"] in calc_rules.COMPARABLE_SCENARIOS
+        ]
+        pontos = [
+            self._score_revision(item, scoring_pool, threshold=threshold) for item in prepared
+        ]
+
+        ativos = [p for p in pontos if p.get("revisao_ativa") and p.get("incluir_na_matriz")]
+        ativo = ativos[0] if len(ativos) == 1 else None
+
+        return {
+            "processo_id": processo_id,
+            "competencia": competencia,
+            "horizonte_meses": horizonte_meses,
+            "threshold": threshold,
+            "eixos": {
+                "impacto": {"label": "Impacto", "min": 0, "max": 100},
+                "esforco": {"label": "Esforço", "min": 0, "max": 100},
+            },
+            "quadrantes": {
+                "quick_win": {"label": "Quick wins"},
+                "strategic": {"label": "Estratégicos"},
+                "fill_in": {"label": "Complementares"},
+                "rethink": {"label": "Reavaliar"},
+            },
+            "melhorias": melhorias,
+            "pontos": pontos,
+            "ativo": (
+                {
+                    "revisao_id": ativo["revisao_id"],
+                    "instancia_id": ativo.get("instancia_id"),
                     "impacto": ativo["impacto"],
                     "esforco": ativo["esforco"],
                     "quadrante": ativo["quadrante"],
@@ -473,6 +584,15 @@ class RevisaoImpactEffortMatrixService:
                 "impacto": {key: round(impact_norm[key], 2) for key in impact_keys},
                 "esforco": {key: round(effort_norm[key], 2) for key in effort_keys},
             },
+            **(
+                {
+                    "instancia_id": item["instancia_id"],
+                    "instancia_label": item["instancia_label"],
+                    "instancia_color_index": item["instancia_color_index"],
+                }
+                if item.get("instancia_id")
+                else {}
+            ),
         }
 
     def _group_rows_by_revisao(self, rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
@@ -514,6 +634,78 @@ class RevisaoImpactEffortMatrixService:
         retrabalho_delta = max(0.0, ref_retrabalho - cur_retrabalho)
         erro_delta = max(0.0, ref_erros - cur_erros)
         return retrabalho_delta * 100.0 + erro_delta
+
+    def _instancia_label(self, instancia: dict[str, Any]) -> str:
+        rotulo = str(instancia.get("rotulo_instancia") or "").strip()
+        if rotulo:
+            return rotulo
+        if instancia.get("todas_filiais_ativas"):
+            return "Todas as unidades"
+        filial = str(instancia.get("nome_filial") or instancia.get("codigo_filial") or "").strip()
+        setores = instancia.get("setores") or []
+        if isinstance(setores, str):
+            setores = []
+        setor_labels = [
+            str(item.get("nome_setor") or item.get("codigo_setor") or "").strip()
+            for item in setores
+            if isinstance(item, dict)
+        ]
+        setor_labels = [label for label in setor_labels if label]
+        if filial and setor_labels:
+            return f"{filial} · {', '.join(setor_labels[:2])}"
+        if filial:
+            return filial
+        if setor_labels:
+            return ", ".join(setor_labels[:2])
+        instancia_id = str(instancia.get("instancia_id") or "")
+        return instancia_id[:8] if instancia_id else "Melhoria"
+
+    def _filter_raw_for_processo(self, raw: TransformometroRawData, processo_id: str) -> TransformometroRawData:
+        instancia_ids = {
+            str(item.get("instancia_id"))
+            for item in raw.processo_instancias
+            if str(item.get("processo_id")) == processo_id
+        }
+        revisao_ids = {
+            str(item.get("revisao_id"))
+            for item in raw.revisoes
+            if str(item.get("processo_id")) == processo_id
+            or str(item.get("instancia_id")) in instancia_ids
+        }
+
+        target_resource_ids = {
+            str(v.get("recurso_compartilhado_id"))
+            for v in raw.revisao_recursos_compartilhados
+            if str(v.get("revisao_id")) in revisao_ids and v.get("recurso_compartilhado_id") is not None
+        }
+        related_resource_links = [
+            v
+            for v in raw.revisao_recursos_compartilhados
+            if str(v.get("recurso_compartilhado_id")) in target_resource_ids
+        ]
+        related_resources = [
+            r
+            for r in raw.recursos_compartilhados
+            if str(r.get("recurso_compartilhado_id")) in target_resource_ids
+        ]
+        related_resource_costs = [
+            c
+            for c in raw.recurso_custos
+            if str(c.get("recurso_compartilhado_id")) in target_resource_ids
+        ]
+
+        return TransformometroRawData(
+            processos=[p for p in raw.processos if str(p.get("processo_id")) == processo_id],
+            processo_instancias=[
+                i for i in raw.processo_instancias if str(i.get("instancia_id")) in instancia_ids
+            ],
+            revisoes=[r for r in raw.revisoes if str(r.get("revisao_id")) in revisao_ids],
+            medicoes=[m for m in raw.medicoes if str(m.get("revisao_id")) in revisao_ids],
+            investimentos=[i for i in raw.investimentos if str(i.get("revisao_id")) in revisao_ids],
+            recursos_compartilhados=related_resources,
+            revisao_recursos_compartilhados=related_resource_links,
+            recurso_custos=related_resource_costs,
+        )
 
     def _filter_raw_for_instancia(self, raw: TransformometroRawData, instancia_id: str) -> TransformometroRawData:
         revisao_ids = {

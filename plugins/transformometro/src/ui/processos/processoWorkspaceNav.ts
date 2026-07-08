@@ -11,6 +11,7 @@ export type ProcessoWorkspaceSectionId =
   | "diagrama"
   | "arquivos"
   | "melhorias"
+  | "priorizacao"
   | "timeline";
 
 export type RevisaoWorkspaceSectionId =
@@ -47,6 +48,7 @@ export const PROCESSO_WORKSPACE_SECTIONS: Array<{
   { id: "diagrama", label: "Diagrama macro" },
   { id: "arquivos", label: "Arquivos" },
   { id: "melhorias", label: "Melhorias" },
+  { id: "priorizacao", label: "Priorização (matriz)" },
   { id: "timeline", label: "Linha do tempo" },
 ];
 
@@ -54,8 +56,8 @@ export const REVISAO_WORKSPACE_SECTIONS: Array<{
   id: RevisaoWorkspaceSectionId;
   label: string;
 }> = [
-  { id: "matriz", label: "Matriz impacto × esforço" },
   { id: "vigencia", label: "Vigência e identificação" },
+  { id: "matriz", label: "Matriz impacto × esforço" },
   { id: "mapeamento", label: "Mapeamento da revisão" },
   { id: "diagrama", label: "Diagrama da revisão" },
   { id: "medicao", label: "Medição operacional" },
