@@ -10,6 +10,7 @@ import {
   PendingChangeBadge,
   StateBox,
 } from "../../components/data";
+import { EditableCell } from "../../components/EditableCell";
 import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
@@ -319,21 +320,20 @@ export function ConfiguracaoPage({
         sortValue: (item) => motivoEdits[item.motivo_id]?.descricao ?? item.descricao,
         render: (item) =>
           canManageMiniApplicators ? (
-            <div className="dm-editable-cell">
-              <input
-                value={motivoEdits[item.motivo_id]?.descricao ?? item.descricao}
-                onChange={(event) =>
-                  setMotivoEdits((prev) => ({
-                    ...prev,
-                    [item.motivo_id]: {
-                      ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
-                      descricao: event.target.value,
-                    },
-                  }))
-                }
-              />
-              <PendingChangeBadge visible={isMotivoDirty(item, motivoEdits)} />
-            </div>
+            <EditableCell
+              value={motivoEdits[item.motivo_id]?.descricao ?? item.descricao}
+              aria-label={`Descrição do motivo ${item.motivo_id}`}
+              onChange={(descricao) =>
+                setMotivoEdits((prev) => ({
+                  ...prev,
+                  [item.motivo_id]: {
+                    ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
+                    descricao,
+                  },
+                }))
+              }
+              badge={<PendingChangeBadge visible={isMotivoDirty(item, motivoEdits)} />}
+            />
           ) : (
             item.descricao
           ),
@@ -408,18 +408,17 @@ export function ConfiguracaoPage({
         render: (item) => {
           const draft = statusEdits[item.status_id] ?? item;
           return canManageMiniApplicators ? (
-            <div className="dm-editable-cell">
-              <input
-                value={draft.descricao}
-                onChange={(event) =>
-                  setStatusEdits((prev) => ({
-                    ...prev,
-                    [item.status_id]: { ...draft, descricao: event.target.value },
-                  }))
-                }
-              />
-              <PendingChangeBadge visible={isStatusDirty(item, statusEdits)} />
-            </div>
+            <EditableCell
+              value={draft.descricao}
+              aria-label={`Descrição do status ${item.status_id}`}
+              onChange={(descricao) =>
+                setStatusEdits((prev) => ({
+                  ...prev,
+                  [item.status_id]: { ...draft, descricao },
+                }))
+              }
+              badge={<PendingChangeBadge visible={isStatusDirty(item, statusEdits)} />}
+            />
           ) : (
             item.descricao
           );
@@ -434,21 +433,21 @@ export function ConfiguracaoPage({
         render: (item) => {
           const draft = statusEdits[item.status_id] ?? item;
           return canManageMiniApplicators ? (
-            <select
+            <EditableCell
+              as="select"
               value={draft.operador}
-              onChange={(event) =>
+              aria-label={`Operador do status ${item.status_id}`}
+              onChange={(operador) =>
                 setStatusEdits((prev) => ({
                   ...prev,
-                  [item.status_id]: { ...draft, operador: event.target.value },
+                  [item.status_id]: { ...draft, operador },
                 }))
               }
-            >
-              {STATUS_OPERATORS.map((operador) => (
-                <option key={operador} value={operador}>
-                  {operador}
-                </option>
-              ))}
-            </select>
+              options={STATUS_OPERATORS.map((operador) => ({
+                value: operador,
+                label: operador,
+              }))}
+            />
           ) : (
             item.operador
           );
@@ -463,17 +462,17 @@ export function ConfiguracaoPage({
         render: (item) => {
           const draft = statusEdits[item.status_id] ?? item;
           return canManageMiniApplicators ? (
-            <input
+            <EditableCell
               type="number"
               min={0}
-              max={200}
               value={draft.percentual}
-              onChange={(event) =>
+              aria-label={`Percentual do status ${item.status_id}`}
+              onChange={(raw) =>
                 setStatusEdits((prev) => ({
                   ...prev,
                   [item.status_id]: {
                     ...draft,
-                    percentual: Number(event.target.value),
+                    percentual: Number(raw),
                   },
                 }))
               }

@@ -10,16 +10,19 @@ type BaseNativeFieldProps = {
   hint?: string;
   span?: boolean;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
+  controlClassName?: string;
   classNames: FormFieldShellClassNames;
 };
 
 export type NativeTextFieldProps = BaseNativeFieldProps & {
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "date";
+  type?: "text" | "date" | "number";
   placeholder?: string;
   maxLength?: number;
+  min?: number | string;
   inputMode?: "decimal" | "numeric";
 };
 
@@ -29,13 +32,16 @@ export function NativeTextField({
   hint,
   span,
   required,
+  disabled,
   className,
+  controlClassName,
   classNames,
   value,
   onChange,
   type = "text",
   placeholder,
   maxLength,
+  min,
   inputMode,
 }: NativeTextFieldProps) {
   return (
@@ -49,11 +55,14 @@ export function NativeTextField({
     >
       <input
         id={id}
+        className={controlClassName}
         type={type}
         required={required}
+        disabled={disabled}
         value={value}
         placeholder={placeholder}
         maxLength={maxLength}
+        min={min}
         inputMode={inputMode}
         onChange={(event) => onChange(event.target.value)}
       />
@@ -79,7 +88,9 @@ export function NativeSelectField({
   hint,
   span,
   required,
+  disabled,
   className,
+  controlClassName,
   classNames,
   value,
   onChange,
@@ -97,7 +108,9 @@ export function NativeSelectField({
     >
       <select
         id={id}
+        className={controlClassName}
         required={required}
+        disabled={disabled}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >
@@ -116,6 +129,7 @@ export type NativeTextAreaFieldProps = BaseNativeFieldProps & {
   value: string;
   onChange: (value: string) => void;
   rows?: number;
+  placeholder?: string;
 };
 
 export function NativeTextAreaField({
@@ -124,11 +138,14 @@ export function NativeTextAreaField({
   hint,
   span = true,
   required,
+  disabled,
   className,
+  controlClassName,
   classNames,
   value,
   onChange,
   rows,
+  placeholder,
 }: NativeTextAreaFieldProps) {
   return (
     <FormFieldShell
@@ -141,9 +158,12 @@ export function NativeTextAreaField({
     >
       <textarea
         id={id}
+        className={controlClassName}
         rows={rows}
         required={required}
+        disabled={disabled}
         value={value}
+        placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
       />
     </FormFieldShell>

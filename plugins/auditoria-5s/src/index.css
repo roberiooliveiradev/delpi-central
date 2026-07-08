@@ -818,15 +818,23 @@
   color: var(--a5s-title);
 }
 
-.a5s-form > label {
+.a5s-form > label,
+.a5s-form .a5s-field {
   display: grid;
   gap: 6px;
   font-weight: 600;
   min-width: 0;
 }
 
+.a5s-form .a5s-field__label {
+  font-weight: 600;
+  color: inherit;
+}
+
 .a5s-form > label > input,
 .a5s-form > label > select,
+.a5s-form .a5s-field > input,
+.a5s-form .a5s-field > select,
 .a5s-form input,
 .a5s-form select {
   width: 100%;

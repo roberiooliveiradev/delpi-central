@@ -590,18 +590,15 @@ services:
 
   quality-labels:
     build:
-      context: ../plugins/quality-labels
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: quality-labels/Dockerfile
+      target: production
 
     container_name: delpi-quality-labels
     restart: unless-stopped
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/quality-labels:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -739,8 +736,8 @@ services:
 
   central-agendamento:
     build:
-      context: ../plugins/central-agendamento
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: central-agendamento/Dockerfile
       target: production
 
     container_name: delpi-central-agendamento

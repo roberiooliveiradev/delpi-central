@@ -16,6 +16,7 @@ import type {
   CustomerHit,
 } from "../types/qualityLabels";
 import { SAMPLE_OPTIONS } from "../utils/certificateFormUtils";
+import { QlNativeTextAreaField, QlNativeTextField } from "./qlFormFields";
 
 const STATUS_OPTIONS: {
   value: CertificateItemStatus;
@@ -228,46 +229,42 @@ export function CertificateFormFields({
               )}
             </div>
           </label>
-          <label className="ql-field">
-            <span className="ql-label-text">Item do cliente</span>
-            <input
-              className="ql-input"
-              value={form.customerItem}
-              onChange={(e) => patch({ customerItem: e.target.value })}
-              placeholder="Ex.: 2229-07/1"
-              disabled={disabled}
-            />
-          </label>
-          <label className="ql-field">
-            <span className="ql-label-text">Revisão</span>
-            <input
-              className="ql-input"
-              value={form.customerItemRev}
-              onChange={(e) => patch({ customerItemRev: e.target.value })}
-              placeholder="Ex.: 00"
-              disabled={disabled}
-            />
-          </label>
-          <label className="ql-field">
-            <span className="ql-label-text">Quantidade</span>
-            <input
-              className="ql-input"
-              value={form.quantity}
-              onChange={(e) => patch({ quantity: e.target.value })}
-              placeholder="Ex.: 10 peças"
-              disabled={disabled}
-            />
-          </label>
-          <label className="ql-field">
-            <span className="ql-label-text">Quantidade amostral</span>
-            <input
-              className="ql-input"
-              value={form.sampleQuantity}
-              onChange={(e) => patch({ sampleQuantity: e.target.value })}
-              placeholder="Ex.: 10 peças"
-              disabled={disabled}
-            />
-          </label>
+          <QlNativeTextField
+            id="ql-customer-item"
+            label="Item do cliente"
+            value={form.customerItem}
+            onChange={(customerItem) => patch({ customerItem })}
+            placeholder="Ex.: 2229-07/1"
+            disabled={disabled}
+            controlClassName="ql-input"
+          />
+          <QlNativeTextField
+            id="ql-customer-item-rev"
+            label="Revisão"
+            value={form.customerItemRev}
+            onChange={(customerItemRev) => patch({ customerItemRev })}
+            placeholder="Ex.: 00"
+            disabled={disabled}
+            controlClassName="ql-input"
+          />
+          <QlNativeTextField
+            id="ql-quantity"
+            label="Quantidade"
+            value={form.quantity}
+            onChange={(quantity) => patch({ quantity })}
+            placeholder="Ex.: 10 peças"
+            disabled={disabled}
+            controlClassName="ql-input"
+          />
+          <QlNativeTextField
+            id="ql-sample-quantity"
+            label="Quantidade amostral"
+            value={form.sampleQuantity}
+            onChange={(sampleQuantity) => patch({ sampleQuantity })}
+            placeholder="Ex.: 10 peças"
+            disabled={disabled}
+            controlClassName="ql-input"
+          />
           {(productCode || productionOrder) && (
             <div className="ql-field">
               <span className="ql-label-text">Item Delpi / OP</span>
@@ -366,28 +363,28 @@ export function CertificateFormFields({
 
       <section className="ql-cert-section">
         <div className="ql-cert-grid">
-          <label className="ql-field ql-field--wide">
-            <span className="ql-label-text">Observações Delpi</span>
-            <textarea
-              className="ql-input ql-textarea"
-              rows={2}
-              value={form.delpiNotes}
-              onChange={(e) => patch({ delpiNotes: e.target.value })}
-              placeholder="Observações da Delpi"
-              disabled={disabled}
-            />
-          </label>
-          <label className="ql-field ql-field--wide">
-            <span className="ql-label-text">Observações do Cliente</span>
-            <textarea
-              className="ql-input ql-textarea"
-              rows={2}
-              value={form.customerNotes}
-              onChange={(e) => patch({ customerNotes: e.target.value })}
-              placeholder="Validação do projeto pelo cliente"
-              disabled={disabled}
-            />
-          </label>
+          <QlNativeTextAreaField
+            id="ql-delpi-notes"
+            label="Observações Delpi"
+            span
+            rows={2}
+            value={form.delpiNotes}
+            onChange={(delpiNotes) => patch({ delpiNotes })}
+            placeholder="Observações da Delpi"
+            disabled={disabled}
+            controlClassName="ql-input ql-textarea"
+          />
+          <QlNativeTextAreaField
+            id="ql-customer-notes"
+            label="Observações do Cliente"
+            span
+            rows={2}
+            value={form.customerNotes}
+            onChange={(customerNotes) => patch({ customerNotes })}
+            placeholder="Validação do projeto pelo cliente"
+            disabled={disabled}
+            controlClassName="ql-input ql-textarea"
+          />
         </div>
       </section>
     </div>

@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 
 import type { SchedulingResource } from "../api/schedulingApi";
 import { RESOURCE_TYPES, type BranchCode, type ResourceType } from "../constants/scheduling";
+import {
+  CaNativeSelectField,
+  CaNativeTextAreaField,
+  CaNativeTextField,
+} from "./caFormFields";
 
 type Props = {
   open: boolean;
@@ -95,61 +100,55 @@ export function ResourceFormModal({
         </div>
 
         <form className="ca-form" onSubmit={(event) => void handleSubmit(event)}>
-          <label className="ca-field">
-            <span>Nome</span>
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ex.: Sala Azul"
-              required
-            />
-          </label>
+          <CaNativeTextField
+            id="ca-resource-name"
+            label="Nome"
+            value={name}
+            onChange={setName}
+            placeholder="Ex.: Sala Azul"
+            required
+          />
 
-          <label className="ca-field">
-            <span>Tipo</span>
-            <select
-              value={resourceType}
-              onChange={(event) => setResourceType(event.target.value as ResourceType)}
-            >
-              {RESOURCE_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CaNativeSelectField
+            id="ca-resource-type"
+            label="Tipo"
+            value={resourceType}
+            onChange={(value) => setResourceType(value as ResourceType)}
+            options={RESOURCE_TYPES.map((type) => ({
+              value: type.value,
+              label: type.label,
+            }))}
+          />
 
-          <label className="ca-field">
-            <span>Descrição</span>
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              rows={3}
-              placeholder="Localização, equipamentos, observações..."
-            />
-          </label>
+          <CaNativeTextAreaField
+            id="ca-resource-description"
+            label="Descrição"
+            value={description}
+            onChange={setDescription}
+            rows={3}
+            span={false}
+            placeholder="Localização, equipamentos, observações..."
+          />
 
           <div className="ca-form-row">
-            <label className="ca-field">
-              <span>Capacidade</span>
-              <input
-                type="number"
-                min={1}
-                value={capacity}
-                onChange={(event) => setCapacity(event.target.value)}
-                placeholder="Opcional"
-              />
-            </label>
+            <CaNativeTextField
+              id="ca-resource-capacity"
+              label="Capacidade"
+              type="number"
+              min={1}
+              value={capacity}
+              onChange={setCapacity}
+              placeholder="Opcional"
+            />
 
             {resourceType === "company_car" ? (
-              <label className="ca-field">
-                <span>Placa</span>
-                <input
-                  value={plate}
-                  onChange={(event) => setPlate(event.target.value)}
-                  placeholder="ABC1D23"
-                />
-              </label>
+              <CaNativeTextField
+                id="ca-resource-plate"
+                label="Placa"
+                value={plate}
+                onChange={setPlate}
+                placeholder="ABC1D23"
+              />
             ) : null}
           </div>
 

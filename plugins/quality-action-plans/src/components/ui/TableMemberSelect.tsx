@@ -1,3 +1,5 @@
+import { NativeSelectControl } from "@delpi/plugin-ui";
+
 import type { SelectOption } from "./types";
 
 type Props = {
@@ -16,18 +18,13 @@ export function TableMemberSelect({
   placeholder = "Selecione…",
 }: Props) {
   return (
-    <select
+    <NativeSelectControl
       className="pac-field__control"
       value={value}
+      onChange={onChange}
+      options={options}
+      placeholderOption={placeholder}
       aria-label={ariaLabel}
-      onChange={(event) => onChange(event.target.value)}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+    />
   );
 }

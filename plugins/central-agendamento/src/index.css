@@ -720,7 +720,8 @@
   gap: 6px;
 }
 
-.ca-field span {
+.ca-field span,
+.ca-field .ca-field__label {
   font-size: 13px;
   font-weight: 600;
   color: var(--ca-title);
