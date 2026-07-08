@@ -65,6 +65,19 @@ def test_document_vision_complete_entry():
     assert entry["phase"] == "document_vision"
     assert entry["group"] == "Visão de documentos"
     assert entry["state"] == "done"
+    assert entry["progress"]["remainingPercent"] >= 0
+
+
+def test_drawing_analysis_step_includes_progress():
+    entry = ChatStreamActivityService.drawing_analysis_step(
+        step_key="query_api",
+        message="Consultando API DELPI…",
+        has_pdf=True,
+    )
+
+    assert entry["progress"]["step"] >= 1
+    assert entry["progress"]["total"] >= entry["progress"]["step"]
+    assert entry["progress"]["remainingPercent"] >= 0
 
 
 def test_emit_document_vision_progress_invokes_callback():

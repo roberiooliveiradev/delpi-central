@@ -5,10 +5,12 @@ import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
 import {
   appendStatusToActivityLog,
   compactActivityLogForDisplay,
+  formatStreamingRemainingLine,
   fullActivityLogForDisplay,
   resolveActivityStatusMessage,
   resolveCurrentActivityLine,
   resolveStreamingHeadline,
+  resolveStreamingRemainingPercent,
   upsertStreamingActivityEntry,
 } from "./streamingActivityLog";
 
@@ -96,5 +98,40 @@ describe("streamingActivityLog", () => {
         state: "active",
       }),
     ).toBe("Pesquisando na internet...");
+  });
+
+  it("usa progresso explícito da API quando disponível", () => {
+    expect(
+      resolveStreamingRemainingPercent(
+        [
+          {
+            id: "vision-ocr",
+            phase: "document_vision",
+            message: "Reconhecendo texto (Tesseract)…",
+            state: "active",
+            progress: { step: 5, total: 18, remainingPercent: 72 },
+          },
+        ],
+        { isActive: true, isAnswering: false },
+      ),
+    ).toBe(72);
+  });
+
+  it("formata linha de percentual restante", () => {
+    expect(
+      formatStreamingRemainingLine(
+        [{ id: "1", message: "Consultando", state: "active" }],
+        { isActive: true, isAnswering: false },
+      ),
+    ).toMatch(/Faltam cerca de \d+% para concluir a resposta/);
+  });
+
+  it("reduz percentual restante quando a prosa já começou", () => {
+    expect(
+      resolveStreamingRemainingPercent([{ id: "1", message: "Gerando", state: "active" }], {
+        isActive: true,
+        isAnswering: true,
+      }),
+    ).toBe(8);
   });
 });

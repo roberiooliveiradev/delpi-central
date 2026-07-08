@@ -97,6 +97,13 @@
       "bom_ocr_detail": "Ampliando e relendo lista de materiais…",
       "dimensions_ocr": "Lendo cotas e decapes…"
     },
+    "progressRemainingTemplate": "Faltam cerca de {percent}% para concluir a resposta…",
+    "pipelineTotals": {
+      "drawingWithPdf": 18,
+      "drawingWithoutPdf": 16,
+      "default": 12,
+      "answeringRemainingPercent": 8
+    },
     "verbs": {
       "thinking": "Pensando",
       "planning": "Planejando",

@@ -223,6 +223,12 @@ export type ChatStreamActivityEntry = {
   path?: string;
   statusCode?: number;
   actionId?: string;
+  progress?: {
+    step?: number;
+    total?: number;
+    completePercent?: number;
+    remainingPercent?: number;
+  };
 };
 
 export type ChatWebSearchSourceQuality = {

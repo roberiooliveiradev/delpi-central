@@ -1,0 +1,9 @@
+{
+  "progressRemainingTemplate": "Faltam cerca de {percent}% para concluir a resposta…",
+  "pipelineTotals": {
+    "drawingWithPdf": 18,
+    "drawingWithoutPdf": 16,
+    "default": 12,
+    "answeringRemainingPercent": 8
+  }
+}

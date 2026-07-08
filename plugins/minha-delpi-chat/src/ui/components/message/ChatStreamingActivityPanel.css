@@ -246,6 +246,21 @@
   }
 }
 
+.mdc-chat-stream-activity__rise-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.mdc-chat-stream-activity__remaining {
+  margin: 0.15rem 0 0;
+  padding: 0;
+  color: color-mix(in srgb, var(--mdc-text-muted) 92%, var(--mdc-text));
+  font-size: 0.72rem;
+  line-height: 1.35;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 .mdc-chat-stream-activity__log-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }

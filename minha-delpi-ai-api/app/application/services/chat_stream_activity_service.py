@@ -35,9 +35,76 @@ def _drawing_stage_message(step_key: str) -> str | None:
 
 
 class ChatStreamActivityService:
+    _DRAWING_PREP_STEPS = 3
+    _DRAWING_VISION_STEPS = 3
+    _DRAWING_FINAL_STEPS = 2
+
     @classmethod
     def drawing_stage_message(cls, step_key: str) -> str | None:
         return _drawing_stage_message(step_key)
+
+    @classmethod
+    def _pipeline_total(cls, *, drawing: bool = False, has_pdf: bool = True) -> int:
+        totals = ChatAssistantContentService.get_mapping("stream", "activity", "pipelineTotals")
+
+        if drawing:
+            key = "drawingWithPdf" if has_pdf else "drawingWithoutPdf"
+
+            return int(totals.get(key) or totals.get("default") or 12)
+
+        return int(totals.get("default") or 12)
+
+    @classmethod
+    def _drawing_stage_progress(cls, step_key: str, *, has_pdf: bool) -> tuple[int, int]:
+        stages = ChatAssistantContentService.get_mapping("stream", "activity", "drawingStages")
+        keys = [
+            key
+            for key in stages
+            if not (key == "read_pdf" and not has_pdf)
+        ]
+        base = cls._DRAWING_PREP_STEPS + (cls._DRAWING_VISION_STEPS if has_pdf else 0)
+
+        try:
+            index = keys.index(step_key)
+        except ValueError:
+            index = max(len(keys) - 1, 0)
+
+        step = base + index + 1
+        total = base + len(keys) + cls._DRAWING_FINAL_STEPS
+
+        return step, total
+
+    @classmethod
+    def _document_vision_progress(cls, step_key: str) -> tuple[int, int]:
+        order = {"start": 1, "ocr": 2, "complete": 3}
+        step = cls._DRAWING_PREP_STEPS + order.get(step_key, 1)
+        total = cls._pipeline_total(drawing=True, has_pdf=True)
+
+        return step, total
+
+    @classmethod
+    def _attach_progress(
+        cls,
+        payload: dict[str, Any],
+        *,
+        step: int,
+        total: int,
+    ) -> dict[str, Any]:
+        if total <= 0:
+            return payload
+
+        bounded_step = max(1, min(step, total))
+        complete_percent = max(0, min(100, round((bounded_step / total) * 100)))
+        remaining_percent = max(0, 100 - complete_percent)
+
+        payload["progress"] = {
+            "step": bounded_step,
+            "total": total,
+            "completePercent": complete_percent,
+            "remainingPercent": remaining_percent,
+        }
+
+        return payload
 
     @classmethod
     def entry(
@@ -54,6 +121,8 @@ class ChatStreamActivityService:
         action_id: str | None = None,
         message: str | None = None,
         entry_id: str | None = None,
+        progress_step: int | None = None,
+        progress_total: int | None = None,
     ) -> dict[str, Any]:
         group = _phase_group(phase)
         summary = message or f"{verb} {target}".strip()
@@ -81,6 +150,9 @@ class ChatStreamActivityService:
 
         if action_id:
             payload["actionId"] = action_id
+
+        if progress_step is not None and progress_total is not None:
+            cls._attach_progress(payload, step=progress_step, total=progress_total)
 
         return payload
 
@@ -130,6 +202,8 @@ class ChatStreamActivityService:
             level=level,
             detail=detail,
             message=summary,
+            progress_step=step,
+            progress_total=total,
         )
 
     @classmethod
@@ -157,7 +231,13 @@ class ChatStreamActivityService:
         step_key: str,
         message: str,
         state: str = "active",
+        has_pdf: bool = True,
     ) -> dict[str, Any]:
+        progress_step, progress_total = cls._drawing_stage_progress(
+            step_key,
+            has_pdf=has_pdf,
+        )
+
         return cls.entry(
             verb="Analisando",
             target="desenho técnico",
@@ -166,6 +246,8 @@ class ChatStreamActivityService:
             level="info",
             message=message,
             entry_id=f"drawing-analysis-{step_key}",
+            progress_step=progress_step,
+            progress_total=progress_total,
         )
 
     @classmethod
@@ -185,6 +267,7 @@ class ChatStreamActivityService:
                     step_key="build_report",
                     message=_drawing_stage_message("build_report") or "Gerando relatório…",
                     state="done",
+                    has_pdf=has_pdf,
                 )
             )
             return
@@ -202,6 +285,7 @@ class ChatStreamActivityService:
                     step_key=step_key,
                     message=message,
                     state="active",
+                    has_pdf=has_pdf,
                 )
             )
 
@@ -213,6 +297,8 @@ class ChatStreamActivityService:
         message: str,
         state: str = "active",
     ) -> dict[str, Any]:
+        progress_step, progress_total = cls._document_vision_progress(step_key)
+
         return cls.entry(
             verb="Extraindo",
             target="texto do documento",
@@ -221,6 +307,8 @@ class ChatStreamActivityService:
             level="info",
             message=message,
             entry_id=f"document-vision-{step_key}",
+            progress_step=progress_step,
+            progress_total=progress_total,
         )
 
     @classmethod
@@ -355,6 +443,10 @@ class ChatStreamActivityService:
         label = path or action_id or f"consulta {index}"
 
         progress = f" ({index}/{total})" if total > 1 else ""
+        pipeline_total = cls._pipeline_total()
+        tool_offset = 4
+        progress_step = min(tool_offset + index, pipeline_total)
+        progress_total = max(pipeline_total, tool_offset + total)
 
         return cls.entry(
             verb="Consultando",
@@ -365,6 +457,8 @@ class ChatStreamActivityService:
             path=path,
             action_id=action_id,
             message=f"Buscando as informações que você pediu...{progress}",
+            progress_step=progress_step,
+            progress_total=progress_total,
         )
 
     @classmethod
