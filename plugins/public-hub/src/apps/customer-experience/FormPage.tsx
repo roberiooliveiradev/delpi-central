@@ -103,15 +103,34 @@ function PointIllustration({
   variant?: "section" | "inline";
 }) {
   const resolved = resolveBackgroundFit(fit);
-  const className = ["cxform-illustration", variant ? `cxform-illustration--${variant}` : ""]
+  const className = [
+    "cxform-illustration",
+    `cxform-illustration--${resolved}`,
+    variant ? `cxform-illustration--${variant}` : "",
+  ]
     .filter(Boolean)
     .join(" ");
+
+  if (resolved === "tile") {
+    return (
+      <figure className={className} aria-hidden="true">
+        <div
+          className="cxform-illustration__photo cxform-illustration__photo--tile"
+          style={{ backgroundImage: `url(${url})` }}
+        />
+      </figure>
+    );
+  }
+
   return (
     <figure className={className} aria-hidden="true">
-      <div
-        className={`cxform-illustration__photo cxform-illustration__photo--${resolved}`}
-        style={{ backgroundImage: `url(${url})` }}
-      />
+      <div className="cxform-illustration__frame">
+        <img
+          className={`cxform-illustration__img cxform-illustration__img--${resolved}`}
+          src={url}
+          alt=""
+        />
+      </div>
     </figure>
   );
 }

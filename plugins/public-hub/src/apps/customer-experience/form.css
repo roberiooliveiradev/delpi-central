@@ -194,12 +194,13 @@
   line-height: 1.2;
   letter-spacing: -0.02em;
   color: var(--pub-text);
-  text-align: left;
+  text-align: center;
 }
 
 .cxform--fullpage.cxform--wizard .cxform-page-title {
   margin: 0 0 18px;
   font-size: clamp(1.45rem, 4.6vw, 1.9rem);
+  text-align: center;
 }
 
 .cxform--fullpage.cxform--wizard .cxform-step .cxform-label,
@@ -211,44 +212,70 @@
   margin-bottom: 10px;
 }
 
-/* Ilustração por etapa/pergunta — mesma lógica de fit do fundo (fixed/scale/tile). */
+/* Ilustração por etapa/pergunta — fixed | scale (adapta) | tile. */
 .cxform-illustration {
   margin: 0 0 20px;
   padding: 0;
   text-align: center;
 }
 
-.cxform-illustration__photo {
+.cxform-illustration__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 220px;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.cxform-illustration__img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Escalável / Preencher: imagem se adapta ao container sem cortar. */
+.cxform-illustration__img--scale {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Tamanho fixo: proporção original, centrada, sem esticar. */
+.cxform-illustration__img--fixed {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: none;
+  object-position: center;
+}
+
+.cxform-illustration__photo--tile {
   display: block;
   width: 100%;
   height: 220px;
   max-width: 100%;
   margin: 0 auto;
   border-radius: 12px;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
-.cxform-illustration__photo--scale {
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.cxform-illustration__photo--fixed {
-  background-size: auto;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.cxform-illustration__photo--tile {
   background-size: auto;
   background-repeat: repeat;
   background-position: top left;
 }
 
-.cxform-illustration--section .cxform-illustration__photo {
+.cxform-illustration--section .cxform-illustration__frame,
+.cxform-illustration--section .cxform-illustration__photo--tile {
   height: 260px;
 }
 
@@ -256,14 +283,15 @@
   margin-bottom: 16px;
 }
 
-.cxform-illustration--inline .cxform-illustration__photo {
+.cxform-illustration--inline .cxform-illustration__frame,
+.cxform-illustration--inline .cxform-illustration__photo--tile {
   height: 200px;
 }
 
 /* Wizard: faixa hero sob o título da etapa (ou no topo se não houver título). */
 .cxform--fullpage.cxform--wizard .cxform-illustration {
   margin: 0 -24px 24px;
-  padding: clamp(20px, 5vw, 36px) clamp(16px, 4vw, 28px);
+  padding: 0;
   background: var(--pub-illustration-band);
   border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
 }
@@ -272,25 +300,25 @@
   margin-top: -24px;
 }
 
-.cxform--fullpage.cxform--wizard .cxform-illustration__photo {
+.cxform--fullpage.cxform--wizard .cxform-illustration__frame,
+.cxform--fullpage.cxform--wizard .cxform-illustration__photo--tile {
   width: 100%;
-  height: min(280px, 36vh);
-  min-height: clamp(120px, 20vw, 180px);
-  margin: 0 auto;
+  height: min(320px, 42vh);
+  min-height: clamp(160px, 28vw, 240px);
+  border-radius: 0;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration__img {
   filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
 }
 
-/* Escalável: preenche toda a faixa (sem faixa lateral vazia). */
-.cxform--fullpage.cxform--wizard .cxform-illustration:has(.cxform-illustration__photo--scale) {
-  padding-left: 0;
-  padding-right: 0;
+.cxform--fullpage.cxform--wizard .cxform-illustration--fixed {
+  padding: clamp(16px, 4vw, 28px);
 }
 
-.cxform--fullpage.cxform--wizard .cxform-illustration__photo--scale {
-  width: 100%;
-  border-radius: 0;
-  background-size: cover;
-  background-position: center;
+.cxform--fullpage.cxform--wizard .cxform-illustration--fixed .cxform-illustration__frame {
+  height: min(280px, 36vh);
+  min-height: clamp(120px, 20vw, 180px);
 }
 
 .cxform-step {
