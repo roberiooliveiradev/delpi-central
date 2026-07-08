@@ -69,7 +69,7 @@ API PNG:
 | **E1** | Motor tabular + PDF DELPI; piloto commercial | ✅ |
 | **E2** | Botões shared + 7 dashboards reexportam motor | ✅ |
 | **E3** | Matrix bridge + jsPDF shared + PNG chart + PVA + CX tabular | ✅ |
-| **E4** | CSV Excel-aware drawing (se 2+ consumidores) | backlog |
+| **E4** | CSV Excel-aware drawing (chat) | ⏳ backlog — só se ≥2 consumidores; ver residual no [refactoring-roadmap.md](./refactoring-roadmap.md) § 7 |
 
 ## Como consumir
 

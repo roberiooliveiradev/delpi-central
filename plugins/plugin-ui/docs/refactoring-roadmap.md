@@ -317,15 +317,40 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 ---
 
-## 7. Próximo passo recomendado
+## 7. Status (jul/2026) — concluído × residual
 
-1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2 concluída** nos dashboards departamentais.
-3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
-5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados.
-6. **Fase 4 concluída** — utilitários centralizados.
-7. **Fase 5 parcial** — `FileDropzone`, confirm controller, `ConfirmModalPanel`, SI `operationalUnitLabels`; backlog: `Modal` base, dropzones chat/CE.
-8. **Exportação (Fases E1–E3)** — motor tabular + PDF DELPI + botões + jsPDF (`export/jspdf`) + PNG chart + matrix/PVA; catálogo [export-catalog.md](./export-catalog.md).
+### Concluído (núcleo)
+
+| Frente | Escopo |
+|--------|--------|
+| **F1** Help | Plugins MFE; portal permanece local |
+| **F2** Shell dashboard | Kpi/Chart/Loading/Pagination/Filter/MultiSelect/DataTable nos dept. |
+| **F3** Forms/detalhe | F3.1–F3.11 (Native*, EditableTableCell, PageHeader, Detail*, BookingModal, maintenance, TV, ProcessoForm) |
+| **F4** Utils | paginationPages, chartColors, operationalUnitLabels, goalDisplay |
+| **F5** (parcial) | FileDropzone, confirm controller, ConfirmModalPanel, ModalShell, SI utils |
+| **Export E1–E3** | Motor tabular, PDF DELPI, botões, jsPDF, PNG chart, matrix, PVA — [export-catalog.md](./export-catalog.md) |
+
+### Residual — avaliar demanda (não bloqueia produção)
+
+| Prioridade ROI | Item | Notas |
+|----------------|------|--------|
+| Alta | **strategic-indicators** Native*/SelectControl | Goals, departments, filters, change requests — maior volume de `<select>`/`<textarea>` crus |
+| Média | **auditoria-5s** `AuditNcItemCard` | Textareas + select com wrap de ícone — precisa slot/ícone no Native* ou wrapper fino |
+| Média | **tv-dashboard** ComunicadoFormatRibbon | Ribbon tipográfico — domínio UI, não Native* puro |
+| Média | **transformometro** forms restantes | Revisão / recurso / vigência (ProcessoForm já Native*) |
+| Baixa | **quality-action-plans** RNC/8D, 5 Whys | Domínio especial (Ishikawa, fluxos) |
+| Baixa | **customer-experience** FormsPanel / form builder | Builder dinâmico |
+| Baixa | **minha-delpi-chat** admin / agent builder | Escopo chat; dropzone distinto |
+| Backlog F5 | Dropzones chat + CE | API/domínio distintos |
+| Backlog F5 | `Modal` base unificado | Variantes SI/drawer |
+| Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
+| Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
+
+### Próximo lote sugerido (quando retomr)
+
+1. SI `IndicatorFiltersBar` + `IndicatorGoalForm` → Native*/SelectControl + CSS BEM.
+2. a5s NC fields (após `afterControl` / slot de ícone, se necessário).
+3. Fechar F5 dropzones ou Modal base sob pedido explícito.
 
 ---
 
