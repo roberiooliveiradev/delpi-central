@@ -13,9 +13,11 @@ type BaseNativeFieldProps = {
   span?: boolean;
   required?: boolean;
   disabled?: boolean;
+  readOnly?: boolean;
   className?: string;
   controlClassName?: string;
   afterControl?: ReactNode;
+  onBlur?: () => void;
   classNames: FormFieldShellClassNames;
 };
 
@@ -26,7 +28,9 @@ export type NativeTextFieldProps = BaseNativeFieldProps & {
   placeholder?: string;
   maxLength?: number;
   min?: number | string;
+  max?: number | string;
   inputMode?: "decimal" | "numeric";
+  autoFocus?: boolean;
 };
 
 export function NativeTextField({
@@ -36,9 +40,11 @@ export function NativeTextField({
   span,
   required,
   disabled,
+  readOnly,
   className,
   controlClassName,
   afterControl,
+  onBlur,
   classNames,
   value,
   onChange,
@@ -46,7 +52,9 @@ export function NativeTextField({
   placeholder,
   maxLength,
   min,
+  max,
   inputMode,
+  autoFocus,
 }: NativeTextFieldProps) {
   return (
     <FormFieldShell
@@ -64,11 +72,15 @@ export function NativeTextField({
         type={type}
         required={required}
         disabled={disabled}
+        readOnly={readOnly}
         value={value}
         placeholder={placeholder}
         maxLength={maxLength}
         min={min}
+        max={max}
         inputMode={inputMode}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       />
     </FormFieldShell>
@@ -97,6 +109,7 @@ export function NativeSelectField({
   className,
   controlClassName,
   afterControl,
+  onBlur,
   classNames,
   value,
   onChange,
@@ -119,6 +132,7 @@ export function NativeSelectField({
         required={required}
         disabled={disabled}
         value={value}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       >
         {placeholderOption !== undefined ? <option value="">{placeholderOption}</option> : null}
@@ -146,9 +160,11 @@ export function NativeTextAreaField({
   span = true,
   required,
   disabled,
+  readOnly,
   className,
   controlClassName,
   afterControl,
+  onBlur,
   classNames,
   value,
   onChange,
@@ -171,8 +187,10 @@ export function NativeTextAreaField({
         rows={rows}
         required={required}
         disabled={disabled}
+        readOnly={readOnly}
         value={value}
         placeholder={placeholder}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       />
     </FormFieldShell>

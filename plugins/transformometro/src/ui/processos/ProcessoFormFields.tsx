@@ -1,6 +1,6 @@
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import { filterSetoresByFilial, resolveSetorIdForFilial } from "../../utils/setores";
@@ -35,22 +35,24 @@ export function ProcessoFormFields({
   return (
     <div className="ds-filters-row ds-filters-row--extended">
       {codigoProcesso ? (
-        <div className="ds-filter-box">
-          <FieldLabel className="tm-field__label" label="Código" hint={TM_HELP_TOOLTIPS.processos.codigo} />
-          <input id="tm-proc-codigo" readOnly value={codigoProcesso} />
-        </div>
-      ) : null}
-      <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-proc-nome">
-          <FieldLabel className="tm-field__label" label="Nome do processo *" hint={TM_HELP_TOOLTIPS.processos.nome} />
-        </label>
-        <input
-          id="tm-proc-nome"
-          required
-          value={form.nome_processo}
-          onChange={(e) => set({ nome_processo: e.target.value })}
+        <TmNativeTextField
+          id="tm-proc-codigo"
+          label="Código"
+          hint={TM_HELP_TOOLTIPS.processos.codigo}
+          value={codigoProcesso}
+          onChange={() => undefined}
+          readOnly
         />
-      </div>
+      ) : null}
+      <TmNativeTextField
+        id="tm-proc-nome"
+        label="Nome do processo *"
+        hint={TM_HELP_TOOLTIPS.processos.nome}
+        className="ds-filter-box--wide"
+        value={form.nome_processo}
+        onChange={(nome_processo) => set({ nome_processo })}
+        required
+      />
       {showInstanciaFields ? (
         <>
           <SelectField
@@ -88,60 +90,49 @@ export function ProcessoFormFields({
         onChange={(status) => set({ status_processo: status })}
         options={mapSelectOptions(options.status_processo)}
       />
-      <div className="ds-filter-box">
-        <label htmlFor="tm-proc-familia">
-          <FieldLabel className="tm-field__label" label="Família (rateio)" hint={TM_HELP_TOOLTIPS.processos.familia} />
-        </label>
-        <input
-          id="tm-proc-familia"
-          placeholder="ex.: ia, automação"
-          value={form.familia_processo}
-          onChange={(e) => set({ familia_processo: e.target.value })}
-        />
-      </div>
-      <div className="ds-filter-box">
-        <label htmlFor="tm-proc-ferramenta">
-          <FieldLabel className="tm-field__label" label="Agrupador ferramenta" hint={TM_HELP_TOOLTIPS.processos.agrupadorFerramenta} />
-        </label>
-        <input
-          id="tm-proc-ferramenta"
-          placeholder="ex.: ChatGPT, Power Automate"
-          value={form.agrupador_ferramenta}
-          onChange={(e) => set({ agrupador_ferramenta: e.target.value })}
-        />
-      </div>
-      <div className="ds-filter-box">
-        <label htmlFor="tm-proc-gestor">
-          <FieldLabel className="tm-field__label" label="Gestor responsável" hint={TM_HELP_TOOLTIPS.processos.gestor} />
-        </label>
-        <input
-          id="tm-proc-gestor"
-          value={form.gestor_responsavel}
-          onChange={(e) => set({ gestor_responsavel: e.target.value })}
-        />
-      </div>
-      <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-proc-objetivo">
-          <FieldLabel className="tm-field__label" label="Objetivo" hint={TM_HELP_TOOLTIPS.processos.objetivo} />
-        </label>
-        <textarea
-          id="tm-proc-objetivo"
-          rows={2}
-          value={form.objetivo_processo}
-          onChange={(e) => set({ objetivo_processo: e.target.value })}
-        />
-      </div>
-      <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-proc-descricao">
-          <FieldLabel className="tm-field__label" label="Descrição" hint={TM_HELP_TOOLTIPS.processos.descricao} />
-        </label>
-        <textarea
-          id="tm-proc-descricao"
-          rows={2}
-          value={form.descricao_processo}
-          onChange={(e) => set({ descricao_processo: e.target.value })}
-        />
-      </div>
+      <TmNativeTextField
+        id="tm-proc-familia"
+        label="Família (rateio)"
+        hint={TM_HELP_TOOLTIPS.processos.familia}
+        value={form.familia_processo}
+        onChange={(familia_processo) => set({ familia_processo })}
+        placeholder="ex.: ia, automação"
+      />
+      <TmNativeTextField
+        id="tm-proc-ferramenta"
+        label="Agrupador ferramenta"
+        hint={TM_HELP_TOOLTIPS.processos.agrupadorFerramenta}
+        value={form.agrupador_ferramenta}
+        onChange={(agrupador_ferramenta) => set({ agrupador_ferramenta })}
+        placeholder="ex.: ChatGPT, Power Automate"
+      />
+      <TmNativeTextField
+        id="tm-proc-gestor"
+        label="Gestor responsável"
+        hint={TM_HELP_TOOLTIPS.processos.gestor}
+        value={form.gestor_responsavel}
+        onChange={(gestor_responsavel) => set({ gestor_responsavel })}
+      />
+      <TmNativeTextAreaField
+        id="tm-proc-objetivo"
+        label="Objetivo"
+        hint={TM_HELP_TOOLTIPS.processos.objetivo}
+        className="ds-filter-box--wide"
+        span={false}
+        rows={2}
+        value={form.objetivo_processo}
+        onChange={(objetivo_processo) => set({ objetivo_processo })}
+      />
+      <TmNativeTextAreaField
+        id="tm-proc-descricao"
+        label="Descrição"
+        hint={TM_HELP_TOOLTIPS.processos.descricao}
+        className="ds-filter-box--wide"
+        span={false}
+        rows={2}
+        value={form.descricao_processo}
+        onChange={(descricao_processo) => set({ descricao_processo })}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { BranchScope } from "../api/tvDashboardApi";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
 
 type Props = {
   id: string;
@@ -17,29 +17,29 @@ export function BranchField({ id, label, hint, scope, value, onChange, placehold
 
   if (branches.length > 0) {
     return (
-      <div className="td-field">
-        <FieldLabel htmlFor={id} label={label} hint={hint} className="td-field__label" />
-        <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
-          {allowConsolidated ? <option value="">Consolidado</option> : null}
-          {branches.map((branch) => (
-            <option key={branch} value={branch}>
-              Filial {branch}
-            </option>
-          ))}
-        </select>
-      </div>
+      <TdNativeSelectField
+        id={id}
+        label={label}
+        hint={hint}
+        value={value}
+        onChange={onChange}
+        placeholderOption={allowConsolidated ? "Consolidado" : undefined}
+        options={branches.map((branch) => ({
+          value: branch,
+          label: `Filial ${branch}`,
+        }))}
+      />
     );
   }
 
   return (
-    <div className="td-field">
-      <FieldLabel htmlFor={id} label={label} hint={hint} className="td-field__label" />
-      <input
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? "Ex.: 01"}
-      />
-    </div>
+    <TdNativeTextField
+      id={id}
+      label={label}
+      hint={hint}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder ?? "Ex.: 01"}
+    />
   );
 }

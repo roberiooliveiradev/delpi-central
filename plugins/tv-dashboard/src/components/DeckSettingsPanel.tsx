@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { FieldLabel } from "@delpi/plugin-ui";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BranchField } from "./BranchField";
 import { DeckInspectorLayout } from "./deck";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
+import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
 
 type Props = {
   activeTab: Extract<DeckRibbonTabId, "slide" | "playlist">;
@@ -119,37 +119,35 @@ export function DeckSettingsPanel({
     return (
       <>
         <div className="td-deck-tabs__grid">
-          <div className="td-field">
-            <FieldLabel htmlFor="td-slide-title" label="Título" hint={F.slideTitle} className="td-field__label" />
-            <input
-              id="td-slide-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => saveSlidePatch({ title })}
-            />
-          </div>
-          <div className="td-field">
-            <FieldLabel htmlFor="td-slide-duration" label="Duração (s)" hint={F.slideDuration} className="td-field__label" />
-            <input
-              id="td-slide-duration"
-              type="number"
-              min={5}
-              max={600}
-              value={durationSec}
-              onChange={(e) => setDurationSec(Number(e.target.value))}
-              onBlur={() => saveSlidePatch({ durationSec })}
-            />
-          </div>
+          <TdNativeTextField
+            id="td-slide-title"
+            label="Título"
+            hint={F.slideTitle}
+            value={title}
+            onChange={setTitle}
+            onBlur={() => saveSlidePatch({ title })}
+          />
+          <TdNativeTextField
+            id="td-slide-duration"
+            label="Duração (s)"
+            hint={F.slideDuration}
+            type="number"
+            min={5}
+            max={600}
+            value={String(durationSec)}
+            onChange={(value) => setDurationSec(Number(value))}
+            onBlur={() => saveSlidePatch({ durationSec })}
+          />
           {slide.slideType === "external" ? (
-            <div className="td-field td-deck-tabs__field--wide">
-              <FieldLabel htmlFor="td-slide-url" label="URL (https://)" hint={F.slideUrl} className="td-field__label" />
-              <input
-                id="td-slide-url"
-                value={externalUrl}
-                onChange={(e) => setExternalUrl(e.target.value)}
-                onBlur={() => saveSlidePatch({ externalUrl })}
-              />
-            </div>
+            <TdNativeTextField
+              id="td-slide-url"
+              label="URL (https://)"
+              hint={F.slideUrl}
+              className="td-deck-tabs__field--wide"
+              value={externalUrl}
+              onChange={setExternalUrl}
+              onBlur={() => saveSlidePatch({ externalUrl })}
+            />
           ) : !isCustomSlide && slide.nativeScreenKey !== "supplies_stock_value" ? (
             <>
               <BranchField
@@ -163,18 +161,17 @@ export function DeckSettingsPanel({
                   saveSlidePatch({ branch: value });
                 }}
               />
-              <div className="td-field">
-                <FieldLabel htmlFor="td-slide-period" label="Período (dias)" hint={F.slidePeriod} className="td-field__label" />
-                <input
-                  id="td-slide-period"
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={periodDays}
-                  onChange={(e) => setPeriodDays(Number(e.target.value))}
-                  onBlur={() => saveSlidePatch({ periodDays })}
-                />
-              </div>
+              <TdNativeTextField
+                id="td-slide-period"
+                label="Período (dias)"
+                hint={F.slidePeriod}
+                type="number"
+                min={1}
+                max={365}
+                value={String(periodDays)}
+                onChange={(value) => setPeriodDays(Number(value))}
+                onBlur={() => saveSlidePatch({ periodDays })}
+              />
             </>
           ) : !isCustomSlide ? (
             <BranchField
@@ -201,60 +198,51 @@ export function DeckSettingsPanel({
   if (activeTab === "playlist") {
     return (
       <div className="td-deck-tabs__grid">
-        <div className="td-field">
-          <FieldLabel htmlFor="td-viewport" label="Resolução alvo" hint={F.viewport} className="td-field__label" />
-          <select
-            id="td-viewport"
-            value={playlist.viewportProfile}
-            onChange={(e) => onSavePlaylistSettings("viewportProfile", e.target.value)}
-          >
-            {VIEWPORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="td-field">
-          <FieldLabel htmlFor="td-transition" label="Transição" hint={F.transition} className="td-field__label" />
-          <select
-            id="td-transition"
-            value={playlist.transitionStyle}
-            onChange={(e) => onSavePlaylistSettings("transitionStyle", e.target.value)}
-          >
-            {TRANSITION_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="td-field">
-          <FieldLabel htmlFor="td-duration-default" label="Duração padrão (s)" hint={F.defaultDuration} className="td-field__label" />
-          <input
-            id="td-duration-default"
-            type="number"
-            min={5}
-            max={600}
-            value={playlist.defaultDurationSec}
-            onChange={(e) => onSavePlaylistSettings("defaultDurationSec", Number(e.target.value))}
-          />
-        </div>
-        <div className="td-field">
-          <FieldLabel htmlFor="td-refresh" label="Atualizar dados a cada (s)" hint={F.refreshInterval} className="td-field__label" />
-          <input
-            id="td-refresh"
-            type="number"
-            min={30}
-            max={3600}
-            value={playlist.globalRefreshSec}
-            onChange={(e) => onSavePlaylistSettings("globalRefreshSec", Number(e.target.value))}
-          />
-        </div>
-        <div className="td-field td-deck-tabs__field--wide">
-          <FieldLabel htmlFor="td-public-url" label="Link público" hint={F.publicUrl} className="td-field__label" />
-          <input id="td-public-url" readOnly value={playlist.publicUrl ?? ""} />
-        </div>
+        <TdNativeSelectField
+          id="td-viewport"
+          label="Resolução alvo"
+          hint={F.viewport}
+          value={playlist.viewportProfile}
+          onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
+          options={VIEWPORT_OPTIONS}
+        />
+        <TdNativeSelectField
+          id="td-transition"
+          label="Transição"
+          hint={F.transition}
+          value={playlist.transitionStyle}
+          onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
+          options={TRANSITION_OPTIONS}
+        />
+        <TdNativeTextField
+          id="td-duration-default"
+          label="Duração padrão (s)"
+          hint={F.defaultDuration}
+          type="number"
+          min={5}
+          max={600}
+          value={String(playlist.defaultDurationSec)}
+          onChange={(value) => onSavePlaylistSettings("defaultDurationSec", Number(value))}
+        />
+        <TdNativeTextField
+          id="td-refresh"
+          label="Atualizar dados a cada (s)"
+          hint={F.refreshInterval}
+          type="number"
+          min={30}
+          max={3600}
+          value={String(playlist.globalRefreshSec)}
+          onChange={(value) => onSavePlaylistSettings("globalRefreshSec", Number(value))}
+        />
+        <TdNativeTextField
+          id="td-public-url"
+          label="Link público"
+          hint={F.publicUrl}
+          className="td-deck-tabs__field--wide"
+          value={playlist.publicUrl ?? ""}
+          onChange={() => undefined}
+          readOnly
+        />
       </div>
     );
   }

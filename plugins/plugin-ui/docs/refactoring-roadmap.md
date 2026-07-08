@@ -236,6 +236,7 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | Forms residual (a5s / QL / CA Native*) | auditoria-5s, quality-labels, central-agendamento | ✅ F3.8 |
 | `BookingModal` Native* + `datetime-local` | central-agendamento | ✅ F3.9 |
 | Maintenance Native* (`dmFormFields` + `afterControl`) | Configuração, MiniAplicadores, revisão programada | ✅ F3.10 |
+| Native* `onBlur`/`readOnly`/`max` + TV + Transformômetro | tv-dashboard deck/BranchField; ProcessoFormFields | ✅ F3.11 |
 
 ### Fase 4 — Utilitários compartilhados (1 sprint)
 
@@ -274,7 +275,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ | Detail* | sim |
 | `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
-| `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ DataTable ✅ | EditableSectionCard ✅ PageHeader ✅ | sim |
+| `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ DataTable ✅ | EditableSectionCard ✅ PageHeader ✅ ProcessoForm Native* ✅ | sim |
 | `cadastro-kaizen` | ✅ | FiltersRow ✅ MultiSelect ✅ DataTable ✅ KpiCard ✅ | Forms ✅ SectionCard ✅ EditableSectionCard ✅ PageHeader ✅ StateBanner ✅ | sim |
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
@@ -287,7 +288,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `auditoria-5s` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ | AuditHeaderForm Native* ✅ | sim |
 | `quality-labels` | — | — | CertificateFormFields + Admin form Native* ✅ | sim |
 | `central-agendamento` | — | — | ResourceFormModal + BookingModal Native* ✅ | sim |
-| `tv-dashboard` | ✅ | — | — | sim |
+| `tv-dashboard` | ✅ | — | BranchField / Deck / AddSlide / NewPlaylist Native* ✅ | sim |
 | `portal` | ❌ fora de escopo | — | — | N/A (shell) |
 
 ---

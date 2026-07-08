@@ -269,7 +269,7 @@ Campos nativos label+controle para plugins que estilizam `<input>`/`<select>`/`<
 
 | Export | Descrição |
 |--------|-----------|
-| `TextField` / `SelectField` / `TextAreaField` | Campo com `FormFieldShell` (`type`: `text` \| `date` \| `datetime-local` \| `number`; `afterControl` para erro/hint extra) |
+| `TextField` / `SelectField` / `TextAreaField` | Campo com `FormFieldShell` (`type`: `text` \| `date` \| `datetime-local` \| `number`; `afterControl`; `onBlur` / `readOnly` / `max` / `autoFocus`) |
 | `FormFieldShell` | Label + hint + slot children + `afterControl` opcional |
 | `formFieldShellKaizenClasses` | BEM `{prefix}-field`, `{prefix}-span-2` |
 

@@ -72,4 +72,27 @@ describe("NativeTextField", () => {
 
     expect(container.querySelector(".dm-field__error")?.textContent).toBe("Obrigatório");
   });
+
+  it("respeita readOnly e onBlur", () => {
+    let blurred = false;
+    render(
+      <NativeTextField
+        id="td-public"
+        label="Link"
+        value="https://example"
+        onChange={() => undefined}
+        readOnly
+        onBlur={() => {
+          blurred = true;
+        }}
+        classNames={formFieldShellKaizenClasses("td")}
+      />,
+    );
+
+    const input = screen.getByLabelText("Link");
+    expect(input.hasAttribute("readOnly")).toBe(true);
+    input.focus();
+    input.blur();
+    expect(blurred).toBe(true);
+  });
 });

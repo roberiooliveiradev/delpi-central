@@ -5,6 +5,7 @@ import { BranchField } from "./BranchField";
 import { ComunicadoComposerField } from "./ComunicadoComposerField";
 import { ExternalSlidePreview } from "../presentation/ExternalSlidePreview";
 import { parseComunicadoConfig, serializeComunicadoConfig } from "@delpi/tv-dashboard-presentation";
+import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
 
 type Props = {
   open: boolean;
@@ -162,22 +163,24 @@ export function AddSlideModal({
             </>
           ) : mode === "native" ? (
             <>
-              <div className="td-field">
-                <label htmlFor="td-screen-key">Tela nativa</label>
-                <select
-                  id="td-screen-key"
-                  value={screenKey || catalog[0]?.key || ""}
-                  onChange={(e) => resetNativeDefaults(catalog.find((c) => c.key === e.target.value) ?? catalog[0])}
-                >
-                  {catalog.map((item) => (
-                    <option key={item.key} value={item.key}>{item.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="td-field">
-                <label htmlFor="td-slide-title">Título</label>
-                <input id="td-slide-title" value={title || selected?.label || ""} onChange={(e) => setTitle(e.target.value)} />
-              </div>
+              <TdNativeSelectField
+                id="td-screen-key"
+                label="Tela nativa"
+                value={screenKey || catalog[0]?.key || ""}
+                onChange={(value) =>
+                  resetNativeDefaults(catalog.find((c) => c.key === value) ?? catalog[0])
+                }
+                options={catalog.map((item) => ({
+                  value: item.key,
+                  label: item.label,
+                }))}
+              />
+              <TdNativeTextField
+                id="td-slide-title"
+                label="Título"
+                value={title || selected?.label || ""}
+                onChange={setTitle}
+              />
               {selected?.key === "custom_message" ? (
                 <ComunicadoComposerField
                   playlistId={playlistId}
@@ -194,10 +197,15 @@ export function AddSlideModal({
                     value={branch}
                     onChange={setBranch}
                   />
-                  <div className="td-field">
-                    <label htmlFor="td-period">Período (dias)</label>
-                    <input id="td-period" type="number" min={1} max={365} value={periodDays} onChange={(e) => setPeriodDays(Number(e.target.value))} />
-                  </div>
+                  <TdNativeTextField
+                    id="td-period"
+                    label="Período (dias)"
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={String(periodDays)}
+                    onChange={(value) => setPeriodDays(Number(value))}
+                  />
                 </>
               ) : (
                 <BranchField
@@ -211,14 +219,21 @@ export function AddSlideModal({
             </>
           ) : (
             <>
-              <div className="td-field">
-                <label htmlFor="td-ext-title">Título</label>
-                <input id="td-ext-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Power BI, site..." />
-              </div>
-              <div className="td-field">
-                <label htmlFor="td-ext-url">URL (https://)</label>
-                <input id="td-ext-url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} placeholder="https://..." required />
-              </div>
+              <TdNativeTextField
+                id="td-ext-title"
+                label="Título"
+                value={title}
+                onChange={setTitle}
+                placeholder="Power BI, site..."
+              />
+              <TdNativeTextField
+                id="td-ext-url"
+                label="URL (https://)"
+                value={externalUrl}
+                onChange={setExternalUrl}
+                placeholder="https://..."
+                required
+              />
               {externalUrl.trim() ? (
                 <div className="td-external-preview-box">
                   <p className="td-subtitle">Teste de incorporação</p>
@@ -228,10 +243,15 @@ export function AddSlideModal({
             </>
           )}
           {mode !== "catalog" ? (
-            <div className="td-field">
-              <label htmlFor="td-slide-duration">Duração (s)</label>
-              <input id="td-slide-duration" type="number" min={5} max={600} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} />
-            </div>
+            <TdNativeTextField
+              id="td-slide-duration"
+              label="Duração (s)"
+              type="number"
+              min={5}
+              max={600}
+              value={String(durationSec)}
+              onChange={(value) => setDurationSec(Number(value))}
+            />
           ) : null}
           <div className="td-modal-actions">
             <button type="button" className="td-btn" onClick={onClose}>Cancelar</button>

@@ -1432,13 +1432,19 @@
 }
 
 .dashboard-transformometro .ds-filter-box input:not([type="checkbox"]):not([type="radio"]),
-.dashboard-transformometro .ds-filter-box select {
+.dashboard-transformometro .ds-filter-box select,
+.dashboard-transformometro .ds-filter-box textarea {
   min-height: var(--ds-control-height);
   border-radius: var(--ds-control-radius);
   border: 1px solid var(--ds-card-border);
   padding: 8px 12px;
   background: var(--ds-input-bg);
   color: var(--ds-text);
+}
+
+.dashboard-transformometro .ds-filter-box textarea {
+  min-height: calc(var(--ds-control-height) * 1.6);
+  resize: vertical;
 }
 
 /* Checkbox / radio — label inline, controle compacto (não herdar input de texto) */
