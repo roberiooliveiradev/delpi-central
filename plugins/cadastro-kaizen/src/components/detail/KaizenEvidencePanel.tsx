@@ -14,6 +14,17 @@ import type {
   KaizenEvidenceType,
 } from "../../types/kaizen";
 import { EVIDENCE_STAGE_GALLERY_LABELS, EVIDENCE_STAGE_OPTIONS } from "../../constants/evidenceStages";
+import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import {
+  canPreviewEvidence,
+  createPendingUploadId,
+  inferEvidenceTypeFromFile,
+  KaizenEvidenceDropzone,
+  KaizenEvidencePendingList,
+  KaizenEvidencePreviewModal,
+  type EvidencePreviewSource,
+  type KaizenPendingUpload,
+} from "../evidence";
 import {
   EmptyHint,
   FormGrid,
@@ -23,21 +34,6 @@ import {
   TextField,
   TitleWithHelp,
 } from "../ui";
-import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
-import {
-  KaizenEvidencePendingList,
-  type KaizenPendingUpload,
-} from "../evidence/KaizenEvidencePendingList";
-import {
-  createPendingUploadId,
-  inferEvidenceTypeFromFile,
-} from "../evidence/kaizenEvidenceUtils";
-import { canPreviewEvidence } from "../evidence/kaizenEvidencePreview";
-import {
-  KaizenEvidencePreviewModal,
-  type EvidencePreviewSource,
-} from "../evidence/KaizenEvidencePreviewModal";
 
 type KaizenEvidencePanelProps = {
   kaizenId: string;

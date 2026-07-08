@@ -208,4 +208,4 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | Evidências | `createDashboardFileDropzone` | `KaizenEvidenceDropzone` |
 | Modal | `createModalShell` | `Modal.tsx` |
 
-Commits de referência (jul/2026): série `refactor(cadastro-kaizen): … via plugin-ui` até `refactor(cadastro-kaizen): concluir migração UI para @delpi/plugin-ui`.
+Commits de referência (jul/2026): série `refactor(cadastro-kaizen): … via plugin-ui` até barrels `ui`/`data`/`form`/`detail`/`evidence` e limpeza de shims.
