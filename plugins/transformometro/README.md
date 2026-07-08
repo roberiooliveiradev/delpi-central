@@ -8,25 +8,38 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 |------|--------|
 | `/apps/transformometro/dashboard` | KPIs, 3 visões (consolidado/filial/dept), alertas, export, recalcular |
 | `/apps/transformometro/processos` | Lista; create com primeira instância |
-| `/apps/transformometro/processos/{id}` | Mestre + painel instâncias + revisões + **diagrama macro** |
-| `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Instância + **escopo no diagrama** |
-| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão + **overlay diagrama** |
-| `/apps/transformometro/filiais` | CRUD filiais |
-| `/apps/transformometro/setores` | Catálogo de departamentos |
-| `/apps/transformometro/recursos` | Catálogo global (`escopo_recurso`) |
+| `/apps/transformometro/processos/{id}` | **Workspace** do processo-mestre (árvore lateral) |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Melhoria no workspace |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão + subpastas na árvore |
+| `/apps/transformometro/configuracoes/unidades` | **Workspace Configurações** — catálogo de unidades |
+| `/apps/transformometro/configuracoes/departamentos` | Departamentos no workspace |
+| `/apps/transformometro/configuracoes/recursos` | Recursos compartilhados no workspace |
 | `/apps/transformometro/dados` | Export/import backup JSON |
+
+**Legado (ainda parseado):** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — redirecionam para o mesmo conteúdo em `/configuracoes/*`.
 
 **Fonte de dados:** Postgres via `transformometro-api` (não planilha Google).
 
 Cadastro pelas telas do app. Backup/restauração via **Exportar / Importar JSON** (mesclar por ID ou substituir tudo) — inclui diagramas macro, escopos e overlays (Playbook 19).
 
+## Workspaces (jul/2026)
+
+Dois ambientes com **árvore lateral** colapsável e redimensionável (persistência no `localStorage`):
+
+| Aba | Árvore | Conteúdo principal |
+|-----|--------|-------------------|
+| **Processos** | Processo → seções (visão geral, mapeamento, diagrama, melhorias…) → melhoria → revisão → **subpastas** (matriz, vigência, medição…) | Detalhe embutido à direita |
+| **Configurações** | Unidades / Departamentos / Recursos → itens do catálogo → subpastas do recurso (dados, custos, vínculos) | Listas e formulários embutidos |
+
+Na revisão, cada subpasta corresponde a uma seção do cadastro (hash `#matriz`, `#vigencia`, etc.). Badge de quadrante (matriz impacto × esforço) aparece no nó da revisão na árvore de Processos.
+
 ## Diagramas (Playbook 19)
 
 | Camada | Onde na UI |
 |--------|------------|
-| **Macro** | Detalhe do processo → seção «Diagrama macro» |
-| **Escopo** | Detalhe da instância → «Escopo no diagrama» (subset de nós) |
-| **Overlay** | Cadastro da revisão → «Diagrama da revisão» (as-is / to-be) |
+| **Macro** | Workspace processo → **Diagrama macro** |
+| **Escopo** | Workspace melhoria → **Escopo no diagrama** |
+| **Overlay** | Workspace revisão → **Diagrama da revisão** (as-is / to-be) |
 
 Editor: React Flow (`FlowchartEditor`, lazy) — BPMN-lite, swimlanes, templates, auto-layout, export PNG.
 
@@ -47,7 +60,7 @@ npm run build
 
 ## Manifesto
 
-`transformometro.manifest.json` — registrar na Core API após deploy (rotas dashboard, processos, recursos, `/dados`):
+`transformometro.manifest.json` — registrar na Core API após deploy (rotas dashboard, processos, configurações, `/dados`):
 
 ```bash
 export TOKEN="<jwt apps.manage>"

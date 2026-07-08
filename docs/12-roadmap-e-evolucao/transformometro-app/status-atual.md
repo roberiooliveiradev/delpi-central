@@ -1,6 +1,6 @@
 # Status atual — Transformômetro
 
-Atualizado: **jul/2026** (V035 referência de comparação entre revisões; editor Mermaid bidirecional; aliases PT-BR de cenários; Playbook 20; V034; UI SelectField + modal)
+Atualizado: **jul/2026** (workspace Processos + Configurações; subpastas de revisão; duplicar revisão; matriz V038; V035 referência de comparação; editor Mermaid bidirecional; Playbook 20; UI SelectField + modal)
 
 > **Regra jul/2026 — referência de comparação (`revisao_referencia_id`, V035).** Revisões não-baseline indicam **contra qual revisão** calcular economia e diffs (diagrama/WBS). A **baseline** não precisa de referência. Se `revisao_referencia_id` estiver vazio (legado), o motor usa a **baseline da instância** (`_pick_reference_review` → fallback `_pick_baseline_review`). Migration V035 faz backfill das revisões existentes apontando para a baseline da mesma melhoria.
 
@@ -29,7 +29,7 @@ Atualizado: **jul/2026** (V035 referência de comparação entre revisões; edit
 
 | Área | Status |
 |------|--------|
-| API + migrations **V001–V035** | ✅ Auto no boot (`TM_RUN_MIGRATIONS_ON_STARTUP=true`) |
+| API + migrations **V001–V038** | ✅ Auto no boot (`TM_RUN_MIGRATIONS_ON_STARTUP=true`) |
 | Processo-mestre + **melhorias** (filial + N setores, escopo livre) | ✅ V013–V015 + **V019** + **V034**; painel MFE **Melhorias** |
 | **CRUD filiais** + editar/excluir instância | ✅ MFE `FiliaisPage` + `PUT/DELETE /instancias/{id}` |
 | Filiais / setores **UUID** + `codigo_*` | ✅ V011–V012; CRUD + options |
@@ -60,12 +60,15 @@ Atualizado: **jul/2026** (V035 referência de comparação entre revisões; edit
 | **Campos melhoria** (resumo, fase, prioridade, go-live) | ✅ V034 |
 | Documentação Playbook 19 | ✅ playbook, ADR, schemas, [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) |
 | Documentação Playbook 20 | ✅ [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) |
-| **Matriz impacto × esforço (Playbook 21)** | ✅ S0–S4 — cadastro revisão, melhoria, badge árvore; S5 multi-processo/export backlog |
+| **Matriz impacto × esforço (Playbook 21)** | ✅ S0–S4 — cadastro revisão, melhoria, badge árvore, migration V038; S5 multi-processo/export backlog |
+| **Workspace Processos** | ✅ Árvore lateral colapsável/redimensionável; subpastas por revisão (hash); badges matriz |
+| **Workspace Configurações** | ✅ Unidades + departamentos + recursos unificados em `/configuracoes/*`; rotas legadas compatíveis |
+| **Duplicar revisão** | ✅ `POST /revisoes/{id}/duplicar` + botão na listagem de revisões |
 | **MFE UX jul/2026** | ✅ SelectField (padrão PAC), modal de confirmação centralizado, transições suaves, linha do tempo |
 
 ## Migrations automáticas
 
-Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose e `infra/.env`), o container **`delpi-transformometro-api`** aplica V001–V035 pendentes no **startup** (`run_migrations_on_startup` no lifespan FastAPI). Falha de migration **impede** a API de subir.
+Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose e `infra/.env`), o container **`delpi-transformometro-api`** aplica V001–V038 pendentes no **startup** (`run_migrations_on_startup` no lifespan FastAPI). Falha de migration **impede** a API de subir.
 
 > **V021** redefine `processo_competencia_snapshot` e `dashboard_competencia_evolucao` com a média por instância (agregação em 2 níveis). Só relevante se `TM_DASHBOARD_PERSIST_CACHE=true` (leitura legada da tabela) — nesse caso, rodar **recalc full** após aplicar. Com o padrão (fonte única live), as views/tabela não são usadas.
 
@@ -79,12 +82,12 @@ docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistenc
 
 1. **Backup JSON** do cadastro atual (`import_cadastro_json.py export`).
 2. Rebuild + recreate `transformometro-api` + `transformometro`.
-3. Migrations sobem sozinhas; validar `status` até **V035** (ou última pendente).
+3. Migrations sobem sozinhas; validar `status` até **V038** (ou última pendente).
 4. **Bootstrap filiais** (V011 não faz seed):  
    `python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/...json`
 5. **Recalc full** do dashboard (obrigatório após V017/V019/V020): Dashboard → Recalcular ou `POST /transformometro/dashboard/recalcular`.
-6. Registrar manifesto atualizado (`register-manifest.sh`) — permissões RBAC filial + rota `/filiais`.
-7. Smoke: dashboard (3 visões), processo → melhorias → revisão URL canônica, macro → escopo → overlay, mapeamento WBS, Transforma+ summary (<500ms com cache).
+6. Registrar manifesto atualizado (`register-manifest.sh`) — permissões RBAC filial + rota `/configuracoes/unidades`.
+7. Smoke: dashboard (3 visões), processo → workspace → melhorias → revisão (subpastas + matriz), configurações (árvore unidades/dept/recursos), macro → escopo → overlay, mapeamento WBS, Transforma+ summary (<500ms com cache).
 
 Detalhe: [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) · [OPERATIONS.md](./OPERATIONS.md).
 
@@ -166,5 +169,7 @@ export TOKEN="..." BASE_URL="https://www.minhadelpi.com.br"
 - [adr-diagramas-processo.md](../../../transformometro-api/docs/adr-diagramas-processo.md)
 - [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)
 - [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md)
+- [PLAYBOOK-21-matriz-impacto-esforco-revisao.md](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md)
+- [playbook-21-implementation-status.md](../../../transformometro-api/docs/playbook-21-implementation-status.md)
 - [TUTORIAL-USUARIO.md](./TUTORIAL-USUARIO.md)
 - [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md)

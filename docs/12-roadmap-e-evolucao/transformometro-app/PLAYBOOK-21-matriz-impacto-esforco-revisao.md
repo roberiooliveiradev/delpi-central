@@ -1,6 +1,6 @@
 # Playbook 21 — Matriz impacto × esforço por revisão (melhoria)
 
-**Status:** S0 design lock (jul/2026) — S1–S4 pendentes  
+**Status:** S0–S4 entregues (jul/2026) — S5 backlog  
 **Decisões fechadas (S0):**
 
 - **Unidade de análise = revisão** (`revisao_id`), não instância nem processo-mestre isolado.

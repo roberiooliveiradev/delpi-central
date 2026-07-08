@@ -22,7 +22,7 @@ python -m uvicorn tm_app.main:app --reload --port 8010
 
 ## Migrations
 
-Ver [migrations/README.md](migrations/README.md) (**V001–V020**, Playbook 18 S1–S12). Startup automático: `TM_RUN_MIGRATIONS_ON_STARTUP=true`.
+Ver [migrations/README.md](migrations/README.md) (**V001–V038**). Startup automático: `TM_RUN_MIGRATIONS_ON_STARTUP=true`.
 
 ```bash
 PLUGINS_DB_HOST=localhost PLUGINS_DB_PORT=5433 ...
@@ -44,7 +44,8 @@ make test
 |-------|----------|
 | Filiais / setores | `/filiais`, `/setores`, `GET /options` (UUID + `codigo_*`) |
 | Instâncias | `GET/POST /processos/{id}/instancias`, `POST /instancias/{id}/duplicar` |
-| Processos / revisões | `/processos`, `/revisoes`, `POST /revisoes/{id}/ativar` |
+| Processos / revisões | `/processos`, `/revisoes`, `POST /revisoes/{id}/ativar`, `POST /revisoes/{id}/duplicar` |
+| Matriz impacto×esforço | `GET/PUT /revisoes/{id}/matriz-impacto-esforco`, `GET /instancias/{id}/matriz-impacto-esforco` |
 | Recursos | `/recursos-compartilhados` (`escopo_recurso`), vínculos |
 | Dashboard | `/dashboard/*` (`view`, `filial_id`, `setor_id`), `POST /recalcular`, snapshot |
 | Options | `GET /options` — catálogos + `access_scope` (RBAC filial) |

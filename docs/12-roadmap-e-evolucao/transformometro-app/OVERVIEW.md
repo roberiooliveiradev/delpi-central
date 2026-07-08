@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** jul/2026 (V035 referência entre revisões; Mermaid bidirecional; aliases de cenário; Playbook 18/20; UI «Melhoria»)
+**Última atualização:** jul/2026 (workspace Processos + Configurações; subpastas de revisão; duplicar revisão; matriz impacto×esforço V038; V035 referência entre revisões)
 
 ## O que é
 
@@ -31,15 +31,17 @@ Origem histórica: **Google Sheets + Apps Script**. Hoje a aplicação web na **
 |------|--------|
 | `/apps/transformometro/dashboard` | KPIs, toggle Consolidado/Filial/Departamento, alertas, export, recalcular |
 | `/apps/transformometro/processos` | Lista; create com primeira melhoria; duplicar processo completo |
-| `/apps/transformometro/processos/{id}` | Mestre + painel **Melhorias** + revisões + diagrama + mapeamento WBS |
-| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão (rota `/instancias/` = melhoria na UI) |
+| `/apps/transformometro/processos/{id}` | **Workspace** do mestre (árvore: seções, melhorias, revisões e subpastas) |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão (rota `/instancias/` = melhoria na UI); seções via hash `#matriz`, `#vigencia`, … |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado (redirect automático) |
-| `/apps/transformometro/filiais` | CRUD de filiais |
-| `/apps/transformometro/setores` | Catálogo de setores |
-| `/apps/transformometro/recursos` | Catálogo global (`escopo_recurso`) |
+| `/apps/transformometro/configuracoes/unidades` | Catálogo de filiais (workspace Configurações) |
+| `/apps/transformometro/configuracoes/departamentos` | Catálogo de setores |
+| `/apps/transformometro/configuracoes/recursos` | Catálogo global (`escopo_recurso`) |
 | `/apps/transformometro/dados` | Export/import backup JSON |
 
-No detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos) e botão **Definir como ativa** (como na planilha legado — sem etapa de aprovação).
+**Legado:** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — ainda reconhecidos pelo roteador.
+
+No workspace de Processos, cada revisão expõe subpastas na árvore (matriz, vigência, medição, investimentos, recursos, evidências, diagrama, mapeamento). A aba superior **Configurações** concentra os três catálogos operacionais com o mesmo padrão de sidebar colapsável e redimensionável.
 
 ## Fluxo do usuário
 

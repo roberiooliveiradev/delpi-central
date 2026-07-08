@@ -176,6 +176,23 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 | Editor **Mermaid** bidirecional (preview ao vivo + aplicar ao canvas) | ✅ |
 | Layout tela cheia do diagrama (sem sobreposição de controles) | ✅ |
 
+## Fase 10 — Workspaces de navegação ✅ entregue (jul/2026)
+
+**Objetivo:** navegação em árvore no padrão IDE — Processos e catálogos operacionais — com sidebar colapsável, redimensionável e deep-link por hash.
+
+| Entrega | Detalhe | Status |
+|---------|---------|--------|
+| **Workspace Processos** | `ProcessoWorkspaceShell` + árvore processo → melhoria → revisão | ✅ |
+| **Subpastas de revisão** | Matriz, vigência, mapeamento, diagrama, medição, investimentos, recursos, evidências (`#matriz`, …) | ✅ |
+| **Sidebar colapsável/redimensionável** | Persistência `localStorage` por workspace | ✅ |
+| **Workspace Configurações** | Unifica Unidades, Departamentos e Recursos em `/configuracoes/*` | ✅ |
+| **Subpastas de recurso** | Dados, custos, vínculos (`#custos`, `#vinculos`) | ✅ |
+| **Duplicar revisão** | `POST /revisoes/{id}/duplicar` + botão na listagem | ✅ |
+| **Rotas legadas** | `/filiais`, `/setores`, `/recursos`, `/cadastros/*` ainda parseadas | ✅ |
+| **Nav superior** | 4 abas: Dashboard · Processos · Configurações · Exportar/Importar | ✅ |
+
+**Critério de pronto:** abrir processo, navegar subpastas da revisão sem perder contexto; cadastrar unidade/depto/recurso só pela árvore de Configurações; duplicar revisão gera cópia inativa com versão sugerida.
+
 ## Fase 6 — Limpeza de legado (pendente)
 
 **Objetivo:** remover código e config órfãos após confirmação em produção.

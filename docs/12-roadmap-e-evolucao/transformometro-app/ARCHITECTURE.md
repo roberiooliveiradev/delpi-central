@@ -307,16 +307,18 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 |---------|--------|
 | `/apps/transformometro/dashboard` | KPIs, toggle **Consolidado / Filial / Departamento**, alertas, export, recalcular |
 | `/apps/transformometro/processos` | Lista; create com primeira instância |
-| `/apps/transformometro/processos/{id}` | Mestre + painel **Instâncias operacionais** + revisões filtradas |
-| `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Instância selecionada |
-| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL **canônica** da revisão |
+| `/apps/transformometro/processos/{id}` | **Workspace** do mestre (árvore: seções, melhorias, revisões, subpastas) |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Melhoria no workspace |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL **canônica** da revisão; seções via hash (`#matriz`, `#vigencia`, …) |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado → redirect para URL canônica |
-| `/apps/transformometro/filiais` | CRUD filiais |
-| `/apps/transformometro/setores` | Catálogo setores (`codigo_setor` na UI) |
-| `/apps/transformometro/recursos` | Catálogo global + campo **`escopo_recurso`** |
+| `/apps/transformometro/configuracoes/unidades` | Workspace **Configurações** — filiais |
+| `/apps/transformometro/configuracoes/departamentos` | Departamentos (`codigo_setor` na UI) |
+| `/apps/transformometro/configuracoes/recursos` | Recursos + **`escopo_recurso`** + subpastas custos/vínculos |
 | `/apps/transformometro/dados` | Export/import backup JSON 1.1 (`filiais`, `processo_instancias`) |
 
-Módulos MFE: `routeParser.ts`, `dashboardViewScope.ts`, `ProcessoInstanciasPanel.tsx`.
+**Legado MFE:** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — parseados pelo roteador.
+
+Módulos MFE: `routeParser.ts`, `processoWorkspaceNav.ts`, `configuracoesWorkspaceNav.ts`, `ProcessoWorkspaceShell.tsx`, `ConfiguracoesWorkspaceShell.tsx`, `dashboardViewScope.ts`.
 
 ## Integração infra
 

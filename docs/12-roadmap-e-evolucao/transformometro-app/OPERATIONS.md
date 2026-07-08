@@ -9,10 +9,8 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 |---------|-----|
 | Portal | `https://www.minhadelpi.com.br/apps/transformometro` |
 | Dashboard | `/apps/transformometro/dashboard` |
-| Processos + instâncias | `/apps/transformometro/processos` → detalhe → painel instâncias |
-| Filiais | `/apps/transformometro/filiais` |
-| Setores | `/apps/transformometro/setores` |
-| Recursos (catálogo) | `/apps/transformometro/recursos` |
+| Processos (workspace) | `/apps/transformometro/processos` → árvore lateral + subpastas de revisão |
+| Configurações | `/apps/transformometro/configuracoes/unidades` (unidades, departamentos, recursos) |
 | Exportar / Importar JSON | `/apps/transformometro/dados` |
 | API health | `/apps/transformometro-api/transformometro/health` |
 
@@ -22,8 +20,8 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 2. Após mudanças relevantes (revisão ativa, vigências, medições): **Dashboard → Recalcular**.
 3. **Alertas** (economia líquida negativa ≥3 meses) e export **CSV** ou **Excel** no dashboard.
 4. Cadastro: preencher **família** e **agrupador ferramenta** quando o processo participa de rateio compartilhado.
-5. **Recursos compartilhados:** cadastrar em **Recursos** (menu); vincular em Processos → revisão → aba Recursos.
-6. **Revisões:** cadastrar baseline/melhorias; informar **Compara com** (V035) em cenários não-baseline; **Definir como ativa** quando for usar no dashboard.
+5. **Recursos compartilhados:** cadastrar em **Configurações → Recursos**; vincular na revisão (subpasta Recursos ou workspace).
+6. **Revisões:** cadastrar baseline/melhorias; informar **Compara com** (V035) em cenários não-baseline; **Definir como ativa** quando for usar no dashboard; **Duplicar** para clonar versão (cópia inativa).
 7. Cadastro oficial somente no portal (sem importação de planilha).
 8. **Instâncias:** replicar timeline entre filiais/setores pelo painel **Replicar instância** (canônico); evitar duplicar processo-mestre (legado deprecado).
 9. **Dashboard:** escolher visão Consolidado / Filial / Departamento; usuários com RBAC filial veem escopo em `/options` → `access_scope`.

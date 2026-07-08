@@ -66,6 +66,7 @@
 
 - `InstanciaMatrizRevisoesSection` — scatter + tabela ranking na melhoria
 - Badge quadrante na árvore (`processoWorkspaceNav`, `ProcessoWorkspaceShell`, sidebar)
+- Subpastas de revisão na árvore (`#matriz`, `#vigencia`, …) — `RevisaoWorkspaceSectionPanel`
 - `fetchInstanciaMatrizImpactoEsforco` + `matrizImpactoPoints.ts`
 
 ## Próximo passo (S5 — backlog)

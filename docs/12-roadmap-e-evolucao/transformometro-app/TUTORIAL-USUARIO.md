@@ -1,7 +1,7 @@
 # Tutorial de uso — Transformômetro
 
 **Público:** gestores, analistas de processo e usuários operacionais  
-**Última atualização:** jul/2026 (melhorias com escopo livre, mapeamento WBS, UI SelectField + modal de confirmação)  
+**Última atualização:** jul/2026 (workspace Processos + Configurações; subpastas de revisão; duplicar revisão; matriz impacto×esforço; referência entre revisões V035)  
 **Acesso:** Minha Delpi → menu **Transformômetro** (`/apps/transformometro`)
 
 Este guia explica **como cadastrar corretamente**, **como usar diagramas** (macro → escopo → revisão) e **como tirar proveito das demais funcionalidades** do app.
@@ -26,8 +26,8 @@ Tudo gira em torno de uma **revisão** — cenário calculável (baseline, melho
 
 | Conceito | O que é | Onde cadastra |
 |----------|---------|---------------|
-| **Unidade (filial)** | Planta ou site operacional (ex.: SC, ES) | Menu **Unidades** |
-| **Departamento (setor)** | Área dentro da unidade (ex.: Engenharia, Qualidade) | Menu **Departamentos** |
+| **Unidade (filial)** | Planta ou site operacional (ex.: SC, ES) | **Configurações** → Unidades |
+| **Departamento (setor)** | Área dentro da unidade (ex.: Engenharia, Qualidade) | **Configurações** → Departamentos |
 | **Processo-mestre** | Iniciativa corporativa (ex.: «Automação do fechamento») | Menu **Processos** |
 | **Melhoria operacional** | Aplicação do processo a **unidade + departamento(s)** — foco distinto de transformação | Detalhe do processo → painel **Melhorias** |
 | **Revisão** | Cenário com vigência, medição e custos | Detalhe da melhoria → **Nova revisão** |
@@ -36,7 +36,7 @@ Tudo gira em torno de uma **revisão** — cenário calculável (baseline, melho
 | **Escopo no diagrama** | Quais nós do macro valem **nesta melhoria** | Detalhe da melhoria → **Escopo no diagrama** |
 | **Escopo no mapeamento** | Quais processos-chave da WBS esta melhoria executa | Detalhe da melhoria → **Escopo no mapeamento** |
 | **Overlay da revisão** | Estado visual **as-is** (baseline) ou **to-be** (melhoria) — fluxo e/ou WBS | Detalhe da revisão → **Diagrama** / **Mapeamento da revisão** |
-| **Recurso compartilhado** | Licença/ferramenta rateada entre revisões | Menu **Recursos** + vínculo na revisão |
+| **Recurso compartilhado** | Licença/ferramenta rateada entre revisões | **Configurações** → Recursos + vínculo na revisão |
 
 ### Hierarquia recomendada
 
@@ -60,7 +60,7 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 
 ### Passo 1 — Unidades
 
-1. Abra **Unidades**.
+1. Abra **Configurações** → pasta **Unidades** (ou clique em uma unidade na árvore).
 2. Cadastre cada filial com **código TOTVS** (ex.: `01`, `02`) e nome.
 3. Mantenha status **ativo** para aparecer em formulários e filtros.
 
@@ -68,14 +68,14 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 
 ### Passo 2 — Departamentos
 
-1. Abra **Departamentos**.
+1. Abra **Configurações** → pasta **Departamentos**.
 2. Cadastre o código (ex.: `engenharia`) e o nome.
 3. Marque **em quais unidades** o departamento existe.
 4. Um departamento só pode ser usado em processos das unidades vinculadas.
 
 ### Passo 3 — Recursos compartilhados (opcional, mas cedo se houver licenças globais)
 
-1. Abra **Recursos**.
+1. Abra **Configurações** → pasta **Recursos compartilhados**.
 2. Cadastre licenças, assinaturas ou ferramentas compartilhadas.
 3. Defina **escopo do recurso**:
    - **Empresa** — rateio entre todos os vínculos vigentes;
@@ -122,18 +122,71 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 | Aba / menu | Função |
 |------------|--------|
 | **Dashboard** | KPIs, gráficos, alertas, exportação, recalcular |
-| **Processos** | Lista e cadastro mestre |
-| **Unidades** | Catálogo de filiais |
-| **Departamentos** | Catálogo de setores |
-| **Recursos** | Licenças e ferramentas compartilhadas |
+| **Processos** | Lista e **workspace** do processo-mestre (árvore lateral) |
+| **Configurações** | Unidades, departamentos e recursos compartilhados (workspace com árvore) |
 | **Exportar / Importar** | Backup e restauração JSON |
+
+> As antigas abas **Unidades**, **Departamentos** e **Recursos** foram unificadas em **Configurações**. URLs legadas (`/filiais`, `/setores`, `/recursos`, `/cadastros/*`) continuam abrindo o mesmo conteúdo.
+
+### Workspace de Processos
+
+Ao abrir um processo, a tela divide-se em **barra lateral** (árvore) e **painel principal**:
+
+```text
+Processo PROC-0001
+├── Visão geral
+├── Dados do processo
+├── Mapeamento
+├── Diagrama macro
+├── Arquivos
+├── Melhorias
+│   └── [cada melhoria]
+│       └── [cada revisão]
+│           ├── Matriz impacto × esforço   (#matriz — oculta na baseline)
+│           ├── Vigência e identificação   (#vigencia)
+│           ├── Mapeamento da revisão      (#mapeamento)
+│           ├── Diagrama da revisão        (#diagrama)
+│           ├── Medição operacional        (#medicao)
+│           ├── Investimentos              (#investimentos)
+│           ├── Recursos compartilhados    (#recursos)
+│           └── Evidências                 (#evidencias)
+└── Linha do tempo
+```
+
+| Recurso | Como usar |
+|---------|-----------|
+| **Pesquisa** | Filtra processos, melhorias e revisões na árvore |
+| **Recolher / expandir** | Botão no topo da sidebar; largura redimensionável (arraste na borda) |
+| **Badge na revisão** | Quadrante da matriz impacto × esforço (ex.: quick win) |
+| **Subpastas** | Clique abre a seção correspondente no painel à direita |
+
+### Workspace de Configurações
+
+Mesmo padrão visual do workspace de Processos:
+
+```text
+Configurações
+├── Unidades (N)
+│   └── [cada filial]
+├── Departamentos (N)
+│   └── [cada setor]
+└── Recursos compartilhados (N)
+    └── [cada recurso]
+        ├── Dados do recurso
+        ├── Custos ao longo do tempo   (#custos)
+        └── Processos vinculados       (#vinculos)
+```
+
+Botões **Nova unidade**, **Novo departamento** e **Novo recurso** ficam no rodapé da sidebar quando a pasta correspondente está selecionada.
 
 ### Como navegar e editar (jul/2026)
 
 | Ação | Como fazer |
 |------|------------|
-| Abrir processo / melhoria / revisão | **Clique na linha** da tabela ou no card correspondente |
+| Abrir processo / melhoria / revisão | **Clique na linha** da tabela, no card ou no nó da **árvore lateral** |
+| Ir a uma seção da revisão | Expanda a revisão na árvore e clique na subpasta (matriz, vigência, medição…) |
 | Editar cadastro | Dentro do detalhe, clique **Editar** no card da seção (não há «Editar» na grade de listagem) |
+| **Duplicar revisão** | Na listagem de revisões da melhoria, botão **Duplicar** — cria cópia inativa com medições, investimentos, vínculos, overlays e evidências; versão sugerida automaticamente |
 | Campos de seleção | Listas suspensas customizadas (mesmo padrão visual do PAC); em listas longas (ex.: recurso do catálogo), use a **busca** no painel |
 | Excluir / duplicar / substituir dados | **Modal de confirmação** dentro do app — não usa o diálogo nativo do navegador |
 | Diagrama em tela cheia | Ícone de expandir no card do diagrama |
@@ -145,6 +198,10 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 | Processo | `/apps/transformometro/processos/{processoId}` |
 | Melhoria (instância) | `/apps/transformometro/processos/{processoId}/instancias/{instanciaId}` |
 | Revisão | `/apps/transformometro/processos/{processoId}/instancias/{instanciaId}/revisoes/{revisaoId}` |
+| Seção da revisão | Mesma URL + hash (`#matriz`, `#vigencia`, `#medicao`, …) |
+| Configurações — unidades | `/apps/transformometro/configuracoes/unidades` |
+| Configurações — departamentos | `/apps/transformometro/configuracoes/departamentos` |
+| Configurações — recursos | `/apps/transformometro/configuracoes/recursos` |
 
 > A rota contém `/instancias/` por compatibilidade técnica; na UI o rótulo é **Melhoria**.
 
@@ -196,6 +253,7 @@ Cada revisão possui seções editáveis (clique **Editar** no card):
 
 | Seção | Conteúdo |
 |-------|----------|
+| **Matriz impacto × esforço** | Scatter de priorização (automático/híbrido/manual); oculta em baseline |
 | **Vigência** | Versão, cenário, **Compara com** (referência), datas, descrição, revisão ativa |
 | **Medição** | Volume, tempos, custos hora, erros, retrabalho |
 | **Investimentos** | Itens únicos ou recorrentes da revisão |
@@ -230,6 +288,18 @@ Na interface, os cenários aparecem com **nomes amigáveis em português**; na A
 2. Revisão **encerrada** (`data_fim_vigencia`) não pode ser marcada como ativa.
 3. **Data de implantação** da melhoria = primeira revisão não-baseline (usa `data_implantacao` ou `data_inicio_vigencia`).
 4. Use **Comparativo** na melhoria para ver totais de cada versão lado a lado (cada uma já reflete sua referência no cálculo).
+5. **Duplicar revisão** acelera uma nova versão: copia cadastro completo (medição, investimentos, recursos, diagrama, mapeamento, evidências); a cópia nasce **inativa** — ajuste versão, vigência e marque como ativa quando validar.
+
+### Matriz impacto × esforço (Playbook 21)
+
+Disponível na subpasta **Matriz impacto × esforço** de cada revisão comparável (não baseline):
+
+- **Modo automático** — scores derivados de economia, ROI, investimentos e recursos já cadastrados.
+- **Modo híbrido / manual** — ajustes qualitativos auditáveis (PUT na API).
+- **Badge na árvore** — quadrante resumido (quick win, estratégico, etc.) no nó da revisão.
+- **Scatter na melhoria** — visão de todas as revisões da mesma melhoria para priorização.
+
+Documentação: [PLAYBOOK-21](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md) · wireframe em `plugins/transformometro/docs/wireframes/matriz-impacto-esforco.md`.
 
 ### Diagnóstico de rateio
 

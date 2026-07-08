@@ -85,6 +85,8 @@ Baseline na tabela com traço; opcionalmente ponto cinza `(0,0)` no gráfico se 
 
 ## 3. Árvore do workspace (sidebar)
 
+Cada revisão comparável pode ser expandida em **subpastas** na árvore (jul/2026). A subpasta **Matriz impacto × esforço** abre `#matriz` no painel principal.
+
 Badge colorido no nó `revisao:{id}` (não no texto inteiro — só pill à direita).
 
 ```
