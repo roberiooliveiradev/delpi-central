@@ -84,7 +84,8 @@ function primaryActionLabel(status: string): string {
 function countRowMenuItems(item: AuditListItem): number {
   let count = 1;
   if (canAccessNc(item.status)) count += 1;
-  if (item.status === "draft") count += 2;
+  if (item.status !== "closed") count += 1;
+  if (item.status === "draft") count += 1;
   return count;
 }
 
@@ -388,7 +389,7 @@ export function AuditListView({
                                   {ncActionLabel(item.status)}
                                 </button>
                               ) : null}
-                              {item.status === "draft" ? (
+                              {item.status !== "closed" ? (
                                 <button
                                   type="button"
                                   role="menuitem"

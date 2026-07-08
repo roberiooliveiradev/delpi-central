@@ -105,6 +105,10 @@ class Settings:
         "AUDIT_5S_NC_UPLOAD_DIR",
         default="/app/data/audit-5s-nc",
     )
+    AUDIT_5S_RESPONSE_UPLOAD_DIR: str = _get_env(
+        "AUDIT_5S_RESPONSE_UPLOAD_DIR",
+        default="/app/data/audit-5s-responses",
+    )
     PAC_EVIDENCE_UPLOAD_DIR: str = _get_env(
         "PAC_EVIDENCE_UPLOAD_DIR",
         default="/app/data/pac-evidences",

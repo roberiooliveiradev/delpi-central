@@ -116,7 +116,11 @@ export function AuditNcEvidenceSection({
       <div className="a5s-nc-evidence__grid">
         <EvidenceSlot
           label="Foto do antes"
-          hint="Situação observada na auditoria."
+          hint={
+            before
+              ? "Situação observada na auditoria (pode ter vindo da avaliação)."
+              : "Situação observada na auditoria."
+          }
           type="before"
           ncId={ncId}
           attachment={before}

@@ -2,6 +2,7 @@ import { API_BASE } from "../constants/audit5s";
 import type { AuditDashboardData, AuditDashboardFilterParams } from "../types/auditDashboard";
 import {
   type ApiEnvelope,
+  httpDelete,
   httpGet,
   httpPatch,
   httpPost,
@@ -38,6 +39,19 @@ export type Criterion = {
   senso_name: string;
 };
 
+export type ResponseAttachment = {
+  id: string;
+  response_id: string;
+  criterion_id?: string;
+  file_name: string;
+  original_name: string;
+  mime_type: string | null;
+  size_bytes: number;
+  storage_path?: string;
+  uploaded_by_user_id?: string;
+  uploaded_at?: string;
+};
+
 export type AuditResponse = {
   id: string;
   criterion_id: string;
@@ -45,6 +59,7 @@ export type AuditResponse = {
   is_not_applicable: boolean;
   observation: string | null;
   version: number;
+  attachment?: ResponseAttachment | null;
 };
 
 export type AuditDetail = {
@@ -142,6 +157,31 @@ export async function saveResponse(
   const res = await httpPut<ApiEnvelope<{ response: AuditResponse; audit: AuditDetail }>>(
     `${API_BASE}/audits/${auditId}/responses/${criterionId}`,
     payload,
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function uploadResponseAttachment(
+  auditId: string,
+  criterionId: string,
+  file: File,
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await httpUploadForm<ApiEnvelope<ResponseAttachment>>(
+    `${API_BASE}/audits/${auditId}/responses/${criterionId}/attachments`,
+    formData,
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function deleteResponseAttachment(
+  auditId: string,
+  criterionId: string,
+  attachmentId: string,
+) {
+  const res = await httpDelete<ApiEnvelope<{ deleted: boolean }>>(
+    `${API_BASE}/audits/${auditId}/responses/${criterionId}/attachments/${attachmentId}`,
   );
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }

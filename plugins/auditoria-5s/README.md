@@ -51,6 +51,20 @@ Base: `/apps/api-delpi/quality/audit-5s`
 
 Documentação: [docs/12-roadmap-e-evolucao/auditoria-5s/ROADMAP.md](../../docs/12-roadmap-e-evolucao/auditoria-5s/ROADMAP.md)
 
+### Foto por critério (avaliação)
+
+Em critérios com nota **Ruim (1)** ou **Médio (3)**, a UI permite anexar foto opcional:
+
+| Método | Path | Uso |
+|--------|------|-----|
+| `POST` | `/audits/{id}/responses/{criterionId}/attachments` | Upload da foto |
+| `GET` | `.../attachments/{attachmentId}/file` | Preview/download |
+| `DELETE` | `.../attachments/{attachmentId}` | Remover |
+
+Ao criar a NC, a foto da avaliação é copiada automaticamente para a evidência **antes** (`before`), se o slot estiver vazio.
+
+Storage: `AUDIT_5S_RESPONSE_UPLOAD_DIR` → volume `${DELPI_DATA_HOST_DIR}/audit-5s-responses`.
+
 ## Homologação
 
 ```bash
@@ -67,6 +81,8 @@ bash ../../scripts/homologacao/check-audit-5s-api.sh
 ## Migrations
 
 As migrations do 5S ficam em `api-delpi/migrations/plugins/quality/` (plugin slug **`quality`**).
+
+Inclui `V037__audit_5s_response_attachment_unique.sql` (índice único: 1 foto por resposta/critério).
 
 **Pré-requisito:** `delpi-postgres-plugins` em execução (`Up`, não `Restarting`). Se o log mostrar `exec format error`, repuxar a imagem AMD64:
 

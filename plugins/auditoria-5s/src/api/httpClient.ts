@@ -175,4 +175,13 @@ export async function httpUploadForm<T>(url: string, body: FormData): Promise<T>
   return parseJson<T>(response);
 }
 
+export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
 export type { ApiEnvelope };

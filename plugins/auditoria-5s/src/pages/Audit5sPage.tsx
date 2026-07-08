@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowUp } from "lucide-react";
 
 import {
   completeEvaluation,
   createArea,
   createAudit,
   deleteAudit,
+  deleteResponseAttachment,
   fetchAreas,
   fetchAudit,
   fetchAudits,
   joinAudit,
   saveResponse,
   updateAudit,
+  uploadResponseAttachment,
   type AuditDetail,
   type AuditListItem,
   type AuditArea,
@@ -23,6 +26,7 @@ import { AuditListView } from "../components/AuditListView";
 import { AuditDashboardPage } from "./AuditDashboardPage";
 import { AuditDetailHero } from "../components/AuditDetailHero";
 import { AuditNcView } from "../components/AuditNcView";
+import { CriterionPhotoSection } from "../components/CriterionPhotoSection";
 import { ObservationTypingHint } from "../components/ObservationTypingHint";
 import { AuditRealtimeBar } from "../components/AuditRealtimeBar";
 import { AuditSensoScoreCards } from "../components/AuditSensoScoreCards";
@@ -63,6 +67,7 @@ export function Audit5sPage({ pathname }: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   const [newAreaName, setNewAreaName] = useState("");
   const [observationDrafts, setObservationDrafts] = useState<Record<string, string>>({});
+  const [photoUploadingCriterionId, setPhotoUploadingCriterionId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     audit_date: new Date().toISOString().slice(0, 10),
@@ -195,8 +200,8 @@ export function Audit5sPage({ pathname }: Props) {
     setSuccess(null);
     try {
       const detail = await fetchAudit(auditId);
-      if (detail.status !== "draft") {
-        setError("Somente auditorias em avaliação podem ter o cabeçalho editado.");
+      if (detail.status === "closed") {
+        setError("Auditoria encerrada — o cabeçalho não pode mais ser editado.");
         return;
       }
       setEditingAuditId(detail.id);
@@ -415,6 +420,50 @@ export function Audit5sPage({ pathname }: Props) {
     }
   };
 
+  const patchResponseAttachment = (
+    criterionId: string,
+    attachment: AuditResponse["attachment"] | null,
+  ) => {
+    setSelectedAudit((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        responses: prev.responses.map((item) =>
+          item.criterion_id === criterionId ? { ...item, attachment } : item,
+        ),
+      };
+    });
+  };
+
+  const handleCriterionPhotoUpload = async (criterionId: string, file: File) => {
+    if (!selectedAudit) return;
+    setError(null);
+    setPhotoUploadingCriterionId(criterionId);
+    try {
+      const attachment = await uploadResponseAttachment(selectedAudit.id, criterionId, file);
+      patchResponseAttachment(criterionId, attachment);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao anexar foto.";
+      setError(message);
+      throw err instanceof Error ? err : new Error(message);
+    } finally {
+      setPhotoUploadingCriterionId(null);
+    }
+  };
+
+  const handleCriterionPhotoRemove = async (criterionId: string, attachmentId: string) => {
+    if (!selectedAudit) return;
+    setError(null);
+    try {
+      await deleteResponseAttachment(selectedAudit.id, criterionId, attachmentId);
+      patchResponseAttachment(criterionId, null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao remover foto.";
+      setError(message);
+      throw err instanceof Error ? err : new Error(message);
+    }
+  };
+
   if (!branch) {
     return (
       <div className="dashboard-auditoria-5s dashboard-page a5s-app">
@@ -565,6 +614,10 @@ export function Audit5sPage({ pathname }: Props) {
                 response?.score,
                 Boolean(response?.is_not_applicable),
               );
+              const showCriterionPhoto =
+                Boolean(response) &&
+                !response?.is_not_applicable &&
+                (response?.score === 1 || response?.score === 3);
               return (
                 <article
                   key={criterion.id}
@@ -620,6 +673,20 @@ export function Audit5sPage({ pathname }: Props) {
                       onBlur={() => void handleObservationBlur(criterion.id)}
                     />
                   </div>
+                  {showCriterionPhoto ? (
+                    <CriterionPhotoSection
+                      auditId={selectedAudit.id}
+                      criterionId={criterion.id}
+                      attachment={response?.attachment}
+                      disabled={disabled}
+                      uploading={photoUploadingCriterionId === criterion.id}
+                      onUpload={(file) => handleCriterionPhotoUpload(criterion.id, file)}
+                      onRemove={async () => {
+                        if (!response?.attachment) return;
+                        await handleCriterionPhotoRemove(criterion.id, response.attachment.id);
+                      }}
+                    />
+                  ) : null}
                 </article>
               );
             })}
@@ -648,6 +715,22 @@ export function Audit5sPage({ pathname }: Props) {
               <p>Avaliação concluída. Volte à lista e acesse <strong>Tratar NC</strong> para registrar não conformidades.</p>
             </div>
           )}
+
+          <footer className="a5s-audit-footer">
+            <button
+              type="button"
+              className="a5s-btn a5s-btn--ghost a5s-audit-footer__top"
+              onClick={() => {
+                document.getElementById("a5s-senso-nav")?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }}
+            >
+              <ArrowUp size={16} aria-hidden />
+              Voltar aos sensos
+            </button>
+          </footer>
         </section>
       )}
 

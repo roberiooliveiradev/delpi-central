@@ -960,6 +960,7 @@ services:
       PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
+      AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
       QUALITY_LABELS_SIGNATURE_DIR: ${QUALITY_LABELS_SIGNATURE_DIR:-/app/data/quality-labels/signatures}
       QUALITY_LABELS_CERTIFICATE_DIR: ${QUALITY_LABELS_CERTIFICATE_DIR:-/app/data/quality-labels/certificates}
@@ -980,6 +981,7 @@ services:
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-nc:/app/data/audit-5s-nc
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-responses:/app/data/audit-5s-responses
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/qr:/app/data/quality-labels/qr
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/signatures:/app/data/quality-labels/signatures
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/certificates:/app/data/quality-labels/certificates
