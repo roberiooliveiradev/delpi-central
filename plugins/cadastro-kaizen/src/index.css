@@ -1573,6 +1573,107 @@
   color: var(--kz-text-muted);
 }
 
+/* Select simples (FilterSelectField / SelectControl) — mesmo DNA do multi-select */
+.dashboard-cadastro-kaizen .kz-select {
+  position: relative;
+  min-width: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--kz-control-height);
+  padding: 8px 12px;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid var(--kz-input-border);
+  background: var(--kz-input-bg);
+  color: var(--kz-input-text);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.dashboard-cadastro-kaizen .kz-select__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-cadastro-kaizen .kz-select--open .kz-select__trigger {
+  border-color: var(--kz-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-cadastro-kaizen .kz-select__trigger svg {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.dashboard-cadastro-kaizen .kz-select--open .kz-select__trigger svg {
+  transform: rotate(180deg);
+}
+
+.dashboard-cadastro-kaizen .kz-select__panel {
+  position: absolute;
+  z-index: 120;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid var(--kz-card-border);
+  background: var(--kz-card-bg);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-cadastro-kaizen .kz-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-cadastro-kaizen .kz-select__option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text);
+}
+
+.dashboard-cadastro-kaizen .kz-select__option:hover,
+.dashboard-cadastro-kaizen .kz-select__option--active {
+  background: color-mix(in srgb, var(--kz-accent) 12%, transparent);
+  color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-select__empty {
+  padding: 8px;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text-muted);
+}
+
 /* Diff entre revisões */
 .dashboard-cadastro-kaizen .kz-timeline__diff {
   list-style: none;

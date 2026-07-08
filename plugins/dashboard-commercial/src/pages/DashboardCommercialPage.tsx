@@ -18,7 +18,7 @@ import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/dataTableUi";
 import { DataTableSection } from "../components/dataTableUi";
 import { FilterBar } from "../components/FilterBar";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FilterSelectField } from "../components/dashboardFiltersUi";
 import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
@@ -857,25 +857,20 @@ export function DashboardCommercialPage({
               onChange: setProposalSearch,
             }}
             toolbarExtra={
-              <label className="dc-proposals-filter dc-field">
-                <FieldLabel
-                  label="Status da proposta"
-                  hint={COMMERCIAL_HELP_TOOLTIPS.filters.proposalStatus}
-                  className="dc-field__label"
-                />
-                <select
-                  value={proposalStatusFilter}
-                  onChange={(event) =>
-                    setProposalStatusFilter(
-                      event.target.value as CommercialProposalStatusFilter
-                    )
-                  }
-                >
-                  <option value="all">Todas</option>
-                  <option value="won">Ganhas</option>
-                  <option value="open">Em aberto</option>
-                </select>
-              </label>
+              <FilterSelectField
+                id="dc-proposal-status"
+                label="Status da proposta"
+                hint={COMMERCIAL_HELP_TOOLTIPS.filters.proposalStatus}
+                value={proposalStatusFilter}
+                onChange={(value) =>
+                  setProposalStatusFilter(value as CommercialProposalStatusFilter)
+                }
+                options={[
+                  { value: "all", label: "Todas" },
+                  { value: "won", label: "Ganhas" },
+                  { value: "open", label: "Em aberto" },
+                ]}
+              />
             }
             emptyMessage="Nenhuma proposta encontrada para os filtros selecionados."
             searchPlaceholder="Buscar proposta, descrição, status, cliente…"

@@ -6,8 +6,8 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
+import { FilterInputField, FilterSelectField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type NonconformityFiltersProps = {
@@ -30,6 +30,11 @@ type NonconformityFiltersProps = {
   onItemCodeChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
 };
+
+const TYPE_OPTIONS = [
+  { value: "internal", label: "Interna" },
+  { value: "external", label: "Externa" },
+] as const;
 
 export function NonconformityFilters({
   competence,
@@ -62,37 +67,35 @@ export function NonconformityFilters({
   );
 
   return (
-    <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de NC">
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label" />
-        <input
-          id="nc-competence"
-          type="month"
-          value={competence}
-          onChange={(e) => onCompetenceChange(e.target.value)}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label" />
-        <input
-          id="nc-date-start"
-          type="date"
-          value={dateStart}
-          onChange={(e) => onDateStartChange(e.target.value)}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label" />
-        <input
-          id="nc-date-end"
-          type="date"
-          value={dateEnd}
-          onChange={(e) => onDateEndChange(e.target.value)}
-        />
-      </label>
-
+    <FiltersRow
+      className="dq-filters-row--extended"
+      ariaLabel="Filtros de NC"
+      variant="extended"
+    >
+      <FilterInputField
+        id="nc-competence"
+        label="Competência"
+        hint={QUALITY_HELP_TOOLTIPS.filters.competence}
+        type="month"
+        value={competence}
+        onChange={onCompetenceChange}
+      />
+      <FilterInputField
+        id="nc-date-start"
+        label="Data inicial"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateStart}
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id="nc-date-end"
+        label="Data final"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd}
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
+      />
       <MultiSelectField
         label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={QUALITY_HELP_TOOLTIPS.filters.branch}
@@ -103,51 +106,37 @@ export function NonconformityFilters({
         searchable
         disabled={branchesLoading}
       />
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Tipo" className="dq-field__label" />
-        <select
-          id="nc-type"
-          value={type}
-          onChange={(e) => onTypeChange(e.target.value as NonconformityType)}
-        >
-          <option value="internal">Interna</option>
-          <option value="external">Externa</option>
-        </select>
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Status" className="dq-field__label" />
-        <input
-          id="nc-status"
-          type="text"
-          value={status}
-          placeholder="Status"
-          onChange={(e) => onStatusChange(e.target.value)}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Item" className="dq-field__label" />
-        <input
-          id="nc-item"
-          type="text"
-          value={itemCode}
-          placeholder="Código do item"
-          onChange={(e) => onItemCodeChange(e.target.value)}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field dq-filter-box--wide">
-        <FieldLabel label="Descrição" className="dq-field__label" />
-        <input
-          id="nc-description"
-          type="text"
-          value={description}
-          placeholder="Buscar na descrição"
-          onChange={(e) => onDescriptionChange(e.target.value)}
-        />
-      </label>
-    </section>
+      <FilterSelectField
+        id="nc-type"
+        label="Tipo"
+        value={type}
+        onChange={(value) => onTypeChange(value as NonconformityType)}
+        options={TYPE_OPTIONS}
+      />
+      <FilterInputField
+        id="nc-status"
+        label="Status"
+        type="text"
+        value={status}
+        placeholder="Status"
+        onChange={onStatusChange}
+      />
+      <FilterInputField
+        id="nc-item"
+        label="Item"
+        type="text"
+        value={itemCode}
+        placeholder="Código do item"
+        onChange={onItemCodeChange}
+      />
+      <FilterInputField
+        id="nc-description"
+        label="Descrição"
+        type="text"
+        value={description}
+        placeholder="Buscar na descrição"
+        onChange={onDescriptionChange}
+      />
+    </FiltersRow>
   );
 }

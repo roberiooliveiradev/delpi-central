@@ -38,6 +38,7 @@ import {
 import { formatPersonNamesList } from "../utils/formatPersonName";
 import { getDisplayNameFromToken } from "../utils/jwt";
 import { AuditRowMenuPortal } from "./AuditRowMenuPortal";
+import { ListFilterSelectField } from "./filtersUi";
 
 const PAGE_SIZE = 10;
 
@@ -234,33 +235,21 @@ export function AuditListView({
             onChange={(e) => updateFilters({ search: e.target.value })}
           />
         </div>
-        <label className="a5s-filters-card__field">
-          <span>Área</span>
-          <select
-            value={filters.areaId}
-            onChange={(e) => updateFilters({ areaId: e.target.value })}
-          >
-            <option value="">Todas</option>
-            {areas.map((area) => (
-              <option key={area.id} value={area.id}>
-                {area.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="a5s-filters-card__field">
-          <span>Status</span>
-          <select
-            value={filters.status}
-            onChange={(e) => updateFilters({ status: e.target.value })}
-          >
-            {STATUS_FILTER_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ListFilterSelectField
+          id="a5s-list-filter-area"
+          label="Área"
+          value={filters.areaId}
+          onChange={(areaId) => updateFilters({ areaId })}
+          options={areas.map((area) => ({ value: area.id, label: area.name }))}
+          placeholderOption="Todas"
+        />
+        <ListFilterSelectField
+          id="a5s-list-filter-status"
+          label="Status"
+          value={filters.status}
+          onChange={(status) => updateFilters({ status })}
+          options={STATUS_FILTER_OPTIONS}
+        />
         <label className="a5s-filters-card__field a5s-filters-card__field--period">
           <span>Período</span>
           <div className="a5s-filters-card__period">

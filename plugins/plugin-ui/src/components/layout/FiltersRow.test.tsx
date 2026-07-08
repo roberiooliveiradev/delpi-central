@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 
-import { FilterInputField, FiltersRow } from "./FiltersRow";
+import { FilterInputField, FilterSelectField, FiltersRow } from "./FiltersRow";
+import { selectControlBemClasses } from "../forms/SelectField";
 
 const classNames = {
   row: "dp-filters-row",
@@ -9,6 +10,8 @@ const classNames = {
   filterBox: "dp-filter-box dp-field",
   fieldLabel: "dp-field__label",
 };
+
+const selectClassNames = selectControlBemClasses("dp");
 
 describe("FiltersRow", () => {
   it("renderiza section com aria-label", () => {
@@ -67,5 +70,31 @@ describe("FilterInputField", () => {
     );
 
     expect(screen.getByLabelText("Competência")).toHaveProperty("type", "month");
+  });
+});
+
+describe("FilterSelectField", () => {
+  it("usa SelectControl em vez de select nativo", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <FilterSelectField
+        classNames={classNames}
+        selectClassNames={selectClassNames}
+        id="dp-type"
+        label="Tipo"
+        value="a"
+        onChange={onChange}
+        options={[
+          { value: "a", label: "Opção A" },
+          { value: "b", label: "Opção B" },
+        ]}
+        placeholderOption="Todos"
+      />,
+    );
+
+    expect(container.querySelector("select")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Tipo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Opção B" }));
+    expect(onChange).toHaveBeenCalledWith("b");
   });
 });
