@@ -12,7 +12,7 @@
 | S0 | Design lock — playbook, contrato API, schema, wireframe, `ImpactEffortMatrix` plugin-ui | ✅ doc + componente headless |
 | S1 | `RevisaoImpactEffortMatrixService` + GET instância/revisão | ✅ |
 | S2 | PUT overrides + migration V038 + audit | ✅ |
-| S3 | Seção no `RevisaoCadastroPanel` + API client | ⏳ pendente |
+| S3 | Seção no `RevisaoCadastroPanel` + API client | ✅ |
 | S4 | Badge árvore workspace + scatter instância | ⏳ pendente |
 | S5 | Visão processo multi-melhoria + export PNG | ⏳ backlog |
 
@@ -50,8 +50,17 @@
 - `RevisaoRepository.update_matriz_impacto_esforco`
 - Testes: `tests/test_revisao_matriz_impacto_esforco_v1.py`
 
-## Próximo passo (S3)
+## Entregas S3
 
-1. `transformometroMatrixApi.ts` — client GET/PUT
-2. `RevisaoMatrizImpactoSection` no `RevisaoCadastroPanel`
-3. Consumir `ImpactEffortMatrix` do `@delpi/plugin-ui` (render-only)
+### MFE (`plugins/transformometro`)
+
+- `transformometroMatrixApi.ts` — GET/PUT matriz revisão
+- `RevisaoMatrizImpactoSection` — scatter, modo, ajustes manuais, resumo métricas
+- Integração em `RevisaoCadastroPanel` (oculta baseline)
+- `TM_HELP_TOOLTIPS.matriz` + `matrizImpactoLabels.ts`
+- Estilos `.tm-impact-effort-section` em `index.css`
+
+## Próximo passo (S4)
+
+1. `InstanciaMatrizRevisoesSection` — scatter + tabela ranking na melhoria
+2. Badge quadrante em `processoWorkspaceNav.ts`

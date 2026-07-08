@@ -135,6 +135,7 @@ export function RevisaoDetailPage({
       onError={setError}
       onRevisaoUpdated={load}
       onRevisaoDeleted={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
+      onNavigate={onNavigate}
     />
   );
 

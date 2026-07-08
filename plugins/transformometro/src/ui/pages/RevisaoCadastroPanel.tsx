@@ -36,6 +36,7 @@ import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestim
 import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
 import { RevisaoRecursosSection } from "../revisao/cadastro/RevisaoRecursosSection";
+import { RevisaoMatrizImpactoSection } from "../revisao/RevisaoMatrizImpactoSection";
 import {
   buildRevisaoVigenciaFromRevisao,
   RevisaoVigenciaSection,
@@ -92,6 +93,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onError: (message: string | null) => void;
   onRevisaoUpdated: () => void;
   onRevisaoDeleted?: () => void;
+  onNavigate?: (path: string) => void;
 };
 
 export function RevisaoCadastroPanel({
@@ -103,6 +105,7 @@ export function RevisaoCadastroPanel({
   onError,
   onRevisaoUpdated,
   onRevisaoDeleted,
+  onNavigate,
 }: Props) {
   const confirm = useConfirm();
   const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
@@ -301,6 +304,17 @@ export function RevisaoCadastroPanel({
             {rateioDiag.economia_liquida_mes.toLocaleString("pt-BR")}
           </p>
         </div>
+      ) : null}
+
+      {revisao.cenario_tipo !== "baseline" ? (
+        <RevisaoMatrizImpactoSection
+          revisao={revisao}
+          revisoesReferencia={revisoesReferencia}
+          getAccessToken={getAccessToken}
+          onError={onError}
+          onNavigate={onNavigate}
+          rateioExcedeGanho={rateioDiag?.rateio_excede_ganho ?? false}
+        />
       ) : null}
 
       <EditableSectionCard

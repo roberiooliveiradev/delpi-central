@@ -230,6 +230,30 @@ export const TM_HELP_TOOLTIPS = {
     comparativoTable:
       "Tabela com os mesmos indicadores do gráfico, incluindo competência e meses com dados.",
   },
+  matriz: {
+    titulo:
+      "Posiciona a revisão em impacto (benefício) versus esforço (custo/complexidade) frente às demais revisões comparáveis da mesma melhoria.",
+    modo:
+      "Automático usa medição, investimentos e comparativo; Híbrido combina dados com percepção qualitativa; Manual prioriza os ajustes informados.",
+    confianca:
+      "Indica a robustez do score automático conforme completude de medição, referência, investimentos e recursos.",
+    quadrantes:
+      "Quick win = alto impacto e baixo esforço; Estratégico = alto em ambos; Complementar = baixo em ambos; Reavaliar = baixo impacto e alto esforço.",
+    ajustesManuais:
+      "Campos qualitativos e observações usados nos modos Híbrido e Manual. No Automático ficam colapsados.",
+    impactoQualitativo: "Percepção de benefício quando a economia ainda não está consolidada (escala 1–5).",
+    esforcoQualitativo: "Percepção de esforço de implantação e adoção (escala 1–5).",
+    alinhamentoEstrategico: "Quão alinhada a revisão está às prioridades estratégicas (escala 1–5).",
+    dependenciasExternas: "Dependência de TI, fornecedor ou fatores externos (escala 1–5).",
+    pessoasAfetadas: "Estimativa de colaboradores impactados pela mudança.",
+    observacao: "Contexto adicional para priorização — visível só na revisão.",
+    bannerBaixaConfianca:
+      "Complete medição, referência de comparação e investimentos ou recursos para elevar a confiança do score automático.",
+    semDados: "Sem revisões comparáveis para exibir nesta melhoria.",
+    graficoAria: "Matriz impacto por esforço das revisões da melhoria",
+    resumoEconomia: "Economia líquida anual",
+    modoAutomaticoHint: "Selecione Híbrido ou Manual para salvar ajustes qualitativos.",
+  },
   investimentos: {
     tipo: "Natureza do investimento (software, equipamento, horas, etc.).",
     descricao: "Descrição do item investido.",
