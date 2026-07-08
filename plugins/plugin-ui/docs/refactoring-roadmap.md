@@ -318,6 +318,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados.
 6. **Fase 4 concluída** — utilitários centralizados.
 7. **Fase 5 parcial** — `FileDropzone`, confirm controller, `ConfirmModalPanel`, SI `operationalUnitLabels`; backlog: `Modal` base, dropzones chat/CE.
+8. **Exportação (Fase E1)** — motor CSV/XLSX/PDF DELPI em `plugin-ui/src/export/`; catálogo [export-catalog.md](./export-catalog.md); piloto `dashboard-commercial`.
 
 ---
 

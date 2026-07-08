@@ -1,0 +1,62 @@
+/**
+ * Motor de exportação tabular compartilhado (CSV, Excel, PDF DELPI print).
+ *
+ * Catálogo: docs/export-catalog.md
+ * `xlsx` é carregado sob demanda — o plugin consumidor deve declarar a dependência.
+ */
+
+export type {
+  TabularExportFormat,
+  ExportAction,
+  ExportColumn,
+  TableExportPayload,
+} from "./types";
+
+export { TABULAR_EXPORT_ACTIONS } from "./types";
+
+export {
+  triggerBlobDownload,
+  triggerFileDownload,
+  csvCell,
+  buildUtf8CsvBlob,
+  sanitizeFilename,
+  sanitizeSheetName,
+} from "./primitives";
+
+export { exportAlert, configureExportAlert, type ExportAlertFn } from "./exportAlert";
+
+export {
+  exportPayloadToCsv,
+  exportPayloadToXlsx,
+  exportPayloadToPdf,
+  exportPayloadsToCsv,
+  exportPayloadsToXlsx,
+  exportPayloadsToPdf,
+  exportTableFormat,
+  type ExportPdfOptions,
+  type ExportXlsxOptions,
+} from "./exportUtils";
+
+export {
+  buildDelpiDocumentStyles,
+  buildDelpiBrandBarHtml,
+  buildDelpiDocumentHtml,
+  buildDelpiDocumentTableSection,
+  buildDefaultExportSummaryLines,
+  escapeDelpiDocumentHtml,
+  resolveDelpiLogoUrl,
+  printDelpiDocumentHtml,
+  exportChartPayloadToPdf,
+  exportTablePayloadToPdf,
+  exportTablePayloadsToPdf,
+  printDelpiDocumentSpec,
+} from "./pdf";
+
+export type {
+  DelpiDocumentBadgeTone,
+  DelpiDocumentColumn,
+  DelpiDocumentImageSection,
+  DelpiDocumentSpec,
+  DelpiDocumentSummaryLine,
+  DelpiDocumentTable,
+} from "./pdf";

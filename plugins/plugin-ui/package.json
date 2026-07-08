@@ -2,7 +2,7 @@
   "name": "@delpi/plugin-ui",
   "private": true,
   "version": "0.1.0",
-  "description": "Componentes React reutilizáveis para plugins MFE (tooltips, labels, abas).",
+  "description": "Componentes React reutilizáveis para plugins MFE (tooltips, labels, abas, exportação).",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -17,7 +17,13 @@
   "peerDependencies": {
     "lucide-react": "^0.576.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "peerDependenciesMeta": {
+    "xlsx": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
@@ -29,6 +35,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "typescript": "~5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "xlsx": "^0.18.5"
   }
 }

@@ -1,6 +1,10 @@
 # Catálogo de componentes
 
-Exports públicos de `@delpi/plugin-ui`. Import único:
+Exports públicos de `@delpi/plugin-ui`. Import único.
+
+Exportação tabular (CSV / Excel / PDF DELPI): ver [export-catalog.md](./export-catalog.md) — `exportTableFormat`, `exportPayloadsToXlsx`, `printDelpiDocumentSpec`, etc.
+
+Imports:
 
 ```ts
 import { HelpTooltip, FieldLabel, TabHintCell } from "@delpi/plugin-ui";

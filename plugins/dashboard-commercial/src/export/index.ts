@@ -1,6 +1,7 @@
 /**
- * Exportação centralizada do Dashboard Comercial (CSV, Excel, PDF).
- * Padrão alinhado ao módulo `src/export/` do minha-delpi-chat.
+ * Exportação do Dashboard Comercial (CSV, Excel, PDF).
+ * Motor tabular/PDF DELPI: `@delpi/plugin-ui` (ver plugin-ui/docs/export-catalog.md).
+ * Builders e botões de domínio permanecem neste módulo.
  */
 
 export { runCommercialExport } from "./dispatch";

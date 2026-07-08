@@ -8,7 +8,7 @@ import {
 import { printDelpiDocumentHtml } from "./delpiDocumentPrint";
 import type { DelpiDocumentSpec, DelpiDocumentTable } from "./types";
 
-const DEFAULT_SUBTITLE = "Minha DELPI · Dashboard Comercial";
+const DEFAULT_SUBTITLE = "Minha DELPI";
 
 function toDocumentTable(payload: TableExportPayload): DelpiDocumentTable {
   return {
@@ -46,14 +46,19 @@ export function printDelpiDocumentSpec(spec: DelpiDocumentSpec): boolean {
   return printDelpiDocumentHtml(html, { iframeTitle: spec.documentTitle });
 }
 
-export function exportTablePayloadToPdf(payload: TableExportPayload): void {
+export function exportTablePayloadToPdf(
+  payload: TableExportPayload,
+  options?: { subtitle?: string },
+): void {
   if (!payload.columns.length) {
     exportAlert("Não há dados para exportar em PDF.");
     return;
   }
 
   const opened = printDelpiDocumentSpec(
-    buildTableExportSpec(payload.title, [toDocumentTable(payload)]),
+    buildTableExportSpec(payload.title, [toDocumentTable(payload)], {
+      subtitle: options?.subtitle,
+    }),
   );
 
   if (!opened) {
@@ -92,6 +97,7 @@ export function exportChartPayloadToPdf(
   title: string,
   payload: TableExportPayload,
   chartDataUrl: string | null,
+  options?: { subtitle?: string },
 ): void {
   const tables = payload.columns.length ? [toDocumentTable(payload)] : [];
   const imageSections = chartDataUrl
@@ -105,6 +111,7 @@ export function exportChartPayloadToPdf(
 
   const opened = printDelpiDocumentSpec(
     buildTableExportSpec(title, tables, {
+      subtitle: options?.subtitle,
       imageSections,
       summaryLines: buildDefaultExportSummaryLines(payload.rows.length),
     }),

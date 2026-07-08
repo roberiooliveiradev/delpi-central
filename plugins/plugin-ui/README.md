@@ -15,6 +15,7 @@ Centraliza primitivos de UI que hoje estão duplicados em dezenas de plugins (ex
 | [docs/component-catalog.md](./docs/component-catalog.md) | API de cada export + exemplos |
 | [docs/contributing.md](./docs/contributing.md) | Como adicionar componentes |
 | [docs/migration-catalog.md](./docs/migration-catalog.md) | Plugins a migrar das cópias locais |
+| [docs/export-catalog.md](./docs/export-catalog.md) | Formatos de exportação (CSV/XLSX/PDF) e fases E1–E4 |
 
 ---
 
