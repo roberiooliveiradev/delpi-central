@@ -4,7 +4,7 @@ import type { ChatStreamActivityEntry } from "../../../data/api/chatTypes";
 import {
   activityPhaseKey,
   formatActivityLogLine,
-  formatStreamingRemainingLine,
+  formatStreamingProgressLine,
   fullActivityLogForDisplay,
   resolveStreamingHeadline,
 } from "../../../state/utils/streamingActivityLog";
@@ -145,7 +145,7 @@ export function ChatStreamingActivityPanel({
 
   const hasLog = fullLines.length > 0;
   const canExpand = fullLines.length > RISING_LOG_VISIBLE_LINES;
-  const remainingLine = formatStreamingRemainingLine(fullLines, {
+  const progressLine = formatStreamingProgressLine(fullLines, {
     isActive,
     isAnswering,
   });
@@ -190,15 +190,15 @@ export function ChatStreamingActivityPanel({
                   />
                 ))}
               </ul>
-              {remainingLine ? (
-                <p className="mdc-chat-stream-activity__remaining">{remainingLine}</p>
+              {progressLine ? (
+                <p className="mdc-chat-stream-activity__remaining">{progressLine}</p>
               ) : null}
             </div>
           ) : (
             <div className="mdc-chat-stream-activity__rise-wrap">
               <RisingLogFeed lines={fullLines.slice(-RISING_LOG_VISIBLE_LINES)} risingIds={risingIds} />
-              {remainingLine ? (
-                <p className="mdc-chat-stream-activity__remaining">{remainingLine}</p>
+              {progressLine ? (
+                <p className="mdc-chat-stream-activity__remaining">{progressLine}</p>
               ) : null}
             </div>
           )}

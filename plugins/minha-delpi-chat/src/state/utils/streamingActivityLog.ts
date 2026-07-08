@@ -1,9 +1,9 @@
 import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
 import {
   detectStreamActivityFlow,
-  streamActivityAnsweringRemainingPercent,
+  streamActivityAnsweringCompletePercent,
   streamActivityPipelineTotal,
-  streamActivityProgressRemainingTemplate,
+  streamActivityProgressCompleteTemplate,
 } from "../../content/streamActivityContent";
 
 export function upsertStreamingActivityEntry(
@@ -180,23 +180,29 @@ export function resolveActivityStatusMessage(
   return fallback;
 }
 
-function resolveExplicitRemainingPercent(
+function resolveExplicitCompletePercent(
   entries: ChatStreamActivityEntry[],
 ): number | null {
   const ordered = fullActivityLogForDisplay(entries);
 
   for (const entry of [...ordered].reverse()) {
+    const complete = entry.progress?.completePercent;
+
+    if (typeof complete === "number" && Number.isFinite(complete)) {
+      return Math.max(1, Math.min(99, Math.round(complete)));
+    }
+
     const remaining = entry.progress?.remainingPercent;
 
     if (typeof remaining === "number" && Number.isFinite(remaining)) {
-      return Math.max(0, Math.min(99, Math.round(remaining)));
+      return Math.max(1, Math.min(99, Math.round(100 - remaining)));
     }
   }
 
   return null;
 }
 
-function estimateRemainingPercent(entries: ChatStreamActivityEntry[]): number {
+function estimateCompletePercent(entries: ChatStreamActivityEntry[]): number {
   const ordered = fullActivityLogForDisplay(entries);
   const flow = detectStreamActivityFlow(ordered);
   const totalSteps = streamActivityPipelineTotal(flow);
@@ -207,11 +213,11 @@ function estimateRemainingPercent(entries: ChatStreamActivityEntry[]): number {
   const advanced = completed + (hasActive ? 0.65 : 0);
   const completeRatio = Math.min(0.92, advanced / Math.max(totalSteps, 1));
 
-  return Math.max(5, Math.round((1 - completeRatio) * 100));
+  return Math.max(8, Math.round(completeRatio * 100));
 }
 
-/** Percentual restante estimado enquanto o turno ainda não entrou na prosa final. */
-export function resolveStreamingRemainingPercent(
+/** Percentual concluído estimado enquanto o turno ainda não entrou na prosa final. */
+export function resolveStreamingCompletePercent(
   entries: ChatStreamActivityEntry[],
   options: { isActive: boolean; isAnswering: boolean },
 ): number | null {
@@ -220,21 +226,21 @@ export function resolveStreamingRemainingPercent(
   }
 
   if (options.isAnswering) {
-    return streamActivityAnsweringRemainingPercent();
+    return streamActivityAnsweringCompletePercent();
   }
 
-  return resolveExplicitRemainingPercent(entries) ?? estimateRemainingPercent(entries);
+  return resolveExplicitCompletePercent(entries) ?? estimateCompletePercent(entries);
 }
 
-export function formatStreamingRemainingLine(
+export function formatStreamingProgressLine(
   entries: ChatStreamActivityEntry[],
   options: { isActive: boolean; isAnswering: boolean },
 ): string | null {
-  const remaining = resolveStreamingRemainingPercent(entries, options);
+  const complete = resolveStreamingCompletePercent(entries, options);
 
-  if (remaining === null) {
+  if (complete === null) {
     return null;
   }
 
-  return streamActivityProgressRemainingTemplate(remaining);
+  return streamActivityProgressCompleteTemplate(complete);
 }

@@ -11,12 +11,12 @@ export type StreamActivityFlowKind = "drawingWithPdf" | "drawingWithoutPdf" | "d
 
 const CONTENT = streamActivityContent;
 
-export function streamActivityProgressRemainingTemplate(percent: number): string {
-  return CONTENT.progressRemainingTemplate.replace("{percent}", String(percent));
+export function streamActivityProgressCompleteTemplate(percent: number): string {
+  return CONTENT.progressCompleteTemplate.replace("{percent}", String(percent));
 }
 
-export function streamActivityAnsweringRemainingPercent(): number {
-  return CONTENT.pipelineTotals.answeringRemainingPercent;
+export function streamActivityAnsweringCompletePercent(): number {
+  return CONTENT.pipelineTotals.answeringCompletePercent;
 }
 
 export function streamActivityPipelineTotal(flow: StreamActivityFlowKind): number {

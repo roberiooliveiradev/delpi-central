@@ -5,12 +5,12 @@ import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
 import {
   appendStatusToActivityLog,
   compactActivityLogForDisplay,
-  formatStreamingRemainingLine,
+  formatStreamingProgressLine,
   fullActivityLogForDisplay,
   resolveActivityStatusMessage,
   resolveCurrentActivityLine,
+  resolveStreamingCompletePercent,
   resolveStreamingHeadline,
-  resolveStreamingRemainingPercent,
   upsertStreamingActivityEntry,
 } from "./streamingActivityLog";
 
@@ -100,38 +100,38 @@ describe("streamingActivityLog", () => {
     ).toBe("Pesquisando na internet...");
   });
 
-  it("usa progresso explícito da API quando disponível", () => {
+  it("usa progresso concluído explícito da API quando disponível", () => {
     expect(
-      resolveStreamingRemainingPercent(
+      resolveStreamingCompletePercent(
         [
           {
             id: "vision-ocr",
             phase: "document_vision",
             message: "Reconhecendo texto (Tesseract)…",
             state: "active",
-            progress: { step: 5, total: 18, remainingPercent: 72 },
+            progress: { step: 5, total: 18, completePercent: 28, remainingPercent: 72 },
           },
         ],
         { isActive: true, isAnswering: false },
       ),
-    ).toBe(72);
+    ).toBe(28);
   });
 
-  it("formata linha de percentual restante", () => {
+  it("formata linha de percentual concluído", () => {
     expect(
-      formatStreamingRemainingLine(
+      formatStreamingProgressLine(
         [{ id: "1", message: "Consultando", state: "active" }],
         { isActive: true, isAnswering: false },
       ),
-    ).toMatch(/Faltam cerca de \d+% para concluir a resposta/);
+    ).toMatch(/Cerca de \d+% concluído para a resposta/);
   });
 
-  it("reduz percentual restante quando a prosa já começou", () => {
+  it("aumenta percentual concluído quando a prosa já começou", () => {
     expect(
-      resolveStreamingRemainingPercent([{ id: "1", message: "Gerando", state: "active" }], {
+      resolveStreamingCompletePercent([{ id: "1", message: "Gerando", state: "active" }], {
         isActive: true,
         isAnswering: true,
       }),
-    ).toBe(8);
+    ).toBe(92);
   });
 });
