@@ -4621,7 +4621,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-impact-effort-section__plot-wrap {
   max-width: 28rem;
   margin: 0 auto 8px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .dashboard-transformometro .tm-impact-effort-section__legend {

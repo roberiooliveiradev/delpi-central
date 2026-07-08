@@ -18,6 +18,7 @@ export type ImpactEffortMatrixClassNames = {
   pointActive: string;
   pointMuted: string;
   pointLabel: string;
+  activeCaption: string;
   empty: string;
 };
 
@@ -41,6 +42,7 @@ export function impactEffortMatrixBemClasses(prefix = "delpi-ui"): ImpactEffortM
     pointActive: `${base}__point--active`,
     pointMuted: `${base}__point--muted`,
     pointLabel: `${base}__point-label`,
+    activeCaption: `${base}__active-caption`,
     empty: `${base}__empty`,
   };
 }

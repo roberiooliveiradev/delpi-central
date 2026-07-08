@@ -13,6 +13,7 @@ import {
   quadrantClassName,
   type ImpactEffortMatrixClassNames,
 } from "./impactEffortMatrixClasses";
+import { resolveActivePoint, resolveDisplayScores } from "./impactEffortMatrixLayout";
 
 const PLOT = { x0: 14, y0: 6, w: 82, h: 82 };
 
@@ -52,6 +53,7 @@ export function ImpactEffortMatrix({
   const visiblePoints = points.filter((p) => !p.muted || p.id === activePointId);
   const thresholdX = toPlotX(threshold);
   const thresholdY = toPlotY(threshold);
+  const activePoint = resolveActivePoint(points, activePointId);
 
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
 
@@ -159,8 +161,9 @@ export function ImpactEffortMatrix({
         </text>
 
         {points.map((point) => {
-          const cx = toPlotX(point.esforco);
-          const cy = toPlotY(point.impacto);
+          const display = resolveDisplayScores(point.impacto, point.esforco, point.quadrante, threshold);
+          const cx = toPlotX(display.esforco);
+          const cy = toPlotY(display.impacto);
           const isActive = point.id === activePointId;
           const pointClass = [
             classNames.point,
@@ -188,12 +191,9 @@ export function ImpactEffortMatrix({
                       onPointSelect(point);
                     }
                   }}
-                />
-                {isActive ? (
-                  <text className={classNames.pointLabel} x={cx + 4} y={cy - 4} fontSize={3.4}>
-                    {point.label}
-                  </text>
-                ) : null}
+                >
+                  <title>{point.label}</title>
+                </circle>
               </g>
             );
           }
@@ -205,10 +205,17 @@ export function ImpactEffortMatrix({
               cx={cx}
               cy={cy}
               r={isActive ? 3.2 : 2.6}
-            />
+            >
+              <title>{point.label}</title>
+            </circle>
           );
         })}
       </svg>
+      {activePoint && !activePoint.muted ? (
+        <p className={classNames.activeCaption} title={activePoint.label}>
+          {activePoint.label}
+        </p>
+      ) : null}
     </div>
   );
 }

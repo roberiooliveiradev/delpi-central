@@ -413,7 +413,6 @@
   --impact-effort-point: var(--delpi-ui-accent, var(--primary, #089bdb));
   width: 100%;
   color: var(--impact-effort-text);
-  overflow: hidden;
 }
 
 .delpi-ui-impact-effort-matrix__plot {
@@ -421,7 +420,7 @@
   width: 100%;
   max-width: 28rem;
   height: auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .delpi-ui-impact-effort-matrix__quadrant {
@@ -488,6 +487,19 @@
   fill: var(--impact-effort-text);
   font-weight: 600;
   pointer-events: none;
+}
+
+.delpi-ui-impact-effort-matrix__active-caption {
+  margin: 8px auto 0;
+  max-width: 28rem;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--impact-effort-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .delpi-ui-impact-effort-matrix__empty {

@@ -50,11 +50,14 @@ describe("ImpactEffortMatrix", () => {
     expect(classNames.axisLabel).toBe("delpi-ui-impact-effort-matrix__axis-label");
 
     const { container } = render(
-      <ImpactEffortMatrix points={SAMPLE} classNames={classNames} />,
+      <ImpactEffortMatrix points={SAMPLE} classNames={classNames} activePointId="r1" />,
     );
     const quadrant = container.querySelector(".delpi-ui-impact-effort-matrix__quadrant--quick-win");
     expect(quadrant).toBeTruthy();
     const effortLabel = container.querySelector(".delpi-ui-impact-effort-matrix__axis-label--effort");
     expect(effortLabel?.getAttribute("font-size")).toBe("3.6");
+    expect(container.querySelector(".delpi-ui-impact-effort-matrix__active-caption")?.textContent).toContain(
+      "v1.1.0",
+    );
   });
 });
