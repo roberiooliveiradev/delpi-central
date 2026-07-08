@@ -50,7 +50,7 @@ def _implanted_row(**overrides) -> dict:
 
 
 def test_summary_keeps_period_savings_and_active_when_no_new_implants_in_period() -> None:
-    repo = PostgresKaizenRepository()
+    repo = PostgresKaizenRepository(connection=MagicMock())
     repo.fetch_all = MagicMock(return_value=[_implanted_row()])
 
     result = repo.summary(
@@ -65,3 +65,39 @@ def test_summary_keeps_period_savings_and_active_when_no_new_implants_in_period(
     assert result["active_count"] == 1
     assert result["active_annual_savings"] > 0
     assert result["realized_annual_savings"] == pytest.approx(3040.45, rel=1e-2)
+
+
+def test_summary_period_savings_zero_for_future_competence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Filtro de competência futura não projeta ganhos ainda não realizados."""
+
+    class _FixedDate(date):
+        @classmethod
+        def today(cls) -> date:  # type: ignore[override]
+            return date(2026, 7, 8)
+
+    monkeypatch.setattr(
+        "app.domain.services.kaizen.kaizen_savings_validity.date",
+        _FixedDate,
+    )
+    monkeypatch.setattr(
+        "app.infrastructure.persistence.plugins.repositories.kaizen.postgres_kaizen_repository.date",
+        _FixedDate,
+    )
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        return_value=[_implanted_row(date_implemented=date(2026, 1, 10))]
+    )
+
+    result = repo.summary(
+        branch_code="01",
+        date_start="2026-08-01",
+        date_end="2026-08-31",
+    )
+
+    assert result["period_implanted_count"] == 0
+    assert result["period_savings"] == 0.0
+    # Run-rate vigente continua refletindo kaizens ativos hoje.
+    assert result["active_count"] == 1
+

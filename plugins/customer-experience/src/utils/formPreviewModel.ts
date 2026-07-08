@@ -19,6 +19,7 @@ export type PreviewFormPage = {
   backgroundImageUrl?: string | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit;
+  pointIcon?: string | null;
 };
 
 export type PreviewFormQuestion = {
@@ -31,6 +32,7 @@ export type PreviewFormQuestion = {
   pageId?: string | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit;
+  pointIcon?: string | null;
 };
 
 type PendingImages = {
@@ -81,6 +83,7 @@ export function buildPreviewForm(input: BuildPreviewInput): PreviewForm {
       ? URL.createObjectURL(pendingImages.pagePoint[index])
       : page.pointImageUrl ?? null,
     pointImageFit: normalizeBackgroundFit(page.pointImageFit),
+    pointIcon: page.pointIcon ?? null,
   }));
 
   const previewQuestions: PreviewFormQuestion[] = questions.map((question, index) => {
@@ -101,6 +104,7 @@ export function buildPreviewForm(input: BuildPreviewInput): PreviewForm {
         ? URL.createObjectURL(pendingImages.questionPoint[index])
         : question.pointImageUrl ?? null,
       pointImageFit: normalizeBackgroundFit(question.pointImageFit),
+      pointIcon: question.pointIcon ?? null,
     };
   });
 

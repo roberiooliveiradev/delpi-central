@@ -2,6 +2,7 @@ import {
   FilterInputField as PluginFilterInputField,
   FilterSelectField as PluginFilterSelectField,
   createFilterBarShell,
+  selectControlBemClasses,
   type FilterInputFieldClassNames,
   type FilterInputFieldProps,
   type FilterSelectFieldProps,
@@ -16,6 +17,8 @@ const WIDE_FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
   filterBox: "ie-field ie-field--wide",
   fieldLabel: "ie-field__label",
 };
+
+const SELECT_CLASS_NAMES = selectControlBemClasses("ie");
 
 export const FilterBarShell = createFilterBarShell({
   prefix: "ie",
@@ -40,10 +43,12 @@ export function FilterInputField({
 export function FilterSelectField({
   wide,
   ...props
-}: Omit<FilterSelectFieldProps, "classNames"> & FieldExtras) {
+}: Omit<FilterSelectFieldProps, "classNames" | "selectClassNames" | "selectLabels"> &
+  FieldExtras) {
   return (
     <PluginFilterSelectField
       classNames={wide ? WIDE_FIELD_CLASS_NAMES : FIELD_CLASS_NAMES}
+      selectClassNames={SELECT_CLASS_NAMES}
       {...props}
     />
   );

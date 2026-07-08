@@ -1,5 +1,7 @@
 import { X } from "lucide-react";
+import type { CSSProperties } from "react";
 import FormPreviewView from "../FormPreviewView";
+import type { BackgroundFit } from "../types";
 import type { PreviewForm } from "../utils/formPreviewModel";
 import { PreviewThemeToggle, usePreviewThemeMode } from "./PreviewThemeToggle";
 
@@ -8,8 +10,18 @@ type FormPreviewModalProps = {
   onClose: () => void;
 };
 
+function resolveBackgroundFit(value: string | null | undefined): BackgroundFit {
+  if (value === "fixed" || value === "tile" || value === "scale") return value;
+  return "scale";
+}
+
 export function FormPreviewModal({ form, onClose }: FormPreviewModalProps) {
   const [themeMode, setThemeMode] = usePreviewThemeMode();
+  const backgroundUrl = form.backgroundImageUrl ?? null;
+  const backgroundFit = resolveBackgroundFit(form.backgroundFit);
+  const viewportPhotoStyle = backgroundUrl
+    ? ({ backgroundImage: `url(${backgroundUrl})` } as CSSProperties)
+    : undefined;
 
   return (
     <div
@@ -28,7 +40,22 @@ export function FormPreviewModal({ form, onClose }: FormPreviewModalProps) {
         </div>
       </div>
       <div className="cx-form-preview-stage" data-theme={themeMode}>
-        <FormPreviewView form={form} />
+        {/*
+          Fundo fora do scroll (igual position:fixed no link público).
+          Antes o mosaico vivia dentro do conteúdo rolável e cortava na altura do card.
+        */}
+        {backgroundUrl && (
+          <div className="cxform-viewport-bg" aria-hidden="true">
+            <div
+              className={`cxform-viewport-bg__photo cxform-viewport-bg__photo--${backgroundFit}`}
+              style={viewportPhotoStyle}
+            />
+            <div className="cxform-viewport-bg__scrim" />
+          </div>
+        )}
+        <div className="cx-form-preview-scroll">
+          <FormPreviewView form={form} />
+        </div>
       </div>
     </div>
   );

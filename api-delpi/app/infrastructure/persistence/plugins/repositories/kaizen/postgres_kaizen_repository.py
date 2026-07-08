@@ -213,7 +213,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         - **Ganhos financeiros no período**: soma de ``daily_savings × dias ativos`` de
           TODOS os kaizens implantados (inclui os implantados antes do período que ainda
-          contabilizam), com o teto de 1 ano de validade.
+          contabilizam), com o teto de 1 ano de validade e **sem projetar dias futuros**.
         - **Contagens/distribuições/série mensal**: escopadas pela ``date_implemented``
           dentro do período (quando informado).
         - **Run-rate vigente**: kaizens implantados ainda dentro da validade hoje.

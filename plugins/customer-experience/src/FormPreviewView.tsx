@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { PreviewForm, PreviewFormPage, PreviewFormQuestion } from "./utils/formPreviewModel";
+import { LucideIconByName } from "@delpi/plugin-ui";
 import type { BackgroundFit } from "./types";
 import "./form-preview.css";
 
@@ -64,10 +65,6 @@ function computeProgress(
   return Math.round((completed / steps.length) * 100);
 }
 
-function resolveBackground(form: PreviewForm, _step: WizardStep | null): string | null {
-  return form.backgroundImageUrl ?? null;
-}
-
 function resolvePointImage(step: WizardStep | null, question?: PreviewFormQuestion): string | null {
   if (step?.kind === "question") {
     return (
@@ -92,23 +89,62 @@ function resolvePointImageFit(
 
 function PointIllustration({
   url,
+  icon,
   fit,
   variant,
 }: {
-  url: string;
+  url?: string | null;
+  icon?: string | null;
   fit?: BackgroundFit | null;
   variant?: "section" | "inline";
 }) {
+  if (!url && !icon) return null;
+  if (icon && !url) {
+    const className = [
+      "cxform-illustration",
+      "cxform-illustration--icon",
+      variant ? `cxform-illustration--${variant}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return (
+      <figure className={className} aria-hidden="true">
+        <div className="cxform-illustration__icon-wrap">
+          <LucideIconByName name={icon} size={72} className="cxform-illustration__icon" />
+        </div>
+      </figure>
+    );
+  }
+
   const resolved = resolveBackgroundFit(fit);
-  const className = ["cxform-illustration", variant ? `cxform-illustration--${variant}` : ""]
+  const className = [
+    "cxform-illustration",
+    `cxform-illustration--${resolved}`,
+    variant ? `cxform-illustration--${variant}` : "",
+  ]
     .filter(Boolean)
     .join(" ");
+
+  if (resolved === "tile") {
+    return (
+      <figure className={className} aria-hidden="true">
+        <div
+          className="cxform-illustration__photo cxform-illustration__photo--tile"
+          style={{ backgroundImage: `url(${url})` }}
+        />
+      </figure>
+    );
+  }
+
   return (
     <figure className={className} aria-hidden="true">
-      <div
-        className={`cxform-illustration__photo cxform-illustration__photo--${resolved}`}
-        style={{ backgroundImage: `url(${url})` }}
-      />
+      <div className="cxform-illustration__frame">
+        <img
+          className={`cxform-illustration__img cxform-illustration__img--${resolved}`}
+          src={url!}
+          alt=""
+        />
+      </div>
     </figure>
   );
 }
@@ -127,10 +163,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState<string | null>(null);
 
-  const currentStep = wizard ? steps[stepIndex] : null;
   const progress = computeProgress(form, stepIndex, answers, name);
-  const backgroundUrl = resolveBackground(form, currentStep);
-  const backgroundFit = resolveBackgroundFit(form.backgroundFit);
 
   const pageById = useMemo(
     () => new Map(pages.map((p) => [p.id, p])),
@@ -216,10 +249,6 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
     );
   }
 
-  const viewportPhotoStyle = backgroundUrl
-    ? ({ backgroundImage: `url(${backgroundUrl})` } as React.CSSProperties)
-    : undefined;
-
   const renderIntroFields = () => (
     <>
       <label className="cxform-field">
@@ -260,18 +289,24 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
             <div key={q.id}>
               {showPageHeader && page && (
                 <div className="cxform-page-header">
-                  {page.pointImageUrl && (
+                  {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
+                  {(page.pointImageUrl || page.pointIcon) && (
                     <PointIllustration
                       url={page.pointImageUrl}
+                      icon={page.pointIcon}
                       fit={page.pointImageFit}
                       variant="section"
                     />
                   )}
-                  {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
                 </div>
               )}
-              {!showPageHeader && q.pointImageUrl && (
-                <PointIllustration url={q.pointImageUrl} fit={q.pointImageFit} variant="inline" />
+              {!showPageHeader && (q.pointImageUrl || q.pointIcon) && (
+                <PointIllustration
+                  url={q.pointImageUrl}
+                  icon={q.pointIcon}
+                  fit={q.pointImageFit}
+                  variant="inline"
+                />
               )}
               <QuestionField
                 question={q}
@@ -291,13 +326,19 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
       return renderIntroFields();
     }
     const pointImage = resolvePointImage(step);
+    const pointIcon =
+      step.kind === "question"
+        ? step.page?.pointIcon ?? step.question.pointIcon ?? null
+        : null;
     const pointFit = resolvePointImageFit(step);
     const pageTitle = step.page?.title?.trim();
     const showPageTitle = Boolean(pageTitle && pageTitle !== step.question.label.trim());
     return (
       <div className="cxform-step">
-        {pointImage && <PointIllustration url={pointImage} fit={pointFit} />}
         {showPageTitle && <h2 className="cxform-page-title">{pageTitle}</h2>}
+        {(pointImage || pointIcon) && (
+          <PointIllustration url={pointImage} icon={pointIcon} fit={pointFit} />
+        )}
         <QuestionField
           question={step.question}
           answer={answers[step.question.id]}
@@ -310,19 +351,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
   const isLastWizardStep = wizard && stepIndex === steps.length - 1;
 
   return (
-    <>
-      {backgroundUrl && (
-        <div className="cxform-viewport-bg" aria-hidden="true">
-          <div
-            className={`cxform-viewport-bg__photo cxform-viewport-bg__photo--${backgroundFit}`}
-            style={viewportPhotoStyle}
-          />
-          <div className="cxform-viewport-bg__scrim" />
-        </div>
-      )}
-      <div
-        className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}`}
-      >
+    <div className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}`}>
       <header className="cxform-header">
         <span className="cxform-eyebrow">Programa Experiência do Cliente · DELPI</span>
         <h1 className="cxform-title">{form.title}</h1>
@@ -374,8 +403,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
           </button>
         )}
       </form>
-      </div>
-    </>
+    </div>
   );
 }
 

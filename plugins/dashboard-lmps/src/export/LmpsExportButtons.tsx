@@ -1,7 +1,9 @@
-import { Download } from "lucide-react";
+/**
+ * UI genérica CSV/Excel/PDF — domínio e builders permanecem em `dispatch` / builders.
+ */
+import { TabularExportButtons } from "@delpi/plugin-ui";
 
 import { runLmpsExport } from "./dispatch";
-import { TABULAR_EXPORT_ACTIONS } from "./types";
 import type {
   DashboardExportContext,
   TabularExportFormat,
@@ -29,28 +31,17 @@ type DashboardExportButtonsProps = ExportButtonsBaseProps & {
 
 export type LmpsExportButtonsProps = TableExportButtonsProps | DashboardExportButtonsProps;
 
-function dispatchRequest(
-  props: LmpsExportButtonsProps,
-  format: TabularExportFormat,
-): void {
+function dispatchRequest(props: LmpsExportButtonsProps, format: TabularExportFormat): void {
   if (props.variant === "table") {
     void (async () => {
-      const payload = props.resolvePayload
-        ? await props.resolvePayload()
-        : props.payload;
-      runLmpsExport({
-        kind: "table",
-        payload,
-        format,
-      });
+      const payload = props.resolvePayload ? await props.resolvePayload() : props.payload;
+      runLmpsExport({ kind: "table", payload, format });
     })();
     return;
   }
 
   void (async () => {
-    const context = props.resolveContext
-      ? await props.resolveContext()
-      : props.context;
+    const context = props.resolveContext ? await props.resolveContext() : props.context;
     runLmpsExport({ kind: "dashboard", context, format });
   })();
 }
@@ -64,21 +55,12 @@ export function LmpsExportButtons(props: LmpsExportButtonsProps) {
   } = props;
 
   return (
-    <div className={className} role="group" aria-label="Exportar dados">
-      {TABULAR_EXPORT_ACTIONS.map((action) => (
-        <button
-          key={action.format}
-          type="button"
-          className={buttonClassName}
-          title={action.title}
-          aria-label={action.title}
-          disabled={disabled}
-          onClick={() => dispatchRequest(props, action.format)}
-        >
-          {showIcon ? <Download size={15} aria-hidden="true" /> : null}
-          <span>{action.label}</span>
-        </button>
-      ))}
-    </div>
+    <TabularExportButtons
+      disabled={disabled}
+      className={className}
+      buttonClassName={buttonClassName}
+      showIcon={showIcon}
+      onExport={(format) => dispatchRequest(props, format)}
+    />
   );
 }

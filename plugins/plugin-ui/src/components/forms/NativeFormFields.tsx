@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import {
   createDashboardFormFieldShell,
   FormFieldShell,
@@ -10,17 +12,25 @@ type BaseNativeFieldProps = {
   hint?: string;
   span?: boolean;
   required?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
   className?: string;
+  controlClassName?: string;
+  afterControl?: ReactNode;
+  onBlur?: () => void;
   classNames: FormFieldShellClassNames;
 };
 
 export type NativeTextFieldProps = BaseNativeFieldProps & {
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "date";
+  type?: "text" | "date" | "datetime-local" | "number";
   placeholder?: string;
   maxLength?: number;
+  min?: number | string;
+  max?: number | string;
   inputMode?: "decimal" | "numeric";
+  autoFocus?: boolean;
 };
 
 export function NativeTextField({
@@ -29,14 +39,22 @@ export function NativeTextField({
   hint,
   span,
   required,
+  disabled,
+  readOnly,
   className,
+  controlClassName,
+  afterControl,
+  onBlur,
   classNames,
   value,
   onChange,
   type = "text",
   placeholder,
   maxLength,
+  min,
+  max,
   inputMode,
+  autoFocus,
 }: NativeTextFieldProps) {
   return (
     <FormFieldShell
@@ -45,16 +63,24 @@ export function NativeTextField({
       hint={hint}
       span={span}
       className={className}
+      afterControl={afterControl}
       classNames={classNames}
     >
       <input
         id={id}
+        className={controlClassName}
         type={type}
         required={required}
+        disabled={disabled}
+        readOnly={readOnly}
         value={value}
         placeholder={placeholder}
         maxLength={maxLength}
+        min={min}
+        max={max}
         inputMode={inputMode}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       />
     </FormFieldShell>
@@ -79,7 +105,11 @@ export function NativeSelectField({
   hint,
   span,
   required,
+  disabled,
   className,
+  controlClassName,
+  afterControl,
+  onBlur,
   classNames,
   value,
   onChange,
@@ -93,12 +123,16 @@ export function NativeSelectField({
       hint={hint}
       span={span}
       className={className}
+      afterControl={afterControl}
       classNames={classNames}
     >
       <select
         id={id}
+        className={controlClassName}
         required={required}
+        disabled={disabled}
         value={value}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       >
         {placeholderOption !== undefined ? <option value="">{placeholderOption}</option> : null}
@@ -116,6 +150,7 @@ export type NativeTextAreaFieldProps = BaseNativeFieldProps & {
   value: string;
   onChange: (value: string) => void;
   rows?: number;
+  placeholder?: string;
 };
 
 export function NativeTextAreaField({
@@ -124,11 +159,17 @@ export function NativeTextAreaField({
   hint,
   span = true,
   required,
+  disabled,
+  readOnly,
   className,
+  controlClassName,
+  afterControl,
+  onBlur,
   classNames,
   value,
   onChange,
   rows,
+  placeholder,
 }: NativeTextAreaFieldProps) {
   return (
     <FormFieldShell
@@ -137,13 +178,19 @@ export function NativeTextAreaField({
       hint={hint}
       span={span}
       className={className}
+      afterControl={afterControl}
       classNames={classNames}
     >
       <textarea
         id={id}
+        className={controlClassName}
         rows={rows}
         required={required}
+        disabled={disabled}
+        readOnly={readOnly}
         value={value}
+        placeholder={placeholder}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       />
     </FormFieldShell>

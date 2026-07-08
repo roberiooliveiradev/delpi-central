@@ -17,6 +17,7 @@ import {
   type RevisaoProgramadaRealizacao,
 } from "../data/api/maintenanceApi";
 import { BrDateInput, FieldLabel, HelpTooltip, PendingChangeBadge, StateBox, StatusBadge } from "./data";
+import { DmNativeTextAreaField } from "./dmFormFields";
 import { fromDateInputValue, toDateInputValue } from "../utils/datetimeLocal";
 
 type FerramentaRevisaoProgramadaSectionProps = {
@@ -570,17 +571,17 @@ export function FerramentaRevisaoProgramadaSection({
                   }
                 />
               </label>
-              <label className="dm-field dm-field--span-full dm-field--textarea">
-                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao}  className="dm-field__label" />
-                <textarea
-                  rows={4}
-                  value={createDraft.observacao}
-                  onChange={(event) =>
-                    setCreateDraft((prev) => ({ ...prev, observacao: event.target.value }))
-                  }
-                  placeholder="Opcional — checklist ou pontos a verificar"
-                />
-              </label>
+              <DmNativeTextAreaField
+                id="dm-revisao-create-obs"
+                label="Observação"
+                hint={CONFIG_TOOLTIPS.revisaoObservacao}
+                className="dm-field--span-full dm-field--textarea"
+                span={false}
+                rows={4}
+                value={createDraft.observacao}
+                onChange={(observacao) => setCreateDraft((prev) => ({ ...prev, observacao }))}
+                placeholder="Opcional — checklist ou pontos a verificar"
+              />
               <div className="dm-form-grid__buttons dm-field--span-full">
                 <button type="submit" className="dm-primary-btn" disabled={saving}>
                   Programar revisão
@@ -626,17 +627,17 @@ export function FerramentaRevisaoProgramadaSection({
                   </span>
                 ) : null}
               </label>
-              <label className="dm-field dm-field--span-full dm-field--textarea">
-                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao}  className="dm-field__label" />
-                <textarea
-                  rows={4}
-                  value={draft.observacao}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, observacao: event.target.value }))
-                  }
-                  placeholder="Opcional — checklist ou pontos a verificar"
-                />
-              </label>
+              <DmNativeTextAreaField
+                id="dm-revisao-edit-obs"
+                label="Observação"
+                hint={CONFIG_TOOLTIPS.revisaoObservacao}
+                className="dm-field--span-full dm-field--textarea"
+                span={false}
+                rows={4}
+                value={draft.observacao}
+                onChange={(observacao) => setDraft((prev) => ({ ...prev, observacao }))}
+                placeholder="Opcional — checklist ou pontos a verificar"
+              />
               <div className="dm-revisao-ferramenta__actions dm-field--span-full">
                 <button
                   type="button"

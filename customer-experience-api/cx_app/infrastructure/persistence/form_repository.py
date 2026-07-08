@@ -20,11 +20,11 @@ _FORM_COLUMNS = (
 )
 _QUESTION_COLUMNS = (
     "id, form_id, page_id, position, question_type, label, help_text, is_required, "
-    "options, point_image_filename, point_image_fit, is_active, created_at, updated_at"
+    "options, point_image_filename, point_image_fit, point_icon, is_active, created_at, updated_at"
 )
 _PAGE_COLUMNS = (
     "id, form_id, position, title, background_image_filename, point_image_filename, "
-    "point_image_fit, created_at, updated_at"
+    "point_image_fit, point_icon, created_at, updated_at"
 )
 
 
@@ -153,6 +153,7 @@ class FormRepository:
                     bg = page.get("background_image_filename")
                     point = page.get("point_image_filename")
                     point_fit = page.get("point_image_fit") or "scale"
+                    point_icon = page.get("point_icon")
                     title = page.get("title")
                     if page.get("id"):
                         cur.execute(
@@ -162,11 +163,21 @@ class FormRepository:
                                 background_image_filename = %s,
                                 point_image_filename = %s,
                                 point_image_fit = %s,
+                                point_icon = %s,
                                 updated_at = NOW()
                             WHERE id = %s AND form_id = %s
                             RETURNING id
                             """,
-                            (position, title, bg, point, point_fit, page["id"], form_id),
+                            (
+                                position,
+                                title,
+                                bg,
+                                point,
+                                point_fit,
+                                point_icon,
+                                page["id"],
+                                form_id,
+                            ),
                         )
                         updated = cur.fetchone()
                         if updated:
@@ -177,11 +188,11 @@ class FormRepository:
                         INSERT INTO {_PAGES}
                             (form_id, position, title,
                              background_image_filename, point_image_filename,
-                             point_image_fit)
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                             point_image_fit, point_icon)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                         """,
-                        (form_id, position, title, bg, point, point_fit),
+                        (form_id, position, title, bg, point, point_fit, point_icon),
                     )
                     inserted = cur.fetchone()
                     keep_ids.append(str(inserted["id"]))
@@ -231,6 +242,7 @@ class FormRepository:
                     page_id = q.get("page_id")
                     point_image = q.get("point_image_filename")
                     point_fit = q.get("point_image_fit") or "scale"
+                    point_icon = q.get("point_icon")
                     if q.get("id"):
                         cur.execute(
                             f"""
@@ -239,6 +251,7 @@ class FormRepository:
                                 help_text = %s, is_required = %s, options = %s,
                                 point_image_filename = %s,
                                 point_image_fit = %s,
+                                point_icon = %s,
                                 is_active = TRUE, updated_at = NOW()
                             WHERE id = %s AND form_id = %s
                             RETURNING id
@@ -253,6 +266,7 @@ class FormRepository:
                                 options,
                                 point_image,
                                 point_fit,
+                                point_icon,
                                 q["id"],
                                 form_id,
                             ),
@@ -265,8 +279,9 @@ class FormRepository:
                         f"""
                         INSERT INTO {_QUESTIONS}
                             (form_id, page_id, position, question_type, label, help_text,
-                             is_required, options, point_image_filename, point_image_fit)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                             is_required, options, point_image_filename, point_image_fit,
+                             point_icon)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                         """,
                         (
@@ -280,6 +295,7 @@ class FormRepository:
                             options,
                             point_image,
                             point_fit,
+                            point_icon,
                         ),
                     )
                     inserted = cur.fetchone()

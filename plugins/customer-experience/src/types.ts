@@ -80,7 +80,7 @@ export const BACKGROUND_FIT_LABELS: Record<BackgroundFit, string> = {
 /** Mesmos modos, rótulos para imagem ilustrativa. */
 export const POINT_IMAGE_FIT_LABELS: Record<BackgroundFit, string> = {
   fixed: "Tamanho fixo (original)",
-  scale: "Escalável (preenche a área)",
+  scale: "Preencher (esticar)",
   tile: "Repetir (mosaico)",
 };
 
@@ -103,6 +103,7 @@ export type FormQuestion = {
   pageIndex?: number | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit;
+  pointIcon?: string | null;
 };
 
 export type FormPage = {
@@ -112,6 +113,7 @@ export type FormPage = {
   backgroundImageUrl?: string | null;
   pointImageUrl?: string | null;
   pointImageFit?: BackgroundFit;
+  pointIcon?: string | null;
 };
 
 export type FormSummary = {

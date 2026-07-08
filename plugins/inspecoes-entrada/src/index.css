@@ -338,6 +338,109 @@
   color: var(--ie-text);
 }
 
+/* SelectControl (FilterSelectField) — evita lista/bullets fora do shell */
+.ie-select {
+  position: relative;
+  min-width: 0;
+}
+
+.ie-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--ie-control-height);
+  padding: 0 12px;
+  border: 1px solid var(--ie-border);
+  border-radius: var(--ie-control-radius);
+  background: var(--ie-surface);
+  color: var(--ie-text);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.ie-select__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ie-select--open .ie-select__trigger {
+  border-color: color-mix(in srgb, var(--ie-accent) 45%, var(--ie-border));
+}
+
+.ie-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ie-select__panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--ie-border);
+  border-radius: var(--ie-control-radius);
+  background: var(--ie-surface);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--ie-text) 12%, transparent);
+}
+
+.ie-select__search {
+  min-height: var(--ie-control-height);
+  padding: 0 12px;
+  border: 1px solid var(--ie-border);
+  border-radius: var(--ie-control-radius);
+  background: var(--ie-surface);
+  color: var(--ie-text);
+  font: inherit;
+}
+
+.ie-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow: auto;
+  display: grid;
+  gap: 2px;
+}
+
+.ie-select__list li {
+  margin: 0;
+  list-style: none;
+}
+
+.ie-select__option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--ie-text);
+  font: inherit;
+  font-size: var(--ie-font-sm);
+}
+
+.ie-select__option:hover,
+.ie-select__option--active {
+  background: color-mix(in srgb, var(--ie-accent) 10%, transparent);
+  color: var(--ie-accent);
+}
+
+.ie-select__empty {
+  padding: 8px;
+  color: var(--ie-muted);
+  font-size: var(--ie-font-sm);
+}
+
 .ie-filter-bar__actions {
   display: flex;
   gap: 10px;

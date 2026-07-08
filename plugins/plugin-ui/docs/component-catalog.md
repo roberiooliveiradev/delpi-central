@@ -2,7 +2,7 @@
 
 Exports públicos de `@delpi/plugin-ui`. Import único.
 
-Exportação tabular (CSV / Excel / PDF DELPI): ver [export-catalog.md](./export-catalog.md) — `exportTableFormat`, `exportPayloadsToXlsx`, `printDelpiDocumentSpec`, etc.
+Exportação tabular (CSV / Excel / PDF DELPI) e botões (`TabularExportButtons`, `DocumentExportActions`, `ExcelExportButton`): ver [export-catalog.md](./export-catalog.md).
 
 Imports:
 
@@ -269,8 +269,8 @@ Campos nativos label+controle para plugins que estilizam `<input>`/`<select>`/`<
 
 | Export | Descrição |
 |--------|-----------|
-| `TextField` / `SelectField` / `TextAreaField` | Campo com `FormFieldShell` |
-| `FormFieldShell` | Label + hint + slot children (participantes, multiselect custom) |
+| `TextField` / `SelectField` / `TextAreaField` | Campo com `FormFieldShell` (`type`: `text` \| `date` \| `datetime-local` \| `number`; `afterControl`; `onBlur` / `readOnly` / `max` / `autoFocus`) |
+| `FormFieldShell` | Label + hint + slot children + `afterControl` opcional |
 | `formFieldShellKaizenClasses` | BEM `{prefix}-field`, `{prefix}-span-2` |
 
 ### `StateBanner` / `PageHeader`
@@ -358,6 +358,35 @@ Consumidores podem **só** passar `className` nas props sem usar as classes defa
 
 ---
 
+## Família `forms` — Lucide icon picker
+
+### `LucideIconPicker`
+
+Painel centralizado para escolher ícones Lucide com **seções** e busca no catálogo completo. Valor em **kebab-case** (ex.: `eye`).
+
+| Prop | Tipo | Default | Descrição |
+|------|------|---------|-----------|
+| `value` | `string \| null` | — | Ícone atual (kebab ou Pascal) |
+| `onChange` | `(icon: string \| null) => void` | — | `null` remove |
+| `onClose` | `() => void` | — | Fecha (botão / após escolher) |
+| `curatedOnly` | `boolean` | `false` | Se `true`, busca só no catálogo curado |
+| `maxResults` | `number` | `480` | Limite de matches na busca completa |
+| `labels` | `LucideIconPickerLabels` | PT-BR | Textos do painel |
+
+Tokens: `--delpi-ui-surface`, `--delpi-ui-text`, `--delpi-ui-border`, `--delpi-ui-muted`, `--delpi-ui-accent` (claro/escuro via tema do plugin).
+
+Helpers: `resolveLucideIcon`, `groupLucideIconsBySection`, `LUCIDE_ICON_SECTIONS`, `CURATED_LUCIDE_ICON_NAMES`, `listLucideIconNames`.
+
+### `LucideIconByName`
+
+Renderiza um ícone Lucide pelo nome.
+
+```ts
+import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
+```
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |
@@ -366,5 +395,7 @@ Consumidores podem **só** passar `className` nas props sem usar as classes defa
 | `dashboard-production` | `HelpTooltip`, `FieldLabel` |
 | `dashboard-commercial` | `HelpTooltip`, `FieldLabel` |
 | `dashboard-engineering` | `HelpTooltip`, `FieldLabel` |
+| `customer-experience` | `LucideIconPicker`, `LucideIconByName` |
+| `public-hub` | `LucideIconByName` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.

@@ -30,13 +30,45 @@
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 24px 16px 48px;
+  padding: 0;
   background: var(--pub-stage-bg);
   color: var(--pub-text-body);
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   z-index: 1;
   color-scheme: light;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Mosaico cobrindo 100% do stage (fora do scroll) — espelha position:fixed do link público.
+ * Antes o fundo viveu dentro do conteúdo rolável e cortava na altura do card.
+ */
+.cx-form-preview-stage > .cxform-viewport-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cx-form-preview-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 24px 16px 48px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.cx-form-preview-stage .cxform--fullpage {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* Tokens claros forçados (prévia independente do tema do portal). */
@@ -124,13 +156,6 @@
 .cx-form-preview-stage[data-theme="dark"] .cxform-card,
 .cx-form-preview-stage[data-theme="dark"] .cxform--fullpage .cxform-header {
   backdrop-filter: none;
-}
-
-/* Fundo do formulário na prévia: absoluto na área do stage — não cobre a toolbar. */
-.cx-form-preview-stage .cxform-viewport-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
 }
 
 .cx-form-preview-overlay {
@@ -374,50 +399,100 @@
 
 .cxform-page-title {
   margin: 0 0 16px;
-  font-size: 1.15rem;
+  font-size: clamp(1.35rem, 4.2vw, 1.75rem);
   font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
   color: var(--pub-text);
-  text-align: left;
+  text-align: center;
 }
 
-/* Ilustração por etapa/pergunta — mesma lógica de fit do fundo (fixed/scale/tile). */
+.cxform--fullpage.cxform--wizard .cxform-page-title {
+  margin: 0 0 18px;
+  font-size: clamp(1.45rem, 4.6vw, 1.9rem);
+  text-align: center;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-step .cxform-label,
+.cxform--fullpage.cxform--wizard .cxform-step legend.cxform-label {
+  font-size: clamp(1.05rem, 3.2vw, 1.2rem);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+
+/* Ilustração por etapa/pergunta — fixed | scale (adapta) | tile. */
 .cxform-illustration {
   margin: 0 0 20px;
   padding: 0;
   text-align: center;
 }
 
-.cxform-illustration__photo {
+.cxform-illustration__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 220px;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Tamanho fixo: altura acompanha a imagem (sem cortar). */
+.cxform-illustration--fixed .cxform-illustration__frame {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.cxform-illustration__img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Preencher: stretch — ocupa 100% do container (pode distorcer). */
+.cxform-illustration__img--scale {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: fill;
+  object-position: center;
+}
+
+/* Tamanho fixo: tamanho nativo; se passar da largura, reduz proporcionalmente. */
+.cxform-illustration__img--fixed {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
+}
+
+.cxform-illustration__photo--tile {
   display: block;
   width: 100%;
   height: 220px;
   max-width: 100%;
   margin: 0 auto;
   border-radius: 12px;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
-.cxform-illustration__photo--scale {
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.cxform-illustration__photo--fixed {
-  background-size: auto;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.cxform-illustration__photo--tile {
   background-size: auto;
   background-repeat: repeat;
   background-position: top left;
 }
 
-.cxform-illustration--section .cxform-illustration__photo {
+.cxform-illustration--section .cxform-illustration__frame,
+.cxform-illustration--section .cxform-illustration__photo--tile {
   height: 260px;
 }
 
@@ -425,24 +500,48 @@
   margin-bottom: 16px;
 }
 
-.cxform-illustration--inline .cxform-illustration__photo {
+.cxform-illustration--inline .cxform-illustration__frame,
+.cxform-illustration--inline .cxform-illustration__photo--tile {
   height: 200px;
 }
 
-/* Wizard passo a passo — faixa hero com ilustração grande no topo do card. */
+/* Wizard: faixa hero sob o título da etapa (ou no topo se não houver título). */
 .cxform--fullpage.cxform--wizard .cxform-illustration {
-  margin: -24px -24px 24px;
-  padding: clamp(20px, 5vw, 36px) clamp(16px, 4vw, 28px);
+  margin: 0 -24px 24px;
+  padding: 0;
   background: var(--pub-illustration-band);
   border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
 }
 
-.cxform--fullpage.cxform--wizard .cxform-illustration__photo {
-  width: min(100%, 420px);
-  height: min(280px, 36vh);
-  min-height: clamp(120px, 20vw, 180px);
-  margin: 0 auto;
+.cxform--fullpage.cxform--wizard .cxform-step > .cxform-illustration:first-child {
+  margin-top: -24px;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration__frame,
+.cxform--fullpage.cxform--wizard .cxform-illustration__photo--tile {
+  width: 100%;
+  height: min(320px, 42vh);
+  min-height: clamp(160px, 28vw, 240px);
+  border-radius: 0;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration__img {
   filter: drop-shadow(0 8px 24px rgba(8, 40, 64, 0.08));
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--fixed {
+  padding: clamp(16px, 4vw, 28px);
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--fixed .cxform-illustration__frame {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--fixed .cxform-illustration__img--fixed {
+  max-width: 100%;
+  max-height: none;
 }
 
 .cxform-step {
@@ -499,9 +598,10 @@
 
 .cxform-title {
   margin: 0 0 8px;
-  font-size: clamp(1.5rem, 5.2vw, 2.1rem);
+  font-size: clamp(1.65rem, 5.6vw, 2.25rem);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
   color: var(--pub-text);
 }
 
@@ -548,9 +648,10 @@
 
 .cxform-label {
   display: block;
-  font-size: 13.5px;
+  font-size: clamp(0.98rem, 2.8vw, 1.08rem);
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
+  line-height: 1.35;
   color: var(--pub-text);
   margin-bottom: 8px;
   padding: 0;
@@ -759,4 +860,38 @@
   .cxform-star {
     transition: none;
   }
+}
+
+.cxform-illustration--icon {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 20px;
+}
+
+.cxform-illustration__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 220px);
+  min-height: 140px;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--pub-accent) 10%, var(--pub-card-bg));
+}
+
+.cxform-illustration__icon {
+  color: var(--pub-accent);
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--icon {
+  margin: 0 -24px 24px;
+  padding: clamp(20px, 5vw, 36px);
+  background: var(--pub-illustration-band);
+  border-bottom: 1px solid color-mix(in srgb, var(--pub-accent) 14%, var(--pub-card-border));
+}
+
+.cxform--fullpage.cxform--wizard .cxform-illustration--icon .cxform-illustration__icon-wrap {
+  width: min(100%, 280px);
+  min-height: clamp(140px, 24vw, 200px);
+  background: transparent;
 }

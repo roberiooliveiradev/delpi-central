@@ -14,6 +14,7 @@ export default defineConfig({
       react: path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
       "lucide-react": path.resolve(__dirname, "node_modules/lucide-react"),
+      "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
       "@delpi/tv-dashboard-presentation": path.resolve(
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",

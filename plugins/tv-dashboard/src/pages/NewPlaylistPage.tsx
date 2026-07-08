@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import { createPlaylist } from "../api/tvDashboardApi";
+import { TdNativeTextAreaField, TdNativeTextField } from "../components/tdFormFields";
 
 type Props = {
   onBack: () => void;
@@ -41,26 +42,23 @@ export function NewPlaylistPage({ onBack, onCreated }: Props) {
         <h2 style={{ marginTop: 0 }}>Nova programação</h2>
         <p className="td-subtitle">Defina um nome e adicione telas na sequência.</p>
         <form onSubmit={(event) => void handleSubmit(event)}>
-          <div className="td-field">
-            <label htmlFor="td-new-name">Nome</label>
-            <input
-              id="td-new-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex.: Painel fábrica — turno A"
-              required
-              autoFocus
-            />
-          </div>
-          <div className="td-field">
-            <label htmlFor="td-new-description">Descrição (opcional)</label>
-            <textarea
-              id="td-new-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
+          <TdNativeTextField
+            id="td-new-name"
+            label="Nome"
+            value={name}
+            onChange={setName}
+            placeholder="Ex.: Painel fábrica — turno A"
+            required
+            autoFocus
+          />
+          <TdNativeTextAreaField
+            id="td-new-description"
+            label="Descrição (opcional)"
+            value={description}
+            onChange={setDescription}
+            rows={3}
+            span={false}
+          />
           {error ? <p className="td-state">{error}</p> : null}
           <div className="td-modal-actions">
             <button type="button" className="td-btn" onClick={onBack}>

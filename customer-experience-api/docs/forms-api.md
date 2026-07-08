@@ -54,6 +54,8 @@ Respostas de detalhe incluem URLs públicas resolvidas (`backgroundImageUrl`, `p
 
 Em `PUT /forms/{id}/questions`, páginas e perguntas aceitam `pointImageFit` (`fixed` | `scale` | `tile`) — mesmos modos do fundo do formulário (`backgroundFit`), aplicados à área da imagem ilustrativa.
 
+Também aceitam `pointIcon` (nome Lucide em kebab-case, ex.: `eye`). Ícone e imagem ilustrativa são mutuamente exclusivos.
+
 ---
 
 ## Público (sem JWT)

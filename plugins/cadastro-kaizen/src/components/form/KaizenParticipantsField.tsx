@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
+import { NativeSelectControl } from "@delpi/plugin-ui";
 
 import { PARTICIPANT_ROLES } from "../../constants/kaizen";
 import type { KaizenParticipant, ParticipantRole } from "../../types/kaizen";
@@ -40,18 +41,13 @@ export function KaizenParticipantsField({ participants, onChange }: KaizenPartic
             maxLength={200}
             onChange={(event) => update(index, { name: event.target.value })}
           />
-          <select
+          <NativeSelectControl
             className="kz-participant-row__role"
             aria-label={`Papel do participante ${index + 1}`}
             value={participant.role}
-            onChange={(event) => update(index, { role: event.target.value as ParticipantRole })}
-          >
-            {PARTICIPANT_ROLES.map((role) => (
-              <option key={role.value} value={role.value}>
-                {role.label}
-              </option>
-            ))}
-          </select>
+            onChange={(role) => update(index, { role: role as ParticipantRole })}
+            options={PARTICIPANT_ROLES}
+          />
           <button
             type="button"
             className="kz-danger-btn"

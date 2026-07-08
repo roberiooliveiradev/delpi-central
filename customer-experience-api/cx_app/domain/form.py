@@ -67,6 +67,7 @@ class PageInput:
     background_image_filename: str | None = None
     point_image_filename: str | None = None
     point_image_fit: str | None = None
+    point_icon: str | None = None
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,7 @@ class QuestionInput:
     page_index: int | None = None
     point_image_filename: str | None = None
     point_image_fit: str | None = None
+    point_icon: str | None = None
 
 
 @dataclass(frozen=True)

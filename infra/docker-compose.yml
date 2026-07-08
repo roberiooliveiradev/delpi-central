@@ -478,8 +478,8 @@ services:
 
   minha-delpi-chat:
     build:
-      context: ../plugins/minha-delpi-chat
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: minha-delpi-chat/Dockerfile
 
     container_name: delpi-minha-delpi-chat
     restart: unless-stopped
@@ -590,18 +590,15 @@ services:
 
   quality-labels:
     build:
-      context: ../plugins/quality-labels
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: quality-labels/Dockerfile
+      target: production
 
     container_name: delpi-quality-labels
     restart: unless-stopped
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/quality-labels:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -695,8 +692,8 @@ services:
 
   customer-experience:
     build:
-      context: ../plugins/customer-experience
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: customer-experience/Dockerfile
       target: production
 
     container_name: delpi-customer-experience
@@ -739,8 +736,8 @@ services:
 
   central-agendamento:
     build:
-      context: ../plugins/central-agendamento
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: central-agendamento/Dockerfile
       target: production
 
     container_name: delpi-central-agendamento

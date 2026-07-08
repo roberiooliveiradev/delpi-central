@@ -61,6 +61,7 @@ class PagePayload(BaseModel):
     backgroundImageFilename: str | None = None
     pointImageFilename: str | None = None
     pointImageFit: str | None = None
+    pointIcon: str | None = None
 
 
 class QuestionPayload(BaseModel):
@@ -74,6 +75,7 @@ class QuestionPayload(BaseModel):
     pageIndex: int | None = Field(default=None, ge=0)
     pointImageFilename: str | None = None
     pointImageFit: str | None = None
+    pointIcon: str | None = None
 
 
 class QuestionsPayload(BaseModel):
@@ -204,6 +206,7 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
                     background_image_filename=p.backgroundImageFilename,
                     point_image_filename=p.pointImageFilename,
                     point_image_fit=p.pointImageFit,
+                    point_icon=p.pointIcon,
                 )
                 for p in payload.pages
             ],
@@ -219,6 +222,7 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
                     page_index=q.pageIndex,
                     point_image_filename=q.pointImageFilename,
                     point_image_fit=q.pointImageFit,
+                    point_icon=q.pointIcon,
                 )
                 for q in payload.questions
             ],

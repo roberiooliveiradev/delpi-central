@@ -485,8 +485,8 @@ services:
 
   minha-delpi-chat:
     build:
-      context: ../plugins/minha-delpi-chat
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: minha-delpi-chat/Dockerfile
     profiles:
       - chat
 
@@ -594,8 +594,8 @@ services:
   quality-labels:
     <<: *plugin-profile
     build:
-      context: ../plugins/quality-labels
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: quality-labels/Dockerfile
       target: production
 
     container_name: delpi-quality-labels
@@ -721,8 +721,8 @@ services:
   customer-experience:
     <<: *plugin-profile
     build:
-      context: ../plugins/customer-experience
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: customer-experience/Dockerfile
       target: production
 
     container_name: delpi-customer-experience
@@ -753,8 +753,8 @@ services:
   central-agendamento:
     <<: *plugin-profile
     build:
-      context: ../plugins/central-agendamento
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: central-agendamento/Dockerfile
       target: production
 
     container_name: delpi-central-agendamento

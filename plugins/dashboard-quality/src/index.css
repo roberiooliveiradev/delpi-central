@@ -1598,6 +1598,93 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   font-size: var(--dq-font-sm, 13px);
 }
 
+.dashboard-quality .dq-select {
+  position: relative;
+  min-width: 0;
+}
+
+.dashboard-quality .dq-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--dq-control-height, 42px);
+  padding: 0 12px;
+  border-radius: var(--dq-control-radius, 10px);
+  border: 1px solid var(--dq-card-border, var(--border, #e2e8f0));
+  background: var(--surface, #fff);
+  color: var(--dq-text, inherit);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.dashboard-quality .dq-select__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-quality .dq-select--open .dq-select__trigger {
+  border-color: color-mix(in srgb, var(--dq-accent, #2563eb) 45%, transparent);
+}
+
+.dashboard-quality .dq-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-quality .dq-select__panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--dq-card-border, var(--border, #e2e8f0));
+  background: var(--dq-card-bg, var(--surface, #fff));
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+}
+
+.dashboard-quality .dq-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow: auto;
+  display: grid;
+  gap: 2px;
+}
+
+.dashboard-quality .dq-select__option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--dq-text, inherit);
+  font: inherit;
+  font-size: var(--dq-font-sm, 13px);
+}
+
+.dashboard-quality .dq-select__option:hover,
+.dashboard-quality .dq-select__option--active {
+  background: color-mix(in srgb, var(--dq-accent, #2563eb) 10%, transparent);
+  color: var(--dq-accent, #2563eb);
+}
+
+.dashboard-quality .dq-select__empty {
+  padding: 8px;
+  color: var(--dq-text-muted);
+  font-size: var(--dq-font-sm, 13px);
+}
+
 .dashboard-quality .dq-filter-box.dq-field label.dq-field__label,
 .dashboard-quality .dq-filter-box .dq-field__label {
   font-size: var(--dq-font-sm);

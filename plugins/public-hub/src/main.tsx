@@ -1,6 +1,7 @@
 import ReactDOM from "react-dom/client";
 import { PublicErrorBoundary } from "./shell/PublicErrorBoundary";
 import { PublicShell } from "./shell/PublicShell";
+import "../../plugin-ui/src/styles.css";
 import "./shell/brand-tokens.css";
 import "./shell/shell.css";
 

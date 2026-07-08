@@ -8,6 +8,7 @@ import {
   PendingChangeBadge,
   StateBox,
 } from "../../components/data";
+import { EditableCell } from "../../components/EditableCell";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import {
@@ -168,21 +169,20 @@ export function FiliaisPage({
         render: (item) => {
           const draft = edits[item.filial_id] ?? item;
           return (
-            <div className="dm-editable-cell">
-              <input
-                value={draft.nome_filial}
-                onChange={(event) =>
-                  setEdits((prev) => ({
-                    ...prev,
-                    [item.filial_id]: {
-                      ...draft,
-                      nome_filial: event.target.value,
-                    },
-                  }))
-                }
-              />
-              <PendingChangeBadge visible={isFilialDirty(item, edits)} />
-            </div>
+            <EditableCell
+              value={draft.nome_filial}
+              aria-label={`Nome da filial ${item.codigo_filial}`}
+              onChange={(nome_filial) =>
+                setEdits((prev) => ({
+                  ...prev,
+                  [item.filial_id]: {
+                    ...draft,
+                    nome_filial,
+                  },
+                }))
+              }
+              badge={<PendingChangeBadge visible={isFilialDirty(item, edits)} />}
+            />
           );
         },
       },
@@ -194,21 +194,24 @@ export function FiliaisPage({
         render: (item) => {
           const draft = edits[item.filial_id] ?? item;
           return (
-            <select
+            <EditableCell
+              as="select"
               value={draft.status_filial}
-              onChange={(event) =>
+              aria-label={`Status da filial ${item.codigo_filial}`}
+              onChange={(status_filial) =>
                 setEdits((prev) => ({
                   ...prev,
                   [item.filial_id]: {
                     ...draft,
-                    status_filial: event.target.value as FilialDraft["status_filial"],
+                    status_filial: status_filial as FilialDraft["status_filial"],
                   },
                 }))
               }
-            >
-              <option value="ativo">Ativo</option>
-              <option value="inativo">Inativo</option>
-            </select>
+              options={[
+                { value: "ativo", label: "Ativo" },
+                { value: "inativo", label: "Inativo" },
+              ]}
+            />
           );
         },
       },

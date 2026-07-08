@@ -109,16 +109,25 @@ class FormService:
         merged_pages: list[dict[str, Any]] = []
         for page in normalized_pages:
             existing = existing_pages.get(str(page.get("id") or ""), {})
+            icon = _clean(page.get("point_icon"))
+            image = (
+                None
+                if icon
+                else (
+                    page.get("point_image_filename")
+                    or existing.get("point_image_filename")
+                )
+            )
             merged_pages.append(
                 {
                     **page,
                     "background_image_filename": page.get("background_image_filename")
                     or existing.get("background_image_filename"),
-                    "point_image_filename": page.get("point_image_filename")
-                    or existing.get("point_image_filename"),
+                    "point_image_filename": image,
                     "point_image_fit": page.get("point_image_fit")
                     or existing.get("point_image_fit")
                     or "scale",
+                    "point_icon": icon,
                 }
             )
 
@@ -130,6 +139,7 @@ class FormService:
                     "background_image_filename": None,
                     "point_image_filename": None,
                     "point_image_fit": "scale",
+                    "point_icon": None,
                 }
                 for q in normalized_questions
             ]
@@ -142,10 +152,17 @@ class FormService:
         }
         for q in normalized_questions:
             existing = existing_questions.get(str(q.get("id") or ""), {})
-            if not q.get("point_image_filename"):
-                q["point_image_filename"] = existing.get("point_image_filename")
             if not q.get("point_image_fit"):
                 q["point_image_fit"] = existing.get("point_image_fit") or "scale"
+            icon = _clean(q.get("point_icon"))
+            image = (
+                None
+                if icon
+                else (q.get("point_image_filename") or existing.get("point_image_filename"))
+            )
+            q["point_icon"] = icon
+            q["point_image_filename"] = image
+            q.pop("_point_icon_explicit", None)
 
         page_ids = [str(p["id"]) for p in stored_pages]
         for index, q in enumerate(normalized_questions):
@@ -230,6 +247,9 @@ class FormService:
                     "point_image_filename": stored_name
                     if str(p["id"]) == page_id
                     else p.get("point_image_filename"),
+                    "point_icon": None
+                    if str(p["id"]) == page_id
+                    else p.get("point_icon"),
                 }
                 for p in self.repository.list_pages(form_id)
             ],
@@ -325,6 +345,10 @@ class FormService:
                     "point_image_filename": stored_name
                     if str(q["id"]) == question_id
                     else q.get("point_image_filename"),
+                    "point_image_fit": q.get("point_image_fit") or "scale",
+                    "point_icon": None
+                    if str(q["id"]) == question_id
+                    else q.get("point_icon"),
                 }
                 for q in questions
             ],
@@ -393,6 +417,7 @@ class FormService:
                     page.get("point_image_filename")
                 ),
                 "point_image_fit": _normalize_background_fit(page.get("point_image_fit")),
+                "point_icon": page.get("point_icon"),
             }
             for page in pages
         ]
@@ -415,6 +440,7 @@ class FormService:
                         q.get("point_image_filename")
                     ),
                     "point_image_fit": _normalize_background_fit(q.get("point_image_fit")),
+                    "point_icon": q.get("point_icon"),
                 }
             )
         self.repository.replace_questions(new_id, cloned_questions)
@@ -567,6 +593,7 @@ class FormService:
             "background_image_filename": _clean(p.background_image_filename),
             "point_image_filename": _clean(p.point_image_filename),
             "point_image_fit": _normalize_background_fit(p.point_image_fit),
+            "point_icon": _clean(p.point_icon),
         }
 
     def _validate_question(self, q: QuestionInput) -> dict[str, Any]:
@@ -593,6 +620,7 @@ class FormService:
             "page_index": q.page_index,
             "point_image_filename": _clean(q.point_image_filename),
             "point_image_fit": _normalize_background_fit(q.point_image_fit),
+            "point_icon": _clean(q.point_icon),
         }
 
     # ----- apresentação ----------------------------------------------------
@@ -660,6 +688,7 @@ class FormService:
             "backgroundImageUrl": self._page_background_url(token, page_id) if bg else None,
             "pointImageUrl": self._page_point_url(token, page_id) if point else None,
             "pointImageFit": _normalize_background_fit(p.get("point_image_fit")),
+            "pointIcon": p.get("point_icon"),
         }
 
     def to_question_view(self, q: dict[str, Any], token: str | None = None) -> dict[str, Any]:
@@ -676,6 +705,7 @@ class FormService:
             "options": q.get("options") or [],
             "pointImageUrl": self._question_point_url(token, question_id) if point else None,
             "pointImageFit": _normalize_background_fit(q.get("point_image_fit")),
+            "pointIcon": q.get("point_icon"),
         }
 
     def _form_background_url(self, token: str | None) -> str | None:

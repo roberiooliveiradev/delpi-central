@@ -2,6 +2,12 @@ import type { InputHTMLAttributes, ReactNode } from "react";
 import { useId } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
+import {
+  SelectControl,
+  selectControlBemClasses,
+  type SelectControlClassNames,
+  type SelectControlLabels,
+} from "../forms/SelectField";
 
 export type FiltersRowClassNames = {
   row: string;
@@ -43,6 +49,13 @@ export type FilterSelectOption = {
   label: string;
 };
 
+const DEFAULT_FILTER_SELECT_LABELS: SelectControlLabels = {
+  searchPlaceholder: "Buscar…",
+  emptyOptions: "Nenhuma opção encontrada.",
+  searchAriaLabel: (fieldLabel) =>
+    fieldLabel ? `Buscar em ${fieldLabel}` : "Buscar opções",
+};
+
 export type FilterSelectFieldProps = {
   label: string;
   hint?: string;
@@ -52,7 +65,11 @@ export type FilterSelectFieldProps = {
   options: readonly FilterSelectOption[];
   placeholderOption?: string;
   disabled?: boolean;
+  searchable?: boolean;
   classNames: FilterInputFieldClassNames;
+  /** Classes BEM do SelectControl (`{prefix}-select*`). */
+  selectClassNames: SelectControlClassNames;
+  selectLabels?: SelectControlLabels;
 };
 
 export type DashboardFiltersLabels = {
@@ -62,7 +79,9 @@ export type DashboardFiltersLabels = {
 export type DashboardFiltersKit = {
   FiltersRow: (props: Omit<FiltersRowProps, "classNames" | "ariaLabel"> & { ariaLabel?: string }) => ReactNode;
   FilterInputField: (props: Omit<FilterInputFieldProps, "classNames">) => ReactNode;
-  FilterSelectField: (props: Omit<FilterSelectFieldProps, "classNames">) => ReactNode;
+  FilterSelectField: (
+    props: Omit<FilterSelectFieldProps, "classNames" | "selectClassNames" | "selectLabels">,
+  ) => ReactNode;
 };
 
 /** Monta classNames BEM `{prefix}-filters-row` dos dashboards departamentais. */
@@ -149,28 +168,33 @@ export function FilterSelectField({
   options,
   placeholderOption,
   disabled = false,
+  searchable = false,
   classNames,
+  selectClassNames,
+  selectLabels = DEFAULT_FILTER_SELECT_LABELS,
 }: FilterSelectFieldProps) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
+  const allowEmpty = placeholderOption !== undefined;
 
   return (
-    <label className={classNames.filterBox} htmlFor={fieldId}>
-      <FieldLabel label={label} hint={hint} className={classNames.fieldLabel} />
-      <select
+    <div className={classNames.filterBox}>
+      <FieldLabel label={label} hint={hint} className={classNames.fieldLabel} htmlFor={fieldId} />
+      <SelectControl
         id={fieldId}
+        options={options}
         value={value}
+        onChange={onChange}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {placeholderOption !== undefined ? <option value="">{placeholderOption}</option> : null}
-        {options.map((item) => (
-          <option key={item.value} value={item.value}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-    </label>
+        searchable={searchable}
+        allowEmpty={allowEmpty}
+        emptyLabel={placeholderOption}
+        placeholder={placeholderOption ?? "Selecione…"}
+        ariaLabel={label}
+        classNames={selectClassNames}
+        labels={selectLabels}
+      />
+    </div>
   );
 }
 
@@ -179,6 +203,7 @@ export function createDashboardFiltersKit(config: {
   labels: DashboardFiltersLabels;
 }): DashboardFiltersKit {
   const classNames = filtersRowBemClasses(config.prefix);
+  const selectClassNames = selectControlBemClasses(config.prefix);
 
   return {
     FiltersRow({ ariaLabel, ...props }) {
@@ -194,7 +219,13 @@ export function createDashboardFiltersKit(config: {
       return <FilterInputField classNames={classNames} {...props} />;
     },
     FilterSelectField(props) {
-      return <FilterSelectField classNames={classNames} {...props} />;
+      return (
+        <FilterSelectField
+          classNames={classNames}
+          selectClassNames={selectClassNames}
+          {...props}
+        />
+      );
     },
   };
 }

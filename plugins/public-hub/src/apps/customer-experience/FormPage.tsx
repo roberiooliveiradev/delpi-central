@@ -7,6 +7,7 @@ import {
   type PublicFormPage,
   type PublicQuestion,
 } from "./api";
+import { LucideIconByName } from "@delpi/plugin-ui";
 import "./form.css";
 
 function resolveBackgroundFit(value: string | null | undefined): BackgroundFit {
@@ -95,26 +96,66 @@ function resolvePointImageFit(
 
 function PointIllustration({
   url,
+  icon,
   fit,
   variant,
 }: {
-  url: string;
+  url?: string | null;
+  icon?: string | null;
   fit?: BackgroundFit | null;
   variant?: "section" | "inline";
 }) {
+  if (!url && !icon) return null;
+  if (icon && !url) {
+    const className = [
+      "cxform-illustration",
+      "cxform-illustration--icon",
+      variant ? `cxform-illustration--${variant}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return (
+      <figure className={className} aria-hidden="true">
+        <div className="cxform-illustration__icon-wrap">
+          <LucideIconByName name={icon} size={72} className="cxform-illustration__icon" />
+        </div>
+      </figure>
+    );
+  }
+
   const resolved = resolveBackgroundFit(fit);
-  const className = ["cxform-illustration", variant ? `cxform-illustration--${variant}` : ""]
+  const className = [
+    "cxform-illustration",
+    `cxform-illustration--${resolved}`,
+    variant ? `cxform-illustration--${variant}` : "",
+  ]
     .filter(Boolean)
     .join(" ");
+
+  if (resolved === "tile") {
+    return (
+      <figure className={className} aria-hidden="true">
+        <div
+          className="cxform-illustration__photo cxform-illustration__photo--tile"
+          style={{ backgroundImage: `url(${url})` }}
+        />
+      </figure>
+    );
+  }
+
   return (
     <figure className={className} aria-hidden="true">
-      <div
-        className={`cxform-illustration__photo cxform-illustration__photo--${resolved}`}
-        style={{ backgroundImage: `url(${url})` }}
-      />
+      <div className="cxform-illustration__frame">
+        <img
+          className={`cxform-illustration__img cxform-illustration__img--${resolved}`}
+          src={url!}
+          alt=""
+        />
+      </div>
     </figure>
   );
 }
+
 
 export function FormView({ form }: { form: PublicForm }) {
   const pages = form.pages ?? [];
@@ -287,18 +328,24 @@ export function FormView({ form }: { form: PublicForm }) {
             <div key={q.id}>
               {showPageHeader && page && (
                 <div className="cxform-page-header">
-                  {page.pointImageUrl && (
+                  {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
+                  {(page.pointImageUrl || page.pointIcon) && (
                     <PointIllustration
                       url={page.pointImageUrl}
+                      icon={page.pointIcon}
                       fit={page.pointImageFit}
                       variant="section"
                     />
                   )}
-                  {page.title && <h2 className="cxform-page-title">{page.title}</h2>}
                 </div>
               )}
-              {!showPageHeader && q.pointImageUrl && (
-                <PointIllustration url={q.pointImageUrl} fit={q.pointImageFit} variant="inline" />
+              {!showPageHeader && (q.pointImageUrl || q.pointIcon) && (
+                <PointIllustration
+                  url={q.pointImageUrl}
+                  icon={q.pointIcon}
+                  fit={q.pointImageFit}
+                  variant="inline"
+                />
               )}
               <QuestionField
                 question={q}
@@ -318,13 +365,19 @@ export function FormView({ form }: { form: PublicForm }) {
       return renderIntroFields();
     }
     const pointImage = resolvePointImage(step);
+    const pointIcon =
+      step.kind === "question"
+        ? step.page?.pointIcon ?? step.question.pointIcon ?? null
+        : null;
     const pointFit = resolvePointImageFit(step);
     const pageTitle = step.page?.title?.trim();
     const showPageTitle = Boolean(pageTitle && pageTitle !== step.question.label.trim());
     return (
       <div className="cxform-step">
-        {pointImage && <PointIllustration url={pointImage} fit={pointFit} />}
         {showPageTitle && <h2 className="cxform-page-title">{pageTitle}</h2>}
+        {(pointImage || pointIcon) && (
+          <PointIllustration url={pointImage} icon={pointIcon} fit={pointFit} />
+        )}
         <QuestionField
           question={step.question}
           answer={answers[step.question.id]}

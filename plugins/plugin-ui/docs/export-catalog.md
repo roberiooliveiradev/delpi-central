@@ -6,11 +6,14 @@
 
 | Formato | Onde nasceu (mais completo) | Destino shared | Status |
 |--------|------------------------------|----------------|--------|
-| **CSV** (UTF-8 BOM, `;`) | `dashboard-*/src/export/exportUtils` (= chat núcleo) | `@delpi/plugin-ui` → `export/` | ✅ Fase E1 |
-| **Excel / XLSX** (multi-sheet) | idem + multi-sheet | `@delpi/plugin-ui` | ✅ Fase E1 |
-| **PDF DELPI** (HTML + print) | `*/src/export/pdf/delpiDocument*` (9 cópias) | `@delpi/plugin-ui` → `export/pdf/` | ✅ Fase E1 |
-| **PDF jsPDF** (seções campo+tabela) | `dashboard-production` / `eficiencia-fabril` `exportDocument.ts` | avaliar facade ou 2º motor | ⏳ Fase E3 |
-| **PNG gráfico** (SVG Recharts → canvas) | `minha-delpi-chat` `chartPngExport.ts` | `@delpi/plugin-ui` | ⏳ Fase E2 |
+| **CSV** (UTF-8 BOM, `;`) | `dashboard-*/src/export/exportUtils` | `@delpi/plugin-ui` → `export/` | ✅ E1 |
+| **Excel / XLSX** (multi-sheet) | idem + multi-sheet | `@delpi/plugin-ui` | ✅ E1 |
+| **PDF DELPI** (HTML + print) | `*/src/export/pdf/delpiDocument*` | `@delpi/plugin-ui` → `export/pdf/` | ✅ E1 |
+| **UI botões** CSV/Excel/PDF · Excel+PDF · Excel só | clones por plugin | `@delpi/plugin-ui` → `ExportButtons` | ✅ E2 |
+| **Matrix → tabular** | `exportDocument` ExportTable | `tableExportPayloadFromMatrix` / `exportMatrix*` | ✅ E3 |
+| **PDF jsPDF** (seções campo+tabela) | production / eficiencia `exportDocument.ts` | `@delpi/plugin-ui` → `export/jspdf/` | ✅ E3 |
+| **PNG gráfico** (SVG Recharts → canvas) | `minha-delpi-chat` `chartPngExport.ts` | `@delpi/plugin-ui` → `chartPngExport` | ✅ E3 |
+| **PVA Excel** | `pedidos-venda-abertos` | `exportTableFormat` + `ExcelExportButton` | ✅ E3 (adiantado do E4) |
 | **Markdown** | `drawingAnalysisExport` (chat) | manter no chat (domínio desenho) | — domínio |
 | **CSV Excel-aware** (UTF-16 LE + `sep=;`) | `drawingAnalysisCsvEncoding` (chat) | opcional em plugin-ui | ⏳ se 2+ consumidores |
 | **Download server-side** (blob API) | transformometro, PAC, propostas | helper `triggerBlobDownload` já shared; fetch fica no plugin | parcial |
@@ -25,55 +28,75 @@ type TableExportPayload = {
 };
 ```
 
-API:
+API do motor tabular:
 
 - `exportTableFormat(payload, "csv" | "xlsx" | "pdf")`
 - `exportPayloadsToXlsx` / `ToCsv` / `ToPdf` (multi-tabela)
-- `sanitizeFilename` / `sanitizeSheetName` / `csvCell` / `triggerBlobDownload`
-- PDF: `buildDelpiDocumentHtml` + `printDelpiDocumentSpec`
+- `runTabularExport({ kind: "table" | "tables", ... })`
+- `tableExportPayloadFromMatrix` / `exportMatrixToXlsx` / `exportMatrixTableFormat`
+- PDF DELPI: `buildDelpiDocumentHtml` + `printDelpiDocumentSpec`
 
-## Famílias ainda locais (não misturar no motor)
+API jsPDF (peer opcional `jspdf` + `jspdf-autotable`):
+
+- `exportTableExcel` / `exportTablePdf` / `exportDocumentExcel` / `exportDocumentPdf`
+- `sanitizePdfText`
+
+API PNG:
+
+- `prepareSvgCloneForRasterExport` / `rasterizeSvgElement` / `exportSvgElementToPng`
+
+## Componentes UI (`@delpi/plugin-ui`)
+
+| Componente | Uso | Classes |
+|------------|-----|---------|
+| `TabularExportButtons` | CSV · Excel · PDF (dashboards) | `className` / `buttonClassName` BEM do plugin |
+| `DocumentExportActions` | Excel + PDF (ícones spreadsheet/file) | production, eficiência-fabril |
+| `ExcelExportButton` | só Excel | controle-retrabalhos, PVA |
+| `createDashboardTabularExportButtons({ prefix })` | factory com prefixo BEM | opcional |
+
+## Famílias ainda locais
 
 | Família | Plugins | Ação |
 |---------|---------|------|
-| Builders de domínio (`*DashboardSheets`, `commercialExportBuilders`) | cada dashboard | **permanecem** no plugin |
-| `*ExportButtons` / dispatch | cada dashboard + chat | UI local → futuro `TabularExportButtons` genérico (E2) |
-| `exportDocument` / `ExportTable` (headers+rows matrix) | production, eficiencia, CR | adapter → `TableExportPayload` (E3) |
-| Export Outliers rudimentares | PVA `exportPedidosExcel`, utils/csv legado | migrar para `exportTableFormat` (E2) |
-| Server PDF/XLSX (PAC, transformometro, propostas) | API blob | só `triggerBlobDownload` |
+| Builders de domínio | dashboards, OEE/OTD, CR, CX | **permanecem** |
+| Chat presentation/drawing (markdown, CSV UTF-16) | minha-delpi-chat | domínio; PNG núcleo shared |
+| Transformometro `html-to-image` | diagramas | domínio distinto |
 
 ## Fases
 
-| Fase | Escopo | Meta |
-|------|--------|------|
-| **E1** | Motor tabular + PDF DELPI em `plugin-ui`; piloto `dashboard-commercial` | ✅ |
-| **E2** | Migrar outros 7 `dashboard-*` + chat reexport; PNG chart; botões genéricos | próximo |
-| **E3** | Bridge `ExportTable` ↔ payload; reduzir `ExportActions` duplicados; limpar `utils/csv.ts` | |
-| **E4** | Outliers (PVA, CR) e doc commercial PNG (se implementar) | |
-
-## Piloto E1
-
-`dashboard-commercial/src/export/{exportUtils,primitives,exportAlert,pdf,types}` reexportam `@delpi/plugin-ui` (subtítulo PDF Comercial preservado). Builders e `CommercialExportButtons` / `dispatch` ficam locais.
-
-## Dependências
-
-- `xlsx` — peer **opcional** de `@delpi/plugin-ui` (dynamic import). O plugin que chama Excel deve declarar `xlsx` no `package.json`.
-- Sem `jspdf` no motor E1 (PDF = print HTML certificado).
+| Fase | Escopo | Status |
+|------|--------|--------|
+| **E1** | Motor tabular + PDF DELPI; piloto commercial | ✅ |
+| **E2** | Botões shared + 7 dashboards reexportam motor | ✅ |
+| **E3** | Matrix bridge + jsPDF shared + PNG chart + PVA + CX tabular | ✅ |
+| **E4** | CSV Excel-aware drawing (chat) | ⏳ backlog — só se ≥2 consumidores; ver residual no [refactoring-roadmap.md](./refactoring-roadmap.md) § 7 |
 
 ## Como consumir
 
 ```ts
 import {
   exportTableFormat,
-  exportPayloadsToXlsx,
+  exportMatrixToXlsx,
+  exportTablePdf,
+  exportSvgElementToPng,
   type TableExportPayload,
+  type ExportTable,
 } from "@delpi/plugin-ui";
 
-exportTableFormat(payload, "xlsx");
+exportMatrixToXlsx({ title: "OEE", headers: ["A"], rows: [["1"]] }, "oee-apontamentos");
+await exportTablePdf(table, "apontamentos");
+exportSvgElementToPng(svg, { width: 640, height: 280, filename: "grafico" });
 ```
+
+Dashboards: `src/export/exportUtils.ts` e `pdf/index.ts` são **wrappers finos** (subtítulo PDF por produto).
+
+## Dependências
+
+- `xlsx` — peer opcional (Excel tabular e jsPDF Excel).
+- `jspdf` + `jspdf-autotable` — peers opcionais (só quem chama `export/jspdf`).
+- PDF DELPI = print HTML; **não** depende de jsPDF.
 
 ## Referências
 
-- Inventário pré-centralização: conversa jul/2026 (agent transcript)
-- Doc comercial legada (PNG prometido): `dashboard-commercial/docs/export.md` — PNG ainda só no chat
 - Playbook UI: [refactoring-roadmap.md](./refactoring-roadmap.md)
+- Doc comercial: `dashboard-commercial/docs/export.md`

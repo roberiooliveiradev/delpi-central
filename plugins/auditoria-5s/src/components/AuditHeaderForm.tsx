@@ -2,6 +2,7 @@ import type { AuditArea } from "../api/audit5sApi";
 import { SHIFTS } from "../constants/audit5s";
 import type { AuditAuditorSelection } from "../types/auditAuditor";
 import { AuditAuditorPicker } from "./AuditAuditorPicker";
+import { AuditNativeSelectField, AuditNativeTextField } from "./auditFormFields";
 
 export type AuditHeaderFormValues = {
   audit_date: string;
@@ -45,25 +46,21 @@ export function AuditHeaderForm({
   return (
     <section className="a5s-panel a5s-form a5s-form--new-audit">
       <h2 className="a5s-form__title">{title}</h2>
-      <label>
-        Data
-        <input
-          type="date"
-          value={form.audit_date}
-          onChange={(e) => onFormChange({ audit_date: e.target.value })}
-        />
-      </label>
-      <label>
-        Área auditada
-        <select value={form.area_id} onChange={(e) => onFormChange({ area_id: e.target.value })}>
-          <option value="">Selecione...</option>
-          {areas.map((area) => (
-            <option key={area.id} value={area.id}>
-              {area.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <AuditNativeTextField
+        id="a5s-audit-date"
+        label="Data"
+        type="date"
+        value={form.audit_date}
+        onChange={(audit_date) => onFormChange({ audit_date })}
+      />
+      <AuditNativeSelectField
+        id="a5s-audit-area"
+        label="Área auditada"
+        value={form.area_id}
+        onChange={(area_id) => onFormChange({ area_id })}
+        placeholderOption="Selecione..."
+        options={areas.map((area) => ({ value: area.id, label: area.name }))}
+      />
       <div className="a5s-inline a5s-form__full">
         <input
           type="text"
@@ -75,24 +72,19 @@ export function AuditHeaderForm({
           Adicionar área
         </button>
       </div>
-      <label>
-        Responsável pela área
-        <input
-          type="text"
-          value={form.area_responsible}
-          onChange={(e) => onFormChange({ area_responsible: e.target.value })}
-        />
-      </label>
-      <label>
-        Turno
-        <select value={form.shift} onChange={(e) => onFormChange({ shift: e.target.value })}>
-          {SHIFTS.map((shift) => (
-            <option key={shift.value} value={shift.value}>
-              {shift.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <AuditNativeTextField
+        id="a5s-audit-responsible"
+        label="Responsável pela área"
+        value={form.area_responsible}
+        onChange={(area_responsible) => onFormChange({ area_responsible })}
+      />
+      <AuditNativeSelectField
+        id="a5s-audit-shift"
+        label="Turno"
+        value={form.shift}
+        onChange={(shift) => onFormChange({ shift })}
+        options={SHIFTS.map((shift) => ({ value: shift.value, label: shift.label }))}
+      />
 
       <AuditAuditorPicker
         value={selectedAuditors}

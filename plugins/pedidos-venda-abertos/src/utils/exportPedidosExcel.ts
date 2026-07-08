@@ -1,4 +1,5 @@
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
+import { exportTableFormat, type TableExportPayload } from "@delpi/plugin-ui";
 import { formatDisplayDate } from "./dates";
 import { getLineOpPrevisao } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";
@@ -52,7 +53,24 @@ function buildFilename(): string {
   const now = new Date();
   const date = now.toISOString().slice(0, 10);
   const time = now.toTimeString().slice(0, 5).replace(":", "");
-  return `pedidos-venda-abertos_${date}_${time}.xlsx`;
+  return `pedidos-venda-abertos_${date}_${time}`;
+}
+
+function buildPayload(
+  items: PedidosVendaAbertosItem[],
+  columns: TableColumnDef[],
+): TableExportPayload {
+  return {
+    title: "Pedidos em aberto",
+    columns: columns.map((column) => ({ key: column.key, label: column.label })),
+    rows: items.map((item) => {
+      const record: Record<string, unknown> = {};
+      for (const column of columns) {
+        record[column.key] = itemExportValue(item, column.key);
+      }
+      return record;
+    }),
+  };
 }
 
 export async function exportPedidosExcel(
@@ -63,22 +81,7 @@ export async function exportPedidosExcel(
     return;
   }
 
-  const XLSX = await import("xlsx");
-  const headers = columns.map((column) => column.label);
-  const rows = items.map((item) =>
-    columns.map((column) => itemExportValue(item, column.key)),
-  );
-
-  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-  worksheet["!cols"] = headers.map((header, columnIndex) => {
-    const maxLen = Math.max(
-      header.length,
-      ...rows.map((row) => String(row[columnIndex] ?? "").length),
-    );
-    return { wch: Math.min(maxLen + 2, 48) };
+  exportTableFormat(buildPayload(items, columns), "xlsx", {
+    filename: buildFilename(),
   });
-
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Pedidos em aberto");
-  XLSX.writeFile(workbook, buildFilename());
 }

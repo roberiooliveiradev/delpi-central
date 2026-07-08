@@ -1,8 +1,7 @@
 import { COMMERCIAL_BRANCH_OPTIONS } from "../constants/filterOptions";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { MultiSelectField } from "./MultiSelectField";
-import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
+import { FilterInputField, FilterSelectField, FiltersRow } from "./dashboardFiltersUi";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -21,6 +20,11 @@ type CommercialFiltersProps = {
   ) => void;
   className?: string;
 };
+
+const CUSTOMER_SEGMENT_OPTIONS = [
+  { value: "weg", label: "WEG" },
+  { value: "new_business", label: "Novos negócios" },
+] as const;
 
 export function CommercialFilters({
   competence,
@@ -70,26 +74,17 @@ export function CommercialFilters({
         emptyLabel="Todas"
         searchable
       />
-      <label className="dc-filter-box dc-field">
-        <FieldLabel
-          label="Clientes"
-          hint={COMMERCIAL_HELP_TOOLTIPS.filters.customerSegment}
-          className="dc-field__label"
-        />
-        <select
-          id="dc-customer-segment"
-          value={customerSegment}
-          onChange={(e) =>
-            onCustomerSegmentChange(
-              e.target.value as CommercialFilterUrlState["customerSegment"]
-            )
-          }
-        >
-          <option value="">Todos</option>
-          <option value="weg">WEG</option>
-          <option value="new_business">Novos negócios</option>
-        </select>
-      </label>
+      <FilterSelectField
+        id="dc-customer-segment"
+        label="Clientes"
+        hint={COMMERCIAL_HELP_TOOLTIPS.filters.customerSegment}
+        value={customerSegment}
+        onChange={(value) =>
+          onCustomerSegmentChange(value as CommercialFilterUrlState["customerSegment"])
+        }
+        options={CUSTOMER_SEGMENT_OPTIONS}
+        placeholderOption="Todos"
+      />
     </FiltersRow>
   );
 }

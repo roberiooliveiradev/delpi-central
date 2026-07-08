@@ -4,6 +4,11 @@ import { Calendar, CalendarDays, CalendarRange } from "lucide-react";
 
 import type { RecurrenceFrequency, RecurrencePayload, SchedulingResource } from "../api/schedulingApi";
 import type { BranchCode } from "../constants/scheduling";
+import {
+  CaNativeSelectField,
+  CaNativeTextAreaField,
+  CaNativeTextField,
+} from "./caFormFields";
 
 type RecurrenceMode = "none" | RecurrenceFrequency;
 
@@ -220,51 +225,45 @@ export function BookingModal({
         </div>
 
         <form className="ca-form" onSubmit={(event) => void handleSubmit(event)}>
-          <label className="ca-field">
-            <span>Recurso</span>
-            <select
-              value={resourceId}
-              onChange={(event) => setResourceId(event.target.value)}
-              required
-            >
-              <option value="">Selecione...</option>
-              {resources.map((resource) => (
-                <option key={resource.id} value={resource.id}>
-                  {resource.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CaNativeSelectField
+            id="ca-booking-resource"
+            label="Recurso"
+            value={resourceId}
+            onChange={setResourceId}
+            required
+            placeholderOption="Selecione..."
+            options={resources.map((resource) => ({
+              value: resource.id,
+              label: resource.name,
+            }))}
+          />
 
-          <label className="ca-field">
-            <span>Título</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Ex.: Reunião com fornecedor"
-              required
-            />
-          </label>
+          <CaNativeTextField
+            id="ca-booking-title-field"
+            label="Título"
+            value={title}
+            onChange={setTitle}
+            placeholder="Ex.: Reunião com fornecedor"
+            required
+          />
 
           <div className="ca-form-row">
-            <label className="ca-field">
-              <span>Início</span>
-              <input
-                type="datetime-local"
-                value={startValue}
-                onChange={(event) => handleStartChange(event.target.value)}
-                required
-              />
-            </label>
-            <label className="ca-field">
-              <span>Término</span>
-              <input
-                type="datetime-local"
-                value={endValue}
-                onChange={(event) => handleEndChange(event.target.value)}
-                required
-              />
-            </label>
+            <CaNativeTextField
+              id="ca-booking-start"
+              label="Início"
+              type="datetime-local"
+              value={startValue}
+              onChange={handleStartChange}
+              required
+            />
+            <CaNativeTextField
+              id="ca-booking-end"
+              label="Término"
+              type="datetime-local"
+              value={endValue}
+              onChange={handleEndChange}
+              required
+            />
           </div>
 
           <fieldset className="ca-fieldset">
@@ -299,30 +298,31 @@ export function BookingModal({
           </fieldset>
 
           {recurrenceMode !== "none" ? (
-            <label className="ca-field">
-              <span>Repetir até</span>
-              <input
+            <div>
+              <CaNativeTextField
+                id="ca-booking-until"
+                label="Repetir até"
                 type="date"
                 value={untilDate}
-                onChange={(event) => setUntilDate(event.target.value)}
+                onChange={setUntilDate}
                 required
               />
               <p className="ca-muted ca-field-hint">
                 A reserva será criada {RECURRENCE_LABELS[recurrenceMode].toLowerCase()} no mesmo
                 horário até a data informada.
               </p>
-            </label>
+            </div>
           ) : null}
 
-          <label className="ca-field">
-            <span>Observações</span>
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              rows={3}
-              placeholder="Informações adicionais (opcional)"
-            />
-          </label>
+          <CaNativeTextAreaField
+            id="ca-booking-notes"
+            label="Observações"
+            value={notes}
+            onChange={setNotes}
+            rows={3}
+            span={false}
+            placeholder="Informações adicionais (opcional)"
+          />
 
           {defaultStart && defaultEnd ? (
             <p className="ca-muted">

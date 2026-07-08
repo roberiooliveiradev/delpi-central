@@ -20,16 +20,22 @@ function lastDayOfMonth(competence: string): string {
   return `${match[1]}-${match[2]}-${String(lastDay).padStart(2, "0")}`;
 }
 
-/** Converte competência YYYY-MM no intervalo de datas do período (mês corrente encerra hoje). */
+/**
+ * Converte competência YYYY-MM no intervalo de datas do período.
+ * Mês corrente encerra em hoje; passado/futuro usam o mês inteiro.
+ * A API não projeta ganho além de hoje (`active_days_in_range`).
+ */
 export function competenceToDateRange(
   competence: string,
-  todayIso = new Date().toISOString().slice(0, 10),
+  todayIso = todayInputValue(),
 ): Pick<LinkedDateFilters, "dateStart" | "dateEnd"> {
   if (!isValidCompetence(competence)) {
     return { dateStart: "", dateEnd: "" };
   }
   const dateStart = `${competence}-01`;
-  const dateEnd = competence === todayIso.slice(0, 7) ? todayIso : lastDayOfMonth(competence);
+  const monthEnd = lastDayOfMonth(competence);
+  const dateEnd =
+    competence === todayIso.slice(0, 7) && todayIso < monthEnd ? todayIso : monthEnd;
   return { dateStart, dateEnd };
 }
 

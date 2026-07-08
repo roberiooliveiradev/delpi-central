@@ -15,6 +15,8 @@ import type { TableExportPayload, TabularExportFormat } from "./types";
 export type ExportXlsxOptions = {
   /** Mensagem quando não há colunas/linhas. */
   emptyMessage?: string;
+  /** Basename do arquivo (sem extensão); padrão = título do payload. */
+  filename?: string;
 };
 
 export type ExportPdfOptions = {
@@ -40,9 +42,12 @@ export function exportPayloadToCsv(payload: TableExportPayload): void {
   );
 }
 
-export function exportPayloadToXlsx(payload: TableExportPayload): void {
+export function exportPayloadToXlsx(
+  payload: TableExportPayload,
+  options?: ExportXlsxOptions,
+): void {
   if (!payload.columns.length) {
-    exportAlert("Não há dados para exportar em Excel.");
+    exportAlert(options?.emptyMessage ?? "Não há dados para exportar em Excel.");
     return;
   }
 
@@ -69,7 +74,10 @@ export function exportPayloadToXlsx(payload: TableExportPayload): void {
         ws,
         sanitizeSheetName(payload.title || "Dados"),
       );
-      XLSX.writeFile(wb, `${sanitizeFilename(payload.title || "dados")}.xlsx`);
+      const fileBase = options?.filename?.trim()
+        ? sanitizeFilename(options.filename)
+        : sanitizeFilename(payload.title || "dados");
+      XLSX.writeFile(wb, `${fileBase}.xlsx`);
     })
     .catch((error) => {
       console.error("[exportPayloadToXlsx]", error);
@@ -174,14 +182,14 @@ export function exportPayloadsToPdf(
 export function exportTableFormat(
   payload: TableExportPayload,
   format: TabularExportFormat,
-  options?: ExportPdfOptions,
+  options?: ExportPdfOptions & ExportXlsxOptions,
 ): void {
   switch (format) {
     case "csv":
       exportPayloadToCsv(payload);
       return;
     case "xlsx":
-      exportPayloadToXlsx(payload);
+      exportPayloadToXlsx(payload, options);
       return;
     case "pdf":
       exportPayloadToPdf(payload, options);

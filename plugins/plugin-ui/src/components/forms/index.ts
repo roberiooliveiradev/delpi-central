@@ -122,4 +122,43 @@ export {
   type NativeTextFieldProps,
 } from "./NativeFormFields";
 
+export {
+  NativeSelectControl,
+  type NativeSelectControlProps,
+} from "./NativeSelectControl";
+
+export {
+  EditableTableCell,
+  createDashboardEditableTableCell,
+  editableTableCellBemClasses,
+  type DashboardEditableTableCellProps,
+  type EditableTableCellClassNames,
+  type EditableTableCellOption,
+  type EditableTableCellProps,
+} from "./EditableTableCell";
+
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
+
+export {
+  LucideIconPicker,
+  LucideIconByName,
+  type LucideIconByNameProps,
+  type LucideIconPickerLabels,
+  type LucideIconPickerProps,
+} from "./LucideIconPicker";
+
+export {
+  CURATED_LUCIDE_ICON_NAMES,
+  LUCIDE_ICON_SECTIONS,
+  countGroupedLucideIcons,
+  countLucideCatalogSize,
+  groupLucideIconsBySection,
+  isLucideIconName,
+  listLucideIconNames,
+  resolveLucideIcon,
+  toKebabCase,
+  toPascalCaseFromKebab,
+  type CuratedLucideIconName,
+  type LucideIconSectionDef,
+  type LucideIconSectionView,
+} from "./lucideIconResolver";

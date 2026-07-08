@@ -232,6 +232,11 @@ Extrair componentes **headless + className**, usando `dashboard-production` como
 | `PageHeader` | 7 plugins operacionais | ✅ F3.6 |
 | `SectionCard` | PAC + kaizen | ✅ F3.2 |
 | `EmptyState` / `LoadingState` | controle-retrabalhos, financeiro-centro-custo | ✅ F3.7 |
+| `EditableTableCell` / `NativeSelectControl` | maintenance, PAC, kaizen | ✅ F3.8 |
+| Forms residual (a5s / QL / CA Native*) | auditoria-5s, quality-labels, central-agendamento | ✅ F3.8 |
+| `BookingModal` Native* + `datetime-local` | central-agendamento | ✅ F3.9 |
+| Maintenance Native* (`dmFormFields` + `afterControl`) | Configuração, MiniAplicadores, revisão programada | ✅ F3.10 |
+| Native* `onBlur`/`readOnly`/`max` + TV + Transformômetro | tv-dashboard deck/BranchField; ProcessoFormFields | ✅ F3.11 |
 
 ### Fase 4 — Utilitários compartilhados (1 sprint)
 
@@ -270,18 +275,20 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `dashboard-lmps` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ | Detail* | sim |
 | `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
-| `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ DataTable ✅ | EditableSectionCard ✅ PageHeader ✅ | sim |
+| `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ DataTable ✅ | EditableSectionCard ✅ PageHeader ✅ ProcessoForm Native* ✅ | sim |
 | `cadastro-kaizen` | ✅ | FiltersRow ✅ MultiSelect ✅ DataTable ✅ KpiCard ✅ | Forms ✅ SectionCard ✅ EditableSectionCard ✅ PageHeader ✅ StateBanner ✅ | sim |
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
-| `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · DataTableSection* allowlist | sim |
+| `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · EditableCell ✅ · Native* forms ✅ | sim |
 | `controle-retrabalhos` | — | Kpi/Chart ✅ LoadingActivity ✅ FilterBarShell ✅ CompactPagination ✅ | PageHeader ✅ Empty/Loading ✅ | sim |
 | `inspecoes-entrada` | — | Pagination ✅ KpiCard ✅ FilterBarShell ✅ | PageHeader ✅ | sim |
 | `inspecoes-entrada` | — | Kpi/Pagination ✅ | PageHeader | sim |
 | `financeiro-centro-custo` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ CompactPagination ✅ | PageHeader ✅ Empty/Loading ✅ | sim |
 | `pedidos-venda-abertos` | — | Pagination ✅ KpiCard ✅ MultiSelect ✅ FilterBarShell ✅ | PageHeader | sim |
-| `auditoria-5s` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ | — | sim |
-| `tv-dashboard` | ✅ | — | — | sim |
+| `auditoria-5s` | — | ChartCard ✅ KpiCard ✅ FilterBarShell ✅ | AuditHeaderForm Native* ✅ | sim |
+| `quality-labels` | — | — | CertificateFormFields + Admin form Native* ✅ | sim |
+| `central-agendamento` | — | — | ResourceFormModal + BookingModal Native* ✅ | sim |
+| `tv-dashboard` | ✅ | — | BranchField / Deck / AddSlide / NewPlaylist Native* ✅ | sim |
 | `portal` | ❌ fora de escopo | — | — | N/A (shell) |
 
 ---
@@ -310,15 +317,40 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 ---
 
-## 7. Próximo passo recomendado
+## 7. Status (jul/2026) — concluído × residual
 
-1. **Fase 1 concluída** nos plugins MFE — portal permanece com implementação própria.
-2. **Fase 2 concluída** nos dashboards departamentais.
-3. **Fase 3.1 concluída** — `DetailFieldGrid` em 5 consumidores.
-5. **Fase 3 concluída** — formulários/detalhe/shell operacional migrados.
-6. **Fase 4 concluída** — utilitários centralizados.
-7. **Fase 5 parcial** — `FileDropzone`, confirm controller, `ConfirmModalPanel`, SI `operationalUnitLabels`; backlog: `Modal` base, dropzones chat/CE.
-8. **Exportação (Fase E1)** — motor CSV/XLSX/PDF DELPI em `plugin-ui/src/export/`; catálogo [export-catalog.md](./export-catalog.md); piloto `dashboard-commercial`.
+### Concluído (núcleo)
+
+| Frente | Escopo |
+|--------|--------|
+| **F1** Help | Plugins MFE; portal permanece local |
+| **F2** Shell dashboard | Kpi/Chart/Loading/Pagination/Filter/MultiSelect/DataTable nos dept. |
+| **F3** Forms/detalhe | F3.1–F3.11 (Native*, EditableTableCell, PageHeader, Detail*, BookingModal, maintenance, TV, ProcessoForm) |
+| **F4** Utils | paginationPages, chartColors, operationalUnitLabels, goalDisplay |
+| **F5** (parcial) | FileDropzone, confirm controller, ConfirmModalPanel, ModalShell, SI utils |
+| **Export E1–E3** | Motor tabular, PDF DELPI, botões, jsPDF, PNG chart, matrix, PVA — [export-catalog.md](./export-catalog.md) |
+
+### Residual — avaliar demanda (não bloqueia produção)
+
+| Prioridade ROI | Item | Notas |
+|----------------|------|--------|
+| Alta | **strategic-indicators** Native*/SelectControl | Goals, departments, filters, change requests — maior volume de `<select>`/`<textarea>` crus |
+| Média | **auditoria-5s** `AuditNcItemCard` | Textareas + select com wrap de ícone — precisa slot/ícone no Native* ou wrapper fino |
+| Média | **tv-dashboard** ComunicadoFormatRibbon | Ribbon tipográfico — domínio UI, não Native* puro |
+| Média | **transformometro** forms restantes | Revisão / recurso / vigência (ProcessoForm já Native*) |
+| Baixa | **quality-action-plans** RNC/8D, 5 Whys | Domínio especial (Ishikawa, fluxos) |
+| Baixa | **customer-experience** FormsPanel / form builder | Builder dinâmico |
+| Baixa | **minha-delpi-chat** admin / agent builder | Escopo chat; dropzone distinto |
+| Backlog F5 | Dropzones chat + CE | API/domínio distintos |
+| Backlog F5 | `Modal` base unificado | Variantes SI/drawer |
+| Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
+| Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
+
+### Próximo lote sugerido (quando retomr)
+
+1. SI `IndicatorFiltersBar` + `IndicatorGoalForm` → Native*/SelectControl + CSS BEM.
+2. a5s NC fields (após `afterControl` / slot de ícone, se necessário).
+3. Fechar F5 dropzones ou Modal base sob pedido explícito.
 
 ---
 
