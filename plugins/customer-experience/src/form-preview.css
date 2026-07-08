@@ -30,18 +30,45 @@
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 24px 16px 48px;
+  padding: 0;
   background: var(--pub-stage-bg);
   color: var(--pub-text-body);
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   z-index: 1;
   color-scheme: light;
   display: flex;
   flex-direction: column;
-  /* Containing block: fixed do mosaico cobre a área visível do stage, não a janela. */
-  transform: translateZ(0);
-  isolation: isolate;
+}
+
+/*
+ * Mosaico cobrindo 100% do stage (fora do scroll) — espelha position:fixed do link público.
+ * Antes o fundo viveu dentro do conteúdo rolável e cortava na altura do card.
+ */
+.cx-form-preview-stage > .cxform-viewport-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cx-form-preview-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 24px 16px 48px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.cx-form-preview-stage .cxform--fullpage {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* Tokens claros forçados (prévia independente do tema do portal). */
@@ -129,35 +156,6 @@
 .cx-form-preview-stage[data-theme="dark"] .cxform-card,
 .cx-form-preview-stage[data-theme="dark"] .cxform--fullpage .cxform-header {
   backdrop-filter: none;
-}
-
-/* Shell da prévia: empilha o card acima do mosaico. */
-.cxform-preview-shell {
-  position: relative;
-  z-index: 1;
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/*
- * Fundo na prévia: fixed relativo ao stage (transform no pai).
- * absolute/sticky no shell só cobria a altura do card e cortava o mosaico.
- */
-.cx-form-preview-stage .cxform-preview-shell > .cxform-viewport-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.cx-form-preview-stage .cxform--fullpage {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  width: 100%;
 }
 
 .cx-form-preview-overlay {

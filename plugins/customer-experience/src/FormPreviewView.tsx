@@ -65,10 +65,6 @@ function computeProgress(
   return Math.round((completed / steps.length) * 100);
 }
 
-function resolveBackground(form: PreviewForm, _step: WizardStep | null): string | null {
-  return form.backgroundImageUrl ?? null;
-}
-
 function resolvePointImage(step: WizardStep | null, question?: PreviewFormQuestion): string | null {
   if (step?.kind === "question") {
     return (
@@ -167,10 +163,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState<string | null>(null);
 
-  const currentStep = wizard ? steps[stepIndex] : null;
   const progress = computeProgress(form, stepIndex, answers, name);
-  const backgroundUrl = resolveBackground(form, currentStep);
-  const backgroundFit = resolveBackgroundFit(form.backgroundFit);
 
   const pageById = useMemo(
     () => new Map(pages.map((p) => [p.id, p])),
@@ -255,10 +248,6 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
       </div>
     );
   }
-
-  const viewportPhotoStyle = backgroundUrl
-    ? ({ backgroundImage: `url(${backgroundUrl})` } as React.CSSProperties)
-    : undefined;
 
   const renderIntroFields = () => (
     <>
@@ -362,19 +351,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
   const isLastWizardStep = wizard && stepIndex === steps.length - 1;
 
   return (
-    <div className="cxform-preview-shell">
-      {backgroundUrl && (
-        <div className="cxform-viewport-bg" aria-hidden="true">
-          <div
-            className={`cxform-viewport-bg__photo cxform-viewport-bg__photo--${backgroundFit}`}
-            style={viewportPhotoStyle}
-          />
-          <div className="cxform-viewport-bg__scrim" />
-        </div>
-      )}
-      <div
-        className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}`}
-      >
+    <div className={`cxform cxform--fullpage${wizard ? " cxform--wizard" : ""}`}>
       <header className="cxform-header">
         <span className="cxform-eyebrow">Programa Experiência do Cliente · DELPI</span>
         <h1 className="cxform-title">{form.title}</h1>
@@ -426,7 +403,6 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
           </button>
         )}
       </form>
-      </div>
     </div>
   );
 }
