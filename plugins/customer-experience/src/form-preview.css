@@ -27,11 +27,22 @@
     radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 14%, transparent), transparent),
     #f3f7fb;
 
-  min-height: 100%;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 24px 16px 48px;
   background: var(--pub-stage-bg);
   color: var(--pub-text-body);
+  overflow-x: hidden;
   overflow-y: auto;
+  z-index: 1;
+}
+
+/* Fundo do formulário na prévia: absoluto na área do stage — não cobre a toolbar. */
+.cx-form-preview-stage .cxform-viewport-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
 .cx-form-preview-overlay {
@@ -44,6 +55,8 @@
 }
 
 .cx-form-preview-toolbar {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
