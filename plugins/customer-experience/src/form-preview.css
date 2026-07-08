@@ -37,6 +37,8 @@
   overflow-y: auto;
   z-index: 1;
   color-scheme: light;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Tokens claros forçados (prévia independente do tema do portal). */
@@ -126,11 +128,33 @@
   backdrop-filter: none;
 }
 
-/* Fundo do formulário na prévia: absoluto na área do stage — não cobre a toolbar. */
-.cx-form-preview-stage .cxform-viewport-bg {
+/* Shell da prévia: altura mínima do stage; cresce com o conteúdo. */
+.cxform-preview-shell {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fundo na prévia: absoluto no shell (não no stage), acompanha o scroll. */
+.cx-form-preview-stage .cxform-preview-shell > .cxform-viewport-bg {
   position: absolute;
   inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 100%;
   z-index: 0;
+  pointer-events: none;
+}
+
+.cx-form-preview-stage .cxform--fullpage {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 100%;
 }
 
 .cx-form-preview-overlay {

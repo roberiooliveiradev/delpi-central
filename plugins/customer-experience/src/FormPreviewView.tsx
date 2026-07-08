@@ -329,7 +329,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
   const isLastWizardStep = wizard && stepIndex === steps.length - 1;
 
   return (
-    <>
+    <div className="cxform-preview-shell">
       {backgroundUrl && (
         <div className="cxform-viewport-bg" aria-hidden="true">
           <div
@@ -394,7 +394,7 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
         )}
       </form>
       </div>
-    </>
+    </div>
   );
 }
 
