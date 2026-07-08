@@ -80,7 +80,7 @@ export const BACKGROUND_FIT_LABELS: Record<BackgroundFit, string> = {
 /** Mesmos modos, rótulos para imagem ilustrativa. */
 export const POINT_IMAGE_FIT_LABELS: Record<BackgroundFit, string> = {
   fixed: "Tamanho fixo (original)",
-  scale: "Preencher (adapta ao container)",
+  scale: "Preencher (esticar)",
   tile: "Repetir (mosaico)",
 };
 
