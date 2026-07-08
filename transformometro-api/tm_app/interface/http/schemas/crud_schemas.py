@@ -222,6 +222,10 @@ class RevisaoMatrizImpactoBody(BaseModel):
     overrides: dict = Field(default_factory=dict)
 
 
+class RevisaoDuplicateBody(BaseModel):
+    versao_revisao: Optional[str] = Field(default=None, min_length=1, max_length=32)
+
+
 class MedicaoBody(BaseModel):
     revisao_id: str
     volume_mensal: float = 0

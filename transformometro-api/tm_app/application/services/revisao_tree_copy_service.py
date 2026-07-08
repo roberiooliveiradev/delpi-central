@@ -10,6 +10,80 @@ from tm_app.infrastructure.persistence.repositories.recurso_repository import Vi
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
 
 
+def copy_revisao_dependents(
+    *,
+    old_rev_id: str,
+    new_rev_id: str,
+    med_repo: MedicaoRepository,
+    inv_repo: InvestimentoRepository,
+    vin_repo: VinculoRepository,
+    auto_commit: bool = False,
+) -> dict[str, int]:
+    stats = {
+        "medicoes": 0,
+        "investimentos": 0,
+        "vinculos": 0,
+    }
+
+    medicao = med_repo.get_by_revisao(old_rev_id)
+    if medicao:
+        med_repo.create(
+            {
+                "revisao_id": new_rev_id,
+                "volume_mensal": medicao.get("volume_mensal", 0),
+                "tempo_medio_execucao_min": medicao.get("tempo_medio_execucao_min", 0),
+                "tempo_retrabalho_min": medicao.get("tempo_retrabalho_min", 0),
+                "percentual_retrabalho": medicao.get("percentual_retrabalho", 0),
+                "percentual_erro": medicao.get("percentual_erro", 0),
+                "quantidade_erros_mes": medicao.get("quantidade_erros_mes", 0),
+                "custo_hora_mao_obra": medicao.get("custo_hora_mao_obra", 0),
+                "custo_unitario_erro": medicao.get("custo_unitario_erro", 0),
+                "custo_unitario_retrabalho": medicao.get("custo_unitario_retrabalho", 0),
+                "custo_outros_desperdicios": medicao.get("custo_outros_desperdicios", 0),
+                "base_referencia_mes": medicao.get("base_referencia_mes"),
+                "observacoes": medicao.get("observacoes"),
+            },
+            auto_commit=auto_commit,
+        )
+        stats["medicoes"] += 1
+
+    for inv in inv_repo.list_by_revisao(old_rev_id):
+        inv_repo.create(
+            {
+                "revisao_id": new_rev_id,
+                "tipo_investimento": inv["tipo_investimento"],
+                "descricao_item": inv["descricao_item"],
+                "quantidade": inv.get("quantidade", 1),
+                "valor_unitario": inv.get("valor_unitario", 0),
+                "recorrencia": inv.get("recorrencia", "unico"),
+                "categoria_investimento": inv.get("categoria_investimento"),
+                "data_investimento": inv.get("data_investimento"),
+                "meses_vigencia": inv.get("meses_vigencia"),
+                "centro_custo": inv.get("centro_custo"),
+                "observacoes": inv.get("observacoes"),
+            },
+            auto_commit=auto_commit,
+        )
+        stats["investimentos"] += 1
+
+    for vin in vin_repo.list_by_revisao(old_rev_id):
+        vin_repo.create(
+            {
+                "revisao_id": new_rev_id,
+                "recurso_compartilhado_id": str(vin["recurso_compartilhado_id"]),
+                "data_inicio_uso": vin.get("data_inicio_uso"),
+                "data_fim_uso": vin.get("data_fim_uso"),
+                "ativo": bool(vin.get("ativo", True)),
+                "peso_rateio": vin.get("peso_rateio"),
+                "observacoes": vin.get("observacoes"),
+            },
+            auto_commit=auto_commit,
+        )
+        stats["vinculos"] += 1
+
+    return stats
+
+
 def copy_revisao_tree(
     *,
     revisoes: list[dict[str, Any]],
@@ -52,62 +126,16 @@ def copy_revisao_tree(
         revisao_id_map[old_rev_id] = new_rev_id
         stats["revisoes"] += 1
 
-        medicao = med_repo.get_by_revisao(old_rev_id)
-        if medicao:
-            med_repo.create(
-                {
-                    "revisao_id": new_rev_id,
-                    "volume_mensal": medicao.get("volume_mensal", 0),
-                    "tempo_medio_execucao_min": medicao.get("tempo_medio_execucao_min", 0),
-                    "tempo_retrabalho_min": medicao.get("tempo_retrabalho_min", 0),
-                    "percentual_retrabalho": medicao.get("percentual_retrabalho", 0),
-                    "percentual_erro": medicao.get("percentual_erro", 0),
-                    "quantidade_erros_mes": medicao.get("quantidade_erros_mes", 0),
-                    "custo_hora_mao_obra": medicao.get("custo_hora_mao_obra", 0),
-                    "custo_unitario_erro": medicao.get("custo_unitario_erro", 0),
-                    "custo_unitario_retrabalho": medicao.get(
-                        "custo_unitario_retrabalho", 0
-                    ),
-                    "custo_outros_desperdicios": medicao.get("custo_outros_desperdicios", 0),
-                    "base_referencia_mes": medicao.get("base_referencia_mes"),
-                    "observacoes": medicao.get("observacoes"),
-                },
-                auto_commit=auto_commit,
-            )
-            stats["medicoes"] += 1
-
-        for inv in inv_repo.list_by_revisao(old_rev_id):
-            inv_repo.create(
-                {
-                    "revisao_id": new_rev_id,
-                    "tipo_investimento": inv["tipo_investimento"],
-                    "descricao_item": inv["descricao_item"],
-                    "quantidade": inv.get("quantidade", 1),
-                    "valor_unitario": inv.get("valor_unitario", 0),
-                    "recorrencia": inv.get("recorrencia", "unico"),
-                    "categoria_investimento": inv.get("categoria_investimento"),
-                    "data_investimento": inv.get("data_investimento"),
-                    "meses_vigencia": inv.get("meses_vigencia"),
-                    "centro_custo": inv.get("centro_custo"),
-                    "observacoes": inv.get("observacoes"),
-                },
-                auto_commit=auto_commit,
-            )
-            stats["investimentos"] += 1
-
-        for vin in vin_repo.list_by_revisao(old_rev_id):
-            vin_repo.create(
-                {
-                    "revisao_id": new_rev_id,
-                    "recurso_compartilhado_id": str(vin["recurso_compartilhado_id"]),
-                    "data_inicio_uso": vin.get("data_inicio_uso"),
-                    "data_fim_uso": vin.get("data_fim_uso"),
-                    "ativo": bool(vin.get("ativo", True)),
-                    "peso_rateio": vin.get("peso_rateio"),
-                    "observacoes": vin.get("observacoes"),
-                },
-                auto_commit=auto_commit,
-            )
-            stats["vinculos"] += 1
+        dep_stats = copy_revisao_dependents(
+            old_rev_id=old_rev_id,
+            new_rev_id=new_rev_id,
+            med_repo=med_repo,
+            inv_repo=inv_repo,
+            vin_repo=vin_repo,
+            auto_commit=auto_commit,
+        )
+        stats["medicoes"] += dep_stats["medicoes"]
+        stats["investimentos"] += dep_stats["investimentos"]
+        stats["vinculos"] += dep_stats["vinculos"]
 
     return stats, revisao_id_map

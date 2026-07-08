@@ -551,6 +551,34 @@ export function deleteRevisao(
   return request<null>(`/revisoes/${revisaoId}`, getAccessToken, { method: "DELETE" });
 }
 
+export type RevisaoDuplicateResult = {
+  revisao: Revisao;
+  origem_revisao_id: string;
+  processo_id: string;
+  instancia_id: string;
+  copiados: {
+    revisoes: number;
+    medicoes: number;
+    investimentos: number;
+    vinculos: number;
+    overlays_diagrama: number;
+    overlays_decomposicao: number;
+    evidencias: number;
+    matriz_impacto_esforco: number;
+  };
+};
+
+export function duplicateRevisao(
+  revisaoId: string,
+  payload?: { versao_revisao?: string },
+  getAccessToken?: () => string | undefined
+) {
+  return request<RevisaoDuplicateResult>(`/revisoes/${revisaoId}/duplicar`, getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload ?? {}),
+  });
+}
+
 export function activateRevisao(
   revisaoId: string,
   getAccessToken?: () => string | undefined

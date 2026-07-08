@@ -84,6 +84,7 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
 
 type RevisaoColumnOptions = {
   onOpen: (revisaoId: string) => void;
+  onDuplicate: (revisao: Revisao) => void;
   onDelete: (revisao: Revisao) => void;
   revisoesById?: Map<string, Revisao>;
 };
@@ -98,6 +99,7 @@ function renderReferenciaLabel(revisao: Revisao, revisoesById?: Map<string, Revi
 
 export function buildRevisaoColumns({
   onOpen,
+  onDuplicate,
   onDelete,
   revisoesById,
 }: RevisaoColumnOptions): DataTableColumn<Revisao>[] {
@@ -161,6 +163,16 @@ export function buildRevisaoColumns({
             }}
           >
             Abrir
+          </button>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              void onDuplicate(r);
+            }}
+          >
+            Duplicar
           </button>
           <button
             type="button"

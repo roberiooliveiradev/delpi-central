@@ -64,6 +64,10 @@ from tm_app.application.services.instancia_duplicate_service import (
     InstanciaDuplicateService,
     InstanciaNotFoundError,
 )
+from tm_app.application.services.revisao_duplicate_service import (
+    RevisaoDuplicateService,
+    RevisaoNotFoundError,
+)
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
@@ -91,6 +95,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     RecursoCustoBody,
     RecursoCustoReajusteBody,
     RevisaoBody,
+    RevisaoDuplicateBody,
     RevisaoMatrizImpactoBody,
     SetorBody,
     SetorUpdateBody,
@@ -751,6 +756,51 @@ def activate_revisao(revisao_id: str, request: Request):
     _audit(request, "revisao", revisao_id, "activate", {})
     _recalc_after_revisao(revisao_id, processo_id=str(row["processo_id"]))
     return ok(row_to_json(row), "Revisão ativada.")
+
+
+@router.post("/revisoes/{revisao_id}/duplicar")
+def duplicate_revisao(
+    revisao_id: str,
+    request: Request,
+    body: RevisaoDuplicateBody | None = None,
+):
+    try:
+        result = RevisaoDuplicateService().duplicate(
+            revisao_id,
+            versao_revisao=body.versao_revisao if body else None,
+        )
+    except RevisaoNotFoundError as exc:
+        return fail(str(exc), 404)
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("duplicate_revisao_failed")
+        return fail(format_api_error(exc), 500)
+
+    new_id = str(result["revisao"]["revisao_id"])
+    processo_id = str(result["processo_id"])
+    _audit(
+        request,
+        "revisao",
+        new_id,
+        "duplicate",
+        {
+            "origem_revisao_id": revisao_id,
+            "copiados": result["copiados"],
+        },
+    )
+    _recalc_after_revisao(new_id, processo_id=processo_id)
+    return ok(
+        {
+            "revisao": row_to_json(result["revisao"]),
+            "origem_revisao_id": revisao_id,
+            "processo_id": processo_id,
+            "instancia_id": str(result["instancia_id"]),
+            "copiados": result["copiados"],
+        },
+        "Revisão duplicada.",
+        201,
+    )
 
 
 @router.delete("/revisoes/{revisao_id}")

@@ -30,6 +30,7 @@ import {
   deleteInstancia,
   deleteRevisao,
   duplicateInstancia,
+  duplicateRevisao,
   fetchOptions,
   fetchProcesso,
   fetchProcessoComparativo,
@@ -219,6 +220,24 @@ export function InstanciaDetailPage({
     }
   }
 
+  async function handleDuplicateRevisao(revisao: Revisao) {
+    const label = revisaoDisplayLabel(revisao);
+    const confirmed = await confirm({
+      title: "Duplicar revisão",
+      message: `Duplicar ${label}? Serão copiados medição, investimentos, vínculos, mapeamento, diagrama, evidências e matriz impacto × esforço. A nova revisão ficará inativa.`,
+      confirmLabel: "Duplicar",
+    });
+    if (!confirmed) return;
+    setError(null);
+    try {
+      const result = await duplicateRevisao(revisao.revisao_id, undefined, getAccessToken);
+      await load();
+      onNavigate(buildProcessoPath(processoId, result.revisao.revisao_id, instanciaId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao duplicar revisão");
+    }
+  }
+
   const comparativoColumns = useMemo(() => buildComparativoColumns(), []);
   const revisaoColumns = useMemo(
     () =>
@@ -226,6 +245,7 @@ export function InstanciaDetailPage({
         revisoesById,
         onOpen: (revisaoId) =>
           onNavigate(buildProcessoPath(processoId, revisaoId, instanciaId)),
+        onDuplicate: (revisao) => void handleDuplicateRevisao(revisao),
         onDelete: (revisao) => void handleDeleteRevisao(revisao),
       }),
     [instanciaId, onNavigate, processoId, revisoesById]
