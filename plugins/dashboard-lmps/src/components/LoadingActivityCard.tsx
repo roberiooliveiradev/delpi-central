@@ -16,7 +16,7 @@ const LABELS = {
 export type { LoadingActivityCardTone, LoadingActivityCardVariant };
 
 export const LoadingActivityCard = createDashboardLoadingActivityCard({
-  prefix: "dl",
+  prefix: "lmps",
   labels: LABELS,
   withCopyWrapper: true,
 });

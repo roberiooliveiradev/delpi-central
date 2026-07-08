@@ -12,6 +12,6 @@ const LABELS = {
   badgesStatus: "Escopo e desempenho em relação à meta",
 } satisfies KpiCardLabels;
 
-export const KpiCard = createDashboardKpiCard({ prefix: "dl", labels: LABELS });
+export const KpiCard = createDashboardKpiCard({ prefix: "lmps", labels: LABELS });
 
 export type KpiCardProps = DashboardKpiCardProps;
