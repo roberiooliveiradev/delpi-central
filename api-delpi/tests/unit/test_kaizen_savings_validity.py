@@ -25,7 +25,7 @@ def test_is_active_within_window():
     assert validity.is_savings_active(
         implemented, status="implantado", reference=date(2026, 6, 1)
     )
-    # Último dia válido.
+    # Ultimo dia valido.
     assert validity.is_savings_active(
         implemented, status="implantado", reference=date(2027, 1, 9)
     )
@@ -33,7 +33,7 @@ def test_is_active_within_window():
 
 def test_is_inactive_after_one_year():
     implemented = date(2026, 1, 10)
-    # No aniversário já não conta mais.
+    # No aniversario ja nao conta mais.
     assert not validity.is_savings_active(
         implemented, status="implantado", reference=date(2027, 1, 10)
     )
@@ -52,7 +52,10 @@ def test_is_inactive_when_not_implemented():
 def test_active_days_full_year_is_365():
     implemented = date(2026, 1, 10)
     days = validity.active_days_in_range(
-        implemented, date(2026, 1, 10), date(2030, 1, 1)
+        implemented,
+        date(2026, 1, 10),
+        date(2030, 1, 1),
+        today=date(2030, 1, 1),
     )
     assert days == 365
 
@@ -60,16 +63,46 @@ def test_active_days_full_year_is_365():
 def test_active_days_zero_when_range_after_validity():
     implemented = date(2026, 1, 10)
     days = validity.active_days_in_range(
-        implemented, date(2027, 2, 1), date(2027, 3, 1)
+        implemented,
+        date(2027, 2, 1),
+        date(2027, 3, 1),
+        today=date(2027, 6, 1),
     )
     assert days == 0
 
 
 def test_active_days_capped_partial_range():
     implemented = date(2026, 1, 10)
-    # Intervalo cobre o fim da validade (09/01/2027) e além.
+    # Intervalo cobre o fim da validade (09/01/2027) e alem.
     days = validity.active_days_in_range(
-        implemented, date(2027, 1, 1), date(2027, 1, 31)
+        implemented,
+        date(2027, 1, 1),
+        date(2027, 1, 31),
+        today=date(2027, 1, 31),
     )
     # 01/01/2027 .. 09/01/2027 = 9 dias.
     assert days == 9
+
+
+def test_active_days_zero_when_range_entirely_in_future():
+    """Competencia futura nao projeta ganhos ? cap em hoje."""
+    implemented = date(2026, 1, 10)
+    days = validity.active_days_in_range(
+        implemented,
+        date(2026, 8, 1),
+        date(2026, 8, 31),
+        today=date(2026, 7, 8),
+    )
+    assert days == 0
+
+
+def test_active_days_capped_at_today_inside_open_period():
+    implemented = date(2026, 1, 10)
+    days = validity.active_days_in_range(
+        implemented,
+        date(2026, 7, 1),
+        date(2026, 7, 31),
+        today=date(2026, 7, 8),
+    )
+    # 01/07 .. 08/07 = 8 dias (nao o mes inteiro).
+    assert days == 8

@@ -70,7 +70,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     launch:
       "Cria uma cópia da versão ativa como rascunho (Em andamento) e a seleciona. Edite as seções ali mesmo e, ao final, clique em “Salvar e tornar ativa”. A versão ativa segue contabilizando até lá.",
     periodGain:
-      "Soma dos ganhos das versões que estiveram implantadas no intervalo, respeitando a validade de 1 ano de cada uma. Rascunhos não contam.",
+      "Soma dos ganhos das versões que estiveram implantadas no intervalo, respeitando a validade de 1 ano de cada uma e sem projetar dias futuros. Rascunhos não contam.",
     currentSavings:
       "Economia contabilizada hoje: a versão implantada vigente, dentro da sua validade de 1 ano.",
     implement:

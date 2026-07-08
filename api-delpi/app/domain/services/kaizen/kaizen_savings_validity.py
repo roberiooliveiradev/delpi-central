@@ -81,18 +81,29 @@ def active_days_in_range(
     implemented: Optional[date],
     range_start: Optional[date],
     range_end: Optional[date],
+    *,
+    today: Optional[date] = None,
 ) -> int:
     """Dias em que o kaizen contabiliza ganhos dentro do intervalo, com a
-    janela de validade de 1 ano aplicada (cap no `savings_valid_until`)."""
+    janela de validade de 1 ano aplicada (cap no `savings_valid_until`).
+
+    Nunca conta dias futuros: o fim efetivo é limitado a ``today`` (padrão:
+    data corrente). Assim um filtro de competência futura retorna ganho 0.
+    """
     if implemented is None:
         return 0
 
+    reference_today = today or date.today()
     start = range_start or implemented
-    end = range_end or date.today()
+    end = range_end or reference_today
 
     effective_start = max(implemented, start)
     valid_until = savings_valid_until(implemented)
-    effective_end = min(end, valid_until)
+    if valid_until is None:
+        return 0
+    # Cap simultâneo: fim do período pedido, validade de 1 ano e “hoje”
+    # (não projeta ganho em datas futuras).
+    effective_end = min(end, valid_until, reference_today)
 
     if effective_start > effective_end:
         return 0

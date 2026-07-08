@@ -88,7 +88,8 @@ def revision_active_days_in_range(
     if last_day is None:
         return 0
     start = max(effective_from, range_start or effective_from)
-    end = min(last_day, range_end or reference_today)
+    # Cap explícito em ``today``: mesmo com range_end futuro, não projeta ganho.
+    end = min(last_day, range_end or reference_today, reference_today)
     if start > end:
         return 0
     return (end - start).days + 1

@@ -114,3 +114,14 @@ def test_superseded_version_counts_in_past_window():
         today=date(2024, 12, 31),
     )
     assert total == 182 * 10.0
+
+
+def test_period_savings_zero_for_future_range():
+    revisions = [_rev(1, "2026-01-10", None, 10.0, version_status="implantado")]
+    total = timeline.period_savings(
+        revisions,
+        date(2026, 8, 1),
+        date(2026, 8, 31),
+        today=date(2026, 7, 8),
+    )
+    assert total == 0.0
