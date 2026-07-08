@@ -168,15 +168,14 @@ body {
   flex: 1 1 auto;
 }
 
-/* Formulários — fundo em tela cheia, conteúdo em coluna central (estilo Google Forms).
-   Centraliza com margin auto nos filhos quando cabe; NÃO usar justify-content:center
-   (corta o topo e impede rolar até o botão quando o conteúdo é mais alto que a tela). */
+/* Formulários — fundo em tela cheia; card no topo, centrado na horizontal.
+   NÃO usar justify-content:center nem flex-shrink no conteúdo (corta o formulário). */
 .pub-stage--fullpage {
   min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
-  padding: 16px 16px 32px;
-  gap: 12px;
+  padding: 24px 16px 48px;
+  gap: 16px;
   align-items: center;
   justify-content: flex-start;
   overflow-x: hidden;
@@ -191,22 +190,22 @@ body {
   width: 64px;
   height: 64px;
   margin: 0 auto;
-  margin-block: auto 0;
   flex: none;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .pub-content--fullpage {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   width: 100%;
   max-width: 680px;
-  margin: 0 auto auto;
+  margin: 0 auto;
   align-items: center;
   display: flex;
   flex-direction: column;
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  overflow: visible;
 }
 
 html.pub-fullpage,
@@ -214,6 +213,7 @@ html.pub-fullpage body,
 html.pub-fullpage #root {
   min-height: 100%;
   min-height: 100dvh;
+  height: auto;
   overflow-x: hidden;
   overflow-y: auto;
 }
