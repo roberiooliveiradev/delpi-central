@@ -201,7 +201,7 @@ export function CommercialDetailPage({
         </div>
       </header>
 
-      <section className="dc-kpi-grid dc-detail-kpi-grid" aria-busy={detail.loading}>
+      <section className="dc-kpi-grid dc-kpi-grid--detail" aria-busy={detail.loading}>
         <KpiCard
           title="Status"
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.statusKpi}

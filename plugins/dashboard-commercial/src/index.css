@@ -831,8 +831,18 @@
 .dashboard-commercial .dc-kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--dc-grid-gap);
+  column-gap: var(--dc-grid-gap);
+  row-gap: var(--dc-grid-gap);
   margin-bottom: var(--dc-section-gap);
+}
+
+.dashboard-commercial .dc-kpi-grid--detail {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.dashboard-commercial .dc-kpi-grid > .dc-card {
+  margin: 0;
+  min-width: 0;
 }
 
 .dashboard-commercial .dc-kpi-header {

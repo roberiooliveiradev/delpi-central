@@ -67,7 +67,7 @@ export function SalesOrderOtdLineDetailPage({
   }, [line]);
 
   return (
-    <div className="dashboard-commercial dashboard-page">
+    <div className="dashboard-commercial dashboard-page dc-detail-page">
       <header className="dc-page-header dc-screen-only">
         <div className="dc-page-header__brand">
           <button
@@ -116,7 +116,7 @@ export function SalesOrderOtdLineDetailPage({
 
       {line ? (
         <>
-          <section className="dc-kpi-grid">
+          <section className="dc-kpi-grid dc-kpi-grid--detail" aria-label="Indicadores OTD da linha">
             <KpiCard
               title="Status OTD"
               value={line.status === "on_time" ? "No prazo" : "Atrasado"}
@@ -145,28 +145,30 @@ export function SalesOrderOtdLineDetailPage({
             />
           </section>
 
-          <DetailCard title="Pedido de venda" titleHint={COMMERCIAL_HELP_TOOLTIPS.otd.detail.order}>
-            <DetailFieldGrid
-              fields={[
-                { label: "Unidade", value: formatOperationalUnitCode(line.branch) },
-                { label: "Pedido", value: line.order_number },
-                { label: "Linha", value: line.line_item },
-                { label: "Cliente", value: line.customer_name ?? line.customer_code ?? "—" },
-                { label: "Código cliente", value: line.customer_code ?? "—" },
-                { label: "Qtd. vendida", value: formatDecimal(line.qty_sold) },
-                { label: "Qtd. entregue", value: formatDecimal(line.qty_delivered) },
-              ]}
-            />
-          </DetailCard>
+          <section className="dc-detail-layout">
+            <DetailCard title="Pedido de venda" titleHint={COMMERCIAL_HELP_TOOLTIPS.otd.detail.order}>
+              <DetailFieldGrid
+                fields={[
+                  { label: "Unidade", value: formatOperationalUnitCode(line.branch) },
+                  { label: "Pedido", value: line.order_number },
+                  { label: "Linha", value: line.line_item },
+                  { label: "Cliente", value: line.customer_name ?? line.customer_code ?? "—" },
+                  { label: "Código cliente", value: line.customer_code ?? "—" },
+                  { label: "Qtd. vendida", value: formatDecimal(line.qty_sold) },
+                  { label: "Qtd. entregue", value: formatDecimal(line.qty_delivered) },
+                ]}
+              />
+            </DetailCard>
 
-          <DetailCard title="Produto" titleHint={COMMERCIAL_HELP_TOOLTIPS.otd.detail.product}>
-            <DetailFieldGrid
-              fields={[
-                { label: "Código", value: line.product_code ?? "—" },
-                { label: "Descrição", value: line.product_description ?? "—" },
-              ]}
-            />
-          </DetailCard>
+            <DetailCard title="Produto" titleHint={COMMERCIAL_HELP_TOOLTIPS.otd.detail.product}>
+              <DetailFieldGrid
+                fields={[
+                  { label: "Código", value: line.product_code ?? "—" },
+                  { label: "Descrição", value: line.product_description ?? "—" },
+                ]}
+              />
+            </DetailCard>
+          </section>
         </>
       ) : null}
     </div>
