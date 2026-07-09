@@ -26,15 +26,14 @@ def _session() -> ChatSession:
 
 @pytest.fixture(autouse=True)
 def patch_chat_settings(monkeypatch):
-    for module in (
-        "app.application.use_cases.stream_chat_message_use_case",
-        "app.application.services.chat_turn.chat_turn_completion_service",
-    ):
-        monkeypatch.setattr(f"{module}.Settings.CHAT_PERSIST_BEFORE_PLAYBACK", True)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", True)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_MAX_CHARS", 30)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_SESSION_TITLE_LLM_ENABLED", False)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_AGENTIC_LOOP_ENABLED", False)
+    module = "app.application.use_cases.stream_chat_message_use_case"
+    monkeypatch.setattr(f"{module}.Settings.CHAT_PERSIST_BEFORE_PLAYBACK", True)
+    monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", True)
+    monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_MAX_CHARS", 30)
+    monkeypatch.setattr(f"{module}.Settings.CHAT_SESSION_TITLE_LLM_ENABLED", False)
+    monkeypatch.setattr(f"{module}.Settings.CHAT_AGENTIC_LOOP_ENABLED", False)
+    monkeypatch.setattr(f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", 0)
+    monkeypatch.setattr(f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000)
 
     monkeypatch.setattr(
         "app.application.services.chat_turn.chat_turn_completion_service.ChatTurnCompletionService._estimate_cost",
