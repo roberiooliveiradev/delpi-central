@@ -34,6 +34,7 @@ export function useTransformometroRealtime({
 
   const onPresenceUpdatedRef = useRef(onPresenceUpdated);
   const onEntityUpdatedRef = useRef(onEntityUpdated);
+  const getAccessTokenRef = useRef(getAccessToken);
 
   const [connected, setConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -45,6 +46,10 @@ export function useTransformometroRealtime({
   useEffect(() => {
     onEntityUpdatedRef.current = onEntityUpdated;
   }, [onEntityUpdated]);
+
+  useEffect(() => {
+    getAccessTokenRef.current = getAccessToken;
+  }, [getAccessToken]);
 
   useEffect(() => {
     if (!enabled || !entityId) {
@@ -77,7 +82,7 @@ export function useTransformometroRealtime({
       clearTimers();
       socketRef.current?.close();
 
-      const token = getAccessToken?.();
+      const token = getAccessTokenRef.current?.();
       if (!token) {
         setConnectionError("Sessão não autenticada para tempo real.");
         setConnected(false);
@@ -130,6 +135,13 @@ export function useTransformometroRealtime({
           };
 
           if (payload.type === "presence.updated" && payload.data) {
+            if (
+              payload.entityType &&
+              payload.entityId &&
+              (payload.entityType !== entityType || payload.entityId !== entityId)
+            ) {
+              return;
+            }
             onPresenceUpdatedRef.current?.(payload.data);
             return;
           }
@@ -172,7 +184,7 @@ export function useTransformometroRealtime({
       socketRef.current = null;
       setConnected(false);
     };
-  }, [enabled, entityId, entityType, getAccessToken]);
+  }, [enabled, entityId, entityType]);
 
   return { connected, connectionError };
 }

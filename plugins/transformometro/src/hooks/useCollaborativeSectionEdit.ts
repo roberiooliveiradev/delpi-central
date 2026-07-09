@@ -11,8 +11,10 @@ import {
 import { useSectionEdit } from "./useSectionEdit";
 import { useTransformometroRealtime } from "./useTransformometroRealtime";
 import { getUserIdFromToken } from "../utils/jwt";
+import { isMatchingPresencePayload } from "../utils/collaborationPresence";
 
 const POLL_MS = 12_000;
+const POLL_WS_CONNECTED_MS = 15_000;
 const LOCK_HEARTBEAT_MS = 20_000;
 const VIEW_HEARTBEAT_MS = 30_000;
 const RESYNC_FALLBACK_MS = 60_000;
@@ -40,24 +42,41 @@ export function useCollaborativeSectionEdit({
   const [realtimeNotice, setRealtimeNotice] = useState<string | null>(null);
   const editingSectionRef = useRef<string | null>(null);
   const onResyncRef = useRef(onResync);
+  const getAccessTokenRef = useRef(getAccessToken);
 
   useEffect(() => {
     onResyncRef.current = onResync;
   }, [onResync]);
 
+  useEffect(() => {
+    getAccessTokenRef.current = getAccessToken;
+  }, [getAccessToken]);
+
   const refreshPresence = useCallback(async () => {
     if (!enabled || !entityId) return;
     try {
-      const data = await fetchCollaborationPresence(entityType, entityId, getAccessToken);
+      const data = await fetchCollaborationPresence(entityType, entityId, () =>
+        getAccessTokenRef.current?.()
+      );
       setPresence(data);
     } catch {
       setPresence(null);
     }
-  }, [enabled, entityId, entityType, getAccessToken]);
+  }, [enabled, entityId, entityType]);
+
+  const handlePresenceUpdated = useCallback(
+    (payload: CollaborationPresencePayload) => {
+      if (!isMatchingPresencePayload(payload, entityType, entityId)) {
+        return;
+      }
+      setPresence(payload);
+    },
+    [entityId, entityType]
+  );
 
   const handleEntityUpdated = useCallback(
     (event: { actorUserId?: string | null; sectionKey?: string | null }) => {
-      const token = getAccessToken?.();
+      const token = getAccessTokenRef.current?.();
       const myUserId = getUserIdFromToken(token);
       if (event.actorUserId && myUserId && event.actorUserId === myUserId) {
         return;
@@ -73,8 +92,9 @@ export function useCollaborativeSectionEdit({
       setResyncVersion((value) => value + 1);
       setRealtimeNotice("Dados atualizados por outro usuário.");
       onResyncRef.current?.();
+      void refreshPresence();
     },
-    [getAccessToken]
+    [refreshPresence]
   );
 
   const { connected: wsConnected, connectionError: wsConnectionError } = useTransformometroRealtime({
@@ -82,7 +102,7 @@ export function useCollaborativeSectionEdit({
     entityId,
     getAccessToken,
     enabled,
-    onPresenceUpdated: setPresence,
+    onPresenceUpdated: handlePresenceUpdated,
     onEntityUpdated: handleEntityUpdated,
   });
 
@@ -95,8 +115,9 @@ export function useCollaborativeSectionEdit({
   }, [enabled, entityId, refreshPresence]);
 
   useEffect(() => {
-    if (!enabled || !entityId || wsConnected) return;
-    const timer = window.setInterval(() => void refreshPresence(), POLL_MS);
+    if (!enabled || !entityId) return;
+    const pollMs = wsConnected ? POLL_WS_CONNECTED_MS : POLL_MS;
+    const timer = window.setInterval(() => void refreshPresence(), pollMs);
     return () => window.clearInterval(timer);
   }, [enabled, entityId, refreshPresence, wsConnected]);
 
@@ -124,23 +145,26 @@ export function useCollaborativeSectionEdit({
           section_key: "",
           mode: "viewing",
         },
-        getAccessToken
+        () => getAccessTokenRef.current?.()
       );
       await refreshPresence();
     })();
     const timer = window.setInterval(() => {
-      void sendCollaborationHeartbeat(
-        {
-          entity_type: entityType,
-          entity_id: entityId,
-          section_key: "",
-          mode: "viewing",
-        },
-        getAccessToken
-      );
+      void (async () => {
+        await sendCollaborationHeartbeat(
+          {
+            entity_type: entityType,
+            entity_id: entityId,
+            section_key: "",
+            mode: "viewing",
+          },
+          () => getAccessTokenRef.current?.()
+        );
+        await refreshPresence();
+      })();
     }, VIEW_HEARTBEAT_MS);
     return () => window.clearInterval(timer);
-  }, [enabled, entityId, entityType, editingSection, getAccessToken, refreshPresence]);
+  }, [enabled, entityId, entityType, editingSection, refreshPresence]);
 
   useEffect(() => {
     if (!enabled || !entityId || !editingSection) return;
@@ -151,7 +175,7 @@ export function useCollaborativeSectionEdit({
         section_key: editingSection,
         mode: "editing",
       },
-      getAccessToken
+      () => getAccessTokenRef.current?.()
     );
     const timer = window.setInterval(() => {
       void sendCollaborationHeartbeat(
@@ -161,11 +185,11 @@ export function useCollaborativeSectionEdit({
           section_key: editingSection,
           mode: "editing",
         },
-        getAccessToken
+        () => getAccessTokenRef.current?.()
       );
     }, LOCK_HEARTBEAT_MS);
     return () => window.clearInterval(timer);
-  }, [enabled, entityId, entityType, editingSection, getAccessToken]);
+  }, [enabled, entityId, entityType, editingSection]);
 
   const releaseCurrentLock = useCallback(async () => {
     const section = editingSectionRef.current;
@@ -175,13 +199,13 @@ export function useCollaborativeSectionEdit({
     try {
       await releaseCollaborationLock(
         { entity_type: entityType, entity_id: entityId, section_key: section },
-        getAccessToken
+        () => getAccessTokenRef.current?.()
       );
     } catch {
       /* noop */
     }
     void refreshPresence();
-  }, [entityId, entityType, getAccessToken, refreshPresence]);
+  }, [entityId, entityType, refreshPresence]);
 
   const startEdit = useCallback(
     async (key: string) => {
@@ -193,7 +217,7 @@ export function useCollaborativeSectionEdit({
       try {
         const result = await acquireCollaborationLock(
           { entity_type: entityType, entity_id: entityId, section_key: key },
-          getAccessToken
+          () => getAccessTokenRef.current?.()
         );
         if (result.acquired === false) {
           setLockError("Outro usuário está editando esta seção agora.");
@@ -210,7 +234,7 @@ export function useCollaborativeSectionEdit({
         return false;
       }
     },
-    [enabled, entityId, entityType, getAccessToken, refreshPresence, sectionEdit]
+    [enabled, entityId, entityType, refreshPresence, sectionEdit]
   );
 
   const cancelEdit = useCallback(
