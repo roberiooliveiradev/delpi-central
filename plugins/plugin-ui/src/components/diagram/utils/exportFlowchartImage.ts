@@ -152,19 +152,15 @@ function inlineEdgeTextExportStyles(
   });
 }
 
-function shouldIncludeExportNode(node: Node): boolean {
-  if (!(node instanceof HTMLElement)) {
-    return true;
-  }
-
-  const classList = node.classList;
+function shouldIncludeExportNode(domNode: HTMLElement): boolean {
+  const classList = domNode.classList;
   if (classList.contains("react-flow__background")) return false;
   if (classList.contains("react-flow__controls")) return false;
   if (classList.contains("react-flow__minimap")) return false;
   if (classList.contains("react-flow__panel")) return false;
   if (classList.contains("react-flow__handle")) return false;
-  if (node.closest(".react-flow__controls")) return false;
-  if (node.closest(".react-flow__minimap")) return false;
+  if (domNode.closest(".react-flow__controls")) return false;
+  if (domNode.closest(".react-flow__minimap")) return false;
 
   return true;
 }
