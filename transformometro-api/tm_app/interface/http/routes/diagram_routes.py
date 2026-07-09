@@ -13,6 +13,7 @@ from tm_app.application.services.transformometro_realtime_notify import notify_f
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
+from tm_app.domain.diagram.bpmn_mermaid_mapping import build_bpmn_catalog_for_api
 from tm_app.domain.diagram.flowchart_validation_service import FlowchartValidationService
 from tm_app.domain.diagram.flowchart_v1 import (
     FlowchartValidationError,
@@ -148,6 +149,11 @@ def _overlay_response(row: dict[str, Any] | None, revisao_id: str) -> dict[str, 
         "empty": not conteudo.get("node_overrides") and not conteudo.get("extra_nodes"),
         "updated_at": row.get("updated_at"),
     }
+
+
+@router.get("/diagrama/catalogo")
+def get_diagrama_catalogo():
+    return ok(build_bpmn_catalog_for_api(), "Catálogo BPMN + convenções Mermaid do Transformômetro.")
 
 
 @router.get("/processos/{processo_id}/diagrama")

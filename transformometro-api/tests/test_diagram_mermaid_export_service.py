@@ -28,3 +28,5 @@ def test_mermaid_decision_shape():
         }
     )
     assert 'n_dec{"Aprovado?"}' in text
+    assert ":::bpmn_decision" in text
+    assert "classDef bpmn_gateway_exclusive" in text
