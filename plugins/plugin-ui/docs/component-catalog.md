@@ -451,6 +451,45 @@ Classes BEM: `delpi-ui-impact-effort-matrix`, `__quadrant--quick-win`, `__point-
 
 ---
 
+## Família `preview` — pré-visualização de arquivos
+
+Importar estilos: `import "@delpi/plugin-ui/styles.css"` (ou caminho relativo ao monorepo).
+
+Peer opcionais: `exceljs`, `mammoth` (planilha e DOCX).
+
+### `resolveFilePreviewKind` / `canPreviewFile`
+
+Detecta `image`, `pdf`, `spreadsheet`, `docx`, `text` ou `none` a partir de mime, nome e tipo declarado.
+
+### `useFilePreviewLoader`
+
+Carrega blob/`File`/fetch async e monta estado para `FilePreviewView` (object URL, texto, planilha ExcelJS, DOCX mammoth).
+
+### `FilePreviewView`
+
+Render-only — imagem, PDF, texto, planilha e DOCX com classes `delpi-ui-file-preview*`.
+
+### `FilePreviewModal`
+
+Modal (`ModalShell`) + loader + view. Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `labels`, `footer`.
+
+```tsx
+import { FilePreviewModal, resolveFilePreviewKind } from "@delpi/plugin-ui";
+
+<FilePreviewModal
+  open={open}
+  title={fileName}
+  onClose={onClose}
+  source={() => fetchBlob()}
+  mimeType={mime}
+  fileName={fileName}
+/>
+```
+
+Plugins migrados: `quality-action-plans`, `minha-delpi-chat`, `transformometro`, `cadastro-kaizen`.
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |
@@ -461,6 +500,9 @@ Classes BEM: `delpi-ui-impact-effort-matrix`, `__quadrant--quick-win`, `__point-
 | `dashboard-engineering` | `HelpTooltip`, `FieldLabel` |
 | `customer-experience` | `LucideIconPicker`, `LucideIconByName` |
 | `public-hub` | `LucideIconByName` |
-| `transformometro` (S3+) | `ImpactEffortMatrix`, `ImpactEffortMatrixLegend` |
+| `transformometro` (S3+) | `ImpactEffortMatrix`, `ImpactEffortMatrixLegend`, `FilePreviewView` |
+| `quality-action-plans` | `FilePreviewView`, `useFilePreviewLoader`, `resolveFilePreviewKind` |
+| `minha-delpi-chat` | `FilePreviewView`, `useFilePreviewLoader`, `resolveFilePreviewKind` |
+| `cadastro-kaizen` | `FilePreviewModal`, `resolveFilePreviewKind` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.

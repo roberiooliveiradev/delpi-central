@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+
+import {
+  FilePreviewView,
+  useFilePreviewLoader,
+} from "@delpi/plugin-ui";
 
 import { Modal } from "../ui/Modal";
-
-export function isImageMime(mime: string | null | undefined): boolean {
-  return !!mime && mime.startsWith("image/");
-}
-
-export function isPdfMime(mime: string | null | undefined): boolean {
-  return (mime ?? "").toLowerCase() === "application/pdf";
-}
 
 type Props = {
   open: boolean;
@@ -19,6 +16,14 @@ type Props = {
   onError?: (message: string) => void;
 };
 
+export function isImageMime(mime: string | null | undefined): boolean {
+  return !!mime && mime.startsWith("image/");
+}
+
+export function isPdfMime(mime: string | null | undefined): boolean {
+  return (mime ?? "").toLowerCase() === "application/pdf";
+}
+
 export function EvidenceFilePreviewModal({
   open,
   title,
@@ -27,76 +32,44 @@ export function EvidenceFilePreviewModal({
   onClose,
   onError,
 }: Props) {
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const source = useCallback(async () => {
+    const objectUrl = await fetchObjectUrl();
+    try {
+      const response = await fetch(objectUrl);
+      return response.blob();
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }, [fetchObjectUrl]);
 
-  const revokeObjectUrl = useCallback((url: string | null) => {
-    if (url) URL.revokeObjectURL(url);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-
-    let active = true;
-    setLoading(true);
-    setError(null);
-    setObjectUrl(null);
-
-    fetchObjectUrl()
-      .then((url) => {
-        if (!active) {
-          URL.revokeObjectURL(url);
-          return;
-        }
-        setObjectUrl(url);
-      })
-      .catch(() => {
-        if (!active) return;
-        const message = "Erro ao carregar pré-visualização do arquivo.";
-        setError(message);
-        onError?.(message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [open, fetchObjectUrl, onError]);
+  const state = useFilePreviewLoader({
+    source,
+    mimeType: mime,
+    fileName: title,
+    enabled: open,
+  });
 
   useEffect(() => {
-    if (open) return;
-    setObjectUrl((current) => {
-      revokeObjectUrl(current);
-      return null;
-    });
-    setError(null);
-    setLoading(false);
-  }, [open, revokeObjectUrl]);
-
-  useEffect(
-    () => () => {
-      revokeObjectUrl(objectUrl);
-    },
-    [objectUrl, revokeObjectUrl]
-  );
+    if (!open || !state.error || state.error === "empty" || state.error === "unsupported") {
+      return;
+    }
+    onError?.(
+      state.error === "load_failed"
+        ? "Erro ao carregar pré-visualização do arquivo."
+        : state.error,
+    );
+  }, [open, onError, state.error]);
 
   return (
     <Modal open={open} title={title} onClose={onClose} className="ds-modal--evidence-preview">
       <div className="tm-evidence-preview-modal">
-        {loading ? <p className="ds-hint">Carregando…</p> : null}
-        {error ? <p className="ds-hint">{error}</p> : null}
-        {!loading && !error && objectUrl && isImageMime(mime) ? (
-          <img className="tm-evidence-preview-modal__img" src={objectUrl} alt={title} />
-        ) : null}
-        {!loading && !error && objectUrl && isPdfMime(mime) ? (
-          <iframe className="tm-evidence-preview-modal__pdf" src={objectUrl} title={title} />
-        ) : null}
-        {!loading && !error && objectUrl && !isImageMime(mime) && !isPdfMime(mime) ? (
-          <p className="ds-hint">Pré-visualização indisponível para este tipo de arquivo.</p>
-        ) : null}
+        <FilePreviewView
+          state={state}
+          title={title}
+          labels={{
+            loadFailed: "Erro ao carregar pré-visualização do arquivo.",
+          }}
+        />
       </div>
     </Modal>
   );

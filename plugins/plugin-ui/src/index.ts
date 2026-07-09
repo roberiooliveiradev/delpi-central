@@ -9,6 +9,8 @@ export * from "./components/layout";
 export * from "./components/feedback";
 export * from "./components/data";
 export * from "./components/forms";
+export * from "./components/preview";
 export * from "./components/charts";
+export * from "./components/diagram";
 export * from "./utils";
 export * from "./export";

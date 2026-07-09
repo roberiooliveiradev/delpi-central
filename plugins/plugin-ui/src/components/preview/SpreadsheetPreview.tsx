@@ -6,9 +6,13 @@ import {
   type SpreadsheetPreviewCell,
   type SpreadsheetPreviewData,
 } from "./spreadsheetPreviewModel";
+import { DEFAULT_FILE_PREVIEW_LABELS } from "./filePreviewTypes";
+
+import type { FilePreviewLabels } from "./filePreviewTypes";
 
 type Props = {
   data: SpreadsheetPreviewData;
+  labels?: Partial<FilePreviewLabels>;
 };
 
 function renderCellContent(cell: SpreadsheetPreviewCell) {
@@ -23,7 +27,8 @@ function renderCellContent(cell: SpreadsheetPreviewCell) {
   return cell.value;
 }
 
-export function SpreadsheetPreview({ data }: Props) {
+export function SpreadsheetPreview({ data, labels: labelsProp }: Props) {
+  const labels = { ...DEFAULT_FILE_PREVIEW_LABELS, ...labelsProp };
   const [activeIndex, setActiveIndex] = useState(0);
   const activeSheet = data.sheets[activeIndex] ?? data.sheets[0];
 
@@ -52,33 +57,33 @@ export function SpreadsheetPreview({ data }: Props) {
   const colCount = Math.max(...sheet.rows.map((row) => row.length), 1);
 
   if (!activeSheet) {
-    return <p className="pac-muted pac-evidence-preview-modal__status">Planilha vazia.</p>;
+    return <p className="delpi-ui-file-preview__muted delpi-ui-file-preview__status">{labels.emptySpreadsheet}</p>;
   }
 
   return (
     <div
-      className="pac-spreadsheet-preview"
+      className="delpi-ui-spreadsheet-preview"
       role="region"
       aria-label="Pré-visualização da planilha somente leitura"
     >
-      <div className="pac-spreadsheet-preview__chrome">
-        <div className="pac-spreadsheet-preview__titlebar">
-          <span className="pac-spreadsheet-preview__title">Excel</span>
-          <span className="pac-spreadsheet-preview__badge">Somente leitura</span>
+      <div className="delpi-ui-spreadsheet-preview__chrome">
+        <div className="delpi-ui-spreadsheet-preview__titlebar">
+          <span className="delpi-ui-spreadsheet-preview__title">{labels.spreadsheetExcelTitle}</span>
+          <span className="delpi-ui-spreadsheet-preview__badge">{labels.spreadsheetReadOnly}</span>
         </div>
-        <div className="pac-spreadsheet-preview__formula-bar" aria-hidden="true">
-          <span className="pac-spreadsheet-preview__name-box">
+        <div className="delpi-ui-spreadsheet-preview__formula-bar" aria-hidden="true">
+          <span className="delpi-ui-spreadsheet-preview__name-box">
             {spreadsheetColumnLabel(0)}1
           </span>
-          <span className="pac-spreadsheet-preview__fx">fx</span>
-          <span className="pac-spreadsheet-preview__formula-input" />
+          <span className="delpi-ui-spreadsheet-preview__fx">fx</span>
+          <span className="delpi-ui-spreadsheet-preview__formula-input" />
         </div>
       </div>
 
-      <div className="pac-spreadsheet-preview__viewport">
-        <table className="pac-spreadsheet-preview__grid">
+      <div className="delpi-ui-spreadsheet-preview__viewport">
+        <table className="delpi-ui-spreadsheet-preview__grid">
           <colgroup>
-            <col className="pac-spreadsheet-preview__corner-col" />
+            <col className="delpi-ui-spreadsheet-preview__corner-col" />
             {Array.from({ length: colCount }, (_, colIndex) => (
               <col
                 key={colIndex}
@@ -88,11 +93,11 @@ export function SpreadsheetPreview({ data }: Props) {
           </colgroup>
           <thead>
             <tr>
-              <th className="pac-spreadsheet-preview__corner" scope="col" aria-hidden="true" />
+              <th className="delpi-ui-spreadsheet-preview__corner" scope="col" aria-hidden="true" />
               {Array.from({ length: colCount }, (_, colIndex) => (
                 <th
                   key={colIndex}
-                  className="pac-spreadsheet-preview__col-head"
+                  className="delpi-ui-spreadsheet-preview__col-head"
                   scope="col"
                 >
                   {spreadsheetColumnLabel(colIndex)}
@@ -106,7 +111,7 @@ export function SpreadsheetPreview({ data }: Props) {
                 key={rowIndex}
                 style={sheet.rowHeights[rowIndex] ? { height: `${sheet.rowHeights[rowIndex]}px` } : undefined}
               >
-                <th className="pac-spreadsheet-preview__row-head" scope="row">
+                <th className="delpi-ui-spreadsheet-preview__row-head" scope="row">
                   {rowIndex + 1}
                 </th>
                 {row.map((cell, colIndex) => {
@@ -115,7 +120,7 @@ export function SpreadsheetPreview({ data }: Props) {
                   return (
                     <td
                       key={colIndex}
-                      className="pac-spreadsheet-preview__cell"
+                      className="delpi-ui-spreadsheet-preview__cell"
                       colSpan={cell.colspan}
                       rowSpan={cell.rowspan}
                       style={cell.style}
@@ -130,7 +135,7 @@ export function SpreadsheetPreview({ data }: Props) {
         </table>
       </div>
 
-      <div className="pac-spreadsheet-preview__tabs" role="tablist" aria-label="Abas da planilha">
+      <div className="delpi-ui-spreadsheet-preview__tabs" role="tablist" aria-label="Abas da planilha">
         {data.sheets.map((tabSheet, index) => (
           <button
             key={`${index}-${tabSheet.name}`}
@@ -139,7 +144,7 @@ export function SpreadsheetPreview({ data }: Props) {
             aria-selected={index === activeIndex}
             title={tabSheet.hidden ? `${tabSheet.name} (oculta no Excel)` : tabSheet.name}
             className={[
-              "pac-spreadsheet-preview__tab",
+              "delpi-ui-spreadsheet-preview__tab",
               index === activeIndex ? "is-active" : "",
               tabSheet.hidden ? "is-hidden-sheet" : "",
             ]
@@ -153,12 +158,12 @@ export function SpreadsheetPreview({ data }: Props) {
       </div>
 
       {limits.rowTruncated || limits.colTruncated ? (
-        <p className="pac-muted pac-spreadsheet-preview__truncated">
-          Pré-visualização limitada
-          {limits.rowTruncated ? ` a ${sheet.rows.length} linhas` : ""}
-          {limits.rowTruncated && limits.colTruncated ? " e" : ""}
-          {limits.colTruncated ? ` ${colCount} colunas` : ""}
-          {" "}na aba «{sheet.name}». Baixe o arquivo para ver a planilha completa.
+        <p className="delpi-ui-file-preview__muted delpi-ui-spreadsheet-preview__truncated">
+          {labels.spreadsheetTruncatedPrefix}
+          {limits.rowTruncated ? ` a ${sheet.rows.length}${labels.spreadsheetTruncatedRows}` : ""}
+          {limits.rowTruncated && limits.colTruncated ? labels.spreadsheetTruncatedAnd : ""}
+          {limits.colTruncated ? ` ${colCount}${labels.spreadsheetTruncatedCols}` : ""}
+          {labels.spreadsheetTruncatedSuffix.replace("{sheet}", sheet.name)}
         </p>
       ) : null}
     </div>

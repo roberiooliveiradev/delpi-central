@@ -1,32 +1,10 @@
-export type AttachmentPreviewKind =
-  | "image"
-  | "pdf"
-  | "text"
-  | "spreadsheet"
-  | "docx"
-  | "unsupported";
+import {
+  canPreviewFile,
+  resolveFilePreviewKind,
+  type FilePreviewKind,
+} from "@delpi/plugin-ui";
 
-const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"];
-
-const SPREADSHEET_MIMES = new Set([
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-]);
-
-const DOCX_MIMES = new Set([
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-
-function extensionFromFilename(filename: string): string {
-  const name = String(filename || "").trim().toLowerCase();
-  const dot = name.lastIndexOf(".");
-
-  if (dot < 0) {
-    return "";
-  }
-
-  return name.slice(dot);
-}
+export type AttachmentPreviewKind = Exclude<FilePreviewKind, "none"> | "unsupported";
 
 export function formatAttachmentSize(size?: number): string {
   if (!size || size < 0) {
@@ -48,41 +26,12 @@ export function resolveAttachmentPreviewKind(
   contentType?: string | null,
   filename?: string,
 ): AttachmentPreviewKind {
-  const mime = String(contentType || "").trim().toLowerCase();
-  const name = String(filename || "").trim().toLowerCase();
-  const extension = extensionFromFilename(name);
+  const kind = resolveFilePreviewKind({
+    mimeType: contentType,
+    fileName: filename,
+  });
 
-  if (mime.startsWith("image/") || IMAGE_EXTENSIONS.includes(extension)) {
-    return "image";
-  }
-
-  if (mime === "application/pdf" || extension === ".pdf") {
-    return "pdf";
-  }
-
-  if (SPREADSHEET_MIMES.has(mime) || extension === ".xlsx" || extension === ".xls") {
-    return "spreadsheet";
-  }
-
-  if (DOCX_MIMES.has(mime) || extension === ".docx") {
-    return "docx";
-  }
-
-  if (
-    mime.startsWith("text/") ||
-    mime === "application/json" ||
-    mime === "application/markdown" ||
-    extension === ".txt" ||
-    extension === ".md" ||
-    extension === ".markdown" ||
-    extension === ".csv" ||
-    extension === ".tsv" ||
-    extension === ".json"
-  ) {
-    return "text";
-  }
-
-  return "unsupported";
+  return kind === "none" ? "unsupported" : kind;
 }
 
 export function createLocalAttachmentPreviewUrl(file: File): string | null {
@@ -99,4 +48,11 @@ export function revokeAttachmentPreviewUrl(url?: string | null) {
   if (url?.startsWith("blob:")) {
     URL.revokeObjectURL(url);
   }
+}
+
+export function canPreviewAttachment(contentType?: string | null, filename?: string): boolean {
+  return canPreviewFile({
+    mimeType: contentType,
+    fileName: filename,
+  });
 }

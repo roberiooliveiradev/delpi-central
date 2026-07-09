@@ -15,14 +15,28 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
+    "@xyflow/react": "^12.11.2",
+    "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.576.0",
+    "mermaid": "^11.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "exceljs": "^4.4.0",
+    "mammoth": "^1.12.0"
   },
   "peerDependenciesMeta": {
+    "@xyflow/react": {
+      "optional": true
+    },
+    "html-to-image": {
+      "optional": true
+    },
+    "mermaid": {
+      "optional": true
+    },
     "jspdf": {
       "optional": true
     },
@@ -31,6 +45,12 @@
     },
     "xlsx": {
       "optional": true
+    },
+    "exceljs": {
+      "optional": true
+    },
+    "mammoth": {
+      "optional": true
     }
   },
   "devDependencies": {
@@ -38,14 +58,19 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "@xyflow/react": "^12.11.2",
+    "html-to-image": "^1.11.13",
     "jsdom": "^29.1.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.576.0",
+    "mermaid": "^11.16.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "typescript": "~5.9.3",
     "vitest": "^3.2.4",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "exceljs": "^4.4.0",
+    "mammoth": "^1.12.0"
   }
 }

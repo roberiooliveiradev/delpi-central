@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import {
+  FilePreviewView,
+  useFilePreviewLoader,
+  type FilePreviewContentState,
+} from "@delpi/plugin-ui";
 
 import {
   fetchPlanEvidenceContent,
@@ -7,14 +13,8 @@ import {
 import type { PlanEvidence } from "../../types/rnc8d";
 import {
   evidencePreviewTitle,
-  isImageEvidence,
-  isPdfEvidence,
   resolveEvidencePreviewMode,
 } from "./evidencePreviewUtils";
-import { parseSpreadsheetPreview, type SpreadsheetPreviewData } from "./spreadsheetPreviewModel";
-import { SpreadsheetPreview } from "./SpreadsheetPreview";
-import { parseDocxPreview, type DocxPreviewData } from "./docxPreviewModel";
-import { DocxPreview } from "./DocxPreview";
 
 type Props = {
   planId: string;
@@ -22,145 +22,87 @@ type Props = {
 };
 
 export function EvidencePreviewContent({ planId, evidence }: Props) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [textContent, setTextContent] = useState<string | null>(null);
-  const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetPreviewData | null>(null);
-  const [docxData, setDocxData] = useState<DocxPreviewData | null>(null);
-  const [truncated, setTruncated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
   const mode = resolveEvidencePreviewMode(evidence);
   const title = evidencePreviewTitle(evidence);
 
+  const blobSource = useMemo(() => {
+    if (mode === "none" || mode === "text") return null;
+    return () => fetchPlanEvidenceFileBlob(planId, evidence.id);
+  }, [planId, evidence.id, mode]);
+
+  const blobState = useFilePreviewLoader({
+    source: blobSource,
+    mimeType: evidence.mime_type,
+    fileName: evidence.file_name,
+    declaredType: evidence.type,
+    enabled: mode !== "none" && mode !== "text",
+  });
+
+  const [textState, setTextState] = useState<FilePreviewContentState>({
+    kind: "text",
+    loading: mode === "text",
+    error: null,
+    previewUrl: null,
+    textContent: null,
+    textTruncated: false,
+    spreadsheetData: null,
+    docxData: null,
+  });
+
   useEffect(() => {
+    if (mode !== "text") return;
+
     let cancelled = false;
+    setTextState((current) => ({ ...current, loading: true, error: null }));
 
-    async function loadPreview() {
-      setLoading(true);
-      setError(null);
-      setPreviewUrl(null);
-      setTextContent(null);
-      setSpreadsheetData(null);
-      setDocxData(null);
-      setTruncated(false);
-
-      try {
-        if (mode === "image" || mode === "pdf") {
-          const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
-          if (cancelled) return;
-          const url = URL.createObjectURL(blob);
-          objectUrlRef.current = url;
-          setPreviewUrl(url);
-          return;
-        }
-
-        if (mode === "spreadsheet") {
-          const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
-          if (cancelled) return;
-          const data = await parseSpreadsheetPreview(blob, {
-            fileName: evidence.file_name ?? undefined,
+    void fetchPlanEvidenceContent(planId, evidence.id)
+      .then((payload) => {
+        if (cancelled) return;
+        const content = payload.text_content?.trim();
+        if (!content) {
+          setTextState({
+            kind: "text",
+            loading: false,
+            error: "Não foi possível extrair texto legível deste arquivo. Use o download.",
+            previewUrl: null,
+            textContent: null,
+            textTruncated: false,
+            spreadsheetData: null,
+            docxData: null,
           });
-          if (cancelled) return;
-          setSpreadsheetData(data);
           return;
         }
-
-        if (mode === "docx") {
-          const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
-          if (cancelled) return;
-          const data = await parseDocxPreview(blob);
-          if (cancelled) return;
-          setDocxData(data);
-          return;
-        }
-
-        if (mode === "text") {
-          const payload = await fetchPlanEvidenceContent(planId, evidence.id);
-          if (cancelled) return;
-          const content = payload.text_content?.trim();
-          if (!content) {
-            setError("Não foi possível extrair texto legível deste arquivo. Use o download.");
-            return;
-          }
-          setTextContent(content);
-          setTruncated(Boolean(payload.extraction?.truncated));
-          return;
-        }
-
-        setError("Pré-visualização não disponível para este tipo de arquivo.");
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Não foi possível carregar a pré-visualização.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadPreview();
+        setTextState({
+          kind: "text",
+          loading: false,
+          error: null,
+          previewUrl: null,
+          textContent: content,
+          textTruncated: Boolean(payload.extraction?.truncated),
+          spreadsheetData: null,
+          docxData: null,
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setTextState({
+          kind: "text",
+          loading: false,
+          error: err instanceof Error ? err.message : "load_failed",
+          previewUrl: null,
+          textContent: null,
+          textTruncated: false,
+          spreadsheetData: null,
+          docxData: null,
+        });
+      });
 
     return () => {
       cancelled = true;
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
     };
   }, [planId, evidence.id, mode]);
 
-  if (loading) {
-    return <p className="pac-muted pac-evidence-preview-modal__status">Carregando pré-visualização…</p>;
-  }
+  const state = mode === "text" ? textState : blobState;
 
-  if (error) {
-    return <p className="pac-muted pac-evidence-preview-modal__status">{error}</p>;
-  }
-
-  if (isImageEvidence(evidence) && previewUrl) {
-    return (
-      <img
-        src={previewUrl}
-        alt={title}
-        className="pac-evidence-preview-modal__image"
-      />
-    );
-  }
-
-  if (isPdfEvidence(evidence) && previewUrl) {
-    return (
-      <iframe
-        src={previewUrl}
-        title={`Pré-visualização: ${title}`}
-        className="pac-evidence-preview-modal__pdf"
-      />
-    );
-  }
-
-  if (spreadsheetData) {
-    return <SpreadsheetPreview data={spreadsheetData} />;
-  }
-
-  if (docxData) {
-    return <DocxPreview data={docxData} title={title} />;
-  }
-
-  if (textContent) {
-    return (
-      <div className="pac-evidence-preview-modal__text-wrap">
-        <pre className="pac-evidence-preview-modal__text">{textContent}</pre>
-        {truncated ? (
-          <p className="pac-muted pac-evidence-preview-modal__truncated">
-            Conteúdo truncado. Baixe o arquivo para ver o documento completo.
-          </p>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <p className="pac-muted pac-evidence-preview-modal__status">
-      Pré-visualização não disponível para este tipo de arquivo.
-    </p>
-  );
+  return <FilePreviewView state={state} title={title} />;
 }

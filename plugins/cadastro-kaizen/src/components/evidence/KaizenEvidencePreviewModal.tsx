@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
+
+import { FilePreviewModal } from "@delpi/plugin-ui";
 
 import { fetchKaizenEvidenceObjectUrl } from "../../api/kaizenApi";
-import type { KaizenEvidence } from "../../types/kaizen";
-import { EmptyHint, LoadingHint, Modal } from "../ui";
 import { formatEvidenceFileSize } from "./kaizenEvidenceUtils";
 import {
   evidencePreviewTitle,
@@ -11,7 +11,7 @@ import {
   type EvidencePreviewMode,
 } from "./kaizenEvidencePreview";
 
-type SavedSource = { kind: "saved"; kaizenId: string; evidence: KaizenEvidence };
+type SavedSource = { kind: "saved"; kaizenId: string; evidence: import("../../types/kaizen").KaizenEvidence };
 type LocalSource = { kind: "local"; file: File };
 export type EvidencePreviewSource = SavedSource | LocalSource;
 
@@ -35,96 +35,52 @@ function sourceSize(source: EvidencePreviewSource): number | null | undefined {
 }
 
 export function KaizenEvidencePreviewModal({ source, onClose }: Props) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
-
+  const open = source != null;
+  const title = source ? sourceTitle(source) : "Pré-visualização";
   const mode = source ? sourceMode(source) : "none";
 
-  useEffect(() => {
-    let cancelled = false;
-
-    function cleanup() {
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
+  const previewSource = useCallback(async () => {
+    if (!source || mode === "none") {
+      throw new Error("unsupported");
     }
-
-    async function load() {
-      cleanup();
-      setUrl(null);
-      setError(null);
-      if (!source || mode === "none") return;
-
-      setLoading(true);
-      try {
-        if (source.kind === "local") {
-          const objectUrl = URL.createObjectURL(source.file);
-          if (cancelled) {
-            URL.revokeObjectURL(objectUrl);
-            return;
-          }
-          objectUrlRef.current = objectUrl;
-          setUrl(objectUrl);
-        } else {
-          const objectUrl = await fetchKaizenEvidenceObjectUrl(source.kaizenId, source.evidence.id);
-          if (cancelled) {
-            URL.revokeObjectURL(objectUrl);
-            return;
-          }
-          objectUrlRef.current = objectUrl;
-          setUrl(objectUrl);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Não foi possível carregar a pré-visualização.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    if (source.kind === "local") {
+      return source.file;
     }
-
-    void load();
-
-    return () => {
-      cancelled = true;
-      cleanup();
-    };
+    const objectUrl = await fetchKaizenEvidenceObjectUrl(source.kaizenId, source.evidence.id);
+    try {
+      const response = await fetch(objectUrl);
+      return response.blob();
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   }, [source, mode]);
 
-  const title = source ? sourceTitle(source) : "Pré-visualização";
+  const mimeType = source?.kind === "saved" ? source.evidence.mime_type : source?.file.type;
+  const fileName = source?.kind === "saved" ? source.evidence.file_name : source?.file.name;
+  const declaredType = source?.kind === "saved" ? source.evidence.type : null;
+
+  const footer = useMemo(() => {
+    if (!source) return null;
+    return (
+      <div className="kz-evidence-preview__meta">
+        <span>{source.kind === "saved" ? source.evidence.file_name ?? "Arquivo" : source.file.name}</span>
+        <span>{formatEvidenceFileSize(sourceSize(source))}</span>
+      </div>
+    );
+  }, [source]);
 
   return (
-    <Modal
-      open={source != null}
+    <FilePreviewModal
+      open={open}
       title={title}
-      className="kz-modal--preview"
       onClose={onClose}
-    >
-      <div className="kz-evidence-preview">
-        {loading ? (
-          <LoadingHint className="kz-evidence-preview__status">Carregando pré-visualização…</LoadingHint>
-        ) : error ? (
-          <EmptyHint className="kz-evidence-preview__status">{error}</EmptyHint>
-        ) : mode === "image" && url ? (
-          <img className="kz-evidence-preview__image" src={url} alt={title} />
-        ) : mode === "pdf" && url ? (
-          <iframe className="kz-evidence-preview__pdf" src={url} title={`Pré-visualização: ${title}`} />
-        ) : (
-          <EmptyHint className="kz-evidence-preview__status">
-            Pré-visualização não disponível para este tipo de arquivo. Use o download.
-          </EmptyHint>
-        )}
-
-        {source ? (
-          <div className="kz-evidence-preview__meta">
-            <span>{source.kind === "saved" ? source.evidence.file_name ?? "Arquivo" : source.file.name}</span>
-            <span>{formatEvidenceFileSize(sourceSize(source))}</span>
-          </div>
-        ) : null}
-      </div>
-    </Modal>
+      source={previewSource}
+      mimeType={mimeType}
+      fileName={fileName}
+      declaredType={declaredType}
+      enabled={mode !== "none"}
+      footer={footer}
+      panelClassName="kz-modal--preview"
+    />
   );
 }
