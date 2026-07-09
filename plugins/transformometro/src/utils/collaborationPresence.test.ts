@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CollaborationPresencePayload } from "../data/api/transformometroCollaborationApi";
-import { isMatchingPresencePayload } from "./collaborationPresence";
+import { isMatchingPresencePayload, presencePayloadEquals } from "./collaborationPresence";
 
 const sample: CollaborationPresencePayload = {
   entity_type: "processo",
@@ -9,6 +9,51 @@ const sample: CollaborationPresencePayload = {
   viewers: [],
   editors: [],
 };
+
+describe("presencePayloadEquals", () => {
+  it("retorna true para snapshots semanticamente iguais", () => {
+    const left: CollaborationPresencePayload = {
+      ...sample,
+      viewers: [
+        {
+          user_id: "u1",
+          user_name: "Ana",
+          section_key: "",
+          mode: "viewing",
+        },
+      ],
+    };
+    const right: CollaborationPresencePayload = {
+      ...sample,
+      viewers: [
+        {
+          user_id: "u1",
+          user_name: "Ana",
+          section_key: "",
+          mode: "viewing",
+        },
+      ],
+    };
+    expect(presencePayloadEquals(left, right)).toBe(true);
+  });
+
+  it("retorna false quando a lista de editores muda", () => {
+    const left: CollaborationPresencePayload = { ...sample, editors: [] };
+    const right: CollaborationPresencePayload = {
+      ...sample,
+      editors: [
+        {
+          user_id: "u2",
+          user_name: "Bob",
+          section_key: "diagrama_macro",
+          mode: "editing",
+          lock_active: true,
+        },
+      ],
+    };
+    expect(presencePayloadEquals(left, right)).toBe(false);
+  });
+});
 
 describe("isMatchingPresencePayload", () => {
   it("aceita payload da mesma entidade", () => {

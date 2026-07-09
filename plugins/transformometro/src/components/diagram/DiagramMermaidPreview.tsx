@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import { buildMermaidPreviewConfig } from "../../utils/mermaidPreviewConfig";
@@ -16,6 +16,7 @@ type MermaidRenderer = {
 };
 
 let mermaidModulePromise: Promise<MermaidRenderer> | null = null;
+let mermaidInitializedForDark: boolean | null = null;
 
 function loadMermaidModule(): Promise<MermaidRenderer> {
   if (!mermaidModulePromise) {
@@ -31,32 +32,54 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
   const isDark = useTransformometroDarkMode();
   const [svg, setSvg] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [rendering, setRendering] = useState(false);
+  const renderedKeyRef = useRef("");
 
   useEffect(() => {
     const diagram = String(code || "").trim();
+    const renderKey = `${isDark ? "dark" : "light"}:${diagram}`;
+
     if (!diagram) {
+      renderedKeyRef.current = "";
       setSvg("");
       setError(null);
+      setRendering(false);
       return;
     }
 
-    const themedDiagram = applyMermaidPreviewTheme(diagram, isDark);
+    if (renderKey === renderedKeyRef.current) {
+      return;
+    }
 
     let cancelled = false;
+    setRendering(true);
+
     loadMermaidModule()
       .then(async (mermaid) => {
-        mermaid.initialize(buildMermaidPreviewConfig(isDark));
+        if (mermaidInitializedForDark !== isDark) {
+          mermaid.initialize(buildMermaidPreviewConfig(isDark));
+          mermaidInitializedForDark = isDark;
+        }
+
+        const themedDiagram = applyMermaidPreviewTheme(diagram, isDark);
         const renderId = `tm-mermaid-${reactId}-${Date.now()}`;
         const result = await mermaid.render(renderId, themedDiagram);
         if (!cancelled) {
           setSvg(postProcessMermaidPreviewSvg(result.svg, isDark));
           setError(null);
+          renderedKeyRef.current = renderKey;
         }
       })
       .catch((err) => {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Erro ao renderizar Mermaid.");
           setSvg("");
+          renderedKeyRef.current = "";
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setRendering(false);
         }
       });
 
@@ -93,7 +116,12 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
 
   return (
     <div
-      className={["tm-diagram-mermaid", themeClass, className]
+      className={[
+        "tm-diagram-mermaid",
+        themeClass,
+        rendering ? "tm-diagram-mermaid--rendering" : "",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
       dangerouslySetInnerHTML={{ __html: svg }}

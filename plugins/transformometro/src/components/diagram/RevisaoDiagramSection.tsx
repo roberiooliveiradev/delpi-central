@@ -56,8 +56,10 @@ export function RevisaoDiagramSection({
   const [baseMerged, setBaseMerged] = useState<FlowchartV1>(emptyFlowchart());
   const editorRef = useRef<FlowchartEditorHandle>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+    }
     onError(null);
     try {
       const [mergedData, overlayData] = await Promise.all([
@@ -81,7 +83,7 @@ export function RevisaoDiagramSection({
 
   useEffect(() => {
     if (!resyncVersion) return;
-    void load();
+    void load({ silent: true });
   }, [resyncVersion, load]);
 
   async function handleSave() {

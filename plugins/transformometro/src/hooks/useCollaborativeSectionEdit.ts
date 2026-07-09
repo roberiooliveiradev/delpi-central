@@ -13,14 +13,13 @@ import { useTransformometroRealtime } from "./useTransformometroRealtime";
 import { COLLABORATION_SECTION_LABELS } from "../constants/collaborationSections";
 import type { TransformometroEntityUpdatedEvent } from "../constants/realtime";
 import { getUserIdFromToken } from "../utils/jwt";
-import { isMatchingPresencePayload } from "../utils/collaborationPresence";
+import { isMatchingPresencePayload, presencePayloadEquals } from "../utils/collaborationPresence";
 import { resolveCollaborativeEntityUpdate } from "../utils/collaborativeEntityUpdate";
 
 const POLL_FALLBACK_MS = 30_000;
 const RESYNC_FALLBACK_MS = 90_000;
 const LOCK_HEARTBEAT_MS = 20_000;
 const VIEW_HEARTBEAT_MS = 30_000;
-const PRESENCE_RESYNC_MS = 35_000;
 
 type Options = {
   entityType: CollaborationEntityType;
@@ -61,20 +60,24 @@ export function useCollaborativeSectionEdit({
       const data = await fetchCollaborationPresence(entityType, entityId, () =>
         getAccessTokenRef.current?.()
       );
-      setPresence(data);
+      setPresence((current) => (presencePayloadEquals(current, data) ? current : data));
     } catch {
-      setPresence(null);
+      /* mantém presença anterior em falha transitória de polling */
     }
   }, [enabled, entityId, entityType]);
+
+  const applyPresencePayload = useCallback((payload: CollaborationPresencePayload) => {
+    setPresence((current) => (presencePayloadEquals(current, payload) ? current : payload));
+  }, []);
 
   const handlePresenceUpdated = useCallback(
     (payload: CollaborationPresencePayload) => {
       if (!isMatchingPresencePayload(payload, entityType, entityId)) {
         return;
       }
-      setPresence(payload);
+      applyPresencePayload(payload);
     },
-    [entityId, entityType]
+    [applyPresencePayload, entityId, entityType]
   );
 
   const handleEntityUpdated = useCallback((event: TransformometroEntityUpdatedEvent) => {
@@ -138,14 +141,6 @@ export function useCollaborativeSectionEdit({
   }, [enabled, entityId, refreshPresence, requestPresence, wsConnected]);
 
   useEffect(() => {
-    if (!enabled || !entityId || !wsConnected) return;
-    const timer = window.setInterval(() => {
-      requestPresence();
-    }, PRESENCE_RESYNC_MS);
-    return () => window.clearInterval(timer);
-  }, [enabled, entityId, requestPresence, wsConnected]);
-
-  useEffect(() => {
     if (!enabled || !entityId || wsConnected) return;
     const timer = window.setInterval(() => void refreshPresence(), POLL_FALLBACK_MS);
     return () => window.clearInterval(timer);
@@ -175,8 +170,7 @@ export function useCollaborativeSectionEdit({
       },
       () => getAccessTokenRef.current?.()
     );
-    await refreshPresence();
-  }, [enabled, entityId, entityType, refreshPresence, sendHeartbeat, wsConnected]);
+  }, [enabled, entityId, entityType, sendHeartbeat, wsConnected]);
 
   const sendEditHeartbeat = useCallback(
     async (sectionKey: string) => {

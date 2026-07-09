@@ -50,8 +50,10 @@ export function ProcessoDiagramSection({
   const editorRef = useRef<FlowchartEditorHandle>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+    }
     onError(null);
     try {
       const data = await fetchProcessoDiagrama(processoId, getAccessToken);
@@ -70,7 +72,7 @@ export function ProcessoDiagramSection({
 
   useEffect(() => {
     if (!resyncVersion) return;
-    void load();
+    void load({ silent: true });
   }, [resyncVersion, load]);
 
   async function runValidation(nextChart: FlowchartV1 = flowchart) {
