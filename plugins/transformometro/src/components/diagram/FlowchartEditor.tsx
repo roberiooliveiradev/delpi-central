@@ -30,6 +30,7 @@ import {
   autoLayoutFlowchart,
   canvasHeightForLanes,
   defaultNodePosition,
+  fitLaneHeightsToContent,
   laneIndexFromDragY,
   laneTopOffset,
   nextPaletteNodePosition,
@@ -37,6 +38,7 @@ import {
   removeLane,
   renameLane,
   reorderLanes,
+  resolveNodeLaneId,
   snapNodeToLane,
 } from "../../utils/diagramSwimlanes";
 import {
@@ -250,15 +252,16 @@ function fromReactFlow(
         label: data.label,
         position: node.position,
         lane_id: lanes.length
-          ? snapNodeToLane(
+          ? resolveNodeLaneId(
               {
                 id: node.id,
                 type: data.nodeType,
                 label: data.label,
                 position: node.position,
+                lane_id: undefined,
               },
               lanes
-            ).lane_id
+            ) ?? lanes[0]?.id
           : undefined,
         highlight: data.highlight as FlowchartNode["highlight"],
         meta: isManualTaskType(data.nodeType) ? { manual: data.manual !== false } : undefined,
@@ -438,9 +441,10 @@ function FlowchartEditorInner({
 
   const emitChange = useCallback(
     (nextNodes: EditorNode[], nextEdges: Edge[]) => {
-      onChange?.(fromReactFlow(nextNodes, nextEdges, value));
+      const draft = fromReactFlow(nextNodes, nextEdges, value);
+      onChange?.(lanes.length ? fitLaneHeightsToContent(draft) : draft);
     },
-    [onChange, value]
+    [lanes.length, onChange, value]
   );
 
   const handleNodeLabelChange = useCallback(
@@ -620,7 +624,17 @@ function FlowchartEditorInner({
             position: item.position,
             lane_id: undefined,
           },
-          lanes
+          lanes,
+          resolveNodeLaneId(
+            {
+              id: item.id,
+              type: itemData.nodeType,
+              label: itemData.label,
+              position: item.position,
+            },
+            lanes
+          ),
+          { snapY: "clamp" }
         );
         return { ...item, position: snapped.position };
       };

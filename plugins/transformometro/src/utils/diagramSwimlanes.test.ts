@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { applySwimlaneBpmnTemplate, createLaneId, createNodeId, type FlowchartV1 } from "../types/diagram";
-import { autoLayoutFlowchart, laneIndexFromDragY, nextPaletteNodePosition, normalizeLanes, removeLane, reorderLanes } from "./diagramSwimlanes";
+import {
+  autoLayoutFlowchart,
+  fitLaneHeightsToContent,
+  laneIndexFromDragY,
+  nextPaletteNodePosition,
+  normalizeLanes,
+  removeLane,
+  reorderLanes,
+  requiredLaneHeight,
+} from "./diagramSwimlanes";
 
 describe("autoLayoutFlowchart", () => {
   it("preserva faixas do template BPMN após auto-layout", () => {
@@ -38,6 +47,89 @@ describe("autoLayoutFlowchart", () => {
     expect(start).toBeTruthy();
     expect(crm).toBeTruthy();
     expect(ranksById.get(start!.id)!).toBeLessThan(ranksById.get(crm!.id)!);
+  });
+
+  it("expande faixas quando o layout vertical excede altura fixa", () => {
+    const laneA = createLaneId();
+    const nodeA = createNodeId("a");
+    const nodeB = createNodeId("b");
+    const flowchart: FlowchartV1 = {
+      format: "flowchart_v1",
+      format_version: 1,
+      lanes: [{ id: laneA, label: "Comercial", height: 168, order: 0 }],
+      nodes: [
+        {
+          id: nodeA,
+          type: "start",
+          label: "Início A",
+          position: { x: 200, y: 40 },
+          lane_id: laneA,
+        },
+        {
+          id: nodeB,
+          type: "start",
+          label: "Início B",
+          position: { x: 420, y: 40 },
+          lane_id: laneA,
+        },
+      ],
+      edges: [],
+    };
+
+    const laidOut = autoLayoutFlowchart(flowchart);
+    const laneAHeight = laidOut.lanes?.find((lane) => lane.id === laneA)?.height ?? 0;
+
+    expect(laneAHeight).toBeGreaterThan(168);
+
+    const ys = laidOut.nodes.map((node) => node.position.y);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(48);
+  });
+});
+
+describe("fitLaneHeightsToContent", () => {
+  it("aumenta altura da faixa e desloca faixas inferiores", () => {
+    const laneA = createLaneId();
+    const laneB = createLaneId();
+    const nodeA = createNodeId("a");
+    const nodeB = createNodeId("b");
+    const flowchart: FlowchartV1 = {
+      format: "flowchart_v1",
+      format_version: 1,
+      lanes: [
+        { id: laneA, label: "Topo", height: 168, order: 0 },
+        { id: laneB, label: "Baixo", height: 168, order: 1 },
+      ],
+      nodes: [
+        {
+          id: nodeA,
+          type: "process",
+          label: "Alto",
+          position: { x: 220, y: 140 },
+          lane_id: laneA,
+        },
+        {
+          id: nodeB,
+          type: "process",
+          label: "Baixo",
+          position: { x: 220, y: 190 },
+          lane_id: laneB,
+        },
+      ],
+      edges: [],
+    };
+
+    const fitted = fitLaneHeightsToContent(flowchart);
+    const laneAHeight = fitted.lanes?.find((lane) => lane.id === laneA)?.height ?? 0;
+    const nodeBAfter = fitted.nodes.find((node) => node.id === nodeB);
+
+    expect(laneAHeight).toBeGreaterThan(168);
+    expect(nodeBAfter?.position.y).toBeGreaterThan(190);
+  });
+});
+
+describe("requiredLaneHeight", () => {
+  it("respeita padding mínimo mesmo sem nós", () => {
+    expect(requiredLaneHeight([], 0)).toBe(168);
   });
 });
 
