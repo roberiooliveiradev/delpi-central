@@ -19,6 +19,13 @@ def _configure_domain_ports():
 
 
 @pytest.fixture(autouse=True)
+def _ensure_operational_fast_path_settings(monkeypatch):
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "CHAT_OPERATIONAL_FAST_PATH_ENABLED", True)
+
+
+@pytest.fixture(autouse=True)
 def _disable_web_search_blocks(monkeypatch):
     from app.domain.services.chat_web_search_intent_service import (
         ChatWebSearchIntentService,

@@ -31,7 +31,7 @@ def test_rag_test_metrics_computes_assertiveness_rate(monkeypatch):
         lambda *_args, **_kwargs: FakeQuery(),
     )
 
-    result = repository._rag_test_metrics_24h(since=since)
+    result = repository._rag_test_metrics_window(since=since)
 
     assert result["totalTests"] == 2
     assert result["assertiveTests"] == 1

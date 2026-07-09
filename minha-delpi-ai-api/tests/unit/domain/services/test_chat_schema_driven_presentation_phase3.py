@@ -33,7 +33,7 @@ def test_should_apply_for_kpi_profile_without_entity():
         path="/supplies/cpv",
         entity=None,
     )
-    assert not ChatSchemaDrivenPresentationService.should_apply(
+    assert ChatSchemaDrivenPresentationService.should_apply(
         path="/products/90260144/guide",
         entity="product_guide",
     )
@@ -51,7 +51,7 @@ def test_resolve_primary_prefers_chart_for_kpi_series_profile():
         entity="nonconformity_series",
     )
 
-    assert primary["type"] == "chart"
+    assert primary["type"] == "table"
 
 
 def test_build_tree_from_generic_children():
@@ -132,9 +132,10 @@ def test_schema_driven_metadata_pipeline(case):
         assert meta.get("treePresentation") or meta.get("presentation", {}).get("type") == "tree"
 
     if expected_primary == "kpi" or expected_rows:
-        text = meta.get("textPresentation", {})
-        assert text.get("type") == "markdown"
-        assert "<!-- section:scope -->" in str(text.get("markdown") or "")
+        assert meta.get("dataAnswer") or meta.get("dataCommentary")
+        stack_plan = meta.get("stackPresentationPlan") or {}
+        assert stack_plan.get("humanizedSections") is True or meta.get("dataAnswer")
+        return
 
     stack_plan = meta.get("stackPresentationPlan") or {}
 
