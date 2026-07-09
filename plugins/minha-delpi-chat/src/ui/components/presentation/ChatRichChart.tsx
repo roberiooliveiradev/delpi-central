@@ -65,6 +65,7 @@ import {
   buildCategoryFilterOptions,
 } from "./pipeline/presentationCategoryFilter";
 import { normalizeChartPresentation } from "./pipeline/chartPresentationNormalize";
+import { ChatRichUxSelect } from "./chatRichUxSelect";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
@@ -416,146 +417,121 @@ export function ChatRichChart({
             {data.length > 0 && activeChartType !== "heatmap" ? (
               <div className="mdc-rich-chart__ux-toolbar" role="group" aria-label="Filtros do gráfico">
                 {axisDefaults.numericColumns.length > 0 ? (
-                  <label className="mdc-rich-chart__ux-field">
-                    <span>Eixo Y</span>
-                    <select
-                      value={resolvedY}
-                      onChange={(event) => {
-                        const column = event.target.value;
-                        setAxisYOverride(column);
-                        recordPresentationTelemetry("presentation_axis_change", {
-                          axis: "y",
-                          column,
-                          chartType: activeChartType,
-                        });
-                      }}
-                      title="Valor numérico no eixo vertical"
-                    >
-                      {axisDefaults.numericColumns.map((column) => (
-                        <option key={column} value={column}>
-                          {formatChartColumnLabel(column, fieldLabels)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <ChatRichUxSelect
+                    label="Eixo Y"
+                    title="Valor numérico no eixo vertical"
+                    value={resolvedY}
+                    allowEmptyOption={false}
+                    onChange={(column) => {
+                      setAxisYOverride(column);
+                      recordPresentationTelemetry("presentation_axis_change", {
+                        axis: "y",
+                        column,
+                        chartType: activeChartType,
+                      });
+                    }}
+                    options={axisDefaults.numericColumns.map((column) => ({
+                      value: column,
+                      label: formatChartColumnLabel(column, fieldLabels),
+                    }))}
+                  />
                 ) : null}
                 {(scatterMode
                   ? axisDefaults.numericColumns
                   : axisDefaults.categoryColumns
                 ).length > 0 ? (
-                  <label className="mdc-rich-chart__ux-field">
-                    <span>{scatterMode ? "Eixo X" : "Categoria"}</span>
-                    <select
-                      value={resolvedX}
-                      onChange={(event) => {
-                        const column = event.target.value;
-                        setAxisXOverride(column);
-                        recordPresentationTelemetry("presentation_axis_change", {
-                          axis: scatterMode ? "x" : "category",
-                          column,
-                          chartType: activeChartType,
-                        });
-                      }}
-                      title={
-                        scatterMode
-                          ? "Valor numérico no eixo horizontal"
-                          : "Campo exibido no eixo horizontal"
-                      }
-                    >
-                      {(scatterMode
-                        ? axisDefaults.numericColumns
-                        : axisDefaults.categoryColumns
-                      ).map((column) => (
-                        <option key={column} value={column}>
-                          {formatChartColumnLabel(column, fieldLabels)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <ChatRichUxSelect
+                    label={scatterMode ? "Eixo X" : "Categoria"}
+                    title={
+                      scatterMode
+                        ? "Valor numérico no eixo horizontal"
+                        : "Campo exibido no eixo horizontal"
+                    }
+                    value={resolvedX}
+                    allowEmptyOption={false}
+                    onChange={(column) => {
+                      setAxisXOverride(column);
+                      recordPresentationTelemetry("presentation_axis_change", {
+                        axis: scatterMode ? "x" : "category",
+                        column,
+                        chartType: activeChartType,
+                      });
+                    }}
+                    options={(scatterMode
+                      ? axisDefaults.numericColumns
+                      : axisDefaults.categoryColumns
+                    ).map((column) => ({
+                      value: column,
+                      label: formatChartColumnLabel(column, fieldLabels),
+                    }))}
+                  />
                 ) : null}
                 {categoryFilterOptions.length > 0 ? (
                   <>
-                    <label className="mdc-rich-chart__ux-field">
-                      <span>Filtrar</span>
-                      <select
-                        value={categoryFilterKey ?? ""}
-                        onChange={(event) => {
-                          const key = event.target.value || null;
-                          setCategoryFilterKey(key);
-                          setCategoryFilterValue(null);
-                        }}
-                        title="Coluna para filtrar os dados"
-                      >
-                        <option value="">Todos</option>
-                        {categoryFilterOptions.map((option) => (
-                          <option key={option.key} value={option.key}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <ChatRichUxSelect
+                      label="Filtrar"
+                      title="Coluna para filtrar os dados"
+                      value={categoryFilterKey ?? ""}
+                      onChange={(key) => {
+                        setCategoryFilterKey(key || null);
+                        setCategoryFilterValue(null);
+                      }}
+                      options={categoryFilterOptions.map((option) => ({
+                        value: option.key,
+                        label: option.label,
+                      }))}
+                    />
                     {categoryFilterKey ? (
-                      <label className="mdc-rich-chart__ux-field">
-                        <span>Valor</span>
-                        <select
-                          value={categoryFilterValue ?? ""}
-                          onChange={(event) => {
-                            const value = event.target.value || null;
-                            setCategoryFilterValue(value);
-                            if (value) {
-                              recordPresentationTelemetry("presentation_category_filter", {
-                                filterKey: categoryFilterKey,
-                                filterValue: value,
-                                chartType: activeChartType,
-                              });
-                            }
-                          }}
-                          title="Valor do filtro"
-                        >
-                          <option value="">Todos</option>
-                          {categoryFilterOptions
+                      <ChatRichUxSelect
+                        label="Valor"
+                        title="Valor do filtro"
+                        value={categoryFilterValue ?? ""}
+                        onChange={(value) => {
+                          setCategoryFilterValue(value || null);
+                          if (value) {
+                            recordPresentationTelemetry("presentation_category_filter", {
+                              filterKey: categoryFilterKey,
+                              filterValue: value,
+                              chartType: activeChartType,
+                            });
+                          }
+                        }}
+                        options={
+                          categoryFilterOptions
                             .find((option) => option.key === categoryFilterKey)
-                            ?.values.map((value) => (
-                              <option key={value} value={value}>
-                                {value}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
+                            ?.values.map((value) => ({ value, label: value })) ?? []
+                        }
+                      />
                     ) : null}
                   </>
                 ) : null}
                 {!periodCompareEnabled ? (
-                  <label className="mdc-rich-chart__ux-field">
-                    <span>Top</span>
-                    <select
-                      value={topFilter}
-                      onChange={(event) =>
-                        setTopFilter(event.target.value as ChartTopFilter)
-                      }
-                    >
-                      <option value="all">Todos</option>
-                      <option value="5">5</option>
-                      <option value="10">10</option>
-                      <option value="20">20</option>
-                    </select>
-                  </label>
+                  <ChatRichUxSelect
+                    label="Top"
+                    value={topFilter}
+                    allowEmptyOption={false}
+                    onChange={(value) => setTopFilter(value as ChartTopFilter)}
+                    options={[
+                      { value: "all", label: "Todos" },
+                      { value: "5", label: "5" },
+                      { value: "10", label: "10" },
+                      { value: "20", label: "20" },
+                    ]}
+                  />
                 ) : null}
                 {temporalAxis && !periodCompareEnabled ? (
-                  <label className="mdc-rich-chart__ux-field">
-                    <span>Janela</span>
-                    <select
-                      value={zoomWindow}
-                      onChange={(event) =>
-                        setZoomWindow(event.target.value as ChartZoomWindow)
-                      }
-                    >
-                      <option value="all">Tudo</option>
-                      <option value="6">6</option>
-                      <option value="12">12</option>
-                      <option value="24">24</option>
-                    </select>
-                  </label>
+                  <ChatRichUxSelect
+                    label="Janela"
+                    value={zoomWindow}
+                    allowEmptyOption={false}
+                    onChange={(value) => setZoomWindow(value as ChartZoomWindow)}
+                    options={[
+                      { value: "all", label: "Tudo" },
+                      { value: "6", label: "6" },
+                      { value: "12", label: "12" },
+                      { value: "24", label: "24" },
+                    ]}
+                  />
                 ) : null}
                 {periodCompareSpec ? (
                   <label className="mdc-rich-chart__ux-toggle">

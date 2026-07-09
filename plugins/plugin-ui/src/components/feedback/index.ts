@@ -73,6 +73,14 @@ export {
   type ModalShellProps,
 } from "./ModalShell";
 export {
+  DrawerShell,
+  createDrawerShell,
+  drawerShellBemClasses,
+  type DashboardDrawerShellProps,
+  type DrawerShellClassNames,
+  type DrawerShellProps,
+} from "./DrawerShell";
+export {
   StatusBadge,
   createDashboardStatusBadge,
   statusBadgeBemClasses,

@@ -14,6 +14,7 @@ import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import { tablePresentationToMarkdown } from "../chatPresentation";
+import { ChatRichUxSelect } from "./chatRichUxSelect";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
@@ -149,50 +150,40 @@ export function ChatRichTable({
           <div className="mdc-rich-table__actions">
             {categoryFilterOptions.length > 0 ? (
               <>
-                <label className="mdc-rich-chart__ux-field mdc-rich-table__filter">
-                  <span>Filtrar</span>
-                  <select
-                    value={categoryFilterKey ?? ""}
-                    onChange={(event) => {
-                      setCategoryFilterKey(event.target.value || null);
-                      setCategoryFilterValue(null);
-                    }}
-                  >
-                    <option value="">Todos</option>
-                    {categoryFilterOptions.map((option) => (
-                      <option key={option.key} value={option.key}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <ChatRichUxSelect
+                  className="mdc-rich-chart__ux-field mdc-rich-table__filter"
+                  label="Filtrar"
+                  value={categoryFilterKey ?? ""}
+                  onChange={(nextKey) => {
+                    setCategoryFilterKey(nextKey || null);
+                    setCategoryFilterValue(null);
+                  }}
+                  options={categoryFilterOptions.map((option) => ({
+                    value: option.key,
+                    label: option.label,
+                  }))}
+                />
                 {categoryFilterKey ? (
-                  <label className="mdc-rich-chart__ux-field mdc-rich-table__filter">
-                    <span>{formatChartColumnLabel(categoryFilterKey, fieldLabels)}</span>
-                    <select
-                      value={categoryFilterValue ?? ""}
-                      onChange={(event) => {
-                        const value = event.target.value || null;
-                        setCategoryFilterValue(value);
-                        if (value) {
-                          recordPresentationTelemetry("presentation_category_filter", {
-                            filterKey: categoryFilterKey,
-                            filterValue: value,
-                            surface: "table",
-                          });
-                        }
-                      }}
-                    >
-                      <option value="">Todos</option>
-                      {categoryFilterOptions
+                  <ChatRichUxSelect
+                    className="mdc-rich-chart__ux-field mdc-rich-table__filter"
+                    label={formatChartColumnLabel(categoryFilterKey, fieldLabels)}
+                    value={categoryFilterValue ?? ""}
+                    onChange={(value) => {
+                      setCategoryFilterValue(value || null);
+                      if (value) {
+                        recordPresentationTelemetry("presentation_category_filter", {
+                          filterKey: categoryFilterKey,
+                          filterValue: value,
+                          surface: "table",
+                        });
+                      }
+                    }}
+                    options={
+                      categoryFilterOptions
                         .find((option) => option.key === categoryFilterKey)
-                        ?.values.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
+                        ?.values.map((value) => ({ value, label: value })) ?? []
+                    }
+                  />
                 ) : null}
               </>
             ) : null}

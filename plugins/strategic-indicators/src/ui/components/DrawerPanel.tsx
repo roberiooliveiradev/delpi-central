@@ -1,4 +1,6 @@
-import { useEffect, useId, type PropsWithChildren, type ReactNode } from "react";
+import { DrawerShell, type DrawerShellClassNames } from "@delpi/plugin-ui";
+import type { PropsWithChildren, ReactNode } from "react";
+
 import { lockPageScroll } from "../utils/pageScrollLock";
 import "./DrawerPanel.css";
 
@@ -11,6 +13,19 @@ type DrawerPanelProps = PropsWithChildren<{
   size?: "md" | "lg" | "xl";
 }>;
 
+const SI_DRAWER_CLASS_NAMES: DrawerShellClassNames = {
+  root: "si-drawer-root",
+  backdrop: "si-drawer-root__backdrop",
+  panel: "si-drawer",
+  header: "si-drawer__header",
+  headerText: "si-drawer__header-text",
+  title: "si-drawer__title",
+  description: "si-drawer__description",
+  closeButton: "si-drawer__close",
+  body: "si-drawer__body",
+  footer: "si-drawer__footer",
+};
+
 export function DrawerPanel({
   open,
   onClose,
@@ -20,69 +35,18 @@ export function DrawerPanel({
   size = "lg",
   children,
 }: DrawerPanelProps) {
-  const titleId = useId();
-  const descriptionId = useId();
-
-  useEffect(() => {
-    if (!open) return;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-
-    const unlockPageScroll = lockPageScroll();
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      unlockPageScroll();
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   return (
-    <div className="si-drawer-root" role="presentation">
-      <button
-        type="button"
-        className="si-drawer-root__backdrop"
-        aria-label="Fechar painel"
-        onClick={onClose}
-      />
-
-      <aside
-        className={`si-drawer si-drawer--${size}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={description ? descriptionId : undefined}
-      >
-        <header className="si-drawer__header">
-          <div className="si-drawer__header-text">
-            <h2 id={titleId} className="si-drawer__title">
-              {title}
-            </h2>
-            {description ? (
-              <p id={descriptionId} className="si-drawer__description">
-                {description}
-              </p>
-            ) : null}
-          </div>
-
-          <button
-            type="button"
-            className="si-drawer__close"
-            aria-label="Fechar"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </header>
-
-        <div className="si-drawer__body">{children}</div>
-
-        {footer ? <footer className="si-drawer__footer">{footer}</footer> : null}
-      </aside>
-    </div>
+    <DrawerShell
+      open={open}
+      title={title}
+      description={description}
+      footer={footer}
+      onClose={onClose}
+      classNames={SI_DRAWER_CLASS_NAMES}
+      className={`si-drawer--${size}`}
+      lockPageScroll={lockPageScroll}
+    >
+      {children}
+    </DrawerShell>
   );
 }

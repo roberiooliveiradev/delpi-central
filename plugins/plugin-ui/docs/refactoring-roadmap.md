@@ -327,7 +327,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **F2** Shell dashboard | Kpi/Chart/Loading/Pagination/Filter/MultiSelect/DataTable nos dept. |
 | **F3** Forms/detalhe | F3.1–F3.13 (Native* + `beforeControl`, a5s NC, TV ribbon, TM revisão, CE FormsPanel, chat admin) |
 | **F4** Utils | paginationPages, chartColors, operationalUnitLabels, goalDisplay |
-| **F5** (parcial) | FileDropzone (+ `emptyContent`/`filledContent`, policy workspace), confirm controller, ConfirmModalPanel, ModalShell (+ description/footer/foco); CE PhotoDropzone empty; SI Modal via `ModalShell` |
+| **F5** (parcial) | FileDropzone (+ policy workspace), ModalShell, **DrawerShell**, confirm controller; CE/SI/chat forms migrados |
 | **Export E1–E3** | Motor tabular, PDF DELPI, botões, jsPDF, PNG chart, matrix, PVA — [export-catalog.md](./export-catalog.md) |
 
 ### Residual — avaliar demanda (não bloqueia produção)
@@ -335,9 +335,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | Prioridade ROI | Item | Notas |
 |----------------|------|--------|
 | Baixa | **quality-action-plans** RNC/8D, 5 Whys | Domínio especial (Ishikawa, fluxos) |
-| Baixa | **minha-delpi-chat** apresentação rica | `ChatRichChart` / `ChatRichTable` selects de toolbar |
 | Baixa | **transformometro** FlowchartMermaidPanel | Editor Mermaid — domínio |
-| Backlog F5 | **SI** `DrawerPanel` | Gaveta lateral — avaliar extensão separada do `ModalShell` |
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
 
@@ -349,16 +347,16 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **tv-dashboard** | `ComunicadoFormatRibbon` + `DataBindingInspector` → `TdRibbonSelect` / `NativeSelectControl` |
 | **transformometro** | Textareas revisão/instância → `TmNativeTextAreaField` |
 | **customer-experience** | `cxFormFields`, FormsPanel builder, `PhotoDropzone` empty → `FileDropzone` |
-| **minha-delpi-chat** | `styles.css` plugin-ui + admin/agent builder → `chatAdminFormFields`; `WorkspaceFileDropzone` → `FileDropzone` + policy ingest |
-| **strategic-indicators** | `Modal` → `ModalShell` (description, footer, tamanho, foco inicial, `lockPageScroll`) |
+| **strategic-indicators** | `Modal` + `DrawerPanel` → `ModalShell` / `DrawerShell` |
+| **minha-delpi-chat** | `WorkspaceFileDropzone` policy; toolbar rich → `ChatRichUxSelect` / `NativeSelectControl` |
 | **customer-experience** | «Novo formulário» + `FormPreviewView` text fields → `CxNative*` / `cxFormPreviewFields` |
 | **plugin-ui** | `FormFieldShell.beforeControl`, `FileDropzone.emptyContent`/policy slots, `ModalShell` description/footer/foco, `TextArea.onFocus/maxLength` |
 
 ### Próximo lote sugerido (quando retomar)
 
-1. SI `DrawerPanel` → variante ou composição sobre shell compartilhado.
-2. Chat apresentação rica (`ChatRichChart` / `ChatRichTable` toolbar selects).
-3. QAP fluxos RNC/8D (domínio especial).
+1. QAP fluxos RNC/8D (domínio especial).
+2. TM `FlowchartMermaidPanel` (editor Mermaid).
+3. `SelectControl` custom na toolbar rich (substituir native compacto, se UX exigir).
 
 ---
 
