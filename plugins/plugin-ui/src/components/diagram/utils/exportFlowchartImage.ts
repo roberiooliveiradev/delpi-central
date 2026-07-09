@@ -1,4 +1,4 @@
-import { getNodesBounds, getViewportForBounds, type Node } from "@xyflow/react";
+import { getNodesBounds, getViewportForBounds, type Node as FlowNode } from "@xyflow/react";
 
 import { LANE_CANVAS_WIDTH } from "./diagramSwimlanes";
 import { getDiagramExportNodes } from "./diagramViewFit";
@@ -27,7 +27,7 @@ type ExportPalette = {
 
 export type ExportReactFlowDiagramOptions = {
   canvasRoot: HTMLElement;
-  nodes: Node[];
+  nodes: FlowNode[];
   filename: string;
   pixelRatio?: number;
 };
@@ -152,12 +152,8 @@ function inlineEdgeTextExportStyles(
   });
 }
 
-/** html-to-image percorre Text/Comment — só Element tem classList/closest. */
-export function shouldIncludeExportNode(domNode: Node): boolean {
-  if (!(domNode instanceof Element)) {
-    return true;
-  }
-
+/** html-to-image filter — exclui controles do React Flow. */
+export function shouldIncludeExportNode(domNode: HTMLElement): boolean {
   const { classList } = domNode;
   if (classList.contains("react-flow__background")) return false;
   if (classList.contains("react-flow__controls")) return false;
@@ -262,7 +258,7 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   link.click();
 }
 
-function injectExportSwimlaneBackdrop(viewport: HTMLElement, nodes: Node[]): () => void {
+function injectExportSwimlaneBackdrop(viewport: HTMLElement, nodes: FlowNode[]): () => void {
   const laneNodes = nodes.filter((node) => node.type === "lane");
   if (!laneNodes.length) {
     return () => undefined;

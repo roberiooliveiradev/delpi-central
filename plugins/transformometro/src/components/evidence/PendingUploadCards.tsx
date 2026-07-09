@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, FileText, X } from "lucide-react";
 
+import {
+  FilePreviewModal,
+  canPreviewFile,
+  resolveFilePreviewKind,
+} from "@delpi/plugin-ui";
+
 import { formatEvidenceFileSize } from "../../data/api/transformometroEvidenceApi";
-import { Modal } from "../ui/Modal";
 
 export type PendingUploadItem = {
   id: string;
@@ -17,23 +22,23 @@ type Props = {
   onRemove: (id: string) => void;
 };
 
+function canPreviewPendingFile(file: File): boolean {
+  return canPreviewFile({ mimeType: file.type, fileName: file.name });
+}
+
 function isImageFile(file: File): boolean {
-  return file.type.startsWith("image/");
+  return resolveFilePreviewKind({ mimeType: file.type, fileName: file.name }) === "image";
 }
 
 function isPdfFile(file: File): boolean {
-  return file.type === "application/pdf";
-}
-
-function canPreviewFile(file: File): boolean {
-  return isImageFile(file) || isPdfFile(file);
+  return resolveFilePreviewKind({ mimeType: file.type, fileName: file.name }) === "pdf";
 }
 
 function useFileObjectUrl(file: File): string | null {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!canPreviewFile(file)) {
+    if (!canPreviewPendingFile(file)) {
       setUrl(null);
       return;
     }
@@ -92,7 +97,7 @@ function PendingUploadCard({
 }) {
   const previewUrl = useFileObjectUrl(item.file);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const previewable = canPreviewFile(item.file);
+  const previewable = canPreviewPendingFile(item.file);
 
   return (
     <article className="tm-evidence-pending-card">
@@ -150,30 +155,16 @@ function PendingUploadCard({
         />
       </details>
 
-      <Modal
+      <FilePreviewModal
         open={previewOpen}
         title={item.file.name}
         onClose={() => setPreviewOpen(false)}
-        className="ds-modal--evidence-preview"
-      >
-        <div className="tm-evidence-preview-modal">
-          {isImageFile(item.file) && previewUrl ? (
-            <img
-              className="tm-evidence-preview-modal__img"
-              src={previewUrl}
-              alt={item.file.name}
-            />
-          ) : isPdfFile(item.file) && previewUrl ? (
-            <iframe
-              className="tm-evidence-preview-modal__pdf"
-              src={previewUrl}
-              title={item.file.name}
-            />
-          ) : (
-            <p className="ds-hint">Pré-visualização indisponível para este tipo de arquivo.</p>
-          )}
-        </div>
-      </Modal>
+        source={item.file}
+        mimeType={item.file.type}
+        fileName={item.file.name}
+        enabled={previewable}
+        metaItems={[formatEvidenceFileSize(item.file.size), item.file.type || "Tipo não informado"]}
+      />
     </article>
   );
 }

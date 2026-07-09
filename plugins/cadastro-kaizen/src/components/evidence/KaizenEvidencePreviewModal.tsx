@@ -30,10 +30,6 @@ function sourceMode(source: EvidencePreviewSource): EvidencePreviewMode {
     : resolveLocalFilePreviewMode(source.file);
 }
 
-function sourceSize(source: EvidencePreviewSource): number | null | undefined {
-  return source.kind === "saved" ? source.evidence.size_bytes : source.file.size;
-}
-
 export function KaizenEvidencePreviewModal({ source, onClose }: Props) {
   const open = source != null;
   const title = source ? sourceTitle(source) : "Pré-visualização";
@@ -59,14 +55,12 @@ export function KaizenEvidencePreviewModal({ source, onClose }: Props) {
   const fileName = source?.kind === "saved" ? source.evidence.file_name : source?.file.name;
   const declaredType = source?.kind === "saved" ? source.evidence.type : null;
 
-  const footer = useMemo(() => {
-    if (!source) return null;
-    return (
-      <div className="kz-evidence-preview__meta">
-        <span>{source.kind === "saved" ? source.evidence.file_name ?? "Arquivo" : source.file.name}</span>
-        <span>{formatEvidenceFileSize(sourceSize(source))}</span>
-      </div>
-    );
+  const metaItems = useMemo(() => {
+    if (!source) return undefined;
+    if (source.kind === "saved") {
+      return [source.evidence.file_name ?? "Arquivo", formatEvidenceFileSize(source.evidence.size_bytes)];
+    }
+    return [source.file.name, formatEvidenceFileSize(source.file.size)];
   }, [source]);
 
   return (
@@ -79,8 +73,7 @@ export function KaizenEvidencePreviewModal({ source, onClose }: Props) {
       fileName={fileName}
       declaredType={declaredType}
       enabled={mode !== "none"}
-      footer={footer}
-      panelClassName="kz-modal--preview"
+      metaItems={metaItems}
     />
   );
 }

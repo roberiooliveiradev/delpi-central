@@ -4604,45 +4604,6 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   letter-spacing: 0.04em;
 }
 
-.dashboard-transformometro .ds-modal-overlay:has(.ds-modal--evidence-preview) {
-  padding: 12px;
-}
-
-.dashboard-transformometro .ds-modal--evidence-preview {
-  width: min(1280px, 96vw);
-  max-height: min(94vh, 960px);
-}
-
-.dashboard-transformometro .ds-modal--evidence-preview .ds-modal__body {
-  padding: 10px 14px 14px;
-}
-
-.dashboard-transformometro .tm-evidence-preview-modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 160px;
-}
-
-.dashboard-transformometro .tm-evidence-preview-modal__img {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  max-height: min(82vh, 860px);
-  margin: 0 auto;
-  object-fit: contain;
-  border-radius: 6px;
-  background: var(--ds-surface-muted);
-}
-
-.dashboard-transformometro .tm-evidence-preview-modal__pdf {
-  width: 100%;
-  height: min(82vh, 860px);
-  border: none;
-  border-radius: 6px;
-  background: var(--ds-surface-muted);
-}
-
 .dashboard-transformometro .tm-evidence-pending {
   list-style: none;
   margin: 0;

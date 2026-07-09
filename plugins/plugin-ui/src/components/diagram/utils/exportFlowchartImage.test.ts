@@ -3,11 +3,6 @@ import { describe, expect, it } from "vitest";
 import { shouldIncludeExportNode } from "./exportFlowchartImage";
 
 describe("shouldIncludeExportNode", () => {
-  it("inclui nós de texto (sem classList)", () => {
-    const text = document.createTextNode("Etapa 1");
-    expect(shouldIncludeExportNode(text)).toBe(true);
-  });
-
   it("exclui controles e fundo do React Flow", () => {
     const background = document.createElement("div");
     background.className = "react-flow__background";

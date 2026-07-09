@@ -1,5 +1,148 @@
 /* @delpi/plugin-ui — pré-visualização de arquivos */
 
+.delpi-ui-file-preview-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, #000 48%, transparent);
+}
+
+.delpi-ui-file-preview-modal {
+  --delpi-ui-preview-control-radius: 12px;
+  --delpi-ui-preview-font-xs: 12px;
+  --delpi-ui-preview-font-sm: 13px;
+  --delpi-ui-preview-card-bg: var(--surface, #ffffff);
+  --delpi-ui-preview-card-border: var(--border, #e6e6e6);
+  --delpi-ui-preview-accent: var(--primary, #089bdb);
+  --delpi-ui-preview-text-muted: color-mix(in srgb, var(--text, #111111) 70%, transparent);
+  width: min(920px, 100%);
+  max-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e6e6e6);
+  background: var(--surface, #ffffff);
+  box-shadow: 0 24px 64px color-mix(in srgb, #000 28%, transparent);
+  color: var(--text, #111111);
+}
+
+:root[data-theme="dark"] .delpi-ui-file-preview-modal {
+  --delpi-ui-preview-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --delpi-ui-preview-card-border: rgba(255, 255, 255, 0.1);
+  --delpi-ui-preview-text-muted: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 92%, #089bdb 8%);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.delpi-ui-file-preview-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border, #e6e6e6) 80%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-file-preview-modal__header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.delpi-ui-file-preview-modal__title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-file-preview-modal__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.delpi-ui-file-preview-modal__close {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--delpi-ui-preview-card-border);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.delpi-ui-file-preview-modal__close:hover {
+  background: color-mix(in srgb, var(--delpi-ui-preview-accent) 10%, transparent);
+}
+
+.delpi-ui-file-preview-modal__body {
+  padding: 16px 18px 18px;
+  overflow: auto;
+}
+
+.delpi-ui-file-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delpi-ui-file-preview__after,
+.delpi-ui-file-preview__description {
+  margin: 0;
+  font-size: var(--delpi-ui-preview-font-sm);
+  line-height: 1.45;
+  color: var(--delpi-ui-preview-text-muted);
+}
+
+.delpi-ui-file-preview__footer {
+  margin-top: 4px;
+}
+
+.delpi-ui-file-preview__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: var(--delpi-ui-preview-font-xs);
+  color: var(--delpi-ui-preview-text-muted);
+}
+
+.delpi-ui-file-preview-modal__header-actions .delpi-ui-file-preview__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--delpi-ui-preview-card-border);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--delpi-ui-preview-font-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-file-preview-modal__header-actions .delpi-ui-file-preview__tool-btn:hover {
+  background: color-mix(in srgb, var(--delpi-ui-preview-accent) 10%, transparent);
+}
+
 .delpi-ui-file-preview__status,
 .delpi-ui-file-preview__muted {
   margin: 0;
@@ -18,6 +161,7 @@
 
 .delpi-ui-file-preview__pdf {
   width: 100%;
+  height: min(68vh, 720px);
   min-height: min(68vh, 720px);
   border: none;
   border-radius: 10px;

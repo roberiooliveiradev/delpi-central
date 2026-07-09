@@ -12,6 +12,7 @@ export type ModalShellClassNames = {
   headerText?: string;
   description?: string;
   footer?: string;
+  headerActions?: string;
 };
 
 export type ModalShellProps = {
@@ -19,6 +20,7 @@ export type ModalShellProps = {
   title: string;
   description?: string;
   footer?: ReactNode;
+  headerActions?: ReactNode;
   onClose: () => void;
   children: ReactNode;
   classNames: ModalShellClassNames;
@@ -48,6 +50,7 @@ export function ModalShell({
   title,
   description,
   footer,
+  headerActions,
   onClose,
   children,
   classNames,
@@ -181,6 +184,9 @@ export function ModalShell({
               {descriptionNode}
             </>
           )}
+          {headerActions && classNames.headerActions ? (
+            <div className={classNames.headerActions}>{headerActions}</div>
+          ) : null}
           <button
             type="button"
             className={classNames.closeButton}

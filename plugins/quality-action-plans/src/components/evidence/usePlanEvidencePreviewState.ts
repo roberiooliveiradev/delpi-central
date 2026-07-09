@@ -1,59 +1,47 @@
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  FilePreviewView,
-  useFilePreviewLoader,
-  type FilePreviewContentState,
-} from "@delpi/plugin-ui";
+import type { FilePreviewContentState } from "@delpi/plugin-ui";
 
 import {
   fetchPlanEvidenceContent,
   fetchPlanEvidenceFileBlob,
 } from "../../api/actionPlansApi";
 import type { PlanEvidence } from "../../types/rnc8d";
-import {
-  evidencePreviewTitle,
-  resolveEvidencePreviewMode,
-} from "./evidencePreviewUtils";
+import { resolveEvidencePreviewMode } from "./evidencePreviewUtils";
 
-type Props = {
-  planId: string;
-  evidence: PlanEvidence;
+const EMPTY_TEXT_STATE: FilePreviewContentState = {
+  kind: "text",
+  loading: false,
+  error: null,
+  previewUrl: null,
+  textContent: null,
+  textTruncated: false,
+  spreadsheetData: null,
+  docxData: null,
 };
 
-export function EvidencePreviewContent({ planId, evidence }: Props) {
-  const mode = resolveEvidencePreviewMode(evidence);
-  const title = evidencePreviewTitle(evidence);
+export function usePlanEvidencePreviewState(planId: string, evidence: PlanEvidence | null) {
+  const mode = evidence ? resolveEvidencePreviewMode(evidence) : "none";
 
   const blobSource = useMemo(() => {
-    if (mode === "none" || mode === "text") return null;
+    if (!evidence || mode === "none" || mode === "text") return null;
     return () => fetchPlanEvidenceFileBlob(planId, evidence.id);
-  }, [planId, evidence.id, mode]);
-
-  const blobState = useFilePreviewLoader({
-    source: blobSource,
-    mimeType: evidence.mime_type,
-    fileName: evidence.file_name,
-    declaredType: evidence.type,
-    enabled: mode !== "none" && mode !== "text",
-  });
+  }, [evidence, mode, planId]);
 
   const [textState, setTextState] = useState<FilePreviewContentState>({
-    kind: "text",
+    ...EMPTY_TEXT_STATE,
+    kind: mode === "text" ? "text" : "none",
     loading: mode === "text",
-    error: null,
-    previewUrl: null,
-    textContent: null,
-    textTruncated: false,
-    spreadsheetData: null,
-    docxData: null,
   });
 
   useEffect(() => {
-    if (mode !== "text") return;
+    if (!evidence || mode !== "text") {
+      setTextState({ ...EMPTY_TEXT_STATE, kind: mode === "text" ? "text" : "none" });
+      return;
+    }
 
     let cancelled = false;
-    setTextState((current) => ({ ...current, loading: true, error: null }));
+    setTextState((current) => ({ ...current, kind: "text", loading: true, error: null }));
 
     void fetchPlanEvidenceContent(planId, evidence.id)
       .then((payload) => {
@@ -100,9 +88,11 @@ export function EvidencePreviewContent({ planId, evidence }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [planId, evidence.id, mode]);
+  }, [evidence, mode, planId]);
 
-  const state = mode === "text" ? textState : blobState;
-
-  return <FilePreviewView state={state} title={title} />;
+  return {
+    mode,
+    blobSource,
+    previewState: mode === "text" ? textState : undefined,
+  };
 }

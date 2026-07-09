@@ -234,6 +234,10 @@ function EvidenceCard({
         fetchObjectUrl={fetchPreviewUrl}
         onClose={() => setPreviewOpen(false)}
         onError={onPreviewError}
+        metaItems={[
+          evidence.tipo_mime ?? evidence.tipo,
+          formatEvidenceFileSize(evidence.tamanho_bytes),
+        ]}
       />
     </figure>
   );

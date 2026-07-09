@@ -2,6 +2,7 @@ export {
   FilePreviewModal,
   type FilePreviewModalProps,
 } from "./FilePreviewModal";
+export { FilePreviewMetaFooter } from "./FilePreviewMetaFooter";
 export { FilePreviewView, type FilePreviewViewProps } from "./FilePreviewView";
 export { useFilePreviewLoader, type UseFilePreviewLoaderOptions } from "./useFilePreviewLoader";
 export {

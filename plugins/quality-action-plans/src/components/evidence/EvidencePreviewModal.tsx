@@ -1,10 +1,11 @@
+import { FilePreviewModal } from "@delpi/plugin-ui";
+
 import { evidenceTypeLabel } from "../../constants/evidence";
 import type { PlanEvidence } from "../../types/rnc8d";
 import { formatDateTime } from "../../utils/format";
-import { Modal } from "../ui/Modal";
 import { formatEvidenceFileSize } from "./evidenceAttachmentUtils";
-import { EvidencePreviewContent } from "./EvidencePreviewContent";
 import { evidencePreviewTitle } from "./evidencePreviewUtils";
+import { usePlanEvidencePreviewState } from "./usePlanEvidencePreviewState";
 
 type Props = {
   planId: string;
@@ -14,28 +15,34 @@ type Props = {
 };
 
 export function EvidencePreviewModal({ planId, evidence, open, onClose }: Props) {
+  const { mode, blobSource, previewState } = usePlanEvidencePreviewState(planId, evidence);
+  const title = evidence ? evidencePreviewTitle(evidence) : "Pré-visualização";
+
   return (
-    <Modal
+    <FilePreviewModal
       open={open}
-      title={evidence ? evidencePreviewTitle(evidence) : "Pré-visualização"}
-      className="pac-modal--evidence-preview"
+      title={title}
       onClose={onClose}
-    >
-      {evidence ? (
-        <div className="pac-evidence-preview-modal">
-          <EvidencePreviewContent planId={planId} evidence={evidence} />
-          {evidence.description ? (
-            <p className="pac-muted pac-evidence-preview-modal__description">
-              {evidence.description}
-            </p>
-          ) : null}
-          <div className="pac-evidence-preview-modal__meta">
-            <span>{evidenceTypeLabel(evidence.type)}</span>
-            <span>{formatEvidenceFileSize(evidence.size_bytes)}</span>
-            <span>{formatDateTime(evidence.created_at)}</span>
-          </div>
-        </div>
-      ) : null}
-    </Modal>
+      source={blobSource}
+      previewState={previewState}
+      mimeType={evidence?.mime_type}
+      fileName={evidence?.file_name}
+      declaredType={evidence?.type}
+      enabled={mode !== "none"}
+      afterPreview={
+        evidence?.description ? (
+          <p className="delpi-ui-file-preview__description">{evidence.description}</p>
+        ) : null
+      }
+      metaItems={
+        evidence
+          ? [
+              evidenceTypeLabel(evidence.type),
+              formatEvidenceFileSize(evidence.size_bytes),
+              formatDateTime(evidence.created_at),
+            ]
+          : undefined
+      }
+    />
   );
 }

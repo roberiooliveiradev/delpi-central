@@ -96,7 +96,6 @@ import {
   ChatAttachmentPreviewModal,
   type ChatAttachmentPreviewTarget,
 } from "../workspace/ChatAttachmentPreviewModal";
-import "../workspace/ChatAttachmentPreviewModal.css";
 import { ChatUserTurnContextChips } from "./ChatUserTurnContextChips";
 import { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";
 import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "../canvas/chatCanvas";

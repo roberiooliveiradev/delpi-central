@@ -235,6 +235,10 @@ function ArquivoCard({
         fetchObjectUrl={fetchPreviewUrl}
         onClose={() => setPreviewOpen(false)}
         onError={onPreviewError}
+        metaItems={[
+          arquivo.tipo_mime ?? arquivo.tipo,
+          formatEvidenceFileSize(arquivo.tamanho_bytes),
+        ]}
       />
     </figure>
   );

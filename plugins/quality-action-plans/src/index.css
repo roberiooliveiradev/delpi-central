@@ -3607,12 +3607,6 @@
   cursor: not-allowed;
 }
 
-.pac-modal--evidence-preview .pac-modal__body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .pac-modal--customer-search {
   width: min(960px, 100%);
 }
@@ -3869,18 +3863,6 @@
   }
 }
 
-
-.pac-evidence-preview-modal__description {
-  margin: 0;
-}
-
-.pac-evidence-preview-modal__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: var(--pac-font-xs, 12px);
-  color: var(--pac-text-muted, rgba(17, 17, 17, 0.7));
-}
 
 .dashboard-quality-action-plans .pac-evidence-name {
   display: flex;

@@ -532,10 +532,14 @@ Render-only — imagem, PDF, texto, planilha e DOCX com classes `delpi-ui-file-p
 
 ### `FilePreviewModal`
 
-Modal (`ModalShell`) + loader + view. Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `labels`, `footer`.
+Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`.
+
+### `FilePreviewMetaFooter`
+
+Rodapé de metadados (tipo, tamanho, data) — usado automaticamente quando `metaItems` é passado ao modal.
 
 ```tsx
-import { FilePreviewModal, resolveFilePreviewKind } from "@delpi/plugin-ui";
+import { FilePreviewModal } from "@delpi/plugin-ui";
 
 <FilePreviewModal
   open={open}
@@ -544,10 +548,11 @@ import { FilePreviewModal, resolveFilePreviewKind } from "@delpi/plugin-ui";
   source={() => fetchBlob()}
   mimeType={mime}
   fileName={fileName}
+  metaItems={["PDF", "89.9 KB", "09/07/2026, 16:19"]}
 />
 ```
 
-Plugins migrados: `quality-action-plans`, `minha-delpi-chat`, `transformometro`, `cadastro-kaizen`.
+Todos os MFEs com prévia de anexo usam **`FilePreviewModal`**: `quality-action-plans`, `minha-delpi-chat`, `transformometro`, `cadastro-kaizen`.
 
 ---
 
@@ -562,8 +567,8 @@ Plugins migrados: `quality-action-plans`, `minha-delpi-chat`, `transformometro`,
 | `customer-experience` | `LucideIconPicker`, `LucideIconByName` |
 | `public-hub` | `LucideIconByName` |
 | `transformometro` (S3+) | `ImpactEffortMatrix`, `ImpactEffortMatrixLegend`, `FilePreviewView`, **`FlowchartEditor`** (via wrapper) |
-| `quality-action-plans` | `FilePreviewView`, `useFilePreviewLoader`, `resolveFilePreviewKind` |
-| `minha-delpi-chat` | `FilePreviewView`, `useFilePreviewLoader`, `resolveFilePreviewKind` |
+| `quality-action-plans` | `FilePreviewModal`, `resolveFilePreviewKind` |
+| `minha-delpi-chat` | `FilePreviewModal`, `resolveFilePreviewKind` |
 | `cadastro-kaizen` | `FilePreviewModal`, `resolveFilePreviewKind` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.

@@ -1,7 +1,7 @@
-import { Download, X } from "lucide-react";
+import { Download } from "lucide-react";
 import { useCallback } from "react";
 
-import { FilePreviewView, useFilePreviewLoader } from "@delpi/plugin-ui";
+import { FilePreviewModal, resolveFilePreviewKind } from "@delpi/plugin-ui";
 
 import {
   downloadChatSource,
@@ -13,8 +13,6 @@ import {
   formatAttachmentSize,
   resolveAttachmentPreviewKind,
 } from "../../chatAttachmentPreview";
-import { ChatModal } from "../shared/modal/ChatModal";
-import "./ChatAttachmentPreviewModal.css";
 
 export type ChatAttachmentPreviewTarget = {
   filename: string;
@@ -65,86 +63,53 @@ export function ChatAttachmentPreviewModal({
     target.serverSourceId,
   ]);
 
-  const state = useFilePreviewLoader({
-    source: canPreview ? previewSource : null,
-    mimeType: target.contentType,
-    fileName: target.filename,
-    enabled: canPreview,
-  });
-
   const sizeLabel = formatAttachmentSize(target.sizeBytes);
   const typeBadge = workspaceFileKindLabel(target.filename);
+  const kindLabel = resolveFilePreviewKind({
+    mimeType: target.contentType,
+    fileName: target.filename,
+  });
+
+  const showDownload =
+    Boolean(target.serverSourceId) || Boolean(target.serverAttachmentId && onDownload);
 
   return (
-    <ChatModal
+    <FilePreviewModal
       open
+      title={target.filename}
       onClose={onClose}
-      size="none"
-      panelClassName="mdc-attachment-preview-modal"
-      ariaLabel={`Pré-visualização de ${target.filename}`}
-    >
-      <header className="mdc-attachment-preview-modal__header">
-        <div className="mdc-attachment-preview-modal__title-wrap">
-          <span className="mdc-attachment-preview-modal__type-badge" aria-hidden="true">
-            {typeBadge}
-          </span>
-          <div>
-            <strong>{target.filename}</strong>
-            {sizeLabel ? <small>{sizeLabel}</small> : null}
-          </div>
-        </div>
-
-        <div className="mdc-attachment-preview-modal__actions">
-          {target.serverSourceId || (target.serverAttachmentId && onDownload) ? (
-            <button
-              type="button"
-              className="mdc-attachment-preview-modal__tool-btn mdc-chat-modal-tool-btn"
-              onClick={() => {
-                if (target.serverSourceId) {
-                  void downloadChatSource(target.serverSourceId, { getAccessToken });
-                  return;
-                }
-
-                if (target.serverAttachmentId && onDownload) {
-                  void onDownload(target.serverAttachmentId);
-                }
-              }}
-            >
-              <Download size={15} aria-hidden="true" />
-              Baixar
-            </button>
-          ) : null}
-
+      source={canPreview ? previewSource : null}
+      mimeType={target.contentType}
+      fileName={target.filename}
+      enabled
+      metaItems={[typeBadge, sizeLabel, kindLabel !== "none" ? kindLabel.toUpperCase() : null]}
+      labels={{
+        loading: "Carregando pré-visualização...",
+        loadFailed: "Não foi possível carregar a pré-visualização.",
+        unavailable:
+          "Pré-visualização inline não disponível para este tipo de arquivo. Use o botão Baixar para abrir no seu computador.",
+      }}
+      headerActions={
+        showDownload ? (
           <button
             type="button"
-            className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
-            onClick={onClose}
-            aria-label="Fechar pré-visualização"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
-      </header>
+            className="delpi-ui-file-preview__tool-btn"
+            onClick={() => {
+              if (target.serverSourceId) {
+                void downloadChatSource(target.serverSourceId, { getAccessToken });
+                return;
+              }
 
-      <div className="mdc-attachment-preview-modal__body">
-        {canPreview ? (
-          <FilePreviewView
-            state={state}
-            title={target.filename}
-            labels={{
-              loading: "Carregando pré-visualização...",
-              loadFailed: "Não foi possível carregar a pré-visualização.",
-              unavailable:
-                "Pré-visualização inline não disponível para este tipo de arquivo. Use o botão Baixar para abrir no seu computador.",
+              if (target.serverAttachmentId && onDownload) {
+                void onDownload(target.serverAttachmentId);
+              }
             }}
-          />
-        ) : (
-          <p className="mdc-attachment-preview-modal__unsupported">
-            Pré-visualização inline não disponível para este tipo de arquivo. Use o botão Baixar
-            para abrir no seu computador.
-          </p>
-        )}
-      </div>
-    </ChatModal>
+          >
+            <Download size={15} aria-hidden="true" />
+            Baixar
+          </button>
+        ) : null
+      }
+    />
   );
 }

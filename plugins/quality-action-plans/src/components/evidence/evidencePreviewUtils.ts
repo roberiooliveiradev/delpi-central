@@ -41,7 +41,6 @@ export function canPreviewLocalFile(file: File): boolean {
   });
 }
 
-// Compat — reexport helpers usados em EvidencePreviewContent legado
 export function isImageEvidence(evidence: PlanEvidence): boolean {
   return resolveEvidencePreviewMode(evidence) === "image";
 }

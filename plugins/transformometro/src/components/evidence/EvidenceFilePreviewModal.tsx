@@ -1,11 +1,6 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 
-import {
-  FilePreviewView,
-  useFilePreviewLoader,
-} from "@delpi/plugin-ui";
-
-import { Modal } from "../ui/Modal";
+import { FilePreviewModal } from "@delpi/plugin-ui";
 
 type Props = {
   open: boolean;
@@ -14,6 +9,7 @@ type Props = {
   fetchObjectUrl: () => Promise<string>;
   onClose: () => void;
   onError?: (message: string) => void;
+  metaItems?: Array<string | null | undefined>;
 };
 
 export function isImageMime(mime: string | null | undefined): boolean {
@@ -31,6 +27,7 @@ export function EvidenceFilePreviewModal({
   fetchObjectUrl,
   onClose,
   onError,
+  metaItems,
 }: Props) {
   const source = useCallback(async () => {
     const objectUrl = await fetchObjectUrl();
@@ -42,35 +39,19 @@ export function EvidenceFilePreviewModal({
     }
   }, [fetchObjectUrl]);
 
-  const state = useFilePreviewLoader({
-    source,
-    mimeType: mime,
-    fileName: title,
-    enabled: open,
-  });
-
-  useEffect(() => {
-    if (!open || !state.error || state.error === "empty" || state.error === "unsupported") {
-      return;
-    }
-    onError?.(
-      state.error === "load_failed"
-        ? "Erro ao carregar pré-visualização do arquivo."
-        : state.error,
-    );
-  }, [open, onError, state.error]);
-
   return (
-    <Modal open={open} title={title} onClose={onClose} className="ds-modal--evidence-preview">
-      <div className="tm-evidence-preview-modal">
-        <FilePreviewView
-          state={state}
-          title={title}
-          labels={{
-            loadFailed: "Erro ao carregar pré-visualização do arquivo.",
-          }}
-        />
-      </div>
-    </Modal>
+    <FilePreviewModal
+      open={open}
+      title={title}
+      onClose={onClose}
+      source={source}
+      mimeType={mime}
+      fileName={title}
+      metaItems={metaItems}
+      labels={{
+        loadFailed: "Erro ao carregar pré-visualização do arquivo.",
+      }}
+      onLoadError={onError}
+    />
   );
 }

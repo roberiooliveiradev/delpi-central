@@ -1,6 +1,7 @@
-import { Modal } from "../ui/Modal";
+import { FilePreviewModal } from "@delpi/plugin-ui";
+
 import { formatEvidenceFileSize } from "./evidenceAttachmentUtils";
-import { EvidenceLocalPreviewContent } from "./EvidenceLocalPreviewContent";
+import { resolveLocalFilePreviewMode } from "./evidencePreviewUtils";
 
 type Props = {
   file: File | null;
@@ -9,22 +10,18 @@ type Props = {
 };
 
 export function EvidenceLocalPreviewModal({ file, open, onClose }: Props) {
+  const mode = file ? resolveLocalFilePreviewMode(file) : "none";
+
   return (
-    <Modal
+    <FilePreviewModal
       open={open}
       title={file?.name ?? "Pré-visualização"}
-      className="pac-modal--evidence-preview"
       onClose={onClose}
-    >
-      {file ? (
-        <div className="pac-evidence-preview-modal">
-          <EvidenceLocalPreviewContent file={file} />
-          <div className="pac-evidence-preview-modal__meta">
-            <span>{formatEvidenceFileSize(file.size)}</span>
-            <span>{file.type || "Tipo não informado"}</span>
-          </div>
-        </div>
-      ) : null}
-    </Modal>
+      source={file}
+      mimeType={file?.type}
+      fileName={file?.name}
+      enabled={mode !== "none"}
+      metaItems={file ? [formatEvidenceFileSize(file.size), file.type || "Tipo não informado"] : undefined}
+    />
   );
 }
