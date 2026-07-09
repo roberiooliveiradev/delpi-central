@@ -1,6 +1,6 @@
 import { useStore, useNodes } from "@xyflow/react";
 
-import { LANE_CANVAS_WIDTH, LANE_HEADER_WIDTH } from "../../utils/diagramSwimlanes";
+import { LANE_CANVAS_WIDTH } from "../../utils/diagramSwimlanes";
 
 type LaneBackdropData = {
   height?: number;
@@ -36,8 +36,8 @@ export function FlowchartSwimlaneBackdrop() {
                 .join(" ")}
               style={{
                 top: lane.position.y,
-                left: LANE_HEADER_WIDTH,
-                width: LANE_CANVAS_WIDTH - LANE_HEADER_WIDTH,
+                left: 0,
+                width: LANE_CANVAS_WIDTH,
                 height,
               }}
             />
