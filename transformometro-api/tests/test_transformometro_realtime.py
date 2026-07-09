@@ -20,3 +20,8 @@ def test_infer_section_key_diagram_and_decomposition():
 
 def test_infer_section_key_revisao_medicao():
     assert infer_section_key("medicao", "upsert") == "medicao"
+
+
+def test_infer_section_key_processo_arquivos():
+    assert infer_section_key("processo", "processo.arquivo.created") == "arquivos"
+    assert infer_section_key("processo", "processo.arquivo.deleted") == "arquivos"

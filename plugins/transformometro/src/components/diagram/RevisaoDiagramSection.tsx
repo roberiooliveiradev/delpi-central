@@ -32,6 +32,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   cenarioTipo?: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  resyncVersion?: number;
   onError: (message: string | null) => void;
   onReload?: () => void;
 };
@@ -42,6 +43,7 @@ export function RevisaoDiagramSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  resyncVersion = 0,
   onError,
   onReload,
 }: Props) {
@@ -76,6 +78,11 @@ export function RevisaoDiagramSection({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!resyncVersion) return;
+    void load();
+  }, [resyncVersion, load]);
 
   async function handleSave() {
     setSaving(true);

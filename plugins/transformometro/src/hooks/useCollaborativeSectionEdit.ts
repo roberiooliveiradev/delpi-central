@@ -10,8 +10,11 @@ import {
 } from "../data/api/transformometroCollaborationApi";
 import { useSectionEdit } from "./useSectionEdit";
 import { useTransformometroRealtime } from "./useTransformometroRealtime";
+import { COLLABORATION_SECTION_LABELS } from "../constants/collaborationSections";
+import type { TransformometroEntityUpdatedEvent } from "../constants/realtime";
 import { getUserIdFromToken } from "../utils/jwt";
 import { isMatchingPresencePayload } from "../utils/collaborationPresence";
+import { resolveCollaborativeEntityUpdate } from "../utils/collaborativeEntityUpdate";
 
 const POLL_FALLBACK_MS = 30_000;
 const RESYNC_FALLBACK_MS = 90_000;
@@ -73,27 +76,35 @@ export function useCollaborativeSectionEdit({
     [entityId, entityType]
   );
 
-  const handleEntityUpdated = useCallback(
-    (event: { actorUserId?: string | null; sectionKey?: string | null }) => {
-      const token = getAccessTokenRef.current?.();
-      const myUserId = getUserIdFromToken(token);
-      if (event.actorUserId && myUserId && event.actorUserId === myUserId) {
-        return;
-      }
+  const handleEntityUpdated = useCallback((event: TransformometroEntityUpdatedEvent) => {
+    const token = getAccessTokenRef.current?.();
+    const myUserId = getUserIdFromToken(token);
+    const updatedSectionKey = event.sectionKey ?? null;
+    const updatedSectionLabel = updatedSectionKey
+      ? COLLABORATION_SECTION_LABELS[updatedSectionKey] ?? updatedSectionKey
+      : null;
 
-      if (editingSectionRef.current) {
-        setRealtimeNotice(
-          "Outro usuário alterou dados desta entidade. Salve ou cancele a edição e recarregue para ver as mudanças."
-        );
-        return;
-      }
+    const decision = resolveCollaborativeEntityUpdate({
+      editingSectionKey: editingSectionRef.current,
+      updatedSectionKey,
+      updatedSectionLabel,
+      actorUserId: event.actorUserId,
+      myUserId,
+    });
 
-      setResyncVersion((value) => value + 1);
-      setRealtimeNotice("Dados atualizados por outro usuário.");
-      onResyncRef.current?.();
-    },
-    []
-  );
+    if (decision.kind === "ignore_own") {
+      return;
+    }
+
+    if (decision.kind === "block_editing_conflict") {
+      setRealtimeNotice(decision.notice);
+      return;
+    }
+
+    setResyncVersion((value) => value + 1);
+    setRealtimeNotice(decision.notice);
+    onResyncRef.current?.();
+  }, []);
 
   const {
     connected: wsConnected,
@@ -332,6 +343,7 @@ export function useCollaborativeSectionEdit({
       resyncVersion,
       realtimeNotice,
       clearRealtimeNotice: () => setRealtimeNotice(null),
+      handleRemoteEntityUpdate: handleEntityUpdated,
     }),
     [
       cancelEdit,
@@ -344,6 +356,7 @@ export function useCollaborativeSectionEdit({
       sectionEdit,
       startEdit,
       stopEdit,
+      handleEntityUpdated,
       wsConnected,
       wsConnectionError,
     ]

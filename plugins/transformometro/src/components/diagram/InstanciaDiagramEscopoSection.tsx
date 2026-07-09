@@ -21,6 +21,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   instanciaId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  resyncVersion?: number;
   onError: (message: string | null) => void;
 };
 
@@ -30,6 +31,7 @@ export function InstanciaDiagramEscopoSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  resyncVersion = 0,
   onError,
 }: Props) {
   const [loading, setLoading] = useState(true);
@@ -67,6 +69,11 @@ export function InstanciaDiagramEscopoSection({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!resyncVersion) return;
+    void load();
+  }, [resyncVersion, load]);
 
   function toggleScopeNode(nodeId: string) {
     if (readOnly) return;

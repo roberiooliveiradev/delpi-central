@@ -20,6 +20,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   instanciaId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  resyncVersion?: number;
   onError: (message: string | null) => void;
 };
 
@@ -29,6 +30,7 @@ export function InstanciaDecompositionEscopoSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  resyncVersion = 0,
   onError,
 }: Props) {
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,11 @@ export function InstanciaDecompositionEscopoSection({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!resyncVersion) return;
+    void load();
+  }, [resyncVersion, load]);
 
   const processosChave = tree.nodes.filter((n) => n.level === "processo_chave" && !n.disabled);
   const selected = new Set(

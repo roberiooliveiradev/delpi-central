@@ -12,6 +12,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
@@ -155,6 +156,13 @@ export function InstanciaDetailPage({
     getAccessToken,
     enabled: !embedded || embeddedActive,
     onResync: () => void load(),
+  });
+
+  useTransformometroEntityWatch({
+    entities: [{ entityType: "processo", entityId: processoId }],
+    getAccessToken,
+    enabled: (!embedded || embeddedActive) && Boolean(processoId),
+    onEntityUpdated: sectionEdit.handleRemoteEntityUpdate,
   });
 
   useEffect(() => {
@@ -422,6 +430,7 @@ export function InstanciaDetailPage({
             instanciaId={instanciaId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
         editContent={
@@ -431,6 +440,7 @@ export function InstanciaDetailPage({
             instanciaId={instanciaId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
       />
@@ -449,6 +459,7 @@ export function InstanciaDetailPage({
             instanciaId={instanciaId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
         editContent={
@@ -457,6 +468,7 @@ export function InstanciaDetailPage({
             instanciaId={instanciaId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
             onSaved={() => sectionEdit.stopEdit("instancia_contexto")}
           />
         }
@@ -477,6 +489,7 @@ export function InstanciaDetailPage({
             instanciaId={instanciaId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
         editContent={
@@ -486,6 +499,7 @@ export function InstanciaDetailPage({
             instanciaId={instanciaId}
             getAccessToken={getAccessToken}
             onError={setError}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
       />

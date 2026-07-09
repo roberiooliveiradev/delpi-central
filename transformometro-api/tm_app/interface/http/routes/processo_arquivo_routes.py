@@ -10,6 +10,7 @@ from tm_app.application.services.processo_arquivo_storage import (
     ProcessoArquivoStorage,
     ProcessoArquivoStorageError,
 )
+from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import row_to_json, rows_to_json
@@ -34,6 +35,23 @@ def _actor(request: Request) -> tuple[str | None, str | None]:
 
 def _ensure_processo(processo_id: str) -> dict | None:
     return ProcessoRepository().get(processo_id)
+
+
+def _notify_arquivo_change(
+    request: Request,
+    *,
+    processo_id: str,
+    action: str,
+    payload: dict,
+) -> None:
+    user_id, _, _ = actor_from_request(request)
+    notify_entity_updated(
+        entity_type="processo",
+        entity_id=processo_id,
+        action=action,
+        actor_user_id=user_id,
+        payload=payload,
+    )
 
 
 @router.get("/processos/{processo_id}/arquivos")
@@ -98,6 +116,12 @@ async def attach_processo_arquivo(
         logger.exception("attach_processo_arquivo failed")
         return fail(f"Falha ao gravar arquivo: {exc}", 500)
 
+    _notify_arquivo_change(
+        request,
+        processo_id=processo_id,
+        action="processo.arquivo.created",
+        payload={"arquivo_id": str(row.get("arquivo_id"))},
+    )
     return ok(row_to_json(row), "Arquivo anexado.", 201)
 
 
@@ -129,16 +153,23 @@ def update_processo_arquivo(
     processo_id: str,
     arquivo_id: str,
     body: ProcessoArquivoUpdateBody,
+    request: Request,
 ):
     repo = ProcessoArquivoRepository()
     row = repo.update(processo_id, arquivo_id, body.model_dump(exclude_unset=True))
     if not row:
         return fail("Arquivo não encontrado.", 404)
+    _notify_arquivo_change(
+        request,
+        processo_id=processo_id,
+        action="processo.arquivo.updated",
+        payload={"arquivo_id": arquivo_id},
+    )
     return ok(row_to_json(row), "Arquivo atualizado.")
 
 
 @router.delete("/processos/{processo_id}/arquivos/{arquivo_id}")
-def delete_processo_arquivo(processo_id: str, arquivo_id: str):
+def delete_processo_arquivo(processo_id: str, arquivo_id: str, request: Request):
     repo = ProcessoArquivoRepository()
     removed = repo.soft_delete(processo_id, arquivo_id)
     if not removed:
@@ -151,4 +182,10 @@ def delete_processo_arquivo(processo_id: str, arquivo_id: str):
             stored_name=str(stored_name),
         )
 
+    _notify_arquivo_change(
+        request,
+        processo_id=processo_id,
+        action="processo.arquivo.deleted",
+        payload={"arquivo_id": arquivo_id},
+    )
     return ok({"arquivo_id": arquivo_id, "deleted": True}, "Arquivo excluído.")

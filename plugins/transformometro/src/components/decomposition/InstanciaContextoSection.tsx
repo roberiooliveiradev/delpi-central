@@ -17,6 +17,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   instanciaId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  resyncVersion?: number;
   onError: (message: string | null) => void;
   onSaved?: () => void;
 };
@@ -26,6 +27,7 @@ export function InstanciaContextoSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  resyncVersion = 0,
   onError,
   onSaved,
 }: Props) {
@@ -49,6 +51,11 @@ export function InstanciaContextoSection({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!resyncVersion) return;
+    void load();
+  }, [resyncVersion, load]);
 
   async function handleSave() {
     setSaving(true);

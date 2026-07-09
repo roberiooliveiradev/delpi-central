@@ -26,6 +26,7 @@ type PendingUpload = PendingUploadItem;
 type Props = {
   processoId: string;
   getAccessToken?: () => string | undefined;
+  resyncVersion?: number;
   onError: (message: string | null) => void;
   onChanged?: () => void;
   readOnly?: boolean;
@@ -209,6 +210,7 @@ function ArquivoCard({
 export function ProcessoArquivoPanel({
   processoId,
   getAccessToken,
+  resyncVersion = 0,
   onError,
   onChanged,
   readOnly = false,
@@ -239,6 +241,11 @@ export function ProcessoArquivoPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!resyncVersion) return;
+    void load();
+  }, [resyncVersion, load]);
 
   function addFiles(files: File[]) {
     if (!files.length || uploading) return;

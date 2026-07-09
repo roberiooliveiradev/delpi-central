@@ -493,6 +493,7 @@ export function ProcessoDetailPage({
                 processoId={processoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
+                resyncVersion={sectionEdit.resyncVersion}
               />
             }
             editContent={
@@ -501,6 +502,7 @@ export function ProcessoDetailPage({
                 processoId={processoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
+                resyncVersion={sectionEdit.resyncVersion}
                 onChanged={() => void load()}
               />
             }

@@ -409,6 +409,7 @@ export function RevisaoCadastroPanel({
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
         editContent={
@@ -419,6 +420,7 @@ export function RevisaoCadastroPanel({
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
       />

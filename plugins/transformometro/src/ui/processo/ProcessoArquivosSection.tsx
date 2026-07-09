@@ -5,6 +5,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  resyncVersion?: number;
   onError: (message: string | null) => void;
   onChanged?: () => void;
 };
@@ -14,6 +15,7 @@ export function ProcessoArquivosSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  resyncVersion = 0,
   onError,
   onChanged,
 }: Props) {
@@ -23,6 +25,7 @@ export function ProcessoArquivosSection({
       getAccessToken={getAccessToken}
       readOnly={readOnly}
       hideHeader={embeddedInCard}
+      resyncVersion={resyncVersion}
       onError={onError}
       onChanged={onChanged}
     />
