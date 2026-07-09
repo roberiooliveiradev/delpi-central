@@ -30,6 +30,7 @@ import type {
 } from "../../../../data/api/chatTypes";
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
+import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 import { ChatIntelligenceSettingsPanel } from "../metrics-tab/ChatIntelligenceSettingsPanel";
 import { ChatResponseModeSettingsPanel } from "../metrics-tab/ChatResponseModeSettingsPanel";
 import { ChatVisionSettingsPanel } from "../metrics-tab/ChatVisionSettingsPanel";
@@ -383,23 +384,19 @@ export function AdminToolsTab({
           </div>
         ) : null}
 
-        <label className="mdc-admin-field mdc-admin-tools-tab__agent-select">
-          <span>Agente</span>
-          <select
-            value={selectedAgentId}
-            disabled={!canManageTools}
-            onChange={(event) => {
-              void loadAgentTools(event.target.value);
-            }}
-          >
-            <option value="">Selecione um agente</option>
-            {agents.map((agent) => (
-              <option key={agent.id} value={agent.id}>
-                {agent.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ChatAdminNativeSelectField
+          id="admin-tools-agent"
+          label="Agente"
+          span={false}
+          className="mdc-admin-tools-tab__agent-select"
+          value={selectedAgentId}
+          disabled={!canManageTools}
+          placeholderOption="Selecione um agente"
+          options={agents.map((agent) => ({ value: agent.id, label: agent.name }))}
+          onChange={(value) => {
+            void loadAgentTools(value);
+          }}
+        />
 
         {isLoadingAgentTools ? <p>Carregando tools do agente...</p> : null}
 
@@ -478,26 +475,22 @@ export function AdminToolsTab({
                 <p>Consulte os últimos testes registrados para uma action vinculada ao agente.</p>
               </div>
 
-              <label className="mdc-admin-field mdc-admin-tools-tab__agent-select">
-                <span>Action</span>
-                <select
-                  value={selectedAgentActionKey}
-                  disabled={!canManageTools || agentActions.length === 0}
-                  onChange={(event) => {
-                    void loadActionLogs(event.target.value);
-                  }}
-                >
-                  <option value="">Selecione uma action</option>
-                  {agentActions.map((action) => (
-                    <option
-                      key={`${action.providerKey}:${action.actionId}`}
-                      value={`${action.providerKey}::${action.actionId}`}
-                    >
-                      {action.providerKey} · {action.actionId}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <ChatAdminNativeSelectField
+                id="admin-tools-action-logs"
+                label="Action"
+                span={false}
+                className="mdc-admin-tools-tab__agent-select"
+                value={selectedAgentActionKey}
+                disabled={!canManageTools || agentActions.length === 0}
+                placeholderOption="Selecione uma action"
+                options={agentActions.map((action) => ({
+                  value: `${action.providerKey}::${action.actionId}`,
+                  label: `${action.providerKey} · ${action.actionId}`,
+                }))}
+                onChange={(value) => {
+                  void loadActionLogs(value);
+                }}
+              />
 
               {isLoadingActionLogs ? <p>Carregando logs...</p> : null}
 

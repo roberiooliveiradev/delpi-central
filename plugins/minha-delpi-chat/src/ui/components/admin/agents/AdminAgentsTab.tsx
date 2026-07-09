@@ -18,6 +18,7 @@ import type {
 } from "../../../../data/api/adminTypes";
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
+import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 import { AgentMiniDashboard } from "./AgentMiniDashboard";
 import { AgentsSummaryStrip } from "./AgentsSummaryStrip";
 import {
@@ -387,26 +388,23 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
               {form.enabled ? (
                 <>
-                  <label>
-                    <span>Preset de domínio</span>
-                    <select
-                      value={form.presetKey ?? ""}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setForm((current) => ({ ...current, presetKey: value }));
-                        if (value) {
-                          applyPreset(value);
-                        }
-                      }}
-                    >
-                      <option value="">Personalizado</option>
-                      {presets.map((preset) => (
-                        <option key={preset.key} value={preset.key}>
-                          {preset.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <ChatAdminNativeSelectField
+                    id="admin-agents-preset"
+                    label="Preset de domínio"
+                    span={false}
+                    value={form.presetKey ?? ""}
+                    placeholderOption="Personalizado"
+                    options={presets.map((preset) => ({
+                      value: preset.key,
+                      label: preset.label,
+                    }))}
+                    onChange={(value) => {
+                      setForm((current) => ({ ...current, presetKey: value }));
+                      if (value) {
+                        applyPreset(value);
+                      }
+                    }}
+                  />
 
                   <div className="mdc-admin-agents__grid">
                     <label>

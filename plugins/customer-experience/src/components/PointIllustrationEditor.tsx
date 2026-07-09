@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ImagePlus, Smile, X } from "lucide-react";
 import { LucideIconByName, LucideIconPicker } from "@delpi/plugin-ui";
 import { PhotoDropzone } from "./PhotoDropzone";
+import { CxNativeSelectField } from "./cxFormFields";
 import {
   BACKGROUND_FITS,
   POINT_IMAGE_FIT_LABELS,
@@ -79,20 +80,17 @@ export function PointIllustrationEditor({
             onClear={onClearImage}
           />
           {hasImage && (
-            <label className="cx-field">
-              <span>Exibição da ilustrativa</span>
-              <select
-                className="cx-select"
-                value={normalizeBackgroundFit(pointImageFit)}
-                onChange={(e) => onChangeFit(normalizeBackgroundFit(e.target.value))}
-              >
-                {BACKGROUND_FITS.map((fit) => (
-                  <option key={fit} value={fit}>
-                    {POINT_IMAGE_FIT_LABELS[fit]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <CxNativeSelectField
+              id="cx-point-image-fit"
+              label="Exibição da ilustrativa"
+              span={false}
+              value={normalizeBackgroundFit(pointImageFit)}
+              options={BACKGROUND_FITS.map((fit) => ({
+                value: fit,
+                label: POINT_IMAGE_FIT_LABELS[fit],
+              }))}
+              onChange={(value) => onChangeFit(normalizeBackgroundFit(value))}
+            />
           )}
         </>
       ) : (

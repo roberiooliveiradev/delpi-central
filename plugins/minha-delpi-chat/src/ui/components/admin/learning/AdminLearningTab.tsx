@@ -29,6 +29,10 @@ import type {
 } from "../../../../data/api/adminTypes";
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
+import {
+  ChatAdminNativeSelectField,
+  ChatAdminNativeTextAreaField,
+} from "../shared/chatAdminFormFields";
 import { ChatLearningPipelineSettingsPanel } from "./ChatLearningPipelineSettingsPanel";
 import { LearningSummaryStrip } from "./LearningSummaryStrip";
 
@@ -594,22 +598,20 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
       {view === "candidates" ? (
         <div className="mdc-admin-learning__layout mdc-admin-split">
           <aside className="mdc-admin-split__aside mdc-admin-panel">
-            <label className="mdc-admin-field">
-              <span>Status</span>
-              <select
-                value={statusFilter}
-                onChange={(event) => {
-                  setSelectedId(null);
-                  setStatusFilter(event.target.value);
-                }}
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option.value || "all"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ChatAdminNativeSelectField
+              id="admin-learning-candidate-status"
+              label="Status"
+              span={false}
+              value={statusFilter}
+              options={STATUS_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+              onChange={(value) => {
+                setSelectedId(null);
+                setStatusFilter(value);
+              }}
+            />
 
             <div className="mdc-admin-entity-list mdc-admin-learning__list">
               {candidates.length === 0 ? (
@@ -698,15 +700,15 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
                   />
                 </label>
 
-                <label className="mdc-admin-field">
-                  <span>Significado (opcional)</span>
-                  <textarea
-                    value={meaningOverride}
-                    rows={3}
-                    onChange={(event) => setMeaningOverride(event.target.value)}
-                    placeholder="para definições de termo"
-                  />
-                </label>
+                <ChatAdminNativeTextAreaField
+                  id="admin-learning-meaning-override"
+                  label="Significado (opcional)"
+                  span={false}
+                  rows={3}
+                  value={meaningOverride}
+                  placeholder="para definições de termo"
+                  onChange={setMeaningOverride}
+                />
 
                 <div className="mdc-admin-learning__actions">
                   <button
@@ -758,23 +760,27 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
                 placeholder="ex.: como voce se chama"
               />
             </label>
-            <label className="mdc-admin-field">
-              <span>Tipo</span>
-              <select value={newType} onChange={(event) => setNewType(event.target.value)}>
-                <option value="typo">Typo</option>
-                <option value="abbreviation">Abreviação</option>
-                <option value="phrase">Expressão</option>
-                <option value="term_definition">Definição de termo</option>
-              </select>
-            </label>
-            <label className="mdc-admin-field">
-              <span>Significado (opcional)</span>
-              <textarea
-                value={newMeaning}
-                rows={2}
-                onChange={(event) => setNewMeaning(event.target.value)}
-              />
-            </label>
+            <ChatAdminNativeSelectField
+              id="admin-learning-new-term-type"
+              label="Tipo"
+              span={false}
+              value={newType}
+              options={[
+                { value: "typo", label: "Typo" },
+                { value: "abbreviation", label: "Abreviação" },
+                { value: "phrase", label: "Expressão" },
+                { value: "term_definition", label: "Definição de termo" },
+              ]}
+              onChange={setNewType}
+            />
+            <ChatAdminNativeTextAreaField
+              id="admin-learning-new-term-meaning"
+              label="Significado (opcional)"
+              span={false}
+              rows={2}
+              value={newMeaning}
+              onChange={setNewMeaning}
+            />
             <button
               type="button"
               className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
@@ -815,19 +821,17 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
         <div className="mdc-admin-learning__layout">
           <div className="mdc-admin-panel">
             <div className="mdc-admin-learning__memory-toolbar">
-              <label className="mdc-admin-field">
-                <span>Status</span>
-                <select
-                  value={memoryStatusFilter}
-                  onChange={(event) => setMemoryStatusFilter(event.target.value)}
-                >
-                  {MEMORY_STATUS_OPTIONS.map((option) => (
-                    <option key={option.value || "all"} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <ChatAdminNativeSelectField
+                id="admin-learning-memory-status"
+                label="Status"
+                span={false}
+                value={memoryStatusFilter}
+                options={MEMORY_STATUS_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                onChange={setMemoryStatusFilter}
+              />
               <p className="mdc-chat-muted">
                 Preferências e perfil duráveis aprendidos por usuário/projeto. Esquecer
                 desativa o item imediatamente.
@@ -980,14 +984,14 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
                 placeholder="ex.: chat-v1-mar-2026"
               />
             </label>
-            <label className="mdc-admin-field">
-              <span>Descrição</span>
-              <textarea
-                value={ftDatasetDescription}
-                rows={2}
-                onChange={(event) => setFtDatasetDescription(event.target.value)}
-              />
-            </label>
+            <ChatAdminNativeTextAreaField
+              id="admin-learning-ft-dataset-description"
+              label="Descrição"
+              span={false}
+              rows={2}
+              value={ftDatasetDescription}
+              onChange={setFtDatasetDescription}
+            />
             <button
               type="button"
               className="mdc-chat-ws-outline-btn"
@@ -997,37 +1001,32 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
               Criar dataset
             </button>
 
-            <label className="mdc-admin-field">
-              <span>Dataset para aprovar amostras</span>
-              <select
-                value={ftSelectedDatasetId ?? ""}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setFtSelectedDatasetId(value ? Number(value) : null);
-                }}
-              >
-                <option value="">— selecione —</option>
-                {ftDatasets.map((dataset) => (
-                  <option key={dataset.id} value={dataset.id}>
-                    {dataset.name} ({dataset.status})
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ChatAdminNativeSelectField
+              id="admin-learning-ft-dataset"
+              label="Dataset para aprovar amostras"
+              span={false}
+              value={ftSelectedDatasetId != null ? String(ftSelectedDatasetId) : ""}
+              placeholderOption="— selecione —"
+              options={ftDatasets.map((dataset) => ({
+                value: String(dataset.id),
+                label: `${dataset.name} (${dataset.status})`,
+              }))}
+              onChange={(value) => {
+                setFtSelectedDatasetId(value ? Number(value) : null);
+              }}
+            />
 
-            <label className="mdc-admin-field">
-              <span>Status das amostras</span>
-              <select
-                value={ftSampleStatusFilter}
-                onChange={(event) => setFtSampleStatusFilter(event.target.value)}
-              >
-                {FT_SAMPLE_STATUS_OPTIONS.map((option) => (
-                  <option key={option.value || "all"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ChatAdminNativeSelectField
+              id="admin-learning-ft-sample-status"
+              label="Status das amostras"
+              span={false}
+              value={ftSampleStatusFilter}
+              options={FT_SAMPLE_STATUS_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+              onChange={setFtSampleStatusFilter}
+            />
           </aside>
 
           <article className="mdc-admin-split__main mdc-admin-panel">

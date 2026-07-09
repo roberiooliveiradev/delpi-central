@@ -60,6 +60,7 @@ import { AdminSessionMemoryMetrics } from "./AdminSessionMemoryMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
+import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 
 import "./AdminMetricsTab.css";
 
@@ -622,17 +623,19 @@ export function AdminMetricsTab({
         actions={
           <div className="mdc-admin-metrics-tab__header-actions">
             {onMetricsHoursChange ? (
-              <label className="mdc-admin-field mdc-admin-metrics-tab__window">
-                <span>Janela</span>
-                <select
-                  value={metricsHours}
-                  onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
-                >
-                  <option value={24}>24 horas</option>
-                  <option value={168}>7 dias</option>
-                  <option value={720}>30 dias</option>
-                </select>
-              </label>
+              <ChatAdminNativeSelectField
+                id="admin-metrics-window"
+                label="Janela"
+                span={false}
+                className="mdc-admin-metrics-tab__window"
+                value={String(metricsHours)}
+                options={[
+                  { value: "24", label: "24 horas" },
+                  { value: "168", label: "7 dias" },
+                  { value: "720", label: "30 dias" },
+                ]}
+                onChange={(value) => onMetricsHoursChange(Number(value))}
+              />
             ) : null}
 
             {onRefresh ? (

@@ -11,6 +11,9 @@ import type {
   AdminGuidelineVersionComparison,
 } from "../../../../data/api/adminTypes";
 import { useConfirmDialog } from "../../shared";
+import {
+  ChatAdminNativeSelectField,
+} from "../shared/chatAdminFormFields";
 
 import "./GuidelineVersionPanel.css";
 
@@ -135,57 +138,51 @@ export function GuidelineVersionPanel({
         Consulte versões, compare mudanças e restaure versões anteriores como novo rascunho.
       </p>
 
-      <label>
-        <span>Diretriz</span>
-        <select
-          value={selectedGuidelineId}
-          onChange={(event) => {
-            void handleLoadVersions(event.target.value);
-          }}
-        >
-          <option value="">Selecione uma diretriz</option>
-          {guidelines.map((guideline) => (
-            <option key={guideline.id} value={guideline.id}>
-              {guideline.title}
-            </option>
-          ))}
-        </select>
-      </label>
+      <ChatAdminNativeSelectField
+        id="guideline-version-guideline"
+        label="Diretriz"
+        span={false}
+        value={selectedGuidelineId}
+        placeholderOption="Selecione uma diretriz"
+        options={guidelines.map((guideline) => ({
+          value: guideline.id,
+          label: guideline.title,
+        }))}
+        onChange={(value) => {
+          void handleLoadVersions(value);
+        }}
+      />
 
       {versions.length >= 2 ? (
         <section className="mdc-guideline-version-panel__compare">
           <h3>Comparar versões</h3>
 
           <div>
-            <label>
-              <span>De</span>
-              <select
-                value={fromVersion}
-                onChange={(event) => setFromVersion(event.target.value)}
-              >
-                <option value="">Versão</option>
-                {versions.map((version) => (
-                  <option key={version.id} value={version.version}>
-                    v{version.version}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ChatAdminNativeSelectField
+              id="guideline-version-from"
+              label="De"
+              span={false}
+              value={fromVersion}
+              placeholderOption="Versão"
+              options={versions.map((version) => ({
+                value: String(version.version),
+                label: `v${version.version}`,
+              }))}
+              onChange={setFromVersion}
+            />
 
-            <label>
-              <span>Para</span>
-              <select
-                value={toVersion}
-                onChange={(event) => setToVersion(event.target.value)}
-              >
-                <option value="">Versão</option>
-                {versions.map((version) => (
-                  <option key={version.id} value={version.version}>
-                    v{version.version}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ChatAdminNativeSelectField
+              id="guideline-version-to"
+              label="Para"
+              span={false}
+              value={toVersion}
+              placeholderOption="Versão"
+              options={versions.map((version) => ({
+                value: String(version.version),
+                label: `v${version.version}`,
+              }))}
+              onChange={setToVersion}
+            />
 
             <button
               type="button"

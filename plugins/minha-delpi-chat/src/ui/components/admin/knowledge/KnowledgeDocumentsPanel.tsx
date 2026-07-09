@@ -1,4 +1,5 @@
 import { KnowledgeDocumentCard } from "./KnowledgeDocumentCard";
+import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 import type {
   DocumentStatusFilter,
   KnowledgeBackendPlaceholders,
@@ -17,12 +18,14 @@ type KnowledgeDocumentsPanelProps = KnowledgeDocumentsState &
   };
 
 function FacetSelect({
+  id,
   label,
   value,
   options,
   disabled,
   onChange,
 }: {
+  id: string;
   label: string;
   value: string;
   options: string[];
@@ -30,17 +33,16 @@ function FacetSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="mdc-admin-field">
-      <span>{label}</span>
-      <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Todos</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ChatAdminNativeSelectField
+      id={id}
+      label={label}
+      span={false}
+      value={value}
+      disabled={disabled}
+      placeholderOption="Todos"
+      options={options.map((option) => ({ value: option, label: option }))}
+      onChange={onChange}
+    />
   );
 }
 
@@ -102,21 +104,21 @@ export function KnowledgeDocumentsPanel({
         </label>
 
         <div className="mdc-admin-filter-bar__row">
-          <label className="mdc-admin-field">
-            <span>Status</span>
-            <select
-              value={documentStatus}
-              onChange={(event) =>
-                setDocumentStatus(event.target.value as DocumentStatusFilter)
-              }
-            >
-              <option value="all">Todos</option>
-              <option value="active">Ativos</option>
-              <option value="inactive">Inativos</option>
-            </select>
-          </label>
+          <ChatAdminNativeSelectField
+            id="knowledge-documents-status"
+            label="Status"
+            span={false}
+            value={documentStatus}
+            options={[
+              { value: "all", label: "Todos" },
+              { value: "active", label: "Ativos" },
+              { value: "inactive", label: "Inativos" },
+            ]}
+            onChange={(value) => setDocumentStatus(value as DocumentStatusFilter)}
+          />
 
           <FacetSelect
+            id="knowledge-documents-category"
             label="Categoria"
             value={documentCategory}
             options={documentFacets.categories}
@@ -125,6 +127,7 @@ export function KnowledgeDocumentsPanel({
           />
 
           <FacetSelect
+            id="knowledge-documents-namespace"
             label="Namespace"
             value={documentNamespace}
             options={documentFacets.namespaces}
@@ -133,6 +136,7 @@ export function KnowledgeDocumentsPanel({
           />
 
           <FacetSelect
+            id="knowledge-documents-domain"
             label="Domínio"
             value={documentDomain}
             options={documentFacets.domains}
@@ -141,6 +145,7 @@ export function KnowledgeDocumentsPanel({
           />
 
           <FacetSelect
+            id="knowledge-documents-tag"
             label="Tag"
             value={documentTag}
             options={documentFacets.tags}
@@ -149,6 +154,7 @@ export function KnowledgeDocumentsPanel({
           />
 
           <FacetSelect
+            id="knowledge-documents-source-type"
             label="Tipo de fonte"
             value={documentSourceType}
             options={documentFacets.sourceTypes}

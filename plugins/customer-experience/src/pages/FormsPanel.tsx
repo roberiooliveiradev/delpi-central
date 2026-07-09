@@ -41,6 +41,12 @@ import {
 } from "../api/formsApi";
 import { PhotoDropzone } from "../components/PhotoDropzone";
 import { PointIllustrationEditor } from "../components/PointIllustrationEditor";
+import {
+  CxNativeSelectField,
+  CxNativeTextAreaField,
+  CxNativeTextField,
+} from "../components/cxFormFields";
+import { CxInlineSelect } from "../components/cxSelectUi";
 import { FormPreviewModal } from "../components/FormPreviewModal";
 import type {
   BackgroundFit,
@@ -879,14 +885,21 @@ function FormEditor({
       )}
 
       <section className="cx-card">
-        <label className="cx-field">
-          <span>Título do formulário</span>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-        </label>
-        <label className="cx-field">
-          <span>Descrição (opcional)</span>
-          <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </label>
+        <CxNativeTextField
+          id="cx-form-title"
+          label="Título do formulário"
+          span={false}
+          value={title}
+          onChange={setTitle}
+        />
+        <CxNativeTextAreaField
+          id="cx-form-description"
+          label="Descrição (opcional)"
+          span={false}
+          rows={2}
+          value={description}
+          onChange={setDescription}
+        />
         <label className="cx-check">
           <input
             type="checkbox"
@@ -911,23 +924,22 @@ function FormEditor({
           />
         </div>
         {(backgroundPreview || form.backgroundImageUrl) && (
-          <label className="cx-field">
-            <span>Exibição do fundo</span>
-            <select
-              className="cx-select"
-              value={backgroundFit}
-              onChange={(e) => setBackgroundFit(normalizeBackgroundFit(e.target.value))}
-            >
-              {BACKGROUND_FITS.map((fit) => (
-                <option key={fit} value={fit}>
-                  {BACKGROUND_FIT_LABELS[fit]}
-                </option>
-              ))}
-            </select>
-            <span className="cx-field-hint">
-              Fixo mantém o tamanho original; escalável preenche a tela; repetir monta um mosaico.
-            </span>
-          </label>
+          <CxNativeSelectField
+            id="cx-form-background-fit"
+            label="Exibição do fundo"
+            span={false}
+            value={backgroundFit}
+            options={BACKGROUND_FITS.map((fit) => ({
+              value: fit,
+              label: BACKGROUND_FIT_LABELS[fit],
+            }))}
+            onChange={(value) => setBackgroundFit(normalizeBackgroundFit(value))}
+            afterControl={
+              <span className="cx-field-hint">
+                Fixo mantém o tamanho original; escalável preenche a tela; repetir monta um mosaico.
+              </span>
+            }
+          />
         )}
       </section>
 
@@ -1022,17 +1034,15 @@ function FormEditor({
               <span className="cx-question__num">
                 {oneQuestionPerPage ? `Etapa ${index + 1}` : index + 1}
               </span>
-              <select
-                className="cx-select"
+              <CxInlineSelect
                 value={q.type}
-                onChange={(e) => changeType(index, e.target.value as QuestionType)}
-              >
-                {(Object.keys(TYPE_LABELS) as QuestionType[]).map((t) => (
-                  <option key={t} value={t}>
-                    {TYPE_LABELS[t]}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => changeType(index, value as QuestionType)}
+                options={(Object.keys(TYPE_LABELS) as QuestionType[]).map((t) => ({
+                  value: t,
+                  label: TYPE_LABELS[t],
+                }))}
+                aria-label="Tipo da pergunta"
+              />
               <div className="cx-question__move">
                 <button
                   className="cx-icon-btn"
@@ -1074,27 +1084,20 @@ function FormEditor({
             )}
 
             {!oneQuestionPerPage && pages.length > 0 && (
-              <label className="cx-field">
-                <span>Página</span>
-                <select
-                  className="cx-select"
-                  value={resolvePageIndex(q) >= 0 ? String(resolvePageIndex(q)) : ""}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    setQuestionPageIndex(
-                      index,
-                      raw === "" ? null : Number(raw),
-                    );
-                  }}
-                >
-                  <option value="">Sem página (formulário contínuo)</option>
-                  {pages.map((p, pi) => (
-                    <option key={p.id ?? pi} value={String(pi)}>
-                      {p.title || `Página ${pi + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <CxNativeSelectField
+                id={`cx-question-page-${index}`}
+                label="Página"
+                span={false}
+                value={resolvePageIndex(q) >= 0 ? String(resolvePageIndex(q)) : ""}
+                placeholderOption="Sem página (formulário contínuo)"
+                options={pages.map((p, pi) => ({
+                  value: String(pi),
+                  label: p.title || `Página ${pi + 1}`,
+                }))}
+                onChange={(value) => {
+                  setQuestionPageIndex(index, value === "" ? null : Number(value));
+                }}
+              />
             )}
 
             <label className="cx-field">

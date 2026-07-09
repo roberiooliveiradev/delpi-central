@@ -88,6 +88,10 @@ import {
 } from "../components/workspace/WorkspaceSourceNote";
 import { AgentMiniDashboard } from "../components/admin/agents/AgentMiniDashboard";
 import "../components/admin/agents/AgentMiniDashboard.css";
+import {
+  ChatAdminNativeSelectField,
+  ChatAdminNativeTextAreaField,
+} from "../components/admin/shared/chatAdminFormFields";
 
 import "./ChatAgentBuilderPage.css";
 
@@ -1591,16 +1595,16 @@ export function ChatAgentBuilderPage({
           </header>
 
           <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__section--flat">
-            <label className="mdc-chat-ws-field">
-              <span>Descrição</span>
-              <textarea
-                value={description}
-                rows={2}
-                maxLength={900}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Explique quando este agente deve ser usado..."
-              />
-            </label>
+            <ChatAdminNativeTextAreaField
+              id="agent-builder-description"
+              label="Descrição"
+              span={false}
+              rows={2}
+              maxLength={900}
+              value={description}
+              placeholder="Explique quando este agente deve ser usado..."
+              onChange={setDescription}
+            />
           </section>
 
           <section
@@ -1610,23 +1614,26 @@ export function ChatAgentBuilderPage({
             <h2 className="mdc-chat-ws-section-head">Visibilidade</h2>
 
             <div className="mdc-chat-agent-builder__grid">
-              <label className="mdc-chat-ws-field">
-                <span>Visibilidade</span>
-                <select
-                  value={visibility}
-                  onChange={(event) => setVisibility(event.target.value)}
-                >
-                  <option value="private">Privado</option>
-                  <option value="public">Público interno</option>
-                  {canManageOfficialAgents ? (
-                    <option value="system">Oficial</option>
-                  ) : null}
-                </select>
-                <small>
-                  Privado: só quem tem acesso. Público interno: visível na lista para a
-                  empresa. Oficial: agente corporativo padrão (requer permissão).
-                </small>
-              </label>
+              <ChatAdminNativeSelectField
+                id="agent-builder-visibility"
+                label="Visibilidade"
+                span={false}
+                value={visibility}
+                options={[
+                  { value: "private", label: "Privado" },
+                  { value: "public", label: "Público interno" },
+                  ...(canManageOfficialAgents
+                    ? [{ value: "system", label: "Oficial" }]
+                    : []),
+                ]}
+                onChange={setVisibility}
+                afterControl={
+                  <small>
+                    Privado: só quem tem acesso. Público interno: visível na lista para a
+                    empresa. Oficial: agente corporativo padrão (requer permissão).
+                  </small>
+                }
+              />
             </div>
 
             {isEditing && agentUsagePath ? (
@@ -1697,12 +1704,18 @@ export function ChatAgentBuilderPage({
             <h2 className="mdc-chat-ws-section-head">Instruções</h2>
 
             <div className="mdc-chat-agent-builder__prompt-templates">
-              <label className="mdc-chat-ws-field">
-                <span>Modelo de instruções</span>
-                <select
-                  value={selectedPromptTemplateKey}
-                  onChange={async (event) => {
-                    const templateKey = event.target.value;
+              <ChatAdminNativeSelectField
+                id="agent-builder-prompt-template"
+                label="Modelo de instruções"
+                span={false}
+                value={selectedPromptTemplateKey}
+                placeholderOption="Selecione um modelo (opcional)"
+                options={AGENT_SYSTEM_PROMPT_TEMPLATES.map((template) => ({
+                  value: template.key,
+                  label: template.label,
+                }))}
+                onChange={(templateKey) => {
+                  void (async () => {
                     setSelectedPromptTemplateKey(templateKey);
 
                     if (!templateKey) {
@@ -1732,52 +1745,50 @@ export function ChatAgentBuilderPage({
 
                     setSystemPrompt(template.prompt);
                     setResponseStyle(template.suggestedResponseStyle);
-                  }}
-                >
-                  <option value="">Selecione um modelo (opcional)</option>
-                  {AGENT_SYSTEM_PROMPT_TEMPLATES.map((template) => (
-                    <option key={template.key} value={template.key}>
-                      {template.label}
-                    </option>
-                  ))}
-                </select>
-                <small>
-                  {selectedPromptTemplateKey
-                    ? getAgentSystemPromptTemplate(selectedPromptTemplateKey)
-                        ?.description
-                    : "Modelos prontos para agentes operacionais, documentais ou híbridos (Onda 7)."}
-                </small>
-              </label>
+                  })();
+                }}
+                afterControl={
+                  <small>
+                    {selectedPromptTemplateKey
+                      ? getAgentSystemPromptTemplate(selectedPromptTemplateKey)
+                          ?.description
+                      : "Modelos prontos para agentes operacionais, documentais ou híbridos (Onda 7)."}
+                  </small>
+                }
+              />
             </div>
 
-            <label className="mdc-chat-ws-field">
-              <span>Instruções do agente</span>
-              <textarea
-                className="mdc-chat-agent-builder__prompt"
-                value={systemPrompt}
-                maxLength={12000}
-                onChange={(event) => setSystemPrompt(event.target.value)}
-                placeholder="Defina comportamento, tom, limites, regras e ações permitidas..."
-              />
-              <small>
-                {isLoadingAgent
-                  ? "Carregando instruções salvas..."
-                  : "Instruções usadas pelo modelo em cada conversa com este agente."}
-              </small>
-            </label>
+            <ChatAdminNativeTextAreaField
+              id="agent-builder-system-prompt"
+              label="Instruções do agente"
+              controlClassName="mdc-chat-agent-builder__prompt"
+              maxLength={12000}
+              value={systemPrompt}
+              placeholder="Defina comportamento, tom, limites, regras e ações permitidas..."
+              onChange={setSystemPrompt}
+              afterControl={
+                <small>
+                  {isLoadingAgent
+                    ? "Carregando instruções salvas..."
+                    : "Instruções usadas pelo modelo em cada conversa com este agente."}
+                </small>
+              }
+            />
 
-            <label className="mdc-chat-ws-field mdc-chat-agent-builder__field--compact">
-              <span>Estilo de resposta</span>
-              <select
-                value={responseStyle}
-                onChange={(event) => setResponseStyle(event.target.value)}
-              >
-                <option value="objetivo">Objetivo</option>
-                <option value="tecnico">Técnico</option>
-                <option value="executivo">Executivo</option>
-                <option value="detalhado">Detalhado</option>
-              </select>
-            </label>
+            <ChatAdminNativeSelectField
+              id="agent-builder-response-style"
+              label="Estilo de resposta"
+              span={false}
+              className="mdc-chat-ws-field mdc-chat-agent-builder__field--compact"
+              value={responseStyle}
+              options={[
+                { value: "objetivo", label: "Objetivo" },
+                { value: "tecnico", label: "Técnico" },
+                { value: "executivo", label: "Executivo" },
+                { value: "detalhado", label: "Detalhado" },
+              ]}
+              onChange={setResponseStyle}
+            />
           </section>
 
           <section className="mdc-chat-agent-builder__section">
@@ -2100,18 +2111,19 @@ export function ChatAgentBuilderPage({
                   disabled={isSharing}
                 />
 
-                <label>
-                  <span>Papel</span>
-                  <select
-                    value={shareRole}
-                    onChange={(event) =>
-                      setShareRole(event.target.value as "viewer" | "editor")
-                    }
-                  >
-                    <option value="viewer">Visualizador</option>
-                    <option value="editor">Editor</option>
-                  </select>
-                </label>
+                <ChatAdminNativeSelectField
+                  id="agent-builder-share-role"
+                  label="Papel"
+                  span={false}
+                  value={shareRole}
+                  options={[
+                    { value: "viewer", label: "Visualizador" },
+                    { value: "editor", label: "Editor" },
+                  ]}
+                  onChange={(value) =>
+                    setShareRole(value as "viewer" | "editor")
+                  }
+                />
               </div>
 
               <button
@@ -2142,20 +2154,23 @@ export function ChatAgentBuilderPage({
                           <small>{share.target_user_email}</small>
                         ) : null}
                       </span>
-                      <select
+                      <ChatAdminNativeSelectField
+                        id={`agent-builder-share-role-${share.target_user_id}`}
+                        label="Papel do compartilhamento"
+                        span={false}
                         value={share.role}
                         disabled={updatingShareUserId === share.target_user_id}
-                        onChange={(event) =>
+                        options={[
+                          { value: "viewer", label: "Visualizador" },
+                          { value: "editor", label: "Editor" },
+                        ]}
+                        onChange={(value) =>
                           void updateAgentShareRole(
                             share.target_user_id,
-                            event.target.value as "viewer" | "editor",
+                            value as "viewer" | "editor",
                           )
                         }
-                        aria-label="Papel do compartilhamento"
-                      >
-                        <option value="viewer">Visualizador</option>
-                        <option value="editor">Editor</option>
-                      </select>
+                      />
                       <button
                         type="button"
                         disabled={revokingShareUserId === share.target_user_id}

@@ -3,6 +3,7 @@ import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { toMonthInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
+import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
 
 const R = TM_HELP_TOOLTIPS.revisao;
 
@@ -189,19 +190,20 @@ export function RevisaoMedicaoSection({
           />
         </label>
       </div>
-      <label className="ds-filter-box ds-filter-box--wide">
-        <FieldLabel className="tm-field__label" label="Observações" hint={R.medicaoObservacoes} />
-        <textarea
-          rows={2}
-          value={medicao.observacoes ?? ""}
-          onChange={(e) =>
-            onChange({
-              ...medicao,
-              observacoes: e.target.value.trim() || undefined,
-            })
-          }
-        />
-      </label>
+      <TmNativeTextAreaField
+        id="revisao-medicao-observacoes"
+        label="Observações"
+        hint={R.medicaoObservacoes}
+        span
+        rows={2}
+        value={medicao.observacoes ?? ""}
+        onChange={(value) =>
+          onChange({
+            ...medicao,
+            observacoes: value.trim() || undefined,
+          })
+        }
+      />
       {hideSubmit ? null : (
         <button type="submit" className="ds-primary-btn">
           Salvar medição

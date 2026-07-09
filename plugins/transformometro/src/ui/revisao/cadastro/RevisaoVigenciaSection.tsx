@@ -7,6 +7,7 @@ import { revisaoDisplayLabel } from "../../../utils/revisaoLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
+import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
 
 const R = TM_HELP_TOOLTIPS.revisao;
 
@@ -222,14 +223,16 @@ export function RevisaoVigenciaSection({
             placeholder="Ex.: Nova ferramenta / mudança de escopo"
           />
         </label>
-        <label className="ds-filter-box ds-filter-box--wide">
-          <FieldLabel className="tm-field__label" label="Observações" hint={R.observacoes} />
-          <textarea
-            rows={2}
-            value={revisaoVigencia.observacoes}
-            onChange={(e) => onChange({ ...revisaoVigencia, observacoes: e.target.value })}
-          />
-        </label>
+        <TmNativeTextAreaField
+          id="revisao-vigencia-observacoes"
+          label="Observações"
+          hint={R.observacoes}
+          span
+          rows={2}
+          value={revisaoVigencia.observacoes}
+          placeholder="Contexto adicional da revisão"
+          onChange={(value) => onChange({ ...revisaoVigencia, observacoes: value })}
+        />
         {hideSubmit ? null : (
           <button type="submit" className="ds-primary-btn">
             Salvar vigência e identificação

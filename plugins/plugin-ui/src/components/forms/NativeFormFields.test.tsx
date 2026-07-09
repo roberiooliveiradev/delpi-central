@@ -73,6 +73,23 @@ describe("NativeTextField", () => {
     expect(container.querySelector(".dm-field__error")?.textContent).toBe("Obrigatório");
   });
 
+  it("renderiza beforeControl dentro do controlWrapper", () => {
+    const { container } = render(
+      <NativeTextField
+        id="a5s-responsible"
+        label="Responsável"
+        value=""
+        onChange={() => undefined}
+        beforeControl={<span className="a5s-nc-input-wrap__icon">icon</span>}
+        controlWrapperClassName="a5s-nc-input-wrap"
+        classNames={formFieldShellKaizenClasses("a5s")}
+      />,
+    );
+
+    expect(container.querySelector(".a5s-nc-input-wrap")).toBeTruthy();
+    expect(container.querySelector(".a5s-nc-input-wrap__icon")).toBeTruthy();
+  });
+
   it("respeita readOnly e onBlur", () => {
     let blurred = false;
     render(

@@ -1767,9 +1767,24 @@
   color: var(--a5s-title);
 }
 
+.a5s-nc-item__fields .a5s-field {
+  display: grid;
+  gap: 6px;
+}
+
+.a5s-nc-item__fields .a5s-field__label,
+.a5s-nc-item__fields .a5s-field > label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--a5s-title);
+}
+
 .a5s-nc-item__fields textarea,
 .a5s-nc-item__fields input,
-.a5s-nc-item__fields select {
+.a5s-nc-item__fields select,
+.a5s-nc-item__fields .a5s-field > textarea,
+.a5s-nc-item__fields .a5s-field > input,
+.a5s-nc-item__fields .a5s-field > select {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--a5s-border);

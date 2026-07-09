@@ -46,6 +46,10 @@ import type {
 import { useConfirmDialog } from "../components/shared";
 import { ChatResourceUsageLink } from "../components/shared/ChatResourceUsageLink";
 import { AgentBuilderSwitch } from "../components/workspace/agentBuilder";
+import {
+  ChatAdminNativeSelectField,
+  ChatAdminNativeTextAreaField,
+} from "../components/admin/shared/chatAdminFormFields";
 import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
@@ -941,15 +945,14 @@ export function ChatAgentActionsPage({
                   </label>
                 </div>
 
-                <label className="mdc-chat-ws-field">
-                  <span>Schema OpenAPI JSON</span>
-                  <textarea
-                    value={newProviderSchema}
-                    onChange={(event) => setNewProviderSchema(event.target.value)}
-                    placeholder='{"openapi":"3.1.0","info":{"title":"Minha API","version":"1.0.0"},"paths":{}}'
-                    rows={12}
-                  />
-                </label>
+                <ChatAdminNativeTextAreaField
+                  id="agent-actions-new-provider-schema"
+                  label="Schema OpenAPI JSON"
+                  rows={12}
+                  value={newProviderSchema}
+                  placeholder='{"openapi":"3.1.0","info":{"title":"Minha API","version":"1.0.0"},"paths":{}}'
+                  onChange={setNewProviderSchema}
+                />
 
                 <div className="mdc-chat-agent-actions-page__actions-row">
                   <button
@@ -1130,22 +1133,23 @@ export function ChatAgentActionsPage({
                         />
                       </label>
 
-                      <label className="mdc-chat-ws-field">
-                        <span>Formato</span>
-                        <select
-                          value={authConfig.scheme}
-                          onChange={(event) =>
-                            setAuthConfig((current) => ({
-                              ...current,
-                              scheme: event.target.value as AuthConfigForm["scheme"],
-                            }))
-                          }
-                        >
-                          <option value="bearer">Bearer</option>
-                          <option value="basic">Basic</option>
-                          <option value="custom">Personalizado</option>
-                        </select>
-                      </label>
+                      <ChatAdminNativeSelectField
+                        id="agent-actions-auth-scheme"
+                        label="Formato"
+                        span={false}
+                        value={authConfig.scheme}
+                        options={[
+                          { value: "bearer", label: "Bearer" },
+                          { value: "basic", label: "Basic" },
+                          { value: "custom", label: "Personalizado" },
+                        ]}
+                        onChange={(value) =>
+                          setAuthConfig((current) => ({
+                            ...current,
+                            scheme: value as AuthConfigForm["scheme"],
+                          }))
+                        }
+                      />
                     </div>
                   ) : null}
 
@@ -1235,16 +1239,15 @@ export function ChatAgentActionsPage({
                 </div>
 
                 <div className="mdc-chat-agent-actions-page__fields">
-                  <label className="mdc-chat-ws-field">
-                    <span>Schema OpenAPI JSON</span>
-                    <textarea
-                      value={providerSchemaText}
-                      onChange={(event) => setProviderSchemaText(event.target.value)}
-                      placeholder="Nenhum schema importado ainda."
-                      rows={14}
-                      readOnly
-                    />
-                  </label>
+                  <ChatAdminNativeTextAreaField
+                    id="agent-actions-provider-schema"
+                    label="Schema OpenAPI JSON"
+                    rows={14}
+                    readOnly
+                    value={providerSchemaText}
+                    placeholder="Nenhum schema importado ainda."
+                    onChange={setProviderSchemaText}
+                  />
 
                   <div className="mdc-chat-agent-actions-page__actions-row">
                     <button

@@ -1,4 +1,5 @@
 import { CalendarDays, CheckCircle2, ChevronDown, UserRound } from "lucide-react";
+import { useId } from "react";
 
 import type { NcAttachmentMap, NcAttachmentType } from "../api/audit5sApi";
 import {
@@ -16,6 +17,11 @@ import {
   isNcPlanComplete,
   ncWorkflowStep,
 } from "../utils/auditNc";
+import {
+  AuditNativeSelectField,
+  AuditNativeTextAreaField,
+  AuditNativeTextField,
+} from "./auditFormFields";
 import { AuditNcEvidenceSection } from "./AuditNcEvidenceSection";
 
 type Props = {
@@ -63,6 +69,7 @@ export function AuditNcItemCard({
   onUpload,
   onFinalize,
 }: Props) {
+  const fieldIdPrefix = useId();
   const sensoLabel = sensoName(item.sensoOrder, item.sensoName);
   const status = item.nc?.status ?? "open";
   const currentStep = ncWorkflowStep(status);
@@ -70,6 +77,7 @@ export function AuditNcItemCard({
   const planComplete = isNcPlanComplete(form);
   const canFinalize = canFinalizeNcAction(form, item.nc, attachmentsByNcId);
   const ncAttachments = item.nc ? attachmentsByNcId[item.nc.id] : undefined;
+  const fieldLocked = disabled || finalized;
 
   return (
     <article className={`a5s-nc-item ${expanded ? "a5s-nc-item--expanded" : ""}`}>
@@ -118,89 +126,81 @@ export function AuditNcItemCard({
           ) : null}
 
           <div className="a5s-nc-item__fields a5s-nc-item__fields--triple">
-            <label>
-              Descrição da não conformidade
-              <textarea
-                rows={4}
-                value={form.description}
-                disabled={disabled || finalized}
-                placeholder="Descreva o que foi observado no critério..."
-                onChange={(e) => onChange({ description: e.target.value })}
-                onBlur={() => onBlurSave()}
-              />
-            </label>
-            <label>
-              Causa / porquê
-              <textarea
-                rows={4}
-                value={form.root_cause}
-                disabled={disabled || finalized}
-                placeholder="Explique por que a não conformidade ocorreu..."
-                onChange={(e) => onChange({ root_cause: e.target.value })}
-                onBlur={() => onBlurSave()}
-              />
-            </label>
-            <label>
-              Ação corretiva
-              <textarea
-                rows={4}
-                value={form.corrective_action}
-                disabled={disabled || finalized}
-                placeholder="Descreva a ação para eliminar ou mitigar a NC..."
-                onChange={(e) => onChange({ corrective_action: e.target.value })}
-                onBlur={() => onBlurSave()}
-              />
-            </label>
+            <AuditNativeTextAreaField
+              id={`${fieldIdPrefix}-description`}
+              label="Descrição da não conformidade"
+              span={false}
+              rows={4}
+              value={form.description}
+              disabled={fieldLocked}
+              placeholder="Descreva o que foi observado no critério..."
+              onChange={(value) => onChange({ description: value })}
+              onBlur={onBlurSave}
+            />
+            <AuditNativeTextAreaField
+              id={`${fieldIdPrefix}-root-cause`}
+              label="Causa / porquê"
+              span={false}
+              rows={4}
+              value={form.root_cause}
+              disabled={fieldLocked}
+              placeholder="Explique por que a não conformidade ocorreu..."
+              onChange={(value) => onChange({ root_cause: value })}
+              onBlur={onBlurSave}
+            />
+            <AuditNativeTextAreaField
+              id={`${fieldIdPrefix}-corrective-action`}
+              label="Ação corretiva"
+              span={false}
+              rows={4}
+              value={form.corrective_action}
+              disabled={fieldLocked}
+              placeholder="Descreva a ação para eliminar ou mitigar a NC..."
+              onChange={(value) => onChange({ corrective_action: value })}
+              onBlur={onBlurSave}
+            />
           </div>
 
           <div className="a5s-nc-item__fields a5s-nc-item__fields--triple">
-            <label>
-              Responsável
-              <span className="a5s-nc-input-wrap">
-                <UserRound size={16} aria-hidden />
-                <input
-                  type="text"
-                  value={form.responsible_name}
-                  disabled={disabled || finalized}
-                  placeholder="Nome do responsável"
-                  onChange={(e) => onChange({ responsible_name: e.target.value })}
-                  onBlur={() => onBlurSave()}
-                />
-              </span>
-            </label>
-            <label>
-              Prazo para conclusão
-              <span className="a5s-nc-input-wrap">
-                <CalendarDays size={16} aria-hidden />
-                <input
-                  type="date"
-                  value={form.due_date}
-                  disabled={disabled || finalized}
-                  onChange={(e) => onChange({ due_date: e.target.value })}
-                  onBlur={() => onBlurSave()}
-                />
-              </span>
-            </label>
-            <label>
-              Prioridade
-              <span className="a5s-nc-input-wrap">
-                <select
-                  value={form.priority}
-                  disabled={disabled || finalized}
-                  onChange={(e) => {
-                    onChange({ priority: e.target.value as NcFormState["priority"] });
-                  }}
-                  onBlur={() => onBlurSave()}
-                >
-                  <option value="">Selecione...</option>
-                  {NC_PRIORITY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </label>
+            <AuditNativeTextField
+              id={`${fieldIdPrefix}-responsible`}
+              label="Responsável"
+              span={false}
+              type="text"
+              value={form.responsible_name}
+              disabled={fieldLocked}
+              placeholder="Nome do responsável"
+              beforeControl={<UserRound size={16} aria-hidden />}
+              controlWrapperClassName="a5s-nc-input-wrap"
+              onChange={(value) => onChange({ responsible_name: value })}
+              onBlur={onBlurSave}
+            />
+            <AuditNativeTextField
+              id={`${fieldIdPrefix}-due-date`}
+              label="Prazo para conclusão"
+              span={false}
+              type="date"
+              value={form.due_date}
+              disabled={fieldLocked}
+              beforeControl={<CalendarDays size={16} aria-hidden />}
+              controlWrapperClassName="a5s-nc-input-wrap"
+              onChange={(value) => onChange({ due_date: value })}
+              onBlur={onBlurSave}
+            />
+            <AuditNativeSelectField
+              id={`${fieldIdPrefix}-priority`}
+              label="Prioridade"
+              span={false}
+              value={form.priority}
+              disabled={fieldLocked}
+              placeholderOption="Selecione..."
+              controlWrapperClassName="a5s-nc-input-wrap"
+              options={NC_PRIORITY_OPTIONS}
+              onChange={(value) =>
+                onChange({ priority: value as NcFormState["priority"] })
+              }
+              onBlur={onBlurSave}
+            />
           </div>
 
           <AuditNcEvidenceSection

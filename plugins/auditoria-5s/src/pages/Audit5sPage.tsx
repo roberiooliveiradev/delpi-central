@@ -22,6 +22,7 @@ import {
 } from "../api/audit5sApi";
 import { getClientId } from "../utils/clientId";
 import { AuditHeaderForm } from "../components/AuditHeaderForm";
+import { AuditNativeTextAreaField } from "../components/auditFormFields";
 import { AuditListView } from "../components/AuditListView";
 import { AuditDashboardPage } from "./AuditDashboardPage";
 import { AuditDetailHero } from "../components/AuditDetailHero";
@@ -641,13 +642,14 @@ export function Audit5sPage({ pathname }: Props) {
                     onSelect={(payload) => void handleScore(criterion.id, payload)}
                   />
                   <div className="a5s-criterion__observation">
-                    <label htmlFor={`obs-${criterion.id}`}>Observação (opcional)</label>
                     <ObservationTypingHint
                       users={observationTyping[criterion.id] ?? []}
                       selfClientId={selfClientId}
                     />
-                    <textarea
+                    <AuditNativeTextAreaField
                       id={`obs-${criterion.id}`}
+                      label="Observação (opcional)"
+                      span={false}
                       rows={2}
                       placeholder={
                         hasScore
@@ -661,10 +663,10 @@ export function Audit5sPage({ pathname }: Props) {
                           signalObservationTyping(criterion.id);
                         }
                       }}
-                      onChange={(e) => {
+                      onChange={(value) => {
                         setObservationDrafts((prev) => ({
                           ...prev,
-                          [criterion.id]: e.target.value,
+                          [criterion.id]: value,
                         }));
                         if (!disabled && hasScore) {
                           signalObservationTyping(criterion.id);

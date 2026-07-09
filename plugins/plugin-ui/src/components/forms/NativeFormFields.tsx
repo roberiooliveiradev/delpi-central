@@ -16,6 +16,8 @@ type BaseNativeFieldProps = {
   readOnly?: boolean;
   className?: string;
   controlClassName?: string;
+  beforeControl?: ReactNode;
+  controlWrapperClassName?: string;
   afterControl?: ReactNode;
   onBlur?: () => void;
   classNames: FormFieldShellClassNames;
@@ -43,6 +45,8 @@ export function NativeTextField({
   readOnly,
   className,
   controlClassName,
+  beforeControl,
+  controlWrapperClassName,
   afterControl,
   onBlur,
   classNames,
@@ -63,6 +67,8 @@ export function NativeTextField({
       hint={hint}
       span={span}
       className={className}
+      beforeControl={beforeControl}
+      controlWrapperClassName={controlWrapperClassName}
       afterControl={afterControl}
       classNames={classNames}
     >
@@ -108,6 +114,8 @@ export function NativeSelectField({
   disabled,
   className,
   controlClassName,
+  beforeControl,
+  controlWrapperClassName,
   afterControl,
   onBlur,
   classNames,
@@ -123,6 +131,8 @@ export function NativeSelectField({
       hint={hint}
       span={span}
       className={className}
+      beforeControl={beforeControl}
+      controlWrapperClassName={controlWrapperClassName}
       afterControl={afterControl}
       classNames={classNames}
     >
@@ -151,6 +161,8 @@ export type NativeTextAreaFieldProps = BaseNativeFieldProps & {
   onChange: (value: string) => void;
   rows?: number;
   placeholder?: string;
+  maxLength?: number;
+  onFocus?: () => void;
 };
 
 export function NativeTextAreaField({
@@ -163,6 +175,8 @@ export function NativeTextAreaField({
   readOnly,
   className,
   controlClassName,
+  beforeControl,
+  controlWrapperClassName,
   afterControl,
   onBlur,
   classNames,
@@ -170,6 +184,8 @@ export function NativeTextAreaField({
   onChange,
   rows,
   placeholder,
+  maxLength,
+  onFocus,
 }: NativeTextAreaFieldProps) {
   return (
     <FormFieldShell
@@ -178,6 +194,8 @@ export function NativeTextAreaField({
       hint={hint}
       span={span}
       className={className}
+      beforeControl={beforeControl}
+      controlWrapperClassName={controlWrapperClassName}
       afterControl={afterControl}
       classNames={classNames}
     >
@@ -190,6 +208,8 @@ export function NativeTextAreaField({
         readOnly={readOnly}
         value={value}
         placeholder={placeholder}
+        maxLength={maxLength}
+        onFocus={onFocus}
         onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       />

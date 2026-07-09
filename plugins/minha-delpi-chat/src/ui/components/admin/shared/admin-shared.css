@@ -85,6 +85,8 @@
 }
 
 .mdc-admin-field > span,
+.mdc-admin-field > label,
+.mdc-admin-field .mdc-admin-field__label,
 .mdc-admin-shell .mdc-admin-simulate__form label > span,
 .mdc-admin-shell .mdc-admin-metrics-tab__intelligence-form label > span,
 .mdc-admin-shell .mdc-admin-agents__editor label > span,

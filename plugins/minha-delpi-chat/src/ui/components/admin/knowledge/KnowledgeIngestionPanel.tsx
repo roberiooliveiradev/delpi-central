@@ -2,6 +2,10 @@ import { useState } from "react";
 
 import { workspaceFileProjectIngestLabels } from "../../../../content/workspaceFileIngestContent";
 import { AdminFileDropzone } from "../shared/AdminFileDropzone";
+import {
+  ChatAdminNativeSelectField,
+  ChatAdminNativeTextAreaField,
+} from "../shared/chatAdminFormFields";
 import { IngestProgressIndicator } from "../../shared/IngestProgressIndicator";
 import { KnowledgeCuratorialFields } from "./KnowledgeCuratorialFields";
 import type {
@@ -246,16 +250,16 @@ export function KnowledgeIngestionPanel({
             }
           />
         ) : (
-          <label className="mdc-admin-field">
-            <span>Conteúdo</span>
-            <textarea
-              value={content}
-              disabled={isMutating || !canManageKnowledge}
-              rows={8}
-              placeholder="Cole aqui diretrizes, glossários ou instruções globais."
-              onChange={(event) => setContent(event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextAreaField
+            id="knowledge-ingestion-content"
+            label="Conteúdo"
+            span={false}
+            rows={8}
+            value={content}
+            disabled={isMutating || !canManageKnowledge}
+            placeholder="Cole aqui diretrizes, glossários ou instruções globais."
+            onChange={setContent}
+          />
         )}
 
         {uploadPercent != null || previewPercent != null ? (
@@ -276,20 +280,21 @@ export function KnowledgeIngestionPanel({
           />
         </label>
 
-        <label className="mdc-admin-field">
-          <span>Tipo</span>
-          <select
-            value={sourceType}
-            disabled={isMutating || !canManageKnowledge}
-            onChange={(event) => setSourceType(event.target.value)}
-          >
-            <option value="diretriz">Diretriz</option>
-            <option value="glossario">Glossário</option>
-            <option value="manual">Manual</option>
-            <option value="politica">Política</option>
-            <option value="admin_upload">Upload admin</option>
-          </select>
-        </label>
+        <ChatAdminNativeSelectField
+          id="knowledge-ingestion-source-type"
+          label="Tipo"
+          span={false}
+          value={sourceType}
+          disabled={isMutating || !canManageKnowledge}
+          options={[
+            { value: "diretriz", label: "Diretriz" },
+            { value: "glossario", label: "Glossário" },
+            { value: "manual", label: "Manual" },
+            { value: "politica", label: "Política" },
+            { value: "admin_upload", label: "Upload admin" },
+          ]}
+          onChange={setSourceType}
+        />
 
         <label className="mdc-admin-field">
           <span>Referência</span>

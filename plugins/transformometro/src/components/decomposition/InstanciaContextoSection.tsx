@@ -9,6 +9,7 @@ import {
 } from "../../data/api/transformometroDecompositionApi";
 import { emptyInstanciaContexto, type InstanciaContextoV1 } from "../../types/decomposition";
 import { InstanciaContextoReadView } from "./InstanciaContextoReadView";
+import { TmNativeTextAreaField } from "../ui/tmNativeFormFields";
 
 const C = TM_HELP_TOOLTIPS.decomposition;
 
@@ -100,16 +101,17 @@ export function InstanciaContextoSection({
         </label>
       </div>
 
-      <label className="ds-field tm-inst-form__field--full">
-        <FieldLabel className="tm-field__label" label="Observações de rollout" hint={C.contextoObservacoesRollout} />
-        <textarea
-          rows={3}
-          value={contexto.observacoes_rollout ?? ""}
-          onChange={(event) =>
-            setContexto({ ...contexto, observacoes_rollout: event.target.value || null })
-          }
-        />
-      </label>
+      <TmNativeTextAreaField
+        id="tm-instancia-contexto-rollout"
+        label="Observações de rollout"
+        hint={C.contextoObservacoesRollout}
+        span
+        rows={3}
+        value={contexto.observacoes_rollout ?? ""}
+        onChange={(value) =>
+          setContexto({ ...contexto, observacoes_rollout: value || null })
+        }
+      />
 
       <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
         {saving ? "Salvando…" : "Salvar contexto"}

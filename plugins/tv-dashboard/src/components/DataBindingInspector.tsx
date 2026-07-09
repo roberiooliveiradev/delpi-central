@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Copy, RefreshCw } from "lucide-react";
+import { NativeSelectControl } from "@delpi/plugin-ui";
 import {
   blockTypeForDisplayMode,
   defaultFrame,
@@ -117,17 +118,15 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
         </div>
         {presentationOptions.length > 1 ? (
           <DeckField id="td-data-display-mode" label="Formato de apresentação">
-            <select
+            <NativeSelectControl
               id="td-data-display-mode"
               value={currentDisplayMode}
-              onChange={(event) => updateDisplayMode(event.target.value as ComunicadoDataDisplayMode)}
-            >
-              {presentationOptions.map((option) => (
-                <option key={option.displayMode} value={option.displayMode}>
-                  {displayModeLabel(option.displayMode)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => updateDisplayMode(value as ComunicadoDataDisplayMode)}
+              options={presentationOptions.map((option) => ({
+                value: option.displayMode,
+                label: displayModeLabel(option.displayMode),
+              }))}
+            />
           </DeckField>
         ) : (
           <p className="td-deck-inspector__meta">{displayModeLabel(currentDisplayMode)}</p>

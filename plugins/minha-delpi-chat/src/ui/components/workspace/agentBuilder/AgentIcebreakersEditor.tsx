@@ -22,6 +22,9 @@ import {
   type AgentIcebreakerEntry,
   type IcebreakerFieldConfig,
 } from "../../../agentIcebreakers";
+import {
+  ChatAdminNativeSelectField,
+} from "../../admin/shared/chatAdminFormFields";
 
 import "./AgentIcebreakersEditor.css";
 
@@ -494,17 +497,17 @@ export function AgentIcebreakersEditor({
                     <div className="mdc-agent-icebreakers-editor__fields-top">
                       <span className="mdc-agent-icebreakers-editor__fields-label">Campos de entrada</span>
                       <div className="mdc-agent-icebreakers-editor__add-field">
-                        <select
+                        <ChatAdminNativeSelectField
+                          id={`agent-icebreaker-new-field-type-${index}`}
+                          label="Tipo do novo campo"
+                          span={false}
                           value={newFieldType}
-                          onChange={(event) => setNewFieldType(event.target.value)}
-                          aria-label="Tipo do novo campo"
-                        >
-                          {ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                          options={ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => ({
+                            value: option.value,
+                            label: option.label,
+                          }))}
+                          onChange={setNewFieldType}
+                        />
                         <button
                           type="button"
                           className="mdc-chat-ws-outline-btn"
@@ -589,25 +592,23 @@ export function AgentIcebreakersEditor({
                             </div>
 
                             <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--meta">
-                              <label className="mdc-chat-ws-field">
-                                <span>Tipo</span>
-                                <select
-                                  value={field.fieldType}
-                                  onChange={(event) =>
-                                    onChange(
-                                      updateField(entries, index, fieldIndex, {
-                                        fieldType: event.target.value,
-                                      }),
-                                    )
-                                  }
-                                >
-                                  {ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
+                              <ChatAdminNativeSelectField
+                                id={`agent-icebreaker-field-type-${index}-${fieldIndex}`}
+                                label="Tipo"
+                                span={false}
+                                value={field.fieldType}
+                                options={ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => ({
+                                  value: option.value,
+                                  label: option.label,
+                                }))}
+                                onChange={(value) =>
+                                  onChange(
+                                    updateField(entries, index, fieldIndex, {
+                                      fieldType: value,
+                                    }),
+                                  )
+                                }
+                              />
 
                               <label className="mdc-chat-ws-field">
                                 <span>Placeholder</span>

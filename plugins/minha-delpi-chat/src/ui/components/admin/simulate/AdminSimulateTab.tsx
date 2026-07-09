@@ -6,6 +6,10 @@ import type { ChatAgent } from "../../../../data/api/chatTypes";
 import { simulateAdminAgent } from "../../../../data/api/adminApi";
 import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
 
+import {
+  ChatAdminNativeSelectField,
+  ChatAdminNativeTextAreaField,
+} from "../shared/chatAdminFormFields";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SimulateSummaryStrip } from "./SimulateSummaryStrip";
 import { computeSimulateSummary } from "./simulateSummary";
@@ -112,39 +116,38 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
       <div className="mdc-admin-simulate__layout mdc-admin-split">
         <div className="mdc-admin-split__aside">
           <article className="mdc-admin-panel mdc-admin-simulate__form">
-        <label className="mdc-admin-field">
-          <span>Pergunta de teste</span>
-          <textarea
-            value={question}
-            rows={4}
-            placeholder="Ex.: Como devo responder sobre férias?"
-            onChange={(event) => setQuestion(event.target.value)}
-          />
-        </label>
+        <ChatAdminNativeTextAreaField
+          id="admin-simulate-question"
+          label="Pergunta de teste"
+          span={false}
+          rows={4}
+          value={question}
+          placeholder="Ex.: Como devo responder sobre férias?"
+          onChange={setQuestion}
+        />
 
-        <label className="mdc-admin-field">
-          <span>Agente (opcional)</span>
-          <select value={agentId} onChange={(event) => setAgentId(event.target.value)}>
-            <option value="">Padrão do chat</option>
-            {agents.map((agent) => (
-              <option key={agent.id} value={agent.id}>
-                {agent.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ChatAdminNativeSelectField
+          id="admin-simulate-agent"
+          label="Agente (opcional)"
+          span={false}
+          value={agentId}
+          placeholderOption="Padrão do chat"
+          options={agents.map((agent) => ({ value: agent.id, label: agent.name }))}
+          onChange={setAgentId}
+        />
 
-        <label className="mdc-admin-field">
-          <span>Sessão real (opcional)</span>
-          <select value={sessionId} onChange={(event) => setSessionId(event.target.value)}>
-            <option value="">Sem histórico de sessão</option>
-            {sessions.map((session) => (
-              <option key={session.id} value={session.id}>
-                {session.title || session.id}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ChatAdminNativeSelectField
+          id="admin-simulate-session"
+          label="Sessão real (opcional)"
+          span={false}
+          value={sessionId}
+          placeholderOption="Sem histórico de sessão"
+          options={sessions.map((session) => ({
+            value: session.id,
+            label: session.title || session.id,
+          }))}
+          onChange={setSessionId}
+        />
 
         <label className="mdc-admin-simulate__checkbox">
           <input

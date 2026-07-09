@@ -54,6 +54,7 @@ import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import { selectedHasGroup } from "../utils/comunicadoGrouping";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
+import { TdRibbonSelect } from "./tdRibbonUi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Labels = Record<string, string>;
@@ -216,18 +217,15 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
           <DeckRibbonGroup label="Fonte" hint={H.font} wide>
             <div className="td-deck-ribbon__toolbar">
               <div className="td-deck-ribbon__toolbar-row">
-                <select
-                  className="td-deck-ribbon__select"
+                <TdRibbonSelect
                   aria-label="Família da fonte"
                   value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
-                  onChange={(e) => updateSelectedStyle({ fontFamily: e.target.value })}
-                >
-                  {COMUNICADO_FONT_FAMILIES.map((font) => (
-                    <option key={font} value={font}>
-                      {font.split(",")[0]}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => updateSelectedStyle({ fontFamily: value })}
+                  options={COMUNICADO_FONT_FAMILIES.map((font) => ({
+                    value: font,
+                    label: font.split(",")[0] ?? font,
+                  }))}
+                />
                 <button
                   type="button"
                   className="td-btn td-btn--sm td-btn--icon"
@@ -424,19 +422,17 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-line-height">
                   Entrelinhas
                 </label>
-                <select
+                <TdRibbonSelect
                   id="td-ribbon-line-height"
                   className="td-deck-ribbon__select td-deck-ribbon__select--compact"
                   aria-label="Entrelinhas"
                   value={String(selected.style?.lineHeight ?? 1.15)}
-                  onChange={(e) => updateSelectedStyle({ lineHeight: Number(e.target.value) })}
-                >
-                  {COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => (
-                    <option key={value} value={value}>
-                      {value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => updateSelectedStyle({ lineHeight: Number(value) })}
+                  options={COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => ({
+                    value: String(value),
+                    label: value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value),
+                  }))}
+                />
                 <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-letter-spacing">
                   Espaçamento
                 </label>
@@ -561,19 +557,21 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <label className="td-deck-ribbon__field-label" htmlFor="td-block-object-fit">
                   Ajuste
                 </label>
-                <select
+                <TdRibbonSelect
                   id="td-block-object-fit"
                   className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+                  aria-label="Ajuste"
                   value={selected.style?.objectFit ?? "cover"}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     updateSelectedStyle({
-                      objectFit: e.target.value as "cover" | "contain",
+                      objectFit: value as "cover" | "contain",
                     })
                   }
-                >
-                  <option value="cover">Preencher</option>
-                  <option value="contain">Conter</option>
-                </select>
+                  options={[
+                    { value: "cover", label: "Preencher" },
+                    { value: "contain", label: "Conter" },
+                  ]}
+                />
               </>
             ) : null}
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-border-width">
@@ -618,21 +616,20 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-shadow">
               Sombra
             </label>
-            <select
+            <TdRibbonSelect
               id="td-block-shadow"
               className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+              aria-label="Sombra"
               value={matchBoxShadowPreset(selected.style?.boxShadow)}
-              onChange={(e) => {
-                const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => item.key === e.target.value);
+              onChange={(value) => {
+                const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => item.key === value);
                 updateSelectedStyle({ boxShadow: preset?.value });
               }}
-            >
-              {COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => (
-                <option key={preset.key} value={preset.key}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
+              options={COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
+                value: preset.key,
+                label: preset.label,
+              }))}
+            />
           </div>
         </DeckRibbonGroup>
       ) : (

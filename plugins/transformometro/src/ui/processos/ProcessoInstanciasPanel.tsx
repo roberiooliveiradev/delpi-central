@@ -20,15 +20,18 @@ import {
   type MelhoriaFormFields,
 } from "../../constants/melhoriaForm";
 import {
+  formatInstanciaSetoresDisplay,
+  formatInstanciaUnidadeDisplay,
   hasProcessoEscopo,
   type ProcessoEscopoState,
 } from "./processoEscopo";
+import { TmNativeTextAreaField } from "../../components/ui/tmNativeFormFields";
 import { filterSetoresByFilial } from "../../utils/setores";
 import { renderTableStatus } from "../../utils/tablePresentation";
 
 function renderInstanciaUnidade(row: ProcessoInstancia, activeFilialCount: number) {
   if (!row.todas_filiais_ativas) {
-    return `${row.codigo_filial ?? row.filial_id} — ${row.nome_filial ?? ""}`.trim();
+    return formatInstanciaUnidadeDisplay(row, activeFilialCount);
   }
   return (
     <span className="tm-instancia-unidade">
@@ -115,15 +118,6 @@ function instanciaSetorIdsForForm(row: ProcessoInstancia, setores: OptionsData["
     const match = setores.find((setor) => setor.id.toLowerCase() === key);
     return match?.id ?? key;
   });
-}
-
-function formatSetores(row: ProcessoInstancia): string {
-  if (row.setores?.length) {
-    return row.setores
-      .map((setor) => `${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor ?? ""}`.trim())
-      .join("; ");
-  }
-  return `${row.codigo_setor ?? row.setor_id ?? ""} — ${row.nome_setor ?? ""}`.trim();
 }
 
 function defaultSetorIds(setores: OptionsData["setores"], filialId: string): string[] {
@@ -518,7 +512,7 @@ export function ProcessoInstanciasPanel({
         key: "setor",
         header: "Departamentos",
         headerHint: TM_HELP_TOOLTIPS.instancias.setores,
-        render: (row) => formatSetores(row) || "—",
+        render: (row) => formatInstanciaSetoresDisplay(row),
       },
       {
         key: "rotulo",
@@ -625,7 +619,7 @@ export function ProcessoInstanciasPanel({
                 onChange={() => toggleFilial(filial.id)}
               />
               <span>
-                {filial.id} — {filial.label}
+                {filial.label}
               </span>
             </label>
           );
@@ -668,18 +662,16 @@ export function ProcessoInstanciasPanel({
 
   const melhoriaFields = (
     <>
-      <div className="ds-filter-box tm-inst-form__field--full">
-        <label htmlFor="tm-melhoria-resumo">
-          <FieldLabel className="tm-field__label" label="Resumo da melhoria" hint={TM_HELP_TOOLTIPS.instancias.resumo} />
-        </label>
-        <textarea
-          id="tm-melhoria-resumo"
-          rows={3}
-          value={resumoMelhoria}
-          onChange={(e) => setResumoMelhoria(e.target.value)}
-          placeholder="Ex.: Automatizar emissão de laudos na recepção de materiais"
-        />
-      </div>
+      <TmNativeTextAreaField
+        id="tm-melhoria-resumo"
+        label="Resumo da melhoria"
+        hint={TM_HELP_TOOLTIPS.instancias.resumo}
+        span
+        rows={3}
+        value={resumoMelhoria}
+        placeholder="Ex.: Automatizar emissão de laudos na recepção de materiais"
+        onChange={setResumoMelhoria}
+      />
       <div className="tm-inst-form__row">
         <div className="ds-filter-box">
           <label htmlFor="tm-melhoria-responsavel">

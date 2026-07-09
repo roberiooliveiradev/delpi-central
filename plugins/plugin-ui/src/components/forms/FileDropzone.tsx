@@ -1,5 +1,5 @@
 import { Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 export type FileDropzoneClassNames = {
   root: string;
@@ -24,6 +24,8 @@ export type FileDropzoneProps = {
   className?: string;
   classNames: FileDropzoneClassNames;
   labels: FileDropzoneLabels;
+  /** Substitui o conteúdo vazio padrão (ex.: preview de foto no CE). */
+  filledContent?: ReactNode;
 };
 
 export function fileDropzoneBemClasses(prefix: string, block = "evidence-dropzone"): FileDropzoneClassNames {
@@ -51,6 +53,7 @@ export function FileDropzone({
   className,
   classNames,
   labels,
+  filledContent,
 }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -71,6 +74,23 @@ export function FileDropzone({
   }
   if (className) {
     rootClass = `${rootClass} ${className}`;
+  }
+
+  if (filledContent) {
+    return (
+      <div className={rootClass}>
+        <input
+          ref={inputRef}
+          type="file"
+          className={classNames.input}
+          multiple={multiple}
+          accept={accept}
+          disabled={disabled}
+          onChange={(event) => addFiles(event.target.files)}
+        />
+        {filledContent}
+      </div>
+    );
   }
 
   return (

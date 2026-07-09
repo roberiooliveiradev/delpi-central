@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 
 import type { SaveAdminGuidelinePayload } from "../../../../data/api/adminApi";
 import type { AdminGuideline } from "./guidelineTypes";
+import {
+  ChatAdminNativeSelectField,
+  ChatAdminNativeTextAreaField,
+} from "../shared/chatAdminFormFields";
 
 import "./GuidelineEditorPanel.css";
 
@@ -142,50 +146,50 @@ export function GuidelineEditorPanel({
         />
       </label>
 
-      <label>
-        <span>Categoria</span>
-        <select
-          value={category}
-          disabled={!canCreateGuidelines}
-          onChange={(event) =>
-            setCategory(event.target.value as SaveAdminGuidelinePayload["category"])
-          }
-        >
-          <option value="behavior">Comportamento</option>
-          <option value="rag">RAG</option>
-          <option value="tools">Ferramentas</option>
-          <option value="safety">Segurança</option>
-        </select>
-      </label>
+      <ChatAdminNativeSelectField
+        id="guideline-editor-category"
+        label="Categoria"
+        span={false}
+        value={category}
+        disabled={!canCreateGuidelines}
+        options={[
+          { value: "behavior", label: "Comportamento" },
+          { value: "rag", label: "RAG" },
+          { value: "tools", label: "Ferramentas" },
+          { value: "safety", label: "Segurança" },
+        ]}
+        onChange={(value) =>
+          setCategory(value as SaveAdminGuidelinePayload["category"])
+        }
+      />
 
-      <label>
-        <span>Ambiente</span>
-        <select
-          value={environment}
-          disabled={!canCreateGuidelines}
-          onChange={(event) =>
-            setEnvironment(
-              event.target.value as SaveAdminGuidelinePayload["environment"],
-            )
-          }
-        >
-          <option value="global">Global</option>
-          <option value="dev">DEV</option>
-          <option value="homolog">HOMOLOG</option>
-          <option value="prod">PROD</option>
-        </select>
-      </label>
+      <ChatAdminNativeSelectField
+        id="guideline-editor-environment"
+        label="Ambiente"
+        span={false}
+        value={environment}
+        disabled={!canCreateGuidelines}
+        options={[
+          { value: "global", label: "Global" },
+          { value: "dev", label: "DEV" },
+          { value: "homolog", label: "HOMOLOG" },
+          { value: "prod", label: "PROD" },
+        ]}
+        onChange={(value) =>
+          setEnvironment(value as SaveAdminGuidelinePayload["environment"])
+        }
+      />
 
-      <label>
-        <span>Conteúdo</span>
-        <textarea
-          value={content}
-          disabled={!canCreateGuidelines}
-          rows={7}
-          placeholder="Escreva a regra operacional que deve orientar o chat."
-          onChange={(event) => setContent(event.target.value)}
-        />
-      </label>
+      <ChatAdminNativeTextAreaField
+        id="guideline-editor-content"
+        label="Conteúdo"
+        span={false}
+        rows={7}
+        value={content}
+        disabled={!canCreateGuidelines}
+        placeholder="Escreva a regra operacional que deve orientar o chat."
+        onChange={setContent}
+      />
 
       <button
         type="button"

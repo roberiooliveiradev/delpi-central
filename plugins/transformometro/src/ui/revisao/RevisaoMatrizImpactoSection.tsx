@@ -13,6 +13,7 @@ import {
 
 import { ChartCard } from "../../components/ChartCard";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
+import { TmNativeTextAreaField } from "../../components/ui/tmNativeFormFields";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { SegmentToggle } from "../../components/SegmentToggle";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -415,17 +416,18 @@ export function RevisaoMatrizImpactoSection({
                     }
                   />
                 </label>
-                <label className="ds-filter-box ds-filter-box--wide tm-field tm-field--full">
-                  <FieldLabel className="tm-field__label" label="Observação" hint={M.observacao} />
-                  <textarea
-                    rows={3}
-                    maxLength={2000}
-                    value={inputs.observacao ?? ""}
-                    onChange={(event) =>
-                      setInputs((prev) => ({ ...prev, observacao: event.target.value || undefined }))
-                    }
-                  />
-                </label>
+                <TmNativeTextAreaField
+                  id="tm-matrix-observacao"
+                  label="Observação"
+                  hint={M.observacao}
+                  span
+                  rows={3}
+                  maxLength={2000}
+                  value={inputs.observacao ?? ""}
+                  onChange={(value) =>
+                    setInputs((prev) => ({ ...prev, observacao: value || undefined }))
+                  }
+                />
               </div>
               {modo !== "auto" ? (
                 <div className="tm-matrix-manual__actions">

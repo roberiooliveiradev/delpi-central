@@ -138,7 +138,8 @@
 }
 
 .cx-field input,
-.cx-field textarea {
+.cx-field textarea,
+.cx-field select {
   font: inherit;
   font-weight: 400;
   color: var(--cx-text);
@@ -149,7 +150,8 @@
 }
 
 .cx-field input:focus,
-.cx-field textarea:focus {
+.cx-field textarea:focus,
+.cx-field select:focus {
   outline: 2px solid var(--cx-accent);
   outline-offset: 1px;
   border-color: transparent;
