@@ -355,6 +355,8 @@ Helpers: `readOnlyFieldKaizenBemClasses`, `readOnlyFieldPacBemClasses`, `createD
 
 Dropdown single-select com busca opcional. `SelectControl` é o trigger/painel reutilizável (ex.: diagram toolbar).
 
+**Toolbar compacto:** `ToolbarSelectField` + `ToolbarSelectControl` — rótulo inline + densidade reduzida (`delpi-ui-toolbar-select*` em `styles.css`). Helpers: `selectControlToolbarBemClasses`, `DEFAULT_TOOLBAR_SELECT_LABELS`.
+
 Helpers: `selectControlBemClasses`, `selectFieldPacClasses`, `selectFieldTransformometroClasses`, `createDashboardSelectField`, `createDashboardSelectControl`.
 
 ---

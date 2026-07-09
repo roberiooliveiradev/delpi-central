@@ -151,7 +151,7 @@ export function ChatRichTable({
             {categoryFilterOptions.length > 0 ? (
               <>
                 <ChatRichUxSelect
-                  className="mdc-rich-chart__ux-field mdc-rich-table__filter"
+                  className="mdc-rich-table__filter"
                   label="Filtrar"
                   value={categoryFilterKey ?? ""}
                   onChange={(nextKey) => {
@@ -165,7 +165,7 @@ export function ChatRichTable({
                 />
                 {categoryFilterKey ? (
                   <ChatRichUxSelect
-                    className="mdc-rich-chart__ux-field mdc-rich-table__filter"
+                    className="mdc-rich-table__filter"
                     label={formatChartColumnLabel(categoryFilterKey, fieldLabels)}
                     value={categoryFilterValue ?? ""}
                     onChange={(value) => {

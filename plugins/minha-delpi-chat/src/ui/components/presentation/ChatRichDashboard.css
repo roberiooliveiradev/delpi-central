@@ -140,12 +140,13 @@
   min-width: 0;
 }
 
-.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-chart__ux-field {
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .delpi-ui-toolbar-select-field {
   margin: 0;
   min-width: 0;
 }
 
-.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter span {
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter span,
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter .delpi-ui-toolbar-select-field__label {
   font-size: 0.68rem;
 }
 
@@ -162,7 +163,7 @@
   white-space: nowrap;
 }
 
-.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-chart__ux-field select {
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter .delpi-ui-toolbar-select__trigger {
   min-height: 1.85rem;
   font-size: 0.75rem;
 }

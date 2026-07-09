@@ -56,6 +56,15 @@ export {
 } from "./SelectField";
 
 export {
+  ToolbarSelectControl,
+  ToolbarSelectField,
+  DEFAULT_TOOLBAR_SELECT_LABELS,
+  TOOLBAR_SELECT_PREFIX,
+  selectControlToolbarBemClasses,
+  type ToolbarSelectFieldProps,
+} from "./ToolbarSelectField";
+
+export {
   DateField,
   createDashboardDateField,
   dateFieldBemClasses,

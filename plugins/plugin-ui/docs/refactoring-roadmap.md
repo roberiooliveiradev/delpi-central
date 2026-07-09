@@ -351,10 +351,11 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **cultura-delpi** | Admin cultura → `CulturaNativeTextAreaControl` + Docker context `../plugins` |
 | **propostas-comerciais** | Tabela/modal PDF → `PcNativeTextAreaControl` |
 | **tv-dashboard** | Comunicado inline → `TdNativeTextAreaControl` |
+| **plugin-ui** | `ToolbarSelectField` — select compacto de toolbar (CSS em `styles.css`) |
 
 ### Próximo lote sugerido (quando retomar)
 
-1. Consolidar estilos `SelectControl` compacto no `plugin-ui` (toolbar pattern reutilizável).
+1. ~~Consolidar estilos `SelectControl` compacto no `plugin-ui`~~ ✅ `ToolbarSelectField` / `ToolbarSelectControl`
 2. **api-delpi-console** / **public-hub** — fora do escopo MFE; avaliar só se unificar runtime.
 
 ---

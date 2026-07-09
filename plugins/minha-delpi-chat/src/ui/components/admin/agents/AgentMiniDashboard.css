@@ -16,9 +16,7 @@
   min-width: 0;
 }
 
-.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__ux-toolbar select,
-.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__toolbar-row select,
-.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__ux-field select {
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .delpi-ui-toolbar-select-field .delpi-ui-toolbar-select__trigger {
   min-height: 2.25rem;
   min-width: 5.75rem;
   font-size: 0.82rem;

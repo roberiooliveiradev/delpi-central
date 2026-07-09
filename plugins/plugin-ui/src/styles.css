@@ -555,3 +555,113 @@
 .tm-impact-effort-matrix {
   --impact-effort-point: var(--tm-accent, var(--primary, #089bdb));
 }
+
+/* --- ToolbarSelectField — SelectControl compacto em toolbars --- */
+.delpi-ui-toolbar-select-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(
+    --delpi-ui-muted,
+    var(--mdc-text-muted, color-mix(in srgb, var(--text, #111) 55%, transparent))
+  );
+}
+
+.delpi-ui-toolbar-select-field__label {
+  color: inherit;
+}
+
+.delpi-ui-toolbar-select {
+  position: relative;
+  min-width: 5.5rem;
+}
+
+.delpi-ui-toolbar-select__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-height: 1.65rem;
+  min-width: 100%;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.2;
+  border-radius: calc(var(--delpi-ui-radius-sm, var(--mdc-radius-sm, 8px)) - 2px);
+  border: 1px solid var(--delpi-ui-border, var(--mdc-control-border, var(--border, #e5e7eb)));
+  background-color: var(--delpi-ui-surface, var(--mdc-control-bg, var(--surface, #fff)));
+  color: var(--delpi-ui-text, var(--mdc-control-text, var(--text, #111)));
+  cursor: pointer;
+}
+
+.delpi-ui-toolbar-select__trigger:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--mdc-primary, var(--primary, #089bdb))) 40%,
+    var(--delpi-ui-border, var(--mdc-control-border, var(--border, #e5e7eb)))
+  );
+}
+
+.delpi-ui-toolbar-select__trigger:focus-visible {
+  outline: none;
+  border-color: var(--delpi-ui-accent, var(--mdc-primary, var(--primary, #089bdb)));
+  box-shadow: var(--delpi-ui-focus-ring, var(--mdc-focus-ring, 0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)));
+}
+
+.delpi-ui-toolbar-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 9rem;
+}
+
+.delpi-ui-toolbar-select__trigger svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+  color: var(--delpi-ui-muted, var(--mdc-text-muted, color-mix(in srgb, var(--text, #111) 55%, transparent)));
+}
+
+.delpi-ui-toolbar-select__panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.2rem);
+  left: 0;
+  min-width: 100%;
+  max-height: 14rem;
+  overflow: auto;
+  border-radius: calc(var(--delpi-ui-radius-sm, var(--mdc-radius-sm, 8px)) - 1px);
+  border: 1px solid var(--delpi-ui-border, var(--mdc-control-border, var(--border, #e5e7eb)));
+  background: var(--delpi-ui-surface, var(--mdc-card-bg, var(--surface, #fff)));
+  box-shadow: var(--delpi-ui-shadow-md, var(--mdc-shadow-md, 0 8px 24px rgba(15, 23, 42, 0.12)));
+}
+
+.delpi-ui-toolbar-select__list {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.25rem;
+}
+
+.delpi-ui-toolbar-select__option {
+  width: 100%;
+  border: 0;
+  border-radius: calc(var(--delpi-ui-radius-sm, var(--mdc-radius-sm, 8px)) - 3px);
+  background: transparent;
+  color: var(--delpi-ui-text, var(--mdc-text, var(--text, #111)));
+  font-size: 0.72rem;
+  text-align: left;
+  padding: 0.35rem 0.45rem;
+  cursor: pointer;
+}
+
+.delpi-ui-toolbar-select__option:hover,
+.delpi-ui-toolbar-select__option--active {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--mdc-primary, var(--primary, #089bdb))) 10%,
+    transparent
+  );
+  color: var(--delpi-ui-text, var(--mdc-text, var(--text, #111)));
+}
