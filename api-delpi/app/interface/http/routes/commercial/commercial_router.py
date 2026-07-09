@@ -20,6 +20,15 @@ from app.application.dto.commercial.commercial_rol_series_request import (
 )
 from app.application.dto.commercial.new_business_rol_pct_request import NewBusinessRolPctRequest
 from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
+from app.application.dto.commercial.get_sales_order_otd_panel_request import (
+    GetSalesOrderOtdPanelRequest,
+)
+from app.application.dto.commercial.sales_order_otd_series_request import (
+    SalesOrderOtdSeriesRequest,
+)
+from app.application.dto.commercial.get_sales_order_otd_line_detail_request import (
+    GetSalesOrderOtdLineDetailRequest,
+)
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.commercial_composer import (
     build_get_head_office_rol_target_pct_use_case,
@@ -31,6 +40,9 @@ from app.composition.commercial_composer import (
     build_get_new_clients_rol_pct_use_case,
     build_get_commercial_rol_series_use_case,
     build_get_sales_order_otd_use_case,
+    build_get_sales_order_otd_panel_use_case,
+    build_get_sales_order_otd_series_use_case,
+    build_get_sales_order_otd_line_detail_use_case,
     build_get_new_business_rol_pct_use_case,
     build_get_head_office_weg_rol_target_use_case,
     build_get_branch_weg_rol_target_use_case,
@@ -664,6 +676,175 @@ def get_new_clients_average(
             status_code=500,
         )
     
+
+@router.get(
+    "/sales-order-otd/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_order_otd_series",
+        path="/commercial/sales-order-otd/series",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_sales_order_otd_series(
+    granularity: str = Query(..., min_length=3, max_length=10),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
+):
+    try:
+        request = SalesOrderOtdSeriesRequest(
+            granularity=granularity,
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+            customer_segment=parse_customer_segment(customer_segment),
+        )
+
+        use_case = build_get_sales_order_otd_series_use_case()
+        result = use_case.execute(request)
+
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_sales_order_otd_series",
+            message="Série temporal de OTD de pedidos de venda carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching sales order OTD series: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching sales order OTD series: {exc}")
+        return error_response(
+            "Internal error while fetching sales order OTD series.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/sales-order-otd/panel",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_order_otd_panel",
+        path="/commercial/sales-order-otd/panel",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_sales_order_otd_panel(
+    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
+    status: Optional[str] = Query(
+        None,
+        description="Filtro de status: on_time ou late.",
+    ),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=1000),
+    sort_by: Optional[str] = Query(default=None),
+    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+):
+    try:
+        use_case = build_get_sales_order_otd_panel_use_case()
+
+        request = GetSalesOrderOtdPanelRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            status=status,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_SALES_ORDER_OTD,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_sales_order_otd_panel",
+            message="Painel de OTD de pedidos de venda carregado com sucesso.",
+            fields=kpi_fields(COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching sales order OTD panel: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching sales order OTD panel: {exc}")
+        return error_response(
+            "Internal error while fetching sales order OTD panel.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_order_otd_line_detail",
+        path="/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_sales_order_otd_line_detail(
+    branch: str,
+    order_number: str,
+    line_item: str,
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
+):
+    try:
+        use_case = build_get_sales_order_otd_line_detail_use_case()
+
+        request = GetSalesOrderOtdLineDetailRequest(
+            branch=branch.strip(),
+            order_number=order_number.strip(),
+            line_item=line_item.strip(),
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+        )
+
+        result = use_case.execute(request)
+
+        return api_delpi_success(
+            result,
+            operation_id="get_sales_order_otd_line_detail",
+            message="Detalhe da linha de pedido de venda carregado com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching sales order OTD line: {exc}")
+        if "não encontrada" in str(exc).lower():
+            return not_found_response(str(exc))
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching sales order OTD line: {exc}")
+        return error_response(
+            "Internal error while fetching sales order OTD line detail.",
+            status_code=500,
+        )
+
 
 @router.get(
     "/sales-order-otd",

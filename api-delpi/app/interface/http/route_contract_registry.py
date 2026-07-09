@@ -176,6 +176,11 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_sales_conversion_rate": RouteContract("sales_conversion_rate", "scalar"),
     "get_new_clients_average": RouteContract("new_clients_average", "scalar"),
     "get_sales_order_otd": RouteContract("sales_order_otd", "scalar"),
+    "get_sales_order_otd_panel": RouteContract("sales_order_otd_panel", "paged_list"),
+    "get_sales_order_otd_series": RouteContract("sales_order_otd_series", "scalar"),
+    "get_sales_order_otd_line_detail": RouteContract(
+        "sales_order_otd_line", "playbook_report"
+    ),
     "get_new_business_rol_pct": RouteContract("new_business_rol_pct", "scalar"),
     "get_new_clients_rol_pct": RouteContract("new_clients_rol_pct", "scalar"),
     # Produção

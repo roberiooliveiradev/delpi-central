@@ -13,6 +13,9 @@ Calcular o percentual de linhas de pedido de venda (SC6) atendidas no prazo em r
 
 ```http
 GET /commercial/sales-order-otd?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&branch=02&customer_segment=weg
+GET /commercial/sales-order-otd/panel?...&status=late&page=1&page_size=20&sort_by=promised_date&sort_dir=desc
+GET /commercial/sales-order-otd/series?granularity=month&start_date=...&end_date=...
+GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 ```
 
 | Parâmetro | Descrição |
@@ -67,7 +70,7 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
 ## Consumidores
 
-- Dashboard Comercial (`plugins/dashboard-commercial`)
+- Dashboard Comercial (`plugins/dashboard-commercial`) — KPI na home + painel `/apps/dashboard-commercial/otd`
 - Strategic Indicators API (`commercial-sales-order-otd`)
 - Chat / agente (`get_sales_order_otd`)
 

@@ -42,11 +42,38 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     rolNewBusiness:
       "ROL (R$) de clientes não-WEG (novos negócios) no período, por unidade. Metas via commercial-rol-new-business no SI.",
     salesOrderOtd:
-      "Percentual de linhas de pedido de venda entregues no prazo (data de faturamento ≤ data de entrega prometida).",
+      "Percentual de linhas de pedido de venda no prazo (faturadas e não faturadas). Abra o painel OTD para ver linhas e evolução.",
     closingRate:
       "Taxa de conversão: ganhas com aceite (AD1_DTASSI) no período sobre propostas abertas (AD1_DATA) no período.",
     newBusinessRol:
       "Participação do ROL de clientes não-WEG no ROL total do período (vendas SD2 menos devoluções).",
+  },
+  otd: {
+    kpiOtd: "OTD de pedidos de venda no período filtrado (data prometida C6_ENTREG).",
+    kpiOnTime: "Linhas atendidas no prazo — faturadas com C6_DATFAT ≤ C6_ENTREG ou abertas ainda dentro do prazo.",
+    kpiLate: "Linhas atrasadas — faturadas após o prazo ou abertas com prazo vencido.",
+    chartEvolution: "Evolução do OTD por unidade. Clique em um ponto para ajustar o período.",
+    filters: {
+      status: "Filtra a tabela por linhas no prazo ou atrasadas.",
+    },
+    table: {
+      section: "Linhas SC6 elegíveis no período (data prometida). Clique para abrir o detalhe.",
+      status: "No prazo ou atrasada conforme faturamento e data prometida.",
+      branch: "Filial TOTVS do pedido (C6_FILIAL).",
+      orderNumber: "Número do pedido de venda (C6_NUM).",
+      lineItem: "Item/linha do pedido (C6_ITEM).",
+      productCode: "Código do produto (C6_PRODUTO).",
+      productDescription: "Descrição do produto (SB1).",
+      customerName: "Nome do cliente (SA1).",
+      promisedDate: "Data prometida de entrega (C6_ENTREG).",
+      invoiceDate: "Data de faturamento (C6_DATFAT) — vazio se ainda não faturado.",
+      daysDiff: "Dias entre a data prometida e o faturamento (ou data de referência do período).",
+      search: "Busca local por pedido, produto, cliente ou unidade.",
+    },
+    detail: {
+      order: "Dados da linha SC6 e cabeçalho SC5.",
+      product: "Produto vinculado à linha do pedido.",
+    },
   },
   charts: {
     rolEvolution:

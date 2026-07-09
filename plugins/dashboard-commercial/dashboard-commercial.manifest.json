@@ -27,6 +27,14 @@
       "icon": "bar-chart3-icon",
       "order": 15,
       "showInMenu": true
+    },
+    {
+      "path": "/apps/dashboard-commercial/otd",
+      "label": "OTD pedidos de venda",
+      "permission": "dashboard-commercial.view",
+      "icon": "bar-chart3-icon",
+      "order": 16,
+      "showInMenu": false
     }
   ],
 

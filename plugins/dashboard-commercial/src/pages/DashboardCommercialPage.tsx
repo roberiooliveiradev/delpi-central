@@ -23,7 +23,7 @@ import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
-import { buildCommercialDetailPath } from "../constants/routes";
+import { buildCommercialDetailPath, COMMERCIAL_ROUTES } from "../constants/routes";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
 import { useCommercialProposals } from "../hooks/useCommercialProposals";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -551,6 +551,7 @@ export function DashboardCommercialPage({
   return (
     <div className="dashboard-commercial dashboard-page dc-print-root">
       <FilterBar
+        currentPath={COMMERCIAL_ROUTES.home}
         filterState={filterState}
         competence={competence}
         dateStart={dateStart}

@@ -4,11 +4,16 @@ import type { CommercialFilterUrlState } from "../utils/filterUrl";
 import { formatCommercialBranchPrintLabel } from "../utils/commercialClientFilters";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
+import { COMMERCIAL_ROUTES } from "../constants/routes";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
+import { CommercialNav } from "./CommercialNav";
 import { HelpTooltip } from "@delpi/plugin-ui";
 import { PrintReportSummary } from "./PrintReportSummary";
 
 type CommercialPageHeaderProps = {
+  title?: string;
+  subtitle?: string;
+  currentPath?: string;
   filterState: CommercialFilterUrlState;
   exportActions?: ReactNode;
   onRefresh: () => void;
@@ -16,6 +21,9 @@ type CommercialPageHeaderProps = {
 };
 
 export function CommercialPageHeader({
+  title = "Dashboard Comercial",
+  subtitle = "ROL, taxa de conversão e clientes novos (TOTVS)",
+  currentPath,
   filterState,
   exportActions,
   onRefresh,
@@ -24,7 +32,7 @@ export function CommercialPageHeader({
   return (
     <>
       <PrintReportSummary
-        title="Dashboard Comercial"
+        title={title}
         dateStart={filterState.dateStart}
         dateEnd={filterState.dateEnd}
         branchLabel={formatCommercialBranchPrintLabel(filterState.branches)}
@@ -38,7 +46,7 @@ export function CommercialPageHeader({
           <div>
             <p className="dc-eyebrow">DELPI • Comercial</p>
             <div className="dc-page-header__title-row">
-              <h1>Dashboard Comercial</h1>
+              <h1>{title}</h1>
               <DepartmentIddBadge
                 departmentId={DASHBOARD_SI_DEPARTMENT_ID}
                 filters={{
@@ -50,13 +58,17 @@ export function CommercialPageHeader({
               />
             </div>
             <span className="dc-page-subtitle dc-page-subtitle--with-help">
-              ROL, taxa de conversão e clientes novos (TOTVS)
+              {subtitle}
               <HelpTooltip
                 content={COMMERCIAL_HELP_TOOLTIPS.actions.pageSubtitle}
                 ariaLabel="Ajuda: escopo do dashboard"
                 className="dc-page-subtitle__help"
               />
             </span>
+            <CommercialNav
+              currentPath={currentPath ?? COMMERCIAL_ROUTES.home}
+              filterState={filterState}
+            />
           </div>
         </div>
 

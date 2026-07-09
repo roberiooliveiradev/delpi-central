@@ -4,6 +4,9 @@ import { CommercialPageHeader } from "./CommercialPageHeader";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 
 type FilterBarProps = {
+  title?: string;
+  subtitle?: string;
+  currentPath?: string;
   filterState: CommercialFilterUrlState;
   competence: string;
   dateStart: string;
@@ -23,6 +26,9 @@ type FilterBarProps = {
 };
 
 export function FilterBar({
+  title,
+  subtitle,
+  currentPath,
   filterState,
   competence,
   dateStart,
@@ -41,6 +47,9 @@ export function FilterBar({
   return (
     <>
       <CommercialPageHeader
+        title={title}
+        subtitle={subtitle}
+        currentPath={currentPath}
         filterState={filterState}
         exportActions={exportActions}
         onRefresh={onRefresh}

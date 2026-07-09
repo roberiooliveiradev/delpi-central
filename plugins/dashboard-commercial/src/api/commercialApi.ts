@@ -13,6 +13,9 @@ import type {
   NewClientsRolPctData,
   RolTargetData,
   SalesOrderOtdData,
+  SalesOrderOtdPanelData,
+  SalesOrderOtdSeriesData,
+  SalesOrderOtdLineDetailData,
 } from "../types/commercial";
 
 export const COMMERCIAL_API_BASE = "/apps/api-delpi/commercial";
@@ -248,6 +251,59 @@ export function getSalesOrderOtd(
     "/sales-order-otd",
     params,
     signal
+  );
+}
+
+export function getSalesOrderOtdPanel(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<SalesOrderOtdPanelData>(
+    "/sales-order-otd/panel",
+    params,
+    signal
+  );
+}
+
+export function getSalesOrderOtdSeries(
+  params: Pick<
+    CommercialFilterParams,
+    "start_date" | "end_date" | "branch" | "customer_segment"
+  > & {
+    granularity: ChartGranularity;
+  },
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<SalesOrderOtdSeriesData>(
+    "/sales-order-otd/series",
+    params,
+    signal
+  );
+}
+
+export function getSalesOrderOtdLineDetail(
+  branch: string,
+  orderNumber: string,
+  lineItem: string,
+  params: Pick<
+    CommercialFilterParams,
+    "start_date" | "end_date" | "customer_segment"
+  >,
+  signal?: AbortSignal
+) {
+  const encodedBranch = encodeURIComponent(branch);
+  const encodedOrder = encodeURIComponent(orderNumber);
+  const encodedLine = encodeURIComponent(lineItem);
+  const query = buildQuery(params);
+
+  return httpGet<ApiSuccessResponse<SalesOrderOtdLineDetailData>>(
+    `${COMMERCIAL_API_BASE}/sales-order-otd/lines/${encodedBranch}/${encodedOrder}/${encodedLine}${query}`,
+    { signal }
+  ).then((response) =>
+    unwrapApiDelpiEnvelope(
+      response,
+      "Erro ao carregar detalhe da linha de pedido de venda"
+    )
   );
 }
 

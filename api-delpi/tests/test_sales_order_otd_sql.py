@@ -1,5 +1,6 @@
 from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_sql import (
     build_sales_order_otd_filters,
+    build_sales_order_otd_lines_count_sql,
     build_sales_order_otd_sql,
 )
 
@@ -28,3 +29,14 @@ def test_build_sales_order_otd_sql_classifies_invoiced_and_open_lines() -> None:
     assert "C6_DATFAT <= C6_ENTREG" in sql
     assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) > C6_ENTREG" in sql
     assert params == ("20260708", "20260708", "20260708")
+
+
+def test_build_sales_order_otd_lines_count_supports_status_filter() -> None:
+    sql, _ = build_sales_order_otd_lines_count_sql(
+        where_clause="1=1",
+        status="late",
+        reference_end_date="2026-07-08",
+    )
+
+    assert "LINHAS_ELEGIVEIS" in sql
+    assert "WHERE status = 'late'" in sql

@@ -34,6 +34,71 @@ export type NewClientsRolPctData = {
   new_clients_rol_pct: number | null;
 };
 
+export type SalesOrderOtdLineStatus = "on_time" | "late";
+
+export type SalesOrderOtdLineItem = {
+  branch: string;
+  order_number: string;
+  line_item: string;
+  product_code?: string | null;
+  product_description?: string | null;
+  customer_code?: string | null;
+  customer_name?: string | null;
+  qty_sold?: number | null;
+  qty_delivered?: number | null;
+  promised_date?: string | null;
+  invoice_date?: string | null;
+  is_invoiced?: number | null;
+  status: SalesOrderOtdLineStatus;
+  days_diff?: number | null;
+};
+
+export type SalesOrderOtdPanelSummary = DashboardGoalFields & {
+  total_lines: number;
+  on_time_lines: number;
+  late_lines: number;
+  sales_order_otd_pct: number | null;
+  late_percentage?: number | null;
+};
+
+export type SalesOrderOtdPanelData = {
+  branch?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  customer_segment?: CommercialCustomerSegment | null;
+  summary: SalesOrderOtdPanelSummary;
+  lines: {
+    items: SalesOrderOtdLineItem[];
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+};
+
+export type SalesOrderOtdSeriesPoint = {
+  periodo: string;
+  sort_key: string;
+  date_start: string;
+  date_end: string;
+  otd_filial_01: number | null;
+  otd_filial_02: number | null;
+};
+
+export type SalesOrderOtdSeriesData = {
+  granularity: string;
+  truncated: boolean;
+  branch?: string | null;
+  points: SalesOrderOtdSeriesPoint[];
+};
+
+export type SalesOrderOtdLineDetailData = {
+  branch: string;
+  order_number: string;
+  line_item: string;
+  line: SalesOrderOtdLineItem;
+};
+
 export type SalesOrderOtdData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
