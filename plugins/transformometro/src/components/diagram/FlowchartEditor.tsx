@@ -99,8 +99,7 @@ const edgeTypes = {
 const LANE_NODE_PREFIX = "__lane__";
 const DUPLICATE_OFFSET = 48;
 const NUDGE_STEP = 8;
-/** Altura mínima do canvas no layout embedded (React Flow exige altura explícita). */
-const EMBEDDED_CANVAS_MIN_HEIGHT = 620;
+const DEFAULT_CANVAS_HEIGHT = 520;
 
 type SelectionClipboard = {
   nodes: ActivityNode[];
@@ -274,9 +273,9 @@ function FlowchartEditorInner({
   const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
   const { fitView } = useReactFlow();
-  const canvasHeight = Math.max(
-    canvasHeightForLanes(lanes, lanes.length ? 360 : 420),
-    layout === "fill" ? EMBEDDED_CANVAS_MIN_HEIGHT : 0
+  const canvasHeight = canvasHeightForLanes(
+    lanes,
+    lanes.length ? 360 : DEFAULT_CANVAS_HEIGHT
   );
   const hasNodeSelection = selectedNodeIds.length > 0;
   const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0;
@@ -340,12 +339,38 @@ function FlowchartEditorInner({
   }, [activeLaneId, lanes]);
 
   useEffect(() => {
-    if (layout !== "fill") return;
-    const timer = window.setTimeout(() => {
-      void fitView({ padding: 0.12, duration: 200 });
-    }, 50);
-    return () => window.clearTimeout(timer);
-  }, [fitView, layout, nodes.length, edges.length, activeTab]);
+    if (activeTab !== "canvas") return;
+    const element = canvasWrapperRef.current;
+    if (!element) return;
+
+    const syncViewport = () => {
+      const { width, height } = element.getBoundingClientRect();
+      if (width < 8 || height < 8) return;
+      window.requestAnimationFrame(() => {
+        void fitView({ padding: 0.15, duration: 0 });
+      });
+    };
+
+    syncViewport();
+
+    const resizeObserver = new ResizeObserver(syncViewport);
+    resizeObserver.observe(element);
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          syncViewport();
+        }
+      },
+      { threshold: 0.01 }
+    );
+    intersectionObserver.observe(element);
+
+    return () => {
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+    };
+  }, [activeTab, fitView, nodes.length, edges.length]);
 
   const emitChange = useCallback(
     (nextNodes: EditorNode[], nextEdges: Edge[]) => {
@@ -936,6 +961,11 @@ function FlowchartEditorInner({
                 labelStyle: { fontSize: 11, fontWeight: 600 },
                 labelBgStyle: { fillOpacity: 0.92 },
               }}
+              onInit={(instance) => {
+                window.requestAnimationFrame(() => {
+                  void instance.fitView({ padding: 0.15, duration: 0 });
+                });
+              }}
               onNodesChange={readOnly ? undefined : onNodesChange}
               onEdgesChange={readOnly ? undefined : onEdgesChange}
               onConnect={onConnect}
@@ -943,7 +973,6 @@ function FlowchartEditorInner({
               onNodesDelete={onNodesDelete}
               onEdgesDelete={onEdgesDelete}
               deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
-              fitView
               minZoom={0.2}
               maxZoom={1.5}
               nodesDraggable={!readOnly}
@@ -953,10 +982,7 @@ function FlowchartEditorInner({
             >
               <Background gap={20} size={1} />
               <MiniMap pannable zoomable />
-              <Controls
-                showInteractive={!readOnly}
-                position={layout === "fill" ? "top-right" : "bottom-left"}
-              />
+              <Controls showInteractive={!readOnly} position="bottom-left" />
             </ReactFlow>
           </div>
         ) : (

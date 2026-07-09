@@ -7,11 +7,11 @@ type Props = {
   enabled?: boolean;
 };
 
-/** Área de trabalho do diagrama — layout expandido inline (sem modal de tela cheia). */
+/** Área de trabalho do diagrama — layout inline (sem modal de tela cheia). */
 export function DiagramFullscreenFrame({ children }: Props) {
   return (
-    <DiagramLayoutProvider layout="fill">
-      <div className="tm-diagram-workspace tm-diagram-workspace--embedded">
+    <DiagramLayoutProvider layout="default">
+      <div className="tm-diagram-workspace">
         <div className="tm-diagram-workspace__body">{children}</div>
       </div>
     </DiagramLayoutProvider>
