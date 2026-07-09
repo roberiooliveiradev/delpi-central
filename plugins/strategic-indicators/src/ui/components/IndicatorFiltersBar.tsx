@@ -1,5 +1,10 @@
 import "./IndicatorFiltersBar.css";
 
+import {
+  IndicatorFilterInputField,
+  IndicatorFilterSelectField,
+} from "./siFiltersUi";
+
 type IndicatorFiltersBarProps = {
   search: string;
   department: string;
@@ -23,46 +28,28 @@ export function IndicatorFiltersBar({
 }: IndicatorFiltersBarProps) {
   return (
     <div className="si-indicator-filters">
-      <div className="si-indicator-filter">
-        <label htmlFor="indicator-search">Buscar indicador</label>
-        <input
-          id="indicator-search"
-          type="text"
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Ex.: OEE, EBITDA, Turnover..."
-        />
-      </div>
-
-      <div className="si-indicator-filter">
-        <label htmlFor="indicator-department">Departamento</label>
-        <select
-          id="indicator-department"
-          value={department}
-          onChange={(event) => onDepartmentChange(event.target.value)}
-        >
-          {departments.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="si-indicator-filter">
-        <label htmlFor="indicator-status">Status</label>
-        <select
-          id="indicator-status"
-          value={status}
-          onChange={(event) => onStatusChange(event.target.value)}
-        >
-          {statuses.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <IndicatorFilterInputField
+        id="indicator-search"
+        label="Buscar indicador"
+        type="search"
+        value={search}
+        onChange={onSearchChange}
+        placeholder="Ex.: OEE, EBITDA, Turnover..."
+      />
+      <IndicatorFilterSelectField
+        id="indicator-department"
+        label="Departamento"
+        value={department}
+        onChange={onDepartmentChange}
+        options={departments}
+      />
+      <IndicatorFilterSelectField
+        id="indicator-status"
+        label="Status"
+        value={status}
+        onChange={onStatusChange}
+        options={statuses}
+      />
     </div>
   );
 }

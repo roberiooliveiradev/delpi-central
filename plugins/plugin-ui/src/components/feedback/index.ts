@@ -72,3 +72,12 @@ export {
   type ModalShellClassNames,
   type ModalShellProps,
 } from "./ModalShell";
+export {
+  StatusBadge,
+  createDashboardStatusBadge,
+  statusBadgeBemClasses,
+  type DashboardStatusBadgeProps,
+  type StatusBadgeClassNames,
+  type StatusBadgeProps,
+  type StatusBadgeVariant,
+} from "./StatusBadge";

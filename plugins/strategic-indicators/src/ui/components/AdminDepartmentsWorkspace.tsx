@@ -20,6 +20,7 @@ import {
 } from "../presentation/labels";
 import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
 import "./AdminDepartmentsWorkspace.css";
+import { SI_VALUE_UNIT_OPTIONS, SiSelectControl } from "./siFiltersUi";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -634,22 +635,22 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Agregação</span>
-            <select
+            <SiSelectControl
               value={departmentForm.aggregation_mode}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  aggregation_mode: event.target.value as "consolidated" | "average_of_units",
+                  aggregation_mode: value as "consolidated" | "average_of_units",
                 }))
               }
-            >
-              <option value="consolidated">
-                {getAggregationModeLabel("consolidated")}
-              </option>
-              <option value="average_of_units">
-                {getAggregationModeLabel("average_of_units")}
-              </option>
-            </select>
+              options={[
+                { value: "consolidated", label: getAggregationModeLabel("consolidated") },
+                {
+                  value: "average_of_units",
+                  label: getAggregationModeLabel("average_of_units"),
+                },
+              ]}
+            />
           </label>
 
           <label className="si-admin-form-field">
@@ -784,40 +785,42 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Escopo</span>
-            <select
+            <SiSelectControl
               value={indicatorForm.scope_type}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  scope_type: event.target.value as "consolidated" | "per_unit",
+                  scope_type: value as "consolidated" | "per_unit",
                 }))
               }
-            >
-              <option value="consolidated">{getScopeTypeLabel("consolidated")}</option>
-              <option value="per_unit">{getScopeTypeLabel("per_unit")}</option>
-            </select>
+              options={[
+                { value: "consolidated", label: getScopeTypeLabel("consolidated") },
+                { value: "per_unit", label: getScopeTypeLabel("per_unit") },
+              ]}
+            />
           </label>
 
           <label className="si-admin-form-field">
             <span>Direção de performance</span>
-            <select
+            <SiSelectControl
               value={indicatorForm.performance_direction}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  performance_direction: event.target.value as
-                    | "higher_is_better"
-                    | "lower_is_better",
+                  performance_direction: value as "higher_is_better" | "lower_is_better",
                 }))
               }
-            >
-              <option value="higher_is_better">
-                {getPerformanceDirectionLabel("higher_is_better")}
-              </option>
-              <option value="lower_is_better">
-                {getPerformanceDirectionLabel("lower_is_better")}
-              </option>
-            </select>
+              options={[
+                {
+                  value: "higher_is_better",
+                  label: getPerformanceDirectionLabel("higher_is_better"),
+                },
+                {
+                  value: "lower_is_better",
+                  label: getPerformanceDirectionLabel("lower_is_better"),
+                },
+              ]}
+            />
           </label>
 
           <label className="si-admin-form-field">
@@ -846,25 +849,18 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Unidade</span>
-            <select
+            <SiSelectControl
               value={indicatorForm.value_unit}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  value_unit: event.target.value,
+                  value_unit: value,
                 }))
               }
-            >
-              <option value="">Não informada</option>
-              <option value="percent">Percentual</option>
-              <option value="currency">Moeda</option>
-              <option value="ppm">PPM</option>
-              <option value="days">Dias</option>
-              <option value="hours">Horas</option>
-              <option value="count">Quantidade</option>
-              <option value="months">Meses</option>
-              <option value="ratio">Razão</option>
-            </select>
+              allowEmpty
+              emptyLabel="Não informada"
+              options={[...SI_VALUE_UNIT_OPTIONS]}
+            />
           </label>
 
           <label className="si-admin-form-field">

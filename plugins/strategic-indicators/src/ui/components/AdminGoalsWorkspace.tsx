@@ -29,6 +29,7 @@ import {
 import { buildGoalDuplicateSeed } from "../utils/goalDuplicateHelpers";
 import type { ScopeType } from "../../data/types/settings";
 import "./AdminGoalsWorkspace.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type AdminGoalsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -477,34 +478,29 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                   <div className="si-admin-form-grid">
                     <label className="si-admin-form-field">
                       <span>Ano de origem (copiar de)</span>
-                      <select
-                        value={sourceYear}
-                        onChange={(e) => setSourceYear(Number(e.target.value))}
-                      >
-                        {yearSelectOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
+                      <SiSelectControl
+                        value={String(sourceYear)}
+                        onChange={(value) => setSourceYear(Number(value))}
+                        options={yearSelectOptions.map((year) => ({
+                          value: String(year),
+                          label: String(year),
+                        }))}
+                      />
                     </label>
                     <label className="si-admin-form-field">
                       <span>Ano de destino (criar/atualizar)</span>
-                      <select
-                        value={duplicateTargetYear ?? selectedYear}
-                        onChange={(e) => {
-                          const nextTarget = Number(e.target.value);
+                      <SiSelectControl
+                        value={String(duplicateTargetYear ?? selectedYear)}
+                        onChange={(value) => {
+                          const nextTarget = Number(value);
                           setDuplicateTargetYear(nextTarget);
                           setSourceYear(pickSourceYearForTarget(catalogYears, nextTarget));
                         }}
-                      >
-                        {yearSelectOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                            {catalogYears.includes(year) ? "" : " (novo)"}
-                          </option>
-                        ))}
-                      </select>
+                        options={yearSelectOptions.map((year) => ({
+                          value: String(year),
+                          label: `${year}${catalogYears.includes(year) ? "" : " (novo)"}`,
+                        }))}
+                      />
                     </label>
                     <label className="si-admin-form-field si-admin-form-field--full">
                       <span>
@@ -549,16 +545,14 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                   <div className="si-admin-form-grid">
                     <label className="si-admin-form-field">
                       <span>Copiar estrutura de</span>
-                      <select
-                        value={copyFromYear}
-                        onChange={(e) => setCopyFromYear(Number(e.target.value))}
-                      >
-                        {yearSelectOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
+                      <SiSelectControl
+                        value={String(copyFromYear)}
+                        onChange={(value) => setCopyFromYear(Number(value))}
+                        options={yearSelectOptions.map((year) => ({
+                          value: String(year),
+                          label: String(year),
+                        }))}
+                      />
                     </label>
                   </div>
                 </AdminInlineToolPanel>
@@ -567,49 +561,38 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
               <div className="si-admin-goals-filters">
                 <label className="si-admin-form-field">
                   <span>Departamento</span>
-                  <select
+                  <SiSelectControl
                     value={goals.selectedDepartmentId}
                     disabled={departments.loading}
-                    onChange={(event) => {
-                      goals.setSelectedDepartmentId(event.target.value);
+                    onChange={(value) => {
+                      goals.setSelectedDepartmentId(value);
                       goals.setSelectedIndicatorId("");
                     }}
-                  >
-                    <option value="">Todos os departamentos</option>
-                    {departmentFilterOptions.map((department) => (
-                      <option
-                        key={department.department_id}
-                        value={department.department_id}
-                      >
-                        {department.department_name}
-                        {department.short_name
-                          ? ` (${department.short_name})`
-                          : ""}
-                      </option>
-                    ))}
-                  </select>
+                    allowEmpty
+                    emptyLabel="Todos os departamentos"
+                    options={departmentFilterOptions.map((department) => ({
+                      value: department.department_id,
+                      label: `${department.department_name}${
+                        department.short_name ? ` (${department.short_name})` : ""
+                      }`,
+                    }))}
+                  />
                 </label>
 
                 <label className="si-admin-form-field">
                   <span>Indicador</span>
-                  <select
+                  <SiSelectControl
                     value={goals.selectedIndicatorId}
                     disabled={catalogIndicatorsLoading || departments.loading}
-                    onChange={(event) =>
-                      goals.setSelectedIndicatorId(event.target.value)
-                    }
-                  >
-                    <option value="">
-                      {catalogIndicatorsLoading
+                    onChange={goals.setSelectedIndicatorId}
+                    allowEmpty
+                    emptyLabel={
+                      catalogIndicatorsLoading
                         ? "Carregando indicadores..."
-                        : "Todos os indicadores"}
-                    </option>
-                    {indicatorFilterOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                        : "Todos os indicadores"
+                    }
+                    options={indicatorFilterOptions}
+                  />
                 </label>
               </div>
 

@@ -8,6 +8,7 @@ import {
   getScopeTypeLabel,
 } from "../presentation/labels";
 import "./CatalogStructureValidationWorkspace.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type CatalogStructureValidationWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -152,31 +153,28 @@ export function CatalogStructureValidationWorkspace({
       <div className="si-catalog-validation__filters">
         <label className="si-admin-form-field">
           <span>Ano das metas</span>
-          <select
-            value={validation.goalYear}
-            onChange={(event) => validation.setGoalYear(Number(event.target.value))}
-          >
-            {yearOptions.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+          <SiSelectControl
+            value={String(validation.goalYear)}
+            onChange={(value) => validation.setGoalYear(Number(value))}
+            options={yearOptions.map((year) => ({
+              value: String(year),
+              label: String(year),
+            }))}
+          />
         </label>
 
         <label className="si-admin-form-field">
           <span>Departamento</span>
-          <select
+          <SiSelectControl
             value={departmentFilter}
-            onChange={(event) => setDepartmentFilter(event.target.value)}
-          >
-            <option value="">Todos</option>
-            {departmentOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={setDepartmentFilter}
+            allowEmpty
+            emptyLabel="Todos"
+            options={departmentOptions.map((option) => ({
+              value: option.id,
+              label: option.label,
+            }))}
+          />
         </label>
 
         <label className="si-catalog-validation__checkbox">

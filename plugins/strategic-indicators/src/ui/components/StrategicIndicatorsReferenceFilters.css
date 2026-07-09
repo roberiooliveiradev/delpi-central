@@ -32,7 +32,10 @@
   color: var(--si-text-muted);
 }
 
-.si-reference-filters__input {
+.si-reference-filters__field input[type="month"],
+.si-reference-filters__field input[type="date"],
+.si-reference-filters__field input[type="text"],
+.si-reference-filters__field input[type="search"] {
   width: 100%;
   min-width: 0;
   min-height: 44px;
@@ -43,9 +46,10 @@
   font: inherit;
   padding: 10px 12px;
   outline: none;
+  box-sizing: border-box;
 }
 
-.si-reference-filters__input:focus {
+.si-reference-filters__field input:focus {
   box-shadow: var(--focus-ring);
   border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
 }
@@ -88,7 +92,8 @@
     grid-column: auto;
   }
 
-  .si-reference-filters__input {
+  .si-reference-filters__field input[type="month"],
+  .si-reference-filters__field input[type="date"] {
     min-height: 40px;
     font-size: 14px;
   }

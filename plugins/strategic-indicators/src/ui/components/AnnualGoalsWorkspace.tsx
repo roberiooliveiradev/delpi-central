@@ -22,6 +22,7 @@ import {
 import { buildEmptyCurveTargets } from "../utils/curveTargets";
 import { resolveGoalValueForApi } from "../utils/goalValuePolicy";
 import "./AnnualGoalsWorkspace.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type AnnualGoalsWorkspaceMode =
   | "create_year"
@@ -272,16 +273,14 @@ export function AnnualGoalsWorkspace({
           <>
             <label className="si-admin-form-field">
               <span>Ano de origem (copiar de)</span>
-              <select
-                value={sourceYear}
-                onChange={(event) => setSourceYear(Number(event.target.value))}
-              >
-                {yearSelectOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
+              <SiSelectControl
+                value={String(sourceYear)}
+                onChange={(value) => setSourceYear(Number(value))}
+                options={yearSelectOptions.map((year) => ({
+                  value: String(year),
+                  label: String(year),
+                }))}
+              />
             </label>
 
             <label className="si-admin-form-field">
@@ -289,16 +288,14 @@ export function AnnualGoalsWorkspace({
               {typeof fixedTargetYear === "number" ? (
                 <input type="number" value={resolvedTargetYear} readOnly />
               ) : (
-                <select
-                  value={targetYear}
-                  onChange={(event) => setTargetYear(Number(event.target.value))}
-                >
-                  {yearSelectOptions.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
+                <SiSelectControl
+                  value={String(targetYear)}
+                  onChange={(value) => setTargetYear(Number(value))}
+                  options={yearSelectOptions.map((year) => ({
+                    value: String(year),
+                    label: String(year),
+                  }))}
+                />
               )}
             </label>
           </>
@@ -308,17 +305,14 @@ export function AnnualGoalsWorkspace({
             {typeof fixedTargetYear === "number" ? (
               <input type="number" value={resolvedTargetYear} readOnly />
             ) : (
-              <select
-                value={resolvedTargetYear}
-                onChange={(event) => setTargetYear(Number(event.target.value))}
-              >
-                {yearSelectOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                    {catalogYears.includes(year) ? "" : " (novo)"}
-                  </option>
-                ))}
-              </select>
+              <SiSelectControl
+                value={String(resolvedTargetYear)}
+                onChange={(value) => setTargetYear(Number(value))}
+                options={yearSelectOptions.map((year) => ({
+                  value: String(year),
+                  label: `${year}${catalogYears.includes(year) ? "" : " (novo)"}`,
+                }))}
+              />
             )}
           </label>
         )}
@@ -326,16 +320,14 @@ export function AnnualGoalsWorkspace({
         {mode === "fill_missing_for_year" ? (
           <label className="si-admin-form-field">
             <span>Copiar estrutura de</span>
-            <select
-              value={copyFromYear}
-              onChange={(event) => setCopyFromYear(Number(event.target.value))}
-            >
-              {yearSelectOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+            <SiSelectControl
+              value={String(copyFromYear)}
+              onChange={(value) => setCopyFromYear(Number(value))}
+              options={yearSelectOptions.map((year) => ({
+                value: String(year),
+                label: String(year),
+              }))}
+            />
           </label>
         ) : null}
 
@@ -360,11 +352,10 @@ export function AnnualGoalsWorkspace({
               {bulkRows.map((row, index) => (
                 <div key={index} className="si-bulk-goals-form__row">
                   {indicatorOptions.length > 0 ? (
-                    <select
+                    <SiSelectControl
                       value={row.indicator_id}
-                      aria-label="Indicador estrutural"
-                      onChange={(event) => {
-                        const nextId = event.target.value;
+                      ariaLabel="Indicador estrutural"
+                      onChange={(nextId) => {
                         const labelHint = indicatorLabelForValue(nextId);
                         setBulkRows((current) =>
                           current.map((item, itemIndex) =>
@@ -378,14 +369,10 @@ export function AnnualGoalsWorkspace({
                           ),
                         );
                       }}
-                    >
-                      <option value="">Selecione o indicador</option>
-                      {indicatorOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      allowEmpty
+                      emptyLabel="Selecione o indicador"
+                      options={indicatorOptions}
+                    />
                   ) : (
                     <input
                       placeholder="ID do indicador"
@@ -436,41 +423,42 @@ export function AnnualGoalsWorkspace({
                     />
                   ) : null}
 
-                  <select
+                  <SiSelectControl
                     value={row.goal_periodicity}
-                    aria-label="Periodicidade da meta"
-                    onChange={(event) =>
+                    ariaLabel="Periodicidade da meta"
+                    onChange={(value) =>
                       setBulkRows((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index
                             ? {
                                 ...item,
                                 goal_periodicity:
-                                  event.target.value as BulkGoalRow["goal_periodicity"],
+                                  value as BulkGoalRow["goal_periodicity"],
                               }
                             : item,
                         ),
                       )
                     }
-                  >
-                    <option value="monthly">{getGoalPeriodicityLabel("monthly")}</option>
-                    <option value="annual">{getGoalPeriodicityLabel("annual")}</option>
-                    <option value="quarterly">{getGoalPeriodicityLabel("quarterly")}</option>
-                    <option value="weekly">{getGoalPeriodicityLabel("weekly")}</option>
-                  </select>
+                    options={[
+                      { value: "monthly", label: getGoalPeriodicityLabel("monthly") },
+                      { value: "annual", label: getGoalPeriodicityLabel("annual") },
+                      { value: "quarterly", label: getGoalPeriodicityLabel("quarterly") },
+                      { value: "weekly", label: getGoalPeriodicityLabel("weekly") },
+                    ]}
+                  />
 
-                  <select
+                  <SiSelectControl
                     value={row.goal_mode}
-                    aria-label="Modo da meta"
-                    onChange={(event) =>
+                    ariaLabel="Modo da meta"
+                    onChange={(value) =>
                       setBulkRows((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index
                             ? {
                                 ...item,
-                                goal_mode: event.target.value as "standard" | "monthly_curve",
+                                goal_mode: value as "standard" | "monthly_curve",
                                 monthly_targets:
-                                  event.target.value === "monthly_curve"
+                                  value === "monthly_curve"
                                     ? buildEmptyCurveTargets(item.goal_periodicity)
                                     : [],
                               }
@@ -478,33 +466,34 @@ export function AnnualGoalsWorkspace({
                         ),
                       )
                     }
-                  >
-                    <option value="standard">{getGoalModeLabel("standard")}</option>
-                    <option value="monthly_curve">
-                      {getGoalModeLabel("monthly_curve")}
-                    </option>
-                  </select>
+                    options={[
+                      { value: "standard", label: getGoalModeLabel("standard") },
+                      { value: "monthly_curve", label: getGoalModeLabel("monthly_curve") },
+                    ]}
+                  />
 
-                  <select
+                  <SiSelectControl
                     value={row.goal_scope_branch}
-                    aria-label="Escopo da meta"
-                    onChange={(event) =>
+                    ariaLabel="Escopo da meta"
+                    onChange={(value) =>
                       setBulkRows((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index
                             ? {
                                 ...item,
-                                goal_scope_branch: event.target.value as BulkGoalRow["goal_scope_branch"],
+                                goal_scope_branch: value as BulkGoalRow["goal_scope_branch"],
                               }
                             : item,
                         ),
                       )
                     }
-                  >
-                    <option value="">{getGoalScopeBranchLabel("")}</option>
-                    <option value="01">{getGoalScopeBranchLabel("01")}</option>
-                    <option value="02">{getGoalScopeBranchLabel("02")}</option>
-                  </select>
+                    allowEmpty
+                    emptyLabel={getGoalScopeBranchLabel("")}
+                    options={[
+                      { value: "01", label: getGoalScopeBranchLabel("01") },
+                      { value: "02", label: getGoalScopeBranchLabel("02") },
+                    ]}
+                  />
                 </div>
               ))}
 

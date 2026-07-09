@@ -10,14 +10,14 @@
   gap: 8px;
 }
 
-.si-indicator-filter label {
+.si-indicator-filter label,
+.si-indicator-filter__label {
   font-size: 13px;
   font-weight: 800;
   color: var(--si-title);
 }
 
-.si-indicator-filter input,
-.si-indicator-filter select {
+.si-indicator-filter input {
   min-height: 44px;
   padding: 10px 12px;
   border-radius: 12px;
@@ -25,14 +25,15 @@
   background: var(--control-bg, var(--surface, #ffffff));
   color: var(--control-text, var(--si-text));
   outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .si-indicator-filter input::placeholder {
   color: var(--control-placeholder, rgba(17, 17, 17, 0.55));
 }
 
-.si-indicator-filter input:focus,
-.si-indicator-filter select:focus {
+.si-indicator-filter input:focus {
   box-shadow: var(--focus-ring);
   border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
 }

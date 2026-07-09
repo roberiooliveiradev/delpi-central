@@ -192,6 +192,22 @@ Feedback de carregamento com spinner, barra de progresso (determinada ou indeter
 
 Helpers: `loadingActivityBemClasses(prefix, { withCopyWrapper? })` e `createDashboardLoadingActivityCard`.
 
+### `StatusBadge`
+
+Pill semântico de status (`neutral` | `info` | `success` | `warning` | `danger`). Estilos no plugin via BEM `{prefix}-status-badge--*`.
+
+Helpers: `statusBadgeBemClasses(prefix)`, `createDashboardStatusBadge({ prefix })`.
+
+Consumidor piloto: `strategic-indicators` (`StatusBadge.tsx`).
+
+### `SectionBlock`
+
+Seção com cabeçalho (título, descrição, slot `aside`) e corpo. Útil em dashboards e painéis admin.
+
+Helpers: `sectionBlockBemClasses(prefix)`, `createDashboardSectionBlock({ prefix })`.
+
+Consumidor piloto: `strategic-indicators` (`SectionBlock.tsx`).
+
 ### `Pagination` + `TablePageSizeSelect`
 
 Rodapé de tabela com navegação, páginas visíveis (reticências), «Ir para» e seletor de itens por página.

@@ -3,6 +3,10 @@ import { Expand, Minimize } from "lucide-react";
 import { LoadingActivityBadge } from "./LoadingActivityBadge";
 import { StatusBadge } from "./StatusBadge";
 import { LastUpdateBadge } from "./LastUpdateBadge";
+import {
+  PresentationFilterInputField,
+  PresentationFilterSelectField,
+} from "./siFiltersUi";
 import "./PresentationTopBar.css";
 
 type PresentationMode = "meeting" | "tv" | "slide";
@@ -271,43 +275,33 @@ export function PresentationTopBar({
         </div>
 
         {showBranchFilter ? (
-          <label className="si-presentation-topbar__filter">
-            <span>Unidade</span>
-            <select
-              value={branch}
-              onChange={(event) => onBranchChange(event.target.value)}
-            >
-              {branchOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <PresentationFilterSelectField
+            id="si-presentation-branch"
+            label="Unidade"
+            value={branch}
+            onChange={onBranchChange}
+            options={branchOptions}
+          />
         ) : null}
 
-        <label className="si-presentation-topbar__filter">
-          <span>Mês de referência</span>
-          <input
-            type="month"
-            value={referenceMonth}
-            onChange={(event) => onReferenceMonthChange(event.target.value)}
-          />
-        </label>
+        <PresentationFilterInputField
+          id="si-presentation-reference-month"
+          label="Mês de referência"
+          type="month"
+          value={referenceMonth}
+          onChange={onReferenceMonthChange}
+        />
 
-        <label className="si-presentation-topbar__filter">
-          <span>Janela de tendência</span>
-          <select
-            value={String(months)}
-            onChange={(event) => onMonthsChange(Number(event.target.value))}
-          >
-            {monthsOptions.map((option) => (
-              <option key={option.value} value={String(option.value)}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PresentationFilterSelectField
+          id="si-presentation-trend-window"
+          label="Janela de tendência"
+          value={String(months)}
+          onChange={(value) => onMonthsChange(Number(value))}
+          options={monthsOptions.map((option) => ({
+            value: String(option.value),
+            label: option.label,
+          }))}
+        />
 
         <div className="si-presentation-topbar__status">
           {isRefreshing ? (

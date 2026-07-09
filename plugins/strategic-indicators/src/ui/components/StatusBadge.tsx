@@ -1,19 +1,8 @@
+import { createDashboardStatusBadge } from "@delpi/plugin-ui";
+
 import "./StatusBadge.css";
 
-type StatusVariant = "neutral" | "info" | "success" | "warning" | "danger";
+/** Pill semântico de status (neutral/info/success/warning/danger). */
+export const StatusBadge = createDashboardStatusBadge({ prefix: "si" });
 
-type StatusBadgeProps = {
-  label: string;
-  variant?: StatusVariant;
-};
-
-export function StatusBadge({
-  label,
-  variant = "neutral",
-}: StatusBadgeProps) {
-  return (
-    <span className={`si-status-badge si-status-badge--${variant}`}>
-      {label}
-    </span>
-  );
-}
+export type { StatusBadgeVariant } from "@delpi/plugin-ui";

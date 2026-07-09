@@ -175,3 +175,11 @@ export {
   type FormActionsClassNames,
   type FormActionsProps,
 } from "./FormActions";
+export {
+  SectionBlock,
+  createDashboardSectionBlock,
+  sectionBlockBemClasses,
+  type DashboardSectionBlockProps,
+  type SectionBlockClassNames,
+  type SectionBlockProps,
+} from "./SectionBlock";

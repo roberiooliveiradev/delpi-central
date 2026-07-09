@@ -11,6 +11,7 @@ import {
   formatAdminGoalValueOnly,
 } from "../utils/goalValuePolicy";
 import "./IndicatorGoalsWorkspace.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type IndicatorGoalsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -163,17 +164,16 @@ export function IndicatorGoalsWorkspace({
             <span className="si-settings-form-field__label">
               Filtrar por indicador
             </span>
-            <select
+            <SiSelectControl
               value={selectedIndicatorId}
-              onChange={(e) => setSelectedIndicatorId(e.target.value)}
-            >
-              <option value="">Todos</option>
-              {indicatorOptions.map((indicatorId) => (
-                <option key={indicatorId} value={indicatorId}>
-                  {indicatorId}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedIndicatorId}
+              allowEmpty
+              emptyLabel="Todos"
+              options={indicatorOptions.map((indicatorId) => ({
+                value: indicatorId,
+                label: indicatorId,
+              }))}
+            />
           </label>
 
           <label className="si-settings-form-field">

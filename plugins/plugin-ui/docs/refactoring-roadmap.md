@@ -95,7 +95,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 | Pacote | Motivo |
 |--------|--------|
 | `minha-delpi-chat` | UI de chat/apresentação rica — contrato próprio; não misturar com shell de dashboard |
-| `strategic-indicators` | Design system interno (`ui/components/*`) — migrar só primitivos isolados se duplicarem dashboards |
+| `strategic-indicators` | Design system interno (`ui/components/*`) | ✅ F3.12 — filtros + admin SelectControl; StatusBadge/SectionBlock no pacote; domínio (PanZoom, presentation) permanece local |
 | `tv-dashboard-presentation` | Já é biblioteca irmã declarada em `shared-libraries.manifest.json` |
 | Presenters de domínio | Cards OEE, fishbone, árvore TOTVS, etc. |
 
@@ -325,7 +325,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 |--------|--------|
 | **F1** Help | Plugins MFE; portal permanece local |
 | **F2** Shell dashboard | Kpi/Chart/Loading/Pagination/Filter/MultiSelect/DataTable nos dept. |
-| **F3** Forms/detalhe | F3.1–F3.11 (Native*, EditableTableCell, PageHeader, Detail*, BookingModal, maintenance, TV, ProcessoForm) |
+| **F3** Forms/detalhe | F3.1–F3.12 (Native*, EditableTableCell, PageHeader, Detail*, BookingModal, maintenance, TV, ProcessoForm, **strategic-indicators SelectControl**) |
 | **F4** Utils | paginationPages, chartColors, operationalUnitLabels, goalDisplay |
 | **F5** (parcial) | FileDropzone, confirm controller, ConfirmModalPanel, ModalShell, SI utils |
 | **Export E1–E3** | Motor tabular, PDF DELPI, botões, jsPDF, PNG chart, matrix, PVA — [export-catalog.md](./export-catalog.md) |
@@ -334,7 +334,6 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Prioridade ROI | Item | Notas |
 |----------------|------|--------|
-| Alta | **strategic-indicators** Native*/SelectControl | Goals, departments, filters, change requests — maior volume de `<select>`/`<textarea>` crus |
 | Média | **auditoria-5s** `AuditNcItemCard` | Textareas + select com wrap de ícone — precisa slot/ícone no Native* ou wrapper fino |
 | Média | **tv-dashboard** ComunicadoFormatRibbon | Ribbon tipográfico — domínio UI, não Native* puro |
 | Média | **transformometro** forms restantes | Revisão / recurso / vigência (ProcessoForm já Native*) |
@@ -346,11 +345,10 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
 
-### Próximo lote sugerido (quando retomr)
+### Próximo lote sugerido (quando retomar)
 
-1. SI `IndicatorFiltersBar` + `IndicatorGoalForm` → Native*/SelectControl + CSS BEM.
-2. a5s NC fields (após `afterControl` / slot de ícone, se necessário).
-3. Fechar F5 dropzones ou Modal base sob pedido explícito.
+1. a5s NC fields (após `afterControl` / slot de ícone, se necessário).
+2. Fechar F5 dropzones ou Modal base sob pedido explícito.
 
 ---
 

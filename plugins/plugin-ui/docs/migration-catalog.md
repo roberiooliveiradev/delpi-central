@@ -186,7 +186,7 @@ Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plug
 | `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard, FilterBarShell |
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
-| `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard | `operationalUnitLabels` |
+| `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard, **StatusBadge**, **SectionBlock**, **FilterSelectField** / **SiSelectControl** | `operationalUnitLabels`, `siFiltersUi` |
 | `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity, FilterBarShell, PageHeader, CompactPagination |
 | `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState, FilterBarShell, PageHeader, CompactPagination |
 | `auditoria-5s` | — | ChartCard, createAnalyticsKpiCard, FilterBarShell |

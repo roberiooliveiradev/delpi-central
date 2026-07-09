@@ -4,6 +4,7 @@ import type {
   StrategicIndicatorsSettingsAuditItem,
 } from "../../data/types/settingsAudit";
 import "./AuditTimelinePanel.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type AuditTimelinePanelProps = {
   items: StrategicIndicatorsSettingsAuditItem[];
@@ -136,33 +137,32 @@ export function AuditTimelinePanel({
         <div className="si-audit-panel__controls">
           <label className="si-audit-panel__filter">
             <span>Filtrar bloco</span>
-            <select
+            <SiSelectControl
               value={filter}
-              onChange={(event) => {
-                const next = event.target.value as AuditFilterValue;
-                setFilter(next);
-                onEntityKeyChange(next);
+              onChange={(next) => {
+                const nextFilter = next as AuditFilterValue;
+                setFilter(nextFilter);
+                onEntityKeyChange(nextFilter);
               }}
-            >
-              {FILTER_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              options={FILTER_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
           </label>
 
           <label className="si-audit-panel__filter">
             <span>Quantidade</span>
-            <select
+            <SiSelectControl
               value={limit}
-              onChange={(event) => setLimit(event.target.value)}
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
+              onChange={setLimit}
+              options={[
+                { value: "10", label: "10" },
+                { value: "20", label: "20" },
+                { value: "50", label: "50" },
+                { value: "100", label: "100" },
+              ]}
+            />
           </label>
 
           <label className="si-audit-panel__filter si-audit-panel__filter--search">

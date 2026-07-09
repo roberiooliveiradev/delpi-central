@@ -30,6 +30,7 @@ import {
   resolveGoalValueForApi,
 } from "../utils/goalValuePolicy";
 import "./IndicatorGoalForm.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type IndicatorOption = {
   value: string;
@@ -238,10 +239,9 @@ export function IndicatorGoalForm({
       <div className="si-modal-form__grid">
         <Field label="Indicador">
           {normalizedIndicatorOptions.length > 0 ? (
-            <select
+            <SiSelectControl
               value={indicatorId}
-              onChange={(e) => {
-                const nextId = e.target.value;
+              onChange={(nextId) => {
                 setIndicatorId(nextId);
                 if (!isEditing && !goalLabel.trim()) {
                   const match = normalizedIndicatorOptions.find(
@@ -253,15 +253,10 @@ export function IndicatorGoalForm({
                   }
                 }
               }}
-              autoFocus={!isEditing}
-            >
-              <option value="">Selecione</option>
-              {normalizedIndicatorOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              allowEmpty
+              emptyLabel="Selecione"
+              options={normalizedIndicatorOptions}
+            />
           ) : (
             <input
               value={indicatorId}
@@ -290,50 +285,54 @@ export function IndicatorGoalForm({
         </Field>
 
         <Field label="Modo da meta">
-          <select
+          <SiSelectControl
             value={goalMode}
-            onChange={(e) => {
-              const nextMode = e.target.value as GoalMode;
-              setGoalMode(nextMode);
-              if (nextMode === "monthly_curve") {
+            onChange={(nextMode) => {
+              const resolvedMode = nextMode as GoalMode;
+              setGoalMode(resolvedMode);
+              if (resolvedMode === "monthly_curve") {
                 setMonthlyTargets(buildEmptyCurveTargets(goalPeriodicity));
               }
             }}
-          >
-            <option value="standard">{getGoalModeLabel("standard")}</option>
-            <option value="monthly_curve">{getGoalModeLabel("monthly_curve")}</option>
-          </select>
+            options={[
+              { value: "standard", label: getGoalModeLabel("standard") },
+              { value: "monthly_curve", label: getGoalModeLabel("monthly_curve") },
+            ]}
+          />
         </Field>
 
         <Field label="Escopo da meta">
-          <select
+          <SiSelectControl
             value={goalScopeBranch}
-            onChange={(e) => setGoalScopeBranch(e.target.value)}
-          >
-            <option value="">{getGoalScopeBranchLabel("")}</option>
-            <option value="01">{getGoalScopeBranchLabel("01")}</option>
-            <option value="02">{getGoalScopeBranchLabel("02")}</option>
-          </select>
+            onChange={setGoalScopeBranch}
+            allowEmpty
+            emptyLabel={getGoalScopeBranchLabel("")}
+            options={[
+              { value: "01", label: getGoalScopeBranchLabel("01") },
+              { value: "02", label: getGoalScopeBranchLabel("02") },
+            ]}
+          />
         </Field>
 
         <Field label="Periodicidade">
-          <select
+          <SiSelectControl
             value={goalPeriodicity}
-            onChange={(e) => {
-              const nextPeriodicity = e.target.value as GoalPeriodicity;
-              setGoalPeriodicity(nextPeriodicity);
+            onChange={(nextPeriodicity) => {
+              const resolvedPeriodicity = nextPeriodicity as GoalPeriodicity;
+              setGoalPeriodicity(resolvedPeriodicity);
               if (goalMode === "monthly_curve") {
                 setMonthlyTargets((current) =>
-                  normalizeCurveTargets(current, nextPeriodicity),
+                  normalizeCurveTargets(current, resolvedPeriodicity),
                 );
               }
             }}
-          >
-            <option value="monthly">Mensal</option>
-            <option value="annual">Anual</option>
-            <option value="quarterly">Trimestral</option>
-            <option value="weekly">Semanal</option>
-          </select>
+            options={[
+              { value: "monthly", label: "Mensal" },
+              { value: "annual", label: "Anual" },
+              { value: "quarterly", label: "Trimestral" },
+              { value: "weekly", label: "Semanal" },
+            ]}
+          />
         </Field>
 
         {goalMode === "standard" ? (

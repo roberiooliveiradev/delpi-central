@@ -9,6 +9,7 @@ import {
   getChangeRequestStatusLabel,
 } from "../presentation/labels";
 import "./ChangeRequestsWorkspacePanel.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type ChangeRequestsWorkspacePanelProps = {
   getAccessToken?: () => string | undefined;
@@ -94,20 +95,28 @@ export function ChangeRequestsWorkspacePanel({
 
           <label className="si-change-requests__field">
             <span>Bloco alvo</span>
-            <select value={targetBlock} onChange={(e) => setTargetBlock(e.target.value)}>
-              <option value="weights.departments">
-                {getAuditEntityKeyLabel("weights.departments")}
-              </option>
-              <option value="goals.summary">
-                {getAuditEntityKeyLabel("goals.summary")}
-              </option>
-              <option value="parameters.global">
-                {getAuditEntityKeyLabel("parameters.global")}
-              </option>
-              <option value="governance.notes">
-                {getAuditEntityKeyLabel("governance.notes")}
-              </option>
-            </select>
+            <SiSelectControl
+              value={targetBlock}
+              onChange={setTargetBlock}
+              options={[
+                {
+                  value: "weights.departments",
+                  label: getAuditEntityKeyLabel("weights.departments"),
+                },
+                {
+                  value: "goals.summary",
+                  label: getAuditEntityKeyLabel("goals.summary"),
+                },
+                {
+                  value: "parameters.global",
+                  label: getAuditEntityKeyLabel("parameters.global"),
+                },
+                {
+                  value: "governance.notes",
+                  label: getAuditEntityKeyLabel("governance.notes"),
+                },
+              ]}
+            />
           </label>
 
           <label className="si-change-requests__field">

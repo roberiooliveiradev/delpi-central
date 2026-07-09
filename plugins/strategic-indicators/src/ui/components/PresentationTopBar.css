@@ -88,7 +88,8 @@
   flex: 0 1 auto;
 }
 
-.si-presentation-topbar__filter span {
+.si-presentation-topbar__filter span,
+.si-presentation-topbar__filter-label {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -96,8 +97,10 @@
   color: var(--si-text-muted);
 }
 
-.si-presentation-topbar__filter input,
-.si-presentation-topbar__filter select {
+.si-presentation-topbar__filter input[type="month"],
+.si-presentation-topbar__filter input[type="date"],
+.si-presentation-topbar__filter input[type="text"],
+.si-presentation-topbar__filter input[type="search"] {
   min-height: 34px;
   border-radius: 10px;
   border: 1px solid var(--si-card-border);
@@ -106,6 +109,7 @@
   font: inherit;
   padding: 7px 10px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .si-presentation-topbar__status {
@@ -438,8 +442,8 @@
     font-size: 14px;
   }
 
-  .si-presentation-topbar__filter input,
-  .si-presentation-topbar__filter select {
+  .si-presentation-topbar__filter input[type="month"],
+  .si-presentation-topbar__filter input[type="date"] {
     min-height: 40px;
   }
 }

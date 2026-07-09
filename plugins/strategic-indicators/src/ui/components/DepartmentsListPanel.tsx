@@ -12,6 +12,7 @@ import type {
 import { DepartmentManagementModal } from "./DepartmentManagementModal";
 import { getAggregationModeLabel } from "../presentation/labels";
 import "./DepartmentsListPanel.css";
+import { SiSelectControl } from "./siFiltersUi";
 
 type DepartmentsListPanelProps = {
   getAccessToken?: () => string | undefined;
@@ -197,16 +198,17 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field si-admin-form-field--compact">
             <span>Status</span>
-            <select
+            <SiSelectControl
               value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value as "all" | "active" | "inactive")
+              onChange={(value) =>
+                setStatusFilter(value as "all" | "active" | "inactive")
               }
-            >
-              <option value="all">Todos</option>
-              <option value="active">Ativos</option>
-              <option value="inactive">Inativos</option>
-            </select>
+              options={[
+                { value: "all", label: "Todos" },
+                { value: "active", label: "Ativos" },
+                { value: "inactive", label: "Inativos" },
+              ]}
+            />
           </label>
 
           <div className="si-admin-list-toolbar__actions">
@@ -327,22 +329,22 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field">
             <span>Agregação</span>
-            <select
+            <SiSelectControl
               value={departmentForm.aggregation_mode}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  aggregation_mode: event.target.value as "consolidated" | "average_of_units",
+                  aggregation_mode: value as "consolidated" | "average_of_units",
                 }))
               }
-            >
-              <option value="consolidated">
-                {getAggregationModeLabel("consolidated")}
-              </option>
-              <option value="average_of_units">
-                {getAggregationModeLabel("average_of_units")}
-              </option>
-            </select>
+              options={[
+                { value: "consolidated", label: getAggregationModeLabel("consolidated") },
+                {
+                  value: "average_of_units",
+                  label: getAggregationModeLabel("average_of_units"),
+                },
+              ]}
+            />
           </label>
 
           <label className="si-admin-form-field">
