@@ -89,9 +89,13 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             branch=request.branch,
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
+            product_prefix=getattr(request, "product_prefix", None),
         )
 
-        ctes = build_inspection_apont_ctes(branch=request.branch)
+        ctes = build_inspection_apont_ctes(
+            branch=request.branch,
+            product_prefix=getattr(request, "product_prefix", None),
+        )
         prod_params = append_apont_date_params(
             ctes.params,
             date_start=date_start,
@@ -330,6 +334,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             branch=request.branch,
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
+            product_prefix=getattr(request, "product_prefix", None),
         )
 
         base_sql = f"""

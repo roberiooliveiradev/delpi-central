@@ -56,11 +56,14 @@ export function PpmPage({ pathname }: PpmPageProps) {
     dateEnd,
     competence,
     branches: selectedBranches,
+    ppmProductScope,
     setDateStart,
     setDateEnd,
     setCompetence,
     setBranches,
+    setPpmProductScope,
     apiParams,
+    ppmApiParams,
     filterState,
   } = useQualityFilters();
 
@@ -70,21 +73,21 @@ export function PpmPage({ pathname }: PpmPageProps) {
   const { summary, page: tablePage, loading, refreshing, error, reload } =
     usePpmPage({
       type: ppmType,
-      filters: apiParams,
+      filters: ppmApiParams,
       page,
       pageSize,
     });
 
   const internalSeries = usePpmChartSeries({
     type: "internal",
-    filters: apiParams,
+    filters: ppmApiParams,
     granularity,
     enabled: compareChart || ppmType === "internal",
   });
 
   const externalSeries = usePpmChartSeries({
     type: "external",
-    filters: apiParams,
+    filters: ppmApiParams,
     granularity,
     enabled: compareChart || ppmType === "external",
   });
@@ -260,7 +263,9 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
   const isBusy = loading || refreshing;
   const isChartBusy = chartLoading || refreshing;
+  const isPlugsScope = ppmProductScope === "plugs";
   const typeLabel = ppmType === "internal" ? "interno" : "externo";
+  const plugsSuffix = isPlugsScope ? " — plugues" : "";
   const hasChartValues = compareChart
     ? compareChartData.some(
         (point) => point.ppmInternal > 0 || point.ppmExternal > 0
@@ -333,12 +338,15 @@ export function PpmPage({ pathname }: PpmPageProps) {
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={selectedBranches}
+        ppmProductScope={ppmProductScope}
+        showPpmProductScope
         branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}
+        onPpmProductScopeChange={setPpmProductScope}
       />
 
       <div className="dq-ppm-toolbar dq-no-print">
@@ -359,7 +367,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
       <section className="dq-kpi-grid dq-kpi-grid--single-row" aria-busy={isBusy}>
         <KpiCard
-          title={`PPM ${typeLabel}`}
+          title={`PPM ${typeLabel}${plugsSuffix}`}
           titleHint={
             ppmType === "internal"
               ? QUALITY_HELP_TOOLTIPS.kpis.ppmInternal

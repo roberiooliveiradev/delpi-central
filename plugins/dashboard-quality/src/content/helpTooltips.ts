@@ -11,12 +11,18 @@ export const QUALITY_HELP_TOOLTIPS = {
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
       "Unidade TOTVS. Vazio = todas; múltiplas unidades restringem o recorte dos indicadores.",
+    ppmProductScope:
+      "Recorte de PPM por família de produto acabado. Plugues = códigos que começam com 9048 (numerador e denominador).",
   },
   kpis: {
     ppmInternal:
       "Parts Per Million interno: devoluções internas por milhão de unidades produzidas no período.",
     ppmExternal:
       "PPM externo: devoluções de clientes por milhão de unidades faturadas.",
+    ppmInternalPlugs:
+      "PPM interno restrito a plugues — produtos acabados cujo código começa com 9048.",
+    ppmExternalPlugs:
+      "PPM externo restrito a plugues — produtos acabados cujo código começa com 9048.",
     kaizenOpen: "Quantidade de kaizens abertos ou em andamento no recorte.",
     kaizenClosed: "Kaizens concluídos no período filtrado.",
     kaizenTotal: "Total de kaizens registrados no período conforme filtros aplicados.",

@@ -14,6 +14,8 @@ import {
   type QualityFilterUrlState,
 } from "../utils/filterUrl";
 import type { DateRangeParams } from "../types/ppm";
+import type { PpmProductScope } from "../utils/ppmProductScope";
+import { resolvePpmProductPrefix } from "../utils/ppmProductScope";
 
 export function useQualityFilters() {
   const initial = readQualityFilters();
@@ -27,21 +29,29 @@ export function useQualityFilters() {
     replaceAll,
   } = useCompetenceLinkedDates(initial);
   const [branches, setBranchesState] = useState(initial.branches);
+  const [ppmProductScope, setPpmProductScopeState] = useState<PpmProductScope>(
+    initial.ppmProductScope
+  );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, competence, branches });
-  }, [dateStart, dateEnd, competence, branches]);
+    writeFiltersToUrl({ dateStart, dateEnd, competence, branches, ppmProductScope });
+  }, [dateStart, dateEnd, competence, branches, ppmProductScope]);
 
   useEffect(() => {
     return subscribeFilterRouteSync(() => {
       const next = readQualityFilters();
       replaceAll(next);
       setBranchesState(next.branches);
+      setPpmProductScopeState(next.ppmProductScope);
     });
   }, [replaceAll]);
 
   const setBranches = useCallback((value: string[]) => {
     setBranchesState(value);
+  }, []);
+
+  const setPpmProductScope = useCallback((value: PpmProductScope) => {
+    setPpmProductScopeState(value);
   }, []);
 
   const apiParams: DateRangeParams = {
@@ -50,11 +60,17 @@ export function useQualityFilters() {
     date_end: inputDateToApi(dateEnd),
   };
 
+  const ppmApiParams: DateRangeParams = {
+    ...apiParams,
+    product_prefix: resolvePpmProductPrefix(ppmProductScope),
+  };
+
   const filterState: QualityFilterUrlState = {
     dateStart,
     dateEnd,
     competence,
     branches,
+    ppmProductScope,
   };
 
   const resetFilters = useCallback(() => {
@@ -65,10 +81,12 @@ export function useQualityFilters() {
     const state: QualityFilterUrlState = {
       ...next,
       branches: [],
+      ppmProductScope: "all",
     };
 
     replaceAll(state);
     setBranchesState([]);
+    setPpmProductScopeState("all");
     writeFiltersToUrl(state);
   }, [replaceAll]);
 
@@ -77,11 +95,14 @@ export function useQualityFilters() {
     dateEnd,
     competence,
     branches,
+    ppmProductScope,
     setDateStart,
     setDateEnd,
     setCompetence,
     setBranches,
+    setPpmProductScope,
     apiParams,
+    ppmApiParams,
     filterState,
     resetFilters,
   };

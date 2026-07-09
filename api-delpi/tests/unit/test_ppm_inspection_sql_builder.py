@@ -22,3 +22,9 @@ def test_build_inspection_apont_ctes_with_branch_and_products() -> None:
     assert "AND SH6.H6_FILIAL = ?" in bundle.apont_inspecao_cte
     assert "AND SH6.H6_PRODUTO IN (?, ?)" in bundle.apont_inspecao_cte
     assert bundle.params == ["01", "01", "50232465", "50233615"]
+
+
+def test_build_inspection_apont_ctes_with_product_prefix() -> None:
+    bundle = build_inspection_apont_ctes(product_prefix="9048")
+    assert "AND SH6.H6_PRODUTO LIKE ?" in bundle.apont_inspecao_cte
+    assert bundle.params == ["9048%"]

@@ -13,6 +13,7 @@ def ppm_summary_cache_key(request: PpmSummaryRequest) -> str:
             request.branch or "",
             request.date_start or "",
             request.date_end or "",
+            request.product_prefix or "",
         ]
     )
 

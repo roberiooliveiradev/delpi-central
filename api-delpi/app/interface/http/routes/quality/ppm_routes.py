@@ -18,6 +18,10 @@ from app.composition.quality_composer import (
     build_list_ppm_use_case,
 )
 from app.core.responses import error_response
+from app.domain.services.quality.ppm_product_scope import (
+    PLUGS_FINISHED_PRODUCT_PREFIX,
+    normalize_ppm_product_prefix,
+)
 from app.interface.http.kpi_field_labels import (
     QUALITY_PPM_FIELD_LABELS,
     QUALITY_PRODUCED_QUANTITY_FIELD_LABELS,
@@ -36,6 +40,27 @@ _PPM_GOAL_KEYS = {
     "external": goal_keys.QUALITY_PPM_EXTERNAL,
 }
 
+_PPM_PLUGS_GOAL_KEYS = {
+    "internal": goal_keys.QUALITY_PPM_INTERNAL_PLUGS,
+    "external": goal_keys.QUALITY_PPM_EXTERNAL_PLUGS,
+}
+
+
+def _resolve_ppm_goal_key(ppm_type: PpmType, product_prefix: str | None) -> str:
+    if product_prefix == PLUGS_FINISHED_PRODUCT_PREFIX:
+        return _PPM_PLUGS_GOAL_KEYS[ppm_type]
+    return _PPM_GOAL_KEYS[ppm_type]
+
+
+def _parse_product_prefix(product_prefix: str | None) -> tuple[str | None, str | None]:
+    if product_prefix is None:
+        return None, None
+
+    try:
+        return normalize_ppm_product_prefix(product_prefix), None
+    except ValueError as exc:
+        return None, str(exc)
+
 
 def _ppm_summary_response(
     *,
@@ -43,18 +68,24 @@ def _ppm_summary_response(
     branch: Optional[str],
     date_start: Optional[str],
     date_end: Optional[str],
+    product_prefix: Optional[str],
 ):
+    normalized_prefix, prefix_error = _parse_product_prefix(product_prefix)
+    if prefix_error:
+        return error_response(prefix_error, status_code=400)
+
     try:
         dto = PpmSummaryRequest(
             type=ppm_type,
             branch=branch,
             date_start=date_start,
             date_end=date_end,
+            product_prefix=normalized_prefix,
         )
         use_case = build_get_ppm_summary_use_case()
         result = enrich_dashboard_metric(
             use_case.execute(dto).to_dict(),
-            source_key=_PPM_GOAL_KEYS[ppm_type],
+            source_key=_resolve_ppm_goal_key(ppm_type, normalized_prefix),
             start_date=date_start,
             end_date=date_end,
             branch=branch,
@@ -80,7 +111,12 @@ def _ppm_list_response(
     date_end: Optional[str],
     page: Optional[int],
     page_size: Optional[int],
+    product_prefix: Optional[str],
 ):
+    normalized_prefix, prefix_error = _parse_product_prefix(product_prefix)
+    if prefix_error:
+        return error_response(prefix_error, status_code=400)
+
     try:
         dto = ListPpmRequest(
             type=ppm_type,
@@ -89,6 +125,7 @@ def _ppm_list_response(
             date_end=date_end,
             page=page,
             page_size=page_size,
+            product_prefix=normalized_prefix,
         )
         use_case = build_list_ppm_use_case()
         result = use_case.execute(dto)
@@ -111,7 +148,12 @@ def _ppm_series_response(
     branch: Optional[str],
     date_start: Optional[str],
     date_end: Optional[str],
+    product_prefix: Optional[str],
 ):
+    normalized_prefix, prefix_error = _parse_product_prefix(product_prefix)
+    if prefix_error:
+        return error_response(prefix_error, status_code=400)
+
     try:
         dto = PpmSeriesRequest(
             type=ppm_type,
@@ -119,6 +161,7 @@ def _ppm_series_response(
             branch=branch,
             date_start=date_start,
             date_end=date_end,
+            product_prefix=normalized_prefix,
         )
         use_case = build_get_ppm_series_use_case()
         result = use_case.execute(dto)
@@ -140,12 +183,17 @@ def get_internal_ppm_summary(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
+    product_prefix: Optional[str] = Query(
+        None,
+        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+    ),
 ):
     return _ppm_summary_response(
         ppm_type="internal",
         branch=branch,
         date_start=date_start,
         date_end=date_end,
+        product_prefix=product_prefix,
     )
 
 
@@ -155,12 +203,17 @@ def get_external_ppm_summary(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
+    product_prefix: Optional[str] = Query(
+        None,
+        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+    ),
 ):
     return _ppm_summary_response(
         ppm_type="external",
         branch=branch,
         date_start=date_start,
         date_end=date_end,
+        product_prefix=product_prefix,
     )
 
 
@@ -171,6 +224,10 @@ def get_internal_ppm_series(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
+    product_prefix: Optional[str] = Query(
+        None,
+        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+    ),
 ):
     return _ppm_series_response(
         ppm_type="internal",
@@ -178,6 +235,7 @@ def get_internal_ppm_series(
         branch=branch,
         date_start=date_start,
         date_end=date_end,
+        product_prefix=product_prefix,
     )
 
 
@@ -188,6 +246,10 @@ def get_external_ppm_series(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
+    product_prefix: Optional[str] = Query(
+        None,
+        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+    ),
 ):
     return _ppm_series_response(
         ppm_type="external",
@@ -195,6 +257,7 @@ def get_external_ppm_series(
         branch=branch,
         date_start=date_start,
         date_end=date_end,
+        product_prefix=product_prefix,
     )
 
 
@@ -206,6 +269,10 @@ def list_internal_ppm(
     date_end: Optional[str] = None,
     page: int = Query(None, ge=1),
     page_size: int = Query(None, ge=1),
+    product_prefix: Optional[str] = Query(
+        None,
+        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+    ),
 ):
     return _ppm_list_response(
         ppm_type="internal",
@@ -214,6 +281,7 @@ def list_internal_ppm(
         date_end=date_end,
         page=page,
         page_size=page_size,
+        product_prefix=product_prefix,
     )
 
 
@@ -225,6 +293,10 @@ def list_external_ppm(
     date_end: Optional[str] = None,
     page: int = Query(None, ge=1),
     page_size: int = Query(None, ge=1),
+    product_prefix: Optional[str] = Query(
+        None,
+        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+    ),
 ):
     return _ppm_list_response(
         ppm_type="external",
@@ -233,6 +305,7 @@ def list_external_ppm(
         date_end=date_end,
         page=page,
         page_size=page_size,
+        product_prefix=product_prefix,
     )
 
 

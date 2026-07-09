@@ -35,6 +35,8 @@ HR_PERFORMANCE_REVIEWS = "hr_performance_reviews_completion"
 
 QUALITY_PPM_INTERNAL = "quality_ppm_internal"
 QUALITY_PPM_EXTERNAL = "quality_ppm_external"
+QUALITY_PPM_INTERNAL_PLUGS = "quality_ppm_internal_plugs"
+QUALITY_PPM_EXTERNAL_PLUGS = "quality_ppm_external_plugs"
 QUALITY_KAIZEN_IDEAS = "quality_kaizen_ideas"
 QUALITY_AUDIT_5S = "quality_audit_5s"
 QUALITY_KAIZEN_FINANCIAL = "quality_kaizen_financial"

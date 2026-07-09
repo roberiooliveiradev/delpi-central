@@ -9,6 +9,7 @@ def build_nc_where_clause(
     branch: str | None,
     date_start: str | None,
     date_end_exclusive: str | None,
+    product_prefix: str | None = None,
 ) -> tuple[str, tuple]:
     if ppm_type == "internal":
         type_filter = "QI2_TIPO = '1'"
@@ -30,4 +31,10 @@ def build_nc_where_clause(
         qb.lt("QI2_OCORRE", date_end_exclusive)
 
     qb.raw(type_filter)
-    return qb.build()
+    where, params = qb.build()
+
+    if product_prefix:
+        where = f"{where} AND QI2_ITEM LIKE ?"
+        params = tuple(list(params) + [f"{product_prefix}%"])
+
+    return where, params

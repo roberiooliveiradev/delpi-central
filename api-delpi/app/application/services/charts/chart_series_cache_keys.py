@@ -74,5 +74,6 @@ def ppm_series_cache_key(request: PpmSeriesRequest) -> str:
             request.date_start or "",
             request.date_end or "",
             request.branch or "",
+            request.product_prefix or "",
         ]
     )

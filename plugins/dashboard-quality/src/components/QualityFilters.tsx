@@ -6,20 +6,27 @@ import {
   sanitizeBranches,
 } from "../utils/branchClientFilters";
 import { MultiSelectField } from "./MultiSelectField";
-import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
+import { FilterInputField, FilterSelectField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
+import {
+  PPM_PRODUCT_SCOPE_OPTIONS,
+  type PpmProductScope,
+} from "../utils/ppmProductScope";
 
 type QualityFiltersProps = {
   competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
+  ppmProductScope?: PpmProductScope;
+  showPpmProductScope?: boolean;
   branchOptions?: string[];
   branchesLoading?: boolean;
   onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
+  onPpmProductScopeChange?: (value: PpmProductScope) => void;
   idPrefix?: string;
   className?: string;
 };
@@ -29,12 +36,15 @@ export function QualityFilters({
   dateStart,
   dateEnd,
   branches,
+  ppmProductScope = "all",
+  showPpmProductScope = false,
   branchOptions = [],
   branchesLoading = false,
   onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
+  onPpmProductScopeChange,
   idPrefix = "dq",
   className,
 }: QualityFiltersProps) {
@@ -84,6 +94,19 @@ export function QualityFilters({
         searchable
         disabled={branchesLoading}
       />
+      {showPpmProductScope ? (
+        <FilterSelectField
+          id={`${idPrefix}-ppm-product`}
+          label="Produto (PPM)"
+          hint={QUALITY_HELP_TOOLTIPS.filters.ppmProductScope}
+          value={ppmProductScope}
+          onChange={(value) => onPpmProductScopeChange?.(value as PpmProductScope)}
+          options={PPM_PRODUCT_SCOPE_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+        />
+      ) : null}
     </FiltersRow>
   );
 }

@@ -40,6 +40,7 @@ export function usePpmChartSeries({
     filters.branch ?? "",
     filters.date_start ?? "",
     filters.date_end ?? "",
+    filters.product_prefix ?? "",
   ].join(":");
 
   const { data, loading, error, reload } = useQualityResource(
@@ -51,6 +52,7 @@ export function usePpmChartSeries({
           date_start: filters.date_start,
           date_end: filters.date_end,
           granularity,
+          product_prefix: filters.product_prefix,
         },
         signal
       ),
@@ -60,6 +62,7 @@ export function usePpmChartSeries({
       filters.branch,
       filters.date_start,
       filters.date_end,
+      filters.product_prefix,
     ],
     { cacheKey, cacheTtlMs: 60_000, enabled }
   );

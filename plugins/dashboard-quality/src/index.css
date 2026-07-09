@@ -257,6 +257,14 @@
 }
 
 /* KPI grid */
+.dashboard-quality .dq-kpi-section {
+  margin-bottom: var(--dq-section-gap);
+}
+
+.dashboard-quality .dq-kpi-section .dq-kpi-grid {
+  margin-bottom: 0;
+}
+
 .dashboard-quality .dq-kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

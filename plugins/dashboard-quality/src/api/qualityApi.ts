@@ -125,7 +125,12 @@ export async function getPpmSummary(
 ): Promise<PpmSummary> {
   return fetchQualityData<PpmSummary>(
     `/ppm/${type}/summary`,
-    params,
+    {
+      branch: params.branch,
+      date_start: params.date_start,
+      date_end: params.date_end,
+      product_prefix: params.product_prefix,
+    },
     signal
   );
 }
@@ -149,7 +154,14 @@ export async function listPpm(
   params: ListPpmParams = {},
   signal?: AbortSignal
 ): Promise<Page<PpmItem>> {
-  return fetchQualityData<Page<PpmItem>>(`/ppm/${type}`, params, signal);
+  return fetchQualityData<Page<PpmItem>>(`/ppm/${type}`, {
+    branch: params.branch,
+    date_start: params.date_start,
+    date_end: params.date_end,
+    page: params.page,
+    page_size: params.page_size,
+    product_prefix: params.product_prefix,
+  }, signal);
 }
 
 export async function listPpmInternal(
@@ -213,6 +225,7 @@ export async function getPpmSeries(
       date_start: params.date_start,
       date_end: params.date_end,
       granularity: params.granularity,
+      product_prefix: params.product_prefix,
     },
     isPpmSeriesData,
     signal

@@ -45,6 +45,7 @@ export function usePpmPage({
     branch: filters.branch,
     date_start: filters.date_start,
     date_end: filters.date_end,
+    product_prefix: filters.product_prefix,
   };
 
   useEffect(() => {
@@ -93,7 +94,7 @@ export function usePpmPage({
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, page, pageSize, stableFilters.branch, stableFilters.date_start, stableFilters.date_end, reloadKey]);
+  }, [type, page, pageSize, stableFilters.branch, stableFilters.date_start, stableFilters.date_end, stableFilters.product_prefix, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);

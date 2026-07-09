@@ -41,6 +41,7 @@ class GetPpmSeriesUseCase:
                     branch=request.branch,
                     date_start=bucket.date_start,
                     date_end=bucket.date_end,
+                    product_prefix=request.product_prefix,
                 )
             )
 

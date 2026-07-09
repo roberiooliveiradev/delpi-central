@@ -8,14 +8,18 @@ import {
   serializeDynamicBranchCsv,
 } from "./branchClientFilters";
 
+import type { PpmProductScope } from "./ppmProductScope";
+import { isPpmProductScope } from "./ppmProductScope";
+
 export type QualityFilterUrlState = {
   dateStart: string;
   dateEnd: string;
   competence: string;
   branches: string[];
+  ppmProductScope: PpmProductScope;
 };
 
-const FILTER_KEYS = ["date_start", "date_end", "competence", "branch"] as const;
+const FILTER_KEYS = ["date_start", "date_end", "competence", "branch", "ppm_product"] as const;
 const SESSION_STORAGE_KEY = "delpi.dashboard-quality.filters";
 
 function isValidIsoDate(value: string): boolean {
@@ -31,6 +35,7 @@ function defaultFilterState(): QualityFilterUrlState {
   return {
     ...defaults,
     branches: [],
+    ppmProductScope: "all",
   };
 }
 
@@ -55,11 +60,13 @@ function parseFilterParams(params: URLSearchParams): QualityFilterUrlState | nul
   const dateEndParam = params.get("date_end") ?? "";
   const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
+  const ppmProductParam = params.get("ppm_product") ?? "";
   const hasAny =
     isValidIsoDate(dateStartParam) ||
     isValidIsoDate(dateEndParam) ||
     isValidCompetence(competenceParam) ||
-    branchParam.length > 0;
+    branchParam.length > 0 ||
+    isPpmProductScope(ppmProductParam);
 
   if (!hasAny) return null;
 
@@ -77,6 +84,7 @@ function parseFilterParams(params: URLSearchParams): QualityFilterUrlState | nul
   return {
     ...dates,
     branches: parseDynamicBranchCsv(branchParam),
+    ppmProductScope: isPpmProductScope(ppmProductParam) ? ppmProductParam : "all",
   };
 }
 
@@ -113,12 +121,18 @@ export function readFiltersFromSession(): QualityFilterUrlState | null {
       defaultDateEnd: defaults.dateEnd,
     });
     const branches = parseStoredBranches(data);
+    const ppmProductScopeRaw =
+      typeof data.ppmProductScope === "string" ? data.ppmProductScope : null;
+    const ppmProductScope = isPpmProductScope(ppmProductScopeRaw)
+      ? ppmProductScopeRaw
+      : "all";
 
     if (
       !dates.dateStart &&
       !dates.dateEnd &&
       !dates.competence &&
-      branches.length === 0
+      branches.length === 0 &&
+      ppmProductScope === "all"
     ) {
       return null;
     }
@@ -126,6 +140,7 @@ export function readFiltersFromSession(): QualityFilterUrlState | null {
     return {
       ...dates,
       branches,
+      ppmProductScope,
     };
   } catch {
     return null;
@@ -170,6 +185,10 @@ export function buildFilterSearchParams(state: QualityFilterUrlState): string {
   const branchCsv = serializeDynamicBranchCsv(state.branches);
   if (branchCsv) {
     params.set("branch", branchCsv);
+  }
+
+  if (state.ppmProductScope !== "all") {
+    params.set("ppm_product", state.ppmProductScope);
   }
 
   const query = params.toString();

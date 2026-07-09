@@ -3,6 +3,7 @@ import { QualityFilters } from "./QualityFilters";
 import { QualityPageHeader } from "./QualityPageHeader";
 import { QUALITY_ROUTES } from "../constants/routes";
 import type { QualityFilterUrlState } from "../utils/filterUrl";
+import type { PpmProductScope } from "../utils/ppmProductScope";
 
 type FilterBarProps = {
   filterState: QualityFilterUrlState;
@@ -10,6 +11,8 @@ type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
   branches: string[];
+  ppmProductScope?: PpmProductScope;
+  showPpmProductScope?: boolean;
   printDisabled?: boolean;
   branchOptions?: string[];
   branchesLoading?: boolean;
@@ -18,6 +21,7 @@ type FilterBarProps = {
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
+  onPpmProductScopeChange?: (value: PpmProductScope) => void;
   onRefresh: () => void;
   refreshing?: boolean;
   exportActions?: ReactNode;
@@ -29,6 +33,8 @@ export function FilterBar({
   dateStart,
   dateEnd,
   branches,
+  ppmProductScope = "all",
+  showPpmProductScope = false,
   branchOptions,
   branchesLoading,
   currentPath,
@@ -37,6 +43,7 @@ export function FilterBar({
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
+  onPpmProductScopeChange,
   onRefresh,
   refreshing = false,
   exportActions,
@@ -63,12 +70,15 @@ export function FilterBar({
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        ppmProductScope={ppmProductScope}
+        showPpmProductScope={showPpmProductScope}
         branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         onCompetenceChange={onCompetenceChange}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchesChange={onBranchesChange}
+        onPpmProductScopeChange={onPpmProductScopeChange}
       />
     </>
   );

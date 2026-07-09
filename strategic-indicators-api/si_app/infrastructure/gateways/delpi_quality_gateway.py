@@ -27,14 +27,19 @@ class DelpiQualityGateway:
         branch: str | None,
         date_start: str | None,
         date_end: str | None,
+        product_prefix: str | None = None,
     ) -> dict[str, Any]:
+        params: dict[str, str | None] = {
+            "branch": branch,
+            "date_start": date_start,
+            "date_end": date_end,
+        }
+        if product_prefix:
+            params["product_prefix"] = product_prefix
+
         return self._client.get_ppm_summary(
             ppm_type,
-            params={
-                "branch": branch,
-                "date_start": date_start,
-                "date_end": date_end,
-            },
+            params=params,
             authorization=bearer_authorization_from_context(),
         )
 

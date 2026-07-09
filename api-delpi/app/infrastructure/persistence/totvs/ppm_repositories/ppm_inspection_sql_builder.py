@@ -23,6 +23,7 @@ def build_inspection_apont_ctes(
     *,
     branch: str | None = None,
     product_codes: list[str] | None = None,
+    product_prefix: str | None = None,
 ) -> InspectionApontCteBundle:
     prod_branch_filter_ct = ""
     prod_branch_filter_sh6 = ""
@@ -38,6 +39,9 @@ def build_inspection_apont_ctes(
         placeholders = ", ".join("?" for _ in product_codes)
         product_filter = f"AND SH6.H6_PRODUTO IN ({placeholders})"
         params.extend(product_codes)
+    elif product_prefix:
+        product_filter = "AND SH6.H6_PRODUTO LIKE ?"
+        params.append(f"{product_prefix}%")
 
     ct_inspecao_cte = CT_INSPECAO_FINAL_CTE.format(
         ct_branch_filter=prod_branch_filter_ct,

@@ -9,6 +9,8 @@ from si_app.application.services.strategic_indicators.period_resolution import (
 )
 from si_app.infrastructure.gateways.delpi_quality_gateway import DelpiQualityGateway
 
+PLUGS_FINISHED_PRODUCT_PREFIX = "9048"
+
 
 @dataclass(frozen=True)
 class QualityBranchSnapshot:
@@ -18,6 +20,8 @@ class QualityBranchSnapshot:
     kaizen_ideas_avg: float | None
     kaizen_financial_gain: float | None
     audit_5s_score: float | None
+    ppm_internal_plugs: float | None = None
+    ppm_external_plugs: float | None = None
 
 
 @dataclass(frozen=True)
@@ -27,6 +31,8 @@ class QualityMetricsSnapshot:
     branches: list[QualityBranchSnapshot]
     ppm_internal_consolidated: float | None = None
     ppm_external_consolidated: float | None = None
+    ppm_internal_plugs_consolidated: float | None = None
+    ppm_external_plugs_consolidated: float | None = None
 
 
 class QualityMetricsSnapshotService:
@@ -120,6 +126,22 @@ class QualityMetricsSnapshotService:
             end_date=end_date,
         )
 
+        ppm_internal_plugs_consolidated = self._resolve_ppm(
+            ppm_type="internal",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
+        )
+
+        ppm_external_plugs_consolidated = self._resolve_ppm(
+            ppm_type="external",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
+        )
+
         snapshots: list[QualityBranchSnapshot] = []
 
         for branch_code in branches:
@@ -135,6 +157,22 @@ class QualityMetricsSnapshotService:
                 branch=branch_code,
                 start_date=start_date,
                 end_date=end_date,
+            )
+
+            ppm_internal_plugs = self._resolve_ppm(
+                ppm_type="internal",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
+            )
+
+            ppm_external_plugs = self._resolve_ppm(
+                ppm_type="external",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
             )
 
             kaizen_summary = self._quality_gateway.get_kaizen_summary(
@@ -175,6 +213,16 @@ class QualityMetricsSnapshotService:
                         float(audit_summary.get("average_score") or 0),
                         2,
                     ),
+                    ppm_internal_plugs=(
+                        round(ppm_internal_plugs, 2)
+                        if ppm_internal_plugs is not None
+                        else None
+                    ),
+                    ppm_external_plugs=(
+                        round(ppm_external_plugs, 2)
+                        if ppm_external_plugs is not None
+                        else None
+                    ),
                 )
             )
 
@@ -192,6 +240,16 @@ class QualityMetricsSnapshotService:
                 if ppm_external_consolidated is not None
                 else None
             ),
+            ppm_internal_plugs_consolidated=(
+                round(ppm_internal_plugs_consolidated, 2)
+                if ppm_internal_plugs_consolidated is not None
+                else None
+            ),
+            ppm_external_plugs_consolidated=(
+                round(ppm_external_plugs_consolidated, 2)
+                if ppm_external_plugs_consolidated is not None
+                else None
+            ),
         )
 
     def _resolve_ppm(
@@ -201,6 +259,7 @@ class QualityMetricsSnapshotService:
         branch: str | None,
         start_date: str | None,
         end_date: str | None,
+        product_prefix: str | None = None,
     ) -> float | None:
         if ppm_type not in {"internal", "external"}:
             raise ValueError("ppm_type deve ser internal ou external")
@@ -210,6 +269,7 @@ class QualityMetricsSnapshotService:
             branch=branch,
             date_start=start_date,
             date_end=end_date,
+            product_prefix=product_prefix,
         )
 
         value = self._extract_first_number(result)

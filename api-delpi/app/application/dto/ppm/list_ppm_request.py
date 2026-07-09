@@ -12,3 +12,4 @@ class ListPpmRequest:
     date_end: Optional[str] = None
     page: Optional[int] = None
     page_size: Optional[int] = None
+    product_prefix: Optional[str] = None
