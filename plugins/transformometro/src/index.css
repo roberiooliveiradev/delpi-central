@@ -6031,35 +6031,80 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   background: color-mix(in srgb, var(--ds-card-bg) 96%, var(--ds-accent) 4%);
 }
 
-.dashboard-transformometro .tm-diagram-node-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node:not(.react-flow__node-lane) {
+  overflow: visible;
 }
 
-.dashboard-transformometro .tm-diagram-node-wrap--decision {
+.dashboard-transformometro .tm-diagram-node-wrap {
+  display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  overflow: visible;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--event {
+  width: 108px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--decision {
+  width: 108px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--box {
+  width: 168px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--data {
+  width: 148px;
+  padding-top: 10px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--comment {
+  width: 148px;
+  padding-bottom: 8px;
+}
+
+.dashboard-transformometro .tm-diagram-node-shell {
+  position: relative;
+  width: 100%;
+}
+
+.dashboard-transformometro .tm-diagram-node-shell--event {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto;
+}
+
+.dashboard-transformometro .tm-diagram-node-shell--decision {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+}
+
+.dashboard-transformometro .tm-diagram-node-shell--box,
+.dashboard-transformometro .tm-diagram-node-shell--data,
+.dashboard-transformometro .tm-diagram-node-shell--comment {
+  width: 100%;
 }
 
 .dashboard-transformometro .tm-diagram-node__external-label {
-  max-width: 220px;
+  width: 100%;
+  max-width: 108px;
   font-size: 11px;
   line-height: 1.3;
   color: var(--ds-text);
-  text-align: left;
+  text-align: center;
 }
 
 .dashboard-transformometro .tm-diagram-node__external-label--below {
-  text-align: center;
-  max-width: 160px;
+  max-width: 108px;
 }
 
 .dashboard-transformometro .tm-diagram-node__start-dot {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   background: #22c55e;
   border: 2px solid #15803d;
@@ -6067,8 +6112,8 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-diagram-node__end-ring {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   border: 3px solid #dc2626;
   box-shadow: inset 0 0 0 2px var(--ds-card-bg);
@@ -6077,24 +6122,30 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-diagram-node--start,
 .dashboard-transformometro .tm-diagram-node--end {
-  min-width: auto;
-  padding: 0;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 2px;
   border: none;
   background: transparent;
   box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dashboard-transformometro .tm-diagram-node--decision {
-  width: 72px;
-  height: 72px;
-  min-width: 72px;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  max-width: 56px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: rotate(45deg);
-  border-radius: 4px;
-  clip-path: none;
+  transform: none;
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
   background: #fbbf24;
   border: 2px solid #d97706;
   color: #78350f;
@@ -6111,16 +6162,16 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-node__gateway-x {
-  transform: rotate(-45deg);
-  font-size: 28px;
+  transform: none;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
 }
 
 .dashboard-transformometro .tm-diagram-node--process {
-  min-width: 180px;
-  min-height: 72px;
-  padding-top: 22px;
+  width: 100%;
+  min-height: 68px;
+  padding: 20px 10px 10px;
   border-radius: 14px;
   position: relative;
   background: color-mix(in srgb, #ecfdf5 36%, var(--ds-card-bg));
@@ -6129,21 +6180,20 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-diagram-node__icon {
   position: absolute;
-  top: 8px;
-  left: 10px;
+  top: 7px;
+  left: 9px;
   color: var(--ds-text-muted);
 }
 
 .dashboard-transformometro .tm-diagram-node--process .tm-diagram-node__label {
   display: block;
-  padding: 0 10px 8px;
   line-height: 1.35;
 }
 
 .dashboard-transformometro .tm-diagram-node--document {
-  min-width: 148px;
-  min-height: 88px;
-  padding: 18px 12px 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 10px 10px;
   border-radius: 2px 10px 10px 10px;
   position: relative;
   background: color-mix(in srgb, #fef3c7 42%, var(--ds-card-bg));
@@ -6154,17 +6204,17 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   position: absolute;
   top: 0;
   right: 0;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   background: linear-gradient(225deg, var(--ds-card-bg) 50%, #fcd34d 50%);
   border-left: 1px solid #d97706;
   border-bottom: 1px solid #d97706;
 }
 
 .dashboard-transformometro .tm-diagram-node--data {
-  min-width: 132px;
-  min-height: 92px;
-  padding: 22px 12px 10px;
+  width: 100%;
+  min-height: 68px;
+  padding: 14px 10px 10px;
   border-radius: 0 0 10px 10px;
   position: relative;
   background: color-mix(in srgb, #dbeafe 48%, var(--ds-card-bg));
@@ -6174,9 +6224,9 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-diagram-node__data-cap {
   position: absolute;
   top: -10px;
-  left: 12px;
-  right: 12px;
-  height: 18px;
+  left: 10px;
+  right: 10px;
+  height: 16px;
   border: 2px solid #2563eb;
   border-bottom: none;
   border-radius: 999px 999px 0 0;
@@ -6184,9 +6234,9 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-node--subprocess {
-  min-width: 168px;
-  min-height: 80px;
-  padding: 20px 12px 10px;
+  width: 100%;
+  min-height: 68px;
+  padding: 18px 10px 10px;
   border-radius: 12px;
   position: relative;
   border-width: 2px;
@@ -6196,16 +6246,16 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-diagram-node__subprocess-inner {
   position: absolute;
-  inset: 5px;
+  inset: 4px;
   border: 1px solid color-mix(in srgb, #7c3aed 55%, transparent);
   border-radius: 8px;
   pointer-events: none;
 }
 
 .dashboard-transformometro .tm-diagram-node--comment {
-  min-width: 140px;
-  min-height: 72px;
-  padding: 16px 12px 10px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 10px 12px;
   border-radius: 10px;
   position: relative;
   border-style: dashed;
@@ -6216,19 +6266,19 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-diagram-node__comment-tail {
   position: absolute;
-  left: 14px;
-  bottom: -10px;
+  left: 12px;
+  bottom: -7px;
   width: 0;
   height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 10px solid color-mix(in srgb, var(--ds-accent) 55%, var(--ds-card-border));
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid color-mix(in srgb, var(--ds-accent) 55%, var(--ds-card-border));
 }
 
 .dashboard-transformometro .tm-diagram-node__shape-icon {
   position: absolute;
-  top: 6px;
-  left: 8px;
+  top: 5px;
+  left: 7px;
   color: var(--ds-text-muted);
 }
 
@@ -6239,6 +6289,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   display: block;
   padding-top: 2px;
   line-height: 1.35;
+  text-align: center;
 }
 
 .dashboard-transformometro .tm-diagram-editor__elements {
@@ -6390,8 +6441,9 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-node {
-  min-width: 96px;
-  padding: 8px 12px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
   border: 2px solid var(--ds-card-border);
   border-radius: var(--ds-radius-sm);
   background: var(--ds-card-bg);

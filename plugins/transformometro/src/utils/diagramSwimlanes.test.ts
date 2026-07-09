@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { applySwimlaneBpmnTemplate, createLaneId, createNodeId, type FlowchartV1 } from "../types/diagram";
-import { autoLayoutFlowchart, laneIndexFromDragY, normalizeLanes, removeLane, reorderLanes } from "./diagramSwimlanes";
+import { autoLayoutFlowchart, laneIndexFromDragY, nextPaletteNodePosition, normalizeLanes, removeLane, reorderLanes } from "./diagramSwimlanes";
 
 describe("autoLayoutFlowchart", () => {
   it("preserva faixas do template BPMN após auto-layout", () => {
@@ -103,5 +103,16 @@ describe("reorderLanes", () => {
     const next = reorderLanes(flowchart, laneB, targetIndex);
     expect(next.lanes?.map((lane) => lane.id)).toEqual([laneB, laneA]);
     expect(next.nodes.find((node) => node.label === "Validar")?.lane_id).toBe(laneB);
+  });
+});
+
+describe("nextPaletteNodePosition", () => {
+  it("distribui novos nós em grade sem sobrepor", () => {
+    const first = nextPaletteNodePosition(0);
+    const second = nextPaletteNodePosition(1);
+    const fifth = nextPaletteNodePosition(4);
+
+    expect(second.x).toBeGreaterThan(first.x);
+    expect(fifth.y).toBeGreaterThan(first.y);
   });
 });

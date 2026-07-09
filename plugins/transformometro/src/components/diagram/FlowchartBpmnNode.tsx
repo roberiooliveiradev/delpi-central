@@ -1,5 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { Database, FileText, Layers, MessageSquare, User } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { FlowchartNodeType } from "../../types/diagram";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
@@ -16,7 +17,7 @@ export type BpmnNodeData = {
   onLabelChange?: (nodeId: string, label: string) => void;
 };
 
-const HANDLE_STYLE = { width: 8, height: 8, borderRadius: 4 };
+const HANDLE_STYLE = { width: 7, height: 7, borderRadius: 999, border: "2px solid var(--ds-card-bg)" };
 
 function ConnectionHandles() {
   return (
@@ -25,8 +26,6 @@ function ConnectionHandles() {
       <Handle type="source" position={Position.Right} style={HANDLE_STYLE} />
       <Handle type="target" position={Position.Top} id="top-target" style={HANDLE_STYLE} />
       <Handle type="source" position={Position.Bottom} id="bottom-source" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Top} id="top-source" style={HANDLE_STYLE} />
-      <Handle type="target" position={Position.Bottom} id="bottom-target" style={HANDLE_STYLE} />
     </>
   );
 }
@@ -80,16 +79,32 @@ function ScopeCheckbox({ id, data }: { id: string; data: BpmnNodeData }) {
   );
 }
 
+function NodeShell({
+  shellClassName,
+  children,
+}: {
+  shellClassName?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={["tm-diagram-node-shell", shellClassName].filter(Boolean).join(" ")}>
+      <ConnectionHandles />
+      {children}
+    </div>
+  );
+}
+
 export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
   const scopeCheckbox = <ScopeCheckbox id={id} data={data} />;
 
   if (data.nodeType === "start") {
     return (
-      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--start">
-        <ConnectionHandles />
-        <div className={nodeClassName("start", data.highlight)}>
-          <span className="tm-diagram-node__start-dot" aria-hidden />
-        </div>
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--event">
+        <NodeShell shellClassName="tm-diagram-node-shell--event">
+          <div className={nodeClassName("start", data.highlight)}>
+            <span className="tm-diagram-node__start-dot" aria-hidden />
+          </div>
+        </NodeShell>
         <NodeLabel nodeId={id} data={data} className="tm-diagram-node__external-label" />
         {scopeCheckbox}
       </div>
@@ -98,11 +113,12 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
 
   if (data.nodeType === "end") {
     return (
-      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--end">
-        <ConnectionHandles />
-        <div className={nodeClassName("end", data.highlight)}>
-          <span className="tm-diagram-node__end-ring" aria-hidden />
-        </div>
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--event">
+        <NodeShell shellClassName="tm-diagram-node-shell--event">
+          <div className={nodeClassName("end", data.highlight)}>
+            <span className="tm-diagram-node__end-ring" aria-hidden />
+          </div>
+        </NodeShell>
         <NodeLabel nodeId={id} data={data} className="tm-diagram-node__external-label" />
         {scopeCheckbox}
       </div>
@@ -112,12 +128,13 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
   if (data.nodeType === "decision") {
     return (
       <div className="tm-diagram-node-wrap tm-diagram-node-wrap--decision">
-        <ConnectionHandles />
-        <div className={nodeClassName("decision", data.highlight)}>
-          <span className="tm-diagram-node__gateway-x" aria-hidden>
-            ×
-          </span>
-        </div>
+        <NodeShell shellClassName="tm-diagram-node-shell--decision">
+          <div className={nodeClassName("decision", data.highlight)}>
+            <span className="tm-diagram-node__gateway-x" aria-hidden>
+              ×
+            </span>
+          </div>
+        </NodeShell>
         <NodeLabel
           nodeId={id}
           data={data}
@@ -130,15 +147,16 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
 
   if (data.nodeType === "document") {
     return (
-      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--document">
-        <ConnectionHandles />
-        <div className={nodeClassName("document", data.highlight)}>
-          <span className="tm-diagram-node__doc-fold" aria-hidden />
-          <span className="tm-diagram-node__shape-icon" aria-hidden>
-            <FileText size={14} strokeWidth={2.2} />
-          </span>
-          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
-        </div>
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--box">
+        <NodeShell shellClassName="tm-diagram-node-shell--box">
+          <div className={nodeClassName("document", data.highlight)}>
+            <span className="tm-diagram-node__doc-fold" aria-hidden />
+            <span className="tm-diagram-node__shape-icon" aria-hidden>
+              <FileText size={13} strokeWidth={2.2} />
+            </span>
+            <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+          </div>
+        </NodeShell>
         {scopeCheckbox}
       </div>
     );
@@ -147,14 +165,15 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
   if (data.nodeType === "data") {
     return (
       <div className="tm-diagram-node-wrap tm-diagram-node-wrap--data">
-        <ConnectionHandles />
-        <div className={nodeClassName("data", data.highlight)}>
-          <span className="tm-diagram-node__data-cap" aria-hidden />
-          <span className="tm-diagram-node__shape-icon" aria-hidden>
-            <Database size={14} strokeWidth={2.2} />
-          </span>
-          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
-        </div>
+        <NodeShell shellClassName="tm-diagram-node-shell--data">
+          <div className={nodeClassName("data", data.highlight)}>
+            <span className="tm-diagram-node__data-cap" aria-hidden />
+            <span className="tm-diagram-node__shape-icon" aria-hidden>
+              <Database size={13} strokeWidth={2.2} />
+            </span>
+            <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+          </div>
+        </NodeShell>
         {scopeCheckbox}
       </div>
     );
@@ -162,15 +181,16 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
 
   if (data.nodeType === "subprocess") {
     return (
-      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--subprocess">
-        <ConnectionHandles />
-        <div className={nodeClassName("subprocess", data.highlight)}>
-          <span className="tm-diagram-node__subprocess-inner" aria-hidden />
-          <span className="tm-diagram-node__shape-icon" aria-hidden>
-            <Layers size={14} strokeWidth={2.2} />
-          </span>
-          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
-        </div>
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--box">
+        <NodeShell shellClassName="tm-diagram-node-shell--box">
+          <div className={nodeClassName("subprocess", data.highlight)}>
+            <span className="tm-diagram-node__subprocess-inner" aria-hidden />
+            <span className="tm-diagram-node__shape-icon" aria-hidden>
+              <Layers size={13} strokeWidth={2.2} />
+            </span>
+            <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+          </div>
+        </NodeShell>
         {scopeCheckbox}
       </div>
     );
@@ -179,29 +199,33 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
   if (data.nodeType === "comment") {
     return (
       <div className="tm-diagram-node-wrap tm-diagram-node-wrap--comment">
-        <ConnectionHandles />
-        <div className={nodeClassName("comment", data.highlight)}>
-          <span className="tm-diagram-node__comment-tail" aria-hidden />
-          <span className="tm-diagram-node__shape-icon" aria-hidden>
-            <MessageSquare size={14} strokeWidth={2.2} />
-          </span>
-          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
-        </div>
+        <NodeShell shellClassName="tm-diagram-node-shell--comment">
+          <div className={nodeClassName("comment", data.highlight)}>
+            <span className="tm-diagram-node__shape-icon" aria-hidden>
+              <MessageSquare size={13} strokeWidth={2.2} />
+            </span>
+            <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+            <span className="tm-diagram-node__comment-tail" aria-hidden />
+          </div>
+        </NodeShell>
         {scopeCheckbox}
       </div>
     );
   }
 
   return (
-    <div className={nodeClassName(data.nodeType, data.highlight)}>
-      <ConnectionHandles />
+    <div className="tm-diagram-node-wrap tm-diagram-node-wrap--box">
+      <NodeShell shellClassName="tm-diagram-node-shell--box">
+        <div className={nodeClassName(data.nodeType, data.highlight)}>
+          {data.manual !== false && data.nodeType === "process" ? (
+            <span className="tm-diagram-node__icon" aria-hidden>
+              <User size={12} strokeWidth={2.2} />
+            </span>
+          ) : null}
+          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+        </div>
+      </NodeShell>
       {scopeCheckbox}
-      {data.manual !== false && data.nodeType === "process" ? (
-        <span className="tm-diagram-node__icon" aria-hidden>
-          <User size={12} strokeWidth={2.2} />
-        </span>
-      ) : null}
-      <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
     </div>
   );
 }

@@ -5,6 +5,10 @@ export const DEFAULT_LANE_HEIGHT = 168;
 export const LANE_CANVAS_WIDTH = 2400;
 export const AUTO_LAYOUT_HORIZONTAL_GAP = 220;
 export const AUTO_LAYOUT_START_X = LANE_HEADER_WIDTH + 48;
+export const PALETTE_NODE_GAP_X = 204;
+export const PALETTE_NODE_GAP_Y = 116;
+export const PALETTE_GRID_COLUMNS = 4;
+export const PALETTE_GRID_ORIGIN = { x: 72, y: 72 } as const;
 
 
 export function normalizeLanes(lanes: FlowchartLane[] | undefined): FlowchartLane[] {
@@ -82,8 +86,17 @@ export function defaultNodePosition(
 ): { x: number; y: number } {
   const centerY = laneCenterY(lanes, laneId);
   return {
-    x: LANE_HEADER_WIDTH + 48 + indexInLane * 48,
-    y: centerY - 28,
+    x: AUTO_LAYOUT_START_X + indexInLane * PALETTE_NODE_GAP_X,
+    y: centerY - 36,
+  };
+}
+
+export function nextPaletteNodePosition(activityIndex: number): { x: number; y: number } {
+  const col = activityIndex % PALETTE_GRID_COLUMNS;
+  const row = Math.floor(activityIndex / PALETTE_GRID_COLUMNS);
+  return {
+    x: PALETTE_GRID_ORIGIN.x + col * PALETTE_NODE_GAP_X,
+    y: PALETTE_GRID_ORIGIN.y + row * PALETTE_NODE_GAP_Y,
   };
 }
 

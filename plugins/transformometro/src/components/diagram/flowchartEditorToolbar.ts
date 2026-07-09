@@ -42,7 +42,7 @@ export function flowchartNodeHint(type: FlowchartNodeType): string {
 export const DIAGRAM_EDITOR_ACTIONS = [
   {
     id: "addLane",
-    label: "+ Faixa (swimlane)",
+    label: "Faixa (swimlane)",
     icon: Plus,
     hint: D.addLane,
   },

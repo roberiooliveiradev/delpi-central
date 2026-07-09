@@ -31,6 +31,7 @@ import {
   defaultNodePosition,
   laneIndexFromDragY,
   laneTopOffset,
+  nextPaletteNodePosition,
   normalizeLanes,
   removeLane,
   renameLane,
@@ -589,10 +590,11 @@ function FlowchartEditorInner({
       );
     }).length;
 
+    const activityCount = nodes.filter((node) => node.type !== "lane").length;
     const position =
       laneId && lanes.length
         ? defaultNodePosition(lanes, laneId, countInLane)
-        : { x: 80 + nodes.length * 24, y: 80 + nodes.length * 16 };
+        : nextPaletteNodePosition(activityCount);
 
     const nextNodes: EditorNode[] = [
       ...nodes,
