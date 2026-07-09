@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Grid2X2, LayoutGrid, LayoutList, Rows3 } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Grid2X2, LayoutGrid, LayoutList, Rows3 } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTable } from "../../components/DataTable";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { SelectField } from "../../components/ui/SelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { Pagination } from "../../components/Pagination";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
@@ -13,10 +14,20 @@ import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { ProcessoFolderIcon } from "./ProcessoFolderIcon";
 import {
+  PROCESSO_LIST_SORT_OPTIONS,
+  readProcessoListSort,
+  sortProcessoListItems,
+  writeProcessoListSort,
+  type ProcessoListSort,
+  type ProcessoListSortField,
+} from "./processoListSort";
+import {
+  fieldVisibilityForProcessoListView,
   pageSizeForProcessoListView,
   PROCESSO_LIST_VIEW_MODES,
   readProcessoListViewMode,
   writeProcessoListViewMode,
+  type ProcessoListFieldVisibility,
   type ProcessoListViewMode,
 } from "./processoListViewMode";
 
@@ -55,6 +66,49 @@ function folderMeta(processo: Processo): string {
   return parts.join(" · ") || processo.status_processo;
 }
 
+function processoFolderTitle(processo: Processo): string {
+  return `${processo.codigo_processo} — ${processo.nome_processo}`;
+}
+
+type FolderCardProps = {
+  processo: Processo;
+  iconSize: "lg" | "md";
+  visibility: ProcessoListFieldVisibility;
+  onOpen: (processo: Processo) => void;
+};
+
+function ProcessoFolderCard({ processo, iconSize, visibility, onOpen }: FolderCardProps) {
+  const minimal = !visibility.showCode && !visibility.showMeta && !visibility.showStatus && !visibility.showProgress;
+
+  return (
+    <article className={`tm-processo-folder${minimal ? " tm-processo-folder--minimal" : ""}`} role="listitem">
+      <button
+        type="button"
+        className="tm-processo-folder__open"
+        onClick={() => onOpen(processo)}
+        title={processoFolderTitle(processo)}
+      >
+        <ProcessoFolderIcon size={iconSize} />
+        {visibility.showCode ? (
+          <span className="tm-processo-folder__code">{processo.codigo_processo}</span>
+        ) : null}
+        <span className="tm-processo-folder__name">{processo.nome_processo}</span>
+        {visibility.showMeta ? <span className="tm-processo-folder__meta">{folderMeta(processo)}</span> : null}
+        {visibility.showStatus ? (
+          <span className="tm-processo-folder__status">{renderTableStatus(processo.status_processo)}</span>
+        ) : null}
+        {visibility.showProgress ? (
+          <ProcessoFormProgress
+            compact
+            completion={computeProcessoListCompletion(processo)}
+            title={`Preenchimento — ${processo.codigo_processo}`}
+          />
+        ) : null}
+      </button>
+    </article>
+  );
+}
+
 export function ProcessoFolderBrowser({
   title = "Processos",
   hint,
@@ -67,54 +121,50 @@ export function ProcessoFolderBrowser({
   detailColumns,
   onOpen,
 }: Props) {
+  const P = TM_HELP_TOOLTIPS.processos;
   const [viewMode, setViewMode] = useState<ProcessoListViewMode>(() => readProcessoListViewMode());
-  const [sortKey, setSortKey] = useState<string>("codigo");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sort, setSort] = useState<ProcessoListSort>(() => readProcessoListSort());
 
   useEffect(() => {
     writeProcessoListViewMode(viewMode);
   }, [viewMode]);
 
-  const sortedItems = useMemo(() => {
-    const copy = [...items];
-    copy.sort((left, right) => {
-      if (sortKey === "preenchimento") {
-        return (
-          (computeProcessoListCompletion(left).percent - computeProcessoListCompletion(right).percent) *
-          (sortDirection === "asc" ? 1 : -1)
-        );
-      }
-      let leftValue = "";
-      let rightValue = "";
-      if (sortKey === "codigo") {
-        leftValue = left.codigo_processo ?? "";
-        rightValue = right.codigo_processo ?? "";
-      } else if (sortKey === "status") {
-        leftValue = left.status_processo ?? "";
-        rightValue = right.status_processo ?? "";
-      } else {
-        leftValue = left.nome_processo ?? "";
-        rightValue = right.nome_processo ?? "";
-      }
-      const cmp = leftValue.localeCompare(rightValue, "pt-BR", { sensitivity: "base" });
-      return sortDirection === "asc" ? cmp : -cmp;
-    });
-    return copy;
-  }, [items, sortDirection, sortKey]);
+  useEffect(() => {
+    writeProcessoListSort(sort);
+  }, [sort]);
+
+  const sortedItems = useMemo(() => sortProcessoListItems(items, sort), [items, sort]);
+  const fieldVisibility = fieldVisibilityForProcessoListView(viewMode);
 
   const pageSize = pageSizeForProcessoListView(viewMode);
   const { page, setPage, slice, total } = useClientPagination(sortedItems, pageSize);
 
   function handleSortChange(columnKey: string) {
-    if (sortKey === columnKey) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(columnKey);
-    setSortDirection("asc");
+    const key = columnKey as ProcessoListSortField;
+    if (!PROCESSO_LIST_SORT_OPTIONS.some((option) => option.value === key)) return;
+    setSort((current) => {
+      if (current.key === key) {
+        return { key, direction: current.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  }
+
+  function handleSortFieldChange(field: string) {
+    const key = field as ProcessoListSortField;
+    if (!PROCESSO_LIST_SORT_OPTIONS.some((option) => option.value === key)) return;
+    setSort((current) => ({ ...current, key }));
+  }
+
+  function toggleSortDirection() {
+    setSort((current) => ({
+      ...current,
+      direction: current.direction === "asc" ? "desc" : "asc",
+    }));
   }
 
   const currentMode = PROCESSO_LIST_VIEW_MODES.find((mode) => mode.id === viewMode)!;
+  const sortDirectionLabel = sort.direction === "asc" ? "Menor → maior" : "Maior → menor";
 
   return (
     <section className={`ds-table-section tm-processo-browser${refreshing ? " tm-processo-browser--refreshing" : ""}`}>
@@ -124,6 +174,34 @@ export function ProcessoFolderBrowser({
           {hint ? <p className="ds-hint">{hint}</p> : null}
         </div>
         <div className="tm-processo-browser__toolbar">
+          <div className="tm-processo-browser__sort" aria-label="Ordenação da lista">
+            <SelectField
+              id="tm-proc-sort-field"
+              label="Ordenar por"
+              hint={P.ordenacaoCampo}
+              value={sort.key}
+              onChange={handleSortFieldChange}
+              options={PROCESSO_LIST_SORT_OPTIONS}
+              className="tm-processo-browser__sort-field"
+            />
+            <div className="tm-processo-browser__sort-direction">
+              <FieldLabel className="tm-field__label tm-processo-browser__sort-direction-label" label="Ordem" hint={P.ordenacaoDirecao} />
+              <button
+                type="button"
+                className="tm-processo-browser__sort-direction-btn"
+                aria-label={`Ordem: ${sortDirectionLabel}. Clique para alternar.`}
+                title={sortDirectionLabel}
+                onClick={toggleSortDirection}
+              >
+                {sort.direction === "asc" ? (
+                  <ArrowDownAZ size={16} aria-hidden="true" />
+                ) : (
+                  <ArrowUpAZ size={16} aria-hidden="true" />
+                )}
+                <span>{sort.direction === "asc" ? "Menor" : "Maior"}</span>
+              </button>
+            </div>
+          </div>
           <div className="tm-processo-browser__view-modes" role="group" aria-label="Modo de visualização">
             {PROCESSO_LIST_VIEW_MODES.map((mode) => {
               const Icon = viewModeIcon(mode.id);
@@ -161,8 +239,8 @@ export function ProcessoFolderBrowser({
           rows={slice}
           rowKey={(row) => row.processo_id}
           onRowClick={onOpen}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
+          sortKey={sort.key}
+          sortDirection={sort.direction}
           onSortChange={handleSortChange}
         />
       ) : viewMode === "list" ? (
@@ -173,20 +251,26 @@ export function ProcessoFolderBrowser({
                 type="button"
                 className="tm-processo-browser__list-item"
                 onClick={() => onOpen(processo)}
+                title={processoFolderTitle(processo)}
               >
                 <ProcessoFolderIcon size="sm" />
                 <span className="tm-processo-browser__list-main">
                   <span className="tm-processo-browser__list-title">{processo.nome_processo}</span>
                   <span className="tm-processo-browser__list-meta">
-                    {processo.codigo_processo} · {folderMeta(processo)}
+                    {fieldVisibility.showCode ? `${processo.codigo_processo} · ` : ""}
+                    {folderMeta(processo)}
                   </span>
                 </span>
-                <span className="tm-processo-browser__list-status">{renderTableStatus(processo.status_processo)}</span>
-                <ProcessoFormProgress
-                  compact
-                  completion={computeProcessoListCompletion(processo)}
-                  title={`Preenchimento — ${processo.codigo_processo}`}
-                />
+                {fieldVisibility.showStatus ? (
+                  <span className="tm-processo-browser__list-status">{renderTableStatus(processo.status_processo)}</span>
+                ) : null}
+                {fieldVisibility.showProgress ? (
+                  <ProcessoFormProgress
+                    compact
+                    completion={computeProcessoListCompletion(processo)}
+                    title={`Preenchimento — ${processo.codigo_processo}`}
+                  />
+                ) : null}
               </button>
             </li>
           ))}
@@ -201,25 +285,13 @@ export function ProcessoFolderBrowser({
           role="list"
         >
           {slice.map((processo) => (
-            <article key={processo.processo_id} className="tm-processo-folder" role="listitem">
-              <button
-                type="button"
-                className="tm-processo-folder__open"
-                onClick={() => onOpen(processo)}
-                title={`Abrir ${processo.codigo_processo}`}
-              >
-                <ProcessoFolderIcon size={viewMode === "icons-lg" ? "lg" : "md"} />
-                <span className="tm-processo-folder__code">{processo.codigo_processo}</span>
-                <span className="tm-processo-folder__name">{processo.nome_processo}</span>
-                <span className="tm-processo-folder__meta">{folderMeta(processo)}</span>
-                <span className="tm-processo-folder__status">{renderTableStatus(processo.status_processo)}</span>
-                <ProcessoFormProgress
-                  compact
-                  completion={computeProcessoListCompletion(processo)}
-                  title={`Preenchimento — ${processo.codigo_processo}`}
-                />
-              </button>
-            </article>
+            <ProcessoFolderCard
+              key={processo.processo_id}
+              processo={processo}
+              iconSize={viewMode === "icons-lg" ? "lg" : "md"}
+              visibility={fieldVisibility}
+              onOpen={onOpen}
+            />
           ))}
         </div>
       )}
@@ -230,7 +302,7 @@ export function ProcessoFolderBrowser({
 
       <p className="ds-hint tm-processo-browser__mode-hint">
         Visualização: {currentMode.label}. Clique na pasta para abrir o processo.
-        <HelpTooltip content={TM_HELP_TOOLTIPS.processos.modosVisualizacao} ariaLabel="Ajuda: modos de visualização" />
+        <HelpTooltip content={P.modosVisualizacao} ariaLabel="Ajuda: modos de visualização" />
       </p>
     </section>
   );

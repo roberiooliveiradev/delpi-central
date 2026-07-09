@@ -149,7 +149,9 @@ export const TM_HELP_TOOLTIPS = {
     preenchimentoLista:
       "Mesmo checklist do detalhe do processo: dados mestre, melhorias, mapeamento, diagrama macro, baseline, melhoria e medição.",
     modosVisualizacao:
-      "Alterne entre ícones grandes, ícones médios, lista compacta e tabela detalhada — como no explorador de arquivos do Windows.",
+      "Alterne entre ícones grandes (só título), ícones médios (+ código e meta), lista (+ status e preenchimento) e tabela detalhada.",
+    ordenacaoCampo: "Campo usado para ordenar a lista em todos os modos de visualização.",
+    ordenacaoDirecao: "Menor → maior (A–Z, 0–100) ou Maior → menor (Z–A, 100–0).",
   },
   decomposition: {
     mapeamento:

@@ -684,9 +684,54 @@
 .dashboard-transformometro .tm-processo-browser__toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   justify-content: flex-end;
   gap: 0.65rem;
+}
+
+.dashboard-transformometro .tm-processo-browser__sort {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.45rem;
+}
+
+.dashboard-transformometro .tm-processo-browser__sort-field {
+  min-width: 11rem;
+}
+
+.dashboard-transformometro .tm-processo-browser__sort-direction {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dashboard-transformometro .tm-processo-browser__sort-direction-label {
+  font-size: 0.72rem;
+}
+
+.dashboard-transformometro .tm-processo-browser__sort-direction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.05rem;
+  padding: 0 0.65rem;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 8px;
+  background: var(--ds-card-bg);
+  color: var(--ds-text);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dashboard-transformometro .tm-processo-browser__sort-direction-btn:hover,
+.dashboard-transformometro .tm-processo-browser__sort-direction-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--ds-accent) 28%, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
+  outline: none;
 }
 
 .dashboard-transformometro .tm-processo-browser__view-modes {
@@ -791,6 +836,17 @@
   width: 100%;
   font-size: 0.82rem;
   line-height: 1.25;
+}
+
+.dashboard-transformometro .tm-processo-folder--minimal .tm-processo-folder__name {
+  -webkit-line-clamp: 3;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.dashboard-transformometro .tm-processo-folder--minimal .tm-processo-folder__open {
+  gap: 0.5rem;
+  padding-bottom: 0.85rem;
 }
 
 .dashboard-transformometro .tm-processo-folder__meta {
