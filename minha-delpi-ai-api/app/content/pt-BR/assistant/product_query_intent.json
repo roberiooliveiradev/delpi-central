@@ -821,6 +821,21 @@
       " op ",
       " ops ",
       "playbook produtivo"
+    ],
+    "dateRequiredTerms": [
+      "analise produtiva",
+      "análise produtiva",
+      "situacao produtiva",
+      "situação produtiva",
+      "playbook produtivo",
+      "playbook de producao",
+      "playbook de produção",
+      "situacao de producao",
+      "situação de produção",
+      "status de producao",
+      "status de produção",
+      "production-status",
+      "production status"
     ]
   },
   "shippingStatus": {

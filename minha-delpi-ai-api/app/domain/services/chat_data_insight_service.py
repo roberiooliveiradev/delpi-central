@@ -285,6 +285,8 @@ class ChatDataInsightService:
 
         if cls._metadata_has_truncated_sections(metadata):
             commentary["paginated"] = True
+        elif cls._composite_sections_truncated(metadata, data):
+            commentary["paginated"] = True
         else:
             rows = cls._resolve_rows(metadata, data)
 
@@ -308,8 +310,6 @@ class ChatDataInsightService:
                         response_meta=response_meta,
                     ):
                         commentary["paginated"] = True
-            elif cls._composite_sections_truncated(metadata, data):
-                commentary["paginated"] = True
 
         cls._ensure_truncation_limitations(commentary)
 

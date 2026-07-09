@@ -573,6 +573,11 @@ class ChatOperationalDateParameterService:
 
         if ChatProductQueryIntentService._looks_like_production_status_question(normalized):
             if product_code or ChatProductQueryIntentService.extract_product_code(normalized):
+                if ChatProductQueryIntentService._looks_like_production_status_date_required(
+                    normalized
+                ):
+                    return "production_status"
+
                 return None
 
         if ChatProductQueryIntentService._looks_like_shipping_status_question(normalized):

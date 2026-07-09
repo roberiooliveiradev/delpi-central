@@ -110,7 +110,7 @@ def test_playbook_operational_entity_uses_playbook_report_title():
     result = presenter.present(payload, path="/production/orders/open")
 
     assert result is not None
-    assert result.get("titulo") == "Ordens de produção em aberto"
+    assert result.get("titulo") == "OPs em aberto"
     assert "Produto A" in "\n".join(result.get("linhas") or [])
     assert "Ordens de venda" not in str(result.get("titulo") or "")
 
@@ -130,7 +130,7 @@ def test_legacy_playbook_operational_path_without_meta_entity():
     result = presenter.present(payload, path="/production/orders/open")
 
     assert result is not None
-    assert result.get("titulo") == "Ordens de produção em aberto"
+    assert result.get("titulo") == "OPs em aberto"
     assert "Ordens de venda" not in str(result.get("titulo") or "")
 
 

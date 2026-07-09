@@ -172,6 +172,14 @@ class ChatRouteContextService:
             "factory-status",
             (
                 "status fabril",
+                "status na fabrica",
+                "status na fábrica",
+                "status completo na fabrica",
+                "status completo na fábrica",
+                "situacao na fabrica",
+                "situacao fabril",
+                "visao fabril",
+                "visão fabril",
                 "playbook fabril",
                 "factory-status",
                 "sem estrutura vigente",
@@ -182,6 +190,8 @@ class ChatRouteContextService:
             (
                 "status de producao",
                 "status de produção",
+                "situacao de producao",
+                "situação de produção",
                 "production-status",
                 "apontamento",
                 "ordem de producao",

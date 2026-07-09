@@ -164,6 +164,19 @@ class OperationalRouteActionResolverService:
             if parameters is None:
                 continue
 
+            from app.domain.services.chat_operational_date_parameter_service import (
+                ChatOperationalDateParameterService,
+            )
+
+            if (
+                ChatOperationalDateParameterService.action_requires_explicit_date(action)
+                and not ChatOperationalDateParameterService.parameters_have_date(
+                    action,
+                    parameters,
+                )
+            ):
+                continue
+
             reason = self.resolve_presentation_reason(
                 route,
                 parameters,

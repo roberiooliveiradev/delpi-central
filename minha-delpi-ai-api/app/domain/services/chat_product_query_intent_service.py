@@ -238,6 +238,12 @@ class ChatProductQueryIntentService:
         )
 
     @classmethod
+    def _looks_like_production_status_date_required(cls, normalized: str) -> bool:
+        return ChatProductQueryIntentPredicateService._looks_like_production_status_date_required(
+            normalized
+        )
+
+    @classmethod
     def _looks_like_shipping_status_question(cls, normalized: str) -> bool:
         return ChatProductQueryIntentPredicateService._looks_like_shipping_status_question(
             normalized

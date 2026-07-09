@@ -13,7 +13,7 @@ def test_load_api_path_labels():
     assert len(paths) >= 80
     assert "/commercial/proposals" in paths
     assert "/production/oee/series" in paths
-    assert "/production/oee/appointments/" in paths
+    assert "/production/oee/appointments/{id}" in paths
     assert "/production/oee" in paths
     assert "/production/eficiencia-fabril/dashboard" in paths
     assert "/system/tables/{tablename}/schema" in paths

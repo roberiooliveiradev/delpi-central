@@ -91,6 +91,20 @@ class ChatProductQueryIntentPredicateService:
         return cls._matches_product_predicate("productionStatus", normalized)
 
     @classmethod
+    def _looks_like_production_status_date_required(cls, normalized: str) -> bool:
+        if not normalized:
+            return False
+
+        return any(
+            term in normalized
+            for term in ChatAssistantContentService.list(
+                "product_query_intent",
+                "productionStatus",
+                "dateRequiredTerms",
+            )
+        )
+
+    @classmethod
     def _looks_like_shipping_status_question(cls, normalized: str) -> bool:
         return cls._matches_product_predicate("shippingStatus", normalized)
 

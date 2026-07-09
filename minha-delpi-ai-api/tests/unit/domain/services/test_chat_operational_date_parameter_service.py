@@ -66,9 +66,8 @@ def test_missing_date_not_requested_when_hoje_in_same_message():
 
 
 def test_missing_date_not_requested_when_essa_semana_in_same_message():
-    answer = ChatOperationalParameterService.resolve_missing_date_answer(
-        "status fabril do produto 90261892 essa semmana"
-    )
+    msg = "status fabril do produto 90261892 essa semana"
+    answer = ChatOperationalParameterService.resolve_missing_date_answer(msg)
 
     assert answer is None
 

@@ -352,6 +352,7 @@
       "id": "productFactoryStatus",
       "domain": "product",
       "priority": 140,
+      "routeSegment": "factory-status",
       "match": {
         "customPredicate": "factoryStatus",
         "noneOf": [
