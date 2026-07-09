@@ -72,6 +72,7 @@ import {
   mermaidToFlowchart,
   MermaidImportError,
 } from "../../utils/flowchartMermaid";
+import { resolveConnectionHandleIds } from "../../utils/diagramConnectionHandles";
 
 type FlowchartEditorProps = {
   value: FlowchartV1;
@@ -195,6 +196,38 @@ function buildLaneNodes(
   }));
 }
 
+function buildFlowchartEdge(
+  edge: FlowchartV1["edges"][number],
+  nodeById: Map<string, FlowchartNode>
+): Edge {
+  const sourceNode = nodeById.get(edge.from);
+  const targetNode = nodeById.get(edge.to);
+  const handles =
+    sourceNode && targetNode
+      ? resolveConnectionHandleIds(
+          { position: sourceNode.position },
+          { position: targetNode.position },
+          sourceNode.type,
+          targetNode.type
+        )
+      : null;
+
+  return {
+    id: edge.id,
+    source: edge.from,
+    target: edge.to,
+    sourceHandle: handles?.sourceHandle,
+    targetHandle: handles?.targetHandle,
+    type: "flowchart",
+    label: edge.label ?? undefined,
+    labelStyle: { fontSize: 11, fontWeight: 600 },
+    labelBgStyle: { fillOpacity: 0.92 },
+    data: {
+      kind: edge.kind ?? "sequence",
+    },
+  };
+}
+
 function toReactFlow(
   value: FlowchartV1,
   laneOptions?: {
@@ -218,18 +251,8 @@ function toReactFlow(
     zIndex: 1,
   }));
 
-  const edges: Edge[] = value.edges.map((edge) => ({
-    id: edge.id,
-    source: edge.from,
-    target: edge.to,
-    type: "flowchart",
-    label: edge.label ?? undefined,
-    labelStyle: { fontSize: 11, fontWeight: 600 },
-    labelBgStyle: { fillOpacity: 0.92 },
-    data: {
-      kind: edge.kind ?? "sequence",
-    },
-  }));
+  const nodeById = new Map(value.nodes.map((node) => [node.id, node]));
+  const edges: Edge[] = value.edges.map((edge) => buildFlowchartEdge(edge, nodeById));
 
   return {
     nodes: [...buildLaneNodes(lanes, laneOptions), ...activityNodes],
@@ -606,10 +629,32 @@ function FlowchartEditorInner({
   const onConnect = useCallback(
     (connection: Connection) => {
       if (readOnly) return;
+      const activityNodes = getNodes().filter((node) => node.type !== "lane");
+      const sourceNode = activityNodes.find((node) => node.id === connection.source);
+      const targetNode = activityNodes.find((node) => node.id === connection.target);
+      const handles =
+        sourceNode && targetNode
+          ? resolveConnectionHandleIds(
+              {
+                position: sourceNode.position,
+                width: sourceNode.measured?.width,
+                height: sourceNode.measured?.height,
+              },
+              {
+                position: targetNode.position,
+                width: targetNode.measured?.width,
+                height: targetNode.measured?.height,
+              },
+              (sourceNode.data as BpmnNodeData).nodeType,
+              (targetNode.data as BpmnNodeData).nodeType
+            )
+          : null;
+
       setEdges((current) => {
         const next = addEdge(
           {
             ...connection,
+            ...(handles ?? {}),
             id: createEdgeId(),
             type: "flowchart",
             data: {
@@ -626,7 +671,7 @@ function FlowchartEditorInner({
         return next;
       });
     },
-    [emitChange, handleEdgeLabelChange, nodes, readOnly, setEdges]
+    [emitChange, getNodes, handleEdgeLabelChange, nodes, readOnly, setEdges]
   );
 
   const onNodeDrag = useCallback(

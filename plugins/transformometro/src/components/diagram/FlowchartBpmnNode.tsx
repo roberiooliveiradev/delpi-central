@@ -98,13 +98,33 @@ function ConnectionHandles({ compact = false }: { compact?: boolean }) {
     borderRadius: 999,
     border: "2px solid var(--ds-card-bg)",
   };
-  const handleProps = { className: "tm-diagram-node__handle", style };
+  const sides = [
+    { position: Position.Left, id: "left" },
+    { position: Position.Right, id: "right" },
+    { position: Position.Top, id: "top" },
+    { position: Position.Bottom, id: "bottom" },
+  ] as const;
+
   return (
     <>
-      <Handle type="target" position={Position.Left} {...handleProps} />
-      <Handle type="source" position={Position.Right} {...handleProps} />
-      <Handle type="target" position={Position.Top} id="top-target" {...handleProps} />
-      <Handle type="source" position={Position.Bottom} id="bottom-source" {...handleProps} />
+      {sides.flatMap(({ position, id }) => [
+        <Handle
+          key={`${id}-target`}
+          id={`${id}-target`}
+          type="target"
+          position={position}
+          className="tm-diagram-node__handle"
+          style={style}
+        />,
+        <Handle
+          key={`${id}-source`}
+          id={`${id}-source`}
+          type="source"
+          position={position}
+          className="tm-diagram-node__handle"
+          style={style}
+        />,
+      ])}
     </>
   );
 }
