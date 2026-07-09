@@ -5481,6 +5481,121 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   background: var(--ds-page-bg);
 }
 
+.dashboard-transformometro .tm-diagram-editor--overlay-tools {
+  gap: 0;
+}
+
+.dashboard-transformometro .tm-diagram-editor__stage {
+  position: relative;
+  min-height: 680px;
+  border-radius: var(--ds-radius-md);
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 56px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: calc(100% - 72px);
+  pointer-events: none;
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-overlay > * {
+  pointer-events: auto;
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-tab {
+  border: none;
+  background: transparent;
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 8px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-tab.is-active {
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-help {
+  border: none;
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel {
+  padding: 6px 8px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  max-height: min(132px, 30vh);
+  overflow: auto;
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette,
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__templates,
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__actions {
+  gap: 4px;
+}
+
+.dashboard-transformometro .tm-diagram-editor__view-tabs--overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard-transformometro .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas {
+  height: 100%;
+  min-height: 680px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+}
+
+.dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__minimap {
+  bottom: 12px;
+  right: 12px;
+}
+
+.dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__controls {
+  bottom: 12px;
+  left: 12px;
+}
+
 .dashboard-transformometro .tm-diagram-editor {
   display: flex;
   flex-direction: column;
@@ -5632,8 +5747,8 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-editor__canvas {
-  height: 520px;
-  min-height: 520px;
+  height: 680px;
+  min-height: 680px;
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
   overflow: hidden;

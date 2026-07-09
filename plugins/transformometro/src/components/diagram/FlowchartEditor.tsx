@@ -15,19 +15,15 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { CircleHelp } from "lucide-react";
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip } from "@delpi/plugin-ui";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
 import { TabPanelTransition } from "../TabPanelTransition";
-import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import {
   DIAGRAM_EDITOR_ACTIONS,
   DIAGRAM_EDITOR_SELECTION_ACTIONS,
-  FLOWCHART_NODE_ICONS,
-  flowchartNodeHint,
 } from "./flowchartEditorToolbar";
 import {
   autoLayoutFlowchart,
@@ -53,9 +49,12 @@ import {
 } from "../../types/diagram";
 import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
-import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import { FlowchartEditableEdge } from "./FlowchartEditableEdge";
 import { FlowchartMermaidPanel } from "./FlowchartMermaidPanel";
+import {
+  FlowchartEditorToolbar,
+  type FlowchartEditorToolbarTab,
+} from "./FlowchartEditorToolbar";
 import { useDiagramEditorLayout } from "./DiagramLayoutContext";
 import {
   createStarterMermaidTemplate,
@@ -99,7 +98,8 @@ const edgeTypes = {
 const LANE_NODE_PREFIX = "__lane__";
 const DUPLICATE_OFFSET = 48;
 const NUDGE_STEP = 8;
-const DEFAULT_CANVAS_HEIGHT = 520;
+const DEFAULT_CANVAS_HEIGHT = 680;
+const STAGE_MIN_HEIGHT = 680;
 
 type SelectionClipboard = {
   nodes: ActivityNode[];
@@ -259,6 +259,7 @@ function FlowchartEditorInner({
   const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
   const [activeTab, setActiveTab] = useState<"canvas" | "mermaid">("canvas");
+  const [toolbarTab, setToolbarTab] = useState<FlowchartEditorToolbarTab>("elements");
   const [mermaidDraft, setMermaidDraft] = useState("");
   const [mermaidApplyError, setMermaidApplyError] = useState<string | null>(null);
   const [mermaidApplying, setMermaidApplying] = useState(false);
@@ -273,9 +274,9 @@ function FlowchartEditorInner({
   const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
   const { fitView } = useReactFlow();
-  const canvasHeight = canvasHeightForLanes(
-    lanes,
-    lanes.length ? 360 : DEFAULT_CANVAS_HEIGHT
+  const canvasHeight = Math.max(
+    canvasHeightForLanes(lanes, lanes.length ? 380 : DEFAULT_CANVAS_HEIGHT),
+    STAGE_MIN_HEIGHT
   );
   const hasNodeSelection = selectedNodeIds.length > 0;
   const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0;
@@ -810,35 +811,35 @@ function FlowchartEditorInner({
     return false;
   };
 
+  const runEditorAction = (actionId: (typeof DIAGRAM_EDITOR_ACTIONS)[number]["id"]) => {
+    if (actionId === "addLane") addLane();
+    else if (actionId === "autoLayout") runAutoLayout();
+    else if (actionId === "templateLinear") applyTemplate("linear");
+    else if (actionId === "templateDecision") applyTemplate("decision");
+    else if (actionId === "templateSwimlanes") applyTemplate("swimlanes");
+  };
+
   return (
     <div
       className={[
         "tm-diagram-editor",
         layout === "fill" ? "tm-diagram-editor--fill" : "",
+        "tm-diagram-editor--overlay-tools",
       ]
         .filter(Boolean)
         .join(" ")}
       ref={exportRef}
     >
-      {!readOnly && showTemplates ? (
-        <div className="tm-diagram-editor__toolbar tm-diagram-editor__toolbar--compact">
-          <div className="tm-diagram-editor__palette">
-            {FLOWCHART_NODE_PALETTE.map((item) => {
-              const Icon = FLOWCHART_NODE_ICONS[item.type];
-              return (
-                <DiagramEditorToolbarButton
-                  key={item.type}
-                  label={item.label}
-                  hint={flowchartNodeHint(item.type)}
-                  icon={Icon}
-                  onClick={() => addNode(item.type)}
-                />
-              );
-            })}
-          </div>
-          <div className="tm-diagram-editor__templates">
-            {lanes.length ? (
-              <FlowchartLaneToolbar
+      <TabPanelTransition tabKey={activeTab}>
+        {activeTab === "canvas" ? (
+          <div
+            className="tm-diagram-editor__stage"
+            style={{ minHeight: canvasHeight }}
+          >
+            {!readOnly && showTemplates ? (
+              <FlowchartEditorToolbar
+                toolbarTab={toolbarTab}
+                onToolbarTabChange={setToolbarTab}
                 lanes={lanes}
                 activeLaneId={activeLaneId}
                 onActiveLaneChange={setActiveLaneId}
@@ -846,161 +847,152 @@ function FlowchartEditorInner({
                 onLaneLabelDraftChange={setLaneLabelDraft}
                 onRenameLane={renameActiveLane}
                 onRemoveLane={removeActiveLane}
-                disableRemove={!lanes.length}
+                onAddNode={addNode}
+                onEditorAction={runEditorAction}
+                onSelectionAction={runSelectionAction}
+                isSelectionActionDisabled={isSelectionActionDisabled}
               />
             ) : null}
-            {DIAGRAM_EDITOR_ACTIONS.map((action) => (
-              <DiagramEditorToolbarButton
-                key={action.id}
-                label={action.label}
-                hint={action.hint}
-                icon={action.icon}
-                onClick={() => {
-                  if (action.id === "addLane") addLane();
-                  else if (action.id === "autoLayout") runAutoLayout();
-                  else if (action.id === "templateLinear") applyTemplate("linear");
-                  else if (action.id === "templateDecision") applyTemplate("decision");
-                  else if (action.id === "templateSwimlanes") applyTemplate("swimlanes");
+
+            {showPreviewTab ? (
+              <div className="tm-diagram-editor__view-tabs tm-diagram-editor__view-tabs--overlay">
+                <HelpTooltip
+                  content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
+                  ariaLabel="Ajuda: Canvas"
+                  wrap
+                  placement="bottom"
+                  className="tm-diagram-editor__tab-wrap"
+                >
+                  <button
+                    type="button"
+                    className={
+                      activeTab === "canvas"
+                        ? "tm-diagram-editor__tab is-active"
+                        : "tm-diagram-editor__tab"
+                    }
+                    onClick={() => setActiveTab("canvas")}
+                  >
+                    Canvas
+                  </button>
+                </HelpTooltip>
+                <HelpTooltip
+                  content={TM_HELP_TOOLTIPS.diagramEditor.mermaidTab}
+                  ariaLabel="Ajuda: Preview Mermaid"
+                  wrap
+                  placement="bottom"
+                  className="tm-diagram-editor__tab-wrap"
+                >
+                  <button
+                    type="button"
+                    className="tm-diagram-editor__tab"
+                    onClick={() => switchToMermaidTab()}
+                  >
+                    Mermaid
+                  </button>
+                </HelpTooltip>
+              </div>
+            ) : null}
+
+            <div
+              ref={canvasWrapperRef}
+              tabIndex={readOnly ? -1 : 0}
+              className={[
+                "tm-diagram-editor__canvas",
+                lanes.length ? "tm-diagram-editor__canvas--swimlanes" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              style={{ height: canvasHeight }}
+            >
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                colorMode={colorMode}
+                defaultEdgeOptions={{
+                  type: "flowchart",
+                  labelStyle: { fontSize: 11, fontWeight: 600 },
+                  labelBgStyle: { fillOpacity: 0.92 },
                 }}
-              />
-            ))}
-          </div>
-          <div className="tm-diagram-editor__actions-row">
-            <span className="tm-diagram-editor__section-label">Ações</span>
-            <div className="tm-diagram-editor__actions">
-              {DIAGRAM_EDITOR_SELECTION_ACTIONS.map((action) => (
-                <DiagramEditorToolbarButton
-                  key={action.id}
-                  label={action.label}
-                  hint={action.hint}
-                  icon={action.icon}
-                  disabled={isSelectionActionDisabled(action.id)}
-                  onClick={() => runSelectionAction(action.id)}
-                />
-              ))}
+                onInit={(instance) => {
+                  window.requestAnimationFrame(() => {
+                    void instance.fitView({ padding: 0.15, duration: 0 });
+                  });
+                }}
+                onNodesChange={readOnly ? undefined : onNodesChange}
+                onEdgesChange={readOnly ? undefined : onEdgesChange}
+                onConnect={onConnect}
+                onNodeDragStop={onNodeDragStop}
+                onNodesDelete={onNodesDelete}
+                onEdgesDelete={onEdgesDelete}
+                deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
+                minZoom={0.2}
+                maxZoom={1.5}
+                nodesDraggable={!readOnly}
+                nodesConnectable={!readOnly}
+                elementsSelectable={!readOnly}
+                proOptions={{ hideAttribution: true }}
+              >
+                <Background gap={20} size={1} />
+                <MiniMap pannable zoomable />
+                <Controls showInteractive={!readOnly} position="bottom-left" />
+              </ReactFlow>
             </div>
           </div>
-          <p className="tm-diagram-editor__hint ds-hint">
-            <HelpTooltip
-              content={TM_HELP_TOOLTIPS.diagramEditor.usoGeral}
-              ariaLabel="Como usar o editor de diagrama"
-              wrap
-              placement="bottom"
-              className="tm-diagram-editor__hint-wrap"
-            >
-              <span className="tm-diagram-editor__hint-link">
-                <CircleHelp size={14} aria-hidden="true" />
-                Como usar
-              </span>
-            </HelpTooltip>
-          </p>
-        </div>
-      ) : null}
-
-      {showPreviewTab ? (
-        <div className="tm-diagram-editor__tabs">
-          <HelpTooltip
-            content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
-            ariaLabel="Ajuda: Canvas"
-            wrap
-            placement="bottom"
-            className="tm-diagram-editor__tab-wrap"
-          >
-            <button
-              type="button"
-              className={
-                activeTab === "canvas"
-                  ? "tm-diagram-editor__tab is-active"
-                  : "tm-diagram-editor__tab"
-              }
-              onClick={() => setActiveTab("canvas")}
-            >
-              Canvas
-            </button>
-          </HelpTooltip>
-          <HelpTooltip
-            content={TM_HELP_TOOLTIPS.diagramEditor.mermaidTab}
-            ariaLabel="Ajuda: Preview Mermaid"
-            wrap
-            placement="bottom"
-            className="tm-diagram-editor__tab-wrap"
-          >
-            <button
-              type="button"
-              className={
-                activeTab === "mermaid"
-                  ? "tm-diagram-editor__tab is-active"
-                  : "tm-diagram-editor__tab"
-              }
-              onClick={() => switchToMermaidTab()}
-            >
-              Mermaid
-            </button>
-          </HelpTooltip>
-        </div>
-      ) : null}
-
-      <TabPanelTransition tabKey={activeTab}>
-        {activeTab === "canvas" ? (
-          <div
-            ref={canvasWrapperRef}
-            tabIndex={readOnly ? -1 : 0}
-            className={[
-              "tm-diagram-editor__canvas",
-              lanes.length ? "tm-diagram-editor__canvas--swimlanes" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            style={{ height: canvasHeight }}
-          >
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={nodeTypes}
-              edgeTypes={edgeTypes}
-              colorMode={colorMode}
-              defaultEdgeOptions={{
-                type: "flowchart",
-                labelStyle: { fontSize: 11, fontWeight: 600 },
-                labelBgStyle: { fillOpacity: 0.92 },
-              }}
-              onInit={(instance) => {
-                window.requestAnimationFrame(() => {
-                  void instance.fitView({ padding: 0.15, duration: 0 });
-                });
-              }}
-              onNodesChange={readOnly ? undefined : onNodesChange}
-              onEdgesChange={readOnly ? undefined : onEdgesChange}
-              onConnect={onConnect}
-              onNodeDragStop={onNodeDragStop}
-              onNodesDelete={onNodesDelete}
-              onEdgesDelete={onEdgesDelete}
-              deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
-              minZoom={0.2}
-              maxZoom={1.5}
-              nodesDraggable={!readOnly}
-              nodesConnectable={!readOnly}
-              elementsSelectable={!readOnly}
-              proOptions={{ hideAttribution: true }}
-            >
-              <Background gap={20} size={1} />
-              <MiniMap pannable zoomable />
-              <Controls showInteractive={!readOnly} position="bottom-left" />
-            </ReactFlow>
-          </div>
         ) : (
-          <FlowchartMermaidPanel
-            draft={mermaidDraft}
-            onDraftChange={setMermaidDraft}
-            onApply={applyMermaidDraft}
-            onRefreshFromCanvas={refreshMermaidFromCanvas}
-            onUseTemplate={useMermaidTemplate}
-            readOnly={readOnly}
-            layout={layout}
-            applyError={mermaidApplyError}
-            applying={mermaidApplying}
-            isEmpty={!value.nodes.length}
-          />
+          <>
+            {showPreviewTab ? (
+              <div className="tm-diagram-editor__view-tabs">
+                <HelpTooltip
+                  content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
+                  ariaLabel="Ajuda: Canvas"
+                  wrap
+                  placement="bottom"
+                  className="tm-diagram-editor__tab-wrap"
+                >
+                  <button
+                    type="button"
+                    className="tm-diagram-editor__tab"
+                    onClick={() => setActiveTab("canvas")}
+                  >
+                    Canvas
+                  </button>
+                </HelpTooltip>
+                <HelpTooltip
+                  content={TM_HELP_TOOLTIPS.diagramEditor.mermaidTab}
+                  ariaLabel="Ajuda: Preview Mermaid"
+                  wrap
+                  placement="bottom"
+                  className="tm-diagram-editor__tab-wrap"
+                >
+                  <button
+                    type="button"
+                    className={
+                      activeTab === "mermaid"
+                        ? "tm-diagram-editor__tab is-active"
+                        : "tm-diagram-editor__tab"
+                    }
+                    onClick={() => switchToMermaidTab()}
+                  >
+                    Mermaid
+                  </button>
+                </HelpTooltip>
+              </div>
+            ) : null}
+            <FlowchartMermaidPanel
+              draft={mermaidDraft}
+              onDraftChange={setMermaidDraft}
+              onApply={applyMermaidDraft}
+              onRefreshFromCanvas={refreshMermaidFromCanvas}
+              onUseTemplate={useMermaidTemplate}
+              readOnly={readOnly}
+              layout={layout}
+              applyError={mermaidApplyError}
+              applying={mermaidApplying}
+              isEmpty={!value.nodes.length}
+            />
+          </>
         )}
       </TabPanelTransition>
     </div>
