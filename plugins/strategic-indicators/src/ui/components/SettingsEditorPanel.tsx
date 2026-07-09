@@ -3,6 +3,7 @@ import type {
   StrategicIndicatorsSettingsResponse,
   StrategicIndicatorsSettingsUpdateRequest,
 } from "../../data/types/settings";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 import "./SettingsEditorPanel.css";
 
 type SettingsEditorPanelProps = {
@@ -96,11 +97,12 @@ function EditorBlock({ title, value, onChange }: EditorBlockProps) {
   return (
     <article className="si-settings-editor__block">
       <label className="si-settings-editor__label">{title}</label>
-      <textarea
+      <SiNativeTextAreaControl
         className="si-settings-editor__textarea"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
         spellCheck={false}
+        aria-label={title}
+        onChange={onChange}
       />
     </article>
   );

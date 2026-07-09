@@ -1,4 +1,5 @@
 import type { SettingsGovernanceItem } from "../../data/types/settings";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 import "./SettingsGovernanceForm.css";
 
 type SettingsGovernanceFormProps = {
@@ -50,11 +51,10 @@ export function SettingsGovernanceForm({
             </Field>
 
             <Field label="Observação">
-              <textarea
+              <SiNativeTextAreaControl
                 value={item.observation}
-                onChange={(e) =>
-                  updateItem(index, "observation", e.target.value)
-                }
+                aria-label="Observação"
+                onChange={(observation) => updateItem(index, "observation", observation)}
               />
             </Field>
           </div>

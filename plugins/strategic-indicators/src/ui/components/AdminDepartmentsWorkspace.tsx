@@ -21,6 +21,7 @@ import {
 import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
 import "./AdminDepartmentsWorkspace.css";
 import { SI_VALUE_UNIT_OPTIONS, SiSelectControl } from "./siFiltersUi";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -669,13 +670,14 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field si-admin-form-field--full">
             <span>Resumo estratégico</span>
-            <textarea
+            <SiNativeTextAreaControl
               rows={3}
               value={departmentForm.strategic_summary}
-              onChange={(event) =>
+              aria-label="Resumo estratégico"
+              onChange={(strategic_summary) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  strategic_summary: event.target.value,
+                  strategic_summary,
                 }))
               }
             />
@@ -923,13 +925,14 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field si-admin-form-field--full">
             <span>Descrição estratégica</span>
-            <textarea
+            <SiNativeTextAreaControl
               rows={3}
               value={indicatorForm.strategic_description}
-              onChange={(event) =>
+              aria-label="Descrição estratégica"
+              onChange={(strategic_description) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  strategic_description: event.target.value,
+                  strategic_description,
                 }))
               }
             />

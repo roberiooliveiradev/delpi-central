@@ -58,15 +58,6 @@ KNOWN_ALLOWLIST: dict[str, str] = {
     "minha-delpi-chat/src/ui/components/workspace/agentBuilder/AgentIcebreakersEditor.tsx": "backlog: ref/onKeyDown",
     "minha-delpi-chat/src/ui/pages/ChatAgentBuilderPage.tsx": "backlog: ref/onKeyDown residual",
     "minha-delpi-chat/src/ui/pages/agent-actions/ActionTestPanel.tsx": "backlog: JSON test panel",
-    # ——— strategic-indicators: settings/admin (migrar siNativeFormFields) ———
-    "strategic-indicators/src/ui/components/AdminDepartmentsWorkspace.tsx": "backlog: SI native forms",
-    "strategic-indicators/src/ui/components/ChangeRequestsWorkspacePanel.tsx": "backlog: SI native forms",
-    "strategic-indicators/src/ui/components/DepartmentManagementModal.tsx": "backlog: SI native forms",
-    "strategic-indicators/src/ui/components/DepartmentsListPanel.tsx": "backlog: SI native forms",
-    "strategic-indicators/src/ui/components/IndicatorGoalForm.tsx": "backlog: SI native forms",
-    "strategic-indicators/src/ui/components/SettingsEditorPanel.tsx": "backlog: SI native forms",
-    "strategic-indicators/src/ui/components/SettingsGoalsForm.tsx": "backlog: SI native forms",
-    "strategic-indicators/src/ui/components/SettingsGovernanceForm.tsx": "backlog: SI native forms",
     # ——— demais plugins ———
     "customer-experience/src/pages/ParticipantsPanel.tsx": "backlog: cxFormFields",
     "cultura-delpi/src/pages/AdminCulturaPage.tsx": "backlog: sem kit plugin-ui",

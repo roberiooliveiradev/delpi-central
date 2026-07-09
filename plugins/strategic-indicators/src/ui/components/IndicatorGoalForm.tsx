@@ -31,6 +31,7 @@ import {
 } from "../utils/goalValuePolicy";
 import "./IndicatorGoalForm.css";
 import { SiSelectControl } from "./siFiltersUi";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 
 type IndicatorOption = {
   value: string;
@@ -410,9 +411,10 @@ export function IndicatorGoalForm({
         ) : null}
 
         <Field label="Observações" fullWidth>
-          <textarea
+          <SiNativeTextAreaControl
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            aria-label="Observações"
+            onChange={setNotes}
           />
         </Field>
       </div>

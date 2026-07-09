@@ -10,6 +10,7 @@ import {
 } from "../presentation/labels";
 import "./ChangeRequestsWorkspacePanel.css";
 import { SiSelectControl } from "./siFiltersUi";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 
 type ChangeRequestsWorkspacePanelProps = {
   getAccessToken?: () => string | undefined;
@@ -87,9 +88,10 @@ export function ChangeRequestsWorkspacePanel({
 
           <label className="si-change-requests__field">
             <span>Descrição</span>
-            <textarea
+            <SiNativeTextAreaControl
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              aria-label="Descrição"
+              onChange={setDescription}
             />
           </label>
 
@@ -121,9 +123,11 @@ export function ChangeRequestsWorkspacePanel({
 
           <label className="si-change-requests__field">
             <span>Payload proposto</span>
-            <textarea
+            <SiNativeTextAreaControl
               value={payloadText}
-              onChange={(e) => setPayloadText(e.target.value)}
+              spellCheck={false}
+              aria-label="Payload proposto"
+              onChange={setPayloadText}
             />
           </label>
 

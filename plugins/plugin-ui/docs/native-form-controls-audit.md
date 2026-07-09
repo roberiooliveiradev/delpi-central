@@ -6,8 +6,8 @@
 
 | Métrica | Valor |
 |---------|------:|
-| `<select>` / `<textarea>` nativos em plugins (exc. `plugin-ui`) | **32** |
-| Allowlist documentada (backlog + domínio) | 32 |
+| `<select>` / `<textarea>` nativos em plugins (exc. `plugin-ui`) | **22** |
+| Allowlist documentada (backlog + domínio) | 22 |
 | **Novos bloqueantes** (`--check`) | **0** |
 | `<select>` restantes | **0** (fora plugins excluídos) |
 
@@ -24,7 +24,7 @@
 
 | Plugin | `<textarea>` | `<select>` | Prioridade sugerida |
 |--------|-------------:|-----------:|---------------------|
-| **strategic-indicators** | 10 | 0 | Alta — criar `siNativeFormFields` |
+| **strategic-indicators** | 0 | 0 | ✅ migrado (`SiNativeTextAreaControl`) |
 | **minha-delpi-chat** | 15 | 0 | Média — 4 domínio permanente, 11 admin/workspace |
 | **cultura-delpi** | 3 | 0 | Média — kit `plugin-ui` + alias Vite |
 | **propostas-comerciais** | 2 | 0 | Média — inline table + modal |
@@ -44,9 +44,8 @@ Estes permanecem nativos; podem evoluir para `NativeTextAreaControl` **sem** she
 
 ## Backlog de migração (por lote)
 
-### Lote A — strategic-indicators (10)
-- `Settings*Form`, `SettingsEditorPanel`, `IndicatorGoalForm`, drawers admin
-- **Kit:** `siNativeFormFields.ts` (espelhar `cxFormFields` / `chatAdminFormFields`)
+### Lote A — strategic-indicators ✅
+- Migrado para `SiNativeTextAreaControl` (`siNativeFormFields.ts`)
 
 ### Lote B — minha-delpi-chat admin/workspace (11)
 - Admin: evaluations, guidelines test, security, skills

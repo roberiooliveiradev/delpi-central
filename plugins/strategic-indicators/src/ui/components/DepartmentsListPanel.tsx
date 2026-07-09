@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { InfoState } from "./InfoState";
 import { Modal } from "./Modal";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { ActionButtons } from "./ActionButtons";
 import { useStrategicIndicatorsAdminDepartments } from "../../state/hooks/useStrategicIndicatorsAdminDepartments";
@@ -363,13 +364,14 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field si-admin-form-field--full">
             <span>Resumo estratégico</span>
-            <textarea
+            <SiNativeTextAreaControl
               rows={3}
               value={departmentForm.strategic_summary}
-              onChange={(event) =>
+              aria-label="Resumo estratégico"
+              onChange={(strategic_summary) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  strategic_summary: event.target.value,
+                  strategic_summary,
                 }))
               }
             />

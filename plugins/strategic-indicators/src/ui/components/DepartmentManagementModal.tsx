@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Modal } from "./Modal";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 import { SectionBlock } from "./SectionBlock";
 import { InfoState } from "./InfoState";
 import { ActionButtons } from "./ActionButtons";
@@ -532,13 +533,14 @@ export function DepartmentManagementModal({
 
           <label className="si-admin-form-field si-admin-form-field--full">
             <span>Descrição estratégica</span>
-            <textarea
+            <SiNativeTextAreaControl
               rows={3}
               value={indicatorForm.strategic_description}
-              onChange={(event) =>
+              aria-label="Descrição estratégica"
+              onChange={(strategic_description) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  strategic_description: event.target.value,
+                  strategic_description,
                 }))
               }
             />

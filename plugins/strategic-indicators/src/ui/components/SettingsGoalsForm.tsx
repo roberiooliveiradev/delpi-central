@@ -1,4 +1,5 @@
 import type { SettingsGoalItem } from "../../data/types/settings";
+import { SiNativeTextAreaControl } from "./siNativeFormFields";
 import "./SettingsGoalsForm.css";
 
 type SettingsGoalsFormProps = {
@@ -59,10 +60,11 @@ export function SettingsGoalsForm({
             </Field>
 
             <Field label="Foco de apoio">
-              <textarea
+              <SiNativeTextAreaControl
                 value={item.supporting_focus}
-                onChange={(e) =>
-                  updateItem(index, "supporting_focus", e.target.value)
+                aria-label="Foco de apoio"
+                onChange={(supporting_focus) =>
+                  updateItem(index, "supporting_focus", supporting_focus)
                 }
               />
             </Field>

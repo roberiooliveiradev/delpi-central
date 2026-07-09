@@ -350,14 +350,14 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **minha-delpi-chat** | `WorkspaceFileDropzone` policy; toolbar rich → `ChatRichUxSelect` / `NativeSelectControl` |
 | **transformometro** | `FlowchartMermaidPanel` → `NativeTextAreaControl` |
 | **minha-delpi-chat** | Toolbar rich → `ChatRichSelectControl` (`SelectControl` compacto) |
-| **quality-action-plans** | Ishikawa / 5 Whys → `NativeTextAreaControl` / `PacWhysFlowTextArea` |
+| **quality-action-plans** | Ishikawa / 5 Whys → `NativeTextAreaControl` |
+| **strategic-indicators** | Settings/admin → `SiNativeTextAreaControl` |
 | **plugin-ui** | `FormFieldShell.beforeControl`, `FileDropzone.emptyContent`/policy slots, `ModalShell` description/footer/foco, `TextArea.onFocus/maxLength` |
 
 ### Próximo lote sugerido (quando retomar)
 
-1. **SI** — `siNativeFormFields` (10 textareas settings/admin).
-2. **Chat** — admin/workspace residual (11) via `chatAdminFormFields` / `NativeTextAreaControl`.
-3. **Lote C** — cultura-delpi, propostas-comerciais, CE Participants, TV comunicado.
+1. **Chat** — admin/workspace residual (11) via `chatAdminFormFields` / `NativeTextAreaControl`.
+2. **Lote C** — cultura-delpi, propostas-comerciais, CE Participants, TV comunicado.
 4. Consolidar estilos `SelectControl` compacto no `plugin-ui` (toolbar pattern reutilizável).
 
 ---
