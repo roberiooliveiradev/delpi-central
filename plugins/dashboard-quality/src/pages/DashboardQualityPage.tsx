@@ -344,11 +344,9 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         </div>
       </section>
 
-      <section className="dq-kpi-section" aria-busy={isBusy}>
-        <h2 className="dq-section-title">PPM plugues (9048*)</h2>
-        <div className="dq-kpi-grid">
-          <KpiCard
-            title="PPM interno — plugues"
+      <section className="dq-kpi-grid" aria-busy={isBusy}>
+        <KpiCard
+          title="PPM interno — plugues"
             titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmInternalPlugs}
             value={formatDashboardMetricValue(ppmInternalPlugs?.ppm, ppmInternalPlugs)}
             {...buildKpiGoalPresentationWithBranchIdd(
@@ -393,7 +391,6 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
               />
             }
           />
-        </div>
       </section>
 
       <section className="dq-kpi-grid" aria-busy={isBusy}>
