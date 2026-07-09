@@ -8,6 +8,8 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 |---------|-----|
 | `docker-compose.dev.yml` | Desenvolvimento local: **padrão = stack essencial** (8 serviços); profiles `chat` e `plugins` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
+| `docker-compose.minimal.yml` | Override dev — desliga LanguageTool/SearXNG e limita RAM do chat |
+| `docker-compose.prod.cpu.yml` | Override prod — hosts com ~8 GB RAM (LanguageTool/SearXNG em profile `optional-heavy`) |
 | `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
 | `docker-compose.prod.vision.yml` | **Override legado** prod — redundante; compose base já inclui visão |
 | `.env.dev.example` | Modelo para copiar → `.env` no dia a dia |
@@ -31,7 +33,67 @@ docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-
 ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev
 ```
 
+# Chat + RAM reduzida (dev WSL ~8 GB)
+docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml \
+  --profile chat --env-file infra/.env up -d
+```
+
 O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f infra/docker-compose.*.yml`.
+
+---
+
+## Memória RAM — diagnóstico e mitigação
+
+### Sintomas comuns
+
+- WSL/Docker trava ao `up --build`
+- Host com ~8 GB RAM fica com swap ou OOM
+- `docker stats` mostra dezenas de containers `delpi-*`
+
+### Causas frequentes
+
+| Causa | Impacto |
+|-------|---------|
+| **Misturar dev + prod** (`-f docker-compose.yml -f docker-compose.dev.yml`) | Sobe **todos** os MFEs/APIs de prod (~40 containers) mesmo em dev |
+| **Prod completo** em máquina pequena | Ollama (~1 GB) + LanguageTool (~2,5 GB) + chat API + dezenas de plugins |
+| **`up --build` paralelo** | Build de 20+ plugins (`npm run build`) + PyTorch no chat API estoura RAM no pico |
+| **Profile `chat` sem `minimal`** | LanguageTool + SearXNG sobem junto com Ollama |
+
+### Comandos corretos (dev)
+
+```bash
+# Essencial (~8 containers) — recomendado no dia a dia
+./infra/scripts/up-minimal-dev.sh
+
+# Chat com RAM controlada (~13 containers, sem LanguageTool/SearXNG)
+docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml \
+  --profile chat --env-file infra/.env up -d
+
+# Build do chat sem paralelizar todos os serviços (evita OOM no build PyTorch/npm)
+export COMPOSE_PARALLEL_LIMIT=1
+docker compose -f infra/docker-compose.dev.yml --profile chat build minha-delpi-ai-api
+```
+
+### Parar stack inflada (recuperação)
+
+Se subiu prod+dev ou todos os plugins por engano:
+
+```bash
+cd infra
+docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml down
+# ou parar extras manualmente:
+docker stop delpi-languagetool delpi-searxng 2>/dev/null || true
+docker stats --no-stream | sort -k4 -hr | head -10
+```
+
+### Produção em host com RAM limitada
+
+```bash
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.cpu.yml \
+  --env-file infra/.env up -d
+```
+
+Ver também `infra/.env.prod.cpu.example` (desliga spell-check web e reduz contexto LLM).
 
 ---
 

@@ -1,0 +1,53 @@
+# Override prod — hosts com RAM limitada (ex.: WSL ~8 GB, máquina dev local).
+# Não use junto com docker-compose.dev.yml.
+#
+# Uso:
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.cpu.yml \
+#     --env-file infra/.env up -d
+#
+# Chat sem extras pesados (LanguageTool ~2,5 GB, SearXNG ~130 MB):
+#   … up -d minha-delpi-ai-api minha-delpi-chat ollama
+#
+# Reativar correção ortográfica / busca web:
+#   … --profile optional-heavy up -d languagetool searxng
+
+services:
+  searxng:
+    profiles: !override
+      - optional-heavy
+
+  languagetool:
+    profiles: !override
+      - optional-heavy
+
+  minha-delpi-ai-api:
+    depends_on: !override
+      core-api:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      CHAT_WEB_SEARCH_ENABLED: "false"
+      CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED: "false"
+      CHAT_TYPING_CORRECTION_ENABLED: "false"
+      CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED: "false"
+      CHAT_LEARNING_GLOSSARY_WEB_MEANING: "false"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX:-1536}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-1024}
+      CHAT_HISTORY_MAX_MESSAGES: "8"
+      MAX_CONTEXT_CHUNKS: "4"
+      CHAT_AGENTIC_LOOP_MAX_STEPS: "1"
+
+  ollama:
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_PARALLEL: "1"
+    deploy:
+      resources:
+        limits:
+          memory: 4500M

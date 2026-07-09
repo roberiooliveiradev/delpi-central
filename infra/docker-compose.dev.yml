@@ -3,10 +3,14 @@
 #   chat      ollama, minha-delpi-ai-api, minha-delpi-chat, searxng, languagetool
 #   plugins   microfrontends e APIs de plugin (dashboards, MFEs, etc.)
 #
+# ⚠ NÃO misture com docker-compose.yml (prod) no mesmo comando — isso sobe ~40+ containers
+#   e estoura RAM em máquinas dev (~8 GB). Use SOMENTE este arquivo no local.
+#
 # Exemplos:
 #   docker compose -f infra/docker-compose.dev.yml up -d
+#   docker compose -f infra/docker-compose.dev.yml --profile chat up -d
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
-#   docker compose -f infra/docker-compose.dev.yml --profile chat --profile plugins up -d
+#   ./infra/scripts/up-minimal-dev.sh   # atalho stack essencial + override de RAM
 
 x-plugin-profile: &plugin-profile
   profiles:
@@ -162,7 +166,7 @@ services:
 
     environment:
       OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-1}
-      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-2}
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-1}
       OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
 
     ports:
@@ -170,6 +174,11 @@ services:
 
     volumes:
       - ollama_data:/root/.ollama
+
+    deploy:
+      resources:
+        limits:
+          memory: ${OLLAMA_MEMORY_LIMIT:-4500M}
 
     networks:
       - delpi-network

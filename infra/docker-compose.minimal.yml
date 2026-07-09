@@ -7,11 +7,11 @@
 
 services:
   searxng:
-    profiles:
+    profiles: !override
       - optional-heavy
 
   languagetool:
-    profiles:
+    profiles: !override
       - optional-heavy
 
   strategic-indicators-api:

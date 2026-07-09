@@ -58,6 +58,8 @@ echo "=== Fase 2: stack mínimo (${#MINIMAL_SERVICES[@]} serviços) ==="
 UP_ARGS=(-d)
 if [[ "$BUILD" == true ]]; then
   UP_ARGS+=(--build)
+  export COMPOSE_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-2}"
+  echo "Build com COMPOSE_PARALLEL_LIMIT=${COMPOSE_PARALLEL_LIMIT} (evita OOM em máquinas ~8 GB)"
 fi
 "${COMPOSE[@]}" up "${UP_ARGS[@]}" "${MINIMAL_SERVICES[@]}"
 
@@ -68,6 +70,7 @@ echo ""
 echo "Stack mínimo no ar: http://localhost"
 echo "Serviços: ${MINIMAL_SERVICES[*]}"
 echo "Chat:     ${COMPOSE[*]} --profile chat up -d"
+echo "Chat RAM: ${COMPOSE[*]} --profile chat up -d  # já inclui override minimal (sem LanguageTool/SearXNG)"
 echo "Plugin:   ${COMPOSE[*]} --profile plugins up -d <servico>"
 echo "Sem: dashboards, MFEs, strategic-indicators, transformometro, maintenance (profile plugins)"
 echo ""
