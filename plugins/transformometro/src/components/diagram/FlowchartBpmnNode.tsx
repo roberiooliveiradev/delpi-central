@@ -158,22 +158,38 @@ function NodeShell({
 }
 
 function GatewaySymbol({ marker }: { marker: BpmnMarker }) {
-  if (marker === "parallel_gateway") return <span aria-hidden>+</span>;
-  if (marker === "inclusive") return <span aria-hidden>O</span>;
-  if (marker === "complex") return <span aria-hidden>*</span>;
-  if (marker === "event_based") return <span aria-hidden>◇</span>;
-  return <span aria-hidden>×</span>;
+  if (marker === "parallel_gateway") return <span className="tm-diagram-node__gateway-glyph tm-diagram-node__gateway-glyph--parallel" aria-hidden>+</span>;
+  if (marker === "inclusive") return <span className="tm-diagram-node__gateway-glyph tm-diagram-node__gateway-glyph--inclusive" aria-hidden>O</span>;
+  if (marker === "complex") return <span className="tm-diagram-node__gateway-glyph tm-diagram-node__gateway-glyph--complex" aria-hidden>✱</span>;
+  if (marker === "event_based") return <span className="tm-diagram-node__gateway-glyph tm-diagram-node__gateway-glyph--event" aria-hidden>◇</span>;
+  return <span className="tm-diagram-node__gateway-glyph tm-diagram-node__gateway-glyph--exclusive" aria-hidden>×</span>;
 }
 
-function BpmnMarkerGlyph({ marker, size = 12 }: { marker: BpmnMarker; size?: number }) {
+function BpmnMarkerGlyph({
+  marker,
+  size = 14,
+  tone = "default",
+}: {
+  marker: BpmnMarker;
+  size?: number;
+  tone?: "default" | "start" | "end" | "end-filled" | "intermediate" | "intermediate-throw" | "boundary";
+}) {
   if (marker === "none" || marker === "exclusive" || marker === "parallel_gateway" || marker === "inclusive" || marker === "complex" || marker === "event_based") {
     return null;
   }
   const Icon = MARKER_ICONS[marker];
   if (Icon) {
     return (
-      <span className="tm-diagram-node__marker-icon" aria-hidden>
-        <Icon size={size} strokeWidth={2.2} />
+      <span
+        className={[
+          "tm-diagram-node__marker-icon",
+          tone !== "default" ? `tm-diagram-node__marker-icon--${tone}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-hidden
+      >
+        <Icon size={size} strokeWidth={2.4} />
       </span>
     );
   }
@@ -192,7 +208,7 @@ function EventStartShape({ marker }: { marker: BpmnMarker }) {
         .join(" ")}
       aria-hidden
     >
-      <BpmnMarkerGlyph marker={marker} size={11} />
+      <BpmnMarkerGlyph marker={marker} size={15} tone="start" />
     </span>
   );
 }
@@ -209,7 +225,11 @@ function EventEndShape({ marker }: { marker: BpmnMarker }) {
         .join(" ")}
       aria-hidden
     >
-      <BpmnMarkerGlyph marker={marker} size={10} />
+      <BpmnMarkerGlyph
+        marker={marker}
+        size={marker === "terminate" ? 12 : 14}
+        tone={marker === "terminate" ? "end-filled" : "end"}
+      />
     </span>
   );
 }
@@ -232,7 +252,11 @@ function EventIntermediateShape({
         .join(" ")}
       aria-hidden
     >
-      <BpmnMarkerGlyph marker={marker} size={10} />
+      <BpmnMarkerGlyph
+        marker={marker}
+        size={14}
+        tone={variant === "throw" ? "intermediate-throw" : "intermediate"}
+      />
     </span>
   );
 }
@@ -258,7 +282,7 @@ function DataStoreCylinder() {
 function BoundaryShape({ marker }: { marker: BpmnMarker }) {
   return (
     <span className="tm-diagram-node__event-shape tm-diagram-node__event-shape--boundary" aria-hidden>
-      <BpmnMarkerGlyph marker={marker} size={9} />
+      <BpmnMarkerGlyph marker={marker} size={12} tone="boundary" />
     </span>
   );
 }
@@ -443,6 +467,16 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
             : def.marker === "event_sub"
               ? Timer
               : Layers;
+    const activityToneClass =
+      def.shape === "activity_call"
+        ? "tm-diagram-node__shape-icon--call"
+        : def.shape === "activity_ad_hoc"
+          ? "tm-diagram-node__shape-icon--ad-hoc"
+          : def.shape === "activity_transaction"
+            ? "tm-diagram-node__shape-icon--transaction"
+            : def.shape === "activity_event_subprocess"
+              ? "tm-diagram-node__shape-icon--event-sub"
+              : "tm-diagram-node__shape-icon--subprocess";
     return (
       <div className="tm-diagram-node-wrap tm-diagram-node-wrap--box">
         <NodeShell shellClassName="tm-diagram-node-shell--box">
@@ -450,8 +484,8 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
             {def.shape === "activity_subprocess" ? (
               <span className="tm-diagram-node__subprocess-inner" aria-hidden />
             ) : null}
-            <span className="tm-diagram-node__shape-icon" aria-hidden>
-              <ActivityIcon size={13} strokeWidth={2.2} />
+            <span className={["tm-diagram-node__shape-icon", activityToneClass].join(" ")} aria-hidden>
+              <ActivityIcon size={15} strokeWidth={2.4} />
             </span>
             <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
           </div>
