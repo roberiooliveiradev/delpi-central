@@ -9,13 +9,13 @@ type LaneNodeData = {
   label: string;
   height: number;
   laneId?: string;
-  isActive?: boolean;
+  toneClass?: string;
   readOnly?: boolean;
   onRename?: (laneId: string, label: string) => void;
   onSelect?: (laneId: string) => void;
 };
 
-export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
+export function FlowchartLaneNode({ data, selected }: NodeProps<Node<LaneNodeData>>) {
   const canInteract = !data.readOnly && Boolean(data.laneId);
 
   const selectLane = () => {
@@ -28,7 +28,8 @@ export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
     <div
       className={[
         "tm-diagram-lane",
-        data.isActive ? "tm-diagram-lane--active" : "",
+        data.toneClass ?? "",
+        selected ? "tm-diagram-lane--selected" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -45,7 +46,7 @@ export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
           .join(" ")}
         role={canInteract ? "button" : undefined}
         tabIndex={canInteract ? 0 : undefined}
-        aria-pressed={canInteract ? data.isActive : undefined}
+        aria-pressed={canInteract ? selected : undefined}
         onClick={(event) => {
           if (event.detail > 1) return;
           selectLane();

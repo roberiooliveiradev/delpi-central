@@ -51,6 +51,7 @@ import {
   snapNodeToLane,
   withNormalizedLanes,
 } from "../../utils/diagramSwimlanes";
+import { diagramLaneToneClass } from "../../utils/diagramLaneColors";
 import {
   FLOWCHART_NODE_PALETTE,
   applyDecisionTemplate,
@@ -109,7 +110,7 @@ type LaneNode = Node<{
   label: string;
   height: number;
   laneId?: string;
-  isActive?: boolean;
+  toneClass?: string;
   readOnly?: boolean;
   onRename?: (laneId: string, label: string) => void;
   onSelect?: (laneId: string) => void;
@@ -190,7 +191,7 @@ function buildLaneNodes(
     onSelectLane?: (laneId: string) => void;
   }
 ): LaneNode[] {
-  return lanes.map((lane) => ({
+  return lanes.map((lane, laneIndex) => ({
     id: `${LANE_NODE_PREFIX}${lane.id}`,
     type: "lane",
     position: { x: 0, y: laneTopOffset(lanes, lane.id) },
@@ -198,16 +199,18 @@ function buildLaneNodes(
       label: lane.label,
       height: lane.height ?? 168,
       laneId: lane.id,
-      isActive: options?.activeLaneId === lane.id,
+      toneClass: diagramLaneToneClass(laneIndex),
       readOnly: options?.readOnly ?? true,
       onRename: options?.onRenameLane,
       onSelect: options?.onSelectLane,
     },
     draggable: !(options?.readOnly ?? true),
     dragHandle: ".tm-diagram-lane__header--draggable",
-    selectable: false,
+    selectable: !(options?.readOnly ?? true),
     connectable: false,
-    focusable: false,
+    focusable: !(options?.readOnly ?? true),
+    selected:
+      !(options?.readOnly ?? true) && options?.activeLaneId === lane.id,
     deletable: false,
     zIndex: -1,
   }));
@@ -355,18 +358,20 @@ function FlowchartEditorInner({
     [onChange, readOnly, value]
   );
 
-  const handleSelectLane = useCallback((laneId: string) => {
-    setActiveLaneId(laneId);
-  }, []);
+  const handleSelectLaneRef = useRef<(laneId: string) => void>(() => {});
 
   const laneRenderOptions = useMemo(
     () => ({
       readOnly,
       activeLaneId,
       onRenameLane: readOnly ? undefined : handleRenameLane,
-      onSelectLane: readOnly ? undefined : handleSelectLane,
+      onSelectLane: readOnly
+        ? undefined
+        : (laneId: string) => {
+            handleSelectLaneRef.current(laneId);
+          },
     }),
-    [activeLaneId, handleRenameLane, handleSelectLane, readOnly]
+    [activeLaneId, handleRenameLane, readOnly]
   );
 
   const initial = useMemo(() => toReactFlow(value, laneRenderOptions), [laneRenderOptions, value]);
@@ -390,6 +395,29 @@ function FlowchartEditorInner({
   );
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
+
+  const handleSelectLane = useCallback(
+    (laneId: string) => {
+      if (readOnly) return;
+      setActiveLaneId(laneId);
+      setNodes((current) =>
+        current.map((node) => {
+          if (node.type === "lane") {
+            const nodeLaneId = (node.data as { laneId?: string }).laneId;
+            return { ...node, selected: nodeLaneId === laneId };
+          }
+          return { ...node, selected: false };
+        })
+      );
+      setEdges((current) => current.map((edge) => ({ ...edge, selected: false })));
+      setSelectedNodeIds([]);
+      setSelectedEdgeIds([]);
+    },
+    [readOnly, setEdges, setNodes]
+  );
+
+  handleSelectLaneRef.current = handleSelectLane;
+
   const selectionSnapshotRef = useRef<SelectionClipboard>({ nodes: [], edges: [] });
   const clipboardRef = useRef<SelectionClipboard | null>(null);
   const pasteGenerationRef = useRef(0);
@@ -472,12 +500,30 @@ function FlowchartEditorInner({
 
   useOnSelectionChange({
     onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
-      syncSelectionSnapshot(
-        selectedNodes as ActivityNode[],
-        selectedEdges
-      );
+      if (!readOnly) {
+        const selectedActivity = selectedNodes.filter((node) => node.type !== "lane");
+        const selectedLane = selectedNodes.find((node) => node.type === "lane");
+        if (selectedActivity.length) {
+          setActiveLaneId(undefined);
+        } else if (selectedLane) {
+          const laneId = (selectedLane.data as { laneId?: string }).laneId;
+          if (laneId) {
+            setActiveLaneId(laneId);
+          }
+        }
+      }
+      syncSelectionSnapshot(selectedNodes as ActivityNode[], selectedEdges);
     },
   });
+
+  useEffect(() => {
+    if (!readOnly) return;
+    setActiveLaneId(undefined);
+    setNodes((current) => current.map((node) => ({ ...node, selected: false })));
+    setEdges((current) => current.map((edge) => ({ ...edge, selected: false })));
+    setSelectedNodeIds([]);
+    setSelectedEdgeIds([]);
+  }, [readOnly, setEdges, setNodes]);
 
   useEffect(() => {
     if (lanes.length && !lanes.some((lane) => lane.id === activeLaneId)) {
@@ -616,23 +662,33 @@ function FlowchartEditorInner({
   useEffect(() => {
     const next = toReactFlow(value, laneRenderOptions);
     setNodes((currentNodes) => {
-      const selectedIds = new Set(
-        currentNodes.filter((node) => node.selected).map((node) => node.id)
+      const activitySelectedIds = new Set(
+        currentNodes
+          .filter((node) => node.type !== "lane" && node.selected)
+          .map((node) => node.id)
       );
+      const hasActivitySelection = activitySelectedIds.size > 0;
       return next.nodes.map((node) => {
         if (node.type === "lane") {
+          const laneId = (node.data as { laneId?: string }).laneId;
+          const laneSelected =
+            !readOnly &&
+            !hasActivitySelection &&
+            Boolean(laneId && activeLaneId === laneId);
           return {
             ...node,
             draggable: !readOnly,
+            selectable: !readOnly,
+            focusable: !readOnly,
             dragHandle: ".tm-diagram-lane__header--draggable",
-            selected: selectedIds.has(node.id),
+            selected: laneSelected,
           };
         }
         return {
           ...node,
           draggable: !readOnly,
           selectable: !readOnly,
-          selected: selectedIds.has(node.id),
+          selected: activitySelectedIds.has(node.id),
           data:
             node.type === "lane"
               ? node.data
@@ -681,6 +737,7 @@ function FlowchartEditorInner({
     onToggleScopeNode,
     diffNodeIds,
     laneRenderOptions,
+    activeLaneId,
     handleNodeLabelChange,
     handleEdgeLabelChange,
     setNodes,
@@ -1197,7 +1254,7 @@ function FlowchartEditorInner({
                 onToolbarTabChange={setToolbarTab}
                 lanes={lanes}
                 activeLaneId={activeLaneId}
-                onActiveLaneChange={setActiveLaneId}
+                onActiveLaneChange={handleSelectLane}
                 onAddNode={addNode}
                 onEditorAction={runEditorAction}
               />
@@ -1301,6 +1358,7 @@ function FlowchartEditorInner({
                 connectionRadius={36}
                 nodesDraggable={!readOnly}
                 nodesConnectable={!readOnly}
+                nodesFocusable={!readOnly}
                 elementsSelectable={!readOnly}
                 proOptions={{ hideAttribution: true }}
               >

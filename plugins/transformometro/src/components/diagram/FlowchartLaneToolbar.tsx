@@ -1,3 +1,4 @@
+import { diagramLaneChipToneClass } from "../../utils/diagramLaneColors";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { FlowchartLane } from "../../types/diagram";
 import { FieldLabel } from "@delpi/plugin-ui";
@@ -23,7 +24,7 @@ export function FlowchartLaneToolbar({
     <div className="tm-diagram-lane-toolbar">
       <FieldLabel className="tm-field__label tm-diagram-lane-toolbar__label" label="Faixas" hint={D.laneSelect} />
       <div className="tm-diagram-lane-toolbar__chips" role="listbox" aria-label="Faixas do diagrama">
-        {lanes.map((lane) => {
+        {lanes.map((lane, laneIndex) => {
           const isActive = lane.id === activeLaneId;
           return (
             <button
@@ -31,11 +32,13 @@ export function FlowchartLaneToolbar({
               type="button"
               role="option"
               aria-selected={isActive}
-              className={
-                isActive
-                  ? "tm-diagram-lane-chip is-active"
-                  : "tm-diagram-lane-chip"
-              }
+              className={[
+                "tm-diagram-lane-chip",
+                diagramLaneChipToneClass(laneIndex),
+                isActive ? "is-active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onClick={() => onActiveLaneChange(lane.id)}
               title={D.laneRename}
             >
