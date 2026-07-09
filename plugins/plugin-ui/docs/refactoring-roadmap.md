@@ -334,7 +334,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Prioridade ROI | Item | Notas |
 |----------------|------|--------|
-| Baixa | Varredura CI `<select>`/`textarea` fora do pacote | Demais plugins MFE |
+| Baixa | Varredura CI `<select>`/`textarea` | ✅ `audit_plugin_ui_native_form_controls.py` — ver [native-form-controls-audit.md](./native-form-controls-audit.md) |
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
 
@@ -355,8 +355,10 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 ### Próximo lote sugerido (quando retomar)
 
-1. Auditar outros plugins MFE com `<select>` / `<textarea>` fora do pacote (varredura CI).
-2. Consolidar estilos `SelectControl` compacto no `plugin-ui` (toolbar pattern reutilizável).
+1. **SI** — `siNativeFormFields` (10 textareas settings/admin).
+2. **Chat** — admin/workspace residual (11) via `chatAdminFormFields` / `NativeTextAreaControl`.
+3. **Lote C** — cultura-delpi, propostas-comerciais, CE Participants, TV comunicado.
+4. Consolidar estilos `SelectControl` compacto no `plugin-ui` (toolbar pattern reutilizável).
 
 ---
 

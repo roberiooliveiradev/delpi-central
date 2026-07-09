@@ -69,7 +69,10 @@ Resumo (2+ consumidores):
 python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
 python3 scripts/ci/audit_plugin_ui_duplication.py --check          # bloqueia HelpTooltip local + integração
 python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em toda duplicata catalogada
+python3 scripts/ci/audit_plugin_ui_native_form_controls.py --check # bloqueia <select>/<textarea> novos fora do pacote
 ```
+
+Relatório: [native-form-controls-audit.md](./native-form-controls-audit.md)
 
 | `DataTable` / `DataTableSection` | ~25 | F2 ✅ (7 dept. + lmps DataTable) |
 | `DetailFieldGrid` | 5 | F3 ✅ (5 consumidores) |
