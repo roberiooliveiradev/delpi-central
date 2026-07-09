@@ -30,7 +30,7 @@ export type FilePreviewModalProps = UseFilePreviewLoaderOptions & {
 };
 
 const MODAL_CLASS_NAMES = {
-  ...modalShellBemClasses("delpi-ui-file-preview-modal"),
+  ...modalShellBemClasses("delpi-ui-file-preview"),
   headerActions: "delpi-ui-file-preview-modal__header-actions",
 };
 

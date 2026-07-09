@@ -23,6 +23,7 @@
   max-height: min(88vh, 900px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border-radius: 16px;
   border: 1px solid var(--border, #e6e6e6);
   background: var(--surface, #ffffff);
@@ -93,6 +94,8 @@
 }
 
 .delpi-ui-file-preview-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 16px 18px 18px;
   overflow: auto;
 }
