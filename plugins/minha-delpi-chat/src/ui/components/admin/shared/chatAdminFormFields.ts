@@ -17,4 +17,4 @@ export const {
   classNames: CHAT_ADMIN_FIELD_CLASS_NAMES,
 });
 
-export { NativeTextAreaControl as ChatNativeTextAreaControl } from "@delpi/plugin-ui";
+export { ChatNativeTextAreaControl } from "../../shared/chatNativeFormFields";

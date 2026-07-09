@@ -41,13 +41,8 @@ EXCLUDED_PLUGINS = frozenset(
 
 # Ocorrências conhecidas e aceitas até migração (domínio ou backlog documentado).
 # Chave: path relativo a plugins/ (POSIX). Valor: motivo curto.
-KNOWN_ALLOWLIST: dict[str, str] = {
-    # ——— minha-delpi-chat: UX de conversa / edição inline (fora de FormFieldShell) ———
-    "minha-delpi-chat/src/ui/components/composer/ChatInput.tsx": "composer principal — autosize/stream",
-    "minha-delpi-chat/src/ui/components/message/ChatMessageEditField.tsx": "edição inline de mensagem",
-    "minha-delpi-chat/src/ui/components/canvas/ChatCanvas.tsx": "editor markdown do canvas",
-    "minha-delpi-chat/src/ui/components/shared/modal/ChatShortcutPromptDialog.tsx": "prompt rápido modal",
-}
+# Vazio = nenhum `<textarea>`/`<select>` nativo inline fora de @delpi/plugin-ui nos plugins MFE.
+KNOWN_ALLOWLIST: dict[str, str] = {}
 
 
 @dataclass(frozen=True)

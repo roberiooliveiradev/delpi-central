@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ChatMarkdown } from "../message/ChatMarkdown";
 
 import { ChatModal } from "../shared/modal/ChatModal";
+import { ChatNativeTextAreaControl } from "../shared/chatNativeFormFields";
 import "./ChatCanvas.css";
 
 export type ChatCanvasDocument = {
@@ -179,12 +180,12 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
 
       <div className="mdc-chat-canvas__body">
         {mode === "edit" ? (
-          <textarea
+          <ChatNativeTextAreaControl
             value={document.markdown}
-            onChange={(event) =>
+            onChange={(markdown) =>
               updateDocument({
                 ...document,
-                markdown: event.target.value,
+                markdown,
               })
             }
             aria-label="Conteúdo markdown da lousa"

@@ -38,4 +38,22 @@ describe("NativeTextAreaControl", () => {
     fireEvent.keyDown(screen.getByLabelText("Composer"), { key: "Enter" });
     expect(handleKeyDown).toHaveBeenCalledTimes(1);
   });
+
+  it("repassa onChangeEvent após onChange", () => {
+    const handleChange = vi.fn();
+    const handleChangeEvent = vi.fn();
+
+    render(
+      <NativeTextAreaControl
+        value=""
+        aria-label="Campo"
+        onChange={handleChange}
+        onChangeEvent={handleChangeEvent}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Campo"), { target: { value: "x" } });
+    expect(handleChange).toHaveBeenCalledWith("x");
+    expect(handleChangeEvent).toHaveBeenCalledTimes(1);
+  });
 });

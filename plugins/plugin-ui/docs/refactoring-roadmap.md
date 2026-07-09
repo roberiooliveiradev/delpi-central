@@ -334,7 +334,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Prioridade ROI | Item | Notas |
 |----------------|------|--------|
-| Baixa | Varredura CI `<select>`/`textarea` | ✅ `audit_plugin_ui_native_form_controls.py` — ver [native-form-controls-audit.md](./native-form-controls-audit.md) |
+| Baixa | Varredura CI `<select>`/`textarea` | ✅ concluída — 0 nativos nos MFE; gate `audit_plugin_ui_native_form_controls.py --check` |
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
 
@@ -347,18 +347,15 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **transformometro** | Textareas revisão/instância → `TmNativeTextAreaField` |
 | **customer-experience** | `cxFormFields`, FormsPanel builder, `PhotoDropzone` empty → `FileDropzone` |
 | **strategic-indicators** | `Modal` + `DrawerPanel` → `ModalShell` / `DrawerShell` |
-| **minha-delpi-chat** | `WorkspaceFileDropzone` policy; toolbar rich → `ChatRichUxSelect` / `NativeSelectControl` |
-| **transformometro** | `FlowchartMermaidPanel` → `NativeTextAreaControl` |
-| **minha-delpi-chat** | Toolbar rich → `ChatRichSelectControl` (`SelectControl` compacto) |
-| **quality-action-plans** | Ishikawa / 5 Whys → `NativeTextAreaControl` |
-| **strategic-indicators** | Settings/admin → `SiNativeTextAreaControl` |
-| **plugin-ui** | `FormFieldShell.beforeControl`, `FileDropzone.emptyContent`/policy slots, `ModalShell` description/footer/foco, `TextArea.onFocus/maxLength` |
+| **minha-delpi-chat** | Composer, edição, canvas, shortcut → `ChatNativeTextAreaControl`; admin/workspace → `chatAdminFormFields` |
+| **cultura-delpi** | Admin cultura → `CulturaNativeTextAreaControl` + Docker context `../plugins` |
+| **propostas-comerciais** | Tabela/modal PDF → `PcNativeTextAreaControl` |
+| **tv-dashboard** | Comunicado inline → `TdNativeTextAreaControl` |
 
 ### Próximo lote sugerido (quando retomar)
 
-1. **Chat** — admin/workspace residual (11) via `chatAdminFormFields` / `NativeTextAreaControl`.
-2. **Lote C** — cultura-delpi, propostas-comerciais, CE Participants, TV comunicado.
-4. Consolidar estilos `SelectControl` compacto no `plugin-ui` (toolbar pattern reutilizável).
+1. Consolidar estilos `SelectControl` compacto no `plugin-ui` (toolbar pattern reutilizável).
+2. **api-delpi-console** / **public-hub** — fora do escopo MFE; avaliar só se unificar runtime.
 
 ---
 

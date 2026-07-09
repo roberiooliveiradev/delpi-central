@@ -1,4 +1,5 @@
 import { useAutoGrowTextarea } from "../../hooks/useAutoGrowTextarea";
+import { ChatNativeTextAreaControl } from "../shared/chatNativeFormFields";
 import type { ChatAttachmentCardModel } from "../workspace/ChatAttachmentCard";
 import { ChatMessageEditAttachments } from "./ChatMessageEditAttachments";
 
@@ -66,14 +67,14 @@ export function ChatMessageEditField({
         />
       ) : null}
 
-      <textarea
+      <ChatNativeTextAreaControl
         ref={ref}
         className="mdc-chat-message-edit__input mdc-auto-grow-textarea"
         value={value}
         rows={1}
         autoFocus
-        onChange={(event) => {
-          onChange(event.target.value);
+        onChange={(next) => {
+          onChange(next);
           requestAnimationFrame(() => syncHeight());
         }}
         onInput={() => {

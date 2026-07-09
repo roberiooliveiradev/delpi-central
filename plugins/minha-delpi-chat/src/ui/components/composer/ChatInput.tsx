@@ -28,6 +28,7 @@ import type { ChatPresentationFormatOption } from "../../../state/hooks/useChatP
 import { ChatPresentationFormatSelector } from "./ChatPresentationFormatSelector";
 import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
 import { ChatInputPlusMenu } from "../shared/composer/ChatInputPlusMenu";
+import { ChatNativeTextAreaControl } from "../shared/chatNativeFormFields";
 import { formatAttachmentSize } from "../../chatAttachmentPreview";
 import type { ComposerAttachmentStatus } from "../../chatAttachmentStatus";
 import { useAutoGrowTextarea } from "../../hooks/useAutoGrowTextarea";
@@ -533,7 +534,7 @@ export function ChatInput({
               />
             ) : null}
 
-            <textarea
+            <ChatNativeTextAreaControl
               ref={textareaRef}
               className="mdc-auto-grow-textarea"
               data-tour="composer-input"
@@ -541,8 +542,8 @@ export function ChatInput({
               disabled={disabled || isSending}
               placeholder={placeholder}
               rows={1}
-              onChange={(event) => {
-                handleDraftChange(event.target.value);
+              onChange={handleDraftChange}
+              onChangeEvent={(event) => {
                 setMentionCursor(event.target.selectionStart ?? event.target.value.length);
                 requestAnimationFrame(() => syncHeight());
               }}

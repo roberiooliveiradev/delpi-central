@@ -8,6 +8,7 @@ import {
 } from "../../../chatShortcutPrompt";
 
 import { ChatModal } from "./ChatModal";
+import { ChatNativeTextAreaControl } from "../chatNativeFormFields";
 import "./ChatShortcutPromptDialog.css";
 
 type ChatShortcutPromptDialogProps = {
@@ -89,14 +90,13 @@ export function ChatShortcutPromptDialog({
           <label key={field.id} className="mdc-chat-shortcut-prompt__field">
             <span>{field.label}</span>
             {field.multiline ? (
-              <textarea
+              <ChatNativeTextAreaControl
                 rows={4}
                 autoComplete="off"
                 autoFocus={fields[0]?.id === field.id}
                 placeholder={field.placeholder}
                 value={values[field.id] ?? ""}
-                onChange={(event) => {
-                  const next = event.target.value;
+                onChange={(next) => {
                   setValues((current) => ({ ...current, [field.id]: next }));
                   setErrors((current) => {
                     if (!current[field.id]) {
