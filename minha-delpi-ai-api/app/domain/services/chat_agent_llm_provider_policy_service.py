@@ -5,7 +5,9 @@ from __future__ import annotations
 from app.domain.services.chat_agent_intelligence_policy_service import (
     ChatAgentIntelligencePolicyService,
 )
-from app.infrastructure.config.llm_text_config import normalize_llm_provider
+from app.domain.services.chat_llm_provider_normalization_service import (
+    ChatLlmProviderNormalizationService,
+)
 
 
 class ChatAgentLlmProviderPolicyService:
@@ -28,4 +30,4 @@ class ChatAgentLlmProviderPolicyService:
         if not normalized:
             return None
 
-        return normalize_llm_provider(normalized)
+        return ChatLlmProviderNormalizationService.normalize(normalized)

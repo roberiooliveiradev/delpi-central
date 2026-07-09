@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
+from app.application.services.chat_document_vision.chat_document_vision_attachment_service import (
+    ChatDocumentVisionAttachmentService,
+)
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 
 
@@ -9,11 +12,12 @@ def test_persist_attachment_vision_metadata_updates_repository():
     attachment = MagicMock()
     attachment.id = attachment_id
     attachment.status = "indexed"
+    repo = MagicMock()
 
     with patch(
-        "app.infrastructure.persistence.postgres_chat_attachment_repository.PostgresChatAttachmentRepository"
-    ) as repo_cls:
-        repo = repo_cls.return_value
+        "app.application.services.chat_document_vision_service._default_attachment_repository",
+        lambda: repo,
+    ):
         ChatDocumentVisionService.persist_attachment_vision_metadata(
             attachment,
             {"engine": "tesseract", "stages": ["tesseract"]},
@@ -27,7 +31,7 @@ def test_persist_attachment_vision_metadata_updates_repository():
     assert call_kwargs["metadata"]["documentVisionAt"]
 
 
-def test_refresh_attachment_vision_snapshot_persists(monkeypatch):
+def test_refresh_attachment_vision_snapshot_persists():
     attachment = MagicMock()
     attachment.id = uuid4()
     attachment.status = "ready"
@@ -35,20 +39,22 @@ def test_refresh_attachment_vision_snapshot_persists(monkeypatch):
     attachment.content_type = "application/pdf"
     attachment.storage_path = "/tmp/doc.pdf"
 
+    vision_payload = {
+        "engine": "native",
+        "stages": ["native"],
+        "charCount": 120,
+        "legible": True,
+        "legibilityScore": 0.9,
+        "schemaVersion": "1.0",
+    }
+
     with patch.object(
-        ChatDocumentVisionService,
-        "_compute_vision_for_attachment",
-        return_value={
-            "engine": "native",
-            "stages": ["native"],
-            "charCount": 120,
-            "legible": True,
-            "legibilityScore": 0.9,
-            "schemaVersion": "1.0",
-        },
+        ChatDocumentVisionAttachmentService,
+        "compute_vision_for_attachment",
+        return_value=vision_payload,
     ):
         with patch.object(
-            ChatDocumentVisionService,
+            ChatDocumentVisionAttachmentService,
             "persist_attachment_vision_metadata",
         ) as persist_mock:
             meta = ChatDocumentVisionService.refresh_attachment_vision_snapshot(

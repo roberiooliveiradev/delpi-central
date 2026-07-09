@@ -32,3 +32,29 @@ def _patch_chat_intelligence_runtime(monkeypatch):
     from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
 
     patch_resolve_chat_intelligence_runtime(monkeypatch)
+
+
+@pytest.fixture
+def presentation_only_shortcut_enabled(monkeypatch):
+    """Restaura paridade 11.4.1 quando o default JSON é llm_prose_everywhere."""
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+    from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "allow_template_prose_fallback",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "deprecate_humanized_linhas_as_prose",
+        lambda: False,
+    )
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)

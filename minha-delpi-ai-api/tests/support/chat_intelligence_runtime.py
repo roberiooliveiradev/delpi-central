@@ -41,11 +41,50 @@ def build_vision_settings_mock(**overrides: Any) -> dict[str, Any]:
     return base
 
 
+def build_learning_pipeline_settings_mock(**overrides: Any) -> dict[str, Any]:
+    from app.infrastructure.config.chat_admin_settings_bundles import (
+        CHAT_LEARNING_PIPELINE_BUNDLE,
+        build_defaults_payload,
+    )
+
+    base = dict(build_defaults_payload(CHAT_LEARNING_PIPELINE_BUNDLE))
+    # Evita gate de promoção acoplar testes unitários ao Postgres.
+    base["learningEvaluationBlockPromotion"] = False
+    base.update(overrides)
+    return base
+
+
+def patch_admin_runtime_settings_readers(monkeypatch) -> None:
+    from app.infrastructure.config.chat_admin_settings_bundles import (
+        CHAT_LEARNING_PIPELINE_BUNDLE,
+        CHAT_RESPONSE_MODE_BUNDLE,
+        CHAT_VISION_BUNDLE,
+        build_defaults_payload,
+    )
+
+    monkeypatch.setattr(
+        "app.infrastructure.config.chat_admin_settings_runtime_reader.read_learning_pipeline_settings",
+        lambda settings_repository=None: build_learning_pipeline_settings_mock(),
+    )
+    monkeypatch.setattr(
+        "app.infrastructure.config.chat_admin_settings_runtime_reader.read_vision_settings",
+        lambda settings_repository=None: build_defaults_payload(CHAT_VISION_BUNDLE),
+    )
+    monkeypatch.setattr(
+        "app.infrastructure.config.chat_admin_settings_runtime_reader.read_response_mode_settings",
+        lambda settings_repository=None: build_defaults_payload(CHAT_RESPONSE_MODE_BUNDLE),
+    )
+
+
 def patch_platform_runtime_access(monkeypatch, *, vision: dict[str, Any] | None = None) -> dict[str, Any]:
     resolved_vision = vision or build_vision_settings_mock()
     monkeypatch.setattr(
         "app.application.services.chat_platform_runtime_access.vision_settings",
         lambda: resolved_vision,
+    )
+    monkeypatch.setattr(
+        "app.application.services.chat_platform_runtime_access.learning_pipeline_settings",
+        build_learning_pipeline_settings_mock,
     )
     return resolved_vision
 
@@ -54,9 +93,6 @@ def patch_resolve_chat_intelligence_runtime(monkeypatch, runtime: Any | None = N
     resolved = runtime or build_chat_intelligence_runtime_mock()
     for target in _RUNTIME_PATCH_TARGETS:
         monkeypatch.setattr(target, lambda _runtime=resolved: _runtime)
+    patch_admin_runtime_settings_readers(monkeypatch)
     patch_platform_runtime_access(monkeypatch)
-    monkeypatch.setattr(
-        "app.application.services.chat_platform_runtime_access.learning_pipeline_settings",
-        lambda: {"enabled": False},
-    )
     return resolved

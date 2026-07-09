@@ -8,7 +8,9 @@ from app.application.services.chat_turn.chat_turn_preparation_service import (
 )
 
 
-def test_direct_answer_in_tool_context_forces_skip_rag():
+def test_direct_answer_in_tool_context_forces_skip_rag(
+    presentation_only_shortcut_enabled,
+):
     session = MagicMock()
     session.id = uuid4()
     request = MagicMock()
@@ -31,7 +33,7 @@ def test_direct_answer_in_tool_context_forces_skip_rag():
         request=request,
         session=session,
         user_id=uuid4(),
-        workspace_context={},
+        workspace_context={"userActivatedAgent": True, "actionsEnabled": True},
         attachments=[],
         previous_messages=[],
         history_source=[],
@@ -48,11 +50,13 @@ def test_direct_answer_in_tool_context_forces_skip_rag():
     assert prepared.direct_answer == "Resposta operacional direta."
     assert prepared.skip_rag is True
     assert "skip_rag" in prepared.pipeline_stages
-    assert "direct_answer" in prepared.pipeline_stages
+    assert "tools" in prepared.pipeline_stages
     rag_context_service.build_context.assert_not_called()
 
 
-def test_operational_rich_presentation_replaces_existing_direct_answer():
+def test_operational_rich_presentation_replaces_existing_direct_answer(
+    presentation_only_shortcut_enabled,
+):
     session = MagicMock()
     session.id = uuid4()
     request = MagicMock()
@@ -87,11 +91,15 @@ def test_operational_rich_presentation_replaces_existing_direct_answer():
     service = ChatTurnPreparationService(rag_context_service=rag_context_service)
 
     prepared = service.prepare(
-        message="faturamento comercial",
+        message="resultado da consulta",
         request=request,
         session=session,
         user_id=uuid4(),
-        workspace_context={"allowedActionIds": ["get_commercial_billing"]},
+        workspace_context={
+            "userActivatedAgent": True,
+            "actionsEnabled": True,
+            "allowedActionIds": ["get_commercial_billing"],
+        },
         attachments=[],
         previous_messages=[],
         history_source=[],
@@ -142,7 +150,7 @@ def test_small_talk_uses_direct_answer_and_skips_rag_and_tools():
     )
 
     assert prepared.direct_answer
-    assert "ajudar" in prepared.direct_answer.lower()
+    assert "resolver" in prepared.direct_answer.lower()
     assert prepared.skip_rag is True
     assert "small_talk" in prepared.pipeline_stages
     assert "skip_rag" in prepared.pipeline_stages

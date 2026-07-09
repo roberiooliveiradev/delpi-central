@@ -3,21 +3,18 @@ from __future__ import annotations
 import os
 
 from app.domain.entities.llm_text_config import LlmTextConfig
-
-OPENAI_COMPATIBLE_PROVIDERS = frozenset({"vllm", "openai_compatible", "openai"})
+from app.domain.services.chat_llm_provider_normalization_service import (
+    ChatLlmProviderNormalizationService,
+    OPENAI_COMPATIBLE_PROVIDERS,
+)
 
 
 def normalize_llm_provider(provider: str) -> str:
-    normalized = str(provider or "ollama").lower().strip()
-
-    if normalized in OPENAI_COMPATIBLE_PROVIDERS:
-        return "openai_compatible"
-
-    return normalized
+    return ChatLlmProviderNormalizationService.normalize(provider)
 
 
 def is_openai_compatible_provider(provider: str) -> bool:
-    return normalize_llm_provider(provider) == "openai_compatible"
+    return ChatLlmProviderNormalizationService.is_openai_compatible(provider)
 
 
 def _env(name: str, default: str = "") -> str:

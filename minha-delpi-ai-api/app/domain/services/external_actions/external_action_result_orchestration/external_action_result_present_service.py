@@ -16,6 +16,35 @@ if TYPE_CHECKING:
 
 class ExternalActionResultPresentService:
     @staticmethod
+    def _is_low_signal_presentation(presented: dict, root: Any) -> bool:
+        linhas = [str(line).strip() for line in (presented.get("linhas") or []) if str(line).strip()]
+        joined = " ".join(linhas).lower()
+
+        if not joined:
+            return True
+
+        generic_markers = (
+            "resultado da consulta",
+            "formato original",
+            "dados retornados pela api",
+            "```json",
+        )
+
+        if not any(marker in joined for marker in generic_markers):
+            return False
+
+        if isinstance(root, dict):
+            product = root.get("product")
+
+            if isinstance(product, dict):
+                code = str(product.get("code") or "").strip()
+
+                if code and code not in joined:
+                    return True
+
+        return True
+
+    @staticmethod
     def present(host: ExternalActionResultPresenter, data, *, path: str = "") -> dict:
         previous_labels = host._active_schema_labels
         previous_formats = host._active_schema_formats
@@ -98,20 +127,32 @@ class ExternalActionResultPresentService:
                 bundle.text,
             ):
                 if isinstance(visual, dict):
-                    return host._operational_response().present_visual(
+                    presented = host._operational_response().present_visual(
                         visual,
                         data=data,
                         path=path,
                     )
 
+                    if presented and not ExternalActionResultPresentService._is_low_signal_presentation(
+                        presented,
+                        root,
+                    ):
+                        return presented
+
             visual = host.build_presentation(data, path=path)
 
             if visual:
-                return host._operational_response().present_visual(
+                presented = host._operational_response().present_visual(
                     visual,
                     data=data,
                     path=path,
                 )
+
+                if presented and not ExternalActionResultPresentService._is_low_signal_presentation(
+                    presented,
+                    root,
+                ):
+                    return presented
 
             if isinstance(root, dict):
                 fallback = host._present_dict_fallback(root, path)

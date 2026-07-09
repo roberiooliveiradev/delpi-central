@@ -67,7 +67,7 @@ def test_follow_up_queries_use_operational_phrases_with_placeholders():
 
     assert by_label["Ver fornecedores"] == "liste os fornecedores do produto {{productCode}}"
     assert by_label["Ver estrutura"] == "mostre a estrutura do produto {{productCode}}"
-    assert by_label["Onde é usado?"] == "onde o produto {{productCode}} é usado?"
+    assert by_label["Análise completa"] == "análise completa do produto {{productCode}}"
 
 
 def test_attach_skips_when_agent_disables_follow_ups():

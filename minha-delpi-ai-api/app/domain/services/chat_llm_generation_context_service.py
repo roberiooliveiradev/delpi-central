@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from contextvars import ContextVar, Token
 
 from app.domain.entities.llm_generation_config import LlmGenerationConfig
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 from app.domain.services.chat_response_mode_service import ChatResponseModeService
-from app.infrastructure.config.llm_text_config import resolve_llm_provider_name
 
 _generation_config: ContextVar[LlmGenerationConfig | None] = ContextVar(
     "llm_generation_config",
@@ -49,7 +49,7 @@ def get_active_llm_provider() -> str:
     if active:
         return active
 
-    return resolve_llm_provider_name()
+    return ChatDomainConfigService.llm_provider()
 
 
 def set_active_llm_provider(provider: str) -> Token:

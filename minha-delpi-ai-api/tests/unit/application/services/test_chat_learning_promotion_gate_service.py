@@ -26,6 +26,11 @@ def test_gate_blocks_bad_normalization_rule(monkeypatch):
     monkeypatch.setattr(Settings, "CHAT_LEARNING_ENABLED", True, raising=False)
     monkeypatch.setattr(Settings, "CHAT_LEARNING_EVALUATION_ENABLED", True, raising=False)
     monkeypatch.setattr(Settings, "CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION", True, raising=False)
+    monkeypatch.setattr(
+        ChatLearningPromotionGateService,
+        "_enabled",
+        staticmethod(lambda: True),
+    )
 
     gate = ChatLearningPromotionGateService(
         evaluation_repository=_FakeEvalRepo(),

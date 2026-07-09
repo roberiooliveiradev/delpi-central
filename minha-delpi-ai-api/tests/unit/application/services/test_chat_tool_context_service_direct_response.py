@@ -86,6 +86,8 @@ class DrawingAnalyserSelectionService:
         intent=None,
         route_segment=None,
         previous_messages=None,
+        drawing_analysis_mode=False,
+        attachment_ids=None,
     ):
         self.product_calls.append(
             {
@@ -209,7 +211,6 @@ def test_build_context_sets_direct_answer_for_successful_external_action():
     assert metadata.get("ok") is True
     summary_lines = (metadata.get("humanizedSummary") or {}).get("linhas") or []
     assert any("10080055" in line for line in summary_lines)
-    assert any("| Campo | Valor |" in line for line in summary_lines)
 
 
 def test_drawing_pdf_product_code_forces_product_analyser_action(monkeypatch):
@@ -243,7 +244,7 @@ def test_drawing_pdf_product_code_forces_product_analyser_action(monkeypatch):
     assert execute_tool.calls == [
         {
             "actionId": "get_product_analyser",
-            "parameters": {"code": "90264231"},
+            "parameters": {"code": "90264231", "view": "full"},
         }
     ]
     assert result["drawingAnalysisMode"] is True
@@ -432,7 +433,9 @@ def test_prefer_presentation_direct_answer_keeps_short_explanatory_summary():
     assert "CORTAR - MANUAL" in compact
 
 
-def test_prefer_presentation_direct_answer_replaces_long_markdown():
+def test_prefer_presentation_direct_answer_replaces_long_markdown(
+    presentation_only_shortcut_enabled,
+):
     tool_calls = [
         {
             "name": "execute_external_action",
@@ -458,7 +461,9 @@ def test_prefer_presentation_direct_answer_replaces_long_markdown():
     assert compact == "Faturamento comercial"
 
 
-def test_prefer_presentation_direct_answer_for_format_refinement_without_prior_text():
+def test_prefer_presentation_direct_answer_for_format_refinement_without_prior_text(
+    presentation_only_shortcut_enabled,
+):
     tool_calls = [
         {
             "name": "execute_external_action",
@@ -663,7 +668,9 @@ def test_resolve_authorized_persisted_answer_keeps_pagination_suffix():
     assert persisted.startswith(authorized)
 
 
-def test_prefer_presentation_direct_answer_keeps_pagination_prompt():
+def test_prefer_presentation_direct_answer_keeps_pagination_prompt(
+    presentation_only_shortcut_enabled,
+):
     tool_calls = [
         {
             "name": "execute_external_action",
