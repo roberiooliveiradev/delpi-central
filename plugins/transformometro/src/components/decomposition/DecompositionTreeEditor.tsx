@@ -11,12 +11,18 @@ import {
   type DecompositionTreeV1,
 } from "../../types/decomposition";
 import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
+import {
+  canAcceptDecompositionDrop,
+  moveDecompositionNode,
+  type DropPosition,
+} from "../../utils/decompositionReorder";
 import { DecompositionRichTree } from "./DecompositionRichTree";
 
 type Props = {
   tree: DecompositionTreeV1;
   readOnly?: boolean;
   title?: string;
+  invalidNodeIds?: ReadonlySet<string>;
   onChange: (tree: DecompositionTreeV1) => void;
 };
 
@@ -24,11 +30,35 @@ function isEditableNodeId(nodeId: string): boolean {
   return nodeId !== "decomposition-root";
 }
 
-export function DecompositionTreeEditor({ tree, readOnly = false, title, onChange }: Props) {
+export function DecompositionTreeEditor({
+  tree,
+  readOnly = false,
+  title,
+  invalidNodeIds,
+  onChange,
+}: Props) {
   const nodeById = useMemo(() => new Map(tree.nodes.map((node) => [node.id, node])), [tree.nodes]);
   const richRoot = useMemo(
     () => buildDecompositionRichTree(tree, { title }),
     [tree, title]
+  );
+  const draggableNodeIds = useMemo(
+    () => new Set(tree.nodes.filter((node) => !node.disabled).map((node) => node.id)),
+    [tree.nodes]
+  );
+  const dragDrop = useMemo(
+    () => ({
+      draggableNodeIds,
+      canDrop: (draggedId: string, targetId: string, position: DropPosition) =>
+        canAcceptDecompositionDrop(tree.nodes, draggedId, targetId, position),
+      onMove: (draggedId: string, targetId: string, position: DropPosition) => {
+        onChange({
+          ...tree,
+          nodes: moveDecompositionNode(tree.nodes, draggedId, targetId, position),
+        });
+      },
+    }),
+    [draggableNodeIds, onChange, tree]
   );
 
   function updateNodes(nextNodes: DecompositionNode[]) {
@@ -111,6 +141,9 @@ export function DecompositionTreeEditor({ tree, readOnly = false, title, onChang
             <Plus size={14} />
             Processo-chave
           </button>
+          <span className="ds-hint tm-decomposition-editor__drag-hint">
+            Arraste pelo ícone ⋮⋮ para reordenar ou mover entre processos-chave.
+          </span>
         </div>
       ) : null}
 
@@ -121,6 +154,8 @@ export function DecompositionTreeEditor({ tree, readOnly = false, title, onChang
           root={richRoot}
           expandDepth={2}
           maxHeight={readOnly ? "480px" : "520px"}
+          enableDragDrop={!readOnly}
+          dragDrop={readOnly ? undefined : dragDrop}
           renderLabel={
             readOnly
               ? undefined
@@ -129,11 +164,19 @@ export function DecompositionTreeEditor({ tree, readOnly = false, title, onChang
                   if (!source) {
                     return <span className="tm-rich-tree__label">{node.label}</span>;
                   }
+                  const invalid = invalidNodeIds?.has(node.id) ?? false;
                   return (
                     <input
-                      className="tm-rich-tree__input"
+                      className={[
+                        "tm-rich-tree__input",
+                        invalid ? "tm-rich-tree__input--invalid" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                       value={source.label ?? ""}
                       placeholder={DECOMPOSITION_LEVEL_LABELS[source.level]}
+                      data-decomposition-node-id={node.id}
+                      aria-invalid={invalid || undefined}
                       onChange={(event) => updateNode(node.id, { label: event.target.value })}
                       aria-label={`Rótulo ${source.label || DECOMPOSITION_LEVEL_LABELS[source.level]}`}
                     />

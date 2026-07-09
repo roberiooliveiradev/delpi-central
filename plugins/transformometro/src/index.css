@@ -1949,7 +1949,15 @@
 }
 
 .dashboard-transformometro .tm-decomposition-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
   margin-bottom: 10px;
+}
+
+.dashboard-transformometro .tm-decomposition-editor__drag-hint {
+  margin: 0;
 }
 
 /* Rich tree — mapeamento WBS (padrão dashboard commercial) */
@@ -1978,6 +1986,68 @@
   gap: 0.25rem;
   padding: 0.35rem 0.5rem 0.35rem 0;
   border-radius: var(--ds-radius-sm);
+  position: relative;
+}
+
+.dashboard-transformometro .tm-rich-tree__drag-handle,
+.dashboard-transformometro .tm-rich-tree__drag-spacer {
+  flex: 0 0 1.25rem;
+  width: 1.25rem;
+  height: 1.5rem;
+  margin-top: 0.05rem;
+}
+
+.dashboard-transformometro .tm-rich-tree__drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-muted);
+  cursor: grab;
+  border-radius: var(--ds-control-radius);
+  padding: 0;
+}
+
+.dashboard-transformometro .tm-rich-tree__drag-handle:hover,
+.dashboard-transformometro .tm-rich-tree__drag-handle:focus-visible {
+  color: var(--ds-accent);
+  background: color-mix(in srgb, var(--ds-accent) 10%, transparent);
+  outline: none;
+}
+
+.dashboard-transformometro .tm-rich-tree__drag-handle:active {
+  cursor: grabbing;
+}
+
+.dashboard-transformometro .tm-rich-tree__row--dragging {
+  opacity: 0.45;
+}
+
+.dashboard-transformometro .tm-rich-tree__row--drop-before::before,
+.dashboard-transformometro .tm-rich-tree__row--drop-after::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ds-accent);
+  pointer-events: none;
+}
+
+.dashboard-transformometro .tm-rich-tree__row--drop-before::before {
+  top: 0;
+}
+
+.dashboard-transformometro .tm-rich-tree__row--drop-after::after {
+  bottom: 0;
+}
+
+.dashboard-transformometro .tm-rich-tree__row--drop-inside {
+  background: color-mix(in srgb, var(--ds-accent) 12%, transparent);
+  outline: 1px dashed color-mix(in srgb, var(--ds-accent) 55%, var(--ds-card-border));
+  outline-offset: -1px;
 }
 
 .dashboard-transformometro .tm-rich-tree__row--asis {
@@ -2060,6 +2130,42 @@
   border: 1px solid var(--ds-card-border);
   background: var(--ds-surface-inset, var(--ds-card-bg));
   color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-rich-tree__input--invalid {
+  border-color: var(--ds-danger, #b42318);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-danger, #b42318) 35%, transparent);
+}
+
+.dashboard-transformometro .tm-decomposition-validation {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-surface-muted);
+  font-size: var(--ds-font-sm);
+}
+
+.dashboard-transformometro .tm-decomposition-validation__issues {
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+}
+
+.dashboard-transformometro .tm-decomposition-validation__issue--error {
+  color: var(--ds-danger, #b42318);
+}
+
+.dashboard-transformometro .tm-decomposition-validation__link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .dashboard-transformometro .tm-rich-tree__subtitle {

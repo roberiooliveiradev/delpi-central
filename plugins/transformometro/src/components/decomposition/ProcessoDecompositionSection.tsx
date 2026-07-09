@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Sparkles } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -14,7 +14,14 @@ import { emptyDecompositionTree, type DecompositionTreeV1 } from "../../types/de
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
 import { TabPanelTransition } from "../TabPanelTransition";
 import { DecompositionTreeEditor } from "./DecompositionTreeEditor";
+import { DecompositionValidationPanel } from "./DecompositionValidationPanel";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
+import {
+  humanizeDecompositionApiError,
+  scrollToDecompositionNode,
+  validateDecompositionTreeForSave,
+  type DecompositionValidationReport,
+} from "../../utils/decompositionValidation";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -41,6 +48,13 @@ export function ProcessoDecompositionSection({
   const [saving, setSaving] = useState(false);
   const [tree, setTree] = useState<DecompositionTreeV1>(emptyDecompositionTree());
   const [tab, setTab] = useState<"arvore" | "planilha">("arvore");
+  const [validationReport, setValidationReport] = useState<DecompositionValidationReport | null>(null);
+
+  const invalidNodeIds = useMemo(() => {
+    if (!validationReport?.issues.length) return undefined;
+    const ids = validationReport.issues.map((issue) => issue.nodeId).filter(Boolean) as string[];
+    return ids.length ? new Set(ids) : undefined;
+  }, [validationReport]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,6 +62,7 @@ export function ProcessoDecompositionSection({
     try {
       const data = await fetchProcessoDecomposicao(processoId, getAccessToken);
       setTree(data.conteudo ?? emptyDecompositionTree());
+      setValidationReport(null);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar mapeamento.");
     } finally {
@@ -64,15 +79,46 @@ export function ProcessoDecompositionSection({
     void load();
   }, [resyncVersion, load]);
 
+  useEffect(() => {
+    if (!validationReport?.issues.length) return;
+    const nextReport = validateDecompositionTreeForSave(tree);
+    setValidationReport(nextReport.valid ? null : nextReport);
+  }, [tree, validationReport?.issues.length]);
+
+  function applyValidationReport(report: DecompositionValidationReport) {
+    setValidationReport(report);
+    if (report.valid) return;
+    setTab("arvore");
+    const firstNodeId = report.issues.find((issue) => issue.nodeId)?.nodeId;
+    if (firstNodeId) {
+      window.requestAnimationFrame(() => scrollToDecompositionNode(firstNodeId));
+    }
+  }
+
   async function handleSave() {
+    const clientReport = validateDecompositionTreeForSave(tree);
+    if (!clientReport.valid) {
+      onError(null);
+      applyValidationReport(clientReport);
+      return;
+    }
+
     setSaving(true);
     onError(null);
+    setValidationReport(null);
     try {
       await saveProcessoDecomposicao(processoId, tree, getAccessToken);
       await load();
       onEntityChanged?.();
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Erro ao salvar mapeamento.");
+      const raw = err instanceof Error ? err.message : "Erro ao salvar mapeamento.";
+      const apiReport = humanizeDecompositionApiError(raw, tree);
+      if (apiReport.issues.some((issue) => issue.nodeId)) {
+        onError(null);
+        applyValidationReport(apiReport);
+      } else {
+        onError(apiReport.issues[0]?.message ?? raw);
+      }
     } finally {
       setSaving(false);
     }
@@ -147,12 +193,15 @@ export function ProcessoDecompositionSection({
             tree={tree}
             readOnly={readOnly}
             title={processoNome ? `Macroprocesso — ${processoNome}` : "Mapeamento do processo"}
+            invalidNodeIds={invalidNodeIds}
             onChange={setTree}
           />
         ) : (
           <DecompositionFlatPreview tree={tree} macroprocesso={processoNome} />
         )}
       </TabPanelTransition>
+
+      <DecompositionValidationPanel report={validationReport} />
 
       {!readOnly ? (
         <div className="tm-decomposition-section__actions">

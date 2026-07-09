@@ -1,8 +1,21 @@
-import { useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type DragEvent,
+  type ReactNode,
+} from "react";
+import { GripVertical } from "lucide-react";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RichTreeNode } from "../../types/richTree";
 import { countRichTreeNodes } from "../../utils/decompositionRichTree";
+import {
+  resolveDecompositionDropPosition,
+  type DropPosition,
+} from "../../utils/decompositionReorder";
 
 const BADGE_CLASS_BY_CODE: Record<string, string> = {
   PK: "tm-rich-tree__badge--pk",
@@ -22,6 +35,25 @@ const HIGHLIGHT_CLASS: Record<NonNullable<RichTreeNode["highlight"]>, string> = 
   changed: "tm-rich-tree__row--changed",
   removed: "tm-rich-tree__row--removed",
 };
+
+type DropTarget = {
+  nodeId: string;
+  position: DropPosition;
+};
+
+type DragDropContextValue = {
+  dragNodeId: string | null;
+  dropTarget: DropTarget | null;
+  startDrag: (nodeId: string, event: DragEvent<HTMLElement>) => void;
+  endDrag: () => void;
+  updateDropTarget: (nodeId: string, event: DragEvent<HTMLElement>) => void;
+  clearDropTarget: () => void;
+  commitDrop: (event: DragEvent<HTMLElement>) => void;
+  isDraggable: (nodeId: string) => boolean;
+  getDropClass: (nodeId: string) => string;
+};
+
+const DragDropContext = createContext<DragDropContextValue | null>(null);
 
 function TreeChevronIcon({ expanded }: { expanded: boolean }) {
   return (
@@ -66,6 +98,7 @@ type RichTreeNodeRowProps = RowSlots & {
   depth: number;
   defaultExpanded: boolean;
   expandDepth: number;
+  enableDragDrop?: boolean;
 };
 
 function RichTreeNodeRow({
@@ -75,20 +108,64 @@ function RichTreeNodeRow({
   expandDepth,
   renderLabel,
   renderActions,
+  enableDragDrop = false,
 }: RichTreeNodeRowProps) {
+  const dragDrop = useContext(DragDropContext);
   const hasChildren = Boolean(node.children?.length);
   const [expanded, setExpanded] = useState(defaultExpanded || depth === 0);
   const badgeCode = String(node.badge ?? "").trim().toUpperCase();
   const badgeClass = BADGE_CLASS_BY_CODE[badgeCode] ?? "";
   const badgeHint = BADGE_HINTS[badgeCode] ?? TM_HELP_TOOLTIPS.decomposition.mapeamento;
   const highlightClass = node.highlight ? HIGHLIGHT_CLASS[node.highlight] : "";
+  const draggable = enableDragDrop && (dragDrop?.isDraggable(node.id) ?? false);
+  const dropClass = enableDragDrop ? (dragDrop?.getDropClass(node.id) ?? "") : "";
+  const isDragging = dragDrop?.dragNodeId === node.id;
 
   return (
     <li className="tm-rich-tree__item">
       <div
-        className={["tm-rich-tree__row", highlightClass].filter(Boolean).join(" ")}
+        className={[
+          "tm-rich-tree__row",
+          highlightClass,
+          dropClass,
+          isDragging ? "tm-rich-tree__row--dragging" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         style={{ paddingLeft: `${depth * 1.1 + 0.35}rem` }}
+        onDragOver={
+          enableDragDrop
+            ? (event) => {
+                event.preventDefault();
+                dragDrop?.updateDropTarget(node.id, event);
+              }
+            : undefined
+        }
+        onDrop={
+          enableDragDrop
+            ? (event) => {
+                event.preventDefault();
+                dragDrop?.commitDrop(event);
+              }
+            : undefined
+        }
       >
+        {draggable ? (
+          <button
+            type="button"
+            className="tm-rich-tree__drag-handle"
+            draggable
+            aria-label="Arrastar para reordenar"
+            title="Arrastar para reordenar ou mover entre seções"
+            onDragStart={(event) => dragDrop?.startDrag(node.id, event)}
+            onDragEnd={() => dragDrop?.endDrag()}
+          >
+            <GripVertical size={14} aria-hidden="true" />
+          </button>
+        ) : (
+          <span className="tm-rich-tree__drag-spacer" aria-hidden="true" />
+        )}
+
         {hasChildren ? (
           <button
             type="button"
@@ -142,6 +219,7 @@ function RichTreeNodeRow({
               expandDepth={expandDepth}
               renderLabel={renderLabel}
               renderActions={renderActions}
+              enableDragDrop={enableDragDrop}
             />
           ))}
         </ul>
@@ -150,11 +228,19 @@ function RichTreeNodeRow({
   );
 }
 
+export type DecompositionDragDropConfig = {
+  draggableNodeIds: ReadonlySet<string>;
+  canDrop: (draggedId: string, targetId: string, position: DropPosition) => boolean;
+  onMove: (draggedId: string, targetId: string, position: DropPosition) => void;
+};
+
 type DecompositionRichTreeProps = RowSlots & {
   root: RichTreeNode;
   expandDepth?: number;
   maxHeight?: string;
   footerLabel?: (nodeCount: number) => string;
+  enableDragDrop?: boolean;
+  dragDrop?: DecompositionDragDropConfig;
 };
 
 export function DecompositionRichTree({
@@ -164,23 +250,130 @@ export function DecompositionRichTree({
   footerLabel = (nodeCount) => `${nodeCount} nó(s) no mapeamento`,
   renderLabel,
   renderActions,
+  enableDragDrop = false,
+  dragDrop,
 }: DecompositionRichTreeProps) {
   const nodeCount = useMemo(() => countRichTreeNodes(root), [root]);
+  const [dragNodeId, setDragNodeId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+
+  const startDrag = useCallback((nodeId: string, event: DragEvent<HTMLElement>) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", nodeId);
+    setDragNodeId(nodeId);
+    setDropTarget(null);
+  }, []);
+
+  const endDrag = useCallback(() => {
+    setDragNodeId(null);
+    setDropTarget(null);
+  }, []);
+
+  const updateDropTarget = useCallback(
+    (nodeId: string, event: DragEvent<HTMLElement>) => {
+      if (!dragNodeId || !dragDrop) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      const canDropInside = dragDrop.canDrop(dragNodeId, nodeId, "inside");
+      const position = resolveDecompositionDropPosition(
+        event.clientY - rect.top,
+        rect.height,
+        canDropInside
+      );
+
+      if (!dragDrop.canDrop(dragNodeId, nodeId, position)) {
+        const fallbackPosition = position === "inside" ? "after" : position;
+        if (!dragDrop.canDrop(dragNodeId, nodeId, fallbackPosition)) {
+          setDropTarget(null);
+          return;
+        }
+        setDropTarget({ nodeId, position: fallbackPosition });
+        return;
+      }
+
+      setDropTarget({ nodeId, position });
+    },
+    [dragDrop, dragNodeId]
+  );
+
+  const clearDropTarget = useCallback(() => {
+    setDropTarget(null);
+  }, []);
+
+  const commitDrop = useCallback(
+    (event: DragEvent<HTMLElement>) => {
+      if (!dragDrop) return;
+      const draggedId = event.dataTransfer.getData("text/plain") || dragNodeId;
+      if (!draggedId || !dropTarget) {
+        endDrag();
+        return;
+      }
+      if (dragDrop.canDrop(draggedId, dropTarget.nodeId, dropTarget.position)) {
+        dragDrop.onMove(draggedId, dropTarget.nodeId, dropTarget.position);
+      }
+      endDrag();
+    },
+    [dragDrop, dragNodeId, dropTarget, endDrag]
+  );
+
+  const getDropClass = useCallback(
+    (nodeId: string) => {
+      if (!dropTarget || dropTarget.nodeId !== nodeId) return "";
+      if (dropTarget.position === "inside") return "tm-rich-tree__row--drop-inside";
+      if (dropTarget.position === "before") return "tm-rich-tree__row--drop-before";
+      return "tm-rich-tree__row--drop-after";
+    },
+    [dropTarget]
+  );
+
+  const dragDropContext = useMemo<DragDropContextValue | null>(() => {
+    if (!enableDragDrop || !dragDrop) return null;
+    return {
+      dragNodeId,
+      dropTarget,
+      startDrag,
+      endDrag,
+      updateDropTarget,
+      clearDropTarget,
+      commitDrop,
+      isDraggable: (nodeId) => dragDrop.draggableNodeIds.has(nodeId),
+      getDropClass,
+    };
+  }, [
+    clearDropTarget,
+    commitDrop,
+    dragDrop,
+    dragNodeId,
+    dropTarget,
+    enableDragDrop,
+    endDrag,
+    getDropClass,
+    startDrag,
+    updateDropTarget,
+  ]);
+
+  const treeBody = (
+    <div className="tm-rich-tree__scroll" style={{ maxHeight }}>
+      <ul className="tm-rich-tree__list">
+        <RichTreeNodeRow
+          node={root}
+          depth={0}
+          defaultExpanded
+          expandDepth={expandDepth}
+          renderLabel={renderLabel}
+          renderActions={renderActions}
+          enableDragDrop={enableDragDrop}
+        />
+      </ul>
+    </div>
+  );
 
   return (
-    <div className="tm-rich-tree">
-      <div className="tm-rich-tree__scroll" style={{ maxHeight }}>
-        <ul className="tm-rich-tree__list">
-          <RichTreeNodeRow
-            node={root}
-            depth={0}
-            defaultExpanded
-            expandDepth={expandDepth}
-            renderLabel={renderLabel}
-            renderActions={renderActions}
-          />
-        </ul>
-      </div>
+    <div className={["tm-rich-tree", enableDragDrop ? "tm-rich-tree--draggable" : ""].filter(Boolean).join(" ")}>
+      {dragDropContext ? (
+        <DragDropContext.Provider value={dragDropContext}>{treeBody}</DragDropContext.Provider>
+      ) : (
+        treeBody
+      )}
       <div className="tm-rich-tree__footer">{footerLabel(nodeCount)}</div>
     </div>
   );
