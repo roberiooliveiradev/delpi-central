@@ -337,6 +337,7 @@ function FlowchartEditorInner({
   const canvasMermaid = useMemo(() => flowchartToMermaid(value), [value]);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
+  const selectionSnapshotRef = useRef<SelectionClipboard>({ nodes: [], edges: [] });
   const clipboardRef = useRef<SelectionClipboard | null>(null);
   const pasteGenerationRef = useRef(0);
   const [clipboardReady, setClipboardReady] = useState(false);
@@ -344,7 +345,7 @@ function FlowchartEditorInner({
   const isDark = useTransformometroDarkMode();
   const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
-  const { fitView } = useReactFlow();
+  const { fitView, getNodes, getEdges } = useReactFlow();
   const canvasHeight = Math.max(
     canvasHeightForLanes(lanes, lanes.length ? 380 : DEFAULT_CANVAS_HEIGHT),
     STAGE_MIN_HEIGHT
@@ -352,12 +353,46 @@ function FlowchartEditorInner({
   const hasNodeSelection = selectedNodeIds.length > 0;
   const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0;
 
+  const getSelectionSnapshot = useCallback(() => {
+    const flowNodes = getNodes();
+    const flowEdges = getEdges();
+    const selectedActivity = flowNodes.filter(
+      (node): node is ActivityNode => node.type !== "lane" && Boolean(node.selected)
+    );
+    const selectedIds = new Set(selectedActivity.map((node) => node.id));
+    return {
+      nodes: selectedActivity,
+      edges: flowEdges.filter(
+        (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
+      ),
+      edgeIds: flowEdges.filter((edge) => edge.selected).map((edge) => edge.id),
+    };
+  }, [getEdges, getNodes]);
+
+  const syncSelectionSnapshot = useCallback(
+    (nextNodes: ActivityNode[], nextEdges: Edge[]) => {
+      const selectedActivity = nextNodes.filter(
+        (node): node is ActivityNode => node.type !== "lane" && Boolean(node.selected)
+      );
+      const selectedIds = new Set(selectedActivity.map((node) => node.id));
+      selectionSnapshotRef.current = {
+        nodes: selectedActivity,
+        edges: nextEdges.filter(
+          (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
+        ),
+      };
+      setSelectedNodeIds(selectedActivity.map((node) => node.id));
+      setSelectedEdgeIds(nextEdges.filter((edge) => edge.selected).map((edge) => edge.id));
+    },
+    []
+  );
+
   useOnSelectionChange({
     onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
-      setSelectedNodeIds(
-        selectedNodes.filter((node) => node.type !== "lane").map((node) => node.id)
+      syncSelectionSnapshot(
+        selectedNodes as ActivityNode[],
+        selectedEdges
       );
-      setSelectedEdgeIds(selectedEdges.map((edge) => edge.id));
     },
   });
 
@@ -488,19 +523,24 @@ function FlowchartEditorInner({
 
   useEffect(() => {
     const next = toReactFlow(value, laneRenderOptions);
-    setNodes(
-      next.nodes.map((node) => {
+    setNodes((currentNodes) => {
+      const selectedIds = new Set(
+        currentNodes.filter((node) => node.selected).map((node) => node.id)
+      );
+      return next.nodes.map((node) => {
         if (node.type === "lane") {
           return {
             ...node,
             draggable: !readOnly,
             dragHandle: ".tm-diagram-lane__header--draggable",
+            selected: selectedIds.has(node.id),
           };
         }
         return {
           ...node,
           draggable: !readOnly,
           selectable: !readOnly,
+          selected: selectedIds.has(node.id),
           data:
             node.type === "lane"
               ? node.data
@@ -523,20 +563,24 @@ function FlowchartEditorInner({
                           : (node.data as BpmnNodeData).highlight,
                 },
         };
-      })
-    );
-    setEdges(
-      next.edges.map((edge) => ({
+      });
+    });
+    setEdges((currentEdges) => {
+      const selectedIds = new Set(
+        currentEdges.filter((edge) => edge.selected).map((edge) => edge.id)
+      );
+      return next.edges.map((edge) => ({
         ...edge,
         type: "flowchart",
         animated: false,
+        selected: selectedIds.has(edge.id),
         data: {
           readOnly,
           onLabelChange: readOnly ? undefined : handleEdgeLabelChange,
           kind: (edge.data as { kind?: FlowchartEdgeKind })?.kind ?? "sequence",
         },
-      }))
-    );
+      }));
+    });
   }, [
     value,
     readOnly,
@@ -605,7 +649,7 @@ function FlowchartEditorInner({
       }
 
       const selectedActivityIds = new Set(
-        nodes
+        getNodes()
           .filter((item) => item.type !== "lane" && item.selected)
           .map((item) => item.id)
       );
@@ -645,7 +689,7 @@ function FlowchartEditorInner({
       setNodes(nextNodes);
       emitChange(nextNodes, edges);
     },
-    [edges, emitChange, lanes, nodes, onChange, readOnly, setNodes, value]
+    [edges, emitChange, getNodes, lanes, nodes, onChange, readOnly, setNodes, value]
   );
 
   const addNode = (type: FlowchartNodeType) => {
@@ -775,8 +819,9 @@ function FlowchartEditorInner({
 
   const nudgeSelection = useCallback(
     (dx: number, dy: number) => {
-      if (readOnly || !selectedNodeIds.length) return;
-      const selectedIds = new Set(selectedNodeIds);
+      if (readOnly) return;
+      const selectedIds = new Set(getSelectionSnapshot().nodes.map((node) => node.id));
+      if (!selectedIds.size) return;
       const nextNodes = nodes.map((node) => {
         if (node.type === "lane" || !selectedIds.has(node.id)) return node;
         return {
@@ -790,52 +835,48 @@ function FlowchartEditorInner({
       setNodes(nextNodes);
       emitChange(nextNodes, edges);
     },
-    [edges, emitChange, nodes, readOnly, selectedNodeIds, setNodes]
+    [edges, emitChange, getSelectionSnapshot, nodes, readOnly, setNodes]
   );
 
   const deleteSelection = useCallback(() => {
-    if (readOnly || !hasSelection) return;
-    if (selectedNodeIds.length) {
-      const deletedIds = new Set(selectedNodeIds);
-      const nextNodes = nodes.filter((node) => !deletedIds.has(node.id));
+    if (readOnly) return;
+    const selection = getSelectionSnapshot();
+    const selectedNodeIdSet = new Set(selection.nodes.map((node) => node.id));
+    const selectedEdgeIdSet = new Set(selection.edgeIds);
+
+    if (selectedNodeIdSet.size) {
+      const nextNodes = nodes.filter((node) => !selectedNodeIdSet.has(node.id));
       const nextEdges = edges.filter(
-        (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
+        (edge) => !selectedNodeIdSet.has(edge.source) && !selectedNodeIdSet.has(edge.target)
       );
       setNodes(nextNodes);
       setEdges(nextEdges);
       emitChange(nextNodes, nextEdges);
       return;
     }
-    const deletedEdgeIds = new Set(selectedEdgeIds);
-    const nextEdges = edges.filter((edge) => !deletedEdgeIds.has(edge.id));
+
+    if (!selectedEdgeIdSet.size) return;
+    const nextEdges = edges.filter((edge) => !selectedEdgeIdSet.has(edge.id));
     setEdges(nextEdges);
     emitChange(nodes, nextEdges);
-  }, [
-    edges,
-    emitChange,
-    hasSelection,
-    nodes,
-    readOnly,
-    selectedEdgeIds,
-    selectedNodeIds,
-    setEdges,
-    setNodes,
-  ]);
+  }, [edges, emitChange, getSelectionSnapshot, nodes, readOnly, setEdges, setNodes]);
+
+  const resolveActionSelection = useCallback((): SelectionClipboard => {
+    const live = getSelectionSnapshot();
+    if (live.nodes.length) {
+      return { nodes: live.nodes, edges: live.edges };
+    }
+    return selectionSnapshotRef.current;
+  }, [getSelectionSnapshot]);
 
   const copySelection = useCallback(() => {
-    if (readOnly || !hasNodeSelection) return;
-    const selectedIds = new Set(selectedNodeIds);
-    clipboardRef.current = {
-      nodes: nodes.filter(
-        (node): node is ActivityNode => node.type !== "lane" && selectedIds.has(node.id)
-      ),
-      edges: edges.filter(
-        (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
-      ),
-    };
+    if (readOnly) return;
+    const snapshot = resolveActionSelection();
+    if (!snapshot.nodes.length) return;
+    clipboardRef.current = snapshot;
     pasteGenerationRef.current = 0;
-    setClipboardReady(Boolean(clipboardRef.current.nodes.length));
-  }, [edges, hasNodeSelection, nodes, readOnly, selectedNodeIds]);
+    setClipboardReady(true);
+  }, [readOnly, resolveActionSelection]);
 
   const pasteSelection = useCallback(() => {
     if (readOnly || !clipboardRef.current?.nodes.length) return;
@@ -866,16 +907,8 @@ function FlowchartEditorInner({
   ]);
 
   const duplicateSelection = useCallback(() => {
-    if (readOnly || !hasNodeSelection) return;
-    const selectedIds = new Set(selectedNodeIds);
-    const snapshot: SelectionClipboard = {
-      nodes: nodes.filter(
-        (node): node is ActivityNode => node.type !== "lane" && selectedIds.has(node.id)
-      ),
-      edges: edges.filter(
-        (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
-      ),
-    };
+    if (readOnly) return;
+    const snapshot = resolveActionSelection();
     if (!snapshot.nodes.length) return;
 
     clipboardRef.current = snapshot;
@@ -901,10 +934,9 @@ function FlowchartEditorInner({
     edges,
     emitChange,
     handleEdgeLabelChange,
-    hasNodeSelection,
     nodes,
     readOnly,
-    selectedNodeIds,
+    resolveActionSelection,
     setEdges,
     setNodes,
   ]);
@@ -917,8 +949,9 @@ function FlowchartEditorInner({
       if (target?.closest("input, textarea, [contenteditable='true']")) return;
 
       const mod = event.ctrlKey || event.metaKey;
+      const selectedCount = getSelectionSnapshot().nodes.length;
       if (mod && event.key.toLowerCase() === "c") {
-        if (!hasNodeSelection) return;
+        if (!selectedCount) return;
         event.preventDefault();
         copySelection();
         return;
@@ -930,13 +963,13 @@ function FlowchartEditorInner({
         return;
       }
       if (mod && event.key.toLowerCase() === "d") {
-        if (!hasNodeSelection) return;
+        if (!selectedCount) return;
         event.preventDefault();
         duplicateSelection();
         return;
       }
 
-      if (!hasNodeSelection) return;
+      if (!selectedCount) return;
       const dx =
         event.key === "ArrowLeft" ? -NUDGE_STEP : event.key === "ArrowRight" ? NUDGE_STEP : 0;
       const dy =
@@ -951,18 +984,20 @@ function FlowchartEditorInner({
   }, [
     copySelection,
     duplicateSelection,
-    hasNodeSelection,
+    getSelectionSnapshot,
     nudgeSelection,
     pasteSelection,
     readOnly,
   ]);
 
   const cycleSelectedEdgeKind = useCallback(() => {
-    if (readOnly || !selectedEdgeIds.length) return;
+    if (readOnly) return;
+    const selectedEdgeIdSet = new Set(getSelectionSnapshot().edgeIds);
+    if (!selectedEdgeIdSet.size) return;
     const order: FlowchartEdgeKind[] = ["sequence", "message_flow", "association"];
     setEdges((currentEdges) => {
       const nextEdges = currentEdges.map((edge) => {
-        if (!selectedEdgeIds.includes(edge.id)) return edge;
+        if (!selectedEdgeIdSet.has(edge.id)) return edge;
         const currentKind = (edge.data?.kind as FlowchartEdgeKind | undefined) ?? "sequence";
         const nextIndex = (order.indexOf(currentKind) + 1) % order.length;
         return {
@@ -979,7 +1014,7 @@ function FlowchartEditorInner({
       });
       return nextEdges;
     });
-  }, [emitChange, readOnly, selectedEdgeIds, setEdges, setNodes]);
+  }, [emitChange, getSelectionSnapshot, readOnly, setEdges, setNodes]);
 
   const runSelectionAction = (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => {
     if (actionId === "delete") deleteSelection();
@@ -1044,6 +1079,9 @@ function FlowchartEditorInner({
                 clipboardReady={clipboardReady}
                 onSelectionAction={runSelectionAction}
                 isSelectionActionDisabled={isSelectionActionDisabled}
+                onPointerDownCapture={(event) => {
+                  event.preventDefault();
+                }}
               />
             ) : null}
 
