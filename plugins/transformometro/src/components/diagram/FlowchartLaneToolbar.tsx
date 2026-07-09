@@ -16,7 +16,7 @@ type Props = {
   laneLabelDraft: string;
   onLaneLabelDraftChange: (value: string) => void;
   onRenameLane: () => void;
-  onRemoveLane: () => void;
+  onRemoveLane: () => void | Promise<void>;
   disableRemove?: boolean;
 };
 
@@ -73,7 +73,7 @@ export function FlowchartLaneToolbar({
         label="Remover faixa"
         hint={D.laneRemove}
         icon={Trash2}
-        onClick={onRemoveLane}
+        onClick={() => void onRemoveLane()}
         disabled={disableRemove}
       />
     </div>

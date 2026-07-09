@@ -212,13 +212,14 @@ function computeNodeRanks(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): 
 }
 
 export function autoLayoutFlowchart(flowchart: FlowchartV1): FlowchartV1 {
-  const lanes = normalizeLanes(flowchart.lanes);
-  const ranks = computeNodeRanks(flowchart.nodes, flowchart.edges);
+  const normalized = withNormalizedLanes(flowchart);
+  const lanes = normalizeLanes(normalized.lanes);
+  const ranks = computeNodeRanks(normalized.nodes, normalized.edges);
 
   if (!lanes.length) {
     return {
-      ...flowchart,
-      nodes: flowchart.nodes.map((node, index) => ({
+      ...normalized,
+      nodes: normalized.nodes.map((node, index) => ({
         ...node,
         position: {
           x: 80 + (ranks.get(node.id) ?? 0) * AUTO_LAYOUT_HORIZONTAL_GAP,
@@ -228,24 +229,43 @@ export function autoLayoutFlowchart(flowchart: FlowchartV1): FlowchartV1 {
     };
   }
 
-  const laneRankCounts = new Map<string, Map<number, number>>();
-
-  const nextNodes = flowchart.nodes.map((node) => {
-    const laneId = resolveNodeLaneId(node, lanes) ?? lanes[0].id;
+  const groups = new Map<string, FlowchartNode[]>();
+  for (const node of normalized.nodes) {
+    const laneId =
+      node.lane_id && lanes.some((lane) => lane.id === node.lane_id)
+        ? node.lane_id
+        : lanes[0].id;
     const rank = ranks.get(node.id) ?? 0;
-    const rankUsage = laneRankCounts.get(laneId) ?? new Map<number, number>();
-    const offsetIndex = rankUsage.get(rank) ?? 0;
-    rankUsage.set(rank, offsetIndex + 1);
-    laneRankCounts.set(laneId, rankUsage);
+    const key = `${laneId}::${rank}`;
+    const bucket = groups.get(key) ?? [];
+    bucket.push({ ...node, lane_id: laneId });
+    groups.set(key, bucket);
+  }
 
-    const x = AUTO_LAYOUT_START_X + rank * AUTO_LAYOUT_HORIZONTAL_GAP + offsetIndex * 48;
-    const y = defaultNodePosition(lanes, laneId, 0).y;
+  const positions = new Map<string, { x: number; y: number }>();
+  for (const bucket of groups.values()) {
+    bucket.sort((left, right) => left.position.x - right.position.x || left.id.localeCompare(right.id));
+    const laneId = bucket[0].lane_id ?? lanes[0].id;
+    const rank = ranks.get(bucket[0].id) ?? 0;
+    bucket.forEach((node, offsetIndex) => {
+      positions.set(node.id, {
+        x: AUTO_LAYOUT_START_X + rank * AUTO_LAYOUT_HORIZONTAL_GAP + offsetIndex * 56,
+        y: defaultNodePosition(lanes, laneId, 0).y,
+      });
+    });
+  }
 
+  const nextNodes = normalized.nodes.map((node) => {
+    const laneId =
+      node.lane_id && lanes.some((lane) => lane.id === node.lane_id)
+        ? node.lane_id
+        : lanes[0].id;
+    const position = positions.get(node.id) ?? node.position;
     return snapNodeToLane(
       {
         ...node,
         lane_id: laneId,
-        position: { x, y },
+        position,
       },
       lanes,
       laneId
@@ -253,7 +273,7 @@ export function autoLayoutFlowchart(flowchart: FlowchartV1): FlowchartV1 {
   });
 
   return {
-    ...flowchart,
+    ...normalized,
     lanes,
     nodes: nextNodes,
   };

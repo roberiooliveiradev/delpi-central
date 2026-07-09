@@ -789,7 +789,7 @@ function FlowchartEditorInner({
       ref={exportRef}
     >
       {!readOnly && showTemplates ? (
-        <div className="tm-diagram-editor__toolbar">
+        <div className="tm-diagram-editor__toolbar tm-diagram-editor__toolbar--compact">
           <div className="tm-diagram-editor__palette">
             {FLOWCHART_NODE_PALETTE.map((item) => {
               const Icon = FLOWCHART_NODE_ICONS[item.type];
@@ -861,10 +861,6 @@ function FlowchartEditorInner({
                 Como usar
               </span>
             </HelpTooltip>
-            {" · "}
-            Passe o mouse nos botões para ver dicas de cada ferramenta
-            {" · "}
-            Duplo clique no texto do nó, da faixa ou do rótulo da seta para editar inline
           </p>
         </div>
       ) : null}
