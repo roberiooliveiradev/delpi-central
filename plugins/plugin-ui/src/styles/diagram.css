@@ -1,5 +1,7 @@
 /* Flowchart editor — @delpi/plugin-ui */
 
+.dashboard-transformometro,
+.delpi-ui-flowchart-shell {
   --tm-diagram-canvas-bg: var(--ds-surface-inset);
   --tm-diagram-dot-color: color-mix(in srgb, var(--ds-text) 22%, transparent);
   --tm-diagram-edge-color: color-mix(in srgb, var(--ds-text) 38%, transparent);
@@ -7,7 +9,10 @@
   --tm-diagram-minimap-node: color-mix(in srgb, var(--ds-accent) 28%, var(--ds-card-bg));
   --tm-diagram-controls-bg: var(--ds-card-bg);
   --tm-diagram-controls-border: var(--ds-card-border);
+}
 
+:root[data-theme="dark"] .dashboard-transformometro,
+:root[data-theme="dark"] .delpi-ui-flowchart-shell {
   --tm-diagram-canvas-bg: color-mix(in srgb, var(--ds-card-bg) 82%, black 18%);
   --tm-diagram-dot-color: rgba(255, 255, 255, 0.16);
   --tm-diagram-edge-color: rgba(255, 255, 255, 0.42);
@@ -15,6 +20,7 @@
   --tm-diagram-minimap-node: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-bg));
   --tm-diagram-controls-bg: color-mix(in srgb, var(--ds-card-bg) 92%, black);
   --tm-diagram-controls-border: rgba(255, 255, 255, 0.12);
+}
 
 .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-section {
   display: flex;
