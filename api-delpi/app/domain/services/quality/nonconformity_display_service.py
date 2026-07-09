@@ -15,6 +15,8 @@ _NONCONFORMITY_STATUS_LABELS: dict[str, str] = {
     "5": "Cancelada",
 }
 
+NONCONFORMITY_STATUS_LABELS = _NONCONFORMITY_STATUS_LABELS
+
 
 def _normalize_code(value: object | None) -> str:
     return str(value or "").strip()

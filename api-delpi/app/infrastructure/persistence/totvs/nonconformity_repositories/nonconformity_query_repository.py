@@ -14,6 +14,9 @@ from app.domain.services.quality.nonconformity_display_service import (
     resolve_nonconformity_status_label,
     resolve_nonconformity_type_label,
 )
+from app.infrastructure.persistence.totvs.nonconformity_repositories.nonconformity_query_filters import (
+    apply_nonconformity_text_filters,
+)
 
 from app.domain.entities.nonconformity.nonconformity import Nonconformity
 from app.application.dto.nonconformity.list_nonconformity_request import (
@@ -71,9 +74,12 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
 
         qb.raw("D_E_L_E_T_ = ''")
         qb.eq("QI2_FILIAL", request.branch)
-        qb.eq("QI2_STATUS", request.status)
-        qb.eq("QI2_ITEM", request.item_code)
-        qb.like("QI2_DESCR", request.description, case_insensitive=True)
+        apply_nonconformity_text_filters(
+            qb,
+            status=request.status,
+            item_code=request.item_code,
+            description=request.description,
+        )
         qb.date_range(
             field="QI2_OCORRE",
             start=request.date_start,
@@ -186,9 +192,12 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
 
         qb.raw("D_E_L_E_T_ = ''")
         qb.eq("QI2_FILIAL", request.branch)
-        qb.eq("QI2_STATUS", request.status)
-        qb.eq("QI2_ITEM", request.item_code)
-        qb.like("QI2_DESCR", request.description, case_insensitive=True)
+        apply_nonconformity_text_filters(
+            qb,
+            status=request.status,
+            item_code=request.item_code,
+            description=request.description,
+        )
         qb.date_range(
             field="QI2_OCORRE",
             start=occurrence_date_start,

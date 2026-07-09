@@ -13,6 +13,14 @@ export const QUALITY_HELP_TOOLTIPS = {
       "Unidade TOTVS. Vazio = todas; múltiplas unidades restringem o recorte dos indicadores.",
     ppmProductScope:
       "Recorte de PPM por família de produto acabado. Plugues = códigos que começam com 9048 (numerador e denominador).",
+    nonconformityType:
+      "Interna (tipo 1) ou externa (cliente/fornecedor). Vazio = todos os tipos.",
+    nonconformityStatus:
+      "Busca aproximada por situação: aceita parte do rótulo (ex.: «procede», «análise») ou do código TOTVS.",
+    nonconformityItem:
+      "Busca aproximada no código do produto (QI2_ITEM). Ex.: «9048» encontra itens que contenham esse trecho.",
+    nonconformityDescription:
+      "Busca aproximada na descrição resumida da NC (QI2_DESCR), sem exigir texto idêntico.",
   },
   kpis: {
     ppmInternal:

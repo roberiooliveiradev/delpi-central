@@ -109,6 +109,7 @@ export function NonconformityFilters({
       <FilterSelectField
         id="nc-type"
         label="Tipo"
+        hint={QUALITY_HELP_TOOLTIPS.filters.nonconformityType}
         value={type}
         onChange={(value) => onTypeChange(value as NonconformityType)}
         options={TYPE_OPTIONS}
@@ -116,6 +117,7 @@ export function NonconformityFilters({
       <FilterInputField
         id="nc-status"
         label="Status"
+        hint={QUALITY_HELP_TOOLTIPS.filters.nonconformityStatus}
         type="text"
         value={status}
         placeholder="Status"
@@ -124,6 +126,7 @@ export function NonconformityFilters({
       <FilterInputField
         id="nc-item"
         label="Item"
+        hint={QUALITY_HELP_TOOLTIPS.filters.nonconformityItem}
         type="text"
         value={itemCode}
         placeholder="Código do item"
@@ -132,6 +135,7 @@ export function NonconformityFilters({
       <FilterInputField
         id="nc-description"
         label="Descrição"
+        hint={QUALITY_HELP_TOOLTIPS.filters.nonconformityDescription}
         type="text"
         value={description}
         placeholder="Buscar na descrição"
