@@ -10,8 +10,12 @@ from tm_app.core.serialize import json_safe
 from tm_app.application.services.collaboration_presence_service import (
     CollaborationPresenceService,
 )
+from tm_app.application.services.transformometro_realtime_hub import (
+    transformometro_realtime_hub,
+)
 from tm_app.application.services.transformometro_realtime_notify import (
     notify_presence_updated,
+    room_key,
 )
 
 logger = logging.getLogger(__name__)
@@ -70,7 +74,7 @@ class TransformometroRealtimeCollaborationHandler:
                 return
 
             if msg_type == "presence.leave":
-                self._clear_user_presence(
+                self._clear_user_presence_if_alone(
                     entity_type=entity_type,
                     entity_id=entity_id,
                     user_id=user_id,
@@ -133,7 +137,48 @@ class TransformometroRealtimeCollaborationHandler:
         entity_type: str,
         entity_id: str,
         user_id: str,
+        remaining_connections: int = 0,
     ) -> None:
+        if remaining_connections > 0:
+            return
+        self._clear_user_presence(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+        )
+
+    def clear_user_presence_http(
+        self,
+        *,
+        entity_type: str,
+        entity_id: str,
+        user_id: str,
+    ) -> bool:
+        """Remove presença via HTTP; retorna False se ainda há WS ativo na sala."""
+        if transformometro_realtime_hub.count_user_connections(
+            room_key(entity_type, entity_id),
+            user_id,
+        ) > 0:
+            return False
+        self._clear_user_presence(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+        )
+        return True
+
+    def _clear_user_presence_if_alone(
+        self,
+        *,
+        entity_type: str,
+        entity_id: str,
+        user_id: str,
+    ) -> None:
+        if transformometro_realtime_hub.count_user_connections(
+            room_key(entity_type, entity_id),
+            user_id,
+        ) > 0:
+            return
         self._clear_user_presence(
             entity_type=entity_type,
             entity_id=entity_id,

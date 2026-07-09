@@ -114,7 +114,7 @@ export function useCollaborativeSectionEdit({
     sendHeartbeat,
     acquireLock: acquireLockViaWs,
     releaseLock: releaseLockViaWs,
-    leavePresence: leavePresenceViaWs,
+    clearPresence,
   } = useTransformometroRealtime({
     entityType,
     entityId,
@@ -326,10 +326,10 @@ export function useCollaborativeSectionEdit({
 
   useEffect(() => {
     return () => {
-      leavePresenceViaWs();
+      clearPresence();
       void releaseCurrentLock();
     };
-  }, [leavePresenceViaWs, releaseCurrentLock]);
+  }, [clearPresence, releaseCurrentLock]);
 
   const presenceSummary = useMemo(() => {
     if (!presence) return null;

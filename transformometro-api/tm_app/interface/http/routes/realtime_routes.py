@@ -63,17 +63,19 @@ async def transformometro_realtime_ws(
             user_email=user_email,
         )
 
-    try:
-        await transformometro_realtime_hub.connect(
-            websocket,
-            room_key=entity_room,
-            user_id=user_id,
-            client_id=client_id,
-            on_message=on_message,
-        )
-    finally:
+    async def on_user_disconnect(_room_key: str, _user_id: str, remaining: int) -> None:
         await transformometro_realtime_collaboration.handle_disconnect(
             entity_type=entity_type,
             entity_id=entity_id,
             user_id=user_id,
+            remaining_connections=remaining,
         )
+
+    await transformometro_realtime_hub.connect(
+        websocket,
+        room_key=entity_room,
+        user_id=user_id,
+        client_id=client_id,
+        on_message=on_message,
+        on_user_disconnect=on_user_disconnect,
+    )

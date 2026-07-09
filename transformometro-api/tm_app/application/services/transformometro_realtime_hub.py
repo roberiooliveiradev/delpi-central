@@ -14,14 +14,25 @@ logger = logging.getLogger(__name__)
 OnRealtimeMessage = Callable[[WebSocket, str], Awaitable[None]]
 
 
+OnUserDisconnect = Callable[[str, str, int], Awaitable[None]]
+
+
 class TransformometroRealtimeHub:
     """Salas WebSocket por entidade (entity_type:entity_id)."""
 
     def __init__(self) -> None:
         self._rooms: dict[str, set[WebSocket]] = {}
+        self._socket_meta: dict[WebSocket, tuple[str, str | None]] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
+
+    def count_user_connections(self, room_key: str, user_id: str) -> int:
+        return sum(
+            1
+            for socket_room, socket_user in self._socket_meta.values()
+            if socket_room == room_key and socket_user == user_id
+        )
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
@@ -50,10 +61,12 @@ class TransformometroRealtimeHub:
         user_id: str | None,
         client_id: str | None,
         on_message: OnRealtimeMessage | None = None,
+        on_user_disconnect: OnUserDisconnect | None = None,
     ) -> None:
         await websocket.accept()
         async with self._lock:
             self._rooms.setdefault(room_key, set()).add(websocket)
+            self._socket_meta[websocket] = (room_key, user_id)
         try:
             await websocket.send_json(
                 {
@@ -72,13 +85,18 @@ class TransformometroRealtimeHub:
         except WebSocketDisconnect:
             pass
         finally:
+            remaining_for_user = 0
             async with self._lock:
+                self._socket_meta.pop(websocket, None)
                 room = self._rooms.get(room_key)
-                if not room:
-                    return
-                room.discard(websocket)
-                if not room:
-                    del self._rooms[room_key]
+                if room:
+                    room.discard(websocket)
+                    if not room:
+                        del self._rooms[room_key]
+                if user_id:
+                    remaining_for_user = self.count_user_connections(room_key, user_id)
+            if on_user_disconnect is not None and user_id:
+                await on_user_disconnect(room_key, user_id, remaining_for_user)
 
     async def broadcast_now(self, room_key: str, payload: dict[str, Any]) -> None:
         async with self._lock:
@@ -99,6 +117,7 @@ class TransformometroRealtimeHub:
                 return
             for websocket in dead:
                 room.discard(websocket)
+                self._socket_meta.pop(websocket, None)
             if not room:
                 del self._rooms[room_key]
 

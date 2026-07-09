@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 from tm_app.application.services.collaboration_presence_service import (
     CollaborationPresenceService,
 )
+from tm_app.application.services.transformometro_realtime_collaboration import (
+    transformometro_realtime_collaboration,
+)
 from tm_app.application.services.transformometro_realtime_notify import (
     notify_presence_updated,
 )
@@ -114,3 +117,21 @@ def post_liberar(body: LockBody, request: Request):
         return fail(str(exc), 400)
     _broadcast_presence(body.entity_type, body.entity_id)
     return ok({"released": True}, "Trava liberada.")
+
+
+@router.delete("/presenca")
+def delete_presenca(entity_type: str, entity_id: str, request: Request):
+    user_id, _, _ = actor_from_request(request)
+    if not user_id:
+        return fail("Usuário não autenticado.", 401)
+    try:
+        cleared = transformometro_realtime_collaboration.clear_user_presence_http(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    if not cleared:
+        return ok({"cleared": False, "still_connected": True}, "Conexão em tempo real ainda ativa.")
+    return ok({"cleared": True}, "Presença removida.")

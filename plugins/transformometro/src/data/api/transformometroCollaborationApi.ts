@@ -112,3 +112,38 @@ export async function releaseCollaborationLock(
     body: JSON.stringify(payload),
   });
 }
+
+export function buildClearCollaborationPresenceUrl(
+  entityType: CollaborationEntityType,
+  entityId: string
+): string {
+  const query = new URLSearchParams({ entity_type: entityType, entity_id: entityId });
+  return `${TRANSFORMOMETRO_API_BASE}/colaboracao/presenca?${query.toString()}`;
+}
+
+export async function clearCollaborationPresence(
+  entityType: CollaborationEntityType,
+  entityId: string,
+  getAccessToken?: () => string | undefined
+): Promise<{ cleared: boolean; still_connected?: boolean }> {
+  const query = new URLSearchParams({ entity_type: entityType, entity_id: entityId });
+  return request(`/colaboracao/presenca?${query.toString()}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
+export function clearCollaborationPresenceKeepalive(
+  entityType: CollaborationEntityType,
+  entityId: string,
+  token: string
+): void {
+  void fetch(buildClearCollaborationPresenceUrl(entityType, entityId), {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    keepalive: true,
+  }).catch(() => {
+    /* best effort on page hide */
+  });
+}

@@ -74,12 +74,16 @@ async def test_realtime_presence_request_serializes_datetime_payload():
 
 
 @pytest.mark.asyncio
-async def test_realtime_presence_leave_clears_user(monkeypatch):
+async def test_realtime_presence_leave_clears_user_when_alone(monkeypatch):
     service = MagicMock()
     websocket = AsyncMock()
     handler = TransformometroRealtimeCollaborationHandler(service=service)
     broadcast = MagicMock()
     monkeypatch.setattr(handler, "_broadcast_presence", broadcast)
+    monkeypatch.setattr(
+        "tm_app.application.services.transformometro_realtime_collaboration.transformometro_realtime_hub.count_user_connections",
+        lambda _room, _user: 0,
+    )
 
     await handler.handle_message(
         websocket,
@@ -100,7 +104,33 @@ async def test_realtime_presence_leave_clears_user(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_realtime_disconnect_clears_user(monkeypatch):
+async def test_realtime_presence_leave_skips_when_other_connections(monkeypatch):
+    service = MagicMock()
+    websocket = AsyncMock()
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+    broadcast = MagicMock()
+    monkeypatch.setattr(handler, "_broadcast_presence", broadcast)
+    monkeypatch.setattr(
+        "tm_app.application.services.transformometro_realtime_collaboration.transformometro_realtime_hub.count_user_connections",
+        lambda _room, _user: 1,
+    )
+
+    await handler.handle_message(
+        websocket,
+        raw_message='{"type":"presence.leave"}',
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u1",
+        user_name="Ana",
+        user_email="ana@example.com",
+    )
+
+    service.clear_user_presence.assert_not_called()
+    broadcast.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_realtime_disconnect_clears_user_when_last_connection(monkeypatch):
     service = MagicMock()
     handler = TransformometroRealtimeCollaborationHandler(service=service)
     broadcast = MagicMock()
@@ -110,6 +140,7 @@ async def test_realtime_disconnect_clears_user(monkeypatch):
         entity_type="processo",
         entity_id="p1",
         user_id="u2",
+        remaining_connections=0,
     )
 
     service.clear_user_presence.assert_called_once_with(
@@ -118,6 +149,39 @@ async def test_realtime_disconnect_clears_user(monkeypatch):
         user_id="u2",
     )
     broadcast.assert_called_once_with("processo", "p1")
+
+
+@pytest.mark.asyncio
+async def test_realtime_disconnect_skips_when_other_connections():
+    service = MagicMock()
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+
+    await handler.handle_disconnect(
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u2",
+        remaining_connections=1,
+    )
+
+    service.clear_user_presence.assert_not_called()
+
+
+def test_clear_user_presence_http_respects_active_connections(monkeypatch):
+    service = MagicMock()
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+    monkeypatch.setattr(
+        "tm_app.application.services.transformometro_realtime_collaboration.transformometro_realtime_hub.count_user_connections",
+        lambda _room, _user: 2,
+    )
+
+    cleared = handler.clear_user_presence_http(
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u1",
+    )
+
+    assert cleared is False
+    service.clear_user_presence.assert_not_called()
 
 
 @pytest.mark.asyncio

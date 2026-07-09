@@ -2,6 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CollaborationEntityType, CollaborationPresencePayload } from "../data/api/transformometroCollaborationApi";
 import {
+  clearCollaborationPresence,
+  clearCollaborationPresenceKeepalive,
+} from "../data/api/transformometroCollaborationApi";
+import {
   buildTransformometroRealtimeWsUrl,
   type TransformometroEntityUpdatedEvent,
   type TransformometroLockResultEvent,
@@ -150,6 +154,30 @@ export function useTransformometroRealtime({
   const leavePresence = useCallback(() => {
     return sendMessage({ type: "presence.leave" });
   }, [sendMessage]);
+
+  const clearPresence = useCallback(() => {
+    if (sendMessage({ type: "presence.leave" })) {
+      return;
+    }
+    if (!entityId) return;
+    void clearCollaborationPresence(entityType, entityId, () => getAccessTokenRef.current?.());
+  }, [entityId, entityType, sendMessage]);
+
+  useEffect(() => {
+    if (!enabled || !entityId) return;
+
+    const onPageHide = () => {
+      const token = getAccessTokenRef.current?.();
+      if (!token) return;
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({ type: "presence.leave" }));
+      }
+      clearCollaborationPresenceKeepalive(entityType, entityId, token);
+    };
+
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
+  }, [enabled, entityId, entityType]);
 
   useEffect(() => {
     if (!enabled || !entityId) {
@@ -312,10 +340,15 @@ export function useTransformometroRealtime({
       cancelled = true;
       clearTimers();
       clearPendingLocks("Conexão em tempo real encerrada.");
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify({ type: "presence.leave" }));
+      const socket = socketRef.current;
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "presence.leave" }));
+        socket.close();
+      } else if (entityId && getAccessTokenRef.current?.()) {
+        void clearCollaborationPresence(entityType, entityId, () => getAccessTokenRef.current?.());
+      } else {
+        socket?.close();
       }
-      socketRef.current?.close();
       socketRef.current = null;
       setConnected(false);
     };
@@ -330,5 +363,6 @@ export function useTransformometroRealtime({
     acquireLock,
     releaseLock,
     leavePresence,
+    clearPresence,
   };
 }
