@@ -153,7 +153,6 @@ export function DecompositionTreeEditor({
         <DecompositionRichTree
           root={richRoot}
           expandDepth={2}
-          maxHeight={readOnly ? "480px" : "520px"}
           enableDragDrop={!readOnly}
           dragDrop={readOnly ? undefined : dragDrop}
           renderLabel={

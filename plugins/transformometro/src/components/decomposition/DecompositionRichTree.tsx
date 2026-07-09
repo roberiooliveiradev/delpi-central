@@ -246,7 +246,7 @@ type DecompositionRichTreeProps = RowSlots & {
 export function DecompositionRichTree({
   root,
   expandDepth = 2,
-  maxHeight = "420px",
+  maxHeight,
   footerLabel = (nodeCount) => `${nodeCount} nó(s) no mapeamento`,
   renderLabel,
   renderActions,
@@ -352,7 +352,10 @@ export function DecompositionRichTree({
   ]);
 
   const treeBody = (
-    <div className="tm-rich-tree__scroll" style={{ maxHeight }}>
+    <div
+      className="tm-rich-tree__scroll"
+      style={maxHeight ? { maxHeight } : undefined}
+    >
       <ul className="tm-rich-tree__list">
         <RichTreeNodeRow
           node={root}
