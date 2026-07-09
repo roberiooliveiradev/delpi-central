@@ -99,6 +99,8 @@ const edgeTypes = {
 const LANE_NODE_PREFIX = "__lane__";
 const DUPLICATE_OFFSET = 48;
 const NUDGE_STEP = 8;
+/** Altura mínima do canvas no layout embedded (React Flow exige altura explícita). */
+const EMBEDDED_CANVAS_MIN_HEIGHT = 620;
 
 type SelectionClipboard = {
   nodes: ActivityNode[];
@@ -272,8 +274,10 @@ function FlowchartEditorInner({
   const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
   const { fitView } = useReactFlow();
-  const canvasHeight =
-    layout === "fill" ? undefined : canvasHeightForLanes(lanes, lanes.length ? 360 : 420);
+  const canvasHeight = Math.max(
+    canvasHeightForLanes(lanes, lanes.length ? 360 : 420),
+    layout === "fill" ? EMBEDDED_CANVAS_MIN_HEIGHT : 0
+  );
   const hasNodeSelection = selectedNodeIds.length > 0;
   const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0;
 
@@ -919,7 +923,7 @@ function FlowchartEditorInner({
             ]
               .filter(Boolean)
               .join(" ")}
-            style={canvasHeight != null ? { height: canvasHeight } : undefined}
+            style={{ height: canvasHeight }}
           >
             <ReactFlow
               nodes={nodes}
