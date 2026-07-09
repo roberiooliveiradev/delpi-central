@@ -572,8 +572,8 @@ services:
 
   cultura-delpi:
     build:
-      context: ../plugins/cultura-delpi
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: cultura-delpi/Dockerfile
 
     container_name: delpi-cultura-delpi
     restart: unless-stopped

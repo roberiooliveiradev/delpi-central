@@ -578,8 +578,8 @@ services:
   cultura-delpi:
     <<: *plugin-profile
     build:
-      context: ../plugins/cultura-delpi
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: cultura-delpi/Dockerfile
       target: production
 
     container_name: delpi-cultura-delpi
