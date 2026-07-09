@@ -16,9 +16,11 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_sql import (
     build_sales_order_otd_filters,
     build_sales_order_otd_line_detail_sql,
+    build_sales_order_otd_line_detail_where,
     build_sales_order_otd_lines_count_sql,
     build_sales_order_otd_lines_list_sql,
     build_sales_order_otd_sql,
+    compose_sales_order_otd_lines_params,
 )
 from app.infrastructure.persistence.totvs.pagination import paginate
 
@@ -73,22 +75,26 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             customer_segment=request.customer_segment,
         )
 
-        count_sql, count_reference_params = build_sales_order_otd_lines_count_sql(
+        count_sql, _ = build_sales_order_otd_lines_count_sql(
             where_clause=where_clause,
             status=request.status,
             reference_end_date=request.end_date,
         )
-        list_sql, list_reference_params = build_sales_order_otd_lines_list_sql(
+        list_sql, _ = build_sales_order_otd_lines_list_sql(
             where_clause=where_clause,
             request=request,
             reference_end_date=request.end_date,
         )
 
-        count_params = where_params + count_reference_params
-        list_params = (
-            where_params
-            + list_reference_params
-            + (paging["offset"], paging["page_size"])
+        count_params = compose_sales_order_otd_lines_params(
+            where_params=where_params,
+            reference_end_date=request.end_date,
+        )
+        list_params = compose_sales_order_otd_lines_params(
+            where_params=where_params,
+            reference_end_date=request.end_date,
+            offset=paging["offset"],
+            page_size=paging["page_size"],
         )
 
         with self:
@@ -107,10 +113,17 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
         self,
         request: GetSalesOrderOtdLineDetailRequest,
     ) -> Optional[dict]:
-        sql, params = build_sales_order_otd_line_detail_sql(
+        where_clause, where_params = build_sales_order_otd_line_detail_where(
             branch=request.branch,
             order_number=request.order_number,
             line_item=request.line_item,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            customer_segment=request.customer_segment,
+        )
+        sql = build_sales_order_otd_line_detail_sql(where_clause=where_clause)
+        params = compose_sales_order_otd_lines_params(
+            where_params=where_params,
             reference_end_date=request.end_date,
         )
 

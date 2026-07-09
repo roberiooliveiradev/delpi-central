@@ -188,11 +188,15 @@ def _list_order_clause(request: GetSalesOrderOtdPanelRequest) -> str:
     sort_column = sort_columns.get(sort_key)
     if sort_column:
         direction = "DESC" if str(request.sort_dir or "asc").lower() == "desc" else "ASC"
+        tie_breakers = [
+            column
+            for column in ("branch", "order_number", "line_item")
+            if column != sort_column
+        ]
+        tie_breaker_sql = ", ".join(f"{column} ASC" for column in tie_breakers)
         return f"""
             ORDER BY {sort_column} {direction},
-                     branch ASC,
-                     order_number ASC,
-                     line_item ASC
+                     {tie_breaker_sql}
         """
 
     return """
@@ -249,22 +253,51 @@ def build_sales_order_otd_lines_list_sql(
 
 def build_sales_order_otd_line_detail_sql(
     *,
-    branch: str,
-    order_number: str,
-    line_item: str,
-    reference_end_date: Optional[str],
-) -> Tuple[str, tuple]:
-    reference_date = _reference_date_param(reference_end_date)
-    list_cte = _list_cte_sql(where_clause=(
-        "C6.C6_FILIAL = ? "
-        "AND LTRIM(RTRIM(C6.C6_NUM)) = LTRIM(RTRIM(?)) "
-        "AND LTRIM(RTRIM(C6.C6_ITEM)) = LTRIM(RTRIM(?))"
-    ))
+    where_clause: str,
+) -> str:
+    list_cte = _list_cte_sql(where_clause=where_clause)
 
-    sql = f"""
+    return f"""
         WITH {list_cte}
         SELECT TOP 1 *
         FROM LINHAS_ELEGIVEIS
     """
 
-    return sql, (branch, order_number, line_item, reference_date, reference_date, reference_date)
+
+def build_sales_order_otd_line_detail_where(
+    *,
+    branch: str,
+    order_number: str,
+    line_item: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    customer_segment: Optional[str],
+) -> Tuple[str, tuple]:
+    where_clause, where_params = build_sales_order_otd_filters(
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
+        customer_segment=customer_segment,
+    )
+    where_clause = (
+        f"{where_clause} "
+        "AND LTRIM(RTRIM(C6.C6_NUM)) = LTRIM(RTRIM(?)) "
+        "AND LTRIM(RTRIM(C6.C6_ITEM)) = LTRIM(RTRIM(?))"
+    )
+    return where_clause, where_params + (order_number, line_item)
+
+
+def compose_sales_order_otd_lines_params(
+    *,
+    where_params: tuple,
+    reference_end_date: Optional[str],
+    offset: Optional[int] = None,
+    page_size: Optional[int] = None,
+) -> tuple:
+    """Placeholders de referência aparecem no SELECT antes do WHERE na CTE."""
+    reference_date = _reference_date_param(reference_end_date)
+    reference_params = (reference_date, reference_date, reference_date)
+    params = reference_params + where_params
+    if offset is not None and page_size is not None:
+        return params + (offset, page_size)
+    return params
