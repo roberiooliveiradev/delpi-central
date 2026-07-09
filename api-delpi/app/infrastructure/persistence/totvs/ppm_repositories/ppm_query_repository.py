@@ -94,7 +94,6 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
         ctes = build_inspection_apont_ctes(
             branch=request.branch,
-            product_prefix=getattr(request, "product_prefix", None),
         )
         prod_params = append_apont_date_params(
             ctes.params,

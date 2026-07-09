@@ -1,4 +1,8 @@
-"""Escopos de produto para cálculo de PPM (prefixos de código acabado)."""
+"""Escopos de produto para cálculo de PPM (prefixos de código acabado).
+
+Regra de negócio: ``product_prefix`` filtra apenas o numerador (QI2_ITEM / devoluções).
+O denominador (produção no CT de inspeção final) permanece sempre geral.
+"""
 
 PLUGS_FINISHED_PRODUCT_PREFIX = "9048"
 COMPONENTS_FINISHED_PRODUCT_PREFIX = "9026"

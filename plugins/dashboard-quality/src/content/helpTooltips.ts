@@ -12,7 +12,7 @@ export const QUALITY_HELP_TOOLTIPS = {
     branch:
       "Unidade TOTVS. Vazio = todas; múltiplas unidades restringem o recorte dos indicadores.",
     ppmProductScope:
-      "Recorte de PPM por família de produto acabado. Plugues = códigos que começam com 9048; componentes = códigos que começam com 9026 (numerador e denominador).",
+      "Recorte de PPM por família: filtra devoluções (QI2_ITEM) por prefixo — plugues 9048, componentes 9026. A produção do denominador permanece geral.",
     nonconformityType:
       "Interna (tipo 1) ou externa (cliente/fornecedor). Vazio = todos os tipos.",
     nonconformityStatus:
@@ -28,13 +28,13 @@ export const QUALITY_HELP_TOOLTIPS = {
     ppmExternal:
       "PPM externo: devoluções de clientes por milhão de unidades faturadas.",
     ppmInternalPlugs:
-      "PPM interno restrito a plugues — produtos acabados cujo código começa com 9048.",
+      "PPM interno de plugues: devoluções internas de produtos 9048* sobre a produção total do período.",
     ppmExternalPlugs:
-      "PPM externo restrito a plugues — produtos acabados cujo código começa com 9048.",
+      "PPM externo de plugues: devoluções externas de produtos 9048* sobre a produção total do período.",
     ppmInternalComponents:
-      "PPM interno restrito a componentes — produtos acabados cujo código começa com 9026.",
+      "PPM interno de componentes: devoluções internas de produtos 9026* sobre a produção total do período.",
     ppmExternalComponents:
-      "PPM externo restrito a componentes — produtos acabados cujo código começa com 9026.",
+      "PPM externo de componentes: devoluções externas de produtos 9026* sobre a produção total do período.",
     kaizenOpen: "Quantidade de kaizens abertos ou em andamento no recorte.",
     kaizenClosed: "Kaizens concluídos no período filtrado.",
     kaizenTotal: "Total de kaizens registrados no período conforme filtros aplicados.",

@@ -197,7 +197,7 @@ def get_internal_ppm_summary(
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
         None,
-        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+        description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
     return _ppm_summary_response(
@@ -217,7 +217,7 @@ def get_external_ppm_summary(
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
         None,
-        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+        description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
     return _ppm_summary_response(
@@ -238,7 +238,7 @@ def get_internal_ppm_series(
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
         None,
-        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+        description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
     return _ppm_series_response(
@@ -260,7 +260,7 @@ def get_external_ppm_series(
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
         None,
-        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+        description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
     return _ppm_series_response(
@@ -283,7 +283,7 @@ def list_internal_ppm(
     page_size: int = Query(None, ge=1),
     product_prefix: Optional[str] = Query(
         None,
-        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+        description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
     return _ppm_list_response(
@@ -307,7 +307,7 @@ def list_external_ppm(
     page_size: int = Query(None, ge=1),
     product_prefix: Optional[str] = Query(
         None,
-        description="Prefixo do código do produto acabado (ex.: 9048 para plugues)",
+        description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
     return _ppm_list_response(
