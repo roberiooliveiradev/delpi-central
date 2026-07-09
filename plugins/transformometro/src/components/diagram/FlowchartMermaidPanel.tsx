@@ -1,5 +1,7 @@
 import { RefreshCw, Wand2 } from "lucide-react";
 
+import { NativeTextAreaControl } from "@delpi/plugin-ui";
+
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 import type { DiagramEditorLayout } from "./DiagramLayoutContext";
 
@@ -69,12 +71,12 @@ export function FlowchartMermaidPanel({
       {readOnly ? (
         <pre className="tm-diagram-editor__mermaid-code">{draft || "Sem preview."}</pre>
       ) : (
-        <textarea
+        <NativeTextAreaControl
           className="tm-diagram-editor__mermaid-input"
           value={draft}
           spellCheck={false}
           aria-label="Código Mermaid"
-          onChange={(event) => onDraftChange(event.target.value)}
+          onChange={onDraftChange}
         />
       )}
 

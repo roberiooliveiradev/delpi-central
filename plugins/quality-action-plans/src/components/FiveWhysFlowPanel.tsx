@@ -9,6 +9,7 @@ import { SectionSaveButton } from "./ui/SectionSaveButton";
 import { FieldLabel } from "@delpi/plugin-ui";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
+import { PacWhysFlowTextArea } from "./ui/PacWhysFlowTextArea";
 import type { FiveWhysForm, FiveWhyStep } from "../utils/fiveWhys";
 import { isFilledWhyStep, serializeFiveWhysForm } from "../utils/fiveWhys";
 
@@ -144,14 +145,15 @@ function WhysFlowTrack({
                     hint={PAC_HELP_TOOLTIPS.detail.fiveWhysQuestion}
                   />
                 </label>
-                <textarea
+                <PacWhysFlowTextArea
                   id={`pac-whys-${config.key}-${index}-question`}
                   className="pac-whys-flow__input pac-whys-flow__input--question"
                   value={step.question}
                   placeholder="Por que…?"
                   rows={2}
                   disabled={disabled}
-                  onChange={(event) => setStep(index, { question: event.target.value })}
+                  ariaLabel={`${index + 1}º porquê — pergunta`}
+                  onChange={(question) => setStep(index, { question })}
                 />
 
                 <label
@@ -163,14 +165,15 @@ function WhysFlowTrack({
                     hint={PAC_HELP_TOOLTIPS.detail.fiveWhysAnswer}
                   />
                 </label>
-                <textarea
+                <PacWhysFlowTextArea
                   id={`pac-whys-${config.key}-${index}-answer`}
                   className="pac-whys-flow__input pac-whys-flow__input--answer"
                   value={step.answer}
                   placeholder="Porque…"
                   rows={3}
                   disabled={disabled}
-                  onChange={(event) => setStep(index, { answer: event.target.value })}
+                  ariaLabel="Resposta"
+                  onChange={(answer) => setStep(index, { answer })}
                 />
               </div>
             </div>

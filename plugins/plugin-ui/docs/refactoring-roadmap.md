@@ -334,7 +334,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Prioridade ROI | Item | Notas |
 |----------------|------|--------|
-| Baixa | **transformometro** FlowchartMermaidPanel | Editor Mermaid — domínio |
+| Baixa | Varredura CI `<select>`/`textarea` fora do pacote | Demais plugins MFE |
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
 
@@ -348,14 +348,15 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **customer-experience** | `cxFormFields`, FormsPanel builder, `PhotoDropzone` empty → `FileDropzone` |
 | **strategic-indicators** | `Modal` + `DrawerPanel` → `ModalShell` / `DrawerShell` |
 | **minha-delpi-chat** | `WorkspaceFileDropzone` policy; toolbar rich → `ChatRichUxSelect` / `NativeSelectControl` |
-| **customer-experience** | «Novo formulário» + `FormPreviewView` text fields → `CxNative*` / `cxFormPreviewFields` |
+| **transformometro** | `FlowchartMermaidPanel` → `NativeTextAreaControl` |
+| **minha-delpi-chat** | Toolbar rich → `ChatRichSelectControl` (`SelectControl` compacto) |
+| **quality-action-plans** | Ishikawa / 5 Whys → `NativeTextAreaControl` / `PacWhysFlowTextArea` |
 | **plugin-ui** | `FormFieldShell.beforeControl`, `FileDropzone.emptyContent`/policy slots, `ModalShell` description/footer/foco, `TextArea.onFocus/maxLength` |
 
 ### Próximo lote sugerido (quando retomar)
 
-1. QAP fluxos RNC/8D (domínio especial).
-2. TM `FlowchartMermaidPanel` (editor Mermaid).
-3. `SelectControl` custom na toolbar rich (substituir native compacto, se UX exigir).
+1. Auditar outros plugins MFE com `<select>` / `<textarea>` fora do pacote (varredura CI).
+2. Consolidar estilos `SelectControl` compacto no `plugin-ui` (toolbar pattern reutilizável).
 
 ---
 

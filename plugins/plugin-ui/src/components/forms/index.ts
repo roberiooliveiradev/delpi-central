@@ -128,6 +128,11 @@ export {
 } from "./NativeSelectControl";
 
 export {
+  NativeTextAreaControl,
+  type NativeTextAreaControlProps,
+} from "./NativeTextAreaControl";
+
+export {
   EditableTableCell,
   createDashboardEditableTableCell,
   editableTableCellBemClasses,

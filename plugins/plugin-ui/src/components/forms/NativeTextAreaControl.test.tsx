@@ -1,0 +1,25 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { NativeTextAreaControl } from "./NativeTextAreaControl";
+
+afterEach(() => {
+  cleanup();
+});
+
+describe("NativeTextAreaControl", () => {
+  it("propaga valor e onChange", () => {
+    const handleChange = vi.fn();
+
+    render(
+      <NativeTextAreaControl
+        value="inicial"
+        aria-label="Código"
+        onChange={handleChange}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Código"), { target: { value: "flowchart" } });
+    expect(handleChange).toHaveBeenCalledWith("flowchart");
+  });
+});

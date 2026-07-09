@@ -1,10 +1,11 @@
-import { NativeSelectControl, type NativeSelectOption } from "@delpi/plugin-ui";
+import { ChatRichSelectControl } from "./chatRichSelectUi";
+import type { SelectOption } from "@delpi/plugin-ui";
 
 type ChatRichUxSelectProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: readonly NativeSelectOption[];
+  options: readonly SelectOption[];
   placeholderOption?: string;
   /** Quando false, não inclui opção vazia inicial. */
   allowEmptyOption?: boolean;
@@ -26,12 +27,14 @@ export function ChatRichUxSelect({
   return (
     <label className={className} title={title}>
       <span>{label}</span>
-      <NativeSelectControl
+      <ChatRichSelectControl
         value={value}
         onChange={onChange}
         options={options}
-        {...(allowEmptyOption ? { placeholderOption } : {})}
-        aria-label={label}
+        allowEmpty={allowEmptyOption}
+        emptyLabel={placeholderOption}
+        searchable={false}
+        ariaLabel={label}
       />
     </label>
   );

@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { useLayoutEffect, useRef } from "react";
 import { Cog, FlaskConical, Leaf, Plus, Ruler, Trash2, Users, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { NativeTextAreaControl } from "@delpi/plugin-ui";
 
 import { FormActions } from "./ui/FormActions";
 import { SectionSaveButton } from "./ui/SectionSaveButton";
@@ -138,17 +139,14 @@ function CauseTextarea({
   }, [value]);
 
   return (
-    <textarea
+    <NativeTextAreaControl
       ref={ref}
       className="pac-field__control pac-field__control--textarea pac-fishbone-branch__input"
       value={value}
       rows={2}
       placeholder={placeholder}
       aria-label={ariaLabel}
-      onChange={(event) => {
-        resizeCauseTextarea(event.currentTarget);
-        onChange(event.target.value);
-      }}
+      onChange={(nextValue) => onChange(nextValue)}
     />
   );
 }
