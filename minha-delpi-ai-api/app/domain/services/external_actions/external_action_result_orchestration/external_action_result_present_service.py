@@ -82,6 +82,10 @@ class ExternalActionResultPresentService:
                     return kpi_result
 
             if isinstance(root, dict):
+                from app.domain.services.external_actions.external_action_sql_capability_service import (
+                    ExternalActionSqlCapabilityService,
+                )
+
                 sql_result = host._sql()._present_sql_resultsets(root, path)
 
                 if sql_result:
@@ -89,7 +93,10 @@ class ExternalActionResultPresentService:
 
                 rows = root.get("rows") if isinstance(root.get("rows"), list) else None
 
-                if rows is None:
+                if rows is None and (
+                    ExternalActionSqlCapabilityService.is_sql_execution_context(path=path)
+                    or ExternalActionSqlCapabilityService.is_sql_result_payload(root)
+                ):
                     rows = host._sql()._coerce_sql_row_list(root)
 
                 if isinstance(rows, list) and rows:

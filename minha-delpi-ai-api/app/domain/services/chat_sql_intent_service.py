@@ -51,7 +51,7 @@ class ChatSqlIntentService:
             for term in cls._sql_context_terms()
         ) or bool(
             re.search(
-                r"\b(?:sa|sb|sc|sd|se|sf|sg|sh|si|sj|sk|sl|sm|sn|so|sp)[a-z]?\d{0,4}\b",
+                r"\b(?:sa|sb|sc|sd|se|sf|sg|sh|si|sj|sk|sl|sm|sn|so|sp)[a-z]?\d{2,4}\b",
                 normalized,
             )
         )

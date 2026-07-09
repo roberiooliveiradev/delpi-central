@@ -251,13 +251,18 @@ class ChatTextTaskIntentService:
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
         normalized = (message or "").strip().lower()
+        pre_category = cls.classify(message)
 
         from app.domain.services.chat_presentation_format_refinement_service import (
             ChatPresentationFormatRefinementService,
         )
 
         if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
-            return False
+            if not (
+                pre_category == "to_table"
+                and not cls._has_presentation_format_reference(normalized)
+            ):
+                return False
 
         from app.domain.services.chat_project_source_slot_resolver_service import (
             ChatProjectSourceSlotResolverService,
@@ -428,3 +433,16 @@ class ChatTextTaskIntentService:
         )
 
         return any(normalized.startswith(lead) for lead in leads)
+
+    @classmethod
+    def _has_presentation_format_reference(cls, normalized: str) -> bool:
+        from app.domain.services.chat_presentation_format_vocabulary_service import (
+            ChatPresentationFormatVocabularyService,
+        )
+
+        tokens = (
+            *ChatPresentationFormatVocabularyService.reference_hints(),
+            *ChatPresentationFormatVocabularyService.last_result_terms(),
+        )
+
+        return any(token in normalized for token in tokens)

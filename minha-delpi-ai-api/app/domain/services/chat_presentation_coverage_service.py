@@ -744,11 +744,14 @@ class ChatPresentationCoverageService:
 
         commentary = str(commentary_profile_key or "").strip()
 
-        if commentary in {"factory_status", "production_status", "shipping_status"}:
+        if commentary in {"factory_status", "production_status", "shipping_status", "analyser"}:
             return "field_value_profile"
 
         if commentary == "stock":
             return "generic_list"
+
+        if commentary == "generic_kpi_series":
+            return "kpi_set"
 
         if commentary == "structure_exclusivity":
             return "hierarchy"

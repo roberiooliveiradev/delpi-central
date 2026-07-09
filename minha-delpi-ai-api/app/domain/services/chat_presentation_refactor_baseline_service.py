@@ -228,11 +228,11 @@ class ChatPresentationRefactorBaselineService:
             ),
             None,
         )
-        visual_bundle = next(
+        schema_driven = next(
             (
                 item
                 for item in file_results
-                if item.relative_path.endswith("chat_presentation_visual_bundle_service.py")
+                if item.relative_path.endswith("chat_schema_driven_presentation_service.py")
             ),
             None,
         )
@@ -265,8 +265,8 @@ class ChatPresentationRefactorBaselineService:
                 "useCaseTableAssemblyPathConditionalCount": use_case_table_assembly,
                 "sectionAvailabilityRouteHandlerCount": section_route_handlers,
                 "sectionAvailabilityLineCount": section_availability.line_count if section_availability else 0,
-                "visualBundleDedicatedEnrichCount": len(visual_bundle.dedicated_enrich_methods)
-                if visual_bundle
+                "visualBundleDedicatedEnrichCount": len(schema_driven.dedicated_enrich_methods)
+                if schema_driven
                 else 0,
                 "tierAProfileCount": len(tier_a_keys),
                 "tierAMissingVisualBuildersCount": len(profile_gaps["tierAMissingVisualBuilders"]),

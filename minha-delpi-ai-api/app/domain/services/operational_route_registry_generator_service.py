@@ -72,7 +72,28 @@ class OperationalRouteRegistryGeneratorService:
             generated.append(cls.build_route_entry(row))
 
         generated.sort(key=lambda route: str(route.get("operationId") or ""))
-        return generated
+        return cls._ensure_unique_route_ids(generated)
+
+    @classmethod
+    def _ensure_unique_route_ids(cls, routes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        seen: dict[str, int] = {}
+        unique: list[dict[str, Any]] = []
+
+        for route in routes:
+            base_id = str(route.get("id") or "").strip()
+            collision = seen.get(base_id, 0)
+            route_id = base_id
+
+            if collision:
+                tail = str(route.get("operationId") or "").split("_")[-1].strip()
+                suffix = tail[:1].upper() + tail[1:] if tail else str(collision + 1)
+                route_id = f"{base_id}{suffix}"
+
+            seen[base_id] = collision + 1
+            route = {**route, "id": route_id}
+            unique.append(route)
+
+        return unique
 
     @classmethod
     def build_route_entry(cls, row: PresentationCoverageRow) -> dict[str, Any]:

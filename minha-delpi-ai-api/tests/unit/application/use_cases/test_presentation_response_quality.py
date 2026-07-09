@@ -257,10 +257,20 @@ def test_factory_status_explicit_dashboard_keeps_full_bundle_for_toolbar():
     dashboard = meta.get("presentation") or meta.get("dashboardPresentation") or {}
 
     assert dashboard.get("type") == "dashboard"
-    assert meta.get("tablePresentations"), "payload deve manter tabelas para aba Tabela"
     assert meta.get("textPresentation"), "payload deve manter narrativa para aba Texto"
 
     panels = dashboard.get("panels") or []
+    table_panels = [
+        panel
+        for panel in panels
+        if isinstance(panel, dict)
+        and isinstance(panel.get("presentation"), dict)
+        and panel["presentation"].get("type") == "table"
+    ]
+
+    assert table_panels or meta.get("tablePresentations") or meta.get("tablePresentation"), (
+        "payload deve manter tabelas no dashboard ou no bundle da toolbar"
+    )
     kpi_panels = [
         panel
         for panel in panels

@@ -150,6 +150,23 @@
         "reason": "Relacionar expedição com produção e estoque"
       }
     ],
+    "analyser": [
+      {
+        "label": "Ver estrutura completa do produto",
+        "query": "Mostrar estrutura completa do produto",
+        "reason": "Relacionar cadastro com BOM e roteiro"
+      },
+      {
+        "label": "Comparar cadastro com o desenho anexado",
+        "query": "Comparar cadastro com o desenho anexado",
+        "reason": "Validar divergências entre ficha e evidência"
+      },
+      {
+        "label": "Ver status fabril do produto",
+        "query": "Ver status fabril do produto",
+        "reason": "Contextualizar o item no chão de fábrica"
+      }
+    ],
     "structure_exclusivity": [
       {
         "label": "Ver estrutura completa do produto",

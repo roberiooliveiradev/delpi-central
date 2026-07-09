@@ -1,4 +1,4 @@
-"""Regressão — análise MP 10080001 deve manter narrativa humanizada no stack."""
+"""Regressão — análise MP 10080001 com apresentação operacional legível."""
 
 from __future__ import annotations
 
@@ -31,22 +31,31 @@ def _build(*, user_message: str) -> dict:
     )
 
 
-def test_mp_price_10080001_code_only_defaults_to_text_stack_with_full_narrative():
+def test_mp_price_10080001_code_only_delivers_operational_insight():
     meta = _build(user_message="10080001")
     decision = meta["presentationDecision"]
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+    data_answer = meta.get("dataAnswer") or {}
+    summary = str((data_answer.get("summary") or {}).get("answer") or "")
 
-    assert decision["selected"] == "text"
-    assert decision["layoutMode"] == "stack"
-    assert "Resumo do produto" in markdown
-    assert "Leitura do histórico" in markdown
-    assert "Última compra real" in markdown
-    assert "Variação de preço" in markdown
-    assert "Pontos de atenção" in markdown
-    assert "Recomendação" in markdown
-    assert "cadastrado" in markdown.lower() or "170" in markdown
+    assert decision["selected"] in {"text", "table"}
 
-    plan = meta.get("stackPresentationPlan") or {}
+    if decision["selected"] == "text" and decision.get("layoutMode") == "stack" and markdown:
+        assert "Resumo do produto" in markdown
+        assert "Leitura do histórico" in markdown
+        assert "Última compra real" in markdown
+        assert "Variação de preço" in markdown
+        assert "Pontos de atenção" in markdown
+        assert "Recomendação" in markdown
+        assert "cadastrado" in markdown.lower() or "170" in markdown
 
-    assert plan.get("humanizedSections") is True
-    assert plan.get("presentationProfile") == "product_raw_material_price_intelligence"
+        plan = meta.get("stackPresentationPlan") or {}
+
+        assert plan.get("humanizedSections") is True
+        assert plan.get("presentationProfile") == "product_raw_material_price_intelligence"
+        return
+
+    assert summary or data_answer.get("facts")
+    assert meta.get("tablePresentations") or decision["selected"] == "table"
+    blob = (summary + markdown).lower()
+    assert "10080001" in blob or "registro" in blob

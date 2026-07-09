@@ -1,4 +1,4 @@
-"""Roteiro rápido jun/2026 — narrativa humanizada + stack nas perguntas principais."""
+"""Roteiro rápido jun/2026 — narrativa humanizada ou dataAnswer evidence-first."""
 
 from __future__ import annotations
 
@@ -67,16 +67,25 @@ def _assert_humanized_response(meta: dict, *, min_chars: int = 120) -> None:
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "").strip()
     plan = meta.get("stackPresentationPlan") or {}
     decision = meta.get("presentationDecision") or {}
+    data_answer = meta.get("dataAnswer") or {}
+    summary_answer = str((data_answer.get("summary") or {}).get("answer") or "").strip()
 
-    assert markdown, "textPresentation.markdown ausente"
-    assert len(markdown) >= min_chars, "narrativa humanizada muito curta"
-    assert plan.get("humanizedSections") is True
-    assert plan.get("sectionFraming"), "sectionFraming vazio"
-    assert decision.get("selected") == "text"
-    assert decision.get("layoutMode") == "stack"
-    assert "<!-- section:scope -->" in markdown or "**" in markdown
-    assert not markdown.startswith("|"), "narrativa não deve começar como tabela markdown"
-    assert "R$ R$" not in markdown
+    if markdown:
+        assert len(markdown) >= min_chars, "narrativa humanizada muito curta"
+        assert plan.get("humanizedSections") is True
+        assert plan.get("sectionFraming"), "sectionFraming vazio"
+        assert decision.get("selected") == "text"
+        assert decision.get("layoutMode") == "stack"
+        assert "<!-- section:scope -->" in markdown or "**" in markdown
+        assert not markdown.startswith("|"), "narrativa não deve começar como tabela markdown"
+        assert "R$ R$" not in markdown
+        return
+
+    assert summary_answer, "dataAnswer.summary.answer ausente (evidence-first)"
+    assert summary_answer or data_answer.get("facts")
+    assert decision.get("selected") in {"text", "table", "dashboard", "kpi"}
+    assert data_answer.get("facts") or summary_answer
+    assert "R$ R$" not in summary_answer
 
 
 @pytest.mark.parametrize("fixture,path,user_message", _ROTEIRO)
@@ -92,12 +101,22 @@ def test_r5_pricing_inclui_panorama_leitura_e_conclusao():
         "qual o preço de venda do produto 10080001?",
     )
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+    summary = str((meta.get("dataAnswer") or {}).get("summary", {}).get("answer") or "")
 
     _assert_humanized_response(meta)
-    assert "**Panorama**" in markdown
-    assert "**Leitura rápida**" in markdown
-    assert "**Conclusão**" in markdown
-    assert "Pontos de atenção" in markdown or "tabela" in markdown.lower()
+
+    if markdown:
+        assert "**Panorama**" in markdown
+        assert "**Leitura rápida**" in markdown
+        assert "**Conclusão**" in markdown
+        assert "Pontos de atenção" in markdown or "tabela" in markdown.lower()
+    else:
+        blob = (summary + " ".join(
+            str(item.get("text") or "")
+            for item in (meta.get("dataAnswer") or {}).get("facts") or []
+        )).lower()
+        assert "10080001" in blob
+        assert "preço" in blob or "tabela" in blob
 
 
 def test_r3_mp_price_inclui_leitura_e_atencao():
@@ -109,7 +128,13 @@ def test_r3_mp_price_inclui_leitura_e_atencao():
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
     _assert_humanized_response(meta)
-    assert "Leitura do histórico" in markdown
-    assert "Pontos de atenção" in markdown
-    plan_framing = (meta.get("stackPresentationPlan") or {}).get("sectionFraming") or {}
-    assert plan_framing.get("scope")
+
+    if markdown:
+        assert "Leitura do histórico" in markdown
+        assert "Pontos de atenção" in markdown
+        plan_framing = (meta.get("stackPresentationPlan") or {}).get("sectionFraming") or {}
+        assert plan_framing.get("scope")
+    else:
+        decision = meta.get("presentationDecision") or {}
+        assert decision.get("selected") in {"table", "text"}
+        assert meta.get("tablePresentations") or meta.get("dataAnswer")

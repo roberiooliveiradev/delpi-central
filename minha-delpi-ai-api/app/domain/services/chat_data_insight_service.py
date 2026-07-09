@@ -226,9 +226,19 @@ class ChatDataInsightService:
             )
 
             if not incomplete and not commentary.get("paginated"):
-                attention.append(
-                    ChatHumanizedDataResponseContentService.get("generic", "largeList")
+                large_list_notice = ChatHumanizedDataResponseContentService.get(
+                    "generic",
+                    "largeList",
                 )
+                attention.append(large_list_notice)
+                limitations = [
+                    str(line).strip()
+                    for line in (commentary.get("limitations") or [])
+                    if str(line or "").strip()
+                ]
+                if large_list_notice and large_list_notice not in limitations:
+                    limitations.append(large_list_notice)
+                    commentary["limitations"] = limitations
 
         numeric_keys = shape.get("numericKeys") or []
 

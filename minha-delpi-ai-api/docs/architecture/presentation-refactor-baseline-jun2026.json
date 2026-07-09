@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-24T16:23:24.076440+00:00",
+  "generatedAt": "2026-07-09T16:39:06.948167+00:00",
   "playbook": "12-R0",
   "summary": {
     "auditFileCount": 4,
@@ -25,51 +25,9 @@
     "narrativeOrderTemplateMethodMax": 0
   },
   "profileGaps": {
-    "missingVisualBuilders": [
-      "directives",
-      "generic",
-      "generic_kpi_series",
-      "generic_list",
-      "kpi_dashboard",
-      "kpi_series",
-      "kpi_snapshot",
-      "last_purchase",
-      "playbook_report",
-      "purchase_list",
-      "sql",
-      "system",
-      "table_list",
-      "tree_hierarchy"
-    ],
-    "missingTableAssembly": [
-      "generic",
-      "generic_kpi_series",
-      "generic_list",
-      "kpi_dashboard",
-      "kpi_series",
-      "kpi_snapshot",
-      "last_purchase",
-      "playbook_report",
-      "purchase_list",
-      "sql",
-      "system",
-      "table_list"
-    ],
-    "missingSectionRules": [
-      "directives",
-      "generic",
-      "generic_kpi_series",
-      "generic_list",
-      "kpi_dashboard",
-      "kpi_series",
-      "kpi_snapshot",
-      "last_purchase",
-      "playbook_report",
-      "purchase_list",
-      "sql",
-      "system",
-      "table_list"
-    ],
+    "missingVisualBuilders": [],
+    "missingTableAssembly": [],
+    "missingSectionRules": [],
     "tierAMissingVisualBuilders": [],
     "tierAMissingTableAssembly": [],
     "tierAMissingSectionRules": []
@@ -79,15 +37,15 @@
   "files": [
     {
       "relativePath": "app/application/use_cases/execute_external_action_use_case.py",
-      "lineCount": 407,
+      "lineCount": 411,
       "pathConditionalCount": 0,
       "pathConditionalHits": [],
       "dedicatedEnrichMethods": [],
       "profileFlagVariables": []
     },
     {
-      "relativePath": "app/domain/services/chat_presentation_visual_bundle_service.py",
-      "lineCount": 407,
+      "relativePath": "app/domain/services/chat_schema_driven_presentation_service.py",
+      "lineCount": 1186,
       "pathConditionalCount": 0,
       "pathConditionalHits": [],
       "dedicatedEnrichMethods": [],
@@ -103,7 +61,7 @@
     },
     {
       "relativePath": "app/domain/services/external_actions/external_action_result_presenter.py",
-      "lineCount": 626,
+      "lineCount": 408,
       "pathConditionalCount": 0,
       "pathConditionalHits": [],
       "dedicatedEnrichMethods": [],

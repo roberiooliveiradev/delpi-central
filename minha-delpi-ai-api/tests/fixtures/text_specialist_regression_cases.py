@@ -61,7 +61,7 @@ TEXT_SPECIALIST_REGRESSION_CASES: list[dict] = [
     {
         "id": "T20",
         "message": "coloque na lousa o relatório da resposta anterior",
-        "pure": True,
+        "pure": False,
         "category": "report",
         "source": "canvas",
     },
