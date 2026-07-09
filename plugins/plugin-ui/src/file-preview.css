@@ -8,37 +8,61 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: color-mix(in srgb, #000 48%, transparent);
+  background: color-mix(in srgb, var(--ds-text, #111111) 52%, transparent);
+  backdrop-filter: blur(2px);
 }
 
 .delpi-ui-file-preview-modal {
   --delpi-ui-preview-control-radius: 12px;
   --delpi-ui-preview-font-xs: 12px;
   --delpi-ui-preview-font-sm: 13px;
-  --delpi-ui-preview-card-bg: var(--surface, #ffffff);
-  --delpi-ui-preview-card-border: var(--border, #e6e6e6);
-  --delpi-ui-preview-accent: var(--primary, #089bdb);
-  --delpi-ui-preview-text-muted: color-mix(in srgb, var(--text, #111111) 70%, transparent);
+  --delpi-ui-preview-card-bg: var(--ds-card-bg, var(--surface, #ffffff));
+  --delpi-ui-preview-card-border: var(--ds-card-border, var(--border, #e6e6e6));
+  --delpi-ui-preview-accent: var(--ds-accent, var(--primary, #089bdb));
+  --delpi-ui-preview-text-muted: var(
+    --ds-text-muted,
+    color-mix(in srgb, var(--text, #111111) 70%, transparent)
+  );
   width: min(920px, 100%);
   max-height: min(88vh, 900px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border-radius: 16px;
-  border: 1px solid var(--border, #e6e6e6);
-  background: var(--surface, #ffffff);
-  box-shadow: 0 24px 64px color-mix(in srgb, #000 28%, transparent);
-  color: var(--text, #111111);
+  border: 1px solid var(--delpi-ui-preview-card-border);
+  background: var(--delpi-ui-preview-card-bg);
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--ds-text, #111111) 28%, transparent);
+  color: var(--ds-text, var(--text, #111111));
 }
 
-:root[data-theme="dark"] .delpi-ui-file-preview-modal {
-  --delpi-ui-preview-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
-  --delpi-ui-preview-card-border: rgba(255, 255, 255, 0.1);
-  --delpi-ui-preview-text-muted: rgba(255, 255, 255, 0.72);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: color-mix(in srgb, var(--surface-2, #1b2030) 92%, #089bdb 8%);
-  color: rgba(255, 255, 255, 0.92);
+:root[data-theme="dark"] .delpi-ui-file-preview-modal,
+.delpi-ui-file-preview-modal-overlay[data-theme="dark"] .delpi-ui-file-preview-modal {
+  --delpi-ui-preview-card-bg: var(
+    --ds-card-bg,
+    color-mix(in srgb, var(--surface-2, #1b2030) 88%, black)
+  );
+  --delpi-ui-preview-card-border: var(--ds-card-border, rgba(255, 255, 255, 0.12));
+  --delpi-ui-preview-text-muted: var(--ds-text-muted, rgba(255, 255, 255, 0.72));
+  border-color: var(--delpi-ui-preview-card-border);
+  background: var(--delpi-ui-preview-card-bg);
+  color: var(--ds-text, rgba(255, 255, 255, 0.92));
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .delpi-ui-file-preview-modal,
+  .delpi-ui-file-preview-modal-overlay:not([data-theme="light"]) .delpi-ui-file-preview-modal {
+    --delpi-ui-preview-card-bg: var(
+      --ds-card-bg,
+      color-mix(in srgb, var(--surface-2, #1b2030) 88%, black)
+    );
+    --delpi-ui-preview-card-border: var(--ds-card-border, rgba(255, 255, 255, 0.12));
+    --delpi-ui-preview-text-muted: var(--ds-text-muted, rgba(255, 255, 255, 0.72));
+    border-color: var(--delpi-ui-preview-card-border);
+    background: var(--delpi-ui-preview-card-bg);
+    color: var(--ds-text, rgba(255, 255, 255, 0.92));
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  }
 }
 
 .delpi-ui-file-preview-modal__header {
@@ -47,11 +71,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 16px 18px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border, #e6e6e6) 80%, transparent);
-}
-
-:root[data-theme="dark"] .delpi-ui-file-preview-modal__header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--ds-border-subtle, var(--delpi-ui-preview-card-border));
 }
 
 .delpi-ui-file-preview-modal__title {
@@ -146,14 +166,6 @@
   background: color-mix(in srgb, var(--delpi-ui-preview-accent) 10%, transparent);
 }
 
-:root[data-theme="dark"] .delpi-ui-file-preview__image {
-  background: color-mix(in srgb, var(--surface-2, #1b2030) 70%, transparent);
-}
-
-:root[data-theme="dark"] .delpi-ui-file-preview__text {
-  background: color-mix(in srgb, var(--delpi-ui-preview-card-bg) 92%, var(--delpi-ui-preview-accent) 8%);
-}
-
 .delpi-ui-file-preview__status,
 .delpi-ui-file-preview__muted {
   margin: 0;
@@ -173,13 +185,30 @@
   background: color-mix(in srgb, var(--surface-2, #eef2f7) 70%, transparent);
 }
 
+:root[data-theme="dark"] .delpi-ui-file-preview__image,
+.delpi-ui-file-preview-modal-overlay[data-theme="dark"] .delpi-ui-file-preview__image {
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 70%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .delpi-ui-file-preview__image,
+  .delpi-ui-file-preview-modal-overlay:not([data-theme="light"]) .delpi-ui-file-preview__image {
+    background: color-mix(in srgb, var(--surface-2, #1b2030) 70%, transparent);
+  }
+}
+
 .delpi-ui-file-preview__pdf {
   width: 100%;
   height: min(68vh, 720px);
   min-height: min(68vh, 720px);
   border: none;
   border-radius: 10px;
-  background: #fff;
+  background: #ffffff;
+}
+
+:root[data-theme="dark"] .delpi-ui-file-preview__pdf,
+.delpi-ui-file-preview-modal-overlay[data-theme="dark"] .delpi-ui-file-preview__pdf {
+  background: var(--delpi-ui-preview-card-bg);
 }
 
 .delpi-ui-file-preview__text-wrap {
@@ -213,6 +242,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding-top: 12px;
 }
 
 .delpi-ui-file-preview:has(.delpi-ui-spreadsheet-preview),
@@ -222,12 +252,13 @@
   overflow: hidden;
 }
 
+/* Planilha — chrome adapta ao tema; área de células permanece “papel” no escuro (como Excel/DOCX). */
 .delpi-ui-spreadsheet-preview {
   --delpi-ui-sheet-bg: #ffffff;
   --delpi-ui-sheet-grid: #d4d4d4;
   --delpi-ui-sheet-header-bg: #f2f2f2;
   --delpi-ui-sheet-header-text: #444444;
-  --delpi-ui-sheet-cell-text: #000000;
+  --delpi-ui-sheet-cell-text: #111111;
   --delpi-ui-sheet-chrome-bg: #f3f3f3;
   --delpi-ui-sheet-chrome-border: #d4d4d4;
   --delpi-ui-sheet-tab-bg: #e6e6e6;
@@ -242,22 +273,32 @@
   border: 1px solid var(--delpi-ui-sheet-chrome-border);
   border-radius: 10px;
   overflow: hidden;
-  background: var(--delpi-ui-sheet-bg);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--delpi-ui-sheet-bg) 80%, #000 20%);
+  background: var(--delpi-ui-sheet-chrome-bg);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--delpi-ui-sheet-chrome-border) 65%, transparent);
 }
 
-:root[data-theme="dark"] .delpi-ui-spreadsheet-preview {
-  --delpi-ui-sheet-bg: #1a2030;
-  --delpi-ui-sheet-grid: #3d465c;
-  --delpi-ui-sheet-header-bg: #252d3d;
-  --delpi-ui-sheet-header-text: rgba(255, 255, 255, 0.78);
-  --delpi-ui-sheet-cell-text: rgba(255, 255, 255, 0.92);
+:root[data-theme="dark"] .delpi-ui-spreadsheet-preview,
+.delpi-ui-file-preview-modal-overlay[data-theme="dark"] .delpi-ui-spreadsheet-preview {
   --delpi-ui-sheet-chrome-bg: #1f2636;
-  --delpi-ui-sheet-chrome-border: rgba(255, 255, 255, 0.12);
+  --delpi-ui-sheet-chrome-border: rgba(255, 255, 255, 0.14);
   --delpi-ui-sheet-tab-bg: #2a3347;
-  --delpi-ui-sheet-tab-active-bg: #1a2030;
-  --delpi-ui-sheet-tab-text: rgba(255, 255, 255, 0.82);
+  --delpi-ui-sheet-tab-active-bg: #ffffff;
+  --delpi-ui-sheet-tab-text: rgba(255, 255, 255, 0.84);
   --delpi-ui-sheet-accent: #33a06a;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .delpi-ui-spreadsheet-preview,
+  .delpi-ui-file-preview-modal-overlay:not([data-theme="light"]) .delpi-ui-spreadsheet-preview {
+    --delpi-ui-sheet-chrome-bg: #1f2636;
+    --delpi-ui-sheet-chrome-border: rgba(255, 255, 255, 0.14);
+    --delpi-ui-sheet-tab-bg: #2a3347;
+    --delpi-ui-sheet-tab-active-bg: #ffffff;
+    --delpi-ui-sheet-tab-text: rgba(255, 255, 255, 0.84);
+    --delpi-ui-sheet-accent: #33a06a;
+    border-color: rgba(255, 255, 255, 0.16);
+  }
 }
 
 .delpi-ui-spreadsheet-preview__chrome {
@@ -309,7 +350,7 @@
   display: flex;
   align-items: center;
   padding: 0 8px;
-  border-right: 1px solid var(--delpi-ui-sheet-chrome-border);
+  border-right: 1px solid var(--delpi-ui-sheet-grid);
   font-size: 11px;
   color: var(--delpi-ui-sheet-header-text);
 }
@@ -337,6 +378,7 @@
   overscroll-behavior: contain;
   background: var(--delpi-ui-sheet-bg);
   scrollbar-gutter: stable;
+  scrollbar-color: #c1c1c1 #f3f3f3;
 }
 
 .delpi-ui-spreadsheet-preview__grid {
@@ -441,7 +483,8 @@
 
 .delpi-ui-spreadsheet-preview__tab.is-active {
   background: var(--delpi-ui-sheet-tab-active-bg);
-  border-color: var(--delpi-ui-sheet-chrome-border);
+  border-color: var(--delpi-ui-sheet-grid);
+  color: var(--delpi-ui-sheet-cell-text);
   box-shadow: inset 0 2px 0 var(--delpi-ui-sheet-accent);
 }
 
@@ -450,7 +493,7 @@ button.delpi-ui-spreadsheet-preview__tab {
 }
 
 button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
-  background: color-mix(in srgb, var(--delpi-ui-sheet-tab-active-bg) 65%, var(--delpi-ui-sheet-tab-bg));
+  background: color-mix(in srgb, var(--delpi-ui-sheet-tab-active-bg) 55%, var(--delpi-ui-sheet-tab-bg));
 }
 
 .delpi-ui-spreadsheet-preview__tab.is-hidden-sheet:not(.is-active) {
@@ -465,13 +508,13 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   font-size: var(--delpi-ui-preview-font-xs);
   border-top: 1px solid var(--delpi-ui-sheet-chrome-border);
   background: var(--delpi-ui-sheet-chrome-bg);
-  color: var(--delpi-ui-preview-text-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+  color: var(--delpi-ui-preview-text-muted);
 }
 
 .delpi-ui-docx-preview {
   --delpi-ui-docx-canvas: #d8d8d8;
   --delpi-ui-docx-page-bg: #ffffff;
-  --delpi-ui-docx-page-text: #000000;
+  --delpi-ui-docx-page-text: #111111;
   --delpi-ui-docx-accent: #185abd;
   --delpi-ui-docx-toolbar-bg: #f3f2f1;
   --delpi-ui-docx-toolbar-border: #d2d0ce;
@@ -488,15 +531,30 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   background: var(--delpi-ui-docx-canvas);
 }
 
-:root[data-theme="dark"] .delpi-ui-docx-preview {
+:root[data-theme="dark"] .delpi-ui-docx-preview,
+.delpi-ui-file-preview-modal-overlay[data-theme="dark"] .delpi-ui-docx-preview {
   --delpi-ui-docx-canvas: #141925;
-  --delpi-ui-docx-page-bg: #f3f3f3;
+  --delpi-ui-docx-page-bg: #ffffff;
   --delpi-ui-docx-page-text: #111111;
   --delpi-ui-docx-accent: #4a90e8;
   --delpi-ui-docx-toolbar-bg: #1f2636;
   --delpi-ui-docx-toolbar-border: rgba(255, 255, 255, 0.12);
   --delpi-ui-docx-toolbar-text: rgba(255, 255, 255, 0.88);
   --delpi-ui-docx-toolbar-muted: rgba(255, 255, 255, 0.62);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .delpi-ui-docx-preview,
+  .delpi-ui-file-preview-modal-overlay:not([data-theme="light"]) .delpi-ui-docx-preview {
+    --delpi-ui-docx-canvas: #141925;
+    --delpi-ui-docx-page-bg: #ffffff;
+    --delpi-ui-docx-page-text: #111111;
+    --delpi-ui-docx-accent: #4a90e8;
+    --delpi-ui-docx-toolbar-bg: #1f2636;
+    --delpi-ui-docx-toolbar-border: rgba(255, 255, 255, 0.12);
+    --delpi-ui-docx-toolbar-text: rgba(255, 255, 255, 0.88);
+    --delpi-ui-docx-toolbar-muted: rgba(255, 255, 255, 0.62);
+  }
 }
 
 .delpi-ui-docx-preview__chrome {
@@ -627,4 +685,5 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   font-size: var(--delpi-ui-preview-font-xs);
   border-top: 1px solid var(--delpi-ui-docx-toolbar-border);
   background: var(--delpi-ui-docx-toolbar-bg);
+  color: var(--delpi-ui-preview-text-muted);
 }

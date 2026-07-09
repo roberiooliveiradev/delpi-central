@@ -160,6 +160,11 @@ export function ModalShell({
   return createPortal(
     <div
       className={overlayClass}
+      data-theme={
+        typeof document !== "undefined"
+          ? document.documentElement.getAttribute("data-theme") ?? undefined
+          : undefined
+      }
       onClick={onClose}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
