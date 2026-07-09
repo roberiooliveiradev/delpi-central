@@ -1,6 +1,7 @@
 import type { Processo } from "../../data/api/transformometroApi";
 import {
   emptyProcessoEscopo,
+  hasProcessoEscopo,
   processoEscopoFromEntity,
   processoEscopoPayload,
   type ProcessoEscopoState,
@@ -63,7 +64,7 @@ export function masterPayloadFromProcessoForm(form: ProcessoFormState): Partial<
     objetivo_processo: form.objetivo_processo.trim() || undefined,
     familia_processo: form.familia_processo.trim() || undefined,
     agrupador_ferramenta: form.agrupador_ferramenta.trim() || undefined,
-    ...processoEscopoPayload(form.escopo),
+    ...(hasProcessoEscopo(form.escopo) ? processoEscopoPayload(form.escopo) : {}),
   };
 }
 

@@ -7,10 +7,10 @@ export type ProcessoEscopoState = {
   setor_ids: string[];
 };
 
-export function emptyProcessoEscopo(defaultFilialId = "01"): ProcessoEscopoState {
+export function emptyProcessoEscopo(_defaultFilialId = "01"): ProcessoEscopoState {
   return {
     todas_filiais_ativas: false,
-    filial_ids: defaultFilialId ? [defaultFilialId] : [],
+    filial_ids: [],
     setor_ids: [],
   };
 }
