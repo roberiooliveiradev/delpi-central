@@ -26,9 +26,6 @@ type Props = {
   lanes: FlowchartLane[];
   activeLaneId?: string;
   onActiveLaneChange: (laneId: string) => void;
-  laneLabelDraft: string;
-  onLaneLabelDraftChange: (value: string) => void;
-  onRenameLane: () => void;
   onRemoveLane: () => void | Promise<void>;
   onAddNode: (type: FlowchartNodeType) => void;
   onEditorAction: (actionId: (typeof DIAGRAM_EDITOR_ACTIONS)[number]["id"]) => void;
@@ -44,9 +41,6 @@ export function FlowchartEditorToolbar({
   lanes,
   activeLaneId,
   onActiveLaneChange,
-  laneLabelDraft,
-  onLaneLabelDraftChange,
-  onRenameLane,
   onRemoveLane,
   onAddNode,
   onEditorAction,
@@ -113,9 +107,6 @@ export function FlowchartEditorToolbar({
                 lanes={lanes}
                 activeLaneId={activeLaneId}
                 onActiveLaneChange={onActiveLaneChange}
-                laneLabelDraft={laneLabelDraft}
-                onLaneLabelDraftChange={onLaneLabelDraftChange}
-                onRenameLane={onRenameLane}
                 onRemoveLane={onRemoveLane}
                 disableRemove={!lanes.length}
               />
@@ -141,6 +132,13 @@ export function FlowchartEditorToolbar({
                 hint={action.hint}
                 icon={action.icon}
                 disabled={isSelectionActionDisabled(action.id)}
+                active={
+                  action.id === "delete"
+                    ? !isSelectionActionDisabled("delete")
+                    : action.id === "move" || action.id === "copy" || action.id === "duplicate"
+                      ? !isSelectionActionDisabled(action.id)
+                      : false
+                }
                 onClick={() => onSelectionAction(action.id)}
               />
             ))}

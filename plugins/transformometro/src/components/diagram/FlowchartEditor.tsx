@@ -81,8 +81,10 @@ type LaneNode = Node<{
   label: string;
   height: number;
   laneId?: string;
+  isActive?: boolean;
   readOnly?: boolean;
   onRename?: (laneId: string, label: string) => void;
+  onSelect?: (laneId: string) => void;
 }>;
 type EditorNode = Node;
 
@@ -114,7 +116,9 @@ function buildLaneNodes(
   lanes: ReturnType<typeof normalizeLanes>,
   options?: {
     readOnly?: boolean;
+    activeLaneId?: string;
     onRenameLane?: (laneId: string, label: string) => void;
+    onSelectLane?: (laneId: string) => void;
   }
 ): LaneNode[] {
   return lanes.map((lane) => ({
@@ -125,8 +129,10 @@ function buildLaneNodes(
       label: lane.label,
       height: lane.height ?? 168,
       laneId: lane.id,
+      isActive: options?.activeLaneId === lane.id,
       readOnly: options?.readOnly ?? true,
       onRename: options?.onRenameLane,
+      onSelect: options?.onSelectLane,
     },
     draggable: false,
     selectable: false,
@@ -141,7 +147,9 @@ function toReactFlow(
   value: FlowchartV1,
   laneOptions?: {
     readOnly?: boolean;
+    activeLaneId?: string;
     onRenameLane?: (laneId: string, label: string) => void;
+    onSelectLane?: (laneId: string) => void;
   }
 ): { nodes: EditorNode[]; edges: Edge[] } {
   const lanes = normalizeLanes(value.lanes);
@@ -238,6 +246,7 @@ function FlowchartEditorInner({
 }: FlowchartEditorProps) {
   const confirm = useConfirm();
   const lanes = useMemo(() => normalizeLanes(value.lanes), [value.lanes]);
+  const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
 
   const handleRenameLane = useCallback(
     (laneId: string, label: string) => {
@@ -247,12 +256,18 @@ function FlowchartEditorInner({
     [onChange, readOnly, value]
   );
 
+  const handleSelectLane = useCallback((laneId: string) => {
+    setActiveLaneId(laneId);
+  }, []);
+
   const laneRenderOptions = useMemo(
     () => ({
       readOnly,
+      activeLaneId,
       onRenameLane: readOnly ? undefined : handleRenameLane,
+      onSelectLane: readOnly ? undefined : handleSelectLane,
     }),
-    [handleRenameLane, readOnly]
+    [activeLaneId, handleRenameLane, handleSelectLane, readOnly]
   );
 
   const initial = useMemo(() => toReactFlow(value, laneRenderOptions), [laneRenderOptions, value]);
@@ -264,8 +279,6 @@ function FlowchartEditorInner({
   const [mermaidApplyError, setMermaidApplyError] = useState<string | null>(null);
   const [mermaidApplying, setMermaidApplying] = useState(false);
   const canvasMermaid = useMemo(() => flowchartToMermaid(value), [value]);
-  const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
-  const [laneLabelDraft, setLaneLabelDraft] = useState("");
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const clipboardRef = useRef<SelectionClipboard | null>(null);
@@ -333,11 +346,6 @@ function FlowchartEditorInner({
     setMermaidDraft(createStarterMermaidTemplate());
     setMermaidApplyError(null);
   }, []);
-
-  useEffect(() => {
-    const lane = lanes.find((item) => item.id === activeLaneId);
-    setLaneLabelDraft(lane?.label ?? "");
-  }, [activeLaneId, lanes]);
 
   useEffect(() => {
     if (activeTab !== "canvas") return;
@@ -586,11 +594,6 @@ function FlowchartEditorInner({
     };
     setActiveLaneId(lane.id);
     onChange?.(next);
-  };
-
-  const renameActiveLane = () => {
-    if (readOnly || !activeLaneId || !laneLabelDraft.trim()) return;
-    onChange?.(renameLane(value, activeLaneId, laneLabelDraft));
   };
 
   const removeActiveLane = async () => {
@@ -843,9 +846,6 @@ function FlowchartEditorInner({
                 lanes={lanes}
                 activeLaneId={activeLaneId}
                 onActiveLaneChange={setActiveLaneId}
-                laneLabelDraft={laneLabelDraft}
-                onLaneLabelDraftChange={setLaneLabelDraft}
-                onRenameLane={renameActiveLane}
                 onRemoveLane={removeActiveLane}
                 onAddNode={addNode}
                 onEditorAction={runEditorAction}

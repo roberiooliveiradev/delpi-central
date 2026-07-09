@@ -1,10 +1,8 @@
-import { Check, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { FlowchartLane } from "../../types/diagram";
 import { FieldLabel } from "@delpi/plugin-ui";
-import { SelectControl } from "../ui/SelectControl";
-import { mapSelectOptionsFromItems } from "../ui/selectTypes";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 
 const D = TM_HELP_TOOLTIPS.diagramEditor;
@@ -13,9 +11,6 @@ type Props = {
   lanes: FlowchartLane[];
   activeLaneId?: string;
   onActiveLaneChange: (laneId: string) => void;
-  laneLabelDraft: string;
-  onLaneLabelDraftChange: (value: string) => void;
-  onRenameLane: () => void;
   onRemoveLane: () => void | Promise<void>;
   disableRemove?: boolean;
 };
@@ -24,9 +19,6 @@ export function FlowchartLaneToolbar({
   lanes,
   activeLaneId,
   onActiveLaneChange,
-  laneLabelDraft,
-  onLaneLabelDraftChange,
-  onRenameLane,
   onRemoveLane,
   disableRemove = false,
 }: Props) {
@@ -36,39 +28,29 @@ export function FlowchartLaneToolbar({
 
   return (
     <div className="tm-diagram-lane-toolbar">
-      <label className="tm-diagram-editor__lane-select">
-        <FieldLabel className="tm-field__label" label="Faixa ativa" hint={D.laneSelect} />
-        <SelectControl
-          ariaLabel="Faixa ativa"
-          value={activeLaneId ?? ""}
-          onChange={onActiveLaneChange}
-          options={mapSelectOptionsFromItems(
-            lanes,
-            (lane) => lane.id,
-            (lane) => lane.label
-          )}
-        />
-      </label>
-      <label className="tm-diagram-lane-toolbar__rename">
-        <FieldLabel className="tm-field__label" label="Nome da faixa" hint={D.laneRename} />
-        <input
-          type="text"
-          value={laneLabelDraft}
-          onChange={(event) => onLaneLabelDraftChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              onRenameLane();
-            }
-          }}
-        />
-      </label>
-      <DiagramEditorToolbarButton
-        label="Aplicar nome"
-        hint={D.laneApply}
-        icon={Check}
-        onClick={onRenameLane}
-      />
+      <FieldLabel className="tm-field__label tm-diagram-lane-toolbar__label" label="Faixas" hint={D.laneSelect} />
+      <div className="tm-diagram-lane-toolbar__chips" role="listbox" aria-label="Faixas do diagrama">
+        {lanes.map((lane) => {
+          const isActive = lane.id === activeLaneId;
+          return (
+            <button
+              key={lane.id}
+              type="button"
+              role="option"
+              aria-selected={isActive}
+              className={
+                isActive
+                  ? "tm-diagram-lane-chip is-active"
+                  : "tm-diagram-lane-chip"
+              }
+              onClick={() => onActiveLaneChange(lane.id)}
+              title={D.laneRename}
+            >
+              {lane.label}
+            </button>
+          );
+        })}
+      </div>
       <DiagramEditorToolbarButton
         label="Remover faixa"
         hint={D.laneRemove}

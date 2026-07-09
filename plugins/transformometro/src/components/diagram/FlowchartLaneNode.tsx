@@ -7,23 +7,53 @@ type LaneNodeData = {
   label: string;
   height: number;
   laneId?: string;
+  isActive?: boolean;
   readOnly?: boolean;
   onRename?: (laneId: string, label: string) => void;
+  onSelect?: (laneId: string) => void;
 };
 
 export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
+  const canInteract = !data.readOnly && Boolean(data.laneId);
+
+  const selectLane = () => {
+    if (canInteract && data.laneId && data.onSelect) {
+      data.onSelect(data.laneId);
+    }
+  };
+
   return (
     <div
-      className="tm-diagram-lane"
+      className={[
+        "tm-diagram-lane",
+        data.isActive ? "tm-diagram-lane--active" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={{ width: LANE_CANVAS_WIDTH, height: data.height }}
     >
       <div
         className={[
           "tm-diagram-lane__header",
-          !data.readOnly && data.onRename ? "tm-diagram-lane__header--editable" : "",
+          canInteract && data.onRename ? "tm-diagram-lane__header--editable" : "",
+          canInteract ? "tm-diagram-lane__header--selectable" : "",
         ]
           .filter(Boolean)
           .join(" ")}
+        role={canInteract ? "button" : undefined}
+        tabIndex={canInteract ? 0 : undefined}
+        aria-pressed={canInteract ? data.isActive : undefined}
+        onClick={(event) => {
+          if (event.detail > 1) return;
+          selectLane();
+        }}
+        onKeyDown={(event) => {
+          if (!canInteract) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectLane();
+          }
+        }}
       >
         <DiagramInlineTextEdit
           value={data.label}

@@ -341,9 +341,10 @@ export const TM_HELP_TOOLTIPS = {
       "Modelo com bifurcação: início, atividade, decisão Sim/Não e dois caminhos convergindo no fim.",
     templateSwimlanes:
       "Exemplo BPMN com duas faixas (Comercial e Engenharia), handoff e gateways — ponto de partida para processos cross-funcionais.",
-    laneSelect: "Faixa onde novos nós da paleta serão inseridos. Também define qual faixa renomear ou remover.",
-    laneRename: "Nome exibido no cabeçalho da faixa. Duplo clique no cabeçalho no canvas também abre a edição.",
-    laneApply: "Aplica o nome digitado à faixa selecionada.",
+    laneSelect:
+      "Faixa ativa para inserir novos nós da paleta. Clique no cabeçalho da faixa no canvas ou use os chips aqui.",
+    laneRename:
+      "Duplo clique no nome da faixa no canvas para editar inline (Enter confirma, Esc cancela), como nos demais nós.",
     laneRemove:
       "Remove a faixa ativa. Com mais de uma faixa, os nós são realocados na restante; removendo a última, o diagrama volta ao canvas simples (sem swimlanes).",
     canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
