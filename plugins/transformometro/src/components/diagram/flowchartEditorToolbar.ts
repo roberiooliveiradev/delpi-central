@@ -46,6 +46,7 @@ import {
   BPMN_PALETTE_CATEGORIES,
   paletteByCategory,
   type BpmnMarker,
+  type BpmnPaletteCategoryId,
   type FlowchartNodeType,
 } from "../../types/bpmnNodeCatalog";
 
@@ -115,6 +116,40 @@ export const FLOWCHART_NODE_ICONS: Record<FlowchartNodeType, LucideIcon> = Objec
 
 export function flowchartNodeHint(type: FlowchartNodeType): string {
   return BPMN_NODE_DEFINITIONS[type]?.hint ?? D.nodes.process;
+}
+
+export type FlowchartElementGroupTab =
+  | "events"
+  | "gateways"
+  | "tasks"
+  | "activities"
+  | "artifacts"
+  | "boundary"
+  | "lanes";
+
+export const FLOWCHART_ELEMENT_GROUP_TABS: Array<{ id: FlowchartElementGroupTab; label: string }> = [
+  { id: "events", label: "Eventos" },
+  { id: "gateways", label: "Gateways" },
+  { id: "tasks", label: "Tarefas" },
+  { id: "activities", label: "Atividades" },
+  { id: "artifacts", label: "Artefatos" },
+  { id: "boundary", label: "Borda" },
+  { id: "lanes", label: "Faixas" },
+];
+
+export const FLOWCHART_EVENT_SUB_TABS: Array<{ id: BpmnPaletteCategoryId; label: string }> = [
+  { id: "events_start", label: "Início" },
+  { id: "events_intermediate", label: "Intermediários" },
+  { id: "events_end", label: "Fim" },
+];
+
+export function resolvePaletteCategory(
+  group: FlowchartElementGroupTab,
+  eventSubTab: BpmnPaletteCategoryId
+): BpmnPaletteCategoryId | null {
+  if (group === "events") return eventSubTab;
+  if (group === "lanes") return null;
+  return group;
 }
 
 export { BPMN_PALETTE_CATEGORIES, paletteByCategory };

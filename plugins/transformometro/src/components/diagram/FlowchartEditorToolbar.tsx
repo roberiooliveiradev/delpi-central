@@ -1,17 +1,22 @@
 import { CircleHelp } from "lucide-react";
+import { useState } from "react";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip } from "@delpi/plugin-ui";
+import type { BpmnPaletteCategoryId } from "../../types/bpmnNodeCatalog";
 import type { FlowchartLane, FlowchartNodeType } from "../../types/diagram";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import {
-  BPMN_PALETTE_CATEGORIES,
   DIAGRAM_EDITOR_ADD_LANE_ACTION,
   DIAGRAM_EDITOR_LAYOUT_ACTIONS,
+  FLOWCHART_ELEMENT_GROUP_TABS,
+  FLOWCHART_EVENT_SUB_TABS,
   FLOWCHART_NODE_ICONS,
   flowchartNodeHint,
   paletteByCategory,
+  resolvePaletteCategory,
+  type FlowchartElementGroupTab,
 } from "./flowchartEditorToolbar";
 
 export type FlowchartEditorToolbarTab = "elements" | "models";
@@ -32,6 +37,50 @@ type Props = {
   onEditorAction: (actionId: (typeof DIAGRAM_EDITOR_LAYOUT_ACTIONS)[number]["id"] | "addLane") => void;
 };
 
+function PaletteSubTabs<T extends string>({
+  tabs,
+  activeId,
+  onChange,
+  ariaLabel,
+  compact,
+}: {
+  tabs: Array<{ id: T; label: string }>;
+  activeId: T;
+  onChange: (id: T) => void;
+  ariaLabel: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "tm-diagram-editor__palette-subtabs",
+        compact ? "tm-diagram-editor__palette-subtabs--compact" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      role="tablist"
+      aria-label={ariaLabel}
+    >
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          role="tab"
+          aria-selected={activeId === tab.id}
+          className={
+            activeId === tab.id
+              ? "tm-diagram-editor__palette-subtab is-active"
+              : "tm-diagram-editor__palette-subtab"
+          }
+          onClick={() => onChange(tab.id)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function FlowchartEditorToolbar({
   toolbarTab,
   onToolbarTabChange,
@@ -43,6 +92,11 @@ export function FlowchartEditorToolbar({
   onEditorAction,
 }: Props) {
   const addLaneAction = DIAGRAM_EDITOR_ADD_LANE_ACTION;
+  const [elementGroup, setElementGroup] = useState<FlowchartElementGroupTab>("events");
+  const [eventSubTab, setEventSubTab] = useState<BpmnPaletteCategoryId>("events_start");
+
+  const activeCategory = resolvePaletteCategory(elementGroup, eventSubTab);
+  const paletteItems = activeCategory ? paletteByCategory(activeCategory) : [];
 
   return (
     <div className="tm-diagram-editor__toolbar-overlay" role="toolbar" aria-label="Ferramentas do diagrama">
@@ -82,48 +136,57 @@ export function FlowchartEditorToolbar({
       <div className="tm-diagram-editor__toolbar-panel" role="tabpanel">
         {toolbarTab === "elements" ? (
           <div className="tm-diagram-editor__elements">
-            <div className="tm-diagram-editor__palette-groups">
-              {BPMN_PALETTE_CATEGORIES.map((category) => {
-                const items = paletteByCategory(category.id);
-                if (!items.length) return null;
-                return (
-                  <section key={category.id} className="tm-diagram-editor__palette-group">
-                    <h4 className="tm-diagram-editor__palette-group-title">{category.label}</h4>
-                    <div className="tm-diagram-editor__palette">
-                      {items.map((item) => {
-                        const Icon = FLOWCHART_NODE_ICONS[item.type];
-                        return (
-                          <DiagramEditorToolbarButton
-                            key={item.type}
-                            label={item.label}
-                            hint={flowchartNodeHint(item.type)}
-                            icon={Icon}
-                            onClick={() => onAddNode(item.type)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-            <div className="tm-diagram-editor__elements-lanes">
-              <DiagramEditorToolbarButton
-                label={addLaneAction.label}
-                hint={addLaneAction.hint}
-                icon={addLaneAction.icon}
-                onClick={() => onEditorAction("addLane")}
+            <PaletteSubTabs
+              tabs={FLOWCHART_ELEMENT_GROUP_TABS}
+              activeId={elementGroup}
+              onChange={setElementGroup}
+              ariaLabel="Categorias de elementos BPMN"
+            />
+
+            {elementGroup === "events" ? (
+              <PaletteSubTabs
+                tabs={FLOWCHART_EVENT_SUB_TABS}
+                activeId={eventSubTab}
+                onChange={setEventSubTab}
+                ariaLabel="Tipos de evento"
+                compact
               />
-              {lanes.length ? (
-                <FlowchartLaneToolbar
-                  lanes={lanes}
-                  activeLaneId={activeLaneId}
-                  onActiveLaneChange={onActiveLaneChange}
-                  onRemoveLane={onRemoveLane}
-                  disableRemove={!lanes.length}
+            ) : null}
+
+            {elementGroup === "lanes" ? (
+              <div className="tm-diagram-editor__elements-lanes tm-diagram-editor__elements-lanes--panel">
+                <DiagramEditorToolbarButton
+                  label={addLaneAction.label}
+                  hint={addLaneAction.hint}
+                  icon={addLaneAction.icon}
+                  onClick={() => onEditorAction("addLane")}
                 />
-              ) : null}
-            </div>
+                {lanes.length ? (
+                  <FlowchartLaneToolbar
+                    lanes={lanes}
+                    activeLaneId={activeLaneId}
+                    onActiveLaneChange={onActiveLaneChange}
+                    onRemoveLane={onRemoveLane}
+                    disableRemove={!lanes.length}
+                  />
+                ) : null}
+              </div>
+            ) : (
+              <div className="tm-diagram-editor__palette">
+                {paletteItems.map((item) => {
+                  const Icon = FLOWCHART_NODE_ICONS[item.type];
+                  return (
+                    <DiagramEditorToolbarButton
+                      key={item.type}
+                      label={item.label}
+                      hint={flowchartNodeHint(item.type)}
+                      icon={Icon}
+                      onClick={() => onAddNode(item.type)}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : null}
 

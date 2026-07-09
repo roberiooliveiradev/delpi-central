@@ -5564,8 +5564,45 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
   background: color-mix(in srgb, var(--ds-card-bg) 90%, transparent);
   backdrop-filter: blur(10px);
-  max-height: min(420px, 55vh);
+  max-height: min(168px, 24vh);
   overflow: auto;
+}
+
+.dashboard-transformometro .tm-diagram-editor__palette-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.dashboard-transformometro .tm-diagram-editor__palette-subtabs--compact {
+  padding-left: 2px;
+  margin-bottom: 6px;
+}
+
+.dashboard-transformometro .tm-diagram-editor__palette-subtab {
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--ds-surface-muted) 70%, transparent);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dashboard-transformometro .tm-diagram-editor__palette-subtab.is-active {
+  color: var(--ds-text);
+  border-color: var(--ds-accent);
+  background: var(--ds-accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-accent) 35%, transparent);
+}
+
+.dashboard-transformometro .tm-diagram-editor__palette-subtabs--compact .tm-diagram-editor__palette-subtab {
+  font-size: 9px;
+  padding: 2px 7px;
 }
 
 .dashboard-transformometro .tm-diagram-editor__palette-groups {
@@ -6486,7 +6523,18 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .tm-diagram-editor__elements {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+}
+
+.dashboard-transformometro .tm-diagram-editor__elements-lanes--panel {
+  border-top: none;
+  padding-top: 0;
+}
+
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette {
+  max-height: min(96px, 14vh);
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .dashboard-transformometro .tm-diagram-editor__elements-lanes {
