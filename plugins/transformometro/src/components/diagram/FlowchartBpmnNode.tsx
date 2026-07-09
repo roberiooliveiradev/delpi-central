@@ -30,7 +30,7 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
-import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { Handle, Position, useViewport, type Node, type NodeProps } from "@xyflow/react";
 import type { ReactNode } from "react";
 
 import {
@@ -53,7 +53,15 @@ export type BpmnNodeData = {
   onLabelChange?: (nodeId: string, label: string) => void;
 };
 
-const HANDLE_STYLE = { width: 7, height: 7, borderRadius: 999, border: "2px solid var(--ds-card-bg)" };
+/** Tamanho alvo do handle na tela (px). */
+const HANDLE_SCREEN_PX = 15;
+const HANDLE_SCREEN_COMPACT_PX = 12;
+/** Acima deste zoom, handles mantêm tamanho visual (não encolhem mais na tela). */
+const HANDLE_ZOOM_SIZE_CEILING = 1.5;
+
+function resolveHandleFlowSize(screenPx: number, zoom: number): number {
+  return screenPx / Math.min(zoom, HANDLE_ZOOM_SIZE_CEILING);
+}
 
 const MARKER_ICONS: Partial<Record<BpmnMarker, LucideIcon>> = {
   message: Mail,
@@ -82,14 +90,21 @@ const MARKER_ICONS: Partial<Record<BpmnMarker, LucideIcon>> = {
 };
 
 function ConnectionHandles({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 6 : 7;
-  const style = { ...HANDLE_STYLE, width: size, height: size };
+  const { zoom } = useViewport();
+  const size = resolveHandleFlowSize(compact ? HANDLE_SCREEN_COMPACT_PX : HANDLE_SCREEN_PX, zoom);
+  const style = {
+    width: size,
+    height: size,
+    borderRadius: 999,
+    border: "2px solid var(--ds-card-bg)",
+  };
+  const handleProps = { className: "tm-diagram-node__handle", style };
   return (
     <>
-      <Handle type="target" position={Position.Left} style={style} />
-      <Handle type="source" position={Position.Right} style={style} />
-      <Handle type="target" position={Position.Top} id="top-target" style={style} />
-      <Handle type="source" position={Position.Bottom} id="bottom-source" style={style} />
+      <Handle type="target" position={Position.Left} {...handleProps} />
+      <Handle type="source" position={Position.Right} {...handleProps} />
+      <Handle type="target" position={Position.Top} id="top-target" {...handleProps} />
+      <Handle type="source" position={Position.Bottom} id="bottom-source" {...handleProps} />
     </>
   );
 }

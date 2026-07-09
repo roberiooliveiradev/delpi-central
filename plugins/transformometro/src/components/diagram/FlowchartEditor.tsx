@@ -342,6 +342,7 @@ function FlowchartEditorInner({
   const pasteGenerationRef = useRef(0);
   const [clipboardReady, setClipboardReady] = useState(false);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const canvasInitialFitRef = useRef(false);
   const isDark = useTransformometroDarkMode();
   const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
@@ -442,27 +443,32 @@ function FlowchartEditorInner({
   }, []);
 
   useEffect(() => {
-    if (activeTab !== "canvas") return;
+    if (activeTab !== "canvas") {
+      canvasInitialFitRef.current = false;
+      return;
+    }
     const element = canvasWrapperRef.current;
     if (!element) return;
 
-    const syncViewport = () => {
+    const tryInitialFit = () => {
+      if (canvasInitialFitRef.current) return;
       const { width, height } = element.getBoundingClientRect();
       if (width < 8 || height < 8) return;
+      canvasInitialFitRef.current = true;
       window.requestAnimationFrame(() => {
         void fitView({ padding: 0.15, duration: 0 });
       });
     };
 
-    syncViewport();
+    tryInitialFit();
 
-    const resizeObserver = new ResizeObserver(syncViewport);
+    const resizeObserver = new ResizeObserver(tryInitialFit);
     resizeObserver.observe(element);
 
     const intersectionObserver = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          syncViewport();
+          tryInitialFit();
         }
       },
       { threshold: 0.01 }
@@ -473,7 +479,7 @@ function FlowchartEditorInner({
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
     };
-  }, [activeTab, fitView, nodes.length, edges.length]);
+  }, [activeTab, fitView]);
 
   const emitChange = useCallback(
     (nextNodes: EditorNode[], nextEdges: Edge[]) => {
@@ -1164,7 +1170,10 @@ function FlowchartEditorInner({
                   labelBgStyle: { fillOpacity: 0.92 },
                 }}
                 onInit={(instance) => {
+                  if (canvasInitialFitRef.current) return;
                   window.requestAnimationFrame(() => {
+                    if (canvasInitialFitRef.current) return;
+                    canvasInitialFitRef.current = true;
                     void instance.fitView({ padding: 0.15, duration: 0 });
                   });
                 }}
@@ -1181,8 +1190,9 @@ function FlowchartEditorInner({
                 selectionKeyCode={null}
                 multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
                 panOnDrag={readOnly ? true : [1, 2]}
-                minZoom={0.2}
-                maxZoom={1.5}
+                minZoom={0.08}
+                maxZoom={3}
+                connectionRadius={36}
                 nodesDraggable={!readOnly}
                 nodesConnectable={!readOnly}
                 elementsSelectable={!readOnly}

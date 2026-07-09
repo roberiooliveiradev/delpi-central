@@ -5938,6 +5938,17 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   --xy-edge-label-color: var(--ds-text);
 }
 
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__handle.tm-diagram-node__handle {
+  background: var(--ds-accent);
+  z-index: 2;
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__handle.tm-diagram-node__handle::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+
 .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-text {
   fill: var(--ds-text);
 }
