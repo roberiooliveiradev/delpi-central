@@ -32,7 +32,6 @@ type Props = {
   lanes: FlowchartLane[];
   activeLaneId?: string;
   onActiveLaneChange: (laneId: string) => void;
-  onRemoveLane: () => void | Promise<void>;
   onAddNode: (type: FlowchartNodeType) => void;
   onEditorAction: (actionId: (typeof DIAGRAM_EDITOR_LAYOUT_ACTIONS)[number]["id"] | "addLane") => void;
 };
@@ -87,7 +86,6 @@ export function FlowchartEditorToolbar({
   lanes,
   activeLaneId,
   onActiveLaneChange,
-  onRemoveLane,
   onAddNode,
   onEditorAction,
 }: Props) {
@@ -166,8 +164,6 @@ export function FlowchartEditorToolbar({
                     lanes={lanes}
                     activeLaneId={activeLaneId}
                     onActiveLaneChange={onActiveLaneChange}
-                    onRemoveLane={onRemoveLane}
-                    disableRemove={!lanes.length}
                   />
                 ) : null}
               </div>

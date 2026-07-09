@@ -353,7 +353,7 @@ export const TM_HELP_TOOLTIPS = {
     fullscreen:
       "Abre o editor em tela cheia com paleta, ferramentas e ações de salvamento. Pressione Esc ou use «Sair da tela cheia» para voltar.",
     selectionDelete:
-      "Remove os nós e setas selecionados. Atalho: Delete ou Backspace. Faixas (swimlanes) não são excluídas por aqui.",
+      "Remove nós e setas selecionados. Sem seleção no canvas, exclui a faixa ativa (com confirmação). Atalho: Delete ou Backspace para nós/setas.",
     selectionMove:
       "Selecione um ou mais nós (caixa de seleção no canvas ou Ctrl+clique) e arraste para reposicionar em grupo. Teclas ← ↑ → ↓ ajustam a posição em passos finos (8 px).",
     selectionCopy:

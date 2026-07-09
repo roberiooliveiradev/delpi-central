@@ -351,7 +351,8 @@ function FlowchartEditorInner({
     STAGE_MIN_HEIGHT
   );
   const hasNodeSelection = selectedNodeIds.length > 0;
-  const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0;
+  const canDeleteActiveLane = Boolean(lanes.length && activeLaneId);
+  const hasSelection = hasNodeSelection || selectedEdgeIds.length > 0 || canDeleteActiveLane;
 
   const getSelectionSnapshot = useCallback(() => {
     const flowNodes = getNodes();
@@ -754,8 +755,8 @@ function FlowchartEditorInner({
     onChange?.(next);
   };
 
-  const removeActiveLane = async () => {
-    if (readOnly || !activeLaneId || !lanes.length) return;
+  const removeActiveLane = useCallback(async () => {
+    if (readOnly || !activeLaneId || !lanes.length) return false;
     const lane = lanes.find((item) => item.id === activeLaneId);
     const isLastLane = lanes.length === 1;
     const confirmed = await confirm({
@@ -766,11 +767,12 @@ function FlowchartEditorInner({
       confirmLabel: "Remover",
       variant: "danger",
     });
-    if (!confirmed) return;
+    if (!confirmed) return false;
     const next = removeLane(value, activeLaneId);
     onChange?.(next);
     setActiveLaneId(normalizeLanes(next.lanes)[0]?.id);
-  };
+    return true;
+  }, [activeLaneId, confirm, lanes, onChange, readOnly, value]);
 
   const runAutoLayout = () => {
     if (readOnly) return;
@@ -838,7 +840,7 @@ function FlowchartEditorInner({
     [edges, emitChange, getSelectionSnapshot, nodes, readOnly, setNodes]
   );
 
-  const deleteSelection = useCallback(() => {
+  const deleteSelection = useCallback(async () => {
     if (readOnly) return;
     const selection = getSelectionSnapshot();
     const selectedNodeIdSet = new Set(selection.nodes.map((node) => node.id));
@@ -855,11 +857,27 @@ function FlowchartEditorInner({
       return;
     }
 
-    if (!selectedEdgeIdSet.size) return;
-    const nextEdges = edges.filter((edge) => !selectedEdgeIdSet.has(edge.id));
-    setEdges(nextEdges);
-    emitChange(nodes, nextEdges);
-  }, [edges, emitChange, getSelectionSnapshot, nodes, readOnly, setEdges, setNodes]);
+    if (selectedEdgeIdSet.size) {
+      const nextEdges = edges.filter((edge) => !selectedEdgeIdSet.has(edge.id));
+      setEdges(nextEdges);
+      emitChange(nodes, nextEdges);
+      return;
+    }
+
+    if (canDeleteActiveLane) {
+      await removeActiveLane();
+    }
+  }, [
+    canDeleteActiveLane,
+    edges,
+    emitChange,
+    getSelectionSnapshot,
+    nodes,
+    readOnly,
+    removeActiveLane,
+    setEdges,
+    setNodes,
+  ]);
 
   const resolveActionSelection = useCallback((): SelectionClipboard => {
     const live = getSelectionSnapshot();
@@ -1017,7 +1035,7 @@ function FlowchartEditorInner({
   }, [emitChange, getSelectionSnapshot, readOnly, setEdges, setNodes]);
 
   const runSelectionAction = (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => {
-    if (actionId === "delete") deleteSelection();
+    if (actionId === "delete") void deleteSelection();
     else if (actionId === "copy") copySelection();
     else if (actionId === "paste") pasteSelection();
     else if (actionId === "duplicate") duplicateSelection();
@@ -1068,7 +1086,6 @@ function FlowchartEditorInner({
                 lanes={lanes}
                 activeLaneId={activeLaneId}
                 onActiveLaneChange={setActiveLaneId}
-                onRemoveLane={removeActiveLane}
                 onAddNode={addNode}
                 onEditorAction={runEditorAction}
               />
