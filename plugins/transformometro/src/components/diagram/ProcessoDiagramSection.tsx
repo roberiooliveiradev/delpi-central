@@ -17,6 +17,7 @@ import { flowchartToMermaid } from "../../utils/flowchartMermaid";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 import { DiagramValidationPanel } from "./DiagramValidationPanel";
 import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
+import type { FlowchartEditorHandle } from "./FlowchartEditor";
 
 const FlowchartEditor = lazy(() =>
   import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
@@ -46,7 +47,7 @@ export function ProcessoDiagramSection({
   const [flowchart, setFlowchart] = useState<FlowchartV1>(emptyFlowchart());
   const liveMermaid = useMemo(() => flowchartToMermaid(flowchart), [flowchart]);
   const [validation, setValidation] = useState<DiagramValidationReport | null>(null);
-  const exportRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<FlowchartEditorHandle>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -108,14 +109,15 @@ export function ProcessoDiagramSection({
   }
 
   async function exportPng() {
-    const target = exportRef.current;
-    if (!target) return;
-    const { toPng } = await import("html-to-image");
-    const dataUrl = await toPng(target, { cacheBust: true, pixelRatio: 2 });
-    const link = document.createElement("a");
-    link.download = `diagrama-processo-${processoId}.png`;
-    link.href = dataUrl;
-    link.click();
+    if (!editorRef.current) {
+      onError("Editor do diagrama indisponível.");
+      return;
+    }
+    try {
+      await editorRef.current.exportPng(`diagrama-processo-${processoId}.png`);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao exportar PNG.");
+    }
   }
 
   async function exportBpmnXml() {
@@ -160,10 +162,10 @@ export function ProcessoDiagramSection({
       >
         <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
           <FlowchartEditor
+            ref={editorRef}
             value={flowchart}
             onChange={readOnly ? undefined : setFlowchart}
             readOnly={readOnly}
-            exportRef={exportRef}
           />
         </Suspense>
 

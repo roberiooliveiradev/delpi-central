@@ -5754,6 +5754,36 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   left: 12px;
 }
 
+.dashboard-transformometro .tm-diagram-editor--exporting .react-flow__handle,
+.dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-node__handle {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.dashboard-transformometro .tm-diagram-editor--exporting .react-flow__background {
+  display: none !important;
+}
+
+.dashboard-transformometro .tm-diagram-editor--exporting .react-flow__controls,
+.dashboard-transformometro .tm-diagram-editor--exporting .react-flow__minimap,
+.dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__action-dock,
+.dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__view-tabs,
+.dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__toolbar-overlay {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.dashboard-transformometro .tm-diagram-editor--exporting .react-flow__edge-path {
+  stroke: rgba(71, 85, 105, 0.92) !important;
+}
+
+.dashboard-transformometro .tm-diagram-editor--exporting .react-flow__node.selected .tm-diagram-node,
+.dashboard-transformometro .tm-diagram-editor--exporting .react-flow__edge.selected .react-flow__edge-path {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
 .dashboard-transformometro .tm-diagram-editor {
   display: flex;
   flex-direction: column;

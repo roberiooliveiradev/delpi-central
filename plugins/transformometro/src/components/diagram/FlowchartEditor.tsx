@@ -15,7 +15,16 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -73,6 +82,11 @@ import {
   MermaidImportError,
 } from "../../utils/flowchartMermaid";
 import { resolveConnectionHandleIds } from "../../utils/diagramConnectionHandles";
+import { exportReactFlowDiagramPng } from "../../utils/exportFlowchartImage";
+
+export type FlowchartEditorHandle = {
+  exportPng: (filename: string) => Promise<string>;
+};
 
 type FlowchartEditorProps = {
   value: FlowchartV1;
@@ -84,7 +98,6 @@ type FlowchartEditorProps = {
   diffNodeIds?: { changed?: string[]; added?: string[]; removed?: string[] };
   showTemplates?: boolean;
   showPreviewTab?: boolean;
-  exportRef?: RefObject<HTMLDivElement | null>;
 };
 
 type ActivityNode = Node<BpmnNodeData>;
@@ -322,8 +335,10 @@ function FlowchartEditorInner({
   diffNodeIds,
   showTemplates = true,
   showPreviewTab = true,
-  exportRef,
-}: FlowchartEditorProps) {
+  editorRef,
+}: FlowchartEditorProps & {
+  editorRef?: Ref<FlowchartEditorHandle>;
+}) {
   const confirm = useConfirm();
   const lanes = useMemo(() => normalizeLanes(value.lanes), [value.lanes]);
   const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
@@ -371,6 +386,27 @@ function FlowchartEditorInner({
   const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
   const { fitView, getNodes, getEdges } = useReactFlow();
+
+  useImperativeHandle(
+    editorRef,
+    () => ({
+      exportPng: async (filename: string) => {
+        if (activeTab !== "canvas") {
+          throw new Error("Abra a aba Desenho antes de exportar o PNG.");
+        }
+        const canvasRoot = canvasWrapperRef.current;
+        if (!canvasRoot) {
+          throw new Error("Canvas do diagrama indisponível.");
+        }
+        return exportReactFlowDiagramPng({
+          canvasRoot,
+          nodes: getNodes(),
+          filename,
+        });
+      },
+    }),
+    [activeTab, getNodes]
+  );
   const canvasHeight = Math.max(
     canvasHeightForLanes(lanes, lanes.length ? 380 : DEFAULT_CANVAS_HEIGHT),
     STAGE_MIN_HEIGHT
@@ -1123,7 +1159,6 @@ function FlowchartEditorInner({
       ]
         .filter(Boolean)
         .join(" ")}
-      ref={exportRef}
     >
       <TabPanelTransition tabKey={activeTab}>
         {activeTab === "canvas" ? (
@@ -1309,10 +1344,12 @@ function FlowchartEditorInner({
   );
 }
 
-export function FlowchartEditor(props: FlowchartEditorProps) {
-  return (
-    <ReactFlowProvider>
-      <FlowchartEditorInner {...props} />
-    </ReactFlowProvider>
-  );
-}
+export const FlowchartEditor = forwardRef<FlowchartEditorHandle, FlowchartEditorProps>(
+  function FlowchartEditor(props, ref) {
+    return (
+      <ReactFlowProvider>
+        <FlowchartEditorInner {...props} editorRef={ref} />
+      </ReactFlowProvider>
+    );
+  }
+);

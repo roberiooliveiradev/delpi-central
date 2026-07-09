@@ -21,6 +21,7 @@ import {
 import { flowchartToMermaid } from "../../utils/flowchartMermaid";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
+import type { FlowchartEditorHandle } from "./FlowchartEditor";
 
 const FlowchartEditor = lazy(() =>
   import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
@@ -51,7 +52,7 @@ export function RevisaoDiagramSection({
   const [overlayDraft, setOverlayDraft] = useState<FlowchartOverlayV1>(emptyOverlay());
   const liveMermaid = useMemo(() => flowchartToMermaid(editable), [editable]);
   const [baseMerged, setBaseMerged] = useState<FlowchartV1>(emptyFlowchart());
-  const exportRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<FlowchartEditorHandle>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -114,25 +115,24 @@ export function RevisaoDiagramSection({
   }
 
   async function exportPng(asEvidence = false) {
-    const target = exportRef.current;
-    if (!target) return;
-    const { toPng } = await import("html-to-image");
-    const dataUrl = await toPng(target, { cacheBust: true, pixelRatio: 2 });
-    if (!asEvidence) {
-      const link = document.createElement("a");
-      link.download = `diagrama-revisao-${revisaoId}.png`;
-      link.href = dataUrl;
-      link.click();
+    if (!editorRef.current) {
+      onError("Editor do diagrama indisponível.");
       return;
     }
-    const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], `diagrama-revisao-${revisaoId}.png`, { type: "image/png" });
-    await uploadRevisaoEvidence(
-      revisaoId,
-      { tipo: "foto", file, descricao: "Diagrama exportado (PNG)" },
-      getAccessToken
-    );
-    onReload?.();
+    try {
+      const dataUrl = await editorRef.current.exportPng(`diagrama-revisao-${revisaoId}.png`);
+      if (!asEvidence) return;
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `diagrama-revisao-${revisaoId}.png`, { type: "image/png" });
+      await uploadRevisaoEvidence(
+        revisaoId,
+        { tipo: "foto", file, descricao: "Diagrama exportado (PNG)" },
+        getAccessToken
+      );
+      onReload?.();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao exportar PNG.");
+    }
   }
 
   if (loading) {
@@ -172,11 +172,11 @@ export function RevisaoDiagramSection({
       >
         <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
           <FlowchartEditor
+            ref={editorRef}
             value={editable}
             onChange={readOnly ? undefined : setEditable}
             readOnly={readOnly}
             diffNodeIds={merged.baseline_diff ?? undefined}
-            exportRef={exportRef}
           />
         </Suspense>
 
