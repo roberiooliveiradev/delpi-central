@@ -20,7 +20,7 @@ export function ProcessoReadView({ processo, activeFilialCount = 1 }: Props) {
     : null;
 
   return (
-    <>
+    <div className="tm-processo-read-view">
       <dl className="ds-dl-grid">
         <div>
           <dt><FieldLabel className="tm-field__label" label="Código" hint={P.codigo} /></dt>
@@ -66,15 +66,17 @@ export function ProcessoReadView({ processo, activeFilialCount = 1 }: Props) {
         ) : null}
       </dl>
       {processo.objetivo_processo ? (
-        <p className="ds-hint">
-          <FieldLabel className="tm-field__label" label="Objetivo" hint={P.objetivo} />: {processo.objetivo_processo}
-        </p>
+        <div className="tm-processo-read-view__block">
+          <FieldLabel className="tm-field__label" label="Objetivo" hint={P.objetivo} />
+          <p className="tm-processo-read-view__text">{processo.objetivo_processo}</p>
+        </div>
       ) : null}
       {processo.descricao_processo ? (
-        <p className="ds-hint">
-          <FieldLabel className="tm-field__label" label="Descrição" hint={P.descricao} />: {processo.descricao_processo}
-        </p>
+        <div className="tm-processo-read-view__block">
+          <FieldLabel className="tm-field__label" label="Descrição" hint={P.descricao} />
+          <p className="tm-processo-read-view__text">{processo.descricao_processo}</p>
+        </div>
       ) : null}
-    </>
+    </div>
   );
 }

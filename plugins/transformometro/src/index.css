@@ -1109,6 +1109,28 @@
   }
 }
 
+.dashboard-transformometro .tm-processo-read-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.dashboard-transformometro .tm-processo-read-view__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dashboard-transformometro .tm-processo-read-view__text {
+  margin: 0;
+  font-size: var(--ds-font-sm);
+  line-height: 1.55;
+  color: var(--ds-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .dashboard-transformometro .tm-processo-workspace-overview__stats {
   margin: 0;
   min-width: 10rem;
