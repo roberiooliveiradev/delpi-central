@@ -321,7 +321,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   diagramEditor: {
     usoGeral:
-      "Adicione nós pela paleta (entram na faixa ativa). Selecione elementos no canvas e use os ícones empilhados no canto inferior direito (excluir, mover, copiar, duplicar) — passe o mouse para ver o rótulo. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Delete/Backspace remove a seleção. Setas ← ↑ → ↓ ajustam posição fina. Use Auto-layout para reorganizar o fluxo.",
+      "Adicione nós pela paleta (entram na faixa ativa). Selecione vários elementos arrastando no canvas para desenhar a caixa de seleção, ou Ctrl+clique para acrescentar à seleção. Use os ícones empilhados no canto inferior direito (excluir, mover, copiar, duplicar). Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Delete/Backspace remove a seleção. Setas ← ↑ → ↓ ajustam posição fina. Use Auto-layout para reorganizar o fluxo.",
     nodes: {
       start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
@@ -355,7 +355,7 @@ export const TM_HELP_TOOLTIPS = {
     selectionDelete:
       "Remove os nós e setas selecionados. Atalho: Delete ou Backspace. Faixas (swimlanes) não são excluídas por aqui.",
     selectionMove:
-      "Selecione um ou mais nós e arraste no canvas para reposicionar. Teclas ← ↑ → ↓ ajustam a posição em passos finos (8 px).",
+      "Selecione um ou mais nós (caixa de seleção no canvas ou Ctrl+clique) e arraste para reposicionar em grupo. Teclas ← ↑ → ↓ ajustam a posição em passos finos (8 px).",
     selectionCopy:
       "Copia os nós selecionados (e setas entre eles) para a área de transferência interna do editor.",
     selectionDuplicate:

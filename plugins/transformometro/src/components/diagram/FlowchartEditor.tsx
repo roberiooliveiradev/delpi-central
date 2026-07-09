@@ -4,6 +4,7 @@ import {
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
+  SelectionMode,
   addEdge,
   useEdgesState,
   useNodesState,
@@ -106,6 +107,7 @@ const DUPLICATE_OFFSET = 48;
 const NUDGE_STEP = 8;
 const DEFAULT_CANVAS_HEIGHT = 680;
 const STAGE_MIN_HEIGHT = 680;
+const DIAGRAM_MULTI_SELECT_KEYS = ["Control", "Meta"] as const;
 
 type SelectionClipboard = {
   nodes: ActivityNode[];
@@ -548,19 +550,33 @@ function FlowchartEditorInner({
         return;
       }
 
-      const data = node.data as BpmnNodeData;
-      const snapped = snapNodeToLane(
-        {
-          id: node.id,
-          type: data.nodeType,
-          label: data.label,
-          position: node.position,
-          lane_id: undefined,
-        },
-        lanes
+      const selectedActivityIds = new Set(
+        nodes
+          .filter((item) => item.type !== "lane" && item.selected)
+          .map((item) => item.id)
       );
+      const snapIds =
+        selectedActivityIds.size > 1 && selectedActivityIds.has(node.id)
+          ? selectedActivityIds
+          : new Set([node.id]);
+
+      const snapActivityNode = (item: EditorNode): EditorNode => {
+        const itemData = item.data as BpmnNodeData;
+        const snapped = snapNodeToLane(
+          {
+            id: item.id,
+            type: itemData.nodeType,
+            label: itemData.label,
+            position: item.position,
+            lane_id: undefined,
+          },
+          lanes
+        );
+        return { ...item, position: snapped.position };
+      };
+
       const nextNodes = nodes.map((item) =>
-        item.id === node.id ? { ...item, position: snapped.position } : item
+        snapIds.has(item.id) ? snapActivityNode(item) : item
       );
       setNodes(nextNodes);
       emitChange(nextNodes, edges);
@@ -967,6 +983,11 @@ function FlowchartEditorInner({
                 onNodesDelete={onNodesDelete}
                 onEdgesDelete={onEdgesDelete}
                 deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
+                selectionOnDrag={!readOnly}
+                selectionMode={SelectionMode.Partial}
+                selectionKeyCode={null}
+                multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
+                panOnDrag={readOnly ? true : [1, 2]}
                 minZoom={0.2}
                 maxZoom={1.5}
                 nodesDraggable={!readOnly}
