@@ -40,6 +40,7 @@ import {
   reorderLanes,
   resolveNodeLaneId,
   snapNodeToLane,
+  withNormalizedLanes,
 } from "../../utils/diagramSwimlanes";
 import {
   FLOWCHART_NODE_PALETTE,
@@ -421,7 +422,7 @@ function FlowchartEditorInner({
     setMermaidApplyError(null);
     try {
       const parsed = mermaidToFlowchart(mermaidDraft, value);
-      const laidOut = autoLayoutFlowchart(parsed);
+      const laidOut = autoLayoutFlowchart(withNormalizedLanes(parsed));
       onChange?.(laidOut);
       setActiveTab("canvas");
     } catch (err) {
@@ -782,7 +783,7 @@ function FlowchartEditorInner({
 
   const runAutoLayout = () => {
     if (readOnly) return;
-    onChange?.(autoLayoutFlowchart(value));
+    onChange?.(autoLayoutFlowchart(withNormalizedLanes(value)));
   };
 
   const onNodesDelete = useCallback(

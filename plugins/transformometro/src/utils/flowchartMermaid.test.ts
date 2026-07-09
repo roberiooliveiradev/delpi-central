@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { emptyFlowchart } from "../types/diagram";
+import { autoLayoutFlowchart, withNormalizedLanes } from "./diagramSwimlanes";
 import { bpmnMermaidClassForType, buildBpmnCatalogForApi, formatMermaidNodeLine } from "./bpmnMermaidMapping";
 import {
   flowchartToMermaid,
@@ -144,6 +145,59 @@ describe("mermaidToFlowchart", () => {
     expect(imported.nodes.map((node) => node.type)).toEqual(["start", "task_user", "end"]);
     expect(imported.nodes.map((node) => node.label)).toEqual(["Início", "Passo", "Fim"]);
     expect(imported.edges).toHaveLength(2);
+  });
+
+  it("importa modelo BPMN com faixas e loops e alinha com auto-layout", () => {
+    const code = [
+      "flowchart TD",
+      '    subgraph lane_lane_e6jo48b ["Comercial"]',
+      '        start_pmeju9i(("Recebimento de nova demanda no CRM")):::bpmn_start',
+      '        proc_bbifixy["Registrar oportunidade e anexos no CRM"]:::bpmn_process',
+      '        proc_aj62bcn["Encaminhar demanda para Engenharia"]:::bpmn_process',
+      '        proc_apf5m3k["Solicitar informações faltantes ao cliente"]:::bpmn_process',
+      "    end",
+      '    subgraph lane_lane_x1grz3h ["LMP — Lançamento e Modificação de Produtos / Engenharia"]',
+      '        proc_41s5v2a["Validar informações técnicas recebidas"]:::bpmn_process',
+      '        dec_6wp6qxi{"Informações completas?"}:::bpmn_decision',
+      '        proc_d9hbj0a["Elaborar lançamento / modificação de produto"]:::bpmn_process',
+      '        dec_cxqw47f{"Revisão técnica aprovada?"}:::bpmn_decision',
+      '        end_37zuxy5(("Fim")):::bpmn_end',
+      "    end",
+      "    start_pmeju9i --> proc_bbifixy",
+      "    proc_bbifixy --> proc_aj62bcn",
+      "    proc_aj62bcn --> proc_41s5v2a",
+      "    proc_41s5v2a --> dec_6wp6qxi",
+      '    dec_6wp6qxi -->|"Sim"| proc_d9hbj0a',
+      '    dec_6wp6qxi -->|"Não"| proc_apf5m3k',
+      "    proc_apf5m3k --> proc_41s5v2a",
+      "    proc_d9hbj0a --> dec_cxqw47f",
+      '    dec_cxqw47f -->|"Sim"| end_37zuxy5',
+      '    dec_cxqw47f -->|"Não"| proc_d9hbj0a',
+    ].join("\n");
+
+    const imported = mermaidToFlowchart(code);
+    expect(imported.lanes).toHaveLength(2);
+    expect(imported.nodes).toHaveLength(9);
+    expect(imported.edges).toHaveLength(10);
+
+    const comercialLaneId = imported.lanes?.[0]?.id;
+    const engenhariaLaneId = imported.lanes?.[1]?.id;
+    expect(imported.nodes.find((node) => node.id === "proc_apf5m3k")?.lane_id).toBe(comercialLaneId);
+    expect(imported.nodes.find((node) => node.id === "proc_41s5v2a")?.lane_id).toBe(engenhariaLaneId);
+
+    const laidOut = autoLayoutFlowchart(withNormalizedLanes(imported));
+    const validar = laidOut.nodes.find((node) => node.id === "proc_41s5v2a");
+    const gatewayInfo = laidOut.nodes.find((node) => node.id === "dec_6wp6qxi");
+    const solicitar = laidOut.nodes.find((node) => node.id === "proc_apf5m3k");
+
+    expect(validar!.position.x).toBeLessThan(gatewayInfo!.position.x);
+    expect(gatewayInfo!.position.x).toBeLessThan(solicitar!.position.x);
+
+    const exported = flowchartToMermaid(laidOut);
+    expect(exported).toContain('subgraph lane_lane_e6jo48b ["Comercial"]');
+    expect(exported).toContain('dec_6wp6qxi{"Informações completas?"}:::bpmn_decision');
+    expect(exported).toContain('dec_6wp6qxi -->|"Não"| proc_apf5m3k');
+    expect(exported).toContain('dec_cxqw47f -->|"Não"| proc_d9hbj0a');
   });
 });
 

@@ -49,6 +49,31 @@ describe("autoLayoutFlowchart", () => {
     expect(ranksById.get(start!.id)!).toBeLessThan(ranksById.get(crm!.id)!);
   });
 
+  it("não infla colunas por arestas de retorno (loops BPMN)", () => {
+    const template = applySwimlaneBpmnTemplate();
+    const laidOut = autoLayoutFlowchart(template);
+
+    const validar = laidOut.nodes.find((node) =>
+      node.label.includes("Validar informações técnicas")
+    );
+    const gatewayInfo = laidOut.nodes.find((node) => node.label.includes("Informações completas"));
+    const solicitar = laidOut.nodes.find((node) =>
+      node.label.includes("Solicitar informações faltantes")
+    );
+    const elaborar = laidOut.nodes.find((node) =>
+      node.label.includes("Elaborar lançamento")
+    );
+
+    expect(validar).toBeTruthy();
+    expect(gatewayInfo).toBeTruthy();
+    expect(solicitar).toBeTruthy();
+    expect(elaborar).toBeTruthy();
+
+    expect(validar!.position.x).toBeLessThan(gatewayInfo!.position.x);
+    expect(gatewayInfo!.position.x).toBeLessThan(elaborar!.position.x);
+    expect(solicitar!.position.x).toBeGreaterThan(gatewayInfo!.position.x);
+  });
+
   it("expande faixas quando o layout vertical excede altura fixa", () => {
     const laneA = createLaneId();
     const nodeA = createNodeId("a");

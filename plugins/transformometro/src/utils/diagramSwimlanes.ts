@@ -324,7 +324,47 @@ export function laneIndexFromDragY(
   return lanes.length - 1;
 }
 
-function computeNodeRanks(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): Map<string, number> {
+function findBackEdgeKeys(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): Set<string> {
+  const nodeIds = nodes.map((node) => node.id);
+  const adjacency = new Map<string, string[]>();
+  for (const nodeId of nodeIds) {
+    adjacency.set(nodeId, []);
+  }
+  for (const edge of edges) {
+    if (!adjacency.has(edge.from) || !adjacency.has(edge.to)) continue;
+    adjacency.get(edge.from)!.push(edge.to);
+  }
+
+  const visited = new Set<string>();
+  const active = new Set<string>();
+  const backEdges = new Set<string>();
+
+  const visit = (nodeId: string) => {
+    visited.add(nodeId);
+    active.add(nodeId);
+    for (const targetId of adjacency.get(nodeId) ?? []) {
+      if (!visited.has(targetId)) {
+        visit(targetId);
+      } else if (active.has(targetId)) {
+        backEdges.add(`${nodeId}->${targetId}`);
+      }
+    }
+    active.delete(nodeId);
+  };
+
+  for (const nodeId of nodeIds) {
+    if (!visited.has(nodeId)) {
+      visit(nodeId);
+    }
+  }
+
+  return backEdges;
+}
+
+function longestPathRanks(
+  nodes: FlowchartNode[],
+  edges: FlowchartV1["edges"]
+): Map<string, number> {
   const ranks = new Map<string, number>();
   const incoming = new Map<string, string[]>();
   const outgoing = new Map<string, string[]>();
@@ -343,8 +383,9 @@ function computeNodeRanks(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): 
   }
 
   const seeds = nodes.filter((node) => (incoming.get(node.id)?.length ?? 0) === 0);
-  const queue = (seeds.length ? seeds : nodes.filter((node) => node.type === "start"))
-    .map((node) => node.id);
+  const queue = (seeds.length ? seeds : nodes.filter((node) => node.type === "start")).map(
+    (node) => node.id
+  );
 
   if (!queue.length) {
     for (const node of nodes) {
@@ -378,6 +419,16 @@ function computeNodeRanks(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): 
   }
 
   return ranks;
+}
+
+function computeNodeRanks(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): Map<string, number> {
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const validEdges = edges.filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to));
+  const backEdgeKeys = findBackEdgeKeys(nodes, validEdges);
+  const forwardEdges = validEdges.filter(
+    (edge) => !backEdgeKeys.has(`${edge.from}->${edge.to}`)
+  );
+  return longestPathRanks(nodes, forwardEdges);
 }
 
 export function autoLayoutFlowchart(flowchart: FlowchartV1): FlowchartV1 {
