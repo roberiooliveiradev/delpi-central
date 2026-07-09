@@ -17,11 +17,37 @@ export type TransformometroPresenceUpdatedEvent = {
   data: CollaborationPresencePayload;
 };
 
+export type TransformometroLockResultEvent = {
+  type: "lock.result";
+  entityType: CollaborationEntityType;
+  entityId: string;
+  sectionKey?: string | null;
+  data: {
+    acquired?: boolean;
+    holder?: CollaborationPresencePayload["editors"][number];
+    presence?: CollaborationPresencePayload["editors"][number];
+  };
+};
+
+export type TransformometroRealtimeErrorEvent = {
+  type: "error";
+  message: string;
+  sectionKey?: string | null;
+};
+
 export type TransformometroRealtimeEvent =
   | TransformometroEntityUpdatedEvent
   | TransformometroPresenceUpdatedEvent
+  | TransformometroLockResultEvent
+  | TransformometroRealtimeErrorEvent
   | { type: "connected"; roomKey?: string; userId?: string; clientId?: string }
   | { type: "pong" };
+
+export type TransformometroRealtimeOutbound =
+  | { type: "presence.request" }
+  | { type: "presence.heartbeat"; sectionKey?: string; mode: "viewing" | "editing" }
+  | { type: "lock.acquire"; sectionKey: string }
+  | { type: "lock.release"; sectionKey: string };
 
 export function buildTransformometroRealtimeWsUrl(options: {
   entityType: CollaborationEntityType;

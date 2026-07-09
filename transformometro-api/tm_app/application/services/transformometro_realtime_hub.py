@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
+
+OnRealtimeMessage = Callable[[WebSocket, str], Awaitable[None]]
 
 
 class TransformometroRealtimeHub:
@@ -45,6 +48,7 @@ class TransformometroRealtimeHub:
         room_key: str,
         user_id: str | None,
         client_id: str | None,
+        on_message: OnRealtimeMessage | None = None,
     ) -> None:
         await websocket.accept()
         async with self._lock:
@@ -60,7 +64,9 @@ class TransformometroRealtimeHub:
             )
             while True:
                 message = await websocket.receive_text()
-                if message.strip().lower() == "ping":
+                if on_message is not None:
+                    await on_message(websocket, message)
+                elif message.strip().lower() == "ping":
                     await websocket.send_json({"type": "pong"})
         except WebSocketDisconnect:
             pass
