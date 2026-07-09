@@ -5785,16 +5785,8 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   .tm-diagram-lane__header,
 .dashboard-transformometro
   .tm-diagram-editor__canvas--readonly
-  .react-flow__node-lane.selected
-  .tm-diagram-lane__body,
-.dashboard-transformometro
-  .tm-diagram-editor__canvas--readonly
   .tm-diagram-lane--selected
-  .tm-diagram-lane__header,
-.dashboard-transformometro
-  .tm-diagram-editor__canvas--readonly
-  .tm-diagram-lane--selected
-  .tm-diagram-lane__body {
+  .tm-diagram-lane__header {
   box-shadow: none !important;
 }
 
@@ -6154,17 +6146,66 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-lane {
-  display: grid;
-  grid-template-columns: 132px minmax(0, 1fr);
+  display: block;
   pointer-events: none;
   border-top: 1px solid var(--ds-card-border);
+  overflow: visible;
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__band {
+  position: absolute;
+  border-top: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-sm);
+  background: color-mix(in srgb, var(--tm-diagram-canvas-bg) 88%, var(--ds-accent) 12%);
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-0 {
+  background: color-mix(in srgb, #089bdb 9%, var(--tm-diagram-canvas-bg));
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-1 {
+  background: color-mix(in srgb, #8b5cf6 10%, var(--tm-diagram-canvas-bg));
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-2 {
+  background: color-mix(in srgb, #f59e0b 11%, var(--tm-diagram-canvas-bg));
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-3 {
+  background: color-mix(in srgb, #f43f5e 9%, var(--tm-diagram-canvas-bg));
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-4 {
+  background: color-mix(in srgb, #10b981 9%, var(--tm-diagram-canvas-bg));
+}
+
+.dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-5 {
+  background: color-mix(in srgb, #0ea5e9 9%, var(--tm-diagram-canvas-bg));
 }
 
 .dashboard-transformometro .tm-diagram-lane__header {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  min-height: 100%;
   padding: 8px;
+  overflow: visible;
   background: color-mix(in srgb, var(--ds-accent) 10%, var(--ds-card-bg));
   border-right: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-sm);
@@ -6177,48 +6218,24 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   background: color-mix(in srgb, #089bdb 14%, var(--ds-card-bg));
 }
 
-.dashboard-transformometro .tm-diagram-lane--tone-0 .tm-diagram-lane__body {
-  background: color-mix(in srgb, #089bdb 9%, var(--tm-diagram-canvas-bg));
-}
-
 .dashboard-transformometro .tm-diagram-lane--tone-1 .tm-diagram-lane__header {
   background: color-mix(in srgb, #8b5cf6 16%, var(--ds-card-bg));
-}
-
-.dashboard-transformometro .tm-diagram-lane--tone-1 .tm-diagram-lane__body {
-  background: color-mix(in srgb, #8b5cf6 10%, var(--tm-diagram-canvas-bg));
 }
 
 .dashboard-transformometro .tm-diagram-lane--tone-2 .tm-diagram-lane__header {
   background: color-mix(in srgb, #f59e0b 18%, var(--ds-card-bg));
 }
 
-.dashboard-transformometro .tm-diagram-lane--tone-2 .tm-diagram-lane__body {
-  background: color-mix(in srgb, #f59e0b 11%, var(--tm-diagram-canvas-bg));
-}
-
 .dashboard-transformometro .tm-diagram-lane--tone-3 .tm-diagram-lane__header {
   background: color-mix(in srgb, #f43f5e 15%, var(--ds-card-bg));
-}
-
-.dashboard-transformometro .tm-diagram-lane--tone-3 .tm-diagram-lane__body {
-  background: color-mix(in srgb, #f43f5e 9%, var(--tm-diagram-canvas-bg));
 }
 
 .dashboard-transformometro .tm-diagram-lane--tone-4 .tm-diagram-lane__header {
   background: color-mix(in srgb, #10b981 15%, var(--ds-card-bg));
 }
 
-.dashboard-transformometro .tm-diagram-lane--tone-4 .tm-diagram-lane__body {
-  background: color-mix(in srgb, #10b981 9%, var(--tm-diagram-canvas-bg));
-}
-
 .dashboard-transformometro .tm-diagram-lane--tone-5 .tm-diagram-lane__header {
   background: color-mix(in srgb, #0ea5e9 15%, var(--ds-card-bg));
-}
-
-.dashboard-transformometro .tm-diagram-lane--tone-5 .tm-diagram-lane__body {
-  background: color-mix(in srgb, #0ea5e9 9%, var(--tm-diagram-canvas-bg));
 }
 
 .dashboard-transformometro .tm-diagram-lane__header--editable {
@@ -6259,25 +6276,16 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
     0 0 14px color-mix(in srgb, var(--ds-accent) 22%, transparent);
 }
 
-.dashboard-transformometro .tm-diagram-lane--selected .tm-diagram-lane__body,
-.dashboard-transformometro
-  .tm-diagram-editor__canvas
-  .react-flow__node-lane.selected
-  .tm-diagram-lane__body {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-accent) 28%, transparent);
-}
-
 .dashboard-transformometro .tm-diagram-lane__label {
   font-size: 11px;
   font-weight: 600;
   line-height: 1.35;
   text-align: center;
   color: var(--ds-text);
-}
-
-.dashboard-transformometro .tm-diagram-lane__body {
-  background: color-mix(in srgb, var(--tm-diagram-canvas-bg) 88%, var(--ds-accent) 12%);
-  border-radius: var(--ds-radius-sm);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  hyphens: auto;
 }
 
 .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node:not(.react-flow__node-lane) {
@@ -6876,6 +6884,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node-lane {
   pointer-events: none !important;
+  overflow: visible !important;
 }
 
 .dashboard-transformometro .tm-diagram-inline-edit {

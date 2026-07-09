@@ -42,6 +42,7 @@ import {
   fitLaneHeightsToContent,
   laneIndexFromDragY,
   laneTopOffset,
+  LANE_HEADER_WIDTH,
   nextPaletteNodePosition,
   normalizeLanes,
   removeLane,
@@ -68,6 +69,7 @@ import { isManualTaskType } from "../../types/bpmnNodeCatalog";
 import type { FlowchartNodeType } from "../../types/bpmnNodeCatalog";
 import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
+import { FlowchartSwimlaneBackdrop } from "./FlowchartSwimlaneBackdrop";
 import { FlowchartEditableEdge } from "./FlowchartEditableEdge";
 import { FlowchartMermaidPanel } from "./FlowchartMermaidPanel";
 import {
@@ -195,6 +197,8 @@ function buildLaneNodes(
     id: `${LANE_NODE_PREFIX}${lane.id}`,
     type: "lane",
     position: { x: 0, y: laneTopOffset(lanes, lane.id) },
+    style: { width: LANE_HEADER_WIDTH },
+    width: LANE_HEADER_WIDTH,
     data: {
       label: lane.label,
       height: lane.height ?? 168,
@@ -1362,6 +1366,7 @@ function FlowchartEditorInner({
                 elementsSelectable={!readOnly}
                 proOptions={{ hideAttribution: true }}
               >
+                <FlowchartSwimlaneBackdrop />
                 <Background gap={20} size={1} />
                 <MiniMap pannable zoomable />
                 <Controls showInteractive={!readOnly} position="bottom-left" />

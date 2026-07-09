@@ -2,7 +2,7 @@ import type { Node, NodeProps } from "@xyflow/react";
 
 import { GripVertical } from "lucide-react";
 
-import { LANE_CANVAS_WIDTH } from "../../utils/diagramSwimlanes";
+import { LANE_HEADER_WIDTH } from "../../utils/diagramSwimlanes";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
 type LaneNodeData = {
@@ -33,7 +33,7 @@ export function FlowchartLaneNode({ data, selected }: NodeProps<Node<LaneNodeDat
       ]
         .filter(Boolean)
         .join(" ")}
-      style={{ width: LANE_CANVAS_WIDTH, height: data.height }}
+      style={{ width: LANE_HEADER_WIDTH, height: data.height }}
     >
       <div
         className={[
@@ -77,7 +77,6 @@ export function FlowchartLaneNode({ data, selected }: NodeProps<Node<LaneNodeDat
           emptyFallback="Faixa"
         />
       </div>
-      <div className="tm-diagram-lane__body" />
     </div>
   );
 }
