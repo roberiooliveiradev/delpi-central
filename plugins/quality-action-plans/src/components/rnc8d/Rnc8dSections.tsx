@@ -25,7 +25,8 @@ import { EditableSectionCard } from "../ui/EditableSectionCard";
 import { TeamMemberRow } from "../TeamMemberRow";
 import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip, NativeSelectControl } from "@delpi/plugin-ui";
+import { SelectField } from "../ui/SelectField";
 import { TableHeaderCell } from "../ui/TableHeaderCell";
 import { DragHandle, RemoveRowButton } from "../ui/RowActions";
 import { SectionCard } from "../ui/SectionCard";
@@ -195,26 +196,17 @@ export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
         value={value.delpi_contact_name ?? ""}
         onChange={(delpi_contact_name) => onChange({ ...value, delpi_contact_name })}
       />
-      <label className="pac-field">
-        <span className="pac-field__label">
-          Área DELPI
-          <HelpTooltip content={PAC_HELP_TOOLTIPS.rnc8d.delpiContactArea} />
-        </span>
-        <select
-          className="pac-field__input"
-          value={value.delpi_contact_area ?? ""}
-          onChange={(event) =>
-            onChange({ ...value, delpi_contact_area: event.target.value || undefined })
-          }
-        >
-          <option value="">Selecione…</option>
-          {DELPI_CONTACT_AREA_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SelectField
+        id="rnc-delpi-area"
+        label="Área DELPI"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.delpiContactArea}
+        value={value.delpi_contact_area ?? ""}
+        onChange={(delpi_contact_area) =>
+          onChange({ ...value, delpi_contact_area: delpi_contact_area || undefined })
+        }
+        options={DELPI_CONTACT_AREA_OPTIONS}
+        allowEmpty
+      />
       <TextField
         id="rnc-delpi-sales-rep"
         label="Vendedor DELPI"
@@ -621,22 +613,17 @@ export function Rnc8dContainmentSection({
                   ) : null}
                 </td>
                 <td>
-                  <select
+                  <NativeSelectControl
                     className="pac-field__control"
                     value={row.area}
                     aria-label="Área da contenção"
-                    onChange={(event) =>
+                    options={CONTAINMENT_AREAS}
+                    onChange={(area) =>
                       updateContainmentRow(index, {
-                        area: event.target.value as Rnc8dContainmentRow["area"],
+                        area: area as Rnc8dContainmentRow["area"],
                       })
                     }
-                  >
-                    {CONTAINMENT_AREAS.map((area) => (
-                      <option key={area.value} value={area.value}>
-                        {area.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </td>
                 <td>
                   <input

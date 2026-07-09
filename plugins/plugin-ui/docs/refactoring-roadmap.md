@@ -334,7 +334,6 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Prioridade ROI | Item | Notas |
 |----------------|------|--------|
-| Baixa | **quality-action-plans** RNC/8D, 5 Whys | Domínio especial (Ishikawa, fluxos) |
 | Baixa | **transformometro** FlowchartMermaidPanel | Editor Mermaid — domínio |
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |

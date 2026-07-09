@@ -63,6 +63,7 @@ import { EditableSectionCard } from "../components/ui/EditableSectionCard";
 import { FormActions } from "../components/ui/FormActions";
 import { SectionCard } from "../components/ui/SectionCard";
 import { SelectField } from "../components/ui/SelectField";
+import { NativeSelectControl } from "@delpi/plugin-ui";
 import { TextAreaField } from "../components/ui/TextAreaField";
 import {
   dashboardPath,
@@ -689,18 +690,16 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 {exportTemplates.length > 0 ? (
                   <label className="pac-export-template-picker">
                     <span className="pac-sr-only">Template Excel 8D</span>
-                    <select
+                    <NativeSelectControl
                       className="pac-select pac-export-template-select"
                       value={exportTemplateKey}
-                      onChange={(event) => setExportTemplateKey(event.target.value)}
-                      title="Modelo de planilha 8D"
-                    >
-                      {exportTemplates.map((item) => (
-                        <option key={item.key} value={item.key}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setExportTemplateKey}
+                      options={exportTemplates.map((item) => ({
+                        value: item.key,
+                        label: item.label,
+                      }))}
+                      aria-label="Template Excel 8D"
+                    />
                   </label>
                 ) : null}
                 <button type="button" className="pac-primary-btn" onClick={() => void handleExportRnc8d()}>

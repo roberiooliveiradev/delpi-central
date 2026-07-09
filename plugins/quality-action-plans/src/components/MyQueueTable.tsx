@@ -1,6 +1,7 @@
 import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { Eye, Paperclip } from "lucide-react";
 import { useState } from "react";
+import { NativeSelectControl } from "@delpi/plugin-ui";
 
 import {
   ACTION_STATUS_OPTIONS,
@@ -52,42 +53,42 @@ function QueueActionStatusSelect({
   const missingEvidence = queueItemMissingRequiredEvidence(item);
 
   return (
-    <select
-      key={`${item.action_id}-${currentStatus}-${resetKey}`}
-      className="pac-table-select pac-table-select--status"
-      defaultValue={currentStatus}
-      aria-label={`Status da ação ${item.plan_code ?? item.action_id}`}
+    <span
       title={
         missingEvidence
           ? "Anexe evidência antes de concluir esta ação."
           : PAC_HELP_TOOLTIPS.tables.actionStatus
       }
-      disabled={disabled}
-      onChange={(event) => {
-        const nextStatus = event.target.value;
-        if (nextStatus === currentStatus) {
-          return;
-        }
-        void (async () => {
-          const confirmed = await onRequestStatusChange(item, nextStatus);
-          if (!confirmed) {
+    >
+      <NativeSelectControl
+        key={`${item.action_id}-${currentStatus}-${resetKey}`}
+        className="pac-table-select pac-table-select--status"
+        value={currentStatus}
+        aria-label={`Status da ação ${item.plan_code ?? item.action_id}`}
+        options={ACTION_STATUS_OPTIONS.map((option) => ({
+          value: option.value,
+          label: option.label,
+        }))}
+        disabled={disabled}
+        onChange={(nextStatus) => {
+          if (nextStatus === currentStatus) {
+            return;
+          }
+          if (nextStatus === "completed" && missingEvidence) {
             setResetKey((value) => value + 1);
             return;
           }
-          await onStatusChange(item, nextStatus);
-        })();
-      }}
-    >
-      {ACTION_STATUS_OPTIONS.map((option) => (
-        <option
-          key={option.value}
-          value={option.value}
-          disabled={option.value === "completed" && missingEvidence}
-        >
-          {option.label}
-        </option>
-      ))}
-    </select>
+          void (async () => {
+            const confirmed = await onRequestStatusChange(item, nextStatus);
+            if (!confirmed) {
+              setResetKey((value) => value + 1);
+              return;
+            }
+            await onStatusChange(item, nextStatus);
+          })();
+        }}
+      />
+    </span>
   );
 }
 
