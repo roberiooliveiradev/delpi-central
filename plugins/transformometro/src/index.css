@@ -5754,6 +5754,30 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   left: 12px;
 }
 
+.dashboard-transformometro .tm-diagram-editor__canvas--readonly .react-flow__handle,
+.dashboard-transformometro .tm-diagram-editor__canvas--readonly .tm-diagram-node__handle {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor:not(.tm-diagram-editor--exporting)
+  .tm-diagram-edge-label__export-only {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-edge-label,
+.dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-edge-label--editor {
+  display: none !important;
+}
+
+.dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-edge-label__export-only {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__handle,
 .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-node__handle {
   opacity: 0 !important;

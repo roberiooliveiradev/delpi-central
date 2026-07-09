@@ -1,6 +1,7 @@
 import {
   BaseEdge,
   EdgeLabelRenderer,
+  EdgeText,
   getSmoothStepPath,
   useReactFlow,
   useStore,
@@ -46,6 +47,21 @@ function baseEdgeStyle(kind: FlowchartEdgeKind | undefined) {
     ...kindStyle,
   };
 }
+
+function resolveSvgLabelText(
+  kind: FlowchartEdgeKind,
+  displayLabel: string,
+  includePlaceholder: boolean
+): string | null {
+  if (kind === "message_flow") return "Mensagem";
+  if (kind === "association") return "Associação";
+  if (displayLabel) return displayLabel;
+  if (includePlaceholder) return "Rótulo";
+  return null;
+}
+
+const EDGE_TEXT_LABEL_STYLE = { fill: "var(--ds-text)", fontSize: 11, fontWeight: 600 };
+const EDGE_TEXT_BG_STYLE = { fill: "var(--ds-card-bg)", fillOpacity: 0.92 };
 
 export function FlowchartEditableEdge({
   id,
@@ -93,6 +109,7 @@ export function FlowchartEditableEdge({
   const displayLabel = typeof label === "string" ? label : "";
   const mergedStyle = { ...style, ...baseEdgeStyle(kind) };
   const showLabelEditor = !edgeData.readOnly && kind === "sequence";
+  const svgLabel = resolveSvgLabelText(kind, displayLabel, showLabelEditor);
 
   return (
     <>
@@ -102,10 +119,27 @@ export function FlowchartEditableEdge({
         markerEnd={kind === "association" ? undefined : markerEnd}
         style={mergedStyle}
       />
+      {svgLabel ? (
+        <EdgeText
+          x={labelPosition.x}
+          y={labelPosition.y}
+          label={svgLabel}
+          labelStyle={EDGE_TEXT_LABEL_STYLE}
+          labelBgStyle={EDGE_TEXT_BG_STYLE}
+          labelBgPadding={[2, 6]}
+          labelBgBorderRadius={4}
+          labelShowBg
+          className={
+            showLabelEditor
+              ? "tm-diagram-edge-label__export-only"
+              : "tm-diagram-edge-label__svg"
+          }
+        />
+      ) : null}
       {showLabelEditor ? (
         <EdgeLabelRenderer>
           <div
-            className="tm-diagram-edge-label nodrag nopan"
+            className="tm-diagram-edge-label tm-diagram-edge-label--editor nodrag nopan"
             style={{
               transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
             }}
@@ -120,30 +154,6 @@ export function FlowchartEditableEdge({
               emptyFallback="Rótulo"
               placeholder="Sim / Não"
             />
-          </div>
-        </EdgeLabelRenderer>
-      ) : displayLabel && kind === "sequence" ? (
-        <EdgeLabelRenderer>
-          <div
-            className="tm-diagram-edge-label tm-diagram-edge-label--readonly nodrag nopan"
-            style={{
-              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
-            }}
-          >
-            <span className="tm-diagram-edge-label__text">{displayLabel}</span>
-          </div>
-        </EdgeLabelRenderer>
-      ) : kind !== "sequence" ? (
-        <EdgeLabelRenderer>
-          <div
-            className="tm-diagram-edge-label tm-diagram-edge-label--kind nodrag nopan"
-            style={{
-              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
-            }}
-          >
-            <span className="tm-diagram-edge-label__text">
-              {kind === "message_flow" ? "Mensagem" : "Associação"}
-            </span>
           </div>
         </EdgeLabelRenderer>
       ) : null}

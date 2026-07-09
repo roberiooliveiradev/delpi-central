@@ -1234,6 +1234,7 @@ function FlowchartEditorInner({
               className={[
                 "tm-diagram-editor__canvas",
                 lanes.length ? "tm-diagram-editor__canvas--swimlanes" : "",
+                readOnly ? "tm-diagram-editor__canvas--readonly" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}

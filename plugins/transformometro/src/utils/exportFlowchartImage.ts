@@ -28,23 +28,6 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function mergeTransparentLayers(layers: string[]): Promise<string> {
-  const images = await Promise.all(layers.map((layer) => loadImage(layer)));
-  const canvas = document.createElement("canvas");
-  canvas.width = images[0]?.naturalWidth ?? 1;
-  canvas.height = images[0]?.naturalHeight ?? 1;
-  const context = canvas.getContext("2d");
-  if (!context) {
-    throw new Error("Canvas indisponível para exportação.");
-  }
-
-  for (const image of images) {
-    context.drawImage(image, 0, 0);
-  }
-
-  return canvas.toDataURL("image/png");
-}
-
 async function rasterizeSvgDataUrl(svgDataUrl: string): Promise<string> {
   const image = await loadImage(svgDataUrl);
   const canvas = document.createElement("canvas");
@@ -57,6 +40,19 @@ async function rasterizeSvgDataUrl(svgDataUrl: string): Promise<string> {
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0);
   return canvas.toDataURL("image/png");
+}
+
+function inlineEdgeTextExportStyles(root: HTMLElement, snapshots: StyleSnapshot[]) {
+  root.querySelectorAll(".react-flow__edge-text").forEach((textNode) => {
+    if (!(textNode instanceof SVGTextElement)) return;
+    snapshotAttribute(textNode, "fill", "#334155", snapshots);
+  });
+
+  root.querySelectorAll(".react-flow__edge-textbg").forEach((backgroundNode) => {
+    if (!(backgroundNode instanceof SVGElement)) return;
+    snapshotAttribute(backgroundNode, "fill", "#ffffff", snapshots);
+    snapshotAttribute(backgroundNode, "fill-opacity", "0.92", snapshots);
+  });
 }
 
 function shouldIncludeExportNode(node: Node): boolean {
@@ -141,6 +137,8 @@ function inlineSvgExportStyles(root: HTMLElement): () => void {
     snapshotStyleProperty(markerPart, "fill", stroke, snapshots);
   });
 
+  inlineEdgeTextExportStyles(root, snapshots);
+
   return () => {
     for (const snapshot of snapshots) {
       for (const [name, value] of snapshot.attributes) {
@@ -184,7 +182,6 @@ export async function exportReactFlowDiagramPng({
     throw new Error("Viewport do diagrama não encontrado.");
   }
 
-  const edgeLabelElement = reactFlow.querySelector(".react-flow__edgelabel-renderer");
   const editorRoot = canvasRoot.closest(".tm-diagram-editor");
 
   const bounds = getNodesBounds(nodes);
@@ -210,7 +207,7 @@ export async function exportReactFlowDiagramPng({
   const restoreSvgStyles = inlineSvgExportStyles(viewportElement);
 
   try {
-    const { toPng, toSvg } = await import("html-to-image");
+    const { toSvg } = await import("html-to-image");
     const captureOptions = {
       cacheBust: true,
       pixelRatio,
@@ -223,20 +220,7 @@ export async function exportReactFlowDiagramPng({
       ...captureOptions,
       style: captureStyle,
     });
-    const viewportLayer = await rasterizeSvgDataUrl(viewportSvg);
-
-    const layers = [viewportLayer];
-
-    if (edgeLabelElement instanceof HTMLElement) {
-      const labelLayer = await toPng(edgeLabelElement, {
-        ...captureOptions,
-        style: captureStyle,
-      });
-      layers.push(labelLayer);
-    }
-
-    const dataUrl =
-      layers.length > 1 ? await mergeTransparentLayers(layers) : viewportLayer;
+    const dataUrl = await rasterizeSvgDataUrl(viewportSvg);
 
     downloadDataUrl(dataUrl, filename);
     return dataUrl;
