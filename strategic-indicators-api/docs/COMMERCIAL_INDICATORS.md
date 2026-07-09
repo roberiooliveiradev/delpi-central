@@ -21,7 +21,7 @@
 | `commercial-rol-weg` | ROL WEG | — | `per_unit` | Curva R$ por filial | `commercial_rol_weg` | ROL clientes WEG (cód. 000001) |
 | `commercial-rol-new-business` | ROL Novos Negócios | — | `per_unit` | Curva R$ por filial | `commercial_rol_new_business` | ROL clientes não-WEG |
 | `commercial-closing-rate` | Taxa de Fechamento | 15% | `per_unit` | Padrão % | `commercial_sales_conversion_rate` | Propostas ganhas / total |
-| `commercial-sales-order-otd` | OTD Pedidos de Venda | 30% | `per_unit` | Padrão 95% | `commercial_sales_order_otd` | `SC6010` + `SC5010` |
+| `commercial-sales-order-otd` | OTD Pedidos de Venda | 30% | `per_unit` | Padrão 95% | `commercial_sales_order_otd` | `SC6010` + `SC5010` (faturadas e não faturadas; ver `api-delpi/docs/api/comercial-sales-order-otd.md`) |
 | `commercial-new-business-rol-pct` | % ROL Novos Negócios | 15% | `per_unit` | Curva % | `commercial_new_business_rol_pct` | ROL não-WEG / ROL total |
 
 ## Medições no SI (`CommercialIndicatorsSnapshotProvider`)

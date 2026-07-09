@@ -14,7 +14,7 @@ Permissão: `dashboard-commercial.view` ou `api-delpi.access`
 | `getCommercialProposalByNumber` | GET | `/proposals/{proposal_number}` | `branch` (obrig.), `revision` — cabeçalho AD1010 + cliente/vendedor + **`list_products[]`** (ADJ010 via `list_ov_products`) |
 | `getCommercialProposalHistoryEvents` | GET | `/proposals/{proposal_number}/history/events` | `branch`, `revision`, `date_start`, `date_end` |
 | `getProductStructure` | GET | `/products/{code}/structure` *(api-delpi produtos, não `/commercial`)* | `max_depth`, `page_size` — BOM carregada no detalhe por produto (`productApi.ts`) |
-| `getSalesOrderOtd` | GET | `/sales-order-otd` | `start_date`, `end_date`, `branch` |
+| `getSalesOrderOtd` | GET | `/sales-order-otd` | `start_date`, `end_date`, `branch`, `customer_segment` — inclui linhas faturadas e não faturadas (ver `api-delpi/docs/api/comercial-sales-order-otd.md`) |
 | `getNewBusinessRolPct` | GET | `/new-business-rol-pct` | `start_date`, `end_date`, `branch` |
 | `getNewClientsAverage` | GET | `/new-clients-average` | `start_date`, `end_date`, `branch` |
 | `getNewClientsRolPct` | GET | `/new-clients-rol-pct` | `start_date`, `end_date`, `branch` |

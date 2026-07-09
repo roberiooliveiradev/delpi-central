@@ -18,7 +18,7 @@ Plugin **microfrontend** (Module Federation) para indicadores do departamento **
 | ROL (por unidade: 01 \| 02) | `head_office_rol_target_pct` + `branch_rol_target_pct` (agregado na UI) | `commercial_rol` |
 | ROL WEG (por unidade) | `head_office_weg_rol_target_pct` + `branch_weg_rol_target_pct` | `commercial_rol_weg` |
 | ROL Novos Negócios (por unidade) | `head_office_new_business_rol_target_pct` + `branch_new_business_rol_target_pct` | `commercial_rol_new_business` |
-| OTD — pedidos de venda | `GET /commercial/sales-order-otd` | `commercial_sales_order_otd` |
+| OTD — pedidos de venda | `GET /commercial/sales-order-otd` | `commercial_sales_order_otd` — regras em `api-delpi/docs/api/comercial-sales-order-otd.md` |
 | Taxa de conversão | `GET /commercial/closing-rate` | `commercial_closing_rate` |
 | Lista de propostas | `GET /commercial/proposals` | — (detalhe da taxa de fechamento) |
 | % ROL — novos negócios | `GET /commercial/new-business-rol-pct` | `commercial_new_business_rol_pct` |
