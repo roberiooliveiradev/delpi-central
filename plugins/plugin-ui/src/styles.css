@@ -1,5 +1,6 @@
 /* @delpi/plugin-ui — importar uma vez no CSS do plugin MFE */
 @import "./file-preview.css";
+@import "./styles/diagram.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;
@@ -666,5 +667,3 @@
   );
   color: var(--delpi-ui-text, var(--mdc-text, var(--text, #111)));
 }
-
-@import './styles/diagram.css';
