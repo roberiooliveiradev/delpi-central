@@ -345,7 +345,7 @@ export const TM_HELP_TOOLTIPS = {
     laneRename: "Nome exibido no cabeçalho da faixa. Duplo clique no cabeçalho no canvas também abre a edição.",
     laneApply: "Aplica o nome digitado à faixa selecionada.",
     laneRemove:
-      "Remove a faixa ativa. Os nós nela são realocados na faixa restante. É necessário manter ao menos uma faixa.",
+      "Remove a faixa ativa. Com mais de uma faixa, os nós são realocados na restante; removendo a última, o diagrama volta ao canvas simples (sem swimlanes).",
     canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
     mermaidTab:
       "Edite o código Mermaid ou visualize o diagrama renderizado. Use «Aplicar ao canvas» para converter em editor visual, ou «Atualizar do canvas» para sincronizar com o desenho atual.",

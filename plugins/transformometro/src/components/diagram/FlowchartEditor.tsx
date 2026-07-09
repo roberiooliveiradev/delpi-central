@@ -593,11 +593,14 @@ function FlowchartEditorInner({
   };
 
   const removeActiveLane = async () => {
-    if (readOnly || !activeLaneId || lanes.length <= 1) return;
+    if (readOnly || !activeLaneId || !lanes.length) return;
     const lane = lanes.find((item) => item.id === activeLaneId);
+    const isLastLane = lanes.length === 1;
     const confirmed = await confirm({
       title: "Remover faixa",
-      message: `Remover a faixa «${lane?.label ?? "Faixa"}»? Os nós serão realocados na faixa restante.`,
+      message: isLastLane
+        ? `Remover a faixa «${lane?.label ?? "Faixa"}»? O diagrama volta ao canvas simples, sem swimlanes.`
+        : `Remover a faixa «${lane?.label ?? "Faixa"}»? Os nós serão realocados na faixa restante.`,
       confirmLabel: "Remover",
       variant: "danger",
     });
@@ -843,7 +846,7 @@ function FlowchartEditorInner({
                 onLaneLabelDraftChange={setLaneLabelDraft}
                 onRenameLane={renameActiveLane}
                 onRemoveLane={removeActiveLane}
-                disableRemove={lanes.length <= 1}
+                disableRemove={!lanes.length}
               />
             ) : null}
             {DIAGRAM_EDITOR_ACTIONS.map((action) => (

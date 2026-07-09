@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { applySwimlaneBpmnTemplate } from "../types/diagram";
-import { autoLayoutFlowchart, normalizeLanes } from "./diagramSwimlanes";
+import { applySwimlaneBpmnTemplate, createLaneId, createNodeId, type FlowchartV1 } from "../types/diagram";
+import { autoLayoutFlowchart, normalizeLanes, removeLane } from "./diagramSwimlanes";
 
 describe("autoLayoutFlowchart", () => {
   it("preserva faixas do template BPMN após auto-layout", () => {
@@ -38,5 +38,31 @@ describe("autoLayoutFlowchart", () => {
     expect(start).toBeTruthy();
     expect(crm).toBeTruthy();
     expect(ranksById.get(start!.id)!).toBeLessThan(ranksById.get(crm!.id)!);
+  });
+});
+
+describe("removeLane", () => {
+  it("remove a última faixa e limpa swimlanes do diagrama", () => {
+    const laneId = createLaneId();
+    const flowchart: FlowchartV1 = {
+      format: "flowchart_v1",
+      format_version: 1,
+      lanes: [{ id: laneId, label: "Comercial", height: 168, order: 0 }],
+      nodes: [
+        {
+          id: createNodeId("sta"),
+          type: "start",
+          label: "Início",
+          position: { x: 200, y: 120 },
+          lane_id: laneId,
+        },
+      ],
+      edges: [],
+    };
+
+    const next = removeLane(flowchart, laneId);
+
+    expect(next.lanes).toBeUndefined();
+    expect(next.nodes[0]?.lane_id).toBeUndefined();
   });
 });
