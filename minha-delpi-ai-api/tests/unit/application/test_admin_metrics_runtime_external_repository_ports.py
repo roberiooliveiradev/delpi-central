@@ -22,6 +22,12 @@ from app.application.use_cases.get_admin_feedback_summary_use_case import (
 from app.application.use_cases.get_admin_quality_unified_summary_use_case import (
     GetAdminQualityUnifiedSummaryUseCase,
 )
+from app.application.use_cases.get_admin_presentation_summary_use_case import (
+    GetAdminPresentationSummaryUseCase,
+)
+from app.application.use_cases.get_admin_session_memory_summary_use_case import (
+    GetAdminSessionMemorySummaryUseCase,
+)
 from app.application.use_cases.get_admin_tools_health_use_case import GetAdminToolsHealthUseCase
 from app.domain.ports.admin_metrics_repository_port import AdminMetricsRepositoryPort
 from app.domain.ports.admin_runtime_settings_repository_port import (
@@ -164,18 +170,27 @@ def test_get_admin_quality_unified_summary_delegates_to_injected_use_cases(monke
     metrics_repository = Mock(spec=AdminMetricsRepositoryPort)
     audit_repository = Mock()
     feedback_use_case = Mock(spec=GetAdminFeedbackSummaryUseCase)
+    presentation_use_case = Mock(spec=GetAdminPresentationSummaryUseCase)
+    session_memory_use_case = Mock(spec=GetAdminSessionMemorySummaryUseCase)
     metrics_repository.get_summary.return_value = {"sessions": 3}
     audit_repository.get_security_summary.return_value = {"blockedCount": 0}
     feedback_use_case.execute.return_value = {"totalFeedback": 1}
+    presentation_use_case.execute.return_value = {"totalPresentations": 0}
+    session_memory_use_case.execute.return_value = {"totalSessions": 0}
 
     payload = GetAdminQualityUnifiedSummaryUseCase(
         feedback_use_case=feedback_use_case,
         metrics_use_case=GetAdminMetricsSummaryUseCase(metrics_repository),
         security_use_case=GetAdminSecuritySummaryUseCase(audit_repository),
+        presentation_use_case=presentation_use_case,
+        session_memory_use_case=session_memory_use_case,
+        audit_repository=audit_repository,
     ).execute(hours=24)
 
     feedback_use_case.execute.assert_called_once()
     metrics_repository.get_summary.assert_called_once()
     audit_repository.get_security_summary.assert_called_once()
+    presentation_use_case.execute.assert_called_once()
+    session_memory_use_case.execute.assert_called_once()
     assert "feedback" in payload
     assert payload["windowHours"] == 24

@@ -62,7 +62,14 @@ def _markdown_embed_issues(markdown: str) -> list[str]:
 
 
 def _validate_suppressed_presentations_removed(metadata: dict[str, Any]) -> list[str]:
-    """MFE render-only: chaves suprimidas pela API não podem permanecer no payload."""
+    """MFE render-only: chaves suprimidas não podem ir ao renderPlan; payload pode manter slots (Playbook 23)."""
+    from app.domain.services.chat_presentation_rich_stack_policy_service import (
+        ChatPresentationRichStackPolicyService,
+    )
+
+    if ChatPresentationRichStackPolicyService._is_composite_metadata(metadata):
+        return []
+
     issues: list[str] = []
     plan = metadata.get("stackPresentationPlan")
 

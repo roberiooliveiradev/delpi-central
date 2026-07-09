@@ -9,6 +9,7 @@ from app.application.use_cases.get_chat_history_use_case import GetChatHistoryUs
 class FakeSession:
     id: object
     user_id: object
+    active_leaf_message_id: object = None
 
 
 @dataclass(frozen=True)
@@ -19,6 +20,7 @@ class FakeMessage:
     content: str
     metadata: dict
     created_at: object
+    parent_message_id: object = None
 
 
 class FakeRepository:
@@ -47,6 +49,9 @@ class FakeRepository:
                 created_at=datetime.now(timezone.utc),
             )
         ]
+
+    def list_all_messages_by_session(self, session_id):
+        return self.list_messages_by_session(session_id)
 
 
 class FakeFeedbackRepository:

@@ -119,7 +119,7 @@ def test_document_vision_list_attachments_uses_port(monkeypatch):
     repository.list_attachments_by_ids.return_value = []
 
     monkeypatch.setattr(
-        "app.application.services.chat_document_vision_service._default_attachment_repository",
+        "app.domain.services.chat_attachment_document_selection_service.ChatAttachmentDocumentSelectionService._repository",
         lambda: repository,
     )
 

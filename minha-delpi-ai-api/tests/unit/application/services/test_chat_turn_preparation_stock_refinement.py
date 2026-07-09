@@ -60,6 +60,8 @@ def test_stock_branch_refinement_skips_rag_and_keeps_operational_mode():
         session=session,
         user_id=user_id,
         workspace_context={
+            "userActivatedAgent": True,
+            "actionsEnabled": True,
             "skills": {"companyKnowledge": True},
             "allowedActionIds": ["stock-action"],
             "capabilities": {"actions": True},

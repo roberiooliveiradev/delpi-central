@@ -111,6 +111,14 @@ def test_capture_creates_candidate_for_unknown_term(monkeypatch):
     monkeypatch.setattr(Settings, "CHAT_LEARNING_ENABLED", True, raising=False)
     monkeypatch.setattr(Settings, "CHAT_LEARNING_GLOSSARY_CAPTURE", True, raising=False)
     monkeypatch.setattr(Settings, "CHAT_LEARNING_GLOSSARY_WEB_MEANING", False, raising=False)
+    monkeypatch.setattr(
+        "app.application.services.chat_platform_runtime_access.learning_pipeline_settings",
+        lambda: {
+            "learningEnabled": True,
+            "learningGlossaryCapture": True,
+            "learningTermConfirmationEnabled": False,
+        },
+    )
     _patch_db(monkeypatch)
 
     candidate_service = _FakeCandidateService()

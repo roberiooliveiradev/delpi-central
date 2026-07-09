@@ -9,14 +9,26 @@ import pytest
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.use_cases.send_chat_message_use_case import SendChatMessageUseCase
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
+from app.domain.entities.chat_message import ChatMessage
 from app.domain.entities.chat_session import ChatSession
 
-_STOCK_HISTORY = [
-    {"role": "user", "content": "estoque do produto 10080022"},
-    {
-        "role": "assistant",
-        "content": "Estoque do produto 10080022",
-        "metadata": {
+
+def _stock_history(session_id) -> list[ChatMessage]:
+    now = datetime.now(timezone.utc)
+    user = ChatMessage(
+        id=uuid4(),
+        session_id=session_id,
+        role="user",
+        content="estoque do produto 10080022",
+        metadata=None,
+        created_at=now,
+    )
+    assistant = ChatMessage(
+        id=uuid4(),
+        session_id=session_id,
+        role="assistant",
+        content="Estoque do produto 10080022",
+        metadata={
             "toolCalls": [
                 {
                     "name": "execute_external_action",
@@ -28,8 +40,9 @@ _STOCK_HISTORY = [
                 }
             ]
         },
-    },
-]
+        created_at=now,
+    )
+    return [user, assistant]
 
 _REFINEMENT_MESSAGE = "filtre filial 02"
 _DIRECT_ANSWER = (
@@ -54,14 +67,16 @@ def _session() -> ChatSession:
 def _workspace() -> dict:
     return {
         "project": None,
-        "agent": None,
+        "agent": {"id": "11111111-1111-4111-8111-111111111111", "name": "Operacional"},
         "projectPrompt": None,
-        "agentPrompt": None,
-        "agentId": None,
+        "agentPrompt": "Agente operacional.",
+        "agentId": "11111111-1111-4111-8111-111111111111",
         "allowedActionIds": ["stock-action"],
         "capabilities": {"actions": True},
         "specialization": None,
         "skills": {"companyKnowledge": True},
+        "userActivatedAgent": True,
+        "actionsEnabled": True,
     }
 
 
@@ -94,7 +109,9 @@ def _build_use_cases():
 
     chat_repository = MagicMock()
     chat_repository.get_session_by_id.return_value = session
-    chat_repository.list_messages_by_session.return_value = _STOCK_HISTORY
+    stock_history = _stock_history(session.id)
+    chat_repository.list_messages_by_session.return_value = stock_history
+    chat_repository.list_all_messages_by_session.return_value = stock_history
     user_message = MagicMock()
     user_message.id = uuid4()
     chat_repository.create_message.return_value = user_message
@@ -185,7 +202,6 @@ def patch_chat_settings(monkeypatch):
     for module in (
         "app.application.use_cases.send_chat_message_use_case",
         "app.application.use_cases.stream_chat_message_use_case",
-        "app.domain.services.chat_external_action_direct_response_service",
     ):
         monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", True)
         monkeypatch.setattr(

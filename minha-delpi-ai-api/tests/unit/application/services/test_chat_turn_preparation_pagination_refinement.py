@@ -101,6 +101,8 @@ def test_parents_page_size_refinement_skips_rag_and_keeps_operational_mode():
         session=session,
         user_id=user_id,
         workspace_context={
+            "userActivatedAgent": True,
+            "actionsEnabled": True,
             "skills": {"companyKnowledge": True},
             "allowedActionIds": ["parents-action"],
             "capabilities": {"actions": True},

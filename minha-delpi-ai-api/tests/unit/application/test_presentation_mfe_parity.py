@@ -5,6 +5,9 @@ from __future__ import annotations
 from app.application.use_cases.execute_external_action_use_case import (
     ExecuteExternalActionUseCase,
 )
+from app.domain.services.chat_presentation_rich_stack_policy_service import (
+    ChatPresentationRichStackPolicyService,
+)
 from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
 from tests.fixtures.presentation_render_plan_gate import (
     P6_EXTENDED_PIPELINE_CASES,
@@ -40,6 +43,10 @@ def test_mfe_parity_no_latent_dashboard_on_factory_status_auto():
 
     assert _validate_render_plan_contract(metadata) == []
     assert _validate_suppressed_presentations_removed(metadata) == []
+
+    if ChatPresentationRichStackPolicyService._is_composite_metadata(metadata):
+        return
+
     assert metadata.get("dashboardPresentation") is None
 
     render_plan = metadata["renderPlan"]

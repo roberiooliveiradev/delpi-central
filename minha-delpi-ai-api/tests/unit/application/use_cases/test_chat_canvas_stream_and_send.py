@@ -55,7 +55,9 @@ def _build_use_cases():
 
     chat_repository = MagicMock()
     chat_repository.get_session_by_id.return_value = session
-    chat_repository.list_messages_by_session.return_value = _assistant_history(session)
+    history = _assistant_history(session)
+    chat_repository.list_messages_by_session.return_value = history
+    chat_repository.list_all_messages_by_session.return_value = history
 
     user_message = MagicMock()
     user_message.id = uuid4()

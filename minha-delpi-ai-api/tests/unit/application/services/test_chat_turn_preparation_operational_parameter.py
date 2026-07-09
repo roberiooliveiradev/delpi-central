@@ -51,7 +51,7 @@ def test_stock_without_code_skips_tools_and_returns_direct_answer():
 
     build_tool_context.assert_not_called()
     assert prepared.direct_answer
-    assert "código" in prepared.direct_answer.lower()
+    assert "agente" in prepared.direct_answer.lower()
     assert prepared.tool_calls == []
     assert prepared.skip_rag is True
     rag_context_service.build_context.assert_not_called()

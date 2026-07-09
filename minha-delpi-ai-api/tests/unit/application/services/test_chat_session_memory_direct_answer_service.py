@@ -48,13 +48,14 @@ def test_memory_introspection_m20():
         workspace_context={
             "workingMemory": {
                 "operationalFocus": {"productCode": "10080001"},
-            },
-            "memoryUx": {
-                "summary": "Produto 10080001",
-                "usage": {
-                    "preferences": ["Respostas curtas"],
-                    "entities": ["Produto 10080001"],
-                },
+                "userContextItems": [
+                    {
+                        "kind": "context",
+                        "label": "Produto 10080001",
+                        "value": "10080001",
+                    }
+                ],
+                "preferencesAppliedLabels": ["Respostas curtas"],
             },
         },
     )

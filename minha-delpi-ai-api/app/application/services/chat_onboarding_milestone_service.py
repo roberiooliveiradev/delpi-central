@@ -150,6 +150,28 @@ class ChatOnboardingMilestoneService:
             metadata["milestoneCelebrations"] = celebrations
 
     @staticmethod
+    def _call_counts_as_operational_success(call: dict) -> bool:
+        if not isinstance(call, dict) or str(call.get("name") or "") != "execute_external_action":
+            return False
+
+        call_meta = call.get("metadata")
+
+        if not isinstance(call_meta, dict) or call_meta.get("ok") is not True:
+            return False
+
+        if call_meta.get("sqlSchemaPrefetch") or call_meta.get("suppressClientPresentation"):
+            return False
+
+        path = str(call_meta.get("path") or "").lower()
+
+        if "/system/tables" in path and (
+            "/columns" in path or "/schema" in path or "/relations" in path
+        ):
+            return False
+
+        return True
+
+    @staticmethod
     def _operational_success(
         tool_calls: list[dict] | None,
         stages: list[str],
@@ -159,34 +181,12 @@ class ChatOnboardingMilestoneService:
             for stage in stages
             if stage.startswith("intent:")
         ):
-            for call in tool_calls or []:
-                if isinstance(call, dict) and str(call.get("name") or "") == "execute_external_action":
-                    return True
+            return any(
+                ChatOnboardingMilestoneService._call_counts_as_operational_success(call)
+                for call in (tool_calls or [])
+            )
 
-        for call in tool_calls or []:
-            if not isinstance(call, dict):
-                continue
-
-            name = str(call.get("name") or "")
-
-            if name != "execute_external_action":
-                continue
-
-            call_meta = call.get("metadata")
-
-            if not isinstance(call_meta, dict) or call_meta.get("ok") is not True:
-                continue
-
-            if call_meta.get("sqlSchemaPrefetch") or call_meta.get("suppressClientPresentation"):
-                continue
-
-            path = str(call_meta.get("path") or "").lower()
-
-            if "/system/tables" in path and (
-                "/columns" in path or "/schema" in path or "/relations" in path
-            ):
-                continue
-
-            return True
-
-        return False
+        return any(
+            ChatOnboardingMilestoneService._call_counts_as_operational_success(call)
+            for call in (tool_calls or [])
+        )

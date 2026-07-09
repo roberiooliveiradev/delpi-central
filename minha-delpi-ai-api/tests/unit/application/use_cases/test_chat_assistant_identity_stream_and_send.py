@@ -1,4 +1,4 @@
-"""Perguntas de identidade do assistente usam resposta canônica direta (sem LLM)."""
+"""Perguntas de identidade: síntese meta LLM com fatos canônicos (sem RAG)."""
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
@@ -13,13 +13,18 @@ from app.domain.entities.chat_session import ChatSession
 
 FAKE_AGENT_ID = UUID("11111111-1111-4111-8111-111111111111")
 
-_IDENTITY_PHRASES = (
+_IDENTITY_META_LLM_PHRASES = (
     "quem é vc?",
     "quem te criou?",
     "o que vc é?",
-    "o que vc faz?",
     "como te usar",
 )
+
+_IDENTITY_DIRECT_CAPABILITY_PHRASES = ("o que vc faz?",)
+
+_IDENTITY_ONLY_NO_RAG = frozenset({"quem te criou?", "quem é vc?"})
+
+_META_SYNTHESIS_MARKER = "fatos canônicos"
 
 
 def _session(*, agent_id: UUID | None = None) -> ChatSession:
@@ -73,6 +78,7 @@ def _build_use_cases(*, common: bool):
     chat_repository = MagicMock()
     chat_repository.get_session_by_id.return_value = session
     chat_repository.list_messages_by_session.return_value = []
+    chat_repository.list_all_messages_by_session.return_value = []
     user_message = MagicMock()
     user_message.id = uuid4()
     chat_repository.create_message.return_value = user_message
@@ -144,6 +150,14 @@ def _collect_stream_answer(events: list[dict]) -> str:
     return streamed
 
 
+def _assert_meta_synthesis_llm_messages(messages: list[dict], *, question: str) -> None:
+    user_messages = [item for item in messages if item.get("role") == "user"]
+    assert user_messages
+    content = user_messages[-1]["content"]
+    assert _META_SYNTHESIS_MARKER in content
+    assert question in content
+
+
 from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
 
 
@@ -173,9 +187,9 @@ def patch_llm_cost(monkeypatch):
     )
 
 
-@pytest.mark.parametrize("message", _IDENTITY_PHRASES)
+@pytest.mark.parametrize("message", _IDENTITY_META_LLM_PHRASES)
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_send_identity_uses_direct_answer_without_llm(message: str, common: bool):
+def test_send_identity_uses_meta_synthesis_without_rag(message: str, common: bool):
     session, send_use_case, _, rag_context_service, llm_gateway = _build_use_cases(
         common=common
     )
@@ -188,18 +202,42 @@ def test_send_identity_uses_direct_answer_without_llm(message: str, common: bool
 
     response = send_use_case.execute(request)
 
-    llm_gateway.generate.assert_not_called()
+    llm_gateway.generate.assert_called_once()
+    _assert_meta_synthesis_llm_messages(
+        llm_gateway.generate.call_args[0][0],
+        question=message,
+    )
     assert response.answer
-    assert len(response.answer.strip()) > 40
+    assert len(response.answer.strip()) > 10
     assert "2019" not in response.answer
     assert "openai" not in response.answer.lower()
-    if message in {"quem te criou?", "quem é vc?", "quem é você?"}:
+    if message in _IDENTITY_ONLY_NO_RAG:
         rag_context_service.build_context.assert_not_called()
+
+
+@pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
+def test_send_capabilities_inquiry_uses_direct_answer_without_llm(common: bool):
+    session, send_use_case, _, rag_context_service, llm_gateway = _build_use_cases(
+        common=common
+    )
+    request = SendChatMessageRequest(
+        user_id=str(session.user_id),
+        session_id=str(session.id),
+        message="o que vc faz?",
+        access_token=None,
+    )
+
+    response = send_use_case.execute(request)
+
+    llm_gateway.generate.assert_not_called()
+    assert response.answer
+    assert len(response.answer.strip()) > 10
+    rag_context_service.build_context.assert_not_called()
 
 
 @pytest.mark.parametrize("message", ("quem te criou?", "quem é vc?"))
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_stream_identity_uses_direct_answer_without_llm(message: str, common: bool):
+def test_stream_identity_uses_meta_synthesis_without_rag(message: str, common: bool):
     session, _, stream_use_case, rag_context_service, llm_gateway = _build_use_cases(
         common=common
     )
@@ -213,10 +251,13 @@ def test_stream_identity_uses_direct_answer_without_llm(message: str, common: bo
     events = list(stream_use_case.stream(request))
     answer = _collect_stream_answer(events)
 
-    llm_gateway.stream.assert_not_called()
+    llm_gateway.stream.assert_called_once()
+    _assert_meta_synthesis_llm_messages(
+        llm_gateway.stream.call_args[0][0],
+        question=message,
+    )
     assert answer
-    assert len(answer.strip()) > 40
+    assert len(answer.strip()) > 10
     assert "2019" not in answer
     assert "openai" not in answer.lower()
-    if message in {"quem te criou?", "quem é vc?"}:
-        rag_context_service.build_context.assert_not_called()
+    rag_context_service.build_context.assert_not_called()

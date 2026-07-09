@@ -1,5 +1,5 @@
-from app.application.services.external_actions.external_action_selection_service import (
-    ExternalActionSelectionService,
+from app.application.services.external_actions.external_action_sql_route_selection_service import (
+    ExternalActionSqlRouteSelectionService,
 )
 
 
@@ -12,7 +12,7 @@ class _Repo:
 
 
 def test_extract_sql_query_preserves_protheus_delete_flag_literal():
-    service = ExternalActionSelectionService(_Repo())
+    service = ExternalActionSqlRouteSelectionService(_Repo())
     message = (
         "execute:\n\nSELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''"
     )
@@ -25,7 +25,7 @@ def test_extract_sql_query_preserves_protheus_delete_flag_literal():
 
 
 def test_extract_sql_query_handles_execute_prefix():
-    service = ExternalActionSelectionService(_Repo())
+    service = ExternalActionSqlRouteSelectionService(_Repo())
     message = "execute:\nSELECT A1_COD FROM SA1010 WHERE D_E_L_E_T_ = ''"
 
     sql = service._extract_sql_query(message)

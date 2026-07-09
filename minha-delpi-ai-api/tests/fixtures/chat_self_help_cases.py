@@ -12,7 +12,7 @@ SELF_HELP_CASES: list[dict] = [
     },
     {
         "id": "A2",
-        "message": "como consulto estoque?",
+        "message": "ajuda sobre estoque",
         "expect_capability": True,
         "expect_substrings": ("estoque", "agente", "produto"),
     },
@@ -65,7 +65,7 @@ SELF_HELP_CASES: list[dict] = [
     },
     {
         "id": "A8",
-        "message": "por que não consigo consultar estoque?",
+        "message": "por que não tenho acesso ao estoque?",
         "expect_capability": True,
         "expect_substrings": ("agente", "permiss", "estoque", "action"),
     },

@@ -11,7 +11,6 @@ from app.application.services.chat_meta_direct_answer_service import (
 from app.application.services.chat_turn.chat_turn_preparation_service import (
     ChatTurnPreparationService,
 )
-from app.application.services.chat_user_context_service import ChatUserContextService
 
 
 def test_detect_compound_meta_intents():
@@ -21,8 +20,8 @@ def test_detect_compound_meta_intents():
 
     assert intents.user_profile is True
     assert intents.capabilities is True
-    assert intents.assistant_identity is True
-    assert intents.count == 3
+    assert intents.assistant_identity is False
+    assert intents.count == 2
 
 
 def test_assistant_identity_classifies_in_compound_question():
@@ -30,7 +29,7 @@ def test_assistant_identity_classifies_in_compound_question():
         "me diga quem sou eu e o que consigo fazer aqui, quem é você?"
     )
 
-    assert category == "who"
+    assert category is None
 
 
 def test_capabilities_detects_consigo_fazer_aqui():
@@ -58,13 +57,12 @@ def test_meta_direct_answer_composes_three_sections():
     assert "Organizei sua pergunta" in answer
     assert "## Seu perfil na Minha DELPI" in answer
     assert "## O que você pode fazer aqui" in answer
-    assert "## Sobre o assistente" in answer
+    assert "## Sobre o assistente" not in answer
     assert "Robério" in answer
     assert "Documentação autorizada" in answer
-    assert "Minha DELPI" in answer
 
 
-def test_turn_preparation_uses_meta_direct_answer_for_compound_question():
+def test_turn_preparation_uses_meta_llm_synthesis_for_compound_question():
     session = MagicMock()
     session.id = uuid4()
     request = MagicMock()
@@ -98,10 +96,9 @@ def test_turn_preparation_uses_meta_direct_answer_for_compound_question():
         resolve_capabilities_answer=lambda _msg: "- Documentação autorizada.",
     )
 
-    assert prepared.direct_answer
+    assert prepared.direct_answer is None
+    assert prepared.tool_context.get("metaLlmSynthesis") is True
+    assert "Robério" in str(prepared.tool_context.get("metaSynthesisFacts") or "")
     assert prepared.skip_rag is True
-    assert "meta_direct_answer" in prepared.pipeline_stages
-    assert "## Seu perfil na Minha DELPI" in prepared.direct_answer
-    assert "## O que você pode fazer aqui" in prepared.direct_answer
-    assert "## Sobre o assistente" in prepared.direct_answer
+    assert "identity_shortcut" in prepared.pipeline_stages
     rag_context_service.build_context.assert_not_called()

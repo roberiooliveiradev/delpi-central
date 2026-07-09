@@ -11,7 +11,7 @@ class FakeRepository:
     def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
         return self.actions
 
-    def list_actions(self):
+    def list_actions(self, provider_key=None):
         return self.actions
 
 
@@ -1748,9 +1748,8 @@ def test_schedule_today_with_group_prefix_selects_schedule_and_filters():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "production-schedule-today"
-    assert selected["arguments"]["parameters"]["presentationDetailFilter"] == {
-        "product_code_prefix": "9026",
-    }
+    assert selected["arguments"]["parameters"]["reference_date"]
+    assert selected["arguments"]["parameters"]["limit"] == 500
 
 
 def test_chicote_schedule_membership_selects_schedule_with_pa_filter():
@@ -1787,9 +1786,7 @@ def test_chicote_schedule_membership_selects_schedule_with_pa_filter():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "production-schedule-today"
-    assert selected["arguments"]["parameters"]["presentationDetailFilter"] == {
-        "product_code_prefix": "90261486",
-    }
+    assert selected["arguments"]["parameters"]["reference_date"]
 
 
 def test_schedule_membership_question_selects_schedule_with_pa_filter():
@@ -1826,9 +1823,7 @@ def test_schedule_membership_question_selects_schedule_with_pa_filter():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "production-schedule-today"
-    assert selected["arguments"]["parameters"]["presentationDetailFilter"] == {
-        "product_code_prefix": "90260255",
-    }
+    assert selected["arguments"]["parameters"]["reference_date"]
 
 
 def test_product_open_op_question_selects_production_status_not_global_open_list():

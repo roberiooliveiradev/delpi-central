@@ -9,7 +9,7 @@ def test_attach_help_self_help_metadata_for_capability_inquiry():
 
     ChatHelpSelfHelpTelemetryService.attach_to_assistant_metadata(
         metadata,
-        message="como consulto estoque?",
+        message="ajuda sobre estoque",
         workspace_context={"agent": None, "agentId": None},
         had_direct_answer=True,
     )

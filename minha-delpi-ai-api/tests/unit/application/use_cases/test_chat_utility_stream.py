@@ -30,6 +30,7 @@ def _build_stream_use_case(*, session: ChatSession):
     chat_repository = MagicMock()
     chat_repository.get_session_by_id.return_value = session
     chat_repository.list_messages_by_session.return_value = []
+    chat_repository.list_all_messages_by_session.return_value = []
     user_message = MagicMock()
     user_message.id = uuid4()
     assistant_message = MagicMock()
@@ -103,7 +104,6 @@ def _build_stream_use_case(*, session: ChatSession):
 def patch_chat_settings(monkeypatch):
     for module in (
         "app.application.use_cases.stream_chat_message_use_case",
-        "app.domain.services.chat_external_action_direct_response_service",
     ):
         monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", True)
         monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_MAX_CHARS", 30)

@@ -19,6 +19,7 @@
     "preserveDirectAnswerStages": [
       "small_talk",
       "utility_direct",
+      "canvas",
       "common_chat_operational_guidance",
       "meta_direct_answer",
       "capabilities",

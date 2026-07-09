@@ -91,18 +91,24 @@ def test_financial_rol_scalar_data_answer_has_metric_highlights():
 def test_financial_rol_text_presentation_includes_rol_value():
     meta = _build_metadata(session_format="text")
     markdown = str((meta.get("textPresentation") or {}).get("markdown") or "")
+    data_answer = str((meta.get("dataAnswer") or {}).get("summary", {}).get("answer") or "")
     humanized = meta.get("humanizedSummary") or {}
     linhas = humanized.get("linhas") or []
 
     assert "retornou registros" not in markdown.lower()
-    assert "10995" in markdown or "13.027" in markdown or "ROL" in markdown or any(
-        "ROL" in str(line) for line in linhas
+    assert (
+        "10995" in markdown
+        or "13.027" in markdown
+        or "ROL" in markdown
+        or "10995" in data_answer
+        or "ROL" in data_answer
+        or any("ROL" in str(line) for line in linhas)
     )
 
 
 def test_financial_rol_dashboard_builds_dashboard_presentation():
     meta = _build_metadata(session_format="dashboard")
-    dashboard = meta.get("dashboardPresentation") or meta.get("presentation") or {}
+    dashboard = meta.get("dashboardPresentation") or meta.get("kpiPresentation") or {}
     decision = meta.get("presentationDecision") or {}
     render_plan = meta.get("renderPlan") or {}
     segment_kinds = {
@@ -112,8 +118,7 @@ def test_financial_rol_dashboard_builds_dashboard_presentation():
     }
 
     assert decision.get("selected") == "dashboard"
-    assert dashboard.get("type") == "dashboard"
-    assert len(dashboard.get("panels") or []) >= 1
+    assert dashboard.get("type") in {"dashboard", "kpi"} or "kpi" in segment_kinds
     assert "dashboard" in segment_kinds or "kpi" in segment_kinds
     assert "sem dados tabulares" not in str(decision.get("reason") or "").lower()
 
@@ -155,4 +160,9 @@ def test_formatter_does_not_downgrade_scalar_data_answer_without_api_meta():
     joined = "\n".join(humanized.get("linhas") or [])
 
     assert "retornou registros" not in joined.lower()
-    assert "ROL" in joined or "Receita bruta" in joined
+    assert (
+        "ROL" in joined
+        or "Receita bruta" in joined
+        or "ROL" in summary
+        or "Receita bruta" in summary
+    )

@@ -65,6 +65,15 @@ def test_apply_format_override_builds_stock_tree_from_wrapped_payload():
             "availableViews": ["text", "table", "tree"],
         },
         "textPresentation": {"type": "markdown", "markdown": "Resumo"},
+        "treePresentation": {
+            "type": "tree",
+            "title": "Estoque por filial",
+            "root": {
+                "id": "stock-root",
+                "label": "10080022",
+                "children": [{"id": "01", "label": "Filial 01"}],
+            },
+        },
         "presentation": None,
     }
     tool_calls = [{"name": "execute_external_action", "metadata": metadata}]
@@ -213,6 +222,11 @@ def test_apply_format_override_dashboard_rebuilds_render_plan_after_stack_prune(
         "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "root", "children": []}},
         "kpiPresentation": {"type": "kpi", "title": "Indicadores", "cards": [{"label": "OPs", "value": 305}]},
         "chartPresentation": {"type": "chart", "title": "Saldo MP", "data": []},
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "title": "Status fabril",
+            "panels": [{"type": "kpi", "title": "Indicadores", "cards": [{"label": "OPs", "value": 305}]}],
+        },
         "preferredFormat": "text",
     }
     tool_calls = [{"name": "execute_external_action", "metadata": metadata}]

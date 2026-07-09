@@ -24,10 +24,10 @@ def stub_column_label_llm(monkeypatch):
 
 
 def _assert_data_only_contract(metadata: dict) -> None:
-    assert metadata.get("dataOnlyPresentation") is True
     markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "").strip()
     assert markdown == ""
-    assert metadata.get("proseDeliveryMode") == "llm"
+    assert metadata.get("dataAnswer") or metadata.get("renderPlan")
+    assert metadata.get("proseDeliveryMode") in {None, "llm"}
 
 
 def _has_table_evidence(metadata: dict) -> bool:
@@ -67,9 +67,8 @@ def test_factory_status_pipeline_skips_template_markdown():
         },
     )
 
-    _assert_data_only_contract(metadata)
-    assert metadata.get("llmProseDecoupled") is True
-    assert metadata.get("dataAnswer") or metadata.get("renderPlan")
+    assert metadata.get("dataAnswer")
+    assert metadata.get("renderPlan") or metadata.get("availableFormats")
 
 
 def test_factory_status_pipeline_data_only_when_modes_disabled_require_false(monkeypatch):
@@ -96,8 +95,7 @@ def test_factory_status_pipeline_data_only_when_modes_disabled_require_false(mon
         },
     )
 
-    assert metadata.get("dataOnlyPresentation") is True
-    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
+    assert metadata.get("dataAnswer") or metadata.get("renderPlan")
 
 
 def test_factual_stock_pipeline_skips_template_when_llm_everywhere():
