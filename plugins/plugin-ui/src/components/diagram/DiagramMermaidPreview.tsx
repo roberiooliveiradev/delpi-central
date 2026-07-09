@@ -1,13 +1,16 @@
 import { useEffect, useId, useRef, useState } from "react";
 
-import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
-import { buildMermaidPreviewConfig } from "../../utils/mermaidPreviewConfig";
-import { postProcessMermaidPreviewSvg } from "../../utils/mermaidPreviewPostProcess";
-import { applyMermaidPreviewTheme } from "../../utils/mermaidPreviewTheme";
+import { useDelpiDarkMode } from "./hooks/useDelpiDarkMode";
+import { buildMermaidPreviewConfig } from "./utils/mermaidPreviewConfig";
+import { postProcessMermaidPreviewSvg } from "./utils/mermaidPreviewPostProcess";
+import { applyMermaidPreviewTheme } from "./utils/mermaidPreviewTheme";
 
 type DiagramMermaidPreviewProps = {
   code: string;
   className?: string;
+  isDark?: boolean;
+  renderingLabel?: string;
+  errorFallback?: string;
 };
 
 type MermaidRenderer = {
@@ -27,9 +30,16 @@ function loadMermaidModule(): Promise<MermaidRenderer> {
   return mermaidModulePromise;
 }
 
-export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreviewProps) {
+export function DiagramMermaidPreview({
+  code,
+  className,
+  isDark: isDarkProp,
+  renderingLabel = "…",
+  errorFallback = "Render error.",
+}: DiagramMermaidPreviewProps) {
   const reactId = useId();
-  const isDark = useTransformometroDarkMode();
+  const isDarkFromHook = useDelpiDarkMode();
+  const isDark = isDarkProp ?? isDarkFromHook;
   const [svg, setSvg] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
@@ -72,7 +82,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Erro ao renderizar Mermaid.");
+          setError(err instanceof Error ? err.message : errorFallback);
           setSvg("");
           renderedKeyRef.current = "";
         }
@@ -86,7 +96,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
     return () => {
       cancelled = true;
     };
-  }, [code, isDark, reactId]);
+  }, [code, errorFallback, isDark, reactId]);
 
   const themeClass = isDark ? "tm-diagram-mermaid--dark" : "tm-diagram-mermaid--light";
 
@@ -109,7 +119,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
           .filter(Boolean)
           .join(" ")}
       >
-        Gerando preview…
+        {renderingLabel}
       </div>
     );
   }

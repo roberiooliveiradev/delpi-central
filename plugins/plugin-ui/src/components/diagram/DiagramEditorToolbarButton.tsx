@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "../help/HelpTooltip";
 
 type Props = {
   label: string;

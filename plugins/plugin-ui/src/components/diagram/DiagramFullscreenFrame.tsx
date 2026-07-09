@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
+
 import { DiagramLayoutProvider } from "./DiagramLayoutContext";
 
 type Props = {
   title?: string;
   subtitle?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   enabled?: boolean;
 };
 

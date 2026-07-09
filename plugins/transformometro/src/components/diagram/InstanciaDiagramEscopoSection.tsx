@@ -8,12 +8,17 @@ import {
   fetchProcessoDiagrama,
   saveInstanciaDiagramEscopo,
 } from "../../data/api/transformometroDiagramApi";
-import { emptyEscopo, emptyFlowchart, type FlowchartEscopo, type FlowchartV1 } from "../../types/diagram";
-import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
-import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
+import {
+  emptyEscopo,
+  emptyFlowchart,
+  DiagramMermaidPreview,
+  DiagramFullscreenFrame,
+  type FlowchartEscopo,
+  type FlowchartV1,
+} from "@delpi/plugin-ui";
 
 const FlowchartEditor = lazy(() =>
-  import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
+  import("./TransformometroFlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
 );
 
 type Props = Pick<AppProps, "getAccessToken"> & {

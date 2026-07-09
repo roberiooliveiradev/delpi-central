@@ -1,4 +1,4 @@
-import { resolveMermaidTheme } from "../hooks/useTransformometroDarkMode";
+import { resolveMermaidTheme } from "../hooks/useDelpiDarkMode";
 
 /** Largura alvo dos rótulos — alinhada ao editor BPMN (~168px). */
 export const MERMAID_LABEL_WRAPPING_WIDTH = 156;

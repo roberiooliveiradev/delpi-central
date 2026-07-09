@@ -14,17 +14,17 @@ import {
   emptyFlowchart,
   emptyOverlay,
   flowToOverlayDraft,
+  flowchartToMermaid,
+  DiagramMermaidPreview,
+  DiagramFullscreenFrame,
   type FlowchartOverlayV1,
   type FlowchartV1,
-  type MergedRevisaoDiagram,
-} from "../../types/diagram";
-import { flowchartToMermaid } from "../../utils/flowchartMermaid";
-import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
-import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
-import type { FlowchartEditorHandle } from "./FlowchartEditor";
+} from "@delpi/plugin-ui";
+import type { FlowchartEditorHandle } from "@delpi/plugin-ui";
+import type { MergedRevisaoDiagram } from "../../types/diagram";
 
 const FlowchartEditor = lazy(() =>
-  import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
+  import("./TransformometroFlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
 );
 
 type Props = Pick<AppProps, "getAccessToken"> & {

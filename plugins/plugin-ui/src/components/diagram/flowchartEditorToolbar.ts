@@ -40,7 +40,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import type { FlowchartEditorLabels } from "./types/flowchartEditorLabels";
 import {
   BPMN_NODE_DEFINITIONS,
   BPMN_PALETTE_CATEGORIES,
@@ -48,9 +48,7 @@ import {
   type BpmnMarker,
   type BpmnPaletteCategoryId,
   type FlowchartNodeType,
-} from "../../types/bpmnNodeCatalog";
-
-const D = TM_HELP_TOOLTIPS.diagramEditor;
+} from "./types/bpmnNodeCatalog";
 
 const MARKER_ICONS: Partial<Record<BpmnMarker, LucideIcon>> = {
   message: Mail,
@@ -114,8 +112,8 @@ export const FLOWCHART_NODE_ICONS: Record<FlowchartNodeType, LucideIcon> = Objec
   })
 ) as Record<FlowchartNodeType, LucideIcon>;
 
-export function flowchartNodeHint(type: FlowchartNodeType): string {
-  return BPMN_NODE_DEFINITIONS[type]?.hint ?? D.nodes.process;
+export function flowchartNodeHint(type: FlowchartNodeType, labels: FlowchartEditorLabels): string {
+  return labels.nodeHints[type] ?? BPMN_NODE_DEFINITIONS[type]?.label ?? "";
 }
 
 export type FlowchartElementGroupTab =
@@ -127,21 +125,13 @@ export type FlowchartElementGroupTab =
   | "boundary"
   | "lanes";
 
-export const FLOWCHART_ELEMENT_GROUP_TABS: Array<{ id: FlowchartElementGroupTab; label: string }> = [
-  { id: "events", label: "Eventos" },
-  { id: "gateways", label: "Desvios" },
-  { id: "tasks", label: "Tarefas" },
-  { id: "activities", label: "Atividades" },
-  { id: "artifacts", label: "Artefatos" },
-  { id: "boundary", label: "Borda" },
-  { id: "lanes", label: "Faixas" },
-];
+export function flowchartElementGroupTabs(labels: FlowchartEditorLabels) {
+  return labels.elementGroupTabs as Array<{ id: FlowchartElementGroupTab; label: string }>;
+}
 
-export const FLOWCHART_EVENT_SUB_TABS: Array<{ id: BpmnPaletteCategoryId; label: string }> = [
-  { id: "events_start", label: "Início" },
-  { id: "events_intermediate", label: "Intermediários" },
-  { id: "events_end", label: "Fim" },
-];
+export function flowchartEventSubTabs(labels: FlowchartEditorLabels) {
+  return labels.eventSubTabs as Array<{ id: BpmnPaletteCategoryId; label: string }>;
+}
 
 export function resolvePaletteCategory(
   group: FlowchartElementGroupTab,
@@ -154,51 +144,41 @@ export function resolvePaletteCategory(
 
 export { BPMN_PALETTE_CATEGORIES, paletteByCategory };
 
-export const DIAGRAM_EDITOR_ACTIONS = [
-  {
-    id: "addLane",
-    label: "Faixa",
-    icon: Plus,
-    hint: D.addLane,
-  },
-  {
-    id: "autoLayout",
-    label: "Layout automático",
-    icon: Wand2,
-    hint: D.autoLayout,
-  },
-  {
-    id: "templateLinear",
-    label: "Modelo linear",
-    icon: Rows3,
-    hint: D.templateLinear,
-  },
-  {
-    id: "templateDecision",
-    label: "Modelo decisão",
-    icon: GitBranch,
-    hint: D.templateDecision,
-  },
-  {
-    id: "templateSwimlanes",
-    label: "Modelo BPMN com faixas",
-    icon: Layers,
-    hint: D.templateSwimlanes,
-  },
-] as const;
+export type DiagramEditorAction = {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  hint: string;
+};
 
-export const DIAGRAM_EDITOR_ADD_LANE_ACTION = DIAGRAM_EDITOR_ACTIONS[0];
-export const DIAGRAM_EDITOR_LAYOUT_ACTIONS = DIAGRAM_EDITOR_ACTIONS.slice(1);
+export function createDiagramEditorActions(labels: FlowchartEditorLabels): DiagramEditorAction[] {
+  return [
+    { id: "addLane", label: labels.editorActions.find((a) => a.id === "addLane")?.label ?? "Lane", icon: Plus, hint: labels.addLane },
+    { id: "autoLayout", label: labels.editorActions.find((a) => a.id === "autoLayout")?.label ?? "Auto layout", icon: Wand2, hint: labels.autoLayout },
+    { id: "templateLinear", label: labels.editorActions.find((a) => a.id === "templateLinear")?.label ?? "Linear", icon: Rows3, hint: labels.templateLinear },
+    { id: "templateDecision", label: labels.editorActions.find((a) => a.id === "templateDecision")?.label ?? "Decision", icon: GitBranch, hint: labels.templateDecision },
+    { id: "templateSwimlanes", label: labels.editorActions.find((a) => a.id === "templateSwimlanes")?.label ?? "Swimlanes", icon: Layers, hint: labels.templateSwimlanes },
+  ];
+}
 
-export const DIAGRAM_EDITOR_SELECTION_ACTIONS = [
-  { id: "delete", label: "Excluir", icon: Trash2, hint: D.selectionDelete },
-  { id: "copy", label: "Copiar", icon: Copy, hint: D.selectionCopy },
-  { id: "paste", label: "Colar", icon: ClipboardPaste, hint: D.selectionPaste },
-  { id: "duplicate", label: "Duplicar", icon: CopyPlus, hint: D.selectionDuplicate },
-  {
-    id: "cycleEdgeKind",
-    label: "Tipo de conexão",
-    icon: GitCompareArrows,
-    hint: D.selectionEdgeKind,
-  },
-] as const;
+export function createDiagramEditorSelectionActions(labels: FlowchartEditorLabels): DiagramEditorAction[] {
+  const iconById: Record<string, LucideIcon> = {
+    delete: Trash2,
+    copy: Copy,
+    paste: ClipboardPaste,
+    duplicate: CopyPlus,
+    cycleEdgeKind: GitCompareArrows,
+  };
+  return labels.selectionActions.map((action) => ({
+    ...action,
+    icon: iconById[action.id] ?? Trash2,
+  }));
+}
+
+export function diagramEditorAddLaneAction(labels: FlowchartEditorLabels) {
+  return createDiagramEditorActions(labels)[0];
+}
+
+export function diagramEditorLayoutActions(labels: FlowchartEditorLabels) {
+  return createDiagramEditorActions(labels).slice(1);
+}

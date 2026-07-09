@@ -120,6 +120,20 @@ Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (impo
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
+## Status — Fase 6 (diagrama / flowchart)
+
+| Plugin | Arquivos locais removidos | Status | Notas |
+|--------|---------------------------|--------|-------|
+| `transformometro` | `components/diagram/FlowchartEditor*`, utils `diagram*`, `flowchartMermaid`, `exportFlowchartImage`, `types/bpmnNodeCatalog` | ✅ Migrado | Wrapper `TransformometroFlowchartEditor` + `content/flowchartEditorLabels.ts` |
+
+Pacote: `plugin-ui/src/components/diagram/` + `styles/diagram.css`.
+
+Após migração:
+- [x] Wrapper fino com `labels`, `confirm`, `colorMode`, `shellClassName`
+- [x] Reexport de tipos de API em `transformometro/src/types/diagram.ts`
+- [x] `npm run build` transformometro + testes plugin-ui diagram
+- [ ] Remover bloco CSS duplicado `tm-diagram-*` de `transformometro/src/index.css` (opcional — alias mantém compatibilidade)
+
 ## Status — Fase 2 (shell de dashboard)
 
 | Plugin | Pagination | MultiSelect | FiltersRow | ChartCard | KpiCard | LoadingActivity | Notas |

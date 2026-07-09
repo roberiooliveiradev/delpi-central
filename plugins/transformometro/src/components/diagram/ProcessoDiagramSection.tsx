@@ -12,15 +12,12 @@ import {
   validateProcessoDiagrama,
   type DiagramValidationReport,
 } from "../../data/api/transformometroDiagramApi";
-import { emptyFlowchart, type FlowchartV1 } from "../../types/diagram";
-import { flowchartToMermaid } from "../../utils/flowchartMermaid";
-import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
+import { emptyFlowchart, type FlowchartV1, flowchartToMermaid, DiagramMermaidPreview, DiagramFullscreenFrame } from "@delpi/plugin-ui";
+import type { FlowchartEditorHandle } from "@delpi/plugin-ui";
 import { DiagramValidationPanel } from "./DiagramValidationPanel";
-import { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
-import type { FlowchartEditorHandle } from "./FlowchartEditor";
 
 const FlowchartEditor = lazy(() =>
-  import("./FlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
+  import("./TransformometroFlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
 );
 
 type Props = Pick<AppProps, "getAccessToken"> & {

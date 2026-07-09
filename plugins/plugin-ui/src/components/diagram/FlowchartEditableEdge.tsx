@@ -9,11 +9,11 @@ import {
   type EdgeProps,
 } from "@xyflow/react";
 
-import type { FlowchartEdgeKind } from "../../types/diagram";
+import type { FlowchartEdgeKind } from "./types/diagram";
 import {
   adjustEdgeLabelPosition,
   computeEdgePathOffsets,
-} from "../../utils/diagramEdgeRouting";
+} from "./utils/diagramEdgeRouting";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
 export type FlowchartEdgeData = {

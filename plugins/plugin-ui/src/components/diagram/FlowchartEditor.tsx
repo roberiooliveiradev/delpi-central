@@ -26,15 +26,16 @@ import {
   type Ref,
 } from "react";
 
-import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
-import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { HelpTooltip } from "@delpi/plugin-ui";
-import { useConfirm } from "../ui/ConfirmDialogProvider";
-import { TabPanelTransition } from "../TabPanelTransition";
+import { useDelpiDarkMode } from "./hooks/useDelpiDarkMode";
+import { HelpTooltip } from "../help/HelpTooltip";
+import type { ConfirmDialogOptions } from "../feedback/useConfirmDialog";
+import { TabPanelTransition } from "./TabPanelTransition";
 import {
-  DIAGRAM_EDITOR_ACTIONS,
-  DIAGRAM_EDITOR_SELECTION_ACTIONS,
+  createDiagramEditorSelectionActions,
+  type DiagramEditorAction,
 } from "./flowchartEditorToolbar";
+import { flowchartEditorShellClassName } from "./diagramShellClasses";
+import type { FlowchartEditorLabels } from "./types/flowchartEditorLabels";
 import {
   autoLayoutFlowchart,
   canvasHeightForLanes,
@@ -51,8 +52,8 @@ import {
   resolveNodeLaneId,
   snapNodeToLane,
   withNormalizedLanes,
-} from "../../utils/diagramSwimlanes";
-import { diagramLaneToneClass } from "../../utils/diagramLaneColors";
+} from "./utils/diagramSwimlanes";
+import { diagramLaneToneClass } from "./utils/diagramLaneColors";
 import {
   FLOWCHART_NODE_PALETTE,
   applyDecisionTemplate,
@@ -64,9 +65,9 @@ import {
   type FlowchartEdgeKind,
   type FlowchartNode,
   type FlowchartV1,
-} from "../../types/diagram";
-import { isManualTaskType } from "../../types/bpmnNodeCatalog";
-import type { FlowchartNodeType } from "../../types/bpmnNodeCatalog";
+} from "./types/diagram";
+import { isManualTaskType } from "./types/bpmnNodeCatalog";
+import type { FlowchartNodeType } from "./types/bpmnNodeCatalog";
 import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
 import { FlowchartSwimlaneBackdrop } from "./FlowchartSwimlaneBackdrop";
@@ -83,13 +84,13 @@ import {
   flowchartToMermaid,
   mermaidToFlowchart,
   MermaidImportError,
-} from "../../utils/flowchartMermaid";
-import { resolveConnectionHandleIds } from "../../utils/diagramConnectionHandles";
-import { exportReactFlowDiagramPng } from "../../utils/exportFlowchartImage";
+} from "./utils/flowchartMermaid";
+import { resolveConnectionHandleIds } from "./utils/diagramConnectionHandles";
+import { exportReactFlowDiagramPng } from "./utils/exportFlowchartImage";
 import {
   DIAGRAM_FIT_VIEW_OPTIONS,
   getDiagramFitNodes,
-} from "../../utils/diagramViewFit";
+} from "./utils/diagramViewFit";
 
 export type FlowchartEditorHandle = {
   exportPng: (filename: string) => Promise<string>;
@@ -99,6 +100,10 @@ type FlowchartEditorProps = {
   value: FlowchartV1;
   onChange?: (next: FlowchartV1) => void;
   readOnly?: boolean;
+  labels: FlowchartEditorLabels;
+  confirm?: (options: ConfirmDialogOptions) => Promise<boolean>;
+  colorMode?: "light" | "dark";
+  shellClassName?: string;
   scopeNodeIds?: Set<string> | null;
   selectedScopeIds?: Set<string>;
   onToggleScopeNode?: (nodeId: string) => void;
@@ -340,6 +345,10 @@ function FlowchartEditorInner({
   value,
   onChange,
   readOnly = false,
+  labels,
+  confirm,
+  colorMode,
+  shellClassName,
   scopeNodeIds,
   selectedScopeIds,
   onToggleScopeNode,
@@ -350,7 +359,10 @@ function FlowchartEditorInner({
 }: FlowchartEditorProps & {
   editorRef?: Ref<FlowchartEditorHandle>;
 }) {
-  const confirm = useConfirm();
+  const isDarkFromHook = useDelpiDarkMode();
+  const isDark = colorMode ? colorMode === "dark" : isDarkFromHook;
+  const reactFlowColorMode = isDark ? "dark" : "light";
+  const selectionActions = useMemo(() => createDiagramEditorSelectionActions(labels), [labels]);
   const lanes = useMemo(() => normalizeLanes(value.lanes), [value.lanes]);
   const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
 
@@ -429,8 +441,6 @@ function FlowchartEditorInner({
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const canvasInitialFitRef = useRef(false);
   const lastFitSignatureRef = useRef("");
-  const isDark = useTransformometroDarkMode();
-  const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
   const { fitView, getNodes, getEdges } = useReactFlow();
 
@@ -445,11 +455,11 @@ function FlowchartEditorInner({
     () => ({
       exportPng: async (filename: string) => {
         if (activeTab !== "canvas") {
-          throw new Error("Abra a aba Desenho antes de exportar o PNG.");
+          throw new Error(labels.exportOpenCanvasTab);
         }
         const canvasRoot = canvasWrapperRef.current;
         if (!canvasRoot) {
-          throw new Error("Canvas do diagrama indisponível.");
+          throw new Error(labels.exportCanvasMissing);
         }
         return exportReactFlowDiagramPng({
           canvasRoot,
@@ -458,7 +468,7 @@ function FlowchartEditorInner({
         });
       },
     }),
-    [activeTab, getNodes]
+    [activeTab, getNodes, labels]
   );
   const canvasHeight = Math.max(
     canvasHeightForLanes(lanes, lanes.length ? 380 : DEFAULT_CANVAS_HEIGHT),
@@ -933,20 +943,22 @@ function FlowchartEditorInner({
     if (readOnly || !activeLaneId || !lanes.length) return false;
     const lane = lanes.find((item) => item.id === activeLaneId);
     const isLastLane = lanes.length === 1;
-    const confirmed = await confirm({
-      title: "Remover faixa",
-      message: isLastLane
-        ? `Remover a faixa «${lane?.label ?? "Faixa"}»? O diagrama volta ao desenho simples, sem faixas.`
-        : `Remover a faixa «${lane?.label ?? "Faixa"}»? Os nós serão realocados na faixa restante.`,
-      confirmLabel: "Remover",
-      variant: "danger",
-    });
+    const confirmed = confirm
+      ? await confirm({
+          title: labels.confirmDeleteLane.title,
+          message: isLastLane
+            ? `Remover a faixa «${lane?.label ?? labels.emptyLaneFallback}»? O diagrama volta ao desenho simples, sem faixas.`
+            : `Remover a faixa «${lane?.label ?? labels.emptyLaneFallback}»? Os nós serão realocados na faixa restante.`,
+          confirmLabel: labels.confirmDeleteLane.confirmLabel,
+          variant: "danger",
+        })
+      : true;
     if (!confirmed) return false;
     const next = removeLane(value, activeLaneId);
     onChange?.(next);
     setActiveLaneId(normalizeLanes(next.lanes)[0]?.id);
     return true;
-  }, [activeLaneId, confirm, lanes, onChange, readOnly, value]);
+  }, [activeLaneId, confirm, labels, lanes, onChange, readOnly, value]);
 
   const runAutoLayout = () => {
     if (readOnly) return;
@@ -1208,7 +1220,7 @@ function FlowchartEditorInner({
     });
   }, [emitChange, getSelectionSnapshot, readOnly, setEdges, setNodes]);
 
-  const runSelectionAction = (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => {
+  const runSelectionAction = (actionId: DiagramEditorAction["id"]) => {
     if (actionId === "delete") void deleteSelection();
     else if (actionId === "copy") copySelection();
     else if (actionId === "paste") pasteSelection();
@@ -1217,7 +1229,7 @@ function FlowchartEditorInner({
   };
 
   const isSelectionActionDisabled = (
-    actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]
+    actionId: DiagramEditorAction["id"]
   ) => {
     if (actionId === "delete") return !hasSelection;
     if (actionId === "paste") return !clipboardReady;
@@ -1228,7 +1240,7 @@ function FlowchartEditorInner({
     return false;
   };
 
-  const runEditorAction = (actionId: (typeof DIAGRAM_EDITOR_ACTIONS)[number]["id"]) => {
+  const runEditorAction = (actionId: DiagramEditorAction["id"]) => {
     if (actionId === "addLane") addLane();
     else if (actionId === "autoLayout") runAutoLayout();
     else if (actionId === "templateLinear") applyTemplate("linear");
@@ -1239,6 +1251,7 @@ function FlowchartEditorInner({
   return (
     <div
       className={[
+        flowchartEditorShellClassName(shellClassName),
         "tm-diagram-editor",
         layout === "fill" ? "tm-diagram-editor--fill" : "",
         "tm-diagram-editor--overlay-tools",
@@ -1254,6 +1267,7 @@ function FlowchartEditorInner({
           >
             {!readOnly && showTemplates ? (
               <FlowchartEditorToolbar
+                labels={labels}
                 toolbarTab={toolbarTab}
                 onToolbarTabChange={setToolbarTab}
                 lanes={lanes}
@@ -1266,6 +1280,8 @@ function FlowchartEditorInner({
 
             {!readOnly ? (
               <FlowchartEditorActionDock
+                labels={labels}
+                selectionActions={selectionActions}
                 clipboardReady={clipboardReady}
                 onSelectionAction={runSelectionAction}
                 isSelectionActionDisabled={isSelectionActionDisabled}
@@ -1278,7 +1294,7 @@ function FlowchartEditorInner({
             {showPreviewTab ? (
               <div className="tm-diagram-editor__view-tabs tm-diagram-editor__view-tabs--overlay">
                 <HelpTooltip
-                  content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
+                  content={labels.canvasTab}
                   ariaLabel="Ajuda: Desenho"
                   wrap
                   placement="bottom"
@@ -1293,11 +1309,11 @@ function FlowchartEditorInner({
                     }
                     onClick={() => setActiveTab("canvas")}
                   >
-                    Desenho
+                    {labels.canvasTabLabel}
                   </button>
                 </HelpTooltip>
                 <HelpTooltip
-                  content={TM_HELP_TOOLTIPS.diagramEditor.mermaidTab}
+                  content={labels.mermaidTab}
                   ariaLabel="Ajuda: Preview Mermaid"
                   wrap
                   placement="bottom"
@@ -1308,7 +1324,7 @@ function FlowchartEditorInner({
                     className="tm-diagram-editor__tab"
                     onClick={() => switchToMermaidTab()}
                   >
-                    Mermaid
+                    {labels.mermaidTabLabel}
                   </button>
                 </HelpTooltip>
               </div>
@@ -1331,7 +1347,7 @@ function FlowchartEditorInner({
                 edges={edges}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
-                colorMode={colorMode}
+                colorMode={reactFlowColorMode}
                 defaultEdgeOptions={{
                   type: "flowchart",
                   labelStyle: { fontSize: 11, fontWeight: 600 },
@@ -1378,7 +1394,7 @@ function FlowchartEditorInner({
             {showPreviewTab ? (
               <div className="tm-diagram-editor__view-tabs">
                 <HelpTooltip
-                  content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
+                  content={labels.canvasTab}
                   ariaLabel="Ajuda: Desenho"
                   wrap
                   placement="bottom"
@@ -1389,11 +1405,11 @@ function FlowchartEditorInner({
                     className="tm-diagram-editor__tab"
                     onClick={() => setActiveTab("canvas")}
                   >
-                    Desenho
+                    {labels.canvasTabLabel}
                   </button>
                 </HelpTooltip>
                 <HelpTooltip
-                  content={TM_HELP_TOOLTIPS.diagramEditor.mermaidTab}
+                  content={labels.mermaidTab}
                   ariaLabel="Ajuda: Preview Mermaid"
                   wrap
                   placement="bottom"
@@ -1408,12 +1424,13 @@ function FlowchartEditorInner({
                     }
                     onClick={() => switchToMermaidTab()}
                   >
-                    Mermaid
+                    {labels.mermaidTabLabel}
                   </button>
                 </HelpTooltip>
               </div>
             ) : null}
             <FlowchartMermaidPanel
+              labels={labels}
               draft={mermaidDraft}
               onDraftChange={setMermaidDraft}
               onApply={applyMermaidDraft}
@@ -1424,6 +1441,7 @@ function FlowchartEditorInner({
               applyError={mermaidApplyError}
               applying={mermaidApplying}
               isEmpty={!value.nodes.length}
+              isDark={isDark}
             />
           </>
         )}

@@ -38,7 +38,7 @@ import {
   getBpmnNodeDefinition,
   type BpmnMarker,
   type FlowchartNodeType,
-} from "../../types/bpmnNodeCatalog";
+} from "./types/bpmnNodeCatalog";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
 export type BpmnNodeData = {

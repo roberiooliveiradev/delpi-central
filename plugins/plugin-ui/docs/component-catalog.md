@@ -200,6 +200,67 @@ Helpers: `statusBadgeBemClasses(prefix)`, `createDashboardStatusBadge({ prefix }
 
 Consumidor piloto: `strategic-indicators` (`StatusBadge.tsx`).
 
+---
+
+## Família `diagram` — editor de fluxograma BPMN / swimlanes
+
+Editor React Flow headless com faixas, paleta BPMN, import/export Mermaid e exportação PNG. **Textos PT-BR** vêm do plugin via `FlowchartEditorLabels` — o pacote não hardcodeia rótulos.
+
+Peer opcionais: `@xyflow/react`, `mermaid`, `html-to-image`.
+
+Importar estilos: `import "@delpi/plugin-ui/styles.css"` (inclui `diagram.css`).
+
+### `FlowchartEditor`
+
+Componente principal (requer `ReactFlowProvider` interno). Props principais:
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `value` / `onChange` | `FlowchartV1` | Estado do diagrama |
+| `labels` | `FlowchartEditorLabels` | Textos e aria labels (obrigatório) |
+| `readOnly` | `boolean?` | Modo somente leitura |
+| `confirm` | `ConfirmDialogOptions?` | Diálogos de confirmação (ex.: remover faixa) |
+| `colorMode` | `"light" \| "dark"?` | Tema Mermaid / canvas |
+| `shellClassName` | `string?` | Classe do dashboard para tokens CSS (ex.: `dashboard-transformometro`) |
+
+Ref: `FlowchartEditorHandle` (`fitView`, `exportPng`, etc.).
+
+### Subcomponentes e utilitários
+
+| Export | Uso |
+|--------|-----|
+| `DiagramMermaidPreview` | Prévia Mermaid read-only |
+| `DiagramFullscreenFrame` | Shell fullscreen |
+| `DiagramLayoutProvider` / `useDiagramEditorLayout` | Layout fill vs. embedded |
+| `flowchartToMermaid` / `mermaidToFlowchart` | Conversão bidirecional |
+| `exportReactFlowDiagramPng` | Export PNG com faixas |
+| `getDiagramFitNodes` / `getDiagramExportNodes` | Fit view e bounds de export |
+| `emptyFlowchart`, templates, catálogo BPMN | Tipos e helpers em `./types/diagram` |
+
+Classes shell: `flowchartEditorShellClassName()`, `FLOWCHART_EDITOR_ROOT_CLASS` (`tm-diagram-editor`). Alias de escopo: `.delpi-ui-flowchart-shell, .dashboard-transformometro`.
+
+### Padrão de integração no plugin
+
+Wrapper fino injeta labels, confirm e tema:
+
+```tsx
+// transformometro/src/components/diagram/TransformometroFlowchartEditor.tsx
+import { FlowchartEditor as BaseFlowchartEditor } from "@delpi/plugin-ui";
+import { TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS } from "../../content/flowchartEditorLabels";
+
+<BaseFlowchartEditor
+  labels={TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS}
+  confirm={confirm}
+  colorMode={isDark ? "dark" : "light"}
+  shellClassName="dashboard-transformometro"
+  {...props}
+/>
+```
+
+Consumidor piloto: `transformometro` (Processo, Revisão, Instância).
+
+---
+
 ### `SectionBlock`
 
 Seção com cabeçalho (título, descrição, slot `aside`) e corpo. Útil em dashboards e painéis admin.
@@ -500,7 +561,7 @@ Plugins migrados: `quality-action-plans`, `minha-delpi-chat`, `transformometro`,
 | `dashboard-engineering` | `HelpTooltip`, `FieldLabel` |
 | `customer-experience` | `LucideIconPicker`, `LucideIconByName` |
 | `public-hub` | `LucideIconByName` |
-| `transformometro` (S3+) | `ImpactEffortMatrix`, `ImpactEffortMatrixLegend`, `FilePreviewView` |
+| `transformometro` (S3+) | `ImpactEffortMatrix`, `ImpactEffortMatrixLegend`, `FilePreviewView`, **`FlowchartEditor`** (via wrapper) |
 | `quality-action-plans` | `FilePreviewView`, `useFilePreviewLoader`, `resolveFilePreviewKind` |
 | `minha-delpi-chat` | `FilePreviewView`, `useFilePreviewLoader`, `resolveFilePreviewKind` |
 | `cadastro-kaizen` | `FilePreviewModal`, `resolveFilePreviewKind` |

@@ -1,0 +1,2274 @@
+/* Flowchart editor — @delpi/plugin-ui */
+
+  --tm-diagram-canvas-bg: var(--ds-surface-inset);
+  --tm-diagram-dot-color: color-mix(in srgb, var(--ds-text) 22%, transparent);
+  --tm-diagram-edge-color: color-mix(in srgb, var(--ds-text) 38%, transparent);
+  --tm-diagram-minimap-bg: var(--ds-card-bg);
+  --tm-diagram-minimap-node: color-mix(in srgb, var(--ds-accent) 28%, var(--ds-card-bg));
+  --tm-diagram-controls-bg: var(--ds-card-bg);
+  --tm-diagram-controls-border: var(--ds-card-border);
+
+  --tm-diagram-canvas-bg: color-mix(in srgb, var(--ds-card-bg) 82%, black 18%);
+  --tm-diagram-dot-color: rgba(255, 255, 255, 0.16);
+  --tm-diagram-edge-color: rgba(255, 255, 255, 0.42);
+  --tm-diagram-minimap-bg: color-mix(in srgb, var(--ds-card-bg) 90%, black);
+  --tm-diagram-minimap-node: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-bg));
+  --tm-diagram-controls-bg: color-mix(in srgb, var(--ds-card-bg) 92%, black);
+  --tm-diagram-controls-border: rgba(255, 255, 255, 0.12);
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-section__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--ds-font-sm);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-section__actions .ds-primary-btn,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-section__actions .ds-ghost-btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: var(--ds-font-xs);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-section__preview {
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  padding: 8px 12px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace--embedded {
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace--embedded .tm-diagram-workspace__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+/* Modal de confirmação — padrão action plans (PAC) */
+.dashboard-transformometro.ds-modal-overlay,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--ds-text) 52%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-modal {
+  width: min(480px, 100%);
+  max-height: min(88vh, 640px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ds-card-radius);
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-card-bg);
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--ds-text) 28%, transparent);
+  color: var(--ds-text);
+  animation: tm-diagram-modal-in 0.18s ease-out;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-modal__title {
+  margin: 0;
+  font-size: var(--ds-font-md, 16px);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-modal__body {
+  padding: 16px 18px 18px;
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-modal__close {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  justify-content: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-confirm-modal__message {
+  margin: 0 0 1.25rem;
+  font-size: var(--ds-font-sm, 14px);
+  line-height: 1.55;
+  color: var(--ds-text);
+  white-space: pre-line;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-form-actions--end {
+  justify-content: flex-end;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-danger-btn {
+  min-height: var(--ds-control-height);
+  border-radius: var(--ds-control-radius);
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--ds-danger-fg) 55%, transparent);
+  background: color-mix(in srgb, var(--ds-danger-fg) 88%, #000 12%);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .ds-danger-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Modal tela cheia — diagrama */
+.dashboard-transformometro.tm-diagram-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10090;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--ds-text) 52%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(1440px, 100%);
+  max-width: 100%;
+  height: min(920px, calc(100vh - 32px));
+  max-height: calc(100vh - 32px);
+  background: var(--ds-page-bg);
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-card-radius);
+  box-shadow:
+    0 24px 64px color-mix(in srgb, var(--ds-text) 28%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--ds-card-border) 80%, transparent);
+  overflow: hidden;
+  animation: tm-diagram-modal-in 0.18s ease-out;
+}
+
+@keyframes tm-diagram-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__title {
+  margin: 0;
+  font-size: var(--ds-font-lg, 18px);
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__subtitle {
+  margin: 4px 0 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__close-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 16px 16px;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__body .tm-diagram-editor--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__body .tm-diagram-editor--fill .tm-diagram-editor__canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__body .tm-diagram-validation,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__body .tm-diagram-section__preview {
+  flex-shrink: 0;
+  max-height: min(28vh, 240px);
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__body .tm-diagram-section__actions {
+  position: static;
+  flex-shrink: 0;
+  z-index: 1;
+  padding-top: 12px;
+  border-top: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: var(--ds-page-bg);
+}
+
+@media (max-width: 720px) {
+  .dashboard-transformometro.tm-diagram-modal {
+    padding: 0;
+  }
+
+  .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__panel {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__close {
+    display: none;
+  }
+
+  .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-modal__close-icon {
+    display: inline-flex;
+  }
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Legado — mantido para referência interna */
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: var(--ds-page-bg);
+  padding: 12px 16px 16px;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ds-border-subtle);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace__title {
+  margin: 0;
+  font-size: var(--ds-font-lg);
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace__subtitle {
+  margin: 4px 0 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace__expand-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace__expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace--fullscreen .tm-diagram-workspace__body {
+  flex: 1;
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace--fullscreen .tm-diagram-section__actions {
+  position: static;
+  flex-shrink: 0;
+  z-index: 1;
+  padding-top: 12px;
+  border-top: 1px solid var(--ds-border-subtle);
+  background: var(--ds-page-bg);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--overlay-tools {
+  gap: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__stage {
+  position: relative;
+  min-height: 680px;
+  border-radius: var(--ds-radius-md);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 56px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: calc(100% - 72px);
+  pointer-events: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-overlay > * {
+  pointer-events: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-tab {
+  border: none;
+  background: transparent;
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 8px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-tab.is-active {
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tool-btn--active:not(:disabled) {
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-help {
+  border: none;
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-panel {
+  padding: 6px 8px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  max-height: min(168px, 24vh);
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette-subtabs--compact {
+  padding-left: 2px;
+  margin-bottom: 6px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette-subtab {
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--ds-surface-muted) 70%, transparent);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette-subtab.is-active {
+  color: var(--ds-text);
+  border-color: var(--ds-accent);
+  background: var(--ds-accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-accent) 35%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette-subtabs--compact .tm-diagram-editor__palette-subtab {
+  font-size: 9px;
+  padding: 2px 7px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(340px, 48vh);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette-group-title {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__templates,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__actions {
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__view-tabs--overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-label {
+  position: absolute;
+  right: calc(100% + 8px);
+  padding: 5px 10px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 96%, var(--ds-accent));
+  box-shadow: 0 8px 22px color-mix(in srgb, #000 18%, transparent);
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  color: var(--ds-text);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-item:hover .tm-diagram-editor__action-dock-label,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-item:focus-within .tm-diagram-editor__action-dock-label {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  border-radius: var(--ds-radius-md);
+  background: color-mix(in srgb, var(--ds-card-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--ds-text);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-btn:hover:not(:disabled) {
+  background: var(--ds-surface-muted);
+  border-color: var(--ds-card-border);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-btn:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__action-dock-btn--active:not(:disabled) {
+  background: var(--ds-accent-soft);
+  border-color: var(--ds-accent);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__minimap {
+  right: 52px;
+  bottom: 12px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas {
+  height: 100%;
+  min-height: 680px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__minimap {
+  bottom: 12px;
+  right: 52px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__controls {
+  bottom: 12px;
+  left: 12px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas--readonly .react-flow__handle,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas--readonly .tm-diagram-node__handle {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas--readonly
+  .react-flow__node:not(.react-flow__node-lane) {
+  pointer-events: none;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas--readonly
+  .react-flow__node.selected
+  .tm-diagram-node,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas--readonly
+  .react-flow__node.selected
+  .tm-diagram-node-wrap
+  .tm-diagram-node,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas--readonly
+  .react-flow__node-lane.selected
+  .tm-diagram-lane__header,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas--readonly
+  .tm-diagram-lane--selected
+  .tm-diagram-lane__header {
+  box-shadow: none !important;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas--readonly
+  .react-flow__edge.selected
+  .react-flow__edge-path {
+  stroke-width: inherit !important;
+  filter: none !important;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor:not(.tm-diagram-editor--exporting)
+  .tm-diagram-edge-label__export-only {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-edge-label,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-edge-label--editor {
+  display: none !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-edge-label__export-only {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__handle,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-node__handle {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__background {
+  display: none !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__controls,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__minimap,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__action-dock,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__view-tabs,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__toolbar-overlay {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__edge-path {
+  stroke: rgba(71, 85, 105, 0.92) !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__node.selected .tm-diagram-node,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__edge.selected .react-flow__edge-path {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--fill .tm-tab-panel-transition {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__canvas {
+  flex: 1 1 auto;
+  min-height: min(620px, 58vh);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace--embedded .tm-diagram-editor--fill .tm-diagram-editor__canvas {
+  min-height: min(620px, 58vh);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar--compact {
+  gap: 4px 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  border-radius: var(--ds-radius-md);
+  background: color-mix(in srgb, var(--ds-card-bg) 94%, var(--ds-accent) 6%);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar--compact .tm-diagram-editor__actions-row {
+  flex-basis: auto;
+  padding-top: 0;
+  border-top: none;
+  margin-left: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar--compact .tm-diagram-editor__hint {
+  margin-left: auto;
+  font-size: var(--ds-font-xs);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-workspace--fullscreen .tm-diagram-editor--fill .tm-diagram-editor__canvas {
+  min-height: min(72vh, 900px);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__palette,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__templates,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__section-label {
+  font-size: var(--ds-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-muted);
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex-basis: 100%;
+  padding-top: 4px;
+  border-top: 1px solid var(--ds-border-subtle);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tool-wrap {
+  border-bottom: none;
+  cursor: default;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ds-font-xs);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tool-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__hint-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ds-accent);
+  font-weight: 600;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__hint-wrap {
+  border-bottom: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tab-wrap {
+  border-bottom: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tab {
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-surface-muted);
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 10px;
+  font-size: var(--ds-font-xs);
+  color: var(--ds-text);
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__tab.is-active {
+  background: var(--ds-accent-soft);
+  border-color: var(--ds-accent);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas {
+  height: 680px;
+  min-height: 680px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  overflow: hidden;
+  background: var(--tm-diagram-canvas-bg);
+  position: relative;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  background-color: var(--tm-diagram-canvas-bg);
+  --xy-background-color: var(--tm-diagram-canvas-bg);
+  --xy-background-pattern-dots-color: var(--tm-diagram-dot-color);
+  --xy-background-pattern-lines-color: var(--tm-diagram-dot-color);
+  --xy-edge-stroke-default: var(--tm-diagram-edge-color);
+  --xy-edge-stroke-selected-default: var(--ds-accent);
+  --xy-connectionline-stroke-default: var(--tm-diagram-edge-color);
+  --xy-minimap-background-color: var(--tm-diagram-minimap-bg);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--tm-diagram-canvas-bg) 55%, transparent);
+  --xy-minimap-node-background-color: var(--tm-diagram-minimap-node);
+  --xy-minimap-node-stroke-color: var(--ds-card-border);
+  --xy-controls-button-background-color: var(--tm-diagram-controls-bg);
+  --xy-controls-button-background-color-hover-default: var(--ds-surface-muted);
+  --xy-controls-button-border-color-default: var(--tm-diagram-controls-border);
+  --xy-controls-button-color-default: var(--ds-text);
+  --xy-controls-button-color-hover-default: var(--ds-text);
+  --xy-controls-box-shadow-default: 0 0 0 1px var(--tm-diagram-controls-border);
+  --xy-edge-label-background-color: var(--ds-card-bg);
+  --xy-edge-label-color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__pane,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__viewport,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__renderer {
+  background-color: transparent;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__background {
+  background-color: var(--tm-diagram-canvas-bg);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas--swimlanes .react-flow__renderer {
+  position: relative;
+  z-index: 1;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node-flowchart,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node-lane {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__handle.tm-diagram-node__handle {
+  background: var(--ds-accent);
+  z-index: 2;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__handle.tm-diagram-node__handle::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-path {
+  stroke: var(--tm-diagram-edge-color, #94a3b8);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-text {
+  fill: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-textbg {
+  fill: var(--ds-card-bg);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__mermaid-code {
+  max-height: 280px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  font-size: var(--ds-font-xs);
+  white-space: pre-wrap;
+  color: var(--ds-text);
+  background: var(--ds-surface-inset);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__mermaid-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__mermaid-panel--fill {
+  flex: 1;
+  min-height: 280px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__mermaid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__mermaid-input {
+  width: 100%;
+  min-height: 140px;
+  max-height: min(32vh, 280px);
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: var(--ds-font-xs);
+  line-height: 1.45;
+  color: var(--ds-text);
+  background: var(--ds-surface-inset);
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__mermaid-preview {
+  flex: 1;
+  min-height: 220px;
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__mermaid-preview {
+  min-height: min(40vh, 480px);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas--swimlanes {
+  min-height: 360px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__lane-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ds-font-xs);
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__lane-select .ds-select__trigger {
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: var(--ds-radius-sm);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane {
+  display: block;
+  pointer-events: none;
+  border-top: 1px solid var(--ds-card-border);
+  overflow: visible;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__band {
+  position: absolute;
+  border-top: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-sm);
+  background: color-mix(in srgb, var(--tm-diagram-canvas-bg) 88%, var(--ds-accent) 12%);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-0 {
+  background: color-mix(in srgb, #089bdb 9%, var(--tm-diagram-canvas-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-1 {
+  background: color-mix(in srgb, #8b5cf6 10%, var(--tm-diagram-canvas-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-2 {
+  background: color-mix(in srgb, #f59e0b 11%, var(--tm-diagram-canvas-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-3 {
+  background: color-mix(in srgb, #f43f5e 9%, var(--tm-diagram-canvas-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-4 {
+  background: color-mix(in srgb, #10b981 9%, var(--tm-diagram-canvas-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-swimlane-backdrop__band.tm-diagram-lane--tone-5 {
+  background: color-mix(in srgb, #0ea5e9 9%, var(--tm-diagram-canvas-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-export-swimlane-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100%;
+  padding: 8px;
+  overflow: visible;
+  background: color-mix(in srgb, var(--ds-accent) 10%, var(--ds-card-bg));
+  border-right: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-sm);
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane--tone-0 .tm-diagram-lane__header {
+  background: color-mix(in srgb, #089bdb 14%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane--tone-1 .tm-diagram-lane__header {
+  background: color-mix(in srgb, #8b5cf6 16%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane--tone-2 .tm-diagram-lane__header {
+  background: color-mix(in srgb, #f59e0b 18%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane--tone-3 .tm-diagram-lane__header {
+  background: color-mix(in srgb, #f43f5e 15%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane--tone-4 .tm-diagram-lane__header {
+  background: color-mix(in srgb, #10b981 15%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane--tone-5 .tm-diagram-lane__header {
+  background: color-mix(in srgb, #0ea5e9 15%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane__header--editable {
+  pointer-events: auto;
+  cursor: text;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane__header--selectable {
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane__header--draggable {
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane__header--draggable:active {
+  cursor: grabbing;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane__drag-handle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ds-text-muted);
+  opacity: 0.72;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane--selected .tm-diagram-lane__header,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node-lane.selected
+  .tm-diagram-lane__header {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--ds-accent) 35%, transparent),
+    0 0 14px color-mix(in srgb, var(--ds-accent) 22%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane__label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--ds-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  hyphens: auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node:not(.react-flow__node-lane) {
+  overflow: visible;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__selection {
+  background: color-mix(in srgb, var(--ds-accent) 14%, transparent);
+  border: 1px solid var(--ds-accent);
+  border-radius: var(--ds-radius-sm);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-accent) 18%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  overflow: visible;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--event {
+  width: 108px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--decision {
+  width: 108px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--box {
+  width: 168px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--data-store {
+  width: 108px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--data-store {
+  width: 72px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--comment {
+  width: 148px;
+  padding-bottom: 8px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell {
+  position: relative;
+  width: 100%;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--event {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--decision {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--box,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--comment {
+  width: 100%;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__external-label {
+  width: 100%;
+  max-width: 108px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ds-text);
+  text-align: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__external-label--below {
+  max-width: 108px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--boundary {
+  width: 88px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--data-object {
+  width: 148px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-wrap--group {
+  width: 180px;
+  min-height: 96px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--boundary {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--data-object,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node-shell--group {
+  width: 100%;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape--start {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #16a34a;
+  border-radius: 999px;
+  background: #ecfdf5;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape--start.tm-diagram-node__event-shape--marked {
+  border-width: 2px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape--end {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #dc2626;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #dc2626;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape--end.tm-diagram-node__event-shape--terminate {
+  background: #dc2626;
+  box-shadow: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape--intermediate {
+  width: 36px;
+  height: 36px;
+  border: 3px double #64748b;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape--intermediate.tm-diagram-node__event-shape--throw {
+  border-style: solid;
+  background: #f8fafc;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__event-shape--boundary {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ea580c;
+  border-radius: 999px;
+  background: #fff7ed;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: #334155;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon svg {
+  display: block;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon--start {
+  color: #15803d;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon--end {
+  color: #b91c1c;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon--end-filled {
+  color: #fff;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon--intermediate {
+  color: #475569;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon--intermediate-throw {
+  color: #c2410c;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__marker-icon--boundary {
+  color: #c2410c;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__gateway-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__gateway-glyph {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--data_object {
+  transform: skewX(-12deg);
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ds-card-border);
+  background: var(--ds-card-bg);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--data_object .tm-diagram-node__label {
+  transform: skewX(12deg);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--group {
+  min-height: 88px;
+  border: 2px dashed var(--ds-text-muted);
+  background: color-mix(in srgb, var(--ds-surface-muted) 50%, transparent);
+  border-radius: var(--ds-radius-md);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--call_activity {
+  border-width: 4px;
+  border-color: #7c3aed;
+  background: color-mix(in srgb, #ede9fe 48%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--subprocess_ad_hoc {
+  border-style: dotted;
+  border-width: 3px;
+  border-color: #9333ea;
+  background: color-mix(in srgb, #f5f3ff 40%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--subprocess_transaction {
+  border-style: double;
+  border-width: 5px;
+  border-color: #059669;
+  background: color-mix(in srgb, #d1fae5 36%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--subprocess_event {
+  border: 3px dashed #ea580c;
+  background: color-mix(in srgb, #ffedd5 40%, var(--ds-card-bg));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__start-dot {
+  display: block;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #22c55e;
+  border: 2px solid #15803d;
+  box-shadow: 0 1px 3px color-mix(in srgb, #000 20%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__end-ring {
+  display: block;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 4px solid #dc2626;
+  box-sizing: border-box;
+  background: color-mix(in srgb, #ef4444 12%, var(--ds-card-bg));
+  box-shadow: 0 1px 3px color-mix(in srgb, #000 20%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--decision,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background: #fbbf24;
+  border: 2px solid #d97706;
+  color: #78350f;
+  box-shadow: 0 1px 3px color-mix(in srgb, #000 16%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_parallel {
+  background: #7dd3fc;
+  border-color: #0284c7;
+  color: #0c4a6e;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_inclusive {
+  background: #c4b5fd;
+  border-color: #7c3aed;
+  color: #4c1d95;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_complex {
+  background: #fde68a;
+  border-color: #ca8a04;
+  color: #713f12;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_event {
+  background: #fbcfe8;
+  border-color: #db2777;
+  color: #831843;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--decision {
+  background: #fbbf24;
+  border-color: #d97706;
+  color: #78350f;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--decision,
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fbbf24 40%, transparent),
+    0 2px 8px color-mix(in srgb, #000 35%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_parallel {
+  background: #0ea5e9;
+  border-color: #38bdf8;
+  color: #082f49;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_inclusive {
+  background: #8b5cf6;
+  border-color: #c4b5fd;
+  color: #2e1065;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_complex {
+  background: #eab308;
+  border-color: #fde047;
+  color: #422006;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway_event {
+  background: #ec4899;
+  border-color: #f9a8d4;
+  color: #500724;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--decision {
+  background: #f59e0b;
+  border-color: #fbbf24;
+  color: #451a03;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__gateway-x {
+  transform: none;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--process {
+  width: 100%;
+  min-height: 68px;
+  padding: 20px 10px 10px;
+  border-radius: 14px;
+  position: relative;
+  background: color-mix(in srgb, #ecfdf5 36%, var(--ds-card-bg));
+  border-color: #059669;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__icon {
+  position: absolute;
+  top: 7px;
+  left: 9px;
+  color: #475569;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--process .tm-diagram-node__icon {
+  color: #047857;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--process .tm-diagram-node__label {
+  display: block;
+  line-height: 1.35;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--document {
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 10px 10px;
+  border-radius: 2px 10px 10px 10px;
+  position: relative;
+  background: color-mix(in srgb, #fef3c7 42%, var(--ds-card-bg));
+  border-color: #d97706;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__doc-fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(225deg, var(--ds-card-bg) 50%, #fcd34d 50%);
+  border-left: 1px solid #d97706;
+  border-bottom: 1px solid #d97706;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--data,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--data-store {
+  width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-svg {
+  display: block;
+  overflow: visible;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-body {
+  fill: color-mix(in srgb, #dbeafe 52%, var(--ds-card-bg));
+  stroke: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-edge {
+  stroke: #2563eb;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-cap {
+  fill: color-mix(in srgb, #dbeafe 72%, var(--ds-card-bg));
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-base {
+  fill: color-mix(in srgb, #93c5fd 58%, var(--ds-card-bg));
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-body {
+  fill: color-mix(in srgb, #2563eb 28%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-cap {
+  fill: color-mix(in srgb, #2563eb 36%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-base {
+  fill: color-mix(in srgb, #1d4ed8 42%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-edge,
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-cap,
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__data-store-base {
+  stroke: #60a5fa;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--subprocess {
+  width: 100%;
+  min-height: 68px;
+  padding: 18px 10px 10px;
+  border-radius: 12px;
+  position: relative;
+  border-width: 2px;
+  background: color-mix(in srgb, #ede9fe 40%, var(--ds-card-bg));
+  border-color: #7c3aed;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__subprocess-inner {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid color-mix(in srgb, #7c3aed 55%, transparent);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--comment {
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 10px 12px;
+  border-radius: 10px;
+  position: relative;
+  border-style: dashed;
+  border-width: 2px;
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-accent) 55%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__comment-tail {
+  position: absolute;
+  left: 12px;
+  bottom: -7px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid color-mix(in srgb, var(--ds-accent) 55%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__shape-icon {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  color: #6d28d9;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__shape-icon--call {
+  color: #6d28d9;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__shape-icon--ad-hoc {
+  color: #9333ea;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__shape-icon--transaction {
+  color: #047857;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__shape-icon--event-sub {
+  color: #c2410c;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__shape-icon--subprocess {
+  color: #7c3aed;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--document .tm-diagram-node__shape-icon {
+  color: #b45309;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--comment .tm-diagram-node__shape-icon {
+  color: color-mix(in srgb, var(--ds-accent) 72%, #334155);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--document .tm-diagram-node__label,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--data .tm-diagram-node__label,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--subprocess .tm-diagram-node__label,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--comment .tm-diagram-node__label {
+  display: block;
+  padding-top: 2px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__elements {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__elements-lanes--panel {
+  border-top: none;
+  padding-top: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette {
+  max-height: min(96px, 14vh);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__elements-lanes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node-lane {
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-inline-edit {
+  width: 100%;
+  min-width: 72px;
+  max-width: 220px;
+  padding: 2px 6px;
+  border: 1px solid var(--ds-accent);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-card-bg);
+  color: var(--ds-text);
+  font: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ds-accent) 18%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-inline-edit__display--editable {
+  cursor: text;
+  border-radius: 2px;
+  outline: none;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-inline-edit__display--editable:hover {
+  background: color-mix(in srgb, var(--ds-accent) 8%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-edge-label {
+  position: absolute;
+  pointer-events: all;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-edge-label__text {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-card-bg);
+  border: 1px solid var(--ds-card-border);
+  color: var(--ds-text);
+  max-width: 160px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-edge-label__input {
+  max-width: 120px;
+  text-align: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-edge-label--readonly .tm-diagram-edge-label__text {
+  pointer-events: none;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node-lane
+  .tm-diagram-lane__header--editable,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node-lane
+  .tm-diagram-lane__header--draggable {
+  pointer-events: auto !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node.selected .tm-diagram-node,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node-wrap
+  .tm-diagram-node {
+  border-color: var(--ds-accent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--ds-accent) 35%, transparent),
+    0 0 14px color-mix(in srgb, var(--ds-accent) 22%, transparent);
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node--decision {
+  border-color: #fde68a;
+  box-shadow:
+    0 0 0 3px var(--ds-accent),
+    0 0 16px color-mix(in srgb, var(--ds-accent) 45%, transparent);
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node--start,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node--end {
+  box-shadow: none;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__event-shape--start,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__event-shape--end,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__event-shape--intermediate,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__event-shape--boundary {
+  box-shadow:
+    0 0 0 3px var(--ds-accent),
+    0 1px 3px color-mix(in srgb, #000 20%, transparent);
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__start-dot {
+  box-shadow:
+    0 0 0 3px var(--ds-accent),
+    0 1px 3px color-mix(in srgb, #000 20%, transparent);
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__end-ring {
+  box-shadow:
+    0 0 0 3px var(--ds-accent),
+    0 1px 3px color-mix(in srgb, #000 20%, transparent);
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node--data,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node--data-store {
+  box-shadow: none;
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__data-store-svg {
+  filter: drop-shadow(0 0 0 var(--ds-accent)) drop-shadow(0 0 8px color-mix(in srgb, var(--ds-accent) 45%, transparent));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-toolbar__label {
+  margin-right: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-edge-label--kind .tm-diagram-edge-label__text {
+  font-size: 10px;
+  color: var(--ds-text-muted);
+  background: var(--ds-card-bg);
+  border: 1px dashed var(--ds-card-border);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-toolbar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip {
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 10px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
+  cursor: pointer;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip--tone-0 {
+  background: color-mix(in srgb, #089bdb 12%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #089bdb 35%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip--tone-1 {
+  background: color-mix(in srgb, #8b5cf6 12%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #8b5cf6 35%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip--tone-2 {
+  background: color-mix(in srgb, #f59e0b 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #f59e0b 38%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip--tone-3 {
+  background: color-mix(in srgb, #f43f5e 12%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #f43f5e 35%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip--tone-4 {
+  background: color-mix(in srgb, #10b981 12%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #10b981 35%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip--tone-5 {
+  background: color-mix(in srgb, #0ea5e9 12%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #0ea5e9 35%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-chip.is-active {
+  background: var(--ds-accent-soft);
+  border-color: var(--ds-accent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--ds-accent) 35%, transparent),
+    0 0 14px color-mix(in srgb, var(--ds-accent) 22%, transparent);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node:not(.tm-diagram-node--decision):not(.tm-diagram-node--gateway):not(.tm-diagram-node--data):not(.tm-diagram-node--data-store) {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-card-bg);
+  color: var(--ds-text);
+  font-size: var(--ds-font-xs);
+  text-align: center;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ds-text) 8%, transparent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--decision,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--gateway {
+  box-sizing: border-box;
+  color: var(--ds-text);
+  font-size: var(--ds-font-xs);
+  text-align: center;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--asis {
+  border-color: #d97706;
+  background: #fef3c7;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--tobe {
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--changed {
+  border-color: #db2777;
+  background: #fce7f3;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--removed {
+  border-color: #9ca3af;
+  background: #f3f4f6;
+  opacity: 0.7;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--asis {
+  border-color: #fbbf24;
+  background: color-mix(in srgb, #d97706 34%, var(--ds-card-bg));
+  color: #fde68a;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--tobe {
+  border-color: #60a5fa;
+  background: color-mix(in srgb, #2563eb 34%, var(--ds-card-bg));
+  color: #dbeafe;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--changed {
+  border-color: #f472b6;
+  background: color-mix(in srgb, #db2777 30%, var(--ds-card-bg));
+  color: #fce7f3;
+}
+
+:root[data-theme="dark"] .delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node--removed {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: color-mix(in srgb, var(--ds-card-bg) 70%, black);
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-node__scope {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--tm-diagram-canvas-bg);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--dark {
+  color-scheme: dark;
+  background: var(--tm-diagram-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-editor__mermaid-preview.tm-diagram-mermaid--dark {
+  background: var(--tm-diagram-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg {
+  display: block;
+  flex: 0 0 auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--dark svg,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--dark svg .tm-mermaid-canvas-bg {
+  background-color: var(--tm-diagram-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--dark svg rect.background,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--dark svg .background {
+  fill: var(--tm-diagram-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--dark svg .node foreignObject,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--dark svg .node foreignObject div {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject div {
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+  max-width: 280px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg foreignObject {
+  overflow: visible;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg foreignObject div,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel p,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel span {
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--loading,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-mermaid--error {
+  font-size: var(--ds-font-sm);
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-diff {
+  padding: 8px 12px;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-surface-muted);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-collab-banner {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-card-border);
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
+  font-size: var(--ds-font-sm);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-collab-banner__alert {
+  margin: 0 0 6px;
+  color: var(--ds-danger, #b42318);
+  font-weight: 600;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-collab-banner__line {
+  margin: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-collab-banner__line + .tm-collab-banner__line {
+  margin-top: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-collab-banner__line--muted {
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 0;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-collab-banner__line--info {
+  color: var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-collab-banner__dismiss {
+  margin-left: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-toolbar .ds-select,
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-toolbar input {
+  min-width: 140px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-toolbar .tm-field__label {
+  margin-right: 4px;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-lane-toolbar__rename {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--ds-font-sm);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-validation {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-surface-muted);
+  font-size: var(--ds-font-sm);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-validation__issues {
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-validation__issue--error {
+  color: var(--ds-danger, #b42318);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-validation__issue--warning {
+  color: var(--ds-warning, #b54708);
+}
+
+.delpi-ui-flowchart-shell, .dashboard-transformometro .tm-diagram-validation__simulation {
+  margin-top: 10px;
+}

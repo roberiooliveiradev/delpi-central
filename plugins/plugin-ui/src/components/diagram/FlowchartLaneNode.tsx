@@ -2,7 +2,7 @@ import type { Node, NodeProps } from "@xyflow/react";
 
 import { GripVertical } from "lucide-react";
 
-import { LANE_HEADER_WIDTH } from "../../utils/diagramSwimlanes";
+import { LANE_HEADER_WIDTH } from "./utils/diagramSwimlanes";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
 type LaneNodeData = {

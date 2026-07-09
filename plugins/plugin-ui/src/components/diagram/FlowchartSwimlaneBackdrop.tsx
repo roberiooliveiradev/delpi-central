@@ -1,6 +1,6 @@
 import { useStore, useNodes } from "@xyflow/react";
 
-import { LANE_CANVAS_WIDTH } from "../../utils/diagramSwimlanes";
+import { LANE_CANVAS_WIDTH } from "./utils/diagramSwimlanes";
 
 type LaneBackdropData = {
   height?: number;

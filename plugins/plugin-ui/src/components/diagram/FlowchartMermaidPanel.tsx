@@ -1,11 +1,12 @@
 import { RefreshCw, Wand2 } from "lucide-react";
 
-import { NativeTextAreaControl } from "@delpi/plugin-ui";
-
+import { NativeTextAreaControl } from "../forms/NativeTextAreaControl";
+import type { FlowchartEditorLabels } from "./types/flowchartEditorLabels";
 import { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 import type { DiagramEditorLayout } from "./DiagramLayoutContext";
 
 type Props = {
+  labels: FlowchartEditorLabels;
   draft: string;
   onDraftChange: (code: string) => void;
   onApply: () => void;
@@ -16,9 +17,11 @@ type Props = {
   applyError: string | null;
   applying: boolean;
   isEmpty: boolean;
+  isDark?: boolean;
 };
 
 export function FlowchartMermaidPanel({
+  labels,
   draft,
   onDraftChange,
   onApply,
@@ -29,6 +32,7 @@ export function FlowchartMermaidPanel({
   applyError,
   applying,
   isEmpty,
+  isDark,
 }: Props) {
   return (
     <div
@@ -43,12 +47,12 @@ export function FlowchartMermaidPanel({
         <div className="tm-diagram-editor__mermaid-toolbar">
           <button type="button" className="ds-ghost-btn" onClick={onRefreshFromCanvas}>
             <RefreshCw size={16} aria-hidden />
-            Atualizar do desenho
+            {labels.mermaidRefreshFromDrawing}
           </button>
           {isEmpty ? (
             <button type="button" className="ds-ghost-btn" onClick={onUseTemplate}>
               <Wand2 size={16} aria-hidden />
-              Modelo inicial
+              {labels.mermaidStarterTemplate}
             </button>
           ) : null}
           <button
@@ -57,7 +61,7 @@ export function FlowchartMermaidPanel({
             disabled={applying || !draft.trim()}
             onClick={onApply}
           >
-            {applying ? "Aplicando…" : "Aplicar ao desenho"}
+            {applying ? labels.mermaidApplying : labels.mermaidApplyToDrawing}
           </button>
         </div>
       ) : null}
@@ -69,18 +73,24 @@ export function FlowchartMermaidPanel({
       ) : null}
 
       {readOnly ? (
-        <pre className="tm-diagram-editor__mermaid-code">{draft || "Sem preview."}</pre>
+        <pre className="tm-diagram-editor__mermaid-code">{draft || labels.mermaidReadonlyEmpty}</pre>
       ) : (
         <NativeTextAreaControl
           className="tm-diagram-editor__mermaid-input"
           value={draft}
           spellCheck={false}
-          aria-label="Código Mermaid"
+          aria-label={labels.mermaidCodeAriaLabel}
           onChange={onDraftChange}
         />
       )}
 
-      <DiagramMermaidPreview code={draft} className="tm-diagram-editor__mermaid-preview" />
+      <DiagramMermaidPreview
+        code={draft}
+        className="tm-diagram-editor__mermaid-preview"
+        isDark={isDark}
+        renderingLabel={labels.mermaidRendering}
+        errorFallback={labels.mermaidRenderError}
+      />
     </div>
   );
 }

@@ -1,18 +1,21 @@
 import type { PointerEvent } from "react";
 
-import { DIAGRAM_EDITOR_SELECTION_ACTIONS } from "./flowchartEditorToolbar";
+import type { FlowchartEditorLabels } from "./types/flowchartEditorLabels";
+import type { DiagramEditorAction } from "./flowchartEditorToolbar";
 import { DiagramEditorActionDockButton } from "./DiagramEditorActionDockButton";
 
 type Props = {
+  labels: FlowchartEditorLabels;
+  selectionActions: DiagramEditorAction[];
   clipboardReady: boolean;
-  onSelectionAction: (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => void;
-  isSelectionActionDisabled: (
-    actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]
-  ) => boolean;
+  onSelectionAction: (actionId: DiagramEditorAction["id"]) => void;
+  isSelectionActionDisabled: (actionId: DiagramEditorAction["id"]) => boolean;
   onPointerDownCapture?: (event: PointerEvent<HTMLDivElement>) => void;
 };
 
 export function FlowchartEditorActionDock({
+  labels,
+  selectionActions,
   clipboardReady,
   onSelectionAction,
   isSelectionActionDisabled,
@@ -22,10 +25,10 @@ export function FlowchartEditorActionDock({
     <div
       className="tm-diagram-editor__action-dock"
       role="toolbar"
-      aria-label="Ações de seleção do diagrama"
+      aria-label={labels.selectionDockAriaLabel}
       onPointerDownCapture={onPointerDownCapture}
     >
-      {DIAGRAM_EDITOR_SELECTION_ACTIONS.map((action) => {
+      {selectionActions.map((action) => {
         const disabled = isSelectionActionDisabled(action.id);
         const active =
           action.id === "paste"

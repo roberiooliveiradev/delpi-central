@@ -1,39 +1,36 @@
 import { CircleHelp } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { HelpTooltip } from "@delpi/plugin-ui";
-import type { BpmnPaletteCategoryId } from "../../types/bpmnNodeCatalog";
-import type { FlowchartLane, FlowchartNodeType } from "../../types/diagram";
+import { HelpTooltip } from "../help/HelpTooltip";
+import type { FlowchartEditorLabels } from "./types/flowchartEditorLabels";
+import type { BpmnPaletteCategoryId } from "./types/bpmnNodeCatalog";
+import type { FlowchartLane, FlowchartNodeType } from "./types/diagram";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import {
-  DIAGRAM_EDITOR_ADD_LANE_ACTION,
-  DIAGRAM_EDITOR_LAYOUT_ACTIONS,
-  FLOWCHART_ELEMENT_GROUP_TABS,
-  FLOWCHART_EVENT_SUB_TABS,
+  diagramEditorAddLaneAction,
+  diagramEditorLayoutActions,
   FLOWCHART_NODE_ICONS,
+  flowchartElementGroupTabs,
+  flowchartEventSubTabs,
   flowchartNodeHint,
   paletteByCategory,
   resolvePaletteCategory,
+  type DiagramEditorAction,
   type FlowchartElementGroupTab,
 } from "./flowchartEditorToolbar";
 
 export type FlowchartEditorToolbarTab = "elements" | "models";
 
-const TOOLBAR_TABS: { id: FlowchartEditorToolbarTab; label: string }[] = [
-  { id: "elements", label: "Elementos" },
-  { id: "models", label: "Modelos" },
-];
-
 type Props = {
+  labels: FlowchartEditorLabels;
   toolbarTab: FlowchartEditorToolbarTab;
   onToolbarTabChange: (tab: FlowchartEditorToolbarTab) => void;
   lanes: FlowchartLane[];
   activeLaneId?: string;
   onActiveLaneChange: (laneId: string) => void;
   onAddNode: (type: FlowchartNodeType) => void;
-  onEditorAction: (actionId: (typeof DIAGRAM_EDITOR_LAYOUT_ACTIONS)[number]["id"] | "addLane") => void;
+  onEditorAction: (actionId: DiagramEditorAction["id"]) => void;
 };
 
 function PaletteSubTabs<T extends string>({
@@ -81,6 +78,7 @@ function PaletteSubTabs<T extends string>({
 }
 
 export function FlowchartEditorToolbar({
+  labels,
   toolbarTab,
   onToolbarTabChange,
   lanes,
@@ -89,7 +87,18 @@ export function FlowchartEditorToolbar({
   onAddNode,
   onEditorAction,
 }: Props) {
-  const addLaneAction = DIAGRAM_EDITOR_ADD_LANE_ACTION;
+  const addLaneAction = diagramEditorAddLaneAction(labels);
+  const layoutActions = useMemo(() => diagramEditorLayoutActions(labels), [labels]);
+  const elementGroupTabs = useMemo(() => flowchartElementGroupTabs(labels), [labels]);
+  const eventSubTabs = useMemo(() => flowchartEventSubTabs(labels), [labels]);
+  const toolbarTabs = useMemo(
+    () => [
+      { id: "elements" as const, label: labels.toolbarElementsTab },
+      { id: "models" as const, label: labels.toolbarModelsTab },
+    ],
+    [labels.toolbarElementsTab, labels.toolbarModelsTab]
+  );
+
   const [elementGroup, setElementGroup] = useState<FlowchartElementGroupTab>("events");
   const [eventSubTab, setEventSubTab] = useState<BpmnPaletteCategoryId>("events_start");
 
@@ -97,10 +106,10 @@ export function FlowchartEditorToolbar({
   const paletteItems = activeCategory ? paletteByCategory(activeCategory) : [];
 
   return (
-    <div className="tm-diagram-editor__toolbar-overlay" role="toolbar" aria-label="Ferramentas do diagrama">
+    <div className="tm-diagram-editor__toolbar-overlay" role="toolbar" aria-label={labels.toolbarAriaLabel}>
       <div className="tm-diagram-editor__toolbar-head">
-        <div className="tm-diagram-editor__toolbar-tabs" role="tablist" aria-label="Grupos de ferramentas">
-          {TOOLBAR_TABS.map((tab) => (
+        <div className="tm-diagram-editor__toolbar-tabs" role="tablist" aria-label={labels.toolbarGroupsAriaLabel}>
+          {toolbarTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -118,15 +127,15 @@ export function FlowchartEditorToolbar({
           ))}
         </div>
         <HelpTooltip
-          content={TM_HELP_TOOLTIPS.diagramEditor.usoGeral}
-          ariaLabel="Como usar o editor de diagrama"
+          content={labels.usoGeral}
+          ariaLabel={labels.toolbarHowToUseAriaLabel}
           wrap
           placement="bottom"
           className="tm-diagram-editor__hint-wrap"
         >
           <button type="button" className="tm-diagram-editor__hint-link tm-diagram-editor__toolbar-help">
             <CircleHelp size={14} aria-hidden="true" />
-            <span>Como usar</span>
+            <span>{labels.toolbarHowToUse}</span>
           </button>
         </HelpTooltip>
       </div>
@@ -135,18 +144,18 @@ export function FlowchartEditorToolbar({
         {toolbarTab === "elements" ? (
           <div className="tm-diagram-editor__elements">
             <PaletteSubTabs
-              tabs={FLOWCHART_ELEMENT_GROUP_TABS}
+              tabs={elementGroupTabs}
               activeId={elementGroup}
               onChange={setElementGroup}
-              ariaLabel="Categorias de elementos BPMN"
+              ariaLabel={labels.paletteCategoriesAriaLabel}
             />
 
             {elementGroup === "events" ? (
               <PaletteSubTabs
-                tabs={FLOWCHART_EVENT_SUB_TABS}
+                tabs={eventSubTabs}
                 activeId={eventSubTab}
                 onChange={setEventSubTab}
-                ariaLabel="Tipos de evento"
+                ariaLabel={labels.paletteEventsAriaLabel}
                 compact
               />
             ) : null}
@@ -161,6 +170,7 @@ export function FlowchartEditorToolbar({
                 />
                 {lanes.length ? (
                   <FlowchartLaneToolbar
+                    labels={labels}
                     lanes={lanes}
                     activeLaneId={activeLaneId}
                     onActiveLaneChange={onActiveLaneChange}
@@ -175,7 +185,7 @@ export function FlowchartEditorToolbar({
                     <DiagramEditorToolbarButton
                       key={item.type}
                       label={item.label}
-                      hint={flowchartNodeHint(item.type)}
+                      hint={flowchartNodeHint(item.type, labels)}
                       icon={Icon}
                       onClick={() => onAddNode(item.type)}
                     />
@@ -188,7 +198,7 @@ export function FlowchartEditorToolbar({
 
         {toolbarTab === "models" ? (
           <div className="tm-diagram-editor__templates">
-            {DIAGRAM_EDITOR_LAYOUT_ACTIONS.map((action) => (
+            {layoutActions.map((action) => (
               <DiagramEditorToolbarButton
                 key={action.id}
                 label={action.label}
