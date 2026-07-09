@@ -129,7 +129,7 @@ export type FlowchartElementGroupTab =
 
 export const FLOWCHART_ELEMENT_GROUP_TABS: Array<{ id: FlowchartElementGroupTab; label: string }> = [
   { id: "events", label: "Eventos" },
-  { id: "gateways", label: "Gateways" },
+  { id: "gateways", label: "Desvios" },
   { id: "tasks", label: "Tarefas" },
   { id: "activities", label: "Atividades" },
   { id: "artifacts", label: "Artefatos" },
@@ -157,31 +157,31 @@ export { BPMN_PALETTE_CATEGORIES, paletteByCategory };
 export const DIAGRAM_EDITOR_ACTIONS = [
   {
     id: "addLane",
-    label: "Faixa (swimlane)",
+    label: "Faixa",
     icon: Plus,
     hint: D.addLane,
   },
   {
     id: "autoLayout",
-    label: "Auto-layout",
+    label: "Layout automático",
     icon: Wand2,
     hint: D.autoLayout,
   },
   {
     id: "templateLinear",
-    label: "Template linear",
+    label: "Modelo linear",
     icon: Rows3,
     hint: D.templateLinear,
   },
   {
     id: "templateDecision",
-    label: "Template decisão",
+    label: "Modelo decisão",
     icon: GitBranch,
     hint: D.templateDecision,
   },
   {
     id: "templateSwimlanes",
-    label: "Template BPMN + swimlanes",
+    label: "Modelo BPMN com faixas",
     icon: Layers,
     hint: D.templateSwimlanes,
   },

@@ -258,7 +258,7 @@ export function buildBpmnCatalogForApi() {
     },
     ai_guidance: {
       summary:
-        "Para gerar diagramas compatíveis com o Transformômetro, use flowchart TD, subgraphs para faixas (swimlanes), classes :::bpmn_<tipo> em todos os nós e arestas --> / -.-> / -.- conforme o tipo de conexão.",
+        "Para gerar diagramas compatíveis com o Transformômetro, use flowchart TD, subgraphs para faixas, classes :::bpmn_<tipo> em todos os nós e arestas --> / -.-> / -.- conforme o tipo de conexão.",
       minimal_example: [
         "flowchart TD",
         '    subgraph lane_vendas ["Vendas"]',

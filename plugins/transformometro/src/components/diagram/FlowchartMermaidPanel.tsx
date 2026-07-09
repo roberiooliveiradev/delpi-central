@@ -43,7 +43,7 @@ export function FlowchartMermaidPanel({
         <div className="tm-diagram-editor__mermaid-toolbar">
           <button type="button" className="ds-ghost-btn" onClick={onRefreshFromCanvas}>
             <RefreshCw size={16} aria-hidden />
-            Atualizar do canvas
+            Atualizar do desenho
           </button>
           {isEmpty ? (
             <button type="button" className="ds-ghost-btn" onClick={onUseTemplate}>
@@ -57,7 +57,7 @@ export function FlowchartMermaidPanel({
             disabled={applying || !draft.trim()}
             onClick={onApply}
           >
-            {applying ? "Aplicando…" : "Aplicar ao canvas"}
+            {applying ? "Aplicando…" : "Aplicar ao desenho"}
           </button>
         </div>
       ) : null}

@@ -321,11 +321,11 @@ export const TM_HELP_TOOLTIPS = {
   },
   diagramEditor: {
     usoGeral:
-      "Adicione nós pela paleta (entram na faixa ativa). Selecione vários elementos arrastando no canvas para desenhar a caixa de seleção, ou Ctrl+clique para acrescentar à seleção. Use os ícones empilhados no canto inferior direito (excluir, copiar, colar, duplicar, tipo de conexão). Copiar grava na memória do editor; Colar insere a cópia com deslocamento (Ctrl+V). Duplicar copia e cola de uma vez. Atalhos: Ctrl+C copiar, Ctrl+V colar, Ctrl+D duplicar, Delete excluir. Setas ← ↑ → ↓ reposicionam a seleção em passos finos. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Use Auto-layout para reorganizar o fluxo.",
+      "Adicione nós pela paleta (entram na faixa ativa). Selecione vários elementos arrastando na área de desenho para desenhar a caixa de seleção, ou Ctrl+clique para acrescentar à seleção. Use os ícones empilhados no canto inferior direito (excluir, copiar, colar, duplicar, tipo de conexão). Copiar grava na memória do editor; Colar insere a cópia com deslocamento (Ctrl+V). Duplicar copia e cola de uma vez. Atalhos: Ctrl+C copiar, Ctrl+V colar, Ctrl+D duplicar, Delete excluir. Setas ← ↑ → ↓ reposicionam a seleção em passos finos. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Use Layout automático para reorganizar o fluxo.",
     nodes: {
       start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
-      decision: "Gateway exclusivo (losango). Use duas ou mais saídas rotuladas (ex.: Sim/Não).",
+      decision: "Desvio exclusivo (losango). Use duas ou mais saídas rotuladas (ex.: Sim/Não).",
       document: "Documento ou artefato produzido ou consumido na etapa.",
       data: "Armazenamento ou registro persistente (cilindro BPMN) referenciado no fluxo.",
       subprocess: "Subprocesso encapsulado — etapa composta por fluxo interno.",
@@ -333,33 +333,33 @@ export const TM_HELP_TOOLTIPS = {
       comment: "Nota explicativa — não participa da lógica do fluxo.",
     },
     addLane:
-      "Adiciona uma faixa horizontal (swimlane) para separar papéis ou áreas (ex.: Comercial, Engenharia). Novos nós entram na faixa selecionada.",
+      "Adiciona uma faixa horizontal para separar papéis ou áreas (ex.: Comercial, Engenharia). Novos nós entram na faixa selecionada.",
     autoLayout:
       "Reorganiza automaticamente nós e setas em grade legível, respeitando as faixas. Útil após adicionar muitos elementos.",
     templateLinear: "Substitui o diagrama por um fluxo linear simples (início → atividades → fim) para começar rápido.",
     templateDecision:
       "Modelo com bifurcação: início, atividade, decisão Sim/Não e dois caminhos convergindo no fim.",
     templateSwimlanes:
-      "Exemplo BPMN com duas faixas (Comercial e Engenharia), handoff e gateways — ponto de partida para processos cross-funcionais.",
+      "Exemplo BPMN com duas faixas (Comercial e Engenharia), transferência entre áreas e desvios — ponto de partida para processos entre departamentos.",
     laneSelect:
-      "Faixa ativa para inserir novos nós da paleta. Clique no cabeçalho da faixa no canvas, use os chips aqui ou arraste o cabeçalho para reordenar faixas.",
+      "Faixa ativa para inserir novos nós da paleta. Clique no cabeçalho da faixa na área de desenho, use os chips aqui ou arraste o cabeçalho para reordenar faixas.",
     laneRename:
-      "Duplo clique no nome da faixa no canvas para editar inline (Enter confirma, Esc cancela), como nos demais nós.",
+      "Duplo clique no nome da faixa na área de desenho para editar inline (Enter confirma, Esc cancela), como nos demais nós.",
     laneRemove:
-      "Remove a faixa ativa. Com mais de uma faixa, os nós são realocados na restante; removendo a última, o diagrama volta ao canvas simples (sem swimlanes).",
+      "Remove a faixa ativa. Com mais de uma faixa, os nós são realocados na restante; removendo a última, o diagrama volta ao desenho simples (sem faixas).",
     canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
     mermaidTab:
-      "Edite o código Mermaid ou visualize o diagrama renderizado. Use «Aplicar ao canvas» para converter em editor visual, ou «Atualizar do canvas» para sincronizar com o desenho atual.",
+      "Edite o código Mermaid ou visualize o diagrama renderizado. Use «Aplicar ao desenho» para converter em editor visual, ou «Atualizar do desenho» para sincronizar com o desenho atual.",
     fullscreen:
       "Abre o editor em tela cheia com paleta, ferramentas e ações de salvamento. Pressione Esc ou use «Sair da tela cheia» para voltar.",
     selectionDelete:
-      "Remove nós e setas selecionados. Sem seleção no canvas, exclui a faixa ativa (com confirmação). Atalho: Delete ou Backspace para nós/setas.",
+      "Remove nós e setas selecionados. Sem seleção na área de desenho, exclui a faixa ativa (com confirmação). Atalho: Delete ou Backspace para nós/setas.",
     selectionMove:
-      "Selecione um ou mais nós (caixa de seleção no canvas ou Ctrl+clique) e arraste para reposicionar em grupo. Teclas ← ↑ → ↓ ajustam a posição em passos finos (8 px).",
+      "Selecione um ou mais nós (caixa de seleção na área de desenho ou Ctrl+clique) e arraste para reposicionar em grupo. Teclas ← ↑ → ↓ ajustam a posição em passos finos (8 px).",
     selectionCopy:
-      "Copia os nós selecionados (e setas entre eles) para a memória interna do editor. Use Colar ou Ctrl+V para inserir no canvas. Atalho: Ctrl+C.",
+      "Copia os nós selecionados (e setas entre eles) para a memória interna do editor. Use Colar ou Ctrl+V para inserir na área de desenho. Atalho: Ctrl+C.",
     selectionPaste:
-      "Insere a última cópia no canvas, com deslocamento automático a cada colagem. Atalho: Ctrl+V. Só fica disponível após Copiar.",
+      "Insere a última cópia na área de desenho, com deslocamento automático a cada colagem. Atalho: Ctrl+V. Só fica disponível após Copiar.",
     selectionDuplicate:
       "Copia e cola de uma vez os nós selecionados, com deslocamento automático e conexões internas preservadas. Atalho: Ctrl+D.",
     selectionEdgeKind:

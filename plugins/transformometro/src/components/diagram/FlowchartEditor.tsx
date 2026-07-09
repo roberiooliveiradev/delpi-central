@@ -768,7 +768,7 @@ function FlowchartEditorInner({
     const confirmed = await confirm({
       title: "Remover faixa",
       message: isLastLane
-        ? `Remover a faixa «${lane?.label ?? "Faixa"}»? O diagrama volta ao canvas simples, sem swimlanes.`
+        ? `Remover a faixa «${lane?.label ?? "Faixa"}»? O diagrama volta ao desenho simples, sem faixas.`
         : `Remover a faixa «${lane?.label ?? "Faixa"}»? Os nós serão realocados na faixa restante.`,
       confirmLabel: "Remover",
       variant: "danger",
@@ -1112,7 +1112,7 @@ function FlowchartEditorInner({
               <div className="tm-diagram-editor__view-tabs tm-diagram-editor__view-tabs--overlay">
                 <HelpTooltip
                   content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
-                  ariaLabel="Ajuda: Canvas"
+                  ariaLabel="Ajuda: Desenho"
                   wrap
                   placement="bottom"
                   className="tm-diagram-editor__tab-wrap"
@@ -1126,7 +1126,7 @@ function FlowchartEditorInner({
                     }
                     onClick={() => setActiveTab("canvas")}
                   >
-                    Canvas
+                    Desenho
                   </button>
                 </HelpTooltip>
                 <HelpTooltip
@@ -1210,7 +1210,7 @@ function FlowchartEditorInner({
               <div className="tm-diagram-editor__view-tabs">
                 <HelpTooltip
                   content={TM_HELP_TOOLTIPS.diagramEditor.canvasTab}
-                  ariaLabel="Ajuda: Canvas"
+                  ariaLabel="Ajuda: Desenho"
                   wrap
                   placement="bottom"
                   className="tm-diagram-editor__tab-wrap"
@@ -1220,7 +1220,7 @@ function FlowchartEditorInner({
                     className="tm-diagram-editor__tab"
                     onClick={() => setActiveTab("canvas")}
                   >
-                    Canvas
+                    Desenho
                   </button>
                 </HelpTooltip>
                 <HelpTooltip

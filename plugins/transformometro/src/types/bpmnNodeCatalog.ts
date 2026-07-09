@@ -76,7 +76,7 @@ export const BPMN_PALETTE_CATEGORIES: Array<{ id: BpmnPaletteCategoryId; label: 
   { id: "events_start", label: "Eventos — início" },
   { id: "events_intermediate", label: "Eventos — intermediários" },
   { id: "events_end", label: "Eventos — fim" },
-  { id: "gateways", label: "Gateways" },
+  { id: "gateways", label: "Desvios" },
   { id: "tasks", label: "Tarefas" },
   { id: "activities", label: "Atividades" },
   { id: "artifacts", label: "Artefatos" },
@@ -104,7 +104,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Processo inicia ao receber uma mensagem.",
   },
   start_timer: {
-    label: "Início — timer",
+    label: "Início — temporizador",
     category: "events_start",
     shape: "event_start",
     marker: "timer",
@@ -121,7 +121,7 @@ export const BPMN_NODE_DEFINITIONS = {
     bpmnTag: "startEvent",
     bpmnEventDefinition: "signalEventDefinition",
     participatesInFlow: true,
-    hint: "Processo inicia ao receber um sinal broadcast.",
+    hint: "Processo inicia ao receber um sinal em difusão.",
   },
   start_conditional: {
     label: "Início — condicional",
@@ -161,10 +161,10 @@ export const BPMN_NODE_DEFINITIONS = {
     marker: "none",
     bpmnTag: "intermediateCatchEvent",
     participatesInFlow: true,
-    hint: "Evento intermediário genérico (catch).",
+    hint: "Evento intermediário genérico (captura).",
   },
   intermediate_message_catch: {
-    label: "Intermediário — mensagem (catch)",
+    label: "Intermediário — mensagem (recepção)",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "message",
@@ -174,7 +174,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Aguarda recebimento de mensagem durante o fluxo.",
   },
   intermediate_timer: {
-    label: "Intermediário — timer",
+    label: "Intermediário — temporizador",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "timer",
@@ -184,14 +184,14 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Aguarda tempo decorrer (delay, prazo, ciclo).",
   },
   intermediate_signal_catch: {
-    label: "Intermediário — sinal (catch)",
+    label: "Intermediário — sinal (recepção)",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "signal",
     bpmnTag: "intermediateCatchEvent",
     bpmnEventDefinition: "signalEventDefinition",
     participatesInFlow: true,
-    hint: "Aguarda um sinal broadcast durante o fluxo.",
+    hint: "Aguarda um sinal em difusão durante o fluxo.",
   },
   intermediate_conditional: {
     label: "Intermediário — condicional",
@@ -204,17 +204,17 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Aguarda condição de negócio ser satisfeita.",
   },
   intermediate_link_catch: {
-    label: "Intermediário — link (catch)",
+    label: "Intermediário — vínculo (recepção)",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "link",
     bpmnTag: "intermediateCatchEvent",
     bpmnEventDefinition: "linkEventDefinition",
     participatesInFlow: true,
-    hint: "Ponto de chegada de um link dentro do mesmo processo.",
+    hint: "Ponto de chegada de um vínculo dentro do mesmo processo.",
   },
   intermediate_message_throw: {
-    label: "Intermediário — mensagem (throw)",
+    label: "Intermediário — mensagem (envio)",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "message",
@@ -224,24 +224,24 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Envia mensagem para outro participante ou processo.",
   },
   intermediate_signal_throw: {
-    label: "Intermediário — sinal (throw)",
+    label: "Intermediário — sinal (envio)",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "signal",
     bpmnTag: "intermediateThrowEvent",
     bpmnEventDefinition: "signalEventDefinition",
     participatesInFlow: true,
-    hint: "Emite sinal broadcast durante o fluxo.",
+    hint: "Emite sinal em difusão durante o fluxo.",
   },
   intermediate_link_throw: {
-    label: "Intermediário — link (throw)",
+    label: "Intermediário — vínculo (envio)",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "link",
     bpmnTag: "intermediateThrowEvent",
     bpmnEventDefinition: "linkEventDefinition",
     participatesInFlow: true,
-    hint: "Salta para o link catch correspondente no diagrama.",
+    hint: "Salta para o ponto de vínculo correspondente no diagrama.",
   },
   intermediate_escalation_throw: {
     label: "Intermediário — escalação",
@@ -311,7 +311,7 @@ export const BPMN_NODE_DEFINITIONS = {
     bpmnTag: "endEvent",
     bpmnEventDefinition: "signalEventDefinition",
     participatesInFlow: true,
-    hint: "Fim ao emitir sinal broadcast.",
+    hint: "Fim ao emitir sinal em difusão.",
   },
   end_escalation: {
     label: "Fim — escalação",
@@ -321,7 +321,7 @@ export const BPMN_NODE_DEFINITIONS = {
     bpmnTag: "endEvent",
     bpmnEventDefinition: "escalationEventDefinition",
     participatesInFlow: true,
-    hint: "Fim por escalação para handler externo.",
+    hint: "Fim por escalação para responsável externo.",
   },
   end_cancel: {
     label: "Fim — cancelamento",
@@ -351,7 +351,7 @@ export const BPMN_NODE_DEFINITIONS = {
     marker: "exclusive",
     bpmnTag: "exclusiveGateway",
     participatesInFlow: true,
-    hint: "Gateway exclusivo — apenas um caminho de saída é tomado.",
+    hint: "Desvio exclusivo — apenas um caminho de saída é tomado.",
   },
   gateway_parallel: {
     label: "Paralelo (AND)",
@@ -360,7 +360,7 @@ export const BPMN_NODE_DEFINITIONS = {
     marker: "parallel_gateway",
     bpmnTag: "parallelGateway",
     participatesInFlow: true,
-    hint: "Gateway paralelo — todos os caminhos de saída são ativados.",
+    hint: "Desvio paralelo — todos os caminhos de saída são ativados.",
   },
   gateway_inclusive: {
     label: "Inclusivo (OR)",
@@ -369,7 +369,7 @@ export const BPMN_NODE_DEFINITIONS = {
     marker: "inclusive",
     bpmnTag: "inclusiveGateway",
     participatesInFlow: true,
-    hint: "Gateway inclusivo — um ou mais caminhos conforme condição.",
+    hint: "Desvio inclusivo — um ou mais caminhos conforme condição.",
   },
   gateway_complex: {
     label: "Complexo",
@@ -378,7 +378,7 @@ export const BPMN_NODE_DEFINITIONS = {
     marker: "complex",
     bpmnTag: "complexGateway",
     participatesInFlow: true,
-    hint: "Gateway com regras de sincronização customizadas.",
+    hint: "Desvio com regras de sincronização customizadas.",
   },
   gateway_event: {
     label: "Baseado em evento",
@@ -475,7 +475,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Subprocesso encapsulado com fluxo interno.",
   },
   call_activity: {
-    label: "Call activity",
+    label: "Chamada de subprocesso",
     category: "activities",
     shape: "activity_call",
     marker: "call",
@@ -484,7 +484,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Referência reutilizável a outro diagrama de processo.",
   },
   subprocess_ad_hoc: {
-    label: "Subprocesso ad-hoc",
+    label: "Subprocesso improvisado",
     category: "activities",
     shape: "activity_ad_hoc",
     marker: "ad_hoc",
@@ -509,7 +509,7 @@ export const BPMN_NODE_DEFINITIONS = {
     bpmnTag: "subProcess",
     bpmnEventDefinition: "triggeredByEvent",
     participatesInFlow: true,
-    hint: "Subprocesso acionado por evento (event subprocess).",
+    hint: "Subprocesso acionado por evento.",
   },
 
   document: {
@@ -559,7 +559,7 @@ export const BPMN_NODE_DEFINITIONS = {
   },
 
   boundary_timer: {
-    label: "Borda — timer",
+    label: "Borda — temporizador",
     category: "boundary",
     shape: "boundary",
     marker: "timer",
@@ -586,7 +586,7 @@ export const BPMN_NODE_DEFINITIONS = {
     bpmnTag: "boundaryEvent",
     bpmnEventDefinition: "errorEventDefinition",
     participatesInFlow: true,
-    hint: "Captura erro da atividade anexada (interrupting).",
+    hint: "Captura erro da atividade anexada (interrompente).",
   },
   boundary_signal: {
     label: "Borda — sinal",
@@ -606,7 +606,7 @@ export const BPMN_NODE_DEFINITIONS = {
     bpmnTag: "boundaryEvent",
     bpmnEventDefinition: "escalationEventDefinition",
     participatesInFlow: true,
-    hint: "Escala atividade para handler externo.",
+    hint: "Escala atividade para responsável externo.",
   },
   boundary_compensation: {
     label: "Borda — compensação",
