@@ -22,6 +22,7 @@ import {
 import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RevisaoEvidence } from "../../types/revisaoEvidence";
+import { isSpreadsheetAttachedFile } from "../../utils/evidenceFilePreview";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
 
 const R = TM_HELP_TOOLTIPS.revisao;
@@ -104,6 +105,15 @@ function EvidenceThumb({
       />
     ) : (
       <div className="tm-evidence__img tm-evidence__img--loading" aria-hidden="true" />
+    );
+  }
+
+  if (isSpreadsheetAttachedFile(evidence)) {
+    return (
+      <div className="tm-evidence__file-icon tm-evidence__file-icon--spreadsheet" aria-hidden="true">
+        <FileText size={24} />
+        <span>XLSX</span>
+      </div>
     );
   }
 

@@ -1,4 +1,5 @@
 import type { RevisaoEvidence, RevisaoEvidenceList, RevisaoEvidenceType } from "../../types/revisaoEvidence";
+import { canPreviewAttachedFile } from "../../utils/evidenceFilePreview";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "./transformometroApiBase";
 
 type ApiEnvelope<T> = {
@@ -110,7 +111,5 @@ export function createPendingUploadId(): string {
 }
 
 export function canPreviewEvidence(evidence: RevisaoEvidence): boolean {
-  if (evidence.tipo === "link") return false;
-  const mime = (evidence.tipo_mime ?? "").toLowerCase();
-  return mime.startsWith("image/") || mime === "application/pdf";
+  return canPreviewAttachedFile(evidence);
 }

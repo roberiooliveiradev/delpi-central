@@ -4596,12 +4596,17 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   color: var(--ds-text-muted);
 }
 
-.dashboard-transformometro .tm-evidence__file-icon--pdf {
+.dashboard-transformometro .tm-evidence__file-icon--pdf,
+.dashboard-transformometro .tm-evidence__file-icon--spreadsheet {
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.04em;
+}
+
+.dashboard-transformometro .tm-evidence__file-icon--spreadsheet {
+  color: color-mix(in srgb, var(--ds-success-fg, #15803d) 85%, var(--ds-text-muted));
 }
 
 .dashboard-transformometro .tm-evidence-pending {

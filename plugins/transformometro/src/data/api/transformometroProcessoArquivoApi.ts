@@ -1,4 +1,5 @@
 import type { ProcessoArquivo, ProcessoArquivoList, ProcessoArquivoType } from "../../types/processoArquivo";
+import { canPreviewAttachedFile } from "../../utils/evidenceFilePreview";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "./transformometroApiBase";
 
 type ApiEnvelope<T> = {
@@ -91,7 +92,5 @@ export {
 } from "./transformometroEvidenceApi";
 
 export function canPreviewProcessoArquivo(arquivo: ProcessoArquivo): boolean {
-  if (arquivo.tipo === "link") return false;
-  const mime = (arquivo.tipo_mime ?? "").toLowerCase();
-  return mime.startsWith("image/") || mime === "application/pdf";
+  return canPreviewAttachedFile(arquivo);
 }

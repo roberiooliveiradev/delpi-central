@@ -50,6 +50,10 @@ function useFileObjectUrl(file: File): string | null {
   return url;
 }
 
+function isSpreadsheetFile(file: File): boolean {
+  return resolveFilePreviewKind({ mimeType: file.type, fileName: file.name }) === "spreadsheet";
+}
+
 function PendingFilePreview({
   file,
   previewUrl,
@@ -73,6 +77,15 @@ function PendingFilePreview({
       <div className="tm-evidence__file-icon tm-evidence__file-icon--pdf" aria-hidden="true">
         <FileText size={24} />
         <span>PDF</span>
+      </div>
+    );
+  }
+
+  if (isSpreadsheetFile(file)) {
+    return (
+      <div className="tm-evidence__file-icon tm-evidence__file-icon--spreadsheet" aria-hidden="true">
+        <FileText size={24} />
+        <span>XLSX</span>
       </div>
     );
   }
