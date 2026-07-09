@@ -3,8 +3,24 @@ import { getNodesBounds, getViewportForBounds, type Node } from "@xyflow/react";
 const EXPORT_PADDING = 0.12;
 const MIN_EXPORT_ZOOM = 0.08;
 const MAX_EXPORT_ZOOM = 4;
-const EXPORT_EDGE_STROKE = "#64748b";
 const EXPORT_EDGE_WIDTH = "1.5";
+const FALLBACK_TEXT_COLOR = "#334155";
+const FALLBACK_EDGE_STROKE = "#64748b";
+const FALLBACK_EDGE_TEXT_BG = "#ffffff";
+
+const HTML_LABEL_SELECTORS = [
+  ".tm-diagram-node__label",
+  ".tm-diagram-node__external-label",
+  ".tm-diagram-inline-edit__display",
+  ".tm-diagram-lane__label",
+] as const;
+
+type ExportPalette = {
+  textColor: string;
+  edgeTextColor: string;
+  edgeTextBg: string;
+  edgeStroke: string;
+};
 
 export type ExportReactFlowDiagramOptions = {
   canvasRoot: HTMLElement;
@@ -42,16 +58,94 @@ async function rasterizeSvgDataUrl(svgDataUrl: string): Promise<string> {
   return canvas.toDataURL("image/png");
 }
 
-function inlineEdgeTextExportStyles(root: HTMLElement, snapshots: StyleSnapshot[]) {
+function isUsableColor(value: string | undefined | null): value is string {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized !== "none" && normalized !== "transparent" && normalized !== "rgba(0, 0, 0, 0)";
+}
+
+function buildExportPalette(canvasRoot: HTMLElement, viewport: HTMLElement): ExportPalette {
+  const labelSample =
+    viewport.querySelector(".tm-diagram-node__label") ??
+    viewport.querySelector(".tm-diagram-node__external-label") ??
+    viewport.querySelector(".tm-diagram-inline-edit__display") ??
+    viewport.querySelector(".tm-diagram-lane__label");
+
+  const textColor =
+    labelSample instanceof HTMLElement
+      ? window.getComputedStyle(labelSample).color
+      : window.getComputedStyle(canvasRoot).color;
+
+  const edgeTextSample = viewport.querySelector(".react-flow__edge-text");
+  const edgeTextColor =
+    edgeTextSample instanceof SVGTextElement
+      ? window.getComputedStyle(edgeTextSample).fill
+      : textColor;
+
+  const edgeBgSample = viewport.querySelector(".react-flow__edge-textbg");
+  const nodeSample = viewport.querySelector(".tm-diagram-node");
+  const edgeTextBg =
+    edgeBgSample instanceof SVGElement
+      ? window.getComputedStyle(edgeBgSample).fill
+      : nodeSample instanceof HTMLElement
+        ? window.getComputedStyle(nodeSample).backgroundColor
+        : window.getComputedStyle(canvasRoot).backgroundColor;
+
+  const edgePathSample = viewport.querySelector(".react-flow__edge-path");
+  const edgeStroke =
+    edgePathSample instanceof SVGPathElement
+      ? resolveExportStroke(edgePathSample, FALLBACK_EDGE_STROKE)
+      : FALLBACK_EDGE_STROKE;
+
+  return {
+    textColor: isUsableColor(textColor) ? textColor : FALLBACK_TEXT_COLOR,
+    edgeTextColor: isUsableColor(edgeTextColor) ? edgeTextColor : isUsableColor(textColor) ? textColor : FALLBACK_TEXT_COLOR,
+    edgeTextBg: isUsableColor(edgeTextBg) ? edgeTextBg : FALLBACK_EDGE_TEXT_BG,
+    edgeStroke,
+  };
+}
+
+function inlineHtmlLabelExportStyles(
+  root: HTMLElement,
+  snapshots: StyleSnapshot[],
+  palette: ExportPalette
+) {
+  for (const selector of HTML_LABEL_SELECTORS) {
+    root.querySelectorAll(selector).forEach((element) => {
+      if (!(element instanceof HTMLElement)) return;
+      const color = window.getComputedStyle(element).color;
+      snapshotStyleProperty(
+        element,
+        "color",
+        isUsableColor(color) ? color : palette.textColor,
+        snapshots
+      );
+    });
+  }
+}
+
+function inlineEdgeTextExportStyles(
+  root: HTMLElement,
+  snapshots: StyleSnapshot[],
+  palette: ExportPalette
+) {
   root.querySelectorAll(".react-flow__edge-text").forEach((textNode) => {
     if (!(textNode instanceof SVGTextElement)) return;
-    snapshotAttribute(textNode, "fill", "#334155", snapshots);
+    const fill = isUsableColor(window.getComputedStyle(textNode).fill)
+      ? window.getComputedStyle(textNode).fill
+      : palette.edgeTextColor;
+    snapshotAttribute(textNode, "fill", fill, snapshots);
+    snapshotStyleProperty(textNode, "fill", fill, snapshots);
   });
 
   root.querySelectorAll(".react-flow__edge-textbg").forEach((backgroundNode) => {
     if (!(backgroundNode instanceof SVGElement)) return;
-    snapshotAttribute(backgroundNode, "fill", "#ffffff", snapshots);
+    const fill = isUsableColor(window.getComputedStyle(backgroundNode).fill)
+      ? window.getComputedStyle(backgroundNode).fill
+      : palette.edgeTextBg;
+    snapshotAttribute(backgroundNode, "fill", fill, snapshots);
     snapshotAttribute(backgroundNode, "fill-opacity", "0.92", snapshots);
+    snapshotStyleProperty(backgroundNode, "fill", fill, snapshots);
   });
 }
 
@@ -101,25 +195,26 @@ function snapshotStyleProperty(
   element.style.setProperty(name, value);
 }
 
-function resolveExportStroke(element: Element): string {
+function resolveExportStroke(element: Element, fallback: string): string {
   if (!(element instanceof SVGGraphicsElement)) {
-    return EXPORT_EDGE_STROKE;
+    return fallback;
   }
   const computed = window.getComputedStyle(element);
   const stroke = computed.stroke?.trim();
-  if (stroke && stroke !== "none" && !stroke.startsWith("var(")) {
+  if (isUsableColor(stroke) && !stroke.startsWith("var(")) {
     return stroke;
   }
-  return EXPORT_EDGE_STROKE;
+  return fallback;
 }
 
-/** html-to-image não resolve stroke via CSS var no clone — inline antes da captura. */
-function inlineSvgExportStyles(root: HTMLElement): () => void {
+/** html-to-image não resolve stroke/fill via CSS var no clone — inline antes da captura. */
+function inlineExportStyles(viewport: HTMLElement, canvasRoot: HTMLElement): () => void {
   const snapshots: StyleSnapshot[] = [];
+  const palette = buildExportPalette(canvasRoot, viewport);
 
-  root.querySelectorAll(".react-flow__edge-path").forEach((path) => {
+  viewport.querySelectorAll(".react-flow__edge-path").forEach((path) => {
     if (!(path instanceof SVGPathElement)) return;
-    const stroke = resolveExportStroke(path);
+    const stroke = resolveExportStroke(path, palette.edgeStroke);
     snapshotAttribute(path, "stroke", stroke, snapshots);
     snapshotAttribute(path, "stroke-width", EXPORT_EDGE_WIDTH, snapshots);
     snapshotAttribute(path, "fill", "none", snapshots);
@@ -128,16 +223,17 @@ function inlineSvgExportStyles(root: HTMLElement): () => void {
     snapshotStyleProperty(path, "fill", "none", snapshots);
   });
 
-  root.querySelectorAll("marker path, marker polygon, marker polyline").forEach((markerPart) => {
+  viewport.querySelectorAll("marker path, marker polygon, marker polyline").forEach((markerPart) => {
     if (!(markerPart instanceof SVGGraphicsElement)) return;
-    const stroke = resolveExportStroke(markerPart);
+    const stroke = resolveExportStroke(markerPart, palette.edgeStroke);
     snapshotAttribute(markerPart, "stroke", stroke, snapshots);
     snapshotAttribute(markerPart, "fill", stroke, snapshots);
     snapshotStyleProperty(markerPart, "stroke", stroke, snapshots);
     snapshotStyleProperty(markerPart, "fill", stroke, snapshots);
   });
 
-  inlineEdgeTextExportStyles(root, snapshots);
+  inlineHtmlLabelExportStyles(viewport, snapshots, palette);
+  inlineEdgeTextExportStyles(viewport, snapshots, palette);
 
   return () => {
     for (const snapshot of snapshots) {
@@ -204,7 +300,7 @@ export async function exportReactFlowDiagramPng({
   };
 
   editorRoot?.classList.add("tm-diagram-editor--exporting");
-  const restoreSvgStyles = inlineSvgExportStyles(viewportElement);
+  const restoreExportStyles = inlineExportStyles(viewportElement, canvasRoot);
 
   try {
     const { toSvg } = await import("html-to-image");
@@ -225,7 +321,7 @@ export async function exportReactFlowDiagramPng({
     downloadDataUrl(dataUrl, filename);
     return dataUrl;
   } finally {
-    restoreSvgStyles();
+    restoreExportStyles();
     editorRoot?.classList.remove("tm-diagram-editor--exporting");
   }
 }
