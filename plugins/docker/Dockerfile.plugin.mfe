@@ -1,0 +1,27 @@
+# Template MFE — usa imagem compartilhada de build (recomendado jul/2026).
+# Copie para plugins/<nome>/Dockerfile e substitua PLACEHOLDER_PLUGIN.
+#
+# Pré-requisito:
+#   ./infra/scripts/build-plugins-shared-base.sh
+
+ARG SHARED_LIBS_BUILDER=delpi-plugins-shared-builder:local
+FROM ${SHARED_LIBS_BUILDER} AS builder
+
+WORKDIR /app
+
+COPY PLACEHOLDER_PLUGIN/package*.json ./PLACEHOLDER_PLUGIN/
+RUN --mount=type=cache,target=/root/.npm \
+    cd PLACEHOLDER_PLUGIN && npm install
+
+COPY PLACEHOLDER_PLUGIN ./PLACEHOLDER_PLUGIN
+
+WORKDIR /app/PLACEHOLDER_PLUGIN
+RUN npm run build
+
+FROM nginx:alpine
+
+COPY --from=builder /app/PLACEHOLDER_PLUGIN/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

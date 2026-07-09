@@ -72,6 +72,14 @@ docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.y
 # Build do chat sem paralelizar todos os serviços (evita OOM no build PyTorch/npm)
 export COMPOSE_PARALLEL_LIMIT=1
 docker compose -f infra/docker-compose.dev.yml --profile chat build minha-delpi-ai-api
+
+# Build de MFEs bundled (legado) — imagem compartilhada tv-dashboard-presentation
+./infra/scripts/build-plugins-shared-base.sh
+export COMPOSE_PARALLEL_LIMIT=2
+docker compose -f infra/docker-compose.dev.yml --profile plugins build dashboard-production
+
+# MFE federado (piloto) — remote plugin-ui em runtime
+docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
 ```
 
 ### Parar stack inflada (recuperação)

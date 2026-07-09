@@ -1,4 +1,5 @@
-# Fragmento Docker — bibliotecas compartilhadas em `plugins/`
+# Fragmento Docker legado — COPY manual de bibliotecas compartilhadas.
+# Preferir: FROM delpi-plugins-shared-builder:local (ver Dockerfile.plugin.mfe + build-plugins-shared-base.sh).
 
 Coloque **após** `WORKDIR /app` e **antes** do `COPY` do plugin consumidor.
 Contexto de build no Compose: `context: ../plugins` (não `../plugins/meu-plugin`).

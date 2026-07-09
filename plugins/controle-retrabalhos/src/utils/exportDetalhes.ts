@@ -5,7 +5,7 @@ import {
   formatHours,
   joinMotivoObservacao,
 } from "./formatters";
-import { exportMatrixToXlsx, type MatrixExportTable } from "@delpi/plugin-ui";
+import { exportMatrixToXlsx, type MatrixExportTable } from "@delpi/plugin-ui/index";
 
 export const RETRABALHO_DETALHES_HEADERS = [
   "Data",

@@ -8,7 +8,14 @@ alwaysApply: false
 
 ## Princípio
 
-**Plugins MFE devem usar componentes compartilhados** antes de criar UI local. A fonte canônica de primitivos transversais é **`plugins/plugin-ui/`** (`@delpi/plugin-ui` via alias Vite).
+**Plugins MFE devem usar componentes compartilhados** antes de criar UI local. A fonte canônica é **`plugins/plugin-ui/`** (`@delpi/plugin-ui`).
+
+**Dois modos de integração (jul/2026):**
+
+| Modo | Quando | Doc |
+|------|--------|-----|
+| **Module Federation** (preferido) | MFEs migrados | [module-federation.md](../plugins/plugin-ui/docs/module-federation.md) |
+| **Alias Vite bundled** (legado) | Demais até rollout Fase 2 | [architecture.md](../plugins/plugin-ui/docs/architecture.md) |
 
 Complementa: `plugins-visual-design-system.mdc`, `plugins-frontend-build.mdc`, `clean-code-architecture-guardrails.mdc`.
 
@@ -30,7 +37,25 @@ Catálogo completo: [plugins/plugin-ui/docs/component-catalog.md](../plugins/plu
 
 ## Integração obrigatória no plugin
 
-### 1. Alias Vite
+### Module Federation (MFEs migrados)
+
+Helper: `plugins/vite/federation.shared.ts`
+
+```ts
+remotes: pluginUiRemote(),
+shared: ["react", "react-dom", "lucide-react"],
+```
+
+```ts
+// bootstrap.tsx
+import "@delpi/plugin-ui/styles";
+```
+
+Docker: **sem** `COPY plugin-ui`; container runtime `delpi-plugin-ui` + `depends_on` no compose.
+
+### Bundled legado (demais plugins)
+
+#### 1. Alias Vite
 
 ```ts
 "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
@@ -38,13 +63,13 @@ Catálogo completo: [plugins/plugin-ui/docs/component-catalog.md](../plugins/plu
 
 Incluir `dedupe: ["react", "react-dom"]` quando o pacote é bundlado do source.
 
-### 2. CSS (uma vez no entry)
+#### 2. CSS (uma vez no entry)
 
 ```ts
 import "../../plugin-ui/src/styles.css";
 ```
 
-### 3. Tokens no dashboard
+#### 3. Tokens no dashboard
 
 ```css
 .dashboard-{nome} {
@@ -56,23 +81,19 @@ import "../../plugin-ui/src/styles.css";
 }
 ```
 
-### 4. Textos PT-BR
+#### 4. Textos PT-BR
 
 Ficam em `src/content/helpTooltips.ts` **do plugin** — nunca hardcoded no pacote compartilhado.
 
-### 5. Docker (obrigatório se o plugin tem `Dockerfile`)
+#### 5. Docker (bundled)
 
-Consumidor de `@delpi/plugin-ui` (ou outra bib. em `plugins/shared-libraries.manifest.json`):
+Consumidor bundled de `@delpi/plugin-ui`:
 
-1. `COPY plugin-ui` + `npm install` no `Dockerfile` — fragmento: `plugins/docker/shared-libraries.Dockerfile.fragment`
-2. Compose com **`context: ../plugins`** (não só a pasta do plugin)
-3. Gate CI antes do merge:
+1. `COPY plugin-ui` + `npm install` **ou** `FROM delpi-plugins-shared-builder`
+2. Compose **`context: ../plugins`**
+3. Gate CI: `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`
 
-```bash
-python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
-```
-
-Doc: [plugins/docker/README.md](../plugins/docker/README.md).
+Consumidor **federado**: `remotes` em vite + `COPY vite ./vite` — ver [module-federation.md](../plugins/plugin-ui/docs/module-federation.md).
 
 ---
 

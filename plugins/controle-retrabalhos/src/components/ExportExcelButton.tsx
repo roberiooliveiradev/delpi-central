@@ -1,4 +1,4 @@
-import { ExcelExportButton as SharedExcelExportButton } from "@delpi/plugin-ui";
+import { ExcelExportButton as SharedExcelExportButton } from "@delpi/plugin-ui/index";
 
 type ExportExcelButtonProps = {
   disabled?: boolean;

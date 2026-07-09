@@ -1,15 +1,27 @@
 {
   "$schema": "./shared-libraries.manifest.schema.json",
-  "description": "Bibliotecas TypeScript em plugins/ consumidas via alias Vite. Todo plugin que importar uma delas deve copiá-la no Dockerfile e usar contexto de build plugins/.",
+  "description": "Bibliotecas TypeScript em plugins/ consumidas por MFEs. plugin-ui: remote Module Federation em runtime; tv-dashboard-presentation: alias Vite + COPY/builder.",
   "requiredBuildContext": "../plugins",
+  "sharedBuilderImage": "delpi-plugins-shared-builder:local",
+  "sharedBuilderDockerfile": "docker/Dockerfile.shared-libs-builder",
   "libraries": [
     {
       "id": "plugin-ui",
       "directory": "plugin-ui",
       "packageName": "@delpi/plugin-ui",
+      "consumptionMode": "federation-remote",
+      "remoteEntry": "/apps/plugin-ui/assets/remoteEntry.js",
+      "remoteMarkers": [
+        "/apps/plugin-ui/assets/remoteEntry.js",
+        "pluginUiRemote",
+        "@delpi/plugin-ui",
+        "PLUGIN_UI_REMOTE_ENTRY",
+        "resolvePluginUiRemoteEntry"
+      ],
       "markers": [
         "@delpi/plugin-ui",
         "plugin-ui/src/styles.css",
+        "@delpi/plugin-ui/styles",
         "../plugin-ui/",
         "\"../plugin-ui"
       ]
@@ -18,6 +30,7 @@
       "id": "tv-dashboard-presentation",
       "directory": "tv-dashboard-presentation",
       "packageName": "@delpi/tv-dashboard-presentation",
+      "consumptionMode": "bundled",
       "markers": [
         "@delpi/tv-dashboard-presentation",
         "tv-dashboard-presentation/",

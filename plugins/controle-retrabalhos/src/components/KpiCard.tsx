@@ -1,4 +1,4 @@
-import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui";
+import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui/index";
 
 export const KpiCard = createSimpleKpiCard("cr");
 

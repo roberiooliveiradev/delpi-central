@@ -11,12 +11,24 @@
 #   docker compose -f infra/docker-compose.dev.yml --profile chat up -d
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
 #   ./infra/scripts/up-minimal-dev.sh   # atalho stack essencial + override de RAM
+#   ./infra/scripts/build-plugins-shared-base.sh   # imagem build tv-dashboard-presentation (legado bundled)
+#   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
 
 x-plugin-profile: &plugin-profile
   profiles:
     - plugins
 
 services:
+
+  # Imagem de build — NÃO sobe em runtime. Profile build-base.
+  plugins-shared-builder:
+    profiles:
+      - build-base
+    build:
+      context: ../plugins
+      dockerfile: docker/Dockerfile.shared-libs-builder
+    image: delpi-plugins-shared-builder:local
+    entrypoint: ["true"]
 
   postgres-core:
     image: postgres:15
@@ -775,8 +787,26 @@ services:
     networks:
       - delpi-network
 
+  plugin-ui:
+    <<: *plugin-profile
+    build:
+      context: ../plugins
+      dockerfile: plugin-ui/Dockerfile
+      target: production
+
+    container_name: delpi-plugin-ui
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   controle-retrabalhos:
     <<: *plugin-profile
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: controle-retrabalhos/Dockerfile

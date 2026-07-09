@@ -2,7 +2,7 @@ import {
   CompactPagination,
   compactPaginationBemClasses,
   type DashboardCompactPaginationProps,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const LABELS = {
   info: ({ page, totalPages }: { page: number; totalPages: number }) =>

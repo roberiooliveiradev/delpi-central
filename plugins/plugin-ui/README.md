@@ -11,7 +11,8 @@ Centraliza primitivos de UI que hoje estão duplicados em dezenas de plugins (ex
 | Recurso | Descrição |
 |---------|-----------|
 | [docs/README.md](./docs/README.md) | Índice da documentação |
-| [docs/architecture.md](./docs/architecture.md) | Estrutura, tokens CSS, integração Vite |
+| [docs/architecture.md](./docs/architecture.md) | Estrutura, tokens CSS, integração Vite / MF |
+| [docs/module-federation.md](./docs/module-federation.md) | **Remote runtime** — Docker, remotes, rollout |
 | [docs/component-catalog.md](./docs/component-catalog.md) | API de cada export + exemplos |
 | [docs/contributing.md](./docs/contributing.md) | Como adicionar componentes |
 | [docs/migration-catalog.md](./docs/migration-catalog.md) | Plugins a migrar das cópias locais |
@@ -21,7 +22,26 @@ Centraliza primitivos de UI que hoje estão duplicados em dezenas de plugins (ex
 
 ## Quick start
 
-### 1. Alias no consumidor (Vite)
+### Module Federation (recomendado — MFEs migrados)
+
+Guia completo: **[docs/module-federation.md](./docs/module-federation.md)**.
+
+```ts
+// vite.config.ts — helper plugins/vite/federation.shared.ts
+remotes: pluginUiRemote(),
+shared: ["react", "react-dom", "lucide-react"],
+```
+
+```ts
+// bootstrap.tsx
+import "@delpi/plugin-ui/styles";
+```
+
+Docker: subir `delpi-plugin-ui` antes do consumidor (`depends_on` no compose).
+
+### Bundled legado (demais plugins até rollout)
+
+#### 1. Alias no consumidor (Vite)
 
 ```ts
 // plugins/meu-plugin/vite.config.ts
@@ -35,7 +55,7 @@ resolve: {
 },
 ```
 
-### 2. Estilos (uma vez)
+#### 2. Estilos (uma vez)
 
 ```ts
 // src/main.tsx — ajuste o caminho relativo
@@ -43,7 +63,7 @@ import "../../plugin-ui/src/styles.css";
 import "./index.css";
 ```
 
-### 3. Tokens no root do dashboard
+#### 3. Tokens no root do dashboard
 
 ```css
 .dashboard-meu-plugin {
@@ -55,7 +75,7 @@ import "./index.css";
 }
 ```
 
-### 4. Uso
+#### 4. Uso
 
 ```tsx
 import { FieldLabel, HelpTooltip, HintAction, SectionHintLabel, TabHintCell } from "@delpi/plugin-ui";

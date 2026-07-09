@@ -1,19 +1,12 @@
-FROM node:20-alpine AS builder
+ARG SHARED_LIBS_BUILDER=delpi-plugins-shared-builder:local
+FROM ${SHARED_LIBS_BUILDER} AS builder
 
 WORKDIR /app
 
-# Pacotes compartilhados — aliases Vite (../tv-dashboard-presentation, ../plugin-ui)
-COPY tv-dashboard-presentation/package*.json ./tv-dashboard-presentation/
-RUN cd tv-dashboard-presentation && npm install
-
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY tv-dashboard/package*.json ./tv-dashboard/
-RUN cd tv-dashboard && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd tv-dashboard && npm install
 
-COPY tv-dashboard-presentation ./tv-dashboard-presentation
-COPY plugin-ui ./plugin-ui
 COPY tv-dashboard ./tv-dashboard
 
 WORKDIR /app/tv-dashboard

@@ -3,7 +3,7 @@ import {
   createDashboardLoadingState,
   emptyStateCardBemClasses,
   loadingStateCardBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 export const EmptyState = createDashboardEmptyState({
   classNames: emptyStateCardBemClasses("cr"),

@@ -1,0 +1,23 @@
+# Imagem de BUILD — bibliotecas compartilhadas em plugins/ (não sobe em runtime).
+# Evita repetir npm install de plugin-ui (e tv-dashboard-presentation) em cada MFE.
+#
+# Build:
+#   docker compose -f infra/docker-compose.dev.yml --profile build-base build plugins-shared-builder
+#   ./infra/scripts/build-plugins-shared-base.sh
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY plugin-ui/package*.json ./plugin-ui/
+RUN --mount=type=cache,target=/root/.npm \
+    cd plugin-ui && npm install
+
+COPY tv-dashboard-presentation/package*.json ./tv-dashboard-presentation/
+RUN --mount=type=cache,target=/root/.npm \
+    cd tv-dashboard-presentation && npm install
+
+COPY plugin-ui ./plugin-ui
+COPY tv-dashboard-presentation ./tv-dashboard-presentation
+
+LABEL org.delpi.role="plugins-shared-builder"

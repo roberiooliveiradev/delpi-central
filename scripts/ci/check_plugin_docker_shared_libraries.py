@@ -90,6 +90,52 @@ def dockerfile_copies_directory(dockerfile: Path, directory: str) -> bool:
     return any(re.search(pattern, content, flags=re.MULTILINE) for pattern in patterns)
 
 
+def dockerfile_uses_shared_builder(dockerfile: Path, manifest: dict) -> bool:
+    content = dockerfile.read_text(encoding="utf-8", errors="ignore")
+    image = str(manifest.get("sharedBuilderImage") or "delpi-plugins-shared-builder:local")
+    markers = (
+        "SHARED_LIBS_BUILDER",
+        image,
+        "Dockerfile.shared-libs-builder",
+    )
+    return any(marker in content for marker in markers)
+
+
+def library_entries_by_directory(manifest: dict) -> dict[str, dict]:
+    return {entry["directory"]: entry for entry in manifest["libraries"]}
+
+
+def vite_declares_federation_remote(plugin_dir: Path, library_entry: dict) -> bool:
+    markers = list(library_entry.get("remoteMarkers") or [])
+    remote_entry = library_entry.get("remoteEntry")
+    if remote_entry:
+        markers.append(remote_entry)
+    if not markers:
+        return False
+
+    for name in ("vite.config.ts", "vite.config.js", "vite.config.mts"):
+        file_path = plugin_dir / name
+        if not file_path.is_file():
+            continue
+        text = file_path.read_text(encoding="utf-8", errors="ignore")
+        if any(marker in text for marker in markers if marker):
+            return True
+    return False
+
+
+def federation_remote_satisfied(
+    plugin_dir: Path,
+    directory: str,
+    manifest: dict,
+) -> bool:
+    library_entry = library_entries_by_directory(manifest).get(directory)
+    if not library_entry:
+        return False
+    if library_entry.get("consumptionMode") != "federation-remote":
+        return False
+    return vite_declares_federation_remote(plugin_dir, library_entry)
+
+
 def compose_build_context(plugin_name: str) -> str | None:
     dockerfile_needle = f"{plugin_name}/Dockerfile"
     for compose_path in COMPOSE_FILES:
@@ -120,16 +166,41 @@ def validate(manifest: dict) -> list[str]:
         if not deps:
             continue
 
-        missing = sorted(
-            directory
-            for directory in deps
-            if not dockerfile_copies_directory(dockerfile, directory)
-        )
+        if dockerfile_uses_shared_builder(dockerfile, manifest):
+            compose_context = compose_build_context(plugin_name)
+            if compose_context is not None:
+                normalized = compose_context.rstrip("/")
+                if not normalized.endswith("/plugins"):
+                    errors.append(
+                        f"{plugin_name}: docker-compose context={compose_context!r} — "
+                        f"consumidor de biblioteca compartilhada exige context {required_context!r}."
+                    )
+            continue
+
+        lib_by_dir = library_entries_by_directory(manifest)
+        uses_builder = dockerfile_uses_shared_builder(dockerfile, manifest)
+        missing: list[str] = []
+        for directory in sorted(deps):
+            entry = lib_by_dir.get(directory, {})
+            if uses_builder or dockerfile_copies_directory(dockerfile, directory):
+                continue
+            if (
+                entry.get("consumptionMode") == "federation-remote"
+                and vite_declares_federation_remote(plugin_dir, entry)
+            ):
+                continue
+            if entry.get("consumptionMode") == "federation-remote":
+                missing.append(
+                    f"{directory} (COPY, shared builder ou pluginUiRemote() em vite.config)"
+                )
+            else:
+                missing.append(directory)
+
         if missing:
             errors.append(
-                f"{plugin_name}/Dockerfile: faltam COPY para biblioteca(s) compartilhada(s): "
+                f"{plugin_name}/Dockerfile: biblioteca(s) compartilhada(s) não satisfeita(s): "
                 f"{', '.join(missing)}. "
-                f"Use o fragmento em plugins/docker/shared-libraries.Dockerfile.fragment."
+                f"Bundled: COPY ou shared builder. Remote: remotes em vite.config.ts."
             )
 
         compose_context = compose_build_context(plugin_name)

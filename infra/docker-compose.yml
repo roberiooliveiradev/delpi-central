@@ -754,7 +754,24 @@ services:
     networks:
       - delpi-network
 
+  plugin-ui:
+    build:
+      context: ../plugins
+      dockerfile: plugin-ui/Dockerfile
+      target: production
+
+    container_name: delpi-plugin-ui
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   controle-retrabalhos:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: controle-retrabalhos/Dockerfile

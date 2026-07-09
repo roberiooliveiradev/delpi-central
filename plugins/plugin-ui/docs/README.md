@@ -4,7 +4,8 @@
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [architecture.md](./architecture.md) | Princípios, escopo, tokens CSS, integração Vite |
+| [architecture.md](./architecture.md) | Princípios, escopo, tokens CSS, Vite bundled vs MF |
+| [module-federation.md](./module-federation.md) | Remote runtime, Docker, consumidor federado, rollout |
 | [component-catalog.md](./component-catalog.md) | Inventário de exports, props e exemplos |
 | [contributing.md](./contributing.md) | Como adicionar componente, testes, checklist de merge |
 | [migration-catalog.md](./migration-catalog.md) | Plugins com cópias locais a migrar |
