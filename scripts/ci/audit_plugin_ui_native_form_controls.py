@@ -59,7 +59,6 @@ KNOWN_ALLOWLIST: dict[str, str] = {
     "minha-delpi-chat/src/ui/pages/ChatAgentBuilderPage.tsx": "backlog: ref/onKeyDown residual",
     "minha-delpi-chat/src/ui/pages/agent-actions/ActionTestPanel.tsx": "backlog: JSON test panel",
     # ——— demais plugins ———
-    "customer-experience/src/pages/ParticipantsPanel.tsx": "backlog: cxFormFields",
     "cultura-delpi/src/pages/AdminCulturaPage.tsx": "backlog: sem kit plugin-ui",
     "propostas-comerciais/src/components/ItensTable.tsx": "backlog: célula editável inline",
     "propostas-comerciais/src/components/PropostaComercialPdfExportModal.tsx": "backlog: modal export",

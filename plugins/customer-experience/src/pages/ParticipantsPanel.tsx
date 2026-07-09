@@ -27,6 +27,7 @@ import {
 import { CompanyField } from "../components/CompanyField";
 import { CompanyMultiSelect } from "../components/CompanyMultiSelect";
 import { PhotoDropzone } from "../components/PhotoDropzone";
+import { CxNativeTextAreaField } from "../components/cxFormFields";
 import { printQrLabel } from "../utils/qrLabelPrint";
 import { useCxPermissions } from "../context/CxPermissionsContext";
 import type { Participant } from "../types";
@@ -374,15 +375,14 @@ export function ParticipantsPanel() {
               />
             </label>
 
-            <label className="cx-field">
-              <span>Mensagem de agradecimento (opcional)</span>
-              <textarea
-                rows={3}
-                value={form.thankYouMessage}
-                onChange={(e) => setForm({ ...form, thankYouMessage: e.target.value })}
-                placeholder="Se vazio, usamos a mensagem padrão da Delpi."
-              />
-            </label>
+            <CxNativeTextAreaField
+              id="cx-participant-thank-you"
+              label="Mensagem de agradecimento (opcional)"
+              rows={3}
+              value={form.thankYouMessage}
+              onChange={(thankYouMessage) => setForm({ ...form, thankYouMessage })}
+              placeholder="Se vazio, usamos a mensagem padrão da Delpi."
+            />
 
             <div className="cx-field">
               <span>
