@@ -2,6 +2,7 @@ import { DIAGRAM_EDITOR_SELECTION_ACTIONS } from "./flowchartEditorToolbar";
 import { DiagramEditorActionDockButton } from "./DiagramEditorActionDockButton";
 
 type Props = {
+  clipboardReady: boolean;
   onSelectionAction: (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => void;
   isSelectionActionDisabled: (
     actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export function FlowchartEditorActionDock({
+  clipboardReady,
   onSelectionAction,
   isSelectionActionDisabled,
 }: Props) {
@@ -21,9 +23,9 @@ export function FlowchartEditorActionDock({
       {DIAGRAM_EDITOR_SELECTION_ACTIONS.map((action) => {
         const disabled = isSelectionActionDisabled(action.id);
         const active =
-          action.id === "delete"
-            ? !disabled
-            : action.id === "move" || action.id === "copy" || action.id === "duplicate"
+          action.id === "paste"
+            ? clipboardReady && !disabled
+            : action.id === "delete" || action.id === "copy" || action.id === "duplicate"
               ? !disabled
               : false;
 

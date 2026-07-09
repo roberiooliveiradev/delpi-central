@@ -6,6 +6,7 @@ import {
   Bot,
   Circle,
   CircleDot,
+  ClipboardPaste,
   Clock,
   Code2,
   Copy,
@@ -22,7 +23,6 @@ import {
   Mail,
   MessageSquare,
   Minus,
-  Move,
   Network,
   Plus,
   Radio,
@@ -157,8 +157,8 @@ export const DIAGRAM_EDITOR_LAYOUT_ACTIONS = DIAGRAM_EDITOR_ACTIONS.slice(1);
 
 export const DIAGRAM_EDITOR_SELECTION_ACTIONS = [
   { id: "delete", label: "Excluir", icon: Trash2, hint: D.selectionDelete },
-  { id: "move", label: "Mover", icon: Move, hint: D.selectionMove },
   { id: "copy", label: "Copiar", icon: Copy, hint: D.selectionCopy },
+  { id: "paste", label: "Colar", icon: ClipboardPaste, hint: D.selectionPaste },
   { id: "duplicate", label: "Duplicar", icon: CopyPlus, hint: D.selectionDuplicate },
   {
     id: "cycleEdgeKind",

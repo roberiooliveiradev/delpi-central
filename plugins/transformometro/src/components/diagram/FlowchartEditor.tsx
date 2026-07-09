@@ -116,6 +116,46 @@ type SelectionClipboard = {
   edges: Edge[];
 };
 
+function cloneClipboardSelection(
+  clipboard: SelectionClipboard,
+  offset: number,
+  readOnly: boolean,
+  onLabelChange?: (edgeId: string, label: string) => void
+): { nodes: ActivityNode[]; edges: Edge[] } {
+  const idMap = new Map<string, string>();
+
+  const clonedNodes = clipboard.nodes.map((node) => {
+    const data = node.data as BpmnNodeData;
+    const newId = createNodeId(data.nodeType.slice(0, 3));
+    idMap.set(node.id, newId);
+    return {
+      ...node,
+      id: newId,
+      selected: true,
+      position: {
+        x: node.position.x + offset,
+        y: node.position.y + offset,
+      },
+    };
+  });
+
+  const clonedEdges = clipboard.edges.map((edge) => ({
+    ...edge,
+    id: createEdgeId(),
+    source: idMap.get(edge.source) ?? edge.source,
+    target: idMap.get(edge.target) ?? edge.target,
+    selected: false,
+    data: {
+      ...edge.data,
+      readOnly,
+      onLabelChange: readOnly ? undefined : onLabelChange,
+      kind: (edge.data?.kind as FlowchartEdgeKind | undefined) ?? "sequence",
+    },
+  }));
+
+  return { nodes: clonedNodes, edges: clonedEdges };
+}
+
 function isLaneNodeId(id: string): boolean {
   return id.startsWith(LANE_NODE_PREFIX);
 }
@@ -295,6 +335,8 @@ function FlowchartEditorInner({
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const clipboardRef = useRef<SelectionClipboard | null>(null);
+  const pasteGenerationRef = useRef(0);
+  const [clipboardReady, setClipboardReady] = useState(false);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const isDark = useTransformometroDarkMode();
   const colorMode = isDark ? "dark" : "light";
@@ -777,44 +819,61 @@ function FlowchartEditorInner({
         (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
       ),
     };
+    pasteGenerationRef.current = 0;
+    setClipboardReady(Boolean(clipboardRef.current.nodes.length));
   }, [edges, hasNodeSelection, nodes, readOnly, selectedNodeIds]);
+
+  const pasteSelection = useCallback(() => {
+    if (readOnly || !clipboardRef.current?.nodes.length) return;
+    pasteGenerationRef.current += 1;
+    const offset = DUPLICATE_OFFSET * pasteGenerationRef.current;
+    const { nodes: pastedNodes, edges: pastedEdges } = cloneClipboardSelection(
+      clipboardRef.current,
+      offset,
+      readOnly,
+      handleEdgeLabelChange
+    );
+    const nextNodes = [
+      ...nodes.map((node) => ({ ...node, selected: false })),
+      ...pastedNodes,
+    ];
+    const nextEdges = [...edges, ...pastedEdges];
+    setNodes(nextNodes);
+    setEdges(nextEdges);
+    emitChange(nextNodes, nextEdges);
+  }, [
+    edges,
+    emitChange,
+    handleEdgeLabelChange,
+    nodes,
+    readOnly,
+    setEdges,
+    setNodes,
+  ]);
 
   const duplicateSelection = useCallback(() => {
     if (readOnly || !hasNodeSelection) return;
     const selectedIds = new Set(selectedNodeIds);
-    const idMap = new Map<string, string>();
-    const duplicatedNodes: ActivityNode[] = nodes
-      .filter((node): node is ActivityNode => node.type !== "lane" && selectedIds.has(node.id))
-      .map((node) => {
-        const data = node.data as BpmnNodeData;
-        const newId = createNodeId(data.nodeType.slice(0, 3));
-        idMap.set(node.id, newId);
-        return {
-          ...node,
-          id: newId,
-          selected: true,
-          position: {
-            x: node.position.x + DUPLICATE_OFFSET,
-            y: node.position.y + DUPLICATE_OFFSET,
-          },
-        };
-      });
+    const snapshot: SelectionClipboard = {
+      nodes: nodes.filter(
+        (node): node is ActivityNode => node.type !== "lane" && selectedIds.has(node.id)
+      ),
+      edges: edges.filter(
+        (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
+      ),
+    };
+    if (!snapshot.nodes.length) return;
 
-    if (!duplicatedNodes.length) return;
+    clipboardRef.current = snapshot;
+    pasteGenerationRef.current = 1;
+    setClipboardReady(true);
 
-    const duplicatedEdges = edges
-      .filter((edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target))
-      .map((edge) => ({
-        ...edge,
-        id: createEdgeId(),
-        source: idMap.get(edge.source) ?? edge.source,
-        target: idMap.get(edge.target) ?? edge.target,
-        selected: false,
-        data: {
-          readOnly,
-          onLabelChange: readOnly ? undefined : handleEdgeLabelChange,
-        },
-      }));
+    const { nodes: duplicatedNodes, edges: duplicatedEdges } = cloneClipboardSelection(
+      snapshot,
+      DUPLICATE_OFFSET,
+      readOnly,
+      handleEdgeLabelChange
+    );
 
     const nextNodes = [
       ...nodes.map((node) => ({ ...node, selected: false })),
@@ -837,11 +896,33 @@ function FlowchartEditorInner({
   ]);
 
   useEffect(() => {
-    if (readOnly || !hasNodeSelection) return;
+    if (readOnly) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.closest("input, textarea, [contenteditable='true']")) return;
 
+      const mod = event.ctrlKey || event.metaKey;
+      if (mod && event.key.toLowerCase() === "c") {
+        if (!hasNodeSelection) return;
+        event.preventDefault();
+        copySelection();
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "v") {
+        if (!clipboardRef.current?.nodes.length) return;
+        event.preventDefault();
+        pasteSelection();
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "d") {
+        if (!hasNodeSelection) return;
+        event.preventDefault();
+        duplicateSelection();
+        return;
+      }
+
+      if (!hasNodeSelection) return;
       const dx =
         event.key === "ArrowLeft" ? -NUDGE_STEP : event.key === "ArrowRight" ? NUDGE_STEP : 0;
       const dy =
@@ -853,7 +934,14 @@ function FlowchartEditorInner({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasNodeSelection, nudgeSelection, readOnly]);
+  }, [
+    copySelection,
+    duplicateSelection,
+    hasNodeSelection,
+    nudgeSelection,
+    pasteSelection,
+    readOnly,
+  ]);
 
   const cycleSelectedEdgeKind = useCallback(() => {
     if (readOnly || !selectedEdgeIds.length) return;
@@ -881,8 +969,8 @@ function FlowchartEditorInner({
 
   const runSelectionAction = (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => {
     if (actionId === "delete") deleteSelection();
-    else if (actionId === "move") canvasWrapperRef.current?.focus();
     else if (actionId === "copy") copySelection();
+    else if (actionId === "paste") pasteSelection();
     else if (actionId === "duplicate") duplicateSelection();
     else if (actionId === "cycleEdgeKind") cycleSelectedEdgeKind();
   };
@@ -891,8 +979,9 @@ function FlowchartEditorInner({
     actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]
   ) => {
     if (actionId === "delete") return !hasSelection;
+    if (actionId === "paste") return !clipboardReady;
     if (actionId === "cycleEdgeKind") return !selectedEdgeIds.length;
-    if (actionId === "move" || actionId === "copy" || actionId === "duplicate") {
+    if (actionId === "copy" || actionId === "duplicate") {
       return !hasNodeSelection;
     }
     return false;
@@ -938,6 +1027,7 @@ function FlowchartEditorInner({
 
             {!readOnly ? (
               <FlowchartEditorActionDock
+                clipboardReady={clipboardReady}
                 onSelectionAction={runSelectionAction}
                 isSelectionActionDisabled={isSelectionActionDisabled}
               />
