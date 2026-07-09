@@ -15,6 +15,7 @@ import type {
 } from "../../../../data/api/adminTypes";
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
+import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
 import { SecuritySummaryStrip } from "./SecuritySummaryStrip";
 
 import "./AdminSecurityTab.css";
@@ -115,14 +116,14 @@ export function AdminSecurityTab({
       <div className="mdc-admin-security__layout mdc-admin-split">
         <article className="mdc-admin-split__aside mdc-admin-panel mdc-admin-security__scan">
           <h3>Testar mensagem</h3>
-          <label className="mdc-admin-field">
-            <span>Mensagem</span>
-            <textarea
-              value={scanMessage}
-              onChange={(event) => setScanMessage(event.target.value)}
-              placeholder="Cole uma mensagem para avaliar risco de injeção de prompt..."
-            />
-          </label>
+          <ChatAdminNativeTextAreaField
+            id="admin-security-scan-message"
+            label="Mensagem"
+            span={false}
+            value={scanMessage}
+            placeholder="Cole uma mensagem para avaliar risco de injeção de prompt..."
+            onChange={setScanMessage}
+          />
           <button
             type="button"
             className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"

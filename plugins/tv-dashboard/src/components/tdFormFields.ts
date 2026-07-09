@@ -16,3 +16,5 @@ export const {
 } = createDashboardNativeFormFields({
   classNames: TD_FIELD_CLASS_NAMES,
 });
+
+export { NativeTextAreaControl as TdNativeTextAreaControl } from "@delpi/plugin-ui";

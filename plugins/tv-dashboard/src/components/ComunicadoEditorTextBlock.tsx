@@ -2,6 +2,7 @@ import { useEffect, useRef, type CSSProperties } from "react";
 import { blockCssStyle, comunicadoTextInnerStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
+import { TdNativeTextAreaControl } from "./tdFormFields";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type TextBlock = Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>;
@@ -68,7 +69,7 @@ export function ComunicadoEditorTextBlock({
     return (
       <div className={blockClass} style={style} onPointerDown={(event) => event.stopPropagation()}>
         <div className={`td-composer__inline-text-wrap td-composer__inline-text-wrap--${block.type}`}>
-          <textarea
+          <TdNativeTextAreaControl
             ref={inputRef}
             className="td-composer__inline-text"
             style={innerStyle}
@@ -76,7 +77,7 @@ export function ComunicadoEditorTextBlock({
             placeholder={PLACEHOLDER[block.type]}
             rows={1}
             aria-label={PLACEHOLDER[block.type]}
-            onChange={(event) => updateBlockContent(block.id, event.target.value)}
+            onChange={(value) => updateBlockContent(block.id, value)}
             onBlur={exitEditing}
             onKeyDown={(event) => {
               event.stopPropagation();

@@ -24,6 +24,7 @@ import {
 } from "../../../agentIcebreakers";
 import {
   ChatAdminNativeSelectField,
+  ChatNativeTextAreaControl,
 } from "../../admin/shared/chatAdminFormFields";
 
 import "./AgentIcebreakersEditor.css";
@@ -471,7 +472,7 @@ export function AgentIcebreakersEditor({
 
                   <label className="mdc-chat-ws-field">
                     <span>Pergunta enviada ao clicar</span>
-                    <textarea
+                    <ChatNativeTextAreaControl
                       ref={(element) => {
                         templateRefs.current[index] = element;
                       }}
@@ -480,10 +481,10 @@ export function AgentIcebreakersEditor({
                       rows={2}
                       maxLength={AGENT_ICEBREAKER_MAX_CHARS}
                       placeholder="Ex.: qual o status fabril hoje do produto {{productCode}}?"
-                      onChange={(event) =>
+                      onChange={(value) =>
                         onChange(
                           patchEntry(entries, index, {
-                            template: clampIcebreakerDraft(event.target.value),
+                            template: clampIcebreakerDraft(value),
                           }),
                         )
                       }

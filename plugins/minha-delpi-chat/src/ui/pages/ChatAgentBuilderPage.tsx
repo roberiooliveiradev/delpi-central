@@ -91,6 +91,7 @@ import "../components/admin/agents/AgentMiniDashboard.css";
 import {
   ChatAdminNativeSelectField,
   ChatAdminNativeTextAreaField,
+  ChatNativeTextAreaControl,
 } from "../components/admin/shared/chatAdminFormFields";
 
 import "./ChatAgentBuilderPage.css";
@@ -1520,11 +1521,11 @@ export function ChatAgentBuilderPage({
                 </div>
 
                 <div className="mdc-chat-ws-create-chat__composer">
-                  <textarea
+                  <ChatNativeTextAreaControl
                     value={createInput}
                     rows={2}
                     disabled={isCreateChatLoading}
-                    onChange={(event) => setCreateInput(event.target.value)}
+                    onChange={setCreateInput}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault();

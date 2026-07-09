@@ -9,6 +9,7 @@ import {
   CULTURA_DELPI_ADMIN_SUBTITLE,
   CULTURA_DELPI_ADMIN_TITLE,
 } from "../content/culturaDelpi";
+import { CulturaNativeTextAreaControl } from "../components/culturaFormFields";
 import type {
   CulturaDelpiContent,
   UpdateCulturaDelpiContentPayload,
@@ -194,12 +195,12 @@ export function AdminCulturaPage() {
             <label className="cultura-delpi-admin__label" htmlFor="cultura-proposito">
               Propósito
             </label>
-            <textarea
+            <CulturaNativeTextAreaControl
               id="cultura-proposito"
               className="cultura-delpi-admin__textarea"
               rows={5}
               value={form.proposito}
-              onChange={(event) => updateField("proposito", event.target.value)}
+              onChange={(value) => updateField("proposito", value)}
               disabled={saving}
             />
           </section>
@@ -208,12 +209,12 @@ export function AdminCulturaPage() {
             <label className="cultura-delpi-admin__label" htmlFor="cultura-missao">
               Missão
             </label>
-            <textarea
+            <CulturaNativeTextAreaControl
               id="cultura-missao"
               className="cultura-delpi-admin__textarea"
               rows={5}
               value={form.missao}
-              onChange={(event) => updateField("missao", event.target.value)}
+              onChange={(value) => updateField("missao", value)}
               disabled={saving}
             />
           </section>
@@ -222,12 +223,12 @@ export function AdminCulturaPage() {
             <label className="cultura-delpi-admin__label" htmlFor="cultura-visao">
               Visão
             </label>
-            <textarea
+            <CulturaNativeTextAreaControl
               id="cultura-visao"
               className="cultura-delpi-admin__textarea"
               rows={5}
               value={form.visao}
-              onChange={(event) => updateField("visao", event.target.value)}
+              onChange={(value) => updateField("visao", value)}
               disabled={saving}
             />
           </section>

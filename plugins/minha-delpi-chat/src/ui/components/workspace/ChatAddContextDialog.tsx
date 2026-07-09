@@ -8,6 +8,7 @@ import {
   workspaceFileContextIngestLabels,
 } from "../../../content/workspaceFileIngestContent";
 import { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
+import { ChatNativeTextAreaControl } from "../admin/shared/chatAdminFormFields";
 import { ChatModal } from "../shared/modal/ChatModal";
 import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
 
@@ -189,7 +190,7 @@ export function ChatAddContextDialog({
         ) : null}
         <label className="mdc-chat-add-context__field">
           <span>Conteúdo</span>
-          <textarea
+          <ChatNativeTextAreaControl
             value={content}
             rows={7}
             maxLength={MAX_CHARS}
@@ -198,8 +199,8 @@ export function ChatAddContextDialog({
               "Ou cole uma tabela, regras, e-mail, SQL, resumo de reunião…"
             }
             autoFocus
-            onChange={(event) => {
-              setContent(event.target.value);
+            onChange={(value) => {
+              setContent(value);
               setError(null);
             }}
           />

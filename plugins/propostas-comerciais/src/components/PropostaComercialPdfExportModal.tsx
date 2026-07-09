@@ -19,6 +19,7 @@ import type {
 } from "../types/propostasComerciais";
 import { displayValue } from "../utils/format";
 import { ItensTable } from "./ItensTable";
+import { PcNativeTextAreaControl } from "./pcFormFields";
 import { PropostaComercialModal } from "./PropostaComercialModal";
 
 type PropostaComercialPdfExportModalProps = {
@@ -208,11 +209,7 @@ function Field({
     <label className={`pc-form-field${wide ? " pc-form-field--wide" : ""}`}>
       <span>{label}</span>
       {multiline ? (
-        <textarea
-          rows={4}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
+        <PcNativeTextAreaControl rows={4} value={value} onChange={onChange} />
       ) : (
         <input type="text" value={value} onChange={(event) => onChange(event.target.value)} />
       )}

@@ -6,8 +6,8 @@
 
 | Métrica | Valor |
 |---------|------:|
-| `<select>` / `<textarea>` nativos em plugins (exc. `plugin-ui`) | **22** |
-| Allowlist documentada (backlog + domínio) | 22 |
+| `<select>` / `<textarea>` nativos em plugins (exc. `plugin-ui`) | **4** |
+| Allowlist documentada (domínio permanente) | 4 |
 | **Novos bloqueantes** (`--check`) | **0** |
 | `<select>` restantes | **0** (fora plugins excluídos) |
 
@@ -20,16 +20,17 @@
 | `public-hub` | Runtime público (form visitante) | 1 `<textarea>` |
 | `portal` | Shell legado | — |
 
-## Por plugin (actionable backlog)
+## Por plugin
 
-| Plugin | `<textarea>` | `<select>` | Prioridade sugerida |
-|--------|-------------:|-----------:|---------------------|
-| **strategic-indicators** | 0 | 0 | ✅ migrado (`SiNativeTextAreaControl`) |
-| **minha-delpi-chat** | 15 | 0 | Média — 4 domínio permanente, 11 admin/workspace |
-| **cultura-delpi** | 3 | 0 | Média — kit `plugin-ui` + alias Vite |
-| **propostas-comerciais** | 2 | 0 | Média — inline table + modal |
-| **customer-experience** | 1 | 0 | Baixa — `ParticipantsPanel` |
-| **tv-dashboard** | 1 | 0 | Baixa — `ComunicadoEditorTextBlock` |
+| Plugin | `<textarea>` | `<select>` | Status |
+|--------|-------------:|-----------:|--------|
+| **minha-delpi-chat** | 4 | 0 | Domínio permanente (composer, edição, canvas, shortcut) |
+| **strategic-indicators** | 0 | 0 | ✅ migrado |
+| **customer-experience** | 0 | 0 | ✅ migrado |
+| **quality-action-plans** | 0 | 0 | ✅ migrado |
+| **cultura-delpi** | 0 | 0 | ✅ migrado (`CulturaNativeTextAreaControl`) |
+| **propostas-comerciais** | 0 | 0 | ✅ migrado (`PcNativeTextAreaControl`) |
+| **tv-dashboard** | 0 | 0 | ✅ migrado (`TdNativeTextAreaControl`) |
 
 ## Domínio permanente (não migrar para FormFieldShell)
 
@@ -42,21 +43,16 @@
 
 Estes permanecem nativos; podem evoluir para `NativeTextAreaControl` **sem** shell se quiser DRY no import.
 
-## Backlog de migração (por lote)
+## Kits locais (wrappers finos)
 
-### Lote A — strategic-indicators ✅
-- Migrado para `SiNativeTextAreaControl` (`siNativeFormFields.ts`)
-
-### Lote B — minha-delpi-chat admin/workspace (11)
-- Admin: evaluations, guidelines test, security, skills
-- Workspace: context dialog, project settings, source note, icebreakers, agent builder residual, action test
-- **Kit:** estender `chatAdminFormFields` ou `NativeTextAreaControl` onde há `ref`/`onKeyDown`
-
-### Lote C — plugins menores (7)
-- `cultura-delpi/AdminCulturaPage` (3)
-- `propostas-comerciais` ItensTable + PdfExportModal (2)
-- `customer-experience/ParticipantsPanel` (1)
-- `tv-dashboard/ComunicadoEditorTextBlock` (1)
+| Plugin | Arquivo | Export |
+|--------|---------|--------|
+| minha-delpi-chat | `chatAdminFormFields.ts` | `ChatAdminNativeTextAreaField`, `ChatNativeTextAreaControl` |
+| strategic-indicators | `siNativeFormFields.ts` | `SiNativeTextAreaControl` |
+| customer-experience | `cxFormFields.ts` | `CxNativeTextAreaField` |
+| cultura-delpi | `culturaFormFields.ts` | `CulturaNativeTextAreaControl` |
+| propostas-comerciais | `pcFormFields.ts` | `PcNativeTextAreaControl` |
+| tv-dashboard | `tdFormFields.ts` | `TdNativeTextAreaField`, `TdNativeTextAreaControl` |
 
 ## Uso do gate CI
 

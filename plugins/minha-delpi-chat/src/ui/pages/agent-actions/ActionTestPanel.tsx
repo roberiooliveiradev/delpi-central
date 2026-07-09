@@ -11,6 +11,7 @@ import {
   type TestField,
 } from "./actionTestUtils";
 import type { ActionTestPanelProps } from "./types";
+import { ChatNativeTextAreaControl } from "../../components/admin/shared/chatAdminFormFields";
 
 import "./ActionTestPanel.css";
 
@@ -207,9 +208,9 @@ export function ActionTestPanel({
           <h3>Body JSON</h3>
           <p>Corpo gerado a partir do schema OpenAPI da rota.</p>
 
-          <textarea
+          <ChatNativeTextAreaControl
             value={bodyText}
-            onChange={(event) => setBodyText(event.target.value)}
+            onChange={setBodyText}
             rows={8}
             spellCheck={false}
           />

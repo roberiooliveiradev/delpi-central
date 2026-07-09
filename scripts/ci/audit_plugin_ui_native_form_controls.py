@@ -47,22 +47,6 @@ KNOWN_ALLOWLIST: dict[str, str] = {
     "minha-delpi-chat/src/ui/components/message/ChatMessageEditField.tsx": "edição inline de mensagem",
     "minha-delpi-chat/src/ui/components/canvas/ChatCanvas.tsx": "editor markdown do canvas",
     "minha-delpi-chat/src/ui/components/shared/modal/ChatShortcutPromptDialog.tsx": "prompt rápido modal",
-    # ——— minha-delpi-chat: backlog admin/workspace (migrar para chatAdminFormFields) ———
-    "minha-delpi-chat/src/ui/components/admin/evaluations/AdminEvaluationsTab.tsx": "backlog: CxNative/chatAdmin",
-    "minha-delpi-chat/src/ui/components/admin/guidelines/GuidelineTestPanel.tsx": "backlog: chatAdmin",
-    "minha-delpi-chat/src/ui/components/admin/security/AdminSecurityTab.tsx": "backlog: chatAdmin",
-    "minha-delpi-chat/src/ui/components/admin/skills/AdminSkillsTab.tsx": "backlog: chatAdmin (2×)",
-    "minha-delpi-chat/src/ui/components/workspace/ChatAddContextDialog.tsx": "backlog: workspace forms",
-    "minha-delpi-chat/src/ui/components/workspace/ChatProjectSettingsModal.tsx": "backlog: workspace forms",
-    "minha-delpi-chat/src/ui/components/workspace/WorkspaceSourceNote.tsx": "backlog: workspace forms",
-    "minha-delpi-chat/src/ui/components/workspace/agentBuilder/AgentIcebreakersEditor.tsx": "backlog: ref/onKeyDown",
-    "minha-delpi-chat/src/ui/pages/ChatAgentBuilderPage.tsx": "backlog: ref/onKeyDown residual",
-    "minha-delpi-chat/src/ui/pages/agent-actions/ActionTestPanel.tsx": "backlog: JSON test panel",
-    # ——— demais plugins ———
-    "cultura-delpi/src/pages/AdminCulturaPage.tsx": "backlog: sem kit plugin-ui",
-    "propostas-comerciais/src/components/ItensTable.tsx": "backlog: célula editável inline",
-    "propostas-comerciais/src/components/PropostaComercialPdfExportModal.tsx": "backlog: modal export",
-    "tv-dashboard/src/components/ComunicadoEditorTextBlock.tsx": "backlog: bloco rich text deck",
 }
 
 

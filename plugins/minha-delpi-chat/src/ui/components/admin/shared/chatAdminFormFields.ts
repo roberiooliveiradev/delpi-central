@@ -16,3 +16,5 @@ export const {
 } = createDashboardNativeFormFields({
   classNames: CHAT_ADMIN_FIELD_CLASS_NAMES,
 });
+
+export { NativeTextAreaControl as ChatNativeTextAreaControl } from "@delpi/plugin-ui";

@@ -9,6 +9,7 @@ import {
 } from "../../../../data/api/adminApi";
 import type { AdminChatSkill, AdminRbacSummary } from "../../../../data/api/adminTypes";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
 import { useConfirmDialog } from "../../shared";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SkillsSummaryStrip } from "./SkillsSummaryStrip";
@@ -350,30 +351,30 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
                   />
                 </label>
 
-                <label className="mdc-admin-field mdc-admin-skills__field-span">
-                  <span>Descrição (UI)</span>
-                  <textarea
-                    value={draft.description}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({ ...current, description: event.target.value }))
-                    }
-                    rows={3}
-                  />
-                </label>
+                <ChatAdminNativeTextAreaField
+                  id="admin-skill-description"
+                  label="Descrição (UI)"
+                  className="mdc-admin-skills__field-span"
+                  value={draft.description}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({ ...current, description: value }))
+                  }
+                  rows={3}
+                />
 
-                <label className="mdc-admin-field mdc-admin-skills__field-span">
-                  <span>Policy (Markdown para o LLM)</span>
-                  <textarea
-                    value={draft.policyContent}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({ ...current, policyContent: event.target.value }))
-                    }
-                    rows={12}
-                    placeholder="Instruções injetadas no contexto quando a skill estiver ativa no agente."
-                  />
-                </label>
+                <ChatAdminNativeTextAreaField
+                  id="admin-skill-policy"
+                  label="Policy (Markdown para o LLM)"
+                  className="mdc-admin-skills__field-span"
+                  value={draft.policyContent}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({ ...current, policyContent: value }))
+                  }
+                  rows={12}
+                  placeholder="Instruções injetadas no contexto quando a skill estiver ativa no agente."
+                />
 
                 <label className="mdc-admin-field">
                   <span>Arquivo policy (fallback)</span>

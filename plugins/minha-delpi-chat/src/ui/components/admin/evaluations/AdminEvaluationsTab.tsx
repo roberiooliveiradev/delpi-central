@@ -13,6 +13,7 @@ import type {
 } from "../../../../data/api/adminTypes";
 
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { EvaluationsSummaryStrip } from "./EvaluationsSummaryStrip";
 
@@ -219,15 +220,15 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
                 </div>
               </div>
 
-              <label className="mdc-admin-field">
-                <span>Comentário (opcional)</span>
-                <textarea
-                  value={comment}
-                  rows={4}
-                  placeholder="Descreva o que faltou ou o que funcionou bem."
-                  onChange={(event) => setComment(event.target.value)}
-                />
-              </label>
+              <ChatAdminNativeTextAreaField
+                id="admin-evaluation-comment"
+                label="Comentário (opcional)"
+                span={false}
+                rows={4}
+                value={comment}
+                placeholder="Descreva o que faltou ou o que funcionou bem."
+                onChange={setComment}
+              />
 
               <AdminFormCheckbox
                 title="Enriquecer sugestões com LLM"

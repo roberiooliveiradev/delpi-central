@@ -22,4 +22,20 @@ describe("NativeTextAreaControl", () => {
     fireEvent.change(screen.getByLabelText("Código"), { target: { value: "flowchart" } });
     expect(handleChange).toHaveBeenCalledWith("flowchart");
   });
+
+  it("repassa onKeyDown", () => {
+    const handleKeyDown = vi.fn();
+
+    render(
+      <NativeTextAreaControl
+        value=""
+        aria-label="Composer"
+        onChange={() => undefined}
+        onKeyDown={handleKeyDown}
+      />,
+    );
+
+    fireEvent.keyDown(screen.getByLabelText("Composer"), { key: "Enter" });
+    expect(handleKeyDown).toHaveBeenCalledTimes(1);
+  });
 });

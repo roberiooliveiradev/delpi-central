@@ -12,6 +12,7 @@ import {
   PROJECT_ICON_OPTIONS,
 } from "./chatProjectIcon";
 import { ChatProjectIcon } from "./ChatProjectIcon";
+import { ChatNativeTextAreaControl } from "../admin/shared/chatAdminFormFields";
 import { ChatWorkspaceIconPicker } from "./ChatWorkspaceIconPicker";
 
 import "./ChatProjectHome.css";
@@ -166,9 +167,9 @@ export function ChatProjectSettingsModal({
 
         <label className="mdc-chat-project-settings__field">
           <span>Instruções</span>
-          <textarea
+          <ChatNativeTextAreaControl
             value={instructions}
-            onChange={(event) => setInstructions(event.target.value)}
+            onChange={setInstructions}
             rows={6}
             placeholder="Defina o contexto e personalize como o assistente responde neste projeto."
           />

@@ -1,19 +1,22 @@
-import { forwardRef } from "react";
+import { forwardRef, type CSSProperties, type KeyboardEvent } from "react";
 
 export type NativeTextAreaControlProps = {
   id?: string;
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  style?: CSSProperties;
   rows?: number;
   placeholder?: string;
   disabled?: boolean;
   readOnly?: boolean;
   maxLength?: number;
   spellCheck?: boolean;
+  autoFocus?: boolean;
   "aria-label"?: string;
   onFocus?: () => void;
   onBlur?: () => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
 };
 
 /**
@@ -26,15 +29,18 @@ export const NativeTextAreaControl = forwardRef<HTMLTextAreaElement, NativeTextA
       value,
       onChange,
       className,
+      style,
       rows,
       placeholder,
       disabled,
       readOnly,
       maxLength,
       spellCheck,
+      autoFocus,
       "aria-label": ariaLabel,
       onFocus,
       onBlur,
+      onKeyDown,
     },
     ref,
   ) {
@@ -43,6 +49,7 @@ export const NativeTextAreaControl = forwardRef<HTMLTextAreaElement, NativeTextA
         ref={ref}
         id={id}
         className={className}
+        style={style}
         value={value}
         rows={rows}
         placeholder={placeholder}
@@ -50,9 +57,11 @@ export const NativeTextAreaControl = forwardRef<HTMLTextAreaElement, NativeTextA
         readOnly={readOnly}
         maxLength={maxLength}
         spellCheck={spellCheck}
+        autoFocus={autoFocus}
         aria-label={ariaLabel}
         onFocus={onFocus}
         onBlur={onBlur}
+        onKeyDown={onKeyDown}
         onChange={(event) => onChange(event.target.value)}
       />
     );

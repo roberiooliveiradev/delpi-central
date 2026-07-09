@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { ChatNativeTextAreaControl } from "../admin/shared/chatAdminFormFields";
+
 type WorkspaceSourceNoteDetailsProps = {
   children: ReactNode;
   summary?: string;
@@ -48,9 +50,9 @@ export function WorkspaceSourceNoteForm({
         onChange={(event) => onTitleChange(event.target.value)}
         placeholder={titlePlaceholder}
       />
-      <textarea
+      <ChatNativeTextAreaControl
         value={content}
-        onChange={(event) => onContentChange(event.target.value)}
+        onChange={onContentChange}
         placeholder={contentPlaceholder}
         rows={4}
       />

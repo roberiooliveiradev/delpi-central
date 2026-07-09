@@ -8,6 +8,7 @@ import {
   type PropostaComercialItemColumnKey,
 } from "../constants/propostaComercialLabels";
 import { displayValue, formatLoteMinimoMil } from "../utils/format";
+import { PcNativeTextAreaControl } from "./pcFormFields";
 
 type ItensTableReadOnlyProps = {
   items: PropostaComercialItem[];
@@ -65,12 +66,12 @@ function TableCellInput({
 
   if (multiline) {
     return (
-      <textarea
+      <PcNativeTextAreaControl
         className={className}
         rows={2}
         value={value}
         aria-label={ariaLabel}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
       />
     );
   }
