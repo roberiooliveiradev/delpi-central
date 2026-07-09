@@ -24,13 +24,26 @@ function childrenOf(parentId: string | null, nodes: DecompositionNode[]): Decomp
     .sort((a, b) => a.ordem - b.ordem);
 }
 
+function resolveNodeLabel(
+  node: DecompositionNode,
+  override?: NonNullable<DecompositionOverlayV1["node_overrides"]>[string]
+): string {
+  if (override && override.label !== undefined) {
+    return override.label;
+  }
+  if (node.label !== undefined && node.label !== null) {
+    return node.label;
+  }
+  return DECOMPOSITION_LEVEL_LABELS[node.level];
+}
+
 function mapDecompositionNode(
   node: DecompositionNode,
   nodes: DecompositionNode[],
   overlay?: DecompositionOverlayV1
 ): RichTreeNode {
   const override = overlay?.node_overrides?.[node.id];
-  const label = override?.label?.trim() || node.label || DECOMPOSITION_LEVEL_LABELS[node.level];
+  const label = resolveNodeLabel(node, override);
   const subtitle = override?.descricao?.trim() || node.descricao?.trim() || undefined;
   const highlight = override?.highlight ?? node.highlight;
   const childNodes = childrenOf(node.id, nodes).map((child) =>

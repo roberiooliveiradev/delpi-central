@@ -155,7 +155,12 @@ export function RevisaoDecompositionSection({
                     ) : (
                       <input
                         className="tm-rich-tree__input"
-                        value={overlay.node_overrides?.[node.id]?.label ?? node.label}
+                        value={
+                          overlay.node_overrides?.[node.id]?.label !== undefined
+                            ? overlay.node_overrides[node.id]!.label!
+                            : node.label
+                        }
+                        placeholder={node.badge === "PK" ? "Processo-chave" : node.badge === "T" ? "Tarefa" : "Sub-tarefa"}
                         onChange={(event) => updateOverride(node.id, event.target.value)}
                         aria-label={`Rótulo ${node.label}`}
                       />

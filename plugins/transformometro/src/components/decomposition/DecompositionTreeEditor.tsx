@@ -124,17 +124,21 @@ export function DecompositionTreeEditor({ tree, readOnly = false, title, onChang
           renderLabel={
             readOnly
               ? undefined
-              : (node) =>
-                  isEditableNodeId(node.id) ? (
+              : (node) => {
+                  const source = nodeById.get(node.id);
+                  if (!source) {
+                    return <span className="tm-rich-tree__label">{node.label}</span>;
+                  }
+                  return (
                     <input
                       className="tm-rich-tree__input"
-                      value={node.label}
+                      value={source.label ?? ""}
+                      placeholder={DECOMPOSITION_LEVEL_LABELS[source.level]}
                       onChange={(event) => updateNode(node.id, { label: event.target.value })}
-                      aria-label={`Rótulo ${node.label}`}
+                      aria-label={`Rótulo ${source.label || DECOMPOSITION_LEVEL_LABELS[source.level]}`}
                     />
-                  ) : (
-                    <span className="tm-rich-tree__label">{node.label}</span>
-                  )
+                  );
+                }
           }
           renderActions={readOnly ? undefined : (node) => renderRowActions(node.id)}
           footerLabel={(count) => `${count} nó(s) no mapeamento`}
