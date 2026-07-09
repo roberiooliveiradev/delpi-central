@@ -1,5 +1,5 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
-import { Database, FileText, Layers, MessageSquare, User } from "lucide-react";
+import { FileText, Layers, MessageSquare, User } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { FlowchartNodeType } from "../../types/diagram";
@@ -101,9 +101,7 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
     return (
       <div className="tm-diagram-node-wrap tm-diagram-node-wrap--event">
         <NodeShell shellClassName="tm-diagram-node-shell--event">
-          <div className={nodeClassName("start", data.highlight)}>
-            <span className="tm-diagram-node__start-dot" aria-hidden />
-          </div>
+          <span className="tm-diagram-node__start-dot" aria-hidden />
         </NodeShell>
         <NodeLabel nodeId={id} data={data} className="tm-diagram-node__external-label" />
         {scopeCheckbox}
@@ -115,9 +113,7 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
     return (
       <div className="tm-diagram-node-wrap tm-diagram-node-wrap--event">
         <NodeShell shellClassName="tm-diagram-node-shell--event">
-          <div className={nodeClassName("end", data.highlight)}>
-            <span className="tm-diagram-node__end-ring" aria-hidden />
-          </div>
+          <span className="tm-diagram-node__end-ring" aria-hidden />
         </NodeShell>
         <NodeLabel nodeId={id} data={data} className="tm-diagram-node__external-label" />
         {scopeCheckbox}
@@ -167,11 +163,13 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
       <div className="tm-diagram-node-wrap tm-diagram-node-wrap--data">
         <NodeShell shellClassName="tm-diagram-node-shell--data">
           <div className={nodeClassName("data", data.highlight)}>
-            <span className="tm-diagram-node__data-cap" aria-hidden />
-            <span className="tm-diagram-node__shape-icon" aria-hidden>
-              <Database size={13} strokeWidth={2.2} />
-            </span>
-            <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+            <div className="tm-diagram-node__data-cylinder">
+              <div className="tm-diagram-node__data-rim tm-diagram-node__data-rim--top" aria-hidden />
+              <div className="tm-diagram-node__data-body">
+                <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+              </div>
+              <div className="tm-diagram-node__data-rim tm-diagram-node__data-rim--bottom" aria-hidden />
+            </div>
           </div>
         </NodeShell>
         {scopeCheckbox}

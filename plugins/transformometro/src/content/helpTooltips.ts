@@ -327,7 +327,7 @@ export const TM_HELP_TOOLTIPS = {
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
       decision: "Gateway exclusivo (losango). Use duas ou mais saídas rotuladas (ex.: Sim/Não).",
       document: "Documento ou artefato produzido ou consumido na etapa.",
-      data: "Dado ou sistema de registro referenciado no fluxo.",
+      data: "Armazenamento ou registro persistente (cilindro BPMN) referenciado no fluxo.",
       subprocess: "Subprocesso encapsulado — etapa composta por fluxo interno.",
       end: "Evento de fim (círculo duplo). Todo caminho deve terminar em um fim.",
       comment: "Nota explicativa — não participa da lógica do fluxo.",
