@@ -152,8 +152,13 @@ function inlineEdgeTextExportStyles(
   });
 }
 
-function shouldIncludeExportNode(domNode: HTMLElement): boolean {
-  const classList = domNode.classList;
+/** html-to-image percorre Text/Comment — só Element tem classList/closest. */
+export function shouldIncludeExportNode(domNode: Node): boolean {
+  if (!(domNode instanceof Element)) {
+    return true;
+  }
+
+  const { classList } = domNode;
   if (classList.contains("react-flow__background")) return false;
   if (classList.contains("react-flow__controls")) return false;
   if (classList.contains("react-flow__minimap")) return false;
