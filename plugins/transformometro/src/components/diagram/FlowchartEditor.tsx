@@ -29,10 +29,12 @@ import {
   autoLayoutFlowchart,
   canvasHeightForLanes,
   defaultNodePosition,
+  laneIndexFromDragY,
   laneTopOffset,
   normalizeLanes,
   removeLane,
   renameLane,
+  reorderLanes,
   snapNodeToLane,
 } from "../../utils/diagramSwimlanes";
 import {
@@ -55,6 +57,7 @@ import {
   FlowchartEditorToolbar,
   type FlowchartEditorToolbarTab,
 } from "./FlowchartEditorToolbar";
+import { FlowchartEditorActionDock } from "./FlowchartEditorActionDock";
 import { useDiagramEditorLayout } from "./DiagramLayoutContext";
 import {
   createStarterMermaidTemplate,
@@ -134,7 +137,8 @@ function buildLaneNodes(
       onRename: options?.onRenameLane,
       onSelect: options?.onSelectLane,
     },
-    draggable: false,
+    draggable: !(options?.readOnly ?? true),
+    dragHandle: ".tm-diagram-lane__header--draggable",
     selectable: false,
     connectable: false,
     focusable: false,
@@ -432,7 +436,11 @@ function FlowchartEditorInner({
     setNodes(
       next.nodes.map((node) => {
         if (node.type === "lane") {
-          return node;
+          return {
+            ...node,
+            draggable: !readOnly,
+            dragHandle: ".tm-diagram-lane__header--draggable",
+          };
         }
         return {
           ...node,
@@ -512,9 +520,33 @@ function FlowchartEditorInner({
     [emitChange, handleEdgeLabelChange, nodes, readOnly, setEdges]
   );
 
+  const onNodeDrag = useCallback(
+    (_: unknown, node: EditorNode) => {
+      if (readOnly || node.type !== "lane") return;
+      if (node.position.x !== 0) {
+        setNodes((current) =>
+          current.map((item) =>
+            item.id === node.id ? { ...item, position: { x: 0, y: node.position.y } } : item
+          )
+        );
+      }
+    },
+    [readOnly, setNodes]
+  );
+
   const onNodeDragStop = useCallback(
     (_: unknown, node: EditorNode) => {
-      if (readOnly || node.type === "lane") return;
+      if (readOnly) return;
+
+      if (node.type === "lane") {
+        const laneId = (node.data as { laneId?: string }).laneId;
+        if (!laneId || !lanes.length) return;
+        const targetIndex = laneIndexFromDragY(lanes, laneId, node.position.y);
+        const nextValue = reorderLanes(value, laneId, targetIndex);
+        onChange?.(nextValue);
+        return;
+      }
+
       const data = node.data as BpmnNodeData;
       const snapped = snapNodeToLane(
         {
@@ -532,7 +564,7 @@ function FlowchartEditorInner({
       setNodes(nextNodes);
       emitChange(nextNodes, edges);
     },
-    [edges, emitChange, lanes, nodes, readOnly, setNodes]
+    [edges, emitChange, lanes, nodes, onChange, readOnly, setNodes, value]
   );
 
   const addNode = (type: FlowchartNodeType) => {
@@ -849,6 +881,11 @@ function FlowchartEditorInner({
                 onRemoveLane={removeActiveLane}
                 onAddNode={addNode}
                 onEditorAction={runEditorAction}
+              />
+            ) : null}
+
+            {!readOnly ? (
+              <FlowchartEditorActionDock
                 onSelectionAction={runSelectionAction}
                 isSelectionActionDisabled={isSelectionActionDisabled}
               />
@@ -923,6 +960,7 @@ function FlowchartEditorInner({
                 onNodesChange={readOnly ? undefined : onNodesChange}
                 onEdgesChange={readOnly ? undefined : onEdgesChange}
                 onConnect={onConnect}
+                onNodeDrag={onNodeDrag}
                 onNodeDragStop={onNodeDragStop}
                 onNodesDelete={onNodesDelete}
                 onEdgesDelete={onEdgesDelete}

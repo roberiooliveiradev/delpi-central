@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { applySwimlaneBpmnTemplate, createLaneId, createNodeId, type FlowchartV1 } from "../types/diagram";
-import { autoLayoutFlowchart, normalizeLanes, removeLane } from "./diagramSwimlanes";
+import { autoLayoutFlowchart, laneIndexFromDragY, normalizeLanes, removeLane, reorderLanes } from "./diagramSwimlanes";
 
 describe("autoLayoutFlowchart", () => {
   it("preserva faixas do template BPMN após auto-layout", () => {
@@ -64,5 +64,44 @@ describe("removeLane", () => {
 
     expect(next.lanes).toBeUndefined();
     expect(next.nodes[0]?.lane_id).toBeUndefined();
+  });
+});
+
+describe("reorderLanes", () => {
+  it("reordena faixas ao arrastar verticalmente", () => {
+    const laneA = createLaneId();
+    const laneB = createLaneId();
+    const flowchart: FlowchartV1 = {
+      format: "flowchart_v1",
+      format_version: 1,
+      lanes: [
+        { id: laneA, label: "Comercial", height: 168, order: 0 },
+        { id: laneB, label: "Engenharia", height: 168, order: 1 },
+      ],
+      nodes: [
+        {
+          id: createNodeId("sta"),
+          type: "start",
+          label: "Início",
+          position: { x: 200, y: 84 },
+          lane_id: laneA,
+        },
+        {
+          id: createNodeId("proc"),
+          type: "process",
+          label: "Validar",
+          position: { x: 420, y: 252 },
+          lane_id: laneB,
+        },
+      ],
+      edges: [],
+    };
+
+    const targetIndex = laneIndexFromDragY(normalizeLanes(flowchart.lanes), laneB, 40);
+    expect(targetIndex).toBe(0);
+
+    const next = reorderLanes(flowchart, laneB, targetIndex);
+    expect(next.lanes?.map((lane) => lane.id)).toEqual([laneB, laneA]);
+    expect(next.nodes.find((node) => node.label === "Validar")?.lane_id).toBe(laneB);
   });
 });

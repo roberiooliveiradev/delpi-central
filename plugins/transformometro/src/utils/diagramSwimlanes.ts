@@ -155,6 +155,61 @@ export function removeLane(flowchart: FlowchartV1, laneId: string): FlowchartV1 
   };
 }
 
+export function reorderLanes(
+  flowchart: FlowchartV1,
+  laneId: string,
+  toIndex: number
+): FlowchartV1 {
+  const lanes = normalizeLanes(flowchart.lanes);
+  if (!lanes.length) {
+    return flowchart;
+  }
+
+  const fromIndex = lanes.findIndex((lane) => lane.id === laneId);
+  if (fromIndex < 0) {
+    return withNormalizedLanes(flowchart);
+  }
+
+  const clampedIndex = Math.max(0, Math.min(lanes.length - 1, toIndex));
+  if (fromIndex === clampedIndex) {
+    return withNormalizedLanes(flowchart);
+  }
+
+  const next = [...lanes];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(clampedIndex, 0, moved);
+
+  return withNormalizedLanes({
+    ...flowchart,
+    lanes: next.map((lane, index) => ({ ...lane, order: index })),
+  });
+}
+
+export function laneIndexFromDragY(
+  lanes: FlowchartLane[],
+  laneId: string,
+  dragY: number
+): number {
+  if (!lanes.length) {
+    return 0;
+  }
+
+  const lane = lanes.find((item) => item.id === laneId);
+  const height = lane?.height ?? DEFAULT_LANE_HEIGHT;
+  const centerY = dragY + height / 2;
+
+  let offset = 0;
+  for (let index = 0; index < lanes.length; index += 1) {
+    const laneHeight = lanes[index].height ?? DEFAULT_LANE_HEIGHT;
+    if (centerY < offset + laneHeight) {
+      return index;
+    }
+    offset += laneHeight;
+  }
+
+  return lanes.length - 1;
+}
+
 function computeNodeRanks(nodes: FlowchartNode[], edges: FlowchartV1["edges"]): Map<string, number> {
   const ranks = new Map<string, number>();
   const incoming = new Map<string, string[]>();

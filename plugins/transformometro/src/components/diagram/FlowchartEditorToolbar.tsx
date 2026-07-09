@@ -6,18 +6,17 @@ import { FLOWCHART_NODE_PALETTE, type FlowchartLane, type FlowchartNodeType } fr
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import {
-  DIAGRAM_EDITOR_ACTIONS,
-  DIAGRAM_EDITOR_SELECTION_ACTIONS,
+  DIAGRAM_EDITOR_ADD_LANE_ACTION,
+  DIAGRAM_EDITOR_LAYOUT_ACTIONS,
   FLOWCHART_NODE_ICONS,
   flowchartNodeHint,
 } from "./flowchartEditorToolbar";
 
-export type FlowchartEditorToolbarTab = "elements" | "layout" | "actions";
+export type FlowchartEditorToolbarTab = "elements" | "models";
 
 const TOOLBAR_TABS: { id: FlowchartEditorToolbarTab; label: string }[] = [
   { id: "elements", label: "Elementos" },
-  { id: "layout", label: "Faixas & modelos" },
-  { id: "actions", label: "Ações" },
+  { id: "models", label: "Modelos" },
 ];
 
 type Props = {
@@ -28,11 +27,7 @@ type Props = {
   onActiveLaneChange: (laneId: string) => void;
   onRemoveLane: () => void | Promise<void>;
   onAddNode: (type: FlowchartNodeType) => void;
-  onEditorAction: (actionId: (typeof DIAGRAM_EDITOR_ACTIONS)[number]["id"]) => void;
-  onSelectionAction: (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => void;
-  isSelectionActionDisabled: (
-    actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]
-  ) => boolean;
+  onEditorAction: (actionId: (typeof DIAGRAM_EDITOR_LAYOUT_ACTIONS)[number]["id"] | "addLane") => void;
 };
 
 export function FlowchartEditorToolbar({
@@ -44,9 +39,9 @@ export function FlowchartEditorToolbar({
   onRemoveLane,
   onAddNode,
   onEditorAction,
-  onSelectionAction,
-  isSelectionActionDisabled,
 }: Props) {
+  const addLaneAction = DIAGRAM_EDITOR_ADD_LANE_ACTION;
+
   return (
     <div className="tm-diagram-editor__toolbar-overlay" role="toolbar" aria-label="Ferramentas do diagrama">
       <div className="tm-diagram-editor__toolbar-head">
@@ -84,62 +79,50 @@ export function FlowchartEditorToolbar({
 
       <div className="tm-diagram-editor__toolbar-panel" role="tabpanel">
         {toolbarTab === "elements" ? (
-          <div className="tm-diagram-editor__palette">
-            {FLOWCHART_NODE_PALETTE.map((item) => {
-              const Icon = FLOWCHART_NODE_ICONS[item.type];
-              return (
-                <DiagramEditorToolbarButton
-                  key={item.type}
-                  label={item.label}
-                  hint={flowchartNodeHint(item.type)}
-                  icon={Icon}
-                  onClick={() => onAddNode(item.type)}
+          <div className="tm-diagram-editor__elements">
+            <div className="tm-diagram-editor__palette">
+              {FLOWCHART_NODE_PALETTE.map((item) => {
+                const Icon = FLOWCHART_NODE_ICONS[item.type];
+                return (
+                  <DiagramEditorToolbarButton
+                    key={item.type}
+                    label={item.label}
+                    hint={flowchartNodeHint(item.type)}
+                    icon={Icon}
+                    onClick={() => onAddNode(item.type)}
+                  />
+                );
+              })}
+            </div>
+            <div className="tm-diagram-editor__elements-lanes">
+              <DiagramEditorToolbarButton
+                label={addLaneAction.label}
+                hint={addLaneAction.hint}
+                icon={addLaneAction.icon}
+                onClick={() => onEditorAction("addLane")}
+              />
+              {lanes.length ? (
+                <FlowchartLaneToolbar
+                  lanes={lanes}
+                  activeLaneId={activeLaneId}
+                  onActiveLaneChange={onActiveLaneChange}
+                  onRemoveLane={onRemoveLane}
+                  disableRemove={!lanes.length}
                 />
-              );
-            })}
+              ) : null}
+            </div>
           </div>
         ) : null}
 
-        {toolbarTab === "layout" ? (
+        {toolbarTab === "models" ? (
           <div className="tm-diagram-editor__templates">
-            {lanes.length ? (
-              <FlowchartLaneToolbar
-                lanes={lanes}
-                activeLaneId={activeLaneId}
-                onActiveLaneChange={onActiveLaneChange}
-                onRemoveLane={onRemoveLane}
-                disableRemove={!lanes.length}
-              />
-            ) : null}
-            {DIAGRAM_EDITOR_ACTIONS.map((action) => (
+            {DIAGRAM_EDITOR_LAYOUT_ACTIONS.map((action) => (
               <DiagramEditorToolbarButton
                 key={action.id}
                 label={action.label}
                 hint={action.hint}
                 icon={action.icon}
                 onClick={() => onEditorAction(action.id)}
-              />
-            ))}
-          </div>
-        ) : null}
-
-        {toolbarTab === "actions" ? (
-          <div className="tm-diagram-editor__actions">
-            {DIAGRAM_EDITOR_SELECTION_ACTIONS.map((action) => (
-              <DiagramEditorToolbarButton
-                key={action.id}
-                label={action.label}
-                hint={action.hint}
-                icon={action.icon}
-                disabled={isSelectionActionDisabled(action.id)}
-                active={
-                  action.id === "delete"
-                    ? !isSelectionActionDisabled("delete")
-                    : action.id === "move" || action.id === "copy" || action.id === "duplicate"
-                      ? !isSelectionActionDisabled(action.id)
-                      : false
-                }
-                onClick={() => onSelectionAction(action.id)}
               />
             ))}
           </div>

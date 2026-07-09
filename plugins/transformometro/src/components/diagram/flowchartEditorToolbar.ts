@@ -72,6 +72,14 @@ export const DIAGRAM_EDITOR_ACTIONS = [
   },
 ] as const;
 
+export const DIAGRAM_EDITOR_LAYOUT_ACTIONS = DIAGRAM_EDITOR_ACTIONS.filter(
+  (action) => action.id !== "addLane"
+);
+
+export const DIAGRAM_EDITOR_ADD_LANE_ACTION = DIAGRAM_EDITOR_ACTIONS.find(
+  (action) => action.id === "addLane"
+)!;
+
 export const DIAGRAM_EDITOR_SELECTION_ACTIONS = [
   {
     id: "delete",

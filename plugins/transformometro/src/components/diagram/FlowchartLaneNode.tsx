@@ -1,5 +1,7 @@
 import type { Node, NodeProps } from "@xyflow/react";
 
+import { GripVertical } from "lucide-react";
+
 import { LANE_CANVAS_WIDTH } from "../../utils/diagramSwimlanes";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
@@ -37,6 +39,7 @@ export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
           "tm-diagram-lane__header",
           canInteract && data.onRename ? "tm-diagram-lane__header--editable" : "",
           canInteract ? "tm-diagram-lane__header--selectable" : "",
+          canInteract ? "tm-diagram-lane__header--draggable" : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -55,6 +58,11 @@ export function FlowchartLaneNode({ data }: NodeProps<Node<LaneNodeData>>) {
           }
         }}
       >
+        {canInteract ? (
+          <span className="tm-diagram-lane__drag-handle" aria-hidden>
+            <GripVertical size={12} strokeWidth={2.4} />
+          </span>
+        ) : null}
         <DiagramInlineTextEdit
           value={data.label}
           readOnly={data.readOnly || !data.laneId || !data.onRename}

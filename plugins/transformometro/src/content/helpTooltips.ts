@@ -321,7 +321,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   diagramEditor: {
     usoGeral:
-      "Adicione nós pela paleta (entram na faixa ativa). Selecione elementos no canvas e use a seção Ações (excluir, mover, copiar, duplicar) ou arraste para posicionar. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Delete/Backspace remove a seleção. Setas ← ↑ → ↓ ajustam posição fina. Use Auto-layout para reorganizar o fluxo.",
+      "Adicione nós pela paleta (entram na faixa ativa). Selecione elementos no canvas e use os ícones empilhados no canto inferior direito (excluir, mover, copiar, duplicar) — passe o mouse para ver o rótulo. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Delete/Backspace remove a seleção. Setas ← ↑ → ↓ ajustam posição fina. Use Auto-layout para reorganizar o fluxo.",
     nodes: {
       start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
@@ -342,7 +342,7 @@ export const TM_HELP_TOOLTIPS = {
     templateSwimlanes:
       "Exemplo BPMN com duas faixas (Comercial e Engenharia), handoff e gateways — ponto de partida para processos cross-funcionais.",
     laneSelect:
-      "Faixa ativa para inserir novos nós da paleta. Clique no cabeçalho da faixa no canvas ou use os chips aqui.",
+      "Faixa ativa para inserir novos nós da paleta. Clique no cabeçalho da faixa no canvas, use os chips aqui ou arraste o cabeçalho para reordenar faixas.",
     laneRename:
       "Duplo clique no nome da faixa no canvas para editar inline (Enter confirma, Esc cancela), como nos demais nós.",
     laneRemove:

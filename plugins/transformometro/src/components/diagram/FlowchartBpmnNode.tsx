@@ -1,5 +1,5 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
-import { User } from "lucide-react";
+import { Database, FileText, Layers, MessageSquare, User } from "lucide-react";
 
 import type { FlowchartNodeType } from "../../types/diagram";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
@@ -64,8 +64,12 @@ function NodeLabel({
   );
 }
 
-export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
-  const scopeCheckbox = data.scopeSelectable ? (
+function ScopeCheckbox({ id, data }: { id: string; data: BpmnNodeData }) {
+  if (!data.scopeSelectable) {
+    return null;
+  }
+
+  return (
     <label className="tm-diagram-node__scope">
       <input
         type="checkbox"
@@ -73,7 +77,11 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
         onChange={() => data.onToggleScope?.(id)}
       />
     </label>
-  ) : null;
+  );
+}
+
+export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
+  const scopeCheckbox = <ScopeCheckbox id={id} data={data} />;
 
   if (data.nodeType === "start") {
     return (
@@ -115,6 +123,70 @@ export function FlowchartBpmnNode({ id, data }: NodeProps<Node<BpmnNodeData>>) {
           data={data}
           className="tm-diagram-node__external-label tm-diagram-node__external-label--below"
         />
+        {scopeCheckbox}
+      </div>
+    );
+  }
+
+  if (data.nodeType === "document") {
+    return (
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--document">
+        <ConnectionHandles />
+        <div className={nodeClassName("document", data.highlight)}>
+          <span className="tm-diagram-node__doc-fold" aria-hidden />
+          <span className="tm-diagram-node__shape-icon" aria-hidden>
+            <FileText size={14} strokeWidth={2.2} />
+          </span>
+          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+        </div>
+        {scopeCheckbox}
+      </div>
+    );
+  }
+
+  if (data.nodeType === "data") {
+    return (
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--data">
+        <ConnectionHandles />
+        <div className={nodeClassName("data", data.highlight)}>
+          <span className="tm-diagram-node__data-cap" aria-hidden />
+          <span className="tm-diagram-node__shape-icon" aria-hidden>
+            <Database size={14} strokeWidth={2.2} />
+          </span>
+          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+        </div>
+        {scopeCheckbox}
+      </div>
+    );
+  }
+
+  if (data.nodeType === "subprocess") {
+    return (
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--subprocess">
+        <ConnectionHandles />
+        <div className={nodeClassName("subprocess", data.highlight)}>
+          <span className="tm-diagram-node__subprocess-inner" aria-hidden />
+          <span className="tm-diagram-node__shape-icon" aria-hidden>
+            <Layers size={14} strokeWidth={2.2} />
+          </span>
+          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+        </div>
+        {scopeCheckbox}
+      </div>
+    );
+  }
+
+  if (data.nodeType === "comment") {
+    return (
+      <div className="tm-diagram-node-wrap tm-diagram-node-wrap--comment">
+        <ConnectionHandles />
+        <div className={nodeClassName("comment", data.highlight)}>
+          <span className="tm-diagram-node__comment-tail" aria-hidden />
+          <span className="tm-diagram-node__shape-icon" aria-hidden>
+            <MessageSquare size={14} strokeWidth={2.2} />
+          </span>
+          <NodeLabel nodeId={id} data={data} className="tm-diagram-node__label" />
+        </div>
         {scopeCheckbox}
       </div>
     );
