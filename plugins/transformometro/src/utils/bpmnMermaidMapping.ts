@@ -47,7 +47,9 @@ const SHAPE_KIND_BY_FAMILY: Record<BpmnShapeFamily, BpmnMermaidShapeKind> = {
   boundary: "circle",
 };
 
-const CLASS_DEFS: Record<string, BpmnMermaidClassDef> = {
+export type MermaidPaletteTheme = "light" | "dark";
+
+const CLASS_DEFS_LIGHT: Record<string, BpmnMermaidClassDef> = {
   bpmn_event_start: { fill: "#ecfdf5", stroke: "#16a34a", color: "#15803d" },
   bpmn_event_end: { fill: "#fff", stroke: "#dc2626", color: "#b91c1c", strokeWidth: "3px" },
   bpmn_event_intermediate: { fill: "#fff", stroke: "#64748b", color: "#475569", strokeWidth: "2px" },
@@ -70,6 +72,56 @@ const CLASS_DEFS: Record<string, BpmnMermaidClassDef> = {
   bpmn_artifact_group: { fill: "#f8fafc", stroke: "#94a3b8", color: "#475569", strokeDasharray: "8 4" },
   bpmn_boundary: { fill: "#fff7ed", stroke: "#ea580c", color: "#c2410c", strokeWidth: "3px" },
 };
+
+const CLASS_DEFS_DARK: Record<string, BpmnMermaidClassDef> = {
+  bpmn_event_start: { fill: "#14532d", stroke: "#22c55e", color: "#bbf7d0" },
+  bpmn_event_end: { fill: "#1f1416", stroke: "#f87171", color: "#fecaca", strokeWidth: "3px" },
+  bpmn_event_intermediate: { fill: "#1e293b", stroke: "#94a3b8", color: "#e2e8f0", strokeWidth: "2px" },
+  bpmn_event_intermediate_throw: { fill: "#431407", stroke: "#fb923c", color: "#fed7aa" },
+  bpmn_gateway_exclusive: { fill: "#78350f", stroke: "#fbbf24", color: "#fef3c7" },
+  bpmn_gateway_parallel: { fill: "#0c4a6e", stroke: "#38bdf8", color: "#e0f2fe" },
+  bpmn_gateway_inclusive: { fill: "#4c1d95", stroke: "#a78bfa", color: "#ede9fe" },
+  bpmn_gateway_complex: { fill: "#713f12", stroke: "#facc15", color: "#fef9c3" },
+  bpmn_gateway_event: { fill: "#831843", stroke: "#f472b6", color: "#fce7f3" },
+  bpmn_task: { fill: "#1e293b", stroke: "#34d399", color: "#d1fae5" },
+  bpmn_activity_subprocess: { fill: "#312e81", stroke: "#a78bfa", color: "#ede9fe" },
+  bpmn_activity_call: { fill: "#312e81", stroke: "#a78bfa", color: "#ede9fe", strokeWidth: "4px" },
+  bpmn_activity_ad_hoc: { fill: "#3b0764", stroke: "#c084fc", color: "#f3e8ff", strokeDasharray: "4 3" },
+  bpmn_activity_transaction: { fill: "#064e3b", stroke: "#34d399", color: "#d1fae5", strokeWidth: "4px" },
+  bpmn_activity_event_subprocess: { fill: "#431407", stroke: "#fb923c", color: "#ffedd5", strokeDasharray: "6 4" },
+  bpmn_artifact_document: { fill: "#78350f", stroke: "#fbbf24", color: "#fef3c7" },
+  bpmn_artifact_data_object: { fill: "#1e293b", stroke: "#94a3b8", color: "#e2e8f0" },
+  bpmn_artifact_data_store: { fill: "#1e3a5f", stroke: "#60a5fa", color: "#dbeafe" },
+  bpmn_artifact_comment: { fill: "#0c4a6e", stroke: "#38bdf8", color: "#e0f2fe", strokeDasharray: "5 3" },
+  bpmn_artifact_group: { fill: "#1e293b", stroke: "#64748b", color: "#cbd5e1", strokeDasharray: "8 4" },
+  bpmn_boundary: { fill: "#431407", stroke: "#fb923c", color: "#ffedd5", strokeWidth: "3px" },
+};
+
+const HIGHLIGHT_DEFS_LIGHT: Record<string, BpmnMermaidClassDef> = {
+  asis: { fill: "#fef3c7", stroke: "#d97706", color: "#92400e" },
+  tobe: { fill: "#dbeafe", stroke: "#2563eb", color: "#1e40af" },
+  changed: { fill: "#fce7f3", stroke: "#db2777", color: "#9d174d" },
+  removed: { fill: "#f3f4f6", stroke: "#9ca3af", color: "#6b7280", strokeDasharray: "4" },
+};
+
+const HIGHLIGHT_DEFS_DARK: Record<string, BpmnMermaidClassDef> = {
+  asis: { fill: "#78350f", stroke: "#fbbf24", color: "#fef3c7" },
+  tobe: { fill: "#1e3a8a", stroke: "#60a5fa", color: "#dbeafe" },
+  changed: { fill: "#831843", stroke: "#f472b6", color: "#fce7f3" },
+  removed: { fill: "#1f2937", stroke: "#6b7280", color: "#9ca3af", strokeDasharray: "4" },
+};
+
+function classDefsForTheme(theme: MermaidPaletteTheme): Record<string, BpmnMermaidClassDef> {
+  return theme === "dark" ? CLASS_DEFS_DARK : CLASS_DEFS_LIGHT;
+}
+
+function formatClassDefLine(group: string, style: BpmnMermaidClassDef): string {
+  const parts = [`fill:${style.fill}`, `stroke:${style.stroke}`];
+  if (style.color) parts.push(`color:${style.color}`);
+  if (style.strokeWidth) parts.push(`stroke-width:${style.strokeWidth}`);
+  if (style.strokeDasharray) parts.push(`stroke-dasharray:${style.strokeDasharray}`);
+  return `    classDef ${group} ${parts.join(",")}`;
+}
 
 function mermaidVisualGroup(nodeType: FlowchartNodeType): string {
   const def = BPMN_NODE_DEFINITIONS[nodeType];
@@ -186,7 +238,11 @@ export function formatMermaidNodeLine(
   return `${body}:::${bpmnMermaidClassForType(nodeType)}`;
 }
 
-export function mermaidClassDefLines(usedClasses: Iterable<string>): string[] {
+export function mermaidClassDefLines(
+  usedClasses: Iterable<string>,
+  theme: MermaidPaletteTheme = "light"
+): string[] {
+  const palette = classDefsForTheme(theme);
   const groups = new Set<string>();
   for (const className of usedClasses) {
     if (!className.startsWith(BPMN_MERMAID_CLASS_PREFIX)) continue;
@@ -195,15 +251,25 @@ export function mermaidClassDefLines(usedClasses: Iterable<string>): string[] {
     groups.add(mermaidVisualGroup(nodeType));
   }
 
-  return [...groups].map((group) => {
-    const style = CLASS_DEFS[group];
-    if (!style) return "";
-    const parts = [`fill:${style.fill}`, `stroke:${style.stroke}`];
-    if (style.color) parts.push(`color:${style.color}`);
-    if (style.strokeWidth) parts.push(`stroke-width:${style.strokeWidth}`);
-    if (style.strokeDasharray) parts.push(`stroke-dasharray:${style.strokeDasharray}`);
-    return `    classDef ${group} ${parts.join(",")}`;
-  }).filter(Boolean);
+  return [...groups]
+    .map((group) => {
+      const style = palette[group];
+      return style ? formatClassDefLine(group, style) : "";
+    })
+    .filter(Boolean);
+}
+
+export function mermaidHighlightClassDefLines(
+  highlights: Iterable<string>,
+  theme: MermaidPaletteTheme = "light"
+): string[] {
+  const palette = theme === "dark" ? HIGHLIGHT_DEFS_DARK : HIGHLIGHT_DEFS_LIGHT;
+  return [...highlights]
+    .map((token) => {
+      const style = palette[token];
+      return style ? formatClassDefLine(`highlight_${token}`, style) : "";
+    })
+    .filter(Boolean);
 }
 
 export function parseMermaidNodeTypeFromClass(className: string | undefined): FlowchartNodeType | undefined {

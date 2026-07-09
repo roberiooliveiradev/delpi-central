@@ -83,6 +83,10 @@ import {
 } from "../../utils/flowchartMermaid";
 import { resolveConnectionHandleIds } from "../../utils/diagramConnectionHandles";
 import { exportReactFlowDiagramPng } from "../../utils/exportFlowchartImage";
+import {
+  DIAGRAM_FIT_VIEW_OPTIONS,
+  getDiagramFitNodes,
+} from "../../utils/diagramViewFit";
 
 export type FlowchartEditorHandle = {
   exportPng: (filename: string) => Promise<string>;
@@ -374,6 +378,16 @@ function FlowchartEditorInner({
   const [mermaidApplyError, setMermaidApplyError] = useState<string | null>(null);
   const [mermaidApplying, setMermaidApplying] = useState(false);
   const canvasMermaid = useMemo(() => flowchartToMermaid(value), [value]);
+  const diagramFitSignature = useMemo(
+    () =>
+      value.nodes
+        .map(
+          (node) =>
+            `${node.id}:${Math.round(node.position.x / 16)}:${Math.round(node.position.y / 16)}`
+        )
+        .join("|"),
+    [value.nodes]
+  );
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const selectionSnapshotRef = useRef<SelectionClipboard>({ nodes: [], edges: [] });
@@ -382,10 +396,17 @@ function FlowchartEditorInner({
   const [clipboardReady, setClipboardReady] = useState(false);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const canvasInitialFitRef = useRef(false);
+  const lastFitSignatureRef = useRef("");
   const isDark = useTransformometroDarkMode();
   const colorMode = isDark ? "dark" : "light";
   const layout = useDiagramEditorLayout();
   const { fitView, getNodes, getEdges } = useReactFlow();
+
+  const fitDiagramToContent = useCallback(() => {
+    const fitNodes = getDiagramFitNodes(getNodes());
+    if (!fitNodes.length) return;
+    void fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
+  }, [fitView, getNodes]);
 
   useImperativeHandle(
     editorRef,
@@ -510,13 +531,17 @@ function FlowchartEditorInner({
     const element = canvasWrapperRef.current;
     if (!element) return;
 
+    const fitSignature = `${value.nodes.length}:${value.edges.length}:${value.lanes?.length ?? 0}:${diagramFitSignature}:${readOnly ? 1 : 0}:${isDark ? 1 : 0}`;
+    const shouldRefit = !canvasInitialFitRef.current || lastFitSignatureRef.current !== fitSignature;
+
     const tryInitialFit = () => {
-      if (canvasInitialFitRef.current) return;
       const { width, height } = element.getBoundingClientRect();
       if (width < 8 || height < 8) return;
+      if (!shouldRefit && canvasInitialFitRef.current) return;
       canvasInitialFitRef.current = true;
+      lastFitSignatureRef.current = fitSignature;
       window.requestAnimationFrame(() => {
-        void fitView({ padding: 0.15, duration: 0 });
+        fitDiagramToContent();
       });
     };
 
@@ -539,7 +564,7 @@ function FlowchartEditorInner({
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
     };
-  }, [activeTab, fitView]);
+  }, [activeTab, diagramFitSignature, fitDiagramToContent, isDark, readOnly, value.edges.length, value.lanes, value.nodes.length]);
 
   const emitChange = useCallback(
     (nextNodes: EditorNode[], nextEdges: Edge[]) => {
@@ -1252,11 +1277,10 @@ function FlowchartEditorInner({
                   labelBgStyle: { fillOpacity: 0.92 },
                 }}
                 onInit={(instance) => {
-                  if (canvasInitialFitRef.current) return;
                   window.requestAnimationFrame(() => {
-                    if (canvasInitialFitRef.current) return;
-                    canvasInitialFitRef.current = true;
-                    void instance.fitView({ padding: 0.15, duration: 0 });
+                    const fitNodes = getDiagramFitNodes(instance.getNodes());
+                    if (!fitNodes.length) return;
+                    void instance.fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
                   });
                 }}
                 onNodesChange={readOnly ? undefined : onNodesChange}

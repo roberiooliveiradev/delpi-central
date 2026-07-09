@@ -1,5 +1,7 @@
 import { getNodesBounds, getViewportForBounds, type Node } from "@xyflow/react";
 
+import { getDiagramFitNodes } from "./diagramViewFit";
+
 const EXPORT_PADDING = 0.12;
 const MIN_EXPORT_ZOOM = 0.08;
 const MAX_EXPORT_ZOOM = 4;
@@ -280,7 +282,7 @@ export async function exportReactFlowDiagramPng({
 
   const editorRoot = canvasRoot.closest(".tm-diagram-editor");
 
-  const bounds = getNodesBounds(nodes);
+  const bounds = getNodesBounds(getDiagramFitNodes(nodes));
   const width = Math.max(Math.ceil(bounds.width * (1 + EXPORT_PADDING * 2)), 1);
   const height = Math.max(Math.ceil(bounds.height * (1 + EXPORT_PADDING * 2)), 1);
   const viewport = getViewportForBounds(

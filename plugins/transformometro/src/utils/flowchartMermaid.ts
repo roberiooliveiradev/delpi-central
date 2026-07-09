@@ -16,6 +16,7 @@ import {
   inferNodeTypeFromMermaidShape,
   mermaidClassDefLines,
   mermaidEdgeSyntax,
+  mermaidHighlightClassDefLines,
   parseMermaidNodeTypeFromClass,
 } from "./bpmnMermaidMapping";
 
@@ -122,20 +123,7 @@ export function flowchartToMermaid(flowchart: FlowchartV1): string {
       .map((node) => node.highlight ?? node.meta?.highlight)
       .filter((value): value is NonNullable<FlowchartNode["highlight"]> => Boolean(value))
   );
-  if (highlights.size) {
-    if (highlights.has("asis")) {
-      lines.push("    classDef highlight_asis fill:#fef3c7,stroke:#d97706");
-    }
-    if (highlights.has("tobe")) {
-      lines.push("    classDef highlight_tobe fill:#dbeafe,stroke:#2563eb");
-    }
-    if (highlights.has("changed")) {
-      lines.push("    classDef highlight_changed fill:#fce7f3,stroke:#db2777");
-    }
-    if (highlights.has("removed")) {
-      lines.push("    classDef highlight_removed fill:#f3f4f6,stroke:#9ca3af,stroke-dasharray:4");
-    }
-  }
+  lines.push(...mermaidHighlightClassDefLines(highlights));
 
   return lines.join("\n");
 }

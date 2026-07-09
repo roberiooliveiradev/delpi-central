@@ -5972,6 +5972,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   width: 100%;
   height: 100%;
   min-height: 100%;
+  background-color: var(--tm-diagram-canvas-bg);
   --xy-background-color: var(--tm-diagram-canvas-bg);
   --xy-background-pattern-dots-color: var(--tm-diagram-dot-color);
   --xy-background-pattern-lines-color: var(--tm-diagram-dot-color);
@@ -5990,6 +5991,21 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   --xy-controls-box-shadow-default: 0 0 0 1px var(--tm-diagram-controls-border);
   --xy-edge-label-background-color: var(--ds-card-bg);
   --xy-edge-label-color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__pane,
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__viewport,
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__renderer,
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__background {
+  background-color: var(--tm-diagram-canvas-bg);
+}
+
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node-flowchart,
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node-lane {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
 }
 
 .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__handle.tm-diagram-node__handle {
@@ -6154,7 +6170,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-lane__body {
-  background: color-mix(in srgb, var(--ds-card-bg) 96%, var(--ds-accent) 4%);
+  background: color-mix(in srgb, var(--tm-diagram-canvas-bg) 88%, var(--ds-accent) 12%);
 }
 
 .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__node:not(.react-flow__node-lane) {
@@ -7022,17 +7038,22 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   overflow: auto;
-  padding: 8px;
+  padding: 12px;
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
-  background: var(--ds-surface-inset);
+  background: var(--tm-diagram-canvas-bg);
 }
 
 .dashboard-transformometro .tm-diagram-mermaid svg {
   display: block;
+  flex: 0 0 auto;
   max-width: 100%;
   height: auto;
+  margin: 0 auto;
 }
 
 .dashboard-transformometro .tm-diagram-mermaid svg foreignObject {
