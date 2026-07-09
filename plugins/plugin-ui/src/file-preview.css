@@ -146,11 +146,22 @@
   background: color-mix(in srgb, var(--delpi-ui-preview-accent) 10%, transparent);
 }
 
+:root[data-theme="dark"] .delpi-ui-file-preview__image {
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 70%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-file-preview__text {
+  background: color-mix(in srgb, var(--delpi-ui-preview-card-bg) 92%, var(--delpi-ui-preview-accent) 8%);
+}
+
 .delpi-ui-file-preview__status,
 .delpi-ui-file-preview__muted {
   margin: 0;
   font-size: 13px;
-  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+  color: var(
+    --delpi-ui-preview-text-muted,
+    var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent))
+  );
 }
 
 .delpi-ui-file-preview__image {
@@ -197,6 +208,20 @@
   font-size: var(--delpi-ui-preview-font-xs);
 }
 
+.delpi-ui-file-preview-modal__body:has(.delpi-ui-spreadsheet-preview),
+.delpi-ui-file-preview-modal__body:has(.delpi-ui-docx-preview) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.delpi-ui-file-preview:has(.delpi-ui-spreadsheet-preview),
+.delpi-ui-file-preview:has(.delpi-ui-docx-preview) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .delpi-ui-spreadsheet-preview {
   --delpi-ui-sheet-bg: #ffffff;
   --delpi-ui-sheet-grid: #d4d4d4;
@@ -207,21 +232,38 @@
   --delpi-ui-sheet-chrome-border: #d4d4d4;
   --delpi-ui-sheet-tab-bg: #e6e6e6;
   --delpi-ui-sheet-tab-active-bg: #ffffff;
+  --delpi-ui-sheet-tab-text: #333333;
   --delpi-ui-sheet-accent: #217346;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  max-height: min(70vh, 720px);
-  border: 1px solid var(--delpi-ui-preview-sheet-chrome-border);
+  flex: 1 1 auto;
+  min-height: 240px;
+  max-height: min(62vh, 640px);
+  border: 1px solid var(--delpi-ui-sheet-chrome-border);
   border-radius: 10px;
   overflow: hidden;
-  background: var(--delpi-ui-preview-sheet-bg);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--delpi-ui-preview-sheet-bg) 80%, #000 20%);
+  background: var(--delpi-ui-sheet-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--delpi-ui-sheet-bg) 80%, #000 20%);
+}
+
+:root[data-theme="dark"] .delpi-ui-spreadsheet-preview {
+  --delpi-ui-sheet-bg: #1a2030;
+  --delpi-ui-sheet-grid: #3d465c;
+  --delpi-ui-sheet-header-bg: #252d3d;
+  --delpi-ui-sheet-header-text: rgba(255, 255, 255, 0.78);
+  --delpi-ui-sheet-cell-text: rgba(255, 255, 255, 0.92);
+  --delpi-ui-sheet-chrome-bg: #1f2636;
+  --delpi-ui-sheet-chrome-border: rgba(255, 255, 255, 0.12);
+  --delpi-ui-sheet-tab-bg: #2a3347;
+  --delpi-ui-sheet-tab-active-bg: #1a2030;
+  --delpi-ui-sheet-tab-text: rgba(255, 255, 255, 0.82);
+  --delpi-ui-sheet-accent: #33a06a;
 }
 
 .delpi-ui-spreadsheet-preview__chrome {
-  background: var(--delpi-ui-preview-sheet-chrome-bg);
-  border-bottom: 1px solid var(--delpi-ui-preview-sheet-chrome-border);
+  flex-shrink: 0;
+  background: var(--delpi-ui-sheet-chrome-bg);
+  border-bottom: 1px solid var(--delpi-ui-sheet-chrome-border);
 }
 
 .delpi-ui-spreadsheet-preview__titlebar {
@@ -231,7 +273,7 @@
   gap: 8px;
   min-height: 34px;
   padding: 6px 10px;
-  background: linear-gradient(180deg, #2f8f57 0%, var(--delpi-ui-preview-sheet-accent) 100%);
+  background: linear-gradient(180deg, #2f8f57 0%, var(--delpi-ui-sheet-accent) 100%);
   color: #ffffff;
 }
 
@@ -257,8 +299,8 @@
   grid-template-columns: 52px 28px 1fr;
   align-items: stretch;
   min-height: 28px;
-  border-top: 1px solid var(--delpi-ui-preview-sheet-chrome-border);
-  background: var(--delpi-ui-preview-sheet-bg);
+  border-top: 1px solid var(--delpi-ui-sheet-chrome-border);
+  background: var(--delpi-ui-sheet-bg);
 }
 
 .delpi-ui-spreadsheet-preview__name-box,
@@ -267,20 +309,20 @@
   display: flex;
   align-items: center;
   padding: 0 8px;
-  border-right: 1px solid var(--delpi-ui-preview-sheet-chrome-border);
+  border-right: 1px solid var(--delpi-ui-sheet-chrome-border);
   font-size: 11px;
-  color: var(--delpi-ui-preview-sheet-header-text);
+  color: var(--delpi-ui-sheet-header-text);
 }
 
 .delpi-ui-spreadsheet-preview__name-box {
   justify-content: center;
-  background: var(--delpi-ui-preview-sheet-header-bg);
+  background: var(--delpi-ui-sheet-header-bg);
   font-weight: 600;
 }
 
 .delpi-ui-spreadsheet-preview__fx {
   justify-content: center;
-  color: #7a7a7a;
+  color: color-mix(in srgb, var(--delpi-ui-sheet-header-text) 70%, transparent);
   font-style: italic;
 }
 
@@ -290,14 +332,18 @@
 
 .delpi-ui-spreadsheet-preview__viewport {
   flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
-  background: var(--delpi-ui-preview-sheet-bg);
+  overscroll-behavior: contain;
+  background: var(--delpi-ui-sheet-bg);
+  scrollbar-gutter: stable;
 }
 
 .delpi-ui-spreadsheet-preview__grid {
   width: max-content;
   min-width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
   font-family: Calibri, "Segoe UI", Arial, sans-serif;
   font-size: 11pt;
@@ -313,11 +359,11 @@
 .delpi-ui-spreadsheet-preview__row-head {
   position: sticky;
   z-index: 2;
-  background: var(--delpi-ui-preview-sheet-header-bg);
-  color: var(--delpi-ui-preview-sheet-header-text);
+  background: var(--delpi-ui-sheet-header-bg);
+  color: var(--delpi-ui-sheet-header-text);
   font-weight: 600;
   text-align: center;
-  border: 1px solid var(--delpi-ui-preview-sheet-grid);
+  border: 1px solid var(--delpi-ui-sheet-grid);
   user-select: none;
 }
 
@@ -327,6 +373,7 @@
   z-index: 4;
   width: 42px;
   min-width: 42px;
+  background: var(--delpi-ui-sheet-header-bg);
 }
 
 .delpi-ui-spreadsheet-preview__col-head {
@@ -344,6 +391,7 @@
   min-width: 42px;
   height: 21px;
   padding: 0 4px;
+  background: var(--delpi-ui-sheet-header-bg);
 }
 
 .delpi-ui-spreadsheet-preview__cell {
@@ -352,9 +400,9 @@
   max-width: 420px;
   min-height: 21px;
   padding: 1px 4px;
-  border: 1px solid var(--delpi-ui-preview-sheet-grid);
-  background: var(--delpi-ui-preview-sheet-bg);
-  color: var(--delpi-ui-preview-sheet-cell-text);
+  border: 1px solid var(--delpi-ui-sheet-grid);
+  background: var(--delpi-ui-sheet-bg);
+  color: var(--delpi-ui-sheet-cell-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -363,14 +411,16 @@
 }
 
 .delpi-ui-spreadsheet-preview__tabs {
+  flex-shrink: 0;
   display: flex;
   align-items: flex-end;
   gap: 2px;
   min-height: 30px;
   padding: 0 6px;
-  border-top: 1px solid var(--delpi-ui-preview-sheet-chrome-border);
-  background: var(--delpi-ui-preview-sheet-chrome-bg);
+  border-top: 1px solid var(--delpi-ui-sheet-chrome-border);
+  background: var(--delpi-ui-sheet-chrome-bg);
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
 }
 
@@ -382,17 +432,17 @@
   border: 1px solid transparent;
   border-bottom: none;
   border-radius: 4px 4px 0 0;
-  background: var(--delpi-ui-preview-sheet-tab-bg);
-  color: #333333;
+  background: var(--delpi-ui-sheet-tab-bg);
+  color: var(--delpi-ui-sheet-tab-text);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .delpi-ui-spreadsheet-preview__tab.is-active {
-  background: var(--delpi-ui-preview-sheet-tab-active-bg);
-  border-color: var(--delpi-ui-preview-sheet-chrome-border);
-  box-shadow: inset 0 2px 0 var(--delpi-ui-preview-sheet-accent);
+  background: var(--delpi-ui-sheet-tab-active-bg);
+  border-color: var(--delpi-ui-sheet-chrome-border);
+  box-shadow: inset 0 2px 0 var(--delpi-ui-sheet-accent);
 }
 
 button.delpi-ui-spreadsheet-preview__tab {
@@ -400,7 +450,7 @@ button.delpi-ui-spreadsheet-preview__tab {
 }
 
 button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
-  background: #efefef;
+  background: color-mix(in srgb, var(--delpi-ui-sheet-tab-active-bg) 65%, var(--delpi-ui-sheet-tab-bg));
 }
 
 .delpi-ui-spreadsheet-preview__tab.is-hidden-sheet:not(.is-active) {
@@ -409,32 +459,50 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
 }
 
 .delpi-ui-spreadsheet-preview__truncated {
+  flex-shrink: 0;
   margin: 0;
   padding: 8px 12px;
   font-size: var(--delpi-ui-preview-font-xs);
-  border-top: 1px solid var(--delpi-ui-preview-sheet-chrome-border);
-  background: var(--delpi-ui-preview-sheet-chrome-bg);
+  border-top: 1px solid var(--delpi-ui-sheet-chrome-border);
+  background: var(--delpi-ui-sheet-chrome-bg);
+  color: var(--delpi-ui-preview-text-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
 }
 
 .delpi-ui-docx-preview {
-  --pac-docx-canvas: #d8d8d8;
-  --pac-docx-page-bg: #ffffff;
-  --pac-docx-page-text: #000000;
-  --pac-docx-accent: #185abd;
-  --pac-docx-toolbar-bg: #f3f2f1;
-  --pac-docx-toolbar-border: #d2d0ce;
+  --delpi-ui-docx-canvas: #d8d8d8;
+  --delpi-ui-docx-page-bg: #ffffff;
+  --delpi-ui-docx-page-text: #000000;
+  --delpi-ui-docx-accent: #185abd;
+  --delpi-ui-docx-toolbar-bg: #f3f2f1;
+  --delpi-ui-docx-toolbar-border: #d2d0ce;
+  --delpi-ui-docx-toolbar-text: #323130;
+  --delpi-ui-docx-toolbar-muted: #605e5c;
   display: flex;
   flex-direction: column;
-  max-height: min(70vh, 720px);
-  border: 1px solid var(--delpi-ui-preview-docx-toolbar-border);
+  flex: 1 1 auto;
+  min-height: 240px;
+  max-height: min(62vh, 640px);
+  border: 1px solid var(--delpi-ui-docx-toolbar-border);
   border-radius: 10px;
   overflow: hidden;
-  background: var(--delpi-ui-preview-docx-canvas);
+  background: var(--delpi-ui-docx-canvas);
+}
+
+:root[data-theme="dark"] .delpi-ui-docx-preview {
+  --delpi-ui-docx-canvas: #141925;
+  --delpi-ui-docx-page-bg: #f3f3f3;
+  --delpi-ui-docx-page-text: #111111;
+  --delpi-ui-docx-accent: #4a90e8;
+  --delpi-ui-docx-toolbar-bg: #1f2636;
+  --delpi-ui-docx-toolbar-border: rgba(255, 255, 255, 0.12);
+  --delpi-ui-docx-toolbar-text: rgba(255, 255, 255, 0.88);
+  --delpi-ui-docx-toolbar-muted: rgba(255, 255, 255, 0.62);
 }
 
 .delpi-ui-docx-preview__chrome {
-  background: var(--delpi-ui-preview-docx-toolbar-bg);
-  border-bottom: 1px solid var(--delpi-ui-preview-docx-toolbar-border);
+  flex-shrink: 0;
+  background: var(--delpi-ui-docx-toolbar-bg);
+  border-bottom: 1px solid var(--delpi-ui-docx-toolbar-border);
 }
 
 .delpi-ui-docx-preview__titlebar {
@@ -444,7 +512,7 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   gap: 8px;
   min-height: 34px;
   padding: 6px 10px;
-  background: linear-gradient(180deg, #2f6fd6 0%, var(--delpi-ui-preview-docx-accent) 100%);
+  background: linear-gradient(180deg, #2f6fd6 0%, var(--delpi-ui-docx-accent) 100%);
   color: #ffffff;
 }
 
@@ -472,7 +540,7 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   min-height: 30px;
   padding: 0 12px;
   font-size: 11px;
-  color: #323130;
+  color: var(--delpi-ui-docx-toolbar-text);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -485,14 +553,16 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   margin-left: auto;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #605e5c;
+  color: var(--delpi-ui-docx-toolbar-muted);
 }
 
 .delpi-ui-docx-preview__viewport {
   flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 24px 16px 32px;
-  background: var(--delpi-ui-preview-docx-canvas);
+  background: var(--delpi-ui-docx-canvas);
 }
 
 .delpi-ui-docx-preview__page {
@@ -500,10 +570,10 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   min-height: 480px;
   margin: 0 auto;
   padding: 72px 80px;
-  border: 1px solid #c8c6c4;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-docx-toolbar-border) 85%, #000);
   border-radius: 2px;
-  background: var(--delpi-ui-preview-docx-page-bg);
-  color: var(--delpi-ui-preview-docx-page-text);
+  background: var(--delpi-ui-docx-page-bg);
+  color: var(--delpi-ui-docx-page-text);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   font-family: Calibri, "Segoe UI", Arial, sans-serif;
   font-size: 11pt;
@@ -555,6 +625,6 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   margin: 0;
   padding: 8px 12px;
   font-size: var(--delpi-ui-preview-font-xs);
-  border-top: 1px solid var(--delpi-ui-preview-docx-toolbar-border);
-  background: var(--delpi-ui-preview-docx-toolbar-bg);
+  border-top: 1px solid var(--delpi-ui-docx-toolbar-border);
+  background: var(--delpi-ui-docx-toolbar-bg);
 }
