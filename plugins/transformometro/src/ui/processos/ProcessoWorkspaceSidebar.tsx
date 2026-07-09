@@ -9,6 +9,7 @@ import {
 } from "./processoWorkspaceNav";
 import { ProcessoWorkspaceSidebarActions } from "./ProcessoWorkspaceSidebarActions";
 import { ProcessoWorkspaceTreeIcon } from "./ProcessoWorkspaceTreeIcon";
+import { handleSpaLinkClick } from "../../utils/spaLink";
 
 type Props = {
   processoLabel: string;
@@ -59,10 +60,11 @@ function TreeNode({
         ) : (
           <span className="tm-processo-workspace-tree__toggle-spacer" aria-hidden="true" />
         )}
-        <button
-          type="button"
+        <a
+          href={node.href}
           className="tm-processo-workspace-tree__link"
-          onClick={() => onNavigate(node.href)}
+          aria-current={isActive ? "page" : undefined}
+          onClick={(event) => handleSpaLinkClick(event, node.href, onNavigate)}
         >
           <span className="tm-processo-workspace-tree__link-main">
             <ProcessoWorkspaceTreeIcon variant={folderVariant} />
@@ -81,7 +83,7 @@ function TreeNode({
             ) : null}
             {node.badge ? <span className="tm-processo-workspace-tree__badge">{node.badge}</span> : null}
           </span>
-        </button>
+        </a>
       </div>
       {hasChildren ? (
         <div

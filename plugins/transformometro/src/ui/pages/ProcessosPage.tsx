@@ -224,6 +224,7 @@ export function ProcessosPage({
         emptyMessage="Nenhum processo. Use Novo processo para cadastrar."
         detailColumns={detailColumns}
         onOpen={(row) => onOpenProcesso(row.processo_id)}
+        onNavigate={onNavigate}
         filters={
           <section className="ds-filters-row ds-filters-row--extended">
             <div className="ds-filter-box ds-filter-box--wide">

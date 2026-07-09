@@ -10,6 +10,8 @@ import { Pagination } from "../../components/Pagination";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
 import { useClientPagination } from "../../hooks/useClientPagination";
 import type { Processo } from "../../data/api/transformometroApi";
+import { buildProcessoPath } from "../../utils/routeParser";
+import { handleSpaLinkClick } from "../../utils/spaLink";
 import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { ProcessoFolderIcon } from "./ProcessoFolderIcon";
@@ -42,6 +44,7 @@ type Props = {
   footer?: ReactNode;
   detailColumns: DataTableColumn<Processo>[];
   onOpen: (processo: Processo) => void;
+  onNavigate: (path: string) => void;
 };
 
 function viewModeIcon(mode: ProcessoListViewMode) {
@@ -74,19 +77,20 @@ type FolderCardProps = {
   processo: Processo;
   iconSize: "lg" | "md";
   visibility: ProcessoListFieldVisibility;
-  onOpen: (processo: Processo) => void;
+  href: string;
+  onNavigate: (path: string) => void;
 };
 
-function ProcessoFolderCard({ processo, iconSize, visibility, onOpen }: FolderCardProps) {
+function ProcessoFolderCard({ processo, iconSize, visibility, href, onNavigate }: FolderCardProps) {
   const minimal = !visibility.showCode && !visibility.showMeta && !visibility.showStatus && !visibility.showProgress;
 
   return (
     <article className={`tm-processo-folder${minimal ? " tm-processo-folder--minimal" : ""}`} role="listitem">
-      <button
-        type="button"
+      <a
+        href={href}
         className="tm-processo-folder__open"
-        onClick={() => onOpen(processo)}
         title={processoFolderTitle(processo)}
+        onClick={(event) => handleSpaLinkClick(event, href, onNavigate)}
       >
         <ProcessoFolderIcon size={iconSize} />
         {visibility.showCode ? (
@@ -104,7 +108,7 @@ function ProcessoFolderCard({ processo, iconSize, visibility, onOpen }: FolderCa
             title={`Preenchimento — ${processo.codigo_processo}`}
           />
         ) : null}
-      </button>
+      </a>
     </article>
   );
 }
@@ -120,6 +124,7 @@ export function ProcessoFolderBrowser({
   footer,
   detailColumns,
   onOpen,
+  onNavigate,
 }: Props) {
   const P = TM_HELP_TOOLTIPS.processos;
   const [viewMode, setViewMode] = useState<ProcessoListViewMode>(() => readProcessoListViewMode());
@@ -245,13 +250,15 @@ export function ProcessoFolderBrowser({
         />
       ) : viewMode === "list" ? (
         <ul className="tm-processo-browser__list" role="list">
-          {slice.map((processo) => (
+          {slice.map((processo) => {
+            const href = buildProcessoPath(processo.processo_id);
+            return (
             <li key={processo.processo_id}>
-              <button
-                type="button"
+              <a
+                href={href}
                 className="tm-processo-browser__list-item"
-                onClick={() => onOpen(processo)}
                 title={processoFolderTitle(processo)}
+                onClick={(event) => handleSpaLinkClick(event, href, onNavigate)}
               >
                 <ProcessoFolderIcon size="sm" />
                 <span className="tm-processo-browser__list-main">
@@ -271,9 +278,10 @@ export function ProcessoFolderBrowser({
                     title={`Preenchimento — ${processo.codigo_processo}`}
                   />
                 ) : null}
-              </button>
+              </a>
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : (
         <div
@@ -290,7 +298,8 @@ export function ProcessoFolderBrowser({
               processo={processo}
               iconSize={viewMode === "icons-lg" ? "lg" : "md"}
               visibility={fieldVisibility}
-              onOpen={onOpen}
+              href={buildProcessoPath(processo.processo_id)}
+              onNavigate={onNavigate}
             />
           ))}
         </div>

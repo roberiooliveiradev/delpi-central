@@ -8,6 +8,7 @@ import {
   filterConfiguracoesTree,
   type ConfiguracoesNavNode,
 } from "./configuracoesWorkspaceNav";
+import { handleSpaLinkClick } from "../../utils/spaLink";
 
 type Props = {
   nodes: ConfiguracoesNavNode[];
@@ -56,10 +57,11 @@ function TreeNode({
         ) : (
           <span className="tm-processo-workspace-tree__toggle-spacer" aria-hidden="true" />
         )}
-        <button
-          type="button"
+        <a
+          href={node.href}
           className="tm-processo-workspace-tree__link"
-          onClick={() => onNavigate(node.href)}
+          aria-current={isActive ? "page" : undefined}
+          onClick={(event) => handleSpaLinkClick(event, node.href, onNavigate)}
         >
           <span className="tm-processo-workspace-tree__link-main">
             <ProcessoWorkspaceTreeIcon variant={folderVariant} />
@@ -68,7 +70,7 @@ function TreeNode({
             </span>
           </span>
           {node.badge ? <span className="tm-processo-workspace-tree__badge">{node.badge}</span> : null}
-        </button>
+        </a>
       </div>
       {hasChildren ? (
         <div
