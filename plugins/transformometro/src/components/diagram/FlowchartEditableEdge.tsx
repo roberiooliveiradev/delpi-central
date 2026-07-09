@@ -2,11 +2,17 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getSmoothStepPath,
+  useReactFlow,
+  useStore,
   type Edge,
   type EdgeProps,
 } from "@xyflow/react";
 
 import type { FlowchartEdgeKind } from "../../types/diagram";
+import {
+  adjustEdgeLabelPosition,
+  computeEdgePathOffsets,
+} from "../../utils/diagramEdgeRouting";
 import { DiagramInlineTextEdit } from "./DiagramInlineTextEdit";
 
 export type FlowchartEdgeData = {
@@ -31,8 +37,20 @@ function edgeStyle(kind: FlowchartEdgeKind | undefined) {
   return undefined;
 }
 
+function baseEdgeStyle(kind: FlowchartEdgeKind | undefined) {
+  const kindStyle = edgeStyle(kind);
+  return {
+    strokeWidth: 1.5,
+    stroke: "var(--tm-diagram-edge-color, #94a3b8)",
+    fill: "none",
+    ...kindStyle,
+  };
+}
+
 export function FlowchartEditableEdge({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -46,6 +64,9 @@ export function FlowchartEditableEdge({
 }: EdgeProps<Edge<FlowchartEdgeData>>) {
   const edgeData = data ?? {};
   const kind = edgeData.kind ?? "sequence";
+  const edges = useStore((state) => state.edges);
+  const { getNodes } = useReactFlow();
+  const pathOffset = computeEdgePathOffsets(edges).get(id) ?? 0;
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -53,10 +74,24 @@ export function FlowchartEditableEdge({
     targetY,
     sourcePosition,
     targetPosition,
+    borderRadius: 12,
+    offset: pathOffset,
   });
+  const labelPosition = adjustEdgeLabelPosition(
+    { x: labelX, y: labelY },
+    {
+      sourceX,
+      sourceY,
+      targetX,
+      targetY,
+      sourceNodeId: source,
+      targetNodeId: target,
+    },
+    getNodes().filter((node) => node.type !== "lane")
+  );
 
   const displayLabel = typeof label === "string" ? label : "";
-  const mergedStyle = { ...style, ...edgeStyle(kind) };
+  const mergedStyle = { ...style, ...baseEdgeStyle(kind) };
   const showLabelEditor = !edgeData.readOnly && kind === "sequence";
 
   return (
@@ -72,7 +107,7 @@ export function FlowchartEditableEdge({
           <div
             className="tm-diagram-edge-label nodrag nopan"
             style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
             }}
           >
             <DiagramInlineTextEdit
@@ -92,7 +127,7 @@ export function FlowchartEditableEdge({
           <div
             className="tm-diagram-edge-label tm-diagram-edge-label--readonly nodrag nopan"
             style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
             }}
           >
             <span className="tm-diagram-edge-label__text">{displayLabel}</span>
@@ -103,7 +138,7 @@ export function FlowchartEditableEdge({
           <div
             className="tm-diagram-edge-label tm-diagram-edge-label--kind nodrag nopan"
             style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
             }}
           >
             <span className="tm-diagram-edge-label__text">

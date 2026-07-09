@@ -5979,6 +5979,12 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   inset: -10px;
 }
 
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-path {
+  stroke: var(--tm-diagram-edge-color, #94a3b8);
+  stroke-width: 1.5;
+  fill: none;
+}
+
 .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__edge-text {
   fill: var(--ds-text);
 }
