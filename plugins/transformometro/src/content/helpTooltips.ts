@@ -11,7 +11,7 @@ export const TM_HELP_TOOLTIPS = {
     unidade: "Unidade operacional (filial) associada ao registro.",
     unidades: "Unidades em que o departamento ou vínculo está ativo.",
     setor: "Departamento operacional dentro da unidade.",
-    setores: "Departamentos vinculados à instância operacional.",
+    setores: "Departamentos vinculados à melhoria.",
     status: "Situação do cadastro — ativos entram nos formulários e no dashboard.",
     rotulo: "Título curto da melhoria (opcional), para reconhecê-la na listagem.",
     versao: "Número ou rótulo da revisão do processo (ex.: 1.0.0, 2.1).",
@@ -121,31 +121,32 @@ export const TM_HELP_TOOLTIPS = {
   },
   processos: {
     codigo: "Código gerado automaticamente ao criar o processo (PROC-XXXX).",
-    nome: "Nome do processo (mestre). A unidade e o departamento entram na instância operacional.",
+    nome: "Nome do processo-mestre monitorado no Transformômetro.",
     familia:
       "Agrupador do processo (ex.: ferramenta ou tema). Usado para consolidar a economia por família no dashboard.",
     agrupadorFerramenta: "Ferramenta ou plataforma principal (ex.: ChatGPT, Power Automate).",
     gestor: "Responsável pelo processo ou pela iniciativa de transformação.",
     objetivo: "Objetivo de negócio do processo — contexto para relatórios.",
     descricao: "Descrição livre do processo e do escopo operacional.",
-    unidade: "Unidade da primeira instância operacional criada junto com o processo.",
-    setor: "Departamento da primeira instância operacional, dentro da unidade escolhida.",
+    unidade:
+      "Unidades onde o processo-mestre se aplica. Marque uma ou mais, ou «Todas as unidades ativas».",
+    setor: "Departamentos envolvidos no escopo do processo-mestre.",
     status:
       "Processos ativos entram no dashboard. Descontinuado e Em implantação ajudam a controlar o ciclo de vida.",
     filtroUnidade: "Filtra a lista de processos por unidade (aplicado na API).",
     filtroStatus: "Filtra processos pelo status operacional.",
     busca: "Busca por código, nome, família ou agrupador de ferramenta.",
     timeline:
-      "Histórico auditado de alterações neste processo e entidades vinculadas (mapeamento WBS, diagramas, instâncias, revisões, medições, investimentos e recursos).",
+      "Histórico auditado de alterações neste processo e entidades vinculadas (mapeamento WBS, diagramas, melhorias, revisões, medições, investimentos e recursos).",
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
     diagramaMacro:
-      "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas instâncias e revisões.",
+      "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões.",
     arquivos:
       "Documentos de referência do processo-mestre — POP, instruções, planilhas e links úteis (independente das evidências por revisão).",
     arquivoUrl: "Endereço web externo do documento (SharePoint, drive, repositório…).",
     arquivoDescription: "Rótulo curto para identificar o arquivo na grade.",
     preenchimento:
-      "Checklist do cadastro completo: dados mestre, instâncias operacionais, diagrama macro, baseline, melhoria e medição com competências registradas.",
+      "Checklist do cadastro completo: dados mestre, melhorias, diagrama macro, baseline, melhoria comparável e medição com competências registradas.",
     preenchimentoLista:
       "Mesmo checklist do detalhe do processo: dados mestre, melhorias, mapeamento, diagrama macro, baseline, melhoria e medição.",
     modosVisualizacao:
@@ -157,7 +158,7 @@ export const TM_HELP_TOOLTIPS = {
     mapeamento:
       "Árvore WBS do macroprocesso — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento e export CSV.",
     escopoInstancia:
-      "Selecione quais processos-chave desta instância operacional executa ou melhora.",
+      "Selecione quais processos-chave desta melhoria executa ou aprimora.",
     contextoInstancia:
       "Metadados operacionais extras — responsável local, rollout e observações complementares.",
     contextoResponsavel:

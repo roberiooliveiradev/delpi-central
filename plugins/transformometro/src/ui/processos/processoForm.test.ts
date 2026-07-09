@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { emptyProcessoForm, masterPayloadFromProcessoForm } from "./processoForm";
-import { emptyProcessoEscopo, hasProcessoEscopo } from "./processoEscopo";
+import {
+  defaultProcessoEscopoForCreate,
+  emptyProcessoEscopo,
+  hasProcessoEscopo,
+} from "./processoEscopo";
 
 describe("processoEscopo", () => {
   it("escopo vazio não é considerado configurado", () => {
@@ -24,10 +28,21 @@ describe("processoEscopo", () => {
       })
     ).toBe(true);
   });
+  it("defaultProcessoEscopoForCreate pré-seleciona unidade e departamento", () => {
+    const escopo = defaultProcessoEscopoForCreate({
+      filiais: [{ id: "01", label: "SC" }],
+      setores: [{ id: "engenharia", label: "Engenharia", filiais: ["01"] }],
+      status_processo: [],
+    } as never);
+
+    expect(hasProcessoEscopo(escopo)).toBe(true);
+    expect(escopo.filial_ids).toEqual(["01"]);
+    expect(escopo.setor_ids).toEqual(["engenharia"]);
+  });
 });
 
 describe("masterPayloadFromProcessoForm", () => {
-  it("não envia escopo parcial ao criar só o mestre", () => {
+  it("não envia escopo quando departamentos não estão definidos", () => {
     const form = emptyProcessoForm();
     form.nome_processo = "Indicadores Estratégicos";
 

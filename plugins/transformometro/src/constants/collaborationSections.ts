@@ -3,7 +3,7 @@ export const COLLABORATION_SECTION_LABELS: Record<string, string> = {
   diagrama_macro: "Diagrama macro",
   decomposicao: "Mapeamento do processo",
   arquivos: "Arquivos do processo",
-  instancia: "Instância",
+  instancia: "Melhoria",
   decomposicao_escopo: "Escopo no mapeamento",
   instancia_contexto: "Contexto operacional",
   diagrama_escopo: "Escopo no diagrama",

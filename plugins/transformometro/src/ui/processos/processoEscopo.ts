@@ -7,6 +7,15 @@ export type ProcessoEscopoState = {
   setor_ids: string[];
 };
 
+export function defaultProcessoEscopoForCreate(options: OptionsData): ProcessoEscopoState {
+  const firstFilial = options.filiais[0]?.id ?? "01";
+  return {
+    todas_filiais_ativas: false,
+    filial_ids: [firstFilial],
+    setor_ids: defaultSetorIdsForFilial(options.setores, firstFilial),
+  };
+}
+
 export function emptyProcessoEscopo(_defaultFilialId = "01"): ProcessoEscopoState {
   return {
     todas_filiais_ativas: false,

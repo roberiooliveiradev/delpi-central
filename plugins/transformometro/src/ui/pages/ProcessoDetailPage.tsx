@@ -362,7 +362,7 @@ export function ProcessoDetailPage({
           <EditableSectionCard
             title="Dados do processo"
             hint={TM_HELP_TOOLTIPS.processos.nome}
-            description="Informações mestre do processo. Instâncias operacionais e revisões ficam nos níveis abaixo."
+            description="Informações mestre do processo. Melhorias e revisões ficam nos níveis abaixo."
             isEditing={sectionEdit.isEditing("processo")}
             onEdit={() => void handleStartEditProcesso()}
             onCancel={() => {

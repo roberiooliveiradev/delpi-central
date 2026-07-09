@@ -25,7 +25,12 @@ import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 const C = TM_HELP_TOOLTIPS.columns;
 const P = TM_HELP_TOOLTIPS.processos;
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
+import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
 import { ProcessoFolderBrowser } from "../processos/ProcessoFolderBrowser";
+import {
+  defaultProcessoEscopoForCreate,
+  hasProcessoEscopo,
+} from "../processos/processoEscopo";
 import {
   emptyProcessoForm,
   masterPayloadFromProcessoForm,
@@ -86,7 +91,10 @@ export function ProcessosPage({
   }, [load]);
 
   function startCreate() {
-    setForm(emptyProcessoForm());
+    setForm({
+      ...emptyProcessoForm(),
+      escopo: options ? defaultProcessoEscopoForCreate(options) : emptyProcessoForm().escopo,
+    });
     setShowForm(true);
     scrollToForm();
   }
@@ -99,6 +107,10 @@ export function ProcessosPage({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!hasProcessoEscopo(form.escopo)) {
+      setError("Selecione ao menos uma unidade e um departamento no escopo do processo.");
+      return;
+    }
     const payload = masterPayloadFromProcessoForm(form);
     try {
       const created = await createProcesso(payload, getAccessToken);
@@ -168,8 +180,8 @@ export function ProcessosPage({
         <section ref={formSectionRef} className="ds-card ds-cadastro-form">
           <h2 className="ds-section-title">Novo processo</h2>
           <p className="ds-hint">
-            Cadastre só o mestre aqui. Unidade e departamento entram na primeira instância operacional
-            na tela seguinte. Para alterar um processo existente, abra-o e edite o card desejado.
+            Cadastre o mestre com unidades e departamentos de escopo. Melhorias e revisões são
+            cadastradas na tela do processo, na seção Melhorias.
           </p>
           <form onSubmit={handleSubmit}>
             <ProcessoFormFields
@@ -178,6 +190,19 @@ export function ProcessosPage({
               showInstanciaFields={false}
               onChange={setForm}
             />
+            <div className="tm-inst-form tm-inst-form--spaced">
+              <h3 className="ds-subsection-title">Unidades e departamentos do processo</h3>
+              <p className="ds-hint">
+                Escopo operacional do processo-mestre. Ao criar melhorias, você pode replicar esta
+                amarração ou definir outra.
+              </p>
+              <ProcessoEscopoFields
+                value={form.escopo}
+                options={options}
+                onChange={(escopo) => setForm({ ...form, escopo })}
+                activeFilialCount={options.filiais.length}
+              />
+            </div>
             <div className="ds-cadastro-form__actions">
               <button type="submit" className="ds-primary-btn">
                 Criar processo
