@@ -17,4 +17,13 @@ describe("buildMermaidPreviewConfig", () => {
   it("usa tema claro quando solicitado", () => {
     expect(buildMermaidPreviewConfig(false).theme).toBe("neutral");
   });
+
+  it("injeta themeCSS e margens de subgraph", () => {
+    const config = buildMermaidPreviewConfig(true);
+    expect(config.themeCSS).toContain("background-color: #111827");
+    expect(config.flowchart).toMatchObject({
+      subGraphTitleMargin: { top: 10, bottom: 18 },
+      rankSpacing: 72,
+    });
+  });
 });

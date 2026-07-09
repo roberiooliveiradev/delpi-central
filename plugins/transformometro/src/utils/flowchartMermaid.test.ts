@@ -64,6 +64,34 @@ describe("flowchartToMermaid", () => {
     expect(text).toContain("classDef bpmn_artifact_data_store");
   });
 
+  it("quebra rótulo longo de faixa em subgraph", () => {
+    const text = flowchartToMermaid({
+      format: "flowchart_v1",
+      format_version: 1,
+      lanes: [
+        {
+          id: "lane_lmp",
+          label: "LMP — Lançamento e Modificação de Produtos / Engenharia",
+          height: 168,
+          order: 0,
+        },
+      ],
+      nodes: [
+        {
+          id: "n1",
+          type: "process",
+          label: "Validar",
+          position: { x: 200, y: 80 },
+          lane_id: "lane_lmp",
+        },
+      ],
+      edges: [],
+    });
+
+    expect(text).toContain("subgraph lane_lane_lmp");
+    expect(text).toMatch(/LMP — Lançamento e Modificação de<br>Produtos/);
+  });
+
   it("exporta arestas de mensagem e associação", () => {
     const text = flowchartToMermaid({
       format: "flowchart_v1",

@@ -18,7 +18,9 @@ import {
   mermaidEdgeSyntax,
   mermaidHighlightClassDefLines,
   parseMermaidNodeTypeFromClass,
+  wrapMermaidLabelText,
 } from "./bpmnMermaidMapping";
+import { MERMAID_LANE_LABEL_WRAPPING_WIDTH } from "./mermaidPreviewConfig";
 
 export { buildBpmnCatalogForApi };
 
@@ -42,6 +44,10 @@ function normalizeImportedMermaidLabel(label: string): string {
 
 function laneSubgraphId(laneId: string): string {
   return sanitizeMermaidId(`lane_${laneId}`);
+}
+
+function formatLaneSubgraphLabel(label: string): string {
+  return wrapMermaidLabelText(escapeLabel(label), MERMAID_LANE_LABEL_WRAPPING_WIDTH);
 }
 
 export function flowchartToMermaid(flowchart: FlowchartV1): string {
@@ -90,7 +96,9 @@ export function flowchartToMermaid(flowchart: FlowchartV1): string {
     for (const lane of lanes) {
       const laneNodes = nodesByLane.get(lane.id) ?? [];
       if (!laneNodes.length) continue;
-      lines.push(`    subgraph ${laneSubgraphId(lane.id)} ["${escapeLabel(lane.label)}"]`);
+      lines.push(
+        `    subgraph ${laneSubgraphId(lane.id)} ["${formatLaneSubgraphLabel(lane.label)}"]`
+      );
       for (const node of laneNodes) {
         writeNode(node, "        ");
       }

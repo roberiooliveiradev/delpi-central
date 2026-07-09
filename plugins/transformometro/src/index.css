@@ -7048,12 +7048,30 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   background: var(--tm-diagram-canvas-bg);
 }
 
+.dashboard-transformometro .tm-diagram-mermaid--dark {
+  color-scheme: dark;
+}
+
 .dashboard-transformometro .tm-diagram-mermaid svg {
   display: block;
   flex: 0 0 auto;
   max-width: 100%;
   height: auto;
   margin: 0 auto;
+}
+
+.dashboard-transformometro .tm-diagram-mermaid--dark svg {
+  background-color: var(--tm-diagram-canvas-bg);
+}
+
+.dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject,
+.dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject div {
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+  max-width: 280px;
 }
 
 .dashboard-transformometro .tm-diagram-mermaid svg foreignObject {

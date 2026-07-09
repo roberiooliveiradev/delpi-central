@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
 import { buildMermaidPreviewConfig } from "../../utils/mermaidPreviewConfig";
+import { postProcessMermaidPreviewSvg } from "../../utils/mermaidPreviewPostProcess";
 import { applyMermaidPreviewTheme } from "../../utils/mermaidPreviewTheme";
 
 type DiagramMermaidPreviewProps = {
@@ -48,7 +49,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
         const renderId = `tm-mermaid-${reactId}-${Date.now()}`;
         const result = await mermaid.render(renderId, themedDiagram);
         if (!cancelled) {
-          setSvg(result.svg);
+          setSvg(postProcessMermaidPreviewSvg(result.svg, isDark));
           setError(null);
         }
       })
@@ -82,7 +83,13 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
 
   return (
     <div
-      className={["tm-diagram-mermaid", className].filter(Boolean).join(" ")}
+      className={[
+        "tm-diagram-mermaid",
+        isDark ? "tm-diagram-mermaid--dark" : "tm-diagram-mermaid--light",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
