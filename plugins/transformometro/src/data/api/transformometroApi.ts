@@ -296,6 +296,7 @@ export function createSetor(
 export function updateSetor(
   setorId: string,
   payload: {
+    codigo_setor: string;
     nome_setor: string;
     filiais: string[];
     status_setor?: string;

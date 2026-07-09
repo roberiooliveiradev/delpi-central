@@ -272,15 +272,17 @@ def _validate_filial_body(body: FilialBody | FilialUpdateBody, *, is_create: boo
 
 
 def _validate_setor_body(body: SetorBody | SetorUpdateBody, *, is_create: bool):
+    from tm_app.infrastructure.persistence.repositories.setor_repository import (
+        normalize_setor_id,
+    )
+
     assert_in(body.status_setor, STATUS_SETOR, "status_setor")
     for filial_id in body.filiais:
         assert_filial_ativa(filial_id, _active_filial_codigos())
     if is_create and isinstance(body, SetorBody):
-        from tm_app.infrastructure.persistence.repositories.setor_repository import (
-            normalize_setor_id,
-        )
-
         normalize_setor_id(body.setor_id or body.nome_setor)
+    if isinstance(body, SetorUpdateBody):
+        normalize_setor_id(body.codigo_setor)
 
 
 def _validate_recurso_body(body: RecursoBody):

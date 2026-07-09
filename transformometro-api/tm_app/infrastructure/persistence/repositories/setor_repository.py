@@ -253,9 +253,19 @@ class SetorRepository(PluginBaseRepository):
         filiais = list(data["filiais"])
         self._validate_filiais(filiais)
 
+        new_codigo = normalize_codigo_setor(
+            data.get("codigo_setor") or existing["codigo_setor"]
+        )
+        old_codigo = str(existing["codigo_setor"])
+        if new_codigo != old_codigo:
+            conflict = self.get(new_codigo)
+            if conflict and str(conflict["setor_id"]) != str(existing["setor_id"]):
+                raise ValueError(f"Departamento com código '{new_codigo}' já existe.")
+
         row = self.execute_returning_one(
             """
             UPDATE transformometro.setores SET
+                codigo_setor = %s,
                 nome_setor = %s,
                 status_setor = %s,
                 updated_at = NOW()
@@ -263,6 +273,7 @@ class SetorRepository(PluginBaseRepository):
             RETURNING setor_id
             """,
             (
+                new_codigo,
                 data["nome_setor"].strip(),
                 data.get("status_setor", "ativo"),
                 existing["setor_id"],
@@ -272,6 +283,17 @@ class SetorRepository(PluginBaseRepository):
         if row is None:
             self._connection.rollback()
             return None
+
+        if new_codigo != old_codigo:
+            self.execute(
+                """
+                UPDATE transformometro.dashboard_calculos
+                SET codigo_setor = %s
+                WHERE setor_id = %s::uuid
+                """,
+                (new_codigo, existing["setor_id"]),
+                auto_commit=False,
+            )
 
         self._sync_filiais(str(existing["setor_id"]), filiais, auto_commit=True)
         return self.get(str(existing["setor_id"]))

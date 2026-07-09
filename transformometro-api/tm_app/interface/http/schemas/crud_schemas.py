@@ -301,6 +301,7 @@ class SetorBody(BaseModel):
 
 
 class SetorUpdateBody(BaseModel):
+    codigo_setor: str = Field(min_length=1, max_length=64)
     nome_setor: str = Field(min_length=1, max_length=255)
     filiais: list[str] = Field(min_length=1)
     status_setor: str = Field(default="ativo", max_length=32)

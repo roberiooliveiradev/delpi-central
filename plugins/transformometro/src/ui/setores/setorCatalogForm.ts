@@ -25,17 +25,21 @@ export function setorFormFromEntity(setor: Setor): SetorFormState {
   };
 }
 
-export function payloadFromSetorForm(form: SetorFormState, editing: boolean) {
-  const base = {
+export function payloadFromSetorForm(form: SetorFormState) {
+  return {
+    codigo_setor: form.codigo_setor.trim(),
     nome_setor: form.nome_setor.trim(),
     filiais: form.filiais,
     status_setor: form.status_setor,
   };
-  if (editing) {
-    return base;
-  }
+}
+
+export function createPayloadFromSetorForm(form: SetorFormState) {
+  const payload = payloadFromSetorForm(form);
   return {
-    ...base,
-    setor_id: form.codigo_setor.trim(),
+    setor_id: payload.codigo_setor,
+    nome_setor: payload.nome_setor,
+    filiais: payload.filiais,
+    status_setor: payload.status_setor,
   };
 }

@@ -8,11 +8,10 @@ import type { SetorFormState } from "./setorCatalogForm";
 type Props = {
   form: SetorFormState;
   options: OptionsData;
-  editing: boolean;
   onChange: (next: SetorFormState) => void;
 };
 
-export function SetorFormFields({ form, options, editing, onChange }: Props) {
+export function SetorFormFields({ form, options, onChange }: Props) {
   const set = (patch: Partial<SetorFormState>) => onChange({ ...form, ...patch });
 
   function toggleFilial(filialId: string) {
@@ -34,7 +33,6 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
         <input
           id="tm-setor-codigo"
           required
-          readOnly={editing}
           placeholder="ex.: engenharia"
           value={form.codigo_setor}
           onChange={(e) => set({ codigo_setor: e.target.value.toLowerCase() })}

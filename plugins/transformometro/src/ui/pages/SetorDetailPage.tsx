@@ -29,6 +29,7 @@ import {
 import { buildSetorPath } from "../../utils/routeParser";
 import { SetorFormFields } from "../setores/SetorFormFields";
 import {
+  createPayloadFromSetorForm,
   emptySetorForm,
   payloadFromSetorForm,
   setorFormFromEntity,
@@ -123,18 +124,10 @@ export function SetorDetailPage({
     }
     setSaving(true);
     setError(null);
-    const payload = payloadFromSetorForm(form, !isCreate);
+    const payload = payloadFromSetorForm(form);
     try {
       if (isCreate) {
-        const created = await createSetor(
-          {
-            setor_id: form.codigo_setor.trim(),
-            nome_setor: payload.nome_setor,
-            filiais: payload.filiais,
-            status_setor: payload.status_setor,
-          },
-          getAccessToken
-        );
+        const created = await createSetor(createPayloadFromSetorForm(form), getAccessToken);
         onNavigate(buildSetorPath(created.setor_id));
         return;
       }
@@ -259,12 +252,7 @@ export function SetorDetailPage({
                 void handleSave();
               }}
             >
-              <SetorFormFields
-                form={form}
-                options={options}
-                editing={!isCreate}
-                onChange={setForm}
-              />
+              <SetorFormFields form={form} options={options} onChange={setForm} />
             </form>
           }
         />

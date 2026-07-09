@@ -82,3 +82,46 @@ def test_soft_delete_blocks_when_processos_exist():
 
     with pytest.raises(ValueError, match="vinculado a processos"):
         repo.soft_delete("comercial")
+
+
+def test_update_allows_codigo_setor_rename():
+    conn = MagicMock()
+    repo = SetorRepository(connection=conn)
+    setor_uuid = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    repo.get = MagicMock(
+        side_effect=[
+            {
+                "setor_id": setor_uuid,
+                "codigo_setor": "suprimentos",
+                "nome_setor": "Suprimentos",
+                "filiais": ["01"],
+            },
+            None,
+            {
+                "setor_id": setor_uuid,
+                "codigo_setor": "supplies",
+                "nome_setor": "Suprimentos",
+                "filiais": ["01"],
+            },
+        ]
+    )
+    repo._validate_filiais = MagicMock()
+    repo.execute_returning_one = MagicMock(return_value={"setor_id": setor_uuid})
+    repo.execute = MagicMock()
+    repo._sync_filiais = MagicMock()
+
+    updated = repo.update(
+        setor_uuid,
+        {
+            "codigo_setor": "supplies",
+            "nome_setor": "Suprimentos",
+            "filiais": ["01"],
+            "status_setor": "ativo",
+        },
+    )
+
+    assert updated["codigo_setor"] == "supplies"
+    update_sql = repo.execute_returning_one.call_args[0][0]
+    assert "codigo_setor = %s" in update_sql
+    repo.execute.assert_called_once()
+    assert "dashboard_calculos" in repo.execute.call_args[0][0]
