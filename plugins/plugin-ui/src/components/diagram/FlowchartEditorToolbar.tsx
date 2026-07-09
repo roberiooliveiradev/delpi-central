@@ -143,7 +143,7 @@ export function FlowchartEditorToolbar({
       <div className="tm-diagram-editor__toolbar-panel" role="tabpanel">
         {toolbarTab === "elements" ? (
           <div className="tm-diagram-editor__elements">
-            <PaletteSubTabs
+            <PaletteSubTabs<FlowchartElementGroupTab>
               tabs={elementGroupTabs}
               activeId={elementGroup}
               onChange={setElementGroup}
@@ -151,7 +151,7 @@ export function FlowchartEditorToolbar({
             />
 
             {elementGroup === "events" ? (
-              <PaletteSubTabs
+              <PaletteSubTabs<BpmnPaletteCategoryId>
                 tabs={eventSubTabs}
                 activeId={eventSubTab}
                 onChange={setEventSubTab}
