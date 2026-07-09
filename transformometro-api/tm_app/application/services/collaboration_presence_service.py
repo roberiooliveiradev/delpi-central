@@ -128,6 +128,19 @@ class CollaborationPresenceService:
             user_id=user_id,
         )
 
+    def clear_user_presence(self, *, entity_type: str, entity_id: str, user_id: str) -> None:
+        self._assert_entity(entity_type)
+        self._repo.release_user_locks(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+        )
+        self._repo.delete_user_presence(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+        )
+
     @staticmethod
     def _assert_entity(entity_type: str) -> None:
         if entity_type not in ALLOWED_ENTITY_TYPES:

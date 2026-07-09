@@ -147,6 +147,23 @@ class CollaborationPresenceRepository(PluginBaseRepository):
             tuple(params),
         )
 
+    def delete_user_presence(
+        self,
+        *,
+        entity_type: str,
+        entity_id: str,
+        user_id: str,
+    ) -> None:
+        self.execute(
+            """
+            DELETE FROM transformometro.collaboration_presence
+            WHERE entity_type = %s
+              AND entity_id = %s::uuid
+              AND user_id = %s
+            """,
+            (entity_type, entity_id, user_id),
+        )
+
     def release_user_locks(
         self,
         *,

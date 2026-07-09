@@ -46,6 +46,7 @@ export type TransformometroRealtimeEvent =
 export type TransformometroRealtimeOutbound =
   | { type: "presence.request" }
   | { type: "presence.heartbeat"; sectionKey?: string; mode: "viewing" | "editing" }
+  | { type: "presence.leave" }
   | { type: "lock.acquire"; sectionKey: string }
   | { type: "lock.release"; sectionKey: string };
 

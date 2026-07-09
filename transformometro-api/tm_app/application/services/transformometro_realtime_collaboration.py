@@ -69,6 +69,14 @@ class TransformometroRealtimeCollaborationHandler:
                 self._broadcast_presence(entity_type, entity_id)
                 return
 
+            if msg_type == "presence.leave":
+                self._clear_user_presence(
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                    user_id=user_id,
+                )
+                return
+
             if msg_type == "lock.acquire":
                 result = self._service.acquire_lock(
                     entity_type=entity_type,
@@ -118,6 +126,36 @@ class TransformometroRealtimeCollaborationHandler:
                     "sectionKey": section_key or None,
                 }
             )
+
+    async def handle_disconnect(
+        self,
+        *,
+        entity_type: str,
+        entity_id: str,
+        user_id: str,
+    ) -> None:
+        self._clear_user_presence(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+        )
+
+    def _clear_user_presence(
+        self,
+        *,
+        entity_type: str,
+        entity_id: str,
+        user_id: str,
+    ) -> None:
+        try:
+            self._service.clear_user_presence(
+                entity_type=entity_type,
+                entity_id=entity_id,
+                user_id=user_id,
+            )
+        except ValueError:
+            return
+        self._broadcast_presence(entity_type, entity_id)
 
     async def _send_presence(
         self,

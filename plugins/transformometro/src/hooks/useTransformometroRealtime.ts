@@ -147,6 +147,10 @@ export function useTransformometroRealtime({
     [sendMessage]
   );
 
+  const leavePresence = useCallback(() => {
+    return sendMessage({ type: "presence.leave" });
+  }, [sendMessage]);
+
   useEffect(() => {
     if (!enabled || !entityId) {
       setConnected(false);
@@ -308,6 +312,9 @@ export function useTransformometroRealtime({
       cancelled = true;
       clearTimers();
       clearPendingLocks("Conexão em tempo real encerrada.");
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({ type: "presence.leave" }));
+      }
       socketRef.current?.close();
       socketRef.current = null;
       setConnected(false);
@@ -322,5 +329,6 @@ export function useTransformometroRealtime({
     sendHeartbeat,
     acquireLock,
     releaseLock,
+    leavePresence,
   };
 }

@@ -74,6 +74,53 @@ async def test_realtime_presence_request_serializes_datetime_payload():
 
 
 @pytest.mark.asyncio
+async def test_realtime_presence_leave_clears_user(monkeypatch):
+    service = MagicMock()
+    websocket = AsyncMock()
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+    broadcast = MagicMock()
+    monkeypatch.setattr(handler, "_broadcast_presence", broadcast)
+
+    await handler.handle_message(
+        websocket,
+        raw_message='{"type":"presence.leave"}',
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u1",
+        user_name="Ana",
+        user_email="ana@example.com",
+    )
+
+    service.clear_user_presence.assert_called_once_with(
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u1",
+    )
+    broadcast.assert_called_once_with("processo", "p1")
+
+
+@pytest.mark.asyncio
+async def test_realtime_disconnect_clears_user(monkeypatch):
+    service = MagicMock()
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+    broadcast = MagicMock()
+    monkeypatch.setattr(handler, "_broadcast_presence", broadcast)
+
+    await handler.handle_disconnect(
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u2",
+    )
+
+    service.clear_user_presence.assert_called_once_with(
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u2",
+    )
+    broadcast.assert_called_once_with("processo", "p1")
+
+
+@pytest.mark.asyncio
 async def test_realtime_lock_acquire_returns_result():
     service = MagicMock()
     service.acquire_lock.return_value = {"acquired": True, "presence": {"section_key": "diagrama_macro"}}

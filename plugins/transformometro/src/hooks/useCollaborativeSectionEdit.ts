@@ -20,6 +20,7 @@ const POLL_FALLBACK_MS = 30_000;
 const RESYNC_FALLBACK_MS = 90_000;
 const LOCK_HEARTBEAT_MS = 20_000;
 const VIEW_HEARTBEAT_MS = 30_000;
+const PRESENCE_RESYNC_MS = 35_000;
 
 type Options = {
   entityType: CollaborationEntityType;
@@ -113,6 +114,7 @@ export function useCollaborativeSectionEdit({
     sendHeartbeat,
     acquireLock: acquireLockViaWs,
     releaseLock: releaseLockViaWs,
+    leavePresence: leavePresenceViaWs,
   } = useTransformometroRealtime({
     entityType,
     entityId,
@@ -134,6 +136,14 @@ export function useCollaborativeSectionEdit({
     }
     void refreshPresence();
   }, [enabled, entityId, refreshPresence, requestPresence, wsConnected]);
+
+  useEffect(() => {
+    if (!enabled || !entityId || !wsConnected) return;
+    const timer = window.setInterval(() => {
+      requestPresence();
+    }, PRESENCE_RESYNC_MS);
+    return () => window.clearInterval(timer);
+  }, [enabled, entityId, requestPresence, wsConnected]);
 
   useEffect(() => {
     if (!enabled || !entityId || wsConnected) return;
@@ -316,9 +326,10 @@ export function useCollaborativeSectionEdit({
 
   useEffect(() => {
     return () => {
+      leavePresenceViaWs();
       void releaseCurrentLock();
     };
-  }, [releaseCurrentLock]);
+  }, [leavePresenceViaWs, releaseCurrentLock]);
 
   const presenceSummary = useMemo(() => {
     if (!presence) return null;
