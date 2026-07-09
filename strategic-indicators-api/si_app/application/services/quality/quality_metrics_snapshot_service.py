@@ -10,6 +10,7 @@ from si_app.application.services.strategic_indicators.period_resolution import (
 from si_app.infrastructure.gateways.delpi_quality_gateway import DelpiQualityGateway
 
 PLUGS_FINISHED_PRODUCT_PREFIX = "9048"
+COMPONENTS_FINISHED_PRODUCT_PREFIX = "9026"
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,8 @@ class QualityBranchSnapshot:
     audit_5s_score: float | None
     ppm_internal_plugs: float | None = None
     ppm_external_plugs: float | None = None
+    ppm_internal_components: float | None = None
+    ppm_external_components: float | None = None
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,8 @@ class QualityMetricsSnapshot:
     ppm_external_consolidated: float | None = None
     ppm_internal_plugs_consolidated: float | None = None
     ppm_external_plugs_consolidated: float | None = None
+    ppm_internal_components_consolidated: float | None = None
+    ppm_external_components_consolidated: float | None = None
 
 
 class QualityMetricsSnapshotService:
@@ -142,6 +147,22 @@ class QualityMetricsSnapshotService:
             product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
         )
 
+        ppm_internal_components_consolidated = self._resolve_ppm(
+            ppm_type="internal",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
+        )
+
+        ppm_external_components_consolidated = self._resolve_ppm(
+            ppm_type="external",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
+        )
+
         snapshots: list[QualityBranchSnapshot] = []
 
         for branch_code in branches:
@@ -173,6 +194,22 @@ class QualityMetricsSnapshotService:
                 start_date=start_date,
                 end_date=end_date,
                 product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
+            )
+
+            ppm_internal_components = self._resolve_ppm(
+                ppm_type="internal",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
+            )
+
+            ppm_external_components = self._resolve_ppm(
+                ppm_type="external",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
             )
 
             kaizen_summary = self._quality_gateway.get_kaizen_summary(
@@ -223,6 +260,16 @@ class QualityMetricsSnapshotService:
                         if ppm_external_plugs is not None
                         else None
                     ),
+                    ppm_internal_components=(
+                        round(ppm_internal_components, 2)
+                        if ppm_internal_components is not None
+                        else None
+                    ),
+                    ppm_external_components=(
+                        round(ppm_external_components, 2)
+                        if ppm_external_components is not None
+                        else None
+                    ),
                 )
             )
 
@@ -248,6 +295,16 @@ class QualityMetricsSnapshotService:
             ppm_external_plugs_consolidated=(
                 round(ppm_external_plugs_consolidated, 2)
                 if ppm_external_plugs_consolidated is not None
+                else None
+            ),
+            ppm_internal_components_consolidated=(
+                round(ppm_internal_components_consolidated, 2)
+                if ppm_internal_components_consolidated is not None
+                else None
+            ),
+            ppm_external_components_consolidated=(
+                round(ppm_external_components_consolidated, 2)
+                if ppm_external_components_consolidated is not None
                 else None
             ),
         )

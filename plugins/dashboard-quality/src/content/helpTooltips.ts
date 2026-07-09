@@ -12,7 +12,7 @@ export const QUALITY_HELP_TOOLTIPS = {
     branch:
       "Unidade TOTVS. Vazio = todas; múltiplas unidades restringem o recorte dos indicadores.",
     ppmProductScope:
-      "Recorte de PPM por família de produto acabado. Plugues = códigos que começam com 9048 (numerador e denominador).",
+      "Recorte de PPM por família de produto acabado. Plugues = códigos que começam com 9048; componentes = códigos que começam com 9026 (numerador e denominador).",
     nonconformityType:
       "Interna (tipo 1) ou externa (cliente/fornecedor). Vazio = todos os tipos.",
     nonconformityStatus:
@@ -31,6 +31,10 @@ export const QUALITY_HELP_TOOLTIPS = {
       "PPM interno restrito a plugues — produtos acabados cujo código começa com 9048.",
     ppmExternalPlugs:
       "PPM externo restrito a plugues — produtos acabados cujo código começa com 9048.",
+    ppmInternalComponents:
+      "PPM interno restrito a componentes — produtos acabados cujo código começa com 9026.",
+    ppmExternalComponents:
+      "PPM externo restrito a componentes — produtos acabados cujo código começa com 9026.",
     kaizenOpen: "Quantidade de kaizens abertos ou em andamento no recorte.",
     kaizenClosed: "Kaizens concluídos no período filtrado.",
     kaizenTotal: "Total de kaizens registrados no período conforme filtros aplicados.",

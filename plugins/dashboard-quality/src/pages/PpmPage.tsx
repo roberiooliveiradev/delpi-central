@@ -37,6 +37,7 @@ import { navigateQuality } from "../utils/navigation";
 import { savePpmDetailRecord } from "../utils/recordDetailStorage";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { formatPpmProductScopeSuffix } from "../utils/ppmProductScope";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type PpmPageProps = {
@@ -263,9 +264,8 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
   const isBusy = loading || refreshing;
   const isChartBusy = chartLoading || refreshing;
-  const isPlugsScope = ppmProductScope === "plugs";
+  const productScopeSuffix = formatPpmProductScopeSuffix(ppmProductScope);
   const typeLabel = ppmType === "internal" ? "interno" : "externo";
-  const plugsSuffix = isPlugsScope ? " — plugues" : "";
   const hasChartValues = compareChart
     ? compareChartData.some(
         (point) => point.ppmInternal > 0 || point.ppmExternal > 0
@@ -367,7 +367,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
       <section className="dq-kpi-grid dq-kpi-grid--single-row" aria-busy={isBusy}>
         <KpiCard
-          title={`PPM ${typeLabel}${plugsSuffix}`}
+          title={`PPM ${typeLabel}${productScopeSuffix}`}
           titleHint={
             ppmType === "internal"
               ? QUALITY_HELP_TOOLTIPS.kpis.ppmInternal

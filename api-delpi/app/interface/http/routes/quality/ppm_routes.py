@@ -19,6 +19,7 @@ from app.composition.quality_composer import (
 )
 from app.core.responses import error_response
 from app.domain.services.quality.ppm_product_scope import (
+    COMPONENTS_FINISHED_PRODUCT_PREFIX,
     PLUGS_FINISHED_PRODUCT_PREFIX,
     normalize_ppm_product_prefix,
 )
@@ -45,10 +46,21 @@ _PPM_PLUGS_GOAL_KEYS = {
     "external": goal_keys.QUALITY_PPM_EXTERNAL_PLUGS,
 }
 
+_PPM_COMPONENTS_GOAL_KEYS = {
+    "internal": goal_keys.QUALITY_PPM_INTERNAL_COMPONENTS,
+    "external": goal_keys.QUALITY_PPM_EXTERNAL_COMPONENTS,
+}
+
+_PPM_PREFIX_GOAL_KEYS = {
+    PLUGS_FINISHED_PRODUCT_PREFIX: _PPM_PLUGS_GOAL_KEYS,
+    COMPONENTS_FINISHED_PRODUCT_PREFIX: _PPM_COMPONENTS_GOAL_KEYS,
+}
+
 
 def _resolve_ppm_goal_key(ppm_type: PpmType, product_prefix: str | None) -> str:
-    if product_prefix == PLUGS_FINISHED_PRODUCT_PREFIX:
-        return _PPM_PLUGS_GOAL_KEYS[ppm_type]
+    scoped_keys = _PPM_PREFIX_GOAL_KEYS.get(product_prefix or "")
+    if scoped_keys is not None:
+        return scoped_keys[ppm_type]
     return _PPM_GOAL_KEYS[ppm_type]
 
 

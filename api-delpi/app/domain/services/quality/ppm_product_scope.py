@@ -1,6 +1,7 @@
 """Escopos de produto para cálculo de PPM (prefixos de código acabado)."""
 
 PLUGS_FINISHED_PRODUCT_PREFIX = "9048"
+COMPONENTS_FINISHED_PRODUCT_PREFIX = "9026"
 
 
 def normalize_ppm_product_prefix(value: str | None) -> str | None:

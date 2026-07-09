@@ -112,6 +112,12 @@ class QualityIndicatorsSnapshotProvider(
         ppm_external_plugs_unit_values = {
             item.branch: item.ppm_external_plugs for item in snapshot.branches
         }
+        ppm_internal_components_unit_values = {
+            item.branch: item.ppm_internal_components for item in snapshot.branches
+        }
+        ppm_external_components_unit_values = {
+            item.branch: item.ppm_external_components for item in snapshot.branches
+        }
         kaizen_ideas_unit_values = {
             item.branch: item.kaizen_ideas_avg for item in snapshot.branches
         }
@@ -183,6 +189,36 @@ class QualityIndicatorsSnapshotProvider(
                     ),
                     "source": "quality_ppm_external_plugs",
                     "unit_values": ppm_external_plugs_unit_values,
+                },
+                {
+                    "department_id": "quality",
+                    "indicator_id": "quality-ppm-internal-components",
+                    "value": self._resolve_ppm_indicator_value(
+                        consolidated_value=getattr(
+                            snapshot,
+                            "ppm_internal_components_consolidated",
+                            None,
+                        ),
+                        unit_values=ppm_internal_components_unit_values,
+                        branch=branch,
+                    ),
+                    "source": "quality_ppm_internal_components",
+                    "unit_values": ppm_internal_components_unit_values,
+                },
+                {
+                    "department_id": "quality",
+                    "indicator_id": "quality-ppm-external-components",
+                    "value": self._resolve_ppm_indicator_value(
+                        consolidated_value=getattr(
+                            snapshot,
+                            "ppm_external_components_consolidated",
+                            None,
+                        ),
+                        unit_values=ppm_external_components_unit_values,
+                        branch=branch,
+                    ),
+                    "source": "quality_ppm_external_components",
+                    "unit_values": ppm_external_components_unit_values,
                 },
                 {
                     "department_id": "quality",

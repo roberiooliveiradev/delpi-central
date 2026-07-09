@@ -10,7 +10,7 @@ import {
   runParallelWithProgress,
   type RequestProgress,
 } from "../utils/loadingProgress";
-import { PLUGS_PRODUCT_PREFIX } from "../utils/ppmProductScope";
+import { PLUGS_PRODUCT_PREFIX, COMPONENTS_PRODUCT_PREFIX } from "../utils/ppmProductScope";
 import {
   getAudit5sSummary,
   getKaizenSummary,
@@ -33,6 +33,8 @@ type SectionErrors = {
   ppmExternal?: string;
   ppmInternalPlugs?: string;
   ppmExternalPlugs?: string;
+  ppmInternalComponents?: string;
+  ppmExternalComponents?: string;
   kaizen?: string;
   audit5s?: string;
 };
@@ -42,12 +44,16 @@ type UseQualityDashboardResult = {
   ppmExternal: PpmSummary | null;
   ppmInternalPlugs: PpmSummary | null;
   ppmExternalPlugs: PpmSummary | null;
+  ppmInternalComponents: PpmSummary | null;
+  ppmExternalComponents: PpmSummary | null;
   kaizen: KaizenSummary | null;
   audit5s: Audit5sSummary | null;
   ppmInternalBranches: PerBranchMetricSlices<PpmSummary> | null;
   ppmExternalBranches: PerBranchMetricSlices<PpmSummary> | null;
   ppmInternalPlugsBranches: PerBranchMetricSlices<PpmSummary> | null;
   ppmExternalPlugsBranches: PerBranchMetricSlices<PpmSummary> | null;
+  ppmInternalComponentsBranches: PerBranchMetricSlices<PpmSummary> | null;
+  ppmExternalComponentsBranches: PerBranchMetricSlices<PpmSummary> | null;
   kaizenIdeasBranches: PerBranchMetricSlices | null;
   kaizenSavingsBranches: PerBranchMetricSlices<KaizenSummary> | null;
   audit5sBranches: PerBranchMetricSlices<Audit5sSummary> | null;
@@ -66,6 +72,8 @@ export function useQualityDashboard(
   const [ppmExternal, setPpmExternal] = useState<PpmSummary | null>(null);
   const [ppmInternalPlugs, setPpmInternalPlugs] = useState<PpmSummary | null>(null);
   const [ppmExternalPlugs, setPpmExternalPlugs] = useState<PpmSummary | null>(null);
+  const [ppmInternalComponents, setPpmInternalComponents] = useState<PpmSummary | null>(null);
+  const [ppmExternalComponents, setPpmExternalComponents] = useState<PpmSummary | null>(null);
   const [kaizen, setKaizen] = useState<KaizenSummary | null>(null);
   const [audit5s, setAudit5s] = useState<Audit5sSummary | null>(null);
   const [ppmInternalBranches, setPpmInternalBranches] =
@@ -75,6 +83,10 @@ export function useQualityDashboard(
   const [ppmInternalPlugsBranches, setPpmInternalPlugsBranches] =
     useState<PerBranchMetricSlices<PpmSummary> | null>(null);
   const [ppmExternalPlugsBranches, setPpmExternalPlugsBranches] =
+    useState<PerBranchMetricSlices<PpmSummary> | null>(null);
+  const [ppmInternalComponentsBranches, setPpmInternalComponentsBranches] =
+    useState<PerBranchMetricSlices<PpmSummary> | null>(null);
+  const [ppmExternalComponentsBranches, setPpmExternalComponentsBranches] =
     useState<PerBranchMetricSlices<PpmSummary> | null>(null);
   const [kaizenIdeasBranches, setKaizenIdeasBranches] =
     useState<PerBranchMetricSlices | null>(null);
@@ -106,6 +118,8 @@ export function useQualityDashboard(
         ppmExternal !== null ||
         ppmInternalPlugs !== null ||
         ppmExternalPlugs !== null ||
+        ppmInternalComponents !== null ||
+        ppmExternalComponents !== null ||
         kaizen !== null ||
         audit5s !== null;
 
@@ -130,6 +144,11 @@ export function useQualityDashboard(
           product_prefix: PLUGS_PRODUCT_PREFIX,
         };
 
+        const componentsPpmParams = {
+          ...basePpmParams,
+          product_prefix: COMPONENTS_PRODUCT_PREFIX,
+        };
+
         const kaizenParams = {
           branch: stableFilters.branch,
           date_start: stableFilters.date_start,
@@ -150,6 +169,8 @@ export function useQualityDashboard(
             (signal) => getPpmExternalSummary(basePpmParams, signal),
             (signal) => getPpmInternalSummary(plugsPpmParams, signal),
             (signal) => getPpmExternalSummary(plugsPpmParams, signal),
+            (signal) => getPpmInternalSummary(componentsPpmParams, signal),
+            (signal) => getPpmExternalSummary(componentsPpmParams, signal),
             (signal) => getKaizenSummary(kaizenParams, signal),
             (signal) => getAudit5sSummary(auditParams, signal),
             ...(needsBranchIdd
@@ -189,6 +210,26 @@ export function useQualityDashboard(
                       (branch, branchSignal) =>
                         getPpmExternalSummary(
                           { ...plugsPpmParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.ppm,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getPpmInternalSummary(
+                          { ...componentsPpmParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.ppm,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getPpmExternalSummary(
+                          { ...componentsPpmParams, branch },
                           branchSignal ?? signal,
                         ),
                       (data) => data.ppm,
@@ -240,6 +281,8 @@ export function useQualityDashboard(
           { index: 1, set: setPpmExternal, key: "ppmExternal" as const },
           { index: 2, set: setPpmInternalPlugs, key: "ppmInternalPlugs" as const },
           { index: 3, set: setPpmExternalPlugs, key: "ppmExternalPlugs" as const },
+          { index: 4, set: setPpmInternalComponents, key: "ppmInternalComponents" as const },
+          { index: 5, set: setPpmExternalComponents, key: "ppmExternalComponents" as const },
         ];
 
         for (const entry of ppmSetters) {
@@ -254,21 +297,21 @@ export function useQualityDashboard(
           }
         }
 
-        if (results[4].status === "fulfilled") {
-          setKaizen(results[4].value as KaizenSummary);
+        if (results[6].status === "fulfilled") {
+          setKaizen(results[6].value as KaizenSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.kaizen =
-            formatQualityApiError(results[4].reason) ||
+            formatQualityApiError(results[6].reason) ||
             "Erro ao carregar kaizens";
         }
 
-        if (results[5].status === "fulfilled") {
-          setAudit5s(results[5].value as Audit5sSummary);
+        if (results[7].status === "fulfilled") {
+          setAudit5s(results[7].value as Audit5sSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.audit5s =
-            formatQualityApiError(results[5].reason) ||
+            formatQualityApiError(results[7].reason) ||
             "Erro ao carregar auditorias 5S";
         }
 
@@ -278,11 +321,13 @@ export function useQualityDashboard(
             setPpmExternalBranches,
             setPpmInternalPlugsBranches,
             setPpmExternalPlugsBranches,
+            setPpmInternalComponentsBranches,
+            setPpmExternalComponentsBranches,
             setKaizenIdeasBranches,
             setKaizenSavingsBranches,
             setAudit5sBranches,
           ];
-          results.slice(6).forEach((result, index) => {
+          results.slice(8).forEach((result, index) => {
             if (result.status === "fulfilled") {
               branchSetters[index]?.(result.value as never);
             }
@@ -294,6 +339,8 @@ export function useQualityDashboard(
           setPpmExternalBranches(null);
           setPpmInternalPlugsBranches(null);
           setPpmExternalPlugsBranches(null);
+          setPpmInternalComponentsBranches(null);
+          setPpmExternalComponentsBranches(null);
           setKaizenIdeasBranches(null);
           setKaizenSavingsBranches(null);
           setAudit5sBranches(null);
@@ -331,12 +378,16 @@ export function useQualityDashboard(
     ppmExternal,
     ppmInternalPlugs,
     ppmExternalPlugs,
+    ppmInternalComponents,
+    ppmExternalComponents,
     kaizen,
     audit5s,
     ppmInternalBranches,
     ppmExternalBranches,
     ppmInternalPlugsBranches,
     ppmExternalPlugsBranches,
+    ppmInternalComponentsBranches,
+    ppmExternalComponentsBranches,
     kaizenIdeasBranches,
     kaizenSavingsBranches,
     audit5sBranches,
