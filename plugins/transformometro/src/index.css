@@ -6215,6 +6215,13 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   background: color-mix(in srgb, #0ea5e9 9%, var(--tm-diagram-canvas-bg));
 }
 
+.dashboard-transformometro .tm-diagram-export-swimlane-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .dashboard-transformometro .tm-diagram-lane__header {
   display: flex;
   align-items: center;

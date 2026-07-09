@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getDiagramFitNodes } from "./diagramViewFit";
+import { getDiagramExportNodes, getDiagramFitNodes } from "./diagramViewFit";
 import { applyMermaidPreviewTheme } from "./mermaidPreviewTheme";
 
 describe("diagramViewFit", () => {
@@ -11,6 +11,15 @@ describe("diagramViewFit", () => {
     ];
 
     expect(getDiagramFitNodes(nodes)).toEqual([nodes[1]]);
+  });
+
+  it("inclui faixas no enquadramento da exportação PNG", () => {
+    const nodes = [
+      { id: "lane-1", type: "lane", position: { x: 0, y: 0 }, data: {} },
+      { id: "n1", type: "flowchart", position: { x: 220, y: 80 }, data: {} },
+    ];
+
+    expect(getDiagramExportNodes(nodes)).toEqual(nodes);
   });
 });
 

@@ -12,3 +12,11 @@ export function getDiagramFitNodes(nodes: Node[]): Node[] {
   const activityNodes = nodes.filter((node) => node.type !== "lane");
   return activityNodes.length ? activityNodes : nodes;
 }
+
+/** Exportação PNG inclui cabeçalhos de faixa e altura total das swimlanes. */
+export function getDiagramExportNodes(nodes: Node[]): Node[] {
+  if (nodes.some((node) => node.type === "lane")) {
+    return nodes;
+  }
+  return getDiagramFitNodes(nodes);
+}

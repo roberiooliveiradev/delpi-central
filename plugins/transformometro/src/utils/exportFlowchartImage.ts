@@ -1,6 +1,7 @@
 import { getNodesBounds, getViewportForBounds, type Node } from "@xyflow/react";
 
-import { getDiagramFitNodes } from "./diagramViewFit";
+import { LANE_CANVAS_WIDTH } from "./diagramSwimlanes";
+import { getDiagramExportNodes } from "./diagramViewFit";
 
 const EXPORT_PADDING = 0.12;
 const MIN_EXPORT_ZOOM = 0.08;
@@ -260,6 +261,35 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   link.click();
 }
 
+function injectExportSwimlaneBackdrop(viewport: HTMLElement, nodes: Node[]): () => void {
+  const laneNodes = nodes.filter((node) => node.type === "lane");
+  if (!laneNodes.length) {
+    return () => undefined;
+  }
+
+  const container = document.createElement("div");
+  container.className = "tm-diagram-export-swimlane-backdrop";
+  container.setAttribute("aria-hidden", "true");
+
+  for (const lane of laneNodes) {
+    const data = lane.data as { height?: number; toneClass?: string };
+    const band = document.createElement("div");
+    band.className = ["tm-diagram-swimlane-backdrop__band", data.toneClass ?? ""]
+      .filter(Boolean)
+      .join(" ");
+    band.style.top = `${lane.position.y}px`;
+    band.style.left = "0";
+    band.style.width = `${LANE_CANVAS_WIDTH}px`;
+    band.style.height = `${data.height ?? 168}px`;
+    container.appendChild(band);
+  }
+
+  viewport.insertBefore(container, viewport.firstChild);
+  return () => {
+    container.remove();
+  };
+}
+
 export async function exportReactFlowDiagramPng({
   canvasRoot,
   nodes,
@@ -282,7 +312,7 @@ export async function exportReactFlowDiagramPng({
 
   const editorRoot = canvasRoot.closest(".tm-diagram-editor");
 
-  const bounds = getNodesBounds(getDiagramFitNodes(nodes));
+  const bounds = getNodesBounds(getDiagramExportNodes(nodes));
   const width = Math.max(Math.ceil(bounds.width * (1 + EXPORT_PADDING * 2)), 1);
   const height = Math.max(Math.ceil(bounds.height * (1 + EXPORT_PADDING * 2)), 1);
   const viewport = getViewportForBounds(
@@ -303,6 +333,7 @@ export async function exportReactFlowDiagramPng({
 
   editorRoot?.classList.add("tm-diagram-editor--exporting");
   const restoreExportStyles = inlineExportStyles(viewportElement, canvasRoot);
+  const removeExportBackdrop = injectExportSwimlaneBackdrop(viewportElement, nodes);
 
   try {
     const { toSvg } = await import("html-to-image");
@@ -323,6 +354,7 @@ export async function exportReactFlowDiagramPng({
     downloadDataUrl(dataUrl, filename);
     return dataUrl;
   } finally {
+    removeExportBackdrop();
     restoreExportStyles();
     editorRoot?.classList.remove("tm-diagram-editor--exporting");
   }
