@@ -327,7 +327,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **F2** Shell dashboard | Kpi/Chart/Loading/Pagination/Filter/MultiSelect/DataTable nos dept. |
 | **F3** Forms/detalhe | F3.1–F3.13 (Native* + `beforeControl`, a5s NC, TV ribbon, TM revisão, CE FormsPanel, chat admin) |
 | **F4** Utils | paginationPages, chartColors, operationalUnitLabels, goalDisplay |
-| **F5** (parcial) | FileDropzone (+ `filledContent`), confirm controller, ConfirmModalPanel, ModalShell; CE PhotoDropzone empty via pacote |
+| **F5** (parcial) | FileDropzone (+ `emptyContent`/`filledContent`, policy workspace), confirm controller, ConfirmModalPanel, ModalShell (+ description/footer/foco); CE PhotoDropzone empty; SI Modal via `ModalShell` |
 | **Export E1–E3** | Motor tabular, PDF DELPI, botões, jsPDF, PNG chart, matrix, PVA — [export-catalog.md](./export-catalog.md) |
 
 ### Residual — avaliar demanda (não bloqueia produção)
@@ -336,10 +336,8 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 |----------------|------|--------|
 | Baixa | **quality-action-plans** RNC/8D, 5 Whys | Domínio especial (Ishikawa, fluxos) |
 | Baixa | **minha-delpi-chat** apresentação rica | `ChatRichChart` / `ChatRichTable` selects de toolbar |
-| Baixa | **customer-experience** FormsPanel create form | Bloco «Novo formulário» ainda com inputs nativos |
 | Baixa | **transformometro** FlowchartMermaidPanel | Editor Mermaid — domínio |
-| Backlog F5 | **minha-delpi-chat** `WorkspaceFileDropzone` | Policy ingest distinta |
-| Backlog F5 | **SI** `Modal` / `DrawerPanel` | Footer/tamanho/foco — estender `ModalShell` antes de migrar |
+| Backlog F5 | **SI** `DrawerPanel` | Gaveta lateral — avaliar extensão separada do `ModalShell` |
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
 
@@ -351,14 +349,16 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **tv-dashboard** | `ComunicadoFormatRibbon` + `DataBindingInspector` → `TdRibbonSelect` / `NativeSelectControl` |
 | **transformometro** | Textareas revisão/instância → `TmNativeTextAreaField` |
 | **customer-experience** | `cxFormFields`, FormsPanel builder, `PhotoDropzone` empty → `FileDropzone` |
-| **minha-delpi-chat** | `styles.css` plugin-ui + admin/agent builder → `chatAdminFormFields` |
-| **plugin-ui** | `FormFieldShell.beforeControl`, `FileDropzone.filledContent`, `TextArea.onFocus/maxLength` |
+| **minha-delpi-chat** | `styles.css` plugin-ui + admin/agent builder → `chatAdminFormFields`; `WorkspaceFileDropzone` → `FileDropzone` + policy ingest |
+| **strategic-indicators** | `Modal` → `ModalShell` (description, footer, tamanho, foco inicial, `lockPageScroll`) |
+| **customer-experience** | «Novo formulário» + `FormPreviewView` text fields → `CxNative*` / `cxFormPreviewFields` |
+| **plugin-ui** | `FormFieldShell.beforeControl`, `FileDropzone.emptyContent`/policy slots, `ModalShell` description/footer/foco, `TextArea.onFocus/maxLength` |
 
 ### Próximo lote sugerido (quando retomar)
 
-1. Chat `WorkspaceFileDropzone` → variante policy do `FileDropzone`.
-2. Estender `ModalShell` (description/footer/size) → migrar SI `Modal`.
-3. CE bloco «Novo formulário» + `FormPreviewView` textarea runtime.
+1. SI `DrawerPanel` → variante ou composição sobre shell compartilhado.
+2. Chat apresentação rica (`ChatRichChart` / `ChatRichTable` toolbar selects).
+3. QAP fluxos RNC/8D (domínio especial).
 
 ---
 

@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import type { PreviewForm, PreviewFormPage, PreviewFormQuestion } from "./utils/formPreviewModel";
 import { LucideIconByName } from "@delpi/plugin-ui";
+import {
+  CxFormPreviewTextAreaField,
+  CxFormPreviewTextField,
+} from "./components/cxFormPreviewFields";
 import type { BackgroundFit } from "./types";
 import "./form-preview.css";
 
@@ -416,12 +420,6 @@ function QuestionField({
   answer: AnswerState[string] | undefined;
   onChange: (value: AnswerState[string]) => void;
 }) {
-  const label = (
-    <span className="cxform-label">
-      {question.label} {question.required && <em className="cxform-req">*</em>}
-    </span>
-  );
-
   if (question.type === "rating") {
     const current = answer?.rating ?? 0;
     return (
@@ -451,32 +449,36 @@ function QuestionField({
 
   if (question.type === "long_text") {
     return (
-      <label className="cxform-field">
-        {label}
-        {question.helpText && <span className="cxform-help">{question.helpText}</span>}
-        <textarea
-          className="cxform-textarea"
-          rows={3}
-          maxLength={2000}
-          value={answer?.text ?? ""}
-          onChange={(e) => onChange({ text: e.target.value })}
-        />
-      </label>
+      <CxFormPreviewTextAreaField
+        id={`cxform-preview-${question.id}`}
+        label={question.label}
+        required={question.required}
+        beforeControl={
+          question.helpText ? <span className="cxform-help">{question.helpText}</span> : undefined
+        }
+        controlClassName="cxform-textarea"
+        rows={3}
+        maxLength={2000}
+        value={answer?.text ?? ""}
+        onChange={(text) => onChange({ text })}
+      />
     );
   }
 
   if (question.type === "short_text") {
     return (
-      <label className="cxform-field">
-        {label}
-        {question.helpText && <span className="cxform-help">{question.helpText}</span>}
-        <input
-          className="cxform-input"
-          maxLength={2000}
-          value={answer?.text ?? ""}
-          onChange={(e) => onChange({ text: e.target.value })}
-        />
-      </label>
+      <CxFormPreviewTextField
+        id={`cxform-preview-${question.id}`}
+        label={question.label}
+        required={question.required}
+        beforeControl={
+          question.helpText ? <span className="cxform-help">{question.helpText}</span> : undefined
+        }
+        controlClassName="cxform-input"
+        maxLength={2000}
+        value={answer?.text ?? ""}
+        onChange={(text) => onChange({ text })}
+      />
     );
   }
 

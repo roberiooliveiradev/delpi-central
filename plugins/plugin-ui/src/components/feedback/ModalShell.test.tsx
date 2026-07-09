@@ -29,4 +29,27 @@ describe("ModalShell", () => {
     expect(screen.getByRole("dialog", { name: "Confirmar exclusão" })).toBeTruthy();
     expect(screen.getByText("Mensagem")).toBeTruthy();
   });
+
+  it("renderiza description e footer quando informados", () => {
+    render(
+      <ModalShell
+        open
+        title="Editar meta"
+        description="Ajuste os valores do indicador."
+        footer={<button type="button">Salvar</button>}
+        onClose={vi.fn()}
+        classNames={{
+          ...modalShellBemClasses("si"),
+          headerText: "si-modal__header-text",
+          description: "si-modal__description",
+          footer: "si-modal__footer",
+        }}
+      >
+        <p>Corpo</p>
+      </ModalShell>,
+    );
+
+    expect(screen.getByText("Ajuste os valores do indicador.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeTruthy();
+  });
 });

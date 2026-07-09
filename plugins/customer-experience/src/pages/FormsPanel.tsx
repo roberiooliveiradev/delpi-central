@@ -425,24 +425,21 @@ function FormsList({
           <Plus size={18} /> Novo formulário
         </h2>
         <form className="cx-form" onSubmit={handleCreate}>
-          <label className="cx-field">
-            <span>Título</span>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex.: Pesquisa de experiência da visita"
-            />
-          </label>
-          <label className="cx-field">
-            <span>Descrição (opcional)</span>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Texto de abertura exibido ao visitante."
-            />
-          </label>
+          <CxNativeTextField
+            id="cx-new-form-title"
+            label="Título"
+            value={title}
+            onChange={setTitle}
+            placeholder="Ex.: Pesquisa de experiência da visita"
+          />
+          <CxNativeTextAreaField
+            id="cx-new-form-description"
+            label="Descrição (opcional)"
+            rows={3}
+            value={description}
+            onChange={setDescription}
+            placeholder="Texto de abertura exibido ao visitante."
+          />
           <button className="cx-button cx-button--primary" type="submit" disabled={creating}>
             {creating ? "Criando..." : "Criar e editar perguntas"}
           </button>

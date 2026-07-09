@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useId, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
 export type ModalShellClassNames = {
@@ -9,17 +9,27 @@ export type ModalShellClassNames = {
   title: string;
   closeButton: string;
   body: string;
+  headerText?: string;
+  description?: string;
+  footer?: string;
 };
 
 export type ModalShellProps = {
   open: boolean;
   title: string;
+  description?: string;
+  footer?: ReactNode;
   onClose: () => void;
   children: ReactNode;
   classNames: ModalShellClassNames;
   className?: string;
   overlayClassName?: string;
   closeAriaLabel?: string;
+  initialFocusSelector?: string;
+  dialogRef?: RefObject<HTMLDivElement | null>;
+  /** Substitui o lock padrão (`document.body.style.overflow`). */
+  lockPageScroll?: () => () => void;
+  overlayAriaHidden?: boolean;
 };
 
 export function modalShellBemClasses(prefix: string): ModalShellClassNames {
@@ -36,33 +46,93 @@ export function modalShellBemClasses(prefix: string): ModalShellClassNames {
 export function ModalShell({
   open,
   title,
+  description,
+  footer,
   onClose,
   children,
   classNames,
   className,
   overlayClassName,
   closeAriaLabel = "Fechar",
+  initialFocusSelector,
+  dialogRef,
+  lockPageScroll,
+  overlayAriaHidden = false,
 }: ModalShellProps) {
   const titleId = useId();
+  const descriptionId = useId();
+  const internalDialogRef = useRef<HTMLDivElement | null>(null);
+  const resolvedDialogRef = dialogRef ?? internalDialogRef;
+  const onCloseRef = useRef(onClose);
+  const hasAutoFocusedRef = useRef(false);
+  const structuredHeader = Boolean(classNames.headerText);
 
   useEffect(() => {
-    if (!open) return;
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      hasAutoFocusedRef.current = false;
+      return;
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+
+    const unlockPageScroll = lockPageScroll
+      ? lockPageScroll()
+      : (() => {
+          const previousOverflow = document.body.style.overflow;
+          document.body.style.overflow = "hidden";
+          return () => {
+            document.body.style.overflow = previousOverflow;
+          };
+        })();
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
+      unlockPageScroll();
+      hasAutoFocusedRef.current = false;
     };
-  }, [open, onClose]);
+  }, [open, lockPageScroll]);
+
+  useEffect(() => {
+    if (!open || hasAutoFocusedRef.current) {
+      return;
+    }
+
+    const rafId = requestAnimationFrame(() => {
+      const dialog = resolvedDialogRef.current;
+      if (!dialog) {
+        return;
+      }
+
+      if (initialFocusSelector) {
+        const focusTarget = dialog.querySelector<HTMLElement>(initialFocusSelector);
+        if (focusTarget) {
+          focusTarget.focus();
+          hasAutoFocusedRef.current = true;
+          return;
+        }
+      }
+
+      const fallback = dialog.querySelector<HTMLElement>(
+        "input, select, textarea, button, [tabindex]:not([tabindex='-1'])",
+      );
+      fallback?.focus();
+      hasAutoFocusedRef.current = true;
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [open, initialFocusSelector, resolvedDialogRef]);
 
   if (!open) {
     return null;
@@ -71,19 +141,46 @@ export function ModalShell({
   const dialogClass = [classNames.dialog, className].filter(Boolean).join(" ");
   const overlayClass = [overlayClassName, classNames.overlay].filter(Boolean).join(" ");
 
+  const titleNode = (
+    <h2 id={titleId} className={classNames.title}>
+      {title}
+    </h2>
+  );
+
+  const descriptionNode =
+    description && classNames.description ? (
+      <p id={descriptionId} className={classNames.description}>
+        {description}
+      </p>
+    ) : null;
+
   return createPortal(
-    <div className={overlayClass} onClick={onClose}>
+    <div
+      className={overlayClass}
+      onClick={onClose}
+      aria-hidden={overlayAriaHidden ? true : undefined}
+    >
       <div
+        ref={resolvedDialogRef}
         className={dialogClass}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={description && classNames.description ? descriptionId : undefined}
         onClick={(event) => event.stopPropagation()}
       >
         <header className={classNames.header}>
-          <h2 id={titleId} className={classNames.title}>
-            {title}
-          </h2>
+          {structuredHeader ? (
+            <div className={classNames.headerText}>
+              {titleNode}
+              {descriptionNode}
+            </div>
+          ) : (
+            <>
+              {titleNode}
+              {descriptionNode}
+            </>
+          )}
           <button
             type="button"
             className={classNames.closeButton}
@@ -94,6 +191,7 @@ export function ModalShell({
           </button>
         </header>
         <div className={classNames.body}>{children}</div>
+        {footer && classNames.footer ? <div className={classNames.footer}>{footer}</div> : null}
       </div>
     </div>,
     document.body,

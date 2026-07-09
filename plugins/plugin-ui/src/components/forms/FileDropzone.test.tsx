@@ -23,4 +23,18 @@ describe("FileDropzone", () => {
     expect(screen.getByText("Arraste arquivos")).toBeTruthy();
     expect(screen.getByText("PDF ou imagem")).toBeTruthy();
   });
+
+  it("renderiza emptyContent customizado", () => {
+    render(
+      <FileDropzone
+        onFilesSelected={vi.fn()}
+        classNames={fileDropzoneKaizenClasses()}
+        labels={{ title: "Padrão", hint: "Ignorado" }}
+        emptyContent={<span>Layout customizado</span>}
+      />,
+    );
+
+    expect(screen.getByText("Layout customizado")).toBeTruthy();
+    expect(screen.queryByText("Padrão")).toBeNull();
+  });
 });

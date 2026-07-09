@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef } from "react";
+import { ModalShell, type ModalShellClassNames } from "@delpi/plugin-ui";
 import type { PropsWithChildren, ReactNode } from "react";
-import { X } from "lucide-react";
+
 import { lockPageScroll } from "../utils/pageScrollLock";
 import "./Modal.css";
 
@@ -16,6 +16,18 @@ type ModalProps = PropsWithChildren<{
   initialFocusSelector?: string;
 }>;
 
+const SI_MODAL_CLASS_NAMES: ModalShellClassNames = {
+  overlay: "si-modal-overlay",
+  dialog: "si-modal",
+  header: "si-modal__header",
+  headerText: "si-modal__header-text",
+  title: "si-modal__title",
+  description: "si-modal__description",
+  closeButton: "si-modal__close",
+  body: "si-modal__body",
+  footer: "si-modal__footer",
+};
+
 export function Modal({
   open,
   title,
@@ -26,107 +38,21 @@ export function Modal({
   size = "md",
   initialFocusSelector,
 }: ModalProps) {
-  const titleId = useId();
-  const descriptionId = useId();
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const onCloseRef = useRef(onClose);
-  const hasAutoFocusedRef = useRef(false);
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!open) {
-      hasAutoFocusedRef.current = false;
-      return;
-    }
-
-    const unlockPageScroll = lockPageScroll();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onCloseRef.current();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      unlockPageScroll();
-      document.removeEventListener("keydown", handleKeyDown);
-      hasAutoFocusedRef.current = false;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || hasAutoFocusedRef.current) return;
-
-    const rafId = requestAnimationFrame(() => {
-      if (!dialogRef.current) return;
-
-      if (initialFocusSelector) {
-        const focusTarget = dialogRef.current.querySelector<HTMLElement>(
-          initialFocusSelector,
-        );
-        if (focusTarget) {
-          focusTarget.focus();
-          hasAutoFocusedRef.current = true;
-          return;
-        }
-      }
-
-      const fallback = dialogRef.current.querySelector<HTMLElement>(
-        "input, select, textarea, button, [tabindex]:not([tabindex='-1'])",
-      );
-      fallback?.focus();
-      hasAutoFocusedRef.current = true;
-    });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, [open, initialFocusSelector]);
-
-  if (!open) return null;
-
   return (
-    <div className="si-modal-overlay" onClick={onClose} aria-hidden="true">
-      <div
-        ref={dialogRef}
-        className={`si-modal si-modal--${size}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={description ? descriptionId : undefined}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="si-modal__header">
-          <div className="si-modal__header-text">
-            <h2 id={titleId} className="si-modal__title">
-              {title}
-            </h2>
-            {description ? (
-              <p id={descriptionId} className="si-modal__description">
-                {description}
-              </p>
-            ) : null}
-          </div>
-
-          <button
-            type="button"
-            className="si-modal__close"
-            onClick={onClose}
-            aria-label="Fechar janela"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="si-modal__body">{children}</div>
-
-        {footer ? <div className="si-modal__footer">{footer}</div> : null}
-      </div>
-    </div>
+    <ModalShell
+      open={open}
+      title={title}
+      description={description}
+      footer={footer}
+      onClose={onClose}
+      classNames={SI_MODAL_CLASS_NAMES}
+      className={`si-modal--${size}`}
+      initialFocusSelector={initialFocusSelector}
+      lockPageScroll={lockPageScroll}
+      closeAriaLabel="Fechar janela"
+      overlayAriaHidden
+    >
+      {children}
+    </ModalShell>
   );
 }
