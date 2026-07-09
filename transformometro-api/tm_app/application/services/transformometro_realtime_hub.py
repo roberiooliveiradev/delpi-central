@@ -5,6 +5,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from tm_app.core.serialize import json_safe
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
@@ -87,7 +88,7 @@ class TransformometroRealtimeHub:
         dead: list[WebSocket] = []
         for websocket in targets:
             try:
-                await websocket.send_json(payload)
+                await websocket.send_json(json_safe(payload))
             except Exception:  # noqa: BLE001
                 dead.append(websocket)
         if not dead:

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from tm_app.core.serialize import json_safe
 from tm_app.infrastructure.persistence.repositories.collaboration_presence_repository import (
     ALLOWED_ENTITY_TYPES,
     LOCK_TTL_SECONDS,
@@ -26,12 +27,14 @@ class CollaborationPresenceService:
                 editors.append(item)
             else:
                 viewers.append(item)
-        return {
-            "entity_type": entity_type,
-            "entity_id": entity_id,
-            "viewers": viewers,
-            "editors": editors,
-        }
+        return json_safe(
+            {
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "viewers": viewers,
+                "editors": editors,
+            }
+        )
 
     def heartbeat(
         self,
@@ -138,12 +141,14 @@ class CollaborationPresenceService:
             if hasattr(lock_expires, "tzinfo") and lock_expires.tzinfo is None:
                 lock_expires = lock_expires.replace(tzinfo=timezone.utc)
             lock_active = lock_expires > datetime.now(timezone.utc)
-        return {
-            "user_id": row.get("user_id"),
-            "user_name": row.get("user_name") or row.get("user_email"),
-            "user_email": row.get("user_email"),
-            "section_key": row.get("section_key") or "",
-            "mode": row.get("mode") or "viewing",
-            "lock_active": lock_active,
-            "heartbeat_at": row.get("heartbeat_at"),
-        }
+        return json_safe(
+            {
+                "user_id": row.get("user_id"),
+                "user_name": row.get("user_name") or row.get("user_email"),
+                "user_email": row.get("user_email"),
+                "section_key": row.get("section_key") or "",
+                "mode": row.get("mode") or "viewing",
+                "lock_active": lock_active,
+                "heartbeat_at": row.get("heartbeat_at"),
+            }
+        )

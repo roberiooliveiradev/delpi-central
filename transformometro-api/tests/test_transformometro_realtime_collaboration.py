@@ -1,3 +1,6 @@
+import json
+from datetime import datetime, timezone
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
@@ -32,6 +35,42 @@ async def test_realtime_presence_request_replies_to_client():
     payload = websocket.send_json.await_args.args[0]
     assert payload["type"] == "presence.updated"
     assert payload["data"]["entity_id"] == "p1"
+
+
+@pytest.mark.asyncio
+async def test_realtime_presence_request_serializes_datetime_payload():
+    service = MagicMock()
+    service.list_presence.return_value = {
+        "entity_type": "processo",
+        "entity_id": "p1",
+        "viewers": [
+            {
+                "user_id": "u1",
+                "user_name": "Ana",
+                "section_key": "",
+                "mode": "viewing",
+                "lock_active": False,
+                "heartbeat_at": datetime(2026, 7, 9, 18, 0, tzinfo=timezone.utc),
+            }
+        ],
+        "editors": [],
+    }
+    websocket = AsyncMock()
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+
+    await handler.handle_message(
+        websocket,
+        raw_message='{"type":"presence.request"}',
+        entity_type="processo",
+        entity_id="p1",
+        user_id="u1",
+        user_name="Ana",
+        user_email="ana@example.com",
+    )
+
+    payload = websocket.send_json.await_args.args[0]
+    json.dumps(payload)
+    assert payload["data"]["viewers"][0]["heartbeat_at"] == "2026-07-09T18:00:00+00:00"
 
 
 @pytest.mark.asyncio

@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import WebSocket
 
+from tm_app.core.serialize import json_safe
 from tm_app.application.services.collaboration_presence_service import (
     CollaborationPresenceService,
 )
@@ -78,13 +79,15 @@ class TransformometroRealtimeCollaborationHandler:
                     user_email=user_email,
                 )
                 await websocket.send_json(
-                    {
-                        "type": "lock.result",
-                        "entityType": entity_type,
-                        "entityId": entity_id,
-                        "sectionKey": section_key,
-                        "data": result,
-                    }
+                    json_safe(
+                        {
+                            "type": "lock.result",
+                            "entityType": entity_type,
+                            "entityId": entity_id,
+                            "sectionKey": section_key,
+                            "data": result,
+                        }
+                    )
                 )
                 self._broadcast_presence(entity_type, entity_id)
                 return
@@ -125,12 +128,14 @@ class TransformometroRealtimeCollaborationHandler:
     ) -> None:
         payload = self._service.list_presence(entity_type=entity_type, entity_id=entity_id)
         await websocket.send_json(
-            {
-                "type": "presence.updated",
-                "entityType": entity_type,
-                "entityId": entity_id,
-                "data": payload,
-            }
+            json_safe(
+                {
+                    "type": "presence.updated",
+                    "entityType": entity_type,
+                    "entityId": entity_id,
+                    "data": payload,
+                }
+            )
         )
 
     @staticmethod
