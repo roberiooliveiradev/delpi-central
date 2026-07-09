@@ -12,16 +12,7 @@ MAX_EDGES = 400
 MAX_EXTRA_NODES = 50
 MAX_EXTRA_EDGES = 100
 
-NODE_TYPES = frozenset({
-    "start",
-    "end",
-    "process",
-    "decision",
-    "document",
-    "data",
-    "subprocess",
-    "comment",
-})
+from tm_app.domain.diagram.bpmn_node_catalog import EDGE_KINDS, NODE_TYPES
 
 MAX_LANES = 12
 MAX_LANE_HEIGHT = 400
@@ -112,6 +103,9 @@ def _validate_edge(edge: Any, *, index: int, node_ids: set[str]) -> None:
     routing = edge.get("routing", "smoothstep")
     if routing is not None and routing not in EDGE_ROUTINGS:
         raise FlowchartValidationError(f"edges[{index}].routing inválido.")
+    kind = edge.get("kind", "sequence")
+    if kind is not None and kind not in EDGE_KINDS:
+        raise FlowchartValidationError(f"edges[{index}].kind inválido.")
 
 
 def _validate_lane(lane: Any, *, index: int) -> None:

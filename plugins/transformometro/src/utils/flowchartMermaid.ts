@@ -2,21 +2,15 @@ import {
   createEdgeId,
   createNodeId,
   emptyFlowchart,
+  isEndEventType,
+  isGatewayType,
+  isKnownFlowchartNodeType,
+  isStartEventType,
+  normalizeFlowchartNodeType,
   type FlowchartNode,
   type FlowchartNodeType,
   type FlowchartV1,
 } from "../types/diagram";
-
-const NODE_TYPES = new Set<FlowchartNodeType>([
-  "start",
-  "end",
-  "process",
-  "decision",
-  "document",
-  "data",
-  "subprocess",
-  "comment",
-]);
 
 function sanitizeMermaidId(nodeId: string): string {
   const cleaned = nodeId.replace(/[^a-zA-Z0-9_]/g, "_");
@@ -31,8 +25,8 @@ function escapeLabel(label: string): string {
 
 function nodeShape(nodeType: FlowchartNodeType, mermaidId: string, label: string): string {
   const text = escapeLabel(label);
-  if (nodeType === "decision") return `    ${mermaidId}{"${text}"}`;
-  if (nodeType === "start" || nodeType === "end") return `    ${mermaidId}(("${text}"))`;
+  if (isGatewayType(nodeType)) return `    ${mermaidId}{"${text}"}`;
+  if (isStartEventType(nodeType) || isEndEventType(nodeType)) return `    ${mermaidId}(("${text}"))`;
   if (nodeType === "comment") return `    ${mermaidId}[/"${text}"/]`;
   return `    ${mermaidId}["${text}"]`;
 }
@@ -51,8 +45,8 @@ export function flowchartToMermaid(flowchart: FlowchartV1): string {
   for (const node of nodes) {
     const rawId = String(node.id ?? "");
     if (!rawId) continue;
-    let nodeType = node.type;
-    if (!NODE_TYPES.has(nodeType)) nodeType = "process";
+    let nodeType = normalizeFlowchartNodeType(String(node.type ?? "process"));
+    if (!isKnownFlowchartNodeType(nodeType)) nodeType = "process";
     const mermaidId = sanitizeMermaidId(rawId);
     idMap.set(rawId, mermaidId);
     let line = nodeShape(nodeType, mermaidId, String(node.label || rawId));

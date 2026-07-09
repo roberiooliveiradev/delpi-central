@@ -5,6 +5,13 @@ import xml.etree.ElementTree as ET
 from typing import Any
 from xml.dom import minidom
 
+from tm_app.domain.diagram.bpmn_node_catalog import (
+    BPMN_NODE_CATALOG,
+    BPMN_TAG_TO_DEFAULT_TYPE,
+    EVENT_DEFINITION_SUFFIX,
+    catalog_spec,
+    normalize_node_type,
+)
 from tm_app.domain.diagram.flowchart_v1 import FlowchartValidationError, validate_flowchart_v1
 
 BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -18,16 +25,7 @@ NS = {
     "dc": DC_NS,
 }
 
-NODE_TO_BPMN = {
-    "start": "startEvent",
-    "end": "endEvent",
-    "process": "task",
-    "document": "task",
-    "data": "task",
-    "subprocess": "subProcess",
-    "decision": "exclusiveGateway",
-    "comment": "task",
-}
+IMPORTABLE_BPMN_TAGS = frozenset(BPMN_TAG_TO_DEFAULT_TYPE.keys())
 
 
 def _sanitize_xml_id(value: str) -> str:
@@ -46,6 +44,66 @@ def _xml_escape(value: str) -> str:
         .replace(">", "&gt;")
         .replace('"', "&quot;")
     )
+
+
+def _local_tag(tag: str) -> str:
+    return tag.split("}")[-1] if "}" in tag else tag
+
+
+def _event_definitions(el: ET.Element) -> list[str]:
+    defs: list[str] = []
+    for child in el:
+        local = _local_tag(child.tag)
+        if local.endswith("EventDefinition"):
+            defs.append(local)
+    return defs
+
+
+def _infer_type_from_bpmn(tag: str, el: ET.Element) -> str:
+    default = BPMN_TAG_TO_DEFAULT_TYPE.get(tag, "process")
+    defs = _event_definitions(el)
+    if not defs:
+        return default
+
+    suffix = EVENT_DEFINITION_SUFFIX.get(defs[0])
+    if not suffix:
+        return default
+
+    if tag == "startEvent":
+        return f"start_{suffix}" if suffix != "terminate" else "start"
+    if tag == "endEvent":
+        return f"end_{suffix}"
+    if tag == "intermediateCatchEvent":
+        mapping = {
+            "link": "intermediate_link_catch",
+            "message": "intermediate_message_catch",
+            "signal": "intermediate_signal_catch",
+            "timer": "intermediate_timer",
+            "conditional": "intermediate_conditional",
+        }
+        return mapping.get(suffix or "", default)
+    if tag == "intermediateThrowEvent":
+        mapping = {
+            "link": "intermediate_link_throw",
+            "message": "intermediate_message_throw",
+            "signal": "intermediate_signal_throw",
+            "escalation": "intermediate_escalation_throw",
+            "compensation": "intermediate_compensation_throw",
+        }
+        return mapping.get(suffix or "", default)
+    if tag == "boundaryEvent":
+        return f"boundary_{suffix}"
+
+    candidate = default
+    if candidate not in BPMN_NODE_CATALOG:
+        return "process"
+    return candidate
+
+
+def _append_event_definition(parent: ET.Element, definition: str | None) -> None:
+    if not definition:
+        return
+    ET.SubElement(parent, f"{{{BPMN_NS}}}{definition}")
 
 
 class FlowchartBpmnXmlService:
@@ -67,7 +125,6 @@ class FlowchartBpmnXmlService:
             attrib={"id": "Process_1", "name": _xml_escape(process_name), "isExecutable": "false"},
         )
 
-        lane_by_node: dict[str, str] = {}
         if lanes:
             lane_set = ET.SubElement(process_el, f"{{{BPMN_NS}}}laneSet", attrib={"id": "LaneSet_1"})
             for lane in lanes:
@@ -84,21 +141,22 @@ class FlowchartBpmnXmlService:
                         continue
                     if str(node.get("lane_id") or "") == str(lane.get("id") or ""):
                         node_id = _sanitize_xml_id(str(node.get("id")))
-                        lane_by_node[str(node["id"])] = lane_id
                         ET.SubElement(lane_el, f"{{{BPMN_NS}}}flowNodeRef").text = node_id
 
         for node in nodes:
             if not isinstance(node, dict) or not node.get("id"):
                 continue
-            node_type = str(node.get("type") or "process")
-            bpmn_type = NODE_TO_BPMN.get(node_type, "task")
+            node_type = normalize_node_type(str(node.get("type") or "process"))
+            spec = catalog_spec(node_type)
+            bpmn_tag = spec.get("bpmn_tag", "task")
             attrs = {
                 "id": _sanitize_xml_id(str(node["id"])),
                 "name": _xml_escape(str(node.get("label") or node["id"])),
             }
-            if bpmn_type == "task" and node_type == "process" and node.get("meta", {}).get("manual"):
+            if bpmn_tag == "task" and node_type == "process" and node.get("meta", {}).get("manual"):
                 attrs["isForCompensation"] = "false"
-            ET.SubElement(process_el, f"{{{BPMN_NS}}}{bpmn_type}", attrib=attrs)
+            element = ET.SubElement(process_el, f"{{{BPMN_NS}}}{bpmn_tag}", attrib=attrs)
+            _append_event_definition(element, spec.get("bpmn_event_definition"))
 
         for edge in edges:
             if not isinstance(edge, dict):
@@ -107,15 +165,22 @@ class FlowchartBpmnXmlService:
             to_id = edge.get("to")
             if not from_id or not to_id:
                 continue
+            kind = str(edge.get("kind") or "sequence")
+            if kind == "message_flow":
+                tag = "messageFlow"
+            elif kind == "association":
+                tag = "association"
+            else:
+                tag = "sequenceFlow"
             attrs = {
                 "id": _sanitize_xml_id(str(edge.get("id") or f"{from_id}_{to_id}")),
                 "sourceRef": _sanitize_xml_id(str(from_id)),
                 "targetRef": _sanitize_xml_id(str(to_id)),
             }
             label = edge.get("label")
-            if label:
+            if label and tag == "sequenceFlow":
                 attrs["name"] = _xml_escape(str(label))
-            ET.SubElement(process_el, f"{{{BPMN_NS}}}sequenceFlow", attrib=attrs)
+            ET.SubElement(process_el, f"{{{BPMN_NS}}}{tag}", attrib=attrs)
 
         rough = ET.tostring(root, encoding="unicode")
         parsed = minidom.parseString(rough)
@@ -154,70 +219,70 @@ class FlowchartBpmnXmlService:
                     if ref.text:
                         lane_node_map[ref.text.strip()] = lane_id
 
-        bpmn_to_type = {
-            "startEvent": "start",
-            "endEvent": "end",
-            "task": "process",
-            "subProcess": "subprocess",
-            "exclusiveGateway": "decision",
-            "parallelGateway": "decision",
-            "inclusiveGateway": "decision",
-        }
-
         nodes: list[dict[str, Any]] = []
         x_offset = 160
         y_base = 80
-        for index, child in enumerate(list(process)):
-            tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
-            if tag in {"laneSet", "sequenceFlow"}:
+        flow_index = 0
+        for child in list(process):
+            tag = _local_tag(child.tag)
+            if tag in {"laneSet", "sequenceFlow", "messageFlow", "association"}:
                 continue
-            if tag not in bpmn_to_type and tag not in NODE_TO_BPMN.values():
+            if tag not in IMPORTABLE_BPMN_TAGS:
                 continue
             node_id = child.get("id")
             if not node_id:
                 continue
-            node_type = bpmn_to_type.get(tag, "process")
+            node_type = normalize_node_type(_infer_type_from_bpmn(tag, child))
             lane_id = lane_node_map.get(node_id)
-            y = y_base + (index % 3) * 96
+            y = y_base + (flow_index % 3) * 96
             if lane_id and lanes:
                 lane_index = next(
                     (idx for idx, lane in enumerate(lanes) if lane["id"] == lane_id), 0
                 )
                 y = 56 + lane_index * 168
+            spec = catalog_spec(node_type)
             nodes.append(
                 {
                     "id": node_id,
                     "type": node_type,
                     "label": child.get("name") or node_id,
-                    "position": {"x": x_offset + (index // 3) * 220, "y": y},
+                    "position": {"x": x_offset + (flow_index // 3) * 220, "y": y},
                     **({"lane_id": lane_id} if lane_id else {}),
                     **(
                         {"meta": {"manual": True}}
-                        if node_type == "process"
+                        if spec.get("manual_task")
                         else {}
                     ),
                 }
             )
+            flow_index += 1
 
         node_ids = {node["id"] for node in nodes}
         edges: list[dict[str, Any]] = []
-        flows = process.findall("bpmn:sequenceFlow", NS) or process.findall(
-            f"{{{BPMN_NS}}}sequenceFlow"
-        )
-        for flow in flows:
-            from_id = flow.get("sourceRef")
-            to_id = flow.get("targetRef")
-            if not from_id or not to_id or from_id not in node_ids or to_id not in node_ids:
-                continue
-            edges.append(
-                {
-                    "id": flow.get("id") or f"flow_{from_id}_{to_id}",
-                    "from": from_id,
-                    "to": to_id,
-                    "label": flow.get("name"),
-                    "routing": "smoothstep",
-                }
+
+        for tag_name, kind in (
+            ("sequenceFlow", "sequence"),
+            ("messageFlow", "message_flow"),
+            ("association", "association"),
+        ):
+            flows = process.findall(f"bpmn:{tag_name}", NS) or process.findall(
+                f"{{{BPMN_NS}}}{tag_name}"
             )
+            for flow in flows:
+                from_id = flow.get("sourceRef")
+                to_id = flow.get("targetRef")
+                if not from_id or not to_id or from_id not in node_ids or to_id not in node_ids:
+                    continue
+                edges.append(
+                    {
+                        "id": flow.get("id") or f"flow_{from_id}_{to_id}",
+                        "from": from_id,
+                        "to": to_id,
+                        "label": flow.get("name") if kind == "sequence" else None,
+                        "routing": "smoothstep",
+                        "kind": kind,
+                    }
+                )
 
         payload: dict[str, Any] = {
             "format": "flowchart_v1",
@@ -232,7 +297,6 @@ class FlowchartBpmnXmlService:
     @staticmethod
     def _find_process(root: ET.Element) -> ET.Element | None:
         for el in root.iter():
-            tag = el.tag.split("}")[-1] if "}" in el.tag else el.tag
-            if tag == "process":
+            if _local_tag(el.tag) == "process":
                 return el
         return None

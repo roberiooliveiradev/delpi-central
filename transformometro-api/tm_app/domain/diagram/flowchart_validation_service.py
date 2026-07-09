@@ -3,6 +3,13 @@ from __future__ import annotations
 from collections import deque
 from typing import Any
 
+from tm_app.domain.diagram.bpmn_node_catalog import (
+    END_EVENT_TYPES,
+    GATEWAY_TYPES,
+    NON_FLOW_NODE_TYPES,
+    START_EVENT_TYPES,
+)
+
 
 class FlowchartValidationService:
     """Validação estrutural e simulação por token (BPMN-lite) de flowchart_v1."""
@@ -20,8 +27,8 @@ class FlowchartValidationService:
             return {"valid": False, "issues": issues, "simulation": self._empty_simulation()}
 
         node_ids = {str(n["id"]) for n in nodes if n.get("id")}
-        starts = [n for n in nodes if str(n.get("type")) == "start"]
-        ends = {str(n["id"]) for n in nodes if str(n.get("type")) == "end"}
+        starts = [n for n in nodes if str(n.get("type")) in START_EVENT_TYPES]
+        ends = {str(n["id"]) for n in nodes if str(n.get("type")) in END_EVENT_TYPES}
 
         if not starts:
             issues.append(
@@ -40,7 +47,12 @@ class FlowchartValidationService:
                 )
             )
 
-        incoming, outgoing = self._adjacency(node_ids, edges)
+        sequence_edges = [
+            edge
+            for edge in edges
+            if str(edge.get("kind") or "sequence") == "sequence"
+        ]
+        incoming, outgoing = self._adjacency(node_ids, sequence_edges)
 
         for edge in edges:
             from_id = str(edge.get("from") or "")
@@ -71,16 +83,21 @@ class FlowchartValidationService:
             node_id = str(node.get("id"))
             node_type = str(node.get("type") or "process")
             out_count = len(outgoing.get(node_id, []))
-            if node_type == "decision" and out_count < 2:
+            if node_type in GATEWAY_TYPES and out_count < 2:
                 issues.append(
                     self._issue(
                         "warning",
                         "decision_needs_branches",
-                        f"Decisão «{node.get('label', node_id)}» deveria ter ao menos 2 saídas.",
+                        f"Gateway «{node.get('label', node_id)}» deveria ter ao menos 2 saídas.",
                         node_id=node_id,
                     )
                 )
-            if node_type not in {"end", "comment"} and out_count == 0 and node_id in reachable:
+            if (
+                node_type not in END_EVENT_TYPES
+                and node_type not in NON_FLOW_NODE_TYPES
+                and out_count == 0
+                and node_id in reachable
+            ):
                 issues.append(
                     self._issue(
                         "warning",
@@ -90,7 +107,7 @@ class FlowchartValidationService:
                     )
                 )
 
-        simulation = self._simulate_tokens(nodes, edges, starts, ends, outgoing)
+        simulation = self._simulate_tokens(nodes, sequence_edges, starts, ends, outgoing)
         if simulation.get("stuck_paths"):
             issues.append(
                 self._issue(

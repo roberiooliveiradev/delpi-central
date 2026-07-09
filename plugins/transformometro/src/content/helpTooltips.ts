@@ -360,6 +360,8 @@ export const TM_HELP_TOOLTIPS = {
       "Copia os nós selecionados (e setas entre eles) para a área de transferência interna do editor.",
     selectionDuplicate:
       "Cria cópias dos nós selecionados com deslocamento automático, mantendo conexões internas.",
+    selectionEdgeKind:
+      "Com setas selecionadas, alterna o tipo BPMN: sequência → fluxo de mensagem → associação.",
   },
   dataTransfer: {
     export:

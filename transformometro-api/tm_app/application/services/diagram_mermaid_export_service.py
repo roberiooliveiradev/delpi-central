@@ -3,6 +3,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from tm_app.domain.diagram.bpmn_node_catalog import (
+    END_EVENT_TYPES,
+    GATEWAY_TYPES,
+    START_EVENT_TYPES,
+    normalize_node_type,
+)
 from tm_app.domain.diagram.flowchart_v1 import NODE_TYPES
 
 
@@ -21,9 +27,9 @@ def _escape_label(label: str) -> str:
 
 def _node_shape(node_type: str, mermaid_id: str, label: str) -> str:
     text = _escape_label(label)
-    if node_type == "decision":
+    if node_type in GATEWAY_TYPES:
         return f'    {mermaid_id}{{"{text}"}}'
-    if node_type in {"start", "end"}:
+    if node_type in START_EVENT_TYPES or node_type in END_EVENT_TYPES:
         return f'    {mermaid_id}(("{text}"))'
     if node_type == "comment":
         return f'    {mermaid_id}[/"{text}"/]'
@@ -46,9 +52,7 @@ class DiagramMermaidExportService:
             raw_id = str(node.get("id") or "")
             if not raw_id:
                 continue
-            node_type = str(node.get("type") or "process")
-            if node_type not in NODE_TYPES:
-                node_type = "process"
+            node_type = normalize_node_type(str(node.get("type") or "process"))
             mermaid_id = _sanitize_mermaid_id(raw_id)
             id_map[raw_id] = mermaid_id
             highlight = (node.get("highlight") or node.get("meta", {}).get("highlight"))

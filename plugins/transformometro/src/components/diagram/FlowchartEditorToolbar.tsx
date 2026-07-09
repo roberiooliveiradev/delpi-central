@@ -2,14 +2,16 @@ import { CircleHelp } from "lucide-react";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip } from "@delpi/plugin-ui";
-import { FLOWCHART_NODE_PALETTE, type FlowchartLane, type FlowchartNodeType } from "../../types/diagram";
+import type { FlowchartLane, FlowchartNodeType } from "../../types/diagram";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import {
+  BPMN_PALETTE_CATEGORIES,
   DIAGRAM_EDITOR_ADD_LANE_ACTION,
   DIAGRAM_EDITOR_LAYOUT_ACTIONS,
   FLOWCHART_NODE_ICONS,
   flowchartNodeHint,
+  paletteByCategory,
 } from "./flowchartEditorToolbar";
 
 export type FlowchartEditorToolbarTab = "elements" | "models";
@@ -80,17 +82,28 @@ export function FlowchartEditorToolbar({
       <div className="tm-diagram-editor__toolbar-panel" role="tabpanel">
         {toolbarTab === "elements" ? (
           <div className="tm-diagram-editor__elements">
-            <div className="tm-diagram-editor__palette">
-              {FLOWCHART_NODE_PALETTE.map((item) => {
-                const Icon = FLOWCHART_NODE_ICONS[item.type];
+            <div className="tm-diagram-editor__palette-groups">
+              {BPMN_PALETTE_CATEGORIES.map((category) => {
+                const items = paletteByCategory(category.id);
+                if (!items.length) return null;
                 return (
-                  <DiagramEditorToolbarButton
-                    key={item.type}
-                    label={item.label}
-                    hint={flowchartNodeHint(item.type)}
-                    icon={Icon}
-                    onClick={() => onAddNode(item.type)}
-                  />
+                  <section key={category.id} className="tm-diagram-editor__palette-group">
+                    <h4 className="tm-diagram-editor__palette-group-title">{category.label}</h4>
+                    <div className="tm-diagram-editor__palette">
+                      {items.map((item) => {
+                        const Icon = FLOWCHART_NODE_ICONS[item.type];
+                        return (
+                          <DiagramEditorToolbarButton
+                            key={item.type}
+                            label={item.label}
+                            hint={flowchartNodeHint(item.type)}
+                            icon={Icon}
+                            onClick={() => onAddNode(item.type)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </section>
                 );
               })}
             </div>

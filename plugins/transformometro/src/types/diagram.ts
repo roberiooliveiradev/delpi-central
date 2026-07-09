@@ -1,12 +1,20 @@
-export type FlowchartNodeType =
-  | "start"
-  | "end"
-  | "process"
-  | "decision"
-  | "document"
-  | "data"
-  | "subprocess"
-  | "comment";
+import type { FlowchartNodeType } from "./bpmnNodeCatalog";
+
+export type { FlowchartNodeType };
+
+export {
+  BPMN_NODE_DEFINITIONS,
+  FLOWCHART_NODE_PALETTE,
+  FLOWCHART_NODE_TYPES,
+  isEndEventType,
+  isGatewayType,
+  isKnownFlowchartNodeType,
+  isManualTaskType,
+  isNonFlowNodeType,
+  isStartEventType,
+  normalizeFlowchartNodeType,
+  paletteByCategory,
+} from "./bpmnNodeCatalog";
 
 export type FlowchartLane = {
   id: string;
@@ -31,12 +39,15 @@ export type FlowchartNode = {
 
 export type FlowchartEdgeRouting = "straight" | "step" | "smoothstep";
 
+export type FlowchartEdgeKind = "sequence" | "message_flow" | "association";
+
 export type FlowchartEdge = {
   id: string;
   from: string;
   to: string;
   label?: string | null;
   routing?: FlowchartEdgeRouting;
+  kind?: FlowchartEdgeKind;
 };
 
 export type FlowchartV1 = {
@@ -141,17 +152,6 @@ export function createNodeId(prefix = "n"): string {
 export function createEdgeId(): string {
   return `e_${Math.random().toString(36).slice(2, 9)}`;
 }
-
-export const FLOWCHART_NODE_PALETTE: Array<{ type: FlowchartNodeType; label: string }> = [
-  { type: "start", label: "Início" },
-  { type: "process", label: "Atividade" },
-  { type: "decision", label: "Decisão" },
-  { type: "document", label: "Documento" },
-  { type: "data", label: "Dado" },
-  { type: "subprocess", label: "Subprocesso" },
-  { type: "end", label: "Fim" },
-  { type: "comment", label: "Nota" },
-];
 
 export function createLaneId(): string {
   return `lane_${Math.random().toString(36).slice(2, 9)}`;

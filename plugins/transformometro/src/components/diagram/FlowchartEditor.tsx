@@ -47,10 +47,12 @@ import {
   createEdgeId,
   createLaneId,
   createNodeId,
+  type FlowchartEdgeKind,
   type FlowchartNode,
-  type FlowchartNodeType,
   type FlowchartV1,
 } from "../../types/diagram";
+import { isManualTaskType } from "../../types/bpmnNodeCatalog";
+import type { FlowchartNodeType } from "../../types/bpmnNodeCatalog";
 import { FlowchartBpmnNode, type BpmnNodeData } from "./FlowchartBpmnNode";
 import { FlowchartLaneNode } from "./FlowchartLaneNode";
 import { FlowchartEditableEdge } from "./FlowchartEditableEdge";
@@ -181,6 +183,9 @@ function toReactFlow(
     label: edge.label ?? undefined,
     labelStyle: { fontSize: 11, fontWeight: 600 },
     labelBgStyle: { fillOpacity: 0.92 },
+    data: {
+      kind: edge.kind ?? "sequence",
+    },
   }));
 
   return {
@@ -216,7 +221,7 @@ function fromReactFlow(
             ).lane_id
           : undefined,
         highlight: data.highlight as FlowchartNode["highlight"],
-        meta: data.nodeType === "process" ? { manual: data.manual !== false } : undefined,
+        meta: isManualTaskType(data.nodeType) ? { manual: data.manual !== false } : undefined,
       };
     });
 
@@ -235,6 +240,7 @@ function fromReactFlow(
           edge.type === "step" || edge.type === "straight" || edge.type === "smoothstep"
             ? edge.type
             : "smoothstep",
+        kind: (edge.data?.kind as FlowchartEdgeKind | undefined) ?? "sequence",
       })),
   };
 }
@@ -481,6 +487,7 @@ function FlowchartEditorInner({
         data: {
           readOnly,
           onLabelChange: readOnly ? undefined : handleEdgeLabelChange,
+          kind: (edge.data as { kind?: FlowchartEdgeKind })?.kind ?? "sequence",
         },
       }))
     );
@@ -510,6 +517,7 @@ function FlowchartEditorInner({
             data: {
               readOnly,
               onLabelChange: handleEdgeLabelChange,
+              kind: "sequence" as FlowchartEdgeKind,
             },
             labelStyle: { fontSize: 11, fontWeight: 600 },
             labelBgStyle: { fillOpacity: 0.92 },
@@ -622,7 +630,7 @@ function FlowchartEditorInner({
         data: {
           label: paletteLabel,
           nodeType: type,
-          manual: type === "process",
+          manual: isManualTaskType(type),
         } satisfies BpmnNodeData,
       },
     ];
@@ -847,17 +855,43 @@ function FlowchartEditorInner({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasNodeSelection, nudgeSelection, readOnly]);
 
+  const cycleSelectedEdgeKind = useCallback(() => {
+    if (readOnly || !selectedEdgeIds.length) return;
+    const order: FlowchartEdgeKind[] = ["sequence", "message_flow", "association"];
+    setEdges((currentEdges) => {
+      const nextEdges = currentEdges.map((edge) => {
+        if (!selectedEdgeIds.includes(edge.id)) return edge;
+        const currentKind = (edge.data?.kind as FlowchartEdgeKind | undefined) ?? "sequence";
+        const nextIndex = (order.indexOf(currentKind) + 1) % order.length;
+        return {
+          ...edge,
+          data: {
+            ...edge.data,
+            kind: order[nextIndex],
+          },
+        };
+      });
+      setNodes((currentNodes) => {
+        emitChange(currentNodes, nextEdges);
+        return currentNodes;
+      });
+      return nextEdges;
+    });
+  }, [emitChange, readOnly, selectedEdgeIds, setEdges, setNodes]);
+
   const runSelectionAction = (actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]) => {
     if (actionId === "delete") deleteSelection();
     else if (actionId === "move") canvasWrapperRef.current?.focus();
     else if (actionId === "copy") copySelection();
     else if (actionId === "duplicate") duplicateSelection();
+    else if (actionId === "cycleEdgeKind") cycleSelectedEdgeKind();
   };
 
   const isSelectionActionDisabled = (
     actionId: (typeof DIAGRAM_EDITOR_SELECTION_ACTIONS)[number]["id"]
   ) => {
     if (actionId === "delete") return !hasSelection;
+    if (actionId === "cycleEdgeKind") return !selectedEdgeIds.length;
     if (actionId === "move" || actionId === "copy" || actionId === "duplicate") {
       return !hasNodeSelection;
     }

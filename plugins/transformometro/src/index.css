@@ -5564,8 +5564,26 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
   background: color-mix(in srgb, var(--ds-card-bg) 90%, transparent);
   backdrop-filter: blur(10px);
-  max-height: min(132px, 30vh);
+  max-height: min(420px, 55vh);
   overflow: auto;
+}
+
+.dashboard-transformometro .tm-diagram-editor__palette-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(340px, 48vh);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.dashboard-transformometro .tm-diagram-editor__palette-group-title {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ds-text-muted);
 }
 
 .dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette,
@@ -6062,8 +6080,16 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   width: 168px;
 }
 
-.dashboard-transformometro .tm-diagram-node-wrap--data {
+.dashboard-transformometro .tm-diagram-node-wrap--data-store {
   width: 108px;
+}
+
+.dashboard-transformometro .tm-diagram-node-shell--data-store {
+  width: 72px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dashboard-transformometro .tm-diagram-node-wrap--comment {
@@ -6092,7 +6118,6 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .tm-diagram-node-shell--box,
-.dashboard-transformometro .tm-diagram-node-shell--data,
 .dashboard-transformometro .tm-diagram-node-shell--comment {
   width: 100%;
 }
@@ -6108,6 +6133,138 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .tm-diagram-node__external-label--below {
   max-width: 108px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--boundary {
+  width: 88px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--data-object {
+  width: 148px;
+}
+
+.dashboard-transformometro .tm-diagram-node-wrap--group {
+  width: 180px;
+  min-height: 96px;
+}
+
+.dashboard-transformometro .tm-diagram-node-shell--boundary {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-transformometro .tm-diagram-node-shell--data-object,
+.dashboard-transformometro .tm-diagram-node-shell--group {
+  width: 100%;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape--start {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #16a34a;
+  border-radius: 999px;
+  background: #ecfdf5;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape--start.tm-diagram-node__event-shape--marked {
+  border-width: 2px;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape--end {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #dc2626;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #dc2626;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape--end.tm-diagram-node__event-shape--terminate {
+  background: #dc2626;
+  box-shadow: none;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape--intermediate {
+  width: 36px;
+  height: 36px;
+  border: 3px double #64748b;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape--intermediate.tm-diagram-node__event-shape--throw {
+  border-style: solid;
+  background: #f8fafc;
+}
+
+.dashboard-transformometro .tm-diagram-node__event-shape--boundary {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ea580c;
+  border-radius: 999px;
+  background: #fff7ed;
+}
+
+.dashboard-transformometro .tm-diagram-node__marker-icon {
+  display: inline-flex;
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-diagram-node__gateway-symbol {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-diagram-node--data_object {
+  transform: skewX(-12deg);
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ds-card-border);
+  background: var(--ds-card-bg);
+}
+
+.dashboard-transformometro .tm-diagram-node--data_object .tm-diagram-node__label {
+  transform: skewX(12deg);
+}
+
+.dashboard-transformometro .tm-diagram-node--group {
+  min-height: 88px;
+  border: 2px dashed var(--ds-text-muted);
+  background: color-mix(in srgb, var(--ds-surface-muted) 50%, transparent);
+  border-radius: var(--ds-radius-md);
+}
+
+.dashboard-transformometro .tm-diagram-node--call_activity {
+  border-width: 4px;
+  border-color: #7c3aed;
+}
+
+.dashboard-transformometro .tm-diagram-node--subprocess_ad_hoc {
+  border-style: dotted;
+}
+
+.dashboard-transformometro .tm-diagram-node--subprocess_transaction {
+  border-style: double;
+  border-width: 4px;
+}
+
+.dashboard-transformometro .tm-diagram-node--subprocess_event {
+  border: 2px dashed #ea580c;
 }
 
 .dashboard-transformometro .tm-diagram-node__start-dot {
@@ -6133,7 +6290,8 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   box-shadow: 0 1px 3px color-mix(in srgb, #000 20%, transparent);
 }
 
-.dashboard-transformometro .tm-diagram-node--decision {
+.dashboard-transformometro .tm-diagram-node--decision,
+.dashboard-transformometro .tm-diagram-node--gateway {
   width: 56px;
   height: 56px;
   min-width: 56px;
@@ -6151,7 +6309,8 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   box-shadow: 0 1px 3px color-mix(in srgb, #000 16%, transparent);
 }
 
-:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node--decision {
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node--decision,
+.dashboard-transformometro .tm-diagram-node--gateway {
   background: #f59e0b;
   border-color: #fbbf24;
   color: #451a03;
@@ -6210,53 +6369,59 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   border-bottom: 1px solid #d97706;
 }
 
-.dashboard-transformometro .tm-diagram-node--data {
-  width: 100%;
+.dashboard-transformometro .tm-diagram-node--data,
+.dashboard-transformometro .tm-diagram-node--data-store {
+  width: auto;
   padding: 0;
   border: none;
   background: transparent;
   box-shadow: none;
 }
 
-.dashboard-transformometro .tm-diagram-node__data-cylinder {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 100%;
-}
-
-.dashboard-transformometro .tm-diagram-node__data-rim {
-  height: 14px;
-  border: 2px solid #2563eb;
-  border-radius: 999px;
-  background: color-mix(in srgb, #dbeafe 72%, var(--ds-card-bg));
-}
-
-.dashboard-transformometro .tm-diagram-node__data-rim--top {
-  margin-bottom: -7px;
-  z-index: 1;
-}
-
-.dashboard-transformometro .tm-diagram-node__data-rim--bottom {
-  margin-top: -7px;
-  background: color-mix(in srgb, #93c5fd 55%, var(--ds-card-bg));
-}
-
-.dashboard-transformometro .tm-diagram-node__data-body {
-  min-height: 52px;
-  padding: 10px 8px 8px;
-  border-left: 2px solid #2563eb;
-  border-right: 2px solid #2563eb;
-  background: color-mix(in srgb, #dbeafe 48%, var(--ds-card-bg));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dashboard-transformometro .tm-diagram-node--data .tm-diagram-node__label {
+.dashboard-transformometro .tm-diagram-node__data-store-svg {
   display: block;
-  line-height: 1.35;
-  text-align: center;
+  overflow: visible;
+}
+
+.dashboard-transformometro .tm-diagram-node__data-store-body {
+  fill: color-mix(in srgb, #dbeafe 52%, var(--ds-card-bg));
+  stroke: none;
+}
+
+.dashboard-transformometro .tm-diagram-node__data-store-edge {
+  stroke: #2563eb;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.dashboard-transformometro .tm-diagram-node__data-store-cap {
+  fill: color-mix(in srgb, #dbeafe 72%, var(--ds-card-bg));
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+
+.dashboard-transformometro .tm-diagram-node__data-store-base {
+  fill: color-mix(in srgb, #93c5fd 58%, var(--ds-card-bg));
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node__data-store-body {
+  fill: color-mix(in srgb, #2563eb 28%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node__data-store-cap {
+  fill: color-mix(in srgb, #2563eb 36%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node__data-store-base {
+  fill: color-mix(in srgb, #1d4ed8 42%, var(--ds-card-bg));
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node__data-store-edge,
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node__data-store-cap,
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node__data-store-base {
+  stroke: #60a5fa;
 }
 
 .dashboard-transformometro .tm-diagram-node--subprocess {
@@ -6436,6 +6601,27 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro
   .tm-diagram-editor__canvas
   .react-flow__node.selected
+  .tm-diagram-node__event-shape--start,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__event-shape--end,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__event-shape--intermediate,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node__event-shape--boundary {
+  box-shadow:
+    0 0 0 3px var(--ds-accent),
+    0 1px 3px color-mix(in srgb, #000 20%, transparent);
+}
+
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
   .tm-diagram-node__start-dot {
   box-shadow:
     0 0 0 3px var(--ds-accent),
@@ -6454,19 +6640,32 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro
   .tm-diagram-editor__canvas
   .react-flow__node.selected
-  .tm-diagram-node--data {
+  .tm-diagram-node--data,
+.dashboard-transformometro
+  .tm-diagram-editor__canvas
+  .react-flow__node.selected
+  .tm-diagram-node--data-store {
   box-shadow: none;
 }
 
 .dashboard-transformometro
   .tm-diagram-editor__canvas
   .react-flow__node.selected
-  .tm-diagram-node__data-body {
-  box-shadow: inset 0 0 0 1px var(--ds-accent);
+  .tm-diagram-node__data-store-svg {
+  filter: drop-shadow(0 0 0 var(--ds-accent)) drop-shadow(0 0 8px color-mix(in srgb, var(--ds-accent) 45%, transparent));
 }
 
 .dashboard-transformometro .tm-diagram-lane-toolbar__label {
   margin-right: 4px;
+}
+
+.dashboard-transformometro .tm-diagram-edge-label--kind .tm-diagram-edge-label__text {
+  font-size: 10px;
+  color: var(--ds-text-muted);
+  background: var(--ds-card-bg);
+  border: 1px dashed var(--ds-card-border);
+  padding: 1px 6px;
+  border-radius: 999px;
 }
 
 .dashboard-transformometro .tm-diagram-lane-toolbar__chips {
@@ -6498,7 +6697,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   color: var(--ds-text);
 }
 
-.dashboard-transformometro .tm-diagram-node:not(.tm-diagram-node--decision) {
+.dashboard-transformometro .tm-diagram-node:not(.tm-diagram-node--decision):not(.tm-diagram-node--gateway):not(.tm-diagram-node--data):not(.tm-diagram-node--data-store) {
   box-sizing: border-box;
   width: 100%;
   padding: 8px 10px;
@@ -6511,7 +6710,8 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   box-shadow: 0 1px 2px color-mix(in srgb, var(--ds-text) 8%, transparent);
 }
 
-.dashboard-transformometro .tm-diagram-node--decision {
+.dashboard-transformometro .tm-diagram-node--decision,
+.dashboard-transformometro .tm-diagram-node--gateway {
   box-sizing: border-box;
   color: var(--ds-text);
   font-size: var(--ds-font-xs);
