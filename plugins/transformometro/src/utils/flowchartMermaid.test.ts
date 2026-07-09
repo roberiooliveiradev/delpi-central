@@ -195,7 +195,7 @@ describe("mermaidToFlowchart", () => {
 
     const exported = flowchartToMermaid(laidOut);
     expect(exported).toContain('subgraph lane_lane_e6jo48b ["Comercial"]');
-    expect(exported).toContain('dec_6wp6qxi{"Informações completas?"}:::bpmn_decision');
+    expect(exported).toContain('dec_6wp6qxi{"Informações<br>completas?"}:::bpmn_decision');
     expect(exported).toContain('dec_6wp6qxi -->|"Não"| proc_apf5m3k');
     expect(exported).toContain('dec_cxqw47f -->|"Não"| proc_d9hbj0a');
   });
@@ -205,6 +205,15 @@ describe("bpmnMermaidMapping", () => {
   it("expõe classe e linha por tipo", () => {
     expect(bpmnMermaidClassForType("gateway_parallel")).toBe("bpmn_gateway_parallel");
     expect(formatMermaidNodeLine("data", "store", "Base")).toContain('[("Base")]:::bpmn_data');
+  });
+
+  it("quebra rótulos longos com br no export Mermaid", () => {
+    const line = formatMermaidNodeLine(
+      "process",
+      "task_a",
+      "Registrar oportunidade e anexos no CRM"
+    );
+    expect(line).toContain("<br>");
   });
 
   it("monta catálogo para IA", () => {

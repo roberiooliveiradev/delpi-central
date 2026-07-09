@@ -7035,6 +7035,21 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   height: auto;
 }
 
+.dashboard-transformometro .tm-diagram-mermaid svg foreignObject {
+  overflow: visible;
+}
+
+.dashboard-transformometro .tm-diagram-mermaid svg foreignObject div,
+.dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel,
+.dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel p,
+.dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel span {
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.3;
+}
+
 .dashboard-transformometro .tm-diagram-mermaid--loading,
 .dashboard-transformometro .tm-diagram-mermaid--error {
   font-size: var(--ds-font-sm);

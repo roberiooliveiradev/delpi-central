@@ -107,13 +107,55 @@ export function bpmnMermaidShapeKindForType(nodeType: FlowchartNodeType): BpmnMe
   return SHAPE_KIND_BY_FAMILY[def.shape];
 }
 
+const MERMAID_WRAP_MAX_BY_SHAPE: Record<BpmnMermaidShapeKind, number> = {
+  stadium: 16,
+  circle: 16,
+  rhombus: 18,
+  rectangle: 24,
+  subroutine: 22,
+  parallelogram: 22,
+  cylinder: 22,
+  comment: 22,
+};
+
+/** Quebra rótulos longos com `<br>` para preview Mermaid (htmlLabels). */
+export function wrapMermaidLabelText(label: string, maxLineLength: number): string {
+  const normalized = label.replace(/"/g, "'").replace(/\n/g, " ").replace(/\s+/g, " ").trim();
+  if (!normalized || normalized.length <= maxLineLength) {
+    return normalized;
+  }
+
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of normalized.split(" ")) {
+    if (!current) {
+      current = word;
+      continue;
+    }
+    const candidate = `${current} ${word}`;
+    if (candidate.length <= maxLineLength) {
+      current = candidate;
+      continue;
+    }
+    lines.push(current);
+    current = word;
+  }
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines.join("<br>");
+}
+
 export function formatMermaidNodeLine(
   nodeType: FlowchartNodeType,
   mermaidId: string,
   label: string
 ): string {
-  const text = label.replace(/"/g, "'").replace(/\n/g, " ").trim();
   const kind = bpmnMermaidShapeKindForType(nodeType);
+  const text = wrapMermaidLabelText(label, MERMAID_WRAP_MAX_BY_SHAPE[kind]);
   let body = "";
   switch (kind) {
     case "stadium":

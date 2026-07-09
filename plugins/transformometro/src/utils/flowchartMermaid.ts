@@ -32,6 +32,13 @@ function escapeLabel(label: string): string {
   return label.replace(/"/g, "'").replace(/\n/g, " ").trim();
 }
 
+function normalizeImportedMermaidLabel(label: string): string {
+  return label
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function laneSubgraphId(laneId: string): string {
   return sanitizeMermaidId(`lane_${laneId}`);
 }
@@ -378,7 +385,7 @@ export function mermaidToFlowchart(code: string, base: FlowchartV1 = emptyFlowch
     return {
       id: node.id,
       type,
-      label: node.label || node.id,
+      label: normalizeImportedMermaidLabel(node.label || node.id),
       position: { x: 80 + index * 180, y: 120 + (parsedLanes.findIndex((lane) => lane.id === node.laneId) * 168) },
       lane_id: node.laneId,
       highlight: node.highlight,

@@ -1,9 +1,7 @@
 import { useEffect, useId, useState } from "react";
 
-import {
-  resolveMermaidTheme,
-  useTransformometroDarkMode,
-} from "../../hooks/useTransformometroDarkMode";
+import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";
+import { buildMermaidPreviewConfig } from "../../utils/mermaidPreviewConfig";
 
 type DiagramMermaidPreviewProps = {
   code: string;
@@ -43,11 +41,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
     let cancelled = false;
     loadMermaidModule()
       .then(async (mermaid) => {
-        mermaid.initialize({
-          startOnLoad: false,
-          securityLevel: "strict",
-          theme: resolveMermaidTheme(isDark),
-        });
+        mermaid.initialize(buildMermaidPreviewConfig(isDark));
         const renderId = `tm-mermaid-${reactId}-${Date.now()}`;
         const result = await mermaid.render(renderId, diagram);
         if (!cancelled) {
