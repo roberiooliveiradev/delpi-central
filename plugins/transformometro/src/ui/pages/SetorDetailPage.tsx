@@ -21,7 +21,7 @@ import {
   createSetor,
   deleteSetor,
   fetchOptions,
-  fetchSetores,
+  fetchSetor,
   updateSetor,
   type OptionsData,
   type Setor,
@@ -57,7 +57,8 @@ export function SetorDetailPage({
   const [setor, setSetor] = useState<Setor | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<SetorFormState>(() => emptySetorForm());
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isCreate);
   const [saving, setSaving] = useState(false);
 
@@ -66,27 +67,41 @@ export function SetorDetailPage({
     [options?.filiais]
   );
 
+  useEffect(() => {
+    setLoadError(null);
+    setSaveError(null);
+    setSetor(null);
+    setLoading(!isCreate);
+  }, [isCreate, setorId]);
+
   const load = useCallback(async () => {
     if (isCreate) {
-      const opts = await fetchOptions(getAccessToken);
-      setOptions(opts);
-      setForm(emptySetorForm());
-      setLoading(false);
+      setLoading(true);
+      try {
+        const opts = await fetchOptions(getAccessToken);
+        setOptions(opts);
+        setForm(emptySetorForm());
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Erro ao carregar opções");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
-    setError(null);
+    setLoadError(null);
+    setLoading(true);
     try {
-      const [list, opts] = await Promise.all([
-        fetchSetores(getAccessToken),
+      const [row, opts] = await Promise.all([
+        fetchSetor(setorId, getAccessToken),
         fetchOptions(getAccessToken),
       ]);
-      const row = list.items.find((item) => item.setor_id === setorId) ?? null;
       setSetor(row);
       setOptions(opts);
-      if (row) setForm(setorFormFromEntity(row));
+      setForm(setorFormFromEntity(row));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar departamento");
+      setSetor(null);
+      setLoadError(err instanceof Error ? err.message : "Erro ao carregar departamento");
     } finally {
       setLoading(false);
     }
@@ -119,15 +134,17 @@ export function SetorDetailPage({
 
   async function handleSave() {
     if (form.filiais.length === 0) {
-      setError("Selecione ao menos uma unidade para o departamento.");
+      setSaveError("Selecione ao menos uma unidade para o departamento.");
       return;
     }
     setSaving(true);
-    setError(null);
+    setSaveError(null);
     const payload = payloadFromSetorForm(form);
     try {
       if (isCreate) {
         const created = await createSetor(createPayloadFromSetorForm(form), getAccessToken);
+        setSetor(created);
+        setForm(setorFormFromEntity(created));
         onNavigate(buildSetorPath(created.setor_id));
         return;
       }
@@ -135,7 +152,7 @@ export function SetorDetailPage({
       setSetor(updated);
       sectionEdit.stopEdit("setor");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar departamento");
+      setSaveError(err instanceof Error ? err.message : "Erro ao salvar departamento");
     } finally {
       setSaving(false);
     }
@@ -151,12 +168,12 @@ export function SetorDetailPage({
       variant: "danger",
     });
     if (!confirmed) return;
-    setError(null);
+    setSaveError(null);
     try {
       await deleteSetor(setor.setor_id, getAccessToken);
       onBack();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir departamento");
+      setSaveError(err instanceof Error ? err.message : "Erro ao excluir departamento");
     }
   }
 
@@ -187,7 +204,7 @@ export function SetorDetailPage({
   if (!isCreate && !setor && !loading) {
     const errorView = (
       <div className="ds-state ds-state--error" role="alert">
-        <p>{error ?? "Departamento não encontrado."}</p>
+        <p>{loadError ?? "Departamento não encontrado."}</p>
         <button type="button" className="ds-ghost-btn" onClick={onBack}>
           Voltar à lista
         </button>
@@ -222,7 +239,19 @@ export function SetorDetailPage({
         </div>
       ) : null}
 
-      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
+      <StatusAlerts
+        error={saveError ?? loadError}
+        loading={false}
+        hasData
+        onRetry={() => {
+          if (saveError) {
+            void handleSave();
+            return;
+          }
+          setLoadError(null);
+          void load();
+        }}
+      />
 
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}

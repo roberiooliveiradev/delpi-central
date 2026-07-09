@@ -238,5 +238,5 @@ class ProcessoEscopoRepository(PluginBaseRepository):
                 auto_commit=False,
             )
         if auto_commit:
-            self.commit()
+            self._connection.commit()
         return self.get_escopo(processo_id)

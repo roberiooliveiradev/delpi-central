@@ -646,6 +646,12 @@ def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request
         return fail(str(exc), 400)
     except ValueError as exc:
         return fail(str(exc), 400)
+    except PluginsRepositoryError as exc:
+        logger.exception("update_processo_persistence_failed processo_id=%s", processo_id)
+        return fail(str(exc), 500)
+    except Exception as exc:
+        logger.exception("update_processo_failed processo_id=%s", processo_id)
+        return fail(format_api_error(exc), 500)
 
     if not row:
         return fail("Processo não encontrado.", 404)

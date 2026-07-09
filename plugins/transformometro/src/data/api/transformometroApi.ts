@@ -278,6 +278,10 @@ export function fetchSetores(
   return request<{ total: number; items: Setor[] }>(`/setores${qs}`, getAccessToken);
 }
 
+export function fetchSetor(setorId: string, getAccessToken?: () => string | undefined) {
+  return request<Setor>(`/setores/${setorId}`, getAccessToken);
+}
+
 export function createSetor(
   payload: {
     setor_id: string;
