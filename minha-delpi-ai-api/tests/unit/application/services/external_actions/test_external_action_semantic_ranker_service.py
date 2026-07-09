@@ -11,13 +11,17 @@ class FakeEmbeddingGateway:
         return self.vectors[text]
 
 
+def _action_embedding_key(method: str, path: str, summary: str) -> str:
+    return " | ".join([method.upper(), path, summary])
+
+
 def test_rank_orders_candidates_by_similarity():
     service = ExternalActionSemanticRankerService(
         FakeEmbeddingGateway(
             {
                 "pedidos abertos": [1.0, 0.0],
-                "GET /orders | list open orders": [0.95, 0.05],
-                "GET /products | list products": [0.0, 1.0],
+                _action_embedding_key("GET", "/orders", "list open orders"): [0.95, 0.05],
+                _action_embedding_key("GET", "/products", "list products"): [0.0, 1.0],
             }
         )
     )
@@ -50,7 +54,7 @@ def test_rank_returns_empty_when_below_min_score():
         FakeEmbeddingGateway(
             {
                 "pergunta genérica": [1.0, 0.0],
-                "GET /unrelated | something else": [0.0, 1.0],
+                _action_embedding_key("GET", "/unrelated", "something else"): [0.0, 1.0],
             }
         )
     )

@@ -11,7 +11,6 @@ _SHOULD_DETECT = (
     ("quem é você?", "who"),
     ("quem e vc", "who"),
     ("se apresente", "who"),
-    ("o que vc faz?", "role"),
     ("para que serve", "role"),
     ("o que você não faz", "limits"),
     ("suas limitações", "limits"),

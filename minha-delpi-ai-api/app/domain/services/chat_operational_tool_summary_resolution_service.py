@@ -114,9 +114,116 @@ class ChatOperationalToolSummaryResolutionService:
         ]
 
         if not cls._has_substantive_lines(lines):
+            fallback = cls._substantive_summary_from_preview(data, path=path)
+
+            if fallback:
+                title = str(fallback.get("titulo") or title or cls._title_from_path(path)).strip()
+                lines = list(fallback.get("linhas") or [])
+
+        if not cls._has_substantive_lines(lines):
             return None
 
         return {"titulo": title, "linhas": lines, "path": path}
+
+    @classmethod
+    def _substantive_summary_from_preview(
+        cls,
+        data: dict,
+        *,
+        path: str,
+    ) -> dict | None:
+        rows = cls._preview_rows(data)
+
+        if not rows:
+            return None
+
+        lowered_path = str(path or "").lower()
+
+        if "/stock" in lowered_path:
+            from app.domain.services.chat_product_operational_content_service import (
+                ChatProductOperationalContentService,
+            )
+
+            product_code = cls._product_code_from_path(path)
+            title = ChatProductOperationalContentService.get(
+                "presentation",
+                "stock",
+                "titleDefault",
+                default="Estoque do produto",
+            )
+
+            if product_code:
+                title = f"{title} {product_code}"
+
+            location_fallback = ChatProductOperationalContentService.get(
+                "presentation",
+                "stock",
+                "locationFallback",
+                default="não informado",
+            )
+            detail_template = ChatProductOperationalContentService.get(
+                "presentation",
+                "stock",
+                "detailLine",
+                default=(
+                    "Filial {branch}, armazém {warehouse}: atual {current}, "
+                    "disponível {available}, empenhada {committed}. Local: {location}."
+                ),
+            )
+            lines = [
+                detail_template.format(
+                    branch=str(row.get("branch") or row.get("filial") or "—"),
+                    warehouse=str(row.get("warehouse") or row.get("armazem") or "—"),
+                    current=str(row.get("current_quantity") or row.get("current") or "—"),
+                    available=str(
+                        row.get("available_quantity") or row.get("available") or "—"
+                    ),
+                    committed=str(
+                        row.get("committed_quantity") or row.get("committed") or "—"
+                    ),
+                    location=str(
+                        row.get("physical_location")
+                        or row.get("location")
+                        or location_fallback
+                    ),
+                )
+                for row in rows[:8]
+                if isinstance(row, dict)
+            ]
+
+            if cls._has_substantive_lines(lines):
+                return {"titulo": title, "linhas": lines}
+
+        return None
+
+    @classmethod
+    def _preview_rows(cls, data: dict) -> list[dict]:
+        if not isinstance(data, dict):
+            return []
+
+        for key in ("items", "rows", "data"):
+            raw = data.get(key)
+
+            if isinstance(raw, list):
+                return [row for row in raw if isinstance(row, dict)]
+
+        nested = data.get("dados")
+
+        if isinstance(nested, dict):
+            raw = nested.get("rows")
+
+            if isinstance(raw, list):
+                return [row for row in raw if isinstance(row, dict)]
+
+        return []
+
+    @classmethod
+    def _product_code_from_path(cls, path: str) -> str:
+        import re
+
+        match = re.search(r"/products/([^/]+)/", str(path or ""), re.IGNORECASE)
+
+        return str(match.group(1)).strip() if match else ""
 
     @classmethod
     def _generic_line_markers(cls) -> tuple[str, ...]:

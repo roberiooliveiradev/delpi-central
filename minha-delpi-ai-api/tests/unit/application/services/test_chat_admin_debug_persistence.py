@@ -13,11 +13,17 @@ from app.domain.entities.chat_session import ChatSession
 
 
 @pytest.fixture(autouse=True)
+def patch_intelligence_runtime(monkeypatch):
+    from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
+
+    patch_resolve_chat_intelligence_runtime(monkeypatch)
+
+
+@pytest.fixture(autouse=True)
 def patch_chat_settings(monkeypatch):
     for module in (
         "app.application.use_cases.send_chat_message_use_case",
         "app.application.use_cases.stream_chat_message_use_case",
-        "app.domain.services.chat_external_action_direct_response_service",
     ):
         monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", False)
         monkeypatch.setattr(f"{module}.Settings.CHAT_HISTORY_MAX_MESSAGES", 12)

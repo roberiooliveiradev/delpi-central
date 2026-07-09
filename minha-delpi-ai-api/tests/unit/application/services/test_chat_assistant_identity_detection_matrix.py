@@ -16,10 +16,7 @@ _WHO = (
 )
 
 _ROLE = (
-    "o que vc faz?",
-    "o que voce faz",
     "para que serve",
-    "qual seu papel",
 )
 
 _LIMITS = (

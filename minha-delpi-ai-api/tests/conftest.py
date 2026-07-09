@@ -25,3 +25,10 @@ def _disable_web_search_blocks(monkeypatch):
     )
 
     monkeypatch.setattr(ChatWebSearchIntentService, "is_feature_enabled", lambda: False)
+
+
+@pytest.fixture(autouse=True)
+def _patch_chat_intelligence_runtime(monkeypatch):
+    from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
+
+    patch_resolve_chat_intelligence_runtime(monkeypatch)

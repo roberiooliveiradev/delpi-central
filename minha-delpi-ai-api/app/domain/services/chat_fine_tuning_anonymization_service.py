@@ -4,18 +4,19 @@ from __future__ import annotations
 
 import re
 
+from app.domain.services.chat_learning_content_service import ChatLearningContentService
 from app.domain.services.chat_learning_safety_guard import ChatLearningSafetyGuard
 
 _REDACT = "[REDACTED]"
 
-# Reutiliza padrões do safety guard para consistência.
-from app.domain.services import chat_learning_safety_guard as _guard
 
-_PATTERNS: tuple[re.Pattern, ...] = (
-    *_guard._SECRET_PATTERNS,
-    *_guard._PII_PATTERNS,
-    _guard._LONG_DIGIT_RUN,
-)
+def _anonymization_patterns() -> tuple[re.Pattern[str], ...]:
+    """Reutiliza catálogo JSON do safety guard para consistência."""
+    return (
+        *ChatLearningContentService.compile_pattern_list("secretPatterns"),
+        *ChatLearningContentService.compile_pattern_list("piiPatterns"),
+        ChatLearningContentService.compile_pattern("longDigitRun"),
+    )
 
 
 class ChatFineTuningAnonymizationService:
@@ -23,7 +24,7 @@ class ChatFineTuningAnonymizationService:
     def anonymize(cls, text: str) -> str:
         content = str(text or "")
 
-        for pattern in _PATTERNS:
+        for pattern in _anonymization_patterns():
             content = pattern.sub(_REDACT, content)
 
         return content.strip()

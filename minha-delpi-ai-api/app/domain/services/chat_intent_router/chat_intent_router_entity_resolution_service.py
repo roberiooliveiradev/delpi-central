@@ -23,6 +23,27 @@ class ChatIntentRouterEntityResolutionService:
         return ChatSnapshotOperationalFocus.get(working)
 
     @classmethod
+    def _filtered_working_memory_params(
+        cls,
+        message: str,
+        workspace_context: dict | None,
+    ) -> dict[str, str]:
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        params = dict(cls.working_memory_entities(workspace_context))
+
+        if ChatProductQueryIntentService.looks_like_scope_reset_operational_query(message):
+            params.pop("productCode", None)
+        elif "productCode" in params and not ChatProductQueryIntentService.should_inherit_product_code(
+            message
+        ):
+            params.pop("productCode", None)
+
+        return params
+
+    @classmethod
     def resolve_entities_from_memory(
         cls,
         message: str,
@@ -37,11 +58,8 @@ class ChatIntentRouterEntityResolutionService:
             ChatReferenceResolutionService,
         )
 
-        wm_entities = cls.working_memory_entities(workspace_context)
+        wm_entities = cls._filtered_working_memory_params(message, workspace_context)
         params: dict[str, str] = dict(wm_entities)
-
-        if ChatProductQueryIntentService.looks_like_scope_reset_operational_query(message):
-            params.pop("productCode", None)
 
         if previous_messages:
             from app.domain.services.chat_conversation_memory_extractor import (
@@ -105,7 +123,9 @@ class ChatIntentRouterEntityResolutionService:
             ProductionOperationalIntentKind,
         )
 
-        params: dict[str, str] = dict(cls.working_memory_entities(workspace_context))
+        params: dict[str, str] = dict(
+            cls._filtered_working_memory_params(message, workspace_context)
+        )
 
         if memory_entities:
             params.update(memory_entities)

@@ -344,7 +344,7 @@ class ChatCapabilitiesCatalogAnswerService:
 
             output.append("")
 
-        return "\n".join(lines)
+        return output
 
     @classmethod
     def build_action_routes_answer(

@@ -129,8 +129,8 @@ def test_build_context_ocr_image_replaces_placeholder(monkeypatch):
     service.text_extractor = ImagePlaceholderExtractor()
 
     with patch(
-        "app.application.services.chat_attachment_context_service.ChatDocumentVisionService.extract_from_storage_path",
-        return_value={"fullText": "CODIGO 90260199 REV.04", "legible": True},
+        "app.application.services.chat_attachment_context_service.ChatDocumentVisionService.enrich_attachment_excerpt",
+        return_value="CODIGO 90260199 REV.04",
     ):
         result = service.build_context(
             user_id=attachment.user_id,
