@@ -4400,6 +4400,15 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   min-height: 90px;
 }
 
+.dashboard-transformometro .tm-evidence__pdf-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ds-surface-muted);
+  pointer-events: none;
+}
+
 .dashboard-transformometro .tm-evidence__file-icon,
 .dashboard-transformometro .tm-evidence__link {
   display: flex;

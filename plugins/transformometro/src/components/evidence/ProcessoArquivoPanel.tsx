@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 import { Download, Eye, FileText, LinkIcon, Plus, Trash2, Upload } from "lucide-react";
 
 import { EvidenceDropzone } from "./EvidenceDropzone";
+import {
+  EvidenceFilePreviewModal,
+  isImageMime,
+  isPdfMime,
+} from "./EvidenceFilePreviewModal";
 import { PendingUploadCards, type PendingUploadItem } from "./PendingUploadCards";
 import {
   canPreviewProcessoArquivo,
@@ -11,7 +17,6 @@ import {
   fetchProcessoArquivos,
   formatEvidenceFileSize,
   inferProcessoArquivoTypeFromFile,
-  processoArquivoFileUrl,
   uploadProcessoArquivo,
 } from "../../data/api/transformometroProcessoArquivoApi";
 import { FieldLabel } from "@delpi/plugin-ui";
@@ -33,10 +38,6 @@ type Props = {
   hideHeader?: boolean;
 };
 
-function isImage(mime: string | null | undefined): boolean {
-  return !!mime && mime.startsWith("image/");
-}
-
 function ArquivoThumb({
   processoId,
   arquivo,
@@ -51,7 +52,7 @@ function ArquivoThumb({
   useEffect(() => {
     let revoked: string | null = null;
     let active = true;
-    if (isImage(arquivo.tipo_mime)) {
+    if (isImageMime(arquivo.tipo_mime) || isPdfMime(arquivo.tipo_mime)) {
       fetchProcessoArquivoObjectUrl(processoId, arquivo.arquivo_id, getAccessToken)
         .then((url) => {
           if (active) {
@@ -82,12 +83,25 @@ function ArquivoThumb({
     );
   }
 
-  if (isImage(arquivo.tipo_mime)) {
+  if (isImageMime(arquivo.tipo_mime)) {
     return objectUrl ? (
       <img
         className="tm-evidence__img"
         src={objectUrl}
         alt={arquivo.descricao ?? arquivo.nome_arquivo ?? "Arquivo"}
+      />
+    ) : (
+      <div className="tm-evidence__img tm-evidence__img--loading" aria-hidden="true" />
+    );
+  }
+
+  if (isPdfMime(arquivo.tipo_mime)) {
+    return objectUrl ? (
+      <iframe
+        className="tm-evidence__pdf-thumb"
+        src={objectUrl}
+        title={arquivo.descricao ?? arquivo.nome_arquivo ?? "Arquivo PDF"}
+        tabIndex={-1}
       />
     ) : (
       <div className="tm-evidence__img tm-evidence__img--loading" aria-hidden="true" />
@@ -120,7 +134,7 @@ async function downloadArquivo(
     anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   } catch {
-    window.open(processoArquivoFileUrl(processoId, arquivo.arquivo_id), "_blank");
+    // download falhou — preview autenticado exige token; não abrir URL direta da API
   }
 }
 
@@ -130,21 +144,32 @@ function ArquivoCard({
   readOnly,
   getAccessToken,
   onDelete,
+  onPreviewError,
 }: {
   processoId: string;
   arquivo: ProcessoArquivo;
   readOnly: boolean;
   getAccessToken?: () => string | undefined;
   onDelete: (arquivo: ProcessoArquivo) => void;
+  onPreviewError: (message: string) => void;
 }) {
   const previewable = canPreviewProcessoArquivo(arquivo);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
-  function handlePreview() {
+  const fetchPreviewUrl = useCallback(
+    () => fetchProcessoArquivoObjectUrl(processoId, arquivo.arquivo_id, getAccessToken),
+    [processoId, arquivo.arquivo_id, getAccessToken]
+  );
+
+  function handlePreview(event?: MouseEvent<HTMLElement>) {
+    event?.stopPropagation();
     if (arquivo.tipo === "link" && arquivo.url_externa) {
-      window.open(arquivo.url_externa, "_blank");
+      window.open(arquivo.url_externa, "_blank", "noopener,noreferrer");
       return;
     }
-    window.open(processoArquivoFileUrl(processoId, arquivo.arquivo_id), "_blank");
+    if (previewable) {
+      setPreviewOpen(true);
+    }
   }
 
   return (
@@ -153,7 +178,7 @@ function ArquivoCard({
         <button
           type="button"
           className="tm-evidence__thumb-btn"
-          onClick={handlePreview}
+          onClick={(event) => handlePreview(event)}
           aria-label={`Pré-visualizar ${arquivo.nome_arquivo ?? "arquivo"}`}
         >
           <ArquivoThumb
@@ -176,7 +201,7 @@ function ArquivoCard({
           <button
             type="button"
             className="ds-ghost-btn"
-            onClick={handlePreview}
+            onClick={(event) => handlePreview(event)}
             aria-label="Abrir arquivo"
           >
             <Eye size={12} aria-hidden="true" />
@@ -203,6 +228,14 @@ function ArquivoCard({
           </button>
         ) : null}
       </div>
+      <EvidenceFilePreviewModal
+        open={previewOpen}
+        title={arquivo.descricao || arquivo.nome_arquivo || "Arquivo"}
+        mime={arquivo.tipo_mime}
+        fetchObjectUrl={fetchPreviewUrl}
+        onClose={() => setPreviewOpen(false)}
+        onError={onPreviewError}
+      />
     </figure>
   );
 }
@@ -375,6 +408,7 @@ export function ProcessoArquivoPanel({
             readOnly={readOnly}
             getAccessToken={getAccessToken}
             onDelete={(item) => void handleDelete(item)}
+            onPreviewError={onError}
           />
         ))}
       </div>

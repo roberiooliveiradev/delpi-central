@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 import { Download, Eye, FileText, LinkIcon, Plus, Trash2, Upload } from "lucide-react";
 
 import { EvidenceDropzone } from "./EvidenceDropzone";
+import {
+  EvidenceFilePreviewModal,
+  isImageMime,
+  isPdfMime,
+} from "./EvidenceFilePreviewModal";
 import { PendingUploadCards, type PendingUploadItem } from "./PendingUploadCards";
 import {
   canPreviewEvidence,
@@ -11,7 +17,6 @@ import {
   fetchRevisaoEvidencias,
   formatEvidenceFileSize,
   inferEvidenceTypeFromFile,
-  revisaoEvidenceFileUrl,
   uploadRevisaoEvidence,
 } from "../../data/api/transformometroEvidenceApi";
 import { FieldLabel } from "@delpi/plugin-ui";
@@ -32,10 +37,6 @@ type Props = {
   hideHeader?: boolean;
 };
 
-function isImage(mime: string | null | undefined): boolean {
-  return !!mime && mime.startsWith("image/");
-}
-
 function EvidenceThumb({
   revisaoId,
   evidence,
@@ -50,7 +51,7 @@ function EvidenceThumb({
   useEffect(() => {
     let revoked: string | null = null;
     let active = true;
-    if (isImage(evidence.tipo_mime)) {
+    if (isImageMime(evidence.tipo_mime) || isPdfMime(evidence.tipo_mime)) {
       fetchRevisaoEvidenceObjectUrl(revisaoId, evidence.evidencia_id, getAccessToken)
         .then((url) => {
           if (active) {
@@ -81,12 +82,25 @@ function EvidenceThumb({
     );
   }
 
-  if (isImage(evidence.tipo_mime)) {
+  if (isImageMime(evidence.tipo_mime)) {
     return objectUrl ? (
       <img
         className="tm-evidence__img"
         src={objectUrl}
         alt={evidence.descricao ?? evidence.nome_arquivo ?? "Evidência"}
+      />
+    ) : (
+      <div className="tm-evidence__img tm-evidence__img--loading" aria-hidden="true" />
+    );
+  }
+
+  if (isPdfMime(evidence.tipo_mime)) {
+    return objectUrl ? (
+      <iframe
+        className="tm-evidence__pdf-thumb"
+        src={objectUrl}
+        title={evidence.descricao ?? evidence.nome_arquivo ?? "Evidência PDF"}
+        tabIndex={-1}
       />
     ) : (
       <div className="tm-evidence__img tm-evidence__img--loading" aria-hidden="true" />
@@ -119,7 +133,7 @@ async function downloadEvidence(
     anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   } catch {
-    window.open(revisaoEvidenceFileUrl(revisaoId, evidence.evidencia_id), "_blank");
+    // download falhou — preview autenticado exige token; não abrir URL direta da API
   }
 }
 
@@ -129,21 +143,32 @@ function EvidenceCard({
   readOnly,
   getAccessToken,
   onDelete,
+  onPreviewError,
 }: {
   revisaoId: string;
   evidence: RevisaoEvidence;
   readOnly: boolean;
   getAccessToken?: () => string | undefined;
   onDelete: (evidence: RevisaoEvidence) => void;
+  onPreviewError: (message: string) => void;
 }) {
   const previewable = canPreviewEvidence(evidence);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
-  function handlePreview() {
+  const fetchPreviewUrl = useCallback(
+    () => fetchRevisaoEvidenceObjectUrl(revisaoId, evidence.evidencia_id, getAccessToken),
+    [revisaoId, evidence.evidencia_id, getAccessToken]
+  );
+
+  function handlePreview(event?: MouseEvent<HTMLElement>) {
+    event?.stopPropagation();
     if (evidence.tipo === "link" && evidence.url_externa) {
-      window.open(evidence.url_externa, "_blank");
+      window.open(evidence.url_externa, "_blank", "noopener,noreferrer");
       return;
     }
-    window.open(revisaoEvidenceFileUrl(revisaoId, evidence.evidencia_id), "_blank");
+    if (previewable) {
+      setPreviewOpen(true);
+    }
   }
 
   return (
@@ -152,7 +177,7 @@ function EvidenceCard({
         <button
           type="button"
           className="tm-evidence__thumb-btn"
-          onClick={handlePreview}
+          onClick={(event) => handlePreview(event)}
           aria-label={`Pré-visualizar ${evidence.nome_arquivo ?? "evidência"}`}
         >
           <EvidenceThumb
@@ -175,7 +200,7 @@ function EvidenceCard({
           <button
             type="button"
             className="ds-ghost-btn"
-            onClick={handlePreview}
+            onClick={(event) => handlePreview(event)}
             aria-label="Abrir evidência"
           >
             <Eye size={12} aria-hidden="true" />
@@ -202,6 +227,14 @@ function EvidenceCard({
           </button>
         ) : null}
       </div>
+      <EvidenceFilePreviewModal
+        open={previewOpen}
+        title={evidence.descricao || evidence.nome_arquivo || "Evidência"}
+        mime={evidence.tipo_mime}
+        fetchObjectUrl={fetchPreviewUrl}
+        onClose={() => setPreviewOpen(false)}
+        onError={onPreviewError}
+      />
     </figure>
   );
 }
@@ -368,6 +401,7 @@ export function RevisaoEvidencePanel({
             readOnly={readOnly}
             getAccessToken={getAccessToken}
             onDelete={(item) => void handleDelete(item)}
+            onPreviewError={onError}
           />
         ))}
       </div>
