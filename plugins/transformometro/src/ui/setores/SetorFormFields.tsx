@@ -72,9 +72,7 @@ export function SetorFormFields({ form, options, onChange }: Props) {
                 checked={form.filiais.includes(filial.id)}
                 onChange={() => toggleFilial(filial.id)}
               />
-              <span>
-                {filial.id} — {filial.label}
-              </span>
+              <span>{filial.label}</span>
             </label>
           ))}
         </div>

@@ -116,7 +116,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate, embedded = f
       headerHint: C.unidades,
       render: (row) =>
         (row.filiais ?? [])
-          .map((filialId) => `${filialId} — ${filialLabels.get(filialId) ?? filialId}`)
+          .map((filialId) => filialLabels.get(filialId) ?? "—")
           .join(", ") || "—",
     },
     {

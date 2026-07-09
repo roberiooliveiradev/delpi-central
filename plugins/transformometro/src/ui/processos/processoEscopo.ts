@@ -53,6 +53,55 @@ export function defaultSetorIdsForFilial(
   return first ? [first.id] : [];
 }
 
+type SetorDisplayRef = Pick<ProcessoInstanciaSetor, "nome_setor">;
+
+type FilialDisplayRef = {
+  nome_filial?: string;
+};
+
+export function formatSetorDisplayName(setor: SetorDisplayRef | null | undefined): string {
+  const name = (setor?.nome_setor ?? "").trim();
+  return name || "—";
+}
+
+export function formatFilialDisplayName(filial: FilialDisplayRef | null | undefined): string {
+  const name = (filial?.nome_filial ?? "").trim();
+  return name || "—";
+}
+
+export function formatInstanciaSetoresDisplay(
+  instancia: Pick<ProcessoInstanciaSetor, "nome_setor"> & {
+    setores?: ProcessoInstanciaSetor[];
+    codigo_setor?: string;
+    setor_id?: string;
+    nome_setor?: string;
+  }
+): string {
+  if (instancia.setores?.length) {
+    const names = instancia.setores
+      .map((setor) => formatSetorDisplayName(setor))
+      .filter((name) => name !== "—");
+    return names.length ? names.join("; ") : "—";
+  }
+  return formatSetorDisplayName(instancia);
+}
+
+export function formatInstanciaUnidadeDisplay(
+  instancia: FilialDisplayRef & {
+    todas_filiais_ativas?: boolean;
+    codigo_filial?: string;
+    filial_id?: string | null;
+  },
+  activeFilialCount = 1
+): string {
+  if (instancia.todas_filiais_ativas) {
+    const suffix =
+      activeFilialCount > 1 ? ` (${activeFilialCount} unidades ativas)` : "";
+    return `Todas as unidades ativas${suffix}`;
+  }
+  return formatFilialDisplayName(instancia);
+}
+
 export function formatProcessoEscopoRead(
   processo: Processo,
   activeFilialCount: number
@@ -60,18 +109,15 @@ export function formatProcessoEscopoRead(
   const setores = processo.setores ?? [];
   const departamentos =
     setores.length > 0
-      ? setores
-          .map((setor: ProcessoInstanciaSetor) =>
-            `${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor ?? ""}`.trim()
-          )
-          .join("; ")
-      : processo.setor_ids?.join(", ") ?? "—";
+      ? setores.map((setor) => formatSetorDisplayName(setor)).join("; ")
+      : "—";
 
   if (processo.todas_filiais_ativas) {
-    const suffix =
-      activeFilialCount > 1 ? ` (${activeFilialCount} unidades ativas)` : "";
     return {
-      unidades: `Todas as unidades ativas${suffix}`,
+      unidades: formatInstanciaUnidadeDisplay(
+        { todas_filiais_ativas: true },
+        activeFilialCount
+      ),
       departamentos,
     };
   }
@@ -79,10 +125,8 @@ export function formatProcessoEscopoRead(
   const filiais = processo.filiais ?? [];
   const unidades =
     filiais.length > 0
-      ? filiais
-          .map((filial) => `${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial ?? ""}`.trim())
-          .join("; ")
-      : processo.filial_ids?.join(", ") ?? "—";
+      ? filiais.map((filial) => formatFilialDisplayName(filial)).join("; ")
+      : "—";
 
   return { unidades, departamentos };
 }

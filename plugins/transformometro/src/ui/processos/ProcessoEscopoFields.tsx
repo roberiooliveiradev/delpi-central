@@ -122,9 +122,7 @@ export function ProcessoEscopoFields({
                     disabled={disabled}
                     onChange={() => toggleFilial(filial.id)}
                   />
-                  <span>
-                    {filial.id} — {filial.label}
-                  </span>
+                  <span>{filial.label}</span>
                 </label>
               );
             })}

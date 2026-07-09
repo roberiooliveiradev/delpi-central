@@ -12,7 +12,7 @@ type Props = {
 export function SetorReadView({ setor, filialLabels }: Props) {
   const unidades =
     (setor.filiais ?? [])
-      .map((filialId) => `${filialId} — ${filialLabels.get(filialId) ?? filialId}`)
+      .map((filialId) => filialLabels.get(filialId) ?? "—")
       .join(", ") || "—";
 
   return (

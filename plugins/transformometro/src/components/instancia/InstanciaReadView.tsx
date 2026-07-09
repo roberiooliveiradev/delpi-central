@@ -3,6 +3,10 @@ import { MelhoriaFaseBadge } from "../../components/melhoria/MelhoriaFaseBadge";
 import { MelhoriaFasePipeline } from "../../components/melhoria/MelhoriaFasePipeline";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
+import {
+  formatInstanciaSetoresDisplay,
+  formatInstanciaUnidadeDisplay,
+} from "../../ui/processos/processoEscopo";
 import { renderTableStatus } from "../../utils/tablePresentation";
 
 const I = TM_HELP_TOOLTIPS.instancias;
@@ -12,19 +16,8 @@ type Props = {
   options: OptionsData;
 };
 
-function formatSetores(instancia: ProcessoInstancia): string {
-  if (instancia.setores?.length) {
-    return instancia.setores
-      .map((setor) => `${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor ?? ""}`.trim())
-      .join("; ");
-  }
-  return `${instancia.codigo_setor ?? instancia.setor_id ?? ""} — ${instancia.nome_setor ?? ""}`.trim();
-}
-
 export function InstanciaReadView({ instancia, options }: Props) {
-  const unidade = instancia.todas_filiais_ativas
-    ? `Todas as unidades ativas (${options.filiais.length})`
-    : `${instancia.codigo_filial ?? instancia.filial_id} — ${instancia.nome_filial ?? ""}`.trim();
+  const unidade = formatInstanciaUnidadeDisplay(instancia, options.filiais.length);
 
   return (
     <div className="tm-instancia-read">
@@ -46,7 +39,7 @@ export function InstanciaReadView({ instancia, options }: Props) {
         </div>
         <div>
           <dt><FieldLabel className="tm-field__label" label="Departamentos" hint={I.setores} /></dt>
-          <dd>{formatSetores(instancia) || "—"}</dd>
+          <dd>{formatInstanciaSetoresDisplay(instancia)}</dd>
         </div>
         <div>
           <dt><FieldLabel className="tm-field__label" label="Título" hint={I.rotulo} /></dt>
