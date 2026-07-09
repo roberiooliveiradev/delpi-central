@@ -17,8 +17,30 @@ describe("postProcessMermaidPreviewSvg", () => {
     const svg = `<svg viewBox="0 0 200 100"><rect style="fill:#ffffff;stroke:none" width="200" height="100"/></svg>`;
     const processed = postProcessMermaidPreviewSvg(svg, true);
 
-    expect(processed).toContain("fill:#1e293b");
     expect(processed).toContain('fill="#111827"');
     expect(processed).not.toContain("#ffffff");
+    expect(processed).not.toContain("fill:#ffffff");
+  });
+
+  it("corrige estilo embutido do mermaid com seletor por id", () => {
+    const svg = [
+      '<svg id="mermaid-1" viewBox="0 0 320 180">',
+      "<style>#mermaid-1 .background { fill: #ffffff; }</style>",
+      '<rect class="background" width="320" height="180"/>',
+      "</svg>",
+    ].join("");
+    const processed = postProcessMermaidPreviewSvg(svg, true);
+
+    expect(processed).toContain("fill: #111827");
+    expect(processed).toContain('data-tm="tm-mermaid-theme-overrides"');
+    expect(processed).not.toContain("fill: #ffffff");
+  });
+
+  it("normaliza fundo claro em hex curto (#ffff)", () => {
+    const svg = `<svg viewBox="0 0 100 80"><rect fill="#ffff" width="100" height="80"/></svg>`;
+    const processed = postProcessMermaidPreviewSvg(svg, true);
+
+    expect(processed).toContain('fill="#111827"');
+    expect(processed).not.toContain("#ffff");
   });
 });

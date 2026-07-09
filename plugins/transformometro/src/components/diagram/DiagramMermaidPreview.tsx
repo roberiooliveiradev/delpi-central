@@ -65,9 +65,15 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
     };
   }, [code, isDark, reactId]);
 
+  const themeClass = isDark ? "tm-diagram-mermaid--dark" : "tm-diagram-mermaid--light";
+
   if (error) {
     return (
-      <div className={["tm-diagram-mermaid tm-diagram-mermaid--error", className].filter(Boolean).join(" ")}>
+      <div
+        className={["tm-diagram-mermaid tm-diagram-mermaid--error", themeClass, className]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {error}
       </div>
     );
@@ -75,7 +81,11 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
 
   if (!svg) {
     return (
-      <div className={["tm-diagram-mermaid tm-diagram-mermaid--loading", className].filter(Boolean).join(" ")}>
+      <div
+        className={["tm-diagram-mermaid tm-diagram-mermaid--loading", themeClass, className]
+          .filter(Boolean)
+          .join(" ")}
+      >
         Gerando preview…
       </div>
     );
@@ -83,11 +93,7 @@ export function DiagramMermaidPreview({ code, className }: DiagramMermaidPreview
 
   return (
     <div
-      className={[
-        "tm-diagram-mermaid",
-        isDark ? "tm-diagram-mermaid--dark" : "tm-diagram-mermaid--light",
-        className,
-      ]
+      className={["tm-diagram-mermaid", themeClass, className]
         .filter(Boolean)
         .join(" ")}
       dangerouslySetInnerHTML={{ __html: svg }}

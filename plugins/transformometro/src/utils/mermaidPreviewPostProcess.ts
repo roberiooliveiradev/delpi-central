@@ -5,7 +5,10 @@ const DARK_CLUSTER_STROKE = "#475569";
 const DARK_LABEL_COLOR = "#e2e8f0";
 
 const LIGHT_FILL_VALUE =
-  /#(?:fff(?:fff)?|ffffff|fefefe|f8fafc|f1f5f9|e2e8f0)\b|white\b/i;
+  /#(?:fff(?:fff)?|ffff|ffffff|fefefe|f8fafc|f1f5f9|e2e8f0|ececff|ffffde|fafafa)\b|white\b|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\)/i;
+
+const MERMAID_STYLE_LIGHT_FILL =
+  /(\.background[^\{]*\{[^}]*?fill\s*:\s*)(#[0-9a-f]{3,8}|white|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))/gi;
 
 type ViewBox = { x: number; y: number; width: number; height: number };
 
@@ -33,10 +36,61 @@ function setSvgCanvasStyle(svg: string, canvasColor: string, isDark: boolean): s
   });
 }
 
+function isLightFill(value: string): boolean {
+  return LIGHT_FILL_VALUE.test(String(value || "").trim());
+}
+
 function appendStyleBlock(svg: string, css: string): string {
-  const block = `<style type="text/css"><![CDATA[${css}]]></style>`;
-  if (svg.includes(block)) return svg;
-  return svg.replace(/<svg([^>]*)>/i, `<svg$1>${block}`);
+  const marker = "tm-mermaid-theme-overrides";
+  if (svg.includes(marker)) return svg;
+  const block = `<style type="text/css" data-tm="${marker}"><![CDATA[${css}]]></style>`;
+  if (svg.includes("</svg>")) {
+    return svg.replace("</svg>", `${block}</svg>`);
+  }
+  return `${svg}${block}`;
+}
+
+function patchEmbeddedMermaidStyles(svg: string, canvasColor: string, isDark: boolean): string {
+  if (!isDark) return svg;
+  return svg.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, cssBody: string) => {
+    if (cssBody.includes("tm-mermaid-theme-overrides")) return match;
+    const patched = cssBody.replace(MERMAID_STYLE_LIGHT_FILL, (_rule, prefix: string) => {
+      return `${prefix}${canvasColor}`;
+    });
+    if (patched === cssBody) return match;
+    return match.replace(cssBody, patched);
+  });
+}
+
+function parseNumericAttr(value: string | undefined): number | null {
+  if (!value) return null;
+  const parsed = Number.parseFloat(String(value).replace(/[^\d.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function rethemeFullViewBoxRects(svg: string, canvasColor: string): string {
+  const viewBox = parseViewBox(svg);
+  if (!viewBox) return svg;
+
+  return svg.replace(/<rect\b([^>]*?)\/?>/gi, (match, attrs: string) => {
+    const width = parseNumericAttr(attrs.match(/\bwidth\s*=\s*["']([^"']+)["']/i)?.[1]);
+    const height = parseNumericAttr(attrs.match(/\bheight\s*=\s*["']([^"']+)["']/i)?.[1]);
+    if (width == null || height == null) return match;
+    if (Math.abs(width - viewBox.width) > 2 || Math.abs(height - viewBox.height) > 2) {
+      return match;
+    }
+
+    let nextAttrs = attrs;
+    if (/\bfill\s*=\s*["'][^"']*["']/i.test(nextAttrs)) {
+      nextAttrs = nextAttrs.replace(/\bfill\s*=\s*["'][^"']*["']/i, `fill="${canvasColor}"`);
+    } else {
+      nextAttrs += ` fill="${canvasColor}"`;
+    }
+    if (!/tm-mermaid-canvas-bg/.test(nextAttrs)) {
+      nextAttrs += ` class="tm-mermaid-canvas-bg"`;
+    }
+    return `<rect${nextAttrs}>`;
+  });
 }
 
 function insertCanvasBackgroundRect(svg: string, canvasColor: string): string {
@@ -68,7 +122,7 @@ function normalizeLightRectFills(svg: string, canvasColor: string, isDark: boole
 
     if (/\bfill\s*=\s*["'][^"']*["']/i.test(nextAttrs)) {
       nextAttrs = nextAttrs.replace(/\bfill\s*=\s*["']([^"']*)["']/i, (_fillMatch, fillValue: string) => {
-        if (!LIGHT_FILL_VALUE.test(fillValue)) return `fill="${fillValue}"`;
+        if (!isLightFill(fillValue)) return `fill="${fillValue}"`;
         return `fill="${targetColor}"`;
       });
     }
@@ -78,7 +132,7 @@ function normalizeLightRectFills(svg: string, canvasColor: string, isDark: boole
         if (!/fill\s*:/i.test(styleValue)) return `style="${styleValue}"`;
         const nextStyle = styleValue.replace(/fill\s*:\s*[^;]+/gi, (fillRule: string) => {
           const color = fillRule.split(":")[1]?.trim() ?? "";
-          if (!LIGHT_FILL_VALUE.test(color)) return fillRule;
+          if (!isLightFill(color)) return fillRule;
           return `fill:${targetColor}`;
         });
         return `style="${nextStyle}"`;
@@ -138,8 +192,26 @@ svg.tm-mermaid-svg--dark .edgeLabel foreignObject div {
   color: ${DARK_LABEL_COLOR} !important;
   background: transparent !important;
 }
-svg.tm-mermaid-svg--dark .root > g > rect:first-of-type {
+svg.tm-mermaid-svg--dark .root > g > rect:first-of-type,
+svg.tm-mermaid-svg--dark .background,
+svg.tm-mermaid-svg--dark rect.background,
+svg.tm-mermaid-svg--dark > g > rect:first-of-type {
   fill: ${canvasColor} !important;
+}
+svg.tm-mermaid-svg--dark .node rect,
+svg.tm-mermaid-svg--dark .nodes rect,
+svg.tm-mermaid-svg--dark .label-container,
+svg.tm-mermaid-svg--dark .basic.label-container {
+  fill: ${DARK_CLUSTER_FILL} !important;
+  stroke: ${DARK_CLUSTER_STROKE} !important;
+}
+svg.tm-mermaid-svg--dark .node foreignObject,
+svg.tm-mermaid-svg--dark .node foreignObject div,
+svg.tm-mermaid-svg--dark .nodeLabel foreignObject div,
+svg.tm-mermaid-svg--dark .label foreignObject div {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: ${DARK_LABEL_COLOR} !important;
 }
 `;
 }
@@ -154,6 +226,8 @@ export function postProcessMermaidPreviewSvg(svg: string, isDark: boolean): stri
     isDark ? "tm-mermaid-svg tm-mermaid-svg--dark" : "tm-mermaid-svg tm-mermaid-svg--light"
   );
   output = setSvgCanvasStyle(output, canvas, isDark);
+  output = patchEmbeddedMermaidStyles(output, canvas, isDark);
+  output = rethemeFullViewBoxRects(output, canvas);
   output = insertCanvasBackgroundRect(output, canvas);
   output = normalizeLightRectFills(output, canvas, isDark);
   output = appendStyleBlock(output, buildThemeCss(isDark, canvas));

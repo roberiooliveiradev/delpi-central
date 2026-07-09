@@ -7073,6 +7073,17 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   background-color: var(--tm-diagram-canvas-bg) !important;
 }
 
+.dashboard-transformometro .tm-diagram-mermaid--dark svg rect.background,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg .background {
+  fill: var(--tm-diagram-canvas-bg) !important;
+}
+
+.dashboard-transformometro .tm-diagram-mermaid--dark svg .node foreignObject,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg .node foreignObject div {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
 .dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject,
 .dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject div {
   overflow: visible !important;
