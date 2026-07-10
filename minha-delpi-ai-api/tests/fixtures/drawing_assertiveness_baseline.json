@@ -34,6 +34,16 @@
       "maxCriticalErrors": 0,
       "allowedStatuses": ["approved", "approved_with_notes"],
       "notes": "Revisão OCR sem titleBlock — pendente, não crítico"
+    },
+    "90261893": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes"],
+      "notes": "50250279 termoencolhível OCR — não intermediate_extra"
+    },
+    "90263396": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes"],
+      "notes": "titleBlock com tabela BOM — revisão pendente"
     }
   }
 }
