@@ -98,6 +98,10 @@ cp infra/.env.prod.example infra/.env
 ./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build minha-delpi-chat dashboard-commercial
 
+# Todos os dashboards ou só *-production (aspas evitam expansão do shell)
+./infra/scripts/up-prod-sequential.sh --no-cache --fase mfe --build 'dashboard-*'
+./infra/scripts/up-prod-sequential.sh --no-cache --fase mfe --build '*-production'
+
 # Serviços pesados separados
 ./infra/scripts/up-prod-sequential.sh --cpu --heavy --build languagetool searxng
 ```

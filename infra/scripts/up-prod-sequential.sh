@@ -7,6 +7,8 @@
 #   ./infra/scripts/up-prod-sequential.sh --fase core --build
 #   ./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
 #   ./infra/scripts/up-prod-sequential.sh --fase mfe --build minha-delpi-chat controle-retrabalhos
+#   ./infra/scripts/up-prod-sequential.sh --no-cache --fase mfe --build 'dashboard-*'
+#   ./infra/scripts/up-prod-sequential.sh --no-cache --fase mfe --build '*-production'
 #   ./infra/scripts/up-prod-sequential.sh --cpu --fase chat --build
 #   ./infra/scripts/up-prod-sequential.sh --heavy --build languagetool searxng
 #
@@ -18,6 +20,9 @@ set -euo pipefail
 
 COMPOSE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 REPO_ROOT="$(cd "$COMPOSE_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=compose-filter-services.sh
+source "$SCRIPT_DIR/compose-filter-services.sh"
 cd "$COMPOSE_DIR"
 
 BUILD=false
@@ -53,7 +58,7 @@ usage() {
   echo "  --fase FASE   Limita a uma fase"
   echo "  --list        Lista ordem e sai"
   echo "  --dry-run     Só imprime comandos"
-  echo "  SERVICO ...   Restringe à lista (com --fase; não use com tudo)"
+  echo "  SERVICO ...   Restringe à lista (com --fase; glob: 'dashboard-*', '*-production')"
   echo ""
   echo "Compose: docker-compose.yml + .env (+ prod.cpu.yml se --cpu)"
 }
@@ -160,50 +165,38 @@ compose_profiles_for() {
   esac
 }
 
-filter_services() {
-  local -n src=$1
-  local -a out=()
-  if [[ ${#EXTRA_SERVICES[@]} -eq 0 ]]; then
-    out=("${src[@]}")
-  else
-    local name want
-    for want in "${EXTRA_SERVICES[@]}"; do
-      for name in "${src[@]}"; do
-        if [[ "$name" == "$want" ]]; then
-          out+=("$name")
-        fi
-      done
-    done
-    if [[ ${#out[@]} -eq 0 ]]; then
-      echo "Nenhum serviço da lista bate com: ${EXTRA_SERVICES[*]}" >&2
-      exit 1
-    fi
+append_filtered_phase() {
+  local -n phase_arr=$1
+  local -a plan_ref=()
+  local -n plan_out=$2
+  local output
+  output="$(compose_filter_phase_services "${phase_arr[@]}")" || exit 1
+  if [[ -n "$output" ]]; then
+    mapfile -t plan_ref <<< "$output"
+    plan_out+=("${plan_ref[@]}")
   fi
-  printf '%s\n' "${out[@]}"
 }
 
 build_plan() {
   local -a plan=()
   case "$FASE" in
-    core) mapfile -t plan < <(filter_services FASE_CORE) ;;
-    remote) mapfile -t plan < <(filter_services FASE_REMOTE) ;;
-    mfe) mapfile -t plan < <(filter_services FASE_MFE) ;;
-    api) mapfile -t plan < <(filter_services FASE_API) ;;
-    chat) mapfile -t plan < <(filter_services FASE_CHAT) ;;
-    heavy) mapfile -t plan < <(filter_services FASE_HEAVY) ;;
-    gpu) mapfile -t plan < <(filter_services FASE_GPU) ;;
+    core) append_filtered_phase FASE_CORE plan ;;
+    remote) append_filtered_phase FASE_REMOTE plan ;;
+    mfe) append_filtered_phase FASE_MFE plan ;;
+    api) append_filtered_phase FASE_API plan ;;
+    chat) append_filtered_phase FASE_CHAT plan ;;
+    heavy) append_filtered_phase FASE_HEAVY plan ;;
+    gpu) append_filtered_phase FASE_GPU plan ;;
     tudo)
       if [[ ${#EXTRA_SERVICES[@]} -gt 0 ]]; then
         echo "Com serviços extras, use --fase (não 'tudo')." >&2
         exit 1
       fi
-      mapfile -t plan < <(
-        filter_services FASE_CORE
-        filter_services FASE_CHAT
-        filter_services FASE_REMOTE
-        filter_services FASE_MFE
-        filter_services FASE_API
-      )
+      append_filtered_phase FASE_CORE plan
+      append_filtered_phase FASE_CHAT plan
+      append_filtered_phase FASE_REMOTE plan
+      append_filtered_phase FASE_MFE plan
+      append_filtered_phase FASE_API plan
       if [[ "$INCLUDE_HEAVY" == true ]]; then
         plan+=("${FASE_HEAVY[@]}")
       fi
@@ -302,7 +295,12 @@ run_compose_up() {
   "${cmd[@]}"
 }
 
-mapfile -t PLAN < <(build_plan)
+plan_output="$(build_plan)" || exit 1
+if [[ -z "$plan_output" ]]; then
+  echo "Nada a subir." >&2
+  exit 0
+fi
+mapfile -t PLAN <<< "$plan_output"
 TOTAL=${#PLAN[@]}
 
 if [[ "$TOTAL" -eq 0 ]]; then
