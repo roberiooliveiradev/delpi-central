@@ -11,7 +11,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
-export function VisualDataViewInspector() {
+export function VisualDataViewInspector({ pane = false }: { pane?: boolean }) {
   const { selected, blocks, updateSelected } = useComunicadoEditor();
 
   if (!selected || !isDataViewBlockType(selected.type)) return null;
@@ -19,7 +19,7 @@ export function VisualDataViewInspector() {
   const sourceOptions = dataSourceOptionsForInspector(blocks, selected.id);
 
   return (
-    <DeckPropertySection title="Conexão de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewBinding}>
+    <DeckPropertySection pane={pane} title="Conexão de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewBinding}>
       {selected.type === "chart_view" ? (
         <p className="td-deck-inspector__meta">Gráfico: {chartTypeLabel(selected.chartType)}</p>
       ) : (

@@ -4,6 +4,7 @@
 @import "./styles/shape.css";
 @import "./styles/menu.css";
 @import "./styles/chart-catalog.css";
+@import "./styles/format-pane.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

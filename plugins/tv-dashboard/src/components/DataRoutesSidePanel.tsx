@@ -135,7 +135,7 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
           <ArrowLeft size={16} aria-hidden="true" />
           Voltar ao catálogo
         </button>
-        <DeckPropertySection title="Configurar fonte" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.sourceConfig}>
+        <DeckPropertySection pane title="Configurar fonte" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.sourceConfig}>
           <p className="td-deck-inspector__meta">{pickedRoute.label}</p>
           <DeckField id="td-data-source-label" label="Rótulo">
             <input id="td-data-source-label" value={label} onChange={(event) => setLabel(event.target.value)} />

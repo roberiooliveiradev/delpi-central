@@ -6,7 +6,7 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { comunicadoBlockSummary, comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DeckPropertySection } from "./DeckPropertySection";
 
-export function ComunicadoLayersPanel() {
+export function ComunicadoLayersPanel({ pane = true }: { pane?: boolean }) {
   const {
     blocks,
     selectedIds,
@@ -31,7 +31,12 @@ export function ComunicadoLayersPanel() {
   }
 
   return (
-    <DeckPropertySection title="Camadas" hint="Selecione ou reordene elementos. Shift+clique para multi-seleção no palco.">
+    <DeckPropertySection
+      pane={pane}
+      title="Lista de camadas"
+      hint="Selecione ou reordene elementos. Shift+clique para multi-seleção no palco."
+      defaultOpen
+    >
       {layers.length === 0 ? (
         <p className="td-subtitle">Nenhum elemento no slide.</p>
       ) : (

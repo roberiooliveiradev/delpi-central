@@ -1,6 +1,6 @@
-import { Database, Layers, MousePointer2, PanelRightClose } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui/index";
-import { useEffect, useState } from "react";
+import { ChevronLeft, Database, Layers, MousePointer2 } from "lucide-react";
+import { FormatPaneShell } from "@delpi/plugin-ui/index";
+import { useEffect, useMemo, useState } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DataRoutesSidePanel } from "../DataRoutesSidePanel";
@@ -11,16 +11,28 @@ import { ComunicadoLayersPanel } from "./ComunicadoLayersPanel";
 type Labels = Record<string, string>;
 type SideTab = "element" | "layers" | "data";
 
+const PANEL_TABS = [
+  { id: "element" as const, label: "Elemento" },
+  { id: "data" as const, label: "Dados" },
+  { id: "layers" as const, label: "Camadas" },
+];
+
+const PANEL_TITLES: Record<SideTab, string> = {
+  element: "Definir elemento",
+  data: "Fontes de dados",
+  layers: "Camadas",
+};
+
 type Props = {
   labels?: Labels;
   /** Dentro do card do palco (não coluna externa do grid). */
   embedded?: boolean;
 };
 
-/** Painel colapsável à direita do palco — propriedades do elemento selecionado. */
+/** Painel lateral estilo PowerPoint — propriedades, dados e camadas. */
 export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
   const { selectedIds, dataPanelOpen, setDataPanelOpen } = useComunicadoEditor();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<SideTab>("element");
 
   useEffect(() => {
@@ -34,8 +46,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
     }
   }, [dataPanelOpen]);
 
-  const hint = TV_DASHBOARD_HELP_TOOLTIPS.tabs.element;
-  const dataHint = TV_DASHBOARD_HELP_TOOLTIPS.tabs.data;
+  const panelTitle = useMemo(() => PANEL_TITLES[tab], [tab]);
 
   function handleTabChange(next: SideTab) {
     setTab(next);
@@ -55,93 +66,76 @@ export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-label="Propriedades do elemento"
+      aria-label="Painel de formatação"
     >
-      <div className="td-deck-side-panel__tab-stack">
-        <HintAction hint={hint} ariaLabel="Ajuda: Elemento" placement="left">
+      {open ? (
+        <FormatPaneShell
+          className="td-deck-side-panel__pane"
+          title={panelTitle}
+          closeLabel="Fechar painel de formatação"
+          onClose={() => setOpen(false)}
+          tabs={PANEL_TABS}
+          activeTabId={tab}
+          onTabChange={(id) => handleTabChange(id as SideTab)}
+          bodyClassName="td-deck-side-panel__pane-body"
+        >
+          {tab === "element" ? (
+            <ComunicadoElementInspector labels={labels} placement="side" />
+          ) : tab === "data" ? (
+            <DataRoutesSidePanel onInserted={() => handleTabChange("element")} />
+          ) : (
+            <ComunicadoLayersPanel />
+          )}
+        </FormatPaneShell>
+      ) : (
+        <div className="td-deck-side-panel__collapsed-rail">
           <button
             type="button"
-            className={`td-deck-side-panel__tab${tab === "element" && open ? " td-deck-side-panel__tab--active" : ""}`}
+            className="td-deck-side-panel__reopen"
+            onClick={() => setOpen(true)}
+            aria-label="Abrir painel de formatação"
+            title="Abrir painel"
+          >
+            <ChevronLeft size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={`td-deck-side-panel__rail-btn${tab === "element" ? " td-deck-side-panel__rail-btn--active" : ""}`}
             onClick={() => {
-              setOpen((value) => (tab === "element" ? !value : true));
+              setOpen(true);
               handleTabChange("element");
             }}
-            aria-expanded={open && tab === "element"}
-            aria-controls="td-deck-element-panel"
+            aria-label="Elemento"
+            title="Definir elemento"
           >
-            {open && tab === "element" ? (
-              <PanelRightClose size={16} aria-hidden="true" />
-            ) : (
-              <MousePointer2 size={16} aria-hidden="true" />
-            )}
-            <span className="td-deck-side-panel__tab-label">Elemento</span>
+            <MousePointer2 size={16} aria-hidden="true" />
           </button>
-        </HintAction>
-        <HintAction hint={dataHint} ariaLabel="Ajuda: Dados" placement="left">
           <button
             type="button"
-            className={`td-deck-side-panel__tab${tab === "data" && open ? " td-deck-side-panel__tab--active" : ""}`}
+            className={`td-deck-side-panel__rail-btn${tab === "data" ? " td-deck-side-panel__rail-btn--active" : ""}`}
             onClick={() => {
               setOpen(true);
               handleTabChange("data");
             }}
-            aria-expanded={open && tab === "data"}
-            aria-controls="td-deck-element-panel"
+            aria-label="Dados"
+            title="Fontes de dados"
           >
             <Database size={16} aria-hidden="true" />
-            <span className="td-deck-side-panel__tab-label">Dados</span>
           </button>
-        </HintAction>
-      </div>
-      {open ? (
-        <div id="td-deck-element-panel" className="td-deck-side-panel__content">
-          <header className="td-deck-side-panel__header">
-            <div className="td-deck-side-panel__tabs" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === "element"}
-                className={`td-deck-side-panel__tab-btn${tab === "element" ? " td-deck-side-panel__tab-btn--active" : ""}`}
-                onClick={() => handleTabChange("element")}
-              >
-                <MousePointer2 size={14} aria-hidden="true" />
-                Elemento
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === "data"}
-                className={`td-deck-side-panel__tab-btn${tab === "data" ? " td-deck-side-panel__tab-btn--active" : ""}`}
-                onClick={() => handleTabChange("data")}
-              >
-                <Database size={14} aria-hidden="true" />
-                Dados
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === "layers"}
-                className={`td-deck-side-panel__tab-btn${tab === "layers" ? " td-deck-side-panel__tab-btn--active" : ""}`}
-                onClick={() => handleTabChange("layers")}
-              >
-                <Layers size={14} aria-hidden="true" />
-                Camadas
-              </button>
-            </div>
-          </header>
-          {tab === "element" ? (
-            <ComunicadoElementInspector labels={labels} placement="side" />
-          ) : tab === "data" ? (
-            <div className="td-deck-side-panel__data">
-              <DataRoutesSidePanel onInserted={() => handleTabChange("element")} />
-            </div>
-          ) : (
-            <div className="td-deck-side-panel__layers">
-              <ComunicadoLayersPanel />
-            </div>
-          )}
+          <button
+            type="button"
+            className={`td-deck-side-panel__rail-btn${tab === "layers" ? " td-deck-side-panel__rail-btn--active" : ""}`}
+            onClick={() => {
+              setOpen(true);
+              handleTabChange("layers");
+            }}
+            aria-label="Camadas"
+            title="Camadas"
+          >
+            <Layers size={16} aria-hidden="true" />
+          </button>
         </div>
-      ) : null}
+      )}
     </aside>
   );
 }

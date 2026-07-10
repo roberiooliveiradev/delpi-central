@@ -77,7 +77,7 @@ function ParamFields({
   );
 }
 
-export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem | null }) {
+export function DataBindingInspector({ route, pane = false }: { route: TvDataRouteCatalogItem | null; pane?: boolean }) {
   const {
     selected,
     config,
@@ -133,7 +133,7 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
 
   return (
     <>
-      <DeckPropertySection title="Dados" hint="Parâmetros deste bloco sobrescrevem filtros do slide.">
+      <DeckPropertySection pane={pane} title="Dados" hint="Parâmetros deste bloco sobrescrevem filtros do slide.">
         <p className="td-deck-inspector__meta">{route?.label ?? binding.operationId}</p>
         <div className="td-deck-inspector__actions">
           <button type="button" className="td-btn td-btn--sm" onClick={() => duplicateSelected()}>

@@ -99,9 +99,12 @@ export function ComunicadoElementInspector({
     );
   }
 
+  const pane = placement === "side";
+
   return (
     <DeckInspectorLayout variant={placement}>
       <DeckPropertySection
+        pane={pane}
         title={labels.comunicadoBlocks ?? "Elemento selecionado"}
         hint={E.panel}
       >
@@ -113,8 +116,8 @@ export function ComunicadoElementInspector({
           <p className="td-deck-inspector__meta">Tipo: {selected.type}</p>
         )}
 
-        {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} /> : null}
-        {!multiSelect && isViewBlock ? <VisualDataViewInspector /> : null}
+        {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} pane={pane} /> : null}
+        {!multiSelect && isViewBlock ? <VisualDataViewInspector pane={pane} /> : null}
 
         {!multiSelect && isShapeBlock ? (
           <>
@@ -190,7 +193,7 @@ export function ComunicadoElementInspector({
       ) : null}
 
       {!multiSelect ? (
-        <DeckPropertySection title="Animação de entrada" hint={E.entranceAnimation}>
+        <DeckPropertySection pane={pane} title="Animação de entrada" hint={E.entranceAnimation}>
           <DeckField id="td-entrance-kind" label="Efeito" hint={E.entranceAnimation}>
             <select
               id="td-entrance-kind"
@@ -263,7 +266,7 @@ export function ComunicadoElementInspector({
       ) : null}
 
       {!multiSelect ? (
-        <DeckPropertySection title="Posição e tamanho" hint={E.position}>
+        <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position}>
           <div className="td-deck-frame-grid">
             {(selected.type === "shape" && isPointShapeKind(selected.shape)
               ? (["x", "y"] as const)
@@ -306,7 +309,7 @@ export function ComunicadoElementInspector({
         </DeckPropertySection>
       ) : null}
 
-      <DeckPropertySection title="Ações" hint={E.layerUp}>
+      <DeckPropertySection pane={pane} title="Ações" hint={E.layerUp}>
         <DeckActionRow>
           {!multiSelect ? (
             <>

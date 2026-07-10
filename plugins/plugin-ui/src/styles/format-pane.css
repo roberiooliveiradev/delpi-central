@@ -1,0 +1,127 @@
+/* Painel lateral estilo PowerPoint — tokens --delpi-ui-* / tema do host */
+.delpi-ui-format-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--delpi-ui-surface, var(--td-surface, #fff));
+  color: var(--delpi-ui-text, var(--td-text, #111));
+}
+
+.delpi-ui-format-pane__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--td-border, #e2e8f0));
+}
+
+.delpi-ui-format-pane__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--delpi-ui-text, var(--td-text, #111));
+}
+
+.delpi-ui-format-pane__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--delpi-ui-muted, var(--td-muted, #64748b));
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.delpi-ui-format-pane__close:hover {
+  color: var(--delpi-ui-text, var(--td-text, #111));
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--td-accent, #2563eb)) 10%, transparent);
+}
+
+.delpi-ui-format-pane__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  flex-shrink: 0;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--td-border, #e2e8f0));
+}
+
+.delpi-ui-format-pane__tab {
+  position: relative;
+  margin: 0;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--delpi-ui-muted, var(--td-muted, #64748b));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.delpi-ui-format-pane__tab:hover {
+  color: var(--delpi-ui-text, var(--td-text, #111));
+}
+
+.delpi-ui-format-pane__tab--active {
+  color: var(--delpi-ui-accent, var(--td-accent, #2563eb));
+  border-bottom-color: var(--delpi-ui-accent, var(--td-accent, #2563eb));
+}
+
+.delpi-ui-format-pane__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0 12px;
+  scrollbar-width: thin;
+}
+
+.delpi-ui-format-pane__section {
+  border-bottom: 1px solid color-mix(in srgb, var(--delpi-ui-border, var(--td-border, #e2e8f0)) 65%, transparent);
+}
+
+.delpi-ui-format-pane__section-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--td-text, #111));
+  user-select: none;
+}
+
+.delpi-ui-format-pane__section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.delpi-ui-format-pane__section-summary::before {
+  content: "▸ ";
+  display: inline-block;
+  width: 1em;
+  color: var(--delpi-ui-muted, var(--td-muted, #64748b));
+  font-size: 10px;
+}
+
+.delpi-ui-format-pane__section[open] > .delpi-ui-format-pane__section-summary::before {
+  content: "▾ ";
+}
+
+.delpi-ui-format-pane__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 14px 14px;
+}

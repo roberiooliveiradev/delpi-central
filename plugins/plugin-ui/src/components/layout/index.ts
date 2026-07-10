@@ -166,6 +166,15 @@ export {
   type FormGridProps,
 } from "./FormGrid";
 export {
+  FormatPaneSection,
+  type FormatPaneSectionProps,
+} from "./FormatPaneSection";
+export {
+  FormatPaneShell,
+  type FormatPaneShellProps,
+  type FormatPaneTab,
+} from "./FormatPaneShell";
+export {
   FormActions,
   createDashboardFormActions,
   formActionsBemClasses,
