@@ -13,8 +13,8 @@
     "xlsx": "^0.18.5",
     "@originjs/vite-plugin-federation": "^1.4.1",
     "lucide-react": "^0.576.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "react-router-dom": "^7.13.1",
     "recharts": "^3.7.0"
   },

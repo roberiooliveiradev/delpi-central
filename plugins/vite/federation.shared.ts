@@ -4,6 +4,9 @@
  * Doc: plugins/plugin-ui/docs/module-federation.md
  */
 import path from "node:path";
+import { REACT_PINNED_VERSION } from "./reactPinnedVersion";
+
+export { REACT_PINNED_VERSION } from "./reactPinnedVersion";
 
 /** URL do remoteEntry servido pelo container delpi-plugin-ui (via gateway). */
 export const PLUGIN_UI_REMOTE_ENTRY = "/apps/plugin-ui/assets/remoteEntry.js";
@@ -16,10 +19,20 @@ export { federationReactProxyFixPlugin } from "./federationReactProxyFix";
 /** URL do remoteEntry em dev local (plugin-ui rodando com npm run dev). */
 export const PLUGIN_UI_DEV_REMOTE_ENTRY = `http://localhost:${PLUGIN_UI_DEV_PORT}/apps/plugin-ui/assets/remoteEntry.js`;
 
-/** Singleton MF — versão explícita para nested remote plugin-ui (semver MF). */
+/** Singleton MF — mesma versão exata em portal + MFEs + plugin-ui (evita React #527). */
 export const FEDERATION_SHARED_REACT = {
-  react: { singleton: true, requiredVersion: "^19.0.0", version: "19.2.0" },
-  "react-dom": { singleton: true, requiredVersion: "^19.0.0", version: "19.2.0" },
+  react: {
+    singleton: true,
+    strictVersion: true,
+    requiredVersion: REACT_PINNED_VERSION,
+    version: REACT_PINNED_VERSION,
+  },
+  "react-dom": {
+    singleton: true,
+    strictVersion: true,
+    requiredVersion: REACT_PINNED_VERSION,
+    version: REACT_PINNED_VERSION,
+  },
   "lucide-react": { singleton: true, version: "0.0.0" },
 } as const;
 
