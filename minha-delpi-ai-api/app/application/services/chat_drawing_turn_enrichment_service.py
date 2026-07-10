@@ -66,7 +66,7 @@ class ChatDrawingTurnEnrichmentService:
             message=message,
             attachment_ids=attachment_ids,
         ):
-            return tool_context
+            return cls._suppress_analyser_presentations(tool_context)
 
         product_code = (
             tool_context.get("drawingPdfExtractSummary", {}).get("productCode")
@@ -125,7 +125,7 @@ class ChatDrawingTurnEnrichmentService:
         )
 
         if not payload:
-            return tool_context
+            return cls._suppress_analyser_presentations(tool_context)
 
         merged = dict(tool_context)
         merged["drawingAnalysisMode"] = True
@@ -136,7 +136,15 @@ class ChatDrawingTurnEnrichmentService:
             if value is not None:
                 merged[key] = value
 
-        return merged
+        return cls._suppress_analyser_presentations(merged)
+
+    @classmethod
+    def _suppress_analyser_presentations(cls, tool_context: dict) -> dict:
+        from app.domain.services.chat_drawing_analyser_presentation_suppression_service import (
+            ChatDrawingAnalyserPresentationSuppressionService,
+        )
+
+        return ChatDrawingAnalyserPresentationSuppressionService.apply(tool_context)
 
     @classmethod
     def resolve_report_direct_answer(cls, tool_context: dict | None) -> str | None:

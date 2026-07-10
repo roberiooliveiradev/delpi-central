@@ -147,6 +147,12 @@ describe("assistantProseRendering", () => {
         metadata: {
           path: "/products/90260140/analyser",
           presentation: { type: "tree", title: "Estrutura", root: { id: "90260140" } },
+          dashboardPresentation: {
+            type: "dashboard",
+            title: "Painel consolidado",
+            panels: [],
+          },
+          renderPlan: { segments: [{ kind: "dashboard", slot: "primary" }] },
           humanizedSummary: { titulo: "Ficha", linhas: [] },
         },
       },
@@ -161,6 +167,9 @@ describe("assistantProseRendering", () => {
     });
 
     expect(stripped[0].metadata?.presentation).toBeUndefined();
+    expect(stripped[0].metadata?.dashboardPresentation).toBeUndefined();
+    expect(stripped[0].metadata?.renderPlan).toBeUndefined();
+    expect(stripped[0].metadata?.suppressClientPresentation).toBe(true);
     expect(stripped[0].metadata?.path).toContain("/analyser");
   });
 });

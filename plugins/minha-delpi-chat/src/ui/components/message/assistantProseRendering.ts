@@ -137,6 +137,8 @@ export function toolCallsForDrawingAnalysisDisplay(
       tablePresentations: _tablePresentations,
       chartPresentation: _chartPresentation,
       treePresentation: _treePresentation,
+      kpiPresentation: _kpiPresentation,
+      dashboardPresentation: _dashboardPresentation,
       inspectionTablePresentation: _inspectionTablePresentation,
       profileTablePresentation: _profileTablePresentation,
       humanizedSummary: _humanizedSummary,
@@ -145,12 +147,18 @@ export function toolCallsForDrawingAnalysisDisplay(
       presentationDecision: _presentationDecision,
       dataCoverageNotice: _dataCoverageNotice,
       pagination: _pagination,
+      renderPlan: _renderPlan,
+      dataCommentary: _dataCommentary,
+      dataAnswer: _dataAnswer,
       ...rest
     } = meta;
 
     return {
       ...call,
-      metadata: rest,
+      metadata: {
+        ...rest,
+        suppressClientPresentation: true,
+      },
     };
   });
 }
