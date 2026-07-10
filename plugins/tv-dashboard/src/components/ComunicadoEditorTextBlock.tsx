@@ -120,14 +120,23 @@ export function ComunicadoEditorTextBlock({
   }, [block.id, reportTextEditSelection]);
 
   const commitDraft = useCallback(
-    (runs = contentRunsFromEditableRoot(editorRef.current!)) => {
-      const { runs: contentRuns, href } = partitionTextBlockRunsAndHref(runs);
-      draftRef.current = syncTextBlockFromRuns(contentRuns);
+    (runs?: ReturnType<typeof contentRunsFromEditableRoot>) => {
+      const fromEditor = runs ?? (editorRef.current ? contentRunsFromEditableRoot(editorRef.current) : null);
+      if (fromEditor) {
+        const { runs: contentRuns, href } = partitionTextBlockRunsAndHref(fromEditor);
+        draftRef.current = syncTextBlockFromRuns(contentRuns);
+        updateBlockTextFields(block.id, draftRef.current);
+        updateBlockLink(block.id, href);
+        return;
+      }
       updateBlockTextFields(block.id, draftRef.current);
-      updateBlockLink(block.id, href);
     },
     [block.id, updateBlockLink, updateBlockTextFields],
   );
+
+  const commitPending = useCallback(() => {
+    commitDraft();
+  }, [commitDraft]);
 
   const applyPartialStyleToggle = useCallback(
     (toggleKey: ContentRunStyleToggleKey) => {
@@ -201,10 +210,7 @@ export function ComunicadoEditorTextBlock({
   }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
 
   function exitEditing() {
-    const editor = editorRef.current;
-    if (editor) {
-      commitDraft(contentRunsFromEditableRoot(editor));
-    }
+    commitPending();
     reportTextEditSelection(null);
     setEditingTextId(null);
   }
@@ -221,7 +227,14 @@ export function ComunicadoEditorTextBlock({
     const end = editorRuns.map((run) => run.text).join("").length;
     restoreEditableTextSelection(editor, end, end);
     reportTextEditSelection({ blockId: block.id, start: end, end }, editorRuns);
-  }, [isEditing, block.id, syncEditorHtml, reportTextEditSelection, block]);
+  }, [isEditing, block.id, syncEditorHtml, reportTextEditSelection]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    return () => {
+      commitPending();
+    };
+  }, [isEditing, commitPending]);
 
   useLayoutEffect(() => {
     if (!isEditing) return;
@@ -243,6 +256,7 @@ export function ComunicadoEditorTextBlock({
       applyListToggle,
       applyNamedStyleToggle,
       refreshSelectionState: reportSelectionFromEditor,
+      commitPending,
     });
 
     return () => registerTextEditorBridge(block.id, null);
@@ -254,6 +268,7 @@ export function ComunicadoEditorTextBlock({
     applyNamedStyleToggle,
     reportSelectionFromEditor,
     registerTextEditorBridge,
+    commitPending,
   ]);
 
   if (isEditing) {
@@ -298,6 +313,10 @@ export function ComunicadoEditorTextBlock({
               }
               if (event.key === "Enter") {
                 event.preventDefault();
+                if (block.type === "heading" && !event.shiftKey) {
+                  exitEditing();
+                  return;
+                }
                 insertLineBreak();
                 return;
               }

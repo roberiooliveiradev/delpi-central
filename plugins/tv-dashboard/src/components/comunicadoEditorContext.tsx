@@ -143,10 +143,21 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const configRef = useRef(config);
   configRef.current = config;
   const textEditorBridgesRef = useRef<Map<string, TextEditorBridge>>(new Map());
+  const editingTextIdRef = useRef<string | null>(editingTextId);
+  editingTextIdRef.current = editingTextId;
+
+  const flushActiveTextEdit = useCallback((blockId?: string | null) => {
+    const activeId = blockId ?? editingTextIdRef.current;
+    if (!activeId) return;
+    textEditorBridgesRef.current.get(activeId)?.commitPending?.();
+  }, []);
 
   const selectedId = selectedIds[selectedIds.length - 1] ?? null;
 
   const setSelectedId = useCallback((id: string | null) => {
+    if (editingTextIdRef.current && editingTextIdRef.current !== id) {
+      flushActiveTextEdit(editingTextIdRef.current);
+    }
     setSelectedIds(id ? [id] : []);
     setEditingTextId((current) => (id === current ? current : null));
     if (!id) {
@@ -155,16 +166,18 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
       setTextEditListSelection(null);
       setTextEditNamedStyleSelection(null);
     }
-  }, []);
+  }, [flushActiveTextEdit]);
 
   const selectBlocksByIds = useCallback((blockIds: string[]) => {
+    flushActiveTextEdit();
     const unique = [...new Set(blockIds.filter(Boolean))];
     setSelectedIds(unique);
     setEditingTextId(null);
-  }, []);
+  }, [flushActiveTextEdit]);
 
   const selectBlock = useCallback(
     (blockId: string, options?: { additive?: boolean }) => {
+      flushActiveTextEdit();
       if (options?.additive) {
         setSelectedIds((current) => {
           const set = new Set(current);
@@ -186,13 +199,14 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
       }
       setEditingTextId(null);
     },
-    [],
+    [flushActiveTextEdit],
   );
 
   const clearSelection = useCallback(() => {
+    flushActiveTextEdit();
     setSelectedIds([]);
     setEditingTextId(null);
-  }, []);
+  }, [flushActiveTextEdit]);
 
   const isBlockSelected = useCallback(
     (blockId: string) => selectedIds.includes(blockId),
@@ -560,6 +574,9 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   }
 
   function setEditingTextIdWithSelection(id: string | null) {
+    if (editingTextIdRef.current && editingTextIdRef.current !== id) {
+      flushActiveTextEdit(editingTextIdRef.current);
+    }
     setEditingTextId(id);
     if (!id) {
       setTextEditSelection(null);

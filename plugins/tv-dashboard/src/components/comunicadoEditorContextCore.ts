@@ -33,6 +33,8 @@ export type TextEditorBridge = {
   applyListToggle: (listType: ComunicadoListType) => void;
   applyNamedStyleToggle: (namedStyle: ComunicadoNamedTextStyle) => void;
   refreshSelectionState: () => void;
+  /** Persiste o rascunho do contentEditable antes de sair do modo edição. */
+  commitPending?: () => void;
 };
 
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
