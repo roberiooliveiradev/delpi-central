@@ -2,6 +2,7 @@ import { createPortal } from "react-dom";
 import { type ReactNode, type RefObject } from "react";
 
 import { useAnchoredPanelPosition } from "./useAnchoredPanelPosition";
+import { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 
 export type AnchoredPanelPortalProps = {
   open: boolean;
@@ -27,18 +28,31 @@ export function AnchoredPanelPortal({
   children,
 }: AnchoredPanelPortalProps) {
   const style = useAnchoredPanelPosition(open, anchorRef, panelRef);
+  const theme = useDelpiUiPortalTheme(open, anchorRef);
 
   if (!open || typeof document === "undefined") return null;
 
   const panelClass =
     variant === "bare"
-      ? className
-      : ["delpi-ui-shape-menu__panel", "delpi-ui-shape-menu__panel--portal", className]
+      ? [theme.hostClassName, className].filter(Boolean).join(" ")
+      : [
+          theme.hostClassName,
+          "delpi-ui-shape-menu__panel",
+          "delpi-ui-shape-menu__panel--portal",
+          className,
+        ]
           .filter(Boolean)
           .join(" ");
 
   return createPortal(
-    <div ref={panelRef} className={panelClass} style={style} role={role} aria-label={ariaLabel}>
+    <div
+      ref={panelRef}
+      className={panelClass}
+      style={{ ...theme.style, ...style }}
+      data-theme={theme.dataTheme}
+      role={role}
+      aria-label={ariaLabel}
+    >
       {children}
     </div>,
     document.body,

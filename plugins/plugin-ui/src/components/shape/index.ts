@@ -1,5 +1,7 @@
 export { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 export type { AnchoredPanelPortalProps } from "./AnchoredPanelPortal";
+export { resolveDelpiUiPortalTheme, DELPI_UI_SHAPE_THEME_HOST_CLASS } from "./delpiUiPortalTheme";
+export { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 export { ColorThemeGrid, ColorStandardRow, ColorSwatch } from "./ColorThemeGrid";
 export { ColorPickerPopover, ColorPickerPopoverTrigger, ShapeFillMenu } from "./ColorPickerPopover";
 export type { ColorPickerPopoverProps, ColorPickerPopoverTriggerProps, ShapeFillMenuProps } from "./ColorPickerPopover";

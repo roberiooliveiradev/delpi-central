@@ -274,6 +274,7 @@
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 6px;
   background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, var(--text, #111111));
   font-size: 11px;
   cursor: pointer;
 }
@@ -373,6 +374,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
 }
 
 .delpi-ui-shape-modal__body {
@@ -403,6 +405,7 @@
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 8px;
   background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -531,4 +534,56 @@
 .delpi-ui-shape-ghost-btn--icon {
   width: 32px;
   height: 32px;
+}
+
+/* Host de tema para portais (claro/escuro) */
+.delpi-ui-shape-theme-host {
+  color: var(--delpi-ui-text, var(--text, #111111));
+  color-scheme: light dark;
+}
+
+.delpi-ui-shape-theme-host[data-theme="dark"],
+:root[data-theme="dark"] .delpi-ui-shape-theme-host {
+  color-scheme: dark;
+}
+
+.delpi-ui-shape-theme-host input,
+.delpi-ui-shape-theme-host select,
+.delpi-ui-shape-theme-host textarea {
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  border-color: var(--delpi-ui-border, var(--border, #e5e7eb));
+}
+
+.delpi-ui-shape-theme-host .delpi-ui-shape-modal__title,
+.delpi-ui-shape-theme-host .delpi-ui-shape-dialog__tab {
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-shape-theme-host .delpi-ui-shape-dialog__tab--active {
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-shape-theme-host .delpi-ui-shape-outline__width {
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-shape-theme-host .delpi-ui-shape-outline__width--active {
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-shape-theme-host .delpi-ui-color-swatch--transparent {
+  background:
+    linear-gradient(45deg, color-mix(in srgb, var(--delpi-ui-muted, #64748b) 35%, transparent) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in srgb, var(--delpi-ui-muted, #64748b) 35%, transparent) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--delpi-ui-muted, #64748b) 35%, transparent) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--delpi-ui-muted, #64748b) 35%, transparent) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .delpi-ui-shape-theme-host:not([data-theme="light"]) {
+    color-scheme: dark;
+  }
 }

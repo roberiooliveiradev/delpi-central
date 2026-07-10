@@ -2,6 +2,8 @@ import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
+import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
+
 export type ModalShellClassNames = {
   overlay: string;
   dialog: string;
@@ -69,6 +71,7 @@ export function ModalShell({
   const onCloseRef = useRef(onClose);
   const hasAutoFocusedRef = useRef(false);
   const structuredHeader = Boolean(classNames.headerText);
+  const portalTheme = useDelpiUiPortalTheme(open);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -142,7 +145,9 @@ export function ModalShell({
   }
 
   const dialogClass = [classNames.dialog, className].filter(Boolean).join(" ");
-  const overlayClass = [overlayClassName, classNames.overlay].filter(Boolean).join(" ");
+  const overlayClass = [overlayClassName, classNames.overlay, portalTheme.hostClassName]
+    .filter(Boolean)
+    .join(" ");
 
   const titleNode = (
     <h2 id={titleId} className={classNames.title}>
@@ -160,11 +165,8 @@ export function ModalShell({
   return createPortal(
     <div
       className={overlayClass}
-      data-theme={
-        typeof document !== "undefined"
-          ? document.documentElement.getAttribute("data-theme") ?? undefined
-          : undefined
-      }
+      style={portalTheme.style}
+      data-theme={portalTheme.dataTheme ?? undefined}
       onClick={onClose}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
