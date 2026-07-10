@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, ImagePlus } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -22,10 +22,7 @@ import {
   type FlowchartEditorHandle,
 } from "@delpi/plugin-ui/index";
 import type { MergedRevisaoDiagram } from "../../types/diagram";
-
-const FlowchartEditor = lazy(() =>
-  import("./TransformometroFlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
-);
+import { FlowchartEditor } from "./TransformometroFlowchartEditor";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
@@ -179,15 +176,13 @@ export function RevisaoDiagramSection({
         title="Diagrama da revisão"
         subtitle="Overlay as-is / to-be sobre o mapa macro do processo."
       >
-        <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
-          <FlowchartEditor
-            ref={editorRef}
-            value={editable}
-            onChange={readOnly ? undefined : setEditable}
-            readOnly={readOnly}
-            diffNodeIds={merged.baseline_diff ?? undefined}
-          />
-        </Suspense>
+        <FlowchartEditor
+          ref={editorRef}
+          value={editable}
+          onChange={readOnly ? undefined : setEditable}
+          readOnly={readOnly}
+          diffNodeIds={merged.baseline_diff ?? undefined}
+        />
 
         <details className="tm-diagram-section__preview" open={false}>
           <summary>Preview Mermaid (mesclado)</summary>

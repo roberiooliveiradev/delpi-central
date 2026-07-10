@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, FileCode2, ShieldCheck, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -21,10 +21,7 @@ import {
   type FlowchartEditorHandle,
 } from "@delpi/plugin-ui/index";
 import { DiagramValidationPanel } from "./DiagramValidationPanel";
-
-const FlowchartEditor = lazy(() =>
-  import("./TransformometroFlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
-);
+import { FlowchartEditor } from "./TransformometroFlowchartEditor";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -165,14 +162,12 @@ export function ProcessoDiagramSection({
         title="Diagrama macro"
         subtitle="Mapa canônico do fluxo end-to-end deste processo-mestre."
       >
-        <Suspense fallback={<p className="ds-hint">Carregando editor…</p>}>
-          <FlowchartEditor
-            ref={editorRef}
-            value={flowchart}
-            onChange={readOnly ? undefined : setFlowchart}
-            readOnly={readOnly}
-          />
-        </Suspense>
+        <FlowchartEditor
+          ref={editorRef}
+          value={flowchart}
+          onChange={readOnly ? undefined : setFlowchart}
+          readOnly={readOnly}
+        />
 
         <DiagramValidationPanel report={validation} loading={validating} />
 

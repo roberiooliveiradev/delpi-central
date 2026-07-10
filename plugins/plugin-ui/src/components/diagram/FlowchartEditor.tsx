@@ -88,6 +88,10 @@ import {
 import { resolveConnectionHandleIds } from "./utils/diagramConnectionHandles";
 import { exportReactFlowDiagramPng } from "./utils/exportFlowchartImage";
 import {
+  findDiagramWorkspaceHost,
+  isDiagramWorkspaceHostVisible,
+} from "./utils/diagramHostVisibility";
+import {
   DIAGRAM_FIT_VIEW_OPTIONS,
   getDiagramFitNodes,
 } from "./utils/diagramViewFit";
@@ -592,12 +596,14 @@ function FlowchartEditorInner({
     if (!element) return;
 
     const fitSignature = `${value.nodes.length}:${value.edges.length}:${value.lanes?.length ?? 0}:${diagramFitSignature}:${readOnly ? 1 : 0}:${isDark ? 1 : 0}`;
-    const shouldRefit = !canvasInitialFitRef.current || lastFitSignatureRef.current !== fitSignature;
 
-    const tryInitialFit = () => {
+    const tryInitialFit = (force = false) => {
+      if (!isDiagramWorkspaceHostVisible(element)) return;
       const { width, height } = element.getBoundingClientRect();
       if (width < 8 || height < 8) return;
-      if (!shouldRefit && canvasInitialFitRef.current) return;
+      const needsFit =
+        force || !canvasInitialFitRef.current || lastFitSignatureRef.current !== fitSignature;
+      if (!needsFit) return;
       canvasInitialFitRef.current = true;
       lastFitSignatureRef.current = fitSignature;
       window.requestAnimationFrame(() => {
@@ -607,22 +613,37 @@ function FlowchartEditorInner({
 
     tryInitialFit();
 
-    const resizeObserver = new ResizeObserver(tryInitialFit);
+    const resizeObserver = new ResizeObserver(() => tryInitialFit());
     resizeObserver.observe(element);
 
     const intersectionObserver = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          tryInitialFit();
+          tryInitialFit(true);
         }
       },
       { threshold: 0.01 }
     );
     intersectionObserver.observe(element);
 
+    const workspaceHost = findDiagramWorkspaceHost(element);
+    let workspaceObserver: MutationObserver | null = null;
+    if (workspaceHost) {
+      workspaceObserver = new MutationObserver(() => {
+        if (!isDiagramWorkspaceHostVisible(element)) return;
+        canvasInitialFitRef.current = false;
+        tryInitialFit(true);
+      });
+      workspaceObserver.observe(workspaceHost, {
+        attributes: true,
+        attributeFilter: ["aria-hidden", "class"],
+      });
+    }
+
     return () => {
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
+      workspaceObserver?.disconnect();
     };
   }, [activeTab, diagramFitSignature, fitDiagramToContent, isDark, readOnly, value.edges.length, value.lanes, value.nodes.length]);
 

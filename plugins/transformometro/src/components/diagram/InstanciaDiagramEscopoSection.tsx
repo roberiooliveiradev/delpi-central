@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -16,9 +16,7 @@ import {
   type FlowchartEscopo,
   type FlowchartV1,
 } from "@delpi/plugin-ui/index";
-const FlowchartEditor = lazy(() =>
-  import("./TransformometroFlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
-);
+import { FlowchartEditor } from "./TransformometroFlowchartEditor";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -165,16 +163,14 @@ export function InstanciaDiagramEscopoSection({
         title="Escopo no diagrama"
         subtitle="Selecione os nós do mapa macro que se aplicam a esta instância."
       >
-        <Suspense fallback={<p className="ds-hint">Carregando canvas…</p>}>
-          <FlowchartEditor
-            value={macro}
-            readOnly
-            selectedScopeIds={selectedScopeIds}
-            onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
-            showTemplates={false}
-            showPreviewTab={false}
-          />
-        </Suspense>
+        <FlowchartEditor
+          value={macro}
+          readOnly
+          selectedScopeIds={selectedScopeIds}
+          onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
+          showTemplates={false}
+          showPreviewTab={false}
+        />
 
         {mermaid ? <DiagramMermaidPreview code={mermaid} /> : null}
 

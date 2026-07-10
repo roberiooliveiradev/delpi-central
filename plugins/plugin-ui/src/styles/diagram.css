@@ -2281,3 +2281,24 @@
 .delpi-ui-flowchart-shell .tm-diagram-validation__simulation, .dashboard-transformometro .tm-diagram-validation__simulation{
   margin-top: 10px;
 }
+
+/* Root do editor — garante visibilidade mesmo se regras filhas vazarem para o shell */
+.delpi-ui-flowchart-shell.tm-diagram-editor,
+.dashboard-transformometro .delpi-ui-flowchart-shell.tm-diagram-editor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  pointer-events: auto;
+  clip: auto;
+  transform: none;
+  background: transparent;
+}
