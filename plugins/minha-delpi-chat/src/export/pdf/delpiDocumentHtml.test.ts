@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { buildDelpiDocumentHtml } from "./delpiDocumentHtml";
+import {
+  buildDelpiDocumentColgroup,
+  resolveDelpiDocumentTableClassName,
+} from "./delpiDocumentTableLayout";
 import type { DelpiDocumentSpec } from "./types";
 
 const tableSpec: DelpiDocumentSpec = {
@@ -46,5 +50,62 @@ describe("delpiDocumentHtml", () => {
 
     expect(html).not.toContain("cert-seal cert-seal--compact");
     expect(html).not.toMatch(/class="cert-seal /);
+  });
+
+  it("aplica perfil compacto de colunas para tabelas de desenho", () => {
+    const html = buildDelpiDocumentHtml(
+      {
+        documentTitle: "Relatório de Análise de Desenho DELPI",
+        tables: [
+          {
+            title: "Estrutura (SG1010)",
+            layoutKey: "structure",
+            columns: [
+              { key: "code", label: "Código" },
+              { key: "description", label: "Descrição" },
+              { key: "quantity", label: "Qtd" },
+              { key: "unit", label: "Unid." },
+              { key: "type", label: "Tipo" },
+              { key: "level", label: "Nível" },
+            ],
+            rows: [
+              {
+                code: "'50222710'",
+                description: "TERM. MAG MATE 18-22AWG",
+                quantity: "1.0",
+                unit: "MI",
+                type: "PI",
+                level: "0",
+              },
+            ],
+          },
+        ],
+      },
+      "https://example.com/logoDelpi.svg",
+    );
+
+    expect(html).toContain('class="cert-table cert-table--dense cert-table--structure"');
+    expect(html).toContain("<colgroup>");
+    expect(html).toContain('width:40%');
+    expect(html).toContain("cert-cell--nowrap");
+    expect(html).toContain("cert-cell--wrap");
+  });
+});
+
+describe("delpiDocumentTableLayout", () => {
+  it("gera colgroup para roteiro e checklist", () => {
+    const guide = buildDelpiDocumentColgroup(
+      [
+        { key: "product", label: "Produto" },
+        { key: "level", label: "Nível" },
+        { key: "operation", label: "Operação" },
+        { key: "center", label: "Centro" },
+        { key: "description", label: "Descrição" },
+      ],
+      "guide",
+    );
+
+    expect(guide).toContain('width:65%');
+    expect(resolveDelpiDocumentTableClassName("checklist")).toContain("cert-table--checklist");
   });
 });

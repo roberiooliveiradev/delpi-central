@@ -83,6 +83,7 @@ function buildDrawingDocumentSpec(
     summaryLines,
     tables: (exportPayload.tables ?? []).map((table) => ({
       title: table.title,
+      layoutKey: table.key,
       columns: table.columns,
       rows: table.rows,
       highlightStatusColumn: true,

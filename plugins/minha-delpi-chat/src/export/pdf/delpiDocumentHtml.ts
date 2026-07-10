@@ -1,4 +1,9 @@
 import { buildDelpiBrandBarHtml, buildDelpiDocumentStyles } from "./delpiDocumentStyles";
+import {
+  buildDelpiDocumentColgroup,
+  resolveDelpiDocumentColumnLayouts,
+  resolveDelpiDocumentTableClassName,
+} from "./delpiDocumentTableLayout";
 import type {
   DelpiDocumentImageSection,
   DelpiDocumentSpec,
@@ -134,26 +139,38 @@ export function buildDelpiDocumentTableSection(table: DelpiDocumentTable): strin
     return "";
   }
 
+  const columnLayouts = resolveDelpiDocumentColumnLayouts(columns, table.layoutKey);
+  const tableClassName = resolveDelpiDocumentTableClassName(table.layoutKey);
+  const colgroup = buildDelpiDocumentColgroup(columns, table.layoutKey);
+
   const header = columns
-    .map((column) => `<th>${escapeDelpiDocumentHtml(String(column.label || column.key || ""))}</th>`)
+    .map((column, index) => {
+      const layout = columnLayouts[index];
+      const classAttr = layout?.className ? ` class="${layout.className}"` : "";
+
+      return `<th${classAttr}>${escapeDelpiDocumentHtml(String(column.label || column.key || ""))}</th>`;
+    })
     .join("");
 
   const body = rows
     .map((row) => {
       const cells = columns
-        .map((column) => {
+        .map((column, index) => {
           const raw = String(row[column.key] ?? "—");
-          let className = "";
+          const layout = columnLayouts[index];
+          const classes = [layout?.className].filter(Boolean);
 
           if (table.highlightStatusColumn && column.key === "status") {
             const lower = raw.toLowerCase();
 
             if (lower.includes("erro") || lower.includes("crítico")) {
-              className = ' class="cert-status--error"';
+              classes.push("cert-status--error");
             } else if (lower === "ok") {
-              className = ' class="cert-status--ok"';
+              classes.push("cert-status--ok");
             }
           }
+
+          const className = classes.length ? ` class="${classes.join(" ")}"` : "";
 
           return `<td${className}>${escapeDelpiDocumentHtml(raw)}</td>`;
         })
@@ -172,7 +189,8 @@ export function buildDelpiDocumentTableSection(table: DelpiDocumentTable): strin
           ? `<h2 class="cert-section__title">${escapeDelpiDocumentHtml(sectionTitle)}</h2>`
           : ""
       }
-      <table class="cert-table">
+      <table class="${tableClassName}">
+        ${colgroup}
         <thead><tr>${header}</tr></thead>
         <tbody>${body}</tbody>
       </table>

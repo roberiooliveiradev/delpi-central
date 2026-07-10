@@ -182,6 +182,33 @@ export function buildDelpiDocumentStyles(): string {
       break-inside: auto;
       page-break-inside: auto;
     }
+    .cert-table--dense th,
+    .cert-table--dense td {
+      padding: 2px 4px;
+      line-height: 1.25;
+      font-size: 7.5pt;
+    }
+    .cert-table--dense th {
+      font-size: 6.5pt;
+      letter-spacing: 0.03em;
+    }
+    .cert-table--inspection th,
+    .cert-table--inspection td {
+      font-size: 7pt;
+    }
+    .cert-cell--nowrap {
+      white-space: nowrap;
+    }
+    .cert-cell--numeric {
+      text-align: center;
+      vertical-align: top;
+    }
+    .cert-cell--wrap {
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      hyphens: auto;
+    }
     .cert-table thead { display: table-header-group; }
     .cert-table tbody { display: table-row-group; }
     .cert-table th, .cert-table td {
@@ -201,8 +228,8 @@ export function buildDelpiDocumentStyles(): string {
       letter-spacing: 0.04em;
     }
     .cert-table tbody tr {
-      break-inside: avoid;
-      page-break-inside: avoid;
+      break-inside: auto;
+      page-break-inside: auto;
     }
     .cert-table tbody tr:nth-child(even) td { background: var(--cert-gray-50); }
     .cert-status--error { color: var(--cert-red); font-weight: 700; }

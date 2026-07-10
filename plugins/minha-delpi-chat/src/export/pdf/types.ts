@@ -4,6 +4,8 @@ export type DelpiDocumentTable = {
   title: string;
   columns: DelpiDocumentColumn[];
   rows: Record<string, unknown>[];
+  /** Chave do perfil de colunas (structure, guide, inspection, checklist, …). */
+  layoutKey?: string;
   /** Destaca coluna status (OK/erro) — relatório de desenho. */
   highlightStatusColumn?: boolean;
 };
