@@ -9,6 +9,7 @@
  * o shim CJS é redirecionado para globalThis.__DELPI_MF_REACT__ quando disponível.
  */
 import type { Plugin } from "vite";
+import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion";
 
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
@@ -64,7 +65,7 @@ const DELPI_MF_REACT_RESOLVE = `${USABLE_REACT_GLOBAL_GUARD}?globalThis.${DELPI_
  * Shims cacheiam `var e=Nu()` na 1ª execução — redireciona para o global canônico.
  */
 export function patchBundledReactConsumerChunk(code: string): string {
-  const importMatch = code.match(/import\{r as (\w+)\}from"\.\/index-[^"]+\.js"/);
+  const importMatch = code.match(/import\{r as (\w+)\}from"\.\/index-[^"?]+\.js(?:\?v=[^"]+)?"/);
   if (!importMatch) {
     return code;
   }
@@ -153,6 +154,42 @@ function isBundledReactCoreChunk(code: string): boolean {
   return code.includes("n.useRef=function");
 }
 
+function mfCacheBustQuery(): string {
+  return `?v=${DELPI_MF_PATCH_VERSION}`;
+}
+
+/** Query ?v= nos imports runtime — contorna Cloudflare immutable stale (mesmo hash pós renderChunk). */
+export function patchMfRuntimeImportCacheBust(code: string): string {
+  const q = mfCacheBustQuery();
+  if (code.includes(`${q}"`) || code.includes(`${q}")`)) {
+    return code;
+  }
+  return code
+    .replace(/from"(\.\/(?:__federation_fn_import-|index-|App-)[^"?]+\.js)"/g, `from"$1${q}"`)
+    .replace(/import\("(\.\/(?:App-|index-|__federation_fn_import-)[^"?]+\.js)"\)/g, `import("$1${q}")`);
+}
+
+export function patchRemoteEntryCacheBust(code: string): string {
+  const q = mfCacheBustQuery();
+  return code.replace(/(\/__federation_expose_[^"?]+\.js)/g, `$1${q}`);
+}
+
+function applyMfChunkPatches(code: string, fileName: string): string {
+  if (fileName.includes("remoteEntry.js")) {
+    return patchRemoteEntryCacheBust(code);
+  }
+  if (fileName.includes("__federation_fn_import")) {
+    return patchMfRuntimeImportCacheBust(patchFederationImportPublishReact(code));
+  }
+  if (isBundledReactCoreChunk(code)) {
+    return patchBundledReactCjsBridge(code);
+  }
+  if (isAppOrExposeChunk(fileName) || fileName.includes("_virtual___federation__")) {
+    return patchMfRuntimeImportCacheBust(patchBundledReactConsumerChunk(code));
+  }
+  return code;
+}
+
 function isAppOrExposeChunk(fileName: string): boolean {
   return /(?:^|\/)App-/.test(fileName) || fileName.includes("__federation_expose_");
 }
@@ -163,34 +200,13 @@ export function federationReactProxyFixPlugin(): Plugin {
     apply: "build",
     enforce: "post",
     renderChunk(code, chunk) {
-      if (chunk.fileName.includes("__federation_fn_import")) {
-        return patchFederationImportPublishReact(patchFederationFlattenModule(code));
-      }
-      if (isBundledReactCoreChunk(code)) {
-        return patchBundledReactCjsBridge(code);
-      }
-      if (isAppOrExposeChunk(chunk.fileName)) {
-        return patchBundledReactConsumerChunk(code);
-      }
-      return null;
+      const patched = applyMfChunkPatches(code, chunk.fileName);
+      return patched === code ? null : patched;
     },
     generateBundle(_outputOptions, bundle) {
       for (const item of Object.values(bundle)) {
         if (item.type !== "chunk") continue;
-
-        if (item.fileName.includes("__federation_fn_import")) {
-          item.code = patchFederationImportPublishReact(patchFederationFlattenModule(item.code));
-          continue;
-        }
-
-        if (isBundledReactCoreChunk(item.code)) {
-          item.code = patchBundledReactCjsBridge(item.code);
-          continue;
-        }
-
-        if (isAppOrExposeChunk(item.fileName)) {
-          item.code = patchBundledReactConsumerChunk(item.code);
-        }
+        item.code = applyMfChunkPatches(item.code, item.fileName);
       }
     },
   };

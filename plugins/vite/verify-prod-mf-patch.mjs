@@ -2,10 +2,14 @@
 /**
  * Valida patches MF em produção (URLs reais — curl não expande *).
  *
+ * Usa ?v= no fetch para contornar Cloudflare immutable stale (cf-cache-status: HIT).
+ *
  * Uso:
  *   node plugins/vite/verify-prod-mf-patch.mjs controle-retrabalhos
  *   node plugins/vite/verify-prod-mf-patch.mjs controle-retrabalhos https://minhadelpi.com.br
  */
+import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.ts";
+
 const appId = process.argv[2];
 const baseUrl = (process.argv[3] ?? "https://minhadelpi.com.br").replace(/\/$/, "");
 
@@ -15,37 +19,51 @@ if (!appId) {
 }
 
 const prefix = `${baseUrl}/apps/${appId}/assets`;
+const cacheBust = `v=${DELPI_MF_PATCH_VERSION}&t=${Date.now()}`;
+
+function assetUrl(file) {
+  return `${prefix}/${file}?${cacheBust}`;
+}
 
 async function fetchText(url) {
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`${url} → HTTP ${res.status}`);
+  }
+  const cf = res.headers.get("cf-cache-status");
+  if (cf === "HIT") {
+    console.warn(`WARN ${url}: cf-cache-status=HIT (purge Cloudflare se o patch falhar)`);
   }
   return res.text();
 }
 
-function extractAsset(remoteEntry, pattern) {
-  const match = remoteEntry.match(pattern);
+function extractAsset(code, pattern) {
+  const match = code.match(pattern);
   return match?.[1] ?? match?.[0] ?? null;
 }
 
+function stripQuery(file) {
+  return file.replace(/\?.*$/, "");
+}
+
 async function main() {
-  const remoteEntry = await fetchText(`${prefix}/remoteEntry.js`);
-  const expose = extractAsset(remoteEntry, /(__federation_expose_App-[^"]+\.js)/);
-  if (!expose) {
+  const remoteEntry = await fetchText(`${prefix}/remoteEntry.js?${cacheBust}`);
+  const exposeRaw = extractAsset(remoteEntry, /(__federation_expose_[^"?]+\.js)/);
+  if (!exposeRaw) {
     throw new Error("remoteEntry sem __federation_expose_App");
   }
+  const expose = stripQuery(exposeRaw);
 
-  const exposeCode = await fetchText(`${prefix}/${expose}`);
-  const fnImport = extractAsset(exposeCode, /(__federation_fn_import-[^"]+\.js)/);
-  const appChunk = extractAsset(exposeCode, /(App-[^"]+\.js)/);
+  const exposeCode = await fetchText(assetUrl(expose));
+  const fnImport = stripQuery(extractAsset(exposeCode, /(__federation_fn_import-[^"?]+\.js)/));
+  const appChunk = stripQuery(extractAsset(exposeCode, /(App-[^"?]+\.js)/));
 
   if (!fnImport || !appChunk) {
     throw new Error(`expose ${expose} sem fn_import ou App chunk`);
   }
 
-  const fnCode = await fetchText(`${prefix}/${fnImport}`);
-  const appCode = await fetchText(`${prefix}/${appChunk}`);
+  const fnCode = await fetchText(assetUrl(fnImport));
+  const appCode = await fetchText(assetUrl(appChunk));
 
   let failed = false;
 
@@ -63,13 +81,21 @@ async function main() {
     console.log(`OK  ${appChunk}: fallback H presente (${appCode.length} bytes)`);
   }
 
+  if (exposeCode.includes(`?v=${DELPI_MF_PATCH_VERSION}`)) {
+    console.log(`OK  ${expose}: imports com ?v=${DELPI_MF_PATCH_VERSION}`);
+  } else {
+    console.warn(`WARN ${expose}: imports sem ?v=${DELPI_MF_PATCH_VERSION} — rebuild MFE necessário`);
+  }
+
   if (failed) {
-    console.error("\nContainer ainda serve bundle antigo ou build sem patch.");
+    console.error("\nOrigem sem patch ou build antigo.");
     console.error("Rebuild: ./infra/scripts/up-prod-sequential.sh --no-cache --fase mfe --build", appId);
+    console.error("Se o build passou verify Docker: purge Cloudflare → /apps/" + appId + "/assets/*");
     process.exit(1);
   }
 
-  console.log("\nOK: patches MF ativos em produção para", appId);
+  console.log("\nOK: patches MF ativos na origem para", appId);
+  console.log("Após deploy com ?v=: purge CF uma vez se browsers ainda falharem.");
 }
 
 main().catch((err) => {

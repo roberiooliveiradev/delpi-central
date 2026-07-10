@@ -9,6 +9,8 @@ import {
   patchBundledReactConsumerChunk,
   patchFederationFlattenModule,
   patchFederationImportPublishReact,
+  patchMfRuntimeImportCacheBust,
+  patchRemoteEntryCacheBust,
   publishDelpiMfReact,
   isUsableReact,
   upgradeUnconditionalReactGlobalPublish,
@@ -94,6 +96,19 @@ function testUpgradeUnconditionalPublish() {
   assert.ok(out.includes("globalThis.__DELPI_MF_REACT__=w[t]"), "upgrade mantém globalThis");
 }
 
+function testMfImportCacheBust() {
+  const raw = String.raw`import{importShared as _}from"./__federation_fn_import-X.js";import("./App-Y.js")`;
+  const out = patchMfRuntimeImportCacheBust(raw);
+  assert.ok(out.includes('__federation_fn_import-X.js?v=4"'), "static import bust");
+  assert.ok(out.includes('import("./App-Y.js?v=4")'), "dynamic import bust");
+}
+
+function testRemoteEntryCacheBust() {
+  const raw = String.raw`y("/apps/foo/assets/__federation_expose_App-ABC.js")`;
+  const out = patchRemoteEntryCacheBust(raw);
+  assert.ok(out.includes("__federation_expose_App-ABC.js?v=4"), "remoteEntry bust");
+}
+
 testFlattenFromObjectAssign();
 testFlattenFromBrokenProxy();
 testFlattenRuntimeStrict();
@@ -102,5 +117,7 @@ testPublishDoesNotOverwritePortalReact();
 testBrokenReactNotUsable();
 testUpgradeUnconditionalPublish();
 testAppChunkReactBridgeFallback();
+testMfImportCacheBust();
+testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 8 testes passaram");
+console.log("OK: federationReactProxyFix — 10 testes passaram");
