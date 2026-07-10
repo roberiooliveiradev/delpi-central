@@ -1,11 +1,12 @@
-import "../../vite/federationShareScopeInit";
 import ReactDOM from "react-dom/client";
-import App, { type AppProps } from "./App";
 import "./index.css";
 
 import { preparePluginUiRemote } from "../../vite/federationShareScope";
+
 await preparePluginUiRemote();
-import { resolveCulturaDelpiRoute } from "./utils/route";
+
+import type { AppProps } from "./App";
+const { default: App } = await import("./App");
 
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
 
@@ -17,8 +18,7 @@ function renderApp(el: HTMLElement, props: AppProps = {}) {
     roots.set(el, root);
   }
 
-  const routeKey = resolveCulturaDelpiRoute(props.pathname);
-  root.render(<App key={routeKey} {...props} />);
+  root.render(<App {...props} />);
 }
 
 export function mount(el: HTMLElement, props: AppProps = {}) {

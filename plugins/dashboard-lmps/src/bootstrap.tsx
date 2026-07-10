@@ -1,14 +1,16 @@
-import "../../vite/federationShareScopeInit";
 import ReactDOM from "react-dom/client";
-import App, { type AppProps } from "./App";
 import "./index.css";
 
 import { preparePluginUiRemote } from "../../vite/federationShareScope";
+
 await preparePluginUiRemote();
+
+import type { AppProps } from "./App";
+const { default: App } = await import("./App");
 
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
 
-export function mount(el: HTMLElement, props: AppProps = {}) {
+function renderApp(el: HTMLElement, props: AppProps = {}) {
   let root = roots.get(el);
 
   if (!root) {
@@ -17,6 +19,14 @@ export function mount(el: HTMLElement, props: AppProps = {}) {
   }
 
   root.render(<App {...props} />);
+}
+
+export function mount(el: HTMLElement, props: AppProps = {}) {
+  renderApp(el, props);
+}
+
+export function updateRoute(el: HTMLElement, props: AppProps = {}) {
+  renderApp(el, props);
 }
 
 export function unmount(el?: HTMLElement) {

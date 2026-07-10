@@ -1,10 +1,11 @@
-import "../../vite/federationShareScopeInit";
 import ReactDOM from "react-dom/client";
-import App from "./App";
 import "./index.css";
 
 import { preparePluginUiRemote } from "../../vite/federationShareScope";
+
 await preparePluginUiRemote();
+
+const { default: App } = await import("./App");
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;

@@ -65,10 +65,10 @@ shared: { ...FEDERATION_SHARED_REACT },
 ```
 
 ```ts
-// bootstrap.tsx — federationShareScopeInit DEVE ser o primeiro import
-import "../../vite/federationShareScopeInit";
+// bootstrap.tsx — preparePluginUiRemote + import() dinâmico de App (ver module-federation.md)
 import { preparePluginUiRemote } from "../../vite/federationShareScope";
 await preparePluginUiRemote();
+const { default: App } = await import("./App");
 ```
 
 ```ts

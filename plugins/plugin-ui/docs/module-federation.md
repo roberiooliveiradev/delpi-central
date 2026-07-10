@@ -102,15 +102,20 @@ export default defineConfig({
 ### Bootstrap
 
 ```ts
-/** Primeiro import — share scope antes de App/páginas que usam @delpi/plugin-ui. */
-import "../../vite/federationShareScopeInit";
+import ReactDOM from "react-dom/client";
+import "./index.css";
 
 import { preparePluginUiRemote } from "../../vite/federationShareScope";
 
+/** Share scope + CSS do plugin-ui antes de carregar App (imports estáticos de App
+ *  são hoistados e puxam @delpi/plugin-ui antes do await preparePluginUiRemote). */
 await preparePluginUiRemote();
+
+import type { AppProps } from "./App";
+const { default: App } = await import("./App");
 ```
 
-`federationShareScopeInit` registra React/lucide do **MFE pai** em `__federation_shared__` na carga do módulo (imports estáticos são hoistados — o `await preparePluginUiRemote()` sozinho chega tarde demais se `App` já foi importado). Depois, `preparePluginUiRemote()` carrega o CSS do remote. **Não** semear React no portal.
+`preparePluginUiRemote()` registra React/lucide em `__federation_shared__` e carrega o CSS do remote. O **`import()` dinâmico de `./App`** é obrigatório — o Vite MF coloca o `await preparePluginUiRemote()` no fim do chunk se `App` for import estático, e o plugin-ui carrega com React duplicado (erro #321). O portal semeia React via `ensurePortalFederationShareScope()` antes de `container.init` (`AppHost`).
 
 ### tsconfig.app.json
 

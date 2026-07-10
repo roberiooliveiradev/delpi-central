@@ -1,8 +1,7 @@
 /**
- * Side-effect: registra React/lucide em __federation_shared__ na carga do módulo.
- *
- * Deve ser o **primeiro** import em bootstrap.tsx dos MFEs federados — imports
- * estáticos de App/páginas puxam @delpi/plugin-ui antes do await preparePluginUiRemote().
+ * @deprecated Use `await import("./App")` após `preparePluginUiRemote()` no bootstrap.
+ * Side-effect só no build — o bundler MF deduplica e executa tarde demais (React #321).
+ * Ver plugins/plugin-ui/docs/module-federation.md § Bootstrap.
  */
 import { ensureMfeFederationShareScope } from "./federationShareScope";
 

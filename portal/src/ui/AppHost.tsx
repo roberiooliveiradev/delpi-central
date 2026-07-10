@@ -29,6 +29,7 @@ import {
   resolveMatchingRoute,
   resolveRouteAlternateUrl,
 } from "./appHostEntry";
+import { ensurePortalFederationShareScope } from "../utils/federationShareScope";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -430,6 +431,8 @@ export const AppHost = () => {
       federatedHostRef.current.innerHTML = "";
 
       try {
+        ensurePortalFederationShareScope();
+
         const container = await loadFederatedContainer(federationEntry);
 
         if (typeof container.init === "function") {

@@ -1,12 +1,15 @@
-import "../../vite/federationShareScopeInit";
 import ReactDOM from "react-dom/client";
-import { PublicErrorBoundary } from "./shell/PublicErrorBoundary";
-import { PublicShell } from "./shell/PublicShell";
 import "./shell/brand-tokens.css";
 import "./shell/shell.css";
 
 import { preparePluginUiRemote } from "../../vite/federationShareScope";
+
 await preparePluginUiRemote();
+
+const [{ PublicErrorBoundary }, { PublicShell }] = await Promise.all([
+  import("./shell/PublicErrorBoundary"),
+  import("./shell/PublicShell"),
+]);
 
 const root = document.getElementById("root");
 if (root) {
