@@ -21,13 +21,12 @@ Se alguma resposta for não, o componente pertence ao plugin específico — nã
 7. Migrar um segundo consumidor ou remover duplicata local
 8. Atualizar migration-catalog.md
 
-### Plugin com `Dockerfile` que importa biblioteca irmã
+### Plugin com `Dockerfile` (consumidor MFE)
 
-1. Registrar markers em `plugins/shared-libraries.manifest.json` (se biblioteca nova).
-2. Adicionar `COPY <biblioteca>/` no Dockerfile — ver `plugins/docker/shared-libraries.Dockerfile.fragment`.
-3. Garantir `context: ../plugins` no `infra/docker-compose*.yml`.
-4. Rodar `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`.
-5. Rodar `python3 scripts/ci/audit_plugin_ui_duplication.py --check` (duplicatas bloqueantes + integração Vite).
+1. Seguir [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md) — **sem** `COPY plugin-ui`.
+2. Compose: `<<: *plugin-ui-federated`.
+3. Rodar `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`.
+4. Rodar `python3 scripts/ci/audit_plugin_ui_duplication.py --check` (duplicatas bloqueantes).
 ```
 
 ## Convenções de código
@@ -55,29 +54,27 @@ Mínimo para componente novo:
 
 ## Integrar em um plugin consumidor
 
-### 1. Alias Vite
+**Padrão atual (jul/2026):** Module Federation — ver [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
+
+### 1. Vite + bootstrap
 
 ```ts
-import path from "node:path";
-
-export default defineConfig({
-  resolve: {
-    alias: {
-      "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
-    },
-    dedupe: ["react", "react-dom"],
-  },
-});
+// vite.config.ts
+remotes: pluginUiRemote(),
+shared: { ...FEDERATION_SHARED_REACT },
 ```
-
-### 2. CSS
 
 ```ts
-// src/main.tsx (ajuste o caminho relativo)
-import "../../plugin-ui/src/styles.css";
+// bootstrap.tsx
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 ```
 
-### 3. Tokens no dashboard
+```ts
+import { HelpTooltip } from "@delpi/plugin-ui/index";
+```
+
+### 2. Tokens no dashboard
 
 ```css
 .dashboard-meu-plugin {
@@ -89,11 +86,11 @@ import "../../plugin-ui/src/styles.css";
 }
 ```
 
-### 4. Textos de ajuda
+### 3. Textos de ajuda
 
 Criar `src/content/helpTooltips.ts` no plugin (padrão `assistant-content` / dashboards).
 
-### 5. Remover duplicata local
+### 4. Remover duplicata local
 
 Apagar `components/HelpTooltip.tsx` (ou equivalente) e atualizar imports para `@delpi/plugin-ui`.
 

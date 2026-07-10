@@ -21,6 +21,7 @@ O registro **não** concede acesso aos usuários — é necessário RBAC depois.
 - Keycloak configurado; usuário autenticado
 - Permissão `apps.manage` **ou** `is_superadmin=true`
 - Container do plugin no Compose (para MFE/iframe com assets)
+- Para MFE: container **`delpi-plugin-ui`** up (remote `@delpi/plugin-ui`) — ver [novo-plugin-mfe-checklist.md](../05-plugin-system/novo-plugin-mfe-checklist.md)
 - Gateway roteando `/apps/<id>/` para o container
 
 ---
@@ -148,6 +149,11 @@ curl -sI http://localhost/apps/strategic-indicators/assets/remoteEntry.js | head
 Deve retornar `200` e `Content-Type` JavaScript, não HTML do Portal.
 
 4. Module Federation: export `mount` / `unmount` no remote.
+5. Remote `@delpi/plugin-ui` acessível (consumidores federados):
+
+```bash
+curl -sI http://localhost/apps/plugin-ui/assets/remoteEntry.js | head -3
+```
 
 ---
 

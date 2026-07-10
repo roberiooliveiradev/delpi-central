@@ -16,14 +16,15 @@ alwaysApply: false
 
 | # | Entrega | Onde |
 |---|---------|------|
+| 0 | **Scaffold MF** — vite, bootstrap, Dockerfile, compose federado | [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) |
 | 1 | **README do plugin** — visão geral, rotas UI, API, permissões, dev, smoke, estrutura | `plugins/{id}/README.md` |
 | 2 | **Doc API** (se consome api-delpi) — endpoints, params, meta, RBAC filial, curl | `api-delpi/docs/api/{id ou módulo}.md` |
 | 3 | **Índice departamental** — seção resumida + link para doc completa | `api-delpi/docs/api/06-modulos-departamentais.md` |
 | 4 | **Referência rápida** — tabela de endpoints | `api-delpi/docs/api/10-referencia-rapida-endpoints.md` |
 | 5 | **Roadmap / spec** — view TOTVS, regras de negócio, validação Fase 0 | `docs/12-roadmap-e-evolucao/{id}/` |
 | 6 | **Inventário plugins** — linha na tabela + backend + caller header + doc link | `docs/08-plugins/README.md` |
-| 7 | **Compose / infra** — serviço no docker-compose + exemplo em `infra/README-ambiente.md` (se aplicável) | `infra/docker-compose*.yml` |
-| 8 | **UI compartilhada** — `@delpi/plugin-ui` para tooltips/labels; sem `HelpTooltip.tsx` local | `plugins-reusable-components.mdc` |
+| 7 | **Compose / infra** — `<<: *plugin-ui-federated`, `depends_on: plugin-ui`, scripts sequenciais | `infra/docker-compose*.yml` |
+| 8 | **UI compartilhada** — `@delpi/plugin-ui/index` via MF; `preparePluginUiRemote()`; sem `HelpTooltip.tsx` local | `plugins-reusable-components.mdc` |
 
 ---
 
@@ -57,11 +58,13 @@ Se o plugin tem rotas SC/ES (ou filiais TOTVS distintas):
 - Omitir plugin do inventário `docs/08-plugins/README.md`
 - Documentação só em comentário de PR (deve persistir no repo)
 - Duplicar `HelpTooltip` ou primitivos de UI que já existem em `@delpi/plugin-ui`
+- Criar MFE com `COPY plugin-ui` no Dockerfile ou sem `preparePluginUiRemote()` — ver [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md)
 
 ---
 
 ## Referências
 
+- [docs/05-plugin-system/novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) — scaffold MF obrigatório
 - [docs/08-plugins/README.md](../docs/08-plugins/README.md)
 - [registrar-plugin.md](../docs/10-guias-operacionais/registrar-plugin.md)
 - [plugins/plugin-ui/README.md](../plugins/plugin-ui/README.md) — componentes reutilizáveis

@@ -14,8 +14,8 @@ alwaysApply: false
 
 | Modo | Quando | Doc |
 |------|--------|-----|
-| **Module Federation** (preferido) | MFEs migrados | [module-federation.md](../plugins/plugin-ui/docs/module-federation.md) |
-| **Alias Vite bundled** (legado) | Demais até rollout Fase 2 | [architecture.md](../plugins/plugin-ui/docs/architecture.md) |
+| **Module Federation** (obrigatório para MFE novo) | Todo plugin MFE | [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) · [module-federation.md](../plugins/plugin-ui/docs/module-federation.md) |
+| **Alias Vite bundled** (legado) | Apenas `@delpi/tv-dashboard-presentation` | [architecture.md](../plugins/plugin-ui/docs/architecture.md) |
 
 Complementa: `plugins-visual-design-system.mdc`, `plugins-frontend-build.mdc`, `clean-code-architecture-guardrails.mdc`.
 
@@ -37,23 +37,33 @@ Catálogo completo: [plugins/plugin-ui/docs/component-catalog.md](../plugins/plu
 
 ## Integração obrigatória no plugin
 
-### Module Federation (MFEs migrados)
+### Module Federation (padrão — todo MFE novo)
 
-Helper: `plugins/vite/federation.shared.ts`
+Checklist completo: [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
+
+Helper: `plugins/vite/federation.shared.ts` + `plugins/vite/federationShareScope.ts`
 
 ```ts
+// vite.config.ts
 remotes: pluginUiRemote(),
-shared: { ...FEDERATION_SHARED_REACT }, // singleton — ver federation.shared.ts
+shared: { ...FEDERATION_SHARED_REACT },
+// federation() ANTES de react()
 ```
 
 ```ts
-// bootstrap.tsx
-import "@delpi/plugin-ui/styles";
+// bootstrap.tsx — antes de qualquer render React
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 ```
 
-Docker: **sem** `COPY plugin-ui`; container runtime `delpi-plugin-ui` + `depends_on` no compose.
+```ts
+// imports de componentes
+import { HelpTooltip } from "@delpi/plugin-ui/index";
+```
 
-### Bundled legado (demais plugins)
+Docker: **sem** `COPY plugin-ui`; `COPY vite ./vite`; container `delpi-plugin-ui` + `<<: *plugin-ui-federated` no compose.
+
+### Bundled legado (somente tv-dashboard-presentation)
 
 #### 1. Alias Vite
 
@@ -145,18 +155,20 @@ Na dúvida: preferir extrair — duplicação entre dashboards é o anti-padrão
 
 ## Checklist antes de merge (plugin UI)
 
-- [ ] Tooltips/labels/abas usam `@delpi/plugin-ui` (não cópia local)?
-- [ ] `styles.css` do pacote importado no `main.tsx`?
+- [ ] Tooltips/labels/abas usam `@delpi/plugin-ui/index` (não cópia local)?
+- [ ] `preparePluginUiRemote()` no `bootstrap.tsx`?
+- [ ] `vite.config.ts` com `pluginUiRemote()` + `FEDERATION_SHARED_REACT`?
 - [ ] Tokens `--delpi-ui-*` mapeados no `.dashboard-{nome}`?
 - [ ] Textos de ajuda em `content/helpTooltips.ts` do plugin?
 - [ ] Novo primitivo transversal documentado em `plugin-ui` (se aplicável)?
 - [ ] `npm run build` do plugin verde?
-- [ ] Consumidor com Docker: `COPY` das bibliotecas + gate `check_plugin_docker_shared_libraries.py --check`?
+- [ ] Docker federado: `COPY vite` + gate `check_plugin_docker_shared_libraries.py --check` (sem `COPY plugin-ui`)?
 
 ---
 
 ## Referências
 
+- [docs/05-plugin-system/novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md)
 - [plugins/plugin-ui/README.md](../plugins/plugin-ui/README.md)
 - [plugins/plugin-ui/docs/architecture.md](../plugins/plugin-ui/docs/architecture.md)
 - [plugins/plugin-ui/docs/contributing.md](../plugins/plugin-ui/docs/contributing.md)

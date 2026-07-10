@@ -576,6 +576,26 @@ Regras:
 - [ ] `/me/apps` retorna o plugin para usuários autorizados.
 - [ ] Portal carrega o plugin sem erro.
 
+**Scaffold técnico (MF + `@delpi/plugin-ui`):** [novo-plugin-mfe-checklist.md](./novo-plugin-mfe-checklist.md).
+
+---
+
+## 23.1 Module Federation e `@delpi/plugin-ui`
+
+MFEs novos **devem** consumir componentes compartilhados via remote runtime (`delpi-plugin-ui`), não via `COPY plugin-ui` no Docker.
+
+| Artefato | Obrigatório |
+|----------|-------------|
+| `vite.config.ts` | `remotes: pluginUiRemote()`, `shared: FEDERATION_SHARED_REACT`, `federation()` antes de `react()` |
+| `bootstrap.tsx` | `await preparePluginUiRemote()` (`plugins/vite/federationShareScope.ts`) |
+| Imports UI | `@delpi/plugin-ui/index` (subpath — nunca bare `@delpi/plugin-ui`) |
+| Dockerfile | `context: ../plugins`, `COPY vite ./vite`, **sem** `COPY plugin-ui` |
+| Compose | `<<: *plugin-ui-federated` |
+
+Referência: `plugins/controle-retrabalhos/`. Doc: [plugins/plugin-ui/docs/module-federation.md](../../plugins/plugin-ui/docs/module-federation.md).
+
+**Anti-padrões:** semear React no portal; alias Vite para source em produção; `export * from "@delpi/plugin-ui/index"`; paths relativos `../plugin-ui/src/...`.
+
 ---
 
 ## 24. Pontos de atenção
@@ -597,6 +617,7 @@ Regras:
 
 ```text
 docs/05-plugin-system/manifesto-plugin.md
+docs/05-plugin-system/novo-plugin-mfe-checklist.md
 docs/05-plugin-system/registro-de-plugin.md
 docs/05-plugin-system/atualizacao-de-manifesto.md
 docs/05-plugin-system/versionamento-e-rollback.md

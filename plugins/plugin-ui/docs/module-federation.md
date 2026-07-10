@@ -43,7 +43,7 @@ Gateway nginx
 | `./index` | `src/index.ts` | `import { KpiCard } from "@delpi/plugin-ui/index"` |
 | `./styles` | `src/styles-entry.ts` | `await import("@delpi/plugin-ui/styles")` |
 
-**Shared singletons:** `react`, `react-dom`, `lucide-react`. O remote `plugin-ui` usa `import: false` — consome React do MFE pai, não bundla cópia própria.
+**Shared singletons:** `react`, `react-dom`, `lucide-react`. O remote consome React do MFE pai via `importShared` — o MFE **deve** chamar `preparePluginUiRemote()` antes de carregar chunks do remote.
 
 Dependências pesadas (`mermaid`, `@xyflow/react`, `jspdf`, …) ficam **no bundle do remote**.
 
@@ -196,6 +196,7 @@ Aceita por plugin-ui: **COPY** · **shared builder** · **`pluginUiRemote()`** n
 
 ## Referências
 
+- [**Checklist novo plugin MFE**](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md)
 - [`plugins/vite/federation.shared.ts`](../vite/federation.shared.ts)
 - [`plugins/plugin-ui/vite.config.ts`](../vite.config.ts)
 - [`plugins/controle-retrabalhos/vite.config.ts`](../../controle-retrabalhos/vite.config.ts)

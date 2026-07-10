@@ -690,6 +690,8 @@ O Portal pode reagir a esses eventos recarregando `/me/apps`.
 
 ## 31. Checklist para novo plugin
 
+Manifesto e registro:
+
 - [ ] Manifesto usa `schemaVersion: "1.0.0"`.
 - [ ] `id` está em lowercase e é estável.
 - [ ] `version` segue SemVer.
@@ -705,12 +707,15 @@ O Portal pode reagir a esses eventos recarregando `/me/apps`.
 - [ ] `/me/apps` retorna o plugin para usuário autorizado.
 - [ ] Portal carrega o plugin sem erro.
 
+**Microfrontend (`type: microfrontend`):** checklist técnico adicional em [novo-plugin-mfe-checklist.md](./novo-plugin-mfe-checklist.md) — Module Federation, `preparePluginUiRemote()`, Dockerfile sem `COPY plugin-ui`, compose `plugin-ui-federated`.
+
 ---
 
 ## 32. Documentos relacionados
 
 ```text
 docs/05-plugin-system/manifesto-plugin.md
+docs/05-plugin-system/novo-plugin-mfe-checklist.md
 docs/05-plugin-system/registro-de-plugin.md
 docs/05-plugin-system/atualizacao-de-manifesto.md
 docs/05-plugin-system/versionamento-e-rollback.md

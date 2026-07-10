@@ -22,24 +22,25 @@ Centraliza primitivos de UI que hoje estão duplicados em dezenas de plugins (ex
 
 ## Quick start
 
-### Module Federation (recomendado — MFEs migrados)
+### Module Federation (obrigatório — todo MFE)
 
-Guia completo: **[docs/module-federation.md](./docs/module-federation.md)**.
+Guia completo: **[docs/module-federation.md](./docs/module-federation.md)** · Checklist novo plugin: **[../../docs/05-plugin-system/novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md)**.
 
 ```ts
 // vite.config.ts — helper plugins/vite/federation.shared.ts
 remotes: pluginUiRemote(),
-shared: ["react", "react-dom", "lucide-react"],
+shared: { ...FEDERATION_SHARED_REACT },
 ```
 
 ```ts
 // bootstrap.tsx
-import "@delpi/plugin-ui/styles";
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 ```
 
-Docker: subir `delpi-plugin-ui` antes do consumidor (`depends_on` no compose).
+Docker: subir `delpi-plugin-ui` antes do consumidor (`<<: *plugin-ui-federated` no compose).
 
-### Bundled legado (demais plugins até rollout)
+### Bundled legado (descontinuado para plugin-ui)
 
 #### 1. Alias no consumidor (Vite)
 

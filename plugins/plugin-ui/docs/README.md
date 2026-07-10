@@ -4,6 +4,7 @@
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [**novo-plugin-mfe-checklist.md**](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md) | Checklist oficial para criar MFE (vite, bootstrap, Docker) |
 | [architecture.md](./architecture.md) | Princípios, escopo, tokens CSS, Vite bundled vs MF |
 | [module-federation.md](./module-federation.md) | Remote runtime, Docker, consumidor federado, rollout |
 | [component-catalog.md](./component-catalog.md) | Inventário de exports, props e exemplos |

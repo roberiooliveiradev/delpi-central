@@ -83,10 +83,10 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/tv-dashboard` | `tv-dashboard` | microfrontend | plugin | `/apps/tv-dashboard` | `delpi-tv-dashboard` |
 | `plugins/public-hub` | `public-hub` | microfrontend | plugin | `/p/*` (rotas públicas) | `delpi-public-hub` |
 | `plugins/tv-dashboard-presentation` | — | biblioteca TS | — | (alias Vite nos MFEs) | — |
-| `plugins/plugin-ui` | — | biblioteca TS | — | (alias Vite nos MFEs) | — |
+| `plugins/plugin-ui` | — | remote MF (`delpi-plugin-ui`) | — | `/apps/plugin-ui/assets/*` | `delpi-plugin-ui` |
 | `plugins/docker/` | — | docs Docker MFE | — | fragmento COPY bib. compartilhadas | — |
 
-**`@delpi/plugin-ui`:** componentes React compartilhados (tooltips, labels, abas). Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md) · Migração: [plugins/plugin-ui/docs/migration-catalog.md](../../plugins/plugin-ui/docs/migration-catalog.md).
+**`@delpi/plugin-ui`:** componentes React compartilhados (tooltips, labels, abas), servidos como **remote Module Federation** (`delpi-plugin-ui`). Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md) · MF: [plugins/plugin-ui/docs/module-federation.md](../../plugins/plugin-ui/docs/module-federation.md) · **Novo MFE:** [../05-plugin-system/novo-plugin-mfe-checklist.md](../05-plugin-system/novo-plugin-mfe-checklist.md).
 
 **Bibliotecas compartilhadas no Docker:** manifesto [plugins/shared-libraries.manifest.json](../../plugins/shared-libraries.manifest.json) · gate `scripts/ci/check_plugin_docker_shared_libraries.py`.
 
@@ -201,11 +201,25 @@ Lista completa: seed + manifestos em `plugins/*/`.
 
 ## 7. Criar novo plugin
 
-1. Copiar estrutura de um **plugin** (`dashboard-commercial`, `minha-delpi-chat`) ou de um **módulo** (`maintenance`) conforme o papel desejado — ver [plugin-vs-module.md](../05-plugin-system/plugin-vs-module.md).
-2. Definir `delpi.manifest.json` (schema `1.0.0` hoje; `1.1.0` quando a Fase 0 do roadmap estiver em produção).
-3. Build → registrar na Core API.
-4. Adicionar serviço `delpi-<id>` no `docker-compose.dev.yml`.
-5. **Documentar** — ver regra `plugins-documentation.mdc` (README do plugin + doc API se consumir api-delpi + entrada em `docs/08-plugins/README.md`).
-6. Validar `remoteEntry.js` via gateway.
+### Microfrontend (padrão jul/2026)
 
-Guia operacional: [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md).
+Siga o checklist técnico completo: **[../05-plugin-system/novo-plugin-mfe-checklist.md](../05-plugin-system/novo-plugin-mfe-checklist.md)**.
+
+Resumo:
+
+1. Copiar estrutura de **`controle-retrabalhos`** ou **`dashboard-commercial`** (Module Federation + `@delpi/plugin-ui` remote).
+2. `vite.config.ts`: `pluginUiRemote()` + `FEDERATION_SHARED_REACT`; `bootstrap.tsx`: `await preparePluginUiRemote()`.
+3. Dockerfile: `context: ../plugins`, `COPY vite ./vite` — **sem** `COPY plugin-ui`.
+4. Compose: anchor `<<: *plugin-ui-federated` + `container_name: delpi-<id>`.
+5. Manifesto `type: microfrontend`, `ui.renderMode: federated`, `entry` → `remoteEntry.js`.
+6. Build → registrar na Core API → RBAC.
+7. **Documentar** — regra `plugins-documentation.mdc` (README + doc API + entrada neste inventário).
+8. Deploy: `./infra/scripts/up-prod-sequential.sh` (fase `remote` → `mfe` → `core`).
+9. Validar `remoteEntry.js` do MFE **e** de `plugin-ui` via gateway.
+
+### Outros tipos
+
+- **Módulo** shell: copiar `maintenance` ou `strategic-indicators` — [plugin-vs-module.md](../05-plugin-system/plugin-vs-module.md).
+- **iframe** / **backend-only**: ver [microfrontends.md](../05-plugin-system/microfrontends.md) e manifesto.
+
+Guia operacional de registro: [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md).

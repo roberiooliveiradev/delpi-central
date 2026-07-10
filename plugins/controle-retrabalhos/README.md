@@ -152,3 +152,9 @@ src/
   constants/        # filiais, tema de gráficos
   utils/            # datas, formatação, export Excel
 ```
+
+---
+
+## Referência Module Federation
+
+Este plugin é o **piloto canônico** para MFEs federados com `@delpi/plugin-ui`. Ao criar um plugin novo, copie a estrutura daqui e siga [docs/05-plugin-system/novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).

@@ -4,22 +4,25 @@
 
 Plugins MFE importam pacotes irmãos via alias Vite ou Module Federation. O build local funciona porque `plugins/` está completo no disco. O **Docker** só enxerga o que o `Dockerfile` copia — esquecer uma pasta quebra o `vite build` no CI/produção.
 
-## `@delpi/plugin-ui` — Module Federation (runtime)
+## `@delpi/plugin-ui` — Module Federation (padrão obrigatório)
 
-**Recomendado para MFEs migrados** (piloto: `controle-retrabalhos`).
+**Todo MFE novo** consome `@delpi/plugin-ui` como remote runtime — rollout concluído (jul/2026).
 
 | Aspecto | Detalhe |
 |---------|---------|
 | Container | `delpi-plugin-ui` (nginx:alpine) |
 | Remote | `/apps/plugin-ui/assets/remoteEntry.js` |
-| Consumidor | `remotes: pluginUiRemote()` — **sem** `COPY plugin-ui` |
-| Doc | [plugin-ui/docs/module-federation.md](../plugin-ui/docs/module-federation.md) |
+| Consumidor | `remotes: pluginUiRemote()` + `await preparePluginUiRemote()` — **sem** `COPY plugin-ui` |
+| Checklist | [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md) |
+| Doc MF | [plugin-ui/docs/module-federation.md](../plugin-ui/docs/module-federation.md) |
 
 ```bash
-docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
+docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui meu-plugin
 ```
 
-Helper Vite: [`plugins/vite/federation.shared.ts`](../vite/federation.shared.ts)
+Helpers: [`plugins/vite/federation.shared.ts`](../vite/federation.shared.ts) · [`plugins/vite/federationShareScope.ts`](../vite/federationShareScope.ts)
+
+Compose: usar anchor `<<: *plugin-ui-federated` (inclui `depends_on: plugin-ui`).
 
 ## Modo bundled (legado) — COPY / shared builder
 
@@ -69,14 +72,9 @@ plugins-shared-builder:
 
 ## Novo consumidor de `@delpi/plugin-ui`
 
-**Preferir Module Federation** — ver [module-federation.md](../plugin-ui/docs/module-federation.md).
+**Obrigatório: Module Federation** — seguir [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
 
-Legado bundled:
-
-1. Alias em `vite.config.ts` + `import "../../plugin-ui/src/styles.css"`.
-2. Template [`Dockerfile.plugin.mfe`](./Dockerfile.plugin.mfe) ou `COPY plugin-ui`.
-3. `context: ../plugins` no compose.
-4. `./infra/scripts/build-plugins-shared-base.sh` + gate CI.
+Legado bundled (`COPY plugin-ui`) **não** é mais aceito para MFEs novos.
 
 ## Nova biblioteca compartilhada
 

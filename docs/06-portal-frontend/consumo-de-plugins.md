@@ -109,6 +109,8 @@ Transição de rota no shell: `appHostRouteTransition.ts` → classe `app-host--
 3. Monta módulo exposto (ex. `./App`) em `federatedHostRef`
 4. O MFE chama `preparePluginUiRemote()` no bootstrap (`plugins/vite/federationShareScope.ts`) antes do CSS do remote — registra React com versão semver para o nested `plugin-ui`.
 
+Scaffold de MFE novo: [novo-plugin-mfe-checklist.md](../05-plugin-system/novo-plugin-mfe-checklist.md).
+
 Gateway serve:
 
 ```text
