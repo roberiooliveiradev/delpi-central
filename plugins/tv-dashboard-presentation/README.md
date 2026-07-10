@@ -2,7 +2,7 @@
 
 Pacote compartilhado do **motor de apresentação** Painéis TV — usado pelo plugin admin e pelo `public-hub`.
 
-Documentação: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
+Documentação: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../../docs/12-roadmap-e-evolucao/tv-dashboard/README.md) · Indicadores live: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados)
 
 ---
 
@@ -18,6 +18,12 @@ import {
   parseComunicadoConfig,
   serializeComunicadoConfig,
   ComunicadoBlockView,
+  ChartViewBlockView,
+  TableViewBlockView,
+  DataSourceBlockView,
+  ConfigurableSeriesChart,
+  mergeComunicadoChartOptions,
+  CHART_ELEMENT_CATALOG,
   comunicadoImageCropCssProperties,
 } from "@delpi/tv-dashboard-presentation";
 ```
@@ -28,9 +34,26 @@ import {
 | `useFullscreenStage` | Duplo-clique → fullscreen (preview admin) |
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
 | `ComunicadoBlockView` | Render blocos comunicado (texto, mídia, crop, formas, dados) |
-| `parseComunicadoConfig` / `serializeComunicadoConfig` | Schema v2–v4 (`imageCrop`, `groupId`, `dataBinding`, …) |
+| `ChartViewBlockView` / `TableViewBlockView` | Visuais conectados a `data_source` |
+| `DataSourceBlockView` | Ícone de fonte no editor (oculto no palco quando vinculado) |
+| `ConfigurableSeriesChart` | Gráfico linhas/colunas com título, legenda, eixos, grade, tabela de dados |
+| `CHART_ELEMENT_CATALOG` | Catálogo de elementos configuráveis (estilo Excel) |
+| `comunicadoDataArchitecture` | `dataSourceId`, `shouldHideDataSourceOnStage`, helpers de vínculo |
+| `parseComunicadoConfig` / `serializeComunicadoConfig` | Schema v2–v4 (`chartOptions`, `dataSourceId`, `dataBinding`, …) |
 | `comunicadoImageCropCssProperties` | CSS viewport para recorte de imagem |
-| `native-screens.css` | Layout viewport-fit (`tdp-*`) |
+| `native-screens.css` | Layout viewport-fit (`tdp-*`, `tdp-series-chart*`) |
+
+---
+
+## Blocos de dados (Onda 4F)
+
+| Tipo | Persistido | Runtime |
+|---|---|---|
+| `data_source` | `dataBinding` (operationId, params, refreshSec) | `resolved` com kpi/chart/table |
+| `chart_view` | `chartType`, `chartOptions`, `dataSourceId` | `resolved` herdado da fonte |
+| `table_view` | `tablePreset`, `maxRows`, `dataSourceId` | `resolved` herdado da fonte |
+
+`chartOptions` inclui: título, legenda (posição), eixos, rótulos de dados, grade H/V, tabela de dados, marcadores, formato R$/% e cor da série.
 
 ---
 
@@ -71,6 +94,7 @@ Docker: `npm install` em **ambos** (`tv-dashboard-presentation` para tipos TS + 
 ## CSS
 
 - Prefixo **`tdp-`** (tv-dashboard presentation)
+- Gráficos: **`tdp-series-chart*`** (título, legenda, eixos, grade, tabela de dados)
 - Modo kiosk público: `.tdp-stage--kiosk` dentro de `.pub-kiosk-root` (public-hub)
 - Preview admin: `.tdp-stage--preview-shell`
 
@@ -83,7 +107,7 @@ cd plugins/tv-dashboard-presentation
 npm test
 ```
 
-Cobertura: `usePresentationEngine` (autoplay, refresh nativo), render OEE com payload real.
+Cobertura: `usePresentationEngine`, comunicado v4, `ConfigurableSeriesChart`, `chartElementCatalog`, enrichment fixtures.
 
 ---
 

@@ -42,7 +42,20 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 
 Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
 
-Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gate CI `scripts/check_tv_data_routes.py --check`.
+Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
+
+```bash
+python3 scripts/generate_tv_data_routes_from_openapi.py --check   # catálogo ⊆ OpenAPI
+python3 scripts/check_tv_data_routes.py --check                  # allowlist válida
+```
+
+Regenerar catálogo após alterações no OpenAPI api-delpi:
+
+```bash
+python3 scripts/generate_tv_data_routes_from_openapi.py --write
+```
+
+O catálogo atual inclui **todas** as operações GET do baseline OpenAPI (~206 rotas), preservando enriquecimentos manuais (`seriesField`, `paramSchema`, `valueFields`) por `operationId`.
 
 
 ---

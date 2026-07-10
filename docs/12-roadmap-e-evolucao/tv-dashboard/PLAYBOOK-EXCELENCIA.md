@@ -1,9 +1,9 @@
 # Playbook de Excelência — TV Dashboard DELPI
 
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
-> **Versão:** 1.3
-> **Data:** 2026-07-07
-> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **v1.3.1 (jul/2026):** 4A.9 cleanup ribbon legado. **v1.3.2–v1.3.4 (jul/2026):** 4C.1–4C.3 rich text + listas. **v1.3.5 (jul/2026):** 4C.4 estilos nomeados. **v1.3.6 (jul/2026):** 4C.5 Google Fonts. **v1.3.7 (jul/2026):** 4E.1 transição por slide. **v1.3.8 (jul/2026):** 4E.2 animações entrada por bloco. **Backlog:** 4E.3–4E.5 master/export; **4F** indicadores live api-delpi (§18 — parcial).
+> **Versão:** 1.4
+> **Data:** 2026-07-10
+> **Status:** … **v1.3.8 (jul/2026):** 4E.2 animações entrada por bloco. **v1.4 (jul/2026):** 4F parcial avançado — arquitetura `data_source` + `chart_view`/`table_view`, catálogo OpenAPI completo, gráficos com elementos configuráveis (§18). **Backlog:** 4E.3–4E.5 master/export; 4F tipos de gráfico avançados (pizza, combo, Recharts nativas).
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente:** 4C (rich text), 4E (animações/master), 4F completo (§18).
+**Ainda pendente:** 4E.3–4E.5 master/export; 4F tipos de gráfico avançados e Recharts em telas nativas (§18 — **v1.4** cobre fonte + visual + `chartOptions`).
 
 ---
 
@@ -743,7 +743,7 @@ Apresentação TV / preview
 | **Chrome** | filmstrip + reorder slides; transição playlist (`fade`/`slide`/`none`); viewport presets |
 | **Sync** | WebSocket `presentation_updated`; thumbnail comunicado ao vivo no filmstrip |
 | **Versão config** | v2 legado headline/subtitle; v3 formas/links; **v4** icon/crop/group/data (campos opcionais) |
-| **Dados live api-delpi** | ⚠ parcial (§18) — blocos `data_*`, catálogo `/data/routes`, preview admin; enrichment server-side |
+| **Dados live api-delpi** | ⚠ v1.4 (§18) — `data_source` + `chart_view`/`table_view`, catálogo 206 rotas, `chartOptions`, enrichment server-side |
 
 ### 17.3 Lacunas vs Canva / PowerPoint
 
@@ -1061,56 +1061,56 @@ Impacto UX × esforço (jul/2026, pós v1.3)
 
 **Meta:** unificar o melhor dos dois mundos — **compositor livre** + **dados DELPI nativos** — reutilizando o contrato OpenAPI já existente (`meta.operationId`, `meta.entity`, `meta.shape`).
 
-### 18.2 Jornada do usuário
+### 18.2 Jornada do usuário (v1.4 — fonte + visual)
 
-1. No editor do slide **Personalizado**, aba **Inserir** → **Indicador** (ou «Dados DELPI»).
-2. Modal com catálogo filtrável por domínio (Produção, Qualidade, Suprimentos, …) — rotas **allowlist** para TV.
-3. Usuário escolhe rota (ex.: «OEE visão geral», «Top itens estoque», «PPM tendência»).
-4. Form de parâmetros conforme OpenAPI / `configSchema` espelhado (filial, período, limite TOP N).
-5. Escolhe **modo de exibição** quando aplicável: Automático (por `meta.shape`), KPI, gráfico, tabela.
-6. Bloco posicionável no palco (mesmo frame % que texto/imagem); preview com **dados reais** no admin.
-7. Na TV, bloco renderiza com refresh conforme `globalRefreshSec` da playlist (ou override por bloco).
+1. No editor do slide **Personalizado**, aba **Inserir** → **Dados** (ou painel lateral **Dados**).
+2. Catálogo filtrável por domínio (Produção, Qualidade, Suprimentos, …) — **206 rotas GET** sincronizadas com OpenAPI.
+3. Usuário escolhe rota (ex.: «OTD — série temporal») → configura parâmetros (`paramSchema`) → **Inserir fonte de dados** (`data_source`).
+4. **Inserir** → **Gráficos** ou **Tabelas** → posiciona visual no palco (`chart_view` / `table_view`).
+5. Seleciona o visual → aba **Elemento** → **Conexão de dados** → dropdown **Fonte de dados** (`dataSourceId`).
+6. Opcional: **Elementos do gráfico** — título, legenda, eixos, rótulos, grade, tabela de dados, marcadores (`chartOptions`).
+7. Preview admin e TV exibem dados reais via enrichment server-side; refresh por `refreshSec` do bloco ou `globalRefreshSec` da playlist.
 
-**Exemplo de composição:**
+**Atalhos:** botão **Abrir fontes de dados** no inspetor; com visual sem fonte, **clique no bloco `data_source`** no palco conecta automaticamente.
+
+**Exemplo de composição (v1.4):**
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
-│  [heading] Campanha segurança — Filial 01               │
-│  [text]    Meta zero acidentes · Julho 2026             │
-│  ┌──────────────┐  ┌─────────────────────────────────┐ │
-│  │ data_kpi     │  │ data_chart                      │ │
-│  │ OEE 78,4%    │  │ série OEE 7 dias                │ │
-│  └──────────────┘  └─────────────────────────────────┘ │
-│  [image] logo                            [shape] faixa │
+│  [heading] Produção — Filial 01                         │
+│  [data_source] OTD série (oculto no palco quando link)  │
+│  ┌──────────────────────┐  ┌──────────────────────────┐ │
+│  │ chart_view (linhas)  │  │ table_view (grade)       │ │
+│  │ + chartOptions       │  │ dataSourceId → fonte     │ │
+│  └──────────────────────┘  └──────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 18.3 Arquitetura alvo
+### 18.3 Arquitetura alvo (v1.4 implementada)
 
 ```text
 Editor (MFE)
-  blocks[].type = data_kpi | data_chart | data_table
-  blocks[].dataBinding = { operationId, params, displayMode?, refreshSec? }
+  data_source.dataBinding = { operationId, params, refreshSec? }
+  chart_view = { chartType, chartOptions?, dataSourceId }
+  table_view = { tablePreset, maxRows?, dataSourceId }
        │
-       │  PATCH native_config (sem payload de dados — só binding)
+       │  PATCH native_config (sem resolved — só binding + chartOptions)
        ▼
 tv-dashboard-api
-  PresentationPayloadService / ComunicadoDataEnrichmentService
-       │  para cada bloco data_*:
-       │    1. validar operationId ∈ tv_data_routes allowlist
-       │    2. validar RBAC + escopo filial (token público / JWT admin)
-       │    3. HTTP server-side → api-delpi (conta serviço)
-       │    4. cache TTL (reuso native_screen_cache_service)
-       │    5. anexar data + meta enxuto no payload do slide
+  ComunicadoDataEnrichmentService
+       │  1. resolve data_source → HTTP api-delpi (allowlist)
+       │  2. _link_view_blocks_to_sources → chart_view/table_view herdam resolved
+       │  3. séries sem items → tabela derivada de points (OTD/OEE)
        ▼
 tv-dashboard-presentation
-  ComunicadoBlockView → TvDataWidget (schema-driven por meta.shape)
-       │  scalar / playbook_report → KPI card
-       │  série temporal            → Recharts line/bar
-       │  paged_list                → tabela compacta (TOP N, sem scroll)
+  ChartViewBlockView → ConfigurableSeriesChart (SVG + chartOptions)
+  TableViewBlockView → tabela compacta
+  DataSourceBlockView → oculto no palco se vinculado (shouldHideDataSourceOnStage)
        ▼
-TV / preview (mesmo componente, render-only)
+TV / preview (render-only, sem scroll interno)
 ```
+
+**Legado:** blocos `data_kpi` / `data_chart` / `data_table` com `dataBinding` direto continuam suportados via `TvDataBlockView`.
 
 **Regras de arquitetura (obrigatórias):**
 
@@ -1122,61 +1122,54 @@ TV / preview (mesmo componente, render-only)
 | **Allowlist** explícita de `operationId` para TV | Nem toda rota chat-critical é adequada à TV (PII, paginação grande) |
 | Presenter **genérico** por shape — **sem** `if /products/` no MFE | Mesmo princípio `schema-first-presentation-delivered` |
 
-### 18.4 Contrato — blocos de dados (v4 proposta)
+### 18.4 Contrato — blocos de dados (v4)
 
-Extensão de `comunicadoTypes` — campos opcionais; slides v3 legados intactos.
+Tipos principais (jul/2026):
+
+| Tipo | Campos persistidos | Notas |
+|---|---|---|
+| `data_source` | `dataBinding` | Fonte única; enrichment com kpi + chart + table |
+| `chart_view` | `chartType`, `chartOptions?`, `dataSourceId?` | Visual desacoplado |
+| `table_view` | `tablePreset`, `maxRows?`, `dataSourceId?` | Visual desacoplado |
+| `data_kpi` / `data_chart` / `data_table` | `dataBinding` | Legado — binding direto |
+
+Exemplo v4 (fonte + gráfico):
 
 ```json
 {
   "version": 4,
-  "background": { "type": "color", "value": "#0f172a" },
   "blocks": [
     {
-      "id": "uuid-1",
-      "type": "heading",
-      "content": "Produção — turno A",
-      "frame": { "x": 5, "y": 8, "w": 90, "h": 12 },
-      "style": { "fontSize": 48, "textAlign": "center", "zIndex": 2 }
-    },
-    {
-      "id": "uuid-2",
-      "type": "data_kpi",
-      "frame": { "x": 5, "y": 28, "w": 28, "h": 22 },
-      "style": { "zIndex": 2 },
+      "id": "src-1",
+      "type": "data_source",
+      "frame": { "x": 8, "y": 30, "w": 12, "h": 12 },
       "dataBinding": {
-        "operationId": "get_production_oee_overview",
-        "params": { "branch": "01", "periodDays": 7 },
-        "displayMode": "kpi",
-        "label": "OEE",
-        "valueField": "oeePct"
+        "operationId": "get_production_otd_series",
+        "params": { "branch": "01", "periodDays": 30 },
+        "displayMode": "auto",
+        "refreshSec": 60
       }
     },
     {
-      "id": "uuid-3",
-      "type": "data_chart",
-      "frame": { "x": 36, "y": 28, "w": 59, "h": 50 },
-      "style": { "zIndex": 2 },
-      "dataBinding": {
-        "operationId": "get_production_oee_series",
-        "params": { "branch": "01", "periodDays": 7 },
-        "displayMode": "line_chart",
-        "chartPolicy": "auto"
-      }
-    },
-    {
-      "id": "uuid-4",
-      "type": "data_table",
-      "frame": { "x": 5, "y": 62, "w": 90, "h": 30 },
-      "dataBinding": {
-        "operationId": "get_supplies_stock_value",
-        "params": { "branch": "01", "top_limit": 5 },
-        "displayMode": "table",
-        "maxRows": 5
+      "id": "chart-1",
+      "type": "chart_view",
+      "chartType": "line",
+      "dataSourceId": "src-1",
+      "frame": { "x": 10, "y": 20, "w": 85, "h": 75 },
+      "chartOptions": {
+        "title": "ROL",
+        "showLegend": true,
+        "legendPosition": "bottom",
+        "showGrid": true,
+        "valueFormat": "currency",
+        "showDataLabels": false
       }
     }
   ]
 }
 ```
+
+Exemplo legado (`data_kpi` / `data_chart`):
 
 **Payload enriquecido (runtime — não persistido):**
 
@@ -1201,14 +1194,25 @@ Tipos de bloco ↔ `meta.shape` (mapeamento inicial):
 
 | `type` bloco | `meta.shape` api-delpi | Widget TV |
 |---|---|---|
-| `data_kpi` | `scalar`, KPI em `playbook_report` | Card numérico + label + delta opcional |
-| `data_chart` | séries em `playbook_report`, `composite_analysis` | Recharts (line/bar) — **sem scroll** |
-| `data_table` | `paged_list` | Tabela compacta TOP N (colunas via `meta.fields`) |
+| `chart_view` | série (`points`) via `dataSourceId` | `ConfigurableSeriesChart` + `chartOptions` |
+| `table_view` | `paged_list` ou série derivada | Tabela compacta (`tablePreset`, `maxRows`) |
+| `data_kpi` | `scalar`, KPI em `playbook_report` | Card numérico + label |
+| `data_chart` / `data_table` (legado) | conforme shape | `TvDataBlockView` |
 | `data_metric` | fallback | Automático por shape |
 
 ### 18.5 Catálogo de rotas TV (`tv_data_routes.json`)
 
-Arquivo versionado em `tv-dashboard-api/tv_app/content/tv_data_routes.json` — **allowlist** explícita, não import automático de todo o OpenAPI.
+Arquivo em `tv-dashboard-api/tv_app/content/tv_data_routes.json` — allowlist sincronizada com **todas** as operações GET do OpenAPI baseline (~206 rotas, jul/2026).
+
+**Scripts de manutenção (raiz do monorepo):**
+
+```bash
+python3 scripts/generate_tv_data_routes_from_openapi.py --write   # regenerar catálogo
+python3 scripts/generate_tv_data_routes_from_openapi.py --check   # gate CI
+python3 scripts/check_tv_data_routes.py --check                   # validação allowlist
+```
+
+Enriquecimentos manuais por `operationId` são **preservados** na regeneração (`seriesField`, `paramSchema`, `valueFields`, `tvConstraints`).
 
 ```json
 {
@@ -1333,6 +1337,14 @@ Exemplo no `native_config` (v4):
 - [x] Filtro no **slide** (`dataFilters.branch`) aplica a todos os blocos; bloco com `params` próprio sobrescreve.
 - [x] UI de filtros gerada a partir de `paramSchema` — sem hardcode por rota no React.
 - [x] Gate CI `--check-tv-data-routes` (script `scripts/check_tv_data_routes.py`).
+- [x] Catálogo GET completo sincronizado com OpenAPI (`generate_tv_data_routes_from_openapi.py`).
+- [x] Arquitetura `data_source` + `chart_view` / `table_view` com `dataSourceId`.
+- [x] Painel lateral **Dados** + `DataRouteCatalogPanel` (busca por categoria).
+- [x] Gráfico com **elementos configuráveis** (`chartOptions` / `CHART_ELEMENT_CATALOG`) — título, legenda, eixos, grade, tabela de dados, marcadores.
+- [x] Séries temporais renderizam tabela derivada de `points` quando não há `items`.
+- [x] Filmstrip com prévia centralizada (`CenteredScaledPreview`) e menu de contexto nas telas.
+- [ ] Tipos de gráfico avançados (pizza, área, combo) — placeholder estilizado até implementação.
+- [ ] Recharts em telas nativas fixas (OEE/OTD dashboard) — backlog v2.
 - [x] `native_config` sanitizado no save — sem `resolved` nem URLs de mídia runtime.
 - [x] Limite de blocos `data_*` por slide (settings `comunicadoDataBlocks.maxPerSlide`).
 
@@ -1340,12 +1352,16 @@ Exemplo no `native_config` (v4):
 
 | Peça | Descrição |
 |---|---|
-| **ComunicadoInsertDataRibbon** (ou tile na aba Inserir) | Abre catálogo de indicadores |
-| **DataRoutePickerModal** | Busca, categorias, descrição amigável, ícone por domínio |
-| **DataBindingInspector** | Params (filial, datas), displayMode, refreshSec, label override; badge herança vs slide |
-| **SlideDataFiltersPanel** | Filtros compartilhados do slide (`dataFilters`) — aba Tela ou seção dedicada |
-| **Placeholder no canvas** | Skeleton com nome da rota enquanto preview carrega |
-| **Preview ao vivo** | Admin chama endpoint enriquecido (JWT) — espelha TV |
+| **DataRoutesSidePanel** | Painel lateral aba **Dados** — catálogo + parâmetros da fonte |
+| **DataRouteCatalogPanel** (`@delpi/plugin-ui`) | Busca, categorias, badge GET + path |
+| **ChartTypeCatalogPanel** / **TableInsertCatalogPanel** | Inserir `chart_view` / `table_view` |
+| **VisualDataViewInspector** | Conexão `dataSourceId`; onboarding + **Abrir fontes de dados** |
+| **ChartViewOptionsInspector** | **Elementos do gráfico** (estilo Excel) + aparência (formato, cor) |
+| **FormatPaneShell** | Painel lateral estilo PowerPoint (Elemento / Dados / Camadas) |
+| **DataBindingInspector** | Params da fonte; badge herança vs `dataFilters` do slide |
+| **SlideFilmstripContextMenu** | Copiar/colar tela, duplicar, ocultar, excluir |
+| **CenteredScaledPreview** | Miniatura filmstrip com escala uniforme |
+| **Preview ao vivo** | `POST /data/preview-block` + payload enriquecido na playlist |
 
 Atalhos de produto:
 
@@ -1376,12 +1392,15 @@ Endpoint público: enrichment transparente dentro de `GET /public/present/{token
 
 | Componente | Função |
 |---|---|
-| `TvDataKpiWidget` | scalar / campo destacado de playbook_report |
-| `TvDataChartWidget` | Recharts — altura 100% do frame, labels mínimos |
-| `TvDataTableWidget` | Colunas de `meta.fields`; truncar com «…»; sem paginação interativa |
-| `TvDataBlockView` | Dispatch por `displayMode` + `meta.shape` — **sem nome de rota no código** |
+| `ConfigurableSeriesChart` | Gráfico linhas/colunas — título, legenda, eixos, grade H/V, rótulos, tabela de dados |
+| `ChartViewBlockView` | Dispatch `chartType` + `chartOptions` + `resolved` |
+| `TableViewBlockView` | Tabela compacta; `maxRows`; colunas de `meta.fields` ou derivadas |
+| `DataSourceBlockView` | Ícone BD no editor; oculto no palco quando vinculado |
+| `TvDataBlockView` | Legado `data_kpi` / `data_chart` / `data_table` |
+| `comunicadoDataArchitecture` | Vínculo `dataSourceId`, helpers de inspector |
+| `chartElementCatalog` | `CHART_ELEMENT_CATALOG` — elementos configuráveis do gráfico |
 
-Estilo: prefixo `tdp-data-*`; respeitar `--tdp-base-w/h` do viewport; **proibido scroll** interno (contrato §6.1).
+Estilo: prefixo `tdp-*` e `tdp-series-chart*`; respeitar viewport-fit; **proibido scroll** interno (contrato §6.1).
 
 ### 18.10 Segurança e governança
 
@@ -1400,7 +1419,7 @@ Estilo: prefixo `tdp-data-*`; respeitar `--tdp-base-w/h` do viewport; **proibido
 | Allowlist | `pytest tv-dashboard-api/tests/test_tv_data_routes_catalog.py` |
 | Enrichment | `pytest tv-dashboard-api/tests/test_comunicado_data_enrichment.py` |
 | Serialize v4 | `comunicado.test.tsx` — binding round-trip sem `resolved` |
-| Render widgets | Story/fixture por shape (`scalar`, `paged_list`, série) |
+| Render widgets | `ConfigurableSeriesChart.test.tsx`, `chartElementCatalog.test.ts`, `test_comunicado_data_enrichment.py` |
 | E2E manual | Slide misto 1080p — zero scroll; refresh 5 min atualiza KPI |
 | Nova rota api-delpi | Checklist `new-api-route-checklist.mdc` **+** entrada em `tv_data_routes.json` |
 

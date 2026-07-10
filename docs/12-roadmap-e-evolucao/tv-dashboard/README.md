@@ -1,6 +1,6 @@
 # Painéis TV — documentação da aplicação
 
-> **Status:** v1.3 em produção (jul/2026) — editor deck + Onda 4A/4B/4D (produtividade, visual, layout)  
+> **Status:** v1.4 em produção (jul/2026) — editor deck + Onda 4A/4B/4D + **4F parcial** (dados live, gráficos configuráveis)  
 > **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
@@ -113,7 +113,29 @@ Telas **externas**: URL + `sandbox` opcional em iframe.
 - Armazenamento persistente: `${DELPI_DATA_HOST_DIR}/tv-dashboard/media`
 - Apresentação pública: `GET /public/present/{token}/media/{assetId}`
 - Roadmap paridade Canva/PowerPoint: [PLAYBOOK-EXCELENCIA.md §17](./PLAYBOOK-EXCELENCIA.md#17-editor-de-slides-personalizados--paridade-canva--powerpoint)
-- **Backlog:** indicadores live (KPI/gráfico/tabela) de rotas api-delpi no mesmo slide — [§18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados)
+
+### Dados live api-delpi no slide personalizado (Onda 4F — jul/2026)
+
+Arquitetura **fonte + visual** (desacoplada):
+
+```text
+Inserir → Dados        → painel lateral (catálogo GET api-delpi) → bloco data_source
+Inserir → Gráficos     → chart_view (linhas/colunas)
+Inserir → Tabelas      → table_view (grade/minimal/faixas)
+Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
+```
+
+| Peça | Onde |
+|---|---|
+| Catálogo de rotas | `GET /data/routes` — **206** operações GET sincronizadas com OpenAPI (`scripts/generate_tv_data_routes_from_openapi.py`) |
+| Painel **Dados** | `DataRoutesSidePanel` + `DataRouteCatalogPanel` (`@delpi/plugin-ui`) |
+| Enrichment | `ComunicadoDataEnrichmentService` — resolve `data_source`; vincula `chart_view` / `table_view` |
+| Gráfico configurável | `ConfigurableSeriesChart` + `chartOptions` (título, legenda, eixos, grade, tabela de dados, marcadores) |
+| Filmstrip | `CenteredScaledPreview` (miniatura centralizada) + menu contexto (copiar/colar, duplicar, ocultar) |
+
+Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados)
+
+- **Backlog 4F:** tipos de gráfico avançados (pizza, área, combo), Recharts em telas nativas fixas
 
 ---
 
@@ -188,7 +210,7 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 | **4C** | Rich text, bullets, estilos nomeados | ❌ backlog |
 | **4D** | Layout avançado | ✅ |
 | **4E** | Animações, master slide, export PNG | ❌ backlog |
-| **4F** | **Indicadores live api-delpi** — KPI, gráfico, tabela em blocos | ⚠ parcial (§18) |
+| **4F** | **Indicadores live api-delpi** — fonte + gráfico/tabela, catálogo OpenAPI, `chartOptions` | ⚠ parcial (§18 — **v1.4**) |
 
 ---
 

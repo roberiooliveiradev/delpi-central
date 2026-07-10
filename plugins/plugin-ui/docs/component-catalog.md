@@ -530,6 +530,20 @@ Carrega blob/`File`/fetch async e monta estado para `FilePreviewView` (object UR
 
 Render-only — imagem, PDF, texto, planilha e DOCX com classes `delpi-ui-file-preview*`.
 
+### `DataRouteCatalogPanel`
+
+Catálogo de rotas GET agrupadas por categoria — busca, cards com título + path + método. Usado no painel **Dados** do tv-dashboard.
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `items` | `DataRouteCatalogItem[]` | Rotas da API `/data/routes` |
+| `onSelect` | `(item) => void` | Callback ao escolher rota |
+| `searchPlaceholder` | `string?` | Placeholder da busca |
+
+```tsx
+import { DataRouteCatalogPanel } from "@delpi/plugin-ui";
+```
+
 ### `CenteredScaledPreview`
 
 Encaixa conteúdo arbitrário em um retângulo com escala uniforme (`min(width/refW, height/refH)`) e centralização — equivalente a `object-fit: contain` para miniaturas (filmstrip TV, palco reduzido).

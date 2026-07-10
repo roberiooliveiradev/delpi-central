@@ -19,7 +19,9 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 - Status «TV online» via heartbeat na rota pública
 - Catálogo de presets e importação de telas prontas
 - RBAC por filial e visão consolidada
-- **Editor visual v1.3** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide, indicadores api-delpi (parcial)
+- **Editor visual v1.4** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
+- **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view`, catálogo 206 rotas GET, gráficos com elementos configuráveis (legenda, eixos, grade, tabela de dados)
+- Filmstrip: prévia centralizada (`CenteredScaledPreview`), menu de contexto nas telas
 
 ---
 
@@ -43,7 +45,7 @@ Base gateway: `/apps/tv-dashboard/`
 |---|---|
 | `tv-dashboard-api` | Backend (`/apps/tv-dashboard-api/`) |
 | `@delpi/tv-dashboard-presentation` | `usePresentationEngine`, `NativeSlideView`, CSS `tdp-*` |
-| `@delpi/plugin-ui` | Tooltips, labels, abas — **remote MF** (`delpi-plugin-ui`) |
+| `@delpi/plugin-ui` | Tooltips, labels, `DataRouteCatalogPanel`, `FormatPaneShell`, `ContextMenu`, `CenteredScaledPreview` — **remote MF** |
 | `public-hub` | View pública `present` (rebuild separado ao alterar apresentação) |
 
 Integração: `@delpi/tv-dashboard-presentation` bundled (`COPY` no Dockerfile); `@delpi/plugin-ui` via `pluginUiRemote()` + `preparePluginUiRemote()`. Ver [module-federation.md](../plugin-ui/docs/module-federation.md).
@@ -67,9 +69,24 @@ POST   /apps/tv-dashboard-api/playlists/{id}/slides/reorder
 GET    /apps/tv-dashboard-api/playlists/{id}/media          # listar assets (biblioteca)
 POST   /apps/tv-dashboard-api/playlists/{id}/media          # upload
 GET    /apps/tv-dashboard-api/playlists/{id}/media/{assetId}
+GET    /apps/tv-dashboard-api/data/routes
+GET    /apps/tv-dashboard-api/data/routes/{operationId}
+POST   /apps/tv-dashboard-api/data/preview-block
 GET    /apps/tv-dashboard-api/content/ui
 GET    /apps/tv-dashboard-api/native-screens
 ```
+
+### Editor — blocos de dados (slide Personalizado)
+
+| Aba / painel | Função |
+|---|---|
+| **Inserir → Dados** | Catálogo de rotas GET (`DataRouteCatalogPanel`) → insere `data_source` |
+| **Inserir → Gráficos / Tabelas** | Insere `chart_view` ou `table_view` |
+| **Elemento → Conexão de dados** | Dropdown **Fonte de dados** (`dataSourceId`) |
+| **Elemento → Elementos do gráfico** | Título, legenda, eixos, rótulos, grade, tabela de dados, marcadores (`chartOptions`) |
+| **Dados** (painel lateral) | Busca e configuração de parâmetros da fonte |
+
+Atalhos: botão **Abrir fontes de dados** no inspetor; clique na fonte no palco conecta visual selecionado.
 
 ---
 
