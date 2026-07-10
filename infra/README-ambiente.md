@@ -483,6 +483,26 @@ Config declarativa (regras ignoradas, siglas ERP): `minha-delpi-ai-api/app/conte
 
 ## Checklist deploy produção
 
+Atualização sequencial (um container por vez, seguro em RAM):
+
+```bash
+# Lista de fases e serviços
+./infra/scripts/up-prod-sequential.sh --list
+
+# Pull + rebuild completo (servidor srv-api)
+./infra/scripts/up-prod-sequential.sh --pull --build
+
+# Só plugin-ui + um MFE
+./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
+./infra/scripts/up-prod-sequential.sh --fase mfe --build minha-delpi-chat
+
+# Host com RAM limitada (LanguageTool/SearXNG opcionais)
+./infra/scripts/up-prod-sequential.sh --cpu --pull --build
+./infra/scripts/up-prod-sequential.sh --cpu --heavy --build languagetool searxng
+```
+
+Manual (equivalente):
+
 - [ ] `cp infra/.env.prod.example infra/.env` e trocar todos os `CHANGE_ME`
 - [ ] `KEYCLOAK_ISSUER` / `PUBLIC_BASE_URL` com URL HTTPS real (gateway)
 - [ ] `docker compose -f infra/docker-compose.yml build` na máquina de deploy (EasyOCR/Docling já na imagem)
