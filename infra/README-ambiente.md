@@ -31,14 +31,89 @@ docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-
 
 # Chat + rebuild explícito com extras de visão (opcional — dev já inclui EasyOCR/Docling)
 ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev
-```
 
 # Chat + RAM reduzida (dev WSL ~8 GB)
 docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml \
   --profile chat --env-file infra/.env up -d
+
+# Rebuild completo sem OOM — preferir em vez de up --build em lote
+./infra/scripts/up-dev-sequential.sh --build
 ```
 
 O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f infra/docker-compose.*.yml`.
+
+---
+
+## Inicialização segura de containers (recomendado)
+
+**Use os scripts sequenciais** para subir ou reconstruir a stack. Eles sobem **um container por vez** (`COMPOSE_PARALLEL_LIMIT=1`), evitam pico de RAM no build (`npm`/`vite`/`PyTorch`) e respeitam a ordem do **Module Federation** (`plugin-ui` antes dos MFEs).
+
+| Script | Quando usar |
+|--------|-------------|
+| [`scripts/up-dev-sequential.sh`](scripts/up-dev-sequential.sh) | Desenvolvimento local / WSL — rebuild de plugins, stack com chat ou MFEs |
+| [`scripts/up-prod-sequential.sh`](scripts/up-prod-sequential.sh) | Produção (`srv-api`) — deploy, `git pull`, rebuild após merge |
+
+### Desenvolvimento
+
+```bash
+cp infra/.env.dev.example infra/.env
+
+# Ver ordem de fases (core → remote → mfe → api → chat)
+./infra/scripts/up-dev-sequential.sh --list
+
+# Subir sem rebuild (já buildado)
+./infra/scripts/up-dev-sequential.sh
+
+# Rebuild completo — seguro em máquinas ~8 GB RAM
+./infra/scripts/up-dev-sequential.sh --build
+
+# Só infra + APIs
+./infra/scripts/up-dev-sequential.sh --fase core --build
+
+# Module Federation: remote antes dos MFEs
+./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
+./infra/scripts/up-dev-sequential.sh --fase mfe --build controle-retrabalhos dashboard-commercial
+
+# Simular comandos sem executar
+./infra/scripts/up-dev-sequential.sh --dry-run --build --fase mfe dashboard-commercial
+```
+
+**Dia a dia sem rebuild:** stack essencial com [`scripts/up-minimal-dev.sh`](scripts/up-minimal-dev.sh) (~8 containers).
+
+### Produção
+
+```bash
+cp infra/.env.prod.example infra/.env
+# editar CHANGE_ME, PUBLIC_BASE_URL, KEYCLOAK_ISSUER
+
+./infra/scripts/up-prod-sequential.sh --list
+
+# Deploy completo após git pull
+./infra/scripts/up-prod-sequential.sh --pull --build
+
+# Host com RAM limitada (~8 GB) — LanguageTool/SearXNG opcionais
+./infra/scripts/up-prod-sequential.sh --cpu --pull --build
+
+# Atualizar só remote MF + um MFE
+./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
+./infra/scripts/up-prod-sequential.sh --fase mfe --build minha-delpi-chat dashboard-commercial
+
+# Serviços pesados separados
+./infra/scripts/up-prod-sequential.sh --cpu --heavy --build languagetool searxng
+```
+
+Executar **da raiz do repositório** (`./infra/scripts/...`). O script de produção roda `docker compose` com cwd em `infra/` e `--env-file .env` — evita o erro `infra/infra/.env`.
+
+### Evitar
+
+| Anti-padrão | Risco |
+|-------------|-------|
+| `docker compose up --build` em todos os serviços | OOM — dezenas de builds npm/vite em paralelo |
+| Misturar `docker-compose.yml` + `docker-compose.dev.yml` | ~40 containers prod + dev juntos |
+| MFEs antes de `plugin-ui` | Remote MF indisponível; MFE quebra em runtime |
+| `--env-file infra/.env` com cwd já em `infra/` | Path duplicado `infra/infra/.env` |
+
+Detalhes de RAM, recuperação e compose manual: § [Memória RAM](#memória-ram--diagnóstico-e-mitigação) e § [Checklist deploy produção](#checklist-deploy-produção).
 
 ---
 
@@ -483,25 +558,22 @@ Config declarativa (regras ignoradas, siglas ERP): `minha-delpi-ai-api/app/conte
 
 ## Checklist deploy produção
 
-Atualização sequencial (um container por vez, seguro em RAM):
+**Preferir** o script sequencial — ver § [Inicialização segura de containers](#inicialização-segura-de-containers-recomendado).
 
 ```bash
-# Lista de fases e serviços
-./infra/scripts/up-prod-sequential.sh --list
-
-# Pull + rebuild completo (servidor srv-api)
 ./infra/scripts/up-prod-sequential.sh --pull --build
+```
 
-# Só plugin-ui + um MFE
+Atalhos por fase:
+
+```bash
+./infra/scripts/up-prod-sequential.sh --list
 ./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build minha-delpi-chat
-
-# Host com RAM limitada (LanguageTool/SearXNG opcionais)
-./infra/scripts/up-prod-sequential.sh --cpu --pull --build
 ./infra/scripts/up-prod-sequential.sh --cpu --heavy --build languagetool searxng
 ```
 
-Manual (equivalente):
+Checklist manual (além do script):
 
 - [ ] `cp infra/.env.prod.example infra/.env` e trocar todos os `CHANGE_ME`
 - [ ] `KEYCLOAK_ISSUER` / `PUBLIC_BASE_URL` com URL HTTPS real (gateway)

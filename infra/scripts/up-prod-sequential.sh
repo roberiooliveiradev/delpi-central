@@ -12,7 +12,7 @@
 #
 # Pré-requisito: infra/.env (cp infra/.env.prod.example infra/.env)
 #
-# Doc: infra/README-ambiente.md § Checklist deploy produção
+# Doc: infra/README-ambiente.md § Inicialização segura de containers
 
 set -euo pipefail
 

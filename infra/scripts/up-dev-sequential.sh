@@ -11,7 +11,7 @@
 #
 # Pré-requisito: infra/.env (cp infra/.env.dev.example infra/.env)
 #
-# Doc: infra/README-ambiente.md § Memória RAM
+# Doc: infra/README-ambiente.md § Inicialização segura de containers
 
 set -euo pipefail
 

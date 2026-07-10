@@ -1,0 +1,75 @@
+---
+description: Inicialização segura de containers — scripts sequenciais dev/prod (OOM, MF)
+alwaysApply: true
+---
+
+# Infra — inicialização segura de containers
+
+## Princípio
+
+**Sempre orientar o usuário** a subir ou reconstruir a stack DELPI com os scripts sequenciais canônicos — **não** com `docker compose up --build` em lote sobre dezenas de serviços.
+
+Doc operacional: `infra/README-ambiente.md` § **Inicialização segura de containers**.
+
+## Scripts canônicos
+
+| Script | Ambiente | Compose |
+|--------|----------|---------|
+| `infra/scripts/up-dev-sequential.sh` | Desenvolvimento (WSL/local) | `docker-compose.dev.yml` + `minimal.yml` + profiles |
+| `infra/scripts/up-prod-sequential.sh` | Produção (`srv-api`, deploy) | `docker-compose.yml` (+ `prod.cpu.yml` com `--cpu`) |
+
+Ambos definem `COMPOSE_PARALLEL_LIMIT=1`, sobem **um serviço por vez**, aguardam Postgres quando necessário e respeitam a ordem **core → chat (prod) → remote (`plugin-ui`) → mfe → api**.
+
+## Quando recomendar (obrigatório)
+
+Orientar o script sequencial quando o usuário:
+
+- pede **deploy**, **subir stack**, **rebuild** ou **atualizar produção**;
+- relata **OOM**, **WSL travando**, **build Docker falhando** ou máquina com **~8 GB RAM**;
+- alterou **MFE**, **`plugin-ui`** ou **Module Federation** e precisa rebuild em prod/dev;
+- quer rebuild de **vários plugins** ou da stack **completa**.
+
+## Comandos de referência
+
+```bash
+# Dev — listar fases
+./infra/scripts/up-dev-sequential.sh --list
+
+# Dev — rebuild completo (seguro em RAM)
+./infra/scripts/up-dev-sequential.sh --build
+
+# Dev — só remote + alguns MFEs
+./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
+./infra/scripts/up-dev-sequential.sh --fase mfe --build dashboard-commercial minha-delpi-chat
+
+# Prod — pull + rebuild (srv-api)
+./infra/scripts/up-prod-sequential.sh --pull --build
+
+# Prod — host RAM limitada
+./infra/scripts/up-prod-sequential.sh --cpu --pull --build
+
+# Prod — só plugin-ui + um MFE após fix MF
+./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
+./infra/scripts/up-prod-sequential.sh --fase mfe --build dashboard-commercial
+```
+
+Executar **a partir da raiz do repo** (`./infra/scripts/...`). O script prod usa `infra/.env`; o dev idem (`cp infra/.env.dev.example infra/.env`).
+
+## O que NÃO recomendar
+
+- `docker compose up --build` **sem** `--profile` explícito ou **misturando** `docker-compose.yml` + `docker-compose.dev.yml` (sobe ~40 containers).
+- Rebuild paralelo de 20+ MFEs (`npm run build` / `vite build`) sem `COMPOSE_PARALLEL_LIMIT=1`.
+- `docker compose ... --env-file infra/.env` **de dentro de** `infra/` (vira `infra/infra/.env`) — usar `./infra/scripts/up-prod-sequential.sh` ou `-f docker-compose.yml --env-file .env` **com cwd em `infra/`**.
+- Subir MFEs federados **antes** de `plugin-ui` (remote MF indisponível).
+
+## Dia a dia dev (stack pequena)
+
+Para **só** portal + APIs sem rebuild massivo: `./infra/scripts/up-minimal-dev.sh` — ver README § Memória RAM.
+
+## Checklist ao orientar deploy
+
+1. Ambiente correto? → script dev **ou** prod.
+2. `.env` existe? → `.env.dev.example` / `.env.prod.example`.
+3. Rebuild? → `--build`; prod com código novo → `--pull --build`.
+4. MF / MFE? → fase `remote` antes de `mfe`.
+5. RAM limitada prod? → `--cpu`; LanguageTool/SearXNG → `--heavy` separado.

@@ -16,6 +16,16 @@ alwaysApply: true
 | `clean-code-architecture-guardrails.mdc` | Desvio de camada, patch local, contrato metadata ambíguo |
 | `persistent-upload-storage.mdc` | **Upload em disco** — volume no Compose; nunca só filesystem do container |
 | `test-and-commit.mdc` | Ao concluir alteração de código — testes; commit só se pedido |
+| `infra-sequential-container-startup.mdc` | **Deploy / docker up / rebuild** — orientar scripts sequenciais dev/prod |
+
+## Infra / Docker
+
+| Regra | Escopo |
+|-------|--------|
+| `infra-sequential-container-startup.mdc` | Subir/rebuild stack — `up-dev-sequential.sh`, `up-prod-sequential.sh`; evitar OOM e ordem MF errada |
+| `persistent-upload-storage.mdc` | Volumes persistentes no Compose |
+
+Doc: `infra/README-ambiente.md`.
 
 ## Chat e API (`minha-delpi-ai-api`)
 
@@ -73,6 +83,8 @@ Novo plugin / UI MFE        → plugins-reusable-components → plugins-document
 Componente UI transversal   → plugins/plugin-ui (extrair antes de duplicar) → migration-catalog.md
 Plugin importa bib. irmã   → shared-libraries.manifest.json → check_plugin_docker_shared_libraries.py
 API dashboard multi-filial → api-delpi-response-contract § RBAC filial → manifest `.view.filial-*`
+Deploy / subir stack / rebuild Docker → infra-sequential-container-startup → up-*-sequential.sh
+OOM ou build MF em prod → infra-sequential-container-startup → fase remote antes de mfe
 ```
 
 ## Ordem de prioridade em conflito
