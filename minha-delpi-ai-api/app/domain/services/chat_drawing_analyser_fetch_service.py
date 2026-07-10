@@ -97,5 +97,21 @@ class ChatDrawingAnalyserFetchService:
 
         if token:
             headers["Authorization"] = f"Bearer {token}"
+            return headers
+
+        try:
+            from delpi_auth.service_token import apply_internal_service_headers
+
+            apply_internal_service_headers(headers)
+        except ImportError:
+            service_token = os.getenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "").strip()
+
+            if service_token:
+                headers["X-Delpi-Service-Token"] = service_token
+                headers["Authorization"] = (
+                    service_token
+                    if service_token.startswith("Bearer ")
+                    else f"Bearer {service_token}"
+                )
 
         return headers
