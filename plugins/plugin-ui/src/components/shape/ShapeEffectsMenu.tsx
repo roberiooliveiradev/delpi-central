@@ -1,6 +1,8 @@
 import { ChevronRight, Sparkles } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
+import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
+
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
 import { useClickOutside } from "./useClickOutside";
@@ -59,7 +61,13 @@ export function ShapeEffectsMenu({ items, onSelect, labels }: ShapeEffectsMenuPr
         <span className="delpi-ui-shape-menu__trigger-label">{L.effects}</span>
       </button>
       {open ? (
-        <div className="delpi-ui-shape-menu__panel delpi-ui-shape-menu__panel--narrow" ref={panelRef} role="menu">
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          className="delpi-ui-shape-menu__panel--narrow"
+          role="menu"
+        >
           <ul className="delpi-ui-shape-effects__list">
             {resolvedItems.map((item) => (
               <EffectRow
@@ -75,7 +83,7 @@ export function ShapeEffectsMenu({ items, onSelect, labels }: ShapeEffectsMenuPr
               />
             ))}
           </ul>
-        </div>
+        </AnchoredPanelPortal>
       ) : null}
     </div>
   );

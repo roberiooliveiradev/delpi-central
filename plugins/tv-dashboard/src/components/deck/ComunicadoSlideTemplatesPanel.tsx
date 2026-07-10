@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 
 import { getSlidePreset, listSlidePresets, type SlidePreset } from "../../api/tvDashboardApi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -10,12 +11,30 @@ export function ComunicadoSlideTemplatesPanel({ compact = false }: { compact?: b
   const [presets, setPresets] = useState<SlidePreset[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [applyingKey, setApplyingKey] = useState<string | null>(null);
+  const [accordionOpen, setAccordionOpen] = useState(false);
+  const accordionAnchorRef = useRef<HTMLDivElement>(null);
+  const accordionPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void listSlidePresets()
       .then(setPresets)
       .catch((err: Error) => setError(err.message));
   }, []);
+
+  useEffect(() => {
+    if (!compact || !accordionOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      const inside =
+        accordionAnchorRef.current?.contains(target) || accordionPanelRef.current?.contains(target);
+      if (!inside) setAccordionOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [accordionOpen, compact]);
 
   const comunicadoPresets = useMemo(
     () =>
@@ -94,10 +113,28 @@ export function ComunicadoSlideTemplatesPanel({ compact = false }: { compact?: b
 
   if (compact) {
     return (
-      <details className="td-deck-settings-accordion">
-        <summary className="td-deck-settings-accordion__summary">Templates e temas</summary>
-        <div className="td-deck-settings-accordion__body">{body}</div>
-      </details>
+      <div className="td-deck-settings-accordion" ref={accordionAnchorRef}>
+        <button
+          type="button"
+          className="td-deck-settings-accordion__summary"
+          aria-expanded={accordionOpen}
+          aria-haspopup="dialog"
+          onClick={() => setAccordionOpen((prev) => !prev)}
+        >
+          Templates e temas
+        </button>
+        <AnchoredPanelPortal
+          open={accordionOpen}
+          anchorRef={accordionAnchorRef}
+          panelRef={accordionPanelRef}
+          variant="bare"
+          className="td-deck-settings-accordion__body td-deck-settings-accordion__body--portal"
+          role="dialog"
+          aria-label="Templates e temas"
+        >
+          {body}
+        </AnchoredPanelPortal>
+      </div>
     );
   }
 

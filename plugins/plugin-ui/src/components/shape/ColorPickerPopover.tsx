@@ -1,6 +1,9 @@
 import { Droplet, Image, Palette, Pipette } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
+
+import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorDialog } from "./ColorDialog";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
@@ -142,7 +145,14 @@ export function ColorPickerPopoverTrigger({
         <span className="delpi-ui-color-picker-trigger__label">{triggerLabel}</span>
       </button>
       {open ? (
-        <div className="delpi-ui-color-picker-trigger__panel" ref={panelRef} role="dialog" aria-label={triggerLabel}>
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          className="delpi-ui-color-picker-trigger__panel--portal"
+          role="dialog"
+          aria-label={triggerLabel}
+        >
           <ColorPickerPopover
             {...popoverProps}
             value={value}
@@ -150,7 +160,7 @@ export function ColorPickerPopoverTrigger({
               onChange(color);
             }}
           />
-        </div>
+        </AnchoredPanelPortal>
       ) : null}
     </div>
   );
@@ -207,7 +217,7 @@ export function ShapeFillMenu({
         <span className="delpi-ui-shape-menu__trigger-label">{fillLabel ?? L.fill}</span>
       </button>
       {open ? (
-        <div className="delpi-ui-shape-menu__panel" ref={panelRef} role="menu">
+        <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
           <ColorPickerPopover
             value={value}
             onChange={(color) => {
@@ -241,7 +251,7 @@ export function ShapeFillMenu({
               </li>
             ) : null}
           </ul>
-        </div>
+        </AnchoredPanelPortal>
       ) : null}
     </div>
   );

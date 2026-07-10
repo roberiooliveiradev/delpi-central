@@ -159,6 +159,14 @@
   box-shadow: 0 12px 32px color-mix(in srgb, #000 18%, transparent);
 }
 
+.delpi-ui-shape-menu__panel--portal,
+.delpi-ui-color-picker-trigger__panel--portal {
+  position: fixed;
+  top: auto;
+  left: auto;
+  z-index: 10200;
+}
+
 .delpi-ui-shape-menu {
   position: relative;
   display: inline-flex;
@@ -337,7 +345,7 @@
 .delpi-ui-shape-dialog-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 10300;
   display: flex;
   align-items: center;
   justify-content: center;

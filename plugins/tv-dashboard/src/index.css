@@ -1668,6 +1668,7 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--td-text) 3%, var(--td-surface));
   user-select: none;
+  font: inherit;
 }
 
 .td-deck-settings-accordion__summary::-webkit-details-marker {
@@ -1679,7 +1680,7 @@
   font-size: 10px;
 }
 
-.td-deck-settings-accordion[open] .td-deck-settings-accordion__summary::before {
+.td-deck-settings-accordion__summary[aria-expanded="true"]::before {
   content: "▾ ";
 }
 
@@ -1697,6 +1698,14 @@
   border-radius: 10px;
   background: var(--td-surface);
   box-shadow: 0 8px 24px color-mix(in srgb, #000 12%, transparent);
+}
+
+.td-deck-settings-accordion__body--portal {
+  position: fixed;
+  top: auto;
+  left: auto;
+  z-index: 10200;
+  max-height: min(320px, 50vh);
 }
 
 .td-deck-chrome__panel--compact .td-deck-inspector__section--compact {
@@ -2315,7 +2324,7 @@
 .td-deck-chrome__ribbon {
   overflow: visible;
   position: relative;
-  z-index: 2;
+  z-index: 30;
 }
 
 .td-deck-chrome__ribbon .td-deck-ribbon {

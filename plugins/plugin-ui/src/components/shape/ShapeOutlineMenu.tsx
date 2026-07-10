@@ -1,6 +1,8 @@
 import { ChevronRight, Minus } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
+import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
+
 import { ColorPickerPopover } from "./ColorPickerPopover";
 import { cssToColorValue } from "./colorUtils";
 import { mergeShapeColorLabels } from "./shapeLabels";
@@ -70,7 +72,7 @@ export function ShapeOutlineMenu({
         <span className="delpi-ui-shape-menu__trigger-label">{outlineLabel ?? L.outline}</span>
       </button>
       {open ? (
-        <div className="delpi-ui-shape-menu__panel" ref={panelRef} role="menu">
+        <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
           <ColorPickerPopover
             value={color}
             onChange={onColorChange}
@@ -136,7 +138,7 @@ export function ShapeOutlineMenu({
               </li>
             ) : null}
           </ul>
-        </div>
+        </AnchoredPanelPortal>
       ) : null}
     </div>
   );

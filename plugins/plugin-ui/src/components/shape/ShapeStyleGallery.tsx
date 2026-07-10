@@ -1,6 +1,8 @@
 import { Shapes } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
+
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels, ShapeStylePreset } from "./types";
 import { useClickOutside } from "./useClickOutside";
@@ -95,7 +97,7 @@ export function ShapeStyleMenu(props: ShapeStyleMenuProps) {
         <span className="delpi-ui-shape-menu__trigger-label">Estilo</span>
       </button>
       {open ? (
-        <div className="delpi-ui-shape-menu__panel" ref={panelRef} role="menu">
+        <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
           <ShapeStyleGallery
             {...props}
             onSelect={(preset) => {
@@ -103,7 +105,7 @@ export function ShapeStyleMenu(props: ShapeStyleMenuProps) {
               setOpen(false);
             }}
           />
-        </div>
+        </AnchoredPanelPortal>
       ) : null}
     </div>
   );

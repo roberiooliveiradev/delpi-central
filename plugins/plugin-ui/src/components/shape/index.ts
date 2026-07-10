@@ -1,3 +1,5 @@
+export { AnchoredPanelPortal } from "./AnchoredPanelPortal";
+export type { AnchoredPanelPortalProps } from "./AnchoredPanelPortal";
 export { ColorThemeGrid, ColorStandardRow, ColorSwatch } from "./ColorThemeGrid";
 export { ColorPickerPopover, ColorPickerPopoverTrigger, ShapeFillMenu } from "./ColorPickerPopover";
 export type { ColorPickerPopoverProps, ColorPickerPopoverTriggerProps, ShapeFillMenuProps } from "./ColorPickerPopover";
