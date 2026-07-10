@@ -78,10 +78,14 @@ class ChatDrawingBomComparisonService:
             pdf_bom_codes,
             api_codes=set(api_codes),
         )
+        structure_all_codes = ChatDrawingStructureIndexService.collect_all_codes(
+            root,
+            product_code,
+        )
         matched_codes, false_row_codes = cls.reconcile_bom_row_description_matches(
             root=root,
             pdf_extract=pdf_extract,
-            api_codes=set(api_codes),
+            api_codes=set(structure_all_codes),
         )
         pdf_bom_codes |= matched_codes
         pdf_bom_codes -= false_row_codes
@@ -89,10 +93,6 @@ class ChatDrawingBomComparisonService:
             pdf_extract
         )
 
-        structure_all_codes = ChatDrawingStructureIndexService.collect_all_codes(
-            root,
-            product_code,
-        )
         normalized_product = ChatProductQueryIntentService.normalize_product_code(
             product_code
         )
