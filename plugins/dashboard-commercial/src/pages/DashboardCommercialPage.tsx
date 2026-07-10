@@ -31,7 +31,6 @@ import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useCommercialFilters } from "../hooks/useCommercialFilters";
 import { useCommercialRolSeries } from "../hooks/useCommercialRolSeries";
 import { useServerTable } from "../hooks/useServerTable";
-import type { ChartGranularity } from "../types/chart";
 import type {
   CommercialProposal,
   CommercialProposalStatusFilter,
@@ -45,7 +44,6 @@ import {
   type DashboardExportContext,
 } from "../export";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
-import { suggestGranularity } from "../utils/periodBuckets";
 import {
   COMMERCIAL_CONSOLIDATED_BRANCH_LABELS,
   COMMERCIAL_KPI_TITLES,
@@ -71,6 +69,7 @@ import {
   appendCustomerSegmentToLabel,
   formatNewBusinessRolContextLine,
 } from "../utils/customerSegmentLabel";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 
 type DashboardCommercialPageProps = {
   isActive?: boolean;
@@ -97,18 +96,10 @@ export function DashboardCommercialPage({
     filterState,
   } = useCommercialFilters();
 
-  const autoGranularity = useMemo(
-    () => suggestGranularity(dateStart, dateEnd),
-    [dateStart, dateEnd],
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
   );
-  const [granularityOverride, setGranularityOverride] =
-    useState<ChartGranularity | null>(null);
-
-  useEffect(() => {
-    setGranularityOverride(null);
-  }, [dateStart, dateEnd]);
-
-  const granularity = granularityOverride ?? autoGranularity;
   const [proposalStatusFilter, setProposalStatusFilter] =
     useState<CommercialProposalStatusFilter>("all");
   const [proposalSearch, setProposalSearch] = useState("");
@@ -749,7 +740,7 @@ export function DashboardCommercialPage({
           <ChartToolbar
             idPrefix="rol"
             granularity={granularity}
-            onGranularityChange={setGranularityOverride}
+            onGranularityChange={setGranularity}
             exportActions={
               <CommercialExportButtons
                 variant="table"

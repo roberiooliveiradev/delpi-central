@@ -17,6 +17,7 @@ import {
   formatEfficiencyBandsQuery,
   type ProductionEfficiencyBand,
 } from "../constants/efficiencyBands";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
@@ -37,7 +38,6 @@ import type {
   ProductionOeeAppointmentItem,
   ProductionOrderProductType,
 } from "../types/production";
-import type { ChartGranularity } from "../types/chart";
 import { downloadOeeSeriesCsv } from "../utils/chartSeriesExport";
 import { formatDisplayDate, formatDisplayTime, formatPeriodLabel } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
@@ -59,7 +59,6 @@ import {
 import { navigateProduction } from "../utils/navigation";
 import { buildOeeAppointmentPath } from "../constants/routes";
 import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
@@ -106,7 +105,10 @@ export function OeePage({ pathname }: OeePageProps) {
     filterState,
   } = useProductionFilters();
 
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
   const [efficiencyBandFilter, setEfficiencyBandFilter] = useState<ProductionEfficiencyBand[]>([]);
   const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>("");
   const [selectedOps, setSelectedOps] = useState<string[]>([]);
@@ -196,10 +198,6 @@ export function OeePage({ pathname }: OeePageProps) {
     filters: apiParams,
     granularity,
   });
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   useEffect(() => {
     serverTable.resetPage();

@@ -13,4 +13,6 @@ export * from "./components/preview";
 export * from "./components/charts";
 export * from "./components/diagram";
 export * from "./utils";
+export * from "./hooks";
+export * from "./types/chartGranularity";
 export * from "./export";

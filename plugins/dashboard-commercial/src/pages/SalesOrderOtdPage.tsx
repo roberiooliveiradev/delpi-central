@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CircleGauge, PackageCheck, Truck } from "lucide-react";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, useChartGranularitySelection } from "@delpi/plugin-ui/index";
 
 import { getSalesOrderOtdPanel } from "../api/commercialApi";
 import { ChartCard } from "../components/ChartCard";
@@ -21,7 +21,6 @@ import { useCommercialResource } from "../hooks/useCommercialResource";
 import { useCommercialSalesOrderOtdSeries } from "../hooks/useCommercialSalesOrderOtdSeries";
 import { useLoadingProgress, EMPTY_REQUEST_PROGRESS } from "../hooks/useSimulatedLoadingProgress";
 import { useServerTable } from "../hooks/useServerTable";
-import type { ChartGranularity } from "../types/chart";
 import type {
   SalesOrderOtdLineItem,
   SalesOrderOtdLineStatus,
@@ -41,7 +40,6 @@ import {
   normalizeOperationalUnitCode,
 } from "../utils/operationalUnitLabels";
 import { buildSalesOrderOtdLinePath } from "../utils/routeParser";
-import { suggestGranularity } from "../utils/periodBuckets";
 import {
   downloadSalesOrderOtdSeriesCsv,
   exportSalesOrderOtdLinesExcel,
@@ -72,7 +70,10 @@ export function SalesOrderOtdPage({ pathname }: SalesOrderOtdPageProps) {
     filterState,
   } = useCommercialFilters();
 
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -108,10 +109,6 @@ export function SalesOrderOtdPage({ pathname }: SalesOrderOtdPageProps) {
     filters: apiParams,
     granularity,
   });
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   useEffect(() => {
     serverTable.resetPage();

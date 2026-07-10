@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { Download } from "lucide-react";
 import {
   Bar,
@@ -24,7 +25,7 @@ import { useNonconformitiesChart } from "../hooks/useNonconformitiesChart";
 import { useNonconformities } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
-import type { ChartGranularity, ChartSeriesPoint } from "../types/chart";
+import type { ChartSeriesPoint } from "../types/chart";
 import type { Nonconformity, NonconformityType } from "../types/nonconformity";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate } from "../utils/dates";
@@ -36,7 +37,6 @@ import {
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { navigateQuality } from "../utils/navigation";
 import { saveNonconformityDetailRecord } from "../utils/recordDetailStorage";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
@@ -61,7 +61,6 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const [status, setStatus] = useState("");
   const [itemCode, setItemCode] = useState("");
   const [description, setDescription] = useState("");
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
     dateStart,
@@ -75,6 +74,11 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     apiParams,
     filterState,
   } = useQualityFilters();
+
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
 
   const { branches: branchOptions, loading: branchesLoading } = useQualityBranches(apiParams);
 
@@ -139,10 +143,6 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     filters: chartFilters,
     granularity,
   });
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   useEffect(() => {
     setPage(1);

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import {
   Bar,
   BarChart,
@@ -31,7 +32,6 @@ import type { LateDeliveryItem, LateSupplierItem } from "../types/supplies";
 import type { ChartGranularity } from "../types/chart";
 import { buildOtdTrendSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -56,7 +56,16 @@ export function OtdPage({ pathname }: OtdPageProps) {
     filterState,
   } = useSuppliesFilters();
 
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+  const resolveOtdGranularity = useCallback(
+    (suggested: "day" | "week" | "month" | "year") =>
+      suggested === "year" ? "year" : "month",
+    [],
+  );
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+    { resolveAutoGranularity: resolveOtdGranularity },
+  );
 
   const { data, loading, refreshing, requestProgress, error, reload } = useSuppliesResource(
     (signal) => getOtd(periodParams, signal),
@@ -67,11 +76,6 @@ export function OtdPage({ pathname }: OtdPageProps) {
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
-
-  useEffect(() => {
-    const suggested = suggestGranularity(dateStart, dateEnd);
-    setGranularity(suggested === "year" ? "year" : "month");
-  }, [dateStart, dateEnd]);
 
   const monthlyChart = useMemo(
     () =>

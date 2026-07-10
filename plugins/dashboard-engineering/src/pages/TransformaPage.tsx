@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import {
   Bar,
   BarChart,
@@ -26,7 +27,6 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useEngineeringResource } from "../hooks/useEngineeringResource";
-import type { ChartGranularity } from "../types/chart";
 import type { TransformaProcess } from "../types/engineering";
 import { buildTransformaSavingsSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel } from "../utils/dates";
@@ -34,7 +34,6 @@ import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 import {
@@ -63,8 +62,12 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
     filterState,
   } = useEngineeringFilters();
 
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
+
   const [statusFilter, setStatusFilter] = useState("");
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const listParams = useMemo(
     () => ({
@@ -133,10 +136,6 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
   const error = summaryError && listError ? summaryError : null;
   const isBusy = loading || refreshing;
   const hasData = summary !== null || processesData !== null;
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   const savingsChartData = useMemo(
     () =>

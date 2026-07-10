@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -43,10 +43,9 @@ import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
 import { useProductionOtdSeries } from "../hooks/useProductionOtdSeries";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useProductionFilters } from "../hooks/useProductionFilters";
-import type { ChartGranularity } from "../types/chart";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { downloadOeeSeriesCsv, downloadOtdSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
-import { suggestGranularity } from "../utils/periodBuckets";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
@@ -71,7 +70,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
     filterState,
   } = useProductionFilters();
 
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
 
   const {
     directLabor,
@@ -101,10 +103,6 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
     filters: apiParams,
     granularity,
   });
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),

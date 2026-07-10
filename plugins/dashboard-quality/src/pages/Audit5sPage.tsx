@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { ClipboardCheck, Download, Star } from "lucide-react";
 import {
   Bar,
@@ -25,7 +26,6 @@ import { QUALITY_ROUTES } from "../constants/routes";
 import { useAudit5sSummary } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
-import type { ChartGranularity } from "../types/chart";
 import type { Audit5s } from "../types/audit5s";
 import {
   aggregateAudit5sByArea,
@@ -40,7 +40,6 @@ import {
 } from "../utils/goalDisplay";
 import { formatScore } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
@@ -51,8 +50,6 @@ type Audit5sPageProps = {
 };
 
 export function Audit5sPage({ pathname }: Audit5sPageProps) {
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
-
   const {
     dateStart,
     dateEnd,
@@ -65,6 +62,11 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
     apiParams,
     filterState,
   } = useQualityFilters();
+
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
 
   const { branches: branchOptions, loading: branchesLoading } = useQualityBranches(apiParams);
 
@@ -81,10 +83,6 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
     useAudit5sSummary(summaryParams);
   const isRefreshing = loading && Boolean(data);
   const items = data?.list_audits ?? [];
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   const areaChart = useMemo(() => aggregateAudit5sByArea(items), [items]);
   const scoreChart = useMemo(

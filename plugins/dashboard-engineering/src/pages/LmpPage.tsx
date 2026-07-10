@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import {
   Bar,
   BarChart,
@@ -30,10 +31,8 @@ import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import type { LmpDashboardItem } from "../types/lmp";
-import type { ChartGranularity } from "../types/chart";
 import { buildLmpFallbackCharts } from "../utils/lmpCharts";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
-import { suggestGranularity } from "../utils/periodBuckets";
 import {
   buildLmpDashboardRowKey,
   formatCycleIndex,
@@ -90,10 +89,14 @@ export function LmpPage({ pathname }: LmpPageProps) {
     filterState,
   } = useEngineeringFilters();
 
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
+
   const [listingTypes, setListingTypes] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [tableSearch, setTableSearch] = useState("");
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const apiListingType = resolveScalarApiFilter(listingTypes, "Todos");
   const apiStatus = resolveScalarApiFilter(statuses, "Todos");
@@ -157,10 +160,6 @@ export function LmpPage({ pathname }: LmpPageProps) {
     () => buildLmpFallbackCharts(sortedItems),
     [sortedItems]
   );
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   const resolvedCharts = useMemo(
     () => ({

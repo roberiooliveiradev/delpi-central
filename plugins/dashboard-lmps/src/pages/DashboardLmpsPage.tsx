@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { BarChart3, CircleGauge, Clock3 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -32,7 +33,6 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useClientTableSort } from "../hooks/useClientTableSort";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
-import type { ChartGranularity } from "../types/chart";
 import type { LmpDashboardItem } from "../types/lmp";
 import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
 import {
@@ -50,7 +50,6 @@ import {
   formatDashboardRevision,
 } from "../utils/lmpListingDisplay";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { readLmpsFilters, syncLmpsFiltersToUrl, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmps } from "../utils/navigation";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
@@ -121,10 +120,15 @@ export function DashboardLmpsPage({
     setCompetence,
     replaceAll,
   } = useCompetenceLinkedDates(initialFilters);
+
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
+
   const [branches, setBranches] = useState(initialFilters.branches);
   const [listingTypes, setListingTypes] = useState(initialFilters.listingTypes);
   const [statuses, setStatuses] = useState(initialFilters.statuses);
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const multiFilters = useMemo(
     () => ({ branches, listingTypes, statuses }),
@@ -241,11 +245,6 @@ export function DashboardLmpsPage({
   const hasCharts =
     resolvedCharts.levelData.some((d) => d.value > 0) ||
     resolvedCharts.statusData.some((d) => d.value > 0);
-
-  useEffect(() => {
-    if (!dateStart || !dateEnd) return;
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   useEffect(() => {
     if (!isActive) return;

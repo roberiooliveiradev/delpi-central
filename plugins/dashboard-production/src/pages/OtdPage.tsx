@@ -13,7 +13,7 @@ import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { OtdEvolutionChart } from "../components/OtdEvolutionChart";
 import { OtdStatusBadge } from "../components/OtdStatusBadge";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";
@@ -28,7 +28,6 @@ import type {
   ProductionOtdOrderItem,
   ProductionOtdOrderStatus,
 } from "../types/production";
-import type { ChartGranularity } from "../types/chart";
 import { downloadOtdSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
@@ -44,7 +43,6 @@ import {
 import { navigateProduction } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
 import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
@@ -70,7 +68,10 @@ export function OtdPage({ pathname }: OtdPageProps) {
     filterState,
   } = useProductionFilters();
 
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -105,10 +106,6 @@ export function OtdPage({ pathname }: OtdPageProps) {
     filters: apiParams,
     granularity,
   });
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   useEffect(() => {
     serverTable.resetPage();

@@ -19,7 +19,7 @@ import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { usePpmPage } from "../hooks/usePpmPage";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
-import type { ChartGranularity } from "../types/chart";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import type { PpmItem, PpmType } from "../types/ppm";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
@@ -35,7 +35,6 @@ import {
 import { mergePpmSeries } from "../utils/mergePpmSeries";
 import { navigateQuality } from "../utils/navigation";
 import { savePpmDetailRecord } from "../utils/recordDetailStorage";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatPpmProductScopeSuffix } from "../utils/ppmProductScope";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
@@ -50,7 +49,6 @@ export function PpmPage({ pathname }: PpmPageProps) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [tableSearch, setTableSearch] = useState("");
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
     dateStart,
@@ -67,6 +65,11 @@ export function PpmPage({ pathname }: PpmPageProps) {
     ppmApiParams,
     filterState,
   } = useQualityFilters();
+
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
 
   const { branches: branchOptions, loading: branchesLoading } =
     useQualityBranches(apiParams);
@@ -126,10 +129,6 @@ export function PpmPage({ pathname }: PpmPageProps) {
   useEffect(() => {
     setPage(1);
   }, [tableSearch]);
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),

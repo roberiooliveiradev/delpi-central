@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { Download, Lightbulb, Wallet } from "lucide-react";
 import {
   Bar,
@@ -30,7 +31,6 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useKaizenSummary } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
-import type { ChartGranularity } from "../types/chart";
 import type { Kaizen } from "../types/kaizen";
 import {
   aggregateKaizenByStatus,
@@ -47,7 +47,6 @@ import {
 import { formatCurrency, formatDecimal } from "../utils/format";
 import { navigateQuality } from "../utils/navigation";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
-import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
@@ -71,7 +70,6 @@ function renderPieLabel({
 export function KaizenPage({ pathname }: KaizenPageProps) {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("");
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
     dateStart,
@@ -85,6 +83,11 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     apiParams,
     filterState,
   } = useQualityFilters();
+
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    dateStart,
+    dateEnd,
+  );
 
   const debouncedTitle = useDebouncedValue(title);
   const debouncedStatus = useDebouncedValue(status);
@@ -120,10 +123,6 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
   const isRefreshing = loading && Boolean(data);
   const items = data?.list_kaizen ?? [];
   const listItems = listData?.list_kaizen ?? [];
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   const statusChart = useMemo(() => aggregateKaizenByStatus(items), [items]);
   const sectorChart = useMemo(

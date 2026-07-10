@@ -13,7 +13,7 @@ import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { ChartCard } from "../../components/ChartCard";
@@ -167,12 +167,19 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [recalculating, setRecalculating] = useState(false);
   const [exporting, setExporting] = useState<"csv" | "excel" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
-    suggestGranularity(defaultFilters.dataInicial, defaultFilters.dataFinal)
-  );
   const [savingsMeasure, setSavingsMeasure] = useState<ChartMeasure>("currency");
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [viewMode, setViewMode] = useState<DashboardViewMode>("consolidated");
+
+  const resolveSavingsGranularity = useCallback(
+    (_suggested: import("@delpi/plugin-ui").ChartGranularity): ChartGranularity =>
+      suggestGranularity(filters.dataInicial, filters.dataFinal),
+    [filters.dataInicial, filters.dataFinal],
+  );
+  const { granularity: savingsGranularity, setGranularity: setSavingsGranularity } =
+    useChartGranularitySelection(filters.dataInicial, filters.dataFinal, {
+      resolveAutoGranularity: resolveSavingsGranularity,
+    });
 
   const params = useMemo(
     () =>
@@ -289,10 +296,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    setSavingsGranularity(suggestGranularity(filters.dataInicial, filters.dataFinal));
-  }, [filters.dataInicial, filters.dataFinal]);
 
   async function handleRefresh() {
     await load();
