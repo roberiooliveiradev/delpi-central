@@ -360,6 +360,35 @@ class ChatToolContextPreTurnService:
                 )
             )
 
+            if drawing_product_code and drawing_pdf_extract:
+                from app.application.services.chat_drawing_analyser_bom_confirmation_orchestration_service import (
+                    ChatDrawingAnalyserBomConfirmationOrchestrationService,
+                )
+
+                anchor_storage_path = ""
+
+                if drawing_library_fetch:
+                    anchor_storage_path = str(
+                        drawing_library_fetch.get("storagePath") or ""
+                    ).strip()
+                else:
+                    source_meta = drawing_pdf_extract.get("sourceMetadata")
+
+                    if isinstance(source_meta, dict):
+                        anchor_storage_path = str(
+                            source_meta.get("storagePath") or ""
+                        ).strip()
+
+                drawing_pdf_extract = (
+                    ChatDrawingAnalyserBomConfirmationOrchestrationService.try_anchor_after_code_resolution(
+                        pdf_extract=drawing_pdf_extract,
+                        product_code=drawing_product_code,
+                        access_token=access_token,
+                        storage_path=anchor_storage_path,
+                        filename=str(attachment_filename or ""),
+                    )
+                )
+
         if drawing_analysis_mode and drawing_has_pdf and not drawing_product_code:
             from app.domain.services.chat_drawing_intent_service import (
                 ChatDrawingIntentService,

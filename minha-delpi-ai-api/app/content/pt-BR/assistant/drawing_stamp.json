@@ -53,6 +53,12 @@
         "ocr_without_regional_bom": ["bom"]
       }
     },
+    "analyserAnchor": {
+      "enabled": true,
+      "minWeakBomComponentScore": 0.95,
+      "view": "full",
+      "comment": "Onda B — após productCode resolvido, re-OCR focal na região BOM e injeta códigos esperados do /analyser encontrados no haystack OCR."
+    },
     "attempts": [
       { "id": "standard", "enableRegionOcr": null },
       {

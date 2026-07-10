@@ -1,6 +1,6 @@
 # Confirmação focal de extração — desenhos DELPI
 
-> **Status:** jul/2026 — Onda A (Tesseract-only, sem âncora API).  
+> **Status:** jul/2026 — Onda A + Onda B (âncora `/analyser` após código resolvido).  
 > **Skill:** `drawing-analysis-delpi` · **Config:** `drawing_stamp.json` → `extractionQualityRetry.confirmation`
 
 ## Problema
@@ -69,15 +69,41 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
 | `confirmationAttempts[]` | Passes com `plan`, `scoreBefore`, `scoreAfter`, `improved` |
 | `sourceMetadata.stages` | Inclui `tesseract_confirmation` após confirmação |
 
-## Onda B (backlog)
+## Onda B — âncora `/analyser` (BOM)
 
-- Ancorar confirmação BOM com códigos esperados do `/analyser` quando `productCode` já resolvido.
+Após `ChatDrawingProductCodeResolutionService` resolver o código no pré-turno, se `bom_scope` ou `bom_completeness` < 95%:
+
+```text
+ChatToolContextPreTurnService (pós resolução de código)
+  → ChatDrawingAnalyserBomConfirmationOrchestrationService.try_anchor_after_code_resolution
+       → ChatDrawingAnalyserFetchService.fetch_root (GET /products/{code}/analyser?view=full)
+       → ChatDrawingAnalyserAnchorService.build_anchor
+       → ChatDrawingBomAnchorConfirmationService.try_improve_with_anchor
+            → OCR focal região bom (Tesseract, mesmo dpiMultiplier da Onda A)
+            → merge + parse_from_text
+            → inject códigos API presentes no haystack mas ausentes em componentCodes
+```
+
+| Módulo | Camada | Papel |
+|--------|--------|-------|
+| `ChatDrawingAnalyserFetchService` | domain | HTTP leve do payload analyser |
+| `ChatDrawingAnalyserAnchorService` | domain | `expected_codes` + gate `should_anchor_bom` |
+| `ChatDrawingBomAnchorConfirmationService` | domain | Re-OCR BOM + injeção por presença no haystack |
+| `ChatDrawingAnalyserBomConfirmationOrchestrationService` | application | Orquestra após código resolvido no pré-turno |
+
+Config: `drawing_stamp.json` → `extractionQualityRetry.analyserAnchor` (`enabled`, `minWeakBomComponentScore`, `view`).
+
+Metadata extra: `bomAnchorConfirmation.addedCodes`, `extractionQualityRetry.analyserBomAnchor`.
+
+## Backlog
+
 - Textos de `extraction_confidence` no checklist distinguindo «confirmação tentada» vs «não tentada».
 
 ## Testes
 
 ```bash
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_extraction_confirmation_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_analyser_bom_anchor_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_extraction_quality_retry_service.py -q
 ```
 
