@@ -57,6 +57,8 @@ Regressão após `vite build`:
 grep 'Object.assign({},e.default,e)' dist/assets/__federation_fn_import*.js   # vazio
 grep '__DELPI_MF_REACT__' dist/assets/index-*.js                              # presente no chunk React bundled
 grep '__DELPI_MF_REACT__' dist/assets/__federation_fn_import*.js              # presente
+grep 'var _delpiMod' dist/assets/__federation_fn_import*.js                   # flatten sem reassign e
+node plugins/vite/federationReactProxyFix.test.mjs                            # testes unitários (tsx)
 ```
 
 O portal e o bootstrap MFE chamam `publishDelpiMfReact` / `ensurePortalFederationShareScope` **antes** de montar o remote.
