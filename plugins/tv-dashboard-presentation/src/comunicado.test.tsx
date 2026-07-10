@@ -264,6 +264,39 @@ describe("CustomMessageScreen rich layout", () => {
     expect(screen.getByText("BC")).toBeTruthy();
   });
 
+  it("renderiza lista com três itens e marcadores na TV", () => {
+    const { container } = render(
+      <CustomMessageScreen
+        data={{
+          version: 3,
+          blocks: [
+            {
+              id: "1",
+              type: "text",
+              content: "Alpha\nBeta\nGamma",
+              contentRuns: [
+                { text: "Alpha", style: { listType: "bullet" } },
+                { text: "\n" },
+                { text: "Beta", style: { listType: "bullet" } },
+                { text: "\n" },
+                { text: "Gamma", style: { listType: "bullet" } },
+              ],
+              frame: { x: 5, y: 10, w: 90, h: 20 },
+              style: { fontSize: 24, color: "#fff", textAlign: "left" },
+            },
+          ],
+          background: { type: "color", value: "#111827" },
+        }}
+      />,
+    );
+    const list = container.querySelector(".tdp-comunicado__list--bullet");
+    expect(list).toBeTruthy();
+    expect(list?.querySelectorAll(".tdp-comunicado__list-item").length).toBe(3);
+    expect(screen.getByText("Alpha")).toBeTruthy();
+    expect(screen.getByText("Beta")).toBeTruthy();
+    expect(screen.getByText("Gamma")).toBeTruthy();
+  });
+
   it("renderiza forma e link", () => {
     render(
       <CustomMessageScreen

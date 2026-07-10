@@ -1,6 +1,11 @@
 import type { CSSProperties } from "react";
 
 import {
+  groupContentRunsForDisplay,
+  joinContentLinesToRuns,
+  splitContentRunsIntoLines,
+} from "./comunicadoContentList";
+import {
   contentRunStyleToCss,
   plainTextFromContentRuns,
   shouldPersistContentRuns,
@@ -9,10 +14,22 @@ import {
 import type {
   ComunicadoContentRun,
   ComunicadoContentRunStyle,
+  ComunicadoListType,
   ComunicadoTextBlock,
   ComunicadoTextDecoration,
 } from "./comunicadoTypes";
 import { buildTextDecoration, parseTextDecorationFlags } from "./comunicadoHelpers";
+
+export {
+  groupContentRunsForDisplay,
+  hasListContentRuns,
+  insertLineBreakAtOffset,
+  selectionListTypeState,
+  toggleListTypeInRange,
+  toggleListTypeOnAllLines,
+  type ContentRunListSelectionState,
+  type TextDisplaySegment,
+} from "./comunicadoContentList";
 
 type CharToken = {
   text: string;
@@ -100,6 +117,9 @@ function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunSt
   if (style.fontStyle === "italic") cleaned.fontStyle = "italic";
   if (style.textDecoration && style.textDecoration !== "none") {
     cleaned.textDecoration = style.textDecoration;
+  }
+  if (style.listType === "bullet" || style.listType === "ordered") {
+    cleaned.listType = style.listType;
   }
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
@@ -268,6 +288,51 @@ function styleFromElement(element: Element): ComunicadoContentRunStyle {
 }
 
 export function contentRunsFromEditableRoot(root: HTMLElement): ComunicadoContentRun[] {
+  const lineElements = root.querySelectorAll(`[${LINE_ATTR}]`);
+  if (lineElements.length > 0) {
+    const lines = [...lineElements].map((element) => {
+      const listTypeRaw = element.getAttribute(LIST_TYPE_ATTR);
+      const listType =
+        listTypeRaw === "bullet" || listTypeRaw === "ordered" ? listTypeRaw : undefined;
+      const runs: ComunicadoContentRun[] = [];
+
+      function appendText(text: string, style?: ComunicadoContentRunStyle) {
+        if (!text) return;
+        const normalizedStyle = pruneRunStyle(style ?? {});
+        const previous = runs[runs.length - 1];
+        if (previous && runStylesEqual(previous.style, normalizedStyle)) {
+          previous.text += text;
+          return;
+        }
+        runs.push(normalizedStyle ? { text, style: normalizedStyle } : { text });
+      }
+
+      function walk(node: Node, inherited?: ComunicadoContentRunStyle) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          appendText(node.textContent ?? "", inherited);
+          return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        const childElement = node as Element;
+        if (childElement.tagName === "BR") return;
+        const merged = mergeInheritedRunStyle(inherited, styleFromElement(childElement));
+        for (const child of childElement.childNodes) {
+          walk(child, merged);
+        }
+      }
+
+      for (const child of element.childNodes) {
+        walk(child);
+      }
+
+      return {
+        runs: compactContentRuns(runs.length > 0 ? runs : [{ text: "" }]),
+        listType,
+      };
+    });
+    return joinContentLinesToRuns(lines);
+  }
+
   const runs: ComunicadoContentRun[] = [];
 
   function appendText(text: string, style?: ComunicadoContentRunStyle) {
@@ -318,7 +383,10 @@ export function runStyleToInlineCss(
     .join(";");
 }
 
-export function renderContentRunsHtml(
+const LINE_ATTR = "data-comunicado-line";
+const LIST_TYPE_ATTR = "data-list-type";
+
+function renderRunsInlineHtml(
   runs: ComunicadoContentRun[],
   options?: { fontScale?: number },
 ): string {
@@ -333,6 +401,34 @@ export function renderContentRunsHtml(
       return `<span style="${inline}">${escapeHtml(run.text)}</span>`;
     })
     .join("");
+}
+
+function renderLineHtml(
+  runs: ComunicadoContentRun[],
+  listType: ComunicadoListType | undefined,
+  options?: { fontScale?: number },
+): string {
+  const inner = renderRunsInlineHtml(runs, options);
+  const safeInner = inner || "<br>";
+  if (!listType) {
+    return `<div ${LINE_ATTR}="">${safeInner}</div>`;
+  }
+  return `<div ${LINE_ATTR}="" ${LIST_TYPE_ATTR}="${listType}">${safeInner}</div>`;
+}
+
+export function renderContentRunsHtml(
+  runs: ComunicadoContentRun[],
+  options?: { fontScale?: number },
+): string {
+  const lines = splitContentRunsIntoLines(runs);
+  if (lines.length === 1 && !lines[0].listType && !plainTextFromContentRuns(runs).includes("\n")) {
+    const single = lines[0].runs;
+    if (single.length === 1 && !single[0].style) {
+      return escapeHtml(single[0].text);
+    }
+    return renderRunsInlineHtml(single, options);
+  }
+  return lines.map((line) => renderLineHtml(line.runs, line.listType, options)).join("");
 }
 
 function escapeHtml(value: string): string {
@@ -357,14 +453,81 @@ export function getEditableTextSelectionOffsets(
 }
 
 function measureTextOffset(root: HTMLElement, container: Node, offset: number): number {
-  const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const lineElements = root.querySelectorAll(`[${LINE_ATTR}]`);
+  if (lineElements.length === 0) {
+    const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let total = 0;
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node === container) return total + offset;
+      total += node.textContent?.length ?? 0;
+    }
+    return total;
+  }
+
   let total = 0;
-  while (walker.nextNode()) {
-    const node = walker.currentNode;
-    if (node === container) return total + offset;
-    total += node.textContent?.length ?? 0;
+  for (let lineIndex = 0; lineIndex < lineElements.length; lineIndex += 1) {
+    const element = lineElements[lineIndex];
+    const walker = root.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node === container) return total + offset;
+      total += node.textContent?.length ?? 0;
+    }
+    if (lineIndex < lineElements.length - 1) total += 1;
   }
   return total;
+}
+
+function locateTextPosition(
+  root: HTMLElement,
+  absoluteOffset: number,
+): { node: Text; offset: number } | null {
+  const lineElements = root.querySelectorAll(`[${LINE_ATTR}]`);
+  let remaining = Math.max(0, absoluteOffset);
+
+  if (lineElements.length === 0) {
+    const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      const length = node.textContent?.length ?? 0;
+      if (remaining <= length) return { node, offset: remaining };
+      remaining -= length;
+    }
+    return null;
+  }
+
+  for (let lineIndex = 0; lineIndex < lineElements.length; lineIndex += 1) {
+    const element = lineElements[lineIndex];
+    const walker = root.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      const length = node.textContent?.length ?? 0;
+      if (remaining <= length) return { node, offset: remaining };
+      remaining -= length;
+    }
+    if (lineIndex < lineElements.length - 1) {
+      if (remaining === 0) {
+        const firstText = element.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        if (firstText.nextNode()) {
+          return { node: firstText.currentNode as Text, offset: 0 };
+        }
+        return null;
+      }
+      remaining -= 1;
+    }
+  }
+
+  const lastLine = lineElements[lineElements.length - 1];
+  const lastWalker = root.ownerDocument.createTreeWalker(lastLine, NodeFilter.SHOW_TEXT);
+  let lastNode: Text | null = null;
+  while (lastWalker.nextNode()) {
+    lastNode = lastWalker.currentNode as Text;
+  }
+  if (lastNode) {
+    return { node: lastNode, offset: lastNode.textContent?.length ?? 0 };
+  }
+  return null;
 }
 
 export function restoreEditableTextSelection(
@@ -382,21 +545,6 @@ export function restoreEditableTextSelection(
   range.setEnd(endPos.node, endPos.offset);
   selection.removeAllRanges();
   selection.addRange(range);
-}
-
-function locateTextPosition(
-  root: HTMLElement,
-  absoluteOffset: number,
-): { node: Text; offset: number } | null {
-  const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let remaining = Math.max(0, absoluteOffset);
-  while (walker.nextNode()) {
-    const node = walker.currentNode as Text;
-    const length = node.textContent?.length ?? 0;
-    if (remaining <= length) return { node, offset: remaining };
-    remaining -= length;
-  }
-  return null;
 }
 
 export function hasPersistableContentRuns(runs: ComunicadoContentRun[] | undefined): boolean {

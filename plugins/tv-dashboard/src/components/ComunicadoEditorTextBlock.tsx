@@ -6,12 +6,15 @@ import {
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
   hasRichTextRuns,
+  insertLineBreakAtOffset,
   renderContentRunsHtml,
   resolveTextBlockDisplayRuns,
   restoreEditableTextSelection,
   syncTextBlockFromRuns,
   toggleContentRunStyleInRange,
+  toggleListTypeInRange,
   type ComunicadoBlock,
+  type ComunicadoListType,
   type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
@@ -121,6 +124,40 @@ export function ComunicadoEditorTextBlock({
     );
   }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
 
+  const applyListToggle = useCallback((listType: ComunicadoListType) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const selection = getEditableTextSelectionOffsets(editor);
+    const runs = contentRunsFromEditableRoot(editor);
+    const start = selection?.start ?? runs.map((run) => run.text).join("").length;
+    const end = selection?.end ?? start;
+    const nextRuns = toggleListTypeInRange(runs, start, end, listType);
+    draftRef.current = syncTextBlockFromRuns(nextRuns);
+    renderedSignatureRef.current = "";
+    syncEditorHtml(nextRuns, true);
+    commitDraft();
+    reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
+  }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
+
+  const insertLineBreak = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const selection = getEditableTextSelectionOffsets(editor);
+    if (!selection) return;
+    const runs = contentRunsFromEditableRoot(editor);
+    const nextRuns = insertLineBreakAtOffset(runs, selection.start);
+    const nextOffset = selection.start + 1;
+    draftRef.current = syncTextBlockFromRuns(nextRuns);
+    renderedSignatureRef.current = "";
+    syncEditorHtml(nextRuns, false);
+    restoreEditableTextSelection(editor, nextOffset, nextOffset);
+    commitDraft();
+    reportTextEditSelection(
+      { blockId: block.id, start: nextOffset, end: nextOffset },
+      nextRuns,
+    );
+  }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
+
   function exitEditing() {
     const editor = editorRef.current;
     if (editor) {
@@ -161,6 +198,7 @@ export function ComunicadoEditorTextBlock({
 
     registerTextEditorBridge(block.id, {
       applyPartialStyleToggle,
+      applyListToggle,
       refreshSelectionState: reportSelectionFromEditor,
     });
 
@@ -169,6 +207,7 @@ export function ComunicadoEditorTextBlock({
     isEditing,
     block.id,
     applyPartialStyleToggle,
+    applyListToggle,
     reportSelectionFromEditor,
     registerTextEditorBridge,
   ]);
@@ -211,6 +250,11 @@ export function ComunicadoEditorTextBlock({
               if (event.key === "Escape") {
                 event.preventDefault();
                 exitEditing();
+                return;
+              }
+              if (event.key === "Enter") {
+                event.preventDefault();
+                insertLineBreak();
                 return;
               }
               if (!(event.ctrlKey || event.metaKey)) return;

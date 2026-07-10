@@ -16,10 +16,13 @@ import {
   nextZIndex,
   parseComunicadoConfig,
   resolveTextBlockDisplayRuns,
+  selectionListTypeState,
   selectionRunStyleState,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
   syncTextBlockFields,
+  syncTextBlockFromRuns,
+  toggleListTypeOnAllLines,
   type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoDataFilters,
@@ -27,6 +30,7 @@ import {
   type ComunicadoTextBlock,
   type ContentRunStyleToggleKey,
   type ComunicadoContentRun,
+  type ComunicadoListType,
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
@@ -109,6 +113,9 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const [textEditSelectionStyle, setTextEditSelectionStyle] = useState<
     ComunicadoEditorContextValue["textEditSelectionStyle"]
   >(null);
+  const [textEditListSelection, setTextEditListSelection] = useState<
+    ComunicadoEditorContextValue["textEditListSelection"]
+  >(null);
   const [uploading, setUploading] = useState(false);
   const [historyTick, setHistoryTick] = useState(0);
 
@@ -128,6 +135,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     if (!id) {
       setTextEditSelection(null);
       setTextEditSelectionStyle(null);
+      setTextEditListSelection(null);
     }
   }, []);
 
@@ -506,27 +514,38 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     runs?: ComunicadoContentRun[],
   ) => {
     setTextEditSelection(selection);
-    if (!selection || selection.start >= selection.end) {
+    if (!selection) {
       setTextEditSelectionStyle(null);
+      setTextEditListSelection(null);
       return;
     }
-    if (runs) {
-      setTextEditSelectionStyle(
-        selectionRunStyleState(runs, selection.start, selection.end),
+
+    const resolvedRuns = (() => {
+      if (runs) return runs;
+      const block = configRef.current.blocks?.find((item) => item.id === selection.blockId);
+      if (!block || (block.type !== "heading" && block.type !== "text")) return null;
+      return resolveTextBlockDisplayRuns(block);
+    })();
+
+    if (!resolvedRuns) {
+      setTextEditSelectionStyle(null);
+      setTextEditListSelection(null);
+      return;
+    }
+
+    if (selection.start >= selection.end) {
+      setTextEditSelectionStyle(null);
+      setTextEditListSelection(
+        selectionListTypeState(resolvedRuns, selection.start, selection.start),
       );
       return;
     }
-    const block = configRef.current.blocks?.find((item) => item.id === selection.blockId);
-    if (!block || (block.type !== "heading" && block.type !== "text")) {
-      setTextEditSelectionStyle(null);
-      return;
-    }
+
     setTextEditSelectionStyle(
-      selectionRunStyleState(
-        resolveTextBlockDisplayRuns(block),
-        selection.start,
-        selection.end,
-      ),
+      selectionRunStyleState(resolvedRuns, selection.start, selection.end),
+    );
+    setTextEditListSelection(
+      selectionListTypeState(resolvedRuns, selection.start, selection.end),
     );
   }, []);
 
@@ -535,6 +554,26 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     const bridge = textEditorBridgesRef.current.get(editingTextId);
     bridge?.applyPartialStyleToggle(toggleKey);
   }, [editingTextId]);
+
+  const toggleSelectedTextListType = useCallback((listType: ComunicadoListType) => {
+    const target =
+      editingTextId != null
+        ? configRef.current.blocks?.find((block) => block.id === editingTextId)
+        : selected && (selected.type === "heading" || selected.type === "text")
+          ? selected
+          : null;
+    if (!target || (target.type !== "heading" && target.type !== "text")) return;
+
+    if (editingTextId === target.id) {
+      const bridge = textEditorBridgesRef.current.get(editingTextId);
+      bridge?.applyListToggle(listType);
+      return;
+    }
+
+    const runs = resolveTextBlockDisplayRuns(target);
+    const nextRuns = toggleListTypeOnAllLines(runs, listType);
+    updateBlockTextFields(target.id, syncTextBlockFromRuns(nextRuns));
+  }, [editingTextId, selected, updateBlockTextFields]);
 
   function updateBlockLink(blockId: string, href: string | undefined) {
     const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
@@ -786,9 +825,11 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     setEditingTextId: setEditingTextIdWithSelection,
     textEditSelection,
     textEditSelectionStyle,
+    textEditListSelection,
     registerTextEditorBridge,
     reportTextEditSelection,
     toggleEditingTextRunStyle,
+    toggleSelectedTextListType,
     uploading,
     shapeMenuOpen,
     setShapeMenuOpen,

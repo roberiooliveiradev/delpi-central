@@ -17,6 +17,8 @@ export type ComunicadoTextDecoration =
   | "line-through"
   | "underline line-through";
 
+export type ComunicadoListType = "bullet" | "ordered";
+
 export type ComunicadoShapeKind =
   | "rectangle"
   | "rounded-rect"
@@ -35,6 +37,8 @@ export type ComunicadoContentRunStyle = {
   fontWeight?: "normal" | "bold";
   fontStyle?: "normal" | "italic";
   textDecoration?: ComunicadoTextDecoration;
+  /** Marcador de parágrafo (4C.3) — aplicado por linha (`\n` separa itens). */
+  listType?: ComunicadoListType;
 };
 
 export type ComunicadoContentRun = {

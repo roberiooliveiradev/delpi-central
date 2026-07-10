@@ -18,6 +18,8 @@ import {
   Group,
   Highlighter,
   Italic,
+  List,
+  ListOrdered,
   Minus,
   Plus,
   Redo2,
@@ -42,6 +44,8 @@ import {
   defaultTextBlockStyle,
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
+  resolveTextBlockDisplayRuns,
+  selectionListTypeState,
 } from "@delpi/tv-dashboard-presentation";
 import { HintAction } from "@delpi/plugin-ui/index";
 
@@ -90,6 +94,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     textEditSelection,
     textEditSelectionStyle,
     toggleEditingTextRunStyle,
+    textEditListSelection,
+    toggleSelectedTextListType,
   } = useComunicadoEditor();
 
   const multiSelected = selectedIds.length >= 2;
@@ -130,6 +136,20 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const strikethroughActive = partialTextSelectionActive
     ? partialStrikethroughActive
     : blockDecorationFlags.strikethrough;
+  const listSelectionState =
+    isTextBlock && selected
+      ? editingTextId === selected.id && textEditListSelection
+        ? textEditListSelection
+        : selectionListTypeState(
+            resolveTextBlockDisplayRuns(selected),
+            0,
+            Math.max(0, selected.content.length),
+          )
+      : null;
+  const bulletListActive =
+    listSelectionState?.bullet === true || listSelectionState?.bullet === "mixed";
+  const orderedListActive =
+    listSelectionState?.ordered === true || listSelectionState?.ordered === "mixed";
   const textVerticalAlign =
     isTextBlock && selected
       ? selected.style?.verticalAlign ?? defaultVerticalAlignForBlock(selected.type)
@@ -432,6 +452,23 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     <Icon size={15} aria-hidden="true" />
                   </button>
                 ))}
+                <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+                <button
+                  type="button"
+                  className={`td-btn td-btn--sm td-btn--icon${bulletListActive ? " td-btn--active" : ""}`}
+                  aria-label="Marcadores"
+                  onClick={() => toggleSelectedTextListType("bullet")}
+                >
+                  <List size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className={`td-btn td-btn--sm td-btn--icon${orderedListActive ? " td-btn--active" : ""}`}
+                  aria-label="Lista numerada"
+                  onClick={() => toggleSelectedTextListType("ordered")}
+                >
+                  <ListOrdered size={15} aria-hidden="true" />
+                </button>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
                 {(
                   [

@@ -5,8 +5,10 @@ import type {
   ComunicadoBlock,
   ComunicadoConfig,
   ComunicadoDataFilters,
+  ComunicadoListType,
   ComunicadoShapeKind,
   ComunicadoTextBlock,
+  ContentRunListSelectionState,
   ContentRunSelectionStyleState,
   ContentRunStyleToggleKey,
   ComunicadoContentRun,
@@ -26,6 +28,7 @@ export type TextEditSelection = {
 
 export type TextEditorBridge = {
   applyPartialStyleToggle: (toggleKey: ContentRunStyleToggleKey) => void;
+  applyListToggle: (listType: ComunicadoListType) => void;
   refreshSelectionState: () => void;
 };
 
@@ -46,12 +49,14 @@ export type ComunicadoEditorContextValue = {
   setEditingTextId: (id: string | null) => void;
   textEditSelection: TextEditSelection | null;
   textEditSelectionStyle: ContentRunSelectionStyleState | null;
+  textEditListSelection: ContentRunListSelectionState | null;
   registerTextEditorBridge: (blockId: string, bridge: TextEditorBridge | null) => void;
   reportTextEditSelection: (
     selection: TextEditSelection | null,
     runs?: ComunicadoContentRun[],
   ) => void;
   toggleEditingTextRunStyle: (toggleKey: ContentRunStyleToggleKey) => void;
+  toggleSelectedTextListType: (listType: ComunicadoListType) => void;
   uploading: boolean;
   shapeMenuOpen: boolean;
   setShapeMenuOpen: (open: boolean) => void;

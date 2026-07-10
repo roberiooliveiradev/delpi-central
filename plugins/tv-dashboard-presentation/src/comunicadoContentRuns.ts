@@ -14,6 +14,7 @@ const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
   "fontWeight",
   "fontStyle",
   "textDecoration",
+  "listType",
 ];
 
 function hasRunStyle(run: ComunicadoContentRun): boolean {
@@ -53,6 +54,9 @@ function normalizeRunStyle(value: unknown): ComunicadoContentRunStyle | undefine
     raw.textDecoration === "underline line-through"
   ) {
     style.textDecoration = raw.textDecoration;
+  }
+  if (raw.listType === "bullet" || raw.listType === "ordered") {
+    style.listType = raw.listType;
   }
   return Object.keys(style).length > 0 ? style : undefined;
 }

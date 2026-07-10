@@ -81,6 +81,26 @@ describe("comunicadoContentRunEditing", () => {
     ]);
   });
 
+  it("serializa listas com linhas marcadas no HTML editável", () => {
+    const html = renderContentRunsHtml([
+      { text: "Primeiro", style: { listType: "bullet" } },
+      { text: "\n" },
+      { text: "Segundo", style: { listType: "bullet" } },
+      { text: "\n" },
+      { text: "Terceiro", style: { listType: "bullet" } },
+    ]);
+    expect(html).toContain('data-list-type="bullet"');
+    const root = document.createElement("div");
+    root.innerHTML = html;
+    expect(contentRunsFromEditableRoot(root)).toEqual([
+      { text: "Primeiro", style: { listType: "bullet" } },
+      { text: "\n" },
+      { text: "Segundo", style: { listType: "bullet" } },
+      { text: "\n" },
+      { text: "Terceiro", style: { listType: "bullet" } },
+    ]);
+  });
+
   it("lê offsets de seleção em contentEditable", () => {
     const root = document.createElement("div");
     root.contentEditable = "true";

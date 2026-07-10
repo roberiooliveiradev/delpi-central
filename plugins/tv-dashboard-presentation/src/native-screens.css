@@ -219,7 +219,9 @@
 }
 
 .tdp-comunicado__block--heading h1,
-.tdp-comunicado__block--text p {
+.tdp-comunicado__block--text p,
+.tdp-comunicado__block--heading .tdp-comunicado__rich-text,
+.tdp-comunicado__block--text .tdp-comunicado__rich-text {
   margin: 0;
   line-height: inherit;
   width: 100%;
@@ -228,6 +230,37 @@
   white-space: pre-wrap;
   overflow: hidden;
   box-sizing: border-box;
+}
+
+.tdp-comunicado__rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.tdp-comunicado__text-segment {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.tdp-comunicado__list {
+  margin: 0;
+  padding: 0 0 0 1.35em;
+  list-style-position: outside;
+}
+
+.tdp-comunicado__list--bullet {
+  list-style-type: disc;
+}
+
+.tdp-comunicado__list--ordered {
+  list-style-type: decimal;
+}
+
+.tdp-comunicado__list-item {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
 }
 
 .tdp-comunicado__block--heading h1 {
