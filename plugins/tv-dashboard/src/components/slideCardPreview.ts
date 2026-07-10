@@ -1,5 +1,5 @@
-import type { ComunicadoConfig, NativeSlidePayload } from "@delpi/tv-dashboard-presentation";
-import { parseComunicadoConfig } from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoConfig, ComunicadoBlock, NativeSlidePayload } from "@delpi/tv-dashboard-presentation";
+import { parseComunicadoConfig, resolveTextBlockDisplayRuns } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, type Slide } from "../api/tvDashboardApi";
 import type { PresentationPayload } from "../api/tvDashboardApi";
@@ -53,15 +53,7 @@ function buildComunicadoPreviewData(
       url: adminMediaUrl(playlistId, background.assetId),
     };
   }
-  const blocks = (cfg.blocks ?? []).map((block) => {
-    if ((block.type === "image" || block.type === "video") && block.assetId) {
-      return {
-        ...block,
-        url: adminMediaUrl(playlistId, block.assetId),
-      };
-    }
-    return block;
-  });
+  const blocks = enrichBlocksForEditorThumbnail(cfg.blocks ?? [], playlistId);
   return {
     version: 2,
     headline: cfg.headline,
@@ -78,4 +70,35 @@ export function externalSlideHost(url?: string | null): string {
   } catch {
     return "Link externo";
   }
+}
+
+const THUMBNAIL_TEXT_PLACEHOLDER: Record<"heading" | "text", string> = {
+  heading: "Título",
+  text: "Texto",
+};
+
+/** Espelha placeholders visíveis no editor (não altera o config persistido). */
+function enrichBlocksForEditorThumbnail(
+  blocks: ComunicadoBlock[],
+  playlistId: string,
+): ComunicadoBlock[] {
+  return blocks.map((block) => {
+    if ((block.type === "image" || block.type === "video") && block.assetId) {
+      return {
+        ...block,
+        url: adminMediaUrl(playlistId, block.assetId),
+      };
+    }
+    if (block.type !== "heading" && block.type !== "text") {
+      return block;
+    }
+    const runs = resolveTextBlockDisplayRuns(block);
+    if (runs.some((run) => run.text.trim())) {
+      return block;
+    }
+    return {
+      ...block,
+      content: THUMBNAIL_TEXT_PLACEHOLDER[block.type],
+    };
+  });
 }

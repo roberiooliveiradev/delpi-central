@@ -74,6 +74,32 @@ describe("slideCardPreview", () => {
     expect(data.blocks?.[0]?.url).toBe("/apps/tv-dashboard-api/playlists/playlist-1/media/asset-1");
   });
 
+  it("preenche placeholder de texto vazio na miniatura do editor", () => {
+    const slide: Slide = {
+      id: "s1",
+      playlistId: "p1",
+      sortOrder: 0,
+      slideType: "native",
+      title: "Comunicado",
+      nativeScreenKey: "custom_message",
+      nativeConfig: {
+        version: 2,
+        blocks: [
+          {
+            id: "b1",
+            type: "heading",
+            content: "",
+            frame: { x: 10, y: 5, w: 80, h: 15 },
+          },
+        ],
+      },
+      isActive: true,
+    };
+    const native = buildSlideThumbnailNative(slide, "playlist-1");
+    const data = native?.data as { blocks?: Array<{ content?: string }> };
+    expect(data.blocks?.[0]?.content).toBe("Título");
+  });
+
   it("extrai host de URL externa", () => {
     expect(externalSlideHost("https://app.powerbi.com/view?r=abc")).toBe("app.powerbi.com");
   });
