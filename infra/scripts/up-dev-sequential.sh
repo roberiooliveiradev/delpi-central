@@ -43,7 +43,7 @@ usage() {
   echo "  tudo   — core → remote → mfe → api → chat (padrão)"
   echo ""
   echo "Opções:"
-  echo "  --build       Rebuild da imagem de cada serviço (npm/vite — lento, seguro em RAM)"
+  echo "  --build       Rebuild da imagem de cada serviço (compose build isolado; ordem via --fase)"
   echo "  --fase FASE   Limita a uma fase (ou tudo)"
   echo "  --list        Lista ordem de subida e sai"
   echo "  --dry-run     Só imprime os comandos"
@@ -259,11 +259,17 @@ run_compose_up() {
     chat) cmd=("${COMPOSE_CHAT[@]}") ;;
     *) cmd=("${COMPOSE_BASE[@]}") ;;
   esac
-  cmd+=(up -d)
+
   if [[ "$BUILD" == true ]]; then
-    cmd+=(--build)
+    local -a build_cmd=("${cmd[@]}" build "$svc")
+    if [[ "$DRY_RUN" == true ]]; then
+      echo "  [dry-run] ${build_cmd[*]}"
+    else
+      "${build_cmd[@]}"
+    fi
   fi
-  cmd+=("$svc")
+
+  cmd+=(up -d --no-deps "$svc")
 
   if [[ "$DRY_RUN" == true ]]; then
     echo "  [dry-run] ${cmd[*]}"

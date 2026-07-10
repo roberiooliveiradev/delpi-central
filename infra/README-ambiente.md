@@ -104,6 +104,8 @@ cp infra/.env.prod.example infra/.env
 
 Executar **da raiz do repositório** (`./infra/scripts/...`). O script de produção roda `docker compose` com cwd em `infra/` e `--env-file .env` — evita o erro `infra/infra/.env`.
 
+Cada serviço sobe com `up -d --no-deps` (a ordem vem do script, não do `depends_on` do Compose). Com `--build`, roda `compose build <serviço>` **isolado** — evita que `gateway` (que declara `depends_on` em dezenas de MFEs) dispare rebuild de toda a stack.
+
 ### Evitar
 
 | Anti-padrão | Risco |
@@ -111,6 +113,7 @@ Executar **da raiz do repositório** (`./infra/scripts/...`). O script de produ�
 | `docker compose up --build` em todos os serviços | OOM — dezenas de builds npm/vite em paralelo |
 | Misturar `docker-compose.yml` + `docker-compose.dev.yml` | ~40 containers prod + dev juntos |
 | MFEs antes de `plugin-ui` | Remote MF indisponível; MFE quebra em runtime |
+| `docker compose up --build gateway` (sem `--no-deps`) | Rebuild em cascata — gateway `depends_on` lista todos os MFEs |
 | `--env-file infra/.env` com cwd já em `infra/` | Path duplicado `infra/infra/.env` |
 
 Detalhes de RAM, recuperação e compose manual: § [Memória RAM](#memória-ram--diagnóstico-e-mitigação) e § [Checklist deploy produção](#checklist-deploy-produção).

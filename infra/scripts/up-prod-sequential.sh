@@ -43,7 +43,7 @@ usage() {
   echo "  tudo   — core → chat(ollama) → remote → mfe → api → gateway já em core (padrão)"
   echo ""
   echo "Opções:"
-  echo "  --build       Rebuild de cada imagem antes de subir"
+  echo "  --build       Rebuild da imagem de cada serviço (compose build isolado; sem bake em cascata)"
   echo "  --pull        git pull em $REPO_ROOT antes de subir"
   echo "  --cpu         Usa docker-compose.prod.cpu.yml (LanguageTool/SearXNG em optional-heavy)"
   echo "  --heavy       Inclui fase heavy (ou serviços searxng/languagetool)"
@@ -275,11 +275,18 @@ run_compose_up() {
   if [[ -n "$profile" ]]; then
     cmd+=(--profile "$profile")
   fi
-  cmd+=(up -d)
+
+  # Build só deste serviço — nunca `up --build` (gateway depends_on dispara bake de 30+ MFEs).
   if [[ "$BUILD" == true ]]; then
-    cmd+=(--build)
+    local -a build_cmd=("${cmd[@]}" build "$svc")
+    if [[ "$DRY_RUN" == true ]]; then
+      echo "  [dry-run] ${build_cmd[*]}"
+    else
+      "${build_cmd[@]}"
+    fi
   fi
-  cmd+=("$svc")
+
+  cmd+=(up -d --no-deps "$svc")
 
   if [[ "$DRY_RUN" == true ]]; then
     echo "  [dry-run] ${cmd[*]}"
