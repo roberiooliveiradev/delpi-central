@@ -1,7 +1,7 @@
 /**
  * UI genérica CSV/Excel/PDF — domínio e builders permanecem em `dispatch` / builders.
  */
-import { TabularExportButtons } from "@delpi/plugin-ui";
+import { TabularExportButtons } from "@delpi/plugin-ui/index";
 
 import { runLmpsExport } from "./dispatch";
 import type {

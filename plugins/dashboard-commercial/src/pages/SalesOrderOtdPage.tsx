@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CircleGauge, PackageCheck, Truck } from "lucide-react";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 
 import { getSalesOrderOtdPanel } from "../api/commercialApi";
 import { ChartCard } from "../components/ChartCard";

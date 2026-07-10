@@ -1,4 +1,4 @@
-import { TabularExportButtons } from "@delpi/plugin-ui";
+import { TabularExportButtons } from "@delpi/plugin-ui/index";
 
 import { runEngineeringExport } from "./dispatch";
 import type {

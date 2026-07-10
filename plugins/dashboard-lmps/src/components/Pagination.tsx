@@ -1,4 +1,4 @@
-import { createCompactPagination } from "@delpi/plugin-ui";
+import { createCompactPagination } from "@delpi/plugin-ui/index";
 
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 

@@ -13,7 +13,7 @@ import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { OtdEvolutionChart } from "../components/OtdEvolutionChart";
 import { OtdStatusBadge } from "../components/OtdStatusBadge";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";

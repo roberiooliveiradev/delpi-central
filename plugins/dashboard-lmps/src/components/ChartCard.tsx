@@ -2,7 +2,7 @@ import {
   ChartCard as DelpiChartCard,
   type ChartCardClassNames,
   type ChartCardProps as DelpiChartCardProps,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const CLASS_NAMES = {
   section: "lmps-card lmps-chart-card",

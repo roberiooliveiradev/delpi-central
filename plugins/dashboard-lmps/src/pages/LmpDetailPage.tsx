@@ -15,7 +15,7 @@ import {
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { LmpHistorySection } from "../components/LmpHistorySection";
 import { LmpProductStructuresSection } from "../components/LmpProductStructuresSection";
 import type { DataTableColumn } from "../components/DataTable";

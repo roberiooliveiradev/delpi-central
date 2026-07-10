@@ -3,7 +3,7 @@ import {
   type DashboardMultiSelectFieldProps,
   type MultiSelectFieldLabels,
   type MultiSelectOption,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const LABELS = {
   emptyLabel: "Todos",

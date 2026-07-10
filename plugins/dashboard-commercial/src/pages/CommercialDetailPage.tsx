@@ -12,7 +12,7 @@ import { CommercialProductStructuresSection } from "../components/CommercialProd
 import { CommercialProposalHistorySection } from "../components/CommercialProposalHistorySection";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";

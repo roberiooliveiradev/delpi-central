@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   useLoadingProgress,

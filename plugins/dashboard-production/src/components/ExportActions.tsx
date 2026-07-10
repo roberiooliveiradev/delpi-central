@@ -1,4 +1,4 @@
-import { DocumentExportActions } from "@delpi/plugin-ui";
+import { DocumentExportActions } from "@delpi/plugin-ui/index";
 
 type ExportActionsProps = {
   disabled?: boolean;

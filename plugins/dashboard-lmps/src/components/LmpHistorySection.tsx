@@ -4,7 +4,7 @@ import { History, Table2 } from "lucide-react";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { DataTableColumn } from "./DataTable";
 import { DataTable } from "./DataTable";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { LmpHistoryTimeline } from "./LmpHistoryTimeline";
 import type { LmpHistoryEvent } from "../types/lmp";
 import {

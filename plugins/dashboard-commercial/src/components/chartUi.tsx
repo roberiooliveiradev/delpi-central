@@ -1,4 +1,4 @@
-import { createDashboardChartToolbarKit } from "@delpi/plugin-ui";
+import { createDashboardChartToolbarKit } from "@delpi/plugin-ui/index";
 
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { CHART_GRANULARITY_OPTIONS, type ChartGranularity } from "../types/chart";

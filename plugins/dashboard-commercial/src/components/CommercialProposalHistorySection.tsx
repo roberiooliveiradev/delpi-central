@@ -13,7 +13,7 @@ import {
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { CommercialProposalTimeline } from "./CommercialProposalTimeline";
 import { DataTable, type DataTableColumn } from "./dataTableUi";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 
 type HistoryViewMode = "timeline" | "table";

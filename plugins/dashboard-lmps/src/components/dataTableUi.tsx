@@ -2,9 +2,9 @@ import {
   DataTable as BaseDataTable,
   dataTableBemClasses,
   type DashboardDataTableProps,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
-export type { DataTableColumn } from "@delpi/plugin-ui";
+export type { DataTableColumn } from "@delpi/plugin-ui/index";
 
 const LABELS = {
   emptyMessage: "Nenhum registro encontrado.",

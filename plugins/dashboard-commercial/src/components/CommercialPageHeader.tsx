@@ -7,7 +7,7 @@ import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import { COMMERCIAL_ROUTES } from "../constants/routes";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { CommercialNav } from "./CommercialNav";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { PrintReportSummary } from "./PrintReportSummary";
 
 type CommercialPageHeaderProps = {

@@ -4,7 +4,7 @@ import {
 } from "../constants/efficiencyBands";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ProductionOrderProductType } from "../types/production";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { MultiSelectField, type MultiSelectOption } from "./MultiSelectField";
 
 type ProductTypeFilter = ProductionOrderProductType | "";

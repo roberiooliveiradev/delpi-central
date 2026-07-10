@@ -1,5 +1,5 @@
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 
 export function StructureLegend() {
   return (

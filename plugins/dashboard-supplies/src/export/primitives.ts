@@ -6,4 +6,4 @@ export {
   buildUtf8CsvBlob,
   sanitizeFilename,
   sanitizeSheetName,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";

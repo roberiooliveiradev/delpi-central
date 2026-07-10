@@ -61,6 +61,8 @@ Dependências pesadas (`mermaid`, `@xyflow/react`, `jspdf`, …) ficam **no bund
 
 4. **Tipos** — `tsconfig.app.json` paths apontam para o source; Vitest usa `pluginUiTestAliases()`.
 
+5. **Reexport + import no mesmo arquivo** — evite `export { x } from "@delpi/plugin-ui/index"` junto com `import { x }` no mesmo ficheiro (rollup MF duplica identificadores). Use um único bloco `import` e reexporte símbolos locais. Script: `plugins/scripts/fix-plugin-ui-federation-reexports.py`.
+
 ---
 
 ## Consumidor federado (referência: `controle-retrabalhos`)
@@ -170,7 +172,8 @@ Aceita por plugin-ui: **COPY** · **shared builder** · **`pluginUiRemote()`** n
 |------|--------|
 | ✅ 0 | Remote + compose + `federation.shared.ts` + docs |
 | ✅ 1 | Piloto `controle-retrabalhos` |
-| 2 | Demais MFEs (trocar imports para `/index`, remover COPY) |
+| ✅ 2a | 8 dashboards departamentais (`dashboard-*`) — script `plugins/scripts/migrate-plugin-ui-federation.py` |
+| 2b | transformometro, quality-action-plans, cadastro-kaizen, maintenance, … |
 | 3 | Trim do shared-builder (só `tv-dashboard-presentation`) |
 
 ---

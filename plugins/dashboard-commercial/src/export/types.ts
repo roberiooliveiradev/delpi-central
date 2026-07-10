@@ -6,9 +6,9 @@ export type {
   ExportAction,
   ExportColumn,
   TableExportPayload,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
-export { TABULAR_EXPORT_ACTIONS } from "@delpi/plugin-ui";
+export { TABULAR_EXPORT_ACTIONS } from "@delpi/plugin-ui/index";
 
 import type {
   ClosingRateData,
@@ -19,7 +19,7 @@ import type {
 } from "../types/commercial";
 import type { CommercialProductStructureEntry } from "../hooks/useCommercialProductStructures";
 import type { RolSeriesPoint } from "../hooks/useCommercialRolSeries";
-import type { TabularExportFormat, TableExportPayload } from "@delpi/plugin-ui";
+import type { TabularExportFormat, TableExportPayload } from "@delpi/plugin-ui/index";
 
 export type DashboardKpiExportRow = {
   indicador: string;

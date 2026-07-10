@@ -1,20 +1,21 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY dashboard-supplies/package*.json ./dashboard-supplies/
-RUN cd dashboard-supplies && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd dashboard-supplies && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY dashboard-supplies ./dashboard-supplies
+COPY vite ./vite
 
 WORKDIR /app/dashboard-supplies
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:alpine AS production
 
 COPY --from=builder /app/dashboard-supplies/dist /usr/share/nginx/html
 

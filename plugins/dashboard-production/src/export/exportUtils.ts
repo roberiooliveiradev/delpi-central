@@ -1,6 +1,31 @@
 /**
  * Reexporta o motor tabular canônico (`@delpi/plugin-ui`).
  */
+import {
+  triggerFileDownload,
+  triggerBlobDownload,
+  csvCell,
+  buildUtf8CsvBlob,
+  sanitizeFilename,
+  sanitizeSheetName,
+  exportAlert,
+  configureExportAlert,
+  exportPayloadToCsv,
+  exportPayloadToXlsx,
+  exportPayloadsToCsv,
+  exportPayloadsToXlsx,
+  TABULAR_EXPORT_ACTIONS,
+  exportPayloadToPdf as sharedExportPayloadToPdf,
+  exportPayloadsToPdf as sharedExportPayloadsToPdf,
+  exportTableFormat as sharedExportTableFormat,
+  type TabularExportFormat,
+  type ExportAction,
+  type ExportColumn,
+  type TableExportPayload,
+  type ExportAlertFn,
+  type ExportPdfOptions,
+} from "@delpi/plugin-ui/index";
+
 export {
   triggerFileDownload,
   triggerBlobDownload,
@@ -15,7 +40,7 @@ export {
   exportPayloadsToCsv,
   exportPayloadsToXlsx,
   TABULAR_EXPORT_ACTIONS,
-} from "@delpi/plugin-ui";
+};
 
 export type {
   TabularExportFormat,
@@ -24,16 +49,7 @@ export type {
   TableExportPayload,
   ExportAlertFn,
   ExportPdfOptions,
-} from "@delpi/plugin-ui";
-
-import {
-  exportPayloadToPdf as sharedExportPayloadToPdf,
-  exportPayloadsToPdf as sharedExportPayloadsToPdf,
-  exportTableFormat as sharedExportTableFormat,
-  type TableExportPayload,
-  type TabularExportFormat,
-  type ExportPdfOptions,
-} from "@delpi/plugin-ui";
+};
 
 const PDF_SUBTITLE = "Minha DELPI · Dashboard Produção";
 

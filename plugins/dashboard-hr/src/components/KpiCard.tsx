@@ -2,7 +2,7 @@ import {
   createDashboardKpiCard,
   type DashboardKpiCardProps,
   type KpiCardLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 export type { GoalPerformanceBadge, GoalScopeBadge } from "../utils/goalDisplay";
 

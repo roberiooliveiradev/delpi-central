@@ -1,7 +1,7 @@
 /** Compat — preferir `exportMatrixToCsv` / `@delpi/plugin-ui`. */
-export { exportMatrixToCsv as downloadCsvFromMatrix } from "@delpi/plugin-ui";
+import { exportMatrixToCsv } from "@delpi/plugin-ui/index";
 
-import { exportMatrixToCsv } from "@delpi/plugin-ui";
+export { exportMatrixToCsv as downloadCsvFromMatrix };
 
 /**
  * Legacy: headers/rows → CSV via motor shared (`;` + BOM).

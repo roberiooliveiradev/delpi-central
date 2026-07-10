@@ -2,7 +2,7 @@ import {
   ChartCard as DelpiChartCard,
   chartCardBemClasses,
   type ChartCardProps as DelpiChartCardProps,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const CLASS_NAMES = chartCardBemClasses("dh");
 

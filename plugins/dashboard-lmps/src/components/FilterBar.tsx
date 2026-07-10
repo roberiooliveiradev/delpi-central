@@ -8,7 +8,7 @@ import {
   LMPS_LISTING_TYPE_OPTIONS,
   LMPS_STATUS_OPTIONS,
 } from "../constants/filterOptions";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { MultiSelectField } from "./MultiSelectField";
 import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";

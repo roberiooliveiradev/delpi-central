@@ -2,7 +2,7 @@ import {
   createDashboardPaginationKit,
   TABLE_PAGE_SIZE_OPTIONS,
   type PageJumpValidationReason,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 

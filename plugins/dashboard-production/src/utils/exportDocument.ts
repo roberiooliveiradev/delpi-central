@@ -14,4 +14,4 @@ export {
   type ExportFieldSection,
   type ExportTableSection,
   type ExportDocument,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";

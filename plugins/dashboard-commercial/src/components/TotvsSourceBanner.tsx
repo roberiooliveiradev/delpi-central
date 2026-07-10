@@ -1,7 +1,7 @@
 import { Database } from "lucide-react";
 
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 export function TotvsSourceBanner() {
   return (
