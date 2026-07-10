@@ -25,7 +25,34 @@
     "maxAttempts": 5,
     "releaseMemoryBetweenAttempts": true,
     "regionOcrEngines": ["tesseract"],
-    "comment": "Tentativas 1–4: Tesseract-only em carimbo/cotas/título; BOM mantém fusão tesseract+easyocr (document_vision.bomFusion). Tentativa 5 reforça EasyOCR em todas as regiões — libera RAM entre passagens.",
+    "comment": "Tentativas 1–4: Tesseract-only em carimbo/cotas/título; BOM mantém fusão tesseract+easyocr (document_vision.bomFusion). Tentativa 5 reforça EasyOCR em todas as regiões — libera RAM entre passagens. Entre tentativas, confirmation re-OCR focal nos campos fracos (Tesseract).",
+    "confirmation": {
+      "enabled": true,
+      "maxPasses": 2,
+      "dpiMultiplier": 1.5,
+      "engines": ["tesseract"],
+      "componentRegions": {
+        "stamp": ["stamp", "title"],
+        "bom_scope": ["bom"],
+        "bom_completeness": ["bom"],
+        "dimensions": ["dimensions"],
+        "ocr_regions": ["stamp", "bom", "dimensions"],
+        "legibility": ["stamp", "bom", "dimensions", "title"]
+      },
+      "reasonRegions": {
+        "product_code_missing": ["stamp"],
+        "product_code_without_title_block": ["stamp", "title"],
+        "stamp_block_missing": ["stamp", "title"],
+        "component_codes_missing": ["bom"],
+        "intermediate_codes_missing": ["bom"],
+        "bom_scope_partial": ["bom"],
+        "bom_scope_unavailable": ["bom"],
+        "dimensions_missing": ["dimensions"],
+        "dimensions_partial": ["dimensions"],
+        "embedded_text_only": ["stamp", "bom", "dimensions"],
+        "ocr_without_regional_bom": ["bom"]
+      }
+    },
     "attempts": [
       { "id": "standard", "enableRegionOcr": null },
       {

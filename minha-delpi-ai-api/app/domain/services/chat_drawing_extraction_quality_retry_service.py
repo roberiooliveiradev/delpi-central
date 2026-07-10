@@ -112,6 +112,45 @@ class ChatDrawingExtractionQualityRetryService:
                     stopped_reason="target_reached",
                 )
 
+            confirmed_payload, _confirmation_runs = (
+                cls._try_confirmation_pass(
+                    storage_path,
+                    filename=filename,
+                    pdf_extract=pdf_extract,
+                    confidence=confidence,
+                    attempt_index=index,
+                    history=history,
+                )
+            )
+
+            if confirmed_payload is not None:
+                pdf_extract = confirmed_payload
+                confidence = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
+                    pdf_extract=pdf_extract,
+                )
+                result = ExtractionQualityAttemptResult(
+                    attempt_id=f"confirm_weak_fields_{index + 1}",
+                    attempt_index=index,
+                    pdf_extract=pdf_extract,
+                    confidence=confidence,
+                )
+                history.append(result)
+
+                if best is None or cls._attempt_is_better(
+                    candidate=result,
+                    current_best=best,
+                ):
+                    best = result
+
+                if confidence.meets_threshold:
+                    return cls._attach_retry_metadata(
+                        pdf_extract,
+                        history=history,
+                        selected=result,
+                        target=target,
+                        stopped_reason="confirmation_reached",
+                    )
+
             if (
                 best is not None
                 and cls._pdf_extract_used_embedded_only(best.pdf_extract)
@@ -441,6 +480,38 @@ class ChatDrawingExtractionQualityRetryService:
         return isinstance(bom_scope, dict) and bool(bom_scope.get("available"))
 
     @classmethod
+    def _try_confirmation_pass(
+        cls,
+        storage_path: str,
+        *,
+        filename: str,
+        pdf_extract: dict[str, Any],
+        confidence: ExtractionConfidenceResult,
+        attempt_index: int,
+        history: list[ExtractionQualityAttemptResult],
+    ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+        from app.domain.services.chat_drawing_tesseract_confirmation_service import (
+            ChatDrawingTesseractConfirmationService,
+        )
+
+        improved, runs = ChatDrawingTesseractConfirmationService.try_improve(
+            storage_path,
+            filename=filename,
+            pdf_extract=pdf_extract,
+            confidence=confidence,
+        )
+
+        if not runs:
+            return improved, runs
+
+        for run in runs:
+            run["afterAttemptId"] = f"attempt_{attempt_index + 1}"
+            if history:
+                run["afterAttemptIndex"] = history[-1].attempt_index
+
+        return improved, runs
+
+    @classmethod
     def _attach_retry_metadata(
         cls,
         pdf_extract: dict[str, Any],
@@ -451,7 +522,7 @@ class ChatDrawingExtractionQualityRetryService:
         stopped_reason: str,
     ) -> dict[str, Any]:
         payload = dict(pdf_extract)
-        payload["extractionQualityRetry"] = {
+        retry_block: dict[str, Any] = {
             "targetConfidence": round(target, 4),
             "targetConfidencePercent": int(round(target * 100)),
             "regionOcrEngines": list(cls._loop_region_ocr_engines() or ("tesseract",)),
@@ -464,6 +535,12 @@ class ChatDrawingExtractionQualityRetryService:
             "attempts": [item.to_metadata() for item in history],
             "selectedConfidence": selected.confidence.to_metadata(),
         }
+        existing_retry = payload.get("extractionQualityRetry")
+
+        if isinstance(existing_retry, dict) and existing_retry.get("confirmationAttempts"):
+            retry_block["confirmationAttempts"] = existing_retry.get("confirmationAttempts")
+
+        payload["extractionQualityRetry"] = retry_block
         return payload
 
     @classmethod

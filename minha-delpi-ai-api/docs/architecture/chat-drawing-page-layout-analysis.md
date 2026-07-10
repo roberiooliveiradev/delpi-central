@@ -130,10 +130,11 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
   → ChatDrawingExtractionQualityRetryService.extract_until_confident
        motores: Tesseract only (override em ChatPdfRegionOcrEngineService)
        tentativa 1: standard (OCR regional automático)
+       → [score < 95%] confirmação focal Tesseract (ver chat-drawing-extraction-confirmation.md)
        tentativa 2: region_ocr (OCR regional explícito)
        tentativa 3: high_dpi_1_5 (DPI × 1.5)
        tentativa 4: high_dpi_2_0_layout (DPI × 2 + layout adaptativo)
-       tentativa 5: easyocr_fusion_2_0 (Tesseract + EasyOCR, só se score < 95%)
+       tentativa 5: easyocr_fusion_2_0 (Tesseract + EasyOCR, só se score < 95% e RAM)
   → gc.collect() + libera cache EasyOCR entre tentativas (caso tenha sido usado antes)
   → ChatDrawingExtractionConfidenceService.evaluate_for_extraction
 ```
@@ -141,6 +142,7 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
 | `stoppedReason` | Significado |
 |-----------------|-------------|
 | `target_reached` | Score ≥ `targetConfidence` na tentativa corrente |
+| `confirmation_reached` | Confirmação focal Tesseract atingiu ≥ 95% (doc: `chat-drawing-extraction-confirmation.md`) |
 | `max_attempts` | Esgotou perfis sem atingir o alvo — retorna a **melhor** tentativa |
 | `no_improvement` | Parada antecipada — score e códigos BOM não subiram **e** não há perfil distinto restante |
 

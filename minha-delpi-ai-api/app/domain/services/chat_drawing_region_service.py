@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
@@ -670,3 +671,101 @@ class ChatDrawingRegionService:
             ChatDrawingPatternsService.multipage_ocr_bom_on_all_pages()
             and ChatDrawingPatternsService.multipage_ocr_full_layout_first_page_only()
         )
+
+    @classmethod
+    def ocr_selected_drawing_regions(
+        cls,
+        storage_path: str,
+        regions: tuple[str, ...] | list[str],
+        *,
+        dpi_multiplier: float = 1.5,
+        engines: tuple[str, ...] | list[str] | None = None,
+    ) -> tuple[dict[str, str], dict[str, Any]]:
+        """OCR focal Tesseract em regiões nomeadas (confirmação pós-confiança baixa)."""
+        try:
+            import fitz
+        except ImportError:
+            return {}, {}
+
+        try:
+            document = fitz.open(storage_path)
+        except Exception:
+            return {}, {}
+
+        from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+        from app.domain.services.chat_pdf_region_ocr_engine_service import (
+            ChatPdfRegionOcrEngineService,
+        )
+
+        lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"
+        dpi = max(72, int(ChatDomainConfigService.chat_document_vision_dpi()))
+        zoom = (dpi / 72.0) * max(1.0, float(dpi_multiplier or 1.0))
+        matrix = fitz.Matrix(zoom, zoom)
+        engines_override = list(engines) if engines else ["tesseract"]
+
+        region_texts: dict[str, str] = {}
+        regions_meta: dict[str, Any] = {}
+
+        try:
+            if int(document.page_count or 0) < 1:
+                return {}, {}
+
+            page = document.load_page(0)
+            region_bboxes = cls.region_bboxes()
+            selected = cls._normalize_selected_regions(regions)
+
+            with ChatPdfRegionOcrEngineService.region_ocr_engines_override(engines_override):
+                for region in selected:
+                    if region == "bom":
+                        merged_text, bbox, region_meta = cls._ocr_bom_region(
+                            page,
+                            matrix=matrix,
+                            lang=lang,
+                            region_bboxes=region_bboxes,
+                        )
+
+                        if merged_text:
+                            region_texts[region] = merged_text
+                            regions_meta[region] = region_meta
+
+                        continue
+
+                    bbox = region_bboxes.get(region)
+
+                    if not bbox:
+                        continue
+
+                    merged_text, region_meta = cls._ocr_region_bundle(
+                        page,
+                        region=region,
+                        bbox=bbox,
+                        matrix=matrix,
+                        lang=lang,
+                    )
+
+                    if merged_text:
+                        region_texts[region] = merged_text
+                        regions_meta[region] = region_meta
+        finally:
+            document.close()
+
+        return region_texts, regions_meta
+
+    @classmethod
+    def _normalize_selected_regions(cls, regions: tuple[str, ...] | list[str]) -> list[str]:
+        seen: set[str] = set()
+        ordered: list[str] = []
+
+        for region in _DRAWING_REGION_ORDER:
+            if region in regions and region not in seen:
+                ordered.append(region)
+                seen.add(region)
+
+        for region in regions:
+            token = str(region).strip().lower()
+
+            if token and token not in seen:
+                ordered.append(token)
+                seen.add(token)
+
+        return ordered
