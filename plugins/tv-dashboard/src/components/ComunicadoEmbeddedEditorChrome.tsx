@@ -12,7 +12,7 @@ type Props = {
   labels?: Labels;
 };
 
-/** Chrome compacto do compositor no modal «Adicionar tela» — mesmas faixas Inserir/Formatar do deck. */
+/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const tabs = resolveEmbeddedComunicadoRibbonTabs();
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");

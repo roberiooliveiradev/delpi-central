@@ -2,7 +2,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   ribbon: {
     slides:
       "Navegue e gerencie as telas da apresentação. Use as setas para alternar sem sair do editor.",
-    newSlide: "Adiciona uma nova tela ao final da playlist. Você escolhe o tipo na sequência.",
+    newSlide: "Adiciona uma nova tela personalizada vazia ao final da playlist para montar gráficos e indicadores.",
     prevSlide: "Volta para a tela anterior na ordem de exibição.",
     nextSlide: "Avança para a próxima tela na ordem de exibição.",
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",

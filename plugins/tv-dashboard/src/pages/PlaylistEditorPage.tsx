@@ -9,7 +9,6 @@ import {
 import {
   activatePlaylist,
   addSlide,
-  addSlideFromPreset,
   deactivatePlaylist,
   deletePlaylist,
   deleteSlide,
@@ -21,7 +20,6 @@ import {
   getPresentationStatus,
   getUiContent,
   listNativeScreens,
-  listSlidePresets,
   regeneratePlaylistToken,
   reorderSlides,
   updatePlaylist,
@@ -32,11 +30,9 @@ import {
   type PresentationPayload,
   type PresentationStatus,
   type Slide,
-  type SlidePreset,
   type TvDashboardUiContent,
 } from "../api/tvDashboardApi";
 import { getAccessToken } from "../api/httpClient";
-import { AddSlideModal } from "../components/AddSlideModal";
 import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
 import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
 import { DeckEditorHeaderActions } from "../components/deck";
@@ -76,12 +72,10 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const confirm = useConfirm();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [catalog, setCatalog] = useState<NativeScreenCatalogItem[]>([]);
-  const [presets, setPresets] = useState<SlidePreset[]>([]);
   const [uiContent, setUiContent] = useState<TvDashboardUiContent | null>(null);
   const [branchScope, setBranchScope] = useState<BranchScope | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [addModalOpen, setAddModalOpen] = useState(false);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -228,16 +222,14 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     setLoading(true);
     setError(null);
     try {
-      const [pl, screens, presetItems, ui, scope] = await Promise.all([
+      const [pl, screens, ui, scope] = await Promise.all([
         getPlaylist(playlistId),
         listNativeScreens(),
-        listSlidePresets(),
         getUiContent(),
         getBranchScope(),
       ]);
       setPlaylist(pl);
       setCatalog(screens);
-      setPresets(presetItems);
       setUiContent(ui);
       setBranchScope(scope);
     } catch (err) {
@@ -282,45 +274,23 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     setPlaylist({ ...updated, slides: playlist.slides });
   }
 
-  async function handleAddNative(payload: {
-    screenKey: string;
-    title: string;
-    nativeConfig: Record<string, unknown>;
-    durationSec: number;
-  }) {
+  async function handleAddCustomSlide() {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
+    const customCatalogItem = catalog.find((item) => item.key === "custom_message");
+    const customCount = (playlist.slides ?? []).filter(
+      (slide) => slide.nativeScreenKey === "custom_message",
+    ).length;
+    const baseTitle = customCatalogItem?.label ?? "Personalizado";
+    const title = customCount === 0 ? baseTitle : `${baseTitle} ${customCount + 1}`;
     const slide = await addSlide(playlist.id, {
       slideType: "native",
-      title: payload.title,
-      nativeScreenKey: payload.screenKey,
-      nativeConfig: payload.nativeConfig,
-      durationSec: payload.durationSec,
-    });
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    setSelectedSlideId(slide.id);
-  }
-
-  async function handleImportPreset(payload: { presetKey: string; branch?: string }) {
-    if (!playlist) return;
-    deckHistory.recordBeforeChange();
-    const slide = await addSlideFromPreset(playlist.id, payload);
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    setSelectedSlideId(slide.id);
-  }
-
-  async function handleAddExternal(payload: {
-    title: string;
-    externalUrl: string;
-    durationSec: number;
-  }) {
-    if (!playlist) return;
-    deckHistory.recordBeforeChange();
-    const slide = await addSlide(playlist.id, {
-      slideType: "external",
-      title: payload.title,
-      externalUrl: payload.externalUrl,
-      durationSec: payload.durationSec,
+      title,
+      nativeScreenKey: "custom_message",
+      nativeConfig: serializeComunicadoConfig(
+        parseComunicadoConfig({ headline: "", blocks: [] }),
+      ),
+      durationSec: customCatalogItem?.defaultDurationSec ?? 30,
     });
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
     setSelectedSlideId(slide.id);
@@ -485,7 +455,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const slideDeckProps = {
     slides,
     selectedSlide,
-    onAdd: () => setAddModalOpen(true),
+    onAdd: () => void handleAddCustomSlide(),
     onSelect: setSelectedSlideId,
     onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
     onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
@@ -575,18 +545,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         </>
       )}
 
-      <AddSlideModal
-        open={addModalOpen}
-        playlistId={playlistId}
-        catalog={catalog}
-        presets={presets}
-        branchScope={branchScope}
-        ui={uiContent}
-        onClose={() => setAddModalOpen(false)}
-        onAddNative={(payload) => void handleAddNative(payload)}
-        onAddExternal={(payload) => void handleAddExternal(payload)}
-        onImportPreset={(payload) => void handleImportPreset(payload)}
-      />
       </div>
     </DeckEditorHistoryProvider>
   );
