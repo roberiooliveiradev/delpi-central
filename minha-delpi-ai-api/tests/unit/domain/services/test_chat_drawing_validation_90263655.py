@@ -1,6 +1,9 @@
 """Regressão — desenho 90263655 (OCR 5020↔5022, qtd 0, decape D=11 mm)."""
 
 from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.domain.services.chat_drawing_bom_comparison_service import (
+    ChatDrawingBomComparisonService,
+)
 from app.domain.services.chat_drawing_bom_quantity_validation_service import (
     ChatDrawingBomQuantityValidationService,
 )
@@ -132,7 +135,6 @@ def _pdf_extract_90263655() -> dict:
             "50224903",
             "50224904",
             "50233492",
-            "50204901",
         ],
         "intermediateCodes": [
             "50224899",
@@ -142,7 +144,6 @@ def _pdf_extract_90263655() -> dict:
             "50224903",
             "50224904",
             "50233492",
-            "50204901",
         ],
         "bomRows": [
             {
@@ -178,17 +179,56 @@ def _pdf_extract_90263655() -> dict:
     }
 
 
-def test_90263655_ocr_typo_zero_two_swap():
-    assert ChatDrawingIntermediateCodeService.is_ocr_typo_duplicate(
-        "50204901",
-        "50224901",
+def test_90263655_extraction_skips_fulltext_when_structured_intermediates_exist():
+    bom_sources = [
+        (
+            "bom_region",
+            "50224899 50224900 50224901 50224902 50224903 50224904 50233492",
+        )
+    ]
+
+    collected = ChatDrawingIntermediateCodeService.collect_codes(
+        full_text="50204901 CB18AZUL ghost from dimensions region",
+        bom_rows=[{"code": "50224901", "description": "CB18AZUL-00313/06/11-9600-0000"}],
+        bom_sources=bom_sources,
+        product_code="90263655",
     )
 
+    assert "50204901" not in collected
+    assert "50224901" in collected
 
-def test_90263655_no_false_intermediate_extra_for_50204901():
+
+def test_90263655_reconcile_drops_false_intermediate_from_bom_row_description():
+    pdf_extract = {
+        **_pdf_extract_90263655(),
+        "intermediateCodes": [
+            *(_pdf_extract_90263655()["intermediateCodes"]),
+            "50204901",
+        ],
+        "bomRows": [
+            *(_pdf_extract_90263655()["bomRows"]),
+            {
+                "code": "50204901",
+                "quantity": "1",
+                "description": "CB18AZUL-00313/06/11-9600-0000",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            },
+        ],
+    }
+
+    resolved = ChatDrawingBomComparisonService.resolve_pdf_intermediate_codes(
+        root=_payload_90263655(),
+        pdf_extract=pdf_extract,
+        product_code="90263655",
+    )
+
+    assert "50204901" not in resolved
+    assert "50224901" in resolved
+
     items = ChatDrawingStructureValidationService.build_check_items(
         root=_payload_90263655(),
-        pdf_extract=_pdf_extract_90263655(),
+        pdf_extract=pdf_extract,
         product_code="90263655",
     )
 
@@ -200,6 +240,24 @@ def test_90263655_no_false_intermediate_extra_for_50204901():
     ]
 
     assert not extra
+
+
+def test_90263655_phantom_fulltext_intermediate_dropped_without_bom_evidence():
+    pdf_extract = {
+        **_pdf_extract_90263655(),
+        "intermediateCodes": [
+            *(_pdf_extract_90263655()["intermediateCodes"]),
+            "50204901",
+        ],
+    }
+
+    resolved = ChatDrawingBomComparisonService.resolve_pdf_intermediate_codes(
+        root=_payload_90263655(),
+        pdf_extract=pdf_extract,
+        product_code="90263655",
+    )
+
+    assert "50204901" not in resolved
 
 
 def test_90263655_no_false_decape_mismatch_when_global_d_conflicts_with_50xx():

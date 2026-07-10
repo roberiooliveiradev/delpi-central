@@ -55,6 +55,15 @@ class ChatDrawingIntermediateCodeService:
                 revision_only=revision_only,
             )
 
+        structured = cls.filter_ocr_duplicates(
+            found,
+            bom_sources=bom_sources,
+            bom_rows=bom_rows,
+        )
+
+        if structured:
+            return structured
+
         for match in ChatDrawingPatternsService.intermediate_code().finditer(str(full_text or "")):
             cls._append_code(found, match.group(0), exclude=exclude, revision_only=revision_only)
 

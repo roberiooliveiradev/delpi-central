@@ -10,9 +10,6 @@ from app.domain.services.chat_drawing_bom_comparison_service import (
 from app.domain.services.chat_drawing_bom_quantity_semantics_service import (
     ChatDrawingBomQuantitySemanticsService,
 )
-from app.domain.services.chat_drawing_intermediate_code_service import (
-    ChatDrawingIntermediateCodeService,
-)
 from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
@@ -266,10 +263,10 @@ class ChatDrawingStructureValidationService:
     ) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
-        pdf_intermediate = set(pdf_extract.get("intermediateCodes") or [])
-        pdf_intermediate |= ChatDrawingBomComparisonService.intermediate_codes_matched_by_description(
+        pdf_intermediate = ChatDrawingBomComparisonService.resolve_pdf_intermediate_codes(
             root=root,
             pdf_extract=pdf_extract,
+            product_code=product_code,
         )
         api_intermediate = cls._collect_api_intermediate_codes(root, product_code)
 
@@ -320,10 +317,6 @@ class ChatDrawingStructureValidationService:
             code
             for code in (pdf_intermediate - api_intermediate)
             if ChatDrawingPatternsService.is_intermediate_family(code)
-            and not any(
-                ChatDrawingIntermediateCodeService.is_ocr_typo_duplicate(code, api_code)
-                for api_code in api_intermediate
-            )
         )
 
         if extra_intermediate:

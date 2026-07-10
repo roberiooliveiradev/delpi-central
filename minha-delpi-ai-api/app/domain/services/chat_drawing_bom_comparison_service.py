@@ -309,6 +309,188 @@ class ChatDrawingBomComparisonService:
         return matched
 
     @classmethod
+    def resolve_pdf_intermediate_codes(
+        cls,
+        *,
+        root: dict,
+        pdf_extract: dict,
+        product_code: str,
+    ) -> set[str]:
+        """Intermediários efetivos no PDF — mesma reconciliação da comparação BOM."""
+        pdf_intermediate = {
+            ChatProductQueryIntentService.normalize_product_code(str(code))
+            for code in (pdf_extract.get("intermediateCodes") or [])
+            if code
+            and ChatDrawingPatternsService.is_intermediate_family(str(code))
+        }
+        description_matched = cls.intermediate_codes_matched_by_description(
+            root=root,
+            pdf_extract=pdf_extract,
+        )
+        intermediate_matched, intermediate_false_rows = (
+            cls.reconcile_intermediate_bom_row_description_matches(
+                root=root,
+                pdf_extract=pdf_extract,
+                api_codes=set(
+                    ChatDrawingStructureIndexService.collect_all_codes(
+                        root,
+                        product_code,
+                    )
+                ),
+            )
+        )
+        pdf_intermediate |= description_matched | intermediate_matched
+
+        structure_all_codes = ChatDrawingStructureIndexService.collect_all_codes(
+            root,
+            product_code,
+        )
+        _, false_row_codes = cls.reconcile_bom_row_description_matches(
+            root=root,
+            pdf_extract=pdf_extract,
+            api_codes=set(structure_all_codes),
+        )
+        false_row_codes |= intermediate_false_rows
+        pdf_intermediate -= {
+            code
+            for code in false_row_codes
+            if ChatDrawingPatternsService.is_intermediate_family(str(code))
+        }
+        pdf_intermediate -= cls._fulltext_only_intermediate_phantoms(
+            pdf_intermediate,
+            pdf_extract=pdf_extract,
+            description_matched=description_matched | intermediate_matched,
+            false_row_codes=false_row_codes,
+        )
+
+        return pdf_intermediate
+
+    @classmethod
+    def reconcile_intermediate_bom_row_description_matches(
+        cls,
+        *,
+        root: dict,
+        pdf_extract: dict,
+        api_codes: set[str],
+    ) -> tuple[set[str], set[str]]:
+        """Linha BOM 50xx com dígito OCR errado mas assinatura CB/CT alinhada ao cadastro."""
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        api_intermediates = [
+            row
+            for row in ChatDrawingStructureIndexService.flatten_items(structure)
+            if row.code in api_codes
+            and ChatDrawingPatternsService.is_intermediate_family(str(row.code))
+            and str(row.description or "").strip()
+        ]
+        matched: set[str] = set()
+        false_row_codes: set[str] = set()
+
+        for bom_row in pdf_extract.get("bomRows") or []:
+            if not isinstance(bom_row, dict):
+                continue
+
+            if ChatDrawingBomReferenceNoiseService.is_client_reference_row(bom_row):
+                continue
+
+            row_code = ChatProductQueryIntentService.normalize_product_code(
+                str(bom_row.get("code") or "")
+            )
+            row_desc = str(bom_row.get("description") or "").strip()
+
+            if (
+                not row_code
+                or not row_desc
+                or not ChatDrawingPatternsService.is_intermediate_family(row_code)
+            ):
+                continue
+
+            row_haystack = row_desc.upper().replace(" ", "")
+            best_api_code: str | None = None
+
+            for struct_row in api_intermediates:
+                signature = ChatDrawingPatternsService.intermediate_description_signature(
+                    struct_row.description
+                )
+
+                if signature and signature in row_haystack:
+                    best_api_code = struct_row.code
+                    break
+
+                for marker in cls._intermediate_color_markers(signature or ""):
+                    if marker in row_haystack:
+                        best_api_code = struct_row.code
+                        break
+
+                if best_api_code:
+                    break
+
+            if not best_api_code:
+                continue
+
+            matched.add(best_api_code)
+
+            if row_code != best_api_code and row_code not in api_codes:
+                false_row_codes.add(row_code)
+
+        return matched, false_row_codes
+
+    @classmethod
+    def _fulltext_only_intermediate_phantoms(
+        cls,
+        pdf_intermediate: set[str],
+        *,
+        pdf_extract: dict,
+        description_matched: set[str],
+        false_row_codes: set[str],
+    ) -> set[str]:
+        """50xx só em lista OCR sem linha BOM nem assinatura de descrição."""
+        row_intermediates = {
+            ChatProductQueryIntentService.normalize_product_code(str(row.get("code") or ""))
+            for row in pdf_extract.get("bomRows") or []
+            if isinstance(row, dict)
+            and ChatDrawingPatternsService.is_intermediate_family(str(row.get("code") or ""))
+        }
+
+        return {
+            code
+            for code in pdf_intermediate
+            if code not in description_matched
+            and code not in row_intermediates
+            and code not in false_row_codes
+            and not cls._intermediate_has_bom_row_description_evidence(
+                code,
+                pdf_extract=pdf_extract,
+            )
+        }
+
+    @classmethod
+    def _intermediate_has_bom_row_description_evidence(
+        cls,
+        code: str,
+        *,
+        pdf_extract: dict,
+    ) -> bool:
+        normalized = ChatProductQueryIntentService.normalize_product_code(code)
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            row_code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if row_code != normalized:
+                continue
+
+            description = str(row.get("description") or "").strip()
+
+            if description:
+                return True
+
+        return False
+
+    @classmethod
     def _intermediate_color_markers(cls, signature: str) -> tuple[str, ...]:
         match = ChatDrawingPatternsService.compile_validation(
             "intermediateColorSignature"
