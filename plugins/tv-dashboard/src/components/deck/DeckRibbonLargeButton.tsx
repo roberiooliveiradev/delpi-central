@@ -1,4 +1,4 @@
-import { HintAction } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
 
 type Props = {

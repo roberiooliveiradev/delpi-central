@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { PreviewForm, PreviewFormPage, PreviewFormQuestion } from "./utils/formPreviewModel";
-import { LucideIconByName } from "@delpi/plugin-ui";
+import { LucideIconByName } from "@delpi/plugin-ui/index";
 import {
   CxFormPreviewTextAreaField,
   CxFormPreviewTextField,

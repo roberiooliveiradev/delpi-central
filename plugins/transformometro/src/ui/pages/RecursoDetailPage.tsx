@@ -11,7 +11,7 @@ import { CollaborativePresenceBanner } from "../../components/collaboration/Coll
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
 import { TableHeader } from "../../components/TableHeader";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { cenarioLabel } from "../../content/cenarioLabels";

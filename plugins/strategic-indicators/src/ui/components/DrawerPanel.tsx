@@ -1,4 +1,4 @@
-import { DrawerShell, type DrawerShellClassNames } from "@delpi/plugin-ui";
+import { DrawerShell, type DrawerShellClassNames } from "@delpi/plugin-ui/index";
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { lockPageScroll } from "../utils/pageScrollLock";

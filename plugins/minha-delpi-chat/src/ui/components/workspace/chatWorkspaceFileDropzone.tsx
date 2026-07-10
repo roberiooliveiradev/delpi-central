@@ -1,5 +1,5 @@
 import { Plus, Upload } from "lucide-react";
-import { createDashboardFileDropzone, type FileDropzoneClassNames } from "@delpi/plugin-ui";
+import { createDashboardFileDropzone, type FileDropzoneClassNames } from "@delpi/plugin-ui/index";
 
 export function workspaceFileDropzoneClasses(): FileDropzoneClassNames {
   const root = "mdc-workspace-file-dropzone";

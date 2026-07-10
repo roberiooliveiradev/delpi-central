@@ -1,4 +1,4 @@
-export type { DataTableColumn } from "@delpi/plugin-ui";
+export type { DataTableColumn } from "@delpi/plugin-ui/index";
 
 export type ServerPaginationConfig = {
   page: number;

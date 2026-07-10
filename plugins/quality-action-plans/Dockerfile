@@ -1,15 +1,16 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY quality-action-plans/package*.json ./quality-action-plans/
-RUN cd quality-action-plans && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd quality-action-plans && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY quality-action-plans ./quality-action-plans
+COPY vite ./vite
 
 WORKDIR /app/quality-action-plans
 RUN npm run build

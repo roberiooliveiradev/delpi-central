@@ -1,7 +1,7 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
 import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { MultiSelectOption } from "./MultiSelectField";
-import { FieldLabel, createFilterBarShell } from "@delpi/plugin-ui";
+import { FieldLabel, createFilterBarShell } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "./MultiSelectField";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 

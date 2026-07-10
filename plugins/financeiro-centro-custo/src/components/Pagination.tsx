@@ -1,4 +1,4 @@
-import { createCompactPagination } from "@delpi/plugin-ui";
+import { createCompactPagination } from "@delpi/plugin-ui/index";
 
 export const Pagination = createCompactPagination({
   prefix: "fcc",

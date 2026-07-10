@@ -4,7 +4,7 @@ import { Copy, Plus, Trash2 } from "lucide-react";
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DataTableSection } from "../../components/DataTableSection";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";

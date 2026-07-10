@@ -9,7 +9,7 @@ import {
   impactEffortMatrixTransformometroClasses,
   type ImpactEffortMatrixMode,
   type ImpactEffortPoint,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import { ChartCard } from "../../components/ChartCard";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";

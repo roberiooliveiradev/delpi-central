@@ -1,18 +1,30 @@
-ARG SHARED_LIBS_BUILDER=delpi-plugins-shared-builder:local
-FROM ${SHARED_LIBS_BUILDER} AS builder
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
+FROM node:20-alpine AS builder
 
 WORKDIR /app
+COPY tv-dashboard-presentation/package*.json ./tv-dashboard-presentation/
+RUN --mount=type=cache,target=/root/.npm \
+    cd tv-dashboard-presentation && npm install
+
+COPY tv-dashboard-presentation ./tv-dashboard-presentation
+
 
 COPY tv-dashboard/package*.json ./tv-dashboard/
 RUN --mount=type=cache,target=/root/.npm \
     cd tv-dashboard && npm install
 
 COPY tv-dashboard ./tv-dashboard
+COPY vite ./vite
 
 WORKDIR /app/tv-dashboard
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:alpine AS production
+
 COPY --from=builder /app/tv-dashboard/dist /usr/share/nginx/html
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]

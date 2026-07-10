@@ -18,7 +18,7 @@ import {
   payloadFromRecursoForm,
 } from "../../recursos/recursoCatalogForm";
 import { Pagination } from "../../../components/Pagination";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
 import { TableHeader } from "../../../components/TableHeader";
 import { SelectField } from "../../../components/ui/SelectField";
 import { mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";

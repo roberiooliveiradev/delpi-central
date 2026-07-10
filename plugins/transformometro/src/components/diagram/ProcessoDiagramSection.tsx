@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Download, FileCode2, ShieldCheck, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchProcessoDiagramBpmnXml,
@@ -12,8 +11,15 @@ import {
   validateProcessoDiagrama,
   type DiagramValidationReport,
 } from "../../data/api/transformometroDiagramApi";
-import { emptyFlowchart, type FlowchartV1, flowchartToMermaid, DiagramMermaidPreview, DiagramFullscreenFrame } from "@delpi/plugin-ui";
-import type { FlowchartEditorHandle } from "@delpi/plugin-ui";
+import {
+  FieldLabel,
+  emptyFlowchart,
+  flowchartToMermaid,
+  DiagramMermaidPreview,
+  DiagramFullscreenFrame,
+  type FlowchartV1,
+  type FlowchartEditorHandle,
+} from "@delpi/plugin-ui/index";
 import { DiagramValidationPanel } from "./DiagramValidationPanel";
 
 const FlowchartEditor = lazy(() =>

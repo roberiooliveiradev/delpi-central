@@ -3,7 +3,7 @@ import {
   kpiCardBemClasses,
   type DashboardKpiCardProps,
   type KpiCardLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const LABELS = {
   goalPrefix: "Meta",

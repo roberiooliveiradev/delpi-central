@@ -1,4 +1,4 @@
-import { createDashboardFileDropzone, fileDropzoneBemClasses } from "@delpi/plugin-ui";
+import { createDashboardFileDropzone, fileDropzoneBemClasses } from "@delpi/plugin-ui/index";
 
 export const CxPhotoDropzoneEmpty = createDashboardFileDropzone({
   classNames: fileDropzoneBemClasses("cx", "photo-drop"),

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-import { FilePreviewModal } from "@delpi/plugin-ui";
+import { FilePreviewModal } from "@delpi/plugin-ui/index";
 
 import { fetchKaizenEvidenceObjectUrl } from "../../api/kaizenApi";
 import { formatEvidenceFileSize } from "./kaizenEvidenceUtils";

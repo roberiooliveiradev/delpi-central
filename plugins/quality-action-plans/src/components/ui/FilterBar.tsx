@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { FiltersRow, filtersRowBemClasses, type FiltersRowClassNames } from "@delpi/plugin-ui";
+import { FiltersRow, filtersRowBemClasses, type FiltersRowClassNames } from "@delpi/plugin-ui/index";
 
 const PAC_FILTER_ROW_CLASSES: FiltersRowClassNames = filtersRowBemClasses("pac");
 

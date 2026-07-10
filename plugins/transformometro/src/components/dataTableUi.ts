@@ -3,7 +3,8 @@ import {
   dataTableBemClasses,
   dataTableSectionBemClasses,
   type DataTableClassNames,
-} from "@delpi/plugin-ui";
+  type DataTableColumn,
+} from "@delpi/plugin-ui/index";
 
 import {
   useLoadingProgress,
@@ -68,4 +69,4 @@ const kit = createDashboardDataTableKit({
 export const DataTable = kit.DataTable;
 export const DataTableSection = kit.DataTableSection;
 
-export type { DataTableColumn } from "@delpi/plugin-ui";
+export type { DataTableColumn };

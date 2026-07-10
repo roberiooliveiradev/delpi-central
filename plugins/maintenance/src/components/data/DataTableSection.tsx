@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useClientPagination } from "../../hooks/useClientPagination";
 import { sortRows } from "../../utils/dataTableSort";
 import { DataTable } from "./DataTable";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { Pagination } from "./Pagination";
 import type { DataTableColumn, ServerPaginationConfig, ServerTableConfig } from "./types";
 

@@ -1,4 +1,4 @@
-import { createTablePaginationNav } from "@delpi/plugin-ui";
+import { createTablePaginationNav } from "@delpi/plugin-ui/index";
 
 export const Pagination = createTablePaginationNav({
   prefix: "dm",

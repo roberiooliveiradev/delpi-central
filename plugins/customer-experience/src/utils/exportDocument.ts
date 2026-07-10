@@ -2,6 +2,16 @@
  * Reexporta motor tabular + jsPDF de `@delpi/plugin-ui`.
  * CSV canônico usa `;` (paridade Excel / demais plugins).
  */
+import {
+  sanitizeFilename,
+  sanitizeSheetName,
+  sanitizePdfText,
+  exportTableExcel,
+  exportTablePdf,
+  exportMatrixToCsv,
+  type ExportTable,
+} from "@delpi/plugin-ui/index";
+
 export {
   sanitizeFilename,
   sanitizeSheetName,
@@ -9,9 +19,7 @@ export {
   exportTableExcel,
   exportTablePdf,
   type ExportTable,
-} from "@delpi/plugin-ui";
-
-import { exportMatrixToCsv, type ExportTable } from "@delpi/plugin-ui";
+};
 
 export function exportTableCsv(table: ExportTable, filename: string): void {
   exportMatrixToCsv(table, filename);

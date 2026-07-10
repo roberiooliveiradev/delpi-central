@@ -1,4 +1,4 @@
-import { SectionHintLabel } from "@delpi/plugin-ui";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 
 type Props = {

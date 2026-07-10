@@ -3,7 +3,7 @@ import { chatAlert } from "../../../utils/chatNativeDialogs";
 import {
   exportSvgElementToPng,
   rasterizeSvgElement,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 export function resolveChartExportTarget(root: HTMLElement | null): {
   container: HTMLElement;

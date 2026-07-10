@@ -1,6 +1,6 @@
 # Module Federation — `@delpi/plugin-ui` como remote runtime
 
-> **Status:** Fase 0 + piloto `controle-retrabalhos` (jul/2026). Demais MFEs ainda usam alias Vite + COPY no Docker até o rollout Fase 2.
+> **Status:** Fase 0 + piloto + rollout Fase 2a/2b concluídos (jul/2026). Restam `public-hub` (shell sem MF) e trim Fase 3 do shared-builder.
 
 ## Objetivo
 
@@ -61,7 +61,7 @@ Dependências pesadas (`mermaid`, `@xyflow/react`, `jspdf`, …) ficam **no bund
 
 4. **Tipos** — `tsconfig.app.json` paths apontam para o source; Vitest usa `pluginUiTestAliases()`.
 
-5. **Reexport + import no mesmo arquivo** — evite `export { x } from "@delpi/plugin-ui/index"` junto com `import { x }` no mesmo ficheiro (rollup MF duplica identificadores). Use um único bloco `import` e reexporte símbolos locais. Script: `plugins/scripts/fix-plugin-ui-federation-reexports.py`.
+5. **Reexport + import no mesmo arquivo** — evite `export { x } from "@delpi/plugin-ui/index"` junto com `import { x }` no mesmo ficheiro (rollup MF duplica identificadores). Use um único bloco `import` e reexporte símbolos locais. Scripts: `fix-plugin-ui-federation-reexports.py`, `merge-plugin-ui-imports.py` (mesclar vários `import` do mesmo remote no ficheiro).
 
 ---
 
@@ -172,9 +172,19 @@ Aceita por plugin-ui: **COPY** · **shared builder** · **`pluginUiRemote()`** n
 |------|--------|
 | ✅ 0 | Remote + compose + `federation.shared.ts` + docs |
 | ✅ 1 | Piloto `controle-retrabalhos` |
-| ✅ 2a | 8 dashboards departamentais (`dashboard-*`) — script `plugins/scripts/migrate-plugin-ui-federation.py` |
-| 2b | transformometro, quality-action-plans, cadastro-kaizen, maintenance, … |
-| 3 | Trim do shared-builder (só `tv-dashboard-presentation`) |
+| ✅ 2a | 8 dashboards departamentais (`dashboard-*`) |
+| ✅ 2b | 17 MFEs operacionais (ver lista abaixo) |
+| 3 | Trim do shared-builder (só `tv-dashboard-presentation`); opcional `public-hub` |
+
+### Consumidores federados (Fase 2)
+
+**Piloto:** `controle-retrabalhos`
+
+**Dashboards (2a):** `dashboard-production`, `dashboard-commercial`, `dashboard-engineering`, `dashboard-financial`, `dashboard-hr`, `dashboard-lmps`, `dashboard-quality`, `dashboard-supplies`
+
+**Operacionais (2b):** `transformometro`, `quality-action-plans`, `cadastro-kaizen`, `maintenance`, `eficiencia-fabril`, `minha-delpi-chat`, `auditoria-5s`, `inspecoes-entrada`, `pedidos-venda-abertos`, `propostas-comerciais`, `financeiro-centro-custo`, `strategic-indicators`, `customer-experience`, `cultura-delpi`, `central-agendamento`, `quality-labels`, `tv-dashboard` (também consome `@delpi/tv-dashboard-presentation` bundled)
+
+**Legado (bundled):** `public-hub` e demais sem `pluginUiRemote()` no Vite.
 
 ---
 

@@ -1,4 +1,4 @@
-import { NativeTextAreaControl } from "@delpi/plugin-ui";
+import { NativeTextAreaControl } from "@delpi/plugin-ui/index";
 
 type Props = {
   value: string;

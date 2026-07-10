@@ -1,3 +1,3 @@
-import { createFilterBarShell } from "@delpi/plugin-ui";
+import { createFilterBarShell } from "@delpi/plugin-ui/index";
 
 export const FilterBar = createFilterBarShell({ prefix: "dm" });

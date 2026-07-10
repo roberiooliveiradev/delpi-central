@@ -1,4 +1,4 @@
-import { createDashboardTextField, textFieldPacClasses } from "@delpi/plugin-ui";
+import { createDashboardTextField, textFieldPacClasses } from "@delpi/plugin-ui/index";
 
 export const TextField = createDashboardTextField({
   classNames: textFieldPacClasses("pac"),

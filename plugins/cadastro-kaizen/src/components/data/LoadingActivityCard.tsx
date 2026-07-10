@@ -2,7 +2,7 @@ import {
   createDashboardLoadingActivityCard,
   type DashboardLoadingActivityCardProps,
   type LoadingActivityCardLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const LABELS = {
   progressRemaining: (remainingPercent: number) => `Faltam ${remainingPercent}%`,

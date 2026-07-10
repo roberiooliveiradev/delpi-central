@@ -1,5 +1,5 @@
 import { MELHORIA_FASE_OPTIONS } from "../../constants/melhoriaForm";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 
 type Props = {
   currentFase?: string | null;

@@ -1,7 +1,7 @@
 import {
   createDashboardNativeFormFields,
   type FormFieldShellClassNames,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const CA_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
   root: "ca-field",

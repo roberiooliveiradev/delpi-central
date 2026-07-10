@@ -1,4 +1,4 @@
-import type { DashboardDataTableSectionProps } from "@delpi/plugin-ui";
+import type { DashboardDataTableSectionProps } from "@delpi/plugin-ui/index";
 
 import { DataTableSection as BaseDataTableSection, type DataTableColumn } from "./dataTableUi";
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { PageHeader as PluginPageHeader, pageHeaderStackBemClasses } from "@delpi/plugin-ui";
+import { PageHeader as PluginPageHeader, pageHeaderStackBemClasses } from "@delpi/plugin-ui/index";
 
 import "./PageHeader.css";
 

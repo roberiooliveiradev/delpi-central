@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { ChartCard as PluginChartCard, chartCardBemClasses } from "@delpi/plugin-ui";
+import { ChartCard as PluginChartCard, chartCardBemClasses } from "@delpi/plugin-ui/index";
 
 const FCC_CHART_CARD_CLASSES = chartCardBemClasses("fcc");
 

@@ -1,1 +1,1 @@
-export { NativeTextAreaControl as PcNativeTextAreaControl } from "@delpi/plugin-ui";
+export { NativeTextAreaControl as PcNativeTextAreaControl } from "@delpi/plugin-ui/index";

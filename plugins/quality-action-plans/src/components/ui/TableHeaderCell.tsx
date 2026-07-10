@@ -1,4 +1,4 @@
-import { createDashboardTableHeaderCell, tableHeaderCellPacClasses } from "@delpi/plugin-ui";
+import { createDashboardTableHeaderCell, tableHeaderCellPacClasses } from "@delpi/plugin-ui/index";
 
 export const TableHeaderCell = createDashboardTableHeaderCell({
   classNames: tableHeaderCellPacClasses("pac"),

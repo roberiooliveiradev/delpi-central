@@ -3,7 +3,7 @@ import { ArrowDownAZ, ArrowUpAZ, Grid2X2, LayoutGrid, LayoutList, Rows3 } from "
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTable } from "../../components/DataTable";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { Pagination } from "../../components/Pagination";

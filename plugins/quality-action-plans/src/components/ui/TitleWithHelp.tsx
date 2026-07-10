@@ -1,4 +1,4 @@
-import { createDashboardTitleWithHelp, titleWithHelpPacClasses } from "@delpi/plugin-ui";
+import { createDashboardTitleWithHelp, titleWithHelpPacClasses } from "@delpi/plugin-ui/index";
 
 export const TitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpPacClasses("pac"),

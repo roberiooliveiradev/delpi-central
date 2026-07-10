@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Download, ImagePlus } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { uploadRevisaoEvidence } from "../../data/api/transformometroEvidenceApi";
 import {
@@ -11,6 +10,7 @@ import {
   saveRevisaoDiagramOverlay,
 } from "../../data/api/transformometroDiagramApi";
 import {
+  FieldLabel,
   emptyFlowchart,
   emptyOverlay,
   flowToOverlayDraft,
@@ -19,8 +19,8 @@ import {
   DiagramFullscreenFrame,
   type FlowchartOverlayV1,
   type FlowchartV1,
-} from "@delpi/plugin-ui";
-import type { FlowchartEditorHandle } from "@delpi/plugin-ui";
+  type FlowchartEditorHandle,
+} from "@delpi/plugin-ui/index";
 import type { MergedRevisaoDiagram } from "../../types/diagram";
 
 const FlowchartEditor = lazy(() =>

@@ -1,4 +1,4 @@
-import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui";
+import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui/index";
 
 import "./LoadingActivityInline.css";
 
@@ -18,4 +18,4 @@ export const LoadingActivityInline = createDashboardLoadingActivityCard({
   },
 });
 
-export type { DashboardLoadingActivityCardProps as LoadingActivityInlineProps } from "@delpi/plugin-ui";
+export type { DashboardLoadingActivityCardProps as LoadingActivityInlineProps } from "@delpi/plugin-ui/index";

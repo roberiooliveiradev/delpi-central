@@ -3,7 +3,7 @@ import {
   createDashboardLoadingState,
   emptyStatePanelBemClasses,
   loadingStatePanelBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 export const EmptyState = createDashboardEmptyState({
   classNames: emptyStatePanelBemClasses("fcc"),

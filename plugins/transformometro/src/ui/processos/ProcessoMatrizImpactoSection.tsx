@@ -7,7 +7,7 @@ import {
   ImpactEffortMatrixLegend,
   impactEffortMatrixTransformometroClasses,
   type ImpactEffortPoint,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import { ChartCard } from "../../components/ChartCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";

@@ -13,7 +13,7 @@ import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { ChartCard } from "../../components/ChartCard";

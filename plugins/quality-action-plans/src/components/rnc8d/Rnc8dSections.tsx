@@ -25,7 +25,7 @@ import { EditableSectionCard } from "../ui/EditableSectionCard";
 import { TeamMemberRow } from "../TeamMemberRow";
 import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
-import { FieldLabel, HelpTooltip, NativeSelectControl } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip, NativeSelectControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../ui/SelectField";
 import { TableHeaderCell } from "../ui/TableHeaderCell";
 import { DragHandle, RemoveRowButton } from "../ui/RowActions";

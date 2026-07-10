@@ -1,4 +1,4 @@
-import { NativeSelectControl } from "@delpi/plugin-ui";
+import { NativeSelectControl } from "@delpi/plugin-ui/index";
 
 import type { SelectOption } from "./types";
 

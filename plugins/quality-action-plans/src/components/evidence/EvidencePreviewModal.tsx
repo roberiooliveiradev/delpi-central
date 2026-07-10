@@ -1,4 +1,4 @@
-import { FilePreviewModal } from "@delpi/plugin-ui";
+import { FilePreviewModal } from "@delpi/plugin-ui/index";
 
 import { evidenceTypeLabel } from "../../constants/evidence";
 import type { PlanEvidence } from "../../types/rnc8d";

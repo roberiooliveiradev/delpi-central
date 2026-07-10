@@ -19,7 +19,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { cenarioSelectLabel } from "../../content/cenarioLabels";

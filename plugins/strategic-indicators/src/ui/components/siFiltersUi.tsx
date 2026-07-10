@@ -7,7 +7,7 @@ import {
   type FilterInputFieldProps,
   type FilterSelectFieldProps,
   type SelectControlLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const SI_SELECT_LABELS: SelectControlLabels = {
   searchPlaceholder: "Buscar…",

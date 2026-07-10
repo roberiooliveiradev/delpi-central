@@ -1,4 +1,4 @@
-import { NativeSelectControl, type NativeSelectOption } from "@delpi/plugin-ui";
+import { NativeSelectControl, type NativeSelectOption } from "@delpi/plugin-ui/index";
 
 type CxInlineSelectProps = {
   id?: string;

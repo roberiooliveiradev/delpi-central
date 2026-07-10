@@ -1,5 +1,5 @@
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
-import { exportTableFormat, type TableExportPayload } from "@delpi/plugin-ui";
+import { exportTableFormat, type TableExportPayload } from "@delpi/plugin-ui/index";
 import { formatDisplayDate } from "./dates";
 import { getLineOpPrevisao } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";

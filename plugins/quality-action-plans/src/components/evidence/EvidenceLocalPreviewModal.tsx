@@ -1,4 +1,4 @@
-import { FilePreviewModal } from "@delpi/plugin-ui";
+import { FilePreviewModal } from "@delpi/plugin-ui/index";
 
 import { formatEvidenceFileSize } from "./evidenceAttachmentUtils";
 import { resolveLocalFilePreviewMode } from "./evidencePreviewUtils";

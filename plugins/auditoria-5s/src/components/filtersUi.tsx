@@ -6,7 +6,7 @@ import {
   type FilterInputFieldClassNames,
   type FilterInputFieldProps,
   type FilterSelectFieldProps,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
   filterBox: "a5s-analytics-filter-field",

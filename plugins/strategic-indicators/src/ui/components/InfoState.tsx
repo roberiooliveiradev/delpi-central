@@ -1,4 +1,4 @@
-import { createInfoStatePanel } from "@delpi/plugin-ui";
+import { createInfoStatePanel } from "@delpi/plugin-ui/index";
 
 import "./InfoState.css";
 
@@ -7,4 +7,4 @@ export const InfoState = createInfoStatePanel({
   renderIcon: () => "i",
 });
 
-export type { DashboardInfoStatePanelProps as InfoStateProps } from "@delpi/plugin-ui";
+export type { DashboardInfoStatePanelProps as InfoStateProps } from "@delpi/plugin-ui/index";

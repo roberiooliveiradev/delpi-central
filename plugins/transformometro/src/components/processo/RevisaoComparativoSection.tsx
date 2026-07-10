@@ -13,7 +13,7 @@ import {
 import type { DataTableColumn } from "../DataTable";
 import { DataTableSection } from "../DataTableSection";
 import { ChartCard } from "../ChartCard";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { SegmentToggle } from "../SegmentToggle";
 import { CollapsiblePanel } from "../CollapsiblePanel";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";

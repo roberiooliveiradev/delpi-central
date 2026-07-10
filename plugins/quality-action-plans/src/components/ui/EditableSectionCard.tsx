@@ -1,4 +1,4 @@
-import { createDashboardEditableSectionCardPac } from "@delpi/plugin-ui";
+import { createDashboardEditableSectionCardPac } from "@delpi/plugin-ui/index";
 
 export const EditableSectionCard = createDashboardEditableSectionCardPac({
   prefix: "pac",

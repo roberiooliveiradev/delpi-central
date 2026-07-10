@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { ExcelExportButton } from "@delpi/plugin-ui";
+import { ExcelExportButton } from "@delpi/plugin-ui/index";
 
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";

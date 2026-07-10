@@ -1,4 +1,4 @@
-import { canPreviewFile, resolveFilePreviewKind, type FilePreviewKind } from "@delpi/plugin-ui";
+import { canPreviewFile, resolveFilePreviewKind, type FilePreviewKind } from "@delpi/plugin-ui/index";
 
 export type AttachedFilePreviewInput = {
   tipo?: string | null;

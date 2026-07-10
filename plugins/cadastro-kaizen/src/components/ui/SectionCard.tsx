@@ -1,4 +1,4 @@
-import { createDashboardSectionCard, sectionCardKaizenBemClasses } from "@delpi/plugin-ui";
+import { createDashboardSectionCard, sectionCardKaizenBemClasses } from "@delpi/plugin-ui/index";
 
 export const SectionCard = createDashboardSectionCard({
   classNames: sectionCardKaizenBemClasses("kz"),

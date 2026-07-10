@@ -1,7 +1,7 @@
 import {
   createDashboardNativeFormFields,
   type FormFieldShellClassNames,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 /** Campos nativos alinhados ao shell `ds-filter-box` / `tm-field__label`. */
 const TM_NATIVE_FIELD_CLASS_NAMES: FormFieldShellClassNames = {

@@ -1,7 +1,7 @@
 import {
   createDashboardFileDropzone,
   fileDropzoneBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const classNames = {
   ...fileDropzoneBemClasses("tm"),

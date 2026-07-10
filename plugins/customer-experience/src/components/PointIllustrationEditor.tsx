@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ImagePlus, Smile, X } from "lucide-react";
-import { LucideIconByName, LucideIconPicker } from "@delpi/plugin-ui";
+import { LucideIconByName, LucideIconPicker } from "@delpi/plugin-ui/index";
 import { PhotoDropzone } from "./PhotoDropzone";
 import { CxNativeSelectField } from "./cxFormFields";
 import {

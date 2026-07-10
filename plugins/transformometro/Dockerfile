@@ -1,20 +1,21 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY transformometro/package*.json ./transformometro/
-RUN cd transformometro && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd transformometro && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY transformometro ./transformometro
+COPY vite ./vite
 
 WORKDIR /app/transformometro
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:alpine AS production
 
 COPY --from=builder /app/transformometro/dist /usr/share/nginx/html
 

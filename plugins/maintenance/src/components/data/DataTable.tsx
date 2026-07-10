@@ -3,7 +3,7 @@ import {
   dataTableBemClasses,
   type DataTableClassNames,
   type DataTableLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import type { DataTableColumn } from "./types";
 import "./DataTable.css";

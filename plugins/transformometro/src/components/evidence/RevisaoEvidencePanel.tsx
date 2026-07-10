@@ -19,7 +19,7 @@ import {
   inferEvidenceTypeFromFile,
   uploadRevisaoEvidence,
 } from "../../data/api/transformometroEvidenceApi";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RevisaoEvidence } from "../../types/revisaoEvidence";
 import { isSpreadsheetAttachedFile } from "../../utils/evidenceFilePreview";

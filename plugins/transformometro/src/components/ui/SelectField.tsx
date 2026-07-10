@@ -1,10 +1,4 @@
-import {
-  createDashboardSelectField,
-  selectFieldTransformometroClasses,
-} from "@delpi/plugin-ui";
-
-export type { SelectOption } from "@delpi/plugin-ui";
-
+import { createDashboardSelectField, selectFieldTransformometroClasses } from "@delpi/plugin-ui/index";
 const CONTROL_LABELS = {
   searchPlaceholder: "Buscar…",
   emptyOptions: "Nenhuma opção encontrada.",

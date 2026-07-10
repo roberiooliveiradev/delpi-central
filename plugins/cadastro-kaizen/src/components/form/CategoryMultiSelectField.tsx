@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import {
   createDashboardCreatableMultiSelectField,
   type MultiSelectFieldLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildCategoryOptions, rememberCustomCategories } from "../../utils/kaizenCategories";

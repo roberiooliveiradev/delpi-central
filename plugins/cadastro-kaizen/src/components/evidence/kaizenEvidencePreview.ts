@@ -3,7 +3,7 @@ import {
   canPreviewFile,
   resolveFilePreviewKind,
   type FilePreviewKind,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 export type EvidencePreviewMode = FilePreviewKind;
 

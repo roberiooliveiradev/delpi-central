@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { createInfoGrid, createPanelCard } from "@delpi/plugin-ui";
+import { createInfoGrid, createPanelCard } from "@delpi/plugin-ui/index";
 
 const PanelCard = createPanelCard("pc");
 

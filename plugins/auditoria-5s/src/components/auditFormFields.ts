@@ -1,7 +1,7 @@
 import {
   createDashboardNativeFormFields,
   formFieldShellBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 /** Campos nativos do formulário de nova auditoria (BEM a5s-field*). */
 export const {

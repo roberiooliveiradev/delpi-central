@@ -4,7 +4,7 @@ import {
   createFilterBarShell,
   type FilterInputFieldClassNames,
   type FilterInputFieldProps,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
   filterBox: "pva-field",

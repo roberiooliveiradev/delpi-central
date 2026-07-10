@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
-import { NativeSelectControl } from "@delpi/plugin-ui";
+import { NativeSelectControl } from "@delpi/plugin-ui/index";
 
 import { PARTICIPANT_ROLES } from "../../constants/kaizen";
 import type { KaizenParticipant, ParticipantRole } from "../../types/kaizen";

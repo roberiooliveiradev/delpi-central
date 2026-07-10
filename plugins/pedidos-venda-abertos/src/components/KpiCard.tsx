@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui";
+import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui/index";
 
 const SimpleKpiCard = createSimpleKpiCard("pva", {
   withBody: true,

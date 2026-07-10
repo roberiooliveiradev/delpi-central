@@ -1,7 +1,7 @@
 import {
   createDashboardEditableSectionCard,
   editableSectionCardBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const LABELS = {
   edit: "Editar",

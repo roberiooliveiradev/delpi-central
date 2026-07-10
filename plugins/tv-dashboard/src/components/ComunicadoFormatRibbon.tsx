@@ -43,7 +43,7 @@ import {
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { HintAction } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {

@@ -1,4 +1,4 @@
-import { exportSvgElementToPng } from "@delpi/plugin-ui";
+import { exportSvgElementToPng } from "@delpi/plugin-ui/index";
 
 export function exportImpactEffortMatrixPlotPng(
   container: HTMLElement | null | undefined,

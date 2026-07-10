@@ -7,7 +7,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui/index";
 
 import type { Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";

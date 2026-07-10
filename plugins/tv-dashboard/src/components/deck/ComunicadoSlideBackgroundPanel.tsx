@@ -1,5 +1,5 @@
 import { Upload, FolderOpen } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";

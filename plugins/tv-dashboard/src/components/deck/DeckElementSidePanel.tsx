@@ -1,5 +1,5 @@
 import { Layers, MousePointer2, PanelRightClose } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui/index";
 import { useEffect, useState } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";

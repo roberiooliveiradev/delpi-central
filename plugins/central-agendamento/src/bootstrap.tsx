@@ -2,6 +2,8 @@ import ReactDOM from "react-dom/client";
 import App, { type AppProps } from "./App";
 import "./index.css";
 
+await import("@delpi/plugin-ui/styles");
+
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
 
 function renderApp(el: HTMLElement, props: AppProps = {}) {

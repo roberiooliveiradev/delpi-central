@@ -1,15 +1,16 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY customer-experience/package*.json ./customer-experience/
-RUN cd customer-experience && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd customer-experience && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY customer-experience ./customer-experience
+COPY vite ./vite
 
 WORKDIR /app/customer-experience
 RUN npm run build

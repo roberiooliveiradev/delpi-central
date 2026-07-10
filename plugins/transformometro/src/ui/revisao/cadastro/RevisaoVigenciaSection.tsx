@@ -1,5 +1,5 @@
 import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../../components/ui/SelectField";
 import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";

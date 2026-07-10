@@ -1,8 +1,9 @@
 import ReactDOM from "react-dom/client";
 import App, { type AppProps } from "./App";
 import { resolvePropostasComerciaisRouteKey } from "./utils/route";
-import "../../plugin-ui/src/styles.css";
 import "./index.css";
+
+await import("@delpi/plugin-ui/styles");
 
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
 

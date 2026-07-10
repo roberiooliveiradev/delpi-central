@@ -1,7 +1,7 @@
 import {
   createDashboardNativeFormFields,
   type FormFieldShellClassNames,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 /** Shell alinhado ao CSS histórico `.ql-field` / `.ql-label-text`. */
 const QL_FIELD_CLASS_NAMES: FormFieldShellClassNames = {

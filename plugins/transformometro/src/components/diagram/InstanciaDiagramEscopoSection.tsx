@@ -1,7 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "@delpi/plugin-ui";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchInstanciaDiagramEscopo,
@@ -9,14 +8,14 @@ import {
   saveInstanciaDiagramEscopo,
 } from "../../data/api/transformometroDiagramApi";
 import {
+  FieldLabel,
   emptyEscopo,
   emptyFlowchart,
   DiagramMermaidPreview,
   DiagramFullscreenFrame,
   type FlowchartEscopo,
   type FlowchartV1,
-} from "@delpi/plugin-ui";
-
+} from "@delpi/plugin-ui/index";
 const FlowchartEditor = lazy(() =>
   import("./TransformometroFlowchartEditor").then((module) => ({ default: module.FlowchartEditor }))
 );

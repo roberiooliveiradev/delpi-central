@@ -1,6 +1,6 @@
 import { ClipboardCheck } from "lucide-react";
 
-import { PageHeader as PluginPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui";
+import { PageHeader as PluginPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui/index";
 
 type PageHeaderProps = {
   loading: boolean;

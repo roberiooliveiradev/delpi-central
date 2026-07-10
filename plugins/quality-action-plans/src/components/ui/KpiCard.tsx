@@ -5,7 +5,7 @@ import {
   metricKpiCardBemClasses,
   type MetricKpiCardClassNames,
   type MetricKpiCardTone,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import type { KpiTone } from "../../constants/dashboardKpis";
 

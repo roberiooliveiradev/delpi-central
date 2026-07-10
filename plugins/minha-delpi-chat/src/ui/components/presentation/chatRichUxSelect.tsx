@@ -1,4 +1,4 @@
-import { ToolbarSelectField, type ToolbarSelectFieldProps } from "@delpi/plugin-ui";
+import { ToolbarSelectField, type ToolbarSelectFieldProps } from "@delpi/plugin-ui/index";
 
 export type ChatRichUxSelectProps = ToolbarSelectFieldProps;
 

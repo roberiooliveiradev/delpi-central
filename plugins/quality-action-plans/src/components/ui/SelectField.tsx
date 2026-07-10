@@ -1,9 +1,9 @@
 import {
   createDashboardSelectField,
   selectFieldPacClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
-export type { SelectOption } from "@delpi/plugin-ui";
+export type { SelectOption } from "@delpi/plugin-ui/index";
 
 const CONTROL_LABELS = {
   searchPlaceholder: "Buscar…",

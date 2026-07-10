@@ -1,6 +1,6 @@
 import { AlertCircle, FileSearch, LoaderCircle } from "lucide-react";
 
-import { createStateBoxPanel, type StateBoxVariant } from "@delpi/plugin-ui";
+import { createStateBoxPanel, type StateBoxVariant } from "@delpi/plugin-ui/index";
 
 function renderStateIcon(variant: StateBoxVariant) {
   if (variant === "loading") {
@@ -18,4 +18,4 @@ export const StateBox = createStateBoxPanel({
   iconClassName: (variant) => (variant === "loading" ? "pc-spin" : undefined),
 });
 
-export type { DashboardStateBoxPanelProps as StateBoxProps } from "@delpi/plugin-ui";
+export type { DashboardStateBoxPanelProps as StateBoxProps } from "@delpi/plugin-ui/index";

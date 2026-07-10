@@ -1,20 +1,21 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY eficiencia-fabril/package*.json ./eficiencia-fabril/
-RUN cd eficiencia-fabril && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd eficiencia-fabril && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY eficiencia-fabril ./eficiencia-fabril
+COPY vite ./vite
 
 WORKDIR /app/eficiencia-fabril
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:alpine AS production
 
 COPY --from=builder /app/eficiencia-fabril/dist /usr/share/nginx/html
 

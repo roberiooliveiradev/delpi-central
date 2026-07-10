@@ -13,7 +13,7 @@ export { StateAlert } from "./StateAlert";
 export { DateField } from "./DateField";
 export { EditableSectionCard } from "./EditableSectionCard";
 export { EmptyHint } from "./EmptyHint";
-export { HelpTooltip, HintAction } from "@delpi/plugin-ui";
+export { HelpTooltip, HintAction } from "@delpi/plugin-ui/index";
 export { LoadingHint } from "./LoadingHint";
 export {
   FormField,

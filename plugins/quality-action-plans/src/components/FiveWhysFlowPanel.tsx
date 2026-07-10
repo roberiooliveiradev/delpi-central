@@ -6,7 +6,7 @@ import { upsertFiveWhys } from "../api/actionPlansApi";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FormActions } from "./ui/FormActions";
 import { SectionSaveButton } from "./ui/SectionSaveButton";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { PacWhysFlowTextArea } from "./ui/PacWhysFlowTextArea";

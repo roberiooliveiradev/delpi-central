@@ -16,7 +16,7 @@ import { ActionResponsiblesField } from "./ActionResponsiblesField";
 import { ActionResponsiblesChips } from "./ActionResponsiblesChips";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";

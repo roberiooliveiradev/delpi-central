@@ -1,4 +1,4 @@
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { MelhoriaFaseBadge } from "../../components/melhoria/MelhoriaFaseBadge";
 import { MelhoriaFasePipeline } from "../../components/melhoria/MelhoriaFasePipeline";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";

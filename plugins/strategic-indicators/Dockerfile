@@ -1,20 +1,21 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY strategic-indicators/package*.json ./strategic-indicators/
-RUN cd strategic-indicators && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd strategic-indicators && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY strategic-indicators ./strategic-indicators
+COPY vite ./vite
 
 WORKDIR /app/strategic-indicators
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:alpine AS production
 
 COPY --from=builder /app/strategic-indicators/dist /usr/share/nginx/html
 

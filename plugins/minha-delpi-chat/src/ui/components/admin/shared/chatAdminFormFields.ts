@@ -1,7 +1,7 @@
 import {
   createDashboardNativeFormFields,
   type FormFieldShellClassNames,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const CHAT_ADMIN_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
   root: "mdc-admin-field",

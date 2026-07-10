@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { TabHintCell } from "@delpi/plugin-ui";
+import { TabHintCell } from "@delpi/plugin-ui/index";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { ComunicadoFormatRibbon } from "./ComunicadoFormatRibbon";

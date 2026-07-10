@@ -4,7 +4,7 @@ import {
   FlowchartEditor as BaseFlowchartEditor,
   type FlowchartEditorHandle,
   type FlowchartEditorLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import { TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS } from "../../content/flowchartEditorLabels";
 import { useTransformometroDarkMode } from "../../hooks/useTransformometroDarkMode";

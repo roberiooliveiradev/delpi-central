@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { FilePreviewModal } from "@delpi/plugin-ui";
+import { FilePreviewModal } from "@delpi/plugin-ui/index";
 
 type Props = {
   open: boolean;

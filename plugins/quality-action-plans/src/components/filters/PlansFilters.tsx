@@ -9,7 +9,7 @@ import {
 } from "../../constants/actionPlans";
 import { EMPTY_PLANS_FILTERS, type PlansFilterState } from "../../utils/planFilters";
 import { FilterBar } from "../ui/FilterBar";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../ui/MultiSelectField";
 import { TextField } from "../ui/TextField";
 

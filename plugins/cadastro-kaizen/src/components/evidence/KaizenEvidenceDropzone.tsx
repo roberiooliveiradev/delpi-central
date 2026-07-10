@@ -1,7 +1,7 @@
 import {
   createDashboardFileDropzone,
   fileDropzoneKaizenClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const classNames = {
   ...fileDropzoneKaizenClasses(),

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ClipboardList } from "lucide-react";
 
-import { PageHeader as PluginPageHeader, pageHeaderPacBrandBemClasses } from "@delpi/plugin-ui";
+import { PageHeader as PluginPageHeader, pageHeaderPacBrandBemClasses } from "@delpi/plugin-ui/index";
 
 type PageHeaderProps = {
   title: string;

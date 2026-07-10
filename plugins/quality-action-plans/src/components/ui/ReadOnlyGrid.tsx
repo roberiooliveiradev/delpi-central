@@ -1,4 +1,4 @@
-import { createDashboardFormGrid, formGridPacClasses } from "@delpi/plugin-ui";
+import { createDashboardFormGrid, formGridPacClasses } from "@delpi/plugin-ui/index";
 
 /** Mesma grade do modo edição (`pac-form-grid`) para manter ordem e colunas alinhadas. */
 export const ReadOnlyGrid = createDashboardFormGrid({

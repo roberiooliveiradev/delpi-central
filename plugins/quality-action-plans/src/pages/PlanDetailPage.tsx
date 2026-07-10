@@ -63,7 +63,7 @@ import { EditableSectionCard } from "../components/ui/EditableSectionCard";
 import { FormActions } from "../components/ui/FormActions";
 import { SectionCard } from "../components/ui/SectionCard";
 import { SelectField } from "../components/ui/SelectField";
-import { NativeSelectControl } from "@delpi/plugin-ui";
+import { NativeSelectControl } from "@delpi/plugin-ui/index";
 import { TextAreaField } from "../components/ui/TextAreaField";
 import {
   dashboardPath,

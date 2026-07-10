@@ -8,7 +8,7 @@ export { DataTableSection, DEFAULT_TABLE_PAGE_SIZE } from "./DataTableSection";
 export { Pagination } from "./Pagination";
 export { FilialBadge } from "./FilialBadge";
 export { FilterBar } from "./FilterBar";
-export { FieldLabel, HelpTooltip } from "@delpi/plugin-ui";
+export { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
 export { MultiSelectField } from "./MultiSelectField";
 export type { MultiSelectOption } from "./MultiSelectField";
 export { PendingChangeBadge } from "./PendingChangeBadge";

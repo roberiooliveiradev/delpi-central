@@ -1,7 +1,7 @@
 import { Download } from "lucide-react";
 import { useCallback } from "react";
 
-import { FilePreviewModal, resolveFilePreviewKind } from "@delpi/plugin-ui";
+import { FilePreviewModal, resolveFilePreviewKind } from "@delpi/plugin-ui/index";
 
 import {
   downloadChatSource,

@@ -1,15 +1,16 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY auditoria-5s/package*.json ./auditoria-5s/
-RUN cd auditoria-5s && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd auditoria-5s && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY auditoria-5s ./auditoria-5s
+COPY vite ./vite
 
 WORKDIR /app/auditoria-5s
 RUN npm run build

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { createMetricKpiCard, type DashboardMetricKpiCardProps } from "@delpi/plugin-ui";
+import { createMetricKpiCard, type DashboardMetricKpiCardProps } from "@delpi/plugin-ui/index";
 
 const MetricKpiCardBase = createMetricKpiCard("ef");
 

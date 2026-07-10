@@ -1,4 +1,4 @@
-import { createDashboardPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui";
+import { createDashboardPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui/index";
 
 export const PageHeader = createDashboardPageHeader({
   layout: "titleRow",

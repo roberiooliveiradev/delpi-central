@@ -1,20 +1,21 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY minha-delpi-chat/package*.json ./minha-delpi-chat/
-RUN cd minha-delpi-chat && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd minha-delpi-chat && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY minha-delpi-chat ./minha-delpi-chat
+COPY vite ./vite
 
 WORKDIR /app/minha-delpi-chat
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:alpine AS production
 
 COPY --from=builder /app/minha-delpi-chat/dist /usr/share/nginx/html
 

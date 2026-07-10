@@ -5,7 +5,7 @@ import {
   FilePreviewModal,
   canPreviewFile,
   resolveFilePreviewKind,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import { formatEvidenceFileSize } from "../../data/api/transformometroEvidenceApi";
 

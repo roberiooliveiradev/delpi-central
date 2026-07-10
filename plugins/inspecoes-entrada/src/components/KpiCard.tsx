@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui";
+import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui/index";
 
 export type KpiCardVariant = "default" | "info" | "warning" | "success" | "danger";
 

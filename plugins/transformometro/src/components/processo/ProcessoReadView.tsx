@@ -1,4 +1,4 @@
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { Processo } from "../../data/api/transformometroApi";
 import { formatProcessoEscopoRead, hasProcessoEscopo } from "../../ui/processos/processoEscopo";

@@ -1,4 +1,4 @@
-import type { ImpactEffortPoint } from "@delpi/plugin-ui";
+import type { ImpactEffortPoint } from "@delpi/plugin-ui/index";
 
 import type { MatrizImpactoPonto } from "../data/api/transformometroMatrixApi";
 import { matrizSeriesColor } from "./matrizImpactoSeriesColors";

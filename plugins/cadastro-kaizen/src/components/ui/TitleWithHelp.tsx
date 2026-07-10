@@ -1,4 +1,4 @@
-import { createDashboardTitleWithHelp, titleWithHelpBemClasses } from "@delpi/plugin-ui";
+import { createDashboardTitleWithHelp, titleWithHelpBemClasses } from "@delpi/plugin-ui/index";
 
 export const TitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses("kz"),

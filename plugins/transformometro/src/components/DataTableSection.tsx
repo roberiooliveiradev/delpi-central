@@ -5,7 +5,7 @@ import {
   DEFAULT_TABLE_PAGE_SIZE,
   type DataTableColumn,
 } from "./dataTableUi";
-import type { DashboardDataTableSectionProps } from "@delpi/plugin-ui";
+import type { DashboardDataTableSectionProps } from "@delpi/plugin-ui/index";
 
 export { DEFAULT_TABLE_PAGE_SIZE };
 export type { DataTableColumn };

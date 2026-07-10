@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { useLayoutEffect, useRef } from "react";
 import { Cog, FlaskConical, Leaf, Plus, Ruler, Trash2, Users, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { NativeTextAreaControl } from "@delpi/plugin-ui";
+import { NativeTextAreaControl } from "@delpi/plugin-ui/index";
 
 import { FormActions } from "./ui/FormActions";
 import { SectionSaveButton } from "./ui/SectionSaveButton";

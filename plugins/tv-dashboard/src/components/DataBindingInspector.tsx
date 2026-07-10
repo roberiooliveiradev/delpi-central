@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Copy, RefreshCw } from "lucide-react";
-import { NativeSelectControl } from "@delpi/plugin-ui";
+import { NativeSelectControl } from "@delpi/plugin-ui/index";
 import {
   blockTypeForDisplayMode,
   defaultFrame,

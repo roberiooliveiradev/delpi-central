@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type { FilePreviewContentState } from "@delpi/plugin-ui";
+import type { FilePreviewContentState } from "@delpi/plugin-ui/index";
 
 import {
   fetchPlanEvidenceContent,

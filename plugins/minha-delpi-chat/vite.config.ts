@@ -1,40 +1,44 @@
 /// <reference types="vitest/config" />
-import path from "node:path";
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
 
+import {
+  FEDERATION_SHARED_REACT,
+  pluginUiRemote,
+  reactResolveAliases,
+  pluginUiTestAliases,
+} from "../vite/federation.shared";
+
 export default defineConfig({
   plugins: [
-    react(),
     federation({
       name: "minha-delpi-chat",
       filename: "remoteEntry.js",
+      remotes: pluginUiRemote(),
       exposes: {
-        "./App": "./src/bootstrap.tsx"
+        "./App": "./src/bootstrap.tsx",
       },
-      shared: ["react", "react-dom"]
-    })
+      shared: [...FEDERATION_SHARED_REACT],
+    }),
+    react(),
   ],
   resolve: {
     alias: {
-      "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
-      react: path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      ...reactResolveAliases(__dirname),
     },
     dedupe: ["react", "react-dom"],
   },
   base: "/apps/minha-delpi-chat/",
-
   build: {
     target: "esnext",
     modulePreload: false,
-    cssCodeSplit: false
+    cssCodeSplit: false,
   },
-
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    alias: pluginUiTestAliases(__dirname),
   },
+
 });

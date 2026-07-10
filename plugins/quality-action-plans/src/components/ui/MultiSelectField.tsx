@@ -5,7 +5,7 @@ import {
   multiSelectPacClasses,
   type MultiSelectFieldLabels,
   type MultiSelectOption,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const MULTI_LABELS = {
   emptyLabel: "Todos",

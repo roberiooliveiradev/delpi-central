@@ -1,7 +1,7 @@
 import {
   createDashboardFilterCheckboxField,
   filterCheckboxFieldPacClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 export const FilterCheckboxField = createDashboardFilterCheckboxField({
   classNames: filterCheckboxFieldPacClasses("pac"),

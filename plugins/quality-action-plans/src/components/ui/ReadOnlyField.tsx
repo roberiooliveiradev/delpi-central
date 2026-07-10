@@ -1,7 +1,7 @@
 import {
   createDashboardReadOnlyField,
   readOnlyFieldPacBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const LABELS = {
   emptyDisplay: "—",

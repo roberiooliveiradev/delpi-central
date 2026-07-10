@@ -1,4 +1,4 @@
-import type { FlowchartEditorLabels } from "@delpi/plugin-ui";
+import type { FlowchartEditorLabels } from "@delpi/plugin-ui/index";
 
 import { TM_HELP_TOOLTIPS } from "./helpTooltips";
 

@@ -1,4 +1,4 @@
-import { SectionHintLabel } from "@delpi/plugin-ui";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 

@@ -1,4 +1,4 @@
-import { createDashboardSectionBlock } from "@delpi/plugin-ui";
+import { createDashboardSectionBlock } from "@delpi/plugin-ui/index";
 
 import "./SectionBlock.css";
 

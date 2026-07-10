@@ -1,7 +1,7 @@
 import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { Eye, Paperclip } from "lucide-react";
 import { useState } from "react";
-import { NativeSelectControl } from "@delpi/plugin-ui";
+import { NativeSelectControl } from "@delpi/plugin-ui/index";
 
 import {
   ACTION_STATUS_OPTIONS,

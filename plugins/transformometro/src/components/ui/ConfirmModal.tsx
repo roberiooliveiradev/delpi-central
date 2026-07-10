@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { ConfirmModalPanel, confirmModalTransformometroClasses } from "@delpi/plugin-ui";
+import { ConfirmModalPanel, confirmModalTransformometroClasses } from "@delpi/plugin-ui/index";
 
 import { Modal } from "./Modal";
 

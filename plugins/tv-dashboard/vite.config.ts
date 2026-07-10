@@ -3,17 +3,24 @@ import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
 import path from "node:path";
 
+import {
+  FEDERATION_SHARED_REACT,
+  pluginUiRemote,
+  reactResolveAliases,
+} from "../vite/federation.shared";
+
 export default defineConfig({
   plugins: [
-    react(),
     federation({
       name: "tv-dashboard",
       filename: "remoteEntry.js",
+      remotes: pluginUiRemote(),
       exposes: {
         "./App": "./src/bootstrap.tsx",
       },
-      shared: ["react", "react-dom"],
+      shared: [...FEDERATION_SHARED_REACT],
     }),
+    react(),
   ],
   resolve: {
     alias: {
@@ -21,9 +28,7 @@ export default defineConfig({
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",
       ),
-      "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
-      react: path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      ...reactResolveAliases(__dirname),
     },
     dedupe: ["react", "react-dom"],
   },

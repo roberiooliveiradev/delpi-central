@@ -1,5 +1,5 @@
 import type { Medicao } from "../../../data/api/transformometroApi";
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { toMonthInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";

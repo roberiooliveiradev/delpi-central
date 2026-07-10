@@ -2,6 +2,8 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
+await import("@delpi/plugin-ui/styles");
+
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;

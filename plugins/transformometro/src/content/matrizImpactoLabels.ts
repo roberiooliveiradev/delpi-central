@@ -1,4 +1,4 @@
-import type { ImpactEffortQuadrantLabels } from "@delpi/plugin-ui";
+import type { ImpactEffortQuadrantLabels } from "@delpi/plugin-ui/index";
 
 import type {
   ImpactEffortConfidence,

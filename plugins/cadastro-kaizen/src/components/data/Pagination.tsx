@@ -2,7 +2,7 @@ import {
   CompactPagination,
   compactPaginationBemClasses,
   type CompactPaginationLabels,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const KZ_PAGINATION_CLASS_NAMES = compactPaginationBemClasses("kz", {
   ghostBtn: "kz-ghost-btn",

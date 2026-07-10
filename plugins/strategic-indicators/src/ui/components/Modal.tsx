@@ -1,4 +1,4 @@
-import { ModalShell, type ModalShellClassNames } from "@delpi/plugin-ui";
+import { ModalShell, type ModalShellClassNames } from "@delpi/plugin-ui/index";
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { lockPageScroll } from "../utils/pageScrollLock";

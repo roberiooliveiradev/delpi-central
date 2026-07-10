@@ -1,4 +1,4 @@
-import { useConfirmDialogController, type ConfirmDialogOptions } from "@delpi/plugin-ui";
+import { useConfirmDialogController, type ConfirmDialogOptions } from "@delpi/plugin-ui/index";
 
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 

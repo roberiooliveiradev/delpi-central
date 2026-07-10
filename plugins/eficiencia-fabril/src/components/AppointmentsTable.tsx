@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { resolveEficienciaFabrilAppointmentStatus } from "../utils/appointmentStatus";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
-import { HelpTooltip } from "@delpi/plugin-ui";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 import { formatDisplayDate } from "../utils/dates";
 import { exportAppointmentsExcel, exportAppointmentsPdf } from "../utils/exportAppointments";

@@ -1,4 +1,4 @@
-import { createDashboardFormGrid } from "@delpi/plugin-ui";
+import { createDashboardFormGrid } from "@delpi/plugin-ui/index";
 
 export const FormGrid = createDashboardFormGrid({
   classNames: { root: "kz-form-grid" },

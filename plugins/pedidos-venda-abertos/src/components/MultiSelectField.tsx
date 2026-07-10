@@ -4,7 +4,7 @@ import {
   type MultiSelectFieldLabels,
   type MultiSelectOption,
   multiSelectBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const LABELS = {
   emptyLabel: "Todos os clientes",

@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, FolderOpen, Trash2, Upload } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui";
+import { HintAction } from "@delpi/plugin-ui/index";
 import { isDataBlockType } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
 

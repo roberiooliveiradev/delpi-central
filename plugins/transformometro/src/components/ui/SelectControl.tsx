@@ -1,10 +1,4 @@
-import {
-  createDashboardSelectControl,
-  selectControlBemClasses,
-} from "@delpi/plugin-ui";
-
-export type { SelectOption } from "@delpi/plugin-ui";
-
+import { createDashboardSelectControl, selectControlBemClasses } from "@delpi/plugin-ui/index";
 const LABELS = {
   searchPlaceholder: "Buscar…",
   emptyOptions: "Nenhuma opção encontrada.",

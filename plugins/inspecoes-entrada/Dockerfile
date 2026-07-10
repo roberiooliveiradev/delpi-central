@@ -1,20 +1,21 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY inspecoes-entrada/package*.json ./inspecoes-entrada/
-RUN cd inspecoes-entrada && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd inspecoes-entrada && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY inspecoes-entrada ./inspecoes-entrada
+COPY vite ./vite
 
 WORKDIR /app/inspecoes-entrada
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:alpine AS production
 
 COPY --from=builder /app/inspecoes-entrada/dist /usr/share/nginx/html
 

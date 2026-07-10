@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Gauge } from "lucide-react";
 
-import { PageHeader as PluginPageHeader, pageHeaderBrandBemClasses } from "@delpi/plugin-ui";
+import { PageHeader as PluginPageHeader, pageHeaderBrandBemClasses } from "@delpi/plugin-ui/index";
 
 import { TransformometroNav } from "./TransformometroNav";
 import "./PageHeader.css";

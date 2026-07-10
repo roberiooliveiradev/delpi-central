@@ -1,7 +1,7 @@
 import {
   createDashboardFileDropzone,
   fileDropzoneBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 

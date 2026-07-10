@@ -1,23 +1,16 @@
-FROM nginx:alpine AS static
-
-COPY central-agendamento/dist/ /usr/share/nginx/html/
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
 
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
 COPY central-agendamento/package*.json ./central-agendamento/
-RUN cd central-agendamento && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd central-agendamento && npm install
 
-COPY plugin-ui ./plugin-ui
 COPY central-agendamento ./central-agendamento
+COPY vite ./vite
 
 WORKDIR /app/central-agendamento
 RUN npm run build

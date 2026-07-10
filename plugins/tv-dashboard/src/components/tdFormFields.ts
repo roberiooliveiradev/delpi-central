@@ -1,7 +1,8 @@
 import {
   createDashboardNativeFormFields,
+  NativeTextAreaControl,
   type FormFieldShellClassNames,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 const TD_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
   root: "td-field",
@@ -17,4 +18,4 @@ export const {
   classNames: TD_FIELD_CLASS_NAMES,
 });
 
-export { NativeTextAreaControl as TdNativeTextAreaControl } from "@delpi/plugin-ui";
+export { NativeTextAreaControl as TdNativeTextAreaControl };
