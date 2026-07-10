@@ -55,7 +55,7 @@ export function newBlockId(): string {
   return `block-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-const DEFAULT_BACKGROUND: ComunicadoBackground = { type: "color", value: "#0f172a" };
+const DEFAULT_BACKGROUND: ComunicadoBackground = { type: "color", value: "#ffffff" };
 const DEFAULT_HEADLINE = "Título";
 
 const DATA_BLOCK_TYPES = new Set(["data_kpi", "data_chart", "data_table", "data_metric"]);
@@ -159,7 +159,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "heading") {
     return {
       fontSize: 56,
-      color: "#ffffff",
+      color: "#111827",
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
       verticalAlign: "middle" as const,
@@ -171,7 +171,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "text") {
     return {
       fontSize: 28,
-      color: "#cbd5e1",
+      color: "#475569",
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
       verticalAlign: "top" as const,
@@ -265,10 +265,12 @@ function readLinkFields(block: Record<string, unknown>) {
 
 export function parseComunicadoConfig(raw: Record<string, unknown> | undefined | null): ComunicadoConfig {
   const cfg = raw ?? {};
-  const blocks = Array.isArray(cfg.blocks) ? (cfg.blocks as ComunicadoBlock[]) : [];
-  if (blocks.length > 0) {
+
+  // Array explícito (inclusive vazio) — não remigrar headline em blocos padrão.
+  if (Array.isArray(cfg.blocks)) {
+    const blocks = cfg.blocks as ComunicadoBlock[];
     return {
-      version: Number(cfg.version) || detectConfigVersion(blocks),
+      version: Number(cfg.version) || (blocks.length > 0 ? detectConfigVersion(blocks) : 2),
       headline: String(cfg.headline ?? ""),
       subtitle: String(cfg.subtitle ?? ""),
       background: normalizeBackground(cfg.background),
@@ -276,13 +278,14 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
       dataFilters: normalizeDataFilters(cfg.dataFilters),
     };
   }
+
   const headline = String(cfg.headline ?? DEFAULT_HEADLINE);
   const subtitle = String(cfg.subtitle ?? "");
   return {
     version: 2,
     headline,
     subtitle,
-    background: DEFAULT_BACKGROUND,
+    background: normalizeBackground(cfg.background),
     blocks: [
       createBlock("heading", headline),
       ...(subtitle ? [createBlock("text", subtitle)] : []),
@@ -328,7 +331,7 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
             to: background.to,
             angle: background.angle ?? 180,
           }
-        : { type: "color", value: background.value || "#0f172a" };
+        : { type: "color", value: background.value || "#ffffff" };
   const blocks = (config.blocks ?? []).map(serializeBlock);
   const version = config.version ?? detectConfigVersion(config.blocks ?? []);
   const payload: Record<string, unknown> = {
@@ -428,7 +431,7 @@ function normalizeBackground(value: unknown): ComunicadoBackground {
     const angle = typeof bg.angle === "number" ? bg.angle : 180;
     return { type: "gradient", from, to, angle };
   }
-  const color = typeof bg.value === "string" && bg.value.trim() ? bg.value : "#0f172a";
+  const color = typeof bg.value === "string" && bg.value.trim() ? bg.value : "#ffffff";
   return { type: "color", value: color };
 }
 

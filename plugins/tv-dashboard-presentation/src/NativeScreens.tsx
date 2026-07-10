@@ -281,7 +281,7 @@ function RichComunicadoScreen({
 }) {
   useComunicadoGoogleFonts({ blocks: data.blocks });
 
-  const background = data.background ?? { type: "color", value: "#0f172a" };
+  const background = data.background ?? { type: "color", value: "#ffffff" };
   const imageUrl =
     background.type === "image" ? background.url ?? background.value : undefined;
   const bgStyle: CSSProperties = comunicadoBackgroundCssProperties(background, imageUrl);

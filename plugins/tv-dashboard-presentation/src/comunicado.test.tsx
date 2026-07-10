@@ -18,6 +18,27 @@ import {
 import { CustomMessageScreen } from "./NativeScreens";
 
 describe("comunicadoHelpers", () => {
+  it("mantém slide vazio quando blocks é array vazio", () => {
+    const parsed = parseComunicadoConfig({
+      version: 2,
+      blocks: [],
+      background: { type: "color", value: "#ffffff" },
+    });
+    expect(parsed.blocks).toEqual([]);
+    expect(parsed.background).toEqual({ type: "color", value: "#ffffff" });
+  });
+
+  it("round-trip de slide vazio não reintroduz blocos padrão", () => {
+    const empty = parseComunicadoConfig({
+      version: 2,
+      blocks: [],
+      background: { type: "color", value: "#ffffff" },
+    });
+    const serialized = serializeComunicadoConfig(empty);
+    const roundtrip = parseComunicadoConfig(serialized);
+    expect(roundtrip.blocks).toEqual([]);
+  });
+
   it("converte legado headline/subtitle em blocos", () => {
     const parsed = parseComunicadoConfig({ headline: "Aviso", subtitle: "Detalhe" });
     expect(parsed.blocks?.length).toBe(2);

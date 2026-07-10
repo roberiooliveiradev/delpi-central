@@ -903,7 +903,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     });
   }
 
-  const background = config.background ?? { type: "color", value: "#0f172a" };
+  const background = config.background ?? { type: "color", value: "#ffffff" };
 
   const ctxValue: ComunicadoEditorContextValue = {
     config,

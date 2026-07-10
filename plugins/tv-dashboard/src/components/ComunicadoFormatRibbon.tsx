@@ -194,7 +194,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             hint={E.backgroundColor}
             label="Cor"
             ariaLabel="Cor sólida de fundo do slide"
-            value={background?.type === "color" ? background.value : "#0f172a"}
+            value={background?.type === "color" ? background.value : "#ffffff"}
             onChange={setBackgroundColor}
           />
           <DeckRibbonTile

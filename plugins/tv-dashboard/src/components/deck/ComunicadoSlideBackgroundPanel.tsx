@@ -26,7 +26,7 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
       <DeckField id="td-bg-color" label="Cor sólida" hint={E.backgroundColor}>
         <TvRibbonColorPicker
           label="Cor"
-          value={background?.type === "color" ? background.value : "#0f172a"}
+          value={background?.type === "color" ? background.value : "#ffffff"}
           onChange={setBackgroundColor}
         />
       </DeckField>

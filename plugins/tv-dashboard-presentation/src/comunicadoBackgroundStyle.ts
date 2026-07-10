@@ -6,7 +6,7 @@ export function comunicadoBackgroundCssProperties(
   background: ComunicadoBackground | undefined,
   imageUrl?: string,
 ): CSSProperties {
-  const bg = background ?? { type: "color", value: "#0f172a" };
+  const bg = background ?? { type: "color", value: "#ffffff" };
 
   if (bg.type === "image" && imageUrl) {
     return {
@@ -24,8 +24,8 @@ export function comunicadoBackgroundCssProperties(
   }
 
   if (bg.type === "color") {
-    return { backgroundColor: bg.value || "#0f172a" };
+    return { backgroundColor: bg.value || "#ffffff" };
   }
 
-  return { backgroundColor: "#0f172a" };
+  return { backgroundColor: "#ffffff" };
 }
