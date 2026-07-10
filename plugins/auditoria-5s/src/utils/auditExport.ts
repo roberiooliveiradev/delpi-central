@@ -12,14 +12,9 @@ import {
   sensoName,
   shiftLabel,
 } from "../constants/audit5s";
-import { getScoreSummaryLabel } from "../components/CriterionScorePicker";
 import { formatAuditDate } from "./auditList";
-import {
-  exportDocumentExcel,
-  exportDocumentPdf,
-  sanitizeFilename,
-  type ExportDocument,
-} from "./exportDocument";
+import { getScoreSummaryLabel } from "./scoreLabels";
+import type { ExportDocument } from "./exportDocument";
 import { formatPersonName } from "./formatPersonName";
 
 export type AuditExportData = {
@@ -159,11 +154,13 @@ function buildExportFilename(auditCode: string, extension: "xlsx" | "pdf"): stri
 }
 
 export async function exportAuditExcel(data: AuditExportData): Promise<void> {
+  const { exportDocumentExcel } = await import("./exportDocument");
   const document = buildAuditExportDocument(data);
   await exportDocumentExcel(document, buildExportFilename(data.detail.audit_code, "xlsx"));
 }
 
 export async function exportAuditPdf(data: AuditExportData): Promise<void> {
+  const { exportDocumentPdf, sanitizeFilename } = await import("./exportDocument");
   const document = buildAuditExportDocument(data);
   await exportDocumentPdf(document, sanitizeFilename(document.title));
 }
