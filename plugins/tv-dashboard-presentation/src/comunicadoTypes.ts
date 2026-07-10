@@ -23,6 +23,7 @@ export type ComunicadoListType = "bullet" | "ordered";
 export type ComunicadoNamedTextStyle = "title1" | "subtitle" | "body";
 
 export type ComunicadoShapeKind =
+  | "point"
   | "rectangle"
   | "rounded-rect"
   | "ellipse"

@@ -31,6 +31,17 @@ function renderSvgShape(
   const sw = strokeWidth;
 
   switch (kind) {
+    case "point":
+      return (
+        <circle
+          cx="50"
+          cy="50"
+          r="10"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw > 0 ? sw : 0}
+        />
+      );
     case "line":
       return <line x1="4" y1="50" x2="96" y2="50" stroke={stroke} strokeWidth={Math.max(3, sw * 2)} />;
     case "line-arrow-right":
@@ -219,7 +230,7 @@ export function ComunicadoShapeGraphic({
   strokeWidth: number;
   borderRadius?: number;
 }) {
-  if (kind === "line" || kind === "line-arrow-right") {
+  if (kind === "line" || kind === "line-arrow-right" || kind === "point") {
     return (
       <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
         {renderSvgShape(kind, { fill, stroke, strokeWidth })}

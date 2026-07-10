@@ -1,9 +1,11 @@
 import type { ComunicadoShapeKind } from "./comunicadoTypes";
+import type { ComunicadoVisualPrimitive } from "./comunicadoVisualPrimitive";
 
 export type ComunicadoShapeCatalogCategory = {
   id: string;
   label: string;
   shapes: ComunicadoShapeKind[];
+  primitive?: ComunicadoVisualPrimitive;
 };
 
 export type ComunicadoShapeCatalogEntry = {
@@ -13,6 +15,7 @@ export type ComunicadoShapeCatalogEntry = {
 };
 
 const SHAPE_LABELS: Record<ComunicadoShapeKind, string> = {
+  point: "Ponto",
   rectangle: "Retângulo",
   "rounded-rect": "Retângulo arredondado",
   ellipse: "Elipse",
@@ -39,23 +42,33 @@ const SHAPE_LABELS: Record<ComunicadoShapeKind, string> = {
 
 export const COMUNICADO_SHAPE_CATALOG_CATEGORIES: ComunicadoShapeCatalogCategory[] = [
   {
+    id: "points",
+    label: "Pontos",
+    primitive: "point",
+    shapes: ["point"],
+  },
+  {
     id: "lines",
     label: "Linhas",
+    primitive: "line",
     shapes: ["line", "line-arrow-right"],
   },
   {
     id: "rectangles",
     label: "Retângulos",
+    primitive: "area",
     shapes: ["rectangle", "rounded-rect", "callout-rect"],
   },
   {
     id: "basic",
     label: "Formas básicas",
+    primitive: "area",
     shapes: ["ellipse", "triangle", "diamond", "pentagon", "hexagon", "heart", "star", "star-4"],
   },
   {
     id: "arrows",
     label: "Setas",
+    primitive: "area",
     shapes: [
       "arrow-right",
       "arrow-left",
@@ -68,6 +81,7 @@ export const COMUNICADO_SHAPE_CATALOG_CATEGORIES: ComunicadoShapeCatalogCategory
   {
     id: "flowchart",
     label: "Fluxograma",
+    primitive: "area",
     shapes: ["flowchart-process", "flowchart-decision", "flowchart-terminator"],
   },
 ];

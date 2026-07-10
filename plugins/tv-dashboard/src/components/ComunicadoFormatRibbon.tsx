@@ -48,8 +48,12 @@ import {
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
   resolveNamedStyleSelectionForBlock,
+  resolveShapePrimitive,
   resolveTextBlockDisplayRuns,
+  resolveVisualBoxChrome,
   selectionListTypeState,
+  shapeSupportsFill,
+  shapeSupportsStroke,
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
 } from "@delpi/tv-dashboard-presentation";
@@ -179,6 +183,14 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const isImageBlock = selected?.type === "image";
   const isShapeBlock =
     selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsShapeFormatting(selected);
+  const shapePrimitive =
+    isShapeBlock && selected.type === "shape"
+      ? resolveShapePrimitive(selected.shape)
+      : null;
+  const shapeChrome = isShapeBlock ? resolveVisualBoxChrome(selected) : null;
+  const showShapeFill = shapePrimitive ? shapeSupportsFill(shapePrimitive) : false;
+  const showShapeStroke = shapePrimitive ? shapeSupportsStroke(shapePrimitive) : false;
+  const defaultShapeStrokeWidth = shapeChrome?.strokeWidth ?? 2;
 
   return (
     <div className="td-deck-ribbon__groups">
@@ -572,41 +584,63 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       {isShapeBlock && selected ? (
         <DeckRibbonGroup label="Forma" hint={H.shape}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Preenchimento">
-              <span className="td-ribbon-tile__icon">
-                <input
-                  type="color"
-                  className="td-deck-ribbon__color"
-                  value={selected.style?.fill ?? "#089bdb"}
-                  onChange={(e) => updateSelectedStyle({ fill: e.target.value })}
-                />
-              </span>
-              <span className="td-ribbon-tile__label">Preench.</span>
-            </label>
-            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Contorno">
-              <span className="td-ribbon-tile__icon">
-                <input
-                  type="color"
-                  className="td-deck-ribbon__color"
-                  value={selected.style?.stroke ?? "#ffffff"}
-                  onChange={(e) => updateSelectedStyle({ stroke: e.target.value })}
-                />
-              </span>
-              <span className="td-ribbon-tile__label">Contorno</span>
-            </label>
-            <HintAction hint={H.strokeWidth} ariaLabel="Ajuda: Espessura do contorno">
-              <label className="td-ribbon-tile td-ribbon-tile--number" aria-label="Espessura do contorno">
-                <input
-                  type="number"
-                  className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                  min={0}
-                  max={20}
-                  value={selected.style?.strokeWidth ?? 2}
-                  onChange={(e) => updateSelectedStyle({ strokeWidth: Number(e.target.value) || 0 })}
-                />
-                <span className="td-ribbon-tile__label">Espess.</span>
+            {showShapeFill ? (
+              <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Preenchimento">
+                <span className="td-ribbon-tile__icon">
+                  <input
+                    type="color"
+                    className="td-deck-ribbon__color"
+                    value={selected.style?.fill ?? "#089bdb"}
+                    onChange={(e) => updateSelectedStyle({ fill: e.target.value })}
+                  />
+                </span>
+                <span className="td-ribbon-tile__label">
+                  {shapePrimitive === "point" ? "Cor" : "Preench."}
+                </span>
               </label>
-            </HintAction>
+            ) : null}
+            {showShapeStroke ? (
+              <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Contorno">
+                <span className="td-ribbon-tile__icon">
+                  <input
+                    type="color"
+                    className="td-deck-ribbon__color"
+                    value={selected.style?.stroke ?? "#ffffff"}
+                    onChange={(e) => updateSelectedStyle({ stroke: e.target.value })}
+                  />
+                </span>
+                <span className="td-ribbon-tile__label">Contorno</span>
+              </label>
+            ) : null}
+            {shapePrimitive === "line" || shapePrimitive === "area" ? (
+              <HintAction hint={H.strokeWidth} ariaLabel="Ajuda: Espessura do contorno">
+                <label className="td-ribbon-tile td-ribbon-tile--number" aria-label="Espessura do contorno">
+                  <input
+                    type="number"
+                    className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                    min={0}
+                    max={20}
+                    value={selected.style?.strokeWidth ?? defaultShapeStrokeWidth}
+                    onChange={(e) => updateSelectedStyle({ strokeWidth: Number(e.target.value) || 0 })}
+                  />
+                  <span className="td-ribbon-tile__label">Espess.</span>
+                </label>
+              </HintAction>
+            ) : shapePrimitive === "point" ? (
+              <HintAction hint={H.strokeWidth} ariaLabel="Ajuda: Espessura do contorno">
+                <label className="td-ribbon-tile td-ribbon-tile--number" aria-label="Espessura do contorno">
+                  <input
+                    type="number"
+                    className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                    min={0}
+                    max={8}
+                    value={selected.style?.strokeWidth ?? defaultShapeStrokeWidth}
+                    onChange={(e) => updateSelectedStyle({ strokeWidth: Number(e.target.value) || 0 })}
+                  />
+                  <span className="td-ribbon-tile__label">Contorno</span>
+                </label>
+              </HintAction>
+            ) : null}
           </div>
         </DeckRibbonGroup>
       ) : null}

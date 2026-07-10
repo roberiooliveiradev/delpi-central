@@ -7,6 +7,11 @@ import type {
   ComunicadoTextBlock,
   ComunicadoVerticalAlign,
 } from "./comunicadoTypes";
+import {
+  defaultStrokeWidthForPrimitive,
+  resolveShapePrimitive,
+  type ComunicadoVisualPrimitive,
+} from "./comunicadoVisualPrimitive";
 
 /** Modo visual da caixa — texto sem preenchimento/contorno; forma com chrome gráfico. */
 export type ComunicadoVisualBoxMode = "text" | "shape";
@@ -17,6 +22,8 @@ export type ComunicadoVisualBoxProfile = {
   mode: ComunicadoVisualBoxMode;
   /** heading | text no modo texto; kind da forma no modo shape. */
   variant: "heading" | "text" | ComunicadoShapeKind;
+  /** Primitivo geométrico — omitido no modo texto. */
+  primitive?: ComunicadoVisualPrimitive;
   /** Tag semântica do conteúdo interno. */
   textTag: "h1" | "p" | "span";
   /** Bloco de texto com contentRuns ou heading/text (não forma com texto plano). */
@@ -54,6 +61,7 @@ export function resolveVisualBoxProfile(block: ComunicadoVisualBoxBlock): Comuni
   return {
     mode: "shape",
     variant: block.shape,
+    primitive: resolveShapePrimitive(block.shape),
     textTag: "span",
     isRichTextBlock: false,
   };
@@ -67,13 +75,12 @@ export function resolveVisualBoxChrome(block: ComunicadoVisualBoxBlock): Comunic
 
   const style = block.style ?? {};
   const shape = block.shape;
+  const primitive = resolveShapePrimitive(shape);
   return {
     showShapeGraphic: true,
     fill: style.fill ?? "#089bdb",
     stroke: style.stroke ?? "#ffffff",
-    strokeWidth:
-      style.strokeWidth ??
-      (shape === "line" || shape === "line-arrow-right" ? 4 : 2),
+    strokeWidth: style.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive),
     borderRadius: style.borderRadius,
     shapeKind: shape,
   };
@@ -92,7 +99,12 @@ export function visualBoxBlockModifierClasses(block: ComunicadoVisualBoxBlock): 
   if (profile.mode === "text") {
     return [`tdp-comunicado__block--${block.type}`, "tdp-comunicado__visual-box--text"];
   }
-  return ["tdp-comunicado__block--shape", "tdp-comunicado__visual-box--shape"];
+  const primitive = profile.primitive ?? resolveShapePrimitive(block.shape);
+  return [
+    "tdp-comunicado__block--shape",
+    "tdp-comunicado__visual-box--shape",
+    `tdp-comunicado__visual-box--primitive-${primitive}`,
+  ];
 }
 
 export function comunicadoVerticalAlignToJustifyContent(

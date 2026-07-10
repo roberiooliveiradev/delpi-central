@@ -42,8 +42,10 @@ describe("comunicadoVisualBox", () => {
 
   it("deriva perfil forma com preenchimento e contorno", () => {
     const block = createShapeBlock("ellipse");
-    expect(resolveVisualBoxProfile(block).mode).toBe("shape");
-    expect(resolveVisualBoxProfile(block).variant).toBe("ellipse");
+    const profile = resolveVisualBoxProfile(block);
+    expect(profile.mode).toBe("shape");
+    expect(profile.variant).toBe("ellipse");
+    expect(profile.primitive).toBe("area");
     const chrome = resolveVisualBoxChrome(block);
     expect(chrome.showShapeGraphic).toBe(true);
     expect(chrome.fill).toBe("#089bdb");
@@ -52,6 +54,9 @@ describe("comunicadoVisualBox", () => {
     expect(chrome.shapeKind).toBe("ellipse");
     expect(visualBoxSupportsShapeFormatting(block)).toBe(true);
     expect(visualBoxBlockModifierClasses(block)).toContain("tdp-comunicado__visual-box--shape");
+    expect(visualBoxBlockModifierClasses(block)).toContain(
+      "tdp-comunicado__visual-box--primitive-area",
+    );
   });
 
   it("texto usa flex coluna; forma com texto usa overlay absoluto", () => {
@@ -66,6 +71,20 @@ describe("comunicadoVisualBox", () => {
 
   it("linhas usam contorno mais espesso por padrão", () => {
     const line = createShapeBlock("line");
+    expect(resolveVisualBoxProfile(line).primitive).toBe("line");
     expect(resolveVisualBoxChrome(line).strokeWidth).toBe(4);
+    expect(visualBoxBlockModifierClasses(line)).toContain(
+      "tdp-comunicado__visual-box--primitive-line",
+    );
+  });
+
+  it("ponto usa primitivo point e frame compacto", () => {
+    const point = createShapeBlock("point");
+    expect(resolveVisualBoxProfile(point).primitive).toBe("point");
+    expect(resolveVisualBoxChrome(point).strokeWidth).toBe(0);
+    expect(point.frame).toEqual({ x: 45, y: 45, w: 10, h: 10 });
+    expect(visualBoxBlockModifierClasses(point)).toContain(
+      "tdp-comunicado__visual-box--primitive-point",
+    );
   });
 });

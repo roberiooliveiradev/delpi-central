@@ -2,6 +2,12 @@ import type { CSSProperties } from "react";
 
 import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
+  defaultStrokeWidthForPrimitive,
+  isLineShapeKind,
+  isPointShapeKind,
+  resolveShapePrimitive,
+} from "./comunicadoVisualPrimitive";
+import {
   serializeContentRuns,
   shouldPersistContentRuns,
   syncTextBlockFields,
@@ -124,7 +130,8 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
-  if (shape === "line" || shape === "line-arrow-right") return { x: 10, y: 48, w: 80, h: 4 };
+  if (shape && isPointShapeKind(shape)) return { x: 45, y: 45, w: 10, h: 10 };
+  if (shape && isLineShapeKind(shape)) return { x: 10, y: 48, w: 80, h: 4 };
   if (
     shape === "arrow-right" ||
     shape === "arrow-left" ||
@@ -171,12 +178,13 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     return { objectFit: "contain" as const, zIndex: 1 };
   }
   if (type === "shape") {
+    const primitive = shape ? resolveShapePrimitive(shape) : "area";
     const base = {
       zIndex: 1,
       fill: "#089bdb",
       stroke: "#ffffff",
-      strokeWidth: shape === "line" || shape === "line-arrow-right" ? 4 : 2,
-      opacity: shape === "line" || shape === "line-arrow-right" ? 1 : 0.9,
+      strokeWidth: defaultStrokeWidthForPrimitive(primitive),
+      opacity: primitive === "area" ? 0.9 : 1,
     };
     if (shape === "rounded-rect" || shape === "callout-rect") return { ...base, borderRadius: 16 };
     if (shape === "ellipse" || shape === "flowchart-terminator") return { ...base, borderRadius: 9999 };

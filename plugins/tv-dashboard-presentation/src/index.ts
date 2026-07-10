@@ -66,6 +66,16 @@ export {
   comunicadoShapeLabel,
   isComunicadoShapeKind,
 } from "./comunicadoShapeCatalog";
+export {
+  defaultStrokeWidthForPrimitive,
+  isAreaShapeKind,
+  isLineShapeKind,
+  isPointShapeKind,
+  resolveShapePrimitive,
+  shapeSupportsFill,
+  shapeSupportsStroke,
+  type ComunicadoVisualPrimitive,
+} from "./comunicadoVisualPrimitive";
 export { ComunicadoShapeGraphic, ComunicadoShapePreview } from "./comunicadoShapeGraphic";
 export {
   COMUNICADO_GOOGLE_FONT_CATALOG,
