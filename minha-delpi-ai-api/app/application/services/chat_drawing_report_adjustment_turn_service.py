@@ -127,9 +127,10 @@ class ChatDrawingReportAdjustmentTurnService:
             ChatDrawingReportExportService,
         )
 
-        export_payload = ChatDrawingReportExportService.build_export_payload(
+        export_payload = ChatDrawingReportExportService.build_adjusted_export_payload(
             package=package,
             report_markdown=report_markdown,
+            previous_messages=previous_messages,
         )
 
         return {

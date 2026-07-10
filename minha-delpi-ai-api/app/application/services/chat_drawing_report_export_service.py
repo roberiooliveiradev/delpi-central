@@ -14,6 +14,9 @@ from app.domain.services.chat_drawing_validation_presentation_service import (
 from app.domain.services.chat_drawing_analysis_export_consistency_service import (
     ChatDrawingAnalysisExportConsistencyService,
 )
+from app.domain.services.chat_drawing_validation_package_service import (
+    ChatDrawingValidationPackageService,
+)
 
 
 class ChatDrawingReportExportService:
@@ -100,6 +103,40 @@ class ChatDrawingReportExportService:
             payload["spreadsheetRows"] = nonconformity_rows
 
         payload["checklistConsistency"] = consistency
+
+        return payload
+
+    @classmethod
+    def build_adjusted_export_payload(
+        cls,
+        *,
+        package: dict[str, Any],
+        report_markdown: str,
+        previous_messages: list | None,
+    ) -> dict[str, Any]:
+        payload = cls.build_export_payload(
+            package=package,
+            report_markdown=report_markdown,
+        )
+        tables = ChatDrawingValidationPackageService.merge_operational_export_tables(
+            payload.get("tables") if isinstance(payload.get("tables"), list) else [],
+            previous_messages=previous_messages,
+        )
+
+        if not tables:
+            return payload
+
+        payload["tables"] = tables
+        csv_content = cls.build_workbook_csv(tables)
+
+        if csv_content.strip():
+            payload["csv"] = csv_content
+
+        payload["checklistConsistency"] = ChatDrawingAnalysisExportConsistencyService.validate(
+            package=package,
+            report_markdown=str(report_markdown or "").strip(),
+            export_tables=tables,
+        )
 
         return payload
 

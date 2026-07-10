@@ -18,6 +18,16 @@ from app.domain.services.chat_drawing_validation_orchestration_service import (
 
 class ChatDrawingValidationPackageService:
     PACKAGE_KEY = "drawingValidationPackage"
+    _EXPORT_TABLE_ORDER = (
+        "pdfData",
+        "apiData",
+        "structure",
+        "guide",
+        "inspection",
+        "nonconformities",
+        "checklist",
+    )
+    _OPERATIONAL_EXPORT_KEYS = ("structure", "guide", "inspection")
 
     @classmethod
     def strip_for_metadata(cls, package: dict[str, Any] | None) -> dict[str, Any]:
@@ -275,3 +285,86 @@ class ChatDrawingValidationPackageService:
         relative = min(index for index in candidates if index >= 0)
 
         return insert_at + relative
+
+    @classmethod
+    def merge_operational_export_tables(
+        cls,
+        tables: list[dict[str, Any]] | None,
+        *,
+        previous_messages: list | None,
+    ) -> list[dict[str, Any]]:
+        current_by_key: dict[str, dict[str, Any]] = {}
+
+        for table in tables or []:
+            if not isinstance(table, dict):
+                continue
+
+            key = str(table.get("key") or "").strip()
+
+            if key:
+                current_by_key[key] = table
+
+        missing = [
+            key
+            for key in cls._OPERATIONAL_EXPORT_KEYS
+            if key not in current_by_key
+        ]
+
+        if not missing:
+            return cls._order_export_tables(list(current_by_key.values()))
+
+        prior_export = cls.last_export_from_messages(previous_messages)
+        prior_tables = (
+            (prior_export or {}).get("tables")
+            if isinstance(prior_export, dict)
+            else None
+        )
+
+        if not isinstance(prior_tables, list):
+            prior_tables = None
+
+        if not prior_tables:
+            prior_package = cls.last_from_messages(previous_messages)
+
+            if isinstance(prior_package, dict) and cls._package_has_operational_detail(
+                prior_package
+            ):
+                from app.domain.services.chat_drawing_validation_presentation_service import (
+                    ChatDrawingValidationPresentationService,
+                )
+
+                prior_tables = ChatDrawingValidationPresentationService.build_export_tables(
+                    prior_package
+                )
+
+        if not isinstance(prior_tables, list):
+            return cls._order_export_tables(list(current_by_key.values()))
+
+        for table in prior_tables:
+            if not isinstance(table, dict):
+                continue
+
+            key = str(table.get("key") or "").strip()
+
+            if key in missing:
+                current_by_key[key] = copy.deepcopy(table)
+
+        return cls._order_export_tables(list(current_by_key.values()))
+
+    @classmethod
+    def _order_export_tables(cls, tables: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        by_key = {
+            str(table.get("key") or "").strip(): table
+            for table in tables
+            if isinstance(table, dict) and str(table.get("key") or "").strip()
+        }
+        ordered: list[dict[str, Any]] = []
+
+        for key in cls._EXPORT_TABLE_ORDER:
+            table = by_key.pop(key, None)
+
+            if table is not None:
+                ordered.append(table)
+
+        ordered.extend(by_key.values())
+        return ordered

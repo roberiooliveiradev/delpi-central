@@ -66,6 +66,22 @@ def _full_prior_markdown() -> str:
 
 def _history_with_prior_export(analysis: dict | None = None) -> list[ChatMessage]:
     prior_markdown = _full_prior_markdown()
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90261877",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        api_status_code=200,
+        pdf_extract={"productCode": "90261877", "revision": "01", "legible": True},
+    )
+    from app.application.services.chat_drawing_report_export_service import (
+        ChatDrawingReportExportService,
+    )
+
+    prior_export = ChatDrawingReportExportService.build_export_payload(
+        package=package,
+        report_markdown=prior_markdown,
+    )
 
     return [
         ChatMessage(
@@ -75,7 +91,7 @@ def _history_with_prior_export(analysis: dict | None = None) -> list[ChatMessage
             content=prior_markdown,
             metadata={
                 "drawingAnalysis": analysis or _analysis_90261877(),
-                "drawingAnalysisExport": {"markdown": prior_markdown},
+                "drawingAnalysisExport": prior_export,
             },
             created_at=datetime.now(timezone.utc),
         )
@@ -143,3 +159,25 @@ def test_adjustment_uses_persisted_validation_package_for_full_report():
     assert "### Estrutura (SG1010)" in markdown
     assert "### Roteiro (SG2010)" in markdown
     assert result["drawingValidationPackage"]["analyserRoot"]
+
+
+def test_adjustment_export_pdf_tables_include_operational_sections_from_prior_export():
+    prior_export = _history_with_prior_export()[0].metadata["drawingAnalysisExport"]
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261877"
+    )
+    result = ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+        message,
+        previous_messages=_history_with_prior_export(),
+    )
+
+    table_keys = {
+        table.get("key")
+        for table in result["drawingAnalysisExport"].get("tables") or []
+    }
+
+    assert "structure" in table_keys
+    assert "guide" in table_keys
+    assert "inspection" in table_keys
+    assert "checklist" in table_keys
+    assert prior_export.get("tables")
