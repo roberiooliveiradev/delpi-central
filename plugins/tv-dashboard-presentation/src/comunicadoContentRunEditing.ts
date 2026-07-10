@@ -5,6 +5,7 @@ import {
   joinContentLinesToRuns,
   splitContentRunsIntoLines,
 } from "./comunicadoContentList";
+import { resolveEffectiveRunStyle } from "./comunicadoNamedTextStyles";
 import {
   contentRunStyleToCss,
   plainTextFromContentRuns,
@@ -15,6 +16,7 @@ import type {
   ComunicadoContentRun,
   ComunicadoContentRunStyle,
   ComunicadoListType,
+  ComunicadoNamedTextStyle,
   ComunicadoTextBlock,
   ComunicadoTextDecoration,
 } from "./comunicadoTypes";
@@ -120,6 +122,9 @@ function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunSt
   }
   if (style.listType === "bullet" || style.listType === "ordered") {
     cleaned.listType = style.listType;
+  }
+  if (style.namedStyle === "title1" || style.namedStyle === "subtitle" || style.namedStyle === "body") {
+    cleaned.namedStyle = style.namedStyle;
   }
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
@@ -294,6 +299,11 @@ export function contentRunsFromEditableRoot(root: HTMLElement): ComunicadoConten
       const listTypeRaw = element.getAttribute(LIST_TYPE_ATTR);
       const listType =
         listTypeRaw === "bullet" || listTypeRaw === "ordered" ? listTypeRaw : undefined;
+      const namedStyleRaw = element.getAttribute(NAMED_STYLE_ATTR);
+      const namedStyle =
+        namedStyleRaw === "title1" || namedStyleRaw === "subtitle" || namedStyleRaw === "body"
+          ? namedStyleRaw
+          : undefined;
       const runs: ComunicadoContentRun[] = [];
 
       function appendText(text: string, style?: ComunicadoContentRunStyle) {
@@ -328,6 +338,7 @@ export function contentRunsFromEditableRoot(root: HTMLElement): ComunicadoConten
       return {
         runs: compactContentRuns(runs.length > 0 ? runs : [{ text: "" }]),
         listType,
+        namedStyle,
       };
     });
     return joinContentLinesToRuns(lines);
@@ -374,7 +385,9 @@ export function runStyleToInlineCss(
   style: ComunicadoContentRunStyle | undefined,
   options?: { fontScale?: number },
 ): string {
-  const css = contentRunStyleToCss(style, options);
+  const css = style?.namedStyle
+    ? contentRunStyleToCss(stripPresetTypographyForEditorInline(style), options)
+    : resolveEffectiveRunStyle(style, options);
   return Object.entries(css)
     .map(([key, value]) => {
       const property = key.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
@@ -385,10 +398,20 @@ export function runStyleToInlineCss(
 
 const LINE_ATTR = "data-comunicado-line";
 const LIST_TYPE_ATTR = "data-list-type";
+const NAMED_STYLE_ATTR = "data-named-style";
+
+function stripPresetTypographyForEditorInline(
+  style: ComunicadoContentRunStyle | undefined,
+): ComunicadoContentRunStyle | undefined {
+  if (!style) return undefined;
+  const { namedStyle: _named, fontSize: _size, fontWeight: _weight, lineHeight: _lh, ...rest } = style;
+  return Object.keys(rest).length > 0 ? rest : undefined;
+}
 
 function renderRunsInlineHtml(
   runs: ComunicadoContentRun[],
   options?: { fontScale?: number },
+  lineNamedStyle?: ComunicadoNamedTextStyle,
 ): string {
   const resolved = compactContentRuns(runs);
   if (resolved.length === 1 && !resolved[0].style) {
@@ -396,7 +419,10 @@ function renderRunsInlineHtml(
   }
   return resolved
     .map((run) => {
-      const inline = runStyleToInlineCss(run.style, options);
+      const styleForInline = lineNamedStyle
+        ? stripPresetTypographyForEditorInline(run.style)
+        : run.style;
+      const inline = runStyleToInlineCss(styleForInline, options);
       if (!inline) return escapeHtml(run.text);
       return `<span style="${inline}">${escapeHtml(run.text)}</span>`;
     })
@@ -406,14 +432,16 @@ function renderRunsInlineHtml(
 function renderLineHtml(
   runs: ComunicadoContentRun[],
   listType: ComunicadoListType | undefined,
+  namedStyle: ComunicadoNamedTextStyle | undefined,
   options?: { fontScale?: number },
 ): string {
-  const inner = renderRunsInlineHtml(runs, options);
+  const inner = renderRunsInlineHtml(runs, options, namedStyle);
   const safeInner = inner || "<br>";
+  const namedAttr = namedStyle ? ` ${NAMED_STYLE_ATTR}="${namedStyle}"` : "";
   if (!listType) {
-    return `<div ${LINE_ATTR}="">${safeInner}</div>`;
+    return `<div ${LINE_ATTR}=""${namedAttr}>${safeInner}</div>`;
   }
-  return `<div ${LINE_ATTR}="" ${LIST_TYPE_ATTR}="${listType}">${safeInner}</div>`;
+  return `<div ${LINE_ATTR}="" ${LIST_TYPE_ATTR}="${listType}"${namedAttr}>${safeInner}</div>`;
 }
 
 export function renderContentRunsHtml(
@@ -421,14 +449,19 @@ export function renderContentRunsHtml(
   options?: { fontScale?: number },
 ): string {
   const lines = splitContentRunsIntoLines(runs);
-  if (lines.length === 1 && !lines[0].listType && !plainTextFromContentRuns(runs).includes("\n")) {
+  if (
+    lines.length === 1 &&
+    !lines[0].listType &&
+    !lines[0].namedStyle &&
+    !plainTextFromContentRuns(runs).includes("\n")
+  ) {
     const single = lines[0].runs;
     if (single.length === 1 && !single[0].style) {
       return escapeHtml(single[0].text);
     }
     return renderRunsInlineHtml(single, options);
   }
-  return lines.map((line) => renderLineHtml(line.runs, line.listType, options)).join("");
+  return lines.map((line) => renderLineHtml(line.runs, line.listType, line.namedStyle, options)).join("");
 }
 
 function escapeHtml(value: string): string {
@@ -555,5 +588,5 @@ export function contentRunInlineStyleProperties(
   style: ComunicadoContentRunStyle | undefined,
   options?: { fontScale?: number },
 ): CSSProperties {
-  return contentRunStyleToCss(style, options);
+  return resolveEffectiveRunStyle(style, options);
 }

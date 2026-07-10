@@ -6,9 +6,11 @@ import type {
   ComunicadoConfig,
   ComunicadoDataFilters,
   ComunicadoListType,
+  ComunicadoNamedTextStyle,
   ComunicadoShapeKind,
   ComunicadoTextBlock,
   ContentRunListSelectionState,
+  ContentRunNamedStyleSelectionState,
   ContentRunSelectionStyleState,
   ContentRunStyleToggleKey,
   ComunicadoContentRun,
@@ -29,6 +31,7 @@ export type TextEditSelection = {
 export type TextEditorBridge = {
   applyPartialStyleToggle: (toggleKey: ContentRunStyleToggleKey) => void;
   applyListToggle: (listType: ComunicadoListType) => void;
+  applyNamedStyleToggle: (namedStyle: ComunicadoNamedTextStyle) => void;
   refreshSelectionState: () => void;
 };
 
@@ -50,6 +53,7 @@ export type ComunicadoEditorContextValue = {
   textEditSelection: TextEditSelection | null;
   textEditSelectionStyle: ContentRunSelectionStyleState | null;
   textEditListSelection: ContentRunListSelectionState | null;
+  textEditNamedStyleSelection: ContentRunNamedStyleSelectionState | null;
   registerTextEditorBridge: (blockId: string, bridge: TextEditorBridge | null) => void;
   reportTextEditSelection: (
     selection: TextEditSelection | null,
@@ -57,6 +61,7 @@ export type ComunicadoEditorContextValue = {
   ) => void;
   toggleEditingTextRunStyle: (toggleKey: ContentRunStyleToggleKey) => void;
   toggleSelectedTextListType: (listType: ComunicadoListType) => void;
+  applySelectedNamedTextStyle: (namedStyle: ComunicadoNamedTextStyle) => void;
   uploading: boolean;
   shapeMenuOpen: boolean;
   setShapeMenuOpen: (open: boolean) => void;

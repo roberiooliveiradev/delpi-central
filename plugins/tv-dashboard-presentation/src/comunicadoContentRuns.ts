@@ -15,6 +15,7 @@ const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
   "fontStyle",
   "textDecoration",
   "listType",
+  "namedStyle",
 ];
 
 function hasRunStyle(run: ComunicadoContentRun): boolean {
@@ -57,6 +58,9 @@ function normalizeRunStyle(value: unknown): ComunicadoContentRunStyle | undefine
   }
   if (raw.listType === "bullet" || raw.listType === "ordered") {
     style.listType = raw.listType;
+  }
+  if (raw.namedStyle === "title1" || raw.namedStyle === "subtitle" || raw.namedStyle === "body") {
+    style.namedStyle = raw.namedStyle;
   }
   return Object.keys(style).length > 0 ? style : undefined;
 }
@@ -130,6 +134,7 @@ export function contentRunStyleToCss(
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
+  if (style.lineHeight != null) css.lineHeight = style.lineHeight;
   return css;
 }
 

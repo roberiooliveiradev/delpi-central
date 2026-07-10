@@ -7,6 +7,7 @@ import {
   getEditableTextSelectionOffsets,
   hasRichTextRuns,
   insertLineBreakAtOffset,
+  applyNamedStyleInRange,
   renderContentRunsHtml,
   resolveTextBlockDisplayRuns,
   restoreEditableTextSelection,
@@ -15,6 +16,7 @@ import {
   toggleListTypeInRange,
   type ComunicadoBlock,
   type ComunicadoListType,
+  type ComunicadoNamedTextStyle,
   type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
@@ -139,6 +141,21 @@ export function ComunicadoEditorTextBlock({
     reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
   }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
 
+  const applyNamedStyleToggle = useCallback((namedStyle: ComunicadoNamedTextStyle) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const selection = getEditableTextSelectionOffsets(editor);
+    const runs = contentRunsFromEditableRoot(editor);
+    const start = selection?.start ?? 0;
+    const end = selection?.end ?? runs.map((run) => run.text).join("").length;
+    const nextRuns = applyNamedStyleInRange(runs, start, end, namedStyle);
+    draftRef.current = syncTextBlockFromRuns(nextRuns);
+    renderedSignatureRef.current = "";
+    syncEditorHtml(nextRuns, true);
+    commitDraft();
+    reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
+  }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
+
   const insertLineBreak = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -199,6 +216,7 @@ export function ComunicadoEditorTextBlock({
     registerTextEditorBridge(block.id, {
       applyPartialStyleToggle,
       applyListToggle,
+      applyNamedStyleToggle,
       refreshSelectionState: reportSelectionFromEditor,
     });
 
@@ -208,6 +226,7 @@ export function ComunicadoEditorTextBlock({
     block.id,
     applyPartialStyleToggle,
     applyListToggle,
+    applyNamedStyleToggle,
     reportSelectionFromEditor,
     registerTextEditorBridge,
   ]);

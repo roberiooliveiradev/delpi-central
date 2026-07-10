@@ -2,11 +2,13 @@ import type {
   ComunicadoContentRun,
   ComunicadoContentRunStyle,
   ComunicadoListType,
+  ComunicadoNamedTextStyle,
 } from "./comunicadoTypes";
 
 export type ContentLineSegment = {
   runs: ComunicadoContentRun[];
   listType?: ComunicadoListType;
+  namedStyle?: ComunicadoNamedTextStyle;
 };
 
 export type TextDisplaySegment =
@@ -36,6 +38,9 @@ function pruneRunStyle(style: ComunicadoContentRunStyle): ComunicadoContentRunSt
   }
   if (style.listType === "bullet" || style.listType === "ordered") {
     cleaned.listType = style.listType;
+  }
+  if (style.namedStyle === "title1" || style.namedStyle === "subtitle" || style.namedStyle === "body") {
+    cleaned.namedStyle = style.namedStyle;
   }
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
@@ -94,12 +99,29 @@ function lineListType(chars: CharToken[]): ComunicadoListType | undefined {
   return undefined;
 }
 
+function lineNamedStyle(chars: CharToken[]): ComunicadoNamedTextStyle | undefined {
+  for (const char of chars) {
+    if (char.text === "\n") continue;
+    if (char.style?.namedStyle) return char.style.namedStyle;
+  }
+  return undefined;
+}
+
 function stripListTypeFromStyle(
   style: ComunicadoContentRunStyle | undefined,
 ): ComunicadoContentRunStyle | undefined {
   if (!style?.listType) return pruneRunStyle(style ?? {});
   const next = { ...style };
   delete next.listType;
+  return pruneRunStyle(next);
+}
+
+function stripNamedStyleFromStyle(
+  style: ComunicadoContentRunStyle | undefined,
+): ComunicadoContentRunStyle | undefined {
+  if (!style?.namedStyle) return pruneRunStyle(style ?? {});
+  const next = { ...style };
+  delete next.namedStyle;
   return pruneRunStyle(next);
 }
 
@@ -118,6 +140,21 @@ function applyListTypeToLineChars(
   });
 }
 
+function applyNamedStyleToLineChars(
+  chars: CharToken[],
+  namedStyle: ComunicadoNamedTextStyle | undefined,
+): CharToken[] {
+  return chars.map((char) => {
+    if (char.text === "\n") return char;
+    const base = stripNamedStyleFromStyle(char.style) ?? {};
+    if (!namedStyle) {
+      const next = pruneRunStyle(base);
+      return next ? { text: char.text, style: next } : { text: char.text };
+    }
+    return { text: char.text, style: pruneRunStyle({ ...base, namedStyle }) };
+  });
+}
+
 export function splitContentRunsIntoLines(runs: ComunicadoContentRun[]): ContentLineSegment[] {
   const chars = flattenRunsToChars(runs);
   if (chars.length === 0) return [{ runs: [{ text: "" }] }];
@@ -130,6 +167,7 @@ export function splitContentRunsIntoLines(runs: ComunicadoContentRun[]): Content
       lines.push({
         runs: charsToRuns(current),
         listType: lineListType(current),
+        namedStyle: lineNamedStyle(current),
       });
       current = [];
       continue;
@@ -140,6 +178,7 @@ export function splitContentRunsIntoLines(runs: ComunicadoContentRun[]): Content
   lines.push({
     runs: charsToRuns(current),
     listType: lineListType(current),
+    namedStyle: lineNamedStyle(current),
   });
   return lines;
 }
@@ -149,18 +188,34 @@ export function joinContentLinesToRuns(lines: ContentLineSegment[]): ComunicadoC
 
   const merged: ComunicadoContentRun[] = [];
   lines.forEach((line, index) => {
-    const lineRuns = line.listType
-      ? line.runs.map((run) => {
+    const lineRuns = (() => {
+      let runs = line.runs;
+      if (line.listType) {
+        runs = runs.map((run) => {
           const base = stripListTypeFromStyle(run.style) ?? {};
           return {
             text: run.text,
             style: pruneRunStyle({ ...base, listType: line.listType }),
           };
-        })
-      : line.runs.map((run) => {
-          const style = stripListTypeFromStyle(run.style);
+        });
+      }
+      if (line.namedStyle) {
+        runs = runs.map((run) => {
+          const base = stripNamedStyleFromStyle(run.style) ?? {};
+          return {
+            text: run.text,
+            style: pruneRunStyle({ ...base, namedStyle: line.namedStyle }),
+          };
+        });
+      }
+      if (!line.listType && !line.namedStyle) {
+        runs = runs.map((run) => {
+          const style = stripNamedStyleFromStyle(stripListTypeFromStyle(run.style));
           return style ? { text: run.text, style } : { text: run.text };
         });
+      }
+      return runs;
+    })();
 
     for (const run of lineRuns) {
       if (!run.text) continue;
@@ -312,6 +367,7 @@ export function insertLineBreakAtOffset(
   const lineIndex = lineIndexForOffset(chars, safeOffset);
   const currentLine = lines[lineIndex];
   const inheritedListType = currentLine?.listType;
+  const inheritedNamedStyle = currentLine?.namedStyle;
 
   let lineCharStart = 0;
   for (let index = 0; index < lineIndex; index += 1) {
@@ -326,15 +382,22 @@ export function insertLineBreakAtOffset(
   nextLines.splice(lineIndex, 1, {
     runs: charsToRuns(beforeChars),
     listType: currentLine?.listType,
+    namedStyle: currentLine?.namedStyle,
   }, {
     runs: charsToRuns(
-      inheritedListType
-        ? applyListTypeToLineChars(afterChars.length > 0 ? afterChars : [{ text: "" }], inheritedListType)
-        : afterChars.length > 0
-          ? afterChars
-          : [{ text: "" }],
+      (() => {
+        let after = afterChars.length > 0 ? afterChars : [{ text: "" }];
+        if (inheritedListType) {
+          after = applyListTypeToLineChars(after, inheritedListType);
+        }
+        if (inheritedNamedStyle) {
+          after = applyNamedStyleToLineChars(after, inheritedNamedStyle);
+        }
+        return after;
+      })(),
     ),
     listType: inheritedListType,
+    namedStyle: inheritedNamedStyle,
   });
 
   return joinContentLinesToRuns(nextLines);

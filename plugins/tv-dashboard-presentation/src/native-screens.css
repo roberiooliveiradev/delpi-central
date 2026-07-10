@@ -263,6 +263,10 @@
   white-space: pre-wrap;
 }
 
+.tdp-comunicado__styled-line + .tdp-comunicado__styled-line {
+  margin-top: 0.15em;
+}
+
 .tdp-comunicado__block--heading h1 {
   font-size: inherit;
   font-weight: inherit;

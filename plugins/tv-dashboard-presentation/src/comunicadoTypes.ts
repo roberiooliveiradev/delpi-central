@@ -19,6 +19,9 @@ export type ComunicadoTextDecoration =
 
 export type ComunicadoListType = "bullet" | "ordered";
 
+/** Estilo de parágrafo nomeado (4C.4) — aplicado por linha via `contentRuns`. */
+export type ComunicadoNamedTextStyle = "title1" | "subtitle" | "body";
+
 export type ComunicadoShapeKind =
   | "rectangle"
   | "rounded-rect"
@@ -37,8 +40,11 @@ export type ComunicadoContentRunStyle = {
   fontWeight?: "normal" | "bold";
   fontStyle?: "normal" | "italic";
   textDecoration?: ComunicadoTextDecoration;
+  lineHeight?: number;
   /** Marcador de parágrafo (4C.3) — aplicado por linha (`\n` separa itens). */
   listType?: ComunicadoListType;
+  /** Estilo nomeado (4C.4) — Título 1, Subtítulo ou Corpo por linha. */
+  namedStyle?: ComunicadoNamedTextStyle;
 };
 
 export type ComunicadoContentRun = {

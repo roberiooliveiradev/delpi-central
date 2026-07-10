@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.3
 > **Data:** 2026-07-07
-> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **v1.3.1 (jul/2026):** 4A.9 cleanup ribbon legado. **v1.3.2–v1.3.4 (jul/2026):** 4C.1–4C.3 rich text + listas. **Backlog:** 4C.4–4C.5, 4E animações; **4F** indicadores live api-delpi (§18 — parcial).
+> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **v1.3.1 (jul/2026):** 4A.9 cleanup ribbon legado. **v1.3.2–v1.3.4 (jul/2026):** 4C.1–4C.3 rich text + listas. **v1.3.5 (jul/2026):** 4C.4 estilos nomeados. **Backlog:** 4C.5 Google Fonts, 4E animações; **4F** indicadores live api-delpi (§18 — parcial).
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -769,7 +769,7 @@ Apresentação TV / preview
 |---|---|---|---|
 | Rich text (runs, negrito parcial) | ✓ | ✅ v1.3.2–4C.2 | `contentRuns` + editor inline |
 | Bullets / listas numeradas | ✓ | ✅ v1.3.4 (4C.3) | `style.listType` + ribbon Marcadores/Numerada |
-| Estilos nomeados (Título 1, Corpo) | ✓ | ❌ | `heading`/`text` fixos |
+| Estilos nomeados (Título 1, Corpo) | ✓ | ✅ v1.3.5 (4C.4) | `style.namedStyle` + ribbon Estilo |
 | Google Fonts / upload de fonte | ✓ | ❌ | 8 famílias em `COMUNICADO_FONT_FAMILIES` |
 | Sombra / contorno / reflexo texto | ✓ | ❌ | |
 | Hiperlink em imagem/forma | ✓ | ✅ v1.3 | Também vídeo e ícone |
@@ -855,7 +855,7 @@ Estrutura atual (v4 — campos opcionais retrocompatíveis):
         "borderRadius": 8
       },
       "content": "…",
-      "contentRuns": [{ "text": "…", "style": { "fontWeight": "bold", "listType": "bullet" } }],
+      "contentRuns": [{ "text": "…", "style": { "fontWeight": "bold", "listType": "bullet", "namedStyle": "title1" } }],
       "href": "https://…",
       "assetId": "…",
       "imageCrop": { "x": 10, "y": 5, "w": 80, "h": 90 },
@@ -879,6 +879,7 @@ Extensões previstas (compatíveis — campos opcionais):
 | `iconName` + bloco `icon` | 4B | ✅ | Lucide |
 | `groupId` em blocos | 4D | ✅ | Agrupar |
 | `contentRuns[]` ou `contentHtml` sanitizado | 4C | ✅ v1.3.2 (4C.1) | Rich text |
+| `contentRuns[].style.namedStyle` | 4C | ✅ v1.3.5 (4C.4) | `title1` \| `subtitle` \| `body` por linha |
 | `animations[]` por bloco | 4E | ❌ | `{ kind, delayMs, durationMs, easing }` |
 | `slideTemplateKey` | 4B | ⚠ | Presets via painel templates (sem campo persistido) |
 | `masterRef` (playlist-level) | 4E | ❌ | Logo/fundo compartilhado |
@@ -944,7 +945,7 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 | 4C.1 | Modelo `contentRuns: { text, style? }[]` com fallback `content` string | M | ✅ v1.3.2 |
 | 4C.2 | Editor inline com toggles parciais (negrito só na seleção) | L | ✅ v1.3.3 |
 | 4C.3 | Bullets / listas numeradas | M | ✅ v1.3.4 |
-| 4C.4 | Estilos nomeados (Título 1, Subtítulo, Corpo) | M |
+| 4C.4 | Estilos nomeados (Título 1, Subtítulo, Corpo) | M | ✅ v1.3.5 |
 | 4C.5 | Catálogo Google Fonts (subset curado + lazy load) | M |
 
 **Critérios de aceite 4C:**
@@ -952,6 +953,7 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 - [x] Slide legado (string plana) abre e salva sem perda.
 - [x] Lista com 3 itens renderiza na TV com marcadores.
 - [x] Negrito parcial visível no editor e na apresentação.
+- [x] Estilo nomeado (Título 1 / Subtítulo / Corpo) aplicável por parágrafo no ribbon e renderizado na TV.
 
 #### Onda 4D — Layout avançado
 
@@ -996,9 +998,9 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 ```text
 Impacto UX × esforço (jul/2026, pós v1.3)
 
-  Concluído v1.3                  → 4A (incl. 4A.9), 4B, 4D, 4C.1–4C.3
-  Próximo                         → 4C.4 estilos nomeados
-  Diferencial PowerPoint          → 4C.4–4C.5 (estilos + Google Fonts)
+  Concluído v1.3                  → 4A (incl. 4A.9), 4B, 4D, 4C.1–4C.4
+  Próximo                         → 4C.5 Google Fonts
+  Diferencial PowerPoint          → 4C.5 (Google Fonts)
   Diferencial DELPI (dados live)  → 4F completar §18 (parcial)
   Longo prazo                     → 4E animações, export PPTX
 ```
@@ -1008,6 +1010,7 @@ Impacto UX × esforço (jul/2026, pós v1.3)
 | Escopo | Comando / critério |
 |---|---|
 | Helpers comunicado | `cd plugins/tv-dashboard-presentation && npm test -- --run` |
+| Estilos nomeados (4C.4) | `npm test -- --run comunicadoNamedTextStyles` |
 | Crop imagem | `npm test -- --run comunicadoImageCrop` |
 | Layout editor | `cd plugins/tv-dashboard && npm test -- --run comunicadoLayoutAlign comunicadoGrouping comunicadoSnap` |
 | Preview filmstrip | `cd plugins/tv-dashboard && npm test -- --run slideCardPreview` |

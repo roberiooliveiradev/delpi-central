@@ -28,6 +28,7 @@ export type {
   ComunicadoDataFilters,
   ComunicadoIconBlock,
   ComunicadoListType,
+  ComunicadoNamedTextStyle,
   ComunicadoScreenData,
   ComunicadoShapeKind,
   ComunicadoTextBlock,
@@ -117,6 +118,18 @@ export {
   hasListContentRuns,
   splitContentRunsIntoLines,
 } from "./comunicadoContentList";
+export {
+  applyNamedStyleInRange,
+  applyNamedStyleOnAllLines,
+  COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
+  defaultNamedStyleForBlockType,
+  hasNamedStyleContentRuns,
+  namedTextStylePreset,
+  resolveEffectiveRunStyle,
+  resolveNamedStyleSelectionForBlock,
+  selectionNamedStyleState,
+  type ContentRunNamedStyleSelectionState,
+} from "./comunicadoNamedTextStyles";
 export { TvDataBlockView } from "./tvDataBlockView";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

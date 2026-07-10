@@ -1,11 +1,16 @@
 import type { CSSProperties } from "react";
 
+import { splitContentRunsIntoLines } from "./comunicadoContentList";
 import {
   contentRunStyleToCss,
   hasRichTextRuns,
   resolveTextBlockDisplayRuns,
 } from "./comunicadoContentRuns";
 import { groupContentRunsForDisplay } from "./comunicadoContentList";
+import {
+  hasNamedStyleContentRuns,
+  resolveEffectiveRunStyle,
+} from "./comunicadoNamedTextStyles";
 import type { ComunicadoContentRun, ComunicadoTextBlock } from "./comunicadoTypes";
 
 type Props = {
@@ -33,7 +38,7 @@ function RenderRuns({
   return (
     <>
       {runs.map((run, index) => {
-        const runStyle = contentRunStyleToCss(run.style, { fontScale });
+        const runStyle = resolveEffectiveRunStyle(run.style, { fontScale });
         const mergedStyle =
           Object.keys(runStyle).length > 0 ? { ...baseStyle, ...runStyle } : baseStyle;
         return (
@@ -46,18 +51,80 @@ function RenderRuns({
   );
 }
 
+function RenderStyledLines({
+  runs,
+  baseStyle,
+  fontScale = 1,
+  lineClassName,
+}: {
+  runs: ComunicadoContentRun[];
+  baseStyle?: CSSProperties;
+  fontScale?: number;
+  lineClassName?: string;
+}) {
+  const lines = splitContentRunsIntoLines(runs);
+  return (
+    <>
+      {lines.map((line, index) => {
+        const lineBaseStyle: CSSProperties = { ...baseStyle };
+        if (line.namedStyle) {
+          const preset = resolveEffectiveRunStyle({ namedStyle: line.namedStyle }, { fontScale });
+          Object.assign(lineBaseStyle, preset);
+        }
+        const text = line.runs.map((run) => run.text).join("");
+        if (!text && index === lines.length - 1) return null;
+        return (
+          <div
+            key={`line-${index}-${line.namedStyle ?? "plain"}`}
+            className={lineClassName}
+            style={lineBaseStyle}
+          >
+            <RenderRuns runs={line.runs} fontScale={fontScale} />
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, className }: Props) {
   const Tag = as;
   const runs = resolveTextBlockDisplayRuns(block);
   const segments = groupContentRunsForDisplay(runs);
   const hasLists = segments.some((segment) => segment.kind === "list");
-  const showRuns = hasRichTextRuns(block) || hasLists;
-  const WrapperTag = hasLists ? "div" : Tag;
+  const hasNamedStyles = hasNamedStyleContentRuns(runs);
+  const hasMultipleLines = runs.some((run) => run.text.includes("\n"));
+  const showRuns = hasRichTextRuns(block) || hasLists || hasNamedStyles;
+  const WrapperTag = hasLists || hasNamedStyles ? "div" : Tag;
 
   if (!showRuns) {
     return (
       <Tag className={className} style={baseStyle}>
         {block.content}
+      </Tag>
+    );
+  }
+
+  if (!hasLists && hasNamedStyles) {
+    return (
+      <WrapperTag
+        className={[className, "tdp-comunicado__rich-text"].filter(Boolean).join(" ")}
+        style={baseStyle}
+      >
+        <RenderStyledLines
+          runs={runs}
+          baseStyle={baseStyle}
+          fontScale={fontScale}
+          lineClassName="tdp-comunicado__styled-line"
+        />
+      </WrapperTag>
+    );
+  }
+
+  if (!hasLists && !hasNamedStyles && hasMultipleLines) {
+    return (
+      <Tag className={[className, "tdp-comunicado__rich-text"].filter(Boolean).join(" ")} style={baseStyle}>
+        <RenderStyledLines runs={runs} baseStyle={baseStyle} fontScale={fontScale} />
       </Tag>
     );
   }
@@ -76,6 +143,13 @@ export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, cl
         if (segment.kind === "text") {
           const text = segment.runs.map((run) => run.text).join("");
           if (!text) return null;
+          if (hasNamedStyleContentRuns(segment.runs)) {
+            return (
+              <span key={`text-${index}`} className="tdp-comunicado__text-segment">
+                <RenderStyledLines runs={segment.runs} baseStyle={baseStyle} fontScale={fontScale} />
+              </span>
+            );
+          }
           return (
             <span key={`text-${index}`} className="tdp-comunicado__text-segment">
               <RenderRuns runs={segment.runs} baseStyle={baseStyle} fontScale={fontScale} />

@@ -39,11 +39,14 @@ import {
   COMUNICADO_FONT_SIZE_MIN,
   COMUNICADO_FONT_SIZE_STEP,
   COMUNICADO_LINE_HEIGHT_OPTIONS,
+  COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
   buildTextDecoration,
   clampFontSize,
+  defaultNamedStyleForBlockType,
   defaultTextBlockStyle,
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
+  resolveNamedStyleSelectionForBlock,
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
 } from "@delpi/tv-dashboard-presentation";
@@ -96,6 +99,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     toggleEditingTextRunStyle,
     textEditListSelection,
     toggleSelectedTextListType,
+    textEditNamedStyleSelection,
+    applySelectedNamedTextStyle,
   } = useComunicadoEditor();
 
   const multiSelected = selectedIds.length >= 2;
@@ -150,6 +155,20 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     listSelectionState?.bullet === true || listSelectionState?.bullet === "mixed";
   const orderedListActive =
     listSelectionState?.ordered === true || listSelectionState?.ordered === "mixed";
+  const namedStyleSelection =
+    isTextBlock && selected
+      ? editingTextId === selected.id && textEditNamedStyleSelection
+        ? textEditNamedStyleSelection
+        : resolveNamedStyleSelectionForBlock(
+            selected,
+            0,
+            Math.max(0, selected.content.length),
+          )
+      : null;
+  const namedStyleValue =
+    namedStyleSelection && namedStyleSelection !== "mixed"
+      ? namedStyleSelection
+      : defaultNamedStyleForBlockType(selected?.type === "heading" ? "heading" : "text");
   const textVerticalAlign =
     isTextBlock && selected
       ? selected.style?.verticalAlign ?? defaultVerticalAlignForBlock(selected.type)
@@ -499,6 +518,24 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     <Icon size={15} aria-hidden="true" />
                   </button>
                 ))}
+              </div>
+              <div className="td-deck-ribbon__toolbar-row">
+                <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-named-style">
+                  Estilo
+                </label>
+                <TdRibbonSelect
+                  id="td-ribbon-named-style"
+                  className="td-deck-ribbon__select td-deck-ribbon__select--style"
+                  aria-label="Estilo de parágrafo"
+                  value={namedStyleValue}
+                  onChange={(value) =>
+                    applySelectedNamedTextStyle(value as typeof namedStyleValue)
+                  }
+                  options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
+                    value: option.key,
+                    label: option.label,
+                  }))}
+                />
               </div>
               <div className="td-deck-ribbon__toolbar-row">
                 <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-line-height">
