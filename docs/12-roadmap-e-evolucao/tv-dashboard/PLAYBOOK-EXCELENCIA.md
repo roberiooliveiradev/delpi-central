@@ -855,6 +855,7 @@ Estrutura atual (v4 — campos opcionais retrocompatíveis):
         "borderRadius": 8
       },
       "content": "…",
+      "contentRuns": [{ "text": "…", "style": { "fontWeight": "bold" } }],
       "href": "https://…",
       "assetId": "…",
       "imageCrop": { "x": 10, "y": 5, "w": 80, "h": 90 },
@@ -877,7 +878,7 @@ Extensões previstas (compatíveis — campos opcionais):
 | `imageCrop` em bloco `image` | 4B | ✅ | Viewport % dentro do frame |
 | `iconName` + bloco `icon` | 4B | ✅ | Lucide |
 | `groupId` em blocos | 4D | ✅ | Agrupar |
-| `contentRuns[]` ou `contentHtml` sanitizado | 4C | ❌ | Rich text |
+| `contentRuns[]` ou `contentHtml` sanitizado | 4C | ✅ v1.3.2 (4C.1) | Rich text |
 | `animations[]` por bloco | 4E | ❌ | `{ kind, delayMs, durationMs, easing }` |
 | `slideTemplateKey` | 4B | ⚠ | Presets via painel templates (sem campo persistido) |
 | `masterRef` (playlist-level) | 4E | ❌ | Logo/fundo compartilhado |
@@ -940,7 +941,7 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 
 | # | Entrega | Esforço |
 |---|---|---|
-| 4C.1 | Modelo `contentRuns: { text, style? }[]` com fallback `content` string | M |
+| 4C.1 | Modelo `contentRuns: { text, style? }[]` com fallback `content` string | M | ✅ v1.3.2 |
 | 4C.2 | Editor inline com toggles parciais (negrito só na seleção) | L |
 | 4C.3 | Bullets / listas numeradas | M |
 | 4C.4 | Estilos nomeados (Título 1, Subtítulo, Corpo) | M |

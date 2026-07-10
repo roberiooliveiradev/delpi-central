@@ -1,5 +1,10 @@
 import type { CSSProperties } from "react";
 
+import {
+  serializeContentRuns,
+  shouldPersistContentRuns,
+  syncTextBlockFields,
+} from "./comunicadoContentRuns";
 import { normalizeComunicadoImageCrop } from "./comunicadoImageCrop";
 import type {
   ComunicadoBackground,
@@ -248,6 +253,7 @@ function detectConfigVersion(blocks: ComunicadoBlock[]): number {
     if (block.groupId) return true;
     if (block.type === "heading" || block.type === "text") {
       if (block.href) return true;
+      if (block.contentRuns && shouldPersistContentRuns(block.contentRuns)) return true;
     } else if (block.type === "image" || block.type === "video") {
       if (block.href) return true;
     }
@@ -306,7 +312,8 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   };
   if (block.groupId) base.groupId = block.groupId;
   if (block.type === "heading" || block.type === "text") {
-    base.content = block.content;
+    const textFields = serializeTextBlockFields(block);
+    Object.assign(base, textFields);
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
   } else if (block.type === "image" || block.type === "video") {
@@ -335,6 +342,15 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     };
   }
   return base;
+}
+
+function serializeTextBlockFields(
+  block: Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = { content: block.content };
+  const serializedRuns = serializeContentRuns(block.contentRuns);
+  if (serializedRuns) payload.contentRuns = serializedRuns;
+  return payload;
 }
 
 function normalizeDataFilters(value: unknown): ComunicadoDataFilters | undefined {
@@ -383,13 +399,15 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   const groupId = readGroupId(block);
   const links = readLinkFields(block);
   if (type === "heading" || type === "text") {
+    const legacyContent = typeof block.content === "string" ? block.content : "";
+    const textFields = syncTextBlockFields(legacyContent, block.contentRuns);
     return {
       id,
       type,
       frame,
       style,
       groupId,
-      content: String(block.content ?? ""),
+      ...textFields,
       href: links.href,
       linkTarget: links.linkTarget,
     };

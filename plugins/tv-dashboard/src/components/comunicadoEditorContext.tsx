@@ -452,7 +452,10 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   function updateBlockContent(blockId: string, content: string) {
     const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
       if (block.id !== blockId) return block;
-      if (block.type === "heading" || block.type === "text" || block.type === "shape") {
+      if (block.type === "heading" || block.type === "text") {
+        return { ...block, content, contentRuns: undefined } as ComunicadoBlock;
+      }
+      if (block.type === "shape") {
         return { ...block, content } as ComunicadoBlock;
       }
       return block;

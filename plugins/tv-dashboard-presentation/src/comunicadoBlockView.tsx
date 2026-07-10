@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoIconGraphic } from "./comunicadoIconView";
+import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
 import { comunicadoImageCropCssProperties } from "./comunicadoImageCrop";
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 import { blockCssStyle, comunicadoTextInnerStyle, isDataBlockType } from "./comunicadoHelpers";
@@ -162,7 +163,9 @@ export function ComunicadoBlockView({
 
   if (block.type === "heading") {
     const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
-    const content = <h1 style={innerStyle}>{block.content}</h1>;
+    const content = (
+      <ComunicadoTextRunsView block={block} as="h1" baseStyle={innerStyle} fontScale={fontScale} />
+    );
     return (
       <div className={`${blockClass} tdp-comunicado__block--heading`} style={style}>
         {wrapWithLink(content, block)}
@@ -172,7 +175,9 @@ export function ComunicadoBlockView({
 
   if (block.type === "text") {
     const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
-    const content = <p style={innerStyle}>{block.content}</p>;
+    const content = (
+      <ComunicadoTextRunsView block={block} as="p" baseStyle={innerStyle} fontScale={fontScale} />
+    );
     return (
       <div className={`${blockClass} tdp-comunicado__block--text`} style={style}>
         {wrapWithLink(content, block)}

@@ -27,6 +27,21 @@ export type ComunicadoShapeKind =
   | "star"
   | "line";
 
+export type ComunicadoContentRunStyle = {
+  fontSize?: number;
+  color?: string;
+  fontFamily?: string;
+  textHighlight?: string;
+  fontWeight?: "normal" | "bold";
+  fontStyle?: "normal" | "italic";
+  textDecoration?: ComunicadoTextDecoration;
+};
+
+export type ComunicadoContentRun = {
+  text: string;
+  style?: ComunicadoContentRunStyle;
+};
+
 export type ComunicadoBlockStyle = {
   fontSize?: number;
   color?: string;
@@ -62,7 +77,10 @@ export type ComunicadoBlockBase = {
 
 export type ComunicadoTextBlock = ComunicadoBlockBase & {
   type: "heading" | "text";
+  /** Texto plano — espelha a concatenação de `contentRuns` ou fallback legado. */
   content: string;
+  /** Trechos com estilo inline opcional (4C); omitido quando equivalente a `content` plano. */
+  contentRuns?: ComunicadoContentRun[];
   href?: string;
   linkTarget?: "_blank" | "_self";
 };

@@ -138,6 +138,50 @@ describe("comunicadoHelpers", () => {
     });
   });
 
+  it("normaliza contentRuns e mantém content legado", () => {
+    const parsed = parseComunicadoConfig({
+      blocks: [
+        {
+          id: "1",
+          type: "text",
+          content: "legado",
+          frame: { x: 0, y: 0, w: 50, h: 20 },
+        },
+        {
+          id: "2",
+          type: "heading",
+          content: "Titulo",
+          contentRuns: [
+            { text: "Tit", style: { fontWeight: "bold" } },
+            { text: "ulo", style: { fontStyle: "italic" } },
+          ],
+          frame: { x: 0, y: 0, w: 50, h: 20 },
+        },
+      ],
+    });
+    const legacy = parsed.blocks?.find((block) => block.id === "1");
+    expect(legacy && "content" in legacy ? legacy.content : "").toBe("legado");
+    expect(legacy && "contentRuns" in legacy ? legacy.contentRuns : undefined).toBeUndefined();
+
+    const rich = parsed.blocks?.find((block) => block.id === "2");
+    expect(rich && "content" in rich ? rich.content : "").toBe("Titulo");
+    expect(rich && "contentRuns" in rich ? rich.contentRuns?.length : 0).toBe(2);
+
+    const serialized = serializeComunicadoConfig(parsed);
+    const blocks = serialized.blocks as Array<Record<string, unknown>>;
+    expect(blocks[0].contentRuns).toBeUndefined();
+    expect(blocks[0].content).toBe("legado");
+    expect(blocks[1].contentRuns).toEqual([
+      { text: "Tit", style: { fontWeight: "bold" } },
+      { text: "ulo", style: { fontStyle: "italic" } },
+    ]);
+    expect(blocks[1].content).toBe("Titulo");
+
+    const roundTrip = parseComunicadoConfig(serialized);
+    const roundRich = roundTrip.blocks?.find((block) => block.id === "2");
+    expect(roundRich && "content" in roundRich ? roundRich.content : "").toBe("Titulo");
+  });
+
   it("não persiste URL de mídia no native_config", () => {
     const parsed = parseComunicadoConfig({
       blocks: [
@@ -192,6 +236,32 @@ describe("CustomMessageScreen rich layout", () => {
       />,
     );
     expect(screen.getByText("Campanha interna")).toBeTruthy();
+  });
+
+  it("renderiza contentRuns com estilos parciais", () => {
+    render(
+      <CustomMessageScreen
+        data={{
+          version: 3,
+          blocks: [
+            {
+              id: "1",
+              type: "text",
+              content: "ABC",
+              contentRuns: [
+                { text: "A", style: { fontWeight: "bold" } },
+                { text: "BC", style: { fontStyle: "italic" } },
+              ],
+              frame: { x: 5, y: 10, w: 90, h: 20 },
+              style: { fontSize: 24, color: "#fff", textAlign: "center" },
+            },
+          ],
+          background: { type: "color", value: "#111827" },
+        }}
+      />,
+    );
+    expect(screen.getByText("A")).toBeTruthy();
+    expect(screen.getByText("BC")).toBeTruthy();
   });
 
   it("renderiza forma e link", () => {

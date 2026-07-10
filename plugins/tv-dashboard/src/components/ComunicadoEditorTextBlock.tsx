@@ -1,8 +1,13 @@
 import { useEffect, useRef, type CSSProperties } from "react";
-import { blockCssStyle, comunicadoTextInnerStyle, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
-
-import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
+import {
+  blockCssStyle,
+  comunicadoTextInnerStyle,
+  ComunicadoTextRunsView,
+  hasRichTextRuns,
+  type ComunicadoBlock,
+} from "@delpi/tv-dashboard-presentation";
 import { TdNativeTextAreaControl } from "./tdFormFields";
+import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type TextBlock = Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>;
@@ -107,7 +112,15 @@ export function ComunicadoEditorTextBlock({
       }}
     >
       <div className="td-composer__text-block-body">
-        {block.type === "heading" ? (
+        {hasRichTextRuns(block) ? (
+          <ComunicadoTextRunsView
+            block={block}
+            as={block.type === "heading" ? "h1" : "p"}
+            baseStyle={innerStyle}
+            fontScale={fontScale}
+            className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
+          />
+        ) : block.type === "heading" ? (
           <h1
             className={isPlaceholder ? "td-composer__text-placeholder" : undefined}
             style={innerStyle}
