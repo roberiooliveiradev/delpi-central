@@ -12,6 +12,8 @@ import {
   entranceAnimationFromPreset,
   entrancePresetValue,
   isDataBlockType,
+  isDataSourceBlockType,
+  isDataViewBlockType,
   isComunicadoVisualBoxBlock,
   normalizeHrefInput,
   resolveEntranceAnimation,
@@ -23,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DataBindingInspector } from "../DataBindingInspector";
+import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ComunicadoImageCropPanel } from "./ComunicadoImageCropPanel";
 import { DeckActionRow } from "./DeckActionRow";
@@ -72,7 +75,8 @@ export function ComunicadoElementInspector({
   const isIconBlock = selected?.type === "icon";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isSidebarLinkBlock = isMediaBlock || isShapeBlock || isIconBlock;
-  const isDataBlock = selected ? isDataBlockType(selected.type) : false;
+  const isDataBlock = selected ? isDataBlockType(selected.type) || isDataSourceBlockType(selected.type) : false;
+  const isViewBlock = selected ? isDataViewBlockType(selected.type) : false;
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
 
   useEffect(() => {
@@ -110,6 +114,7 @@ export function ComunicadoElementInspector({
         )}
 
         {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} /> : null}
+        {!multiSelect && isViewBlock ? <VisualDataViewInspector /> : null}
 
         {!multiSelect && isShapeBlock ? (
           <>

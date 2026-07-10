@@ -8,12 +8,15 @@ import {
 } from "./comunicadoBlockAnimations";
 import { comunicadoImageCropCssProperties } from "./comunicadoImageCrop";
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
-import { blockCssStyle, isDataBlockType } from "./comunicadoHelpers";
+import { blockCssStyle, isDataBlockType, isDataSourceBlockType } from "./comunicadoHelpers";
 import {
   isComunicadoVisualBoxBlock,
   visualBoxBlockModifierClasses,
 } from "./comunicadoVisualBox";
 import type { ComunicadoBlock, ComunicadoDataBlock } from "./comunicadoTypes";
+import { ChartViewBlockView } from "./chartViewBlockView";
+import { DataSourceBlockView } from "./dataSourceBlockView";
+import { TableViewBlockView } from "./tableViewBlockView";
 import { TvDataBlockView } from "./tvDataBlockView";
 
 type Props = {
@@ -184,6 +187,36 @@ export function ComunicadoBlockView({
           interactive={interactive}
           loading={dataLoading}
         />
+      </div>
+    );
+  }
+
+  if (isDataSourceBlockType(block.type)) {
+    if (!interactive) return null;
+    return (
+      <div className={blockClass("tdp-comunicado__block--data-source")} style={style}>
+        <DataSourceBlockView
+          block={block}
+          interactive={interactive}
+          loading={dataLoading}
+          editorMode={interactive}
+        />
+      </div>
+    );
+  }
+
+  if (block.type === "chart_view") {
+    return (
+      <div className={blockClass("tdp-comunicado__block--chart-view")} style={style}>
+        <ChartViewBlockView block={block} interactive={interactive} loading={dataLoading} />
+      </div>
+    );
+  }
+
+  if (block.type === "table_view") {
+    return (
+      <div className={blockClass("tdp-comunicado__block--table-view")} style={style}>
+        <TableViewBlockView block={block} interactive={interactive} loading={dataLoading} />
       </div>
     );
   }

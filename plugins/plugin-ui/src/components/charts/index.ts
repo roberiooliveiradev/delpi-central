@@ -1,4 +1,21 @@
 export {
+  ChartTypeCatalogPanel,
+  DELPI_CHART_CATALOG_CATEGORIES,
+  DELPI_CHART_TYPE_CATALOG,
+  type ChartTypeCatalogPanelProps,
+  type DelpiChartCatalogEntry,
+  type DelpiChartType,
+} from "./ChartTypeCatalogPanel";
+export {
+  TableInsertCatalogPanel,
+  DELPI_TABLE_GRID_MAX_COLS,
+  DELPI_TABLE_GRID_MAX_ROWS,
+  DELPI_TABLE_INSERT_PRESETS,
+  type DelpiTableInsertPreset,
+  type DelpiTableInsertSelection,
+  type TableInsertCatalogPanelProps,
+} from "./TableInsertCatalogPanel";
+export {
   ImpactEffortMatrix,
   ImpactEffortMatrixLegend,
   type ImpactEffortMatrixLegendProps,

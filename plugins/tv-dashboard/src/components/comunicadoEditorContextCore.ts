@@ -10,6 +10,8 @@ import type {
   ComunicadoShapeKind,
   ComunicadoTextBlock,
   ComunicadoDataDisplayMode,
+  ComunicadoChartType,
+  ComunicadoTablePreset,
   ContentRunListSelectionState,
   ContentRunNamedStyleSelectionState,
   ContentRunSelectionStyleState,
@@ -75,6 +77,12 @@ export type ComunicadoEditorContextValue = {
   startDrag: (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => void;
   addBlock: (type: ComunicadoBlock["type"]) => void;
   addDataBlock: (block: ComunicadoBlock) => void;
+  addDataSourceBlock: (block: ComunicadoBlock) => void;
+  addChartViewBlock: (chartType: ComunicadoChartType) => void;
+  addTableViewBlock: (rows: number, cols: number, preset: ComunicadoTablePreset) => void;
+  openDataPanel: () => void;
+  dataPanelOpen: boolean;
+  setDataPanelOpen: (open: boolean) => void;
   addShape: (shape: ComunicadoShapeKind) => void;
   addIconBlock: (iconName: string) => void;
   groupSelected: () => void;

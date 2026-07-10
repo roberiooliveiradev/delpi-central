@@ -72,7 +72,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",
-    insertDataGroup: "Blocos de indicadores, gráficos e tabelas com dados da api-delpi.",
+    insertDataGroup: "Fontes de dados, gráficos e tabelas desacoplados — estilo PowerPoint/Excel.",
+    insertDataSource: "Abre o catálogo de rotas api-delpi para inserir uma fonte de dados no palco.",
+    insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",
+    insertTable: "Escolha o tamanho ou estilo da tabela e conecte-a a uma fonte de dados.",
     insertHeading: "Caixa de título em destaque para comunicados e chamadas principais.",
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
@@ -86,6 +89,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Configurações da tela atual: título exibido no filmstrip, tempo na rotação e filtros operacionais (quando aplicável).",
     playlist:
       "Parâmetros globais da apresentação: resolução da TV, transição entre telas, duração padrão e link público.",
+    data: "Catálogo de rotas api-delpi e configuração de fontes de dados para gráficos e tabelas.",
   },
   ribbonTabs: {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
@@ -133,6 +137,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Tela livre: monte o layout no palco com as abas Inserir (texto, imagem, dados), Formatar e Exibir. O título acima é só o nome no filmstrip.",
     publicUrl:
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
+  },
+  data: {
+    catalogSearch: "Busque rotas GET da api-delpi por nome, operationId ou categoria.",
+    sourceConfig: "Parâmetros da consulta e intervalo de atualização da fonte de dados.",
+    viewBinding: "Conecte o gráfico ou tabela a uma fonte inserida no palco (ícone de banco).",
+    sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
   },
   contextMenu: {
     menu: "Menu de contexto do elemento no palco.",

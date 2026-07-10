@@ -12,6 +12,7 @@ from tv_app.application.services.native_screen_cache_service import (
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
+    DATA_VIEW_BLOCK_TYPES,
     TvDataRouteCatalogService,
 )
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
@@ -196,19 +197,47 @@ class ComunicadoDataEnrichmentService:
             if not isinstance(block, dict):
                 continue
             block_type = str(block.get("type") or "")
-            if block_type not in DATA_BLOCK_TYPES:
-                enriched.append(block)
-                continue
-            enriched.append(
-                self._enrich_data_block(
-                    block,
-                    slide_filters=slide_filters,
-                    playlist_defaults=playlist_defaults,
-                    authorization=authorization,
-                    user=user,
+            if block_type in DATA_BLOCK_TYPES:
+                enriched.append(
+                    self._enrich_data_block(
+                        block,
+                        slide_filters=slide_filters,
+                        playlist_defaults=playlist_defaults,
+                        authorization=authorization,
+                        user=user,
+                    )
                 )
-            )
-        return enriched
+                continue
+            if block_type in DATA_VIEW_BLOCK_TYPES:
+                enriched.append(dict(block))
+                continue
+            enriched.append(block)
+        return self._link_view_blocks_to_sources(enriched)
+
+    @staticmethod
+    def _link_view_blocks_to_sources(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        source_resolved: dict[str, dict[str, Any]] = {}
+        for block in blocks:
+            if str(block.get("type") or "") == "data_source":
+                resolved = block.get("resolved")
+                if isinstance(resolved, dict):
+                    source_resolved[str(block.get("id") or "")] = resolved
+        if not source_resolved:
+            return blocks
+        linked: list[dict[str, Any]] = []
+        for block in blocks:
+            block_type = str(block.get("type") or "")
+            if block_type not in DATA_VIEW_BLOCK_TYPES:
+                linked.append(block)
+                continue
+            source_id = str(block.get("dataSourceId") or "").strip()
+            if not source_id or source_id not in source_resolved:
+                linked.append(block)
+                continue
+            merged = dict(block)
+            merged["resolved"] = source_resolved[source_id]
+            linked.append(merged)
+        return linked
 
     def _resolve_presentation(
         self,
@@ -311,6 +340,7 @@ class ComunicadoDataEnrichmentService:
         data = payload.get("data")
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
         display_mode = str(binding.get("displayMode") or "kpi")
+        block_type = str(block.get("type") or "")
 
         resolved: dict[str, Any] = {
             "meta": meta,
@@ -320,17 +350,31 @@ class ComunicadoDataEnrichmentService:
             "label": binding.get("label") or route_info.get("label"),
         }
 
-        resolved.update(
-            self._resolve_presentation(
-                display_mode=display_mode,
-                data=data,
-                route_info=route_info,
-                meta=meta,
-                binding=binding,
-                merged_params=merged_params,
-                label=resolved.get("label"),
+        if block_type == "data_source":
+            for mode in ("kpi", "line_chart", "table"):
+                resolved.update(
+                    self._resolve_presentation(
+                        display_mode=mode,
+                        data=data,
+                        route_info=route_info,
+                        meta=meta,
+                        binding=binding,
+                        merged_params=merged_params,
+                        label=resolved.get("label"),
+                    )
+                )
+        else:
+            resolved.update(
+                self._resolve_presentation(
+                    display_mode=display_mode,
+                    data=data,
+                    route_info=route_info,
+                    meta=meta,
+                    binding=binding,
+                    merged_params=merged_params,
+                    label=resolved.get("label"),
+                )
             )
-        )
 
         result["resolved"] = resolved
         return result

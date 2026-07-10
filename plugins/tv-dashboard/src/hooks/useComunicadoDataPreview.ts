@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildDataPreviewFingerprint,
-  isDataBlockType,
+  isFetchableDataBlockType,
   resolveDataBlockRefreshSec,
   serializeComunicadoConfig,
   type ComunicadoConfig,
-  type ComunicadoDataBlock,
+  type ComunicadoDataBinding,
   type ComunicadoDataResolved,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -18,10 +18,15 @@ type Options = {
   debounceMs?: number;
 };
 
-function stripResolved(block: ComunicadoDataBlock): Record<string, unknown> {
-  const { resolved: _resolved, ...blockPayload } = block as ComunicadoDataBlock & {
-    resolved?: ComunicadoDataResolved;
-  };
+type FetchableBlock = {
+  id: string;
+  type: string;
+  dataBinding: ComunicadoDataBinding;
+  resolved?: ComunicadoDataResolved;
+};
+
+function stripResolved(block: FetchableBlock): Record<string, unknown> {
+  const { resolved: _resolved, ...blockPayload } = block;
   return blockPayload as Record<string, unknown>;
 }
 
@@ -46,14 +51,15 @@ export function useComunicadoDataPreview({
 
   const readDataBlocks = useCallback(
     () =>
-      (configRef.current.blocks ?? []).filter((block): block is ComunicadoDataBlock =>
-        isDataBlockType(block.type),
+      (configRef.current.blocks ?? []).filter(
+        (block): block is FetchableBlock =>
+          isFetchableDataBlockType(block.type) && "dataBinding" in block,
       ),
     [],
   );
 
   const fetchBlocks = useCallback(
-    async (blocks: ComunicadoDataBlock[], options: { showLoading: boolean; blockIds?: Set<string> }) => {
+    async (blocks: FetchableBlock[], options: { showLoading: boolean; blockIds?: Set<string> }) => {
       if (blocks.length === 0) {
         setResolvedByBlockId({});
         setInitialLoading(false);

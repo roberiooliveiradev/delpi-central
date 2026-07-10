@@ -8,6 +8,50 @@ from tv_app.application.services.comunicado_data_enrichment_service import (
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 
 
+def test_enrich_data_source_block_resolves_full_payload():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct", "shape": "playbook_report"},
+        "data": {
+            "summary": {"value": 78.4},
+            "points": [{"label": "Jan", "value": 70}, {"label": "Fev", "value": 78.4}],
+            "items": [{"produto": "A", "qty": 10}],
+        },
+        "route": {
+            "label": "OEE",
+            "valueFields": ["value"],
+            "seriesField": "points",
+            "tableFields": "items",
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "params": {"periodDays": 7},
+                "displayMode": "auto",
+            },
+        },
+        {
+            "id": "chart-1",
+            "type": "chart_view",
+            "dataSourceId": "src-1",
+            "chartType": "line",
+        },
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    assert enriched[0]["resolved"]["kpi"]["value"] == 78.4
+    assert enriched[0]["resolved"]["chart"]["points"]
+    assert enriched[1]["resolved"]["kpi"]["value"] == 78.4
+
+
 def test_enrich_data_kpi_block_resolves_scalar():
     gateway = MagicMock()
     gateway.fetch_by_operation_id.return_value = {

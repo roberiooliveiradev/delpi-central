@@ -7,7 +7,9 @@ from typing import Any
 
 ROUTES_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_data_routes.json"
 
-DATA_BLOCK_TYPES = frozenset({"data_kpi", "data_chart", "data_table", "data_metric"})
+DATA_BLOCK_TYPES = frozenset({"data_kpi", "data_chart", "data_table", "data_metric", "data_source"})
+DATA_VIEW_BLOCK_TYPES = frozenset({"chart_view", "table_view"})
+FETCHABLE_DATA_BLOCK_TYPES = DATA_BLOCK_TYPES
 
 
 @lru_cache(maxsize=1)
@@ -39,6 +41,10 @@ class TvDataRouteCatalogService:
     @staticmethod
     def is_data_block(block: dict[str, Any]) -> bool:
         return str(block.get("type") or "") in DATA_BLOCK_TYPES
+
+    @staticmethod
+    def is_data_view_block(block: dict[str, Any]) -> bool:
+        return str(block.get("type") or "") in DATA_VIEW_BLOCK_TYPES
 
 
 def reset_tv_data_route_catalog_cache() -> None:

@@ -172,6 +172,45 @@ export type ComunicadoDataBinding = {
 
 export type ComunicadoDataBlockType = "data_kpi" | "data_chart" | "data_table" | "data_metric";
 
+/** Tipos de gráfico para blocos `chart_view` (catálogo completo). */
+export type ComunicadoChartType =
+  | "line"
+  | "bar"
+  | "area"
+  | "stacked_bar"
+  | "pie"
+  | "doughnut"
+  | "scatter"
+  | "bubble"
+  | "radar"
+  | "combo"
+  | "waterfall"
+  | "funnel"
+  | "histogram";
+
+export type ComunicadoTablePreset = "grid" | "minimal" | "banded";
+
+export type ComunicadoDataSourceBlock = ComunicadoBlockBase & {
+  type: "data_source";
+  dataBinding: ComunicadoDataBinding;
+  resolved?: ComunicadoDataResolved;
+};
+
+export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
+  type: "chart_view";
+  chartType: ComunicadoChartType;
+  dataSourceId?: string;
+  resolved?: ComunicadoDataResolved;
+};
+
+export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
+  type: "table_view";
+  tablePreset: ComunicadoTablePreset;
+  dataSourceId?: string;
+  maxRows?: number;
+  resolved?: ComunicadoDataResolved;
+};
+
 export type ComunicadoDataBlock = ComunicadoBlockBase & {
   type: ComunicadoDataBlockType;
   dataBinding: ComunicadoDataBinding;
@@ -205,7 +244,10 @@ export type ComunicadoBlock =
   | ComunicadoMediaBlock
   | ComunicadoShapeBlock
   | ComunicadoIconBlock
-  | ComunicadoDataBlock;
+  | ComunicadoDataBlock
+  | ComunicadoDataSourceBlock
+  | ComunicadoChartViewBlock
+  | ComunicadoTableViewBlock;
 
 export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
 

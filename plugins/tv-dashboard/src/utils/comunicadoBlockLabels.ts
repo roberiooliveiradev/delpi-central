@@ -1,4 +1,4 @@
-import { isDataBlockType, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import { isDataBlockType, isDataSourceBlockType, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 const TYPE_LABELS: Record<string, string> = {
   heading: "Título",
@@ -10,6 +10,9 @@ const TYPE_LABELS: Record<string, string> = {
   data_chart: "Dados — Gráfico",
   data_table: "Dados — Tabela",
   data_metric: "Dados",
+  data_source: "Fonte de dados",
+  chart_view: "Gráfico",
+  table_view: "Tabela",
   icon: "Ícone",
 };
 
@@ -26,6 +29,9 @@ export function comunicadoBlockSummary(block: ComunicadoBlock): string {
     return block.content?.trim() || comunicadoBlockTypeLabel(block.type);
   }
   if (isDataBlockType(block.type) && "dataBinding" in block) {
+    return block.dataBinding.label ?? block.dataBinding.operationId;
+  }
+  if (isDataSourceBlockType(block.type) && "dataBinding" in block) {
     return block.dataBinding.label ?? block.dataBinding.operationId;
   }
   if (block.type === "icon") {

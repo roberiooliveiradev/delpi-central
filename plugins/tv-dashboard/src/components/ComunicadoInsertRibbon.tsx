@@ -1,11 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, Heading, Image as ImageIcon, Shapes, Sparkles, Text, Video } from "lucide-react";
-import { AnchoredPanelPortal, LucideIconGridPanel } from "@delpi/plugin-ui/index";
-import { COMUNICADO_ICON_OPTIONS, type ComunicadoShapeKind } from "@delpi/tv-dashboard-presentation";
+import { BarChart3, Database, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
+import {
+  AnchoredPanelPortal,
+  ChartTypeCatalogPanel,
+  LucideIconGridPanel,
+  TableInsertCatalogPanel,
+  type DelpiChartType,
+  type DelpiTableInsertSelection,
+} from "@delpi/plugin-ui/index";
+import {
+  COMUNICADO_ICON_OPTIONS,
+  createChartViewBlock,
+  createTableViewBlock,
+  type ComunicadoChartType,
+  type ComunicadoShapeKind,
+  type ComunicadoTablePreset,
+} from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
-import { DataRoutePickerModal } from "./DataRoutePickerModal";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -22,34 +35,66 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     addBlock,
     addShape,
     addIconBlock,
-    addDataBlock,
+    addChartViewBlock,
+    addTableViewBlock,
+    openDataPanel,
     openMediaLibrary,
   } = useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
   const iconAnchorRef = useRef<HTMLDivElement>(null);
+  const chartAnchorRef = useRef<HTMLDivElement>(null);
+  const tableAnchorRef = useRef<HTMLDivElement>(null);
   const iconPanelRef = useRef<HTMLDivElement>(null);
-  const [dataPickerOpen, setDataPickerOpen] = useState(false);
+  const chartPanelRef = useRef<HTMLDivElement>(null);
+  const tablePanelRef = useRef<HTMLDivElement>(null);
   const [iconMenuOpen, setIconMenuOpen] = useState(false);
+  const [chartMenuOpen, setChartMenuOpen] = useState(false);
+  const [tableMenuOpen, setTableMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!shapeMenuOpen && !iconMenuOpen) return undefined;
+    if (!shapeMenuOpen && !iconMenuOpen && !chartMenuOpen && !tableMenuOpen) return undefined;
 
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node;
-      if (shapeAnchorRef.current?.contains(target) || iconAnchorRef.current?.contains(target)) return;
-      if ((target as HTMLElement).closest?.(".td-shape-library--portal, .delpi-ui-lucide-icon-grid")) return;
+      if (
+        shapeAnchorRef.current?.contains(target) ||
+        iconAnchorRef.current?.contains(target) ||
+        chartAnchorRef.current?.contains(target) ||
+        tableAnchorRef.current?.contains(target)
+      ) {
+        return;
+      }
+      if (
+        (target as HTMLElement).closest?.(
+          ".td-shape-library--portal, .delpi-ui-lucide-icon-grid, .delpi-ui-chart-catalog, .delpi-ui-table-insert-catalog",
+        )
+      ) {
+        return;
+      }
       setShapeMenuOpen(false);
       setIconMenuOpen(false);
+      setChartMenuOpen(false);
+      setTableMenuOpen(false);
     }
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [iconMenuOpen, setShapeMenuOpen, shapeMenuOpen]);
+  }, [chartMenuOpen, iconMenuOpen, setShapeMenuOpen, shapeMenuOpen, tableMenuOpen]);
 
   function insertShape(kind: ComunicadoShapeKind) {
     addShape(kind);
     rememberComunicadoShape(kind);
     setShapeMenuOpen(false);
+  }
+
+  function insertChart(chartType: DelpiChartType) {
+    addChartViewBlock(chartType as ComunicadoChartType);
+    setChartMenuOpen(false);
+  }
+
+  function insertTable(selection: DelpiTableInsertSelection) {
+    addTableViewBlock(selection.rows, selection.cols, selection.preset as ComunicadoTablePreset);
+    setTableMenuOpen(false);
   }
 
   return (
@@ -98,6 +143,8 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               active={shapeMenuOpen}
               onClick={() => {
                 setIconMenuOpen(false);
+                setChartMenuOpen(false);
+                setTableMenuOpen(false);
                 setShapeMenuOpen(!shapeMenuOpen);
               }}
             />
@@ -117,6 +164,8 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               active={iconMenuOpen}
               onClick={() => {
                 setShapeMenuOpen(false);
+                setChartMenuOpen(false);
+                setTableMenuOpen(false);
                 setIconMenuOpen((open) => !open);
               }}
             />
@@ -151,19 +200,67 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
       <DeckRibbonGroup label="Dados" hint={H.insertDataGroup ?? H.insertIndicator}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
-            icon={BarChart3}
-            label={labels.comunicadoAddIndicator ?? "Indicador"}
-            hint={H.insertIndicator ?? H.insert}
-            onClick={() => setDataPickerOpen(true)}
+            icon={Database}
+            label={labels.comunicadoAddDataSource ?? "Dados"}
+            hint={H.insertDataSource ?? H.insertIndicator}
+            onClick={() => openDataPanel()}
           />
+          <div ref={chartAnchorRef} className="td-composer__dropdown">
+            <DeckRibbonTile
+              icon={BarChart3}
+              label={labels.comunicadoAddChart ?? "Gráficos"}
+              hint={H.insertChart ?? H.insertIndicator}
+              active={chartMenuOpen}
+              onClick={() => {
+                setShapeMenuOpen(false);
+                setIconMenuOpen(false);
+                setTableMenuOpen(false);
+                setChartMenuOpen((open) => !open);
+              }}
+            />
+            {chartMenuOpen ? (
+              <AnchoredPanelPortal
+                open={chartMenuOpen}
+                anchorRef={chartAnchorRef}
+                panelRef={chartPanelRef}
+                variant="bare"
+                className="td-chart-catalog-portal"
+                role="menu"
+                aria-label="Catálogo de gráficos"
+              >
+                <ChartTypeCatalogPanel onSelect={insertChart} />
+              </AnchoredPanelPortal>
+            ) : null}
+          </div>
+          <div ref={tableAnchorRef} className="td-composer__dropdown">
+            <DeckRibbonTile
+              icon={Table2}
+              label={labels.comunicadoAddTable ?? "Tabelas"}
+              hint={H.insertTable ?? H.insertIndicator}
+              active={tableMenuOpen}
+              onClick={() => {
+                setShapeMenuOpen(false);
+                setIconMenuOpen(false);
+                setChartMenuOpen(false);
+                setTableMenuOpen((open) => !open);
+              }}
+            />
+            {tableMenuOpen ? (
+              <AnchoredPanelPortal
+                open={tableMenuOpen}
+                anchorRef={tableAnchorRef}
+                panelRef={tablePanelRef}
+                variant="bare"
+                className="td-table-catalog-portal"
+                role="menu"
+                aria-label="Catálogo de tabelas"
+              >
+                <TableInsertCatalogPanel onSelect={insertTable} />
+              </AnchoredPanelPortal>
+            ) : null}
+          </div>
         </div>
       </DeckRibbonGroup>
-
-      <DataRoutePickerModal
-        open={dataPickerOpen}
-        onClose={() => setDataPickerOpen(false)}
-        onSelect={(block) => addDataBlock(block)}
-      />
     </div>
   );
 }

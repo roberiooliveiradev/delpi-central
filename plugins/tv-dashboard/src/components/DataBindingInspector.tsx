@@ -8,6 +8,7 @@ import {
   defaultFrame,
   displayModeOptionLabel,
   isDataBlockType,
+  isDataSourceBlockType,
   listDataPresentationOptions,
   resolveDataBlockRefreshSec,
   type ComunicadoDataBinding,
@@ -88,7 +89,8 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
   } = useComunicadoEditor();
   const [routePickerOpen, setRoutePickerOpen] = useState(false);
 
-  if (!selected || !isDataBlockType(selected.type) || !("dataBinding" in selected)) return null;
+  if (!selected || !("dataBinding" in selected)) return null;
+  if (!isDataBlockType(selected.type) && !isDataSourceBlockType(selected.type)) return null;
 
   const binding = selected.dataBinding;
   const slideFilters = config.dataFilters ?? {};
@@ -102,7 +104,8 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
   const inheritedRefreshSec = resolveDataBlockRefreshSec(undefined, globalRefreshSec);
   const valueFieldOptions = routeValueFieldOptions(route);
   const maxRowsLimit = routeMaxRowsLimit(route);
-  const showTableOptions = currentDisplayMode === "table";
+  const showPresentationMode = isDataBlockType(selected.type) && !isDataSourceBlockType(selected.type);
+  const showTableOptions = showPresentationMode && currentDisplayMode === "table";
 
   function updateParam(key: string, raw: string) {
     const nextParams = { ...(binding.params ?? {}) };
@@ -142,17 +145,19 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
             Trocar rota
           </button>
         </div>
-        <DeckField id="td-data-display-mode" label="Formato de apresentação">
-          <NativeSelectControl
-            id="td-data-display-mode"
-            value={currentDisplayMode === "auto" ? "kpi" : currentDisplayMode}
-            onChange={(value) => updateDisplayMode(value as ComunicadoDataDisplayMode)}
-            options={presentationOptions.map((option) => ({
-              value: option.displayMode,
-              label: displayModeOptionLabel(option),
-            }))}
-          />
-        </DeckField>
+        {showPresentationMode ? (
+          <DeckField id="td-data-display-mode" label="Formato de apresentação">
+            <NativeSelectControl
+              id="td-data-display-mode"
+              value={currentDisplayMode === "auto" ? "kpi" : currentDisplayMode}
+              onChange={(value) => updateDisplayMode(value as ComunicadoDataDisplayMode)}
+              options={presentationOptions.map((option) => ({
+                value: option.displayMode,
+                label: displayModeOptionLabel(option),
+              }))}
+            />
+          </DeckField>
+        ) : null}
         <DeckField id="td-data-label" label="Rótulo (opcional)">
           <input
             id="td-data-label"

@@ -1,5 +1,10 @@
-import { isDataBlockType } from "./comunicadoHelpers";
-import type { ComunicadoConfig, ComunicadoDataBinding, ComunicadoDataBlock } from "./comunicadoTypes";
+import { isDataBlockType, isDataSourceBlockType } from "./comunicadoHelpers";
+import type {
+  ComunicadoConfig,
+  ComunicadoDataBinding,
+  ComunicadoDataBlock,
+  ComunicadoDataSourceBlock,
+} from "./comunicadoTypes";
 
 export const DATA_REFRESH_SEC_MIN = 30;
 export const DATA_REFRESH_SEC_MAX = 3600;
@@ -45,12 +50,25 @@ function serializeBindingForFingerprint(binding: ComunicadoDataBinding): Record<
 /** Chave estável só com filtros e bindings — mudanças de layout não disparam refetch. */
 export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
   const dataFilters = config.dataFilters ?? {};
-  const blocks = (config.blocks ?? [])
+  const legacyBlocks = (config.blocks ?? [])
     .filter((block): block is ComunicadoDataBlock => isDataBlockType(block.type))
     .map((block) => ({
       id: block.id,
       type: block.type,
       dataBinding: serializeBindingForFingerprint(block.dataBinding),
     }));
-  return JSON.stringify({ dataFilters, blocks });
+  const sourceBlocks = (config.blocks ?? [])
+    .filter((block): block is ComunicadoDataSourceBlock => isDataSourceBlockType(block.type))
+    .map((block) => ({
+      id: block.id,
+      type: block.type,
+      dataBinding: serializeBindingForFingerprint(block.dataBinding),
+    }));
+  const viewLinks = (config.blocks ?? [])
+    .filter((block) => block.type === "chart_view" || block.type === "table_view")
+    .map((block) => ({
+      id: block.id,
+      dataSourceId: block.type === "chart_view" || block.type === "table_view" ? block.dataSourceId : undefined,
+    }));
+  return JSON.stringify({ dataFilters, blocks: [...legacyBlocks, ...sourceBlocks], viewLinks });
 }

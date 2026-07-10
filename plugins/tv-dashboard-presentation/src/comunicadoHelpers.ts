@@ -38,6 +38,8 @@ import type {
   ComunicadoDataBlockType,
   ComunicadoDataFilters,
   ComunicadoDataResolved,
+  ComunicadoChartType,
+  ComunicadoTablePreset,
   ComunicadoFrame,
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
@@ -47,6 +49,22 @@ import {
   COMUNICADO_FONT_SIZE_MAX,
   COMUNICADO_FONT_SIZE_MIN,
 } from "./comunicadoTypes";
+import {
+  isDataSourceBlockType,
+  isDataViewBlockType,
+  isFetchableDataBlockType,
+} from "./comunicadoDataArchitecture";
+
+export {
+  isDataSourceBlockType,
+  isDataViewBlockType,
+  isFetchableDataBlockType,
+  getLinkedDataSourceIds,
+  shouldHideDataSourceOnStage,
+  listDataSourceBlocks,
+  resolveDataSourceLabel,
+  dataSourceOptionsForInspector,
+} from "./comunicadoDataArchitecture";
 
 export function newBlockId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -92,6 +110,56 @@ export function defaultDataBlockTypeForRoute(
   return "data_kpi";
 }
 
+export function createDataSourceBlock(
+  operationId: string,
+  options: {
+    label?: string;
+    defaultParams?: Record<string, string | number>;
+    refreshSec?: number;
+  } = {},
+): ComunicadoBlock {
+  return {
+    id: newBlockId(),
+    type: "data_source",
+    frame: { x: 8, y: 30, w: 18, h: 18 },
+    style: { zIndex: 1, color: "#089bdb" },
+    dataBinding: {
+      operationId,
+      params: { ...(options.defaultParams ?? {}) },
+      displayMode: "auto",
+      label: options.label,
+      refreshSec: options.refreshSec,
+    },
+  };
+}
+
+export function createChartViewBlock(chartType: ComunicadoChartType): ComunicadoBlock {
+  return {
+    id: newBlockId(),
+    type: "chart_view",
+    chartType,
+    frame: { x: 10, y: 28, w: 80, h: 45 },
+    style: { zIndex: 2, color: "#ffffff" },
+  };
+}
+
+export function createTableViewBlock(
+  rows: number,
+  cols: number,
+  preset: ComunicadoTablePreset = "grid",
+): ComunicadoBlock {
+  const height = Math.min(55, 12 + rows * 4);
+  const width = Math.min(92, 20 + cols * 8);
+  return {
+    id: newBlockId(),
+    type: "table_view",
+    tablePreset: preset,
+    maxRows: rows,
+    frame: { x: 5, y: 55 - height / 2, w: width, h: height },
+    style: { zIndex: 2, color: "#ffffff" },
+  };
+}
+
 export function createDataBlock(
   operationId: string,
   options: {
@@ -133,6 +201,9 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "data_chart") return { x: 10, y: 28, w: 80, h: 45 };
   if (type === "data_table") return { x: 5, y: 55, w: 90, h: 35 };
   if (type === "data_metric") return { x: 5, y: 28, w: 28, h: 22 };
+  if (type === "data_source") return { x: 8, y: 30, w: 18, h: 18 };
+  if (type === "chart_view") return { x: 10, y: 28, w: 80, h: 45 };
+  if (type === "table_view") return { x: 5, y: 55, w: 90, h: 35 };
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
@@ -204,7 +275,10 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "icon") {
     return { zIndex: 2, color: "#ffffff", strokeWidth: 2 };
   }
-  if (isDataBlockType(type)) {
+  if (isDataBlockType(type) || isDataSourceBlockType(type)) {
+    return { zIndex: 2, color: "#ffffff" };
+  }
+  if (isDataViewBlockType(type)) {
     return { zIndex: 2, color: "#ffffff" };
   }
   return {};
@@ -295,6 +369,9 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
 }
 
 function detectConfigVersion(blocks: ComunicadoBlock[]): number {
+  if (blocks.some((block) => isDataSourceBlockType(block.type) || isDataViewBlockType(block.type))) {
+    return 5;
+  }
   if (blocks.some((block) => isDataBlockType(block.type))) return 4;
   const hasV3 = blocks.some((block) => {
     if (block.type === "shape" || block.type === "icon") return true;
@@ -390,6 +467,23 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       maxRows: block.dataBinding.maxRows,
       refreshSec: block.dataBinding.refreshSec,
     };
+  } else if (block.type === "data_source" && "dataBinding" in block) {
+    base.dataBinding = {
+      operationId: block.dataBinding.operationId,
+      params: block.dataBinding.params ?? {},
+      displayMode: block.dataBinding.displayMode,
+      label: block.dataBinding.label,
+      valueField: block.dataBinding.valueField,
+      maxRows: block.dataBinding.maxRows,
+      refreshSec: block.dataBinding.refreshSec,
+    };
+  } else if (block.type === "chart_view") {
+    base.chartType = block.chartType;
+    if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+  } else if (block.type === "table_view") {
+    base.tablePreset = block.tablePreset;
+    if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.maxRows != null) base.maxRows = block.maxRows;
   }
   return base;
 }
@@ -530,6 +624,76 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
           maxRows: binding.maxRows,
           refreshSec: binding.refreshSec,
         },
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
+      } as ComunicadoBlock,
+      block,
+    );
+  }
+  if (type === "data_source") {
+    const bindingRaw = block.dataBinding;
+    const binding =
+      bindingRaw && typeof bindingRaw === "object"
+        ? (bindingRaw as ComunicadoDataBinding)
+        : { operationId: "" };
+    return attachBlockAnimations(
+      {
+        id,
+        type: "data_source",
+        frame,
+        style: { ...defaultStyle("data_source"), ...style },
+        groupId,
+        dataBinding: {
+          operationId: String(binding.operationId ?? ""),
+          params: (binding.params as ComunicadoDataBinding["params"]) ?? {},
+          displayMode: binding.displayMode ?? "auto",
+          label: binding.label,
+          valueField: binding.valueField,
+          maxRows: binding.maxRows,
+          refreshSec: binding.refreshSec,
+        },
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
+      } as ComunicadoBlock,
+      block,
+    );
+  }
+  if (type === "chart_view") {
+    const chartType = typeof block.chartType === "string" ? (block.chartType as ComunicadoChartType) : "line";
+    return attachBlockAnimations(
+      {
+        id,
+        type: "chart_view",
+        frame,
+        style: { ...defaultStyle("chart_view"), ...style },
+        groupId,
+        chartType,
+        dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
+      } as ComunicadoBlock,
+      block,
+    );
+  }
+  if (type === "table_view") {
+    const tablePreset =
+      typeof block.tablePreset === "string" ? (block.tablePreset as ComunicadoTablePreset) : "grid";
+    return attachBlockAnimations(
+      {
+        id,
+        type: "table_view",
+        frame,
+        style: { ...defaultStyle("table_view"), ...style },
+        groupId,
+        tablePreset,
+        dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        maxRows: typeof block.maxRows === "number" ? block.maxRows : undefined,
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)

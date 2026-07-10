@@ -11,7 +11,11 @@ import {
   createBlock,
   createIconBlock,
   createShapeBlock,
+  createChartViewBlock,
+  createTableViewBlock,
   isDataBlockType,
+  isFetchableDataBlockType,
+  isDataViewBlockType,
   newBlockId,
   nextZIndex,
   parseComunicadoConfig,
@@ -42,6 +46,8 @@ import {
   type ContentRunStyleToggleKey,
   type ComunicadoContentRun,
   type ComunicadoListType,
+  type ComunicadoChartType,
+  type ComunicadoTablePreset,
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
@@ -149,6 +155,7 @@ export function ComunicadoEditorProvider({
   });
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
+  const [dataPanelOpen, setDataPanelOpen] = useState(false);
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
   const [textEditSelectionStyle, setTextEditSelectionStyle] = useState<
     ComunicadoEditorContextValue["textEditSelectionStyle"]
@@ -278,10 +285,20 @@ export function ComunicadoEditorProvider({
   const blocks = useMemo(() => {
     const sorted = sortBlocksByZIndex(config.blocks ?? []);
     return sorted.map((block) => {
-      if (!isDataBlockType(block.type)) return block;
-      const preview = resolvedByBlockId[block.id];
-      if (!preview) return block;
-      return { ...block, resolved: preview };
+      if (isFetchableDataBlockType(block.type) && "dataBinding" in block) {
+        const preview = resolvedByBlockId[block.id];
+        if (preview) return { ...block, resolved: preview };
+        return block;
+      }
+      if (isDataViewBlockType(block.type) && block.dataSourceId) {
+        const preview = resolvedByBlockId[block.dataSourceId];
+        if (preview) return { ...block, resolved: preview };
+      }
+      if (isDataBlockType(block.type)) {
+        const preview = resolvedByBlockId[block.id];
+        if (preview) return { ...block, resolved: preview };
+      }
+      return block;
     });
   }, [config.blocks, resolvedByBlockId]);
 
@@ -545,6 +562,30 @@ export function ComunicadoEditorProvider({
     }
     setSelectedId(withZ.id);
     updateBlocks([...(configRef.current.blocks ?? []), withZ]);
+  }
+
+  function addDataSourceBlock(block: ComunicadoBlock) {
+    addDataBlock(block);
+    setDataPanelOpen(false);
+  }
+
+  function addChartViewBlock(chartType: ComunicadoChartType) {
+    const block = createChartViewBlock(chartType);
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    setSelectedId(block.id);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }
+
+  function addTableViewBlock(rows: number, cols: number, preset: ComunicadoTablePreset) {
+    const block = createTableViewBlock(rows, cols, preset);
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    setSelectedId(block.id);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }
+
+  function openDataPanel() {
+    setDataPanelOpen(true);
+    setRibbonTabRequest("insert");
   }
 
   function setDataFilters(filters: ComunicadoDataFilters | undefined) {
@@ -1055,6 +1096,12 @@ export function ComunicadoEditorProvider({
     startDrag,
     addBlock,
     addDataBlock,
+    addDataSourceBlock,
+    addChartViewBlock,
+    addTableViewBlock,
+    openDataPanel,
+    dataPanelOpen,
+    setDataPanelOpen,
     addShape,
     addIconBlock,
     groupSelected,

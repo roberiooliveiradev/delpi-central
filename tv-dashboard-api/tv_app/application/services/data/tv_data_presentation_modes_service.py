@@ -63,6 +63,8 @@ def validate_block_type_for_binding(
     block_type: str,
     display_mode: str | None,
 ) -> None:
+    if block_type in {"data_source", "data_metric"}:
+        return
     if block_type not in DATA_BLOCK_TYPES:
         raise ValueError("Tipo de bloco de dados inválido.")
     expected = block_type_for_display_mode(display_mode or "kpi")

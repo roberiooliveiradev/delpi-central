@@ -1,7 +1,10 @@
 import {
   COMUNICADO_EDITOR_FONT_SCALE,
   comunicadoBackgroundCssProperties,
-  isDataBlockType,
+  isDataSourceBlockType,
+  isDataViewBlockType,
+  isFetchableDataBlockType,
+  shouldHideDataSourceOnStage,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
   useComunicadoGoogleFonts,
@@ -214,6 +217,9 @@ export function ComunicadoComposerCanvas() {
           </>
         ) : null}
           {blocks.map((block) => {
+            if (isDataSourceBlockType(block.type) && shouldHideDataSourceOnStage(block.id, blocks)) {
+              return null;
+            }
             const isSelected = isBlockSelected(block.id);
             const isPrimary = block.id === primarySelected;
             return (
@@ -247,7 +253,9 @@ export function ComunicadoComposerCanvas() {
                   isEditingText={editingTextId === block.id}
                   className={isSelected ? "td-composer__block--selected" : ""}
                   dataLoading={
-                    isDataBlockType(block.type) && !("resolved" in block && block.resolved) && dataPreviewLoading
+                    (isFetchableDataBlockType(block.type) || isDataViewBlockType(block.type)) &&
+                    !("resolved" in block && block.resolved) &&
+                    dataPreviewLoading
                   }
                 />
                 {showResizeHandles(block.id) ? (

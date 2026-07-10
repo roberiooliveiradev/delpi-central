@@ -130,6 +130,9 @@ export {
   comunicadoTextInnerStyle,
   createBlock,
   createDataBlock,
+  createDataSourceBlock,
+  createChartViewBlock,
+  createTableViewBlock,
   createIconBlock,
   createShapeBlock,
   defaultDataBlockTypeForRoute,
@@ -138,6 +141,14 @@ export {
   defaultVerticalAlignForBlock,
   frameStyle,
   isDataBlockType,
+  isDataSourceBlockType,
+  isDataViewBlockType,
+  isFetchableDataBlockType,
+  getLinkedDataSourceIds,
+  shouldHideDataSourceOnStage,
+  listDataSourceBlocks,
+  dataSourceOptionsForInspector,
+  resolveDataSourceLabel,
   mergeDataFilters,
   nextZIndex,
   parseComunicadoConfig,
@@ -238,6 +249,11 @@ export {
   renderTextBlockEditorHtml,
 } from "./comunicadoTextBlockLink";
 export { TvDataBlockView } from "./tvDataBlockView";
+export { ChartViewBlockView } from "./chartViewBlockView";
+export { TableViewBlockView } from "./tableViewBlockView";
+export { DataSourceBlockView } from "./dataSourceBlockView";
+export { chartTypeLabel, tablePresetLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
+export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock } from "./comunicadoTypes";
 export {
   resolveChartType,
   resolveEffectiveDisplayMode,
