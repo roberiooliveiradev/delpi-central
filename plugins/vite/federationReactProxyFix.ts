@@ -4,20 +4,99 @@
  * Object.assign({}, module.default, module) congela __CLIENT_INTERNALS.H = null
  * → useState/useRef null em recharts, zustand, plugin-ui (#294, #534, #741).
  * Substituído por Proxy com live bindings (upstream PR #743 — não publicado em 1.4.1).
+ *
+ * Chunks App-*.js ainda importam React bundled (index-*.js) fora do importShared;
+ * o shim CJS é redirecionado para globalThis.__DELPI_MF_REACT__ quando disponível.
  */
 import type { Plugin } from "vite";
 
-const OBJECT_ASSIGN_FLATTEN =
-  /e\.default&&\(e=Object\.assign\(\{\},e\.default,e\)\)/g;
+/** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
+export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
 
-const PROXY_FLATTEN = String.raw`e.default&&(e=(o=e,m=e.default,new Proxy(m,{get(p,r){return r!=="default"&&r in o?o[r]:p[r]},has(p,r){return r in o||r in p},ownKeys(p){const r=new Set([...Reflect.ownKeys(p),...Reflect.ownKeys(o)]);return r.delete("default"),[...r]}})))`;
+export function publishDelpiMfReact(react: unknown): void {
+  (globalThis as Record<string, unknown>)[DELPI_MF_REACT_GLOBAL] = react;
+}
 
-/** Aplica patch em código gerado do runtime MF. */
-export function patchFederationFlattenModule(code: string): string {
-  if (!code.includes("Object.assign({},e.default,e)")) {
+/** Proxy flatten sem reatribuir parâmetro `e` (strict → Assignment to constant variable). */
+const PROXY_FLATTEN_EXPR = String.raw`_delpiMod=e.default?new Proxy(e.default,{get(p,r){return r!=="default"&&r in e?e[r]:p[r]},has(p,r){return r in e||r in p},ownKeys(p){const r=new Set([...Reflect.ownKeys(p),...Reflect.ownKeys(e)]);return r.delete("default"),[...r]}}):e`;
+
+const BROKEN_PROXY_BRANCH =
+  /:\(e\.default&&\(e=\(o=e,m=e\.default,new Proxy\(m,\{get\(p,r\)\{return r!=="default"&&r in o\?o\[r\]:p\[r\]\},has\(p,r\)\{return r in o\|\|r in p\},ownKeys\(p\)\{const r=new Set\(\[\.\.\.Reflect\.ownKeys\(p\),\.\.\.Reflect\.ownKeys\(o\)\]\);return r\.delete\("default"\),\[\.\.\.r\]\}\}\)\)\),(\w+)\[(\w+)\]=e,e\)/;
+
+const OBJECT_ASSIGN_BRANCH =
+  /:\(e\.default&&\(e=Object\.assign\(\{\},e\.default,e\)\),(\w+)\[(\w+)\]=e,e\)/;
+
+const REACT_PUBLISH = (cache: string, pkg: string) =>
+  `${pkg}==="react"&&(globalThis.${DELPI_MF_REACT_GLOBAL}=${cache}[${pkg}])`;
+
+function replaceFlattenElseBranch(code: string): string {
+  const replacement = `:(${PROXY_FLATTEN_EXPR},$1[$2]=_delpiMod,_delpiMod)`;
+
+  if (BROKEN_PROXY_BRANCH.test(code)) {
+    code = code.replace(BROKEN_PROXY_BRANCH, replacement);
+  } else if (code.includes("Object.assign({},e.default,e)")) {
+    code = code.replace(OBJECT_ASSIGN_BRANCH, replacement);
+  } else if (!code.includes("_delpiMod=e.default?new Proxy")) {
     return code;
   }
-  return code.replace(OBJECT_ASSIGN_FLATTEN, PROXY_FLATTEN);
+
+  if (!code.includes("var _delpiMod")) {
+    code = code.replace(/function H\((\w+),(\w+)\)\{/, "function H($1,$2){var _delpiMod;");
+  }
+  return code;
+}
+
+/** Aplica patch Proxy em flattenModule do runtime MF. */
+export function patchFederationFlattenModule(code: string): string {
+  return replaceFlattenElseBranch(code);
+}
+
+/** Publica React no global quando importShared carrega o módulo shared. */
+export function patchFederationImportPublishReact(code: string): string {
+  if (!code.includes("=e.default,e.default") && !code.includes("=_delpiMod,_delpiMod")) {
+    return code;
+  }
+  if (code.includes(DELPI_MF_REACT_GLOBAL)) {
+    return code;
+  }
+  return code
+    .replace(
+      /(\w+)\[(\w+)\]=e\.default,e\.default/g,
+      (_, cache, pkg) =>
+        `${cache}[${pkg}]=e.default,${REACT_PUBLISH(cache, pkg)},e.default`,
+    )
+    .replace(
+      /(\w+)\[(\w+)\]=(_delpiMod|e),\3(?=[\)}])/g,
+      (_, cache, pkg, ret) =>
+        `${cache}[${pkg}]=${ret},${REACT_PUBLISH(cache, pkg)},${ret}`,
+    );
+}
+
+/**
+ * Chunks index-*.js com React bundled exportam `r` como CJS bridge síncrono.
+ * Redireciona para __DELPI_MF_REACT__ quando o share scope já foi semeado.
+ */
+export function patchBundledReactCjsBridge(code: string): string {
+  if (!code.includes("n.useRef=function")) {
+    return code;
+  }
+  const exportMatch = code.match(/export\{(\w+) as r\}/);
+  if (!exportMatch) {
+    return code;
+  }
+  const fnName = exportMatch[1];
+  const fnStart = new RegExp(`function ${fnName}\\(\\)\\{return`);
+  if (!fnStart.test(code)) {
+    return code;
+  }
+  return code.replace(
+    fnStart,
+    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g)return __g;return`,
+  );
+}
+
+function isBundledReactCoreChunk(code: string): boolean {
+  return code.includes("n.useRef=function");
 }
 
 export function federationReactProxyFixPlugin(): Plugin {
@@ -27,8 +106,15 @@ export function federationReactProxyFixPlugin(): Plugin {
     generateBundle(_outputOptions, bundle) {
       for (const item of Object.values(bundle)) {
         if (item.type !== "chunk") continue;
-        if (!item.fileName.includes("__federation_fn_import")) continue;
-        item.code = patchFederationFlattenModule(item.code);
+
+        if (item.fileName.includes("__federation_fn_import")) {
+          item.code = patchFederationImportPublishReact(patchFederationFlattenModule(item.code));
+          continue;
+        }
+
+        if (isBundledReactCoreChunk(item.code)) {
+          item.code = patchBundledReactCjsBridge(item.code);
+        }
       }
     },
   };

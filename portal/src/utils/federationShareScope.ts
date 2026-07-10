@@ -59,4 +59,6 @@ export function ensurePortalFederationShareScope(): void {
   registerModule(scope, "react", React, React.version);
   registerModule(scope, "react-dom", reactDomShared, ReactDOM.version);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0");
+
+  (globalThis as Record<string, unknown>).__DELPI_MF_REACT__ = React;
 }

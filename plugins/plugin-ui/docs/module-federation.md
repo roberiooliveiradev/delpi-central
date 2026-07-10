@@ -49,7 +49,17 @@ Gateway nginx
 
 O `@originjs/vite-plugin-federation@1.4.1` usa `Object.assign` em `flattenModule` (`__federation_fn_import*.js`), congelando `__CLIENT_INTERNALS.H` (dispatcher de hooks). Sintomas: **#321**, **`useRef` null** em recharts/zustand/dashboards, tela preta até F5.
 
-**Canônico:** `federationReactProxyFixPlugin()` em todo `vite.config.ts` federado (substitui `Object.assign` por `Proxy` — equivalente ao upstream PR #743). Regressão: após `vite build`, `grep Object.assign({},e.default,e) dist/assets/__federation_fn_import*.js` deve retornar vazio.
+**Canônico:** `federationReactProxyFixPlugin()` em todo `vite.config.ts` federado (substitui `Object.assign` por `Proxy` — equivalente ao upstream PR #743). O flatten usa `_delpiMod` local (não reatribui o parâmetro `e` — evita *Assignment to constant variable* em strict). Também redireciona o shim CJS `index-*.js` (React bundled em App/recharts) para `globalThis.__DELPI_MF_REACT__`.
+
+Regressão após `vite build`:
+
+```bash
+grep 'Object.assign({},e.default,e)' dist/assets/__federation_fn_import*.js   # vazio
+grep '__DELPI_MF_REACT__' dist/assets/index-*.js                              # presente no chunk React bundled
+grep '__DELPI_MF_REACT__' dist/assets/__federation_fn_import*.js              # presente
+```
+
+O portal e o bootstrap MFE chamam `publishDelpiMfReact` / `ensurePortalFederationShareScope` **antes** de montar o remote.
 
 Dependências pesadas (`mermaid`, `@xyflow/react`, `jspdf`, …) ficam **no bundle do remote**.
 

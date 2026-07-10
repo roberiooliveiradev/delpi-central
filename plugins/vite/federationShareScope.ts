@@ -8,6 +8,7 @@ import React from "react";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as LucideReact from "lucide-react";
+import { publishDelpiMfReact } from "./federationReactProxyFix";
 
 type FederationShareFrom = "mfe-host" | "portal-host";
 
@@ -112,6 +113,7 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
   registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", preservePortalPair);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
+  publishDelpiMfReact(React);
 }
 
 /** @deprecated Prefer ensureMfeFederationShareScopeReady — sync não valida createRoot do portal. */
@@ -122,6 +124,7 @@ export function ensureMfeFederationShareScope(): void {
   registerModule(scope, "react", React, React.version, "mfe-host", true);
   registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", false);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
+  publishDelpiMfReact(React);
 }
 
 /** createRoot/hydrateRoot via share scope — mesma instância que importShared('react'). */
