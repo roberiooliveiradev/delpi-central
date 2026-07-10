@@ -7,7 +7,6 @@ import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckEditorChrome } from "./DeckEditorChrome";
 import { DeckWorkspace } from "./DeckWorkspace";
-import { ComunicadoSlideBackgroundPanel } from "./deck/ComunicadoSlideBackgroundPanel";
 import { ComunicadoSlideTemplatesPanel } from "./deck/ComunicadoSlideTemplatesPanel";
 import { DeckElementSidePanel } from "./deck";
 import { SlideDataFiltersPanel } from "./SlideDataFiltersPanel";
@@ -43,9 +42,8 @@ export function CustomSlideEditorLayout({
 
   const slideTabExtra = (
     <>
-      <ComunicadoSlideBackgroundPanel labels={adminLabels} />
-      <ComunicadoSlideTemplatesPanel />
-      <SlideDataFiltersPanel branchScope={chromeProps.branchScope} />
+      <ComunicadoSlideTemplatesPanel compact />
+      <SlideDataFiltersPanel branchScope={chromeProps.branchScope} compact />
     </>
   );
 

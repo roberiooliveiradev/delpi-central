@@ -1,6 +1,7 @@
 export { DeckEditorHeaderActions } from "./DeckEditorHeaderActions";
 export { ComunicadoElementInspector } from "./ComunicadoElementInspector";
 export { ComunicadoSlideBackgroundPanel } from "./ComunicadoSlideBackgroundPanel";
+export { ComunicadoSlideBackgroundRibbon } from "./ComunicadoSlideBackgroundRibbon";
 export { DeckActionRow } from "./DeckActionRow";
 export { DeckElementSidePanel } from "./DeckElementSidePanel";
 export { DeckField } from "./DeckField";

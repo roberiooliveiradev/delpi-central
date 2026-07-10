@@ -6,6 +6,7 @@ import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideDeckRibbon } from "./SlideDeckRibbon";
 import {
+  ComunicadoSlideBackgroundRibbon,
   DeckHistoryRibbonGroup,
   DeckRibbonShell,
   type DeckRibbonTabId,
@@ -118,8 +119,11 @@ export function DeckEditorChrome({
       {isSettingsTab(activeTab) ? (
         <>
           <div className="td-deck-chrome__ribbon td-deck-chrome__ribbon--settings">
-            <DeckRibbonShell>
+            <DeckRibbonShell label="Configurações da tela">
               <DeckHistoryRibbonGroup />
+              {activeTab === "slide" && isCustomSlide ? (
+                <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
+              ) : null}
             </DeckRibbonShell>
           </div>
           <div className="td-deck-chrome__panel td-deck-chrome__panel--compact" role="tabpanel">

@@ -5,7 +5,7 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { COMUNICADO_SLIDE_THEMES } from "../../content/comunicadoSlideThemes";
 import { DeckPropertySection } from "./DeckPropertySection";
 
-export function ComunicadoSlideTemplatesPanel() {
+export function ComunicadoSlideTemplatesPanel({ compact = false }: { compact?: boolean }) {
   const { applySlideTemplate, applySlideTheme } = useComunicadoEditor();
   const [presets, setPresets] = useState<SlidePreset[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +41,9 @@ export function ComunicadoSlideTemplatesPanel() {
     }
   }
 
-  return (
+  const body = (
     <>
-      <DeckPropertySection title="Templates" hint="Substitui o conteúdo do slide pelo layout do template.">
+      <DeckPropertySection title="Templates" hint="Substitui o conteúdo do slide pelo layout do template." compact={compact}>
         {error ? <p className="td-error">{error}</p> : null}
         <ul className="td-template-list">
           {comunicadoPresets.map((preset) => (
@@ -57,7 +57,7 @@ export function ComunicadoSlideTemplatesPanel() {
                 <span className="td-template-list__label">
                   {applyingKey === preset.key ? "Aplicando…" : preset.label}
                 </span>
-                {preset.description ? (
+                {!compact && preset.description ? (
                   <span className="td-template-list__meta">{preset.description}</span>
                 ) : null}
               </button>
@@ -66,7 +66,7 @@ export function ComunicadoSlideTemplatesPanel() {
         </ul>
       </DeckPropertySection>
 
-      <DeckPropertySection title="Temas de cor" hint="Aplica paleta ao fundo e aos blocos de texto/forma.">
+      <DeckPropertySection title="Temas de cor" hint="Aplica paleta ao fundo e aos blocos de texto/forma." compact={compact}>
         <div className="td-theme-grid">
           {COMUNICADO_SLIDE_THEMES.map((theme) => (
             <button
@@ -91,4 +91,15 @@ export function ComunicadoSlideTemplatesPanel() {
       </DeckPropertySection>
     </>
   );
+
+  if (compact) {
+    return (
+      <details className="td-deck-settings-accordion">
+        <summary className="td-deck-settings-accordion__summary">Templates e temas</summary>
+        <div className="td-deck-settings-accordion__body">{body}</div>
+      </details>
+    );
+  }
+
+  return body;
 }

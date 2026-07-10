@@ -11,9 +11,10 @@ type ParamSchema = Record<string, { type?: string; label?: string; default?: str
 
 type Props = {
   branchScope?: BranchScope | null;
+  compact?: boolean;
 };
 
-export function SlideDataFiltersPanel({ branchScope = null }: Props) {
+export function SlideDataFiltersPanel({ branchScope = null, compact = false }: Props) {
   const { config, setDataFilters } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const filters = config.dataFilters ?? {};
@@ -35,7 +36,7 @@ export function SlideDataFiltersPanel({ branchScope = null }: Props) {
   if (Object.keys(schema).length === 0) return null;
 
   return (
-    <DeckPropertySection title="Filtros do slide" hint="Aplicam-se a todos os blocos de dados deste slide.">
+    <DeckPropertySection title="Filtros do slide" hint="Aplicam-se a todos os blocos de dados deste slide." compact={compact}>
       {Object.entries(schema).map(([key, field]) =>
         key === "branch" ? (
           <BranchField

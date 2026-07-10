@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BranchField } from "./BranchField";
-import { DeckInspectorLayout } from "./deck";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
 import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
 
@@ -131,7 +130,7 @@ export function DeckSettingsPanel({
 
   if (activeTab === "slide" && slide) {
     return (
-      <>
+      <div className="td-deck-settings-strip">
         <div className="td-deck-tabs__grid">
           <TdNativeTextField
             id="td-slide-title"
@@ -215,13 +214,14 @@ export function DeckSettingsPanel({
             <p className="td-subtitle td-deck-tabs__meta">Tipo: {catalogItem.label}</p>
           ) : null}
         </div>
-        {slideTabExtra ? <DeckInspectorLayout>{slideTabExtra}</DeckInspectorLayout> : null}
-      </>
+        {slideTabExtra}
+      </div>
     );
   }
 
   if (activeTab === "playlist") {
     return (
+      <div className="td-deck-settings-strip">
       <div className="td-deck-tabs__grid">
         <TdNativeSelectField
           id="td-viewport"
@@ -268,6 +268,7 @@ export function DeckSettingsPanel({
           onChange={() => undefined}
           readOnly
         />
+      </div>
       </div>
     );
   }

@@ -6,12 +6,20 @@ type Props = {
   title: string;
   hint?: string;
   icon?: LucideIcon;
+  compact?: boolean;
   children: ReactNode;
 };
 
-export function DeckPropertySection({ title, hint, icon: Icon, children }: Props) {
+export function DeckPropertySection({ title, hint, icon: Icon, compact = false, children }: Props) {
   return (
-    <section className="td-deck-inspector__section">
+    <section
+      className={[
+        "td-deck-inspector__section",
+        compact ? "td-deck-inspector__section--compact" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <h4 className="td-deck-inspector__section-title">
         {Icon ? <Icon size={14} aria-hidden="true" /> : null}
         {hint ? <SectionHintLabel label={title} hint={hint} /> : title}

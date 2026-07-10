@@ -3,6 +3,7 @@ import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { COMUNICADO_BACKGROUND_GRADIENT_PRESETS } from "./ComunicadoSlideBackgroundRibbon";
 import { DeckField } from "./DeckField";
 import { DeckPropertySection } from "./DeckPropertySection";
 
@@ -10,11 +11,7 @@ const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 type Labels = Record<string, string>;
 
-const GRADIENT_PRESETS: Array<{ label: string; from: string; to: string }> = [
-  { label: "Azul profundo", from: "#0f172a", to: "#1e3a5f" },
-  { label: "DELPI", from: "#05070a", to: "#0d2840" },
-  { label: "Pôr do sol", from: "#1e1b4b", to: "#be123c" },
-];
+const GRADIENT_PRESETS = COMUNICADO_BACKGROUND_GRADIENT_PRESETS;
 
 export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Labels }) {
   const { uploading, background, triggerUpload, openMediaLibrary, setBackgroundColor, setBackgroundGradient } =
