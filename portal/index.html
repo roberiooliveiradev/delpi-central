@@ -8,12 +8,35 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#003866" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
 
     <title>Minha DELPI</title>
   </head>
 
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var key = "delpi-portal-asset-recover";
+        window.addEventListener(
+          "error",
+          function (ev) {
+            var t = ev.target;
+            if (!t || t.tagName !== "SCRIPT" || t.type !== "module") return;
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, "1");
+            var u = new URL(window.location.href);
+            u.searchParams.set("_recover", String(Date.now()));
+            window.location.replace(u.toString());
+          },
+          true,
+        );
+        window.addEventListener("load", function () {
+          sessionStorage.removeItem(key);
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

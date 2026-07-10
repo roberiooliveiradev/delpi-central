@@ -585,6 +585,19 @@ Checklist manual (além do script):
 - [ ] `CHAT_DOCUMENT_VISION_BACKEND=docling` ou `auto` conforme política do servidor
 - [ ] `ollama pull` dos modelos de chat e embedding (`OLLAMA_MODEL`, `EMBEDDING_MODEL`)
 - [ ] `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED=true` + serviço `languagetool` no ar (opcional; ~2,5 GB RAM)
+
+### Após deploy do **portal** (tela escura / login em branco)
+
+Sintoma: Network mostra `index-*.js` com ~0,7 kB e `Content-Type: text/html` — cache Cloudflare servindo HTML antigo no lugar do bundle JS.
+
+1. Redeploy: `./infra/scripts/up-prod-sequential.sh --fase core --build portal gateway`
+2. **Purge cache Cloudflare** (obrigatório se o sintoma persistir):
+   - Dashboard Cloudflare → site `minhadelpi.com.br` → **Caching** → **Purge Everything**
+   - Ou purge seletivo: `/login`, `/`, `/assets/*`
+3. Hard refresh nos browsers (Ctrl+Shift+R) ou aba anônima
+4. Validar: `curl -sI https://minhadelpi.com.br/assets/index-DvFfb1Q9.js` deve retornar `content-type: application/javascript` e ~1,4 MB (hash muda a cada build — use o do HTML atual)
+
+Doc: [docs/02-infraestrutura/gateway-nginx.md](../docs/02-infraestrutura/gateway-nginx.md) § troubleshooting «Tela escura no `/login`».
 - [ ] Não commitar `.env` (já no `.gitignore`)
 
 ### Rebuild prod com visão (já incluída no compose padrão)
