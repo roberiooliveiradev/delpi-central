@@ -922,3 +922,112 @@
   color: var(--tdp-data-text, #e2e8f0);
 }
 
+.tdp-series-chart {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--tdp-data-text, #e2e8f0);
+}
+
+.tdp-series-chart__title {
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(11px, 1.4vw, 16px);
+  line-height: 1.2;
+  color: var(--tdp-data-text-strong, #f8fafc);
+}
+
+.tdp-series-chart__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.tdp-series-chart__svg {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tdp-series-chart__plot-area {
+  fill: transparent;
+  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 35%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.tdp-series-chart__grid-line {
+  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 22%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.tdp-series-chart__tick {
+  fill: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 90%, transparent);
+  font-size: 9px;
+}
+
+.tdp-series-chart__axis-title {
+  fill: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 80%, transparent);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.tdp-series-chart__data-label {
+  fill: var(--tdp-data-text, #e2e8f0);
+  font-size: 8px;
+  font-weight: 500;
+}
+
+.tdp-series-chart__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  font-size: clamp(9px, 1vw, 12px);
+  color: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 95%, transparent);
+}
+
+.tdp-series-chart__legend--right {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 4.5rem;
+  max-width: 35%;
+}
+
+.tdp-series-chart__legend--top,
+.tdp-series-chart__legend--bottom {
+  justify-content: center;
+}
+
+.tdp-series-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tdp-series-chart__legend-swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tdp-series-chart--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(10px, 1.2vw, 13px);
+  color: var(--tdp-data-muted, #94a3b8);
+}
+

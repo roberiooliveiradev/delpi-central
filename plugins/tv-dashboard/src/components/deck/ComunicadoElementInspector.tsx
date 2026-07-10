@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DataBindingInspector } from "../DataBindingInspector";
+import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ComunicadoImageCropPanel } from "./ComunicadoImageCropPanel";
@@ -121,6 +122,9 @@ export function ComunicadoElementInspector({
         {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} pane={pane} /> : null}
         {!multiSelect && isViewBlock ? (
           <VisualDataViewInspector pane={pane} onOpenDataSources={onOpenDataSources} />
+        ) : null}
+        {!multiSelect && selected?.type === "chart_view" ? (
+          <ChartViewOptionsInspector pane={pane} />
         ) : null}
 
         {!multiSelect && isShapeBlock ? (

@@ -1,4 +1,5 @@
 import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
+import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 
 export type ComunicadoFrame = {
   x: number;
@@ -200,6 +201,7 @@ export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
   type: "chart_view";
   chartType: ComunicadoChartType;
   dataSourceId?: string;
+  chartOptions?: ComunicadoChartOptions;
   resolved?: ComunicadoDataResolved;
 };
 

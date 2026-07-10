@@ -23,6 +23,7 @@ import {
   normalizeBlockAnimations,
   serializeBlockAnimations,
 } from "./comunicadoBlockAnimations";
+import { DEFAULT_COMUNICADO_CHART_OPTIONS, type ComunicadoChartOptions } from "./comunicadoChartOptions";
 import {
   comunicadoVerticalAlignToJustifyContent,
   defaultVerticalAlignForVisualBox,
@@ -138,6 +139,7 @@ export function createChartViewBlock(chartType: ComunicadoChartType): Comunicado
     id: newBlockId(),
     type: "chart_view",
     chartType,
+    chartOptions: { ...DEFAULT_COMUNICADO_CHART_OPTIONS },
     frame: { x: 10, y: 28, w: 80, h: 45 },
     style: { zIndex: 2, color: "#ffffff" },
   };
@@ -480,6 +482,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.chartOptions) base.chartOptions = { ...block.chartOptions };
   } else if (block.type === "table_view") {
     base.tablePreset = block.tablePreset;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
@@ -664,6 +667,10 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   }
   if (type === "chart_view") {
     const chartType = typeof block.chartType === "string" ? (block.chartType as ComunicadoChartType) : "line";
+    const chartOptions =
+      block.chartOptions && typeof block.chartOptions === "object"
+        ? ({ ...DEFAULT_COMUNICADO_CHART_OPTIONS, ...(block.chartOptions as ComunicadoChartOptions) })
+        : { ...DEFAULT_COMUNICADO_CHART_OPTIONS };
     return attachBlockAnimations(
       {
         id,
@@ -672,6 +679,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         style: { ...defaultStyle("chart_view"), ...style },
         groupId,
         chartType,
+        chartOptions,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
         resolved:
           block.resolved && typeof block.resolved === "object"

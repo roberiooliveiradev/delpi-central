@@ -146,6 +146,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "1) Inserir → Dados → escolha uma rota (cria data_source no palco). 2) Inserir → Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → aba Elemento → Conexão de dados → Fonte de dados.",
     connectOnStage:
       "Com um gráfico ou tabela selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
+    chartOptions: "Título, legenda, eixos, rótulos de dados e formato dos valores exibidos no gráfico.",
+    chartTitle: "Título central acima do gráfico (ex.: ROL). Vazio usa o nome da fonte de dados.",
+    chartLegend: "Texto exibido na legenda para identificar a série.",
+    chartDataLabels: "Mostra o valor numérico em cada ponto ou barra.",
     sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
   },
   contextMenu: {

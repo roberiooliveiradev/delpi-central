@@ -253,6 +253,18 @@ export { ChartViewBlockView } from "./chartViewBlockView";
 export { TableViewBlockView } from "./tableViewBlockView";
 export { DataSourceBlockView } from "./dataSourceBlockView";
 export { chartTypeLabel, tablePresetLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
+export {
+  CHART_LEGEND_POSITION_OPTIONS,
+  CHART_VALUE_FORMAT_OPTIONS,
+  DEFAULT_COMUNICADO_CHART_OPTIONS,
+  formatSeriesChartValue,
+  mergeComunicadoChartOptions,
+  resolveChartDisplayOptions,
+  type ComunicadoChartLegendPosition,
+  type ComunicadoChartOptions,
+  type ComunicadoChartValueFormat,
+} from "./comunicadoChartOptions";
+export { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock } from "./comunicadoTypes";
 export {
   resolveChartType,

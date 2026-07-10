@@ -81,9 +81,9 @@ export function ChartViewBlockView({ block, interactive = false, loading = false
   return (
     <div className={`tdp-data-block tdp-data-block--chart tdp-data-block--chart-${chartType}`}>
       {chartType === "bar" ? (
-        <TvDataBarChartWidget resolved={resolved} />
+        <TvDataBarChartWidget resolved={resolved} chartOptions={block.chartOptions} />
       ) : (
-        <TvDataLineChartWidget resolved={resolved} />
+        <TvDataLineChartWidget resolved={resolved} chartOptions={block.chartOptions} />
       )}
     </div>
   );
