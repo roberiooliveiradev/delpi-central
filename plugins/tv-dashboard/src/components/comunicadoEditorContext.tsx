@@ -89,6 +89,7 @@ function snapshotConfig(config: ComunicadoConfig): ComunicadoConfig {
 type ProviderProps = {
   playlistId: string;
   slideId?: string;
+  globalRefreshSec?: number;
   value: Record<string, unknown>;
   onChange: (config: Record<string, unknown>) => void;
   children: ReactNode;
@@ -130,7 +131,13 @@ function ComunicadoEditorKeyboardBridge() {
   return null;
 }
 
-export function ComunicadoEditorProvider({ playlistId, value, onChange, children }: ProviderProps) {
+export function ComunicadoEditorProvider({
+  playlistId,
+  globalRefreshSec = 300,
+  value,
+  onChange,
+  children,
+}: ProviderProps) {
   const deckHistory = useDeckEditorHistoryContext();
   const [config, setConfig] = useState<ComunicadoConfig>(() =>
     enrichComunicadoConfigForEditor(value, playlistId),
@@ -263,6 +270,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     useComunicadoDataPreview({
       playlistId,
       config,
+      globalRefreshSec,
     });
 
   const blocks = useMemo(() => {
@@ -1099,6 +1107,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     handleUploadFile,
     dataPreviewLoading,
     dataPreviewError,
+    globalRefreshSec,
   };
 
   return (

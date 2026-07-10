@@ -1,6 +1,7 @@
 import {
   COMUNICADO_EDITOR_FONT_SCALE,
   comunicadoBackgroundCssProperties,
+  isDataBlockType,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
   useComunicadoGoogleFonts,
@@ -245,7 +246,9 @@ export function ComunicadoComposerCanvas() {
                   isSelected={isSelected}
                   isEditingText={editingTextId === block.id}
                   className={isSelected ? "td-composer__block--selected" : ""}
-                  dataLoading={dataPreviewLoading}
+                  dataLoading={
+                    isDataBlockType(block.type) && !("resolved" in block && block.resolved) && dataPreviewLoading
+                  }
                 />
                 {showResizeHandles(block.id) ? (
                   <>

@@ -110,6 +110,13 @@ export {
   displayModeLabel,
   listDataPresentationOptions,
 } from "./comunicadoDataPresentation";
+export {
+  buildDataPreviewFingerprint,
+  DATA_REFRESH_SEC_DEFAULT,
+  DATA_REFRESH_SEC_MAX,
+  DATA_REFRESH_SEC_MIN,
+  resolveDataBlockRefreshSec,
+} from "./dataRefresh";
 export type { DataPresentationOption } from "./comunicadoDataPresentation";
 export {
   blockCssStyle,

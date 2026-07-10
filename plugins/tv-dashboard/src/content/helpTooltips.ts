@@ -127,6 +127,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Duração aplicada a novas telas e às que não tiverem tempo individual definido.",
     refreshInterval:
       "Intervalo para atualizar dados ao vivo (KPIs, estoque etc.) sem recarregar a página inteira.",
+    dataBlockRefreshInterval:
+      "Intervalo deste bloco para atualizar o preview de dados. Vazio = usa o padrão da programação.",
     publicUrl:
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
   },

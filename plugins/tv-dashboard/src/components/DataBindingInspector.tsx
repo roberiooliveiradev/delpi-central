@@ -3,15 +3,19 @@ import { Copy, RefreshCw } from "lucide-react";
 import { NativeSelectControl } from "@delpi/plugin-ui/index";
 import {
   blockTypeForDisplayMode,
+  DATA_REFRESH_SEC_MAX,
+  DATA_REFRESH_SEC_MIN,
   defaultFrame,
   displayModeLabel,
   isDataBlockType,
   listDataPresentationOptions,
+  resolveDataBlockRefreshSec,
   type ComunicadoDataBinding,
   type ComunicadoDataDisplayMode,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataRoutePickerModal } from "./DataRoutePickerModal";
 import { DeckField } from "./deck/DeckField";
@@ -63,7 +67,7 @@ function ParamFields({
 }
 
 export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem | null }) {
-  const { selected, config, updateSelected, duplicateSelected, replaceSelectedDataRoute } =
+  const { selected, config, updateSelected, duplicateSelected, replaceSelectedDataRoute, globalRefreshSec } =
     useComunicadoEditor();
   const [routePickerOpen, setRoutePickerOpen] = useState(false);
 
@@ -78,6 +82,7 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
   const displayModes = routeDisplayModes(route);
   const presentationOptions = listDataPresentationOptions(displayModes);
   const currentDisplayMode = (binding.displayMode ?? "auto") as ComunicadoDataDisplayMode;
+  const inheritedRefreshSec = resolveDataBlockRefreshSec(undefined, globalRefreshSec);
 
   function updateParam(key: string, raw: string) {
     const nextParams = { ...(binding.params ?? {}) };
@@ -140,6 +145,33 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
                 dataBinding: { ...binding, label: event.target.value || undefined },
               } as Partial<typeof selected>)
             }
+          />
+        </DeckField>
+        <DeckField
+          id="td-data-refresh"
+          label="Atualizar a cada (s)"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.dataBlockRefreshInterval}
+        >
+          <input
+            id="td-data-refresh"
+            type="number"
+            min={DATA_REFRESH_SEC_MIN}
+            max={DATA_REFRESH_SEC_MAX}
+            placeholder={`Padrão (${inheritedRefreshSec}s)`}
+            value={binding.refreshSec ?? ""}
+            onChange={(event) => {
+              const raw = event.target.value.trim();
+              const nextBinding: ComunicadoDataBinding = { ...binding };
+              if (!raw) {
+                delete nextBinding.refreshSec;
+              } else {
+                const parsed = Number(raw);
+                if (Number.isFinite(parsed)) {
+                  nextBinding.refreshSec = parsed;
+                }
+              }
+              updateSelected({ dataBinding: nextBinding } as Partial<typeof selected>);
+            }}
           />
         </DeckField>
         <ParamFields

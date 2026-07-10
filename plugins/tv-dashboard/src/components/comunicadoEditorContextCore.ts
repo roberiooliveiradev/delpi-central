@@ -137,6 +137,7 @@ export type ComunicadoEditorContextValue = {
   handleUploadFile: (file: File, target: "block" | "background") => void;
   dataPreviewLoading: boolean;
   dataPreviewError: string | null;
+  globalRefreshSec: number;
 };
 
 export const ComunicadoEditorContext = createContext<ComunicadoEditorContextValue | null>(null);
