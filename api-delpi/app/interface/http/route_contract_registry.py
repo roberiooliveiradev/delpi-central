@@ -491,6 +491,11 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_audit_5s_areas": RouteContract("audit_5s_area", "paged_list"),
     "create_audit_5s_area": RouteContract("audit_5s_area", "scalar"),
     "list_audit_5s_criteria": RouteContract("audit_5s_criterion", "paged_list"),
+    "get_audit_5s_catalog": RouteContract("audit_5s_catalog", "scalar"),
+    "list_audit_5s_catalog_publications": RouteContract(
+        "audit_5s_catalog_publication", "paged_list"
+    ),
+    "publish_audit_5s_catalog": RouteContract("audit_5s_catalog", "scalar"),
     "list_audit_5s_audits": RouteContract("audit_5s_audit", "paged_list"),
     "create_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
     "update_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),

@@ -107,6 +107,214 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             (version,),
         )
 
+    def get_max_catalog_version(self) -> int:
+        row = self.fetch_one(
+            """
+            SELECT COALESCE(MAX(catalog_version), 0) AS max_version
+              FROM quality.audit_5s_criteria
+            """
+        )
+        return int(row["max_version"]) if row else 0
+
+    def list_catalog_senso_names(self, catalog_version: int) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT catalog_version, senso_sort_order, name
+              FROM quality.audit_5s_catalog_senso_names
+             WHERE catalog_version = %s
+             ORDER BY senso_sort_order
+            """,
+            (catalog_version,),
+        )
+
+    def get_latest_catalog_publication(self, branch_code: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            """
+            SELECT id,
+                   branch_code,
+                   catalog_version,
+                   published_by_user_id,
+                   published_at,
+                   criteria_count,
+                   notes
+              FROM quality.audit_5s_catalog_publications
+             WHERE branch_code = %s
+             ORDER BY published_at DESC
+             LIMIT 1
+            """,
+            (branch_code,),
+        )
+
+    def list_catalog_publications(self, branch_code: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT id,
+                   branch_code,
+                   catalog_version,
+                   published_by_user_id,
+                   published_at,
+                   criteria_count,
+                   notes
+              FROM quality.audit_5s_catalog_publications
+             WHERE branch_code = %s
+             ORDER BY published_at DESC
+            """,
+            (branch_code,),
+        )
+
+    def get_active_catalog(self, branch_code: str) -> dict[str, Any]:
+        catalog_version = self.resolve_catalog_version(branch_code)
+        criteria = self.list_criteria_catalog(catalog_version)
+        senso_names = self.list_catalog_senso_names(catalog_version)
+        latest_publication = self.get_latest_catalog_publication(branch_code)
+        return {
+            "branch_code": branch_code,
+            "catalog_version": catalog_version,
+            "criteria_count": len(criteria),
+            "criteria": criteria,
+            "senso_names": senso_names,
+            "last_published_at": (
+                latest_publication["published_at"] if latest_publication else None
+            ),
+            "last_published_by_user_id": (
+                latest_publication["published_by_user_id"] if latest_publication else None
+            ),
+        }
+
+    def publish_catalog(
+        self,
+        *,
+        branch_code: str,
+        criteria: list[dict[str, Any]],
+        senso_names: list[dict[str, Any]] | None,
+        published_by_user_id: str | None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        next_version = self.get_max_catalog_version() + 1
+        senso_rows = self.fetch_all(
+            """
+            SELECT id, sort_order
+              FROM quality.audit_5s_sensos
+             WHERE active = TRUE
+            """
+        )
+        senso_id_by_order = {int(row["sort_order"]): row["id"] for row in senso_rows}
+
+        try:
+            for item in criteria:
+                senso_order = int(item["senso_order"])
+                senso_id = senso_id_by_order.get(senso_order)
+                if senso_id is None:
+                    raise PluginsRepositoryError(
+                        f"Senso {senso_order} não encontrado no catálogo base."
+                    )
+                self.execute(
+                    """
+                    INSERT INTO quality.audit_5s_criteria (
+                        senso_id, code, description, sort_order, catalog_version
+                    ) VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (
+                        senso_id,
+                        item["code"],
+                        item["description"],
+                        int(item["sort_order"]),
+                        next_version,
+                    ),
+                    auto_commit=False,
+                )
+
+            if senso_names:
+                for item in senso_names:
+                    self.execute(
+                        """
+                        INSERT INTO quality.audit_5s_catalog_senso_names (
+                            catalog_version, senso_sort_order, name
+                        ) VALUES (%s, %s, %s)
+                        ON CONFLICT (catalog_version, senso_sort_order) DO UPDATE
+                            SET name = EXCLUDED.name
+                        """,
+                        (
+                            next_version,
+                            int(item["senso_sort_order"]),
+                            item["name"],
+                        ),
+                        auto_commit=False,
+                    )
+
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_branch_catalog (branch_code, catalog_version)
+                VALUES (%s, %s)
+                ON CONFLICT (branch_code) DO UPDATE
+                    SET catalog_version = EXCLUDED.catalog_version,
+                        active = TRUE
+                """,
+                (branch_code, next_version),
+                auto_commit=False,
+            )
+
+            publication = self.execute_returning_one(
+                """
+                INSERT INTO quality.audit_5s_catalog_publications (
+                    branch_code,
+                    catalog_version,
+                    published_by_user_id,
+                    criteria_count,
+                    notes
+                ) VALUES (%s, %s, %s, %s, %s)
+                RETURNING id,
+                          branch_code,
+                          catalog_version,
+                          published_by_user_id,
+                          published_at,
+                          criteria_count,
+                          notes
+                """,
+                (
+                    branch_code,
+                    next_version,
+                    published_by_user_id,
+                    len(criteria),
+                    notes,
+                ),
+                auto_commit=False,
+            )
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+
+        if not publication:
+            raise PluginsRepositoryError("Falha ao registrar publicação do catálogo.")
+
+        return {
+            "branch_code": branch_code,
+            "catalog_version": next_version,
+            "criteria_count": len(criteria),
+            "published_at": publication["published_at"],
+            "published_by_user_id": publication["published_by_user_id"],
+            "publication_id": publication["id"],
+        }
+
+    def criterion_belongs_to_catalog_version(
+        self,
+        *,
+        criterion_id: str,
+        catalog_version: int,
+    ) -> bool:
+        row = self.fetch_one(
+            """
+            SELECT 1
+              FROM quality.audit_5s_criteria
+             WHERE id = %s
+               AND catalog_version = %s
+               AND active = TRUE
+            """,
+            (criterion_id, catalog_version),
+        )
+        return row is not None
+
     def list_audits(
         self,
         branch_code: str,

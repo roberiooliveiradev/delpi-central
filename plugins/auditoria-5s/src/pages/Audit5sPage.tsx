@@ -27,6 +27,7 @@ import { AuditHeaderForm } from "../components/AuditHeaderForm";
 import { AuditNativeTextAreaField } from "../components/auditFormFields";
 import { AuditListView } from "../components/AuditListView";
 import { AuditDashboardPage } from "./AuditDashboardPage";
+import { AuditCatalogPage } from "./AuditCatalogPage";
 import { AuditDetailHero } from "../components/AuditDetailHero";
 import { AuditNcView } from "../components/AuditNcView";
 import { CriterionPhotoSection } from "../components/CriterionPhotoSection";
@@ -56,7 +57,7 @@ type Props = {
   pathname?: string;
 };
 
-type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard";
+type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard" | "catalog";
 
 export function Audit5sPage({ pathname }: Props) {
   const branch = branchFromPathname(pathname);
@@ -519,6 +520,8 @@ export function Audit5sPage({ pathname }: Props) {
           ? "Registre ações corretivas para os critérios com nota baixa desta auditoria."
           : view === "dashboard"
             ? "Acompanhe a evolução das auditorias com filtros e gráficos gerenciais."
+            : view === "catalog"
+              ? "Edite e publique o catálogo de critérios desta filial."
             : auditListSubtitle(branch);
 
   return (
@@ -534,6 +537,8 @@ export function Audit5sPage({ pathname }: Props) {
               ? "Tratar não conformidades"
               : view === "dashboard"
                 ? "Dashboard gerencial"
+                : view === "catalog"
+                  ? "Critérios da auditoria"
                 : undefined
           }
           subtitle={pageSubtitle}
@@ -553,6 +558,7 @@ export function Audit5sPage({ pathname }: Props) {
           loading={loading}
           onNew={openNewAudit}
           onOpenDashboard={() => setView("dashboard")}
+          onOpenCatalog={() => setView("catalog")}
           onOpenAudit={(auditId) => void openAudit(auditId)}
           onOpenNc={(auditId) => void openNc(auditId)}
           onEditAudit={(auditId) => void openEditAudit(auditId)}
@@ -569,6 +575,8 @@ export function Audit5sPage({ pathname }: Props) {
           onOpenItem={handleDashboardItem}
         />
       )}
+
+      {view === "catalog" && <AuditCatalogPage branch={branch} />}
 
       {view === "new" && (
         <AuditHeaderForm

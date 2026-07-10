@@ -39,6 +39,56 @@ export type Criterion = {
   senso_name: string;
 };
 
+export type CatalogSensoName = {
+  catalog_version: number;
+  senso_sort_order: number;
+  name: string;
+};
+
+export type CatalogData = {
+  branch_code: string;
+  catalog_version: number;
+  criteria_count: number;
+  criteria: Criterion[];
+  senso_names: CatalogSensoName[];
+  last_published_at: string | null;
+  last_published_by_user_id: string | null;
+};
+
+export type CatalogPublication = {
+  id: string;
+  branch_code: string;
+  catalog_version: number;
+  published_by_user_id: string | null;
+  published_at: string;
+  criteria_count: number;
+  notes: string | null;
+};
+
+export type PublishCatalogPayload = {
+  branch_code: string;
+  criteria: Array<{
+    senso_order: number;
+    sort_order: number;
+    code: string;
+    description: string;
+  }>;
+  senso_names?: Array<{
+    senso_sort_order: number;
+    name: string;
+  }>;
+  notes?: string | null;
+};
+
+export type PublishCatalogResult = {
+  branch_code: string;
+  catalog_version: number;
+  criteria_count: number;
+  published_at: string;
+  published_by_user_id: string | null;
+  publication_id: string;
+};
+
 export type ResponseAttachment = {
   id: string;
   response_id: string;
@@ -93,6 +143,26 @@ export async function createArea(branch: string, name: string) {
     branch_code: branch,
     name,
   });
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function fetchCatalog(branch: string) {
+  const res = await httpGet<ApiEnvelope<CatalogData>>(`${API_BASE}/catalog?branch=${branch}`);
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function fetchCatalogPublications(branch: string) {
+  const res = await httpGet<ApiEnvelope<CatalogPublication[]>>(
+    `${API_BASE}/catalog/publications?branch=${branch}`,
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function publishCatalog(payload: PublishCatalogPayload) {
+  const res = await httpPut<ApiEnvelope<PublishCatalogResult>>(
+    `${API_BASE}/catalog/publish`,
+    payload,
+  );
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 

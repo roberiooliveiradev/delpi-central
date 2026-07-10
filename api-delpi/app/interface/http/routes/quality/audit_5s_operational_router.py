@@ -20,6 +20,11 @@ from app.application.services.audit_5s.response_attachment_storage import (
     Audit5sResponseAttachmentStorage,
     Audit5sResponseAttachmentStorageError,
 )
+from app.application.services.audit_5s.catalog_publish_service import (
+    CatalogPublishValidationError,
+    catalogs_are_equal,
+    validate_publish_payload,
+)
 from app.application.services.audit_5s.scoring_service import (
     can_attach_criterion_photo,
     is_nc_candidate,
@@ -35,6 +40,7 @@ from app.application.services.audit_5s.realtime_publisher import (
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
+from app.interface.http.routes.quality.audit_5s_branch_access import branch_access_error
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
 
@@ -101,6 +107,25 @@ class AddNcActionBody(BaseModel):
     description: str = Field(..., min_length=3)
 
 
+class CatalogCriterionBody(BaseModel):
+    senso_order: int = Field(..., ge=1, le=5)
+    sort_order: int = Field(..., ge=1)
+    code: str = Field(..., min_length=3, max_length=20)
+    description: str = Field(..., min_length=3, max_length=2000)
+
+
+class CatalogSensoNameBody(BaseModel):
+    senso_sort_order: int = Field(..., ge=1, le=5)
+    name: str = Field(..., min_length=2, max_length=100)
+
+
+class PublishCatalogBody(BaseModel):
+    branch_code: str = Field(..., pattern="^(01|02)$")
+    criteria: list[CatalogCriterionBody] = Field(..., min_length=1)
+    senso_names: list[CatalogSensoNameBody] | None = None
+    notes: str | None = Field(default=None, max_length=500)
+
+
 def _current_user_id() -> str:
     user = get_current_user()
     if user is None:
@@ -164,6 +189,83 @@ def list_criteria(
     except Exception as exc:
         log_error(f"Erro ao listar critérios 5S: {exc}")
         return error_response("Erro interno ao listar critérios.", status_code=500)
+
+
+@router.get("/catalog")
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
+def get_catalog(branch: str = Query(..., pattern="^(01|02)$")):
+    branch_error = branch_access_error(branch)
+    if branch_error is not None:
+        return branch_error
+    try:
+        repo = build_audit_5s_repository()
+        data = repo.get_active_catalog(branch)
+        return api_delpi_success(data, operation_id="get_audit_5s_catalog")
+    except Exception as exc:
+        log_error(f"Erro ao carregar catálogo 5S: {exc}")
+        return error_response("Erro interno ao carregar catálogo.", status_code=500)
+
+
+@router.get("/catalog/publications")
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
+def list_catalog_publications(branch: str = Query(..., pattern="^(01|02)$")):
+    branch_error = branch_access_error(branch)
+    if branch_error is not None:
+        return branch_error
+    try:
+        repo = build_audit_5s_repository()
+        data = repo.list_catalog_publications(branch)
+        return api_delpi_success(data, operation_id="list_audit_5s_catalog_publications")
+    except Exception as exc:
+        log_error(f"Erro ao listar publicações do catálogo 5S: {exc}")
+        return error_response("Erro interno ao listar publicações.", status_code=500)
+
+
+@router.put("/catalog/publish")
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+def publish_catalog(body: PublishCatalogBody = Body(...)):
+    branch_error = branch_access_error(body.branch_code, require_audit=True)
+    if branch_error is not None:
+        return branch_error
+    try:
+        repo = build_audit_5s_repository()
+        normalized_criteria = validate_publish_payload(
+            criteria=[item.model_dump() for item in body.criteria],
+            senso_names=(
+                [item.model_dump() for item in body.senso_names]
+                if body.senso_names is not None
+                else None
+            ),
+        )
+        active = repo.get_active_catalog(body.branch_code)
+        next_senso_names = (
+            [item.model_dump() for item in body.senso_names]
+            if body.senso_names is not None
+            else None
+        )
+        if catalogs_are_equal(
+            current_criteria=active["criteria"],
+            next_criteria=normalized_criteria,
+            current_senso_names=active["senso_names"],
+            next_senso_names=next_senso_names,
+        ):
+            return error_response("Nenhuma alteração detectada.", status_code=409)
+
+        data = repo.publish_catalog(
+            branch_code=body.branch_code,
+            criteria=normalized_criteria,
+            senso_names=next_senso_names,
+            published_by_user_id=_current_user_id(),
+            notes=body.notes,
+        )
+        return api_delpi_success(data, operation_id="publish_audit_5s_catalog")
+    except CatalogPublishValidationError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao publicar catálogo 5S: {exc}")
+        return error_response("Erro interno ao publicar catálogo.", status_code=500)
 
 
 @router.get("/audits")
