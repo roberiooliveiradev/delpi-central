@@ -61,6 +61,7 @@ type Props = {
   loading: boolean;
   onNew: () => void;
   onOpenDashboard: () => void;
+  onOpenCatalog: () => void;
   onOpenAudit: (auditId: string) => void;
   onOpenNc: (auditId: string) => void;
   onEditAudit: (auditId: string) => void;
@@ -102,6 +103,7 @@ export function AuditListView({
   loading,
   onNew,
   onOpenDashboard,
+  onOpenCatalog,
   onOpenAudit,
   onOpenNc,
   onEditAudit,
@@ -225,6 +227,10 @@ export function AuditListView({
           </p>
         </div>
         <div className="a5s-dashboard__actions">
+          <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenCatalog}>
+            <ListChecks size={16} aria-hidden />
+            Critérios
+          </button>
           <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenDashboard}>
             <BarChart3 size={16} aria-hidden />
             Dashboard
