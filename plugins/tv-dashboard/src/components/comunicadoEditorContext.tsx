@@ -52,6 +52,7 @@ import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
 import { snapComunicadoFrame } from "../utils/comunicadoSnap";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
+import { computeFitStageZoom } from "../utils/stageViewport";
 import {
   expandSelectionWithGroups,
   groupBlocks,
@@ -214,8 +215,10 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   );
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
   const [stageZoom, setStageZoom] = useState(1);
+  const [showStageRulers, setShowStageRulers] = useState(true);
   const [showStageGrid, setShowStageGrid] = useState(false);
   const [showStageGuides, setShowStageGuides] = useState(true);
+  const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const snapEnabledRef = useRef(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
@@ -482,6 +485,13 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     onInteractionEnd: handleInteractionEnd,
     resolveBlock: (blockId) => configRef.current.blocks?.find((block) => block.id === blockId),
   });
+
+  const fitStageToView = useCallback(() => {
+    const wrap = canvasWrapRef.current;
+    const canvas = canvasRef.current;
+    if (!wrap || !canvas) return;
+    setStageZoom(computeFitStageZoom(wrap, canvas));
+  }, [canvasRef]);
 
   function addBlock(type: ComunicadoBlock["type"]) {
     const block = createBlock(
@@ -988,6 +998,10 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     alignSelected,
     stageZoom,
     setStageZoom,
+    fitStageToView,
+    canvasWrapRef,
+    showStageRulers,
+    setShowStageRulers,
     showStageGrid,
     setShowStageGrid,
     showStageGuides,

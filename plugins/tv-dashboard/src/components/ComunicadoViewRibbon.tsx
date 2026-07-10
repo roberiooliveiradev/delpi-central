@@ -1,4 +1,5 @@
 import {
+  Crosshair,
   Focus,
   Grid3x3,
   Magnet,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { clampStageZoom, STAGE_ZOOM_MAX, STAGE_ZOOM_MIN } from "../utils/stageViewport";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -20,6 +22,9 @@ export function ComunicadoViewRibbon() {
   const {
     stageZoom,
     setStageZoom,
+    fitStageToView,
+    showStageRulers,
+    setShowStageRulers,
     showStageGrid,
     setShowStageGrid,
     showStageGuides,
@@ -36,22 +41,22 @@ export function ComunicadoViewRibbon() {
             icon={ZoomOut}
             label="−"
             hint={H.zoomOut}
-            disabled={stageZoom <= 0.5}
-            onClick={() => setStageZoom(Math.max(0.5, Math.round((stageZoom - 0.1) * 10) / 10))}
+            disabled={stageZoom <= STAGE_ZOOM_MIN}
+            onClick={() => setStageZoom(clampStageZoom(stageZoom - 0.1))}
           />
           <span className="td-deck-ribbon__zoom-label">{Math.round(stageZoom * 100)}%</span>
           <DeckRibbonTile
             icon={ZoomIn}
             label="+"
             hint={H.zoomIn}
-            disabled={stageZoom >= 2}
-            onClick={() => setStageZoom(Math.min(2, Math.round((stageZoom + 0.1) * 10) / 10))}
+            disabled={stageZoom >= STAGE_ZOOM_MAX}
+            onClick={() => setStageZoom(clampStageZoom(stageZoom + 0.1))}
           />
           <DeckRibbonTile
             icon={Maximize2}
             label="Ajustar"
             hint={H.zoomFit}
-            onClick={() => setStageZoom(1)}
+            onClick={() => fitStageToView()}
           />
           <DeckRibbonTile
             icon={Focus}
@@ -66,6 +71,13 @@ export function ComunicadoViewRibbon() {
       <DeckRibbonGroup label="Mostrar" hint={V.showGroup}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
+            icon={Ruler}
+            label="Réguas"
+            hint={V.rulers}
+            active={showStageRulers}
+            onClick={() => setShowStageRulers(!showStageRulers)}
+          />
+          <DeckRibbonTile
             icon={Grid3x3}
             label="Grade"
             hint={V.grid}
@@ -73,7 +85,7 @@ export function ComunicadoViewRibbon() {
             onClick={() => setShowStageGrid(!showStageGrid)}
           />
           <DeckRibbonTile
-            icon={Ruler}
+            icon={Crosshair}
             label="Guias"
             hint={V.guides}
             active={showStageGuides}

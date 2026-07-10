@@ -110,6 +110,10 @@ export type ComunicadoEditorContextValue = {
   alignSelected: (command: LayoutAlignCommand) => void;
   stageZoom: number;
   setStageZoom: (zoom: number) => void;
+  fitStageToView: () => void;
+  canvasWrapRef: RefObject<HTMLDivElement | null>;
+  showStageRulers: boolean;
+  setShowStageRulers: (show: boolean) => void;
   showStageGrid: boolean;
   setShowStageGrid: (show: boolean) => void;
   showStageGuides: boolean;

@@ -8,6 +8,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
+import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
@@ -55,7 +56,6 @@ export function ComunicadoComposerCanvas() {
     canvasRef,
     startDrag,
     dataPreviewLoading,
-    stageZoom,
     showStageGrid,
     showStageGuides,
   } = useComunicadoEditor();
@@ -173,24 +173,20 @@ export function ComunicadoComposerCanvas() {
   }, [marquee]);
 
   return (
-    <div className="td-composer td-composer--deck">
+    <ComunicadoStageShell>
       <div
-        className="td-composer__canvas-wrap td-composer__canvas-wrap--full td-composer__canvas-wrap--zoom"
-        style={{ "--td-composer-zoom": stageZoom } as React.CSSProperties}
+        ref={canvasRef}
+        className="td-composer__canvas td-composer__canvas--zoomed"
+        style={canvasStyle}
+        onPointerDown={handleCanvasPointerDown}
       >
-        <div
-          ref={canvasRef}
-          className="td-composer__canvas td-composer__canvas--zoomed"
-          style={canvasStyle}
-          onPointerDown={handleCanvasPointerDown}
-        >
-          {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
-          {showStageGuides ? (
-            <>
-              <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
-              <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
-            </>
-          ) : null}
+        {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
+        {showStageGuides ? (
+          <>
+            <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
+            <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
+          </>
+        ) : null}
           {blocks.map((block) => {
             const isSelected = isBlockSelected(block.id);
             const isPrimary = block.id === primarySelected;
@@ -250,8 +246,7 @@ export function ComunicadoComposerCanvas() {
           {marqueeStyle ? (
             <div className="td-composer__marquee" style={marqueeStyle} aria-hidden="true" />
           ) : null}
-        </div>
       </div>
-    </div>
+    </ComunicadoStageShell>
   );
 }
