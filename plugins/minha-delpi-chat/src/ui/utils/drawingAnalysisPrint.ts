@@ -86,6 +86,8 @@ function buildDrawingDocumentSpec(
       layoutKey: table.key,
       columns: table.columns,
       rows: table.rows,
+      presentation: table.presentation,
+      outline: table.outline,
       highlightStatusColumn: true,
     })),
     footerNote: String(

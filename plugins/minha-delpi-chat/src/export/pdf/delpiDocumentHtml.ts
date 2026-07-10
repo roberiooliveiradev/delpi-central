@@ -157,6 +157,21 @@ function sanitizeExportCellValue(raw: string, columnKey: string): string {
 }
 
 export function buildDelpiDocumentTableSection(table: DelpiDocumentTable): string {
+  if (table.presentation === "outline" && table.outline?.trim()) {
+    const sectionTitle = table.title?.trim();
+
+    return `
+    <section class="cert-section">
+      ${
+        sectionTitle
+          ? `<h2 class="cert-section__title">${escapeDelpiDocumentHtml(sectionTitle)}</h2>`
+          : ""
+      }
+      <pre class="cert-structure-outline">${escapeDelpiDocumentHtml(table.outline.trim())}</pre>
+    </section>
+  `;
+  }
+
   const columns = table.columns ?? [];
   const rows = table.rows ?? [];
 

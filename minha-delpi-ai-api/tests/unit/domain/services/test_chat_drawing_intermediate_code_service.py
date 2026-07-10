@@ -10,6 +10,13 @@ def test_is_ocr_typo_duplicate_detects_nine_two_swap():
     )
 
 
+def test_is_ocr_typo_duplicate_detects_zero_two_swap():
+    assert ChatDrawingIntermediateCodeService.is_ocr_typo_duplicate(
+        "50204901",
+        "50224901",
+    )
+
+
 def test_is_ocr_typo_duplicate_ignores_valid_sibling_intermediates():
     assert not ChatDrawingIntermediateCodeService.is_ocr_typo_duplicate(
         "50225215",

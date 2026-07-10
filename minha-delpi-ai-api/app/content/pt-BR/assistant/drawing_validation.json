@@ -436,6 +436,7 @@
   "validationRules": {
     "lengthToleranceRatio": 0.05,
     "decapeToleranceMm": 1.0,
+    "decapeProfileMismatchSkipMm": 3.0,
     "decapeGlobalMismatchRatio": 2.5,
     "maxRootStructureQuantityMm": 1000,
     "maxSegmentLengthChecks": 6,
@@ -492,6 +493,7 @@
       "pendingStatus": "pending",
       "maxTrustedPieceQuantity": 99,
       "rejectDecimalPieceQuantity": true,
+      "rejectZeroQuantity": true,
       "rejectQuantityMatchingDescriptionNumber": true,
       "rejectIntermediateLengthAsQuantity": true,
       "intermediateLengthQuantityMinMm": 50,
@@ -509,7 +511,8 @@
         "quantity_api_crosscheck"
       ],
       "skipPendingWhenUntrustedReasons": [
-        "quantity_from_description"
+        "quantity_from_description",
+        "zero_quantity"
       ],
       "refinementExhaustedPending": true,
       "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"],

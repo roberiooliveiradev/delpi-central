@@ -18,6 +18,8 @@ class ChatDrawingIntermediateCodeService:
         ("2", "9"),
         ("0", "8"),
         ("8", "0"),
+        ("0", "2"),
+        ("2", "0"),
         ("1", "7"),
         ("7", "1"),
     }

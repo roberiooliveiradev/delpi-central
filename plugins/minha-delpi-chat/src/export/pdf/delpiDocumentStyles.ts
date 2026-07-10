@@ -234,6 +234,20 @@ export function buildDelpiDocumentStyles(): string {
     .cert-table tbody tr:nth-child(even) td { background: var(--cert-gray-50); }
     .cert-status--error { color: var(--cert-red); font-weight: 700; }
     .cert-status--ok { color: var(--cert-green); font-weight: 700; }
+    .cert-structure-outline {
+      margin: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--cert-gray-200);
+      border-radius: 4px;
+      background: var(--cert-gray-50);
+      font-family: "Courier New", Courier, monospace;
+      font-size: 8.5pt;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      break-inside: auto;
+      page-break-inside: auto;
+    }
     .cert-chart-image {
       display: block;
       max-width: 100%;

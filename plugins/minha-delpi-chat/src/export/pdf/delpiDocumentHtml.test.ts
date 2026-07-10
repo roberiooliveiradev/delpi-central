@@ -91,6 +91,30 @@ describe("delpiDocumentHtml", () => {
     expect(html).toContain("50222710");
     expect(html).not.toContain("`50222710`");
   });
+
+  it("renderiza estrutura em outline ASCII quando presentation é outline", () => {
+    const html = buildDelpiDocumentHtml(
+      {
+        documentTitle: "Relatório de Análise de Desenho DELPI",
+        tables: [
+          {
+            title: "Estrutura (SG1010)",
+            layoutKey: "structure",
+            presentation: "outline",
+            outline: "90262008 PA 1 MI — CHICOTE\n└── 50225424 PI 1 — CABO",
+            columns: [],
+            rows: [],
+          },
+        ],
+      },
+      "https://example.com/logoDelpi.svg",
+    );
+
+    expect(html).toContain("cert-structure-outline");
+    expect(html).toContain("90262008 PA 1 MI — CHICOTE");
+    expect(html).toContain("└── 50225424 PI 1 — CABO");
+    expect(html).not.toContain("cert-table--structure");
+  });
 });
 
 describe("delpiDocumentTableLayout", () => {

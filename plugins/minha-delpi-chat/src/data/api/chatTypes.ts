@@ -692,6 +692,8 @@ export type ChatMessageMetadata = {
       sheetName?: string;
       columns: { key: string; label: string }[];
       rows: Record<string, string>[];
+      presentation?: "outline" | "table";
+      outline?: string;
     }[];
     spreadsheetRows?: {
       section: string;

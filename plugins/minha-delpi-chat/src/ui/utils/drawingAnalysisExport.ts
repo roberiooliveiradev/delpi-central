@@ -16,6 +16,8 @@ export type DrawingExportTable = {
   sheetName?: string;
   columns: { key: string; label: string }[];
   rows: Record<string, string>[];
+  presentation?: "outline" | "table";
+  outline?: string;
 };
 
 export type DrawingAnalysisExportPayload = NonNullable<

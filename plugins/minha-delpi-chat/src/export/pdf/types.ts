@@ -8,6 +8,9 @@ export type DelpiDocumentTable = {
   layoutKey?: string;
   /** Destaca coluna status (OK/erro) — relatório de desenho. */
   highlightStatusColumn?: boolean;
+  /** Árvore ASCII no lugar da tabela plana (estrutura SG1010). */
+  presentation?: "outline" | "table";
+  outline?: string;
 };
 
 export type DelpiDocumentSummaryLine = {

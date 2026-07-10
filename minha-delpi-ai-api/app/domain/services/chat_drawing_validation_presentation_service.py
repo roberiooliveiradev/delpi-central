@@ -392,19 +392,97 @@ class ChatDrawingValidationPresentationService:
         return result
 
     @classmethod
-    def format_analyser_detail_sections(cls, root: Any) -> list[str]:
-        if not isinstance(root, dict) or not root:
-            return []
+    def _resolve_product_code_from_analyser_root(cls, root: dict[str, Any]) -> str:
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
 
-        from app.domain.services.chat_presentation_tree_markdown_service import (
-            ChatPresentationTreeMarkdownService,
-        )
+        return str(product.get("code") or "").strip() or "0"
+
+    @classmethod
+    def _normalize_structure_for_tree(cls, root: dict[str, Any]) -> dict[str, Any] | None:
         from app.domain.services.external_actions.external_action_result_presenter import (
             ExternalActionResultPresenter,
         )
 
-        lines: list[str] = []
+        structure = root.get("structure")
+
+        if not isinstance(structure, dict):
+            return None
+
         presenter = ExternalActionResultPresenter()
+        normalized = presenter._normalize_api_section(structure)
+
+        if not isinstance(normalized, dict):
+            return None
+
+        if not isinstance(normalized.get("root"), dict):
+            product = root.get("product") if isinstance(root.get("product"), dict) else {}
+            code = str(product.get("code") or "").strip()
+
+            if code and isinstance(normalized.get("items"), list):
+                normalized = {
+                    **normalized,
+                    "root": {
+                        "code": code,
+                        "description": str(product.get("description") or ""),
+                        "type": str(product.get("type") or "PA"),
+                        "unit": str(product.get("unit") or ""),
+                        "quantity": product.get("quantity", 1),
+                    },
+                }
+
+        if not isinstance(normalized.get("root"), dict):
+            return None
+
+        return normalized
+
+    @classmethod
+    def _resolve_structure_tree_presentation(cls, root: dict[str, Any]) -> dict[str, Any] | None:
+        from app.domain.services.chat_product_structure_presentation_service import (
+            ChatProductStructurePresentationService,
+        )
+
+        if not isinstance(root, dict) or not root:
+            return None
+
+        normalized_structure = cls._normalize_structure_for_tree(root)
+
+        if not normalized_structure:
+            return None
+
+        code = cls._resolve_product_code_from_analyser_root(root)
+
+        return ChatProductStructurePresentationService.build_tree_presentation(
+            {**root, "structure": normalized_structure},
+            path=f"/products/{code}/analyser",
+        )
+
+    @classmethod
+    def _format_structure_tree_outline(
+        cls,
+        tree: dict[str, Any],
+        *,
+        markdown_fence: bool = True,
+    ) -> str:
+        from app.domain.services.chat_presentation_tree_markdown_service import (
+            ChatPresentationTreeMarkdownService,
+        )
+
+        outline = ChatPresentationTreeMarkdownService.outline_markdown(tree)
+
+        if not outline:
+            return ""
+
+        if markdown_fence:
+            return f"```text\n{outline}\n```"
+
+        return outline
+
+    @classmethod
+    def format_analyser_detail_sections(cls, root: Any) -> list[str]:
+        if not isinstance(root, dict) or not root:
+            return []
+
+        lines: list[str] = []
         structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
         structure_items = (
             structure.get("items") if isinstance(structure.get("items"), list) else []
@@ -414,12 +492,8 @@ class ChatDrawingValidationPresentationService:
             lines.extend(
                 ["", ChatDrawingValidationContentService.get("report", "sections", "structure")]
             )
-            tree = presenter.build_tree_presentation(root, path="/products/0/analyser")
-            outline = (
-                ChatPresentationTreeMarkdownService.build_outline_section(tree)
-                if isinstance(tree, dict)
-                else ""
-            )
+            tree = cls._resolve_structure_tree_presentation(root)
+            outline = cls._format_structure_tree_outline(tree) if isinstance(tree, dict) else ""
 
             if outline:
                 lines.append(outline)
@@ -958,16 +1032,26 @@ class ChatDrawingValidationPresentationService:
         ]
 
         structure_rows = cls._export_structure_rows(root)
+        structure_tree = cls._resolve_structure_tree_presentation(root)
+        structure_outline = (
+            cls._format_structure_tree_outline(structure_tree, markdown_fence=False)
+            if isinstance(structure_tree, dict)
+            else ""
+        )
 
-        if structure_rows:
-            tables.append(
-                cls._build_export_table(
-                    "structure",
-                    column_keys=["code", "description", "quantity", "unit", "type", "level"],
-                    column_labels=cls._export_column_labels("structure"),
-                    rows=structure_rows,
-                )
+        if structure_rows or structure_outline:
+            structure_table = cls._build_export_table(
+                "structure",
+                column_keys=["code", "description", "quantity", "unit", "type", "level"],
+                column_labels=cls._export_column_labels("structure"),
+                rows=structure_rows,
             )
+
+            if structure_outline:
+                structure_table["presentation"] = "outline"
+                structure_table["outline"] = structure_outline
+
+            tables.append(structure_table)
 
         guide_rows = cls._export_guide_rows(root)
 
@@ -1059,7 +1143,11 @@ class ChatDrawingValidationPresentationService:
                 )
             )
 
-        return [table for table in tables if table.get("rows")]
+        return [
+            table
+            for table in tables
+            if table.get("rows") or str(table.get("outline") or "").strip()
+        ]
 
     @classmethod
     def _export_column_labels(cls, key: str) -> list[str]:

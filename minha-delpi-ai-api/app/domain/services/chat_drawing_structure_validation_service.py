@@ -10,6 +10,9 @@ from app.domain.services.chat_drawing_bom_comparison_service import (
 from app.domain.services.chat_drawing_bom_quantity_semantics_service import (
     ChatDrawingBomQuantitySemanticsService,
 )
+from app.domain.services.chat_drawing_intermediate_code_service import (
+    ChatDrawingIntermediateCodeService,
+)
 from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
@@ -317,6 +320,10 @@ class ChatDrawingStructureValidationService:
             code
             for code in (pdf_intermediate - api_intermediate)
             if ChatDrawingPatternsService.is_intermediate_family(code)
+            and not any(
+                ChatDrawingIntermediateCodeService.is_ocr_typo_duplicate(code, api_code)
+                for api_code in api_intermediate
+            )
         )
 
         if extra_intermediate:
@@ -447,6 +454,12 @@ class ChatDrawingStructureValidationService:
                 if not cls._decape_side_indicated(dimensions, side_key):
                     continue
 
+                if pdf_ref is not None and cls._should_skip_intermediate_decape_for_profile(
+                    pdf_ref,
+                    expected,
+                ):
+                    continue
+
                 within = cls._decape_matches_pdf(
                     expected,
                     pdf_ref=pdf_ref,
@@ -535,6 +548,9 @@ class ChatDrawingStructureValidationService:
         ):
             return True
 
+        if cls._pdf_global_decape_unmatched_by_all_intermediates(dimensions, root):
+            return True
+
         if root and cls._global_decape_conflicts_with_intermediate_profile(
             dimensions,
             root,
@@ -573,6 +589,57 @@ class ChatDrawingStructureValidationService:
         ratio = ChatDrawingPatternsService.decape_global_mismatch_ratio()
 
         return pdf_left > max_expected * ratio
+
+    @classmethod
+    def _pdf_global_decape_unmatched_by_all_intermediates(
+        cls,
+        dimensions: dict[str, Any],
+        root: dict,
+    ) -> bool:
+        rows = ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+
+        for side in ("left", "right"):
+            pdf_key = f"{side}DecapeMm"
+            pdf_val = ChatDrawingToleranceService.parse_mm(dimensions.get(pdf_key))
+
+            if pdf_val is None or not cls._decape_side_indicated(dimensions, side):
+                continue
+
+            expected_key = f"{side}DecapeMm"
+            expected_values = [
+                float(value)
+                for row in rows
+                if (value := row.get(expected_key)) is not None
+            ]
+
+            if not expected_values:
+                continue
+
+            if not any(
+                ChatDrawingToleranceService.decape_within_tolerance(pdf_val, expected)
+                is True
+                for expected in expected_values
+            ):
+                return True
+
+        return False
+
+    @classmethod
+    def _should_skip_intermediate_decape_for_profile(
+        cls,
+        pdf_ref: float,
+        expected: float,
+    ) -> bool:
+        if ChatDrawingToleranceService.decape_within_tolerance(pdf_ref, expected) is not False:
+            return False
+
+        gap = abs(float(pdf_ref) - float(expected))
+        skip_gap = ChatDrawingPatternsService.validation_rule_float(
+            "decapeProfileMismatchSkipMm",
+            ChatDrawingPatternsService.decape_tolerance_mm() * 2,
+        )
+
+        return gap > skip_gap
 
     @classmethod
     def _decape_side_indicated(cls, dimensions: dict[str, Any], side: str) -> bool:

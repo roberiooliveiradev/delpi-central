@@ -7,6 +7,9 @@ from app.domain.services.chat_drawing_validation_content_service import (
 from app.domain.services.chat_drawing_validation_presentation_service import (
     ChatDrawingValidationPresentationService,
 )
+from tests.fixtures.drawing_validation_rule_regression_cases import (
+    payload_stamp_bom_nested_mp,
+)
 
 configure_domain_infrastructure_ports()
 
@@ -222,3 +225,32 @@ def test_format_inspection_section_shows_test_details():
     assert "| 01 | 01 | LABFIS | 290 | 285 | 295 | MM |" in body
     assert "| 01 | 12 | 10420256 |" in body
     assert "Revisão **02**" in body
+
+
+def test_format_analyser_detail_sections_uses_structure_tree_outline():
+    root = payload_stamp_bom_nested_mp()
+    lines = ChatDrawingValidationPresentationService.format_analyser_detail_sections(root)
+    body = "\n".join(lines)
+
+    assert "### Estrutura (SG1010)" in body
+    assert "```text" in body
+    assert "└──" in body or "├──" in body
+    assert "90262008" in body
+    assert "| Código | Descrição | Qtd | Unid. | Tipo |" not in body
+
+
+def test_build_export_tables_structure_includes_outline_for_pdf():
+    root = payload_stamp_bom_nested_mp()
+    package = {
+        "drawingAnalysis": {"productCode": "90262008", "items": []},
+        "productSummary": {"code": "90262008", "description": "CHICOTE"},
+        "analyserRoot": root,
+    }
+    tables = ChatDrawingValidationPresentationService.build_export_tables(package)
+    structure_table = next(table for table in tables if table.get("key") == "structure")
+
+    assert structure_table.get("presentation") == "outline"
+    assert "└──" in str(structure_table.get("outline") or "") or "├──" in str(
+        structure_table.get("outline") or ""
+    )
+    assert structure_table.get("rows")

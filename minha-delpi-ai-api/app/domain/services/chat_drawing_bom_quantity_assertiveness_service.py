@@ -238,6 +238,12 @@ class ChatDrawingBomQuantityAssertivenessService:
         root: dict,
         pdf_extract: dict,
     ) -> str | None:
+        if quantity <= 0 and ChatDrawingPatternsService.bom_quantity_semantics_rule(
+            "rejectZeroQuantity",
+            True,
+        ):
+            return "zero_quantity"
+
         if ChatDrawingPatternsService.is_intermediate_family(code):
             intermediate_reason = cls._intermediate_quantity_reason(
                 row=row,
