@@ -63,7 +63,7 @@ grep 'var _delpiMod' dist/assets/__federation_fn_import*.js                   # 
 node plugins/vite/federationReactProxyFix.test.mjs                            # testes unitários (tsx)
 ```
 
-O portal e o bootstrap MFE chamam `publishDelpiMfReact` / `ensurePortalFederationShareScope` **antes** de montar o remote.
+O portal e o bootstrap MFE chamam `publishDelpiMfReact` / `ensurePortalFederationShareScope` **antes** de montar o remote. O bootstrap **não** sobrescreve `__DELPI_MF_REACT__` se o portal já semeou uma instância válida (evita cópia bundled quebrada em `index-*.js`).
 
 Dependências pesadas (`mermaid`, `@xyflow/react`, `jspdf`, …) ficam **no bundle do remote**.
 

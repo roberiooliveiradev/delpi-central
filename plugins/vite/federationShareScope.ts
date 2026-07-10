@@ -113,7 +113,12 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
   registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", preservePortalPair);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
-  publishDelpiMfReact(React);
+
+  try {
+    publishDelpiMfReact(await loadSharedModule("react"));
+  } catch {
+    publishDelpiMfReact(React);
+  }
 }
 
 /** @deprecated Prefer ensureMfeFederationShareScopeReady — sync não valida createRoot do portal. */

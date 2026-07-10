@@ -13,8 +13,17 @@ import type { Plugin } from "vite";
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
 
+function isUsableReact(mod: unknown): mod is { useRef: (...args: unknown[]) => unknown } {
+  return typeof (mod as { useRef?: unknown })?.useRef === "function";
+}
+
+/** Publica React canônico — não sobrescreve instância válida já semeada pelo portal. */
 export function publishDelpiMfReact(react: unknown): void {
-  (globalThis as Record<string, unknown>)[DELPI_MF_REACT_GLOBAL] = react;
+  const g = globalThis as Record<string, unknown>;
+  if (isUsableReact(g[DELPI_MF_REACT_GLOBAL])) return;
+  if (isUsableReact(react)) {
+    g[DELPI_MF_REACT_GLOBAL] = react;
+  }
 }
 
 /** Proxy flatten sem reatribuir parâmetro `e` (strict → Assignment to constant variable). */
@@ -27,7 +36,7 @@ const OBJECT_ASSIGN_BRANCH =
   /:\(e\.default&&\(e=Object\.assign\(\{\},e\.default,e\)\),(\w+)\[(\w+)\]=e,e\)/;
 
 const REACT_PUBLISH = (cache: string, pkg: string) =>
-  `${pkg}==="react"&&(globalThis.${DELPI_MF_REACT_GLOBAL}=${cache}[${pkg}])`;
+  `${pkg}==="react"&&!globalThis.${DELPI_MF_REACT_GLOBAL}&&(globalThis.${DELPI_MF_REACT_GLOBAL}=${cache}[${pkg}])`;
 
 function replaceFlattenElseBranch(code: string): string {
   const replacement = `:(${PROXY_FLATTEN_EXPR},$1[$2]=_delpiMod,_delpiMod)`;

@@ -8,6 +8,7 @@ import {
   patchBundledReactCjsBridge,
   patchFederationFlattenModule,
   patchFederationImportPublishReact,
+  publishDelpiMfReact,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
 
@@ -47,9 +48,17 @@ function testReactShimUsesGlobal() {
   assert.match(out, /function V\(\)\{const __g=globalThis\.__DELPI_MF_REACT__;if\(__g\)return __g;return/);
 }
 
+function testPublishDoesNotOverwritePortalReact() {
+  globalThis[DELPI_MF_REACT_GLOBAL] = { useRef: () => "portal" };
+  publishDelpiMfReact({ useRef: () => "bundled" });
+  assert.equal(globalThis[DELPI_MF_REACT_GLOBAL].useRef(), "portal");
+  delete globalThis[DELPI_MF_REACT_GLOBAL];
+}
+
 testFlattenFromObjectAssign();
 testFlattenFromBrokenProxy();
 testFlattenRuntimeStrict();
 testReactShimUsesGlobal();
+testPublishDoesNotOverwritePortalReact();
 
-console.log("OK: federationReactProxyFix — 4 testes passaram");
+console.log("OK: federationReactProxyFix — 5 testes passaram");
