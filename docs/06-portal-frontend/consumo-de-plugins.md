@@ -107,7 +107,7 @@ Transição de rota no shell: `appHostRouteTransition.ts` → classe `app-host--
 1. `import(/* @vite-ignore */ entryUrl)` carrega `remoteEntry.js`
 2. Container deve expor `.get()` (Module Federation)
 3. Monta módulo exposto (ex. `./App`) em `federatedHostRef`
-4. Compartilha escopo via `window.__federation_shared__` — o portal **pré-registra** `react`, `react-dom` e `lucide-react` em `main.tsx` (`seedViteFederationShareScope`) antes de qualquer MFE; remotes federados (`plugin-ui`) consomem o mesmo singleton (evita React #321)
+4. O MFE pai registra React no share scope ao inicializar o nested remote `plugin-ui` — **não** pré-semeie React no portal (`__federation_shared__`), senão o remote consome instância diferente da do bundle do MFE (React #321).
 
 Gateway serve:
 

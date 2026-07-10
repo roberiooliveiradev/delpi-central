@@ -14,11 +14,21 @@ export const PLUGIN_UI_DEV_PORT = 5010;
 /** URL do remoteEntry em dev local (plugin-ui rodando com npm run dev). */
 export const PLUGIN_UI_DEV_REMOTE_ENTRY = `http://localhost:${PLUGIN_UI_DEV_PORT}/apps/plugin-ui/assets/remoteEntry.js`;
 
-/** Singleton MF — evita React #321 entre portal, MFE e remote plugin-ui. */
+/** Singleton MF — MFE fornece React ao nested remote plugin-ui via share scope local. */
 export const FEDERATION_SHARED_REACT = {
   react: { singleton: true, requiredVersion: "^19.0.0" },
   "react-dom": { singleton: true, requiredVersion: "^19.0.0" },
   "lucide-react": { singleton: true },
+} as const;
+
+/**
+ * plugin-ui como nested remote — não bundlar React local; consome o MFE pai.
+ * Evita React #321 quando portal seed ou semver escolhem instância errada.
+ */
+export const FEDERATION_SHARED_REACT_REMOTE = {
+  react: { singleton: true, requiredVersion: "^19.0.0", import: false },
+  "react-dom": { singleton: true, requiredVersion: "^19.0.0", import: false },
+  "lucide-react": { singleton: true, import: false },
 } as const;
 
 /** React Flow — singleton com o host para evitar hooks nulos (useRef / zustand). */

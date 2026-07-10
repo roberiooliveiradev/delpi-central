@@ -5,10 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./ui/App";
 import { AuthProvider } from "./state/AuthContext";
 import { NotificationCatalogProvider } from "./state/NotificationCatalogContext";
-import { seedViteFederationShareScope } from "./federation/seedViteFederationShareScope";
 import "./index.css";
-
-seedViteFederationShareScope();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

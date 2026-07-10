@@ -43,9 +43,7 @@ Gateway nginx
 | `./index` | `src/index.ts` | `import { KpiCard } from "@delpi/plugin-ui/index"` |
 | `./styles` | `src/styles-entry.ts` | `await import("@delpi/plugin-ui/styles")` |
 
-**Shared singletons:** `react`, `react-dom`, `lucide-react` (objeto `{ singleton: true }` em `federation.shared.ts`).
-
-O **portal** registra React no `window.__federation_shared__` antes de montar MFEs (`portal/src/federation/seedViteFederationShareScope.ts`) — obrigatório para evitar erro React #321 com remote `plugin-ui`.
+**Shared singletons:** `react`, `react-dom`, `lucide-react`. O remote `plugin-ui` usa `import: false` — consome React do MFE pai, não bundla cópia própria.
 
 Dependências pesadas (`mermaid`, `@xyflow/react`, `jspdf`, …) ficam **no bundle do remote**.
 
