@@ -14,6 +14,9 @@ from app.domain.services.chat_drawing_intermediate_semantics_service import (
 )
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_tolerance_service import ChatDrawingToleranceService
+from app.domain.services.chat_drawing_structure_index_service import (
+    ChatDrawingStructureIndexService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -262,6 +265,7 @@ class ChatDrawingBomQuantityAssertivenessService:
             quantity,
             code=code,
             pdf_extract=pdf_extract,
+            root=root,
         ):
             return "quantity_from_description"
 
@@ -271,9 +275,6 @@ class ChatDrawingBomQuantityAssertivenessService:
             "column_inferred",
             "refined_column",
         }
-
-        if trusted_column_source and source == "refined_column":
-            return None
 
         piece_units = ChatDrawingPatternsService.piece_count_units()
         api_unit = (api_row.unit if api_row else "").upper()
@@ -406,11 +407,13 @@ class ChatDrawingBomQuantityAssertivenessService:
         *,
         code: str = "",
         pdf_extract: dict | None = None,
+        root: dict | None = None,
     ) -> bool:
         description = cls._resolved_row_description(
             row,
             code=code,
             pdf_extract=pdf_extract or {},
+            root=root or {},
         )
 
         if not description.strip():
@@ -429,9 +432,18 @@ class ChatDrawingBomQuantityAssertivenessService:
         *,
         code: str,
         pdf_extract: dict,
+        root: dict | None = None,
     ) -> str:
         parts = [str(row.get("description") or "")]
         normalized_code = ChatProductQueryIntentService.normalize_product_code(code)
+
+        if normalized_code and isinstance(root, dict):
+            structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+
+            for index_row in ChatDrawingStructureIndexService.flatten_items(structure):
+                if index_row.code == normalized_code and index_row.description.strip():
+                    parts.append(index_row.description)
+                    break
 
         if not normalized_code:
             return " ".join(part for part in parts if part).strip()

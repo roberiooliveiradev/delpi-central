@@ -107,6 +107,49 @@ def test_column_inferred_quantity_source_skips_description_noise():
     assert reason is None
 
 
+def test_refined_column_without_row_description_uses_api_description_noise():
+    row = {
+        "code": "10091137",
+        "quantity": "4",
+        "description": None,
+        "quantitySource": "refined_column",
+        "quantityTrusted": True,
+    }
+    root = _payload_like_root()
+    root["structure"] = {
+        "items": [
+            {
+                "code": "10091137",
+                "description": "CONECTOR RETO 4 VIAS NU UL 94V-0",
+                "type": "MP",
+                "unit": "PC",
+                "quantity": 1000.0,
+                "components": [],
+            }
+        ]
+    }
+    reason = ChatDrawingBomQuantityAssertivenessService._untrusted_reason(
+        row=row,
+        code="10091137",
+        quantity=4.0,
+        api_row=None,
+        root=root,
+        pdf_extract={},
+    )
+
+    assert reason == "quantity_from_description"
+
+
+def _payload_like_root() -> dict:
+    return {
+        "product": {
+            "code": "90263655",
+            "unit": "MI",
+            "pa_reference": {"catalog_unit": "MI", "catalog_pieces_per_unit": 1000.0},
+        }
+    }
+
+
 def test_rejects_intermediate_length_as_quantity():
     row = {
         "code": "50212969",

@@ -24,6 +24,11 @@
       "maxCriticalErrors": 0,
       "allowedStatuses": ["approved", "approved_with_notes", "incomplete"],
       "notes": "BOM carimbo + roteiro PI legado — sem falsos críticos pós Fase C"
+    },
+    "90263655": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes"],
+      "notes": "QTD 4 VIAS não é quantidade BOM — refined_column sem descrição usa SG1010"
     }
   }
 }

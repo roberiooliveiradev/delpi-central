@@ -10,7 +10,21 @@ Ative o pipeline PDF × API DELPI quando o usuário pedir análise ou validaçã
 
 Ordem de autoridade em divergência: **API DELPI → PDF/OCR → normas (RAG)**.
 
-## Obrigações do assistente
+## Falsos positivos / negativos conhecidos (não reclassifique)
+
+O pipeline já trata estes padrões — **não** eleve Pendente a OK nem converta Erro em «provavelmente certo»:
+
+| Padrão | Comportamento esperado |
+|--------|------------------------|
+| **N VIAS** na descrição (ex.: «4 VIAS») | QTD extraída igual a N → **Pendente** (`quantity_from_description`), não crítico |
+| **Refinamento OCR de coluna** (`refined_column`) | Confia na célula só após cruzar ruído de descrição e SG1010 — sem descrição no PDF usa cadastro |
+| **Intermediário 50xx** fantasma em `full_text` | Ignorado quando BOM estruturada já lista CB/CT — não reportar `intermediate_extra` |
+| **Revisão sem carimbo legível** | Tende a **Pendente** (`revision_manual_pending`) — não afirmar conformidade |
+| **QTD 0 / coluna vazia** | **Pendente** ou ignorado na comparação — não crítico automático |
+
+Se `drawingAnalysis` marcar **Pendente**, diga que a leitura foi incerta e sugira reextração ou conferência manual — **não** trate como aprovado.
+
+## Severidade e checklist
 
 1. Não invente dados ausentes no PDF nem no cadastro.
 2. Quando `drawingAnalysisExport.markdown` existir, use-o como base do relatório — **não reclassifique** itens do checklist.
