@@ -450,8 +450,6 @@
   flex-shrink: 0;
 }
 
-.td-modal-backdrop {
-
 .td-modal--wide {
   width: min(980px, 100%);
 }
