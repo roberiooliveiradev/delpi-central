@@ -1,10 +1,12 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { BarChart3, Heading, Image as ImageIcon, Shapes, Sparkles, Text, Video } from "lucide-react";
-import { COMUNICADO_ICON_OPTIONS, COMUNICADO_SHAPE_KINDS, type ComunicadoShapeKind } from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoShapeKind } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { DataRoutePickerModal } from "./DataRoutePickerModal";
+import { ComunicadoIconLibraryMenu } from "./ComunicadoIconLibraryMenu";
+import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -13,67 +15,46 @@ type Labels = Record<string, string>;
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
-function ShapeDropdownMenu({
-  anchorRef,
-  onSelect,
-  items = COMUNICADO_SHAPE_KINDS.map((item) => ({ kind: item.kind, label: item.label })),
-}: {
-  anchorRef: RefObject<HTMLDivElement | null>;
-  onSelect: (kind: string) => void;
-  items?: Array<{ kind: string; label: string }>;
-}) {
-  const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
-
-  useLayoutEffect(() => {
-    const anchor = anchorRef.current;
-    if (!anchor) return;
-
-    const rect = anchor.getBoundingClientRect();
-    setStyle({
-      position: "fixed",
-      top: rect.bottom + 4,
-      left: rect.left,
-      zIndex: 5000,
-      visibility: "visible",
-    });
-  }, [anchorRef]);
-
-  return createPortal(
-    <div className="td-composer__dropdown-menu td-composer__dropdown-menu--portal" role="menu" style={style}>
-      {items.map((item) => (
-        <button
-          key={item.kind}
-          type="button"
-          role="menuitem"
-          className="td-composer__dropdown-item"
-          onClick={() => onSelect(item.kind)}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>,
-    document.body,
-  );
-}
-
 export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
-  const { shapeMenuOpen, setShapeMenuOpen, addBlock, addShape, addIconBlock, addDataBlock, openMediaLibrary } =
-    useComunicadoEditor();
+  const {
+    shapeMenuOpen,
+    setShapeMenuOpen,
+    addBlock,
+    addShape,
+    addIconBlock,
+    addDataBlock,
+    openMediaLibrary,
+  } = useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
   const iconAnchorRef = useRef<HTMLDivElement>(null);
   const [dataPickerOpen, setDataPickerOpen] = useState(false);
   const [iconMenuOpen, setIconMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (!shapeMenuOpen && !iconMenuOpen) return undefined;
+
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+      if (shapeAnchorRef.current?.contains(target) || iconAnchorRef.current?.contains(target)) return;
+      if ((target as HTMLElement).closest?.(".td-shape-library--portal")) return;
+      setShapeMenuOpen(false);
+      setIconMenuOpen(false);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [iconMenuOpen, setShapeMenuOpen, shapeMenuOpen]);
+
+  function insertShape(kind: ComunicadoShapeKind) {
+    addShape(kind);
+    rememberComunicadoShape(kind);
+    setShapeMenuOpen(false);
+  }
+
   return (
     <div className="td-deck-ribbon__groups">
-      <DeckRibbonGroup label="Inserir" hint={H.insert}>
+      <DeckRibbonGroup label="Texto" hint={H.insertTextGroup ?? H.insert}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={BarChart3}
-            label={labels.comunicadoAddIndicator ?? "Dados"}
-            hint={H.insertIndicator ?? H.insert}
-            onClick={() => setDataPickerOpen(true)}
-          />
           <DeckRibbonTile
             icon={Heading}
             label={labels.comunicadoAddHeading ?? "Título"}
@@ -86,6 +67,11 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             hint={H.insertText}
             onClick={() => addBlock("text")}
           />
+        </div>
+      </DeckRibbonGroup>
+
+      <DeckRibbonGroup label="Mídia" hint={H.insertMediaGroup ?? H.insert}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={ImageIcon}
             label={labels.comunicadoAddImage ?? "Imagem"}
@@ -98,48 +84,61 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             hint={H.insertVideo}
             onClick={() => openMediaLibrary("insert-video")}
           />
+        </div>
+      </DeckRibbonGroup>
+
+      <DeckRibbonGroup label="Ilustrações" hint={H.insertIllustrationsGroup ?? H.insertShape}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <div ref={shapeAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile
               icon={Shapes}
-              label={labels.comunicadoAddShape ?? "Forma"}
+              label={labels.comunicadoAddShape ?? "Formas"}
               hint={H.insertShape}
               active={shapeMenuOpen}
-              onClick={() => setShapeMenuOpen(!shapeMenuOpen)}
+              onClick={() => {
+                setIconMenuOpen(false);
+                setShapeMenuOpen(!shapeMenuOpen);
+              }}
             />
             {shapeMenuOpen ? (
-              <ShapeDropdownMenu
-                anchorRef={shapeAnchorRef}
-                onSelect={(kind) => {
-                  addShape(kind as ComunicadoShapeKind);
-                  setShapeMenuOpen(false);
-                }}
-              />
+              <ComunicadoShapeLibraryMenu anchorRef={shapeAnchorRef} onSelect={insertShape} />
             ) : null}
           </div>
           <div ref={iconAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile
               icon={Sparkles}
-              label={labels.comunicadoAddIcon ?? "Ícone"}
+              label={labels.comunicadoAddIcon ?? "Ícones"}
               hint={H.insertIcon}
               active={iconMenuOpen}
-              onClick={() => setIconMenuOpen((open) => !open)}
+              onClick={() => {
+                setShapeMenuOpen(false);
+                setIconMenuOpen((open) => !open);
+              }}
             />
             {iconMenuOpen ? (
-              <ShapeDropdownMenu
+              <ComunicadoIconLibraryMenu
                 anchorRef={iconAnchorRef}
                 onSelect={(name) => {
                   addIconBlock(name);
                   setIconMenuOpen(false);
                 }}
-                items={COMUNICADO_ICON_OPTIONS.map((item) => ({
-                  kind: item.name,
-                  label: item.label,
-                }))}
               />
             ) : null}
           </div>
         </div>
       </DeckRibbonGroup>
+
+      <DeckRibbonGroup label="Dados" hint={H.insertDataGroup ?? H.insertIndicator}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile
+            icon={BarChart3}
+            label={labels.comunicadoAddIndicator ?? "Indicador"}
+            hint={H.insertIndicator ?? H.insert}
+            onClick={() => setDataPickerOpen(true)}
+          />
+        </div>
+      </DeckRibbonGroup>
+
       <DataRoutePickerModal
         open={dataPickerOpen}
         onClose={() => setDataPickerOpen(false)}

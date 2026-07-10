@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { ComunicadoShapeGraphic } from "./comunicadoShapeGraphic";
 import { ComunicadoIconGraphic } from "./comunicadoIconView";
 import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
 import {
@@ -67,82 +68,15 @@ function wrapWithLink(node: ReactNode, block: ComunicadoBlock) {
 }
 
 function ShapeGraphic({ block }: { block: Extract<ComunicadoBlock, { type: "shape" }> }) {
-  const fill = block.style?.fill ?? "#089bdb";
-  const stroke = block.style?.stroke ?? "#ffffff";
-  const strokeWidth = block.style?.strokeWidth ?? 2;
-
-  if (block.shape === "line") {
-    return (
-      <div
-        className="tdp-comunicado__shape-line"
-        style={{ backgroundColor: stroke, height: Math.max(2, strokeWidth) }}
-      />
-    );
-  }
-
-  if (block.shape === "triangle") {
-    return (
-      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
-        <polygon points="50,8 92,92 8,92" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      </svg>
-    );
-  }
-
-  if (block.shape === "arrow-right") {
-    return (
-      <svg viewBox="0 0 100 60" className="tdp-comunicado__shape-svg" aria-hidden="true">
-        <path
-          d="M4 30 H62 L48 14 L58 4 L96 30 L58 56 L48 46 L62 30 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-        />
-      </svg>
-    );
-  }
-
-  if (block.shape === "chevron-right") {
-    return (
-      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
-        <path
-          d="M28 12 L72 50 L28 88 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-
-  if (block.shape === "star") {
-    return (
-      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
-        <polygon
-          points="50,6 61,38 96,38 68,58 79,92 50,72 21,92 32,58 4,38 39,38"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-
-  const shapeStyle: CSSProperties = {
-    width: "100%",
-    height: "100%",
-    backgroundColor: fill,
-    border: `${strokeWidth}px solid ${stroke}`,
-    borderRadius:
-      block.shape === "ellipse"
-        ? "50%"
-        : block.shape === "rounded-rect"
-          ? block.style?.borderRadius ?? 16
-          : 0,
-  };
-
-  return <div className="tdp-comunicado__shape-fill" style={shapeStyle} />;
+  return (
+    <ComunicadoShapeGraphic
+      kind={block.shape}
+      fill={block.style?.fill ?? "#089bdb"}
+      stroke={block.style?.stroke ?? "#ffffff"}
+      strokeWidth={block.style?.strokeWidth ?? 2}
+      borderRadius={block.style?.borderRadius}
+    />
+  );
 }
 
 export function ComunicadoBlockView({

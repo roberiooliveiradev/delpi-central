@@ -27,10 +27,24 @@ export type ComunicadoShapeKind =
   | "rounded-rect"
   | "ellipse"
   | "triangle"
+  | "diamond"
+  | "pentagon"
+  | "hexagon"
+  | "heart"
   | "arrow-right"
+  | "arrow-left"
+  | "arrow-up"
+  | "arrow-down"
   | "chevron-right"
+  | "chevron-left"
   | "star"
-  | "line";
+  | "star-4"
+  | "line"
+  | "line-arrow-right"
+  | "flowchart-process"
+  | "flowchart-decision"
+  | "flowchart-terminator"
+  | "callout-rect";
 
 export type ComunicadoContentRunStyle = {
   fontSize?: number;
@@ -216,17 +230,6 @@ export const COMUNICADO_FONT_SIZE_MAX = 120;
 export const COMUNICADO_FONT_SIZE_STEP = 2;
 
 export const COMUNICADO_LINE_HEIGHT_OPTIONS = [1, 1.15, 1.5, 2] as const;
-
-export const COMUNICADO_SHAPE_KINDS: Array<{ kind: ComunicadoShapeKind; label: string }> = [
-  { kind: "rectangle", label: "Retângulo" },
-  { kind: "rounded-rect", label: "Retângulo arredondado" },
-  { kind: "ellipse", label: "Elipse" },
-  { kind: "triangle", label: "Triângulo" },
-  { kind: "arrow-right", label: "Seta" },
-  { kind: "chevron-right", label: "Chevron" },
-  { kind: "star", label: "Estrela" },
-  { kind: "line", label: "Linha" },
-];
 
 export const COMUNICADO_ICON_OPTIONS: Array<{ name: string; label: string }> = [
   { name: "Star", label: "Estrela" },

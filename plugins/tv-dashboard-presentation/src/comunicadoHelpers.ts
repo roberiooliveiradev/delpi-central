@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
   serializeContentRuns,
   shouldPersistContentRuns,
@@ -117,9 +118,20 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
-  if (shape === "line") return { x: 10, y: 48, w: 80, h: 2 };
-  if (shape === "arrow-right" || shape === "chevron-right") return { x: 35, y: 40, w: 30, h: 20 };
-  if (shape === "star") return { x: 38, y: 35, w: 24, h: 24 };
+  if (shape === "line" || shape === "line-arrow-right") return { x: 10, y: 48, w: 80, h: 4 };
+  if (
+    shape === "arrow-right" ||
+    shape === "arrow-left" ||
+    shape === "arrow-up" ||
+    shape === "arrow-down" ||
+    shape === "chevron-right" ||
+    shape === "chevron-left"
+  ) {
+    return { x: 35, y: 40, w: 30, h: 20 };
+  }
+  if (shape === "star" || shape === "star-4" || shape === "heart") return { x: 38, y: 35, w: 24, h: 24 };
+  if (shape === "flowchart-terminator") return { x: 30, y: 42, w: 40, h: 16 };
+  if (shape === "callout-rect") return { x: 28, y: 28, w: 44, h: 36 };
   if (type === "icon") return { x: 42, y: 40, w: 16, h: 16 };
   return { x: 30, y: 30, w: 40, h: 40 };
 }
@@ -157,11 +169,12 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       zIndex: 1,
       fill: "#089bdb",
       stroke: "#ffffff",
-      strokeWidth: shape === "line" ? 4 : 2,
-      opacity: shape === "line" ? 1 : 0.9,
+      strokeWidth: shape === "line" || shape === "line-arrow-right" ? 4 : 2,
+      opacity: shape === "line" || shape === "line-arrow-right" ? 1 : 0.9,
     };
-    if (shape === "rounded-rect") return { ...base, borderRadius: 16 };
-    if (shape === "ellipse") return { ...base, borderRadius: 9999 };
+    if (shape === "rounded-rect" || shape === "callout-rect") return { ...base, borderRadius: 16 };
+    if (shape === "ellipse" || shape === "flowchart-terminator") return { ...base, borderRadius: 9999 };
+    if (shape === "flowchart-process") return { ...base, borderRadius: 4 };
     return base;
   }
   if (type === "icon") {
@@ -430,7 +443,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     );
   }
   if (type === "shape") {
-    const kind = shape && isShapeKind(shape) ? shape : "rectangle";
+    const kind = shape && isComunicadoShapeKind(shape) ? shape : "rectangle";
     return attachBlockAnimations(
       {
         id,
@@ -516,16 +529,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
 }
 
 function isShapeKind(value: string): value is ComunicadoShapeKind {
-  return [
-    "rectangle",
-    "rounded-rect",
-    "ellipse",
-    "triangle",
-    "arrow-right",
-    "chevron-right",
-    "star",
-    "line",
-  ].includes(value);
+  return isComunicadoShapeKind(value);
 }
 
 function normalizeFrame(value: unknown, type: ComunicadoBlock["type"]): ComunicadoFrame {

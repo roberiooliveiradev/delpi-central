@@ -57,8 +57,16 @@ export {
   COMUNICADO_FONT_SIZE_STEP,
   COMUNICADO_ICON_OPTIONS,
   COMUNICADO_LINE_HEIGHT_OPTIONS,
-  COMUNICADO_SHAPE_KINDS,
 } from "./comunicadoTypes";
+export {
+  COMUNICADO_SHAPE_CATALOG,
+  COMUNICADO_SHAPE_CATALOG_CATEGORIES,
+  COMUNICADO_SHAPE_KINDS,
+  COMUNICADO_SHAPE_KIND_VALUES,
+  comunicadoShapeLabel,
+  isComunicadoShapeKind,
+} from "./comunicadoShapeCatalog";
+export { ComunicadoShapeGraphic, ComunicadoShapePreview } from "./comunicadoShapeGraphic";
 export {
   COMUNICADO_GOOGLE_FONT_CATALOG,
   buildGoogleFontsStylesheetUrl,
