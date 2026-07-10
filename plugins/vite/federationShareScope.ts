@@ -9,7 +9,7 @@ import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as LucideReact from "lucide-react";
 import { publishDelpiMfReact } from "./federationReactProxyFix";
-import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion";
+import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
 
 /** Amarrado ao bundle — invalida hash quando o patch MF muda. */
 void DELPI_MF_PATCH_VERSION;

@@ -16,6 +16,7 @@ import {
   upgradeUnconditionalReactGlobalPublish,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
+import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
 
 const REACT_INTERNALS = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
 
@@ -99,14 +100,14 @@ function testUpgradeUnconditionalPublish() {
 function testMfImportCacheBust() {
   const raw = String.raw`import{importShared as _}from"./__federation_fn_import-X.js";import("./App-Y.js")`;
   const out = patchMfRuntimeImportCacheBust(raw);
-  assert.ok(out.includes('__federation_fn_import-X.js?v=4"'), "static import bust");
-  assert.ok(out.includes('import("./App-Y.js?v=4")'), "dynamic import bust");
+  assert.ok(out.includes(`__federation_fn_import-X.js?v=${DELPI_MF_PATCH_VERSION}"`), "static import bust");
+  assert.ok(out.includes(`import("./App-Y.js?v=${DELPI_MF_PATCH_VERSION}")`), "dynamic import bust");
 }
 
 function testRemoteEntryCacheBust() {
   const raw = String.raw`y("/apps/foo/assets/__federation_expose_App-ABC.js")`;
   const out = patchRemoteEntryCacheBust(raw);
-  assert.ok(out.includes("__federation_expose_App-ABC.js?v=4"), "remoteEntry bust");
+  assert.ok(out.includes(`__federation_expose_App-ABC.js?v=${DELPI_MF_PATCH_VERSION}`), "remoteEntry bust");
 }
 
 testFlattenFromObjectAssign();

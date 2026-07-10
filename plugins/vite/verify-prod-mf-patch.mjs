@@ -8,7 +8,7 @@
  *   node plugins/vite/verify-prod-mf-patch.mjs controle-retrabalhos
  *   node plugins/vite/verify-prod-mf-patch.mjs controle-retrabalhos https://minhadelpi.com.br
  */
-import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.ts";
+import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
 
 const appId = process.argv[2];
 const baseUrl = (process.argv[3] ?? "https://minhadelpi.com.br").replace(/\/$/, "");

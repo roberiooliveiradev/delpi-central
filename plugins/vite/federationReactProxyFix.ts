@@ -9,7 +9,7 @@
  * o shim CJS é redirecionado para globalThis.__DELPI_MF_REACT__ quando disponível.
  */
 import type { Plugin } from "vite";
-import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion";
+import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
 
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
