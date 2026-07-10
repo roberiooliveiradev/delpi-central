@@ -15,12 +15,18 @@ import {
   newBlockId,
   nextZIndex,
   parseComunicadoConfig,
+  resolveTextBlockDisplayRuns,
+  selectionRunStyleState,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
+  syncTextBlockFields,
   type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoDataFilters,
   type ComunicadoShapeKind,
+  type ComunicadoTextBlock,
+  type ContentRunStyleToggleKey,
+  type ComunicadoContentRun,
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
@@ -42,6 +48,8 @@ import {
   ComunicadoEditorContext,
   useComunicadoEditor,
   type ComunicadoEditorContextValue,
+  type TextEditorBridge,
+  type TextEditSelection,
 } from "./comunicadoEditorContextCore";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
 
@@ -97,6 +105,10 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     return first ? [first] : [];
   });
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
+  const [textEditSelectionStyle, setTextEditSelectionStyle] = useState<
+    ComunicadoEditorContextValue["textEditSelectionStyle"]
+  >(null);
   const [uploading, setUploading] = useState(false);
   const [historyTick, setHistoryTick] = useState(0);
 
@@ -106,12 +118,17 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const multiDragRef = useRef<{ startFrames: Map<string, ComunicadoBlock["frame"]> } | null>(null);
   const configRef = useRef(config);
   configRef.current = config;
+  const textEditorBridgesRef = useRef<Map<string, TextEditorBridge>>(new Map());
 
   const selectedId = selectedIds[selectedIds.length - 1] ?? null;
 
   const setSelectedId = useCallback((id: string | null) => {
     setSelectedIds(id ? [id] : []);
     setEditingTextId((current) => (id === current ? current : null));
+    if (!id) {
+      setTextEditSelection(null);
+      setTextEditSelectionStyle(null);
+    }
   }, []);
 
   const selectBlocksByIds = useCallback((blockIds: string[]) => {
@@ -450,18 +467,74 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   }
 
   function updateBlockContent(blockId: string, content: string) {
+    updateBlockTextFields(blockId, syncTextBlockFields(content, undefined));
+  }
+
+  function updateBlockTextFields(
+    blockId: string,
+    fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">,
+  ) {
+    const textFields = syncTextBlockFields(fields.content, fields.contentRuns);
     const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
       if (block.id !== blockId) return block;
       if (block.type === "heading" || block.type === "text") {
-        return { ...block, content, contentRuns: undefined } as ComunicadoBlock;
+        return { ...block, ...textFields } as ComunicadoBlock;
       }
       if (block.type === "shape") {
-        return { ...block, content } as ComunicadoBlock;
+        return { ...block, content: textFields.content } as ComunicadoBlock;
       }
       return block;
     });
     updateBlocks(nextBlocks);
   }
+
+  function setEditingTextIdWithSelection(id: string | null) {
+    setEditingTextId(id);
+    if (!id) {
+      setTextEditSelection(null);
+      setTextEditSelectionStyle(null);
+    }
+  }
+
+  const registerTextEditorBridge = useCallback((blockId: string, bridge: TextEditorBridge | null) => {
+    if (bridge) textEditorBridgesRef.current.set(blockId, bridge);
+    else textEditorBridgesRef.current.delete(blockId);
+  }, []);
+
+  const reportTextEditSelection = useCallback((
+    selection: TextEditSelection | null,
+    runs?: ComunicadoContentRun[],
+  ) => {
+    setTextEditSelection(selection);
+    if (!selection || selection.start >= selection.end) {
+      setTextEditSelectionStyle(null);
+      return;
+    }
+    if (runs) {
+      setTextEditSelectionStyle(
+        selectionRunStyleState(runs, selection.start, selection.end),
+      );
+      return;
+    }
+    const block = configRef.current.blocks?.find((item) => item.id === selection.blockId);
+    if (!block || (block.type !== "heading" && block.type !== "text")) {
+      setTextEditSelectionStyle(null);
+      return;
+    }
+    setTextEditSelectionStyle(
+      selectionRunStyleState(
+        resolveTextBlockDisplayRuns(block),
+        selection.start,
+        selection.end,
+      ),
+    );
+  }, []);
+
+  const toggleEditingTextRunStyle = useCallback((toggleKey: ContentRunStyleToggleKey) => {
+    if (!editingTextId) return;
+    const bridge = textEditorBridgesRef.current.get(editingTextId);
+    bridge?.applyPartialStyleToggle(toggleKey);
+  }, [editingTextId]);
 
   function updateBlockLink(blockId: string, href: string | undefined) {
     const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
@@ -710,7 +783,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     clearSelection,
     setSelectedId,
     editingTextId,
-    setEditingTextId,
+    setEditingTextId: setEditingTextIdWithSelection,
+    textEditSelection,
+    textEditSelectionStyle,
+    registerTextEditorBridge,
+    reportTextEditSelection,
+    toggleEditingTextRunStyle,
     uploading,
     shapeMenuOpen,
     setShapeMenuOpen,
@@ -727,6 +805,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateSelected,
     updateBlock,
     updateBlockContent,
+    updateBlockTextFields,
     updateBlockLink,
     updateSelectedStyle,
     removeSelected,

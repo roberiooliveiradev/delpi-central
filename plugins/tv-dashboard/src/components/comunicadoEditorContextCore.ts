@@ -6,6 +6,10 @@ import type {
   ComunicadoConfig,
   ComunicadoDataFilters,
   ComunicadoShapeKind,
+  ComunicadoTextBlock,
+  ContentRunSelectionStyleState,
+  ContentRunStyleToggleKey,
+  ComunicadoContentRun,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { MediaAsset } from "../api/tvDashboardApi";
@@ -13,6 +17,17 @@ import type { ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
+
+export type TextEditSelection = {
+  blockId: string;
+  start: number;
+  end: number;
+};
+
+export type TextEditorBridge = {
+  applyPartialStyleToggle: (toggleKey: ContentRunStyleToggleKey) => void;
+  refreshSelectionState: () => void;
+};
 
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
@@ -29,6 +44,14 @@ export type ComunicadoEditorContextValue = {
   setSelectedId: (id: string | null) => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
+  textEditSelection: TextEditSelection | null;
+  textEditSelectionStyle: ContentRunSelectionStyleState | null;
+  registerTextEditorBridge: (blockId: string, bridge: TextEditorBridge | null) => void;
+  reportTextEditSelection: (
+    selection: TextEditSelection | null,
+    runs?: ComunicadoContentRun[],
+  ) => void;
+  toggleEditingTextRunStyle: (toggleKey: ContentRunStyleToggleKey) => void;
   uploading: boolean;
   shapeMenuOpen: boolean;
   setShapeMenuOpen: (open: boolean) => void;
@@ -45,6 +68,10 @@ export type ComunicadoEditorContextValue = {
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
   updateBlockContent: (blockId: string, content: string) => void;
+  updateBlockTextFields: (
+    blockId: string,
+    fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">,
+  ) => void;
   updateBlockLink: (blockId: string, href: string | undefined) => void;
   updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
   removeSelected: () => void;

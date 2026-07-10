@@ -86,6 +86,10 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     groupSelected,
     ungroupSelected,
     blocks,
+    editingTextId,
+    textEditSelection,
+    textEditSelectionStyle,
+    toggleEditingTextRunStyle,
   } = useComunicadoEditor();
 
   const multiSelected = selectedIds.length >= 2;
@@ -94,6 +98,38 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const canUngroup = selectedHasGroup(blocks, selectedIds);
 
   const isTextBlock = selected?.type === "heading" || selected?.type === "text";
+  const partialTextSelectionActive = Boolean(
+    isTextBlock &&
+      selected &&
+      editingTextId === selected.id &&
+      textEditSelection &&
+      textEditSelection.blockId === selected.id &&
+      textEditSelection.end > textEditSelection.start,
+  );
+  const blockFontWeightActive = selected?.style?.fontWeight === "bold";
+  const blockFontStyleActive = selected?.style?.fontStyle === "italic";
+  const blockDecorationFlags = parseTextDecorationFlags(selected?.style?.textDecoration);
+  const partialFontWeightActive =
+    partialTextSelectionActive &&
+    (textEditSelectionStyle?.fontWeight === "bold" || textEditSelectionStyle?.fontWeight === "mixed");
+  const partialFontStyleActive =
+    partialTextSelectionActive &&
+    (textEditSelectionStyle?.fontStyle === "italic" || textEditSelectionStyle?.fontStyle === "mixed");
+  const partialUnderlineActive =
+    partialTextSelectionActive &&
+    (textEditSelectionStyle?.underline === true || textEditSelectionStyle?.underline === "mixed");
+  const partialStrikethroughActive =
+    partialTextSelectionActive &&
+    (textEditSelectionStyle?.strikethrough === true ||
+      textEditSelectionStyle?.strikethrough === "mixed");
+  const fontWeightActive = partialTextSelectionActive ? partialFontWeightActive : blockFontWeightActive;
+  const fontStyleActive = partialTextSelectionActive ? partialFontStyleActive : blockFontStyleActive;
+  const underlineActive = partialTextSelectionActive
+    ? partialUnderlineActive
+    : blockDecorationFlags.underline;
+  const strikethroughActive = partialTextSelectionActive
+    ? partialStrikethroughActive
+    : blockDecorationFlags.strikethrough;
   const textVerticalAlign =
     isTextBlock && selected
       ? selected.style?.verticalAlign ?? defaultVerticalAlignForBlock(selected.type)
@@ -271,65 +307,74 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               <div className="td-deck-ribbon__toolbar-row">
                 <button
                   type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontWeight === "bold" ? " td-btn--active" : ""}`}
+                  className={`td-btn td-btn--sm td-btn--icon${fontWeightActive ? " td-btn--active" : ""}`}
                   aria-label="Negrito"
-                  onClick={() =>
+                  onClick={() => {
+                    if (partialTextSelectionActive) {
+                      toggleEditingTextRunStyle("fontWeight");
+                      return;
+                    }
                     updateSelectedStyle({
                       fontWeight: selected.style?.fontWeight === "bold" ? "normal" : "bold",
-                    })
-                  }
+                    });
+                  }}
                 >
                   <Bold size={15} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${selected.style?.fontStyle === "italic" ? " td-btn--active" : ""}`}
+                  className={`td-btn td-btn--sm td-btn--icon${fontStyleActive ? " td-btn--active" : ""}`}
                   aria-label="Itálico"
-                  onClick={() =>
+                  onClick={() => {
+                    if (partialTextSelectionActive) {
+                      toggleEditingTextRunStyle("fontStyle");
+                      return;
+                    }
                     updateSelectedStyle({
                       fontStyle: selected.style?.fontStyle === "italic" ? "normal" : "italic",
-                    })
-                  }
+                    });
+                  }}
                 >
                   <Italic size={15} aria-hidden="true" />
                 </button>
-                {(() => {
-                  const flags = parseTextDecorationFlags(selected.style?.textDecoration);
-                  return (
-                    <>
-                      <button
-                        type="button"
-                        className={`td-btn td-btn--sm td-btn--icon${flags.underline ? " td-btn--active" : ""}`}
-                        aria-label="Sublinhado"
-                        onClick={() =>
-                          updateSelectedStyle({
-                            textDecoration: buildTextDecoration(
-                              !flags.underline,
-                              flags.strikethrough,
-                            ),
-                          })
-                        }
-                      >
-                        <Underline size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className={`td-btn td-btn--sm td-btn--icon${flags.strikethrough ? " td-btn--active" : ""}`}
-                        aria-label="Tachado"
-                        onClick={() =>
-                          updateSelectedStyle({
-                            textDecoration: buildTextDecoration(
-                              flags.underline,
-                              !flags.strikethrough,
-                            ),
-                          })
-                        }
-                      >
-                        <Strikethrough size={15} aria-hidden="true" />
-                      </button>
-                    </>
-                  );
-                })()}
+                <button
+                  type="button"
+                  className={`td-btn td-btn--sm td-btn--icon${underlineActive ? " td-btn--active" : ""}`}
+                  aria-label="Sublinhado"
+                  onClick={() => {
+                    if (partialTextSelectionActive) {
+                      toggleEditingTextRunStyle("underline");
+                      return;
+                    }
+                    updateSelectedStyle({
+                      textDecoration: buildTextDecoration(
+                        !blockDecorationFlags.underline,
+                        blockDecorationFlags.strikethrough,
+                      ),
+                    });
+                  }}
+                >
+                  <Underline size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className={`td-btn td-btn--sm td-btn--icon${strikethroughActive ? " td-btn--active" : ""}`}
+                  aria-label="Tachado"
+                  onClick={() => {
+                    if (partialTextSelectionActive) {
+                      toggleEditingTextRunStyle("strikethrough");
+                      return;
+                    }
+                    updateSelectedStyle({
+                      textDecoration: buildTextDecoration(
+                        blockDecorationFlags.underline,
+                        !blockDecorationFlags.strikethrough,
+                      ),
+                    });
+                  }}
+                >
+                  <Strikethrough size={15} aria-hidden="true" />
+                </button>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
                 <label className="td-ribbon-tile td-ribbon-tile--color td-ribbon-tile--inline" aria-label="Realce">
                   <span className="td-ribbon-tile__icon">

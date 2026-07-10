@@ -942,16 +942,16 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 | # | Entrega | Esforço |
 |---|---|---|
 | 4C.1 | Modelo `contentRuns: { text, style? }[]` com fallback `content` string | M | ✅ v1.3.2 |
-| 4C.2 | Editor inline com toggles parciais (negrito só na seleção) | L |
+| 4C.2 | Editor inline com toggles parciais (negrito só na seleção) | L | ✅ v1.3.3 |
 | 4C.3 | Bullets / listas numeradas | M |
 | 4C.4 | Estilos nomeados (Título 1, Subtítulo, Corpo) | M |
 | 4C.5 | Catálogo Google Fonts (subset curado + lazy load) | M |
 
 **Critérios de aceite 4C:**
 
-- [ ] Slide legado (string plana) abre e salva sem perda.
+- [x] Slide legado (string plana) abre e salva sem perda.
 - [ ] Lista com 3 itens renderiza na TV com marcadores.
-- [ ] Negrito parcial visível no editor e na apresentação.
+- [x] Negrito parcial visível no editor e na apresentação.
 
 #### Onda 4D — Layout avançado
 

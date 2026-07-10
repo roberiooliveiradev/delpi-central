@@ -29,6 +29,7 @@ export type {
   ComunicadoIconBlock,
   ComunicadoScreenData,
   ComunicadoShapeKind,
+  ComunicadoTextBlock,
 } from "./comunicadoTypes";
 export type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 export {
@@ -90,6 +91,20 @@ export {
   shouldPersistContentRuns,
   syncTextBlockFields,
 } from "./comunicadoContentRuns";
+export {
+  compactContentRuns,
+  contentRunInlineStyleProperties,
+  contentRunsFromEditableRoot,
+  getEditableTextSelectionOffsets,
+  hasPersistableContentRuns,
+  renderContentRunsHtml,
+  restoreEditableTextSelection,
+  selectionRunStyleState,
+  syncTextBlockFromRuns,
+  toggleContentRunStyleInRange,
+  type ContentRunSelectionStyleState,
+  type ContentRunStyleToggleKey,
+} from "./comunicadoContentRunEditing";
 export { TvDataBlockView } from "./tvDataBlockView";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";
