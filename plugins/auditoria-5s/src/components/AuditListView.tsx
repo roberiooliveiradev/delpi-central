@@ -41,11 +41,6 @@ import {
 } from "../utils/auditList";
 import { formatPersonNamesList } from "../utils/formatPersonName";
 import { getDisplayNameFromToken } from "../utils/jwt";
-import {
-  exportAuditExcel,
-  exportAuditPdf,
-  loadAuditExportData,
-} from "../utils/auditExport";
 import { AuditRowMenuPortal } from "./AuditRowMenuPortal";
 import { ListFilterSelectField } from "./filtersUi";
 
@@ -197,6 +192,9 @@ export function AuditListView({
     setExportError(null);
     setExportingAuditId(item.id);
     try {
+      const { exportAuditExcel, exportAuditPdf, loadAuditExportData } = await import(
+        "../utils/auditExport"
+      );
       const data = await loadAuditExportData(item.id);
       if (format === "excel") {
         await exportAuditExcel(data);

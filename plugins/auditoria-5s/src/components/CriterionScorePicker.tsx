@@ -15,6 +15,8 @@ const SCORE_META: Record<number, { tone: ScoreTone; label: string }> = {
   5: { tone: "high", label: "Bom" },
 };
 
+export { getScoreSummaryLabel } from "../utils/scoreLabels";
+
 export function getScoreTone(
   score: number | null | undefined,
   isNotApplicable: boolean,
@@ -23,17 +25,6 @@ export function getScoreTone(
   if (score === 1) return "low";
   if (score === 3) return "mid";
   if (score === 5) return "high";
-  return null;
-}
-
-export function getScoreSummaryLabel(
-  score: number | null | undefined,
-  isNotApplicable: boolean,
-): string | null {
-  if (isNotApplicable) return "N/A";
-  if (score != null && SCORE_META[score]) {
-    return SCORE_META[score].label;
-  }
   return null;
 }
 
