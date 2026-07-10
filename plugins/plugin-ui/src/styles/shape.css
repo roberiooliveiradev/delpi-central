@@ -139,11 +139,64 @@
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, var(--delpi-ui-surface, #fff));
 }
 
+.delpi-ui-color-picker-trigger__label {
+  font-size: 11px;
+}
+
+.delpi-ui-color-picker-trigger--ribbon {
+  display: inline-flex;
+}
+
+.delpi-ui-color-picker-trigger--ribbon .delpi-ui-color-picker-trigger__button {
+  min-width: 52px;
+  min-height: 52px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-color-picker-trigger--ribbon .delpi-ui-color-picker-trigger__button:hover,
+.delpi-ui-color-picker-trigger--ribbon .delpi-ui-color-picker-trigger__button[aria-expanded="true"] {
+  border-color: var(--delpi-ui-border, var(--border, #e5e7eb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, var(--delpi-ui-surface, #fff));
+}
+
 .delpi-ui-color-picker-trigger__preview {
   width: 28px;
   height: 14px;
   border: 1px solid var(--delpi-ui-border, #cbd5e1);
   border-radius: 2px;
+}
+
+.delpi-ui-color-picker-trigger--ribbon .delpi-ui-color-picker-trigger__preview {
+  width: 22px;
+  height: 12px;
+}
+
+.delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__button {
+  flex-direction: row;
+  gap: 0;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 4px;
+}
+
+.delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
 }
 
 .delpi-ui-color-picker-trigger__panel,

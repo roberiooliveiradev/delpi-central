@@ -1,10 +1,10 @@
 import { FolderOpen, Upload } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "./DeckRibbonGroup";
 import { DeckRibbonTile } from "./DeckRibbonTile";
+import { TvRibbonColorPicker } from "./TvRibbonColorPicker";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -28,42 +28,26 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
   return (
     <div className="td-deck-ribbon__groups">
       <DeckRibbonGroup label={labels.comunicadoBackground ?? "Fundo"} hint={E.backgroundColor}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <HintAction hint={E.backgroundColor} ariaLabel="Ajuda: Cor de fundo">
-            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Cor sólida">
-              <span className="td-ribbon-tile__icon">
-                <input
-                  type="color"
-                  className="td-deck-ribbon__color"
-                  value={background?.type === "color" ? background.value : "#0f172a"}
-                  onChange={(e) => setBackgroundColor(e.target.value)}
-                />
-              </span>
-              <span className="td-ribbon-tile__label">Cor</span>
-            </label>
-          </HintAction>
-          <label className="td-ribbon-tile td-ribbon-tile--inline" aria-label="Gradiente — cor inicial">
-            <span className="td-ribbon-tile__icon">
-              <input
-                type="color"
-                className="td-deck-ribbon__color td-deck-ribbon__color--overlay"
-                value={gradientFrom}
-                onChange={(e) => setBackgroundGradient(e.target.value, gradientTo)}
-              />
-            </span>
-            <span className="td-ribbon-tile__label">Grad. ini.</span>
-          </label>
-          <label className="td-ribbon-tile td-ribbon-tile--inline" aria-label="Gradiente — cor final">
-            <span className="td-ribbon-tile__icon">
-              <input
-                type="color"
-                className="td-deck-ribbon__color td-deck-ribbon__color--overlay"
-                value={gradientTo}
-                onChange={(e) => setBackgroundGradient(gradientFrom, e.target.value)}
-              />
-            </span>
-            <span className="td-ribbon-tile__label">Grad. fim</span>
-          </label>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
+          <TvRibbonColorPicker
+            hint={E.backgroundColor}
+            label="Cor"
+            ariaLabel="Cor sólida de fundo do slide"
+            value={background?.type === "color" ? background.value : "#0f172a"}
+            onChange={setBackgroundColor}
+          />
+          <TvRibbonColorPicker
+            label="Grad. ini."
+            ariaLabel="Gradiente — cor inicial"
+            value={gradientFrom}
+            onChange={(color) => setBackgroundGradient(color, gradientTo)}
+          />
+          <TvRibbonColorPicker
+            label="Grad. fim"
+            ariaLabel="Gradiente — cor final"
+            value={gradientTo}
+            onChange={(color) => setBackgroundGradient(gradientFrom, color)}
+          />
           <DeckRibbonTile
             icon={Upload}
             label={labels.comunicadoUpload ?? "Enviar"}

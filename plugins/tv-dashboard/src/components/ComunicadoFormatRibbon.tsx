@@ -16,7 +16,6 @@ import {
   Crop,
   FolderOpen,
   Group,
-  Highlighter,
   Italic,
   List,
   ListOrdered,
@@ -66,6 +65,7 @@ import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import { selectedHasGroup } from "../utils/comunicadoGrouping";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
+import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { TdRibbonIconButton, TdRibbonSelect } from "./tdRibbonUi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
@@ -189,20 +189,14 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   return (
     <div className="td-deck-ribbon__groups">
       <DeckRibbonGroup label="Fundo do slide" hint={H.background}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <HintAction hint={E.backgroundColor} ariaLabel="Ajuda: Cor de fundo">
-            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Cor de fundo">
-              <span className="td-ribbon-tile__icon">
-                <input
-                  type="color"
-                  className="td-deck-ribbon__color"
-                  value={background?.type === "color" ? background.value : "#0f172a"}
-                  onChange={(e) => setBackgroundColor(e.target.value)}
-                />
-              </span>
-              <span className="td-ribbon-tile__label">Cor</span>
-            </label>
-          </HintAction>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
+          <TvRibbonColorPicker
+            hint={E.backgroundColor}
+            label="Cor"
+            ariaLabel="Cor sólida de fundo do slide"
+            value={background?.type === "color" ? background.value : "#0f172a"}
+            onChange={setBackgroundColor}
+          />
           <DeckRibbonTile
             icon={Upload}
             label={labels.comunicadoUpload ?? "Imagem"}
@@ -405,28 +399,22 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   <Strikethrough size={15} aria-hidden="true" />
                 </TdRibbonIconButton>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                <HintAction hint={H.textHighlight} ariaLabel="Ajuda: Realce do texto">
-                  <label className="td-ribbon-tile td-ribbon-tile--color td-ribbon-tile--inline" aria-label="Realce">
-                    <span className="td-ribbon-tile__icon">
-                      <Highlighter size={15} aria-hidden="true" />
-                      <input
-                        type="color"
-                        className="td-deck-ribbon__color td-deck-ribbon__color--overlay"
-                        value={selected.style?.textHighlight ?? "#fef08a"}
-                        onChange={(e) => updateSelectedStyle({ textHighlight: e.target.value })}
-                      />
-                    </span>
-                  </label>
-                </HintAction>
-                <HintAction hint={H.textColor} ariaLabel="Ajuda: Cor do texto">
-                  <input
-                    type="color"
-                    className="td-deck-ribbon__color"
-                    aria-label="Cor do texto"
-                    value={selected.style?.color ?? "#ffffff"}
-                    onChange={(e) => updateSelectedStyle({ color: e.target.value })}
-                  />
-                </HintAction>
+                <TvRibbonColorPicker
+                  hint={H.textHighlight}
+                  label="Realce"
+                  ariaLabel="Realce do texto"
+                  inline
+                  value={selected.style?.textHighlight ?? "#fef08a"}
+                  onChange={(color) => updateSelectedStyle({ textHighlight: color })}
+                />
+                <TvRibbonColorPicker
+                  hint={H.textColor}
+                  label="Cor texto"
+                  ariaLabel="Cor do texto"
+                  inline
+                  value={selected.style?.color ?? "#ffffff"}
+                  onChange={(color) => updateSelectedStyle({ color })}
+                />
                 <TdRibbonIconButton
                   hint={H.clearFormatting}
                   ariaLabel="Limpar formatação"
@@ -723,16 +711,13 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 })
               }
             />
-            <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Cor da borda">
-              <span className="td-ribbon-tile__icon">
-                <input
-                  type="color"
-                  className="td-deck-ribbon__color"
-                  value={selected.style?.borderColor ?? "#ffffff"}
-                  onChange={(e) => updateSelectedStyle({ borderColor: e.target.value })}
-                />
-              </span>
-            </label>
+            <TvRibbonColorPicker
+              label="Borda"
+              ariaLabel="Cor da borda"
+              inline
+              value={selected.style?.borderColor ?? "#ffffff"}
+              onChange={(color) => updateSelectedStyle({ borderColor: color })}
+            />
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-radius">
               Raio
             </label>

@@ -6,6 +6,7 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { COMUNICADO_BACKGROUND_GRADIENT_PRESETS } from "./ComunicadoSlideBackgroundRibbon";
 import { DeckField } from "./DeckField";
 import { DeckPropertySection } from "./DeckPropertySection";
+import { TvRibbonColorPicker } from "./TvRibbonColorPicker";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
@@ -23,31 +24,25 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
   return (
     <DeckPropertySection title={labels.comunicadoBackground ?? "Fundo do slide"} hint={E.backgroundColor}>
       <DeckField id="td-bg-color" label="Cor sólida" hint={E.backgroundColor}>
-        <input
-          id="td-bg-color"
-          type="color"
-          className="td-deck-color-input"
+        <TvRibbonColorPicker
+          label="Cor"
           value={background?.type === "color" ? background.value : "#0f172a"}
-          onChange={(e) => setBackgroundColor(e.target.value)}
+          onChange={setBackgroundColor}
         />
       </DeckField>
 
       <DeckField id="td-bg-gradient-from" label="Gradiente — cor inicial">
-        <input
-          id="td-bg-gradient-from"
-          type="color"
-          className="td-deck-color-input"
+        <TvRibbonColorPicker
+          label="Início"
           value={gradientFrom}
-          onChange={(e) => setBackgroundGradient(e.target.value, gradientTo)}
+          onChange={(color) => setBackgroundGradient(color, gradientTo)}
         />
       </DeckField>
       <DeckField id="td-bg-gradient-to" label="Gradiente — cor final">
-        <input
-          id="td-bg-gradient-to"
-          type="color"
-          className="td-deck-color-input"
+        <TvRibbonColorPicker
+          label="Fim"
           value={gradientTo}
-          onChange={(e) => setBackgroundGradient(gradientFrom, e.target.value)}
+          onChange={(color) => setBackgroundGradient(gradientFrom, color)}
         />
       </DeckField>
       <div className="td-deck-inspector__actions">

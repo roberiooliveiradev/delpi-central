@@ -5,6 +5,8 @@ export { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 export { ColorThemeGrid, ColorStandardRow, ColorSwatch } from "./ColorThemeGrid";
 export { ColorPickerPopover, ColorPickerPopoverTrigger, ShapeFillMenu } from "./ColorPickerPopover";
 export type { ColorPickerPopoverProps, ColorPickerPopoverTriggerProps, ShapeFillMenuProps } from "./ColorPickerPopover";
+export { RibbonColorPicker } from "./RibbonColorPicker";
+export type { RibbonColorPickerProps } from "./RibbonColorPicker";
 export { ColorDialog } from "./ColorDialog";
 export type { ColorDialogProps } from "./ColorDialog";
 export { ShapeOutlineMenu } from "./ShapeOutlineMenu";

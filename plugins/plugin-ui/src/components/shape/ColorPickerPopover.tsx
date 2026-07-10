@@ -2,8 +2,6 @@ import { Droplet, Image, Palette, Pipette } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
-
-import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorDialog } from "./ColorDialog";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
