@@ -11,6 +11,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd controle-retrabalhos && npm install
 
 COPY controle-retrabalhos ./controle-retrabalhos
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/controle-retrabalhos

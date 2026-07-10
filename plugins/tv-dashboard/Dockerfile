@@ -16,6 +16,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd tv-dashboard && npm install
 
 COPY tv-dashboard ./tv-dashboard
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/tv-dashboard

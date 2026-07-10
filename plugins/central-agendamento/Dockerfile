@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd central-agendamento && npm install
 
 COPY central-agendamento ./central-agendamento
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/central-agendamento

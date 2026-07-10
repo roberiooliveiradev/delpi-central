@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd quality-labels && npm install
 
 COPY quality-labels ./quality-labels
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/quality-labels

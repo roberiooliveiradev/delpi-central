@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd dashboard-quality && npm install
 
 COPY dashboard-quality ./dashboard-quality
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/dashboard-quality

@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd cultura-delpi && npm install
 
 COPY cultura-delpi ./cultura-delpi
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/cultura-delpi

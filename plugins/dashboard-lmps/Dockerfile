@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd dashboard-lmps && npm install
 
 COPY dashboard-lmps ./dashboard-lmps
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/dashboard-lmps

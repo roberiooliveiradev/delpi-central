@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd dashboard-financial && npm install
 
 COPY dashboard-financial ./dashboard-financial
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/dashboard-financial

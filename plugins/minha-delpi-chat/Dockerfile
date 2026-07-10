@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd minha-delpi-chat && npm install
 
 COPY minha-delpi-chat ./minha-delpi-chat
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/minha-delpi-chat

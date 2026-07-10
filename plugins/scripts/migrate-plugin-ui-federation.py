@@ -30,6 +30,7 @@ RUN --mount=type=cache,target=/root/.npm \\
     cd {name} && npm install
 
 COPY {name} ./{name}
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/{name}

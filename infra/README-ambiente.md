@@ -80,6 +80,13 @@ docker compose -f infra/docker-compose.dev.yml --profile plugins build dashboard
 
 # MFE federado (piloto) — remote plugin-ui em runtime
 docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
+
+# Stack completo sem estourar RAM — um serviço por vez (rebuild)
+./infra/scripts/up-dev-sequential.sh --build
+# Só core + remote + alguns MFEs:
+./infra/scripts/up-dev-sequential.sh --fase core --build
+./infra/scripts/up-dev-sequential.sh --fase remote --build
+./infra/scripts/up-dev-sequential.sh --fase mfe --build controle-retrabalhos public-hub transformometro
 ```
 
 ### Parar stack inflada (recuperação)

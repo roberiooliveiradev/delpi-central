@@ -10,6 +10,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd quality-action-plans && npm install
 
 COPY quality-action-plans ./quality-action-plans
+# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
+COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/quality-action-plans
