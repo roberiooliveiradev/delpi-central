@@ -1,10 +1,14 @@
-import ReactDOM from "react-dom/client";
 import "./shell/brand-tokens.css";
 import "./shell/shell.css";
 
-import { preparePluginUiRemote } from "../../vite/federationShareScope";
+import {
+  getReactDomClient,
+  preparePluginUiRemote,
+} from "../../vite/federationShareScope";
 
 await preparePluginUiRemote();
+
+const ReactDOM = await getReactDomClient();
 
 const [{ PublicErrorBoundary }, { PublicShell }] = await Promise.all([
   import("./shell/PublicErrorBoundary"),

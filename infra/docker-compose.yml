@@ -440,6 +440,8 @@ services:
     build:
       context: ../plugins
       dockerfile: maintenance/Dockerfile
+      args:
+        SOURCE_REVISION: ${SOURCE_REVISION:-dev}
 
     container_name: delpi-maintenance
     restart: unless-stopped

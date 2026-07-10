@@ -21,6 +21,7 @@ REPO_ROOT="$(cd "$COMPOSE_DIR/.." && pwd)"
 cd "$COMPOSE_DIR"
 
 BUILD=false
+NO_CACHE=false
 FASE="tudo"
 DRY_RUN=false
 GIT_PULL=false
@@ -44,6 +45,7 @@ usage() {
   echo ""
   echo "Opções:"
   echo "  --build       Rebuild da imagem de cada serviço (compose build isolado; sem bake em cascata)"
+  echo "  --no-cache    Passa --no-cache ao docker compose build (evita layer CACHED stale no MFE)"
   echo "  --pull        git pull em $REPO_ROOT antes de subir"
   echo "  --cpu         Usa docker-compose.prod.cpu.yml (LanguageTool/SearXNG em optional-heavy)"
   echo "  --heavy       Inclui fase heavy (ou serviços searxng/languagetool)"
@@ -59,6 +61,7 @@ usage() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --build) BUILD=true; shift ;;
+    --no-cache) NO_CACHE=true; shift ;;
     --pull) GIT_PULL=true; shift ;;
     --cpu) USE_CPU=true; shift ;;
     --heavy) INCLUDE_HEAVY=true; shift ;;
@@ -252,6 +255,7 @@ fi
 export COMPOSE_PARALLEL_LIMIT=1
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
+export SOURCE_REVISION="${SOURCE_REVISION:-$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo dev)}"
 
 wait_pg() {
   local container="$1" user="$2" db="$3"
@@ -279,6 +283,9 @@ run_compose_up() {
   # Build só deste serviço — nunca `up --build` (gateway depends_on dispara bake de 30+ MFEs).
   if [[ "$BUILD" == true ]]; then
     local -a build_cmd=("${cmd[@]}" build "$svc")
+    if [[ "$NO_CACHE" == true ]]; then
+      build_cmd+=(--no-cache)
+    fi
     if [[ "$DRY_RUN" == true ]]; then
       echo "  [dry-run] ${build_cmd[*]}"
     else

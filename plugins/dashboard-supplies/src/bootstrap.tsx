@@ -1,14 +1,19 @@
-import ReactDOM from "react-dom/client";
 import "./index.css";
 
-import { preparePluginUiRemote } from "../../vite/federationShareScope";
+import {
+  getReactDomClient,
+  preparePluginUiRemote,
+} from "../../vite/federationShareScope";
 
 await preparePluginUiRemote();
 
+const ReactDOM = await getReactDomClient();
+
 import type { AppProps } from "./App";
+import type { Root } from "react-dom/client";
 const { default: App } = await import("./App");
 
-const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
+const roots = new WeakMap<HTMLElement, Root>();
 
 function renderApp(el: HTMLElement, props: AppProps = {}) {
   let root = roots.get(el);

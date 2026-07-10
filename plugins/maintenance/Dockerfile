@@ -13,8 +13,10 @@ COPY maintenance ./maintenance
 COPY vite ./vite
 
 WORKDIR /app/maintenance
-# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
-RUN npx vite build
+
+# Invalida cache do vite build quando o código-fonte muda (git rev no deploy).
+ARG SOURCE_REVISION=dev
+RUN echo "maintenance build ${SOURCE_REVISION}" && npx vite build
 
 FROM nginx:alpine AS production
 

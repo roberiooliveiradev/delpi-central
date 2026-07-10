@@ -102,20 +102,25 @@ export default defineConfig({
 ### Bootstrap
 
 ```ts
-import ReactDOM from "react-dom/client";
 import "./index.css";
 
-import { preparePluginUiRemote } from "../../vite/federationShareScope";
+import {
+  getReactDomClient,
+  preparePluginUiRemote,
+} from "../../vite/federationShareScope";
 
-/** Share scope + CSS do plugin-ui antes de carregar App (imports estáticos de App
- *  são hoistados e puxam @delpi/plugin-ui antes do await preparePluginUiRemote). */
 await preparePluginUiRemote();
 
+const ReactDOM = await getReactDomClient();
+
+const ReactDOM = await getReactDomClient();
+
 import type { AppProps } from "./App";
+import type { Root } from "react-dom/client";
 const { default: App } = await import("./App");
 ```
 
-`preparePluginUiRemote()` registra React/lucide em `__federation_shared__` e carrega o CSS do remote. O **`import()` dinâmico de `./App`** é obrigatório — o Vite MF coloca o `await preparePluginUiRemote()` no fim do chunk se `App` for import estático, e o plugin-ui carrega com React duplicado (erro #321). O portal semeia React via `ensurePortalFederationShareScope()` antes de `container.init` (`AppHost`).
+`preparePluginUiRemote()` registra React/lucide em `__federation_shared__` e carrega o CSS do remote. O **`import()` dinâmico de `./App`** é obrigatório — o Vite MF coloca o `await preparePluginUiRemote()` no fim do chunk se `App` for import estático. **`getReactDomClient()`** usa o mesmo React do share scope (nunca `import react-dom/client` estático no bootstrap — quebrava hooks com o React do portal). O portal semeia React via `ensurePortalFederationShareScope()` antes de `container.init` (`AppHost`); o MFE **não sobrescreve** entradas `portal-host`.
 
 ### tsconfig.app.json
 

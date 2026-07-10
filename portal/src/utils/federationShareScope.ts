@@ -6,6 +6,7 @@
  */
 import React from "react";
 import * as ReactDOM from "react-dom";
+import * as ReactDOMClient from "react-dom/client";
 import * as LucideReact from "lucide-react";
 
 type FederationShareEntry = {
@@ -15,6 +16,14 @@ type FederationShareEntry = {
 };
 
 type FederationShareScope = Record<string, Record<string, FederationShareEntry>>;
+
+function buildReactDomSharedExport() {
+  return {
+    ...ReactDOM,
+    createRoot: ReactDOMClient.createRoot,
+    hydrateRoot: ReactDOMClient.hydrateRoot,
+  };
+}
 
 function shareEntry(mod: unknown): FederationShareEntry {
   return {
@@ -45,8 +54,9 @@ export function ensurePortalFederationShareScope(): void {
   globalRef.__federation_shared__.default = globalRef.__federation_shared__.default ?? {};
 
   const scope = globalRef.__federation_shared__.default;
+  const reactDomShared = buildReactDomSharedExport();
 
   registerModule(scope, "react", React, React.version);
-  registerModule(scope, "react-dom", ReactDOM, ReactDOM.version);
+  registerModule(scope, "react-dom", reactDomShared, ReactDOM.version);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0");
 }
