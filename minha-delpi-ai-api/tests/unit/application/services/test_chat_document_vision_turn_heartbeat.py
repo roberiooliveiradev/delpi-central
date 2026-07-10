@@ -36,3 +36,23 @@ def test_run_blocking_with_ocr_heartbeat_pulses_while_waiting(monkeypatch):
     assert result == "ok"
     assert events
     assert all(event["phase"] == "document_vision" for event in events)
+
+
+def test_run_blocking_with_ocr_heartbeat_worker_runs_inside_app_context():
+    from flask import Flask, has_app_context
+
+    app = Flask(__name__)
+    seen: dict[str, bool] = {}
+
+    def operation() -> str:
+        seen["in_context"] = has_app_context()
+        return "ok"
+
+    with app.app_context():
+        result = ChatDocumentVisionTurnService._run_blocking_with_ocr_heartbeat(
+            operation,
+            on_stream_activity=lambda _entry: None,
+        )
+
+    assert result == "ok"
+    assert seen["in_context"] is True

@@ -20,6 +20,18 @@ T = TypeVar("T")
 
 
 class ChatDocumentVisionTurnService:
+    @staticmethod
+    def _capture_flask_app():
+        try:
+            from flask import current_app, has_app_context
+
+            if has_app_context():
+                return current_app._get_current_object()
+        except RuntimeError:
+            return None
+
+        return None
+
     @classmethod
     def _run_blocking_with_ocr_heartbeat(
         cls,
@@ -30,13 +42,18 @@ class ChatDocumentVisionTurnService:
         if on_stream_activity is None:
             return operation()
 
+        flask_app = cls._capture_flask_app()
         result: dict[str, T] = {}
         error: list[BaseException] = []
         done = threading.Event()
 
         def worker() -> None:
             try:
-                result["value"] = operation()
+                if flask_app is not None:
+                    with flask_app.app_context():
+                        result["value"] = operation()
+                else:
+                    result["value"] = operation()
             except BaseException as exc:
                 error.append(exc)
             finally:
