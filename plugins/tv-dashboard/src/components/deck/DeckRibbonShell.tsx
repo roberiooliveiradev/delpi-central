@@ -9,7 +9,13 @@ type Props = {
 export function DeckRibbonShell({ children, label = "Controles de slide", embedded }: Props) {
   return (
     <div
-      className={["td-deck-ribbon", embedded ? "td-deck-ribbon--embedded" : null].filter(Boolean).join(" ")}
+      className={[
+        "td-deck-ribbon",
+        "td-deck-ribbon--compact",
+        embedded ? "td-deck-ribbon--embedded" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="toolbar"
       aria-label={label}
     >

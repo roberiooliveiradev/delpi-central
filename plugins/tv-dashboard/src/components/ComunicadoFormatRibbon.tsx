@@ -180,7 +180,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const isShapeBlock = selected?.type === "shape";
 
   return (
-    <div className="td-deck-ribbon__groups td-deck-ribbon__groups--format">
+    <div className="td-deck-ribbon__groups">
       <DeckRibbonGroup label="Histórico" hint="Desfazer ou refazer alterações no slide (Ctrl+Z / Ctrl+Y).">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile icon={Undo2} label="Desfazer" disabled={!canUndo} onClick={undo} />

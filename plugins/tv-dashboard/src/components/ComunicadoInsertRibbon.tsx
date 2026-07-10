@@ -67,7 +67,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   return (
     <div className="td-deck-ribbon__groups">
       <DeckRibbonGroup label="Inserir" hint={H.insert}>
-        <div className="td-deck-ribbon__tiles">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={BarChart3}
             label={labels.comunicadoAddIndicator ?? "Dados"}

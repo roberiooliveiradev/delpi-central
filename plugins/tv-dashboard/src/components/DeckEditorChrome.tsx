@@ -114,7 +114,7 @@ export function DeckEditorChrome({
       ) : null}
 
       {isSettingsTab(activeTab) ? (
-        <div className="td-deck-chrome__panel" role="tabpanel">
+        <div className="td-deck-chrome__panel td-deck-chrome__panel--compact" role="tabpanel">
           <DeckSettingsPanel
             activeTab={activeTab}
             playlist={playlist}
