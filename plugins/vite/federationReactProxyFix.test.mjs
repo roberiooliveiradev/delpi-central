@@ -6,9 +6,11 @@
 import assert from "node:assert/strict";
 import {
   patchBundledReactCjsBridge,
+  patchBundledReactConsumerChunk,
   patchFederationFlattenModule,
   patchFederationImportPublishReact,
   publishDelpiMfReact,
+  upgradeUnconditionalReactGlobalPublish,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
 
@@ -24,6 +26,7 @@ function testFlattenFromObjectAssign() {
   assert.ok(out.includes("var _delpiMod"), "declara _delpiMod");
   assert.ok(!out.includes("e=(o=e"), "não reatribui e");
   assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "publica react global");
+  assert.ok(out.includes("!globalThis.__DELPI_MF_REACT__"), "guard no publish");
 }
 
 function testFlattenFromBrokenProxy() {
@@ -55,10 +58,25 @@ function testPublishDoesNotOverwritePortalReact() {
   delete globalThis[DELPI_MF_REACT_GLOBAL];
 }
 
+function testUpgradeUnconditionalPublish() {
+  const raw = String.raw`t==="react"&&(globalThis.__DELPI_MF_REACT__=w[t])`;
+  const out = upgradeUnconditionalReactGlobalPublish(raw);
+  assert.ok(out.includes("!globalThis.__DELPI_MF_REACT__"), "upgrade adiciona guard");
+}
+
+function testAppChunkReactBridgeFallback() {
+  const raw = String.raw`import{r as Nu}from"./index-ABC.js";function x(){if(Ws)return al;Ws=1;var e=Nu(),t=DA();return e.useRef}`;
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes("__DELPI_MF_REACT__?.useRef"), "App shim usa global");
+  assert.ok(!out.includes("var e=Nu()"), "init shim não chama Nu() direto");
+}
+
 testFlattenFromObjectAssign();
 testFlattenFromBrokenProxy();
 testFlattenRuntimeStrict();
 testReactShimUsesGlobal();
 testPublishDoesNotOverwritePortalReact();
+testUpgradeUnconditionalPublish();
+testAppChunkReactBridgeFallback();
 
-console.log("OK: federationReactProxyFix — 5 testes passaram");
+console.log("OK: federationReactProxyFix — 7 testes passaram");

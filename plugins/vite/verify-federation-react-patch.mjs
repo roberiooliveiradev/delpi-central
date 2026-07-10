@@ -27,6 +27,17 @@ for (const file of fs.readdirSync(distDir)) {
       console.error(`FAIL ${file}: publish __DELPI_MF_REACT__ ausente`);
       failed = true;
     }
+    if (!code.includes("!globalThis.__DELPI_MF_REACT__")) {
+      console.error(`FAIL ${file}: publish sem guard !globalThis.__DELPI_MF_REACT__`);
+      failed = true;
+    }
+  }
+
+  if (/(?:^|\/)App-/.test(file) && code.includes('import{r as ') && code.includes('from"./index-')) {
+    if (!code.includes("__DELPI_MF_REACT__?.useRef")) {
+      console.error(`FAIL ${file}: App chunk sem fallback global no bridge React`);
+      failed = true;
+    }
   }
 
   if (

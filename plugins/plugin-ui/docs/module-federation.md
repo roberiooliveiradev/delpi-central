@@ -51,16 +51,18 @@ O `@originjs/vite-plugin-federation@1.4.1` usa `Object.assign` em `flattenModule
 
 **React #527 (versões divergentes):** portal e MFEs devem usar a **mesma versão exata** de `react` e `react-dom` (`plugins/vite/reactPinnedVersion.ts` → `19.2.7`). Portal em 19.2.4 + MFE em 19.2.6 quebra o par react/react-dom no share scope. Sincronizar: `node plugins/vite/sync-react-pinned-version.mjs` + rebuild portal e MFEs.
 
-**Canônico:** `federationReactProxyFixPlugin()` em todo `vite.config.ts` federado (substitui `Object.assign` por `Proxy` — equivalente ao upstream PR #743). O flatten usa `_delpiMod` local (não reatribui o parâmetro `e` — evita *Assignment to constant variable* em strict). Também redireciona o shim CJS `index-*.js` (React bundled em App/recharts) para `globalThis.__DELPI_MF_REACT__`.
+**Canônico:** `federationReactProxyFixPlugin()` em todo `vite.config.ts` federado (substitui `Object.assign` por `Proxy` — equivalente ao upstream PR #743). O flatten usa `_delpiMod` local (não reatribui o parâmetro `e` — evita *Assignment to constant variable* em strict). Também redireciona o shim CJS `index-*.js` (React bundled em App/recharts) para `globalThis.__DELPI_MF_REACT__`. Chunks `App-*.js` com `import{r as X}from"./index-*"` recebem fallback no bridge (`Nu()` → global canônico). O `importShared` publica React no global **só se** `!globalThis.__DELPI_MF_REACT__` (não sobrescreve o portal).
 
 Regressão após `vite build`:
 
 ```bash
 grep 'Object.assign({},e.default,e)' dist/assets/__federation_fn_import*.js   # vazio
+grep '!globalThis.__DELPI_MF_REACT__' dist/assets/__federation_fn_import*.js  # guard presente
 grep '__DELPI_MF_REACT__' dist/assets/index-*.js                              # presente no chunk React bundled
-grep '__DELPI_MF_REACT__' dist/assets/__federation_fn_import*.js              # presente
+grep '__DELPI_MF_REACT__?.useRef' dist/assets/App-*.js                         # fallback no App/recharts
 grep 'var _delpiMod' dist/assets/__federation_fn_import*.js                   # flatten sem reassign e
 node plugins/vite/federationReactProxyFix.test.mjs                            # testes unitários (tsx)
+node plugins/vite/verify-federation-react-patch.mjs dist/assets               # gate pós-build
 ```
 
 O portal e o bootstrap MFE chamam `publishDelpiMfReact` / `ensurePortalFederationShareScope` **antes** de montar o remote. O bootstrap **não** sobrescreve `__DELPI_MF_REACT__` se o portal já semeou uma instância válida (evita cópia bundled quebrada em `index-*.js`).

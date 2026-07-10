@@ -101,6 +101,16 @@ async function sharedReactDomHasCreateRoot(): Promise<boolean> {
  */
 export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   const scope = getShareScope();
+
+  if (hasPortalHostEntry(scope, "react")) {
+    try {
+      publishDelpiMfReact(await loadSharedModule("react"));
+    } catch {
+      /* scope incompleto — fallback abaixo */
+    }
+  }
+  publishDelpiMfReact(React);
+
   const reactDomShared = buildReactDomSharedExport();
 
   let preservePortalPair =
@@ -113,12 +123,6 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
   registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", preservePortalPair);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
-
-  try {
-    publishDelpiMfReact(await loadSharedModule("react"));
-  } catch {
-    publishDelpiMfReact(React);
-  }
 }
 
 /** @deprecated Prefer ensureMfeFederationShareScopeReady — sync não valida createRoot do portal. */

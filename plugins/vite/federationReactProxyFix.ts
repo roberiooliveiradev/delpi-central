@@ -35,8 +35,37 @@ const BROKEN_PROXY_BRANCH =
 const OBJECT_ASSIGN_BRANCH =
   /:\(e\.default&&\(e=Object\.assign\(\{\},e\.default,e\)\),(\w+)\[(\w+)\]=e,e\)/;
 
+const REACT_PUBLISH_GUARD = `!globalThis.${DELPI_MF_REACT_GLOBAL}`;
+
 const REACT_PUBLISH = (cache: string, pkg: string) =>
-  `${pkg}==="react"&&!globalThis.${DELPI_MF_REACT_GLOBAL}&&(globalThis.${DELPI_MF_REACT_GLOBAL}=${cache}[${pkg}])`;
+  `${pkg}==="react"&&${REACT_PUBLISH_GUARD}&&(globalThis.${DELPI_MF_REACT_GLOBAL}=${cache}[${pkg}])`;
+
+/** Corrige publish incondicional gerado por builds parciais ou runtime MF antigo. */
+export function upgradeUnconditionalReactGlobalPublish(code: string): string {
+  return code.replace(
+    /(\w+)==="react"&&\(globalThis\.(__DELPI_MF_REACT__=\w+\[\w+\])\)/g,
+    `$1==="react"&&${REACT_PUBLISH_GUARD}&&($2)`,
+  );
+}
+
+const DELPI_MF_REACT_RESOLVE = `globalThis.${DELPI_MF_REACT_GLOBAL}?.useRef?globalThis.${DELPI_MF_REACT_GLOBAL}:`;
+
+/**
+ * App/recharts importam React bundled (index-*.js) fora do importShared.
+ * Shims cacheiam `var e=Nu()` na 1ª execução — redireciona para o global canônico.
+ */
+export function patchBundledReactConsumerChunk(code: string): string {
+  const importMatch = code.match(/import\{r as (\w+)\}from"\.\/index-[^"]+\.js"/);
+  if (!importMatch) {
+    return code;
+  }
+  const reactBridge = importMatch[1];
+  if (!code.includes(`${reactBridge}()`)) {
+    return code;
+  }
+  const resolveExpr = `(${DELPI_MF_REACT_RESOLVE}${reactBridge}())`;
+  return code.replace(new RegExp(`${reactBridge}\\(\\)`, "g"), resolveExpr);
+}
 
 function replaceFlattenElseBranch(code: string): string {
   const replacement = `:(${PROXY_FLATTEN_EXPR},$1[$2]=_delpiMod,_delpiMod)`;
@@ -62,13 +91,15 @@ export function patchFederationFlattenModule(code: string): string {
 
 /** Publica React no global quando importShared carrega o módulo shared. */
 export function patchFederationImportPublishReact(code: string): string {
-  if (!code.includes("=e.default,e.default") && !code.includes("=_delpiMod,_delpiMod")) {
-    return code;
+  let out = upgradeUnconditionalReactGlobalPublish(code);
+
+  if (!out.includes("=e.default,e.default") && !out.includes("=_delpiMod,_delpiMod")) {
+    return out;
   }
-  if (code.includes(DELPI_MF_REACT_GLOBAL)) {
-    return code;
+  if (out.includes(REACT_PUBLISH_GUARD)) {
+    return out;
   }
-  return code
+  return out
     .replace(
       /(\w+)\[(\w+)\]=e\.default,e\.default/g,
       (_, cache, pkg) =>
@@ -108,10 +139,27 @@ function isBundledReactCoreChunk(code: string): boolean {
   return code.includes("n.useRef=function");
 }
 
+function isAppOrExposeChunk(fileName: string): boolean {
+  return /(?:^|\/)App-/.test(fileName) || fileName.includes("__federation_expose_");
+}
+
 export function federationReactProxyFixPlugin(): Plugin {
   return {
     name: "federation-react-proxy-fix",
     apply: "build",
+    enforce: "post",
+    renderChunk(code, chunk) {
+      if (chunk.fileName.includes("__federation_fn_import")) {
+        return patchFederationImportPublishReact(patchFederationFlattenModule(code));
+      }
+      if (isBundledReactCoreChunk(code)) {
+        return patchBundledReactCjsBridge(code);
+      }
+      if (isAppOrExposeChunk(chunk.fileName)) {
+        return patchBundledReactConsumerChunk(code);
+      }
+      return null;
+    },
     generateBundle(_outputOptions, bundle) {
       for (const item of Object.values(bundle)) {
         if (item.type !== "chunk") continue;
@@ -123,6 +171,11 @@ export function federationReactProxyFixPlugin(): Plugin {
 
         if (isBundledReactCoreChunk(item.code)) {
           item.code = patchBundledReactCjsBridge(item.code);
+          continue;
+        }
+
+        if (isAppOrExposeChunk(item.fileName)) {
+          item.code = patchBundledReactConsumerChunk(item.code);
         }
       }
     },
