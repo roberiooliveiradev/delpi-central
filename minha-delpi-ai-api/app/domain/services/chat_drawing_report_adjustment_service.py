@@ -6,6 +6,9 @@ import copy
 from datetime import datetime, timezone
 from typing import Any
 
+from app.domain.services.chat_conversation_context_service import (
+    ChatConversationContextService,
+)
 from app.domain.services.chat_drawing_report_adjustment_target_service import (
     ChatDrawingReportAdjustmentTargetService,
 )
@@ -25,15 +28,12 @@ class ChatDrawingReportAdjustmentService:
         merged: dict[str, dict[str, Any]] = {}
 
         for item in previous_messages or []:
-            if not isinstance(item, dict):
+            if ChatConversationContextService.message_role(item).lower() != "assistant":
                 continue
 
-            if str(item.get("role") or "").strip().lower() != "assistant":
-                continue
+            metadata = ChatConversationContextService.message_metadata(item)
 
-            metadata = item.get("metadata")
-
-            if not isinstance(metadata, dict):
+            if not metadata:
                 continue
 
             candidates: list[Any] = []

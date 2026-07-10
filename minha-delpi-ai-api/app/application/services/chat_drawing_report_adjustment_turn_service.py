@@ -47,6 +47,9 @@ class ChatDrawingReportAdjustmentTurnService:
         )
 
         if not analysis:
+            if ChatDrawingReportAdjustmentIntentService.has_adjustment_signal(message):
+                return cls._build_missing_prior_report_result(message=message)
+
             return None
 
         existing_overrides = ChatDrawingReportAdjustmentService.load_overrides(
@@ -132,6 +135,20 @@ class ChatDrawingReportAdjustmentTurnService:
             "drawingAnalysis": updated_analysis,
             "drawingAnalysisExport": export_payload,
             "drawingAnalysisOverrides": overrides,
+            "currentMessage": str(message).strip(),
+        }
+
+    @classmethod
+    def _build_missing_prior_report_result(cls, *, message: str) -> dict[str, Any]:
+        return {
+            "context": "",
+            "toolCalls": [],
+            "nativeToolCalling": {"used": False, "providerSupports": False},
+            "directAnswer": ChatDrawingQueryIntentContentService.get(
+                "directAnswers",
+                "missingPriorDrawingReport",
+            ),
+            "skipRag": True,
             "currentMessage": str(message).strip(),
         }
 

@@ -1,3 +1,7 @@
+from datetime import datetime, timezone
+from uuid import uuid4
+
+from app.domain.entities.chat_message import ChatMessage
 from app.domain.services.chat_drawing_llm_presentation_service import (
     ChatDrawingLlmPresentationService,
 )
@@ -22,6 +26,28 @@ def _history_with_analysis() -> list[dict]:
             },
         }
     ]
+
+
+def _history_with_chat_message_entity() -> list[ChatMessage]:
+    return [
+        ChatMessage(
+            id=uuid4(),
+            session_id=uuid4(),
+            role="assistant",
+            content="# Relatório",
+            metadata=_history_with_analysis()[0]["metadata"],
+            created_at=datetime.now(timezone.utc),
+        )
+    ]
+
+
+def test_last_analysis_reads_chat_message_entity():
+    analysis = ChatDrawingLlmPresentationService.last_analysis_from_messages(
+        _history_with_chat_message_entity(),
+    )
+
+    assert analysis is not None
+    assert analysis["productCode"] == "90262008"
 
 
 def test_hydrates_drawing_analysis_on_follow_up_without_new_analysis_request():

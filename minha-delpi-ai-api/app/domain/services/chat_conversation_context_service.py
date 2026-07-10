@@ -9,6 +9,14 @@ class ChatConversationContextService:
     _STRUCTURE_PATH_HINT = re.compile(r"/products/[^/]+/structure", re.IGNORECASE)
 
     @classmethod
+    def message_role(cls, message, *, default: str = "") -> str:
+        return cls._message_field(message, "role", default)
+
+    @classmethod
+    def message_metadata(cls, message) -> dict:
+        return cls._message_metadata(message)
+
+    @classmethod
     def _message_field(cls, message, name: str, default: str = "") -> str:
         if isinstance(message, dict):
             return str(message.get(name) or default).strip()

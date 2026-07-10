@@ -1,6 +1,10 @@
+from datetime import datetime, timezone
+from uuid import uuid4
+
 from app.application.services.chat_drawing_report_adjustment_turn_service import (
     ChatDrawingReportAdjustmentTurnService,
 )
+from app.domain.entities.chat_message import ChatMessage
 from app.domain.services.chat_drawing_report_adjustment_intent_service import (
     ChatDrawingReportAdjustmentIntentService,
 )
@@ -55,6 +59,22 @@ def _history_with_analysis(analysis: dict | None = None) -> list[dict]:
     ]
 
 
+def _history_with_chat_message_entity(analysis: dict | None = None) -> list[ChatMessage]:
+    return [
+        ChatMessage(
+            id=uuid4(),
+            session_id=uuid4(),
+            role="assistant",
+            content="# Relatório de Análise de Desenho DELPI",
+            metadata={
+                "drawingAnalysis": analysis or _analysis_90261877(),
+                "drawingAnalysisExport": {"markdown": "# Relatório"},
+            },
+            created_at=datetime.now(timezone.utc),
+        )
+    ]
+
+
 def test_intent_matches_chip_confirm_manual_message():
     message = (
         "confirmar revisão manual do item pendente no relatório do desenho 90261877"
@@ -86,6 +106,34 @@ def test_chip_adjustment_turn_updates_report_to_approved():
     assert result["drawingAnalysis"]["status"] == "approved"
     assert "Relatório de Análise" in result["directAnswer"]
     assert result["drawingAnalysisExport"]["markdown"]
+
+
+def test_chip_adjustment_reads_chat_message_entity_history():
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261877"
+    )
+    result = ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+        message,
+        previous_messages=_history_with_chat_message_entity(),
+    )
+
+    assert result is not None
+    assert result["drawingAnalysis"]["status"] == "approved"
+    assert result["drawingAnalysisExport"]["markdown"]
+
+
+def test_adjustment_without_prior_report_returns_direct_answer_not_none():
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261877"
+    )
+    result = ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+        message,
+        previous_messages=[],
+    )
+
+    assert result is not None
+    assert result["toolCalls"] == []
+    assert "relatório de análise de desenho anterior" in str(result["directAnswer"]).lower()
 
 
 def test_intent_matches_90261877_adjustment_message():

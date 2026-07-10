@@ -6,6 +6,9 @@ import json
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_conversation_context_service import (
+    ChatConversationContextService,
+)
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 
 
@@ -18,21 +21,35 @@ class ChatDrawingLlmPresentationService:
         previous_messages: list | None,
     ) -> dict[str, Any] | None:
         for item in reversed(previous_messages or []):
-            if not isinstance(item, dict):
+            if ChatConversationContextService.message_role(item).lower() != "assistant":
                 continue
 
-            if str(item.get("role") or "").strip().lower() != "assistant":
+            metadata = ChatConversationContextService.message_metadata(item)
+
+            if not metadata:
                 continue
 
-            metadata = item.get("metadata")
-
-            if not isinstance(metadata, dict):
-                continue
-
-            drawing = metadata.get("drawingAnalysis")
+            drawing = cls._drawing_analysis_from_metadata(metadata)
 
             if isinstance(drawing, dict) and drawing.get("items"):
                 return drawing
+
+        return None
+
+    @classmethod
+    def _drawing_analysis_from_metadata(cls, metadata: dict[str, Any]) -> dict[str, Any] | None:
+        drawing = metadata.get("drawingAnalysis")
+
+        if isinstance(drawing, dict) and drawing.get("items"):
+            return drawing
+
+        intelligence = metadata.get("intelligence")
+
+        if isinstance(intelligence, dict):
+            nested = intelligence.get("drawingAnalysis")
+
+            if isinstance(nested, dict) and nested.get("items"):
+                return nested
 
         return None
 
