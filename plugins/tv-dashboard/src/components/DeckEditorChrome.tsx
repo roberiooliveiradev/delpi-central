@@ -7,7 +7,7 @@ import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideDeckRibbon } from "./SlideDeckRibbon";
 import {
   ComunicadoSlideBackgroundRibbon,
-  DeckHistoryRibbonGroup,
+  DeckHistoryTabActions,
   DeckRibbonShell,
   type DeckRibbonTabId,
   resolveDeckRibbonTabs,
@@ -87,6 +87,7 @@ export function DeckEditorChrome({
     <section className="td-deck-chrome" aria-label="Editor da programação">
       <div className="td-deck-chrome__head">
         <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
+          <DeckHistoryTabActions />
           {tabs.map((tab) => (
             <TabHintCell
               key={tab.id}
@@ -107,7 +108,6 @@ export function DeckEditorChrome({
       {isRibbonTab(activeTab) ? (
         <div className="td-deck-chrome__ribbon">
           <DeckRibbonShell>
-            <DeckHistoryRibbonGroup />
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
             {isCustomSlide && (activeTab === "insert" || activeTab === "format" || activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
@@ -118,14 +118,13 @@ export function DeckEditorChrome({
 
       {isSettingsTab(activeTab) ? (
         <>
-          <div className="td-deck-chrome__ribbon td-deck-chrome__ribbon--settings">
-            <DeckRibbonShell label="Configurações da tela">
-              <DeckHistoryRibbonGroup />
-              {activeTab === "slide" && isCustomSlide ? (
+          {activeTab === "slide" && isCustomSlide ? (
+            <div className="td-deck-chrome__ribbon td-deck-chrome__ribbon--settings">
+              <DeckRibbonShell label="Configurações da tela">
                 <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
-              ) : null}
-            </DeckRibbonShell>
-          </div>
+              </DeckRibbonShell>
+            </div>
+          ) : null}
           <div className="td-deck-chrome__panel td-deck-chrome__panel--compact" role="tabpanel">
           <DeckSettingsPanel
             activeTab={activeTab}
