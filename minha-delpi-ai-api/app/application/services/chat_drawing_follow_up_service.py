@@ -50,6 +50,23 @@ class ChatDrawingFollowUpService:
         if isinstance(drawing, dict):
             metadata["drawingAnalysis"] = drawing
 
+        overrides = None
+
+        if isinstance(tool_context, dict) and isinstance(
+            tool_context.get("drawingAnalysisOverrides"),
+            list,
+        ):
+            overrides = tool_context.get("drawingAnalysisOverrides")
+
+        if overrides is None and isinstance(drawing, dict) and isinstance(
+            drawing.get("drawingAnalysisOverrides"),
+            list,
+        ):
+            overrides = drawing.get("drawingAnalysisOverrides")
+
+        if isinstance(overrides, list) and overrides:
+            metadata["drawingAnalysisOverrides"] = overrides
+
         from app.application.services.chat_drawing_metrics_service import (
             ChatDrawingMetricsService,
         )
@@ -75,9 +92,18 @@ class ChatDrawingFollowUpService:
         )
         queries = _playbook().get("drawingFollowUpQueries") or {}
         critical = int(drawing.get("criticalErrors") or 0)
+        warnings = int(drawing.get("warnings") or 0)
+        errors = int(drawing.get("errors") or 0)
 
         if critical <= 0 and "Ver só erros críticos" in labels:
             labels = [label for label in labels if label != "Ver só erros críticos"]
+
+        if critical > 0 or (warnings <= 0 and errors <= 0):
+            labels = [
+                label
+                for label in labels
+                if label not in {"Confirmar revisão manual", "Descartar ressalva"}
+            ]
 
         if not cls._should_offer_bom_reextract(drawing) and "Reextrair BOM do PDF" in labels:
             labels = [label for label in labels if label != "Reextrair BOM do PDF"]

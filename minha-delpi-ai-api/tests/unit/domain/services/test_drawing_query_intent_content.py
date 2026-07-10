@@ -19,6 +19,21 @@ def test_drawing_query_intent_direct_answers_from_json():
     )
 
 
+def test_report_adjustment_triggers_loaded_from_json():
+    from app.domain.services.chat_drawing_query_intent_content_service import (
+        ChatDrawingQueryIntentContentService,
+    )
+
+    assert ChatDrawingQueryIntentContentService.list_values(
+        "reportAdjustmentTriggers",
+        "confirmManual",
+    )
+    assert ChatDrawingQueryIntentContentService.get(
+        "directAnswers",
+        "ambiguousAdjustment",
+    )
+
+
 def test_conformidade_delpi_trigger_from_json_bundle():
     assert ChatDrawingIntentService.is_drawing_analysis_request(
         "gerar relatorio de conformidade delpi 90260140"

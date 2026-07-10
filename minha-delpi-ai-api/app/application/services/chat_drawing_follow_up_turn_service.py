@@ -134,7 +134,10 @@ class ChatDrawingFollowUpTurnService:
     def _wants_report_repeat(cls, normalized: str) -> bool:
         return bool(
             re.search(
-                r"ger(e|ar)\s+(novamente\s+)?o\s+relat[oó]rio|relat[oó]rio\s+t[eé]cnico",
+                r"ger(e|ar)\s+(um\s+)?(novo\s+)?(novamente\s+)?(o\s+)?relat[oó]rio|"
+                r"atualize\s+o\s+relat[oó]rio|"
+                r"refa[cç]a\s+o\s+relat[oó]rio|"
+                r"relat[oó]rio\s+t[eé]cnico",
                 normalized,
             )
         )

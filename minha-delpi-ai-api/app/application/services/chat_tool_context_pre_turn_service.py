@@ -99,6 +99,27 @@ class ChatToolContextPreTurnService:
 
         agent_metadata = agent_context.get("metadata") if isinstance(agent_context, dict) else None
 
+        from app.application.services.chat_drawing_report_adjustment_turn_service import (
+            ChatDrawingReportAdjustmentTurnService,
+        )
+
+        drawing_adjustment_result = (
+            ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+                raw_message,
+                previous_messages=previous_messages,
+                attachment_ids=attachment_ids,
+            )
+        )
+
+        if drawing_adjustment_result:
+            return ToolTurnPreparation(
+                early_result=host._finalize_tool_context_result(
+                    message=raw_message,
+                    previous_messages=previous_messages,
+                    result=drawing_adjustment_result,
+                ),
+            )
+
         from app.application.services.chat_drawing_follow_up_turn_service import (
             ChatDrawingFollowUpTurnService,
         )

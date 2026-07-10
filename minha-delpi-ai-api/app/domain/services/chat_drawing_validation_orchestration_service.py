@@ -892,6 +892,66 @@ class ChatDrawingValidationOrchestrationService:
         }
 
     @classmethod
+    def reconcile_analysis_summary(cls, analysis: dict[str, Any]) -> dict[str, Any]:
+        items = analysis.get("items") if isinstance(analysis.get("items"), list) else []
+        has_pdf_attachment = bool(analysis.get("hasPdfAttachment"))
+        pdf_legible = analysis.get("pdfLegible")
+
+        critical = sum(1 for item in items if item.get("status") == cls._STATUS_CRITICAL)
+        errors = sum(1 for item in items if item.get("status") == cls._STATUS_ERROR)
+        pending = sum(1 for item in items if item.get("status") == cls._STATUS_PENDING)
+
+        if critical:
+            overall = "rejected"
+            overall_label = cls._content("overallLabels", "rejected")
+            conclusion = cls._content("conclusions", "rejected")
+        elif has_pdf_attachment and pdf_legible is False:
+            overall = "incomplete"
+            overall_label = cls._content("overallLabels", "incomplete")
+            conclusion = cls._content("conclusions", "illegiblePdf")
+        elif pending and not has_pdf_attachment:
+            overall = "incomplete"
+            overall_label = cls._content("overallLabels", "incomplete")
+            conclusion = cls._content("conclusions", "noPdf")
+        elif errors or pending:
+            overall = "approved_with_notes"
+            overall_label = cls._content("overallLabels", "approvedWithNotes")
+            conclusion = ChatDrawingValidationPresentationService.build_analysis_conclusion(
+                items,
+                has_pdf=has_pdf_attachment,
+            )
+        else:
+            overall = "approved"
+            overall_label = cls._content("overallLabels", "approved")
+            conclusion = cls._content("conclusions", "approved")
+
+        merged = dict(analysis)
+        merged.update(
+            {
+                "status": overall,
+                "overallLabel": overall_label,
+                "criticalErrors": critical,
+                "errors": errors,
+                "warnings": pending,
+                "conclusion": conclusion,
+            }
+        )
+        return merged
+
+    @classmethod
+    def repackage_with_overrides(
+        cls,
+        analysis: dict[str, Any],
+        overrides: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        from app.domain.services.chat_drawing_report_adjustment_service import (
+            ChatDrawingReportAdjustmentService,
+        )
+
+        updated = ChatDrawingReportAdjustmentService.apply_overrides(analysis, overrides)
+        return {"drawingAnalysis": updated}
+
+    @classmethod
     def _vision_refinement_metadata(cls, pdf_meta: dict[str, Any]) -> dict[str, Any] | None:
         refinement = pdf_meta.get("bomVisionRefinement")
 

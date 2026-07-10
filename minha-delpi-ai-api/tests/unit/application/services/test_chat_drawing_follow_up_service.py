@@ -44,6 +44,27 @@ def test_attach_hides_critical_chip_when_no_errors():
     assert "Ver checklist completo" in labels
 
 
+def test_offers_manual_review_chips_when_warnings_present():
+    metadata: dict = {}
+    drawing = {
+        "productCode": "90261877",
+        "criticalErrors": 0,
+        "errors": 0,
+        "warnings": 1,
+        "status": "approved_with_notes",
+    }
+
+    ChatDrawingFollowUpService.attach_to_assistant_metadata(
+        metadata,
+        intelligence={"drawingAnalysis": drawing},
+    )
+
+    labels = [item["label"] for item in metadata.get("drawingFollowUpSuggestions") or []]
+
+    assert "Confirmar revisão manual" in labels
+    assert "Descartar ressalva" in labels
+
+
 def test_offers_bom_reextract_chip_when_bom_issues_and_vision_refinement():
     metadata: dict = {}
     drawing = {

@@ -46,6 +46,13 @@
     "approvedWithNotes": "Aprovado com ressalvas",
     "approved": "Aprovado"
   },
+  "manualReview": {
+    "statusLabel": "Revisado manualmente",
+    "evidenceTemplate": "Revisado em engenharia em {date}",
+    "defaultReason": "Confirmado manualmente nesta conversa",
+    "overrideApplied": "Ressalva removida após revisão humana: {item}.",
+    "conclusionIntro": "Itens abaixo foram confirmados manualmente nesta conversa:"
+  },
   "decapeSides": {
     "left": "esquerdo",
     "right": "direito"

@@ -98,7 +98,7 @@ Contrato neutro: `documentVision.tables[]`. Contrato skill: `bomRows`, `drawingA
 
 **Render-only (Fase A — jun/2026):** quando `drawingAnalysis` / `drawingAnalysisExport` estão no tool context, o checklist já foi decidido pelo pipeline (`ChatDrawingValidationOrchestrationService`). O LLM recebe `drawing-analysis-render-only.md` via `PromptPolicyService` e **não reclassifica** `items[]` — só narrativa, plano de ação e normas (RAG). Follow-ups sem novo PDF reidratam o último `drawingAnalysis` com `ChatDrawingLlmPresentationService`. Playbook: [desacoplamento skill](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md) Fase A ✅.
 
-**Ajuste interativo pós-revisão (Onda 16 — backlog jul/2026):** mensagens como «foi revisado, o problema não é verdadeiro, gere novo relatório» hoje **não** alteram `items[]` — só reformatação ou reanálise completa. Roadmap: [playbook ajuste interativo](../roadmap/melhorias/playbook_ajuste_relatorio_desenho_interativo.md) (overrides `drawingAnalysisOverrides` + re-render determinístico).
+**Ajuste interativo pós-revisão (Onda 16 — Fase 16.1 ✅ jul/2026):** mensagens como «foi revisado, o problema não é verdadeiro, gere novo relatório» aplicam `drawingAnalysisOverrides` via `ChatDrawingReportAdjustmentTurnService` e regeneram `drawingAnalysisExport` sem reanálise do PDF. Roadmap: [playbook ajuste interativo](../roadmap/melhorias/playbook_ajuste_relatorio_desenho_interativo.md).
 
 **RAG normativo (Fase D — jun/2026):** com checklist de desenho **e** trechos RAG no turno, `PromptPolicyService` injeta `drawing-analysis-rag-normative.md` — normas explicam requisitos; **status** permanece só em `drawingAnalysis.items[]`.
 
