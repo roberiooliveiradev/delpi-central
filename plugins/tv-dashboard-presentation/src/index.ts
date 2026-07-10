@@ -49,6 +49,17 @@ export {
   COMUNICADO_LINE_HEIGHT_OPTIONS,
   COMUNICADO_SHAPE_KINDS,
 } from "./comunicadoTypes";
+export {
+  COMUNICADO_GOOGLE_FONT_CATALOG,
+  buildGoogleFontsStylesheetUrl,
+  collectFontFamiliesFromComunicadoConfig,
+  comunicadoFontFamilyOptions,
+  ensureComunicadoGoogleFontsLoaded,
+  resolveGoogleFontEntry,
+  useComunicadoGoogleFonts,
+  type ComunicadoFontFamilyOption,
+  type ComunicadoGoogleFontEntry,
+} from "./comunicadoGoogleFonts";
 export { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 export {
   blockTypeForDisplayMode,

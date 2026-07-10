@@ -42,7 +42,9 @@ import {
   COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
   buildTextDecoration,
   clampFontSize,
+  comunicadoFontFamilyOptions,
   defaultNamedStyleForBlockType,
+  ensureComunicadoGoogleFontsLoaded,
   defaultTextBlockStyle,
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
@@ -295,10 +297,13 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <TdRibbonSelect
                   aria-label="Família da fonte"
                   value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
-                  onChange={(value) => updateSelectedStyle({ fontFamily: value })}
-                  options={COMUNICADO_FONT_FAMILIES.map((font) => ({
-                    value: font,
-                    label: font.split(",")[0] ?? font,
+                  onChange={(value) => {
+                    ensureComunicadoGoogleFontsLoaded([value]);
+                    updateSelectedStyle({ fontFamily: value });
+                  }}
+                  options={comunicadoFontFamilyOptions().map((font) => ({
+                    value: font.value,
+                    label: font.source === "google" ? `${font.label} · Google` : font.label,
                   }))}
                 />
                 <button

@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 
 import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 import { ComunicadoBlockView } from "./comunicadoBlockView";
+import { useComunicadoGoogleFonts } from "./comunicadoGoogleFonts";
 import { hasRichComunicado, sortBlocksByZIndex, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
 import type { ComunicadoBackground } from "./comunicadoTypes";
 import { formatNumber, formatPct } from "./nativeFormat";
@@ -278,6 +279,8 @@ function RichComunicadoScreen({
 }: {
   data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
 }) {
+  useComunicadoGoogleFonts({ blocks: data.blocks });
+
   const background = data.background ?? { type: "color", value: "#0f172a" };
   const imageUrl =
     background.type === "image" ? background.url ?? background.value : undefined;

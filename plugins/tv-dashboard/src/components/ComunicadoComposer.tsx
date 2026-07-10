@@ -1,4 +1,8 @@
-import { comunicadoBackgroundCssProperties, frameStyle } from "@delpi/tv-dashboard-presentation";
+import {
+  comunicadoBackgroundCssProperties,
+  frameStyle,
+  useComunicadoGoogleFonts,
+} from "@delpi/tv-dashboard-presentation";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -38,6 +42,7 @@ function useCanvasBackgroundStyle() {
 
 export function ComunicadoComposerCanvas() {
   const {
+    config,
     blocks,
     selectedId,
     selectedIds,
@@ -51,6 +56,7 @@ export function ComunicadoComposerCanvas() {
     dataPreviewLoading,
     stageZoom,
   } = useComunicadoEditor();
+  useComunicadoGoogleFonts(config);
   const canvasStyle = useCanvasBackgroundStyle();
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const marqueeActiveRef = useRef(false);
