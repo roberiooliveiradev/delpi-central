@@ -10,9 +10,26 @@ import {
   patchFederationFlattenModule,
   patchFederationImportPublishReact,
   publishDelpiMfReact,
+  isUsableReact,
   upgradeUnconditionalReactGlobalPublish,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
+
+const REACT_INTERNALS = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
+
+function portalReact() {
+  return {
+    useRef: () => "portal",
+    [REACT_INTERNALS]: { H: {} },
+  };
+}
+
+function brokenReact() {
+  return {
+    useRef: () => "broken",
+    [REACT_INTERNALS]: { H: null },
+  };
+}
 
 const UNPATCHED_H = String.raw`function H(e,t){return typeof e.default=="function"?(Object.keys(e).forEach(s=>{s!=="default"&&(e.default[s]=e[s])}),w[t]=e.default,e.default):(e.default&&(e=Object.assign({},e.default,e)),w[t]=e,e)}`;
 
@@ -38,37 +55,43 @@ function testFlattenFromBrokenProxy() {
 function testFlattenRuntimeStrict() {
   const code = patchFederationImportPublishReact(patchFederationFlattenModule(UNPATCHED_H));
   const result = new Function(
-    `const w={}; ${code}; return H({ default: { useRef: () => "ok" } }, "react");`,
+    `const w={}; const mock={useRef:()=>"ok",__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE:{H:{}}}; ${code}; return H({ default: mock }, "react");`,
   )();
   assert.equal(typeof result.useRef, "function");
-  assert.equal(globalThis[DELPI_MF_REACT_GLOBAL]?.useRef?.(), "ok");
+  assert.ok(isUsableReact(globalThis[DELPI_MF_REACT_GLOBAL]));
   delete globalThis[DELPI_MF_REACT_GLOBAL];
 }
 
 function testReactShimUsesGlobal() {
   const out = patchBundledReactCjsBridge(REACT_SHIM);
   assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "shim consulta global");
-  assert.match(out, /function V\(\)\{const __g=globalThis\.__DELPI_MF_REACT__;if\(__g\)return __g;return/);
+  assert.ok(out.includes(REACT_INTERNALS), "shim valida dispatcher H");
 }
 
 function testPublishDoesNotOverwritePortalReact() {
-  globalThis[DELPI_MF_REACT_GLOBAL] = { useRef: () => "portal" };
-  publishDelpiMfReact({ useRef: () => "bundled" });
+  globalThis[DELPI_MF_REACT_GLOBAL] = portalReact();
+  publishDelpiMfReact(brokenReact());
   assert.equal(globalThis[DELPI_MF_REACT_GLOBAL].useRef(), "portal");
   delete globalThis[DELPI_MF_REACT_GLOBAL];
+}
+
+function testBrokenReactNotUsable() {
+  assert.ok(!isUsableReact(brokenReact()));
+  assert.ok(isUsableReact(portalReact()));
+}
+
+function testAppChunkReactBridgeFallback() {
+  const raw = String.raw`import{r as Nu}from"./index-ABC.js";function x(){if(Ws)return al;Ws=1;var e=Nu(),t=DA();return e.useRef}`;
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes(REACT_INTERNALS), "App shim valida dispatcher H");
+  assert.ok(!out.includes("var e=Nu()"), "init shim não chama Nu() direto");
 }
 
 function testUpgradeUnconditionalPublish() {
   const raw = String.raw`t==="react"&&(globalThis.__DELPI_MF_REACT__=w[t])`;
   const out = upgradeUnconditionalReactGlobalPublish(raw);
   assert.ok(out.includes("!globalThis.__DELPI_MF_REACT__"), "upgrade adiciona guard");
-}
-
-function testAppChunkReactBridgeFallback() {
-  const raw = String.raw`import{r as Nu}from"./index-ABC.js";function x(){if(Ws)return al;Ws=1;var e=Nu(),t=DA();return e.useRef}`;
-  const out = patchBundledReactConsumerChunk(raw);
-  assert.ok(out.includes("__DELPI_MF_REACT__?.useRef"), "App shim usa global");
-  assert.ok(!out.includes("var e=Nu()"), "init shim não chama Nu() direto");
+  assert.ok(out.includes("globalThis.__DELPI_MF_REACT__=w[t]"), "upgrade mantém globalThis");
 }
 
 testFlattenFromObjectAssign();
@@ -76,7 +99,8 @@ testFlattenFromBrokenProxy();
 testFlattenRuntimeStrict();
 testReactShimUsesGlobal();
 testPublishDoesNotOverwritePortalReact();
+testBrokenReactNotUsable();
 testUpgradeUnconditionalPublish();
 testAppChunkReactBridgeFallback();
 
-console.log("OK: federationReactProxyFix — 7 testes passaram");
+console.log("OK: federationReactProxyFix — 8 testes passaram");

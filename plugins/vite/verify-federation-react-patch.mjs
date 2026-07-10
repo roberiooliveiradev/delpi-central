@@ -34,8 +34,8 @@ for (const file of fs.readdirSync(distDir)) {
   }
 
   if (/(?:^|\/)App-/.test(file) && code.includes('import{r as ') && code.includes('from"./index-')) {
-    if (!code.includes("__DELPI_MF_REACT__?.useRef")) {
-      console.error(`FAIL ${file}: App chunk sem fallback global no bridge React`);
+    if (!code.includes("__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE")) {
+      console.error(`FAIL ${file}: App chunk sem validação dispatcher H no bridge React`);
       failed = true;
     }
   }

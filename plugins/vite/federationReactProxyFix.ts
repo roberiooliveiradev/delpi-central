@@ -13,9 +13,18 @@ import type { Plugin } from "vite";
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
 
-function isUsableReact(mod: unknown): mod is { useRef: (...args: unknown[]) => unknown } {
-  return typeof (mod as { useRef?: unknown })?.useRef === "function";
+const REACT_INTERNALS_KEY = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
+
+function reactHookDispatcher(mod: unknown): unknown {
+  return (mod as Record<string, { H?: unknown } | undefined>)?.[REACT_INTERNALS_KEY]?.H;
 }
+
+/** React flatten quebrado expõe useRef mas H=null — tratar como inválido. */
+export function isUsableReact(mod: unknown): mod is { useRef: (...args: unknown[]) => unknown } {
+  return typeof (mod as { useRef?: unknown })?.useRef === "function" && reactHookDispatcher(mod) != null;
+}
+
+const USABLE_REACT_GLOBAL_GUARD = `(globalThis.${DELPI_MF_REACT_GLOBAL}&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useRef=="function"&&globalThis.${DELPI_MF_REACT_GLOBAL}.${REACT_INTERNALS_KEY}?.H)`;
 
 /** Publica React canônico — não sobrescreve instância válida já semeada pelo portal. */
 export function publishDelpiMfReact(react: unknown): void {
@@ -44,11 +53,11 @@ const REACT_PUBLISH = (cache: string, pkg: string) =>
 export function upgradeUnconditionalReactGlobalPublish(code: string): string {
   return code.replace(
     /(\w+)==="react"&&\(globalThis\.(__DELPI_MF_REACT__=\w+\[\w+\])\)/g,
-    `$1==="react"&&${REACT_PUBLISH_GUARD}&&($2)`,
+    `$1==="react"&&${REACT_PUBLISH_GUARD}&&(globalThis.$2)`,
   );
 }
 
-const DELPI_MF_REACT_RESOLVE = `globalThis.${DELPI_MF_REACT_GLOBAL}?.useRef?globalThis.${DELPI_MF_REACT_GLOBAL}:`;
+const DELPI_MF_REACT_RESOLVE = `${USABLE_REACT_GLOBAL_GUARD}?globalThis.${DELPI_MF_REACT_GLOBAL}:`;
 
 /**
  * App/recharts importam React bundled (index-*.js) fora do importShared.
@@ -91,25 +100,30 @@ export function patchFederationFlattenModule(code: string): string {
 
 /** Publica React no global quando importShared carrega o módulo shared. */
 export function patchFederationImportPublishReact(code: string): string {
-  let out = upgradeUnconditionalReactGlobalPublish(code);
+  let out = patchFederationFlattenModule(code);
+  out = upgradeUnconditionalReactGlobalPublish(out);
 
-  if (!out.includes("=e.default,e.default") && !out.includes("=_delpiMod,_delpiMod")) {
-    return out;
-  }
   if (out.includes(REACT_PUBLISH_GUARD)) {
     return out;
   }
-  return out
-    .replace(
-      /(\w+)\[(\w+)\]=e\.default,e\.default/g,
-      (_, cache, pkg) =>
-        `${cache}[${pkg}]=e.default,${REACT_PUBLISH(cache, pkg)},e.default`,
-    )
-    .replace(
-      /(\w+)\[(\w+)\]=(_delpiMod|e),\3(?=[\)}])/g,
-      (_, cache, pkg, ret) =>
-        `${cache}[${pkg}]=${ret},${REACT_PUBLISH(cache, pkg)},${ret}`,
-    );
+
+  if (!out.includes("=e.default,e.default") && !out.includes("=_delpiMod") && !out.includes("===\"react\"&&")) {
+    return out;
+  }
+
+  return upgradeUnconditionalReactGlobalPublish(
+    out
+      .replace(
+        /(\w+)\[(\w+)\]=e\.default,e\.default/g,
+        (_, cache, pkg) =>
+          `${cache}[${pkg}]=e.default,${REACT_PUBLISH(cache, pkg)},e.default`,
+      )
+      .replace(
+        /(\w+)\[(\w+)\]=(_delpiMod|e),(\3)(?=,|\))/g,
+        (_, cache, pkg, ret) =>
+          `${cache}[${pkg}]=${ret},${REACT_PUBLISH(cache, pkg)},${ret}`,
+      ),
+  );
 }
 
 /**
@@ -131,7 +145,7 @@ export function patchBundledReactCjsBridge(code: string): string {
   }
   return code.replace(
     fnStart,
-    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g)return __g;return`,
+    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g&&typeof __g.useRef=="function"&&__g.${REACT_INTERNALS_KEY}?.H)return __g;return`,
   );
 }
 

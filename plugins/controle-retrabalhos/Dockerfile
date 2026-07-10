@@ -16,6 +16,7 @@ COPY vite ./vite
 WORKDIR /app/controle-retrabalhos
 # tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
 RUN npx vite build
+RUN node ../vite/verify-federation-react-patch.mjs dist/assets
 
 FROM nginx:alpine AS production
 
