@@ -12,7 +12,7 @@
 | Vocabulário checklist | `drawing_validation.json` · `drawing_stamp.json` |
 | Registry parcial | `drawing_validation_rules.json` |
 | Policy atual | `drawing-analysis-delpi-skill.md` |
-| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [Validação normativa](./playbook_validacao_desenhos_delpi_roadmap.md) · [OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md) · [BOM colunar](./playbook_bom_colunar_visao_skill_desenho.md) |
+| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [Validação normativa](./playbook_validacao_desenhos_delpi_roadmap.md) · [OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md) · [BOM colunar](./playbook_bom_colunar_visao_skill_desenho.md) · [**Ajuste interativo relatório**](./playbook_ajuste_relatorio_desenho_interativo.md) |
 | Paridade desacoplamento | [Playbook 18 — prosa template × LLM](../playbook-18-prosa-template-llm-desacoplamento.md) |
 
 **Motivação:** regressões por produto (90262008, 90264243) mostram acoplamento residual — policy da skill repete regras que o pipeline já decide; testes nomeados por código; LLM pode reclassificar itens que `drawingAnalysis.items` já fixou.

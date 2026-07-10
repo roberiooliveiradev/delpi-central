@@ -297,6 +297,7 @@ DRAWING_VALIDATE_CODES=90263149,90262834,90263622,90264227 \
 4. **15.5** — notas dimensionais (90262834).
 5. **15.6** — quantidades, balões, registry declarativo.
 6. **16.0** — desacoplamento skill × pipeline → [playbook_skill_desenho_desacoplamento.md](./playbook_skill_desenho_desacoplamento.md) (Fases A–E).
+7. **16.1–16.3** — ajuste interativo do relatório (overrides humanos) → [playbook_ajuste_relatorio_desenho_interativo.md](./playbook_ajuste_relatorio_desenho_interativo.md).
 
 ---
 
@@ -310,3 +311,4 @@ DRAWING_VALIDATE_CODES=90263149,90262834,90263622,90264227 \
 | [chat-pdf-document-extraction.md](../../architecture/chat-pdf-document-extraction.md) | BOM, cotas, famílias PA |
 | [assistant-content-catalog.md](../../architecture/assistant-content-catalog.md) | `drawing_validation.json` |
 | [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md) | Fase 15.8 — BOM colunar, loop visão, assertividade 95% |
+| [playbook_ajuste_relatorio_desenho_interativo.md](./playbook_ajuste_relatorio_desenho_interativo.md) | Onda 16 — overrides humanos, relatório interativo pós-análise |
