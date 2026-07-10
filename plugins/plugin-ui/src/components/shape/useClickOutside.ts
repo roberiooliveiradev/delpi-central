@@ -1,10 +1,17 @@
 import { useEffect, useRef, type RefObject } from "react";
 
+function isInsideNestedModal(target: Node): boolean {
+  return target instanceof Element && Boolean(target.closest('[aria-modal="true"]'));
+}
+
 export function useClickOutside<T extends HTMLElement>(
   refs: RefObject<T | null>[],
   active: boolean,
   onOutside: () => void,
 ): void {
+  const onOutsideRef = useRef(onOutside);
+  onOutsideRef.current = onOutside;
+
   useEffect(() => {
     if (!active) return;
 
@@ -12,9 +19,8 @@ export function useClickOutside<T extends HTMLElement>(
       const target = event.target as Node | null;
       if (!target) return;
       const inside = refs.some((ref) => ref.current?.contains(target));
-      if (!inside) {
-        onOutside();
-      }
+      if (inside || isInsideNestedModal(target)) return;
+      onOutsideRef.current();
     };
 
     document.addEventListener("mousedown", handlePointerDown);
@@ -23,5 +29,5 @@ export function useClickOutside<T extends HTMLElement>(
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("touchstart", handlePointerDown);
     };
-  }, [active, onOutside, refs]);
+  }, [active, refs]);
 }
