@@ -42,3 +42,8 @@ def is_evaluation_complete(
 
 def is_nc_candidate(score: int | None, is_not_applicable: bool) -> bool:
     return not is_not_applicable and score in (1, 3)
+
+
+def can_attach_criterion_photo(score: int | None, is_not_applicable: bool) -> bool:
+    """Foto opcional em qualquer nota aplicável (1, 3 ou 5); não em NA."""
+    return not is_not_applicable and score in (1, 3, 5)

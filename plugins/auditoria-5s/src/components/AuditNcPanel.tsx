@@ -289,6 +289,7 @@ export function AuditNcPanel({
         {items.map((item) => (
           <AuditNcItemCard
             key={item.responseId}
+            auditId={audit.id}
             item={item}
             form={forms[item.responseId] ?? emptyNcForm()}
             attachmentsByNcId={attachmentsByNcId}

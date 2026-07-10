@@ -25,6 +25,7 @@ import {
 import { AuditNcEvidenceSection } from "./AuditNcEvidenceSection";
 
 type Props = {
+  auditId: string;
   item: NcTreatmentItem;
   form: NcFormState;
   attachmentsByNcId: NcAttachmentMap;
@@ -54,6 +55,7 @@ const WORKFLOW_STEPS = [
 ];
 
 export function AuditNcItemCard({
+  auditId,
   item,
   form,
   attachmentsByNcId,
@@ -204,9 +206,12 @@ export function AuditNcItemCard({
           </div>
 
           <AuditNcEvidenceSection
+            auditId={auditId}
+            criterionId={item.criterionId}
             ncId={item.nc?.id ?? null}
             before={ncAttachments?.before}
             after={ncAttachments?.after}
+            evaluationBefore={item.evaluationAttachment}
             disabled={disabled || finalized}
             uploadingType={uploadingType}
             onUpload={onUpload}

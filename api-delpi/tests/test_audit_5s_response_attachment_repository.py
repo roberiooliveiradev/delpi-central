@@ -170,7 +170,7 @@ def test_seed_nc_before_skips_without_response_photo() -> None:
     assert result is None
 
 
-def test_upsert_response_attachment_rejects_non_nc_score(
+def test_upsert_response_attachment_allows_bom_score(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     repo = FakeAudit5sRepo()
@@ -182,8 +182,58 @@ def test_upsert_response_attachment_rejects_non_nc_score(
             return {"id": "resp-1", "score": 5, "is_not_applicable": False}
         return None
 
+    def fake_execute_returning_one(
+        query: str,
+        params: tuple[Any, ...] | None = None,
+        *,
+        auto_commit: bool = True,
+    ) -> dict[str, Any] | None:
+        if "audit_5s_response_attachments" in query and "INSERT" in query:
+            return {
+                "id": "att-1",
+                "response_id": "resp-1",
+                "file_name": params[1] if params else "criterion_x.jpg",
+                "original_name": params[2] if params else "a.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 10,
+                "storage_path": "resp-1/criterion_x.jpg",
+                "uploaded_by_user_id": "user-1",
+                "uploaded_at": "2026-07-10T12:00:00Z",
+            }
+        return None
+
     repo.fetch_one = fake_fetch_one  # type: ignore[method-assign]
-    with pytest.raises(PluginsRepositoryError, match="Ruim \\(1\\) ou Médio \\(3\\)"):
+    repo.execute_returning_one = fake_execute_returning_one  # type: ignore[method-assign]
+
+    result = repo.upsert_response_attachment(
+        audit_id="audit-1",
+        criterion_id="crit-1",
+        original_name="a.jpg",
+        file_name="criterion_x.jpg",
+        storage_path="resp-1/criterion_x.jpg",
+        mime_type="image/jpeg",
+        size_bytes=10,
+        uploaded_by_user_id="user-1",
+    )
+
+    assert result["criterion_id"] == "crit-1"
+    assert result["response_id"] == "resp-1"
+
+
+def test_upsert_response_attachment_rejects_not_applicable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = FakeAudit5sRepo()
+
+    def fake_fetch_one(query: str, params: tuple[Any, ...] | None = None):
+        if "audit_5s_audits" in query:
+            return {"id": "audit-1", "status": "draft"}
+        if "audit_5s_responses" in query:
+            return {"id": "resp-1", "score": None, "is_not_applicable": True}
+        return None
+
+    repo.fetch_one = fake_fetch_one  # type: ignore[method-assign]
+    with pytest.raises(PluginsRepositoryError, match="após informar a nota"):
         repo.upsert_response_attachment(
             audit_id="audit-1",
             criterion_id="crit-1",

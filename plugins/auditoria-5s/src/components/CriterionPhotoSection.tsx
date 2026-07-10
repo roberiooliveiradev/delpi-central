@@ -14,6 +14,7 @@ type Props = {
   attachment?: ResponseAttachment | null;
   disabled: boolean;
   uploading: boolean;
+  reusesForNcBefore?: boolean;
   onUpload: (file: File) => Promise<void>;
   onRemove: () => Promise<void>;
 };
@@ -24,6 +25,7 @@ export function CriterionPhotoSection({
   attachment,
   disabled,
   uploading,
+  reusesForNcBefore = false,
   onUpload,
   onRemove,
 }: Props) {
@@ -127,7 +129,9 @@ export function CriterionPhotoSection({
       <p className="a5s-criterion-photo__hint">
         {attachment
           ? "Toque na foto para ampliar. Use o botão abaixo para substituir pela câmera."
-          : "Toque na área abaixo para abrir a câmera — a foto será reutilizada como evidência do antes na NC."}
+          : reusesForNcBefore
+            ? "Registre uma foto opcional deste critério. Em notas Ruim ou Médio, ela também pode ser reutilizada como evidência do antes na NC."
+            : "Registre uma foto opcional para documentar este critério durante a avaliação."}
       </p>
 
       <input

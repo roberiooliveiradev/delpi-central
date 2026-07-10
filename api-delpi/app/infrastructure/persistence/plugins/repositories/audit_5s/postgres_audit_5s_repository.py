@@ -9,6 +9,7 @@ from app.application.services.audit_5s.scoring_service import (
     CriterionScoreInput,
     calculate_overall_percentual,
     calculate_senso_percentual,
+    can_attach_criterion_photo,
     is_evaluation_complete,
     is_nc_candidate,
 )
@@ -620,9 +621,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             raise PluginsRepositoryError(
                 "Salve a nota do critério antes de anexar a foto."
             )
-        if not is_nc_candidate(response.get("score"), bool(response.get("is_not_applicable"))):
+        if not can_attach_criterion_photo(
+            response.get("score"), bool(response.get("is_not_applicable"))
+        ):
             raise PluginsRepositoryError(
-                "Foto do critério disponível apenas para notas Ruim (1) ou Médio (3)."
+                "Foto do critério disponível após informar a nota (1, 3 ou 5)."
             )
 
         response_id = str(response["id"])
@@ -852,6 +855,40 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         refreshed = self.get_audit(audit_id)
         if not refreshed:
             raise PluginsRepositoryError("Falha ao concluir avaliação.")
+        return refreshed
+
+    def reopen_evaluation(self, audit_id: str) -> dict[str, Any]:
+        audit = self.get_audit(audit_id)
+        if not audit:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+
+        status = str(audit["status"])
+        if status == "draft":
+            raise PluginsRepositoryError("A auditoria já está em fase de avaliação.")
+        if status == "closed":
+            raise PluginsRepositoryError(
+                "Auditorias encerradas não podem ser reabertas para avaliação."
+            )
+        if status not in ("evaluation_complete", "nc_in_progress"):
+            raise PluginsRepositoryError("Auditoria não pode ser reaberta neste status.")
+
+        if self.list_nonconformities(audit_id):
+            raise PluginsRepositoryError(
+                "Não é possível reabrir a avaliação enquanto houver não conformidades registradas."
+            )
+
+        self.execute(
+            """
+            UPDATE quality.audit_5s_audits
+               SET status = 'draft',
+                   updated_at = NOW()
+             WHERE id = %s
+            """,
+            (audit_id,),
+        )
+        refreshed = self.get_audit(audit_id)
+        if not refreshed:
+            raise PluginsRepositoryError("Falha ao reabrir avaliação.")
         return refreshed
 
     def list_nc_candidates(self, audit_id: str) -> list[dict[str, Any]]:
@@ -1648,6 +1685,20 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             (normalized_id,),
         )
 
+    def purge_audit_files(self, audit_id: str) -> None:
+        nc_storage = Audit5sNcAttachmentStorage()
+        response_storage = Audit5sResponseAttachmentStorage()
+
+        for item in self.list_nc_attachments_for_audit(audit_id):
+            nc_storage.delete_nonconformity_dir(str(item["nonconformity_id"]))
+
+        response_ids = {
+            str(item["response_id"])
+            for item in self.list_response_attachments_for_audit(audit_id)
+        }
+        for response_id in response_ids:
+            response_storage.delete_response_dir(response_id)
+
     def delete_audit(self, audit_id: str) -> None:
         normalized_id = audit_id.strip()
         audit = self.get_audit_delete_target(normalized_id)
@@ -1658,6 +1709,18 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "Somente auditorias em avaliação podem ser excluídas."
             )
 
+        self._delete_audit_cascade(normalized_id)
+
+    def force_delete_audit(self, audit_id: str) -> None:
+        normalized_id = audit_id.strip()
+        audit = self.get_audit_delete_target(normalized_id)
+        if not audit:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+
+        self._delete_audit_cascade(normalized_id)
+
+    def _delete_audit_cascade(self, normalized_id: str) -> None:
+        self.purge_audit_files(normalized_id)
         self.execute(
             """
             DELETE FROM quality.audit_5s_audits

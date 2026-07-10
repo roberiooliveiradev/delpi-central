@@ -115,6 +115,13 @@ export async function deleteAudit(auditId: string) {
   await httpPost<ApiEnvelope<null>>(`${API_BASE}/audits/${auditId.trim()}/delete`, {});
 }
 
+export async function forceDeleteAudit(auditId: string) {
+  await httpPost<ApiEnvelope<null>>(
+    `${API_BASE}/audits/${auditId.trim()}/force-delete`,
+    {},
+  );
+}
+
 export async function createAudit(payload: {
   branch_code: string;
   audit_date: string;
@@ -189,6 +196,14 @@ export async function deleteResponseAttachment(
 export async function completeEvaluation(auditId: string) {
   const res = await httpPost<ApiEnvelope<AuditDetail>>(
     `${API_BASE}/audits/${auditId}/complete-evaluation`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function reopenEvaluation(auditId: string) {
+  const res = await httpPost<ApiEnvelope<AuditDetail>>(
+    `${API_BASE}/audits/${auditId.trim()}/reopen-evaluation`,
     {},
   );
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
