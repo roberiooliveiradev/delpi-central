@@ -102,7 +102,7 @@ Relatório: [native-form-controls-audit.md](./native-form-controls-audit.md)
 | `operationalUnitLabels` | 8 dashboards | Filiais 01/02 TOTVS |
 | `goalDisplay` | 8 dashboards | Badges IDD / meta KPI |
 
-Reexport local: `export * from "../../../plugin-ui/src/utils/goalDisplay"` (imports existentes preservados).
+Reexport local (barrel do plugin): `export { goalDisplayFormat } from "@delpi/plugin-ui/index"` — preferir subpath MF, não paths relativos `plugin-ui/src/…`.
 
 ## Status — Fase 5 (evidências / confirm / SI)
 
@@ -194,19 +194,24 @@ Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGr
 | `controle-retrabalhos` | — | ✅ | ✅ |
 | `financeiro-centro-custo` | — | ✅ | ✅ |
 
-## Integração `@delpi/plugin-ui` (Vite + Docker)
+## Integração `@delpi/plugin-ui` (Module Federation)
 
-Plugins com alias Vite, `styles.css` no bootstrap e Dockerfile `context: ../plugins`:
+**Rollout concluído (jul/2026):** todos os MFEs abaixo usam `pluginUiRemote()` + `preparePluginUiRemote()` — **sem** `COPY plugin-ui` no Docker.
 
-| Plugin | F1 help | F2/F3 componentes |
-|--------|---------|-------------------|
-| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell |
-| `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard, FilterBarShell |
-| `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid |
-| `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard, **StatusBadge**, **SectionBlock**, **FilterSelectField** / **SiSelectControl** | `operationalUnitLabels`, `siFiltersUi` |
-| `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity, FilterBarShell, PageHeader, CompactPagination |
-| `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState, FilterBarShell, PageHeader, CompactPagination |
-| `auditoria-5s` | — | ChartCard, createAnalyticsKpiCard, FilterBarShell |
+Checklist: [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
+
+| Plugin | F1 help | F2/F3 componentes | MF |
+|--------|---------|-------------------|-----|
+| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell | ✅ |
+| `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard, FilterBarShell | ✅ |
+| `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid | ✅ |
+| `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard, **StatusBadge**, **SectionBlock**, **FilterSelectField** / **SiSelectControl** | ✅ |
+| `controle-retrabalhos` | — | KpiCard, ChartCard, LoadingActivity, FilterBarShell, PageHeader, CompactPagination | ✅ (referência) |
+| `financeiro-centro-custo` | — | ChartCard, KpiCard, EmptyState, LoadingState, FilterBarShell, PageHeader, CompactPagination | ✅ |
+| `auditoria-5s` | — | ChartCard, createAnalyticsKpiCard, FilterBarShell | ✅ |
+| `quality-labels` | — | CertificateFormFields, Admin form | ✅ |
+| `minha-delpi-chat` | — | ChatNative*, admin forms | ✅ |
+| `public-hub` | — | shell público | ✅ |
 
 ## Referência — `cadastro-kaizen` (migração UI concluída)
 

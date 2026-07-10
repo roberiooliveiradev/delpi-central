@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Adiciona COPY plugin-ui nos Dockerfiles de MFEs federados (tsconfig paths no build)."""
+"""OBSOLETO (jul/2026) — adicionava COPY plugin-ui nos Dockerfiles federados.
+
+Rollout MF concluído: consumidores NÃO devem copiar plugin-ui. Use
+docs/05-plugin-system/novo-plugin-mfe-checklist.md. Mantido só para histórico.
+"""
 
 from __future__ import annotations
 

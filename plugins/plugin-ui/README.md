@@ -40,52 +40,9 @@ await preparePluginUiRemote();
 
 Docker: subir `delpi-plugin-ui` antes do consumidor (`<<: *plugin-ui-federated` no compose).
 
-### Bundled legado (descontinuado para plugin-ui)
+### Histórico — bundled (descontinuado)
 
-#### 1. Alias no consumidor (Vite)
-
-```ts
-// plugins/meu-plugin/vite.config.ts
-import path from "node:path";
-
-resolve: {
-  alias: {
-    "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
-  },
-  dedupe: ["react", "react-dom"],
-},
-```
-
-#### 2. Estilos (uma vez)
-
-```ts
-// src/main.tsx — ajuste o caminho relativo
-import "../../plugin-ui/src/styles.css";
-import "./index.css";
-```
-
-#### 3. Tokens no root do dashboard
-
-```css
-.dashboard-meu-plugin {
-  --delpi-ui-accent: var(--meu-accent, var(--primary, #089bdb));
-  --delpi-ui-surface: var(--meu-surface, var(--surface, #fff));
-  --delpi-ui-text: var(--meu-text, var(--text, #111));
-  --delpi-ui-border: var(--meu-border, var(--border, #e5e7eb));
-  --delpi-ui-muted: var(--meu-muted);
-}
-```
-
-#### 4. Uso
-
-```tsx
-import { FieldLabel, HelpTooltip, HintAction, SectionHintLabel, TabHintCell } from "@delpi/plugin-ui";
-import { MEU_HELP } from "./content/helpTooltips";
-
-<FieldLabel htmlFor="periodo" label="Período" hint={MEU_HELP.fields.period} className="meu-field__label" />
-
-<SectionHintLabel label="Filtros" hint={MEU_HELP.sections.filters} className="meu-ribbon__label" />
-```
+Antes do rollout MF (jul/2026), consumidores usavam alias Vite + `COPY plugin-ui`. **Não usar** em plugins novos. Ver [module-federation.md](./docs/module-federation.md) e [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
 
 ---
 
@@ -166,25 +123,17 @@ src/
 
 ## Consumidores
 
-| Plugin | Status |
-|--------|--------|
-| `tv-dashboard` | ✅ Integrado (referência) |
-| `dashboard-commercial` | ✅ Fase 1 |
-| `dashboard-engineering` | ✅ Fase 1 |
-| `dashboard-financial` | ✅ Fase 1 |
-| `dashboard-hr` | ✅ Fase 1 |
-| `dashboard-lmps` | ✅ Fase 1 |
-| `dashboard-production` | ✅ Fase 1 |
-| `dashboard-quality` | ✅ Fase 1 |
-| `dashboard-supplies` | ✅ Fase 1 |
-| `cadastro-kaizen` | ✅ F1 + F2/F3 | Migração UI completa — [UI-PLUGIN-UI.md](../cadastro-kaizen/docs/UI-PLUGIN-UI.md) |
-| `transformometro` | ✅ Fase 1 |
-| `quality-action-plans` | ✅ Fase 1 |
-| `eficiencia-fabril` | ✅ Fase 1 |
-| `maintenance` | ✅ Fase 1 |
-| `portal` | ❌ Fora de escopo (shell) |
+**27 MFEs** + `public-hub` consomem via Module Federation (`delpi-plugin-ui`). Rollout concluído — ver [module-federation.md](./docs/module-federation.md).
 
-Demais plugins — ver [migration-catalog.md](./docs/migration-catalog.md).
+| Grupo | Plugins |
+|-------|---------|
+| Referência | `controle-retrabalhos` |
+| Dashboards | `dashboard-*` (8) |
+| Operacionais | `quality-labels`, `quality-action-plans`, `minha-delpi-chat`, `cadastro-kaizen`, … |
+| Shell | `public-hub` (MF plugin-ui; bundled só `tv-dashboard-presentation`) |
+| Fora de escopo | `portal` (shell host), `api-delpi-console` (não importa plugin-ui) |
+
+Detalhe por componente: [migration-catalog.md](./docs/migration-catalog.md).
 
 ---
 

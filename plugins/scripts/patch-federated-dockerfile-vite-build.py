@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Ajusta Dockerfiles federados: vite build no Docker (sem tsc/plugin-ui COPY)."""
+"""Ajusta Dockerfiles federados: npx vite build (sem tsc / sem COPY plugin-ui).
+
+Rollout concluído (jul/2026). Mantido para referência.
+"""
 
 from __future__ import annotations
 

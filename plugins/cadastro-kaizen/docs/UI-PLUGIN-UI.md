@@ -9,20 +9,25 @@ O plugin **cadastro-kaizen** concluiu a migração de primitivos duplicados para
 3. **CSS no plugin** — classes `kz-*` em `src/index.css`; tokens `--delpi-ui-*` no root `.dashboard-cadastro-kaizen`.
 4. **Import canônico** — consumir primitivos via `components/ui` (barrel), incluindo `HelpTooltip` e `HintAction`.
 
-Alias Vite (obrigatório):
+Module Federation (jul/2026):
 
 ```ts
-// vite.config.ts
-"@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
+// vite.config.ts — federation.shared.ts
+remotes: pluginUiRemote(),
+shared: { ...FEDERATION_SHARED_REACT },
 ```
-
-Estilos base:
 
 ```ts
-// main.tsx
-import "../../plugin-ui/src/styles.css";
-import "./index.css";
+// bootstrap.tsx
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 ```
+
+```ts
+import { HelpTooltip } from "@delpi/plugin-ui/index";
+```
+
+Doc: [novo-plugin-mfe-checklist.md](../../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
 
 ## Wrappers (`src/components/ui/`)
 

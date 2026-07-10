@@ -1,7 +1,7 @@
 # Roadmap de refatoração — componentes compartilhados (`@delpi/plugin-ui`)
 
 > **Objetivo:** eliminar duplicação de UI transversal entre plugins MFE, centralizando em `plugins/plugin-ui/` sem quebrar builds, Docker nem tema claro/escuro no portal federado.  
-> **Baseline:** jul/2026 · **Consumidores:** 21 plugins MFE com alias Vite + `styles.css` (ver `migration-catalog.md`).
+> **Baseline:** jul/2026 · **Consumidores:** 27 MFEs via Module Federation (`pluginUiRemote()` + `preparePluginUiRemote()`) — rollout MF **concluído**; ver [module-federation.md](./module-federation.md).
 
 ---
 
@@ -13,7 +13,7 @@
 |---------|---------|--------|
 | `help` | `HelpTooltip`, `FieldLabel`, `SectionHintLabel`, `TabHintCell`, `HintAction` | `FieldLabel.test.tsx` |
 
-Referência de integração: `plugins/tv-dashboard/` (alias Vite + `styles.css` + tokens `--delpi-ui-*`).
+Referência de integração: `plugins/controle-retrabalhos/` (MF + `preparePluginUiRemote()`).
 
 ### 1.2 Cópias locais de `HelpTooltip` (prioridade máxima)
 
@@ -103,17 +103,16 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 
 ## 2. Princípios de migração (sem quebrar o front)
 
-### 2.1 Padrão estrangulador (recomendado)
+### 2.1 Padrão estrangulador (componentes — histórico Fase 1)
+
+Para **novos plugins**, usar Module Federation desde o início — [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
 
 ```text
-1. Adicionar alias Vite + import styles.css (sem remover código local)
-2. Trocar imports em 1–2 arquivos piloto → build verde
-3. Migrar restante dos imports; remover arquivo local
-4. Remover CSS legado (*-help-tooltip*, etc.)
-5. Validar portal federado (claro + escuro + mobile)
+1. Scaffold MF (vite + bootstrap + Docker federado)
+2. Importar de @delpi/plugin-ui/index
+3. Tokens --delpi-ui-* no dashboard
+4. Validar portal federado (claro + escuro + mobile)
 ```
-
-**Nunca** big-bang em todos os plugins num único PR.
 
 ### 2.2 Contrato de estilos (obrigatório)
 
@@ -129,16 +128,19 @@ O pacote **não** importa CSS do plugin consumidor.
 
 Permanecem em `src/content/helpTooltips.ts` de cada plugin. O pacote recebe só `content` / `hint` / `label` via props.
 
-### 2.4 Docker / CI
+### 2.4 Docker / CI (jul/2026 — Module Federation)
 
-Todo plugin que passar a importar `@delpi/plugin-ui` precisa:
+Todo plugin MFE que consome `@delpi/plugin-ui`:
 
-1. `resolve.alias` em `vite.config.ts`
-2. `import "../../plugin-ui/src/styles.css"` no entry (`main.tsx`)
-3. `Dockerfile`: `COPY plugin-ui` + `context: ../plugins` no Compose
-4. Gate: `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`
+1. `remotes: pluginUiRemote()` + `shared: FEDERATION_SHARED_REACT` em `vite.config.ts`
+2. `await preparePluginUiRemote()` no `bootstrap.tsx`
+3. `Dockerfile`: `COPY vite ./vite` — **sem** `COPY plugin-ui`; `context: ../plugins` no Compose
+4. Compose: `<<: *plugin-ui-federated` (`depends_on: plugin-ui`)
+5. Gate: `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`
 
-Modelo: `plugins/tv-dashboard/Dockerfile`.
+Checklist: [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md). Modelo: `plugins/controle-retrabalhos/Dockerfile`.
+
+**Bundled** permanece só para `@delpi/tv-dashboard-presentation` (`tv-dashboard`, `public-hub`).
 
 ### 2.5 Definition of Done (por plugin)
 
@@ -175,26 +177,12 @@ Modelo: `plugins/tv-dashboard/Dockerfile`.
 | 1d Simplificados | `eficiencia-fabril`, `maintenance` | Ganho a11y (portal/viewport vs CSS puro) |
 | 1e Portal | `portal` | Só após 0.3 — API controlada |
 
-**Checklist por plugin (Fase 1):**
+**Checklist por plugin (Fase 1 — histórico; integração atual = MF):**
+
+Ver [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md). Resumo da migração de componentes:
 
 ```ts
-// vite.config.ts
-"@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
-
-// main.tsx
-import "../../plugin-ui/src/styles.css";
-
-// index.css — dentro de .dashboard-{nome}
---delpi-ui-accent: var(--{prefix}-accent, var(--primary, #089bdb));
-// … demais tokens (ver architecture.md)
-```
-
-Substituir:
-
-```ts
-import { HelpTooltip, FieldLabel } from "./HelpTooltip";
-// →
-import { HelpTooltip, FieldLabel } from "@delpi/plugin-ui";
+import { HelpTooltip, FieldLabel } from "@delpi/plugin-ui/index";
 ```
 
 Remover blocos CSS `*-help-tooltip*` do `index.css`.
@@ -298,7 +286,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | Risco | Mitigação |
 |-------|-----------|
 | Regressão visual (tema escuro) | Validar no portal federado; tokens `--delpi-ui-*` |
-| Build Docker quebra | Gate CI `check_plugin_docker_shared_libraries.py`; piloto tv-dashboard |
+| Build Docker quebra | Gate CI `check_plugin_docker_shared_libraries.py`; `pluginUiRemote()` no vite |
 | `KpiCard`/tabela muito acoplados ao prefixo CSS | Props `className` granulares; não mover CSS de marca para o pacote |
 | `eficiencia-fabril`/`maintenance` perdem tooltip CSS-only | Migração = melhoria a11y (portal + teclado) |
 | PRs grandes | **1 plugin = 1 PR** na Fase 1; Fase 2 componente a componente |
@@ -311,7 +299,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | Métrica | Hoje | Meta pós-F1 | Meta pós-F2 |
 |---------|------|-------------|-------------|
 | Arquivos `HelpTooltip.tsx` locais | 1 (portal) | 0 nos plugins | 0 |
-| Plugins consumindo `@delpi/plugin-ui` | 15 | 15 ✅ | 20+ |
+| Plugins consumindo `@delpi/plugin-ui` | 27 (MF) | 27 ✅ | 27+ |
 | LOC duplicada (help only) | ~3.800 | ~0 | ~0 |
 | Componentes shell duplicados | ~80 arquivos | ~80 | ≤15 |
 
@@ -328,6 +316,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **F3** Forms/detalhe | F3.1–F3.13 (Native* + `beforeControl`, a5s NC, TV ribbon, TM revisão, CE FormsPanel, chat admin) |
 | **F4** Utils | paginationPages, chartColors, operationalUnitLabels, goalDisplay |
 | **F5** (parcial) | FileDropzone (+ policy workspace), ModalShell, **DrawerShell**, confirm controller; CE/SI/chat forms migrados |
+| **MF runtime** | 27 MFEs + `public-hub`; `delpi-plugin-ui`; sem `COPY plugin-ui` nos consumidores |
 | **Export E1–E3** | Motor tabular, PDF DELPI, botões, jsPDF, PNG chart, matrix, PVA — [export-catalog.md](./export-catalog.md) |
 
 ### Residual — avaliar demanda (não bloqueia produção)
@@ -356,7 +345,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 ### Próximo lote sugerido (quando retomar)
 
 1. ~~Consolidar estilos `SelectControl` compacto no `plugin-ui`~~ ✅ `ToolbarSelectField` / `ToolbarSelectControl`
-2. **api-delpi-console** / **public-hub** — fora do escopo MFE; avaliar só se unificar runtime.
+2. **api-delpi-console** — não consome `@delpi/plugin-ui`. **public-hub** — MF para plugin-ui; bundled só `tv-dashboard-presentation`.
 
 ---
 

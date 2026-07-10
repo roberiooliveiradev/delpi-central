@@ -43,11 +43,10 @@ Base gateway: `/apps/tv-dashboard/`
 |---|---|
 | `tv-dashboard-api` | Backend (`/apps/tv-dashboard-api/`) |
 | `@delpi/tv-dashboard-presentation` | `usePresentationEngine`, `NativeSlideView`, CSS `tdp-*` |
-| `@delpi/plugin-ui` | Tooltips, labels, abas (`HelpTooltip`, `FieldLabel`, …) |
+| `@delpi/plugin-ui` | Tooltips, labels, abas — **remote MF** (`delpi-plugin-ui`) |
 | `public-hub` | View pública `present` (rebuild separado ao alterar apresentação) |
 
-Alias Vite: `../tv-dashboard-presentation/src/index.ts`, `../plugin-ui/src/index.ts`  
-Module Federation: `shared: ["react", "react-dom"]` (React único via portal).
+Integração: `@delpi/tv-dashboard-presentation` bundled (`COPY` no Dockerfile); `@delpi/plugin-ui` via `pluginUiRemote()` + `preparePluginUiRemote()`. Ver [module-federation.md](../plugin-ui/docs/module-federation.md).
 
 ---
 

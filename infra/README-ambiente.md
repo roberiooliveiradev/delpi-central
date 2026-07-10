@@ -156,8 +156,8 @@ docker compose -f infra/docker-compose.dev.yml --profile chat build minha-delpi-
 export COMPOSE_PARALLEL_LIMIT=2
 docker compose -f infra/docker-compose.dev.yml --profile plugins build dashboard-production
 
-# MFE federado (piloto) — remote plugin-ui em runtime
-docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
+# MFE federado — remote @delpi/plugin-ui em runtime (padrão jul/2026)
+docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui quality-labels
 
 # Stack completo sem estourar RAM — um serviço por vez (rebuild)
 ./infra/scripts/up-dev-sequential.sh --build

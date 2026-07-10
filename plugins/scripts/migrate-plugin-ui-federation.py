@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Migração mecânica de um MFE para consumir @delpi/plugin-ui via Module Federation.
 
+Rollout concluído (jul/2026) — todos os MFEs já migrados. Script mantido para
+referência ou novos plugins; preferir copiar controle-retrabalhos + checklist:
+docs/05-plugin-system/novo-plugin-mfe-checklist.md
+
 Uso:
   python3 plugins/scripts/migrate-plugin-ui-federation.py transformometro maintenance
   python3 plugins/scripts/migrate-plugin-ui-federation.py --all-remaining

@@ -1,7 +1,10 @@
-# Template MFE — usa imagem compartilhada de build (recomendado jul/2026).
-# Copie para plugins/<nome>/Dockerfile e substitua PLACEHOLDER_PLUGIN.
+# Template MFE — biblioteca bundled `@delpi/tv-dashboard-presentation`
 #
-# Pré-requisito:
+# Para MFEs com @delpi/plugin-ui use Module Federation — NÃO este template.
+# Checklist: docs/05-plugin-system/novo-plugin-mfe-checklist.md
+# Referência MF: plugins/controle-retrabalhos/Dockerfile
+#
+# Pré-requisito (só bundled tv-dashboard-presentation):
 #   ./infra/scripts/build-plugins-shared-base.sh
 
 ARG SHARED_LIBS_BUILDER=delpi-plugins-shared-builder:local

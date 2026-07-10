@@ -154,9 +154,11 @@ VITE_PLUGIN_UI_DEV=1 npm run dev
 
 ---
 
-## Modo legado (bundled)
+## Modo legado (bundled) — descontinuado para `@delpi/plugin-ui`
 
-Plugins não migrados: alias `@delpi/plugin-ui` → source + `COPY plugin-ui` ou shared builder.
+**Nenhum consumidor MFE** usa mais alias + `COPY plugin-ui`. O gate CI aceita **`pluginUiRemote()`** no `vite.config.ts`.
+
+O modo bundled permanece apenas para **`@delpi/tv-dashboard-presentation`** (`tv-dashboard`, `public-hub`).
 
 Manifesto: `consumptionMode` em `plugins/shared-libraries.manifest.json`.
 
@@ -165,8 +167,6 @@ Gate CI:
 ```bash
 python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
 ```
-
-Aceita por plugin-ui: **COPY** · **shared builder** · **`pluginUiRemote()`** no vite.
 
 ---
 
@@ -182,7 +182,7 @@ Aceita por plugin-ui: **COPY** · **shared builder** · **`pluginUiRemote()`** n
 
 ### Consumidores federados
 
-**Piloto:** `controle-retrabalhos`
+**Referência:** `controle-retrabalhos`
 
 **Dashboards (2a):** `dashboard-production`, `dashboard-commercial`, `dashboard-engineering`, `dashboard-financial`, `dashboard-hr`, `dashboard-lmps`, `dashboard-quality`, `dashboard-supplies`
 

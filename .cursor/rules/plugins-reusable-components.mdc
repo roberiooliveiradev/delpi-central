@@ -63,21 +63,17 @@ import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 Docker: **sem** `COPY plugin-ui`; `COPY vite ./vite`; container `delpi-plugin-ui` + `<<: *plugin-ui-federated` no compose.
 
-### Bundled legado (somente tv-dashboard-presentation)
+### Bundled — `@delpi/tv-dashboard-presentation` (tv-dashboard, public-hub)
 
 #### 1. Alias Vite
 
 ```ts
-"@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
+"@delpi/tv-dashboard-presentation": path.resolve(__dirname, "../tv-dashboard-presentation/src/index.ts"),
 ```
 
-Incluir `dedupe: ["react", "react-dom"]` quando o pacote é bundlado do source.
+#### 2. Docker
 
-#### 2. CSS (uma vez no entry)
-
-```ts
-import "../../plugin-ui/src/styles.css";
-```
+`COPY tv-dashboard-presentation/` no Dockerfile ou `FROM delpi-plugins-shared-builder`.
 
 #### 3. Tokens no dashboard
 
@@ -95,15 +91,15 @@ import "../../plugin-ui/src/styles.css";
 
 Ficam em `src/content/helpTooltips.ts` **do plugin** — nunca hardcoded no pacote compartilhado.
 
-#### 5. Docker (bundled)
+#### 5. Docker (bundled — só `@delpi/tv-dashboard-presentation`)
 
-Consumidor bundled de `@delpi/plugin-ui`:
+Plugins que bundlam biblioteca irmã (`tv-dashboard`, `public-hub`):
 
-1. `COPY plugin-ui` + `npm install` **ou** `FROM delpi-plugins-shared-builder`
+1. `COPY tv-dashboard-presentation/` no Dockerfile (ou `FROM delpi-plugins-shared-builder`)
 2. Compose **`context: ../plugins`**
 3. Gate CI: `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`
 
-Consumidor **federado**: `remotes` em vite + `COPY vite ./vite` — ver [module-federation.md](../plugins/plugin-ui/docs/module-federation.md).
+Consumidor de **`@delpi/plugin-ui`**: ver [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) — MF, sem `COPY plugin-ui`.
 
 ---
 

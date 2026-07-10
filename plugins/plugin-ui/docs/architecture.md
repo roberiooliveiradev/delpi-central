@@ -2,22 +2,22 @@
 
 ## Papel no monorepo
 
-Biblioteca **TypeScript + React** de componentes transversais para plugins MFE.
+Biblioteca **TypeScript + React** de componentes transversais para plugins MFE, servida como **remote Module Federation** (`delpi-plugin-ui`).
 
 **Dois modos de consumo (jul/2026):**
 
-| Modo | Quem | Integração |
-|------|------|------------|
-| **Module Federation (recomendado)** | MFEs migrados (piloto: `controle-retrabalhos`) | Remote runtime `delpi-plugin-ui` — doc [module-federation.md](./module-federation.md) |
-| **Bundled (legado)** | `tv-dashboard-presentation`, `public-hub` (parcial) | Alias Vite + COPY ou shared builder |
+| Modo | Pacote | Integração |
+|------|--------|------------|
+| **Module Federation** (obrigatório) | `@delpi/plugin-ui` | Remote runtime `delpi-plugin-ui` — [module-federation.md](./module-federation.md) · [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md) |
+| **Bundled** | `@delpi/tv-dashboard-presentation` | Alias Vite + `COPY` no Dockerfile (`tv-dashboard`, `public-hub`) |
 
-`@delpi/tv-dashboard-presentation` permanece **bundled** (alias + COPY).
+**Nenhum MFE consumidor** bundla mais `@delpi/plugin-ui` no build Docker.
 
 ```text
-plugins/plugin-ui/          ← fonte + remote federation (remoteEntry.js)
-        ↓ remotes (MF) ou alias Vite (legado)
-plugins/controle-retrabalhos/   ← piloto MF
-plugins/dashboard-*/            ← legado (migrar Fase 2)
+plugins/plugin-ui/              ← fonte + remote (remoteEntry.js)
+        ↓ remotes + preparePluginUiRemote()
+plugins/controle-retrabalhos/   ← referência canônica
+plugins/dashboard-*/            ← 27 consumidores federados
 …
 ```
 
@@ -47,8 +47,8 @@ plugins/plugin-ui/
 │   ├── contributing.md
 │   └── migration-catalog.md
 └── src/
-    ├── index.ts              # barrel — expose federation "."
-    ├── styles.css            # expose federation "./styles"
+    ├── index.ts              # barrel — expose "./index"
+    ├── styles.css            # expose "./styles"
     └── components/
 ```
 
@@ -67,45 +67,44 @@ plugins/plugin-ui/
 }
 ```
 
-- **MF:** `import "@delpi/plugin-ui/styles"` no `bootstrap.tsx`.
-- **Legado:** `import "../../plugin-ui/src/styles.css"`.
+- **MF:** `preparePluginUiRemote()` no `bootstrap.tsx` carrega `@delpi/plugin-ui/styles` (dynamic import).
 - Seguir [plugins-visual-design-system.mdc](../../.cursor/rules/plugins-visual-design-system.mdc): escopo `.dashboard-{nome}`, sem `body`/`:root` global no MFE.
 
-## Integração — Module Federation (recomendado)
+## Integração — Module Federation (padrão)
 
-Ver guia completo: **[module-federation.md](./module-federation.md)**.
-
-Resumo:
+Guia completo: **[module-federation.md](./module-federation.md)** · checklist novo MFE: **[novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md)**.
 
 ```ts
-// consumidor — plugins/vite/federation.shared.ts
+// vite.config.ts — plugins/vite/federation.shared.ts
 remotes: pluginUiRemote(),
-shared: ["react", "react-dom", "lucide-react"],
+shared: { ...FEDERATION_SHARED_REACT },
 ```
 
 ```ts
-// bootstrap.tsx
-import "@delpi/plugin-ui/styles";
+// bootstrap.tsx — plugins/vite/federationShareScope.ts
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
+```
+
+```ts
+// componentes
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 ```
 
 Container: `delpi-plugin-ui` · URL: `/apps/plugin-ui/assets/remoteEntry.js`
 
-## Integração — bundled (legado)
+### Docker (consumidores)
 
-```ts
-resolve: {
-  alias: {
-    "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
-  },
-  dedupe: ["react", "react-dom"],
-},
-```
+- `context: ../plugins`
+- `COPY vite ./vite` no Dockerfile do MFE
+- **Sem** `COPY plugin-ui`
+- Compose: `<<: *plugin-ui-federated`
 
-### Docker (consumidores legados)
+**Gate CI:** `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`
 
-Contexto: `plugins/`. Copiar `plugin-ui/` (+ `tv-dashboard-presentation/` se aplicável) ou usar `delpi-plugins-shared-builder`.
+## Integração — `@delpi/tv-dashboard-presentation` (bundled)
 
-**Gate CI:** `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check` — manifesto em `plugins/shared-libraries.manifest.json`.
+Somente `tv-dashboard` e `public-hub`. Alias Vite + `COPY tv-dashboard-presentation/` no Dockerfile. Ver [plugins/docker/README.md](../../docker/README.md).
 
 ## HelpTooltip — decisão técnica
 
@@ -115,4 +114,4 @@ O balão usa **`position: fixed` + `createPortal(document.body)`** porque ancest
 
 Pacote `private: true` no monorepo — versão semântica no `package.json` para changelog interno.
 
-Em modo **federation-remote**, breaking changes no barrel exigem atualizar [migration-catalog.md](./migration-catalog.md) e coordenar deploy do container `plugin-ui` (consumidores federados não precisam rebuild se a API exportada for compatível).
+Em modo **federation-remote**, breaking changes no barrel exigem atualizar [migration-catalog.md](./migration-catalog.md) e coordenar deploy do container `plugin-ui`. Consumidores federados **não** precisam rebuild se a API exportada for compatível — basta redeploy de `delpi-plugin-ui` + refresh do browser.
