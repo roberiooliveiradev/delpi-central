@@ -277,6 +277,39 @@ def test_90263655_no_false_decape_mismatch_when_global_d_conflicts_with_50xx():
     assert not decape_errors
 
 
+def test_90263655_refined_column_vias_quantity_not_critical():
+    pdf_extract = {
+        **_pdf_extract_90263655(),
+        "bomRows": [
+            *_pdf_extract_90263655()["bomRows"][:1],
+            {
+                "code": "10091137",
+                "quantity": 4,
+                "quantitySource": "refined_column",
+                "quantityTrusted": True,
+                "description": "CONECTOR RETO 4 VIAS NU UL 94V-0",
+            },
+            *_pdf_extract_90263655()["bomRows"][2:],
+        ],
+    }
+
+    qty_items = ChatDrawingBomQuantityValidationService.build_check_items(
+        root=_payload_90263655(),
+        pdf_extract=pdf_extract,
+        product_code="90263655",
+    )
+
+    critical_qty = [
+        item
+        for item in qty_items
+        if item.get("templateKey") == "bom_quantity_mismatch"
+        and item.get("status") == "critical_error"
+        and "10091137" in str(item.get("item") or "")
+    ]
+
+    assert not critical_qty
+
+
 def test_90263655_zero_and_description_quantities_not_critical():
     qty_items = ChatDrawingBomQuantityValidationService.build_check_items(
         root=_payload_90263655(),

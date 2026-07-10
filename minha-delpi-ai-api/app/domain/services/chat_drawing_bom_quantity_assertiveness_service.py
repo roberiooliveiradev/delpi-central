@@ -254,6 +254,17 @@ class ChatDrawingBomQuantityAssertivenessService:
             if intermediate_reason:
                 return intermediate_reason
 
+        if ChatDrawingPatternsService.bom_quantity_semantics_rule(
+            "rejectQuantityMatchingDescriptionNumber",
+            True,
+        ) and cls._quantity_matches_description(
+            row,
+            quantity,
+            code=code,
+            pdf_extract=pdf_extract,
+        ):
+            return "quantity_from_description"
+
         source = str(row.get("quantitySource") or "").strip().lower()
         trusted_column_source = bool(row.get("quantityTrusted")) and source in {
             "column",
@@ -286,19 +297,6 @@ class ChatDrawingBomQuantityAssertivenessService:
                 and not float(quantity).is_integer()
             ):
                 return "decimal_piece_quantity"
-
-        if ChatDrawingPatternsService.bom_quantity_semantics_rule(
-            "rejectQuantityMatchingDescriptionNumber",
-            True,
-        ) and not (
-            trusted_column_source and source == "column"
-        ) and cls._quantity_matches_description(
-            row,
-            quantity,
-            code=code,
-            pdf_extract=pdf_extract,
-        ):
-            return "quantity_from_description"
 
         if api_row is not None and not cls._matches_api(
             quantity=quantity,
