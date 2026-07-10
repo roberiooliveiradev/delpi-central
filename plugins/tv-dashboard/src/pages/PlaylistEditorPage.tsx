@@ -374,8 +374,10 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       externalUrl?: string;
       transitionStyle?: string | null;
     },
+    options?: { recordHistory?: boolean },
   ) {
     if (!playlist) return;
+    if (options?.recordHistory) deckHistory.recordBeforeChange();
     const updated = await updateSlide(playlist.id, slide.id, payload);
     setPlaylist({
       ...playlist,
@@ -471,10 +473,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
     onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
     onRemove: (slide: Slide) => void handleRemoveSlide(slide),
-    undo: deckHistory.undo,
-    redo: deckHistory.redo,
-    canUndo: deckHistory.canUndo,
-    canRedo: deckHistory.canRedo,
   };
 
   const chromeProps = {
@@ -503,7 +501,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     ),
     onSavePlaylistSettings: (field: string, value: string | number) => void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
-      void handleSaveSlide(slide, payload),
+      void handleSaveSlide(slide, payload, { recordHistory: true }),
   };
 
   const workspaceProps = {

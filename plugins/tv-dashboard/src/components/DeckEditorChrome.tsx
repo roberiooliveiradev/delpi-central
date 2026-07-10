@@ -6,6 +6,7 @@ import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideDeckRibbon } from "./SlideDeckRibbon";
 import {
+  DeckHistoryRibbonGroup,
   DeckRibbonShell,
   type DeckRibbonTabId,
   resolveDeckRibbonTabs,
@@ -19,10 +20,6 @@ type SlideDeckProps = {
   onDuplicate: (slide: Slide) => void;
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
-  undo?: () => void;
-  redo?: () => void;
-  canUndo?: boolean;
-  canRedo?: boolean;
 };
 
 type Props = {
@@ -109,6 +106,7 @@ export function DeckEditorChrome({
       {isRibbonTab(activeTab) ? (
         <div className="td-deck-chrome__ribbon">
           <DeckRibbonShell>
+            <DeckHistoryRibbonGroup />
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
             {isCustomSlide && (activeTab === "insert" || activeTab === "format" || activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
@@ -118,7 +116,13 @@ export function DeckEditorChrome({
       ) : null}
 
       {isSettingsTab(activeTab) ? (
-        <div className="td-deck-chrome__panel td-deck-chrome__panel--compact" role="tabpanel">
+        <>
+          <div className="td-deck-chrome__ribbon td-deck-chrome__ribbon--settings">
+            <DeckRibbonShell>
+              <DeckHistoryRibbonGroup />
+            </DeckRibbonShell>
+          </div>
+          <div className="td-deck-chrome__panel td-deck-chrome__panel--compact" role="tabpanel">
           <DeckSettingsPanel
             activeTab={activeTab}
             playlist={playlist}
@@ -129,7 +133,8 @@ export function DeckEditorChrome({
             onSavePlaylistSettings={onSavePlaylistSettings}
             onSaveSlide={onSaveSlide}
           />
-        </div>
+          </div>
+        </>
       ) : null}
     </section>
   );

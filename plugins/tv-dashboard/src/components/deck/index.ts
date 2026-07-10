@@ -6,7 +6,7 @@ export { DeckElementSidePanel } from "./DeckElementSidePanel";
 export { DeckField } from "./DeckField";
 export { DeckInspectorLayout } from "./DeckInspectorLayout";
 export { DeckPropertySection } from "./DeckPropertySection";
-export { DeckRibbonGroup } from "./DeckRibbonGroup";
+export { DeckHistoryRibbonGroup } from "./DeckHistoryRibbonGroup";
 export { DeckRibbonLargeButton } from "./DeckRibbonLargeButton";
 export { DeckRibbonShell } from "./DeckRibbonShell";
 export { DeckRibbonTile } from "./DeckRibbonTile";

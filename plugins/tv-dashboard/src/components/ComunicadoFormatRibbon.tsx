@@ -22,13 +22,11 @@ import {
   ListOrdered,
   Minus,
   Plus,
-  Redo2,
   RemoveFormatting,
   Strikethrough,
   Trash2,
   Underline,
   Ungroup,
-  Undo2,
   Upload,
 } from "lucide-react";
 import {
@@ -90,10 +88,6 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     triggerUpload,
     openMediaLibrary,
     setBackgroundColor,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
     alignSelected,
     groupSelected,
     ungroupSelected,
@@ -194,13 +188,6 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
 
   return (
     <div className="td-deck-ribbon__groups">
-      <DeckRibbonGroup label="Histórico" hint="Desfazer ou refazer alterações na programação ou no slide (Ctrl+Z / Ctrl+Y).">
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile icon={Undo2} label="Desfazer" hint={H.undo} disabled={!canUndo} onClick={undo} />
-          <DeckRibbonTile icon={Redo2} label="Refazer" hint={H.redo} disabled={!canRedo} onClick={redo} />
-        </div>
-      </DeckRibbonGroup>
-
       <DeckRibbonGroup label="Fundo do slide" hint={H.background}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <HintAction hint={E.backgroundColor} ariaLabel="Ajuda: Cor de fundo">
