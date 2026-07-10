@@ -19,7 +19,7 @@ import {
   type ComunicadoNamedTextStyle,
   type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
-import { ComunicadoEditorLinkChrome } from "./ComunicadoEditorLinkChrome";
+import { ComunicadoEditorInlineField } from "./ComunicadoEditorInlineField";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type TextBlock = Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>;
@@ -72,6 +72,7 @@ export function ComunicadoEditorTextBlock({
     "td-composer__text-block--readonly",
     isEditing ? "td-composer__text-block--editing" : "",
     isSelected && !isEditing ? "td-composer__text-block--selected" : "",
+    block.href ? "td-composer__text-block--has-link" : "",
     className,
   ]
     .filter(Boolean)
@@ -335,10 +336,13 @@ export function ComunicadoEditorTextBlock({
         )}
       </div>
       {showInlineChrome ? (
-        <ComunicadoEditorLinkChrome
+        <ComunicadoEditorInlineField
+          variant="text"
           blockId={block.id}
+          blockType={block.type}
+          content={block.content}
           href={block.href}
-          hint="Duplo-clique para editar"
+          contentRuns={block.contentRuns}
         />
       ) : null}
     </div>
