@@ -29,6 +29,11 @@
       "maxCriticalErrors": 0,
       "allowedStatuses": ["approved", "approved_with_notes"],
       "notes": "QTD 4 VIAS não é quantidade BOM — refined_column sem descrição usa SG1010"
+    },
+    "90264226": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes"],
+      "notes": "Revisão OCR sem titleBlock — pendente, não crítico"
     }
   }
 }

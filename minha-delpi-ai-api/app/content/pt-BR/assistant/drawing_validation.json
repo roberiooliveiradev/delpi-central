@@ -518,6 +518,9 @@
       "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"],
       "lengthConsumableCodePrefixes": ["101", "105"],
       "lengthConsumableDescriptionMarkers": ["TUBO", "TERMOENCOLHIVEL"]
+    },
+    "revisionCrossCheck": {
+      "pendingWhenTitleBlockMissing": true
     }
   },
   "validationLayers": {
@@ -542,7 +545,8 @@
       "total_length",
       "balloon_missing_codes",
       "dimension_note_ambiguous",
-      "revision_pdf"
+      "revision_pdf",
+      "revision_critical"
     ],
     "pdfConflictTemplateKeys": [
       "bom_extra",

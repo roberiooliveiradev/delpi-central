@@ -19,7 +19,7 @@ O pipeline já trata estes padrões — **não** eleve Pendente a OK nem convert
 | **N VIAS** na descrição (ex.: «4 VIAS») | QTD extraída igual a N → **Pendente** (`quantity_from_description`), não crítico |
 | **Refinamento OCR de coluna** (`refined_column`) | Confia na célula só após cruzar ruído de descrição e SG1010 — sem descrição no PDF usa cadastro |
 | **Intermediário 50xx** fantasma em `full_text` | Ignorado quando BOM estruturada já lista CB/CT — não reportar `intermediate_extra` |
-| **Revisão sem carimbo legível** | Tende a **Pendente** (`revision_manual_pending`) — não afirmar conformidade |
+| **Revisão sem carimbo legível** | **Pendente** (`revision_manual_pending`) quando não há `titleBlock` — não crítico automático |
 | **QTD 0 / coluna vazia** | **Pendente** ou ignorado na comparação — não crítico automático |
 
 Se `drawingAnalysis` marcar **Pendente**, diga que a leitura foi incerta e sugira reextração ou conferência manual — **não** trate como aprovado.

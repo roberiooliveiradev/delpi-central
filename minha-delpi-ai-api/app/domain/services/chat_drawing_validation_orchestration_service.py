@@ -668,6 +668,7 @@ class ChatDrawingValidationOrchestrationService:
                 pdf_internal_revision=pdf_internal_revision,
                 api_current_revision=api_current_revision,
                 api_revision_date=api_revision_date,
+                pdf_extract=pdf_extract,
             )
 
             if revision_item:
@@ -700,7 +701,12 @@ class ChatDrawingValidationOrchestrationService:
         pdf_internal_revision: str,
         api_current_revision: str,
         api_revision_date: str,
+        pdf_extract: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
+        from app.domain.services.chat_drawing_revision_cross_check_service import (
+            ChatDrawingRevisionCrossCheckService,
+        )
+
         api_compare = cls._resolve_api_revision_for_compare(
             api_current_revision,
             api_revision_date,
@@ -755,6 +761,16 @@ class ChatDrawingValidationOrchestrationService:
                     revision=pdf_revision,
                 ),
                 api_evidence=api_revision_date,
+            )
+
+        if ChatDrawingRevisionCrossCheckService.should_pending_instead_of_critical(
+            pdf_extract
+        ):
+            return cls._item_from_template(
+                "revision_manual_pending",
+                status=cls._STATUS_PENDING,
+                pdf_evidence=pdf_evidence,
+                api_evidence=api_current_revision or api_revision_date,
             )
 
         return cls._item_from_template(
