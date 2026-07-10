@@ -28,6 +28,8 @@ type Props = {
   visualBoxTextContent?: ReactNode;
   visualBoxTextClassName?: string;
   visualBoxInnerStyle?: CSSProperties;
+  /** Palco do editor: texto interativo dentro de formas. */
+  visualBoxEditorInteractive?: boolean;
 };
 
 function blockLinkHref(block: ComunicadoBlock): string | undefined {
@@ -84,6 +86,7 @@ export function ComunicadoBlockView({
   visualBoxTextContent,
   visualBoxTextClassName,
   visualBoxInnerStyle,
+  visualBoxEditorInteractive = false,
 }: Props) {
   const baseStyle = embedded
     ? {
@@ -116,6 +119,7 @@ export function ComunicadoBlockView({
         textContent={visualBoxTextContent}
         textClassName={visualBoxTextClassName}
         innerStyleOverride={visualBoxInnerStyle}
+        editorInteractive={visualBoxEditorInteractive}
       />
     );
     return (

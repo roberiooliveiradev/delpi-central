@@ -18,6 +18,8 @@ type Props = {
   textContent?: ReactNode;
   textClassName?: string;
   innerStyleOverride?: CSSProperties;
+  /** Palco do editor: permite interação com texto dentro da forma. */
+  editorInteractive?: boolean;
 };
 
 function DefaultTextContent({
@@ -61,10 +63,11 @@ export function ComunicadoVisualBoxView({
   textContent,
   textClassName,
   innerStyleOverride,
+  editorInteractive = false,
 }: Props) {
   const profile = resolveVisualBoxProfile(block);
   const chrome = resolveVisualBoxChrome(block);
-  const contentLayoutStyle = resolveVisualBoxContentLayoutStyle(block, { fontScale });
+  const contentLayoutStyle = resolveVisualBoxContentLayoutStyle(block, { fontScale, editorInteractive });
   const innerStyle = innerStyleOverride ?? comunicadoTextInnerStyle(
     block.type === "heading" || block.type === "text" ? block : {
       id: block.id,

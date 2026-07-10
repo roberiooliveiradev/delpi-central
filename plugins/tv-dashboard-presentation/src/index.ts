@@ -149,6 +149,7 @@ export {
   resolveVisualBoxContentLayoutStyle,
   resolveVisualBoxProfile,
   visualBoxBlockModifierClasses,
+  visualBoxSupportsInlineTextEditing,
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
 } from "./comunicadoVisualBox";

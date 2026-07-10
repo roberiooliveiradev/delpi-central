@@ -94,6 +94,11 @@ export function visualBoxSupportsShapeFormatting(block: ComunicadoVisualBoxBlock
   return resolveVisualBoxProfile(block).mode === "shape";
 }
 
+/** Palco do editor: duplo clique para editar texto interno (heading, text, shape). */
+export function visualBoxSupportsInlineTextEditing(block: ComunicadoVisualBoxBlock): boolean {
+  return true;
+}
+
 export function visualBoxBlockModifierClasses(block: ComunicadoVisualBoxBlock): string[] {
   const profile = resolveVisualBoxProfile(block);
   if (profile.mode === "text") {
@@ -126,7 +131,7 @@ export function defaultVerticalAlignForVisualBox(
 /** Estilos do contêiner flex da caixa visual (texto e forma com texto). */
 export function resolveVisualBoxContentLayoutStyle(
   block: ComunicadoVisualBoxBlock,
-  options?: { fontScale?: number },
+  options?: { fontScale?: number; editorInteractive?: boolean },
 ): CSSProperties {
   const fontScale = options?.fontScale ?? 1;
   const style = block.style ?? {};
@@ -151,7 +156,7 @@ export function resolveVisualBoxContentLayoutStyle(
     css.inset = 0;
     css.padding = "0.4em";
     css.textAlign = style.textAlign ?? "center";
-    css.pointerEvents = "none";
+    css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   }
 
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;

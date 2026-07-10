@@ -1,8 +1,15 @@
-import { ComunicadoBlockView, ComunicadoMediaPlaceholder, blockCssStyle, comunicadoImageCropCssProperties, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import {
+  ComunicadoBlockView,
+  ComunicadoMediaPlaceholder,
+  blockCssStyle,
+  comunicadoImageCropCssProperties,
+  isComunicadoVisualBoxBlock,
+  type ComunicadoBlock,
+} from "@delpi/tv-dashboard-presentation";
 import type { CSSProperties } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import { ComunicadoEditorTextBlock } from "./ComunicadoEditorTextBlock";
+import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
 
 type Props = {
@@ -77,14 +84,14 @@ export function ComunicadoEditorBlockView({
     height: "100%",
   };
 
-  if (block.type === "heading" || block.type === "text") {
+  if (isComunicadoVisualBoxBlock(block)) {
     return (
-      <ComunicadoEditorTextBlock
+      <ComunicadoEditorVisualBoxBlock
         block={block}
         fontScale={fontScale}
         className={className}
         isSelected={isSelected}
-        isEditing={isEditingText}
+        isEditingText={isEditingText}
       />
     );
   }
@@ -97,21 +104,6 @@ export function ComunicadoEditorBlockView({
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <ComunicadoEditorVideoPreview block={block} style={style} className={className} />
-      </div>
-    );
-  }
-
-  if (block.type === "shape") {
-    return (
-      <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <ComunicadoBlockView
-          block={block}
-          fontScale={fontScale}
-          interactive
-          embedded
-          className={className}
-          dataLoading={dataLoading}
-        />
       </div>
     );
   }

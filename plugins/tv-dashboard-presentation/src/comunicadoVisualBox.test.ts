@@ -7,6 +7,7 @@ import {
   resolveVisualBoxContentLayoutStyle,
   resolveVisualBoxProfile,
   visualBoxBlockModifierClasses,
+  visualBoxSupportsInlineTextEditing,
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
 } from "./comunicadoVisualBox";
@@ -67,6 +68,14 @@ describe("comunicadoVisualBox", () => {
     const shapeLayout = resolveVisualBoxContentLayoutStyle(shape);
     expect(shapeLayout.position).toBe("absolute");
     expect(shapeLayout.textAlign).toBe("center");
+    expect(shapeLayout.pointerEvents).toBe("none");
+    const shapeEditorLayout = resolveVisualBoxContentLayoutStyle(shape, { editorInteractive: true });
+    expect(shapeEditorLayout.pointerEvents).toBe("auto");
+  });
+
+  it("caixas visuais suportam edição inline no palco", () => {
+    expect(visualBoxSupportsInlineTextEditing(createBlock("text", "A"))).toBe(true);
+    expect(visualBoxSupportsInlineTextEditing(createShapeBlock("rectangle"))).toBe(true);
   });
 
   it("linhas usam contorno mais espesso por padrão", () => {
