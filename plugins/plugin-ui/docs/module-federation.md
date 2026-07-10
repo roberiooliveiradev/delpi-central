@@ -63,7 +63,19 @@ grep '__DELPI_MF_REACT__?.useRef' dist/assets/App-*.js                         #
 grep 'var _delpiMod' dist/assets/__federation_fn_import*.js                   # flatten sem reassign e
 node plugins/vite/federationReactProxyFix.test.mjs                            # testes unitários (tsx)
 node plugins/vite/verify-federation-react-patch.mjs dist/assets               # gate pós-build
+node plugins/vite/verify-prod-mf-patch.mjs controle-retrabalhos               # produção (URLs reais)
 ```
+
+**Deploy controle-retrabalhos** (servidor — `--no-cache` obrigatório na camada `COPY vite`):
+
+```bash
+git pull
+./infra/scripts/up-prod-sequential.sh --no-cache --fase mfe --build controle-retrabalhos
+./infra/scripts/up-prod-sequential.sh --fase core --build gateway   # após mudança nginx (cache runtime MF)
+node plugins/vite/verify-prod-mf-patch.mjs controle-retrabalhos
+```
+
+`curl .../__federation_fn_import-*.js` **não funciona** (glob na URL). Use o script acima ou o hash extraído do `remoteEntry.js`.
 
 O portal e o bootstrap MFE chamam `publishDelpiMfReact` / `ensurePortalFederationShareScope` **antes** de montar o remote. O bootstrap **não** sobrescreve `__DELPI_MF_REACT__` se o portal já semeou uma instância válida (evita cópia bundled quebrada em `index-*.js`).
 
