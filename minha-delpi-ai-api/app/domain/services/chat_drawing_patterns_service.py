@@ -119,6 +119,10 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("gluedToleranceCota")
 
     @classmethod
+    def revision_column_grid(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("revisionColumnGrid")
+
+    @classmethod
     def max_segment_length_mm(cls) -> float:
         raw = ChatAssistantContentService.get(
             _STAMP_BUNDLE,

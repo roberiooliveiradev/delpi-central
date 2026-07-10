@@ -172,3 +172,20 @@ def test_only_implausible_global_decape_when_all_values_above_typical():
     assert not ChatDrawingDimensionsExtractionService.only_implausible_global_decape(
         {"leftDecapeMm": 10.0, "rightDecapeMm": None}
     )
+
+
+def test_extract_dimensions_ignores_pre_decape_note_and_revision_column_grid():
+    text = """
+    RETIRAR O PRE-DECAPE
+    1 | 2 | 3 | 4
+    10
+    ±1
+    282
+    ±2
+    """
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] is None
+    assert dims["rightDecapeMm"] == 10.0
+    assert dims["decapeIndication"] == {"left": False, "right": True}

@@ -50,6 +50,7 @@ class ChatDrawingDimensionsExtractionService:
         explicit_left = cls._first_number(
             normalized,
             patterns=ChatDrawingPatternsService.decape_left_patterns(),
+            skip_suppressed_decape_context=True,
         )
 
         if explicit_left is not None:
@@ -59,6 +60,7 @@ class ChatDrawingDimensionsExtractionService:
         explicit_right = cls._first_number(
             normalized,
             patterns=ChatDrawingPatternsService.decape_right_patterns(),
+            skip_suppressed_decape_context=True,
         )
 
         if explicit_right is not None:
@@ -70,6 +72,7 @@ class ChatDrawingDimensionsExtractionService:
                 generic = cls._first_number(
                     normalized,
                     patterns=(ChatDrawingPatternsService.generic_decape(),),
+                    skip_suppressed_decape_context=True,
                 )
 
                 if generic is not None and cls._is_plausible_cable_decape(generic):
@@ -80,6 +83,7 @@ class ChatDrawingDimensionsExtractionService:
             note_decape = cls._first_number(
                 normalized,
                 patterns=(ChatDrawingPatternsService.decape_note(),),
+                skip_suppressed_decape_context=True,
             )
 
             if (
@@ -97,6 +101,7 @@ class ChatDrawingDimensionsExtractionService:
         machine_decape = cls._first_number(
             normalized,
             patterns=(ChatDrawingPatternsService.decape_machine_side(),),
+            skip_suppressed_decape_context=True,
         )
 
         if machine_decape is not None:
@@ -539,6 +544,13 @@ class ChatDrawingDimensionsExtractionService:
     @classmethod
     def _normalize_ocr_text(cls, text: str) -> str:
         collapsed = re.sub(r"[ \t]+", " ", str(text or ""))
+        grid = ChatDrawingPatternsService.revision_column_grid()
+        lines = [
+            line
+            for line in collapsed.splitlines()
+            if not grid.fullmatch(line.strip())
+        ]
+        collapsed = "\n".join(lines)
         return re.sub(r"\n{3,}", "\n\n", collapsed).strip()
 
     @classmethod
@@ -548,11 +560,19 @@ class ChatDrawingDimensionsExtractionService:
         *,
         patterns: tuple[re.Pattern[str], ...],
         label_hints: list[str] | None = None,
+        skip_suppressed_decape_context: bool = False,
     ) -> float | None:
         for pattern in patterns:
-            match = pattern.search(text)
+            for match in pattern.finditer(text):
+                if skip_suppressed_decape_context and cls._should_skip_decape_in_context(
+                    text,
+                    start=match.start(),
+                ):
+                    continue
 
-            if match:
+                if match.lastindex is None or match.lastindex < 1:
+                    continue
+
                 parsed = cls._parse_number(match.group(1))
 
                 if parsed is not None:
@@ -604,19 +624,22 @@ class ChatDrawingDimensionsExtractionService:
     def _should_skip_decape_in_context(cls, text: str, *, start: int = 0) -> bool:
         window = cls._context_window(text, start).upper()
 
+        if any(
+            cls._text_has_note_markers(
+                window,
+                ChatDrawingPatternsService.dimension_note_context_markers(note_type),
+            )
+            for note_type in ChatDrawingPatternsService.dimension_note_types_suppressing_decape()
+        ):
+            return True
+
         if cls._text_has_note_markers(
             window,
             ChatDrawingPatternsService.dimension_note_context_markers("decape_cable"),
         ):
             return False
 
-        return any(
-            cls._text_has_note_markers(
-                window,
-                ChatDrawingPatternsService.dimension_note_context_markers(note_type),
-            )
-            for note_type in ChatDrawingPatternsService.dimension_note_types_suppressing_decape()
-        )
+        return False
 
     @classmethod
     def _context_window(cls, text: str, start: int, *, radius: int = 120) -> str:

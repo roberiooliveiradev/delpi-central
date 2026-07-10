@@ -233,6 +233,15 @@
     "machine_side": {
       "contextMarkers": ["DECAPAR O LADO", "NA MAQUINA", "NA MÁQUINA"],
       "patternKeys": ["decapeMachineSide"]
+    },
+    "pre_decape_process": {
+      "contextMarkers": [
+        "PRE-DECAPE",
+        "PRE DECAPE",
+        "RETIRAR O PRE-DECAPE",
+        "RETIRAR PRE-DECAPE"
+      ],
+      "suppressesDecapeExtraction": true
     }
   },
   "streamStages": {
@@ -300,7 +309,8 @@
     "segmentLengthTolerance": "\\b(\\d{3,5})\\s*±\\s*(\\d+)\\b",
     "decapeTolerance": "\\b(\\d{1,2})\\s*±\\s*(\\d+)\\b",
     "gluedToleranceCota": "\\b(\\d{1,2})±1(\\d{3,4})±(\\d+)\\b",
-    "genericDecape": "DEC[A4@]PE?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
+    "genericDecape": "(?<!PRE-)DEC[A4@]PE?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
+    "revisionColumnGrid": "^(?:\\s*\\d{1,2})(?:\\s*\\|\\s*\\d{1,2}){2,}\\s*$",
     "decapeNote": "DECAPE\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "decapeMachineSide": "DECAPAR\\s+O\\s+LADO\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "hintNumberTail": "(\\d[\\d\\s,.]*)\\s*M{0,2}",
@@ -378,8 +388,8 @@
       "LENGTH\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}"
     ],
     "decapeLeft": [
-      "DEC[A4@]PE?\\s*E(?:SQUERD[OA])?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)",
-      "D\\s*E\\s*C\\s*A\\s*P\\s*E\\s*E(?:SQUERD[OA])?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)"
+      "(?<!PRE-)DEC[A4@]PE?\\s*E(?:SQUERD[OA])\\b\\s*[:.]?\\s*(\\d[\\d\\s,.]*)",
+      "(?<!PRE-)D\\s*E\\s*C\\s*A\\s*P\\s*E\\s*E(?:SQUERD[OA])\\b\\s*[:.]?\\s*(\\d[\\d\\s,.]*)"
     ],
     "decapeRight": [
       "DEC[A4@]PE?\\s*D(?:IREIT[OA])?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)",
