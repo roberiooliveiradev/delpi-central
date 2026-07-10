@@ -9,7 +9,7 @@ Biblioteca **TypeScript + React** de componentes transversais para plugins MFE.
 | Modo | Quem | Integração |
 |------|------|------------|
 | **Module Federation (recomendado)** | MFEs migrados (piloto: `controle-retrabalhos`) | Remote runtime `delpi-plugin-ui` — doc [module-federation.md](./module-federation.md) |
-| **Bundled (legado)** | Demais MFEs até rollout Fase 2 | Alias Vite + `COPY plugin-ui` ou shared builder |
+| **Bundled (legado)** | `tv-dashboard-presentation`, `public-hub` (parcial) | Alias Vite + COPY ou shared builder |
 
 `@delpi/tv-dashboard-presentation` permanece **bundled** (alias + COPY).
 

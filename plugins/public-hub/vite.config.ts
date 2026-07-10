@@ -1,28 +1,39 @@
+import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "node:path";
+import federation from "@originjs/vite-plugin-federation";
 
-// Shell público genérico (fora do portal, sem login). Servido pelo gateway em /p/.
-// Cada app registra suas páginas públicas no shell (ver src/shell/registry.ts).
+import {
+  FEDERATION_SHARED_REACT,
+  pluginUiRemote,
+  reactResolveAliases,
+} from "../vite/federation.shared";
+
+// Shell público (/p/) — consome @delpi/plugin-ui via MF; tv-dashboard-presentation bundled.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    federation({
+      name: "public-hub",
+      remotes: pluginUiRemote(),
+      shared: [...FEDERATION_SHARED_REACT],
+    }),
+    react(),
+  ],
   resolve: {
-    // Pacote compartilhado é compilado do source; sem dedupe o Vite pode
-    // puxar react de tv-dashboard-presentation/node_modules → hooks quebram.
-    dedupe: ["react", "react-dom", "lucide-react"],
     alias: {
-      react: path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      ...reactResolveAliases(__dirname),
       "lucide-react": path.resolve(__dirname, "node_modules/lucide-react"),
-      "@delpi/plugin-ui": path.resolve(__dirname, "../plugin-ui/src/index.ts"),
       "@delpi/tv-dashboard-presentation": path.resolve(
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",
       ),
     },
+    dedupe: ["react", "react-dom", "lucide-react"],
   },
   base: "/p/",
   build: {
     target: "esnext",
+    modulePreload: false,
+    cssCodeSplit: false,
   },
 });

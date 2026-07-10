@@ -393,6 +393,8 @@ services:
 
 
   strategic-indicators:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: strategic-indicators/Dockerfile
@@ -411,6 +413,8 @@ services:
       - delpi-network
 
   transformometro:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: transformometro/Dockerfile
@@ -431,6 +435,8 @@ services:
       - delpi-network
 
   maintenance:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: maintenance/Dockerfile
@@ -482,6 +488,8 @@ services:
       - delpi-network
 
   minha-delpi-chat:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: minha-delpi-chat/Dockerfile
@@ -502,6 +510,8 @@ services:
       - delpi-network
 
   dashboard-lmps:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-lmps/Dockerfile
@@ -516,6 +526,8 @@ services:
       - delpi-network
 
   dashboard-quality:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-quality/Dockerfile
@@ -530,6 +542,8 @@ services:
       - delpi-network
 
   dashboard-commercial:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-commercial/Dockerfile
@@ -544,6 +558,8 @@ services:
       - delpi-network
 
   dashboard-production:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-production/Dockerfile
@@ -558,6 +574,8 @@ services:
       - delpi-network
 
   eficiencia-fabril:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: eficiencia-fabril/Dockerfile
@@ -576,6 +594,8 @@ services:
       - delpi-network
 
   cultura-delpi:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: cultura-delpi/Dockerfile
@@ -594,6 +614,8 @@ services:
       - delpi-network
 
   quality-labels:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: quality-labels/Dockerfile
@@ -609,6 +631,8 @@ services:
       - delpi-network
 
   tv-dashboard:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: tv-dashboard/Dockerfile
@@ -623,6 +647,8 @@ services:
       - delpi-network
 
   pedidos-venda-abertos:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: pedidos-venda-abertos/Dockerfile
@@ -637,6 +663,8 @@ services:
       - delpi-network
 
   propostas-comerciais:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: propostas-comerciais/Dockerfile
@@ -651,6 +679,8 @@ services:
       - delpi-network
 
   auditoria-5s:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: auditoria-5s/Dockerfile
@@ -666,6 +696,8 @@ services:
       - delpi-network
 
   cadastro-kaizen:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: cadastro-kaizen/Dockerfile
@@ -681,6 +713,8 @@ services:
       - delpi-network
 
   quality-action-plans:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: quality-action-plans/Dockerfile
@@ -696,6 +730,8 @@ services:
       - delpi-network
 
   customer-experience:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: customer-experience/Dockerfile
@@ -711,6 +747,8 @@ services:
       - delpi-network
 
   public-hub:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: public-hub/Dockerfile
@@ -726,6 +764,8 @@ services:
       - delpi-network
 
   inspecoes-entrada:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: inspecoes-entrada/Dockerfile
@@ -740,6 +780,8 @@ services:
       - delpi-network
 
   central-agendamento:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: central-agendamento/Dockerfile
@@ -786,6 +828,8 @@ services:
       - delpi-network
 
   dashboard-supplies:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-supplies/Dockerfile
@@ -800,6 +844,8 @@ services:
       - delpi-network
 
   dashboard-financial:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-financial/Dockerfile
@@ -814,6 +860,8 @@ services:
       - delpi-network
 
   financeiro-centro-custo:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: financeiro-centro-custo/Dockerfile
@@ -828,6 +876,8 @@ services:
       - delpi-network
 
   dashboard-engineering:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-engineering/Dockerfile
@@ -860,6 +910,8 @@ services:
       - delpi-network
 
   dashboard-hr:
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: dashboard-hr/Dockerfile

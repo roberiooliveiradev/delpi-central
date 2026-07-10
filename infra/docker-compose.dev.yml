@@ -11,12 +11,17 @@
 #   docker compose -f infra/docker-compose.dev.yml --profile chat up -d
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
 #   ./infra/scripts/up-minimal-dev.sh   # atalho stack essencial + override de RAM
-#   ./infra/scripts/build-plugins-shared-base.sh   # imagem build tv-dashboard-presentation (legado bundled)
+#   ./infra/scripts/build-plugins-shared-base.sh   # imagem build tv-dashboard-presentation (bundled)
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
 
 x-plugin-profile: &plugin-profile
   profiles:
     - plugins
+
+x-plugin-ui-federated: &plugin-ui-federated
+  <<: *plugin-profile
+  depends_on:
+    - plugin-ui
 
 services:
 
@@ -460,7 +465,7 @@ services:
 
 
   strategic-indicators:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: strategic-indicators/Dockerfile
@@ -475,7 +480,7 @@ services:
       - delpi-network
 
   transformometro:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: transformometro/Dockerfile
@@ -490,7 +495,7 @@ services:
       - delpi-network
 
   maintenance:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: maintenance/Dockerfile
@@ -521,7 +526,7 @@ services:
       - delpi-network
 
   dashboard-lmps:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-lmps/Dockerfile
@@ -536,7 +541,7 @@ services:
       - delpi-network
 
   dashboard-quality:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-quality/Dockerfile
@@ -551,7 +556,7 @@ services:
       - delpi-network
 
   dashboard-commercial:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-commercial/Dockerfile
@@ -566,7 +571,7 @@ services:
       - delpi-network
 
   dashboard-production:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-production/Dockerfile
@@ -581,7 +586,7 @@ services:
       - delpi-network
 
   eficiencia-fabril:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: eficiencia-fabril/Dockerfile
@@ -597,7 +602,7 @@ services:
       - delpi-network
 
   cultura-delpi:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: cultura-delpi/Dockerfile
@@ -613,7 +618,7 @@ services:
       - delpi-network
 
   quality-labels:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: quality-labels/Dockerfile
@@ -629,7 +634,7 @@ services:
       - delpi-network
 
   tv-dashboard:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: tv-dashboard/Dockerfile
@@ -644,7 +649,7 @@ services:
       - delpi-network
 
   pedidos-venda-abertos:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: pedidos-venda-abertos/Dockerfile
@@ -660,7 +665,7 @@ services:
       - delpi-network
 
   propostas-comerciais:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: propostas-comerciais/Dockerfile
@@ -676,7 +681,7 @@ services:
       - delpi-network
 
   auditoria-5s:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: auditoria-5s/Dockerfile
@@ -692,7 +697,7 @@ services:
       - delpi-network
 
   inspecoes-entrada:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: inspecoes-entrada/Dockerfile
@@ -708,7 +713,7 @@ services:
       - delpi-network
 
   cadastro-kaizen:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: cadastro-kaizen/Dockerfile
@@ -724,7 +729,7 @@ services:
       - delpi-network
 
   quality-action-plans:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: quality-action-plans/Dockerfile
@@ -740,7 +745,7 @@ services:
       - delpi-network
 
   customer-experience:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: customer-experience/Dockerfile
@@ -756,7 +761,7 @@ services:
       - delpi-network
 
   public-hub:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: public-hub/Dockerfile
@@ -772,7 +777,7 @@ services:
       - delpi-network
 
   central-agendamento:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: central-agendamento/Dockerfile
@@ -804,9 +809,7 @@ services:
       - delpi-network
 
   controle-retrabalhos:
-    <<: *plugin-profile
-    depends_on:
-      - plugin-ui
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: controle-retrabalhos/Dockerfile
@@ -822,7 +825,7 @@ services:
       - delpi-network
 
   dashboard-supplies:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-supplies/Dockerfile
@@ -837,7 +840,7 @@ services:
       - delpi-network
 
   dashboard-financial:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-financial/Dockerfile
@@ -852,7 +855,7 @@ services:
       - delpi-network
 
   financeiro-centro-custo:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: financeiro-centro-custo/Dockerfile
@@ -868,7 +871,7 @@ services:
       - delpi-network
 
   dashboard-engineering:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-engineering/Dockerfile
@@ -898,7 +901,7 @@ services:
       - delpi-network
 
   dashboard-hr:
-    <<: *plugin-profile
+    <<: *plugin-ui-federated
     build:
       context: ../plugins
       dockerfile: dashboard-hr/Dockerfile

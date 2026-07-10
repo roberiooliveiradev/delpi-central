@@ -23,16 +23,16 @@ Helper Vite: [`plugins/vite/federation.shared.ts`](../vite/federation.shared.ts)
 
 ## Modo bundled (legado) — COPY / shared builder
 
-Plugins **não migrados** ainda bundlam `@delpi/plugin-ui` no build.
+Apenas **`@delpi/tv-dashboard-presentation`** permanece bundled (`public-hub`, `tv-dashboard`).
 
 ### Problema de RAM no build
 
-Cada MFE fazia `npm install` do `plugin-ui` de novo. Com `up --build` em 20+ plugins, isso **multiplica** memória e tempo.
+Com `up --build` em massa, repetir `npm install` da lib bundled multiplica memória e tempo.
 
 | Abordagem | Runtime | Build |
 |-----------|---------|-------|
-| COPY plugin-ui em cada Dockerfile (legado) | OK | 26× npm install |
-| **`delpi-plugins-shared-builder:local`** | OK | 1× npm install das libs bundled |
+| COPY por Dockerfile | OK | N× npm install |
+| **`delpi-plugins-shared-builder:local`** | OK | 1× npm install (tv-dashboard-presentation) |
 
 ```bash
 ./infra/scripts/build-plugins-shared-base.sh
@@ -62,7 +62,7 @@ plugins-shared-builder:
 
 | Artefato | Uso |
 |----------|-----|
-| [`Dockerfile.shared-libs-builder`](./Dockerfile.shared-libs-builder) | Build bundled (tv-dashboard-presentation + plugin-ui legado) |
+| [`Dockerfile.shared-libs-builder`](./Dockerfile.shared-libs-builder) | Build bundled (`tv-dashboard-presentation` apenas) |
 | [`Dockerfile.plugin.mfe`](./Dockerfile.plugin.mfe) | Template MFE com shared builder |
 | [`controle-retrabalhos/Dockerfile`](../controle-retrabalhos/Dockerfile) | Piloto MF (sem plugin-ui no build) |
 | [`plugin-ui/Dockerfile`](../plugin-ui/Dockerfile) | Remote runtime |

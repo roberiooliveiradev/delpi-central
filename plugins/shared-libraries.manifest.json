@@ -1,6 +1,6 @@
 {
   "$schema": "./shared-libraries.manifest.schema.json",
-  "description": "Bibliotecas TypeScript em plugins/ consumidas por MFEs. plugin-ui: remote Module Federation em runtime; tv-dashboard-presentation: alias Vite + COPY/builder.",
+  "description": "Bibliotecas TypeScript em plugins/ consumidas por MFEs. plugin-ui: remote MF (delpi-plugin-ui); tv-dashboard-presentation: alias Vite + COPY/builder.",
   "requiredBuildContext": "../plugins",
   "sharedBuilderImage": "delpi-plugins-shared-builder:local",
   "sharedBuilderDockerfile": "docker/Dockerfile.shared-libs-builder",

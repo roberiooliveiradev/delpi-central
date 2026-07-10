@@ -1,6 +1,6 @@
 # Module Federation — `@delpi/plugin-ui` como remote runtime
 
-> **Status:** Fase 0 + piloto + rollout Fase 2a/2b concluídos (jul/2026). Restam `public-hub` (shell sem MF) e trim Fase 3 do shared-builder.
+> **Status:** Rollout concluído (jul/2026) — todos os MFEs + `public-hub` consomem `@delpi/plugin-ui` via remote MF. Shared-builder mantém só `tv-dashboard-presentation` (bundled).
 
 ## Objetivo
 
@@ -174,9 +174,9 @@ Aceita por plugin-ui: **COPY** · **shared builder** · **`pluginUiRemote()`** n
 | ✅ 1 | Piloto `controle-retrabalhos` |
 | ✅ 2a | 8 dashboards departamentais (`dashboard-*`) |
 | ✅ 2b | 17 MFEs operacionais (ver lista abaixo) |
-| 3 | Trim do shared-builder (só `tv-dashboard-presentation`); opcional `public-hub` |
+| ✅ 3 | Trim shared-builder (só `tv-dashboard-presentation`); `public-hub` consumidor MF; `depends_on: plugin-ui` no Compose |
 
-### Consumidores federados (Fase 2)
+### Consumidores federados
 
 **Piloto:** `controle-retrabalhos`
 
@@ -184,7 +184,9 @@ Aceita por plugin-ui: **COPY** · **shared builder** · **`pluginUiRemote()`** n
 
 **Operacionais (2b):** `transformometro`, `quality-action-plans`, `cadastro-kaizen`, `maintenance`, `eficiencia-fabril`, `minha-delpi-chat`, `auditoria-5s`, `inspecoes-entrada`, `pedidos-venda-abertos`, `propostas-comerciais`, `financeiro-centro-custo`, `strategic-indicators`, `customer-experience`, `cultura-delpi`, `central-agendamento`, `quality-labels`, `tv-dashboard` (também consome `@delpi/tv-dashboard-presentation` bundled)
 
-**Legado (bundled):** `public-hub` e demais sem `pluginUiRemote()` no Vite.
+**Shell público:** `public-hub` — consumidor MF (sem `exposes`); `tv-dashboard-presentation` permanece bundled.
+
+**Legado (bundled):** nenhum consumidor de `@delpi/plugin-ui` restante.
 
 ---
 

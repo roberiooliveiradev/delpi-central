@@ -1,20 +1,22 @@
+# Shell público (/p/) — @delpi/plugin-ui via Module Federation; tv-dashboard-presentation bundled.
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Dependências do pacote compartilhado (tipos TS). Runtime: dedupe no vite.config.ts.
 COPY tv-dashboard-presentation/package*.json ./tv-dashboard-presentation/
-RUN cd tv-dashboard-presentation && npm install
-
-COPY plugin-ui/package*.json ./plugin-ui/
-RUN cd plugin-ui && npm install
-
-COPY public-hub/package*.json ./public-hub/
-RUN cd public-hub && npm install
+RUN --mount=type=cache,target=/root/.npm \
+    cd tv-dashboard-presentation && npm install
 
 COPY tv-dashboard-presentation ./tv-dashboard-presentation
-COPY plugin-ui ./plugin-ui
+
+COPY public-hub/package*.json ./public-hub/
+RUN --mount=type=cache,target=/root/.npm \
+    cd public-hub && npm install
+
 COPY public-hub ./public-hub
+COPY vite ./vite
 
 WORKDIR /app/public-hub
 RUN npm run build

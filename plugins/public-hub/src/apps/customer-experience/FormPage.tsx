@@ -7,7 +7,7 @@ import {
   type PublicFormPage,
   type PublicQuestion,
 } from "./api";
-import { LucideIconByName } from "@delpi/plugin-ui";
+import { LucideIconByName } from "@delpi/plugin-ui/index";
 import "./form.css";
 
 function resolveBackgroundFit(value: string | null | undefined): BackgroundFit {

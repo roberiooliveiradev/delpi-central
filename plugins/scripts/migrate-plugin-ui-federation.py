@@ -149,6 +149,8 @@ ALREADY_MIGRATED = {
     "dashboard-quality",
     "dashboard-supplies",
     "plugin-ui",
+    "public-hub",
+    *LOT_2B,
 }
 
 
