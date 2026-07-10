@@ -97,7 +97,18 @@ export function DashboardCommercialPage({
     filterState,
   } = useCommercialFilters();
 
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+  const autoGranularity = useMemo(
+    () => suggestGranularity(dateStart, dateEnd),
+    [dateStart, dateEnd],
+  );
+  const [granularityOverride, setGranularityOverride] =
+    useState<ChartGranularity | null>(null);
+
+  useEffect(() => {
+    setGranularityOverride(null);
+  }, [dateStart, dateEnd]);
+
+  const granularity = granularityOverride ?? autoGranularity;
   const [proposalStatusFilter, setProposalStatusFilter] =
     useState<CommercialProposalStatusFilter>("all");
   const [proposalSearch, setProposalSearch] = useState("");
@@ -168,10 +179,6 @@ export function DashboardCommercialPage({
     debouncedProposalSearch,
     proposalsServerTable.resetPage,
   ]);
-
-  useEffect(() => {
-    setGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -742,7 +749,7 @@ export function DashboardCommercialPage({
           <ChartToolbar
             idPrefix="rol"
             granularity={granularity}
-            onGranularityChange={setGranularity}
+            onGranularityChange={setGranularityOverride}
             exportActions={
               <CommercialExportButtons
                 variant="table"
