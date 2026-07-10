@@ -30,8 +30,6 @@ import {
   Ungroup,
   Undo2,
   Upload,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 import {
   COMUNICADO_FONT_FAMILIES,
@@ -63,7 +61,7 @@ import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import { selectedHasGroup } from "../utils/comunicadoGrouping";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
-import { TdRibbonSelect } from "./tdRibbonUi";
+import { TdRibbonIconButton, TdRibbonSelect } from "./tdRibbonUi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Labels = Record<string, string>;
@@ -90,8 +88,6 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     canUndo,
     canRedo,
     alignSelected,
-    stageZoom,
-    setStageZoom,
     groupSelected,
     ungroupSelected,
     blocks,
@@ -183,8 +179,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     <div className="td-deck-ribbon__groups">
       <DeckRibbonGroup label="Histórico" hint="Desfazer ou refazer alterações no slide (Ctrl+Z / Ctrl+Y).">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile icon={Undo2} label="Desfazer" disabled={!canUndo} onClick={undo} />
-          <DeckRibbonTile icon={Redo2} label="Refazer" disabled={!canRedo} onClick={redo} />
+          <DeckRibbonTile icon={Undo2} label="Desfazer" hint={H.undo} disabled={!canUndo} onClick={undo} />
+          <DeckRibbonTile icon={Redo2} label="Refazer" hint={H.redo} disabled={!canRedo} onClick={redo} />
         </div>
       </DeckRibbonGroup>
 
@@ -213,75 +209,58 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
           <DeckRibbonTile
             icon={FolderOpen}
             label="Biblioteca"
-            hint="Escolher imagem já enviada à playlist"
+            hint={H.mediaLibrary}
             onClick={() => openMediaLibrary("background")}
           />
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Visualização" hint="Zoom do palco (50% a 200%).">
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={ZoomOut}
-            label="−"
-            disabled={stageZoom <= 0.5}
-            onClick={() => setStageZoom(Math.max(0.5, Math.round((stageZoom - 0.1) * 10) / 10))}
-          />
-          <span className="td-deck-ribbon__zoom-label">{Math.round(stageZoom * 100)}%</span>
-          <DeckRibbonTile
-            icon={ZoomIn}
-            label="+"
-            disabled={stageZoom >= 2}
-            onClick={() => setStageZoom(Math.min(2, Math.round((stageZoom + 0.1) * 10) / 10))}
-          />
-        </div>
-      </DeckRibbonGroup>
-
       {multiSelected ? (
-        <DeckRibbonGroup label="Alinhar" hint="Alinhar ou distribuir os elementos selecionados.">
+        <DeckRibbonGroup label="Alinhar" hint={H.alignSelection}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
             {(
               [
-                ["align-left", AlignHorizontalJustifyStart, "Esquerda"],
-                ["align-center-h", AlignHorizontalJustifyCenter, "Centro H"],
-                ["align-right", AlignHorizontalJustifyEnd, "Direita"],
-                ["align-top", AlignVerticalJustifyStart, "Topo"],
-                ["align-center-v", AlignVerticalJustifyCenter, "Centro V"],
-                ["align-bottom", AlignVerticalJustifyEnd, "Base"],
+                ["align-left", AlignHorizontalJustifyStart, "Esquerda", H.alignSelectionLeft],
+                ["align-center-h", AlignHorizontalJustifyCenter, "Centro H", H.alignSelectionCenterH],
+                ["align-right", AlignHorizontalJustifyEnd, "Direita", H.alignSelectionRight],
+                ["align-top", AlignVerticalJustifyStart, "Topo", H.alignSelectionTop],
+                ["align-center-v", AlignVerticalJustifyCenter, "Centro V", H.alignSelectionCenterV],
+                ["align-bottom", AlignVerticalJustifyEnd, "Base", H.alignSelectionBottom],
               ] as const
-            ).map(([command, Icon, label]) => (
+            ).map(([command, Icon, label, hint]) => (
               <DeckRibbonTile
                 key={command}
                 icon={Icon}
                 label={label}
+                hint={hint}
                 onClick={() => alignSelected(command as LayoutAlignCommand)}
               />
             ))}
             <DeckRibbonTile
               icon={AlignHorizontalJustifyCenter}
               label="Dist. H"
-              hint="Distribuir horizontalmente (3+)"
+              hint={H.distributeH}
               disabled={!canDistribute}
               onClick={() => alignSelected("distribute-h")}
             />
             <DeckRibbonTile
               icon={AlignVerticalJustifyCenter}
               label="Dist. V"
-              hint="Distribuir verticalmente (3+)"
+              hint={H.distributeV}
               disabled={!canDistribute}
               onClick={() => alignSelected("distribute-v")}
             />
             <DeckRibbonTile
               icon={Group}
               label="Agrupar"
-              hint="Agrupar seleção"
+              hint={H.groupSelection}
               disabled={!canGroup}
               onClick={groupSelected}
             />
             <DeckRibbonTile
               icon={Ungroup}
               label="Desagrupar"
-              hint="Remover grupo da seleção"
+              hint={H.ungroupSelection}
               disabled={!canUngroup}
               onClick={ungroupSelected}
             />
@@ -294,22 +273,23 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
           <DeckRibbonGroup label="Fonte" hint={H.font} wide>
             <div className="td-deck-ribbon__toolbar">
               <div className="td-deck-ribbon__toolbar-row">
-                <TdRibbonSelect
-                  aria-label="Família da fonte"
-                  value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
-                  onChange={(value) => {
-                    ensureComunicadoGoogleFontsLoaded([value]);
-                    updateSelectedStyle({ fontFamily: value });
-                  }}
-                  options={comunicadoFontFamilyOptions().map((font) => ({
-                    value: font.value,
-                    label: font.source === "google" ? `${font.label} · Google` : font.label,
-                  }))}
-                />
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm td-btn--icon"
-                  aria-label="Diminuir fonte"
+                <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
+                  <TdRibbonSelect
+                    aria-label="Família da fonte"
+                    value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
+                    onChange={(value) => {
+                      ensureComunicadoGoogleFontsLoaded([value]);
+                      updateSelectedStyle({ fontFamily: value });
+                    }}
+                    options={comunicadoFontFamilyOptions().map((font) => ({
+                      value: font.value,
+                      label: font.source === "google" ? `${font.label} · Google` : font.label,
+                    }))}
+                  />
+                </HintAction>
+                <TdRibbonIconButton
+                  hint={H.fontSizeDown}
+                  ariaLabel="Diminuir fonte"
                   disabled={(selected.style?.fontSize ?? 32) <= COMUNICADO_FONT_SIZE_MIN}
                   onClick={() =>
                     updateSelectedStyle({
@@ -320,22 +300,23 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }
                 >
                   <Minus size={14} aria-hidden="true" />
-                </button>
-                <input
-                  type="number"
-                  className="td-deck-ribbon__number"
-                  aria-label="Tamanho da fonte"
-                  min={COMUNICADO_FONT_SIZE_MIN}
-                  max={COMUNICADO_FONT_SIZE_MAX}
-                  value={selected.style?.fontSize ?? 32}
-                  onChange={(e) =>
-                    updateSelectedStyle({ fontSize: clampFontSize(Number(e.target.value)) })
-                  }
-                />
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm td-btn--icon"
-                  aria-label="Aumentar fonte"
+                </TdRibbonIconButton>
+                <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
+                  <input
+                    type="number"
+                    className="td-deck-ribbon__number"
+                    aria-label="Tamanho da fonte"
+                    min={COMUNICADO_FONT_SIZE_MIN}
+                    max={COMUNICADO_FONT_SIZE_MAX}
+                    value={selected.style?.fontSize ?? 32}
+                    onChange={(e) =>
+                      updateSelectedStyle({ fontSize: clampFontSize(Number(e.target.value)) })
+                    }
+                  />
+                </HintAction>
+                <TdRibbonIconButton
+                  hint={H.fontSizeUp}
+                  ariaLabel="Aumentar fonte"
                   disabled={(selected.style?.fontSize ?? 32) >= COMUNICADO_FONT_SIZE_MAX}
                   onClick={() =>
                     updateSelectedStyle({
@@ -346,13 +327,13 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }
                 >
                   <Plus size={14} aria-hidden="true" />
-                </button>
+                </TdRibbonIconButton>
               </div>
               <div className="td-deck-ribbon__toolbar-row">
-                <button
-                  type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${fontWeightActive ? " td-btn--active" : ""}`}
-                  aria-label="Negrito"
+                <TdRibbonIconButton
+                  hint={H.bold}
+                  ariaLabel="Negrito"
+                  active={Boolean(fontWeightActive)}
                   onClick={() => {
                     if (partialTextSelectionActive) {
                       toggleEditingTextRunStyle("fontWeight");
@@ -364,11 +345,11 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }}
                 >
                   <Bold size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${fontStyleActive ? " td-btn--active" : ""}`}
-                  aria-label="Itálico"
+                </TdRibbonIconButton>
+                <TdRibbonIconButton
+                  hint={H.italic}
+                  ariaLabel="Itálico"
+                  active={Boolean(fontStyleActive)}
                   onClick={() => {
                     if (partialTextSelectionActive) {
                       toggleEditingTextRunStyle("fontStyle");
@@ -380,11 +361,11 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }}
                 >
                   <Italic size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${underlineActive ? " td-btn--active" : ""}`}
-                  aria-label="Sublinhado"
+                </TdRibbonIconButton>
+                <TdRibbonIconButton
+                  hint={H.underline}
+                  ariaLabel="Sublinhado"
+                  active={Boolean(underlineActive)}
                   onClick={() => {
                     if (partialTextSelectionActive) {
                       toggleEditingTextRunStyle("underline");
@@ -399,11 +380,11 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }}
                 >
                   <Underline size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${strikethroughActive ? " td-btn--active" : ""}`}
-                  aria-label="Tachado"
+                </TdRibbonIconButton>
+                <TdRibbonIconButton
+                  hint={H.strikethrough}
+                  ariaLabel="Tachado"
+                  active={Boolean(strikethroughActive)}
                   onClick={() => {
                     if (partialTextSelectionActive) {
                       toggleEditingTextRunStyle("strikethrough");
@@ -418,30 +399,33 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }}
                 >
                   <Strikethrough size={15} aria-hidden="true" />
-                </button>
+                </TdRibbonIconButton>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                <label className="td-ribbon-tile td-ribbon-tile--color td-ribbon-tile--inline" aria-label="Realce">
-                  <span className="td-ribbon-tile__icon">
-                    <Highlighter size={15} aria-hidden="true" />
-                    <input
-                      type="color"
-                      className="td-deck-ribbon__color td-deck-ribbon__color--overlay"
-                      value={selected.style?.textHighlight ?? "#fef08a"}
-                      onChange={(e) => updateSelectedStyle({ textHighlight: e.target.value })}
-                    />
-                  </span>
-                </label>
-                <input
-                  type="color"
-                  className="td-deck-ribbon__color"
-                  aria-label="Cor do texto"
-                  value={selected.style?.color ?? "#ffffff"}
-                  onChange={(e) => updateSelectedStyle({ color: e.target.value })}
-                />
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm td-btn--icon"
-                  aria-label="Limpar formatação"
+                <HintAction hint={H.textHighlight} ariaLabel="Ajuda: Realce do texto">
+                  <label className="td-ribbon-tile td-ribbon-tile--color td-ribbon-tile--inline" aria-label="Realce">
+                    <span className="td-ribbon-tile__icon">
+                      <Highlighter size={15} aria-hidden="true" />
+                      <input
+                        type="color"
+                        className="td-deck-ribbon__color td-deck-ribbon__color--overlay"
+                        value={selected.style?.textHighlight ?? "#fef08a"}
+                        onChange={(e) => updateSelectedStyle({ textHighlight: e.target.value })}
+                      />
+                    </span>
+                  </label>
+                </HintAction>
+                <HintAction hint={H.textColor} ariaLabel="Ajuda: Cor do texto">
+                  <input
+                    type="color"
+                    className="td-deck-ribbon__color"
+                    aria-label="Cor do texto"
+                    value={selected.style?.color ?? "#ffffff"}
+                    onChange={(e) => updateSelectedStyle({ color: e.target.value })}
+                  />
+                </HintAction>
+                <TdRibbonIconButton
+                  hint={H.clearFormatting}
+                  ariaLabel="Limpar formatação"
                   onClick={() => {
                     const defaults = defaultTextBlockStyle(selected.type);
                     updateSelected({
@@ -450,7 +434,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }}
                 >
                   <RemoveFormatting size={15} aria-hidden="true" />
-                </button>
+                </TdRibbonIconButton>
               </div>
             </div>
           </DeckRibbonGroup>
@@ -460,39 +444,39 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               <div className="td-deck-ribbon__toolbar-row">
                 {(
                   [
-                    { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda" },
-                    { align: "center" as const, icon: AlignCenter, label: "Centralizar" },
-                    { align: "right" as const, icon: AlignRight, label: "Alinhar à direita" },
-                    { align: "justify" as const, icon: AlignJustify, label: "Justificar" },
+                    { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
+                    { align: "center" as const, icon: AlignCenter, label: "Centralizar", hint: H.alignCenter },
+                    { align: "right" as const, icon: AlignRight, label: "Alinhar à direita", hint: H.alignRight },
+                    { align: "justify" as const, icon: AlignJustify, label: "Justificar", hint: H.alignJustify },
                   ] as const
-                ).map(({ align, icon: Icon, label }) => (
-                  <button
+                ).map(({ align, icon: Icon, label, hint }) => (
+                  <TdRibbonIconButton
                     key={align}
-                    type="button"
-                    className={`td-btn td-btn--sm td-btn--icon${selected.style?.textAlign === align ? " td-btn--active" : ""}`}
-                    aria-label={label}
+                    hint={hint}
+                    ariaLabel={label}
+                    active={selected.style?.textAlign === align}
                     onClick={() => updateSelectedStyle({ textAlign: align })}
                   >
                     <Icon size={15} aria-hidden="true" />
-                  </button>
+                  </TdRibbonIconButton>
                 ))}
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                <button
-                  type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${bulletListActive ? " td-btn--active" : ""}`}
-                  aria-label="Marcadores"
+                <TdRibbonIconButton
+                  hint={H.bulletList}
+                  ariaLabel="Marcadores"
+                  active={Boolean(bulletListActive)}
                   onClick={() => toggleSelectedTextListType("bullet")}
                 >
                   <List size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className={`td-btn td-btn--sm td-btn--icon${orderedListActive ? " td-btn--active" : ""}`}
-                  aria-label="Lista numerada"
+                </TdRibbonIconButton>
+                <TdRibbonIconButton
+                  hint={H.orderedList}
+                  ariaLabel="Lista numerada"
+                  active={Boolean(orderedListActive)}
                   onClick={() => toggleSelectedTextListType("ordered")}
                 >
                   <ListOrdered size={15} aria-hidden="true" />
-                </button>
+                </TdRibbonIconButton>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
                 {(
                   [
@@ -500,28 +484,31 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       align: "top" as const,
                       icon: AlignVerticalJustifyStart,
                       label: "Alinhar ao topo",
+                      hint: H.alignTop,
                     },
                     {
                       align: "middle" as const,
                       icon: AlignVerticalJustifyCenter,
                       label: "Centralizar verticalmente",
+                      hint: H.alignMiddle,
                     },
                     {
                       align: "bottom" as const,
                       icon: AlignVerticalJustifyEnd,
                       label: "Alinhar à base",
+                      hint: H.alignBottom,
                     },
                   ] as const
-                ).map(({ align, icon: Icon, label }) => (
-                  <button
+                ).map(({ align, icon: Icon, label, hint }) => (
+                  <TdRibbonIconButton
                     key={align}
-                    type="button"
-                    className={`td-btn td-btn--sm td-btn--icon${textVerticalAlign === align ? " td-btn--active" : ""}`}
-                    aria-label={label}
+                    hint={hint}
+                    ariaLabel={label}
+                    active={textVerticalAlign === align}
                     onClick={() => updateSelectedStyle({ verticalAlign: align })}
                   >
                     <Icon size={15} aria-hidden="true" />
-                  </button>
+                  </TdRibbonIconButton>
                 ))}
               </div>
               <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
@@ -610,12 +597,12 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
         <DeckRibbonGroup label="Organizar" hint={H.organize} wide>
           <div className="td-deck-ribbon__organize">
             <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-            <DeckRibbonTile icon={Copy} label="Duplicar" hint="Duplicar elemento (Ctrl+D)" onClick={duplicateSelected} />
+            <DeckRibbonTile icon={Copy} label="Duplicar" hint={H.duplicateBlock} onClick={duplicateSelected} />
             {isImageBlock && selected?.url ? (
               <DeckRibbonTile
                 icon={Crop}
                 label="Recorte"
-                hint="Ajustar recorte da imagem no inspetor"
+                hint={H.cropImage}
                 onClick={() => {
                   document.getElementById("td-comunicado-crop-panel")?.scrollIntoView({
                     behavior: "smooth",
@@ -629,7 +616,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <DeckRibbonTile
                   icon={FolderOpen}
                   label="Biblioteca"
-                  hint="Escolher mídia da playlist"
+                  hint={H.mediaLibrary}
                   onClick={() => openMediaLibrary("block")}
                 />
                 <DeckRibbonTile
@@ -664,17 +651,20 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-opacity">
               Opacidade
             </label>
-            <input
-              id="td-block-opacity"
-              type="range"
-              min={10}
-              max={100}
-              step={5}
-              value={Math.round((selected.style?.opacity ?? 1) * 100)}
-              onChange={(e) =>
-                updateSelectedStyle({ opacity: Number(e.target.value) / 100 })
-              }
-            />
+            <HintAction hint={H.opacity} ariaLabel="Ajuda: Opacidade">
+              <input
+                id="td-block-opacity"
+                type="range"
+                min={10}
+                max={100}
+                step={5}
+                aria-label="Opacidade"
+                value={Math.round((selected.style?.opacity ?? 1) * 100)}
+                onChange={(e) =>
+                  updateSelectedStyle({ opacity: Number(e.target.value) / 100 })
+                }
+              />
+            </HintAction>
             {isMediaBlock ? (
               <>
                 <label className="td-deck-ribbon__field-label" htmlFor="td-block-object-fit">

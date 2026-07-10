@@ -6,7 +6,7 @@ import { DeckRibbonShell, resolveEmbeddedComunicadoRibbonTabs } from "./deck";
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "format";
+type EmbeddedTab = "insert" | "format" | "view";
 
 type Props = {
   labels?: Labels;

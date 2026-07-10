@@ -29,6 +29,7 @@ import {
   sortBlocksByZIndex,
   syncTextBlockFields,
   syncTextBlockFromRuns,
+  clampFrame,
   toggleListTypeOnAllLines,
   type ComunicadoBlock,
   type ComunicadoConfig,
@@ -193,11 +194,19 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   );
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
   const [stageZoom, setStageZoom] = useState(1);
+  const [showStageGrid, setShowStageGrid] = useState(false);
+  const [showStageGuides, setShowStageGuides] = useState(true);
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const snapEnabledRef = useRef(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [mediaLibraryTarget, setMediaLibraryTarget] = useState<MediaLibraryTarget>("block");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<"block" | "background">("block");
   const mediaLibraryTargetRef = useRef<MediaLibraryTarget>("block");
+
+  useEffect(() => {
+    snapEnabledRef.current = snapEnabled;
+  }, [snapEnabled]);
 
   useEffect(() => {
     const enriched = enrichComunicadoConfigForEditor(value, playlistId);
@@ -380,7 +389,9 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
       for (const id of idsToFinalize) {
         const index = nextBlocks.findIndex((block) => block.id === id);
         if (index < 0) continue;
-        const snappedFrame = snapComunicadoFrame(nextBlocks[index].frame, mode);
+        const snappedFrame = snapEnabledRef.current
+          ? snapComunicadoFrame(nextBlocks[index].frame, mode)
+          : clampFrame(nextBlocks[index].frame);
         nextBlocks[index] = { ...nextBlocks[index], frame: snappedFrame };
       }
 
@@ -919,6 +930,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     alignSelected,
     stageZoom,
     setStageZoom,
+    showStageGrid,
+    setShowStageGrid,
+    showStageGuides,
+    setShowStageGuides,
+    snapEnabled,
+    setSnapEnabled,
     fileInputRef,
     handleUploadFile,
     dataPreviewLoading,

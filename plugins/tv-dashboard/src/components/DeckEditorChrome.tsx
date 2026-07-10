@@ -44,8 +44,8 @@ type Props = {
   ) => void;
 };
 
-function isRibbonTab(tab: DeckRibbonTabId): tab is "home" | "insert" | "format" {
-  return tab === "home" || tab === "insert" || tab === "format";
+function isRibbonTab(tab: DeckRibbonTabId): tab is "home" | "insert" | "format" | "view" {
+  return tab === "home" || tab === "insert" || tab === "format" || tab === "view";
 }
 
 function isSettingsTab(tab: DeckRibbonTabId): tab is "slide" | "playlist" {
@@ -106,7 +106,7 @@ export function DeckEditorChrome({
         <div className="td-deck-chrome__ribbon">
           <DeckRibbonShell>
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
-            {isCustomSlide && (activeTab === "insert" || activeTab === "format") ? (
+            {isCustomSlide && (activeTab === "insert" || activeTab === "format" || activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}
           </DeckRibbonShell>

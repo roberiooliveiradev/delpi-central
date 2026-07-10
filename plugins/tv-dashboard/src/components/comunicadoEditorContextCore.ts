@@ -108,6 +108,12 @@ export type ComunicadoEditorContextValue = {
   alignSelected: (command: LayoutAlignCommand) => void;
   stageZoom: number;
   setStageZoom: (zoom: number) => void;
+  showStageGrid: boolean;
+  setShowStageGrid: (show: boolean) => void;
+  showStageGuides: boolean;
+  setShowStageGuides: (show: boolean) => void;
+  snapEnabled: boolean;
+  setSnapEnabled: (enabled: boolean) => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
   handleUploadFile: (file: File, target: "block" | "background") => void;
   dataPreviewLoading: boolean;

@@ -559,6 +559,48 @@
   transform-origin: top center;
 }
 
+.td-composer__stage-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--td-border) 55%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--td-border) 55%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 5% 5%;
+}
+
+.td-composer__stage-guide {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--td-accent) 70%, transparent);
+}
+
+.td-composer__stage-guide--v {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.td-composer__stage-guide--h {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
 .td-deck-ribbon__zoom-label {
   display: inline-flex;
   align-items: center;

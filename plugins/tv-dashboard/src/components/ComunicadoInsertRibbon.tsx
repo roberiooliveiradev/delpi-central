@@ -120,7 +120,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             <DeckRibbonTile
               icon={Sparkles}
               label={labels.comunicadoAddIcon ?? "Ícone"}
-              hint={H.insertShape}
+              hint={H.insertIcon}
               active={iconMenuOpen}
               onClick={() => setIconMenuOpen((open) => !open)}
             />

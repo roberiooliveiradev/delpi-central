@@ -55,6 +55,8 @@ export function ComunicadoComposerCanvas() {
     startDrag,
     dataPreviewLoading,
     stageZoom,
+    showStageGrid,
+    showStageGuides,
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
   const canvasStyle = useCanvasBackgroundStyle();
@@ -176,6 +178,13 @@ export function ComunicadoComposerCanvas() {
           style={canvasStyle}
           onPointerDown={handleCanvasPointerDown}
         >
+          {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
+          {showStageGuides ? (
+            <>
+              <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
+              <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
+            </>
+          ) : null}
           {blocks.map((block) => {
             const isSelected = isBlockSelected(block.id);
             const isPrimary = block.id === primarySelected;

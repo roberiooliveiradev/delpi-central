@@ -7,6 +7,12 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
+import type { ReactNode } from "react";
+import { HintAction } from "@delpi/plugin-ui/index";
+
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+
+const H = TV_DASHBOARD_HELP_TOOLTIPS.header;
 
 type Props = {
   playlistName: string;
@@ -22,6 +28,35 @@ type Props = {
   onToggleLink: () => void;
   onDelete: () => void;
 };
+
+function HeaderActionButton({
+  hint,
+  ariaLabel,
+  onClick,
+  danger,
+  children,
+}: {
+  hint: string;
+  ariaLabel: string;
+  onClick: () => void;
+  danger?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <HintAction hint={hint} ariaLabel={ariaLabel} placement="bottom">
+      <button
+        type="button"
+        className={["td-btn", "td-btn--compact", danger ? "td-btn--danger" : null]
+          .filter(Boolean)
+          .join(" ")}
+        aria-label={ariaLabel}
+        onClick={onClick}
+      >
+        {children}
+      </button>
+    </HintAction>
+  );
+}
 
 /** Ações da playlist integradas à faixa do chrome (sem barra extra no topo). */
 export function DeckEditorHeaderActions({
@@ -40,40 +75,39 @@ export function DeckEditorHeaderActions({
 }: Props) {
   return (
     <div className="td-deck-chrome__actions">
-      <button type="button" className="td-btn td-btn--compact" onClick={onBack} title="Voltar">
+      <HeaderActionButton hint={H.back} ariaLabel="Voltar" onClick={onBack}>
         <ArrowLeft size={16} />
-      </button>
+      </HeaderActionButton>
       <span className="td-deck-chrome__actions-title" title={playlistName}>
         {playlistName}
       </span>
       {tvStatusLabel ? <span className={tvStatusClass}>{tvStatusLabel}</span> : null}
       <div className="td-deck-chrome__actions-group">
-        <button type="button" className="td-btn td-btn--compact" onClick={onPreview} title="Pré-visualizar">
+        <HeaderActionButton hint={H.preview} ariaLabel="Pré-visualizar" onClick={onPreview}>
           <Eye size={16} />
-        </button>
-        <button type="button" className="td-btn td-btn--compact" onClick={onShare} title="Compartilhar">
+        </HeaderActionButton>
+        <HeaderActionButton hint={H.share} ariaLabel="Compartilhar" onClick={onShare}>
           <Link2 size={16} />
-        </button>
-        <button type="button" className="td-btn td-btn--compact" onClick={onCopyLink} title="Copiar link">
+        </HeaderActionButton>
+        <HeaderActionButton hint={H.copyLink} ariaLabel="Copiar link" onClick={onCopyLink}>
           <Copy size={16} />
-        </button>
-        <button type="button" className="td-btn td-btn--compact" onClick={onQr} title="QR code">
+        </HeaderActionButton>
+        <HeaderActionButton hint={H.qr} ariaLabel="QR code" onClick={onQr}>
           <QrCode size={16} />
-        </button>
-        <button type="button" className="td-btn td-btn--compact" onClick={onRegenerateToken} title="Novo link">
+        </HeaderActionButton>
+        <HeaderActionButton hint={H.regenerateToken} ariaLabel="Novo link" onClick={onRegenerateToken}>
           <RefreshCw size={16} />
-        </button>
-        <button
-          type="button"
-          className="td-btn td-btn--compact"
+        </HeaderActionButton>
+        <HeaderActionButton
+          hint={H.toggleLink}
+          ariaLabel={linkActive ? "Desativar link" : "Reativar link"}
           onClick={onToggleLink}
-          title={linkActive ? "Desativar link" : "Reativar link"}
         >
           <Link2 size={16} />
-        </button>
-        <button type="button" className="td-btn td-btn--compact td-btn--danger" onClick={onDelete} title="Excluir">
+        </HeaderActionButton>
+        <HeaderActionButton hint={H.delete} ariaLabel="Excluir" onClick={onDelete} danger>
           <Trash2 size={16} />
-        </button>
+        </HeaderActionButton>
       </div>
     </div>
   );
