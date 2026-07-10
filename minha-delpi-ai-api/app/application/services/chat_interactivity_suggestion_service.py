@@ -348,6 +348,27 @@ class ChatInteractivitySuggestionService:
             if web_primary_turn and item.get("sourceKey") == "followUpSuggestions":
                 intent_boost = 40
 
+            if intent == "drawing_analysis" and item.get("sourceKey") == "drawingFollowUpSuggestions":
+                raw_boost = ChatInteractivityContentService.node("drawingIntentChipBoost")
+                intent_boost = int(raw_boost) if isinstance(raw_boost, int) else -45
+
+                drawing = metadata.get("drawingAnalysis")
+
+                if isinstance(drawing, dict) and (
+                    int(drawing.get("warnings") or 0) > 0
+                    or int(drawing.get("errors") or 0) > 0
+                ):
+                    manual_labels = ChatInteractivityContentService.label_set(
+                        "drawingManualReviewLabels",
+                    )
+                    label = str(item.get("label") or "").strip()
+
+                    if label in manual_labels:
+                        extra = ChatInteractivityContentService.node(
+                            "drawingManualReviewChipBoost",
+                        )
+                        intent_boost += int(extra) if isinstance(extra, int) else -25
+
             sub_intent = (
                 str(intent_route.get("subIntent") or intent_route.get("router", {}).get("subIntent") or "")
                 if isinstance(intent_route, dict)

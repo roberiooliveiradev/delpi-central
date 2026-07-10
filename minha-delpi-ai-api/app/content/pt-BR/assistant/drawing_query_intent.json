@@ -177,7 +177,11 @@
       "conferido manualmente",
       "aprovado em engenharia",
       "confirmar revisão manual",
-      "confirmar revisao manual"
+      "confirmar revisao manual",
+      "conferido",
+      "conferido e esta correto",
+      "esta correto",
+      "está correto"
     ],
     "disputeFinding": [
       "não é verdadeiro",

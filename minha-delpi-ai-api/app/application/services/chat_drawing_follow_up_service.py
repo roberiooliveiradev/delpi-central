@@ -105,6 +105,12 @@ class ChatDrawingFollowUpService:
                 if label not in {"Confirmar revisão manual", "Descartar ressalva"}
             ]
 
+        if warnings > 0 or errors > 0:
+            manual_review = ("Confirmar revisão manual", "Descartar ressalva")
+            front = [label for label in manual_review if label in labels]
+            rest = [label for label in labels if label not in manual_review]
+            labels = front + rest
+
         if not cls._should_offer_bom_reextract(drawing) and "Reextrair BOM do PDF" in labels:
             labels = [label for label in labels if label != "Reextrair BOM do PDF"]
         elif "Reextrair BOM do PDF" in labels:

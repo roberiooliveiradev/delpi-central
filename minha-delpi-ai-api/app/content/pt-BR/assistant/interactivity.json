@@ -31,6 +31,12 @@
     "Ver em tabela": "visualizar",
     "Exportar CSV": "exportar",
     "Colocar na lousa": "lousa",
+    "Confirmar revisão manual": "consultar",
+    "Descartar ressalva": "consultar",
+    "Validar BOM": "consultar",
+    "Validar cotas": "consultar",
+    "Gerar relatório": "consultar",
+    "Reanalisar desenho": "consultar",
     "Deixar mais formal": "formatar",
     "Deixar mais curto": "formatar",
     "Traduzir": "formatar",
@@ -248,6 +254,12 @@
     "Ampliar período": "amplie o período da última consulta"
   },
   "presentationViewChipBoost": -28,
+  "drawingIntentChipBoost": -45,
+  "drawingManualReviewChipBoost": -25,
+  "drawingManualReviewLabels": [
+    "Confirmar revisão manual",
+    "Descartar ressalva"
+  ],
   "metadataSources": [
     { "key": "followUpSuggestions", "group": "consultar", "priority": 10 },
     { "key": "errorRecoveryFollowUpSuggestions", "group": "recuperar", "priority": 5 },
@@ -257,7 +269,7 @@
     { "key": "textTaskFollowUpSuggestions", "group": "formatar", "priority": 31 },
     { "key": "emailFollowUpSuggestions", "group": "formatar", "priority": 32 },
     { "key": "webSearchFollowUpSuggestions", "group": "web", "priority": 8 },
-    { "key": "drawingFollowUpSuggestions", "group": "consultar", "priority": 18 },
+    { "key": "drawingFollowUpSuggestions", "group": "consultar", "priority": 5 },
     { "key": "helpFollowUpSuggestions", "group": "ajuda", "priority": 40 },
     { "key": "helpErrorFollowUpSuggestions", "group": "ajuda", "priority": 6 },
     { "key": "routingDisambiguationSuggestions", "group": "consultar", "priority": 12 },

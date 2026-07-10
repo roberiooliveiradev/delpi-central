@@ -187,6 +187,57 @@ def test_consolidated_interactivity_prioritizes_view_chart_chip_over_follow_up()
     assert "Ver em gráfico" in primary_labels
 
 
+def test_drawing_manual_review_chips_prioritized_in_consolidated_interactivity():
+    metadata = {
+        "drawingAnalysis": {
+            "productCode": "90261877",
+            "warnings": 1,
+            "errors": 0,
+            "criticalErrors": 0,
+        },
+        "drawingFollowUpSuggestions": [
+            {
+                "label": "Confirmar revisão manual",
+                "query": "confirmar revisão manual do item pendente no relatório do desenho 90261877",
+            },
+            {
+                "label": "Descartar ressalva",
+                "query": "descartar a ressalva pendente do relatório do desenho 90261877",
+            },
+            {"label": "Validar cotas", "query": "valide as cotas do desenho 90261877"},
+            {"label": "Gerar relatório", "query": "gere novamente o relatório do desenho 90261877"},
+        ],
+        "operationalRefinementFollowUpSuggestions": [
+            {"label": "Aumentar profundidade", "query": "aumente a profundidade da consulta anterior"},
+            {"label": "Comparar período", "query": "compare com o mês anterior"},
+            {"label": "Detalhar por filial", "query": "detalhe por filial"},
+        ],
+        "presentationFollowUpSuggestions": [
+            {"label": "Colocar na lousa", "query": "coloque na lousa"},
+        ],
+    }
+
+    ChatInteractivitySuggestionService.attach_to_assistant_metadata(
+        metadata,
+        workspace_context={"userActivatedAgent": True, "actionsEnabled": True},
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {"ok": True, "path": "/products/90261877/analyser"},
+            }
+        ],
+        intent_route={"intent": "drawing_analysis", "subIntent": "delpi_pdf"},
+    )
+
+    primary_labels = [
+        item["label"] for item in metadata["interactivity"]["suggestions"]
+    ]
+
+    assert "Confirmar revisão manual" in primary_labels
+    assert "Descartar ressalva" in primary_labels
+    assert "Aumentar profundidade" not in primary_labels
+
+
 def test_detect_presentation_type_respects_selected_text_over_embedded_chart():
     token = ChatPresentationInteractivityService._detect_presentation_type(
         [

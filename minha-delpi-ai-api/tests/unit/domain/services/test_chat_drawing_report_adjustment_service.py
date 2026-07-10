@@ -63,6 +63,12 @@ def test_intent_matches_90261877_adjustment_message():
     assert ChatDrawingReportAdjustmentIntentService.matches(message)
 
 
+def test_intent_matches_conferido_correction_phrase():
+    assert ChatDrawingReportAdjustmentIntentService.matches(
+        "conferido e esta correto",
+    )
+
+
 def test_adjustment_turn_updates_dimension_note_to_approved():
     message = (
         "foi revisado e o problema não é verdadeiro, gere um novo relatório"

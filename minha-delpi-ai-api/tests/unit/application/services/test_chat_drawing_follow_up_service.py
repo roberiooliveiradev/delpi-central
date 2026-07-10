@@ -63,6 +63,7 @@ def test_offers_manual_review_chips_when_warnings_present():
 
     assert "Confirmar revisão manual" in labels
     assert "Descartar ressalva" in labels
+    assert labels.index("Confirmar revisão manual") < labels.index("Gerar relatório")
 
 
 def test_offers_bom_reextract_chip_when_bom_issues_and_vision_refinement():
