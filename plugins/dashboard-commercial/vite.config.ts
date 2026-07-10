@@ -19,7 +19,7 @@ export default defineConfig({
       exposes: {
         "./App": "./src/bootstrap.tsx",
       },
-      shared: [...FEDERATION_SHARED_REACT],
+      shared: { ...FEDERATION_SHARED_REACT },
     }),
     react(),
   ],

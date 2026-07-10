@@ -43,7 +43,7 @@ Helper: `plugins/vite/federation.shared.ts`
 
 ```ts
 remotes: pluginUiRemote(),
-shared: ["react", "react-dom", "lucide-react"],
+shared: { ...FEDERATION_SHARED_REACT }, // singleton — ver federation.shared.ts
 ```
 
 ```ts

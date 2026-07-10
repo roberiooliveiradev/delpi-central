@@ -14,16 +14,23 @@ export const PLUGIN_UI_DEV_PORT = 5010;
 /** URL do remoteEntry em dev local (plugin-ui rodando com npm run dev). */
 export const PLUGIN_UI_DEV_REMOTE_ENTRY = `http://localhost:${PLUGIN_UI_DEV_PORT}/apps/plugin-ui/assets/remoteEntry.js`;
 
-export const FEDERATION_SHARED_REACT = ["react", "react-dom", "lucide-react"] as const;
+/** Singleton MF — evita React #321 entre portal, MFE e remote plugin-ui. */
+export const FEDERATION_SHARED_REACT = {
+  react: { singleton: true, requiredVersion: "^19.0.0" },
+  "react-dom": { singleton: true, requiredVersion: "^19.0.0" },
+  "lucide-react": { singleton: true },
+} as const;
 
 /** React Flow — singleton com o host para evitar hooks nulos (useRef / zustand). */
-export const FEDERATION_SHARED_XYFLOW = ["@xyflow/react"] as const;
+export const FEDERATION_SHARED_XYFLOW = {
+  "@xyflow/react": { singleton: true },
+} as const;
 
 /** Remote plugin-ui e MFEs com editor de diagrama (ex.: transformometro). */
-export const FEDERATION_SHARED_WITH_DIAGRAM = [
+export const FEDERATION_SHARED_WITH_DIAGRAM = {
   ...FEDERATION_SHARED_REACT,
   ...FEDERATION_SHARED_XYFLOW,
-] as const;
+} as const;
 
 /**
  * Resolve a URL do remote `@delpi/plugin-ui`.

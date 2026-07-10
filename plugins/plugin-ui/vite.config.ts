@@ -18,7 +18,7 @@ export default defineConfig({
         "./index": "./src/index.ts",
         "./styles": "./src/styles-entry.ts",
       },
-      shared: [...FEDERATION_SHARED_WITH_DIAGRAM],
+      shared: { ...FEDERATION_SHARED_WITH_DIAGRAM },
     }),
     react(),
   ],
