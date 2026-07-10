@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.3
 > **Data:** 2026-07-07
-> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **Backlog:** 4A.9 cleanup, 4C rich text, 4E animações; **4F** indicadores live api-delpi (§18 — parcial).
+> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **v1.3.1 (jul/2026):** 4A.9 cleanup ribbon legado. **Backlog:** 4C rich text, 4E animações; **4F** indicadores live api-delpi (§18 — parcial).
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente:** 4A.9 (unificar ribbon legado), 4C (rich text), 4E (animações/master), 4F completo (§18).
+**Ainda pendente:** 4C (rich text), 4E (animações/master), 4F completo (§18).
 
 ---
 
@@ -678,10 +678,9 @@ sequenceDiagram
 
 **Próximo backlog editor:**
 
-1. **4A.9** — unificar `ComunicadoEditorRibbon` legado / cleanup painéis mortos.
-2. **Rich text** (4C) — runs ou markdown controlado.
-3. **Animações / master slide** (4E).
-4. **Indicadores live api-delpi** (4F) — composição mista texto + KPI/gráfico (§18; parcial).
+1. **Rich text** (4C) — runs ou markdown controlado.
+2. **Animações / master slide** (4E).
+3. **Indicadores live api-delpi** (4F) — composição mista texto + KPI/gráfico (§18; parcial).
 
 ### Concluído v2 (jul/2026)
 
@@ -824,7 +823,7 @@ Apresentação TV / preview
 
 | Item | Situação | Ação |
 |---|---|---|
-| `ComunicadoEditorRibbon` | Legado; usado só no modal `ComunicadoComposerField` | **4A.9** — unificar com ribbons do deck ou deprecar modal |
+| `ComunicadoEditorRibbon` | ~~Legado~~ removido v1.3.1 — modal usa `ComunicadoEmbeddedEditorChrome` + `DeckElementSidePanel` | — |
 | `opacity`, `objectFit`, `linkTarget` | ✅ expostos na UI v1.3 | Manter paridade editor/TV |
 | Enrichment `version` | Sempre retorna `2` em alguns paths | Alinhar com `detectConfigVersion` (v3/v4) |
 | Texto em formas | Renderiza se estilo definido | Estender ribbon Fonte quando shape selecionada |
@@ -910,7 +909,7 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 | 4A.6 | Snap 5% + guias ao centro do palco | `comunicadoSnap.ts` | M | ✅ v1.3 |
 | 4A.7 | Alinhar/distribuir (2+ seleção) | `comunicadoLayoutAlign.ts` | M | ✅ v1.3 |
 | 4A.8 | Biblioteca de mídia da playlist | API + `MediaLibraryModal` | M | ✅ v1.3 |
-| 4A.9 | Unificar ribbon legado / remover painel morto | cleanup | S | ❌ backlog |
+| 4A.9 | Unificar ribbon legado / remover painel morto | cleanup | S | ✅ v1.3.1 |
 
 **Critérios de aceite 4A:**
 
@@ -996,8 +995,8 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 ```text
 Impacto UX × esforço (jul/2026, pós v1.3)
 
-  Concluído v1.3                  → 4A (exc. 4A.9), 4B, 4D
-  Próximo                         → 4A.9 cleanup ribbon legado
+  Concluído v1.3                  → 4A (incl. 4A.9), 4B, 4D
+  Próximo                         → 4C rich text + bullets
   Diferencial PowerPoint          → 4C rich text + bullets
   Diferencial DELPI (dados live)  → 4F completar §18 (parcial)
   Longo prazo                     → 4E animações, export PPTX

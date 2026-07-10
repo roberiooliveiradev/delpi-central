@@ -37,3 +37,8 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
 export function resolveDeckRibbonTabs(isCustomSlide: boolean): DeckRibbonTabMeta[] {
   return DECK_RIBBON_TABS.filter((tab) => !tab.customOnly || isCustomSlide);
 }
+
+/** Faixas Inserir + Formatar — modal embutido e preview rápido do compositor. */
+export function resolveEmbeddedComunicadoRibbonTabs(): DeckRibbonTabMeta[] {
+  return DECK_RIBBON_TABS.filter((tab) => tab.customOnly);
+}

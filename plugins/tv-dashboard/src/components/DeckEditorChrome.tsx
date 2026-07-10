@@ -2,8 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
-import { ComunicadoFormatRibbon } from "./ComunicadoFormatRibbon";
-import { ComunicadoInsertRibbon } from "./ComunicadoInsertRibbon";
+import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideDeckRibbon } from "./SlideDeckRibbon";
 import {
@@ -106,11 +105,8 @@ export function DeckEditorChrome({
         <div className="td-deck-chrome__ribbon">
           <DeckRibbonShell>
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
-            {activeTab === "insert" && isCustomSlide ? (
-              <ComunicadoInsertRibbon labels={adminLabels} />
-            ) : null}
-            {activeTab === "format" && isCustomSlide ? (
-              <ComunicadoFormatRibbon labels={adminLabels} />
+            {isCustomSlide && (activeTab === "insert" || activeTab === "format") ? (
+              <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}
           </DeckRibbonShell>
         </div>

@@ -1703,6 +1703,39 @@
   box-shadow: 0 4px 16px color-mix(in srgb, #000 4%, transparent);
 }
 
+.td-deck-chrome--embedded {
+  margin-bottom: 12px;
+  box-shadow: none;
+  z-index: 1;
+}
+
+.td-composer-embedded {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.td-composer-embedded__stage {
+  display: flex;
+  align-items: stretch;
+  min-height: 280px;
+  border: 1px solid var(--td-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--td-surface);
+}
+
+.td-composer-embedded__stage .td-deck-stage__editor {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+}
+
+.td-composer-embedded__stage .td-deck-side-panel--stage {
+  flex-shrink: 0;
+}
+
 .td-deck-chrome__head {
   display: flex;
   align-items: stretch;
@@ -1829,10 +1862,6 @@
 
 .td-deck-tabs__ribbon .td-deck-ribbon {
   border-bottom: 1px solid var(--td-border);
-}
-
-.td-deck-tabs--embedded {
-  margin-bottom: 12px;
 }
 
 .td-deck-tabs__nav {

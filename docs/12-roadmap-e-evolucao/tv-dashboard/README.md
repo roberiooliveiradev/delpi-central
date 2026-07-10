@@ -183,7 +183,7 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 
 | Fase | Foco | Status |
 |------|------|--------|
-| **4A** | Produtividade editor | ✅ exc. 4A.9 cleanup |
+| **4A** | Produtividade editor | ✅ completo (incl. 4A.9) |
 | **4B** | Templates, temas, visual | ✅ |
 | **4C** | Rich text, bullets, estilos nomeados | ❌ backlog |
 | **4D** | Layout avançado | ✅ |

@@ -78,8 +78,11 @@ export function reactResolveAliases(pluginDir: string) {
 /** Alias de source para Vitest/tsc (tipos e testes sem remote). */
 export function pluginUiTestAliases(pluginDir: string) {
   const uiRoot = path.resolve(pluginDir, "../plugin-ui/src");
-  return {
-    "@delpi/plugin-ui": path.join(uiRoot, "index.ts"),
-    "@delpi/plugin-ui/styles": path.join(uiRoot, "styles.css"),
-  };
+  const indexTs = path.join(uiRoot, "index.ts");
+  const stylesCss = path.join(uiRoot, "styles.css");
+  return [
+    { find: "@delpi/plugin-ui/index", replacement: indexTs },
+    { find: "@delpi/plugin-ui/styles", replacement: stylesCss },
+    { find: "@delpi/plugin-ui", replacement: indexTs },
+  ];
 }

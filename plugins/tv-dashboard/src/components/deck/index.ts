@@ -11,4 +11,8 @@ export { DeckRibbonLargeButton } from "./DeckRibbonLargeButton";
 export { DeckRibbonShell } from "./DeckRibbonShell";
 export { DeckRibbonTile } from "./DeckRibbonTile";
 export type { DeckRibbonTabId } from "./deckRibbonTabMeta";
-export { DECK_RIBBON_TABS, resolveDeckRibbonTabs } from "./deckRibbonTabMeta";
+export {
+  DECK_RIBBON_TABS,
+  resolveDeckRibbonTabs,
+  resolveEmbeddedComunicadoRibbonTabs,
+} from "./deckRibbonTabMeta";
