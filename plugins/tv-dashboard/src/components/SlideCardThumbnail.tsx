@@ -1,6 +1,6 @@
 import { Globe } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
-import { NativeSlideView } from "@delpi/tv-dashboard-presentation";
+import { COMUNICADO_EDITOR_FONT_SCALE, NativeSlideView } from "@delpi/tv-dashboard-presentation";
 
 import type { Slide } from "../api/tvDashboardApi";
 import type { PresentationPayload } from "../api/tvDashboardApi";
@@ -61,7 +61,7 @@ export function SlideCardThumbnail({ slide, playlistId, previewSlide }: Props) {
           transform: `scale(${scale})`,
         }}
       >
-        <NativeSlideView native={native} />
+        <NativeSlideView native={native} comunicadoFontScale={COMUNICADO_EDITOR_FONT_SCALE} />
       </div>
     </div>
   );

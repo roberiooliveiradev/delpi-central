@@ -707,7 +707,7 @@
 
 .td-composer__canvas-wrap {
   border: 1px solid var(--td-border);
-  border-radius: 14px;
+  border-radius: 0;
   padding: 10px;
   background: var(--td-stage-chrome);
 }
@@ -716,7 +716,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 10px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -2920,7 +2920,7 @@
   min-height: 0;
   min-width: 0;
   padding: 0;
-  border-radius: 16px;
+  border-radius: 0;
   border: 1px solid var(--td-border);
   background: var(--td-surface);
   box-shadow: 0 10px 32px color-mix(in srgb, #000 6%, transparent);

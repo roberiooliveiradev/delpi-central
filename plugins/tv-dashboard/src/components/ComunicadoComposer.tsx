@@ -1,4 +1,5 @@
 import {
+  COMUNICADO_EDITOR_FONT_SCALE,
   comunicadoBackgroundCssProperties,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
@@ -13,7 +14,6 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
-const FONT_SCALE = 0.35;
 const MARQUEE_THRESHOLD_PX = 4;
 
 const BLOCK_RESIZE_HANDLES: Array<{
@@ -215,7 +215,7 @@ export function ComunicadoComposerCanvas() {
               >
                 <ComunicadoEditorBlockView
                   block={block}
-                  fontScale={FONT_SCALE}
+                  fontScale={COMUNICADO_EDITOR_FONT_SCALE}
                   isSelected={isSelected}
                   isEditingText={editingTextId === block.id}
                   className={isSelected ? "td-composer__block--selected" : ""}

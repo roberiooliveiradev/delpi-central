@@ -39,6 +39,26 @@ describe("comunicadoHelpers", () => {
     expect(roundtrip.blocks).toEqual([]);
   });
 
+  it("mescla estilo padrão quando bloco vem com style vazio", () => {
+    const parsed = parseComunicadoConfig({
+      version: 2,
+      blocks: [
+        {
+          id: "h1",
+          type: "heading",
+          content: "Título",
+          frame: { x: 5, y: 12, w: 90, h: 18 },
+          style: {},
+        },
+      ],
+    });
+    const heading = parsed.blocks?.[0];
+    expect(heading?.type).toBe("heading");
+    if (heading?.type === "heading") {
+      expect(heading.style?.fontSize).toBe(56);
+    }
+  });
+
   it("converte legado headline/subtitle em blocos", () => {
     const parsed = parseComunicadoConfig({ headline: "Aviso", subtitle: "Detalhe" });
     expect(parsed.blocks?.length).toBe(2);

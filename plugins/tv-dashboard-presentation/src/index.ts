@@ -116,6 +116,7 @@ export {
   buildTextDecoration,
   clampFontSize,
   clampFrame,
+  COMUNICADO_EDITOR_FONT_SCALE,
   comunicadoTextInnerStyle,
   createBlock,
   createDataBlock,

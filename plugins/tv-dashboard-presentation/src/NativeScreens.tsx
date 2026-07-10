@@ -258,11 +258,13 @@ export function StrategicIndicatorsHeroScreen({
 
 export function CustomMessageScreen({
   data,
+  fontScale = 1,
 }: {
   data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
+  fontScale?: number;
 }) {
   if (hasRichComunicado(data)) {
-    return <RichComunicadoScreen data={data} />;
+    return <RichComunicadoScreen data={data} fontScale={fontScale} />;
   }
   return (
     <div className="tdp-native-screen tdp-message">
@@ -276,8 +278,10 @@ export function CustomMessageScreen({
 
 function RichComunicadoScreen({
   data,
+  fontScale = 1,
 }: {
   data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
+  fontScale?: number;
 }) {
   useComunicadoGoogleFonts({ blocks: data.blocks });
 
@@ -292,14 +296,21 @@ function RichComunicadoScreen({
     <div className="tdp-native-screen tdp-comunicado" style={bgStyle}>
       <div className="tdp-comunicado__stage">
         {blocks.map((block) => (
-          <ComunicadoBlockView key={block.id} block={block} />
+          <ComunicadoBlockView key={block.id} block={block} fontScale={fontScale} />
         ))}
       </div>
     </div>
   );
 }
 
-export function NativeSlideView({ native }: { native: NativeSlidePayload }) {
+export function NativeSlideView({
+  native,
+  comunicadoFontScale,
+}: {
+  native: NativeSlidePayload;
+  /** Escala tipográfica do comunicado (miniatura / preview do editor). */
+  comunicadoFontScale?: number;
+}) {
   const key = native.screenKey;
   const data = native.data as Record<string, unknown>;
   if (key === "production_oee_overview") {
@@ -367,6 +378,7 @@ export function NativeSlideView({ native }: { native: NativeSlidePayload }) {
             background?: ComunicadoBackground;
           }
         }
+        fontScale={comunicadoFontScale}
       />
     );
   }

@@ -58,6 +58,9 @@ export function newBlockId(): string {
 const DEFAULT_BACKGROUND: ComunicadoBackground = { type: "color", value: "#ffffff" };
 const DEFAULT_HEADLINE = "Título";
 
+/** Escala tipográfica do palco no editor (miniatura e preview devem usar o mesmo valor). */
+export const COMUNICADO_EDITOR_FONT_SCALE = 0.35;
+
 const DATA_BLOCK_TYPES = new Set(["data_kpi", "data_chart", "data_table", "data_metric"]);
 
 export function isDataBlockType(type: string): type is ComunicadoDataBlockType {
@@ -451,7 +454,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   const type = (block.type as ComunicadoBlock["type"]) ?? "text";
   const frame = normalizeFrame(block.frame, type);
   const shape = typeof block.shape === "string" ? (block.shape as ComunicadoShapeKind) : undefined;
-  const style = (block.style as ComunicadoBlock["style"]) ?? defaultStyle(type, shape);
+  const rawStyle = (block.style as ComunicadoBlock["style"]) ?? {};
+  const style = { ...defaultStyle(type, shape), ...rawStyle };
   const id = typeof block.id === "string" ? block.id : newBlockId();
   const groupId = readGroupId(block);
   const links = readLinkFields(block);
