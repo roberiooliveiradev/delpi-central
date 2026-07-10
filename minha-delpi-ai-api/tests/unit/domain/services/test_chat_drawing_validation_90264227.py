@@ -38,6 +38,53 @@ def _pdf_extract_ocr() -> dict:
     }
 
 
+def test_90264227_no_false_bom_extra_for_wire_gauge_ocr_row():
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=_payload_90264227(),
+        pdf_extract={
+            "productCode": "90264227",
+            "revision": "21",
+            "legible": True,
+            "componentCodes": [
+                "10081867",
+                "10091640",
+                "10130091",
+                "10140027",
+                "50215425",
+                "50215426",
+                "50215433",
+                "50215434",
+                "10440133",
+                "10440134",
+            ],
+            "intermediateCodes": ["50215425", "50215426", "50215433", "50215434"],
+            "bomRows": [
+                {
+                    "code": "10061667",
+                    "quantity": "2",
+                    "description": "20ANG OURO ROHS (FLEXTRONIGS)",
+                    "quantitySource": "refined_column",
+                    "quantityTrusted": True,
+                }
+            ],
+            "validationScopes": {
+                "bom": {
+                    "available": True,
+                    "text": "20ANG OURO ROHS",
+                    "sourceKey": "bom_region",
+                }
+            },
+        },
+        product_code="90264227",
+    )
+
+    assert not any(
+        item.get("item") == "Componente extra no PDF"
+        and "10061667" in str(item.get("pdfEvidence"))
+        for item in items
+    )
+
+
 def test_90264227_no_false_bom_extra_for_child_cables():
     items = ChatDrawingStructureValidationService.build_check_items(
         root=_payload_90264227(),

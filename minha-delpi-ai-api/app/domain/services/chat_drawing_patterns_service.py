@@ -216,6 +216,14 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp_list("bomClientReferenceNoise")
 
     @classmethod
+    def bom_wire_gauge_row_noise_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("bomWireGaugeRowNoise")
+
+    @classmethod
+    def bom_wire_gauge_inline_noise_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("bomWireGaugeInlineNoise")
+
+    @classmethod
     def bom_stamp_layout_without_table_patterns(cls) -> tuple[re.Pattern[str], ...]:
         return cls.compile_stamp_list("bomStampLayoutWithoutTable")
 

@@ -11,6 +11,9 @@ def test_drawing_stamp_patterns_compile():
     assert ChatDrawingPatternsService.intermediate_code().search("50215434")
     assert ChatDrawingPatternsService.revision().search("REV.02")
     assert ChatDrawingPatternsService.bom_section().search("LISTA DE MATERIAIS")
+    assert ChatDrawingPatternsService.bom_wire_gauge_row_noise_patterns()[0].search(
+        "20ANG OURO ROHS"
+    )
 
 
 def test_drawing_validation_rules_from_json():

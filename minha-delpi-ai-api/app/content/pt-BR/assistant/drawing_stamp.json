@@ -357,6 +357,17 @@
       "Z-\\d+",
       "WEG\\s+INDUSTRIAS"
     ],
+    "bomWireGaugeRowNoise": [
+      "^\\s*\\d{1,2}\\s*ANG\\b",
+      "^\\s*\\d{1,2}\\s*AWG\\b",
+      "^\\s*\\d{1,2}\\s*-\\s*\\d{1,2}\\s*AWG\\b",
+      "^\\s*\\d{1,2}-\\d{1,2}AWG\\b",
+      "^\\s*\\d{1,2}\\s*-\\s*\\d{1,2}\\s*ANG\\b"
+    ],
+    "bomWireGaugeInlineNoise": [
+      "\\b\\d{1,2}-\\d{1,2}ANG\\b",
+      "\\b\\d{1,2}\\s*-\\s*\\d{1,2}\\s*ANG\\b"
+    ],
     "clientReferenceCodeCapture": [
       "(\\d{8})\\s+DC\\s*:?\\s*Z",
       "(\\d{8})\\s+DC:Z-"

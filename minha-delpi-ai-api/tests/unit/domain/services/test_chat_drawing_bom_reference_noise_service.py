@@ -9,6 +9,74 @@ from app.domain.services.chat_drawing_total_length_reference_service import (
 configure_domain_infrastructure_ports()
 
 
+def test_wire_gauge_row_detected_as_reference_noise():
+    row = {
+        "code": "10061667",
+        "quantity": "2",
+        "description": "20ANG OURO ROHS (FLEXTRONIGS)",
+        "quantitySource": "refined_column",
+        "quantityTrusted": True,
+    }
+
+    assert ChatDrawingBomReferenceNoiseService.is_client_reference_row(row)
+
+
+def test_collect_reference_noise_codes_filters_wire_gauge_false_code():
+    pdf_extract = {
+        "productCode": "90264227",
+        "bomRows": [
+            {
+                "code": "10061667",
+                "quantity": "2",
+                "description": "20ANG OURO ROHS (FLEXTRONIGS)",
+                "quantitySource": "refined_column",
+                "quantityTrusted": True,
+            },
+            {
+                "code": "50215425",
+                "quantity": "36",
+                "description": "CT26VERM-00036/04/06-0000-0000",
+            },
+        ],
+        "componentCodes": ["10061667", "50215425"],
+    }
+
+    codes = ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(pdf_extract)
+
+    assert "10061667" in codes
+    assert "50215425" not in codes
+
+
+def test_collect_reference_noise_codes_filters_wire_gauge_inline_from_bom_haystack():
+    pdf_extract = {
+        "productCode": "90264227",
+        "componentCodes": ["10061667", "50215425"],
+        "sourceMetadata": {
+            "regionTexts": {
+                "bom": (
+                    "[6 | 2 | 10061667 [TERN PIGO-LOGK 22-20ANG OURO ROHS (FLEXTRONIGS)\n"
+                    "1 50215425 CT26VERM-00036/04/06-0000-0000"
+                )
+            }
+        },
+    }
+
+    codes = ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(pdf_extract)
+
+    assert "10061667" in codes
+    assert "50215425" not in codes
+
+
+def test_valid_cable_row_with_awg_in_description_is_not_noise():
+    row = {
+        "code": "10020033",
+        "quantity": "1",
+        "description": "CABO PVC 105°C 22AWG VM 600V NBR 9117",
+    }
+
+    assert not ChatDrawingBomReferenceNoiseService.is_client_reference_row(row)
+
+
 def test_client_reference_row_detected_from_dc_z_pattern():
     row = {
         "code": "10056570",

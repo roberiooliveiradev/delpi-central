@@ -51,6 +51,8 @@ class ChatDrawingBomReferenceNoiseService:
         ):
             codes.add(code)
 
+        codes |= cls._collect_wire_gauge_false_codes_from_bom_haystack(pdf_extract)
+
         return codes
 
     @classmethod
@@ -65,6 +67,9 @@ class ChatDrawingBomReferenceNoiseService:
         if not blob.strip():
             return False
 
+        if cls._is_wire_gauge_false_code_row(row):
+            return True
+
         for pattern in ChatDrawingPatternsService.bom_client_reference_noise_patterns():
             if pattern.search(blob):
                 return True
@@ -75,6 +80,65 @@ class ChatDrawingBomReferenceNoiseService:
             return True
 
         return False
+
+    @classmethod
+    def _is_wire_gauge_false_code_row(cls, row: dict[str, Any]) -> bool:
+        """Linha BOM cuja descrição começa com bitola (AWG/ANG) — OCR gera falso 10xxxxxx."""
+        description = str(row.get("description") or "").strip().upper()
+
+        if not description:
+            return False
+
+        for pattern in ChatDrawingPatternsService.bom_wire_gauge_row_noise_patterns():
+            if pattern.search(description):
+                return True
+
+        return False
+
+    @classmethod
+    def _collect_wire_gauge_false_codes_from_bom_haystack(cls, pdf_extract: dict) -> set[str]:
+        """Códigos 10xxxxxx em linhas BOM OCR com bitola inline (ex.: 22-20ANG)."""
+        source_metadata = pdf_extract.get("sourceMetadata")
+
+        if not isinstance(source_metadata, dict):
+            return set()
+
+        region_texts = source_metadata.get("regionTexts")
+
+        if not isinstance(region_texts, dict):
+            return set()
+
+        bom_text = str(region_texts.get("bom") or "").strip()
+
+        if not bom_text:
+            return set()
+
+        inline_patterns = ChatDrawingPatternsService.bom_wire_gauge_inline_noise_patterns()
+        component_pattern = ChatDrawingPatternsService.component_code()
+        codes: set[str] = set()
+
+        for line in bom_text.splitlines():
+            upper = str(line or "").strip().upper()
+
+            if not upper or not cls._line_looks_like_ocr_table_noise(upper):
+                continue
+
+            if not any(pattern.search(upper) for pattern in inline_patterns):
+                continue
+
+            for match in component_pattern.finditer(line):
+                code = ChatProductQueryIntentService.normalize_product_code(
+                    str(match.group(1) or "")
+                )
+
+                if code:
+                    codes.add(code)
+
+        return codes
+
+    @classmethod
+    def _line_looks_like_ocr_table_noise(cls, line: str) -> bool:
+        return "|" in line or line.lstrip().startswith("[")
 
     @classmethod
     def _description_is_revision_only(cls, description: str) -> bool:
