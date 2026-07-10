@@ -4,11 +4,13 @@ import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
 import { defineConfig } from "vite";
 
-import { FEDERATION_SHARED_REACT, PLUGIN_UI_DEV_PORT } from "../vite/federation.shared";
+import {
+  FEDERATION_SHARED_WITH_DIAGRAM,
+  PLUGIN_UI_DEV_PORT,
+} from "../vite/federation.shared";
 
 export default defineConfig({
   plugins: [
-    react(),
     federation({
       name: "plugin_ui",
       filename: "remoteEntry.js",
@@ -16,15 +18,17 @@ export default defineConfig({
         "./index": "./src/index.ts",
         "./styles": "./src/styles-entry.ts",
       },
-      shared: [...FEDERATION_SHARED_REACT],
+      shared: [...FEDERATION_SHARED_WITH_DIAGRAM],
     }),
+    react(),
   ],
   resolve: {
     alias: {
       react: path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "@xyflow/react": path.resolve(__dirname, "node_modules/@xyflow/react"),
     },
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom", "@xyflow/react"],
   },
   base: "/apps/plugin-ui/",
   server: {

@@ -16,6 +16,15 @@ export const PLUGIN_UI_DEV_REMOTE_ENTRY = `http://localhost:${PLUGIN_UI_DEV_PORT
 
 export const FEDERATION_SHARED_REACT = ["react", "react-dom", "lucide-react"] as const;
 
+/** React Flow — singleton com o host para evitar hooks nulos (useRef / zustand). */
+export const FEDERATION_SHARED_XYFLOW = ["@xyflow/react"] as const;
+
+/** Remote plugin-ui e MFEs com editor de diagrama (ex.: transformometro). */
+export const FEDERATION_SHARED_WITH_DIAGRAM = [
+  ...FEDERATION_SHARED_REACT,
+  ...FEDERATION_SHARED_XYFLOW,
+] as const;
+
 /**
  * Resolve a URL do remote `@delpi/plugin-ui`.
  *
