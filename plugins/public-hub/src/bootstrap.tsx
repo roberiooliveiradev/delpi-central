@@ -1,3 +1,4 @@
+import "../../vite/federationShareScopeInit";
 import ReactDOM from "react-dom/client";
 import { PublicErrorBoundary } from "./shell/PublicErrorBoundary";
 import { PublicShell } from "./shell/PublicShell";

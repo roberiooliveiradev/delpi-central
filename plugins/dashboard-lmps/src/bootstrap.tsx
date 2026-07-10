@@ -1,3 +1,4 @@
+import "../../vite/federationShareScopeInit";
 import ReactDOM from "react-dom/client";
 import App, { type AppProps } from "./App";
 import "./index.css";
