@@ -8,10 +8,31 @@ from app.domain.services.chat_drawing_validation_orchestration_service import (
 
 configure_domain_infrastructure_ports()
 
+_STAMP_TEXT = (
+    "ES EXECUTADO VERIFICADO | LIBERADO | DATA\n"
+    "| 20/08/24 00 |\n"
+    "90264226 REV.00\n"
+)
 
-def test_stamp_trusted_when_title_block_present():
+
+def test_stamp_trusted_when_stamp_markers_present():
     assert ChatDrawingRevisionCrossCheckService.stamp_trusted(
-        {"titleBlock": {"revision": "02"}}
+        {
+            "productCode": "90264226",
+            "titleBlock": {"rawText": _STAMP_TEXT, "fields": {"code": "90264226"}},
+        }
+    )
+
+
+def test_stamp_untrusted_when_title_block_is_bom_table_noise():
+    assert not ChatDrawingRevisionCrossCheckService.stamp_trusted(
+        {
+            "productCode": "90263396",
+            "titleBlock": {
+                "rawText": "A3 | 1 | 10380013 | CABO | A4 | 1 | 10080063 | TERM",
+                "fields": {"code": "90263396", "rev": "00"},
+            },
+        }
     )
 
 
@@ -61,7 +82,11 @@ def test_revision_mismatch_critical_with_title_block():
         api_current_revision="002",
         api_revision_date="",
         pdf_extract={
-            "titleBlock": {"revision": "00", "productCode": "90264226"},
+            "productCode": "90264226",
+            "revision": "00",
+            "internalRevision": "00",
+            "legible": True,
+            "titleBlock": {"rawText": _STAMP_TEXT, "fields": {"code": "90264226"}},
         },
     )
 

@@ -351,6 +351,21 @@ class ChatDrawingBomComparisonService:
             api_codes=set(structure_all_codes),
         )
         false_row_codes |= intermediate_false_rows
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            row_code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if (
+                row_code
+                and ChatDrawingPatternsService.is_intermediate_family(row_code)
+                and ChatDrawingBomReferenceNoiseService.is_false_intermediate_bom_row(row)
+            ):
+                false_row_codes.add(row_code)
+
         pdf_intermediate -= {
             code
             for code in false_row_codes
@@ -485,8 +500,15 @@ class ChatDrawingBomComparisonService:
 
             description = str(row.get("description") or "").strip()
 
-            if description:
-                return True
+            if not description:
+                return False
+
+            if ChatDrawingBomReferenceNoiseService.is_false_intermediate_bom_row(row):
+                return False
+
+            return ChatDrawingBomReferenceNoiseService._intermediate_description_has_cable_evidence(
+                description
+            )
 
         return False
 

@@ -170,3 +170,23 @@ def test_total_length_uses_pi_quantity_with_length_unit():
     assert reference is not None
     assert reference.length_mm == 2.0
     assert reference.unit_label == "MI"
+
+
+def test_false_intermediate_bom_row_termoencolhivel_noise():
+    row = {
+        "code": "50250279",
+        "description": "LUVATERMOENCOLHVEL =",
+        "quantitySource": "column",
+    }
+
+    assert ChatDrawingBomReferenceNoiseService.is_false_intermediate_bom_row(row)
+    assert ChatDrawingBomReferenceNoiseService.is_client_reference_row(row)
+
+
+def test_intermediate_bom_row_with_date_path_is_not_false():
+    row = {
+        "code": "50222736",
+        "description": "/10/04-0000-0600",
+    }
+
+    assert not ChatDrawingBomReferenceNoiseService.is_false_intermediate_bom_row(row)

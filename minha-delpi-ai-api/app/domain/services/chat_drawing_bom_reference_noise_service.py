@@ -70,6 +70,9 @@ class ChatDrawingBomReferenceNoiseService:
         if cls._is_wire_gauge_false_code_row(row):
             return True
 
+        if cls.is_false_intermediate_bom_row(row):
+            return True
+
         for pattern in ChatDrawingPatternsService.bom_client_reference_noise_patterns():
             if pattern.search(blob):
                 return True
@@ -80,6 +83,61 @@ class ChatDrawingBomReferenceNoiseService:
             return True
 
         return False
+
+    @classmethod
+    def is_false_intermediate_bom_row(cls, row: dict[str, Any]) -> bool:
+        """50xx com descrição de consumível (termoencolhível) ou sem assinatura CB/CT."""
+        code = ChatProductQueryIntentService.normalize_product_code(
+            str(row.get("code") or "")
+        )
+
+        if not code or not ChatDrawingPatternsService.is_intermediate_family(code):
+            return False
+
+        description = str(row.get("description") or "").strip()
+
+        if not description:
+            return True
+
+        if cls._intermediate_description_has_cable_evidence(description):
+            return False
+
+        folded = description.upper().replace(" ", "")
+
+        for marker in cls._intermediate_consumable_noise_markers():
+            if marker in folded:
+                return True
+
+        return False
+
+    @classmethod
+    def _intermediate_description_has_cable_evidence(cls, description: str) -> bool:
+        if ChatDrawingPatternsService.intermediate_segment().search(description):
+            return True
+
+        return bool(
+            ChatDrawingPatternsService.compile_validation("intermediateDatePath").search(
+                description
+            )
+        )
+
+    @classmethod
+    def _intermediate_consumable_noise_markers(cls) -> tuple[str, ...]:
+        node = ChatDrawingPatternsService.validation_rule("intermediateBomEvidence")
+
+        if not isinstance(node, dict):
+            return ()
+
+        markers = node.get("consumableDescriptionNoise")
+
+        if not isinstance(markers, list):
+            return ()
+
+        return tuple(
+            str(marker).strip().upper().replace(" ", "")
+            for marker in markers
+            if str(marker).strip()
+        )
 
     @classmethod
     def _is_wire_gauge_false_code_row(cls, row: dict[str, Any]) -> bool:

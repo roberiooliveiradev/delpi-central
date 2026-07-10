@@ -520,7 +520,17 @@
       "lengthConsumableDescriptionMarkers": ["TUBO", "TERMOENCOLHIVEL"]
     },
     "revisionCrossCheck": {
-      "pendingWhenTitleBlockMissing": true
+      "pendingWhenTitleBlockMissing": true,
+      "minStampMarkerHits": 2,
+      "bomTableNoiseMinPipes": 5
+    },
+    "intermediateBomEvidence": {
+      "consumableDescriptionNoise": [
+        "TERMOENCOLH",
+        "LUVATERMO",
+        "HEAT SHRINK",
+        "ENCOLHIVEL"
+      ]
     }
   },
   "validationLayers": {
@@ -575,7 +585,8 @@
   },
   "patterns": {
     "intermediateColorSignature": "^CB\\d{2}([A-Z]{4})",
-    "productDescriptionLengthMm": "(\\d{1,4})\\s*MM\\b"
+    "productDescriptionLengthMm": "(\\d{1,4})\\s*MM\\b",
+    "intermediateDatePath": "/\\d{2}/\\d{2}-\\d{4}"
   },
   "statusPresentation": {
     "ok": { "label": "OK", "symbol": "✅" },
