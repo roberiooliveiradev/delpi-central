@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
 
+import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
+
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
@@ -71,6 +73,12 @@ export function DeckEditorChrome({
   const tabs = resolveDeckRibbonTabs(isCustomSlide);
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
 
+  useComunicadoRibbonTabSync((tab) => {
+    if (tab === "insert" || tab === "format" || tab === "view") {
+      setActiveTab(tab);
+    }
+  });
+
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
       setActiveTab("home");
@@ -117,15 +125,24 @@ export function DeckEditorChrome({
       ) : null}
 
       {isSettingsTab(activeTab) ? (
-        <>
+        <div
+          className={[
+            "td-deck-chrome__panel",
+            "td-deck-chrome__panel--compact",
+            activeTab === "slide" && isCustomSlide ? "td-deck-chrome__panel--slide-unified" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          role="tabpanel"
+        >
           {activeTab === "slide" && isCustomSlide ? (
-            <div className="td-deck-chrome__ribbon td-deck-chrome__ribbon--settings">
-              <DeckRibbonShell label="Configurações da tela">
+            <>
+              <DeckRibbonShell label="Fundo da tela" embedded>
                 <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
               </DeckRibbonShell>
-            </div>
+              <div className="td-deck-chrome__slide-strip-sep" aria-hidden="true" />
+            </>
           ) : null}
-          <div className="td-deck-chrome__panel td-deck-chrome__panel--compact" role="tabpanel">
           <DeckSettingsPanel
             activeTab={activeTab}
             playlist={playlist}
@@ -136,8 +153,7 @@ export function DeckEditorChrome({
             onSavePlaylistSettings={onSavePlaylistSettings}
             onSaveSlide={onSaveSlide}
           />
-          </div>
-        </>
+        </div>
       ) : null}
     </section>
   );
