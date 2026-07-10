@@ -198,19 +198,19 @@ class ChatDrawingValidationPresentationService:
         )
 
     @classmethod
-    def format_code(cls, value: Any) -> str:
+    def format_code(cls, value: Any, *, markdown: bool = True) -> str:
         token = str(value or "").strip()
 
         if not token or token == "—":
             return token
 
         if _CODE_TOKEN.match(token):
-            return f"`{token}`"
+            return f"`{token}`" if markdown else token
 
         return token
 
     @classmethod
-    def format_code_list(cls, value: Any) -> str:
+    def format_code_list(cls, value: Any, *, markdown: bool = True) -> str:
         raw = str(value or "").strip()
 
         if not raw or raw == "—":
@@ -226,7 +226,7 @@ class ChatDrawingValidationPresentationService:
         if not parts:
             return raw
 
-        return delimiter.join(cls.format_code(part) for part in parts)
+        return delimiter.join(cls.format_code(part, markdown=markdown) for part in parts)
 
     @classmethod
     def format_evidence_cell(cls, value: Any) -> str:
@@ -917,7 +917,7 @@ class ChatDrawingValidationPresentationService:
                 rows=[
                     {
                         "field": str(pdf_fields.get("code", "Código")),
-                        "value": cls.format_code(pdf_code) if pdf_code else dash,
+                        "value": cls.format_code(pdf_code, markdown=False) if pdf_code else dash,
                     },
                     {
                         "field": str(pdf_fields.get("revision", "Revisão (PDF)")),
@@ -941,7 +941,8 @@ class ChatDrawingValidationPresentationService:
                     {
                         "field": str(api_fields.get("code", "Código")),
                         "value": cls.format_code(
-                            product.get("code") or analysis.get("productCode") or dash
+                            product.get("code") or analysis.get("productCode") or dash,
+                            markdown=False,
                         ),
                     },
                     {
@@ -1147,7 +1148,7 @@ class ChatDrawingValidationPresentationService:
 
                 rows.append(
                     {
-                        "code": cls.format_code(row.get("code") or dash),
+                        "code": cls.format_code(row.get("code") or dash, markdown=False),
                         "description": str(row.get("description") or dash),
                         "quantity": str(
                             row.get("quantity") if row.get("quantity") is not None else dash
@@ -1198,7 +1199,8 @@ class ChatDrawingValidationPresentationService:
             rows.append(
                 {
                     "product": cls.format_code(
-                        row.get("product_code") or row.get("product") or dash
+                        row.get("product_code") or row.get("product") or dash,
+                        markdown=False,
                     ),
                     "level": str(
                         row.get("bom_level")
@@ -1206,7 +1208,8 @@ class ChatDrawingValidationPresentationService:
                         else row.get("level") or dash
                     ),
                     "operation": cls.format_code(
-                        row.get("operation_code") or row.get("operation") or dash
+                        row.get("operation_code") or row.get("operation") or dash,
+                        markdown=False,
                     ),
                     "center": str(
                         row.get("work_center")
@@ -1247,10 +1250,10 @@ class ChatDrawingValidationPresentationService:
             for detail in detail_rows:
                 rows.append(
                     {
-                        "product": cls.format_code(detail.get("product") or dash),
+                        "product": cls.format_code(detail.get("product") or dash, markdown=False),
                         "level": str(detail.get("level") or dash),
                         "section": str(detail.get("section") or dash),
-                        "operation": cls.format_code(detail.get("operation") or dash),
+                        "operation": cls.format_code(detail.get("operation") or dash, markdown=False),
                         "test": str(detail.get("test") or dash),
                         "lab": str(detail.get("lab") or dash),
                         "nominal": str(detail.get("nominal") or dash),

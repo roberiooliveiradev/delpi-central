@@ -131,6 +131,31 @@ function buildSummaryHtml(lines: DelpiDocumentSummaryLine[]): string {
   `;
 }
 
+const CODE_COLUMN_KEYS = new Set([
+  "code",
+  "product",
+  "operation",
+  "test",
+  "center",
+  "work_center",
+]);
+
+function sanitizeExportCellValue(raw: string, columnKey: string): string {
+  const text = String(raw ?? "—");
+
+  if (!CODE_COLUMN_KEYS.has(columnKey)) {
+    return text;
+  }
+
+  const trimmed = text.trim();
+
+  if (trimmed.startsWith("`") && trimmed.endsWith("`") && trimmed.length > 2) {
+    return trimmed.slice(1, -1);
+  }
+
+  return text;
+}
+
 export function buildDelpiDocumentTableSection(table: DelpiDocumentTable): string {
   const columns = table.columns ?? [];
   const rows = table.rows ?? [];
@@ -156,7 +181,7 @@ export function buildDelpiDocumentTableSection(table: DelpiDocumentTable): strin
     .map((row) => {
       const cells = columns
         .map((column, index) => {
-          const raw = String(row[column.key] ?? "—");
+          const raw = sanitizeExportCellValue(String(row[column.key] ?? "—"), column.key);
           const layout = columnLayouts[index];
           const classes = [layout?.className].filter(Boolean);
 

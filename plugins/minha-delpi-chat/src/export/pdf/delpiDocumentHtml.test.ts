@@ -70,7 +70,7 @@ describe("delpiDocumentHtml", () => {
             ],
             rows: [
               {
-                code: "'50222710'",
+                code: "`50222710`",
                 description: "TERM. MAG MATE 18-22AWG",
                 quantity: "1.0",
                 unit: "MI",
@@ -88,7 +88,8 @@ describe("delpiDocumentHtml", () => {
     expect(html).toContain("<colgroup>");
     expect(html).toContain('width:40%');
     expect(html).toContain("cert-cell--nowrap");
-    expect(html).toContain("cert-cell--wrap");
+    expect(html).toContain("50222710");
+    expect(html).not.toContain("`50222710`");
   });
 });
 

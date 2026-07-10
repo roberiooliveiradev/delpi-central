@@ -33,7 +33,7 @@ def test_export_guide_rows_without_legacy_analyser_presenter():
     rows = ChatDrawingValidationPresentationService._export_guide_rows(root)
 
     assert len(rows) == 1
-    assert rows[0]["product"] == "`90260140`"
+    assert rows[0]["product"] == "90260140"
     assert rows[0]["operation"] == "01"
     assert rows[0]["center"] == "CT-19"
 
@@ -86,8 +86,19 @@ def test_expand_bom_extra_into_per_code_rows():
 
 def test_format_code_wraps_product_codes():
     assert ChatDrawingValidationPresentationService.format_code("90264227") == "`90264227`"
+    assert (
+        ChatDrawingValidationPresentationService.format_code("90264227", markdown=False)
+        == "90264227"
+    )
     assert ChatDrawingValidationPresentationService.format_code_list("10140027, 10440133") == (
         "`10140027`, `10440133`"
+    )
+    assert (
+        ChatDrawingValidationPresentationService.format_code_list(
+            "10140027, 10440133",
+            markdown=False,
+        )
+        == "10140027, 10440133"
     )
 
 
@@ -158,7 +169,7 @@ def test_export_inspection_rows_measurable_textual_contract():
     rows = ChatDrawingValidationPresentationService._export_inspection_rows(root)
 
     assert len(rows) == 2
-    assert rows[0]["product"] == "`90261647`"
+    assert rows[0]["product"] == "90261647"
     assert rows[0]["section"] == "Dimensional"
     assert rows[0]["test"] == "01"
     assert rows[0]["nominal"] == "290"
