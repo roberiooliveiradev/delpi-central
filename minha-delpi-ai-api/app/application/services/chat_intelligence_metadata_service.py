@@ -104,6 +104,15 @@ class ChatIntelligenceMetadataService:
         if isinstance(drawing_export, dict) and drawing_export.get("markdown"):
             metadata["drawingAnalysisExport"] = drawing_export
 
+        from app.domain.services.chat_drawing_validation_package_service import (
+            ChatDrawingValidationPackageService,
+        )
+
+        package = tool_context.get(ChatDrawingValidationPackageService.PACKAGE_KEY)
+
+        if isinstance(package, dict):
+            ChatDrawingValidationPackageService.attach_to_metadata(metadata, package)
+
         document_vision = tool_context.get("documentVision")
 
         if isinstance(document_vision, dict) and document_vision:

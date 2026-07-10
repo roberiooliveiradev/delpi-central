@@ -130,7 +130,11 @@ class ChatToolContextAuxiliaryService:
                     report_markdown=report_markdown,
                 )
 
-                return {
+                from app.domain.services.chat_drawing_validation_package_service import (
+                    ChatDrawingValidationPackageService,
+                )
+
+                payload = {
                     "directAnswer": ChatDrawingValidationOrchestrationService.wrap_direct_answer(
                         str(direct_answer or ""),
                         package=package,
@@ -138,6 +142,8 @@ class ChatToolContextAuxiliaryService:
                     "drawingAnalysis": package.get("drawingAnalysis"),
                     "drawingAnalysisExport": export_payload,
                 }
+                ChatDrawingValidationPackageService.attach_to_payload(payload, package)
+                return payload
 
             return None
 

@@ -44,6 +44,16 @@ class ChatDrawingFollowUpService:
         if isinstance(export, dict) and export.get("markdown"):
             metadata["drawingAnalysisExport"] = export
 
+        if isinstance(tool_context, dict):
+            from app.domain.services.chat_drawing_validation_package_service import (
+                ChatDrawingValidationPackageService,
+            )
+
+            package = tool_context.get(ChatDrawingValidationPackageService.PACKAGE_KEY)
+
+            if isinstance(package, dict):
+                ChatDrawingValidationPackageService.attach_to_metadata(metadata, package)
+
         if isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode"):
             metadata["drawingAnalysisMode"] = True
 

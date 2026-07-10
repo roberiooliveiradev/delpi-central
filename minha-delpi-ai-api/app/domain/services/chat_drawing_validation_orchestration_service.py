@@ -943,12 +943,24 @@ class ChatDrawingValidationOrchestrationService:
         cls,
         analysis: dict[str, Any],
         overrides: list[dict[str, Any]],
+        *,
+        base_package: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         from app.domain.services.chat_drawing_report_adjustment_service import (
             ChatDrawingReportAdjustmentService,
         )
+        from app.domain.services.chat_drawing_validation_package_service import (
+            ChatDrawingValidationPackageService,
+        )
 
         updated = ChatDrawingReportAdjustmentService.apply_overrides(analysis, overrides)
+
+        if isinstance(base_package, dict) and base_package.get("drawingAnalysis"):
+            return ChatDrawingValidationPackageService.merge_with_analysis(
+                base_package,
+                updated,
+            )
+
         return {"drawingAnalysis": updated}
 
     @classmethod

@@ -22,6 +22,9 @@ from app.domain.services.chat_drawing_report_adjustment_target_service import (
 from app.domain.services.chat_drawing_validation_orchestration_service import (
     ChatDrawingValidationOrchestrationService,
 )
+from app.domain.services.chat_drawing_validation_package_service import (
+    ChatDrawingValidationPackageService,
+)
 
 
 class ChatDrawingReportAdjustmentTurnService:
@@ -111,9 +114,13 @@ class ChatDrawingReportAdjustmentTurnService:
             analysis,
             overrides,
         )
-        package = {"drawingAnalysis": updated_analysis}
-        report_markdown = ChatDrawingValidationOrchestrationService.format_report_markdown(
-            package
+        package = ChatDrawingValidationPackageService.resolve_for_adjustment(
+            updated_analysis,
+            previous_messages=previous_messages,
+        )
+        report_markdown = ChatDrawingValidationPackageService.format_adjusted_report_markdown(
+            package,
+            previous_messages=previous_messages,
         )
 
         from app.application.services.chat_drawing_report_export_service import (
@@ -136,7 +143,11 @@ class ChatDrawingReportAdjustmentTurnService:
             "drawingAnalysisExport": export_payload,
             "drawingAnalysisOverrides": overrides,
             "currentMessage": str(message).strip(),
-        }
+        } | (
+            {ChatDrawingValidationPackageService.PACKAGE_KEY: package}
+            if package.get("drawingAnalysis")
+            else {}
+        )
 
     @classmethod
     def _build_missing_prior_report_result(cls, *, message: str) -> dict[str, Any]:

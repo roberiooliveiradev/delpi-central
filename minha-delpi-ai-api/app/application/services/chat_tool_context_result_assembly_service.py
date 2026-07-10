@@ -295,6 +295,11 @@ class ChatToolContextResultAssemblyService:
                     "drawingAnalysisExport"
                 ]
 
+            package_key = "drawingValidationPackage"
+
+            if drawing_analysis_payload.get(package_key):
+                result_payload[package_key] = drawing_analysis_payload[package_key]
+
             wrapped_direct = str(drawing_analysis_payload.get("directAnswer") or "").strip()
 
             if wrapped_direct:
