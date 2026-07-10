@@ -1,1 +1,31 @@
-export * from "../../../plugin-ui/src/utils/goalDisplay";
+export type {
+  PerformanceDirection,
+  GoalPerformanceTone,
+  GoalScopeBadgeTone,
+  GoalPerformanceBadge,
+  GoalScopeBadge,
+  DashboardGoalFields,
+  KpiGoalPresentation,
+  BranchMetricSlice,
+  PerBranchMetricSlices,
+} from "@delpi/plugin-ui/index";
+
+export {
+  formatDashboardMetricValue,
+  calculateIndicatorIddScore,
+  formatIndicatorIddScore,
+  resolveIddScoreLabel,
+  resolveConsolidatedIddScoreLabel,
+  applyConsolidatedBranchIddScore,
+  buildKpiGoalPresentationWithBranchIdd,
+  fetchPerBranchMetricSlices,
+  formatGoalScopeLabel,
+  resolveGoalScopeBadge,
+  formatPerformanceDirectionLabel,
+  isGoalOnTrack,
+  resolveOffTrackStatusLabel,
+  resolveGoalPerformanceBadge,
+  resolveGoalLabel,
+  buildKpiGoalPresentation,
+  formatGoalSubtitle,
+} from "@delpi/plugin-ui/index";
