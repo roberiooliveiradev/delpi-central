@@ -10,12 +10,11 @@ RUN --mount=type=cache,target=/root/.npm \
     cd cadastro-kaizen && npm install
 
 COPY cadastro-kaizen ./cadastro-kaizen
-# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
-COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/cadastro-kaizen
-RUN npm run build
+# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+RUN npx vite build
 
 FROM nginx:alpine AS production
 

@@ -10,12 +10,11 @@ RUN --mount=type=cache,target=/root/.npm \
     cd auditoria-5s && npm install
 
 COPY auditoria-5s ./auditoria-5s
-# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
-COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/auditoria-5s
-RUN npm run build
+# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+RUN npx vite build
 
 FROM nginx:alpine AS production
 

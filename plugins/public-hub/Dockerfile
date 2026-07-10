@@ -16,12 +16,11 @@ RUN --mount=type=cache,target=/root/.npm \
     cd public-hub && npm install
 
 COPY public-hub ./public-hub
-# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
-COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/public-hub
-RUN npm run build
+# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+RUN npx vite build
 
 FROM nginx:alpine AS production
 

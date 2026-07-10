@@ -1,11 +1,6 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import '../../plugin-ui/src/styles.css'
-import './index.css'
-import App from './App.tsx'
+import { mount } from "./bootstrap";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+const root = document.getElementById("root");
+if (root) {
+  mount(root);
+}

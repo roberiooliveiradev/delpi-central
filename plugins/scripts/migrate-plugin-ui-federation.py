@@ -30,11 +30,11 @@ RUN --mount=type=cache,target=/root/.npm \\
     cd {name} && npm install
 
 COPY {name} ./{name}
-COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/{name}
-RUN npm run build
+# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+RUN npx vite build
 
 FROM nginx:alpine AS production
 

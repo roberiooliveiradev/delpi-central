@@ -10,12 +10,11 @@ RUN --mount=type=cache,target=/root/.npm \
     cd dashboard-production && npm install
 
 COPY dashboard-production ./dashboard-production
-# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
-COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/dashboard-production
-RUN npm run build
+# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+RUN npx vite build
 
 FROM nginx:alpine AS production
 

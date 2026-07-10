@@ -119,12 +119,13 @@ await import("@delpi/plugin-ui/styles");
 
 ### Dockerfile
 
-**Runtime:** sem bundlar `plugin-ui` (remote MF). **Build:** copiar só o **source** para `tsconfig` paths (`tsc`); **sem** `npm install` em `plugin-ui` no Dockerfile do consumidor.
+**Runtime:** remote MF (sem bundlar `plugin-ui`). **Docker build:** `npx vite build` — o `tsc` fica para CI/local (`npm run build`); não copiar `plugin-ui` no Dockerfile do consumidor.
 
 ```dockerfile
 COPY controle-retrabalhos ./controle-retrabalhos
-COPY plugin-ui ./plugin-ui
 COPY vite ./vite
+WORKDIR /app/controle-retrabalhos
+RUN npx vite build
 ```
 
 ### Compose

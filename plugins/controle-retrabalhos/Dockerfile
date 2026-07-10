@@ -11,12 +11,11 @@ RUN --mount=type=cache,target=/root/.npm \
     cd controle-retrabalhos && npm install
 
 COPY controle-retrabalhos ./controle-retrabalhos
-# Source plugin-ui — tsconfig paths no build; runtime = remote MF.
-COPY plugin-ui ./plugin-ui
 COPY vite ./vite
 
 WORKDIR /app/controle-retrabalhos
-RUN npm run build
+# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+RUN npx vite build
 
 FROM nginx:alpine AS production
 
