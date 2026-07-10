@@ -51,6 +51,7 @@ export function ComunicadoComposerCanvas() {
   const {
     config,
     blocks,
+    selected,
     selectedId,
     selectedIds,
     isBlockSelected,
@@ -63,6 +64,7 @@ export function ComunicadoComposerCanvas() {
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
+    updateBlock,
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
   const canvasStyle = useCanvasBackgroundStyle();
@@ -236,6 +238,15 @@ export function ComunicadoComposerCanvas() {
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
                   event.stopPropagation();
+                  if (
+                    isDataSourceBlockType(block.type) &&
+                    selected &&
+                    isDataViewBlockType(selected.type) &&
+                    !selected.dataSourceId?.trim()
+                  ) {
+                    updateBlock(selected.id, { dataSourceId: block.id } as Partial<typeof selected>);
+                    return;
+                  }
                   selectBlock(block.id, { additive: event.shiftKey });
                   if (
                     editingTextId === block.id &&

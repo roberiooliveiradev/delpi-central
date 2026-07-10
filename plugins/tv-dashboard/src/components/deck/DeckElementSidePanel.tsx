@@ -80,7 +80,11 @@ export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
           bodyClassName="td-deck-side-panel__pane-body"
         >
           {tab === "element" ? (
-            <ComunicadoElementInspector labels={labels} placement="side" />
+            <ComunicadoElementInspector
+              labels={labels}
+              placement="side"
+              onOpenDataSources={() => handleTabChange("data")}
+            />
           ) : tab === "data" ? (
             <DataRoutesSidePanel onInserted={() => handleTabChange("element")} />
           ) : (

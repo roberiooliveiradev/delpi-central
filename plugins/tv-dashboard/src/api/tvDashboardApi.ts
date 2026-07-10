@@ -225,6 +225,7 @@ export type TvDataRouteCatalogItem = {
   operationId: string;
   label: string;
   category: string;
+  description?: string;
   path?: string;
   allowedDisplayModes?: string[];
   suggestedDisplayModes?: string[];

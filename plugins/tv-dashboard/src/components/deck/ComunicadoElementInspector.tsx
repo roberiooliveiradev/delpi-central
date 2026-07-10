@@ -52,9 +52,11 @@ function formatFrameValue(value: number): string {
 export function ComunicadoElementInspector({
   labels = {},
   placement = "default",
+  onOpenDataSources,
 }: {
   labels?: Labels;
   placement?: "default" | "side";
+  onOpenDataSources?: () => void;
 }) {
   const {
     selected,
@@ -117,7 +119,9 @@ export function ComunicadoElementInspector({
         )}
 
         {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} pane={pane} /> : null}
-        {!multiSelect && isViewBlock ? <VisualDataViewInspector pane={pane} /> : null}
+        {!multiSelect && isViewBlock ? (
+          <VisualDataViewInspector pane={pane} onOpenDataSources={onOpenDataSources} />
+        ) : null}
 
         {!multiSelect && isShapeBlock ? (
           <>

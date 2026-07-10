@@ -1,24 +1,724 @@
 {
   "routes": [
     {
-      "operationId": "get_overall_equipment_effectiveness_pct",
+      "operationId": "get_branch_rol_target_pct",
       "httpMethod": "GET",
-      "label": "OEE — visão geral",
+      "label": "Indicador — Meta percentual rol comercial",
+      "category": "commercial",
+      "path": "/commercial/branch_rol_target_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_sales_conversion_rate",
+      "httpMethod": "GET",
+      "label": "Indicador — Taxa de fechamento comercial",
+      "category": "commercial",
+      "path": "/commercial/closing-rate",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_head_office_rol_target_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Meta percentual rol comercial",
+      "category": "commercial",
+      "path": "/commercial/head_office_rol_target_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_new_business_rol_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Percentual rol de novos negócios",
+      "category": "commercial",
+      "path": "/commercial/new-business-rol-pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_new_clients_average",
+      "httpMethod": "GET",
+      "label": "Indicador — Média de novos clientes",
+      "category": "commercial",
+      "path": "/commercial/new-clients-average",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_new_clients_rol_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Percentual rol de clientes novos",
+      "category": "commercial",
+      "path": "/commercial/new-clients-rol-pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_commercial_proposals",
+      "httpMethod": "GET",
+      "label": "Propostas comerciais (carteira Totvs)",
+      "category": "commercial",
+      "path": "/commercial/proposals",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_commercial_proposal",
+      "httpMethod": "GET",
+      "label": "Detalhe da proposta comercial (OV)",
+      "category": "commercial",
+      "path": "/commercial/proposals/{proposal_number}",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_commercial_proposal_history_events",
+      "httpMethod": "GET",
+      "label": "Histórico de estágios da proposta comercial",
+      "category": "commercial",
+      "path": "/commercial/proposals/{proposal_number}/history/events",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_commercial_rol_series",
+      "httpMethod": "GET",
+      "label": "Indicador — Série temporal de rol comercial",
+      "category": "commercial",
+      "path": "/commercial/rol/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_sales_order_otd",
+      "httpMethod": "GET",
+      "label": "Indicador — Otd de pedidos de venda",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
+      "httpMethod": "GET",
+      "label": "Get Cultura Delpi Content",
+      "category": "strategic",
+      "path": "/cultura-delpi/content",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "search_customers_route_customers_search_get",
+      "httpMethod": "GET",
+      "label": "Search Customers Route",
+      "category": "commercial",
+      "path": "/customers/search",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_dashboard_department_idd_dashboard_department_idd_get",
+      "httpMethod": "GET",
+      "label": "Get Dashboard Department Idd",
+      "category": "system",
+      "path": "/dashboard/department-idd",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_lmps",
+      "httpMethod": "GET",
+      "label": "Listar LMPs (ordens especiais / amostras)",
+      "category": "engineering",
+      "path": "/engineering/lmps",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_lmps_dashboard",
+      "httpMethod": "GET",
+      "label": "Dashboard de LMPs",
+      "category": "engineering",
+      "path": "/engineering/lmps/dashboard",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_lmps_dashboard_charts",
+      "httpMethod": "GET",
+      "label": "Gráficos do painel de LMPs",
+      "category": "engineering",
+      "path": "/engineering/lmps/dashboard/charts",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_lmps_dashboard_items",
+      "httpMethod": "GET",
+      "label": "Itens paginados do painel de LMPs",
+      "category": "engineering",
+      "path": "/engineering/lmps/dashboard/items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_lmps_dashboard_summary",
+      "httpMethod": "GET",
+      "label": "KPIs resumidos do painel de LMPs",
+      "category": "engineering",
+      "path": "/engineering/lmps/dashboard/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_lmp_by_sale_number",
+      "httpMethod": "GET",
+      "label": "Detalhe da LMP por ordem de venda",
+      "category": "engineering",
+      "path": "/engineering/lmps/{sale_number}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_lmp_history_events",
+      "httpMethod": "GET",
+      "label": "Histórico de eventos da OV (AIJ010)",
+      "category": "engineering",
+      "path": "/engineering/lmps/{sale_number}/history/events",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_lmp_history_flow",
+      "httpMethod": "GET",
+      "label": "Transições de fluxo da engenharia na OV",
+      "category": "engineering",
+      "path": "/engineering/lmps/{sale_number}/history/flow",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_mini_applicators_ferramentas",
+      "httpMethod": "GET",
+      "label": "Listar ferramentas mini-aplicadores",
+      "category": "engineering",
+      "path": "/engineering/mini-applicators/ferramentas",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_mini_applicators_ferramenta",
+      "httpMethod": "GET",
+      "label": "Detalhe de ferramenta mini-aplicador",
+      "category": "engineering",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_mini_applicators_componentes",
+      "httpMethod": "GET",
+      "label": "Componentes do mini-aplicador",
+      "category": "engineering",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/componentes",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_mini_applicators_golpes",
+      "httpMethod": "GET",
+      "label": "Golpes do mini-aplicador no período",
+      "category": "engineering",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/golpes",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_mini_applicators_pecas",
+      "httpMethod": "GET",
+      "label": "Listar peças do mini-aplicador",
+      "category": "engineering",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/pecas",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_transforma_mais_processes",
+      "httpMethod": "GET",
+      "label": "Listar processos Transforma Mais",
+      "category": "engineering",
+      "path": "/engineering/transforma-mais/processes",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_transforma_mais_summary",
+      "httpMethod": "GET",
+      "label": "Resumo Transforma Mais",
+      "category": "engineering",
+      "path": "/engineering/transforma-mais/processes/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_financial_ebitda_pct",
+      "httpMethod": "GET",
+      "label": "EBITDA percentual (financeiro)",
+      "category": "financial",
+      "path": "/financial/ebitda_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_financial_fixed_cost_pct",
+      "httpMethod": "GET",
+      "label": "Custo fixo percentual (financeiro)",
+      "category": "financial",
+      "path": "/financial/fixed_cost_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_financial_pmr",
+      "httpMethod": "GET",
+      "label": "PMR — prazo médio de recebimento",
+      "category": "financial",
+      "path": "/financial/pmr",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_financial_rol",
+      "httpMethod": "GET",
+      "label": "ROL financeiro (receita operacional líquida)",
+      "category": "financial",
+      "path": "/financial/rol",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "root_health_get",
+      "httpMethod": "GET",
+      "label": "Root",
+      "category": "system",
+      "path": "/health",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_hr_active_pdi_count",
+      "httpMethod": "GET",
+      "label": "Indicador — Pdis ativos",
+      "category": "hr",
+      "path": "/hr/active-pdi-count",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_hr_branches",
+      "httpMethod": "GET",
+      "label": "Indicador — Filiais de rh",
+      "category": "hr",
+      "path": "/hr/branches",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_hr_performance_reviews_completion",
+      "httpMethod": "GET",
+      "label": "Indicador — Conclusão de avaliações de desempenho",
+      "category": "hr",
+      "path": "/hr/performance-reviews-completion",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_hr_snapshot",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Snapshot de rh",
+      "category": "hr",
+      "path": "/hr/snapshot",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_inspecoes_entrada_historico",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Inspecoes entrada historico",
+      "category": "quality",
+      "path": "/inspecoes-entrada/historico",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_inspecoes_entrada_historico_detalhe",
+      "httpMethod": "GET",
+      "label": "Consulta — Inspecoes entrada historico detalhe",
+      "category": "quality",
+      "path": "/inspecoes-entrada/historico/detalhe",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_inspecoes_entrada_pendentes",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Inspecoes entrada pendentes",
+      "category": "quality",
+      "path": "/inspecoes-entrada/pendentes",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_inspecoes_entrada_pendentes_fornecedor",
+      "httpMethod": "GET",
+      "label": "Lista — Inspecoes entrada pendentes fornecedor",
+      "category": "quality",
+      "path": "/inspecoes-entrada/pendentes-fornecedor",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_inspecoes_entrada_rejeitadas_ensaiador",
+      "httpMethod": "GET",
+      "label": "Lista — Inspecoes entrada rejeitadas ensaiador",
+      "category": "quality",
+      "path": "/inspecoes-entrada/rejeitadas-ensaiador",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_inspecoes_entrada_rejeitadas_produto",
+      "httpMethod": "GET",
+      "label": "Lista — Inspecoes entrada rejeitadas produto",
+      "category": "quality",
+      "path": "/inspecoes-entrada/rejeitadas-produto",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_inspecoes_entrada_resumo",
+      "httpMethod": "GET",
+      "label": "Indicador — Inspecoes entrada resumo",
+      "category": "quality",
+      "path": "/inspecoes-entrada/resumo",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_pedidos_venda_abertos",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Pedidos de venda em aberto",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_ops_abertas_pedidos_venda",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Ops abertas (pedidos de venda)",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/ops-abertas",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_production_allocation_gaps",
+      "httpMethod": "GET",
+      "label": "Componentes sem empenho (travamento)",
       "category": "production",
-      "path": "/production/overall_equipment_effectiveness_pct",
-      "allowedDisplayModes": ["kpi", "auto"],
-      "defaultParams": { "periodDays": 7 },
-      "paramSchema": {
-        "branch": { "type": "string", "optional": true, "label": "Filial" },
-        "periodDays": { "type": "integer", "default": 7, "label": "Período (dias)" }
-      },
-      "paramStrategy": "date_range",
-      "valueFields": ["overall_equipment_effectiveness_pct", "value", "oeePct"],
-      "metaShape": "scalar",
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      "path": "/production/allocation-gaps",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_consumption_by_item",
+      "httpMethod": "GET",
+      "label": "Consumo real de item por produto",
+      "category": "production",
+      "path": "/production/consumption/by-item/{code}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_consumption_top_items",
+      "httpMethod": "GET",
+      "label": "Itens mais consumidos na produção",
+      "category": "production",
+      "path": "/production/consumption/top-items",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_consumption_top_items_by_work_center",
+      "httpMethod": "GET",
+      "label": "Consumo por centro de trabalho",
+      "category": "production",
+      "path": "/production/consumption/top-items-by-work-center",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_consumption_top_items_validated",
+      "httpMethod": "GET",
+      "label": "Consumo validado por apontamento real",
+      "category": "production",
+      "path": "/production/consumption/top-items-validated",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_depreciation_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Depreciação percentual",
+      "category": "production",
+      "path": "/production/depreciation_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_direct_labor_cost_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Custo direto de mão de obra",
+      "category": "production",
+      "path": "/production/direct_labor_cost_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_eficiencia_fabril_appointments",
+      "httpMethod": "GET",
+      "label": "Eficiência fabril — apontamentos (carga bulk)",
+      "category": "production",
+      "path": "/production/eficiencia-fabril/appointments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_eficiencia_fabril_dashboard",
+      "httpMethod": "GET",
+      "label": "Eficiência fabril — dashboard MOD e gráficos",
+      "category": "production",
+      "path": "/production/eficiencia-fabril/dashboard",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_losses_records",
+      "httpMethod": "GET",
+      "label": "Registros detalhados de refugo/scrap",
+      "category": "production",
+      "path": "/production/losses/records",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_losses_top_materials",
+      "httpMethod": "GET",
+      "label": "Matérias-primas com mais refugo/scrap no período",
+      "category": "production",
+      "path": "/production/losses/top-materials",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_oee",
+      "httpMethod": "GET",
+      "label": "OEE produção — resumo e apontamentos (view fabril)",
+      "category": "production",
+      "path": "/production/oee",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_oee_appointment_by_id",
+      "httpMethod": "GET",
+      "label": "Detalhe do apontamento OEE (roteiro, estrutura e tempos)",
+      "category": "production",
+      "path": "/production/oee/appointments/{appointment_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
     },
     {
       "operationId": "get_production_oee_series",
@@ -26,16 +726,31 @@
       "label": "OEE — série temporal",
       "category": "production",
       "path": "/production/oee/series",
-      "allowedDisplayModes": ["line_chart", "auto"],
-      "defaultParams": { "periodDays": 7 },
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "defaultParams": {
+        "periodDays": 7
+      },
       "paramSchema": {
-        "branch": { "type": "string", "optional": true, "label": "Filial" },
-        "periodDays": { "type": "integer", "default": 7, "label": "Período (dias)" }
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "periodDays": {
+          "type": "integer",
+          "default": 7,
+          "label": "Período (dias)"
+        }
       },
       "paramStrategy": "date_range",
-      "fixedQueryParams": { "granularity": "day" },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "seriesField": "points",
-      "metaShape": "scalar",
       "tvConstraints": {
         "requiresBranchPermission": true
       }
@@ -46,60 +761,96 @@
       "label": "OTD — produção",
       "category": "production",
       "path": "/production/on_time_delivery_pct",
-      "allowedDisplayModes": ["kpi", "auto"],
-      "defaultParams": { "periodDays": 30 },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "defaultParams": {
+        "periodDays": 30
+      },
       "paramSchema": {
-        "branch": { "type": "string", "optional": true, "label": "Filial" },
-        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
       },
       "paramStrategy": "date_range",
-      "valueFields": ["on_time_delivery_pct", "value", "otdPct"],
-      "metaShape": "scalar",
+      "valueFields": [
+        "on_time_delivery_pct",
+        "value",
+        "otdPct"
+      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       }
     },
     {
-      "operationId": "get_supplies_stock_value",
+      "operationId": "get_production_order_by_op",
       "httpMethod": "GET",
-      "label": "Suprimentos — valor de estoque",
-      "category": "supplies",
-      "path": "/supplies/stock-value",
-      "allowedDisplayModes": ["kpi", "table", "auto"],
-      "defaultParams": {},
-      "paramSchema": {
-        "branch": { "type": "string", "optional": true, "label": "Filial" },
-        "top_limit": { "type": "integer", "default": 5, "label": "TOP N itens", "optional": true }
-      },
-      "paramStrategy": "direct",
-      "valueFields": ["value", "stockValue", "total"],
-      "tableFields": "top_products",
-      "metaShape": "scalar",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      }
+      "label": "Detalhe da OP por C2_OP",
+      "category": "production",
+      "path": "/production/orders/by-op/{production_order}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
     },
     {
-      "operationId": "get_ppm_internal_summary",
+      "operationId": "get_production_orders_finished",
       "httpMethod": "GET",
-      "label": "Qualidade — PPM interno",
-      "category": "quality",
-      "path": "/quality/ppm/internal/summary",
-      "allowedDisplayModes": ["kpi", "auto"],
-      "defaultParams": { "periodDays": 30 },
-      "paramSchema": {
-        "branch": { "type": "string", "optional": true, "label": "Filial" },
-        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
-      },
-      "paramStrategy": "date_range",
-      "valueFields": ["value", "ppm", "ppmValue"],
-      "metaShape": "scalar",
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      "label": "OPs finalizadas na data",
+      "category": "production",
+      "path": "/production/orders/finished",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_orders_finished_without_consumption",
+      "httpMethod": "GET",
+      "label": "OPs finalizadas sem consumo de componentes",
+      "category": "production",
+      "path": "/production/orders/finished-without-consumption",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_orders_open",
+      "httpMethod": "GET",
+      "label": "OPs em aberto na data",
+      "category": "production",
+      "path": "/production/orders/open",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_otd",
+      "httpMethod": "GET",
+      "label": "OTD produção — resumo e ordens (SC2010)",
+      "category": "production",
+      "path": "/production/otd",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
     },
     {
       "operationId": "get_production_otd_series",
@@ -107,39 +858,167 @@
       "label": "OTD — série temporal",
       "category": "production",
       "path": "/production/otd/series",
-      "allowedDisplayModes": ["line_chart", "auto"],
-      "defaultParams": { "periodDays": 30 },
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "defaultParams": {
+        "periodDays": 30
+      },
       "paramSchema": {
-        "branch": { "type": "string", "optional": true, "label": "Filial" },
-        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
       },
       "paramStrategy": "date_range",
-      "fixedQueryParams": { "granularity": "day" },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "seriesField": "points",
-      "metaShape": "scalar",
       "tvConstraints": {
         "requiresBranchPermission": true
       }
     },
     {
-      "operationId": "get_ppm_external_summary",
+      "operationId": "get_overall_equipment_effectiveness_pct",
       "httpMethod": "GET",
-      "label": "Qualidade — PPM externo",
-      "category": "quality",
-      "path": "/quality/ppm/external/summary",
-      "allowedDisplayModes": ["kpi", "auto"],
-      "defaultParams": { "periodDays": 30 },
+      "label": "OEE — visão geral",
+      "category": "production",
+      "path": "/production/overall_equipment_effectiveness_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "defaultParams": {
+        "periodDays": 7
+      },
       "paramSchema": {
-        "branch": { "type": "string", "optional": true, "label": "Filial" },
-        "periodDays": { "type": "integer", "default": 30, "label": "Período (dias)" }
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "periodDays": {
+          "type": "integer",
+          "default": 7,
+          "label": "Período (dias)"
+        }
       },
       "paramStrategy": "date_range",
-      "valueFields": ["value", "ppm", "ppmValue"],
-      "metaShape": "scalar",
+      "valueFields": [
+        "overall_equipment_effectiveness_pct",
+        "value",
+        "oeePct"
+      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       }
+    },
+    {
+      "operationId": "get_production_planned_vs_real_time",
+      "httpMethod": "GET",
+      "label": "Tempo planejado × tempo real por OP",
+      "category": "production",
+      "path": "/production/planned-vs-real-time",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_cost_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Custo de produção percentual",
+      "category": "production",
+      "path": "/production/production_cost_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_schedule_today",
+      "httpMethod": "GET",
+      "label": "Produtos programados para produzir na data",
+      "category": "production",
+      "path": "/production/schedule/today",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_work_center_average_planned_time",
+      "httpMethod": "GET",
+      "label": "Tempo médio planejado por centro de trabalho",
+      "category": "production",
+      "path": "/production/work-centers/average-planned-time",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_production_work_center_order_summary",
+      "httpMethod": "GET",
+      "label": "Resumo de OPs por centro de trabalho",
+      "category": "production",
+      "path": "/production/work-centers/order-summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_directives",
+      "httpMethod": "GET",
+      "label": "Diretivas do produto (referência cliente ou código DELPI)",
+      "category": "products",
+      "path": "/products/directives/{identifier}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_product_drawings",
+      "httpMethod": "GET",
+      "label": "Catálogo de desenhos PDF da biblioteca",
+      "category": "products",
+      "path": "/products/drawings",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_exclusive_raw_materials_catalog",
+      "httpMethod": "GET",
+      "label": "Catálogo global de matérias-primas exclusivas",
+      "category": "products",
+      "path": "/products/exclusive-raw-materials/catalog",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
     },
     {
       "operationId": "search_products",
@@ -147,21 +1026,1654 @@
       "label": "Produtos — busca",
       "category": "products",
       "path": "/products/search",
-      "allowedDisplayModes": ["table", "auto"],
-      "defaultParams": { "page": 1, "page_size": 5 },
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      },
       "paramSchema": {
-        "description": { "type": "string", "optional": true, "label": "Descrição contém" },
-        "group_code": { "type": "string", "optional": true, "label": "Grupo" },
-        "code": { "type": "string", "optional": true, "label": "Código" },
-        "page_size": { "type": "integer", "default": 5, "label": "Linhas (TOP N)" }
+        "description": {
+          "type": "string",
+          "optional": true,
+          "label": "Descrição contém"
+        },
+        "group_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupo"
+        },
+        "code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código"
+        },
+        "page_size": {
+          "type": "integer",
+          "default": 5,
+          "label": "Linhas (TOP N)"
+        }
       },
       "paramStrategy": "direct",
       "tableFields": "items",
-      "metaShape": "paged_list",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       }
+    },
+    {
+      "operationId": "get_product_detail",
+      "httpMethod": "GET",
+      "label": "Dados cadastrais do produto",
+      "category": "products",
+      "path": "/products/{code}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_analyser",
+      "httpMethod": "GET",
+      "label": "Analisador completo do produto",
+      "category": "products",
+      "path": "/products/{code}/analyser",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_cost_impact_simulation",
+      "httpMethod": "GET",
+      "label": "Simulador de impacto de custos do PA",
+      "category": "products",
+      "path": "/products/{code}/cost-impact-simulation",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_customers",
+      "httpMethod": "GET",
+      "label": "Clientes do produto",
+      "category": "products",
+      "path": "/products/{code}/customers",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_drawing",
+      "httpMethod": "GET",
+      "label": "Metadados do desenho PDF do produto",
+      "category": "products",
+      "path": "/products/{code}/drawing",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_drawing_pdf",
+      "httpMethod": "GET",
+      "label": "Download do desenho PDF do produto",
+      "category": "products",
+      "path": "/products/{code}/drawing/pdf",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_factory_status",
+      "httpMethod": "GET",
+      "label": "Status fabril completo do produto",
+      "category": "products",
+      "path": "/products/{code}/factory-status",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_guide",
+      "httpMethod": "GET",
+      "label": "Roteiro de produção do produto",
+      "category": "products",
+      "path": "/products/{code}/guide",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_inbound_invoice_items",
+      "httpMethod": "GET",
+      "label": "Itens de nota fiscal de entrada do produto",
+      "category": "products",
+      "path": "/products/{code}/inbound-invoice-items",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_inspection",
+      "httpMethod": "GET",
+      "label": "Inspeção de qualidade do produto (QP6/QP7/QP8)",
+      "category": "products",
+      "path": "/products/{code}/inspection",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_internal_movements",
+      "httpMethod": "GET",
+      "label": "Movimentações internas do produto",
+      "category": "products",
+      "path": "/products/{code}/internal-movements",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_last_purchase",
+      "httpMethod": "GET",
+      "label": "Última compra válida da matéria-prima",
+      "category": "products",
+      "path": "/products/{code}/last-purchase",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_outbound_invoice_items",
+      "httpMethod": "GET",
+      "label": "Itens de nota fiscal de saída do produto",
+      "category": "products",
+      "path": "/products/{code}/outbound-invoice-items",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_parents",
+      "httpMethod": "GET",
+      "label": "Onde o produto é usado (produtos pai / BOM reversa)",
+      "category": "products",
+      "path": "/products/{code}/parents",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_pricing",
+      "httpMethod": "GET",
+      "label": "Preços e tabelas comerciais do produto",
+      "category": "products",
+      "path": "/products/{code}/pricing",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_production_status",
+      "httpMethod": "GET",
+      "label": "Situação produtiva do produto (PA, PI, OP e apontamentos)",
+      "category": "products",
+      "path": "/products/{code}/production-status",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_purchase_budget_history",
+      "httpMethod": "GET",
+      "label": "Histórico de orçamento de compra (SC + PC)",
+      "category": "products",
+      "path": "/products/{code}/purchase-budget-history",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "httpMethod": "GET",
+      "label": "Histórico de preço de compra da matéria-prima",
+      "category": "products",
+      "path": "/products/{code}/purchase-price-history",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_purchases",
+      "httpMethod": "GET",
+      "label": "Histórico de compras do produto",
+      "category": "products",
+      "path": "/products/{code}/purchases",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "httpMethod": "GET",
+      "label": "Análise inteligente de preço de matéria-prima",
+      "category": "products",
+      "path": "/products/{code}/raw-material-price-intelligence",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_sales_summary",
+      "httpMethod": "GET",
+      "label": "Resumo de vendas do produto",
+      "category": "products",
+      "path": "/products/{code}/sales",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_sales_billing",
+      "httpMethod": "GET",
+      "label": "Faturamento do produto",
+      "category": "products",
+      "path": "/products/{code}/sales/billing",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_sales_open_orders",
+      "httpMethod": "GET",
+      "label": "Carteira de pedidos de venda em aberto do produto",
+      "category": "products",
+      "path": "/products/{code}/sales/open-orders",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_shipping_status",
+      "httpMethod": "GET",
+      "label": "Expedição do PA via inspeção final",
+      "category": "products",
+      "path": "/products/{code}/shipping-status",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_stock",
+      "httpMethod": "GET",
+      "label": "Estoque do produto por filial e local",
+      "category": "products",
+      "path": "/products/{code}/stock",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_structure",
+      "httpMethod": "GET",
+      "label": "Estrutura (BOM) do produto",
+      "category": "products",
+      "path": "/products/{code}/structure",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "hierarchy"
+    },
+    {
+      "operationId": "structure_excel_public_products__code__structure_excel_get",
+      "httpMethod": "GET",
+      "label": "Structure Excel Public",
+      "category": "products",
+      "path": "/products/{code}/structure/excel",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "hierarchy"
+    },
+    {
+      "operationId": "get_product_structure_exclusivity",
+      "httpMethod": "GET",
+      "label": "Estrutura do produto com exclusividade de matérias-primas",
+      "category": "products",
+      "path": "/products/{code}/structure/exclusivity",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "hierarchy"
+    },
+    {
+      "operationId": "get_product_summary",
+      "httpMethod": "GET",
+      "label": "Resumo do produto (cadastro + estoque + preços)",
+      "category": "products",
+      "path": "/products/{code}/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_product_suppliers",
+      "httpMethod": "GET",
+      "label": "Fornecedores do produto",
+      "category": "products",
+      "path": "/products/{code}/suppliers",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_propostas_comerciais",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Proposta comercial interna (pdf/totvs)",
+      "category": "commercial",
+      "path": "/propostas-comerciais/",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_proposta_comercial",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Proposta comercial interna (pdf/totvs)",
+      "category": "commercial",
+      "path": "/propostas-comerciais/{proposta_interna}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
+      "httpMethod": "GET",
+      "label": "Export Proposta Comercial Pdf Route",
+      "category": "commercial",
+      "path": "/propostas-comerciais/{proposta_interna}/pdf",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
+      "httpMethod": "GET",
+      "label": "Get Public Inspection",
+      "category": "quality",
+      "path": "/public/quality-labels/inspection/{token}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_purchases_top_products",
+      "httpMethod": "GET",
+      "label": "Produtos mais comprados no período",
+      "category": "supplies",
+      "path": "/purchases/top-products",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_quality_action_plans",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan",
+      "category": "quality",
+      "path": "/quality/action-plans",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_quality_action_plan_assignable_users",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Directory user",
+      "category": "quality",
+      "path": "/quality/action-plans/assignable-users",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_quality_action_plans_dashboard",
+      "httpMethod": "GET",
+      "label": "Indicador — Quality action plan dashboard",
+      "category": "quality",
+      "path": "/quality/action-plans/dashboard",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_quality_action_plan_pending_effectiveness_reviews",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan",
+      "category": "quality",
+      "path": "/quality/action-plans/effectiveness-review/pending",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "search_quality_action_plan_evidences",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan evidence",
+      "category": "quality",
+      "path": "/quality/action-plans/evidences/search",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_quality_action_plan_export_templates",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan export template",
+      "category": "quality",
+      "path": "/quality/action-plans/export-templates",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_quality_action_plan_knowledge_graph",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Quality action plan knowledge graph",
+      "category": "quality",
+      "path": "/quality/action-plans/intelligence/knowledge-graph",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_quality_action_plan_my_queue",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan action",
+      "category": "quality",
+      "path": "/quality/action-plans/my-queue",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_quality_action_plans_overdue",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan",
+      "category": "quality",
+      "path": "/quality/action-plans/overdue",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_quality_action_plans_recurrence",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan recurrence",
+      "category": "quality",
+      "path": "/quality/action-plans/recurrence",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_quality_action_plan_detail",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Quality action plan",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_quality_action_plan_audit_log",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan audit log",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/audit-log",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_quality_action_plan_evidences",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan evidence",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/evidences",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_quality_action_plan_evidence_content",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Quality action plan evidence",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/content",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "download_quality_action_plan_evidence",
+      "httpMethod": "GET",
+      "label": "Consulta — Quality action plan evidence",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/file",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "export_quality_action_plan_pdf",
+      "httpMethod": "GET",
+      "label": "Consulta — Quality action plan export",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/export/pdf",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "export_quality_action_plan_rnc_8d",
+      "httpMethod": "GET",
+      "label": "Indicador — Quality action plan export",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/export/rnc-8d",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "export_quality_action_plan_rnc_8d_pdf",
+      "httpMethod": "GET",
+      "label": "Consulta — Quality action plan export",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/export/rnc-8d/pdf",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_quality_action_plan_revisions",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality action plan revision",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/revisions",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_quality_action_plan_revision",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Quality action plan revision",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/revisions/{revision_number}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_quality_action_plan_similar_cases",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Quality action plan similar cases",
+      "category": "quality",
+      "path": "/quality/action-plans/{plan_id}/similar-cases",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "httpMethod": "GET",
+      "label": "Get Audit 5S Dashboard",
+      "category": "quality",
+      "path": "/quality/audit-5s/analytics/dashboard",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_areas_quality_audit_5s_areas_get",
+      "httpMethod": "GET",
+      "label": "List Areas",
+      "category": "quality",
+      "path": "/quality/audit-5s/areas",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_audits_quality_audit_5s_audits_get",
+      "httpMethod": "GET",
+      "label": "List Audits",
+      "category": "quality",
+      "path": "/quality/audit-5s/audits",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "httpMethod": "GET",
+      "label": "Get Audit",
+      "category": "quality",
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "httpMethod": "GET",
+      "label": "List Audit Nc Attachments",
+      "category": "quality",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "httpMethod": "GET",
+      "label": "List Nc Candidates",
+      "category": "quality",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "httpMethod": "GET",
+      "label": "List Audit Nonconformities",
+      "category": "quality",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_criteria_quality_audit_5s_criteria_get",
+      "httpMethod": "GET",
+      "label": "List Criteria",
+      "category": "quality",
+      "path": "/quality/audit-5s/criteria",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "httpMethod": "GET",
+      "label": "List Nc Actions",
+      "category": "quality",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "httpMethod": "GET",
+      "label": "List Nc Attachments",
+      "category": "quality",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "httpMethod": "GET",
+      "label": "Download Nc Attachment",
+      "category": "quality",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
+      "httpMethod": "GET",
+      "label": "Get Audit 5S Summary",
+      "category": "quality",
+      "path": "/quality/audit-5s/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_quality_branches_quality_branches_get",
+      "httpMethod": "GET",
+      "label": "List Quality Branches",
+      "category": "quality",
+      "path": "/quality/branches",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_kaizen_records",
+      "httpMethod": "GET",
+      "label": "Cadastro operacional de kaizens (PostgreSQL)",
+      "category": "quality",
+      "path": "/quality/kaizens/records",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
+      "httpMethod": "GET",
+      "label": "Export Kaizen Records",
+      "category": "quality",
+      "path": "/quality/kaizens/records/export",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_kaizen_record",
+      "httpMethod": "GET",
+      "label": "Detalhe do kaizen cadastrado (PostgreSQL)",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
+      "httpMethod": "GET",
+      "label": "Get Kaizen At Date",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/at",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
+      "httpMethod": "GET",
+      "label": "List Kaizen Audit Log",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/audit-log",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
+      "httpMethod": "GET",
+      "label": "List Kaizen Evidences",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/evidences",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
+      "httpMethod": "GET",
+      "label": "Download Kaizen Evidence",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
+      "httpMethod": "GET",
+      "label": "List Kaizen History",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/history",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
+      "httpMethod": "GET",
+      "label": "List Kaizen Revisions",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/revisions",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
+      "httpMethod": "GET",
+      "label": "Get Kaizen Revision",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/revisions/{revision_number}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
+      "httpMethod": "GET",
+      "label": "Get Kaizen Savings Timeline",
+      "category": "quality",
+      "path": "/quality/kaizens/records/{record_id}/savings-timeline",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_kaizen_summary",
+      "httpMethod": "GET",
+      "label": "Kaizens — resumo e listagem (Google Sheets)",
+      "category": "quality",
+      "path": "/quality/kaizens/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_kaizen_by_id",
+      "httpMethod": "GET",
+      "label": "Detalhe do kaizen (Google Sheets)",
+      "category": "quality",
+      "path": "/quality/kaizens/{kaizen_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_labels_quality_labels_get",
+      "httpMethod": "GET",
+      "label": "List Labels",
+      "category": "quality",
+      "path": "/quality/labels",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_audit_events_quality_labels_audit_events_get",
+      "httpMethod": "GET",
+      "label": "List Audit Events",
+      "category": "quality",
+      "path": "/quality/labels/audit-events",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_checklist_template_quality_labels_checklist_template_get",
+      "httpMethod": "GET",
+      "label": "List Checklist Template",
+      "category": "quality",
+      "path": "/quality/labels/checklist-template",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
+      "httpMethod": "GET",
+      "label": "Get My Inspector",
+      "category": "quality",
+      "path": "/quality/labels/inspectors/me",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
+      "httpMethod": "GET",
+      "label": "Get My Signature",
+      "category": "quality",
+      "path": "/quality/labels/inspectors/me/signature",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
+      "httpMethod": "GET",
+      "label": "Lookup Op",
+      "category": "quality",
+      "path": "/quality/labels/lookup-op/{production_order}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "search_ops_quality_labels_search_ops_get",
+      "httpMethod": "GET",
+      "label": "Search Ops",
+      "category": "quality",
+      "path": "/quality/labels/search-ops",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_label_quality_labels__label_id__get",
+      "httpMethod": "GET",
+      "label": "Get Label",
+      "category": "quality",
+      "path": "/quality/labels/{label_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_certificate_quality_labels__label_id__certificate_get",
+      "httpMethod": "GET",
+      "label": "Get Certificate",
+      "category": "quality",
+      "path": "/quality/labels/{label_id}/certificate",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
+      "httpMethod": "GET",
+      "label": "Get Certificate Pdf",
+      "category": "quality",
+      "path": "/quality/labels/{label_id}/certificate/pdf",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_label_qr_quality_labels__label_id__qr_get",
+      "httpMethod": "GET",
+      "label": "Get Label Qr",
+      "category": "quality",
+      "path": "/quality/labels/{label_id}/qr",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_nonconformity_route_quality_nonconformities_get",
+      "httpMethod": "GET",
+      "label": "List Nonconformity Route",
+      "category": "quality",
+      "path": "/quality/nonconformities",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
+      "httpMethod": "GET",
+      "label": "Get Nonconformity Series",
+      "category": "quality",
+      "path": "/quality/nonconformities/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_ppm_external",
+      "httpMethod": "GET",
+      "label": "List External Ppm",
+      "category": "quality",
+      "path": "/quality/ppm/external",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_ppm_external_series",
+      "httpMethod": "GET",
+      "label": "Get External Ppm Series",
+      "category": "quality",
+      "path": "/quality/ppm/external/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_ppm_external_summary",
+      "httpMethod": "GET",
+      "label": "Qualidade — PPM externo",
+      "category": "quality",
+      "path": "/quality/ppm/external/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "list_ppm_internal",
+      "httpMethod": "GET",
+      "label": "List Internal Ppm",
+      "category": "quality",
+      "path": "/quality/ppm/internal",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_ppm_internal_series",
+      "httpMethod": "GET",
+      "label": "Get Internal Ppm Series",
+      "category": "quality",
+      "path": "/quality/ppm/internal/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_ppm_internal_summary",
+      "httpMethod": "GET",
+      "label": "Qualidade — PPM interno",
+      "category": "quality",
+      "path": "/quality/ppm/internal/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_produced_quantity",
+      "httpMethod": "GET",
+      "label": "Get Produced Quantity",
+      "category": "quality",
+      "path": "/quality/produced-quantity",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_quality_solution_patterns",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Quality solution pattern",
+      "category": "quality",
+      "path": "/quality/solution-patterns",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_sale_orders",
+      "httpMethod": "GET",
+      "label": "Listar ordens de venda",
+      "category": "commercial",
+      "path": "/sales/",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_bookings_scheduling_bookings_get",
+      "httpMethod": "GET",
+      "label": "List Bookings",
+      "category": "scheduling",
+      "path": "/scheduling/bookings",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_resources_scheduling_resources_get",
+      "httpMethod": "GET",
+      "label": "List Resources",
+      "category": "scheduling",
+      "path": "/scheduling/resources",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_supplies_cpv",
+      "httpMethod": "GET",
+      "label": "CPV — custo de produto vendido (Kardex / suprimentos)",
+      "category": "supplies",
+      "path": "/supplies/cpv",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_supplies_inventory_turnover",
+      "httpMethod": "GET",
+      "label": "Giro de estoque / IDD (suprimentos)",
+      "category": "supplies",
+      "path": "/supplies/inventory-turnover",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_supplies_negotiation_savings_summary",
+      "httpMethod": "GET",
+      "label": "Economia em negociações de compras (planilha IDD Suprimentos)",
+      "category": "supplies",
+      "path": "/supplies/negotiation-savings/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_supplies_otd",
+      "httpMethod": "GET",
+      "label": "OTD — entrega no prazo (suprimentos)",
+      "category": "supplies",
+      "path": "/supplies/otd",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_supplies_stock_value",
+      "httpMethod": "GET",
+      "label": "Suprimentos — valor de estoque",
+      "category": "supplies",
+      "path": "/supplies/stock-value",
+      "allowedDisplayModes": [
+        "kpi",
+        "table",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "top_limit": {
+          "type": "integer",
+          "default": 5,
+          "label": "TOP N itens",
+          "optional": true
+        }
+      },
+      "paramStrategy": "direct",
+      "valueFields": [
+        "value",
+        "stockValue",
+        "total"
+      ],
+      "tableFields": "top_products",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      }
+    },
+    {
+      "operationId": "get_caller_stats_system_caller_stats_get",
+      "httpMethod": "GET",
+      "label": "Breakdown de requests por X-Delpi-Caller-App",
+      "category": "system",
+      "path": "/system/caller-stats",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "search_columns_global_system_columns_search_get",
+      "httpMethod": "GET",
+      "label": "Busca colunas por descrição (SX3010 + ranking semântico)",
+      "category": "system",
+      "path": "/system/columns/search",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_console_alerts_system_console_alerts_get",
+      "httpMethod": "GET",
+      "label": "Histórico recente de alertas do console",
+      "category": "system",
+      "path": "/system/console-alerts",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_console_health_system_console_health_get",
+      "httpMethod": "GET",
+      "label": "Saúde agregada do console para Admin Stats",
+      "category": "system",
+      "path": "/system/console-health",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_envelope_contracts_system_envelope_contracts_get",
+      "httpMethod": "GET",
+      "label": "Golden files de contrato de envelope (smoke)",
+      "category": "system",
+      "path": "/system/envelope-contracts",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_observability_snapshot_system_observability_snapshot_get",
+      "httpMethod": "GET",
+      "label": "Snapshot unificado para comparador de deploy",
+      "category": "system",
+      "path": "/system/observability-snapshot",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_openapi_diff_system_openapi_diff_get",
+      "httpMethod": "GET",
+      "label": "Diff do OpenAPI atual vs baseline versionado",
+      "category": "system",
+      "path": "/system/openapi-diff",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_query_cache_stats_system_query_cache_stats_get",
+      "httpMethod": "GET",
+      "label": "Hits e misses do cache compartilhado (LMP, estoque)",
+      "category": "system",
+      "path": "/system/query-cache/stats",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_smoke_definitions_system_smoke_definitions_get",
+      "httpMethod": "GET",
+      "label": "Definições das smoke suites do console",
+      "category": "system",
+      "path": "/system/smoke-definitions",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "get_sql_health_system_sql_health_get",
+      "httpMethod": "GET",
+      "label": "Telemetria SQL recente (ring buffer memória ou Redis)",
+      "category": "system",
+      "path": "/system/sql-health",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "search_tables_system_tables_search_get",
+      "httpMethod": "GET",
+      "label": "Busca tabelas por descrição (SX2)",
+      "category": "system",
+      "path": "/system/tables/search",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "table_system_tables__tableName__get",
+      "httpMethod": "GET",
+      "label": "Consulta informações de tabela",
+      "category": "system",
+      "path": "/system/tables/{tableName}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "table_columns_system_tables__tableName__columns_get",
+      "httpMethod": "GET",
+      "label": "Consulta colunas de tabela com paginação",
+      "category": "system",
+      "path": "/system/tables/{tableName}/columns",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "search_columns_system_tables__tableName__columns_search_get",
+      "httpMethod": "GET",
+      "label": "Buscar colunas por texto",
+      "category": "system",
+      "path": "/system/tables/{tableName}/columns/search",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "table_indexes_system_tables__tableName__indexes_get",
+      "httpMethod": "GET",
+      "label": "Consulta índices (SIX010)",
+      "category": "system",
+      "path": "/system/tables/{tableName}/indexes",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "table_relations_system_tables__tableName__relations_get",
+      "httpMethod": "GET",
+      "label": "Consulta relacionamentos (SX9010)",
+      "category": "system",
+      "path": "/system/tables/{tableName}/relations",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "table_schema_system_tables__tableName__schema_get",
+      "httpMethod": "GET",
+      "label": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
+      "category": "system",
+      "path": "/system/tables/{tableName}/schema",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
     }
   ]
 }

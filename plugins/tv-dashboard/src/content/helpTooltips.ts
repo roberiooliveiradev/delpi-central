@@ -139,9 +139,13 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
   },
   data: {
-    catalogSearch: "Busque rotas GET da api-delpi por nome, operationId ou categoria.",
+    catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",
     sourceConfig: "Parâmetros da consulta e intervalo de atualização da fonte de dados.",
     viewBinding: "Conecte o gráfico ou tabela a uma fonte inserida no palco (ícone de banco).",
+    connectFlow:
+      "1) Inserir → Dados → escolha uma rota (cria data_source no palco). 2) Inserir → Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → aba Elemento → Conexão de dados → Fonte de dados.",
+    connectOnStage:
+      "Com um gráfico ou tabela selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
     sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
   },
   contextMenu: {

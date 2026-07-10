@@ -11,12 +11,20 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
-export function VisualDataViewInspector({ pane = false }: { pane?: boolean }) {
-  const { selected, blocks, updateSelected } = useComunicadoEditor();
+type Props = {
+  pane?: boolean;
+  /** Abre aba Dados do painel lateral (catálogo de fontes). */
+  onOpenDataSources?: () => void;
+};
+
+export function VisualDataViewInspector({ pane = false, onOpenDataSources }: Props) {
+  const { selected, blocks, updateSelected, openDataPanel } = useComunicadoEditor();
 
   if (!selected || !isDataViewBlockType(selected.type)) return null;
 
   const sourceOptions = dataSourceOptionsForInspector(blocks, selected.id);
+  const hasSource = Boolean(selected.dataSourceId?.trim());
+  const openSources = onOpenDataSources ?? openDataPanel;
 
   return (
     <DeckPropertySection pane={pane} title="Conexão de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewBinding}>
@@ -25,6 +33,14 @@ export function VisualDataViewInspector({ pane = false }: { pane?: boolean }) {
       ) : (
         <p className="td-deck-inspector__meta">Tabela: {tablePresetLabel(selected.tablePreset)}</p>
       )}
+      {!hasSource ? (
+        <div className="td-deck-inspector__onboarding">
+          <p className="td-deck-inspector__hint">{TV_DASHBOARD_HELP_TOOLTIPS.data.connectFlow}</p>
+          <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={() => openSources()}>
+            Abrir fontes de dados
+          </button>
+        </div>
+      ) : null}
       <DeckField id="td-view-data-source" label="Fonte de dados">
         <NativeSelectControl
           id="td-view-data-source"

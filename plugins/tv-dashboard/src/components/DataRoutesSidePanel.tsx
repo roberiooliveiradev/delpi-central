@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Factory, Package, ShieldCheck } from "lucide-react";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { DataRouteCatalogPanel, FieldLabel } from "@delpi/plugin-ui/index";
 import {
   createDataSourceBlock,
   DATA_REFRESH_SEC_MAX,
@@ -14,14 +14,34 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
-const CATEGORY_ORDER = ["production", "quality", "supplies", "products", "strategic"] as const;
+const CATEGORY_ORDER = [
+  "production",
+  "quality",
+  "supplies",
+  "commercial",
+  "products",
+  "financial",
+  "engineering",
+  "hr",
+  "scheduling",
+  "strategic",
+  "system",
+  "other",
+] as const;
 
 const CATEGORY_LABELS: Record<string, string> = {
   production: "Produção",
   quality: "Qualidade",
   supplies: "Suprimentos",
+  commercial: "Comercial",
   products: "Produtos",
+  financial: "Financeiro",
+  engineering: "Engenharia",
+  hr: "Recursos Humanos",
+  scheduling: "Agendamento",
   strategic: "Estratégico",
+  system: "Sistema",
+  other: "Outros",
 };
 
 type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
@@ -40,7 +60,6 @@ type Props = {
 export function DataRoutesSidePanel({ onInserted }: Props) {
   const { config, addDataSourceBlock, globalRefreshSec } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pickedRoute, setPickedRoute] = useState<TvDataRouteCatalogItem | null>(null);
@@ -56,36 +75,6 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return routes;
-    return routes.filter(
-      (route) =>
-        route.label.toLowerCase().includes(q) ||
-        route.operationId.toLowerCase().includes(q) ||
-        route.category.toLowerCase().includes(q),
-    );
-  }, [query, routes]);
-
-  const grouped = useMemo(() => {
-    const buckets = new Map<string, TvDataRouteCatalogItem[]>();
-    for (const route of filtered) {
-      const key = route.category || "outros";
-      const list = buckets.get(key) ?? [];
-      list.push(route);
-      buckets.set(key, list);
-    }
-    const orderedKeys = [
-      ...CATEGORY_ORDER.filter((key) => buckets.has(key)),
-      ...[...buckets.keys()].filter((key) => !CATEGORY_ORDER.includes(key as (typeof CATEGORY_ORDER)[number])),
-    ];
-    return orderedKeys.map((key) => ({
-      key,
-      label: CATEGORY_LABELS[key] ?? key,
-      routes: buckets.get(key) ?? [],
-    }));
-  }, [filtered]);
 
   const slideFilters = config.dataFilters ?? {};
 
@@ -119,7 +108,6 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
     });
     addDataSourceBlock(block);
     setPickedRoute(null);
-    setQuery("");
     onInserted?.();
   }
 
@@ -196,35 +184,27 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
   return (
     <div className="td-data-routes-panel">
       <FieldLabel hint={TV_DASHBOARD_HELP_TOOLTIPS.data.catalogSearch}>Catálogo api-delpi</FieldLabel>
-      <input
-        type="search"
-        className="td-data-routes-panel__search"
-        placeholder="Buscar por nome ou categoria…"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
+      <DataRouteCatalogPanel
+        items={routes.map((route) => ({
+          id: route.operationId,
+          label: route.label,
+          category: route.category,
+          description: route.description,
+          path: route.path,
+          httpMethod: "GET",
+        }))}
+        onSelect={(item) => {
+          const route = routes.find((entry) => entry.operationId === item.id);
+          if (route) pickRoute(route);
+        }}
+        searchPlaceholder="Buscar por nome, path ou categoria…"
+        emptyMessage="Nenhuma rota encontrada."
+        loading={loading}
+        error={error}
+        categoryLabels={CATEGORY_LABELS}
+        categoryOrder={CATEGORY_ORDER}
+        renderCategoryIcon={(category) => <CategoryIcon category={category} />}
       />
-      {loading ? <p className="td-subtitle">Carregando catálogo…</p> : null}
-      {error ? <p className="td-error">{error}</p> : null}
-      <div className="td-data-route-groups td-data-route-groups--panel">
-        {grouped.map((group) => (
-          <section key={group.key} className="td-data-route-group">
-            <h3 className="td-data-route-group__title">
-              <CategoryIcon category={group.key} />
-              {group.label}
-            </h3>
-            <ul className="td-data-route-list">
-              {group.routes.map((route) => (
-                <li key={route.operationId}>
-                  <button type="button" className="td-data-route-list__item" onClick={() => pickRoute(route)}>
-                    <span className="td-data-route-list__label">{route.label}</span>
-                    <span className="td-data-route-list__meta">{route.operationId}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
     </div>
   );
 }

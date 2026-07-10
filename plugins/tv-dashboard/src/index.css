@@ -11,6 +11,17 @@
   --delpi-ui-text: var(--td-text);
   --delpi-ui-border: var(--td-border);
   --delpi-ui-muted: var(--td-muted);
+  /* Blocos de dados no palco do editor — tema claro/escuro do host */
+  --tdp-data-bg: var(--td-surface);
+  --tdp-data-surface: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
+  --tdp-data-source-bg: color-mix(in srgb, var(--td-accent) 6%, var(--td-surface));
+  --tdp-data-text: var(--td-text);
+  --tdp-data-text-strong: var(--td-text);
+  --tdp-data-muted: var(--td-muted);
+  --tdp-data-accent: var(--td-accent);
+  --tdp-data-accent-strong: var(--td-accent);
+  --tdp-data-border: var(--td-border);
+  --tdp-data-error: color-mix(in srgb, #b42318 85%, var(--td-text));
 }
 
 .dashboard-tv-dashboard.dashboard-page {
@@ -3340,6 +3351,24 @@
 .td-deck-inspector__meta {
   margin: 0;
   font-size: 12px;
+  color: var(--td-muted);
+}
+
+.td-deck-inspector__onboarding {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--td-accent) 35%, var(--td-border));
+  background: color-mix(in srgb, var(--td-accent) 6%, var(--td-surface));
+}
+
+.td-deck-inspector__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--td-muted);
 }
 

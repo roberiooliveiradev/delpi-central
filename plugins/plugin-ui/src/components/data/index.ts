@@ -71,6 +71,12 @@ export { buildDataTableSearchText } from "../../utils/dataTableSearch";
 export { useClientPagination } from "../../utils/useClientPagination";
 
 export {
+  DataRouteCatalogPanel,
+  type DataRouteCatalogItem,
+  type DataRouteCatalogPanelProps,
+} from "./DataRouteCatalogPanel";
+
+export {
   TableHeaderCell,
   TableHeaderContent,
   createDashboardTableHeaderCell,
