@@ -58,21 +58,24 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 ```bash
 cp infra/.env.dev.example infra/.env
 
-# Ver ordem de fases (core → remote → mfe → api → chat)
 ./infra/scripts/up-dev-sequential.sh --list
 
-# Subir sem rebuild (já buildado)
-./infra/scripts/up-dev-sequential.sh
-
-# Rebuild completo — seguro em máquinas ~8 GB RAM
-./infra/scripts/up-dev-sequential.sh --build
+# Deploy completo após git pull
+./infra/scripts/up-dev-sequential.sh --pull --build
 
 # Só infra + APIs
 ./infra/scripts/up-dev-sequential.sh --fase core --build
 
 # Module Federation: remote antes dos MFEs
 ./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
-./infra/scripts/up-dev-sequential.sh --fase mfe --build controle-retrabalhos dashboard-commercial
+./infra/scripts/up-dev-sequential.sh --fase mfe --build minha-delpi-chat dashboard-commercial
+
+# Todos os dashboards ou só *-production (aspas evitam expansão do shell)
+./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build 'dashboard-*'
+./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build '*-production'
+
+# Serviços pesados (LanguageTool + SearXNG — profile chat)
+./infra/scripts/up-dev-sequential.sh --heavy --build languagetool searxng
 
 # Simular comandos sem executar
 ./infra/scripts/up-dev-sequential.sh --dry-run --build --fase mfe dashboard-commercial
