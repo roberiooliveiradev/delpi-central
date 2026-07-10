@@ -245,5 +245,11 @@
         "userHint": "Não foi possível ler este .xls automaticamente. Salve como .xlsx."
       }
     }
+  },
+  "sourceCitation": {
+    "singleFile": "Com base no arquivo **{filename}** anexado nesta conversa.",
+    "multipleFiles": "Com base nos arquivos anexados: **{filenames}**.",
+    "maxFilenamesListed": 3,
+    "maxFilenamesStored": 5
   }
 }

@@ -46,6 +46,44 @@ class ChatAttachmentContentService:
         return ChatAssistantContentService.get(_BUNDLE, "unreadable", "body").strip()
 
     @classmethod
+    def source_citation_single(cls, *, filename: str) -> str:
+        return ChatAssistantContentService.format(
+            _BUNDLE,
+            "sourceCitation",
+            "singleFile",
+            filename=filename,
+        )
+
+    @classmethod
+    def source_citation_multiple(cls, *, filenames: str) -> str:
+        return ChatAssistantContentService.format(
+            _BUNDLE,
+            "sourceCitation",
+            "multipleFiles",
+            filenames=filenames,
+        )
+
+    @classmethod
+    def source_citation_max_filenames_listed(cls) -> int:
+        value = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "sourceCitation",
+            "maxFilenamesListed",
+        )
+
+        return int(value) if isinstance(value, int) and value > 0 else 3
+
+    @classmethod
+    def source_citation_max_filenames_stored(cls) -> int:
+        value = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "sourceCitation",
+            "maxFilenamesStored",
+        )
+
+        return int(value) if isinstance(value, int) and value > 0 else 5
+
+    @classmethod
     def large_file_block(cls) -> dict[str, Any]:
         node = ChatAssistantContentService.get_node(_BUNDLE, "largeFile")
 

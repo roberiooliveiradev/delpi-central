@@ -25,6 +25,18 @@ def test_follow_up_queries_mapped():
     assert queries.get("Resumir") == "resuma o conteúdo do arquivo anexado"
 
 
+def test_source_citation_templates_from_json():
+    single = ChatAttachmentContentService.source_citation_single(
+        filename="contrato.pdf",
+    )
+    multiple = ChatAttachmentContentService.source_citation_multiple(
+        filenames="a.pdf, b.pdf",
+    )
+
+    assert "**contrato.pdf**" in single
+    assert "**a.pdf, b.pdf**" in multiple
+
+
 def test_canvas_responses_load_from_attachments_json():
     disabled = ChatAttachmentContentService.canvas_text("disabled")
 

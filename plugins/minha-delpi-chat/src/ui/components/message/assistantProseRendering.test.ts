@@ -9,6 +9,8 @@ import {
   shouldRenderPresentationHeading,
   stripLeadingMarkdownTitleSafely,
   toolCallsForDrawingAnalysisDisplay,
+  shouldShowAttachmentSourceCitation,
+  resolveAttachmentSourceCitationMarkdown,
 } from "./assistantProseRendering";
 
 describe("assistantProseRendering", () => {
@@ -171,5 +173,33 @@ describe("assistantProseRendering", () => {
     expect(stripped[0].metadata?.renderPlan).toBeUndefined();
     expect(stripped[0].metadata?.suppressClientPresentation).toBe(true);
     expect(stripped[0].metadata?.path).toContain("/analyser");
+  });
+
+  it("oculta citação de anexo em turno de relatório de desenho", () => {
+    const metadata = {
+      drawingAnalysisMode: true,
+      drawingAnalysisExport: {
+        filename: "relatorio.md",
+        markdown: "## Relatório",
+      },
+      attachmentSourceCitation: {
+        note: "Com base no arquivo **90261877.pdf** anexado nesta conversa.",
+      },
+    };
+
+    expect(shouldShowAttachmentSourceCitation(metadata)).toBe(false);
+    expect(resolveAttachmentSourceCitationMarkdown(metadata)).toContain(
+      "90261877.pdf",
+    );
+  });
+
+  it("mantém citação de anexo fora de turno de desenho", () => {
+    expect(
+      shouldShowAttachmentSourceCitation({
+        attachmentSourceCitation: {
+          note: "Com base no arquivo **contrato.pdf** anexado nesta conversa.",
+        },
+      }),
+    ).toBe(true);
   });
 });

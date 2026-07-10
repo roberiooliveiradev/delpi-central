@@ -217,6 +217,42 @@ def test_l10_attachment_source_citation_metadata():
     assert case["expect_citation"] is bool(metadata.get("attachmentSourceCitation"))
 
 
+def test_attachment_source_citation_skipped_for_drawing_report():
+    from app.domain.services.chat_drawing_validation_orchestration_service import (
+        ChatDrawingValidationOrchestrationService,
+    )
+    from tests.unit.domain.services.test_external_action_result_presenter_analyser_humanized import (
+        _analyser_payload_with_guide_and_inspection,
+    )
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90261877",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "productCode": "90261877",
+            "revision": "01",
+            "legible": True,
+        },
+    )
+    report = ChatDrawingValidationOrchestrationService.format_report_markdown(package)
+    metadata: dict = {}
+
+    ChatAttachmentSourceCitationService.attach_to_assistant_metadata(
+        metadata,
+        attachments=[
+            {
+                "original_filename": "90261877.pdf",
+                "status": "indexed",
+            }
+        ],
+        answer=report,
+    )
+
+    assert metadata.get("attachmentSourceCitation") is None
+
+
 def test_canvas_follow_up_when_lousa_active():
     metadata: dict = {}
 

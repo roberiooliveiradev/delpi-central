@@ -55,6 +55,8 @@ import { resolveResponseModeEffectNotice } from "./responseModeEffectNotice";
 import {
   resolveAssistantDisplayContent,
   toolCallsForDrawingAnalysisDisplay,
+  resolveAttachmentSourceCitationMarkdown,
+  shouldShowAttachmentSourceCitation,
 } from "./assistantProseRendering";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatDrawingExportButtons } from "../../../export/ChatExportButtons";
@@ -1722,10 +1724,15 @@ export function ChatMessageList({
                     />
                   </>
                 ) : null}
-                {message.metadata?.attachmentSourceCitation?.note ? (
-                  <p className="mdc-chat-source-citation">
-                    {String(message.metadata.attachmentSourceCitation.note)}
-                  </p>
+                {shouldShowAttachmentSourceCitation(message.metadata) ? (
+                  <div className="mdc-chat-source-citation">
+                    <ChatMarkdown
+                      content={resolveAttachmentSourceCitationMarkdown(
+                        message.metadata,
+                      )}
+                      compact
+                    />
+                  </div>
                 ) : null}
                 {message.metadata?.drawingAnalysisExport?.markdown ? (
                   <ChatDrawingExportButtons

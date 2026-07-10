@@ -68,6 +68,27 @@ export function isDrawingAnalysisTurn(
   );
 }
 
+/** Citação de anexo indexado — markdown via ChatMarkdown, não texto cru. */
+export function resolveAttachmentSourceCitationMarkdown(
+  metadata?: ChatMessageMetadata | null,
+): string {
+  return String(metadata?.attachmentSourceCitation?.note || "").trim();
+}
+
+export function shouldShowAttachmentSourceCitation(
+  metadata?: ChatMessageMetadata | null,
+): boolean {
+  if (!resolveAttachmentSourceCitationMarkdown(metadata)) {
+    return false;
+  }
+
+  if (isDrawingAnalysisTurn(metadata)) {
+    return false;
+  }
+
+  return true;
+}
+
 /** Corpo principal do assistente em turnos de análise de desenho (relatório DELPI). */
 export function resolveAssistantDisplayContent(
   content: string,
