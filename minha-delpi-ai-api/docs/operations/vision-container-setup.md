@@ -52,6 +52,7 @@ Fusão multi-motor: `ChatPdfRegionOcrFusionService` — regiões gerais mesclam 
 | `CHAT_DOCUMENT_VISION_ENABLED` | `true` | Master switch visão |
 | `CHAT_DOCUMENT_VISION_BACKEND` | `auto` | `native`, `tesseract`, `docling`, `ollama_vlm`, … |
 | `CHAT_DOCUMENT_VISION_TESSERACT_LANG` | `por+eng` | Idiomas Tesseract |
+| `CHAT_EASYOCR_ENABLED` | `true` | `false` desliga EasyOCR (BOM e tentativa 5 usam só Tesseract) |
 
 ## Comandos
 

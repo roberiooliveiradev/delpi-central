@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+import os
 from typing import Any
 
 from app.domain.exceptions.vision_exceptions import VisionMemoryLimitedError
@@ -38,7 +39,15 @@ class ChatVisionMemoryGuardService:
         return ChatDocumentVisionContentService.memory_guard_easyocr_lazy_release()
 
     @classmethod
+    def easyocr_enabled(cls) -> bool:
+        raw = os.environ.get("CHAT_EASYOCR_ENABLED", "true").strip().lower()
+        return raw not in {"0", "false", "no", "off"}
+
+    @classmethod
     def can_use_easyocr(cls) -> bool:
+        if not cls.easyocr_enabled():
+            return False
+
         required = cls.min_available_mb_for_easyocr()
         available = cls.available_memory_mb()
 

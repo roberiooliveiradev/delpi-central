@@ -24,6 +24,20 @@ def test_filter_engines_drops_easyocr_when_memory_low(monkeypatch):
     assert filtered == ("tesseract",)
 
 
+def test_can_use_easyocr_false_when_disabled_by_env(monkeypatch):
+    monkeypatch.setenv("CHAT_EASYOCR_ENABLED", "false")
+    monkeypatch.setattr(
+        ChatVisionMemoryGuardService,
+        "available_memory_mb",
+        staticmethod(lambda: 8192),
+    )
+
+    assert not ChatVisionMemoryGuardService.can_use_easyocr()
+    assert ChatVisionMemoryGuardService.filter_engines_for_memory(
+        ("tesseract", "easyocr")
+    ) == ("tesseract",)
+
+
 def test_filter_engines_keeps_easyocr_when_memory_ok(monkeypatch):
     monkeypatch.setattr(
         ChatVisionMemoryGuardService,
