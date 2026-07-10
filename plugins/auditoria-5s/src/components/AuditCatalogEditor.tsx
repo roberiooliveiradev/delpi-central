@@ -46,16 +46,26 @@ export function AuditCatalogEditor({
             Nenhum critério neste senso. Adicione ao menos um antes de publicar.
           </p>
         ) : (
-          criteria.map((item, index) => (
-            <AuditCatalogCriterionRow
-              key={item.clientId}
-              item={item}
-              index={index + 1}
-              onChange={onChange}
-              onRemove={onRemove}
-              canRemove={criteria.length > 1}
-            />
-          ))
+          <>
+            <div className="a5s-catalog-senso__list-head" aria-hidden>
+              <span className="a5s-catalog-senso__list-head-cell a5s-catalog-senso__list-head-cell--index">
+                #
+              </span>
+              <span className="a5s-catalog-senso__list-head-cell">Código</span>
+              <span className="a5s-catalog-senso__list-head-cell">Descrição do critério</span>
+              <span className="a5s-catalog-senso__list-head-cell a5s-catalog-senso__list-head-cell--action" />
+            </div>
+            {criteria.map((item, index) => (
+              <AuditCatalogCriterionRow
+                key={item.clientId}
+                item={item}
+                index={index + 1}
+                onChange={onChange}
+                onRemove={onRemove}
+                canRemove={criteria.length > 1}
+              />
+            ))}
+          </>
         )}
       </div>
     </section>
