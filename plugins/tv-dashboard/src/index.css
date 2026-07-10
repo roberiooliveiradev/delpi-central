@@ -3339,6 +3339,19 @@
   gap: 12px;
 }
 
+.td-deck-inspector__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+  color: var(--td-text);
+  cursor: pointer;
+}
+
+.td-deck-inspector__checkbox input {
+  accent-color: var(--td-accent);
+}
+
 .td-deck-inspector__meta {
   margin: 0;
   font-size: 12px;
