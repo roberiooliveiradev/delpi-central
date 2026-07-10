@@ -450,7 +450,7 @@ export const AppHost = () => {
         const exposedModule = (app as any).exposedModule ?? "./App";
 
         const factory = await container.get(exposedModule);
-        const mod = factory?.();
+        const mod = await Promise.resolve(typeof factory === "function" ? factory() : factory);
 
         if (!mod?.mount) {
           throw new Error(`Módulo exposto "${exposedModule}" não possui mount().`);

@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
+import { federationReactProxyFixPlugin } from "../vite/federationReactProxyFix";
 import path from "node:path";
 
 import {
@@ -20,6 +21,7 @@ export default defineConfig({
       },
       shared: { ...FEDERATION_SHARED_REACT },
     }),
+    federationReactProxyFixPlugin(),
     react(),
   ],
   resolve: {

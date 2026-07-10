@@ -45,6 +45,12 @@ Gateway nginx
 
 **Shared singletons:** `react`, `react-dom`, `lucide-react`. O remote consome React do MFE pai via `importShared` — o MFE **deve** chamar `preparePluginUiRemote()` antes de carregar chunks do remote.
 
+### React 19 — patch obrigatório no build (`federationReactProxyFixPlugin`)
+
+O `@originjs/vite-plugin-federation@1.4.1` usa `Object.assign` em `flattenModule` (`__federation_fn_import*.js`), congelando `__CLIENT_INTERNALS.H` (dispatcher de hooks). Sintomas: **#321**, **`useRef` null** em recharts/zustand/dashboards, tela preta até F5.
+
+**Canônico:** `federationReactProxyFixPlugin()` em todo `vite.config.ts` federado (substitui `Object.assign` por `Proxy` — equivalente ao upstream PR #743). Regressão: após `vite build`, `grep Object.assign({},e.default,e) dist/assets/__federation_fn_import*.js` deve retornar vazio.
+
 Dependências pesadas (`mermaid`, `@xyflow/react`, `jspdf`, …) ficam **no bundle do remote**.
 
 ---

@@ -2,6 +2,7 @@ import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
+import { federationReactProxyFixPlugin } from "../vite/federationReactProxyFix";
 
 import {
   FEDERATION_SHARED_REACT,
@@ -17,6 +18,7 @@ export default defineConfig({
       remotes: pluginUiRemote(),
       shared: { ...FEDERATION_SHARED_REACT },
     }),
+    federationReactProxyFixPlugin(),
     react(),
   ],
   resolve: {

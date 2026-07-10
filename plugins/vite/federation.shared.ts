@@ -11,6 +11,8 @@ export const PLUGIN_UI_REMOTE_ENTRY = "/apps/plugin-ui/assets/remoteEntry.js";
 /** Porta padrão do `vite dev` do plugin-ui local. */
 export const PLUGIN_UI_DEV_PORT = 5010;
 
+export { federationReactProxyFixPlugin } from "./federationReactProxyFix";
+
 /** URL do remoteEntry em dev local (plugin-ui rodando com npm run dev). */
 export const PLUGIN_UI_DEV_REMOTE_ENTRY = `http://localhost:${PLUGIN_UI_DEV_PORT}/apps/plugin-ui/assets/remoteEntry.js`;
 

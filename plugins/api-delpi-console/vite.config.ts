@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
+import { federationReactProxyFixPlugin } from "../vite/federationReactProxyFix";
 
 export default defineConfig({
   plugins: [
@@ -13,6 +14,7 @@ export default defineConfig({
       },
       shared: ["react", "react-dom"],
     }),
+    federationReactProxyFixPlugin(),
   ],
   base: "/apps/api-delpi-console/",
   build: {
