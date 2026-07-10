@@ -112,3 +112,81 @@ export function buildThemeColorGrid(baseColors: readonly string[]): string[][] {
 export function colorsEqual(a: ColorValue, b: ColorValue): boolean {
   return normalizeHex(a.hex) === normalizeHex(b.hex) && Math.abs(a.alpha - b.alpha) < 0.01;
 }
+
+export type HsvColor = { h: number; s: number; v: number };
+
+export function rgbToHsv(r: number, g: number, b: number): HsvColor {
+  const rn = clampByte(r) / 255;
+  const gn = clampByte(g) / 255;
+  const bn = clampByte(b) / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    switch (max) {
+      case rn:
+        h = ((gn - bn) / d + (gn < bn ? 6 : 0)) * 60;
+        break;
+      case gn:
+        h = ((bn - rn) / d + 2) * 60;
+        break;
+      default:
+        h = ((rn - gn) / d + 4) * 60;
+        break;
+    }
+  }
+  const s = max === 0 ? 0 : d / max;
+  return { h, s, v: max };
+}
+
+export function hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b: number } {
+  const hh = ((h % 360) + 360) % 360;
+  const sat = Math.min(1, Math.max(0, s));
+  const val = Math.min(1, Math.max(0, v));
+  const c = val * sat;
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+  const m = val - c;
+  let rp = 0;
+  let gp = 0;
+  let bp = 0;
+  if (hh < 60) {
+    rp = c;
+    gp = x;
+  } else if (hh < 120) {
+    rp = x;
+    gp = c;
+  } else if (hh < 180) {
+    gp = c;
+    bp = x;
+  } else if (hh < 240) {
+    gp = x;
+    bp = c;
+  } else if (hh < 300) {
+    rp = x;
+    bp = c;
+  } else {
+    rp = c;
+    bp = x;
+  }
+  return {
+    r: clampByte((rp + m) * 255),
+    g: clampByte((gp + m) * 255),
+    b: clampByte((bp + m) * 255),
+  };
+}
+
+export function colorValueToHsv(color: ColorValue): HsvColor {
+  const { r, g, b } = hexToRgb(color.hex);
+  return rgbToHsv(r, g, b);
+}
+
+export function hsvToColorValue(hsv: HsvColor, alpha: number): ColorValue {
+  const { r, g, b } = hsvToRgb(hsv.h, hsv.s, hsv.v);
+  return { hex: rgbToHex(r, g, b), alpha: clampAlpha(alpha) };
+}
+
+export function hueToHex(h: number): string {
+  const { r, g, b } = hsvToRgb(h, 1, 1);
+  return rgbToHex(r, g, b);
+}

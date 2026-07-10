@@ -4,6 +4,8 @@ import {
   buildThemeColorGrid,
   colorToCss,
   cssToColorValue,
+  hsvToColorValue,
+  colorValueToHsv,
   normalizeHex,
   parseHexColor,
   rgbToHex,
@@ -34,5 +36,11 @@ describe("shape colorUtils", () => {
     const grid = buildThemeColorGrid(DELPI_THEME_BASE_COLORS);
     expect(grid).toHaveLength(6);
     expect(grid[0]).toHaveLength(10);
+  });
+
+  it("converte rgb ↔ hsv sem perder a cor", () => {
+    const original = { hex: "#156082", alpha: 1 };
+    const roundtrip = hsvToColorValue(colorValueToHsv(original), original.alpha);
+    expect(roundtrip.hex).toBe(original.hex);
   });
 });

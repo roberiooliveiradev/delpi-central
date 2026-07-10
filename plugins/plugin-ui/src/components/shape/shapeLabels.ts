@@ -36,6 +36,7 @@ export const DEFAULT_SHAPE_COLOR_LABELS: Required<ShapeColorLabels> = {
   blue: "Azul",
   hex: "Hex",
   transparency: "Transparência",
+  colorModel: "Modelo de Cores:",
   ok: "OK",
   cancel: "Cancelar",
 };

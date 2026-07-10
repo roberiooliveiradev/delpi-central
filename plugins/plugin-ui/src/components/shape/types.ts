@@ -61,6 +61,7 @@ export type ShapeColorLabels = {
   blue?: string;
   hex?: string;
   transparency?: string;
+  colorModel?: string;
   ok?: string;
   cancel?: string;
 };
