@@ -134,12 +134,44 @@ def _build_table_columns(meta: dict[str, Any], rows: list[dict[str, Any]]) -> li
     return []
 
 
+def _series_to_table_rows(
+    data: Any,
+    series_field: str | None,
+    *,
+    branch: str | None = None,
+    max_rows: int,
+    value_label: str | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    """Converte pontos de série temporal em linhas tabulares (ex.: OTD/OEE)."""
+    points = _extract_series(data, series_field, branch=branch)
+    rows: list[dict[str, Any]] = []
+    for point in points[:max_rows]:
+        label = point.get("label")
+        rows.append(
+            {
+                "label": label,
+                "periodo": label,
+                "value": point.get("value"),
+            }
+        )
+    if not rows:
+        return [], []
+    columns = [
+        {"key": "periodo", "label": "Período"},
+        {"key": "value", "label": value_label or "Valor"},
+    ]
+    return rows, columns
+
+
 def _extract_table_rows(
     data: Any,
     table_field: str | None,
     max_rows: int,
     *,
     meta: dict[str, Any] | None = None,
+    series_field: str | None = None,
+    branch: str | None = None,
+    value_label: str | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     raw_rows = _list_from_data(data, table_field)
     rows: list[dict[str, Any]] = []
@@ -147,6 +179,19 @@ def _extract_table_rows(
         if isinstance(row, dict):
             rows.append(dict(row))
     columns = _build_table_columns(meta or {}, rows)
+    if rows:
+        return rows, columns
+
+    series_rows, series_columns = _series_to_table_rows(
+        data,
+        series_field,
+        branch=branch,
+        max_rows=max_rows,
+        value_label=value_label,
+    )
+    if series_rows:
+        return series_rows, series_columns
+
     return rows, columns
 
 
@@ -280,6 +325,9 @@ class ComunicadoDataEnrichmentService:
             route_info.get("tableFields"),
             max_rows,
             meta=meta,
+            series_field=route_info.get("seriesField"),
+            branch=branch_str,
+            value_label=label,
         )
         if not rows:
             scalar = _extract_scalar_value(data, value_fields)

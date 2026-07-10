@@ -297,6 +297,52 @@ def test_enrich_series_route_as_kpi_uses_last_point():
     assert enriched[0]["resolved"]["kpi"]["value"] == 75.5
 
 
+def test_enrich_data_source_resolves_series_as_table_rows():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_otd_series", "shape": "scalar"},
+        "data": {
+            "points": [
+                {"periodo": "2026-07-01", "otd_filial_01": 88.0, "otd_filial_02": 72.0},
+                {"periodo": "2026-07-02", "otd_filial_01": 90.5, "otd_filial_02": 74.0},
+            ]
+        },
+        "route": {
+            "label": "OTD — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_otd_series",
+                "params": {"branch": "01", "periodDays": 30},
+                "displayMode": "auto",
+            },
+        },
+        {
+            "id": "tbl-1",
+            "type": "table_view",
+            "dataSourceId": "src-1",
+            "tablePreset": "standard",
+            "maxRows": 3,
+        },
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    table_rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(table_rows) == 2
+    assert table_rows[0]["periodo"] == "2026-07-01"
+    assert table_rows[0]["value"] == 88.0
+    assert enriched[1]["resolved"]["table"]["rows"][0]["value"] == 88.0
+
+
 def test_enrich_honors_value_field_override():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()
