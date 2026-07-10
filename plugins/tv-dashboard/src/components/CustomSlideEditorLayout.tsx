@@ -41,10 +41,10 @@ export function CustomSlideEditorLayout({
   );
 
   const slideTabExtra = (
-    <>
+    <div className="td-deck-settings-tools-row">
       <ComunicadoSlideTemplatesPanel compact />
       <SlideDataFiltersPanel branchScope={chromeProps.branchScope} compact />
-    </>
+    </div>
   );
 
   const chromeWithSlideExtras = { ...chromeProps, slideTabExtra };

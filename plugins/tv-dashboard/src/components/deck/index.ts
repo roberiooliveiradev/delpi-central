@@ -4,7 +4,8 @@ export { ComunicadoSlideBackgroundPanel } from "./ComunicadoSlideBackgroundPanel
 export { ComunicadoSlideBackgroundRibbon } from "./ComunicadoSlideBackgroundRibbon";
 export { DeckActionRow } from "./DeckActionRow";
 export { DeckElementSidePanel } from "./DeckElementSidePanel";
-export { DeckField } from "./DeckField";
+export { DeckIconField } from "./DeckIconField";
+export { DeckSettingsAccordion } from "./DeckSettingsAccordion";
 export { DeckInspectorLayout } from "./DeckInspectorLayout";
 export { DeckPropertySection } from "./DeckPropertySection";
 export { DeckHistoryTabActions } from "./DeckHistoryTabActions";

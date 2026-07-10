@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { ArrowLeftRight, Building2, CalendarRange, Globe, LayoutTemplate, Timer, Type } from "lucide-react";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BranchField } from "./BranchField";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
+import { DeckIconField } from "./deck/DeckIconField";
 import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
 
 type Props = {
@@ -130,54 +132,108 @@ export function DeckSettingsPanel({
 
   if (activeTab === "slide" && slide) {
     return (
-      <div className="td-deck-settings-strip">
-        <div className="td-deck-tabs__grid">
-          <TdNativeTextField
-            id="td-slide-title"
-            label="Título"
-            hint={F.slideTitle}
-            value={title}
-            onChange={setTitle}
-            onBlur={() => saveSlidePatch({ title })}
-          />
-          <TdNativeTextField
-            id="td-slide-duration"
-            label="Duração (s)"
-            hint={F.slideDuration}
-            type="number"
-            min={5}
-            max={600}
-            value={String(durationSec)}
-            onChange={(value) => setDurationSec(Number(value))}
-            onBlur={() => saveSlidePatch({ durationSec })}
-          />
-          <TdNativeSelectField
-            id="td-slide-transition"
-            label="Transição desta tela"
-            hint={F.slideTransition}
-            value={transitionStyle}
-            onChange={(value) => {
-              setTransitionStyle(value);
-              saveSlidePatch({ transitionStyle: value });
-            }}
-            options={SLIDE_TRANSITION_OPTIONS}
-          />
-          {slide.slideType === "external" ? (
+      <div className="td-deck-settings-strip td-deck-settings-strip--slide">
+        <div className="td-deck-tabs__grid td-deck-tabs__grid--icon-fields">
+          <DeckIconField id="td-slide-title" icon={Type} label="Título" hint={F.slideTitle}>
             <TdNativeTextField
-              id="td-slide-url"
-              label="URL (https://)"
-              hint={F.slideUrl}
-              className="td-deck-tabs__field--wide"
-              value={externalUrl}
-              onChange={setExternalUrl}
-              onBlur={() => saveSlidePatch({ externalUrl })}
+              id="td-slide-title"
+              label=""
+              value={title}
+              onChange={setTitle}
+              onBlur={() => saveSlidePatch({ title })}
             />
+          </DeckIconField>
+          <DeckIconField
+            id="td-slide-duration"
+            icon={Timer}
+            label="Duração"
+            hint={F.slideDuration}
+            className="td-deck-icon-field--narrow"
+          >
+            <TdNativeTextField
+              id="td-slide-duration"
+              label=""
+              type="number"
+              min={5}
+              max={600}
+              value={String(durationSec)}
+              onChange={(value) => setDurationSec(Number(value))}
+              onBlur={() => saveSlidePatch({ durationSec })}
+            />
+          </DeckIconField>
+          <DeckIconField
+            id="td-slide-transition"
+            icon={ArrowLeftRight}
+            label="Transição"
+            hint={F.slideTransition}
+            className="td-deck-icon-field--medium"
+          >
+            <TdNativeSelectField
+              id="td-slide-transition"
+              label=""
+              value={transitionStyle}
+              onChange={(value) => {
+                setTransitionStyle(value);
+                saveSlidePatch({ transitionStyle: value });
+              }}
+              options={SLIDE_TRANSITION_OPTIONS}
+            />
+          </DeckIconField>
+          {slide.slideType === "external" ? (
+            <DeckIconField
+              id="td-slide-url"
+              icon={Globe}
+              label="URL"
+              hint={F.slideUrl}
+              className="td-deck-icon-field--wide"
+            >
+              <TdNativeTextField
+                id="td-slide-url"
+                label=""
+                className="td-deck-tabs__field--wide"
+                value={externalUrl}
+                onChange={setExternalUrl}
+                onBlur={() => saveSlidePatch({ externalUrl })}
+              />
+            </DeckIconField>
           ) : !isCustomSlide && slide.nativeScreenKey !== "supplies_stock_value" ? (
             <>
+              <DeckIconField icon={Building2} label="Filial" hint={F.slideBranch}>
+                <BranchField
+                  id="td-slide-branch"
+                  label=""
+                  scope={branchScope}
+                  value={branch}
+                  onChange={(value) => {
+                    setBranch(value);
+                    saveSlidePatch({ branch: value });
+                  }}
+                />
+              </DeckIconField>
+              <DeckIconField
+                id="td-slide-period"
+                icon={CalendarRange}
+                label="Período"
+                hint={F.slidePeriod}
+                className="td-deck-icon-field--narrow"
+              >
+                <TdNativeTextField
+                  id="td-slide-period"
+                  label=""
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={String(periodDays)}
+                  onChange={(value) => setPeriodDays(Number(value))}
+                  onBlur={() => saveSlidePatch({ periodDays })}
+                />
+              </DeckIconField>
+            </>
+          ) : !isCustomSlide ? (
+            <DeckIconField icon={Building2} label="Filial" hint={F.slideBranch}>
               <BranchField
-                id="td-slide-branch"
-                label="Filial (opcional)"
-                hint={F.slideBranch}
+                id="td-slide-branch-stock"
+                label=""
                 scope={branchScope}
                 value={branch}
                 onChange={(value) => {
@@ -185,36 +241,16 @@ export function DeckSettingsPanel({
                   saveSlidePatch({ branch: value });
                 }}
               />
-              <TdNativeTextField
-                id="td-slide-period"
-                label="Período (dias)"
-                hint={F.slidePeriod}
-                type="number"
-                min={1}
-                max={365}
-                value={String(periodDays)}
-                onChange={(value) => setPeriodDays(Number(value))}
-                onBlur={() => saveSlidePatch({ periodDays })}
-              />
-            </>
-          ) : !isCustomSlide ? (
-            <BranchField
-              id="td-slide-branch-stock"
-              label="Filial (opcional)"
-              hint={F.slideBranch}
-              scope={branchScope}
-              value={branch}
-              onChange={(value) => {
-                setBranch(value);
-                saveSlidePatch({ branch: value });
-              }}
-            />
+            </DeckIconField>
           ) : null}
           {catalogItem ? (
-            <p className="td-subtitle td-deck-tabs__meta">Tipo: {catalogItem.label}</p>
+            <span className="td-deck-settings-chip" title={`Tipo: ${catalogItem.label}`}>
+              <LayoutTemplate size={13} aria-hidden="true" />
+              {catalogItem.label}
+            </span>
           ) : null}
         </div>
-        {slideTabExtra}
+        {slideTabExtra ? <div className="td-deck-settings-strip__tools">{slideTabExtra}</div> : null}
       </div>
     );
   }

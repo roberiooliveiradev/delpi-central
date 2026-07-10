@@ -1,6 +1,5 @@
-import { useLayoutEffect, useState, type CSSProperties, type RefObject } from "react";
-import { createPortal } from "react-dom";
-import { HintAction } from "@delpi/plugin-ui/index";
+import { useRef } from "react";
+import { AnchoredPanelPortal, HintAction } from "@delpi/plugin-ui/index";
 import {
   COMUNICADO_SHAPE_CATALOG_CATEGORIES,
   ComunicadoShapePreview,
@@ -14,39 +13,24 @@ import { readRecentComunicadoShapes } from "../utils/comunicadoRecentShapes";
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 type Props = {
-  anchorRef: RefObject<HTMLDivElement | null>;
+  open: boolean;
+  anchorRef: React.RefObject<HTMLDivElement | null>;
   onSelect: (kind: ComunicadoShapeKind) => void;
 };
 
-export function ComunicadoShapeLibraryMenu({ anchorRef, onSelect }: Props) {
-  const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
+export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
   const recent = readRecentComunicadoShapes();
 
-  useLayoutEffect(() => {
-    const anchor = anchorRef.current;
-    if (!anchor) return;
-
-    const rect = anchor.getBoundingClientRect();
-    const panelWidth = 360;
-    const left = Math.min(Math.max(8, rect.left), window.innerWidth - panelWidth - 8);
-
-    setStyle({
-      position: "fixed",
-      top: rect.bottom + 4,
-      left,
-      width: panelWidth,
-      maxHeight: "min(70vh, 520px)",
-      zIndex: 5000,
-      visibility: "visible",
-    });
-  }, [anchorRef]);
-
-  return createPortal(
-    <div
+  return (
+    <AnchoredPanelPortal
+      open={open}
+      anchorRef={anchorRef}
+      panelRef={panelRef}
+      variant="bare"
       className="td-shape-library td-shape-library--portal"
       role="menu"
       aria-label="Biblioteca de formas"
-      style={style}
     >
       {recent.length ? (
         <section className="td-shape-library__section">
@@ -69,8 +53,7 @@ export function ComunicadoShapeLibraryMenu({ anchorRef, onSelect }: Props) {
           </div>
         </section>
       ))}
-    </div>,
-    document.body,
+    </AnchoredPanelPortal>
   );
 }
 

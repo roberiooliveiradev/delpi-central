@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { BranchField } from "./BranchField";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { DeckSettingsAccordion } from "./deck/DeckSettingsAccordion";
 
 type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
 
@@ -23,7 +23,7 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
   }, []);
 
-  const schema = mergeParamSchemas(routes);
+  const schema = useMemo(() => mergeParamSchemas(routes), [routes]);
 
   function updateFilter(key: string, raw: string | number) {
     const next = { ...filters };
@@ -35,8 +35,12 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
 
   if (Object.keys(schema).length === 0) return null;
 
-  return (
-    <DeckPropertySection title="Filtros do slide" hint="Aplicam-se a todos os blocos de dados deste slide." compact={compact}>
+  const body = (
+    <DeckPropertySection
+      title="Filtros do slide"
+      hint="Aplicam-se a todos os blocos de dados deste slide."
+      compact={compact}
+    >
       {Object.entries(schema).map(([key, field]) =>
         key === "branch" ? (
           <BranchField
@@ -61,6 +65,16 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
       )}
     </DeckPropertySection>
   );
+
+  if (compact) {
+    return (
+      <DeckSettingsAccordion summary="Filtros" ariaLabel="Filtros de dados do slide">
+        {body}
+      </DeckSettingsAccordion>
+    );
+  }
+
+  return body;
 }
 
 function mergeParamSchemas(routes: TvDataRouteCatalogItem[]): ParamSchema {

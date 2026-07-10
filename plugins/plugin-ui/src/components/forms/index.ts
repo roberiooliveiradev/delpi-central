@@ -154,6 +154,12 @@ export {
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
 
 export {
+  LucideIconGridPanel,
+  type LucideIconGridItem,
+  type LucideIconGridPanelProps,
+} from "./LucideIconGridPanel";
+
+export {
   LucideIconPicker,
   LucideIconByName,
   type LucideIconByNameProps,

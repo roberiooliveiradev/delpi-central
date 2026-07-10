@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { BarChart3, Heading, Image as ImageIcon, Shapes, Sparkles, Text, Video } from "lucide-react";
-import type { ComunicadoShapeKind } from "@delpi/tv-dashboard-presentation";
+import { AnchoredPanelPortal, LucideIconGridPanel } from "@delpi/plugin-ui/index";
+import { COMUNICADO_ICON_OPTIONS, type ComunicadoShapeKind } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { DataRoutePickerModal } from "./DataRoutePickerModal";
-import { ComunicadoIconLibraryMenu } from "./ComunicadoIconLibraryMenu";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -27,6 +27,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   } = useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
   const iconAnchorRef = useRef<HTMLDivElement>(null);
+  const iconPanelRef = useRef<HTMLDivElement>(null);
   const [dataPickerOpen, setDataPickerOpen] = useState(false);
   const [iconMenuOpen, setIconMenuOpen] = useState(false);
 
@@ -36,7 +37,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node;
       if (shapeAnchorRef.current?.contains(target) || iconAnchorRef.current?.contains(target)) return;
-      if ((target as HTMLElement).closest?.(".td-shape-library--portal")) return;
+      if ((target as HTMLElement).closest?.(".td-shape-library--portal, .delpi-ui-lucide-icon-grid")) return;
       setShapeMenuOpen(false);
       setIconMenuOpen(false);
     }
@@ -101,7 +102,11 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               }}
             />
             {shapeMenuOpen ? (
-              <ComunicadoShapeLibraryMenu anchorRef={shapeAnchorRef} onSelect={insertShape} />
+              <ComunicadoShapeLibraryMenu
+                open={shapeMenuOpen}
+                anchorRef={shapeAnchorRef}
+                onSelect={insertShape}
+              />
             ) : null}
           </div>
           <div ref={iconAnchorRef} className="td-composer__dropdown">
@@ -116,13 +121,28 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               }}
             />
             {iconMenuOpen ? (
-              <ComunicadoIconLibraryMenu
+              <AnchoredPanelPortal
+                open={iconMenuOpen}
                 anchorRef={iconAnchorRef}
-                onSelect={(name) => {
-                  addIconBlock(name);
-                  setIconMenuOpen(false);
-                }}
-              />
+                panelRef={iconPanelRef}
+                variant="bare"
+                className="td-icon-library-portal"
+                role="menu"
+                aria-label="Biblioteca de ícones"
+              >
+                <LucideIconGridPanel
+                  title="Ícones"
+                  items={COMUNICADO_ICON_OPTIONS.map((item) => ({
+                    name: item.name,
+                    label: item.label,
+                    hint: `${H.insertIcon} — ${item.label}`,
+                  }))}
+                  onSelect={(name) => {
+                    addIconBlock(name);
+                    setIconMenuOpen(false);
+                  }}
+                />
+              </AnchoredPanelPortal>
             ) : null}
           </div>
         </div>

@@ -359,6 +359,67 @@
   color: var(--lucide-picker-muted);
 }
 
+/* Grade compacta (ribbon / popover) */
+.delpi-ui-lucide-icon-grid {
+  --lucide-picker-surface: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --lucide-picker-text: var(--delpi-ui-text, var(--text, #0f172a));
+  --lucide-picker-muted: var(--delpi-ui-muted, var(--text-muted, #64748b));
+  --lucide-picker-border: var(--delpi-ui-border, var(--border, #d8e1e9));
+  --lucide-picker-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: var(--lucide-picker-text);
+}
+
+.delpi-ui-lucide-icon-grid__title {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lucide-picker-muted);
+}
+
+.delpi-ui-lucide-icon-grid__items {
+  display: grid;
+  gap: 4px;
+}
+
+.delpi-ui-lucide-icon-grid__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.delpi-ui-lucide-icon-grid__item:hover {
+  border-color: color-mix(in srgb, var(--lucide-picker-accent) 25%, var(--lucide-picker-border));
+  background: color-mix(in srgb, var(--lucide-picker-accent) 8%, transparent);
+}
+
+.delpi-ui-lucide-icon-grid__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: var(--lucide-picker-text);
+}
+
+.delpi-ui-lucide-icon-grid__label {
+  max-width: 100%;
+  font-size: 9px;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--lucide-picker-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .delpi-ui-lucide-icon-picker__hint {
   margin: 0;
   font-size: 0.78rem;
