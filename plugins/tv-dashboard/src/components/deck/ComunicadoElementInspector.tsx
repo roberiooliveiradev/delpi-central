@@ -1,6 +1,19 @@
 import { ArrowDown, ArrowUp, FolderOpen, Trash2, Upload } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui/index";
-import { isDataBlockType } from "@delpi/tv-dashboard-presentation";
+import {
+  BLOCK_ENTRANCE_DELAY_MAX_MS,
+  BLOCK_ENTRANCE_DELAY_MIN_MS,
+  BLOCK_ENTRANCE_DELAY_STEP_MS,
+  BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
+  BLOCK_ENTRANCE_DURATION_MAX_MS,
+  BLOCK_ENTRANCE_DURATION_MIN_MS,
+  BLOCK_ENTRANCE_DURATION_STEP_MS,
+  BLOCK_ENTRANCE_PRESET_OPTIONS,
+  entranceAnimationFromPreset,
+  entrancePresetValue,
+  isDataBlockType,
+  resolveEntranceAnimation,
+} from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
 
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
@@ -144,6 +157,79 @@ export function ComunicadoElementInspector({
         <div id="td-comunicado-crop-panel">
           <ComunicadoImageCropPanel />
         </div>
+      ) : null}
+
+      {!multiSelect ? (
+        <DeckPropertySection title="Animação de entrada" hint={E.entranceAnimation}>
+          <DeckField id="td-entrance-kind" label="Efeito" hint={E.entranceAnimation}>
+            <select
+              id="td-entrance-kind"
+              value={entrancePresetValue(resolveEntranceAnimation(selected.animations))}
+              onChange={(e) => {
+                const entrance = resolveEntranceAnimation(selected.animations);
+                updateSelected({
+                  animations: entranceAnimationFromPreset(e.target.value, {
+                    delayMs: entrance?.delayMs ?? 0,
+                    durationMs: entrance?.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
+                  }),
+                } as Partial<typeof selected>);
+              }}
+            >
+              {BLOCK_ENTRANCE_PRESET_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </DeckField>
+          {resolveEntranceAnimation(selected.animations) ? (
+            <>
+              <DeckField id="td-entrance-delay" label="Atraso (ms)" hint={E.entranceDelay}>
+                <input
+                  id="td-entrance-delay"
+                  type="number"
+                  min={BLOCK_ENTRANCE_DELAY_MIN_MS}
+                  max={BLOCK_ENTRANCE_DELAY_MAX_MS}
+                  step={BLOCK_ENTRANCE_DELAY_STEP_MS}
+                  value={resolveEntranceAnimation(selected.animations)?.delayMs ?? 0}
+                  onChange={(e) => {
+                    const entrance = resolveEntranceAnimation(selected.animations);
+                    if (!entrance) return;
+                    updateSelected({
+                      animations: entranceAnimationFromPreset(entrancePresetValue(entrance), {
+                        delayMs: Number(e.target.value),
+                        durationMs: entrance.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
+                      }),
+                    } as Partial<typeof selected>);
+                  }}
+                />
+              </DeckField>
+              <DeckField id="td-entrance-duration" label="Duração (ms)" hint={E.entranceDuration}>
+                <input
+                  id="td-entrance-duration"
+                  type="number"
+                  min={BLOCK_ENTRANCE_DURATION_MIN_MS}
+                  max={BLOCK_ENTRANCE_DURATION_MAX_MS}
+                  step={BLOCK_ENTRANCE_DURATION_STEP_MS}
+                  value={
+                    resolveEntranceAnimation(selected.animations)?.durationMs ??
+                    BLOCK_ENTRANCE_DURATION_DEFAULT_MS
+                  }
+                  onChange={(e) => {
+                    const entrance = resolveEntranceAnimation(selected.animations);
+                    if (!entrance) return;
+                    updateSelected({
+                      animations: entranceAnimationFromPreset(entrancePresetValue(entrance), {
+                        delayMs: entrance.delayMs ?? 0,
+                        durationMs: Number(e.target.value),
+                      }),
+                    } as Partial<typeof selected>);
+                  }}
+                />
+              </DeckField>
+            </>
+          ) : null}
+        </DeckPropertySection>
       ) : null}
 
       {!multiSelect ? (

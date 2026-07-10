@@ -71,6 +71,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     layerUp: "Move o elemento uma camada acima, sobrepondo os demais.",
     layerDown: "Envia o elemento uma camada abaixo, atrás dos demais.",
     remove: "Remove o elemento selecionado do slide.",
+    entranceAnimation:
+      "Efeito de entrada na TV quando o slide aparece (fade ou deslizar). Não anima no palco do editor.",
+    entranceDelay: "Atraso em milissegundos antes do elemento entrar na tela.",
+    entranceDuration: "Duração da animação de entrada em milissegundos.",
     uploadMedia: "Substitui a imagem ou vídeo do elemento pelo arquivo enviado.",
     backgroundColor: "Cor sólida de fundo do slide personalizado.",
     uploadBackground: "Imagem de fundo em tela cheia. Substitui a cor quando definida.",

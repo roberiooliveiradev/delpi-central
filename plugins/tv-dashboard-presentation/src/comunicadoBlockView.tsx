@@ -2,6 +2,10 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoIconGraphic } from "./comunicadoIconView";
 import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
+import {
+  blockEntranceAnimationClass,
+  blockEntranceAnimationStyle,
+} from "./comunicadoBlockAnimations";
 import { comunicadoImageCropCssProperties } from "./comunicadoImageCrop";
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 import { blockCssStyle, comunicadoTextInnerStyle, isDataBlockType } from "./comunicadoHelpers";
@@ -149,7 +153,7 @@ export function ComunicadoBlockView({
   embedded = false,
   dataLoading = false,
 }: Props) {
-  const style = embedded
+  const baseStyle = embedded
     ? {
         ...blockCssStyle(block, { fontScale }),
         position: "relative" as const,
@@ -159,7 +163,17 @@ export function ComunicadoBlockView({
         height: "100%",
       }
     : blockCssStyle(block, { fontScale });
-  const blockClass = `tdp-comunicado__block tdp-comunicado__block--${block.type}${className ? ` ${className}` : ""}`;
+  const animClass = blockEntranceAnimationClass(block.animations);
+  const style: CSSProperties = { ...baseStyle, ...blockEntranceAnimationStyle(block.animations) };
+  const blockClass = (extra = "") =>
+    [
+      `tdp-comunicado__block tdp-comunicado__block--${block.type}`,
+      animClass,
+      className,
+      extra,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   if (block.type === "heading") {
     const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
@@ -167,7 +181,7 @@ export function ComunicadoBlockView({
       <ComunicadoTextRunsView block={block} as="h1" baseStyle={innerStyle} fontScale={fontScale} />
     );
     return (
-      <div className={`${blockClass} tdp-comunicado__block--heading`} style={style}>
+      <div className={blockClass("tdp-comunicado__block--heading")} style={style}>
         {wrapWithLink(content, block)}
       </div>
     );
@@ -179,7 +193,7 @@ export function ComunicadoBlockView({
       <ComunicadoTextRunsView block={block} as="p" baseStyle={innerStyle} fontScale={fontScale} />
     );
     return (
-      <div className={`${blockClass} tdp-comunicado__block--text`} style={style}>
+      <div className={blockClass("tdp-comunicado__block--text")} style={style}>
         {wrapWithLink(content, block)}
       </div>
     );
@@ -197,7 +211,7 @@ export function ComunicadoBlockView({
       <ComunicadoMediaPlaceholder kind="image" />
     );
     return (
-      <div className={`${blockClass} tdp-comunicado__block--media`} style={style}>
+      <div className={blockClass("tdp-comunicado__block--media")} style={style}>
         {wrapWithLink(media, block)}
       </div>
     );
@@ -217,7 +231,7 @@ export function ComunicadoBlockView({
       <ComunicadoMediaPlaceholder kind="video" />
     );
     return (
-      <div className={`${blockClass} tdp-comunicado__block--media`} style={style}>
+      <div className={blockClass("tdp-comunicado__block--media")} style={style}>
         {wrapWithLink(media, block)}
       </div>
     );
@@ -235,7 +249,7 @@ export function ComunicadoBlockView({
       </>
     );
     return (
-      <div className={`${blockClass} tdp-comunicado__block--shape`} style={style}>
+      <div className={blockClass("tdp-comunicado__block--shape")} style={style}>
         {wrapWithLink(shapeContent, block)}
       </div>
     );
@@ -244,7 +258,7 @@ export function ComunicadoBlockView({
   if (block.type === "icon") {
     const iconNode = <ComunicadoIconGraphic block={block} />;
     return (
-      <div className={`${blockClass} tdp-comunicado__block--icon`} style={style}>
+      <div className={blockClass("tdp-comunicado__block--icon")} style={style}>
         {wrapWithLink(iconNode, block)}
       </div>
     );
@@ -252,7 +266,7 @@ export function ComunicadoBlockView({
 
   if (isDataBlockType(block.type)) {
     return (
-      <div className={`${blockClass} tdp-comunicado__block--data`} style={style}>
+      <div className={blockClass("tdp-comunicado__block--data")} style={style}>
         <TvDataBlockView
           block={block as ComunicadoDataBlock}
           interactive={interactive}

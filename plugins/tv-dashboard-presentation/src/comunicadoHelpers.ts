@@ -6,6 +6,10 @@ import {
   syncTextBlockFields,
 } from "./comunicadoContentRuns";
 import { normalizeComunicadoImageCrop } from "./comunicadoImageCrop";
+import {
+  normalizeBlockAnimations,
+  serializeBlockAnimations,
+} from "./comunicadoBlockAnimations";
 import type {
   ComunicadoBackground,
   ComunicadoBlock,
@@ -311,6 +315,8 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     style: block.style ?? {},
   };
   if (block.groupId) base.groupId = block.groupId;
+  const serializedAnimations = serializeBlockAnimations(block.animations);
+  if (serializedAnimations) base.animations = serializedAnimations;
   if (block.type === "heading" || block.type === "text") {
     const textFields = serializeTextBlockFields(block);
     Object.assign(base, textFields);
@@ -386,6 +392,14 @@ function normalizeBackground(value: unknown): ComunicadoBackground {
   return { type: "color", value: color };
 }
 
+function attachBlockAnimations<T extends ComunicadoBlock>(
+  block: T,
+  raw: Record<string, unknown>,
+): T {
+  const animations = normalizeBlockAnimations(raw.animations);
+  return animations?.length ? { ...block, animations } : block;
+}
+
 function normalizeBlock(value: unknown): ComunicadoBlock {
   if (!value || typeof value !== "object") {
     return createBlock("text", "");
@@ -401,44 +415,53 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   if (type === "heading" || type === "text") {
     const legacyContent = typeof block.content === "string" ? block.content : "";
     const textFields = syncTextBlockFields(legacyContent, block.contentRuns);
-    return {
-      id,
-      type,
-      frame,
-      style,
-      groupId,
-      ...textFields,
-      href: links.href,
-      linkTarget: links.linkTarget,
-    };
+    return attachBlockAnimations(
+      {
+        id,
+        type,
+        frame,
+        style,
+        groupId,
+        ...textFields,
+        href: links.href,
+        linkTarget: links.linkTarget,
+      },
+      block,
+    );
   }
   if (type === "shape") {
     const kind = shape && isShapeKind(shape) ? shape : "rectangle";
-    return {
-      id,
-      type,
-      frame,
-      style: { ...defaultStyle("shape", kind), ...style },
-      shape: kind,
-      groupId,
-      content: typeof block.content === "string" ? block.content : "",
-      href: links.href,
-      linkTarget: links.linkTarget,
-    };
+    return attachBlockAnimations(
+      {
+        id,
+        type,
+        frame,
+        style: { ...defaultStyle("shape", kind), ...style },
+        shape: kind,
+        groupId,
+        content: typeof block.content === "string" ? block.content : "",
+        href: links.href,
+        linkTarget: links.linkTarget,
+      },
+      block,
+    );
   }
   if (type === "icon") {
     const iconName =
       typeof block.iconName === "string" && block.iconName.trim() ? block.iconName.trim() : "Star";
-    return {
-      id,
-      type: "icon",
-      frame,
-      style: { ...defaultStyle("icon"), ...style },
-      iconName,
-      groupId,
-      href: links.href,
-      linkTarget: links.linkTarget,
-    };
+    return attachBlockAnimations(
+      {
+        id,
+        type: "icon",
+        frame,
+        style: { ...defaultStyle("icon"), ...style },
+        iconName,
+        groupId,
+        href: links.href,
+        linkTarget: links.linkTarget,
+      },
+      block,
+    );
   }
   if (isDataBlockType(type)) {
     const bindingRaw = block.dataBinding;
@@ -446,42 +469,48 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       bindingRaw && typeof bindingRaw === "object"
         ? (bindingRaw as ComunicadoDataBinding)
         : { operationId: "" };
-    return {
-      id,
-      type,
-      frame,
-      style: { ...defaultStyle(type), ...style },
-      groupId,
-      dataBinding: {
-        operationId: String(binding.operationId ?? ""),
-        params: (binding.params as ComunicadoDataBinding["params"]) ?? {},
-        displayMode: binding.displayMode,
-        label: binding.label,
-        valueField: binding.valueField,
-        maxRows: binding.maxRows,
-        refreshSec: binding.refreshSec,
-      },
-      resolved:
-        block.resolved && typeof block.resolved === "object"
-          ? (block.resolved as ComunicadoDataResolved)
-          : undefined,
-    } as ComunicadoBlock;
+    return attachBlockAnimations(
+      {
+        id,
+        type,
+        frame,
+        style: { ...defaultStyle(type), ...style },
+        groupId,
+        dataBinding: {
+          operationId: String(binding.operationId ?? ""),
+          params: (binding.params as ComunicadoDataBinding["params"]) ?? {},
+          displayMode: binding.displayMode,
+          label: binding.label,
+          valueField: binding.valueField,
+          maxRows: binding.maxRows,
+          refreshSec: binding.refreshSec,
+        },
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
+      } as ComunicadoBlock,
+      block,
+    );
   }
   if (type === "image" || type === "video") {
-    return {
-      id,
-      type,
-      frame,
-      style,
-      groupId,
-      assetId: typeof block.assetId === "string" ? block.assetId : undefined,
-      url: typeof block.url === "string" ? block.url : undefined,
-      href: links.href,
-      linkTarget: links.linkTarget,
-      ...(type === "image"
-        ? { imageCrop: normalizeComunicadoImageCrop(block.imageCrop) }
-        : {}),
-    };
+    return attachBlockAnimations(
+      {
+        id,
+        type,
+        frame,
+        style,
+        groupId,
+        assetId: typeof block.assetId === "string" ? block.assetId : undefined,
+        url: typeof block.url === "string" ? block.url : undefined,
+        href: links.href,
+        linkTarget: links.linkTarget,
+        ...(type === "image"
+          ? { imageCrop: normalizeComunicadoImageCrop(block.imageCrop) }
+          : {}),
+      },
+      block,
+    );
   }
   return createBlock("text", "");
 }

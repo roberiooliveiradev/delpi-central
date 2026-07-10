@@ -31,6 +31,28 @@ describe("comunicadoHelpers", () => {
     expect(serialized.headline).toBe("Titulo");
   });
 
+  it("persiste animações de entrada por bloco", () => {
+    const parsed = parseComunicadoConfig({
+      version: 3,
+      blocks: [
+        {
+          id: "1",
+          type: "text",
+          content: "Entrada",
+          frame: { x: 0, y: 0, w: 40, h: 20 },
+          animations: [{ phase: "entrance", kind: "fade", delayMs: 150, durationMs: 700 }],
+        },
+      ],
+    });
+    const serialized = serializeComunicadoConfig(parsed);
+    const blocks = serialized.blocks as Array<Record<string, unknown>>;
+    expect(blocks[0].animations).toEqual([
+      { phase: "entrance", kind: "fade", delayMs: 150, durationMs: 700 },
+    ]);
+    const roundtrip = parseComunicadoConfig(serialized);
+    expect(roundtrip.blocks?.[0]?.animations?.[0]?.kind).toBe("fade");
+  });
+
   it("serializa v3 com formas e links", () => {
     const shape = createShapeBlock("rectangle");
     const parsed = parseComunicadoConfig({

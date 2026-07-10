@@ -51,6 +51,97 @@
   }
 }
 
+/* 4E.2 — animações de entrada por bloco (só no slide ativo) */
+.tdp-slide--active .tdp-comunicado__block--anim-fade {
+  animation: tdp-block-fade-in var(--tdp-block-anim-duration, 600ms)
+    var(--tdp-block-anim-easing, ease-out) var(--tdp-block-anim-delay, 0ms) both;
+}
+
+.tdp-slide--active .tdp-comunicado__block--anim-slide-in {
+  animation-duration: var(--tdp-block-anim-duration, 600ms);
+  animation-timing-function: var(--tdp-block-anim-easing, ease-out);
+  animation-delay: var(--tdp-block-anim-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+.tdp-slide--active .tdp-comunicado__block--anim-slide-in-up {
+  animation-name: tdp-block-slide-in-up;
+}
+
+.tdp-slide--active .tdp-comunicado__block--anim-slide-in-down {
+  animation-name: tdp-block-slide-in-down;
+}
+
+.tdp-slide--active .tdp-comunicado__block--anim-slide-in-left {
+  animation-name: tdp-block-slide-in-left;
+}
+
+.tdp-slide--active .tdp-comunicado__block--anim-slide-in-right {
+  animation-name: tdp-block-slide-in-right;
+}
+
+@keyframes tdp-block-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tdp-block-slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tdp-block-slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tdp-block-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tdp-block-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tdp-slide--active .tdp-comunicado__block--anim-fade,
+  .tdp-slide--active .tdp-comunicado__block--anim-slide-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .tdp-external-frame {
   width: 100%;
   height: 100%;

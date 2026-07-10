@@ -78,11 +78,29 @@ export type ComunicadoBlockStyle = {
   strokeWidth?: number;
 };
 
+export type ComunicadoBlockAnimationKind = "fade" | "slide-in";
+
+export type ComunicadoBlockAnimationDirection = "up" | "down" | "left" | "right";
+
+export type ComunicadoBlockAnimationEasing = "ease" | "ease-out" | "ease-in-out" | "linear";
+
+export type ComunicadoBlockAnimation = {
+  phase: "entrance";
+  kind: ComunicadoBlockAnimationKind;
+  delayMs?: number;
+  durationMs?: number;
+  easing?: ComunicadoBlockAnimationEasing;
+  /** Direção do deslize (`slide-in`); padrão `up`. */
+  direction?: ComunicadoBlockAnimationDirection;
+};
+
 export type ComunicadoBlockBase = {
   id: string;
   frame: ComunicadoFrame;
   style?: ComunicadoBlockStyle;
   groupId?: string;
+  /** Animações do bloco (4E.2) — entrada na TV. */
+  animations?: ComunicadoBlockAnimation[];
 };
 
 export type ComunicadoTextBlock = ComunicadoBlockBase & {

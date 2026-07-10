@@ -26,6 +26,10 @@ export {
 } from "./presentationTransition";
 export type {
   ComunicadoBlock,
+  ComunicadoBlockAnimation,
+  ComunicadoBlockAnimationDirection,
+  ComunicadoBlockAnimationEasing,
+  ComunicadoBlockAnimationKind,
   ComunicadoConfig,
   ComunicadoContentRun,
   ComunicadoContentRunStyle,
@@ -147,6 +151,23 @@ export {
   selectionNamedStyleState,
   type ContentRunNamedStyleSelectionState,
 } from "./comunicadoNamedTextStyles";
+export {
+  BLOCK_ENTRANCE_DELAY_MAX_MS,
+  BLOCK_ENTRANCE_DELAY_MIN_MS,
+  BLOCK_ENTRANCE_DELAY_STEP_MS,
+  BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
+  BLOCK_ENTRANCE_DURATION_MAX_MS,
+  BLOCK_ENTRANCE_DURATION_MIN_MS,
+  BLOCK_ENTRANCE_DURATION_STEP_MS,
+  BLOCK_ENTRANCE_PRESET_OPTIONS,
+  blockEntranceAnimationClass,
+  blockEntranceAnimationStyle,
+  entranceAnimationFromPreset,
+  entrancePresetValue,
+  normalizeBlockAnimations,
+  resolveEntranceAnimation,
+  serializeBlockAnimations,
+} from "./comunicadoBlockAnimations";
 export { TvDataBlockView } from "./tvDataBlockView";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";
