@@ -15,6 +15,7 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | [menu-dinamico.md](./menu-dinamico.md) | `/me/apps`, Sidebar |
 | [app-authorization.md](./app-authorization.md) | Guards, permissões na UI |
 | [consumo-de-plugins.md](./consumo-de-plugins.md) | AppHost, loading overlay, Module Federation, iframe |
+| [portal-deploy-cache-cloudflare.md](./portal-deploy-cache-cloudflare.md) | **Deploy portal + cache CF** — tela escura no login, `?v=` no bundle |
 | [favoritos.md](./favoritos.md) | `/me/apps/favorites`, reorder, pin |
 | [app-launcher-cards.md](./app-launcher-cards.md) | `AppLauncherCard`, grid, drag na sidebar |
 | [descubra-o-portal.md](./descubra-o-portal.md) | **Descubra o portal** — card na home, painel, gamificação, retomada |

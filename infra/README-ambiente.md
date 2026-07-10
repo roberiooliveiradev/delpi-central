@@ -588,16 +588,17 @@ Checklist manual (além do script):
 
 ### Após deploy do **portal** (tela escura / login em branco)
 
-Sintoma: Network mostra `index-*.js` com ~0,7 kB e `Content-Type: text/html` — cache Cloudflare servindo HTML antigo no lugar do bundle JS.
+Sintoma: Network → `index-*.js` com **~0,6 kB** (esperado ~1,4 MB) — Cloudflare ou cache local servindo HTML no lugar do bundle.
 
 1. Redeploy: `./infra/scripts/up-prod-sequential.sh --fase core --build portal gateway`
-2. **Purge cache Cloudflare** (obrigatório se o sintoma persistir):
-   - Dashboard Cloudflare → site `minhadelpi.com.br` → **Caching** → **Purge Everything**
-   - Ou purge seletivo: `/login`, `/`, `/assets/*`
-3. Hard refresh nos browsers (Ctrl+Shift+R) ou aba anônima
-4. Validar: `curl -sI https://minhadelpi.com.br/assets/index-DvFfb1Q9.js` deve retornar `content-type: application/javascript` e ~1,4 MB (hash muda a cada build — use o do HTML atual)
+2. **Purge cache Cloudflare** (limpar entradas envenenadas anteriores ao fix `?v=`):
+   - Dashboard → `minhadelpi.com.br` → **Caching** → **Purge Everything**
+   - Ou: `/login`, `/`, `/assets/*`
+3. Hard refresh (Ctrl+Shift+R) ou aba anônima
+4. Validar no DevTools: JS com `?v=` ou `?cb=` na URL e tamanho ~1 MB+
 
-Doc: [docs/02-infraestrutura/gateway-nginx.md](../docs/02-infraestrutura/gateway-nginx.md) § troubleshooting «Tela escura no `/login`».
+Documentação completa: [docs/06-portal-frontend/portal-deploy-cache-cloudflare.md](../docs/06-portal-frontend/portal-deploy-cache-cloudflare.md)
+
 - [ ] Não commitar `.env` (já no `.gitignore`)
 
 ### Rebuild prod com visão (já incluída no compose padrão)

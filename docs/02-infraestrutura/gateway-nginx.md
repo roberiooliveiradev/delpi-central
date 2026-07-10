@@ -136,8 +136,10 @@ Rotas HTTP `/apps/api-delpi/*` podem continuar com `$upstream_api_delpi` + resol
 |---|---|
 | `remoteEntry.js` | `Cache-Control: no-store` — força reload após deploy de plugin |
 | Demais `/apps/{id}/assets/*` | `max-age=31536000, immutable` — chunks com hash no build |
-| Portal `/assets/*` | `immutable` no container portal; **404** se chunk ausente (nunca `index.html`) |
-| Portal `index.html` / rotas SPA | `no-cache` — evita HTML stale após deploy |
+| Portal `/assets/*` (200) | `immutable` no container portal |
+| Portal `/assets/*` (404) | `no-store` — chunk ausente nunca cacheado como HTML |
+| Portal bundle (pós `ac5814af6`) | URL com `?v=BUILD` ou `?cb=` — bypass cache CF envenenado |
+| Portal `index.html` / rotas SPA | `no-cache` + `CDN-Cache-Control: no-store` |
 
 ---
 
@@ -187,7 +189,7 @@ delpi-strategic-indicators, delpi-dashboard-lmps, delpi-minha-delpi-chat
 | Socket não conecta | Falta token em `socket.auth`; path errado |
 | `WebSocket … /apps/api-delpi/socket.io` failed (Auditoria 5S) | Location socket com `proxy_pass http://$upstream…` — usar hostname estático `http://api-delpi:8000/socket.io` e `docker restart delpi-gateway` |
 | Plugin antigo em cache | Só `remoteEntry` é no-store; hard refresh ou versão no build |
-| **Tela escura no `/login`** (Network: `index-*.js` ~0,7 kB, type `html`) | `index.html` antigo (cache) aponta hash JS que não existe; nginx devolvia SPA fallback como JS e Cloudflare cacheava 4h. **Correção:** `portal/nginx.conf` — `/assets/` retorna 404 se ausente; redeploy portal + **purge cache Cloudflare** + hard refresh |
+| **Tela escura no `/login`** (Network: `index-*.js` ~0,7 kB) | Cache Cloudflare servindo HTML no lugar do chunk JS. Ver [portal-deploy-cache-cloudflare.md](../06-portal-frontend/portal-deploy-cache-cloudflare.md) — fix: `portal/nginx.conf`, plugin `cacheBustEntryPlugin`, purge CF + redeploy portal/gateway |
 
 ---
 
@@ -207,4 +209,5 @@ delpi-strategic-indicators, delpi-dashboard-lmps, delpi-minha-delpi-chat
 - [docker-compose.md](./docker-compose.md)
 - [ambientes-dev-prod.md](./ambientes-dev-prod.md)
 - [../06-portal-frontend/consumo-de-plugins.md](../06-portal-frontend/consumo-de-plugins.md)
+- [../06-portal-frontend/portal-deploy-cache-cloudflare.md](../06-portal-frontend/portal-deploy-cache-cloudflare.md)
 - [../04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md)
