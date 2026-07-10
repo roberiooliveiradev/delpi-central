@@ -135,7 +135,9 @@ Rotas HTTP `/apps/api-delpi/*` podem continuar com `$upstream_api_delpi` + resol
 | Arquivo | Política |
 |---|---|
 | `remoteEntry.js` | `Cache-Control: no-store` — força reload após deploy de plugin |
-| Demais `/assets/*` | `max-age=31536000, immutable` — chunks com hash no build |
+| Demais `/apps/{id}/assets/*` | `max-age=31536000, immutable` — chunks com hash no build |
+| Portal `/assets/*` | `immutable` no container portal; **404** se chunk ausente (nunca `index.html`) |
+| Portal `index.html` / rotas SPA | `no-cache` — evita HTML stale após deploy |
 
 ---
 
@@ -185,6 +187,7 @@ delpi-strategic-indicators, delpi-dashboard-lmps, delpi-minha-delpi-chat
 | Socket não conecta | Falta token em `socket.auth`; path errado |
 | `WebSocket … /apps/api-delpi/socket.io` failed (Auditoria 5S) | Location socket com `proxy_pass http://$upstream…` — usar hostname estático `http://api-delpi:8000/socket.io` e `docker restart delpi-gateway` |
 | Plugin antigo em cache | Só `remoteEntry` é no-store; hard refresh ou versão no build |
+| **Tela escura no `/login`** (Network: `index-*.js` ~0,7 kB, type `html`) | `index.html` antigo (cache) aponta hash JS que não existe; nginx devolvia SPA fallback como JS e Cloudflare cacheava 4h. **Correção:** `portal/nginx.conf` — `/assets/` retorna 404 se ausente; redeploy portal + **purge cache Cloudflare** + hard refresh |
 
 ---
 
