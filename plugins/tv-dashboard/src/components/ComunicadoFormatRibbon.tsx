@@ -180,7 +180,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const isShapeBlock = selected?.type === "shape";
 
   return (
-    <div className="td-deck-ribbon__groups">
+    <div className="td-deck-ribbon__groups td-deck-ribbon__groups--format">
       <DeckRibbonGroup label="Histórico" hint="Desfazer ou refazer alterações no slide (Ctrl+Z / Ctrl+Y).">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile icon={Undo2} label="Desfazer" disabled={!canUndo} onClick={undo} />
@@ -524,7 +524,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   </button>
                 ))}
               </div>
-              <div className="td-deck-ribbon__toolbar-row">
+              <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
                 <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-named-style">
                   Estilo
                 </label>
@@ -541,8 +541,6 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     label: option.label,
                   }))}
                 />
-              </div>
-              <div className="td-deck-ribbon__toolbar-row">
                 <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-line-height">
                   Entrelinhas
                 </label>
@@ -609,8 +607,9 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       ) : null}
 
       {selected ? (
-        <DeckRibbonGroup label="Organizar" hint={H.organize}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+        <DeckRibbonGroup label="Organizar" hint={H.organize} wide>
+          <div className="td-deck-ribbon__organize">
+            <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
             <DeckRibbonTile icon={Copy} label="Duplicar" hint="Duplicar elemento (Ctrl+D)" onClick={duplicateSelected} />
             {isImageBlock && selected?.url ? (
               <DeckRibbonTile
@@ -660,8 +659,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               hint={E.remove}
               onClick={removeSelected}
             />
-          </div>
-          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--compact">
+            </div>
+            <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-opacity">
               Opacidade
             </label>
@@ -754,6 +753,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 label: preset.label,
               }))}
             />
+            </div>
           </div>
         </DeckRibbonGroup>
       ) : (

@@ -1353,6 +1353,126 @@
   gap: 4px;
 }
 
+.td-deck-ribbon__toolbar-row--dense {
+  gap: 3px 6px;
+}
+
+.td-deck-ribbon__toolbar--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+.td-deck-ribbon__organize {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  width: 100%;
+}
+
+.td-deck-ribbon__groups--format {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  align-items: stretch;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__group {
+  min-height: 0;
+  flex-shrink: 0;
+  padding: 2px 8px 1px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__group--wide {
+  min-width: min(320px, max-content);
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__caption {
+  padding-top: 1px;
+}
+
+.td-deck-ribbon__groups--format .td-ribbon-tile {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 2px 4px;
+  gap: 2px;
+}
+
+.td-deck-ribbon__groups--format .td-ribbon-tile__icon {
+  width: 22px;
+  height: 22px;
+}
+
+.td-deck-ribbon__groups--format .td-ribbon-tile__label {
+  font-size: 9px;
+  max-width: 52px;
+  line-height: 1.1;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__toolbar {
+  gap: 2px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__select,
+.td-deck-ribbon__groups--format .td-deck-ribbon__number,
+.td-deck-ribbon__groups--format .td-btn--sm {
+  height: 28px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__select {
+  min-width: 100px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__select--compact {
+  min-width: 72px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__select--style {
+  min-width: 108px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__number {
+  width: 52px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__number--compact {
+  width: 48px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__color {
+  width: 28px;
+  height: 28px;
+}
+
+.td-deck-ribbon__groups--format .td-ribbon-tile--inline .td-ribbon-tile__icon {
+  width: 28px;
+  height: 28px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__toolbar-sep {
+  height: 18px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__field-label {
+  font-size: 10px;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__organize input[type="range"] {
+  width: 72px;
+  margin: 0;
+}
+
+.td-deck-ribbon__groups--format .td-deck-ribbon__zoom-label {
+  min-width: 40px;
+  font-size: 11px;
+}
+
 .td-deck-ribbon__toolbar-sep {
   width: 1px;
   height: 22px;
