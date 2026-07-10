@@ -16,27 +16,6 @@
 
   <body>
     <div id="root"></div>
-    <script>
-      (function () {
-        var key = "delpi-portal-asset-recover";
-        window.addEventListener(
-          "error",
-          function (ev) {
-            var t = ev.target;
-            if (!t || t.tagName !== "SCRIPT" || t.type !== "module") return;
-            if (sessionStorage.getItem(key)) return;
-            sessionStorage.setItem(key, "1");
-            var u = new URL(window.location.href);
-            u.searchParams.set("_recover", String(Date.now()));
-            window.location.replace(u.toString());
-          },
-          true,
-        );
-        window.addEventListener("load", function () {
-          sessionStorage.removeItem(key);
-        });
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

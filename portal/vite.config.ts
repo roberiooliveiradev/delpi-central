@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { portalCacheBustEntryPlugin } from "./vite/cacheBustEntryPlugin";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), portalCacheBustEntryPlugin()],
   server: {
     host: true,
     allowedHosts: ['portal', 'localhost']
