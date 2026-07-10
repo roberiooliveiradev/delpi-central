@@ -485,6 +485,25 @@ export function getEditableTextSelectionOffsets(
   return { start: Math.min(start, end), end: Math.max(start, end) };
 }
 
+type EditableCaretPosition = { node: Node; offset: number };
+
+function caretPositionInLineElement(element: HTMLElement): EditableCaretPosition {
+  const childNodes = element.childNodes;
+  if (childNodes.length === 0) {
+    return { node: element, offset: 0 };
+  }
+  for (let index = 0; index < childNodes.length; index += 1) {
+    const child = childNodes[index];
+    if (child.nodeType === Node.TEXT_NODE) {
+      return { node: child, offset: 0 };
+    }
+    if (child.nodeType === Node.ELEMENT_NODE && (child as Element).tagName === "BR") {
+      return { node: element, offset: index };
+    }
+  }
+  return { node: element, offset: childNodes.length };
+}
+
 function measureTextOffset(root: HTMLElement, container: Node, offset: number): number {
   const lineElements = root.querySelectorAll(`[${LINE_ATTR}]`);
   if (lineElements.length === 0) {
@@ -501,11 +520,24 @@ function measureTextOffset(root: HTMLElement, container: Node, offset: number): 
   let total = 0;
   for (let lineIndex = 0; lineIndex < lineElements.length; lineIndex += 1) {
     const element = lineElements[lineIndex];
+    const lineStart = total;
+    if (container === element) {
+      return lineStart;
+    }
     const walker = root.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let lineTextLength = 0;
     while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (node === container) return total + offset;
-      total += node.textContent?.length ?? 0;
+      if (node === container) return lineStart + offset;
+      lineTextLength += node.textContent?.length ?? 0;
+    }
+    total += lineTextLength;
+    if (
+      lineTextLength === 0 &&
+      container.nodeType === Node.ELEMENT_NODE &&
+      element.contains(container)
+    ) {
+      return lineStart;
     }
     if (lineIndex < lineElements.length - 1) total += 1;
   }
@@ -515,7 +547,7 @@ function measureTextOffset(root: HTMLElement, container: Node, offset: number): 
 function locateTextPosition(
   root: HTMLElement,
   absoluteOffset: number,
-): { node: Text; offset: number } | null {
+): EditableCaretPosition | null {
   const lineElements = root.querySelectorAll(`[${LINE_ATTR}]`);
   let remaining = Math.max(0, absoluteOffset);
 
@@ -531,7 +563,7 @@ function locateTextPosition(
   }
 
   for (let lineIndex = 0; lineIndex < lineElements.length; lineIndex += 1) {
-    const element = lineElements[lineIndex];
+    const element = lineElements[lineIndex] as HTMLElement;
     const walker = root.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const node = walker.currentNode as Text;
@@ -539,19 +571,15 @@ function locateTextPosition(
       if (remaining <= length) return { node, offset: remaining };
       remaining -= length;
     }
+    if (remaining === 0) {
+      return caretPositionInLineElement(element);
+    }
     if (lineIndex < lineElements.length - 1) {
-      if (remaining === 0) {
-        const firstText = element.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-        if (firstText.nextNode()) {
-          return { node: firstText.currentNode as Text, offset: 0 };
-        }
-        return null;
-      }
       remaining -= 1;
     }
   }
 
-  const lastLine = lineElements[lineElements.length - 1];
+  const lastLine = lineElements[lineElements.length - 1] as HTMLElement;
   const lastWalker = root.ownerDocument.createTreeWalker(lastLine, NodeFilter.SHOW_TEXT);
   let lastNode: Text | null = null;
   while (lastWalker.nextNode()) {
@@ -560,7 +588,7 @@ function locateTextPosition(
   if (lastNode) {
     return { node: lastNode, offset: lastNode.textContent?.length ?? 0 };
   }
-  return null;
+  return caretPositionInLineElement(lastLine);
 }
 
 export function restoreEditableTextSelection(

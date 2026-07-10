@@ -86,10 +86,16 @@ export function ComunicadoEditorTextBlock({
     .join(" ");
 
   const syncEditorHtml = useCallback(
-    (runs = editorRunsForBlock(block), restoreSelection = false) => {
+    (
+      runs = editorRunsForBlock(block),
+      selectionOverride?: { start: number; end: number } | null,
+    ) => {
       const editor = editorRef.current;
       if (!editor) return;
-      const selection = restoreSelection ? getEditableTextSelectionOffsets(editor) : null;
+      const selection =
+        selectionOverride === undefined
+          ? getEditableTextSelectionOffsets(editor)
+          : selectionOverride;
       const signature = JSON.stringify(runs);
       if (signature === renderedSignatureRef.current) return;
       editor.innerHTML = renderTextBlockEditorHtml(runs, { fontScale });
@@ -131,7 +137,7 @@ export function ComunicadoEditorTextBlock({
       const nextRuns = toggleContentRunStyleInRange(runs, selection.start, selection.end, toggleKey);
       draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
       renderedSignatureRef.current = "";
-      syncEditorHtml(nextRuns, true);
+      syncEditorHtml(nextRuns, { start: selection.start, end: selection.end });
       commitDraft(nextRuns);
       reportTextEditSelection(
         { blockId: block.id, start: selection.start, end: selection.end },
@@ -152,7 +158,7 @@ export function ComunicadoEditorTextBlock({
       const nextRuns = toggleListTypeInRange(runs, start, end, listType);
       draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
       renderedSignatureRef.current = "";
-      syncEditorHtml(nextRuns, true);
+      syncEditorHtml(nextRuns, { start, end });
       commitDraft(nextRuns);
       reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
     },
@@ -170,7 +176,7 @@ export function ComunicadoEditorTextBlock({
       const nextRuns = applyNamedStyleInRange(runs, start, end, namedStyle);
       draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
       renderedSignatureRef.current = "";
-      syncEditorHtml(nextRuns, true);
+      syncEditorHtml(nextRuns, { start, end });
       commitDraft(nextRuns);
       reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
     },
@@ -187,8 +193,7 @@ export function ComunicadoEditorTextBlock({
     const nextOffset = selection.start + 1;
     draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
     renderedSignatureRef.current = "";
-    syncEditorHtml(nextRuns, false);
-    restoreEditableTextSelection(editor, nextOffset, nextOffset);
+    syncEditorHtml(nextRuns, { start: nextOffset, end: nextOffset });
     commitDraft(nextRuns);
     reportTextEditSelection({ blockId: block.id, start: nextOffset, end: nextOffset }, nextRuns);
   }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
@@ -209,7 +214,7 @@ export function ComunicadoEditorTextBlock({
     renderedSignatureRef.current = "";
     const editor = editorRef.current;
     if (!editor) return;
-    syncEditorHtml(editorRuns);
+    syncEditorHtml(editorRuns, null);
     editor.focus();
     const end = editorRuns.map((run) => run.text).join("").length;
     restoreEditableTextSelection(editor, end, end);
@@ -218,8 +223,10 @@ export function ComunicadoEditorTextBlock({
 
   useLayoutEffect(() => {
     if (!isEditing) return;
+    const editor = editorRef.current;
     const editorRuns = editorRunsForBlock(block);
-    syncEditorHtml(editorRuns, true);
+    const selection = editor ? getEditableTextSelectionOffsets(editor) : null;
+    syncEditorHtml(editorRuns, selection);
     draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(editorRuns).runs);
   }, [block.contentRuns, block.content, block.href, isEditing, fontScale, syncEditorHtml, block]);
 

@@ -4,11 +4,14 @@ import {
   compactContentRuns,
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
+  insertLineBreakAtOffset,
   renderContentRunsHtml,
+  restoreEditableTextSelection,
   selectionRunStyleState,
   syncTextBlockFromRuns,
   toggleContentRunStyleInRange,
 } from "./comunicadoContentRunEditing";
+import { renderTextBlockEditorHtml } from "./comunicadoTextBlockLink";
 import type { ComunicadoContentRun } from "./comunicadoTypes";
 
 describe("comunicadoContentRunEditing", () => {
@@ -116,6 +119,48 @@ describe("comunicadoContentRunEditing", () => {
     selection?.addRange(range);
 
     expect(getEditableTextSelectionOffsets(root)).toEqual({ start: 1, end: 4 });
+    document.body.removeChild(root);
+  });
+
+  it("restaura cursor no início de linha vazia após Enter", () => {
+    const runs = insertLineBreakAtOffset([{ text: "Linha 1" }], "Linha 1".length);
+    const root = document.createElement("div");
+    root.contentEditable = "true";
+    root.innerHTML = renderTextBlockEditorHtml(runs);
+    document.body.appendChild(root);
+
+    const nextOffset = "Linha 1".length + 1;
+    restoreEditableTextSelection(root, nextOffset, nextOffset);
+
+    expect(getEditableTextSelectionOffsets(root)).toEqual({
+      start: nextOffset,
+      end: nextOffset,
+    });
+
+    document.body.removeChild(root);
+  });
+
+  it("preserva seleção após re-render do HTML multilinha", () => {
+    const runs = insertLineBreakAtOffset(
+      insertLineBreakAtOffset([{ text: "Primeira" }], "Primeira".length),
+      "Primeira".length + 1,
+    );
+    const root = document.createElement("div");
+    root.contentEditable = "true";
+    document.body.appendChild(root);
+
+    root.innerHTML = renderTextBlockEditorHtml(runs);
+    const caretOffset = "Primeira".length + 2;
+    restoreEditableTextSelection(root, caretOffset, caretOffset);
+
+    root.innerHTML = renderTextBlockEditorHtml(runs);
+    restoreEditableTextSelection(root, caretOffset, caretOffset);
+
+    expect(getEditableTextSelectionOffsets(root)).toEqual({
+      start: caretOffset,
+      end: caretOffset,
+    });
+
     document.body.removeChild(root);
   });
 });
