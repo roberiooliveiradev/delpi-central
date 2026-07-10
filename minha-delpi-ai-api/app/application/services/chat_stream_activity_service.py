@@ -312,6 +312,35 @@ class ChatStreamActivityService:
         )
 
     @classmethod
+    def document_vision_ocr_heartbeat(cls) -> dict[str, Any]:
+        message = ChatAssistantContentService.get(
+            "stream",
+            "activity",
+            "documentVisionOcrHeartbeat",
+            default="Ainda reconhecendo texto do desenho…",
+        )
+
+        return cls.document_vision_step(
+            step_key="ocr",
+            message=str(message),
+            state="active",
+        )
+
+    @classmethod
+    def ocr_heartbeat_interval_seconds(cls) -> float:
+        raw = ChatAssistantContentService.get(
+            "stream",
+            "activity",
+            "ocrHeartbeatIntervalSeconds",
+            default="45",
+        )
+
+        try:
+            return max(15.0, float(str(raw).strip()))
+        except (TypeError, ValueError):
+            return 45.0
+
+    @classmethod
     def emit_document_vision_progress(
         cls,
         on_stream_activity,

@@ -41,7 +41,7 @@ import {
 } from "../chatMessageDelivery";
 import { isIncompleteChatStreamError } from "../chatStreamConnection";
 import {
-  CHAT_TURN_STALL_TIMEOUT_MS,
+  resolveStallTimeoutMs,
   resolveUnansweredTurnRecovery,
   stallTimeoutMessage,
 } from "../chatTurnRecovery";
@@ -2121,7 +2121,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       const lastActivity =
         streamActivityAtRef.current.get(sessionId) ?? startedAt ?? Date.now();
 
-      if (Date.now() - lastActivity < CHAT_TURN_STALL_TIMEOUT_MS) {
+      const activityLog = getSessionStreamUi(sessionId).activityLog;
+      const stallTimeoutMs = resolveStallTimeoutMs(activityLog);
+
+      if (Date.now() - lastActivity < stallTimeoutMs) {
         return;
       }
 

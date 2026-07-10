@@ -97,7 +97,9 @@
       "bom_ocr_detail": "Ampliando e relendo lista de materiais…",
       "dimensions_ocr": "Lendo cotas e decapes…"
     },
-    "progressCompleteTemplate": "Cerca de {percent}% concluído para a resposta…",
+    "documentVisionOcrHeartbeat": "Ainda reconhecendo texto do desenho…",
+    "ocrHeartbeatIntervalSeconds": 45,
+    "progressCompleteTemplate": "Cerca de {percent}% concluído…",
     "pipelineTotals": {
       "drawingWithPdf": 18,
       "drawingWithoutPdf": 16,

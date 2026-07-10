@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+import threading
+from typing import Any, Callable, TypeVar
 
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.application.services.chat_stream_activity_service import ChatStreamActivityService
@@ -15,8 +16,45 @@ from app.domain.services.chat_vision_memory_guard_service import (
     ChatVisionMemoryGuardService,
 )
 
+T = TypeVar("T")
+
 
 class ChatDocumentVisionTurnService:
+    @classmethod
+    def _run_blocking_with_ocr_heartbeat(
+        cls,
+        operation: Callable[[], T],
+        *,
+        on_stream_activity: Callable[..., Any] | None,
+    ) -> T:
+        if on_stream_activity is None:
+            return operation()
+
+        result: dict[str, T] = {}
+        error: list[BaseException] = []
+        done = threading.Event()
+
+        def worker() -> None:
+            try:
+                result["value"] = operation()
+            except BaseException as exc:
+                error.append(exc)
+            finally:
+                done.set()
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
+        interval = ChatStreamActivityService.ocr_heartbeat_interval_seconds()
+
+        while not done.wait(timeout=interval):
+            on_stream_activity(ChatStreamActivityService.document_vision_ocr_heartbeat())
+
+        if error:
+            raise error[0]
+
+        return result["value"]
+
     @classmethod
     def should_run_for_drawing(cls, skills: dict | None = None) -> bool:
         return ChatDocumentVisionSkillService.should_run_for_drawing(skills)
@@ -44,16 +82,20 @@ class ChatDocumentVisionTurnService:
         session_id: str | None = None,
         attachment_ids: list | None = None,
         skills: dict | None = None,
+        on_stream_activity: Callable[..., Any] | None = None,
     ) -> dict[str, Any]:
         if not cls.should_run_for_drawing(skills):
             return dict(parsed) if isinstance(parsed, dict) else {}
 
-        return ChatDocumentVisionService.enrich_drawing_extract(
-            parsed,
-            user_id=user_id,
-            session_id=session_id,
-            attachment_ids=attachment_ids,
-            skills=skills,
+        return cls._run_blocking_with_ocr_heartbeat(
+            lambda: ChatDocumentVisionService.enrich_drawing_extract(
+                parsed,
+                user_id=user_id,
+                session_id=session_id,
+                attachment_ids=attachment_ids,
+                skills=skills,
+            ),
+            on_stream_activity=on_stream_activity,
         )
 
     @classmethod
@@ -119,6 +161,7 @@ class ChatDocumentVisionTurnService:
                 session_id=session_id,
                 attachment_ids=attachment_ids,
                 skills=skills,
+                on_stream_activity=on_stream_activity,
             )
         except (MemoryError, VisionMemoryLimitedError):
             ChatVisionMemoryGuardService.release_ocr_memory()
@@ -169,9 +212,12 @@ class ChatDocumentVisionTurnService:
             return base, activation
 
         try:
-            vision = ChatDocumentVisionService._extract_drawing_pdf(
-                storage_path,
-                filename=filename,
+            vision = cls._run_blocking_with_ocr_heartbeat(
+                lambda: ChatDocumentVisionService._extract_drawing_pdf(
+                    storage_path,
+                    filename=filename,
+                ),
+                on_stream_activity=on_stream_activity,
             )
             enriched = ChatDocumentVisionService.merge_into_drawing_parse(base, vision)
         except (MemoryError, VisionMemoryLimitedError):

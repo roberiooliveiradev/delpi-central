@@ -5,5 +5,9 @@
     "timeout": "A resposta demorou mais que o esperado. Tente novamente ou reformule a pergunta.",
     "orphaned": "Não recebi resposta para esta pergunta. Tente de novo ou ative um agente com acesso aos dados."
   },
-  "retryLabel": "Tentar novamente"
+  "retryLabel": "Tentar novamente",
+  "stallTimeouts": {
+    "defaultMs": 120000,
+    "drawingAnalysisMs": 600000
+  }
 }

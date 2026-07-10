@@ -1,12 +1,16 @@
 import recoveryContent from "../content/chat_turn_recovery.json";
 
-import type { ChatMessage } from "../data/api/chatTypes";
+import type { ChatMessage, ChatStreamActivityEntry } from "../data/api/chatTypes";
 import {
   getDeliveryStatus,
   sessionAwaitingAssistantResponse,
 } from "./chatMessageDelivery";
+import { detectStreamActivityFlow } from "../content/streamActivityContent";
 
-export const CHAT_TURN_STALL_TIMEOUT_MS = 120_000;
+export const CHAT_TURN_STALL_TIMEOUT_MS = recoveryContent.stallTimeouts.defaultMs;
+
+export const CHAT_TURN_STALL_DRAWING_TIMEOUT_MS =
+  recoveryContent.stallTimeouts.drawingAnalysisMs;
 
 export type UnansweredTurnReason = "cancelled" | "timeout" | "orphaned";
 
@@ -23,6 +27,24 @@ function recoveryMessage(reason: UnansweredTurnReason): string {
     recoveryContent.messages[reason] ||
     recoveryContent.messages.orphaned
   );
+}
+
+export function isDrawingAnalysisActivityLog(
+  entries: ChatStreamActivityEntry[],
+): boolean {
+  const flow = detectStreamActivityFlow(entries);
+
+  return flow === "drawingWithPdf" || flow === "drawingWithoutPdf";
+}
+
+export function resolveStallTimeoutMs(
+  entries: ChatStreamActivityEntry[],
+): number {
+  if (isDrawingAnalysisActivityLog(entries)) {
+    return CHAT_TURN_STALL_DRAWING_TIMEOUT_MS;
+  }
+
+  return CHAT_TURN_STALL_TIMEOUT_MS;
 }
 
 function resolveUnansweredReason(message: ChatMessage): UnansweredTurnReason {
