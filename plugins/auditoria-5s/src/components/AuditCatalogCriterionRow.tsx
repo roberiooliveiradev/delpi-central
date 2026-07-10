@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 
-import { FieldLabel } from "@delpi/plugin-ui";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 
 import type { EditableCriterion } from "../utils/catalogEditor";
 
