@@ -12,6 +12,7 @@ import {
   entranceAnimationFromPreset,
   entrancePresetValue,
   isDataBlockType,
+  normalizeHrefInput,
   resolveEntranceAnimation,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
@@ -59,11 +60,14 @@ export function ComunicadoElementInspector({
     moveLayer,
     triggerUpload,
     openMediaLibrary,
+    updateBlockLink,
   } = useComunicadoEditor();
 
   const multiSelect = selectedIds.length > 1;
   const isShapeBlock = selected?.type === "shape";
+  const isIconBlock = selected?.type === "icon";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
+  const isSidebarLinkBlock = isMediaBlock || isShapeBlock || isIconBlock;
   const isDataBlock = selected ? isDataBlockType(selected.type) : false;
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
 
@@ -124,6 +128,23 @@ export function ComunicadoElementInspector({
               />
             </DeckField>
           </>
+        ) : null}
+
+        {!multiSelect && isSidebarLinkBlock ? (
+          <DeckField id="td-block-link" label="Link" hint={E.link}>
+            <input
+              id="td-block-link"
+              type="url"
+              placeholder="https://…"
+              value={selected.href ?? ""}
+              onChange={(e) =>
+                updateBlockLink(
+                  selected.id,
+                  normalizeHrefInput(e.target.value) || undefined,
+                )
+              }
+            />
+          </DeckField>
         ) : null}
 
         {!multiSelect && isMediaBlock ? (

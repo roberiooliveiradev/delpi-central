@@ -2,7 +2,6 @@ import { ComunicadoBlockView, ComunicadoMediaPlaceholder, blockCssStyle, comunic
 import type { CSSProperties } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import { ComunicadoEditorInlineField } from "./ComunicadoEditorInlineField";
 import { ComunicadoEditorTextBlock } from "./ComunicadoEditorTextBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
 
@@ -56,7 +55,6 @@ function EditorImageBlock({
       ) : (
         <ComunicadoMediaPlaceholder kind="image" />
       )}
-      {isSelected ? <ComunicadoEditorInlineField variant="link" blockId={block.id} href={block.href} /> : null}
     </div>
   );
 }
@@ -99,7 +97,6 @@ export function ComunicadoEditorBlockView({
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <ComunicadoEditorVideoPreview block={block} style={style} className={className} />
-        {isSelected ? <ComunicadoEditorInlineField variant="link" blockId={block.id} href={block.href} /> : null}
       </div>
     );
   }
@@ -115,7 +112,6 @@ export function ComunicadoEditorBlockView({
           className={className}
           dataLoading={dataLoading}
         />
-        {isSelected ? <ComunicadoEditorInlineField variant="link" blockId={block.id} href={block.href} /> : null}
       </div>
     );
   }
@@ -131,7 +127,6 @@ export function ComunicadoEditorBlockView({
           className={className}
           dataLoading={dataLoading}
         />
-        {isSelected ? <ComunicadoEditorInlineField variant="link" blockId={block.id} href={block.href} /> : null}
       </div>
     );
   }

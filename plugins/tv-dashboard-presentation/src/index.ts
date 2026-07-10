@@ -168,6 +168,14 @@ export {
   resolveEntranceAnimation,
   serializeBlockAnimations,
 } from "./comunicadoBlockAnimations";
+export {
+  appendHrefLineToRuns,
+  hrefLineStyle,
+  isLikelyExternalUrl,
+  normalizeHrefInput,
+  partitionTextBlockRunsAndHref,
+  renderTextBlockEditorHtml,
+} from "./comunicadoTextBlockLink";
 export { TvDataBlockView } from "./tvDataBlockView";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";
