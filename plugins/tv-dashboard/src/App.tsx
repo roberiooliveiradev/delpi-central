@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
+import { ConfirmDialogProvider } from "./context/ConfirmDialogProvider";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
 import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
@@ -82,30 +83,32 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   }
 
   return (
-    <div
-      className={[
-        "dashboard-tv-dashboard",
-        "dashboard-page",
-        isFullscreenView ? "td-app-shell--preview" : null,
-        isDeckEditor ? "dashboard-page--deck-edit" : null,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div className={`td-app-shell${isDeckEditor ? " td-app-shell--deck" : ""}`}>
-        {!isFullscreenView && !isDeckEditor ? (
-          <header className="td-hero">
-            <p className="td-eyebrow">Operações · Displays</p>
-            <h1 className="td-title">Painéis TV</h1>
-            <p className="td-subtitle">
-              Crie programações rotativas para TVs da empresa e compartilhe um link público sem login.
-            </p>
-          </header>
-        ) : null}
-        <div className={isDeckEditor ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
-          {renderBody()}
+    <ConfirmDialogProvider>
+      <div
+        className={[
+          "dashboard-tv-dashboard",
+          "dashboard-page",
+          isFullscreenView ? "td-app-shell--preview" : null,
+          isDeckEditor ? "dashboard-page--deck-edit" : null,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <div className={`td-app-shell${isDeckEditor ? " td-app-shell--deck" : ""}`}>
+          {!isFullscreenView && !isDeckEditor ? (
+            <header className="td-hero">
+              <p className="td-eyebrow">Operações · Displays</p>
+              <h1 className="td-title">Painéis TV</h1>
+              <p className="td-subtitle">
+                Crie programações rotativas para TVs da empresa e compartilhe um link público sem login.
+              </p>
+            </header>
+          ) : null}
+          <div className={isDeckEditor ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
+            {renderBody()}
+          </div>
         </div>
       </div>
-    </div>
+    </ConfirmDialogProvider>
   );
 }

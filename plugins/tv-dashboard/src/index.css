@@ -335,10 +335,11 @@
   justify-content: center;
 }
 
-.td-modal-backdrop {
+.td-modal-backdrop,
+.td-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 10400;
   background: color-mix(in srgb, #000 45%, transparent);
   display: grid;
   place-items: center;
@@ -354,7 +355,100 @@
   box-shadow: 0 20px 60px color-mix(in srgb, #000 18%, transparent);
   max-height: min(92vh, 960px);
   overflow: auto;
+  color: var(--td-text);
 }
+
+.td-modal--confirm {
+  width: min(440px, 100%);
+}
+
+.td-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.td-modal__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--td-text);
+}
+
+.td-modal__body {
+  display: grid;
+  gap: 12px;
+}
+
+.td-confirm-modal__message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--td-text);
+}
+
+.td-modal-actions--end {
+  justify-content: flex-end;
+}
+
+.td-ghost-btn,
+.td-primary-btn,
+.td-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--td-border);
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.td-ghost-btn {
+  background: var(--td-surface);
+  color: var(--td-text);
+}
+
+.td-primary-btn {
+  background: var(--td-accent);
+  border-color: var(--td-accent);
+  color: #fff;
+}
+
+.td-danger-btn {
+  background: color-mix(in srgb, #b42318 92%, var(--td-surface));
+  border-color: color-mix(in srgb, #b42318 55%, var(--td-border));
+  color: #fff;
+}
+
+.td-ghost-btn:hover:not(:disabled),
+.td-primary-btn:hover:not(:disabled),
+.td-danger-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.td-ghost-btn:disabled,
+.td-primary-btn:disabled,
+.td-danger-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.td-ghost-btn--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.td-modal__close {
+  flex-shrink: 0;
+}
+
+.td-modal-backdrop {
 
 .td-modal--wide {
   width: min(980px, 100%);

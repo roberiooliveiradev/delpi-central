@@ -47,6 +47,7 @@ import {
   DeckEditorHistoryProvider,
   type DeckEditorHistoryContextValue,
 } from "../context/deckEditorHistoryContext";
+import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
 import { useDeckEditorKeyboard } from "../hooks/useDeckEditorKeyboard";
 import type { DeckEditorSnapshot } from "../utils/deckEditorHistory";
@@ -72,6 +73,7 @@ type Props = {
 };
 
 export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: Props) {
+  const confirm = useConfirm();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [catalog, setCatalog] = useState<NativeScreenCatalogItem[]>([]);
   const [presets, setPresets] = useState<SlidePreset[]>([]);
@@ -326,7 +328,13 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   async function handleRemoveSlide(slide: Slide) {
     if (!playlist) return;
-    if (!window.confirm(`Remover a tela «${slide.title}»?`)) return;
+    const confirmed = await confirm({
+      title: "Remover tela",
+      message: `Remover a tela «${slide.title}»?`,
+      confirmLabel: "Remover",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     deckHistory.recordBeforeChange();
     await deleteSlide(playlist.id, slide.id);
     const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
@@ -346,18 +354,27 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   async function handleDelete() {
     if (!playlist) return;
-    if (!window.confirm("Excluir esta programação permanentemente?")) return;
+    const confirmed = await confirm({
+      title: "Excluir programação",
+      message: "Excluir esta programação permanentemente?",
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     await deletePlaylist(playlist.id);
     onBack();
   }
 
   async function handleRegenerateToken() {
     if (!playlist) return;
-    if (
-      !window.confirm(
+    const confirmed = await confirm({
+      title: "Gerar novo link",
+      message:
         "Gerar novo link? TVs com o link atual deixarão de funcionar até usar o novo endereço.",
-      )
-    ) {
+      confirmLabel: "Gerar novo link",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     const updated = await regeneratePlaylistToken(playlist.id);

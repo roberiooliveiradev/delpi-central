@@ -6,6 +6,7 @@ import {
   listPlaylists,
   type Playlist,
 } from "../api/tvDashboardApi";
+import { useConfirm } from "../context/ConfirmDialogProvider";
 
 function formatLastPresented(value?: string | null) {
   if (!value) return "—";
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export function PlaylistsPage({ onOpen, onCreate }: Props) {
+  const confirm = useConfirm();
   const [items, setItems] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,12 @@ export function PlaylistsPage({ onOpen, onCreate }: Props) {
   }, [load]);
 
   async function handleDuplicate(item: Playlist) {
-    if (!window.confirm(`Duplicar «${item.name}»?`)) return;
+    const confirmed = await confirm({
+      title: "Duplicar programação",
+      message: `Duplicar «${item.name}»?`,
+      confirmLabel: "Duplicar",
+    });
+    if (!confirmed) return;
     try {
       const copy = await duplicatePlaylist(item.id);
       onOpen(copy.id);

@@ -9,6 +9,7 @@ import {
   regeneratePlaylistToken,
   type Playlist,
 } from "../api/tvDashboardApi";
+import { useConfirm } from "../context/ConfirmDialogProvider";
 import { playlistPath } from "../routing";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export function PlaylistSharePage({ playlistId, onBack }: Props) {
+  const confirm = useConfirm();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,11 +67,14 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
 
   async function handleRegenerateToken() {
     if (!playlist) return;
-    if (
-      !window.confirm(
+    const confirmed = await confirm({
+      title: "Gerar novo link",
+      message:
         "Gerar novo link? TVs com o link atual deixarão de funcionar até usar o novo endereço.",
-      )
-    ) {
+      confirmLabel: "Gerar novo link",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     const updated = await regeneratePlaylistToken(playlist.id);
