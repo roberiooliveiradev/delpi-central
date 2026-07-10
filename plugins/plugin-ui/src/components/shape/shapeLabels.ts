@@ -1,0 +1,45 @@
+import type { ShapeColorLabels } from "./types";
+
+export const DEFAULT_SHAPE_COLOR_LABELS: Required<ShapeColorLabels> = {
+  themeColors: "Cores do Tema",
+  standardColors: "Cores Padrão",
+  noFill: "Sem preenchimento",
+  noOutline: "Sem contorno",
+  moreColors: "Mais cores…",
+  eyedropper: "Conta-gotas",
+  image: "Imagem…",
+  gradient: "Gradiente…",
+  texture: "Textura…",
+  fill: "Preenchimento",
+  outline: "Contorno",
+  thickness: "Espessura",
+  dashed: "Esboçado",
+  lineStyle: "Traços",
+  arrows: "Setas",
+  effects: "Efeitos",
+  preset: "Predefinição",
+  shadow: "Sombra",
+  reflection: "Reflexo",
+  glow: "Brilho",
+  softEdges: "Bordas suaves",
+  bevel: "Bisel",
+  rotation3d: "Rotação 3D",
+  themeStyles: "Estilos de Tema",
+  presets: "Predefinições",
+  colorDialogTitle: "Cores",
+  tabStandard: "Padrão",
+  tabCustom: "Personalizar",
+  newColor: "Nova",
+  currentColor: "Atual",
+  red: "Vermelho",
+  green: "Verde",
+  blue: "Azul",
+  hex: "Hex",
+  transparency: "Transparência",
+  ok: "OK",
+  cancel: "Cancelar",
+};
+
+export function mergeShapeColorLabels(labels?: ShapeColorLabels): Required<ShapeColorLabels> {
+  return { ...DEFAULT_SHAPE_COLOR_LABELS, ...labels };
+}

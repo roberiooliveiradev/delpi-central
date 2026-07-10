@@ -556,11 +556,34 @@ Todos os MFEs com prévia de anexo usam **`FilePreviewModal`**: `quality-action-
 
 ---
 
+## Família `shape` — formatação de formas
+
+Paleta estilo PowerPoint: grade tema 10×6, cores padrão, diálogo RGB/hex/transparência, menus de preenchimento/contorno/efeitos/estilo.
+
+| Export | Descrição |
+|--------|-----------|
+| `ColorThemeGrid` | Grade configurável de cores do tema |
+| `ColorStandardRow` | Linha de cores padrão |
+| `ColorPickerPopover` | Popover com paleta + «Sem preenchimento» + «Mais cores» |
+| `ColorDialog` | Modal com abas Padrão / Personalizar |
+| `ShapeFillMenu` | Dropdown de preenchimento |
+| `ShapeOutlineMenu` | Dropdown de contorno + espessura |
+| `ShapeEffectsMenu` | Efeitos com submenus (shell + callbacks) |
+| `ShapeStyleGallery` / `ShapeStyleMenu` | Presets «Abc» |
+
+```tsx
+import { ShapeFillMenu, ShapeOutlineMenu } from "@delpi/plugin-ui/index";
+
+<ShapeFillMenu value="#089bdb" onChange={setFill} onNoFill={() => setFill("transparent")} />
+```
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |
 |--------|-------------------|
-| `tv-dashboard` | Todos os exports `help` |
+| `tv-dashboard` | Todos os exports `help` + `ShapeFillMenu`, `ShapeOutlineMenu`, `ShapeStyleMenu`, `ShapeEffectsMenu` |
 | `dashboard-production` | `HelpTooltip`, `FieldLabel` |
 | `dashboard-commercial` | `HelpTooltip`, `FieldLabel` |
 | `dashboard-engineering` | `HelpTooltip`, `FieldLabel` |

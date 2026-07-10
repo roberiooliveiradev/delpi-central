@@ -55,7 +55,7 @@ import {
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
 } from "@delpi/tv-dashboard-presentation";
-import { HintAction } from "@delpi/plugin-ui/index";
+import { HintAction, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
@@ -570,64 +570,44 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
 
       {isShapeBlock && selected ? (
         <DeckRibbonGroup label="Forma" hint={H.shape}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             {showShapeFill ? (
-              <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Preenchimento">
-                <span className="td-ribbon-tile__icon">
-                  <input
-                    type="color"
-                    className="td-deck-ribbon__color"
-                    value={selected.style?.fill ?? "#089bdb"}
-                    onChange={(e) => updateSelectedStyle({ fill: e.target.value })}
-                  />
-                </span>
-                <span className="td-ribbon-tile__label">
-                  {shapePrimitive === "point" ? "Cor" : "Preench."}
-                </span>
-              </label>
+              <ShapeFillMenu
+                value={selected.style?.fill ?? "#089bdb"}
+                fillLabel={shapePrimitive === "point" ? "Cor" : "Preench."}
+                onChange={(color) => updateSelectedStyle({ fill: color })}
+                onNoFill={() => updateSelectedStyle({ fill: "transparent" })}
+              />
             ) : null}
             {showShapeStroke ? (
-              <label className="td-ribbon-tile td-ribbon-tile--color" aria-label="Contorno">
-                <span className="td-ribbon-tile__icon">
-                  <input
-                    type="color"
-                    className="td-deck-ribbon__color"
-                    value={selected.style?.stroke ?? "#ffffff"}
-                    onChange={(e) => updateSelectedStyle({ stroke: e.target.value })}
-                  />
-                </span>
-                <span className="td-ribbon-tile__label">Contorno</span>
-              </label>
+              <ShapeOutlineMenu
+                color={selected.style?.stroke ?? "#ffffff"}
+                strokeWidth={selected.style?.strokeWidth ?? defaultShapeStrokeWidth}
+                minWidth={shapePrimitive === "point" ? 0 : 0}
+                maxWidth={shapePrimitive === "point" ? 8 : 20}
+                outlineLabel="Contorno"
+                onColorChange={(color) => updateSelectedStyle({ stroke: color })}
+                onNoOutline={() => updateSelectedStyle({ stroke: "transparent" })}
+                onStrokeWidthChange={(width) => updateSelectedStyle({ strokeWidth: width })}
+              />
             ) : null}
-            {shapePrimitive === "line" || shapePrimitive === "area" ? (
-              <HintAction hint={H.strokeWidth} ariaLabel="Ajuda: Espessura do contorno">
-                <label className="td-ribbon-tile td-ribbon-tile--number" aria-label="Espessura do contorno">
-                  <input
-                    type="number"
-                    className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                    min={0}
-                    max={20}
-                    value={selected.style?.strokeWidth ?? defaultShapeStrokeWidth}
-                    onChange={(e) => updateSelectedStyle({ strokeWidth: Number(e.target.value) || 0 })}
-                  />
-                  <span className="td-ribbon-tile__label">Espess.</span>
-                </label>
-              </HintAction>
-            ) : shapePrimitive === "point" ? (
-              <HintAction hint={H.strokeWidth} ariaLabel="Ajuda: Espessura do contorno">
-                <label className="td-ribbon-tile td-ribbon-tile--number" aria-label="Espessura do contorno">
-                  <input
-                    type="number"
-                    className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                    min={0}
-                    max={8}
-                    value={selected.style?.strokeWidth ?? defaultShapeStrokeWidth}
-                    onChange={(e) => updateSelectedStyle({ strokeWidth: Number(e.target.value) || 0 })}
-                  />
-                  <span className="td-ribbon-tile__label">Contorno</span>
-                </label>
-              </HintAction>
-            ) : null}
+            <ShapeStyleMenu
+              onSelect={(preset) =>
+                updateSelectedStyle({
+                  fill: preset.fill,
+                  stroke: preset.stroke,
+                  strokeWidth: preset.strokeWidth,
+                  boxShadow: preset.boxShadow,
+                })
+              }
+            />
+            <ShapeEffectsMenu
+              onSelect={(effectId, optionId) => {
+                if (effectId === "shadow" && !optionId) {
+                  updateSelectedStyle({ boxShadow: "0 4px 14px rgba(0, 0, 0, 0.28)" });
+                }
+              }}
+            />
           </div>
         </DeckRibbonGroup>
       ) : null}

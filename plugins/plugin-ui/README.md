@@ -55,6 +55,9 @@ Antes do rollout MF (jul/2026), consumidores usavam alias Vite + `COPY plugin-ui
 | `SectionHintLabel` | Rótulo de seção (ribbon) + ajuda |
 | `TabHintCell` | Aba + ? sem botão aninhado |
 | `HintAction` | Botão/controle com balão ao hover |
+| `ShapeFillMenu` / `ShapeOutlineMenu` | Menus de cor estilo PowerPoint (ribbon) |
+| `ColorDialog` / `ColorPickerPopover` | Paleta tema + diálogo «Mais cores» |
+| `ShapeStyleMenu` / `ShapeEffectsMenu` | Estilos de tema e efeitos de forma |
 | `ChartCard` | Cartão de gráfico (layout headless + `classNames` BEM) |
 | `chartCardBemClasses` | Helper para mapa BEM `{prefix}-chart-card__*` |
 | `KpiCard` | Cartão KPI departamental (meta, badges IDD, ícone) |

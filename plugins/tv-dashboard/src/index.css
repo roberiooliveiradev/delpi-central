@@ -1413,6 +1413,16 @@
   gap: 0;
 }
 
+.td-deck-ribbon__tiles--shape-menus {
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.td-deck-ribbon__tiles--shape-menus .delpi-ui-shape-menu__panel,
+.td-deck-ribbon__tiles--shape-menus .delpi-ui-color-picker-trigger__panel {
+  z-index: 50;
+}
+
 .td-ribbon-tile {
   display: inline-flex;
   flex-direction: column;
