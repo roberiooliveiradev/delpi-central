@@ -147,6 +147,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     connectOnStage:
       "Com um gráfico ou tabela selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
     chartOptions: "Título, legenda, eixos, rótulos de dados e formato dos valores exibidos no gráfico.",
+    chartElements:
+      "Ative ou configure cada parte do gráfico, como no menu «Adicionar elemento de gráfico» do Excel.",
+    chartAppearance: "Formato numérico e cor da série.",
     chartTitle: "Título central acima do gráfico (ex.: ROL). Vazio usa o nome da fonte de dados.",
     chartLegend: "Texto exibido na legenda para identificar a série.",
     chartDataLabels: "Mostra o valor numérico em cada ponto ou barra.",

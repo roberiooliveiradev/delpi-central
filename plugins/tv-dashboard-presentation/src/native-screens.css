@@ -958,9 +958,23 @@
 
 .tdp-series-chart__plot-area {
   fill: transparent;
-  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 35%, transparent);
+  stroke: transparent;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
+}
+
+.tdp-series-chart__plot-area--axes {
+  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 35%, transparent);
+}
+
+.tdp-series-chart__axis-line {
+  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 55%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.tdp-series-chart__grid-line--vertical {
+  stroke-dasharray: 2 2;
 }
 
 .tdp-series-chart__grid-line {
@@ -1029,5 +1043,29 @@
   justify-content: center;
   font-size: clamp(10px, 1.2vw, 13px);
   color: var(--tdp-data-muted, #94a3b8);
+}
+
+.tdp-series-chart__data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(8px, 0.95vw, 11px);
+  margin-top: 0.25rem;
+}
+
+.tdp-series-chart__data-table th,
+.tdp-series-chart__data-table td {
+  border: 1px solid color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 28%, transparent);
+  padding: 0.2em 0.35em;
+  text-align: center;
+}
+
+.tdp-series-chart__data-table th {
+  font-weight: 600;
+  color: var(--tdp-data-text-strong, #f8fafc);
+  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 8%, transparent);
+}
+
+.tdp-series-chart__data-table td {
+  color: var(--tdp-data-text, #e2e8f0);
 }
 

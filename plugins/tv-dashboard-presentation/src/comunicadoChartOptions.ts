@@ -9,12 +9,18 @@ export type ComunicadoChartOptions = {
   seriesName?: string;
   showLegend?: boolean;
   legendPosition?: ComunicadoChartLegendPosition;
+  showAxes?: boolean;
   showXAxisLabels?: boolean;
   showYAxisLabels?: boolean;
+  showXAxisTitle?: boolean;
+  showYAxisTitle?: boolean;
   xAxisTitle?: string;
   yAxisTitle?: string;
   showDataLabels?: boolean;
+  showDataTable?: boolean;
   showGrid?: boolean;
+  showVerticalGrid?: boolean;
+  showMarkers?: boolean;
   valueFormat?: ComunicadoChartValueFormat;
   seriesColor?: string;
 };
@@ -30,10 +36,16 @@ export const DEFAULT_COMUNICADO_CHART_OPTIONS: ComunicadoChartOptions = {
   showTitle: true,
   showLegend: true,
   legendPosition: "bottom",
+  showAxes: true,
   showXAxisLabels: true,
   showYAxisLabels: true,
+  showXAxisTitle: false,
+  showYAxisTitle: false,
   showDataLabels: false,
+  showDataTable: false,
   showGrid: true,
+  showVerticalGrid: false,
+  showMarkers: true,
   valueFormat: "auto",
   seriesColor: "#0d7a8c",
 };

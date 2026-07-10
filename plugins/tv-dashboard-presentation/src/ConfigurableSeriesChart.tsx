@@ -26,6 +26,35 @@ function xLabelStep(count: number): number {
   return Math.ceil(count / 8);
 }
 
+function ChartDataTable({
+  points,
+  seriesName,
+  valueFormat,
+}: {
+  points: SeriesChartPoint[];
+  seriesName: string;
+  valueFormat: ComunicadoChartOptions["valueFormat"];
+}) {
+  return (
+    <table className="tdp-series-chart__data-table">
+      <thead>
+        <tr>
+          <th>Período</th>
+          <th>{seriesName}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {points.map((point, index) => (
+          <tr key={`dt-${index}`}>
+            <td>{String(point.label ?? index + 1)}</td>
+            <td>{formatSeriesChartValue(Number(point.value), valueFormat ?? "auto")}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export function ConfigurableSeriesChart({
   chartType,
   points,
@@ -58,6 +87,8 @@ export function ConfigurableSeriesChart({
   const title = config.title?.trim();
   const seriesName = config.seriesName?.trim() || title || "Série";
   const showLegend = config.showLegend && config.legendPosition !== "hidden";
+  const showAxes = config.showAxes !== false;
+  const valueFormat = config.valueFormat ?? "auto";
 
   const legend = showLegend ? (
     <ul
@@ -90,7 +121,7 @@ export function ConfigurableSeriesChart({
           role="img"
           aria-label={title || seriesName}
         >
-          {config.yAxisTitle ? (
+          {config.showYAxisTitle && config.yAxisTitle ? (
             <text
               x={10}
               y={MARGIN.top + plotH / 2}
@@ -106,7 +137,7 @@ export function ConfigurableSeriesChart({
                 const y = toY(tick);
                 return (
                   <line
-                    key={`grid-${tick}`}
+                    key={`grid-h-${tick}`}
                     x1={MARGIN.left}
                     y1={y}
                     x2={MARGIN.left + plotW}
@@ -117,13 +148,53 @@ export function ConfigurableSeriesChart({
               })
             : null}
 
+          {config.showVerticalGrid
+            ? usable.map((_, index) => {
+                const x = toX(index);
+                return (
+                  <line
+                    key={`grid-v-${index}`}
+                    x1={x}
+                    y1={MARGIN.top}
+                    x2={x}
+                    y2={MARGIN.top + plotH}
+                    className="tdp-series-chart__grid-line tdp-series-chart__grid-line--vertical"
+                  />
+                );
+              })
+            : null}
+
           <rect
             x={MARGIN.left}
             y={MARGIN.top}
             width={plotW}
             height={plotH}
-            className="tdp-series-chart__plot-area"
+            className={[
+              "tdp-series-chart__plot-area",
+              showAxes ? "tdp-series-chart__plot-area--axes" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           />
+
+          {showAxes ? (
+            <>
+              <line
+                x1={MARGIN.left}
+                y1={MARGIN.top + plotH}
+                x2={MARGIN.left + plotW}
+                y2={MARGIN.top + plotH}
+                className="tdp-series-chart__axis-line"
+              />
+              <line
+                x1={MARGIN.left}
+                y1={MARGIN.top}
+                x2={MARGIN.left}
+                y2={MARGIN.top + plotH}
+                className="tdp-series-chart__axis-line"
+              />
+            </>
+          ) : null}
 
           {config.showYAxisLabels
             ? ticks.map((tick) => {
@@ -137,7 +208,7 @@ export function ConfigurableSeriesChart({
                     textAnchor="end"
                     dominantBaseline="middle"
                   >
-                    {formatSeriesChartValue(tick, config.valueFormat ?? "auto")}
+                    {formatSeriesChartValue(tick, valueFormat)}
                   </text>
                 );
               })
@@ -162,7 +233,7 @@ export function ConfigurableSeriesChart({
                         className="tdp-series-chart__data-label"
                         textAnchor="middle"
                       >
-                        {formatSeriesChartValue(value, config.valueFormat ?? "auto")}
+                        {formatSeriesChartValue(value, valueFormat)}
                       </text>
                     ) : null}
                   </g>
@@ -181,9 +252,17 @@ export function ConfigurableSeriesChart({
                 strokeLinejoin="round"
                 strokeLinecap="round"
               />
-              {usable.map((point, index) => (
-                <circle key={`dot-${index}`} cx={toX(index)} cy={toY(Number(point.value))} r={2.5} fill={seriesColor} />
-              ))}
+              {config.showMarkers !== false
+                ? usable.map((point, index) => (
+                    <circle
+                      key={`dot-${index}`}
+                      cx={toX(index)}
+                      cy={toY(Number(point.value))}
+                      r={2.5}
+                      fill={seriesColor}
+                    />
+                  ))
+                : null}
               {config.showDataLabels
                 ? usable.map((point, index) => (
                     <text
@@ -193,7 +272,7 @@ export function ConfigurableSeriesChart({
                       className="tdp-series-chart__data-label"
                       textAnchor="middle"
                     >
-                      {formatSeriesChartValue(Number(point.value), config.valueFormat ?? "auto")}
+                      {formatSeriesChartValue(Number(point.value), valueFormat)}
                     </text>
                   ))
                 : null}
@@ -216,7 +295,7 @@ export function ConfigurableSeriesChart({
               )
             : null}
 
-          {config.xAxisTitle ? (
+          {config.showXAxisTitle && config.xAxisTitle ? (
             <text
               x={MARGIN.left + plotW / 2}
               y={VIEW_H - 4}
@@ -230,6 +309,9 @@ export function ConfigurableSeriesChart({
         {config.legendPosition === "right" ? legend : null}
       </div>
       {config.legendPosition === "bottom" ? legend : null}
+      {config.showDataTable ? (
+        <ChartDataTable points={usable} seriesName={seriesName} valueFormat={valueFormat} />
+      ) : null}
     </div>
   );
 }

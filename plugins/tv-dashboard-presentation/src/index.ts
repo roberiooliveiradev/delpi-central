@@ -252,6 +252,14 @@ export { TvDataBlockView } from "./tvDataBlockView";
 export { ChartViewBlockView } from "./chartViewBlockView";
 export { TableViewBlockView } from "./tableViewBlockView";
 export { DataSourceBlockView } from "./dataSourceBlockView";
+export {
+  CHART_ELEMENT_CATALOG,
+  isChartElementApplicable,
+  isChartElementEnabled,
+  setChartElementEnabled,
+  type ChartElementDefinition,
+  type ChartElementId,
+} from "./chartElementCatalog";
 export { chartTypeLabel, tablePresetLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
 export {
   CHART_LEGEND_POSITION_OPTIONS,

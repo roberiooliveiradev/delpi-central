@@ -26,6 +26,22 @@ describe("ConfigurableSeriesChart", () => {
     expect(screen.getByText("ROL")).toBeTruthy();
     expect(screen.getByText("Receita")).toBeTruthy();
   });
+
+  it("renderiza tabela de dados quando habilitada", () => {
+    render(
+      <ConfigurableSeriesChart
+        chartType="line"
+        points={[
+          { label: "jan/26", value: 100 },
+          { label: "fev/26", value: 200 },
+        ]}
+        options={{ showDataTable: true, seriesName: "ROL", showLegend: false, legendPosition: "hidden" }}
+      />,
+    );
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(screen.getAllByText("jan/26").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("ROL").length).toBeGreaterThan(0);
+  });
 });
 
 describe("formatSeriesChartValue", () => {
