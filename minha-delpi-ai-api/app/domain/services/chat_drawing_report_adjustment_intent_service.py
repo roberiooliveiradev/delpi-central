@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 from app.domain.services.chat_drawing_query_intent_content_service import (
     ChatDrawingQueryIntentContentService,
 )
@@ -16,13 +15,12 @@ class ChatDrawingReportAdjustmentIntentService:
         *,
         attachment_ids: list[str] | None = None,
     ) -> bool:
-        if not message or not str(message).strip():
-            return False
+        del attachment_ids
+        return cls.has_adjustment_signal(message)
 
-        if ChatDrawingIntentService.is_drawing_analysis_request(
-            message,
-            attachment_ids=attachment_ids,
-        ):
+    @classmethod
+    def has_adjustment_signal(cls, message: str | None) -> bool:
+        if not message or not str(message).strip():
             return False
 
         normalized = ChatDrawingQueryIntentContentService.normalize_message(message)

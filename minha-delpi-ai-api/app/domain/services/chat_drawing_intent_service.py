@@ -51,6 +51,13 @@ class ChatDrawingIntentService:
         *,
         attachment_ids: list[str] | None = None,
     ) -> bool:
+        from app.domain.services.chat_drawing_report_adjustment_intent_service import (
+            ChatDrawingReportAdjustmentIntentService,
+        )
+
+        if ChatDrawingReportAdjustmentIntentService.has_adjustment_signal(message):
+            return False
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:

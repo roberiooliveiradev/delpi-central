@@ -55,6 +55,39 @@ def _history_with_analysis(analysis: dict | None = None) -> list[dict]:
     ]
 
 
+def test_intent_matches_chip_confirm_manual_message():
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261877"
+    )
+
+    assert ChatDrawingReportAdjustmentIntentService.matches(message)
+
+
+def test_chip_message_not_classified_as_drawing_analysis_request():
+    from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261877"
+    )
+
+    assert not ChatDrawingIntentService.is_drawing_analysis_request(message)
+
+
+def test_chip_adjustment_turn_updates_report_to_approved():
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261877"
+    )
+    result = ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+        message,
+        previous_messages=_history_with_analysis(),
+    )
+
+    assert result is not None
+    assert result["drawingAnalysis"]["status"] == "approved"
+    assert "Relatório de Análise" in result["directAnswer"]
+    assert result["drawingAnalysisExport"]["markdown"]
+
+
 def test_intent_matches_90261877_adjustment_message():
     message = (
         "foi revisado e o problema não é verdadeiro, gere um novo relatório"
