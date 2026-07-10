@@ -17,7 +17,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
     paragraph:
       "Alinhamento horizontal e vertical, justificação, entrelinhas e espaçamento entre caracteres.",
-    shape: "Ajusta preenchimento e contorno da forma selecionada.",
+    shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
+    strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Controla camadas e mídia do elemento selecionado: ordem (frente/fundo), troca de arquivo ou remoção.",
     undo: "Desfazer a última alteração no slide (Ctrl+Z).",

@@ -1,15 +1,18 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { ComunicadoShapeGraphic } from "./comunicadoShapeGraphic";
+import { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
 import { ComunicadoIconGraphic } from "./comunicadoIconView";
-import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
 import {
   blockEntranceAnimationClass,
   blockEntranceAnimationStyle,
 } from "./comunicadoBlockAnimations";
 import { comunicadoImageCropCssProperties } from "./comunicadoImageCrop";
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
-import { blockCssStyle, comunicadoTextInnerStyle, isDataBlockType } from "./comunicadoHelpers";
+import { blockCssStyle, isDataBlockType } from "./comunicadoHelpers";
+import {
+  isComunicadoVisualBoxBlock,
+  visualBoxBlockModifierClasses,
+} from "./comunicadoVisualBox";
 import type { ComunicadoBlock, ComunicadoDataBlock } from "./comunicadoTypes";
 import { TvDataBlockView } from "./tvDataBlockView";
 
@@ -21,6 +24,10 @@ type Props = {
   /** Quando true, o pai controla left/top/width/height. */
   embedded?: boolean;
   dataLoading?: boolean;
+  /** Conteúdo de texto customizado (editor); só caixas visuais. */
+  visualBoxTextContent?: ReactNode;
+  visualBoxTextClassName?: string;
+  visualBoxInnerStyle?: CSSProperties;
 };
 
 function blockLinkHref(block: ComunicadoBlock): string | undefined {
@@ -67,18 +74,6 @@ function wrapWithLink(node: ReactNode, block: ComunicadoBlock) {
   );
 }
 
-function ShapeGraphic({ block }: { block: Extract<ComunicadoBlock, { type: "shape" }> }) {
-  return (
-    <ComunicadoShapeGraphic
-      kind={block.shape}
-      fill={block.style?.fill ?? "#089bdb"}
-      stroke={block.style?.stroke ?? "#ffffff"}
-      strokeWidth={block.style?.strokeWidth ?? 2}
-      borderRadius={block.style?.borderRadius}
-    />
-  );
-}
-
 export function ComunicadoBlockView({
   block,
   fontScale = 1,
@@ -86,6 +81,9 @@ export function ComunicadoBlockView({
   interactive = false,
   embedded = false,
   dataLoading = false,
+  visualBoxTextContent,
+  visualBoxTextClassName,
+  visualBoxInnerStyle,
 }: Props) {
   const baseStyle = embedded
     ? {
@@ -109,25 +107,19 @@ export function ComunicadoBlockView({
       .filter(Boolean)
       .join(" ");
 
-  if (block.type === "heading") {
-    const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
+  if (isComunicadoVisualBoxBlock(block)) {
+    const modifiers = visualBoxBlockModifierClasses(block);
     const content = (
-      <ComunicadoTextRunsView block={block} as="h1" baseStyle={innerStyle} fontScale={fontScale} />
+      <ComunicadoVisualBoxView
+        block={block}
+        fontScale={fontScale}
+        textContent={visualBoxTextContent}
+        textClassName={visualBoxTextClassName}
+        innerStyleOverride={visualBoxInnerStyle}
+      />
     );
     return (
-      <div className={blockClass("tdp-comunicado__block--heading")} style={style}>
-        {wrapWithLink(content, block)}
-      </div>
-    );
-  }
-
-  if (block.type === "text") {
-    const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
-    const content = (
-      <ComunicadoTextRunsView block={block} as="p" baseStyle={innerStyle} fontScale={fontScale} />
-    );
-    return (
-      <div className={blockClass("tdp-comunicado__block--text")} style={style}>
+      <div className={blockClass([...modifiers, "tdp-comunicado__visual-box"].join(" "))} style={style}>
         {wrapWithLink(content, block)}
       </div>
     );
@@ -167,24 +159,6 @@ export function ComunicadoBlockView({
     return (
       <div className={blockClass("tdp-comunicado__block--media")} style={style}>
         {wrapWithLink(media, block)}
-      </div>
-    );
-  }
-
-  if (block.type === "shape") {
-    const shapeContent = (
-      <>
-        <ShapeGraphic block={block} />
-        {block.content ? (
-          <div className="tdp-comunicado__shape-text">
-            <span>{block.content}</span>
-          </div>
-        ) : null}
-      </>
-    );
-    return (
-      <div className={blockClass("tdp-comunicado__block--shape")} style={style}>
-        {wrapWithLink(shapeContent, block)}
       </div>
     );
   }

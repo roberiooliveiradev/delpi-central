@@ -12,8 +12,10 @@ import {
   entranceAnimationFromPreset,
   entrancePresetValue,
   isDataBlockType,
+  isComunicadoVisualBoxBlock,
   normalizeHrefInput,
   resolveEntranceAnimation,
+  visualBoxSupportsShapeFormatting,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -64,7 +66,8 @@ export function ComunicadoElementInspector({
   } = useComunicadoEditor();
 
   const multiSelect = selectedIds.length > 1;
-  const isShapeBlock = selected?.type === "shape";
+  const isShapeBlock =
+    selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsShapeFormatting(selected);
   const isIconBlock = selected?.type === "icon";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isSidebarLinkBlock = isMediaBlock || isShapeBlock || isIconBlock;

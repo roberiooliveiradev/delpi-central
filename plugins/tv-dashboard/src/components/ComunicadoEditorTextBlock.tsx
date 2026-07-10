@@ -17,6 +17,7 @@ import {
   syncTextBlockFromRuns,
   toggleContentRunStyleInRange,
   toggleListTypeInRange,
+  visualBoxBlockModifierClasses,
   type ComunicadoBlock,
   type ComunicadoListType,
   type ComunicadoNamedTextStyle,
@@ -75,7 +76,8 @@ export function ComunicadoEditorTextBlock({
 
   const blockClass = [
     "tdp-comunicado__block",
-    `tdp-comunicado__block--${block.type}`,
+    "tdp-comunicado__visual-box",
+    ...visualBoxBlockModifierClasses(block),
     "td-composer__text-block",
     "td-composer__text-block--readonly",
     isEditing ? "td-composer__text-block--editing" : "",

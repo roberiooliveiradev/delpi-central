@@ -110,6 +110,21 @@ export {
   sortBlocksByZIndex,
 } from "./comunicadoHelpers";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
+export { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
+export {
+  type ComunicadoVisualBoxBlock,
+  type ComunicadoVisualBoxChrome,
+  type ComunicadoVisualBoxMode,
+  type ComunicadoVisualBoxProfile,
+  defaultVerticalAlignForVisualBox,
+  isComunicadoVisualBoxBlock,
+  resolveVisualBoxChrome,
+  resolveVisualBoxContentLayoutStyle,
+  resolveVisualBoxProfile,
+  visualBoxBlockModifierClasses,
+  visualBoxSupportsShapeFormatting,
+  visualBoxSupportsTextFormatting,
+} from "./comunicadoVisualBox";
 export { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
 export {
   contentRunStyleToCss,

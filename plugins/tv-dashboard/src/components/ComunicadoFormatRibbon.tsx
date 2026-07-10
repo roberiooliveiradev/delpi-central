@@ -44,11 +44,14 @@ import {
   defaultNamedStyleForBlockType,
   ensureComunicadoGoogleFontsLoaded,
   defaultTextBlockStyle,
+  isComunicadoVisualBoxBlock,
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
   resolveNamedStyleSelectionForBlock,
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
+  visualBoxSupportsShapeFormatting,
+  visualBoxSupportsTextFormatting,
 } from "@delpi/tv-dashboard-presentation";
 import { HintAction } from "@delpi/plugin-ui/index";
 
@@ -106,7 +109,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const canGroup = selectedIds.length >= 2;
   const canUngroup = selectedHasGroup(blocks, selectedIds);
 
-  const isTextBlock = selected?.type === "heading" || selected?.type === "text";
+  const isTextBlock =
+    selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsTextFormatting(selected);
   const partialTextSelectionActive = Boolean(
     isTextBlock &&
       selected &&
@@ -173,7 +177,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       : "top";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isImageBlock = selected?.type === "image";
-  const isShapeBlock = selected?.type === "shape";
+  const isShapeBlock =
+    selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsShapeFormatting(selected);
 
   return (
     <div className="td-deck-ribbon__groups">
@@ -589,6 +594,19 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               </span>
               <span className="td-ribbon-tile__label">Contorno</span>
             </label>
+            <HintAction hint={H.strokeWidth} ariaLabel="Ajuda: Espessura do contorno">
+              <label className="td-ribbon-tile td-ribbon-tile--number" aria-label="Espessura do contorno">
+                <input
+                  type="number"
+                  className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                  min={0}
+                  max={20}
+                  value={selected.style?.strokeWidth ?? 2}
+                  onChange={(e) => updateSelectedStyle({ strokeWidth: Number(e.target.value) || 0 })}
+                />
+                <span className="td-ribbon-tile__label">Espess.</span>
+              </label>
+            </HintAction>
           </div>
         </DeckRibbonGroup>
       ) : null}

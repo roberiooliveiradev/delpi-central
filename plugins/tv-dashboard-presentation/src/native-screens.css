@@ -374,7 +374,17 @@
   display: block;
 }
 
-.tdp-comunicado__block--shape {
+.tdp-comunicado__visual-box--text {
+  /* Caixa de texto: sem preenchimento/contorno de forma — só tipografia. */
+}
+
+.tdp-comunicado__visual-box-content {
+  width: 100%;
+  height: 100%;
+}
+
+.tdp-comunicado__block--shape,
+.tdp-comunicado__visual-box--shape {
   display: flex;
   align-items: center;
   justify-content: center;

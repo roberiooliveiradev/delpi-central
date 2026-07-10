@@ -11,6 +11,12 @@ import {
   normalizeBlockAnimations,
   serializeBlockAnimations,
 } from "./comunicadoBlockAnimations";
+import {
+  comunicadoVerticalAlignToJustifyContent,
+  defaultVerticalAlignForVisualBox,
+  isComunicadoVisualBoxBlock,
+  resolveVisualBoxProfile,
+} from "./comunicadoVisualBox";
 import type {
   ComunicadoBackground,
   ComunicadoBlock,
@@ -557,17 +563,10 @@ export function frameStyle(frame: ComunicadoFrame): CSSProperties {
   };
 }
 
-/** h1/p usam text-align: inherit no contêiner flex em coluna. */
-export function comunicadoVerticalAlignToJustifyContent(
-  verticalAlign: ComunicadoVerticalAlign,
-): NonNullable<CSSProperties["justifyContent"]> {
-  if (verticalAlign === "middle") return "center";
-  if (verticalAlign === "bottom") return "flex-end";
-  return "flex-start";
-}
+export { comunicadoVerticalAlignToJustifyContent } from "./comunicadoVisualBox";
 
 export function defaultVerticalAlignForBlock(type: "heading" | "text"): ComunicadoVerticalAlign {
-  return type === "heading" ? "middle" : "top";
+  return defaultVerticalAlignForVisualBox({ id: "", type, content: "", frame: { x: 0, y: 0, w: 1, h: 1 } });
 }
 
 export function defaultTextBlockStyle(type: "heading" | "text"): ComunicadoBlockStyle {
@@ -640,37 +639,38 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
   };
   applySharedBlockVisualStyle(style, css);
 
-  if (block.type === "heading" || block.type === "text") {
-    css.display = "flex";
-    css.flexDirection = "column";
-    css.alignItems = "stretch";
-    const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForBlock(block.type);
-    css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
-    if (style.textAlign) css.textAlign = style.textAlign;
-    if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-    if (style.color) css.color = style.color;
-    if (style.fontFamily) css.fontFamily = style.fontFamily;
-    if (style.fontWeight) css.fontWeight = style.fontWeight;
-    if (style.fontStyle) css.fontStyle = style.fontStyle;
-    if (style.lineHeight != null) css.lineHeight = style.lineHeight;
-    return css;
-  }
+  if (isComunicadoVisualBoxBlock(block)) {
+    const profile = resolveVisualBoxProfile(block);
+    if (profile.mode === "text") {
+      css.display = "flex";
+      css.flexDirection = "column";
+      css.alignItems = "stretch";
+      const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForVisualBox(block);
+      css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
+      if (style.textAlign) css.textAlign = style.textAlign;
+      if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
+      if (style.color) css.color = style.color;
+      if (style.fontFamily) css.fontFamily = style.fontFamily;
+      if (style.fontWeight) css.fontWeight = style.fontWeight;
+      if (style.fontStyle) css.fontStyle = style.fontStyle;
+      if (style.lineHeight != null) css.lineHeight = style.lineHeight;
+      return css;
+    }
 
-  if (block.type === "shape" && block.content) {
-    if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-    if (style.color) css.color = style.color;
-    if (style.fontFamily) css.fontFamily = style.fontFamily;
-    if (style.textAlign) css.textAlign = style.textAlign;
-    if (style.fontWeight) css.fontWeight = style.fontWeight;
-    if (style.fontStyle) css.fontStyle = style.fontStyle;
-    if (style.textDecoration) css.textDecoration = style.textDecoration;
-  }
-
-  if (block.type === "shape") {
+    if (block.content) {
+      if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
+      if (style.color) css.color = style.color;
+      if (style.fontFamily) css.fontFamily = style.fontFamily;
+      if (style.textAlign) css.textAlign = style.textAlign;
+      if (style.fontWeight) css.fontWeight = style.fontWeight;
+      if (style.fontStyle) css.fontStyle = style.fontStyle;
+      if (style.textDecoration) css.textDecoration = style.textDecoration;
+    }
     if (style.backgroundColor) css.backgroundColor = style.backgroundColor;
     if (style.borderColor) css.borderColor = style.borderColor;
     if (style.borderWidth != null) css.borderWidth = style.borderWidth;
     if (style.borderRadius != null) css.borderRadius = style.borderRadius;
+    return css;
   }
 
   if (block.type === "icon") {
