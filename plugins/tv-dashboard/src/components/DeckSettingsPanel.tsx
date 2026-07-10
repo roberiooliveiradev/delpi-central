@@ -243,7 +243,12 @@ export function DeckSettingsPanel({
               />
             </DeckIconField>
           ) : null}
-          {catalogItem ? (
+          {isCustomSlide ? (
+            <span className="td-deck-settings-chip" title={F.customSlideType}>
+              <LayoutTemplate size={13} aria-hidden="true" />
+              Tela livre
+            </span>
+          ) : catalogItem ? (
             <span className="td-deck-settings-chip" title={`Tipo: ${catalogItem.label}`}>
               <LayoutTemplate size={13} aria-hidden="true" />
               {catalogItem.label}

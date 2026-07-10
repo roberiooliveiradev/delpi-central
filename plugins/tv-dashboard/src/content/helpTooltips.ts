@@ -129,6 +129,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Intervalo para atualizar dados ao vivo (KPIs, estoque etc.) sem recarregar a página inteira.",
     dataBlockRefreshInterval:
       "Intervalo deste bloco para atualizar o preview de dados. Vazio = usa o padrão da programação.",
+    customSlideType:
+      "Tela livre: monte o layout no palco com as abas Inserir (texto, imagem, dados), Formatar e Exibir. O título acima é só o nome no filmstrip.",
     publicUrl:
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
   },

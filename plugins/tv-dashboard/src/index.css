@@ -2003,7 +2003,11 @@
 .td-deck-chrome__panel--slide-unified .td-deck-settings-strip--slide {
   flex: 1 1 auto;
   min-width: 0;
+  max-width: 100%;
   justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .td-deck-settings-strip {
@@ -2016,7 +2020,7 @@
 
 .td-deck-settings-strip--slide {
   width: 100%;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .td-deck-settings-strip__tools {
@@ -2055,6 +2059,7 @@
   flex-direction: column;
   gap: 2px;
   flex: 0 0 auto;
+  flex-shrink: 0;
   min-width: 120px;
 }
 
@@ -2063,13 +2068,15 @@
 }
 
 .td-deck-icon-field--narrow {
-  min-width: 76px;
-  max-width: 92px;
+  min-width: 72px;
+  width: 72px;
+  max-width: none;
 }
 
 .td-deck-icon-field--medium {
-  min-width: 128px;
-  max-width: 160px;
+  min-width: 148px;
+  width: min(168px, 30vw);
+  max-width: none;
 }
 
 .td-deck-icon-field--wide {
@@ -2100,6 +2107,11 @@
   margin: 0;
   gap: 0;
   min-width: 0;
+  width: 100%;
+}
+
+.td-deck-chrome__panel--compact .td-deck-icon-field .td-field {
+  min-width: 0;
 }
 
 .td-deck-icon-field .td-field > .td-field__label:empty,
@@ -2108,8 +2120,9 @@
 }
 
 .td-deck-tabs__grid--icon-fields {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  min-width: min-content;
 }
 
 .td-deck-chrome__panel--compact .td-deck-tabs__grid {
