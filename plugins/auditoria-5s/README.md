@@ -53,7 +53,7 @@ Documentação: [docs/12-roadmap-e-evolucao/auditoria-5s/ROADMAP.md](../../docs/
 
 ### Foto por critério (avaliação)
 
-Em critérios com nota **Ruim (1)** ou **Médio (3)**, a UI permite anexar foto opcional:
+Em qualquer critério com nota **1, 3 ou 5**, a UI permite anexar foto opcional:
 
 | Método | Path | Uso |
 |--------|------|-----|
@@ -64,6 +64,29 @@ Em critérios com nota **Ruim (1)** ou **Médio (3)**, a UI permite anexar foto 
 Ao criar a NC, a foto da avaliação é copiada automaticamente para a evidência **antes** (`before`), se o slot estiver vazio.
 
 Storage: `AUDIT_5S_RESPONSE_UPLOAD_DIR` → volume `${DELPI_DATA_HOST_DIR}/audit-5s-responses`.
+
+### Exclusão de auditorias
+
+| Método | Path | Uso |
+|--------|------|-----|
+| `POST` | `/audits/{id}/delete` | Exclui auditoria em **avaliação** (`draft`) |
+| `POST` | `/audits/{id}/force-delete` | Exclui auditoria em **qualquer status** (irreversível; remove respostas, fotos e NCs) |
+| `POST` | `/audits/{id}/reopen-evaluation` | Volta para fase **Em avaliação** (`draft`); bloqueado se já houver NC registrada |
+
+Permissão: `auditoria-5s.audit.filial-XX` da filial da auditoria.
+
+### Exportação de resultados
+
+Na lista de auditorias, menu **Mais ações** (⋯) por linha:
+
+| Formato | Conteúdo |
+|---------|----------|
+| Excel (`.xlsx`) | Cabeçalho, notas por senso, critérios e NCs (quando existirem) |
+| PDF | Mesmo conteúdo formatado para impressão/arquivo |
+
+### Tratamento de NC — foto do antes
+
+Na tela de tratamento, a **foto tirada na avaliação** aparece imediatamente no card «Foto do antes» (badge «Da avaliação»), sem precisar preencher o plano de ação. Ao salvar o plano, a API copia a foto para a evidência oficial da NC (`seed_nc_before_from_response_attachment`).
 
 ## Homologação
 

@@ -59,7 +59,7 @@ export function shiftLabel(value: string): string {
 
 const AUDIT_STATUS_LABELS: Record<string, string> = {
   draft: "Em avaliação",
-  evaluation_complete: "Avaliação concluída",
+  evaluation_complete: "Pendente NC's",
   nc_in_progress: "NC em andamento",
   closed: "Encerrada",
 };
@@ -96,6 +96,10 @@ export function ncStatusLabel(value: string): string {
 
 export function canAccessNc(status: string): boolean {
   return status === "evaluation_complete" || status === "nc_in_progress" || status === "closed";
+}
+
+export function canReopenEvaluation(status: string): boolean {
+  return status === "evaluation_complete" || status === "nc_in_progress";
 }
 
 export function ncActionLabel(status: string): string {

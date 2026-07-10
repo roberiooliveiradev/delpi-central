@@ -1,4 +1,4 @@
-import type { NcCandidate, Nonconformity } from "../api/audit5sApi";
+import type { NcCandidate, Nonconformity, ResponseAttachment } from "../api/audit5sApi";
 import type { NcAttachmentMap } from "../api/audit5sApi";
 import { hasNcEvidence } from "./ncAttachments";
 
@@ -12,6 +12,7 @@ export type NcFormState = {
 };
 
 export type NcTreatmentItem = {
+  criterionId: string;
   responseId: string;
   code: string;
   criterionDescription: string;
@@ -19,6 +20,7 @@ export type NcTreatmentItem = {
   sensoName: string;
   score: number;
   observation: string | null;
+  evaluationAttachment: ResponseAttachment | null;
   nc: Nonconformity | null;
 };
 
@@ -64,6 +66,7 @@ export function buildNcTreatmentItems(
   const ncByResponse = new Map(ncs.map((nc) => [nc.response_id, nc]));
 
   return candidates.map((item) => ({
+    criterionId: item.id,
     responseId: item.response.id,
     code: item.code,
     criterionDescription: item.description,
@@ -71,6 +74,7 @@ export function buildNcTreatmentItems(
     sensoName: item.senso_name,
     score: item.response.score ?? 0,
     observation: item.response.observation,
+    evaluationAttachment: item.response.attachment ?? null,
     nc: ncByResponse.get(item.response.id) ?? null,
   }));
 }

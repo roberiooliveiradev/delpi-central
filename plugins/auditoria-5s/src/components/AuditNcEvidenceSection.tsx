@@ -1,13 +1,17 @@
 import { useRef, useState } from "react";
 import { Camera, CheckCircle2, ImagePlus } from "lucide-react";
 
-import type { NcAttachment, NcAttachmentType } from "../api/audit5sApi";
+import type { NcAttachment, NcAttachmentType, ResponseAttachment } from "../api/audit5sApi";
 import { NcAttachmentPreview } from "./NcAttachmentPreview";
+import { ResponseAttachmentPreview } from "./ResponseAttachmentPreview";
 
 type Props = {
+  auditId: string;
+  criterionId: string;
   ncId: string | null;
   before?: NcAttachment;
   after?: NcAttachment;
+  evaluationBefore?: ResponseAttachment | null;
   disabled: boolean;
   uploadingType: NcAttachmentType | null;
   onUpload: (type: NcAttachmentType, file: File) => Promise<void>;
@@ -19,6 +23,9 @@ function EvidenceSlot({
   type,
   ncId,
   attachment,
+  evaluationAttachment,
+  auditId,
+  criterionId,
   disabled,
   uploading,
   onSelect,
@@ -28,11 +35,15 @@ function EvidenceSlot({
   type: NcAttachmentType;
   ncId: string | null;
   attachment?: NcAttachment;
+  evaluationAttachment?: ResponseAttachment | null;
+  auditId: string;
+  criterionId: string;
   disabled: boolean;
   uploading: boolean;
   onSelect: (type: NcAttachmentType, file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasEvaluationPreview = type === "before" && !attachment && Boolean(evaluationAttachment);
 
   return (
     <article className="a5s-nc-evidence__slot">
@@ -43,12 +54,23 @@ function EvidenceSlot({
             <CheckCircle2 size={14} aria-hidden />
             Anexada
           </span>
+        ) : hasEvaluationPreview ? (
+          <span className="a5s-nc-evidence__slot-badge a5s-nc-evidence__slot-badge--muted">
+            Da avaliação
+          </span>
         ) : null}
       </div>
       <p className="a5s-nc-evidence__hint">{hint}</p>
 
       {attachment && ncId ? (
         <NcAttachmentPreview ncId={ncId} attachment={attachment} label={label} />
+      ) : hasEvaluationPreview && evaluationAttachment ? (
+        <ResponseAttachmentPreview
+          auditId={auditId}
+          criterionId={criterionId}
+          attachment={evaluationAttachment}
+          label={label}
+        />
       ) : (
         <div className="a5s-nc-evidence__placeholder" aria-hidden>
           <Camera size={28} />
@@ -81,14 +103,18 @@ function EvidenceSlot({
 }
 
 export function AuditNcEvidenceSection({
+  auditId,
+  criterionId,
   ncId,
   before,
   after,
+  evaluationBefore,
   disabled,
   uploadingType,
   onUpload,
 }: Props) {
   const [error, setError] = useState<string | null>(null);
+  const showEvaluationBefore = !before && Boolean(evaluationBefore);
 
   const handleSelect = async (type: NcAttachmentType, file: File) => {
     setError(null);
@@ -106,10 +132,10 @@ export function AuditNcEvidenceSection({
         <p>Anexe a foto do antes e do depois para finalizar a ação.</p>
       </div>
 
-      {!ncId ? (
+      {!ncId && !showEvaluationBefore ? (
         <p className="a5s-nc-evidence__hint a5s-nc-evidence__hint--block">
-          Salve o plano de ação (descrição, causa, ação, responsável e prazo) para habilitar o
-          envio de evidências.
+          Salve o plano de ação (descrição, responsável e prazo) para habilitar o envio de
+          evidências adicionais.
         </p>
       ) : null}
 
@@ -119,11 +145,16 @@ export function AuditNcEvidenceSection({
           hint={
             before
               ? "Situação observada na auditoria (pode ter vindo da avaliação)."
-              : "Situação observada na auditoria."
+              : showEvaluationBefore
+                ? "Foto registrada na avaliação — use como referência ao preencher o plano."
+                : "Situação observada na auditoria."
           }
           type="before"
           ncId={ncId}
           attachment={before}
+          evaluationAttachment={evaluationBefore}
+          auditId={auditId}
+          criterionId={criterionId}
           disabled={disabled}
           uploading={uploadingType === "before"}
           onSelect={(type, file) => void handleSelect(type, file)}
@@ -134,6 +165,8 @@ export function AuditNcEvidenceSection({
           type="after"
           ncId={ncId}
           attachment={after}
+          auditId={auditId}
+          criterionId={criterionId}
           disabled={disabled}
           uploading={uploadingType === "after"}
           onSelect={(type, file) => void handleSelect(type, file)}

@@ -6,11 +6,13 @@ import {
   createArea,
   createAudit,
   deleteAudit,
+  forceDeleteAudit,
   deleteResponseAttachment,
   fetchAreas,
   fetchAudit,
   fetchAudits,
   joinAudit,
+  reopenEvaluation,
   saveResponse,
   updateAudit,
   uploadResponseAttachment,
@@ -103,11 +105,15 @@ export function Audit5sPage({ pathname }: Props) {
     void loadList();
   }, [loadList]);
 
-  const handleDeleteAudit = async (auditId: string) => {
+  const handleDeleteAudit = async (auditId: string, status: string) => {
     setError(null);
     setSuccess(null);
     try {
-      await deleteAudit(auditId);
+      if (status === "draft") {
+        await deleteAudit(auditId);
+      } else {
+        await forceDeleteAudit(auditId);
+      }
       if (selectedAudit?.id === auditId) {
         setSelectedAudit(null);
         setView("list");
@@ -133,6 +139,23 @@ export function Audit5sPage({ pathname }: Props) {
       setError(err instanceof Error ? err.message : "Erro ao abrir auditoria.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReopenAudit = async (auditId: string) => {
+    setError(null);
+    setSuccess(null);
+    try {
+      await reopenEvaluation(auditId);
+      if (selectedAudit?.id === auditId) {
+        setSelectedAudit(null);
+      }
+      await loadList();
+      setSuccess("Auditoria reaberta para avaliação.");
+      await openAudit(auditId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao reabrir auditoria.");
+      throw err;
     }
   };
 
@@ -533,6 +556,7 @@ export function Audit5sPage({ pathname }: Props) {
           onOpenAudit={(auditId) => void openAudit(auditId)}
           onOpenNc={(auditId) => void openNc(auditId)}
           onEditAudit={(auditId) => void openEditAudit(auditId)}
+          onReopenAudit={handleReopenAudit}
           onDeleteAudit={handleDeleteAudit}
         />
       )}
@@ -618,7 +642,9 @@ export function Audit5sPage({ pathname }: Props) {
               const showCriterionPhoto =
                 Boolean(response) &&
                 !response?.is_not_applicable &&
-                (response?.score === 1 || response?.score === 3);
+                response?.score != null;
+              const reusesPhotoForNcBefore =
+                response?.score === 1 || response?.score === 3;
               return (
                 <article
                   key={criterion.id}
@@ -682,6 +708,7 @@ export function Audit5sPage({ pathname }: Props) {
                       attachment={response?.attachment}
                       disabled={disabled}
                       uploading={photoUploadingCriterionId === criterion.id}
+                      reusesForNcBefore={reusesPhotoForNcBefore}
                       onUpload={(file) => handleCriterionPhotoUpload(criterion.id, file)}
                       onRemove={async () => {
                         if (!response?.attachment) return;

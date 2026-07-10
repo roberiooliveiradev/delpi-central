@@ -8,7 +8,7 @@ import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi
 const STATUS_OPTIONS = [
   { value: "closed", label: "Encerradas" },
   { value: "nc_in_progress", label: "NC em andamento" },
-  { value: "evaluation_complete", label: "Avaliação concluída" },
+  { value: "evaluation_complete", label: "Pendente NC's" },
   { value: "draft", label: "Em avaliação" },
   { value: "", label: "Todas" },
 ];

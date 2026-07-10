@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { CheckCircle2, Clock3 } from "lucide-react";
+import { CheckCircle2, CircleHelp, Clock3 } from "lucide-react";
 
 import type { AuditDetail } from "../api/audit5sApi";
 import { formatRelativeUpdate, type NcTreatmentStats } from "../utils/auditNc";
+import { AuditNcGuidanceModal } from "./AuditNcGuidanceModal";
 import { AuditNcPanel } from "./AuditNcPanel";
-import { AuditNcSidebar } from "./AuditNcSidebar";
 import { AuditNcSummary } from "./AuditNcSummary";
 
 type Props = {
@@ -25,6 +25,7 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
   });
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [closeSignal, setCloseSignal] = useState(0);
+  const [guidanceOpen, setGuidanceOpen] = useState(false);
 
   const canFinish = audit.status !== "closed" && stats.total > 0 && stats.finalized === stats.total;
 
@@ -43,17 +44,27 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
           Registre ações corretivas para os critérios com nota baixa desta auditoria. Os campos são salvos
           automaticamente ao sair de cada campo.
         </p>
-        {audit.status !== "closed" ? (
+        <div className="a5s-nc-treatment__intro-actions">
           <button
             type="button"
-            className="a5s-btn a5s-btn--header"
-            disabled={!canFinish}
-            onClick={handleFinish}
+            className="a5s-btn a5s-btn--ghost a5s-btn--header"
+            onClick={() => setGuidanceOpen(true)}
           >
-            <CheckCircle2 size={16} aria-hidden />
-            Concluir tratamento
+            <CircleHelp size={16} aria-hidden />
+            Orientações
           </button>
-        ) : null}
+          {audit.status !== "closed" ? (
+            <button
+              type="button"
+              className="a5s-btn a5s-btn--header"
+              disabled={!canFinish}
+              onClick={handleFinish}
+            >
+              <CheckCircle2 size={16} aria-hidden />
+              Concluir tratamento
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <AuditNcSummary audit={audit} stats={stats} />
@@ -67,8 +78,9 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
           onLastSavedChange={setLastSavedAt}
           closeSignal={closeSignal}
         />
-        <AuditNcSidebar />
       </div>
+
+      <AuditNcGuidanceModal open={guidanceOpen} onClose={() => setGuidanceOpen(false)} />
 
       <footer className="a5s-nc-treatment__footer">
         <span className="a5s-nc-treatment__updated">

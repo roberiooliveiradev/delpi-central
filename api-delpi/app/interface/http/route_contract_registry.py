@@ -496,6 +496,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "update_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
     "get_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
     "delete_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
+    "force_delete_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
     "join_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
     "upsert_audit_5s_response": RouteContract("audit_5s_response", "scalar"),
     "list_audit_5s_response_attachments": RouteContract(
@@ -508,6 +509,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "audit_5s_response_attachment", "scalar"
     ),
     "complete_audit_5s_evaluation": RouteContract("audit_5s_audit", "scalar"),
+    "reopen_audit_5s_evaluation": RouteContract("audit_5s_audit", "scalar"),
     "list_audit_5s_nc_candidates": RouteContract("audit_5s_nc_candidate", "paged_list"),
     "list_audit_5s_nonconformities": RouteContract("audit_5s_nonconformity", "paged_list"),
     "create_audit_5s_nonconformity": RouteContract("audit_5s_nonconformity", "scalar"),

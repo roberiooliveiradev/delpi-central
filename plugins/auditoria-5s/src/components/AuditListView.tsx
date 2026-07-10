@@ -7,11 +7,14 @@ import {
   ClipboardList,
   Clock3,
   Eye,
+  FileSpreadsheet,
+  FileText,
   FilterX,
   Lock,
   MoreHorizontal,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
   Trash2,
 } from "lucide-react";
@@ -22,6 +25,7 @@ import {
   auditStatusLabel,
   auditStatusVariant,
   canAccessNc,
+  canReopenEvaluation,
   ncActionLabel,
   shiftLabel,
 } from "../constants/audit5s";
@@ -37,6 +41,11 @@ import {
 } from "../utils/auditList";
 import { formatPersonNamesList } from "../utils/formatPersonName";
 import { getDisplayNameFromToken } from "../utils/jwt";
+import {
+  exportAuditExcel,
+  exportAuditPdf,
+  loadAuditExportData,
+} from "../utils/auditExport";
 import { AuditRowMenuPortal } from "./AuditRowMenuPortal";
 import { ListFilterSelectField } from "./filtersUi";
 
@@ -45,7 +54,7 @@ const PAGE_SIZE = 10;
 const STATUS_FILTER_OPTIONS = [
   { value: "", label: "Todos" },
   { value: "draft", label: "Em avaliação" },
-  { value: "evaluation_complete", label: "Avaliação concluída" },
+  { value: "evaluation_complete", label: "Pendente NC's" },
   { value: "nc_in_progress", label: "NC em andamento" },
   { value: "closed", label: "Encerrada" },
 ];
@@ -60,7 +69,8 @@ type Props = {
   onOpenAudit: (auditId: string) => void;
   onOpenNc: (auditId: string) => void;
   onEditAudit: (auditId: string) => void;
-  onDeleteAudit: (auditId: string) => Promise<void>;
+  onReopenAudit: (auditId: string) => Promise<void>;
+  onDeleteAudit: (auditId: string, status: string) => Promise<void>;
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -83,10 +93,10 @@ function primaryActionLabel(status: string): string {
 }
 
 function countRowMenuItems(item: AuditListItem): number {
-  let count = 1;
+  let count = 4;
   if (canAccessNc(item.status)) count += 1;
+  if (canReopenEvaluation(item.status)) count += 1;
   if (item.status !== "closed") count += 1;
-  if (item.status === "draft") count += 1;
   return count;
 }
 
@@ -100,13 +110,18 @@ export function AuditListView({
   onOpenAudit,
   onOpenNc,
   onEditAudit,
+  onReopenAudit,
   onDeleteAudit,
 }: Props) {
   const [filters, setFilters] = useState<AuditListFilters>(EMPTY_AUDIT_LIST_FILTERS);
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AuditListItem | null>(null);
+  const [pendingReopen, setPendingReopen] = useState<AuditListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const [exportingAuditId, setExportingAuditId] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   const userName = getDisplayNameFromToken(getAccessToken()) ?? "Auditor";
@@ -153,13 +168,52 @@ export function AuditListView({
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      await onDeleteAudit(pendingDelete.id);
+      await onDeleteAudit(pendingDelete.id, pendingDelete.status);
       setPendingDelete(null);
       setOpenMenuId(null);
     } catch {
       // Erro exibido pelo Audit5sPage via banner.
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleConfirmReopen = async () => {
+    if (!pendingReopen) return;
+    setReopening(true);
+    try {
+      await onReopenAudit(pendingReopen.id);
+      setPendingReopen(null);
+      setOpenMenuId(null);
+    } catch {
+      // Erro exibido pelo Audit5sPage via banner.
+    } finally {
+      setReopening(false);
+    }
+  };
+
+  const handleExport = async (item: AuditListItem, format: "excel" | "pdf") => {
+    if (exportingAuditId) return;
+    setExportError(null);
+    setExportingAuditId(item.id);
+    try {
+      const data = await loadAuditExportData(item.id);
+      if (format === "excel") {
+        await exportAuditExcel(data);
+      } else {
+        await exportAuditPdf(data);
+      }
+      setOpenMenuId(null);
+    } catch (reason) {
+      setExportError(
+        reason instanceof Error
+          ? reason.message
+          : format === "excel"
+            ? "Não foi possível exportar o Excel."
+            : "Não foi possível exportar o PDF.",
+      );
+    } finally {
+      setExportingAuditId(null);
     }
   };
 
@@ -278,6 +332,12 @@ export function AuditListView({
         </button>
       </section>
 
+      {exportError ? (
+        <p className="a5s-alert a5s-alert--error" role="alert">
+          {exportError}
+        </p>
+      ) : null}
+
       <section className="a5s-table-card">
         {loading ? (
           <p className="a5s-table-card__loading">Carregando auditorias...</p>
@@ -378,6 +438,20 @@ export function AuditListView({
                                   {ncActionLabel(item.status)}
                                 </button>
                               ) : null}
+                              {canReopenEvaluation(item.status) ? (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="a5s-row-menu__item"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setPendingReopen(item);
+                                  }}
+                                >
+                                  <RotateCcw size={14} aria-hidden />
+                                  Reabrir avaliação
+                                </button>
+                              ) : null}
                               {item.status !== "closed" ? (
                                 <button
                                   type="button"
@@ -392,20 +466,38 @@ export function AuditListView({
                                   Editar cabeçalho
                                 </button>
                               ) : null}
-                              {item.status === "draft" ? (
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="a5s-row-menu__danger"
-                                  onClick={() => {
-                                    setOpenMenuId(null);
-                                    setPendingDelete(item);
-                                  }}
-                                >
-                                  <Trash2 size={14} aria-hidden />
-                                  Excluir auditoria
-                                </button>
-                              ) : null}
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="a5s-row-menu__item"
+                                disabled={exportingAuditId === item.id}
+                                onClick={() => void handleExport(item, "excel")}
+                              >
+                                <FileSpreadsheet size={14} aria-hidden />
+                                {exportingAuditId === item.id ? "Exportando..." : "Exportar Excel"}
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="a5s-row-menu__item"
+                                disabled={exportingAuditId === item.id}
+                                onClick={() => void handleExport(item, "pdf")}
+                              >
+                                <FileText size={14} aria-hidden />
+                                Exportar PDF
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="a5s-row-menu__danger"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setPendingDelete(item);
+                                }}
+                              >
+                                <Trash2 size={14} aria-hidden />
+                                Excluir auditoria
+                              </button>
                             </AuditRowMenuPortal>
                           </div>
                         </div>
@@ -453,6 +545,55 @@ export function AuditListView({
         )}
       </section>
 
+      {pendingReopen ? (
+        <div
+          className="a5s-confirm-overlay"
+          role="presentation"
+          onClick={() => !reopening && setPendingReopen(null)}
+        >
+          <div
+            className="a5s-confirm-dialog"
+            role="alertdialog"
+            aria-labelledby="a5s-reopen-title"
+            aria-describedby="a5s-reopen-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="a5s-reopen-title" className="a5s-confirm-dialog__title">
+              Reabrir avaliação?
+            </h2>
+            <p id="a5s-reopen-desc" className="a5s-confirm-dialog__text">
+              A auditoria <strong>{pendingReopen.audit_code}</strong> (
+              {formatAuditDate(pendingReopen.audit_date)}, {pendingReopen.area_name}) voltará para a
+              fase de avaliação dos critérios. As notas já registradas serão mantidas para edição.
+              {pendingReopen.status === "nc_in_progress" ? (
+                <>
+                  {" "}
+                  Se já houver não conformidades registradas, a reabertura será bloqueada.
+                </>
+              ) : null}
+            </p>
+            <div className="a5s-confirm-dialog__actions">
+              <button
+                type="button"
+                className="a5s-btn a5s-btn--ghost"
+                disabled={reopening}
+                onClick={() => setPendingReopen(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="a5s-btn"
+                disabled={reopening}
+                onClick={() => void handleConfirmReopen()}
+              >
+                {reopening ? "Reabrindo..." : "Reabrir avaliação"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {pendingDelete ? (
         <div className="a5s-confirm-overlay" role="presentation" onClick={() => !deleting && setPendingDelete(null)}>
           <div
@@ -463,11 +604,23 @@ export function AuditListView({
             onClick={(event) => event.stopPropagation()}
           >
             <h2 id="a5s-delete-title" className="a5s-confirm-dialog__title">
-              Excluir auditoria?
+              {pendingDelete.status === "draft"
+                ? "Excluir auditoria?"
+                : "Excluir auditoria definitivamente?"}
             </h2>
             <p id="a5s-delete-desc" className="a5s-confirm-dialog__text">
-              A auditoria <strong>{pendingDelete.audit_code}</strong> ({formatAuditDate(pendingDelete.audit_date)}
-              , {pendingDelete.area_name}) será removida permanentemente. Esta ação não pode ser desfeita.
+              A auditoria <strong>{pendingDelete.audit_code}</strong> (
+              {formatAuditDate(pendingDelete.audit_date)}, {pendingDelete.area_name}) será removida
+              permanentemente junto com respostas, fotos e não conformidades vinculadas.
+              {pendingDelete.status !== "draft" ? (
+                <>
+                  {" "}
+                  O status atual é <strong>{auditStatusLabel(pendingDelete.status)}</strong> — esta
+                  ação não pode ser desfeita.
+                </>
+              ) : (
+                <> Esta ação não pode ser desfeita.</>
+              )}
             </p>
             <div className="a5s-confirm-dialog__actions">
               <button

@@ -20,7 +20,10 @@ from app.application.services.audit_5s.response_attachment_storage import (
     Audit5sResponseAttachmentStorage,
     Audit5sResponseAttachmentStorageError,
 )
-from app.application.services.audit_5s.scoring_service import is_nc_candidate
+from app.application.services.audit_5s.scoring_service import (
+    can_attach_criterion_photo,
+    is_nc_candidate,
+)
 from app.composition.audit_5s_composer import (
     build_audit_5s_repository,
     build_get_audit_5s_dashboard_use_case,
@@ -303,11 +306,6 @@ def delete_audit(audit_id: str):
                 status_code=422,
             )
 
-        attachments = repo.list_nc_attachments_for_audit(audit_id)
-        storage = Audit5sNcAttachmentStorage()
-        for nc_id in {str(item["nonconformity_id"]) for item in attachments}:
-            storage.delete_nonconformity_dir(nc_id)
-
         repo.delete_audit(audit_id)
         return api_delpi_success(
             None,
@@ -322,6 +320,40 @@ def delete_audit(audit_id: str):
         return error_response(str(exc), status_code=422)
     except Exception as exc:
         log_error(f"Erro ao excluir auditoria 5S: {exc}")
+        return error_response("Erro interno ao excluir auditoria.", status_code=500)
+
+
+@router.post("/audits/{audit_id}/force-delete")
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+def force_delete_audit(audit_id: str):
+    audit_id = audit_id.strip()
+    if not audit_id:
+        return error_response("Identificador da auditoria inválido.", status_code=400)
+
+    try:
+        repo = build_audit_5s_repository()
+        audit = repo.get_audit_delete_target(audit_id)
+        if not audit:
+            return error_response("Auditoria não encontrada.", status_code=404)
+
+        branch_error = branch_access_error(audit["branch_code"], require_audit=True)
+        if branch_error is not None:
+            return branch_error
+
+        repo.force_delete_audit(audit_id)
+        return api_delpi_success(
+            None,
+            operation_id="force_delete_audit_5s_audit",
+            message="Auditoria excluída permanentemente.",
+        )
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status_code = 404 if "não encontrada" in message.lower() else 422
+        return error_response(message, status_code=status_code)
+    except (Audit5sNcAttachmentStorageError, Audit5sResponseAttachmentStorageError) as exc:
+        return error_response(str(exc), status_code=422)
+    except Exception as exc:
+        log_error(f"Erro ao excluir auditoria 5S (force-delete): {exc}")
         return error_response("Erro interno ao excluir auditoria.", status_code=500)
 
 
@@ -439,9 +471,11 @@ async def upload_response_attachment(
                 "Salve a nota do critério antes de anexar a foto.",
                 status_code=422,
             )
-        if not is_nc_candidate(response.get("score"), bool(response.get("is_not_applicable"))):
+        if not can_attach_criterion_photo(
+            response.get("score"), bool(response.get("is_not_applicable"))
+        ):
             return error_response(
-                "Foto do critério disponível apenas para notas Ruim (1) ou Médio (3).",
+                "Foto do critério disponível após informar a nota (1, 3 ou 5).",
                 status_code=422,
             )
 
@@ -547,6 +581,46 @@ async def complete_evaluation(audit_id: str):
     except Exception as exc:
         log_error(f"Erro ao concluir avaliação 5S: {exc}")
         return error_response("Erro interno ao concluir avaliação.", status_code=500)
+
+
+@router.post("/audits/{audit_id}/reopen-evaluation")
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+async def reopen_evaluation(audit_id: str):
+    audit_id = audit_id.strip()
+    if not audit_id:
+        return error_response("Identificador da auditoria inválido.", status_code=400)
+
+    try:
+        repo = build_audit_5s_repository()
+        audit = repo.get_audit(audit_id)
+        if not audit:
+            return error_response("Auditoria não encontrada.", status_code=404)
+
+        branch_error = branch_access_error(audit["branch_code"], require_audit=True)
+        if branch_error is not None:
+            return branch_error
+
+        data = repo.reopen_evaluation(audit_id)
+        try:
+            await publish_audit_updated(
+                audit_id=audit_id,
+                audit=data,
+                event_type="evaluation_reopened",
+                actor_user_id=_current_user_id(),
+                actor_display_name=_current_user_name(),
+            )
+        except Exception as publish_exc:
+            log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
+        return api_delpi_success(
+            data,
+            operation_id="reopen_audit_5s_evaluation",
+            message="Auditoria reaberta para avaliação.",
+        )
+    except PluginsRepositoryError as exc:
+        return error_response(str(exc), status_code=422)
+    except Exception as exc:
+        log_error(f"Erro ao reabrir avaliação 5S: {exc}")
+        return error_response("Erro interno ao reabrir avaliação.", status_code=500)
 
 
 @router.get("/audits/{audit_id}/nc-candidates")
