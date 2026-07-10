@@ -77,8 +77,8 @@ def test_child_cable_codes_not_counted_as_extra_when_parent_present():
     assert "10440134" not in result.extra_in_pdf
     assert "50215434" in result.missing_in_pdf
     assert "50225933" not in result.missing_in_pdf
-    assert "40091640" in result.extra_in_pdf
-    assert "10091640" in result.missing_in_pdf
+    assert "40091640" not in result.extra_in_pdf
+    assert "10091640" not in result.missing_in_pdf
     assert "1013091" in result.extra_in_pdf
     assert "10130091" in result.missing_in_pdf
 
@@ -273,3 +273,83 @@ def test_nested_mp_under_pi_not_extra_when_only_in_stamp_bom_table():
 
     assert "10020006" not in result.extra_in_pdf
     assert "10080138" not in result.extra_in_pdf
+
+
+def test_catalog_prefix_crosswalk_maps_40_code_to_api_10_code():
+    root = {
+        "structure": {
+            "items": [
+                {"code": "10091535", "description": "CONECTOR RECEPTACULO", "components": []},
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["40091535"],
+        "bomRows": [
+            {
+                "code": "40091535",
+                "quantity": "1",
+                "description": "CONECTOR RECEPTACULO PICO-LOCK PASSO 2MM AWG 26~20",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            }
+        ],
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90264206",
+    )
+
+    assert "40091535" not in result.extra_in_pdf
+    assert "10091535" not in result.missing_in_pdf
+
+
+def test_bom_row_description_match_reconciles_ocr_digit_and_catalog_code():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "10080106",
+                    "description": "TERM. MAG MATE 18-22AWG ESTANHADO CARRETEL UL",
+                    "components": [],
+                },
+                {
+                    "code": "10020055",
+                    "description": "CABO PVC 105°C 22AWG LA 600V NBR 9117 V02B",
+                    "components": [],
+                },
+            ]
+        }
+    }
+
+    pdf_extract = {
+        "bomRows": [
+            {
+                "code": "10020106",
+                "quantity": "01",
+                "description": "TERM. MAG MATE 1,5 18-22AWG EMO2 ESTANHADO",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            },
+            {
+                "code": "40090055",
+                "quantity": "4",
+                "description": "40090055 [CABO PVC 105°C 22AWG LA B00V NBR 9117 VOOR",
+                "quantitySource": "column_inferred",
+                "quantityTrusted": True,
+            },
+        ],
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263222",
+    )
+
+    assert "10020106" not in result.extra_in_pdf
+    assert "40090055" not in result.extra_in_pdf
+    assert "10080106" not in result.missing_in_pdf
+    assert "10020055" not in result.missing_in_pdf

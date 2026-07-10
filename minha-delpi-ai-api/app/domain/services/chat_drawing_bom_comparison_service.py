@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from app.domain.services.chat_drawing_bom_reference_noise_service import (
@@ -73,6 +74,17 @@ class ChatDrawingBomComparisonService:
             api_codes=api_codes,
             child_cable_parents=cls.collect_child_cable_parents(root),
         )
+        pdf_bom_codes = cls._apply_catalog_prefix_crosswalk(
+            pdf_bom_codes,
+            api_codes=set(api_codes),
+        )
+        matched_codes, false_row_codes = cls.reconcile_bom_row_description_matches(
+            root=root,
+            pdf_extract=pdf_extract,
+            api_codes=set(api_codes),
+        )
+        pdf_bom_codes |= matched_codes
+        pdf_bom_codes -= false_row_codes
         pdf_bom_codes -= ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(
             pdf_extract
         )
@@ -393,6 +405,157 @@ class ChatDrawingBomComparisonService:
             normalized_codes.add(code)
 
         return normalized_codes
+
+    @classmethod
+    def _apply_catalog_prefix_crosswalk(
+        cls,
+        pdf_codes: set[str],
+        *,
+        api_codes: set[str],
+    ) -> set[str]:
+        """Código catálogo 40xxxxxx no PDF → 10xxxxxx quando o MP canônico está na API."""
+        if not bool(
+            ChatDrawingPatternsService.bom_comparison_rule(
+                "catalogPrefixCrosswalkEnabled",
+                True,
+            )
+        ):
+            return set(pdf_codes)
+
+        from_prefix = str(
+            ChatDrawingPatternsService.bom_comparison_rule(
+                "catalogPrefixCrosswalkFrom",
+                "40",
+            )
+            or "40"
+        )
+        to_prefix = str(
+            ChatDrawingPatternsService.bom_comparison_rule(
+                "catalogPrefixCrosswalkTo",
+                "10",
+            )
+            or "10"
+        )
+        resolved = set(pdf_codes)
+
+        for code in list(resolved):
+            if not code.startswith(from_prefix) or len(code) != 8:
+                continue
+
+            primary = f"{to_prefix}{code[2:]}"
+
+            if primary in api_codes:
+                resolved.discard(code)
+                resolved.add(primary)
+
+        return resolved
+
+    @classmethod
+    def reconcile_bom_row_description_matches(
+        cls,
+        *,
+        root: dict,
+        pdf_extract: dict,
+        api_codes: set[str],
+    ) -> tuple[set[str], set[str]]:
+        """Linha BOM com código OCR errado mas descrição alinhada ao cadastro API."""
+        min_ratio = float(
+            ChatDrawingPatternsService.bom_comparison_rule(
+                "descriptionRowMatchMinOverlapRatio",
+                0.5,
+            )
+            or 0.5
+        )
+        min_tokens = int(
+            ChatDrawingPatternsService.bom_comparison_rule(
+                "descriptionRowMatchMinOverlapTokens",
+                3,
+            )
+            or 3
+        )
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        structure_rows = [
+            row
+            for row in ChatDrawingStructureIndexService.flatten_items(structure)
+            if row.code in api_codes and str(row.description or "").strip()
+        ]
+        matched: set[str] = set()
+        false_row_codes: set[str] = set()
+
+        for bom_row in pdf_extract.get("bomRows") or []:
+            if not isinstance(bom_row, dict):
+                continue
+
+            if ChatDrawingBomReferenceNoiseService.is_client_reference_row(bom_row):
+                continue
+
+            row_code = ChatProductQueryIntentService.normalize_product_code(
+                str(bom_row.get("code") or "")
+            )
+            row_desc = str(bom_row.get("description") or "").strip()
+
+            if not row_code or not row_desc:
+                continue
+
+            row_tokens = cls._description_match_tokens(row_desc)
+
+            if len(row_tokens) < min_tokens:
+                continue
+
+            best_api_code: str | None = None
+            best_ratio = 0.0
+
+            for struct_row in structure_rows:
+                api_tokens = cls._description_match_tokens(struct_row.description)
+                overlap = row_tokens & api_tokens
+
+                if len(overlap) < min_tokens:
+                    continue
+
+                ratio = len(overlap) / len(api_tokens)
+
+                if ratio >= min_ratio and ratio > best_ratio:
+                    best_ratio = ratio
+                    best_api_code = struct_row.code
+
+            if best_api_code:
+                matched.add(best_api_code)
+
+                if row_code not in api_codes:
+                    false_row_codes.add(row_code)
+
+        return matched, false_row_codes
+
+    @classmethod
+    def _description_match_tokens(cls, text: str) -> set[str]:
+        normalized = str(text or "").upper()
+        tokens: set[str] = set()
+
+        for match in re.finditer(r"[A-Z]{3,}", normalized):
+            token = match.group(0)
+
+            if token in {
+                "COM",
+                "PARA",
+                "ROHS",
+                "DELPI",
+                "FLEXTRONICS",
+                "FLEXTRONIGS",
+                "NBR",
+                "STYLE",
+                "COD",
+            }:
+                continue
+
+            tokens.add(token)
+
+        for match in re.finditer(r"\d{1,2}(?:-\d{1,2})?AWG", normalized):
+            tokens.add(match.group(0))
+
+        for match in re.finditer(r"\d{1,2}(?:-\d{1,2})?ANG", normalized):
+            tokens.add(match.group(0))
+
+        return tokens
 
     @classmethod
     def _drop_catalog_alternate_duplicates(

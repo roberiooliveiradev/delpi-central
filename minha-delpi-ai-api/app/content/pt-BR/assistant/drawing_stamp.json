@@ -475,6 +475,11 @@
   },
   "bomComparison": {
     "preferStructuredRowsMinCount": 2,
-    "structuredQuantitySources": ["column", "column_inferred", "refined_column"]
+    "structuredQuantitySources": ["column", "column_inferred", "refined_column"],
+    "catalogPrefixCrosswalkEnabled": true,
+    "catalogPrefixCrosswalkFrom": "40",
+    "catalogPrefixCrosswalkTo": "10",
+    "descriptionRowMatchMinOverlapRatio": 0.5,
+    "descriptionRowMatchMinOverlapTokens": 3
   }
 }
