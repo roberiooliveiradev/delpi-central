@@ -228,6 +228,7 @@ export type TvDataRouteCatalogItem = {
   path?: string;
   allowedDisplayModes?: string[];
   suggestedDisplayModes?: string[];
+  valueFields?: string[];
   defaultParams?: Record<string, unknown>;
   paramSchema?: Record<string, unknown>;
   tvConstraints?: Record<string, unknown>;

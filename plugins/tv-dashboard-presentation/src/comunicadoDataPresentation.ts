@@ -8,6 +8,8 @@ export type DataPresentationOption = {
   blockType: ComunicadoDataBlockType;
   label: string;
   description: string;
+  /** Rota sugere este formato — badge no picker, não restringe escolha. */
+  recommended?: boolean;
 };
 
 const PRESENTATION_META: Record<
@@ -15,13 +17,13 @@ const PRESENTATION_META: Record<
   { label: string; description: string; blockType: ComunicadoDataBlockType }
 > = {
   kpi: {
-    label: "Valor destacado (KPI)",
+    label: "Indicador (KPI)",
     description: "Número em destaque — eficiência, totais ou percentuais.",
     blockType: "data_kpi",
   },
   table: {
-    label: "Listagem (tabela)",
-    description: "Lista compacta — produtos, rankings TOP N.",
+    label: "Tabela",
+    description: "Listagem tabular — produtos, rankings ou detalhes.",
     blockType: "data_table",
   },
   line_chart: {
@@ -36,8 +38,8 @@ const PRESENTATION_META: Record<
   },
 };
 
-const MODE_ORDER: ComunicadoDataDisplayMode[] = [
-  "auto",
+/** Formatos sempre disponíveis após escolher qualquer rota. */
+export const UNIVERSAL_DISPLAY_MODES: Exclude<ComunicadoDataDisplayMode, "auto">[] = [
   "kpi",
   "table",
   "line_chart",
@@ -46,10 +48,10 @@ const MODE_ORDER: ComunicadoDataDisplayMode[] = [
 
 export function blockTypeForDisplayMode(
   displayMode: ComunicadoDataDisplayMode,
-  _allowedDisplayModes?: string[],
+  _suggestedDisplayModes?: string[],
 ): ComunicadoDataBlockType {
   if (displayMode === "auto") {
-    return "data_metric";
+    return "data_kpi";
   }
   if (displayMode === "kpi") return "data_kpi";
   if (displayMode === "table") return "data_table";
@@ -63,46 +65,55 @@ export function displayModeLabel(mode: ComunicadoDataDisplayMode): string {
   return PRESENTATION_META[mode].label;
 }
 
-/** Opções de apresentação permitidas para uma rota do catálogo TV. */
+export function displayModeOptionLabel(option: DataPresentationOption): string {
+  if (option.recommended) {
+    return `${option.label} (recomendado)`;
+  }
+  return option.label;
+}
+
+/** Opções universais de apresentação; suggestedDisplayModes só marca recomendados. */
 export function listDataPresentationOptions(
-  allowedDisplayModes: string[] | undefined,
+  suggestedDisplayModes?: string[] | undefined,
 ): DataPresentationOption[] {
-  const allowed = new Set((allowedDisplayModes ?? []).map((mode) => mode.trim()).filter(Boolean));
-  const options: DataPresentationOption[] = [];
+  const suggested = new Set(
+    (suggestedDisplayModes ?? []).map((mode) => mode.trim()).filter(Boolean),
+  );
 
-  for (const mode of MODE_ORDER) {
-    if (mode !== "auto" && !allowed.has(mode)) continue;
-    if (mode === "auto" && !allowed.has("auto") && allowed.size > 0) continue;
-
-    if (mode === "auto") {
-      options.push({
-        displayMode: "auto",
-        blockType: "data_metric",
-        label: "Automático",
-        description: "Escolhe KPI, gráfico ou listagem conforme a rota.",
-      });
-      continue;
-    }
-
+  const options = UNIVERSAL_DISPLAY_MODES.map((mode) => {
     const meta = PRESENTATION_META[mode];
-    options.push({
+    return {
       displayMode: mode,
       blockType: meta.blockType,
       label: meta.label,
       description: meta.description,
-    });
-  }
+      recommended: suggested.has(mode),
+    };
+  });
 
-  if (options.length === 0) {
-    return [
-      {
-        displayMode: "auto",
-        blockType: "data_metric",
-        label: "Automático",
-        description: "Formato padrão para esta rota.",
-      },
-    ];
-  }
+  options.sort((left, right) => {
+    if (Boolean(left.recommended) !== Boolean(right.recommended)) {
+      return left.recommended ? -1 : 1;
+    }
+    return UNIVERSAL_DISPLAY_MODES.indexOf(left.displayMode) - UNIVERSAL_DISPLAY_MODES.indexOf(right.displayMode);
+  });
 
   return options;
+}
+
+/** Formato padrão ao inserir bloco: última escolha do usuário ou KPI. */
+export function defaultDisplayModeForInsert(
+  suggestedDisplayModes: string[] | undefined,
+  lastUserChoice?: ComunicadoDataDisplayMode | null,
+): Exclude<ComunicadoDataDisplayMode, "auto"> {
+  if (lastUserChoice && lastUserChoice !== "auto") {
+    return lastUserChoice;
+  }
+  const suggested = (suggestedDisplayModes ?? []).map((mode) => mode.trim()).filter(Boolean);
+  for (const mode of UNIVERSAL_DISPLAY_MODES) {
+    if (suggested.includes(mode)) {
+      return mode;
+    }
+  }
+  return "kpi";
 }

@@ -22,14 +22,16 @@ _SHAPE_DEFAULT_MODES: dict[str, list[str]] = {
 
 
 def normalize_display_mode(value: str | None) -> str:
-    token = str(value or "auto").strip().lower()
+    token = str(value or "kpi").strip().lower()
     if token == "chart":
         return "line_chart"
-    return token if token in _DISPLAY_MODES else "auto"
+    if token == "auto":
+        return "auto"
+    return token if token in _DISPLAY_MODES else "kpi"
 
 
 def block_type_for_display_mode(display_mode: str) -> str:
-    return _BLOCK_TYPE_FOR_MODE.get(normalize_display_mode(display_mode), "data_metric")
+    return _BLOCK_TYPE_FOR_MODE.get(normalize_display_mode(display_mode), "data_kpi")
 
 
 def suggested_display_modes(
@@ -41,7 +43,7 @@ def suggested_display_modes(
     if allowed:
         return allowed
     shape = str(meta_shape or "scalar").strip().lower()
-    return list(_SHAPE_DEFAULT_MODES.get(shape, ["auto", "kpi", "table"]))
+    return list(_SHAPE_DEFAULT_MODES.get(shape, ["kpi", "table", "line_chart"]))
 
 
 def validate_display_mode(
@@ -49,10 +51,12 @@ def validate_display_mode(
     *,
     allowed_display_modes: list[str] | None,
 ) -> None:
+    del allowed_display_modes
     mode = normalize_display_mode(display_mode)
-    allowed = suggested_display_modes(allowed_display_modes=allowed_display_modes)
-    if mode != "auto" and mode not in allowed:
-        raise ValueError(f"Formato de apresentação não permitido: {mode}")
+    if mode == "auto":
+        return
+    if mode not in _DISPLAY_MODES:
+        raise ValueError(f"Formato de apresentação inválido: {mode}")
 
 
 def validate_block_type_for_binding(
@@ -61,7 +65,7 @@ def validate_block_type_for_binding(
 ) -> None:
     if block_type not in DATA_BLOCK_TYPES:
         raise ValueError("Tipo de bloco de dados inválido.")
-    expected = block_type_for_display_mode(display_mode or "auto")
+    expected = block_type_for_display_mode(display_mode or "kpi")
     mode = normalize_display_mode(display_mode)
     if mode == "auto":
         return

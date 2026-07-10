@@ -5,6 +5,7 @@ from typing import Any
 
 from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
+from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
 from tv_app.application.services.native_screen_cache_service import (
     native_data_cache_ttl_seconds,
 )
@@ -31,6 +32,14 @@ def _build_data_cache_key(
         sort_keys=True,
         default=str,
     )
+
+
+def _value_fields_for_binding(route_info: dict[str, Any], binding: dict[str, Any]) -> list[str]:
+    override = binding.get("valueField")
+    if override is not None and str(override).strip():
+        return [str(override).strip()]
+    raw = route_info.get("valueFields") or []
+    return [str(field).strip() for field in raw if str(field).strip()]
 
 
 def _extract_scalar_value(data: Any, value_fields: list[Any]) -> Any:
@@ -88,28 +97,77 @@ def _extract_series(
     return points
 
 
-def _extract_table_rows(data: Any, table_field: str | None, max_rows: int) -> list[dict[str, Any]]:
+def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
     if not isinstance(data, dict):
         return []
     key = table_field or "items"
     raw = data.get(key)
-    if not isinstance(raw, list):
-        raw = data.get("top_products")
-    if not isinstance(raw, list):
-        return []
+    if isinstance(raw, list):
+        return raw
+    raw = data.get("top_products")
+    if isinstance(raw, list):
+        return raw
+    return []
+
+
+def _build_table_columns(meta: dict[str, Any], rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    fields = meta.get("fields")
+    if isinstance(fields, list):
+        columns: list[dict[str, str]] = []
+        for field in fields:
+            if not isinstance(field, dict):
+                continue
+            key = str(field.get("key") or field.get("name") or "").strip()
+            if not key:
+                continue
+            columns.append(
+                {
+                    "key": key,
+                    "label": str(field.get("label") or field.get("title") or key),
+                }
+            )
+        if columns:
+            return columns
+    if rows:
+        return [{"key": str(key), "label": str(key)} for key in rows[0].keys()]
+    return []
+
+
+def _extract_table_rows(
+    data: Any,
+    table_field: str | None,
+    max_rows: int,
+    *,
+    meta: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    raw_rows = _list_from_data(data, table_field)
     rows: list[dict[str, Any]] = []
-    for row in raw[:max_rows]:
-        if not isinstance(row, dict):
-            continue
-        rows.append(
-            {
-                "productCode": row.get("product_code") or row.get("productCode") or row.get("code"),
-                "description": row.get("product_description") or row.get("description") or row.get("name"),
-                "stockValue": row.get("total_stock_value") or row.get("stockValue") or row.get("value"),
-                "stockQuantity": row.get("total_stock_quantity") or row.get("stockQuantity"),
-            }
-        )
-    return rows
+    for row in raw_rows[:max_rows]:
+        if isinstance(row, dict):
+            rows.append(dict(row))
+    columns = _build_table_columns(meta or {}, rows)
+    return rows, columns
+
+
+def _scalar_as_chart_points(value: Any, label: str | None = None) -> list[dict[str, Any]]:
+    if value is None:
+        return []
+    return [{"label": label, "value": value}]
+
+
+def _infer_auto_display_mode(
+    data: Any,
+    route_info: dict[str, Any],
+    meta: dict[str, Any],
+) -> str:
+    shape = str(meta.get("shape") or route_info.get("metaShape") or "scalar")
+    if shape == "paged_list" or route_info.get("tableFields"):
+        return "table"
+    if route_info.get("seriesField") or shape in {"playbook_report", "composite_analysis"}:
+        points = _extract_series(data, route_info.get("seriesField"))
+        if points:
+            return "line_chart"
+    return "kpi"
 
 
 class ComunicadoDataEnrichmentService:
@@ -151,6 +209,60 @@ class ComunicadoDataEnrichmentService:
                 )
             )
         return enriched
+
+    def _resolve_presentation(
+        self,
+        *,
+        display_mode: str,
+        data: Any,
+        route_info: dict[str, Any],
+        meta: dict[str, Any],
+        binding: dict[str, Any],
+        merged_params: dict[str, Any],
+        label: str | None,
+    ) -> dict[str, Any]:
+        mode = normalize_display_mode(display_mode)
+        if mode == "auto":
+            mode = _infer_auto_display_mode(data, route_info, meta)
+
+        value_fields = _value_fields_for_binding(route_info, binding)
+        branch = merged_params.get("branch")
+        branch_str = str(branch).strip() if branch else None
+        max_rows = int(binding.get("maxRows") or route_info.get("tvConstraints", {}).get("maxRows") or 5)
+
+        if mode == "kpi":
+            scalar = _extract_scalar_value(data, value_fields)
+            if scalar is None:
+                points = _extract_series(data, route_info.get("seriesField"), branch=branch_str)
+                if points:
+                    scalar = points[-1].get("value")
+            return {"kpi": {"value": scalar, "label": label}}
+
+        if mode in {"line_chart", "bar_chart"}:
+            points = _extract_series(data, route_info.get("seriesField"), branch=branch_str)
+            if not points:
+                scalar = _extract_scalar_value(data, value_fields)
+                points = _scalar_as_chart_points(scalar, label)
+            chart_type = "bar" if mode == "bar_chart" else "line"
+            return {"chart": {"points": points, "chartType": chart_type}}
+
+        rows, columns = _extract_table_rows(
+            data,
+            route_info.get("tableFields"),
+            max_rows,
+            meta=meta,
+        )
+        if not rows:
+            scalar = _extract_scalar_value(data, value_fields)
+            if scalar is not None:
+                row: dict[str, Any] = {}
+                field_key = value_fields[0] if value_fields else "value"
+                row[field_key] = scalar
+                if label:
+                    row["label"] = label
+                rows = [row]
+                columns = _build_table_columns(meta, rows)
+        return {"table": {"rows": rows, "columns": columns}}
 
     def _enrich_data_block(
         self,
@@ -197,63 +309,28 @@ class ComunicadoDataEnrichmentService:
 
         route_info = payload.get("route") or {}
         data = payload.get("data")
-        display_mode = str(binding.get("displayMode") or "auto")
-        block_type = str(block.get("type") or "")
+        meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+        display_mode = str(binding.get("displayMode") or "kpi")
 
         resolved: dict[str, Any] = {
-            "meta": payload.get("meta") or {},
+            "meta": meta,
             "data": data,
             "error": None,
-            "displayMode": display_mode,
+            "displayMode": normalize_display_mode(display_mode),
             "label": binding.get("label") or route_info.get("label"),
         }
 
-        value_fields = route_info.get("valueFields") or []
-        if block_type == "data_kpi" or display_mode == "kpi":
-            resolved["kpi"] = {
-                "value": _extract_scalar_value(data, value_fields),
-                "label": resolved.get("label"),
-            }
-        elif block_type == "data_chart" or display_mode in {"line_chart", "bar_chart", "chart"}:
-            branch = merged_params.get("branch")
-            resolved["chart"] = {
-                "points": _extract_series(
-                    data,
-                    route_info.get("seriesField"),
-                    branch=str(branch).strip() if branch else None,
-                ),
-            }
-        elif block_type == "data_table" or display_mode == "table":
-            max_rows = int(binding.get("maxRows") or route_info.get("tvConstraints", {}).get("maxRows") or 5)
-            resolved["table"] = {
-                "rows": _extract_table_rows(data, route_info.get("tableFields"), max_rows),
-            }
-        elif block_type == "data_metric" or display_mode == "auto":
-            shape = str((payload.get("meta") or {}).get("shape") or route_info.get("metaShape") or "scalar")
-            if shape == "paged_list" or route_info.get("tableFields"):
-                max_rows = int(binding.get("maxRows") or route_info.get("tvConstraints", {}).get("maxRows") or 5)
-                resolved["table"] = {
-                    "rows": _extract_table_rows(data, route_info.get("tableFields"), max_rows),
-                }
-            elif route_info.get("seriesField") or shape in {"playbook_report", "composite_analysis"}:
-                branch = merged_params.get("branch")
-                points = _extract_series(
-                    data,
-                    route_info.get("seriesField"),
-                    branch=str(branch).strip() if branch else None,
-                )
-                if points:
-                    resolved["chart"] = {"points": points}
-                else:
-                    resolved["kpi"] = {
-                        "value": _extract_scalar_value(data, value_fields),
-                        "label": resolved.get("label"),
-                    }
-            else:
-                resolved["kpi"] = {
-                    "value": _extract_scalar_value(data, value_fields),
-                    "label": resolved.get("label"),
-                }
+        resolved.update(
+            self._resolve_presentation(
+                display_mode=display_mode,
+                data=data,
+                route_info=route_info,
+                meta=meta,
+                binding=binding,
+                merged_params=merged_params,
+                label=resolved.get("label"),
+            )
+        )
 
         result["resolved"] = resolved
         return result

@@ -118,13 +118,11 @@ export function createDataBlock(
       params: { ...(options.defaultParams ?? {}) },
       displayMode:
         options.displayMode ??
-        (blockType === "data_metric"
-          ? "auto"
-          : blockType === "data_chart"
-            ? "line_chart"
-            : blockType === "data_table"
-              ? "table"
-              : "kpi"),
+        (blockType === "data_chart"
+          ? "line_chart"
+          : blockType === "data_table"
+            ? "table"
+            : "kpi"),
       label: options.label,
     },
   };

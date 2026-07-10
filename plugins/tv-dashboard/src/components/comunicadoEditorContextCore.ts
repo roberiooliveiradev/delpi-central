@@ -9,6 +9,7 @@ import type {
   ComunicadoNamedTextStyle,
   ComunicadoShapeKind,
   ComunicadoTextBlock,
+  ComunicadoDataDisplayMode,
   ContentRunListSelectionState,
   ContentRunNamedStyleSelectionState,
   ContentRunSelectionStyleState,
@@ -138,6 +139,8 @@ export type ComunicadoEditorContextValue = {
   dataPreviewLoading: boolean;
   dataPreviewError: string | null;
   globalRefreshSec: number;
+  lastDataDisplayMode: ComunicadoDataDisplayMode;
+  setLastDataDisplayMode: (mode: ComunicadoDataDisplayMode) => void;
 };
 
 export const ComunicadoEditorContext = createContext<ComunicadoEditorContextValue | null>(null);

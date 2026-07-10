@@ -6,7 +6,7 @@ import {
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
   defaultFrame,
-  displayModeLabel,
+  displayModeOptionLabel,
   isDataBlockType,
   listDataPresentationOptions,
   resolveDataBlockRefreshSec,
@@ -23,9 +23,19 @@ import { DeckPropertySection } from "./deck/DeckPropertySection";
 
 type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
 
-function routeDisplayModes(route: TvDataRouteCatalogItem | null): string[] | undefined {
+function routeSuggestedModes(route: TvDataRouteCatalogItem | null): string[] | undefined {
   if (!route) return undefined;
   return route.suggestedDisplayModes ?? route.allowedDisplayModes;
+}
+
+function routeValueFieldOptions(route: TvDataRouteCatalogItem | null): string[] {
+  const fields = route?.valueFields ?? [];
+  return fields.map((field) => String(field).trim()).filter(Boolean);
+}
+
+function routeMaxRowsLimit(route: TvDataRouteCatalogItem | null): number {
+  const limit = route?.tvConstraints?.maxRows;
+  return typeof limit === "number" && Number.isFinite(limit) ? Math.round(limit) : 20;
 }
 
 function ParamFields({
@@ -67,8 +77,15 @@ function ParamFields({
 }
 
 export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem | null }) {
-  const { selected, config, updateSelected, duplicateSelected, replaceSelectedDataRoute, globalRefreshSec } =
-    useComunicadoEditor();
+  const {
+    selected,
+    config,
+    updateSelected,
+    duplicateSelected,
+    replaceSelectedDataRoute,
+    globalRefreshSec,
+    setLastDataDisplayMode,
+  } = useComunicadoEditor();
   const [routePickerOpen, setRoutePickerOpen] = useState(false);
 
   if (!selected || !isDataBlockType(selected.type) || !("dataBinding" in selected)) return null;
@@ -79,10 +96,13 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
   const inheritedKeys = new Set(
     Object.keys(slideFilters).filter((key) => blockParams[key] === undefined || blockParams[key] === ""),
   );
-  const displayModes = routeDisplayModes(route);
-  const presentationOptions = listDataPresentationOptions(displayModes);
-  const currentDisplayMode = (binding.displayMode ?? "auto") as ComunicadoDataDisplayMode;
+  const suggestedModes = routeSuggestedModes(route);
+  const presentationOptions = listDataPresentationOptions(suggestedModes);
+  const currentDisplayMode = (binding.displayMode ?? "kpi") as ComunicadoDataDisplayMode;
   const inheritedRefreshSec = resolveDataBlockRefreshSec(undefined, globalRefreshSec);
+  const valueFieldOptions = routeValueFieldOptions(route);
+  const maxRowsLimit = routeMaxRowsLimit(route);
+  const showTableOptions = currentDisplayMode === "table";
 
   function updateParam(key: string, raw: string) {
     const nextParams = { ...(binding.params ?? {}) };
@@ -99,11 +119,12 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
   }
 
   function updateDisplayMode(displayMode: ComunicadoDataDisplayMode) {
-    const blockType = blockTypeForDisplayMode(displayMode, displayModes);
+    const blockType = blockTypeForDisplayMode(displayMode, suggestedModes);
+    setLastDataDisplayMode(displayMode === "auto" ? "kpi" : displayMode);
     updateSelected({
       type: blockType,
       frame: defaultFrame(blockType),
-      dataBinding: { ...binding, displayMode },
+      dataBinding: { ...binding, displayMode: displayMode === "auto" ? "kpi" : displayMode },
     } as Partial<typeof selected>);
   }
 
@@ -121,21 +142,17 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
             Trocar rota
           </button>
         </div>
-        {presentationOptions.length > 1 ? (
-          <DeckField id="td-data-display-mode" label="Formato de apresentação">
-            <NativeSelectControl
-              id="td-data-display-mode"
-              value={currentDisplayMode}
-              onChange={(value) => updateDisplayMode(value as ComunicadoDataDisplayMode)}
-              options={presentationOptions.map((option) => ({
-                value: option.displayMode,
-                label: displayModeLabel(option.displayMode),
-              }))}
-            />
-          </DeckField>
-        ) : (
-          <p className="td-deck-inspector__meta">{displayModeLabel(currentDisplayMode)}</p>
-        )}
+        <DeckField id="td-data-display-mode" label="Formato de apresentação">
+          <NativeSelectControl
+            id="td-data-display-mode"
+            value={currentDisplayMode === "auto" ? "kpi" : currentDisplayMode}
+            onChange={(value) => updateDisplayMode(value as ComunicadoDataDisplayMode)}
+            options={presentationOptions.map((option) => ({
+              value: option.displayMode,
+              label: displayModeOptionLabel(option),
+            }))}
+          />
+        </DeckField>
         <DeckField id="td-data-label" label="Rótulo (opcional)">
           <input
             id="td-data-label"
@@ -147,6 +164,52 @@ export function DataBindingInspector({ route }: { route: TvDataRouteCatalogItem 
             }
           />
         </DeckField>
+        {valueFieldOptions.length > 0 ? (
+          <DeckField id="td-data-value-field" label="Campo de valor">
+            <NativeSelectControl
+              id="td-data-value-field"
+              value={binding.valueField ?? ""}
+              onChange={(value) => {
+                const nextBinding: ComunicadoDataBinding = { ...binding };
+                if (!value) {
+                  delete nextBinding.valueField;
+                } else {
+                  nextBinding.valueField = value;
+                }
+                updateSelected({ dataBinding: nextBinding } as Partial<typeof selected>);
+              }}
+              options={[
+                { value: "", label: "Automático (primeiro disponível)" },
+                ...valueFieldOptions.map((field) => ({ value: field, label: field })),
+              ]}
+            />
+          </DeckField>
+        ) : null}
+        {showTableOptions ? (
+          <DeckField id="td-data-max-rows" label="Máximo de linhas">
+            <input
+              id="td-data-max-rows"
+              type="number"
+              min={1}
+              max={maxRowsLimit}
+              placeholder={`Padrão (até ${Math.min(maxRowsLimit, 5)})`}
+              value={binding.maxRows ?? ""}
+              onChange={(event) => {
+                const raw = event.target.value.trim();
+                const nextBinding: ComunicadoDataBinding = { ...binding };
+                if (!raw) {
+                  delete nextBinding.maxRows;
+                } else {
+                  const parsed = Number(raw);
+                  if (Number.isFinite(parsed) && parsed >= 1) {
+                    nextBinding.maxRows = Math.min(Math.round(parsed), maxRowsLimit);
+                  }
+                }
+                updateSelected({ dataBinding: nextBinding } as Partial<typeof selected>);
+              }}
+            />
+          </DeckField>
+        ) : null}
         <DeckField
           id="td-data-refresh"
           label="Atualizar a cada (s)"

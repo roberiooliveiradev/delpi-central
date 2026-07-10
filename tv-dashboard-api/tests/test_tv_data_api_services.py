@@ -8,6 +8,7 @@ from tv_app.application.services.data.tv_data_param_validation_service import (
 from tv_app.application.services.data.tv_data_presentation_modes_service import (
     block_type_for_display_mode,
     suggested_display_modes,
+    validate_display_mode,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 
@@ -83,3 +84,11 @@ def test_enrich_route_includes_suggested_modes():
         pytest.skip("Catálogo OEE indisponível")
     enriched = TvDataConfigValidationService().enrich_route_for_api(route)
     assert enriched.get("suggestedDisplayModes")
+
+
+def test_validate_display_mode_accepts_universal_modes_on_scalar_route():
+    route = _oee_route()
+    if not route:
+        pytest.skip("Catálogo OEE indisponível")
+    validate_display_mode("table", allowed_display_modes=route.get("allowedDisplayModes"))
+    validate_display_mode("bar_chart", allowed_display_modes=route.get("allowedDisplayModes"))

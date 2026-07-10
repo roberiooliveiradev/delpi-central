@@ -181,5 +181,103 @@ def test_enrich_data_metric_auto_resolves_table_for_paged_list():
     ]
     enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
     rows = enriched[0]["resolved"]["table"]["rows"]
-    assert rows[0]["productCode"] == "90123456"
-    assert rows[0]["description"] == "Produto A"
+    assert rows[0]["code"] == "90123456"
+    assert rows[0]["name"] == "Produto A"
+    columns = enriched[0]["resolved"]["table"]["columns"]
+    assert any(column["key"] == "code" for column in columns)
+
+
+def test_enrich_scalar_route_as_line_chart():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct", "shape": "scalar"},
+        "data": {"summary": {"value": 78.4}},
+        "route": {
+            "label": "OEE",
+            "valueFields": ["value"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "chart-1",
+            "type": "data_chart",
+            "dataBinding": {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "displayMode": "line_chart",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    points = enriched[0]["resolved"]["chart"]["points"]
+    assert len(points) == 1
+    assert points[0]["value"] == 78.4
+
+
+def test_enrich_series_route_as_kpi_uses_last_point():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {
+            "points": [
+                {"periodo": "2026-07-01", "value": 70.0},
+                {"periodo": "2026-07-02", "value": 75.5},
+            ]
+        },
+        "route": {
+            "label": "OEE série",
+            "seriesField": "points",
+            "valueFields": ["value"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "kpi-1",
+            "type": "data_kpi",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "displayMode": "kpi",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    assert enriched[0]["resolved"]["kpi"]["value"] == 75.5
+
+
+def test_enrich_honors_value_field_override():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct", "shape": "scalar"},
+        "data": {"summary": {"value": 10, "oeePct": 88.2}},
+        "route": {
+            "valueFields": ["value", "oeePct"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "kpi-1",
+            "type": "data_kpi",
+            "dataBinding": {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "displayMode": "kpi",
+                "valueField": "oeePct",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    assert enriched[0]["resolved"]["kpi"]["value"] == 88.2

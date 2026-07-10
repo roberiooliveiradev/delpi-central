@@ -267,15 +267,27 @@ describe("comunicadoHelpers", () => {
 });
 
 describe("comunicadoDataPresentation", () => {
-  it("lista modos permitidos por rota", () => {
-    const options = listDataPresentationOptions(["kpi", "line_chart", "auto"]);
-    expect(options.some((option) => option.displayMode === "kpi")).toBe(true);
-    expect(options.some((option) => option.displayMode === "auto")).toBe(true);
+  it("lista todos os formatos universais independente da rota", () => {
+    const options = listDataPresentationOptions(["kpi", "auto"]);
+    expect(options).toHaveLength(4);
+    expect(options.map((option) => option.displayMode)).toEqual(
+      expect.arrayContaining(["kpi", "table", "line_chart", "bar_chart"]),
+    );
+    expect(options.some((option) => option.displayMode === "auto")).toBe(false);
   });
 
-  it("mapeia auto para data_metric", () => {
-    expect(blockTypeForDisplayMode("auto")).toBe("data_metric");
+  it("marca modos sugeridos como recomendados", () => {
+    const options = listDataPresentationOptions(["line_chart"]);
+    const line = options.find((option) => option.displayMode === "line_chart");
+    expect(line?.recommended).toBe(true);
+    const table = options.find((option) => option.displayMode === "table");
+    expect(table?.recommended).toBe(false);
+  });
+
+  it("mapeia auto para data_kpi e table para data_table", () => {
+    expect(blockTypeForDisplayMode("auto")).toBe("data_kpi");
     expect(blockTypeForDisplayMode("table")).toBe("data_table");
+    expect(blockTypeForDisplayMode("bar_chart")).toBe("data_chart");
   });
 });
 

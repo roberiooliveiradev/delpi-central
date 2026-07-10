@@ -17,6 +17,7 @@ import {
   parseComunicadoConfig,
   ComunicadoListType,
   ComunicadoNamedTextStyle,
+  type ComunicadoDataDisplayMode,
   applyNamedStyleInRange,
   applyNamedStyleOnAllLines,
   defaultNamedStyleForBlockType,
@@ -147,6 +148,7 @@ export function ComunicadoEditorProvider({
     return first ? [first] : [];
   });
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
   const [textEditSelectionStyle, setTextEditSelectionStyle] = useState<
     ComunicadoEditorContextValue["textEditSelectionStyle"]
@@ -535,6 +537,12 @@ export function ComunicadoEditorProvider({
       ...block,
       style: { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) },
     };
+    if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
+      const mode = withZ.dataBinding.displayMode;
+      if (mode && mode !== "auto") {
+        setLastDataDisplayMode(mode);
+      }
+    }
     setSelectedId(withZ.id);
     updateBlocks([...(configRef.current.blocks ?? []), withZ]);
   }
@@ -1108,6 +1116,8 @@ export function ComunicadoEditorProvider({
     dataPreviewLoading,
     dataPreviewError,
     globalRefreshSec,
+    lastDataDisplayMode,
+    setLastDataDisplayMode,
   };
 
   return (

@@ -107,8 +107,11 @@ export {
 export { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 export {
   blockTypeForDisplayMode,
+  defaultDisplayModeForInsert,
   displayModeLabel,
+  displayModeOptionLabel,
   listDataPresentationOptions,
+  UNIVERSAL_DISPLAY_MODES,
 } from "./comunicadoDataPresentation";
 export {
   buildDataPreviewFingerprint,
@@ -235,5 +238,11 @@ export {
   renderTextBlockEditorHtml,
 } from "./comunicadoTextBlockLink";
 export { TvDataBlockView } from "./tvDataBlockView";
+export {
+  resolveChartType,
+  resolveEffectiveDisplayMode,
+  resolveTableColumns,
+  type TvDataTableColumn,
+} from "./tvDataPresentation";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

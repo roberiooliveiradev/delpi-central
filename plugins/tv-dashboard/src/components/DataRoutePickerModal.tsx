@@ -3,11 +3,14 @@ import { ArrowLeft, Factory, Package, ShieldCheck, X } from "lucide-react";
 import {
   blockTypeForDisplayMode,
   createDataBlock,
+  defaultDisplayModeForInsert,
+  displayModeOptionLabel,
   listDataPresentationOptions,
   type ComunicadoDataDisplayMode,
 } from "@delpi/tv-dashboard-presentation";
 
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
   open: boolean;
@@ -31,11 +34,12 @@ function CategoryIcon({ category }: { category: string }) {
   return <Factory size={16} aria-hidden />;
 }
 
-function routeDisplayModes(route: TvDataRouteCatalogItem): string[] | undefined {
+function routeSuggestedModes(route: TvDataRouteCatalogItem): string[] | undefined {
   return route.suggestedDisplayModes ?? route.allowedDisplayModes;
 }
 
 export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
+  const { lastDataDisplayMode, setLastDataDisplayMode } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -88,14 +92,20 @@ export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
 
   const presentationOptions = useMemo(() => {
     if (!pickedRoute) return [];
-    return listDataPresentationOptions(routeDisplayModes(pickedRoute));
+    return listDataPresentationOptions(routeSuggestedModes(pickedRoute));
   }, [pickedRoute]);
+
+  const defaultMode = useMemo(() => {
+    if (!pickedRoute) return "kpi" as ComunicadoDataDisplayMode;
+    return defaultDisplayModeForInsert(routeSuggestedModes(pickedRoute), lastDataDisplayMode);
+  }, [pickedRoute, lastDataDisplayMode]);
 
   if (!open) return null;
 
   function buildBlock(route: TvDataRouteCatalogItem, displayMode: ComunicadoDataDisplayMode) {
-    const modes = routeDisplayModes(route);
-    const blockType = blockTypeForDisplayMode(displayMode, modes);
+    const modes = routeSuggestedModes(route);
+    const normalizedMode = displayMode === "auto" ? "kpi" : displayMode;
+    const blockType = blockTypeForDisplayMode(normalizedMode, modes);
     const defaultParams = Object.fromEntries(
       Object.entries(route.paramSchema ?? {})
         .map(([key, schema]) => {
@@ -107,14 +117,16 @@ export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
     return createDataBlock(route.operationId, {
       blockType,
       label: route.label,
-      displayMode,
+      displayMode: normalizedMode,
       defaultParams,
     });
   }
 
   function handleConfirm(displayMode: ComunicadoDataDisplayMode) {
     if (!pickedRoute) return;
-    onSelect(buildBlock(pickedRoute, displayMode));
+    const normalizedMode = displayMode === "auto" ? "kpi" : displayMode;
+    setLastDataDisplayMode(normalizedMode);
+    onSelect(buildBlock(pickedRoute, normalizedMode));
     onClose();
   }
 
@@ -187,10 +199,12 @@ export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
                   <li key={option.displayMode}>
                     <button
                       type="button"
-                      className="td-data-route-list__item"
+                      className={`td-data-route-list__item${
+                        option.displayMode === defaultMode ? " td-data-route-list__item--default" : ""
+                      }`}
                       onClick={() => handleConfirm(option.displayMode)}
                     >
-                      <span className="td-data-route-list__label">{option.label}</span>
+                      <span className="td-data-route-list__label">{displayModeOptionLabel(option)}</span>
                       <span className="td-data-route-list__meta">{option.description}</span>
                     </button>
                   </li>

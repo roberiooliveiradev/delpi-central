@@ -178,6 +178,11 @@ export type ComunicadoDataBlock = ComunicadoBlockBase & {
   resolved?: ComunicadoDataResolved;
 };
 
+export type ComunicadoDataTableColumn = {
+  key: string;
+  label: string;
+};
+
 export type ComunicadoDataResolved = {
   meta?: Record<string, unknown>;
   data?: unknown;
@@ -185,8 +190,14 @@ export type ComunicadoDataResolved = {
   displayMode?: string;
   label?: string;
   kpi?: { value?: unknown; label?: string };
-  chart?: { points?: Array<{ label?: unknown; value?: unknown }> };
-  table?: { rows?: Array<Record<string, unknown>> };
+  chart?: {
+    points?: Array<{ label?: unknown; value?: unknown }>;
+    chartType?: "line" | "bar";
+  };
+  table?: {
+    rows?: Array<Record<string, unknown>>;
+    columns?: ComunicadoDataTableColumn[];
+  };
 };
 
 export type ComunicadoBlock =
