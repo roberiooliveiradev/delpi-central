@@ -39,3 +39,54 @@ export {
   type ImpactEffortQuadrant,
   type ImpactEffortQuadrantLabels,
 } from "./impactEffortTypes";
+export { ConfigurableSeriesChart, type ConfigurableSeriesChartProps } from "./ConfigurableSeriesChart";
+export { SeriesChartPrimitive, type SeriesChartPrimitiveProps, type SeriesPlotRenderProps } from "./SeriesChartPrimitive";
+export { LineSeriesChart, type LineSeriesChartProps } from "./LineSeriesChart";
+export { BarSeriesChart, type BarSeriesChartProps } from "./BarSeriesChart";
+export {
+  seriesChartBemClasses,
+  seriesChartTvClasses,
+  SeriesChartClassesProvider,
+  useSeriesChartClasses,
+  type SeriesChartClassNames,
+  type SeriesChartClassesProviderProps,
+} from "./seriesChartClasses";
+export {
+  DEFAULT_SERIES_CHART_OPTIONS,
+  SERIES_CHART_LEGEND_POSITION_OPTIONS,
+  SERIES_CHART_VALUE_FORMAT_OPTIONS,
+  formatSeriesChartValue,
+  mergeSeriesChartOptions,
+  resolveSeriesChartDisplayOptions,
+  resolveSeriesChartTicks,
+  seriesChartThemeStyle,
+  usableSeriesChartPoints,
+  type SeriesChartKind,
+  type SeriesChartLegendPosition,
+  type SeriesChartOptions,
+  type SeriesChartPoint,
+  type SeriesChartTheme,
+  type SeriesChartValueFormat,
+} from "./seriesChartOptions";
+export {
+  SERIES_CHART_ELEMENT_CATALOG,
+  CHART_ELEMENT_CATALOG,
+  isSeriesChartElementApplicable,
+  isChartElementApplicable,
+  isSeriesChartElementEnabled,
+  isChartElementEnabled,
+  setSeriesChartElementEnabled,
+  setChartElementEnabled,
+  type SeriesChartElementDefinition,
+  type ChartElementDefinition,
+  type SeriesChartElementId,
+  type ChartElementId,
+} from "./seriesChartElementCatalog";
+export {
+  buildSeriesChartLayout,
+  resolveSeriesName,
+  resolveXLabelStep,
+  shouldRotateXLabels,
+  type SeriesChartLayout,
+} from "./seriesChart";
+export * from "./seriesChart";

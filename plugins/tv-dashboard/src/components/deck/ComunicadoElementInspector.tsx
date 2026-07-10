@@ -26,6 +26,7 @@ import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboa
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
+import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ComunicadoImageCropPanel } from "./ComunicadoImageCropPanel";
@@ -125,6 +126,9 @@ export function ComunicadoElementInspector({
         ) : null}
         {!multiSelect && selected?.type === "chart_view" ? (
           <ChartViewOptionsInspector pane={pane} />
+        ) : null}
+        {!multiSelect && selected?.type === "table_view" ? (
+          <TableViewOptionsInspector pane={pane} />
         ) : null}
 
         {!multiSelect && isShapeBlock ? (

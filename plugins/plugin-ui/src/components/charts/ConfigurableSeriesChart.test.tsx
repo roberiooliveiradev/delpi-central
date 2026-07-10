@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
-import { formatSeriesChartValue, mergeComunicadoChartOptions } from "./comunicadoChartOptions";
+import { formatSeriesChartValue, mergeSeriesChartOptions } from "./seriesChartOptions";
 
 describe("ConfigurableSeriesChart", () => {
   it("renderiza título e legenda configuráveis", () => {
@@ -63,12 +63,12 @@ describe("ConfigurableSeriesChart", () => {
       />,
     );
 
-    expect(container.querySelector(".tdp-series-chart__title")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__legend")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__series-line")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__series-marker")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__data-label")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__grid-line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__title")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__legend")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__series-marker")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__data-label")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__grid-line")).toBeTruthy();
   });
 
   it("omite marcadores quando desabilitados", () => {
@@ -80,8 +80,8 @@ describe("ConfigurableSeriesChart", () => {
       />,
     );
 
-    expect(container.querySelector(".tdp-series-chart__series-marker")).toBeNull();
-    expect(container.querySelector(".tdp-series-chart__series-line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__series-marker")).toBeNull();
+    expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
   });
 });
 
@@ -93,9 +93,9 @@ describe("formatSeriesChartValue", () => {
   });
 });
 
-describe("mergeComunicadoChartOptions", () => {
+describe("mergeSeriesChartOptions", () => {
   it("aplica defaults", () => {
-    const merged = mergeComunicadoChartOptions({ showDataLabels: true });
+    const merged = mergeSeriesChartOptions({ showDataLabels: true });
     expect(merged.showGrid).toBe(true);
     expect(merged.showDataLabels).toBe(true);
   });

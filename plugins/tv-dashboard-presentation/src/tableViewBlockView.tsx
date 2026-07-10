@@ -1,66 +1,16 @@
-import { formatNumber, formatPct } from "./nativeFormat";
+import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
+
+import { ConfigurableTable } from "./ConfigurableTable";
 import { tablePresetLabel } from "./comunicadoChartView";
-import type { ComunicadoDataResolved, ComunicadoTableViewBlock } from "./comunicadoTypes";
-import { resolveTableColumns, type TvDataTableColumn } from "./tvDataPresentation";
+import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
+import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
+import { resolveTableColumns } from "./tvDataPresentation";
 
 type Props = {
   block: ComunicadoTableViewBlock;
   interactive?: boolean;
   loading?: boolean;
 };
-
-function formatCellValue(value: unknown): string {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "number") {
-    if (Math.abs(value) <= 100 && !Number.isInteger(value)) return formatPct(value);
-    return formatNumber(value);
-  }
-  return String(value);
-}
-
-function TableWidget({
-  resolved,
-  columns,
-  preset,
-  maxRows,
-}: {
-  resolved: ComunicadoDataResolved;
-  columns: TvDataTableColumn[];
-  preset: ComunicadoTableViewBlock["tablePreset"];
-  maxRows?: number;
-}) {
-  const rows = (resolved.table?.rows ?? []).slice(0, maxRows ?? undefined);
-  if (rows.length === 0) {
-    return <div className="tdp-data-table tdp-data-table--empty">Sem linhas</div>;
-  }
-  const visibleColumns = columns.length > 0 ? columns : resolveTableColumns(resolved, rows);
-  const presetClass =
-    preset === "minimal"
-      ? "tdp-data-table--minimal"
-      : preset === "banded"
-        ? "tdp-data-table--banded"
-        : "";
-  return (
-    <table className={`tdp-data-table ${presetClass}`.trim()}>
-      <thead>
-        <tr>
-          {visibleColumns.map((column) => (
-            <th key={column.key}>{column.label}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, index) => (
-          <tr key={`row-${index}`}>
-            {visibleColumns.map((column) => (
-              <td key={`${column.key}-${index}`}>{formatCellValue(row[column.key])}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
 
 export function TableViewBlockView({ block, interactive = false, loading = false }: Props) {
   const resolved = block.resolved;
@@ -85,19 +35,27 @@ export function TableViewBlockView({ block, interactive = false, loading = false
     );
   }
 
-  const rows = resolved.table?.rows ?? [];
+  const rows = (resolved.table?.rows ?? []).slice(0, block.maxRows ?? undefined);
   const columns = resolveTableColumns(resolved, rows);
+  const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 
   return (
     <div className="tdp-data-block tdp-data-block--table">
-      <div className="tdp-data-table-wrap">
-        <TableWidget
-          resolved={resolved}
-          columns={columns}
-          preset={block.tablePreset}
-          maxRows={block.maxRows}
-        />
-      </div>
+      <CenteredScaledPreview
+        referenceWidth={420}
+        referenceHeight={220}
+        className="tdp-centered-scaled-preview"
+        contentClassName="tdp-centered-scaled-preview__content"
+      >
+        <div className="tdp-data-table-wrap">
+          <ConfigurableTable
+            columns={columns}
+            rows={rows}
+            options={tableOptions}
+            preset={block.tablePreset}
+          />
+        </div>
+      </CenteredScaledPreview>
     </div>
   );
 }

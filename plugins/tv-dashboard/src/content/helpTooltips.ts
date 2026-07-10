@@ -153,6 +153,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     chartTitle: "Título central acima do gráfico (ex.: ROL). Vazio usa o nome da fonte de dados.",
     chartLegend: "Texto exibido na legenda para identificar a série.",
     chartDataLabels: "Mostra o valor numérico em cada ponto ou barra.",
+    tableElements: "Ative ou configure cada parte da tabela, como título, cabeçalho e listras.",
+    tableCells: "Formato numérico, alinhamento e tamanho da fonte das células.",
+    tableAppearance: "Cores de cabeçalho, células e bordas.",
+    tableTitle: "Título acima da grade (ex.: Top produtos). Vazio usa o nome da fonte de dados.",
     sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
   },
   contextMenu: {

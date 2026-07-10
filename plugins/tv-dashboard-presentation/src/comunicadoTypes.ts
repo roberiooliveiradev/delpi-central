@@ -1,5 +1,6 @@
 import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
+import type { ComunicadoTableOptions } from "./comunicadoTableOptions";
 
 export type ComunicadoFrame = {
   x: number;
@@ -208,6 +209,7 @@ export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
 export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   type: "table_view";
   tablePreset: ComunicadoTablePreset;
+  tableOptions?: ComunicadoTableOptions;
   dataSourceId?: string;
   maxRows?: number;
   resolved?: ComunicadoDataResolved;

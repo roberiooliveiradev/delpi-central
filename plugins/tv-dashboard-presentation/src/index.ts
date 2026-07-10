@@ -272,7 +272,27 @@ export {
   type ComunicadoChartOptions,
   type ComunicadoChartValueFormat,
 } from "./comunicadoChartOptions";
+export {
+  DEFAULT_COMUNICADO_TABLE_OPTIONS,
+  TABLE_TEXT_ALIGN_OPTIONS,
+  TABLE_VALUE_FORMAT_OPTIONS,
+  formatTableCellValue,
+  mergeComunicadoTableOptions,
+  presetDefaultTableOptions,
+  resolveTableDisplayOptions,
+  type ComunicadoTableOptions,
+  type ComunicadoTableTextAlign,
+  type ComunicadoTableValueFormat,
+} from "./comunicadoTableOptions";
+export {
+  TABLE_ELEMENT_CATALOG,
+  isTableElementEnabled,
+  setTableElementEnabled,
+  type TableElementDefinition,
+  type TableElementId,
+} from "./tableElementCatalog";
 export { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
+export { ConfigurableTable } from "./ConfigurableTable";
 export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock } from "./comunicadoTypes";
 export {
   resolveChartType,

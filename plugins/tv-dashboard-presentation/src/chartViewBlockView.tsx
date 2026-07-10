@@ -1,3 +1,5 @@
+import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
+
 import { chartTypeLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
 import { TvDataBarChartWidget, TvDataLineChartWidget } from "./tvDataChartWidgets";
@@ -80,11 +82,18 @@ export function ChartViewBlockView({ block, interactive = false, loading = false
 
   return (
     <div className={`tdp-data-block tdp-data-block--chart tdp-data-block--chart-${chartType}`}>
-      {chartType === "bar" ? (
-        <TvDataBarChartWidget resolved={resolved} chartOptions={block.chartOptions} />
-      ) : (
-        <TvDataLineChartWidget resolved={resolved} chartOptions={block.chartOptions} />
-      )}
+      <CenteredScaledPreview
+        referenceWidth={400}
+        referenceHeight={chartType === "bar" ? 260 : 280}
+        className="tdp-centered-scaled-preview"
+        contentClassName="tdp-centered-scaled-preview__content"
+      >
+        {chartType === "bar" ? (
+          <TvDataBarChartWidget resolved={resolved} chartOptions={block.chartOptions} />
+        ) : (
+          <TvDataLineChartWidget resolved={resolved} chartOptions={block.chartOptions} />
+        )}
+      </CenteredScaledPreview>
     </div>
   );
 }

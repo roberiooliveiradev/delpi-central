@@ -1,4 +1,45 @@
 export {
+  ConfigurablePresentationTable,
+  ConfigurableTable,
+  type ConfigurablePresentationTableProps,
+  type ConfigurableTableProps,
+} from "./ConfigurablePresentationTable";
+
+export {
+  configurableTableBemClasses,
+  configurableTableTvClasses,
+  ConfigurableTableClassesProvider,
+  useConfigurableTableClasses,
+  type ConfigurableTableClassNames,
+  type ConfigurableTableClassesProviderProps,
+} from "./configurableTableClasses";
+
+export {
+  CONFIGURABLE_TABLE_ELEMENT_CATALOG,
+  isConfigurableTableElementEnabled,
+  setConfigurableTableElementEnabled,
+  type ConfigurableTableElementDefinition,
+  type ConfigurableTableElementId,
+} from "./configurableTableElementCatalog";
+
+export {
+  CONFIGURABLE_TABLE_TEXT_ALIGN_OPTIONS,
+  CONFIGURABLE_TABLE_VALUE_FORMAT_OPTIONS,
+  DEFAULT_CONFIGURABLE_TABLE_OPTIONS,
+  formatConfigurableTableCellValue,
+  mergeConfigurableTableOptions,
+  presetDefaultConfigurableTableOptions,
+  resolveConfigurableTableDisplayOptions,
+  configurableTableOptionsCssVars,
+  configurableTableOptionsModifierClasses,
+  type ConfigurableTableOptions,
+  type ConfigurableTablePreset,
+  type ConfigurableTableTextAlign,
+  type ConfigurableTableValueFormat,
+  type PresentationTableColumn,
+} from "./configurableTableOptions";
+
+export {
   Pagination,
   TablePageSizeSelect,
   createDashboardPaginationKit,

@@ -25,6 +25,10 @@ import {
 } from "./comunicadoBlockAnimations";
 import { DEFAULT_COMUNICADO_CHART_OPTIONS, type ComunicadoChartOptions } from "./comunicadoChartOptions";
 import {
+  presetDefaultTableOptions,
+  type ComunicadoTableOptions,
+} from "./comunicadoTableOptions";
+import {
   comunicadoVerticalAlignToJustifyContent,
   defaultVerticalAlignForVisualBox,
   isComunicadoVisualBoxBlock,
@@ -156,6 +160,7 @@ export function createTableViewBlock(
     id: newBlockId(),
     type: "table_view",
     tablePreset: preset,
+    tableOptions: presetDefaultTableOptions(preset),
     maxRows: rows,
     frame: { x: 5, y: 55 - height / 2, w: width, h: height },
     style: { zIndex: 2, color: "#ffffff" },
@@ -487,6 +492,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     base.tablePreset = block.tablePreset;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
     if (block.maxRows != null) base.maxRows = block.maxRows;
+    if (block.tableOptions) base.tableOptions = { ...block.tableOptions };
   }
   return base;
 }
@@ -692,6 +698,10 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   if (type === "table_view") {
     const tablePreset =
       typeof block.tablePreset === "string" ? (block.tablePreset as ComunicadoTablePreset) : "grid";
+    const tableOptions =
+      block.tableOptions && typeof block.tableOptions === "object"
+        ? (block.tableOptions as ComunicadoTableOptions)
+        : undefined;
     return attachBlockAnimations(
       {
         id,
@@ -700,6 +710,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         style: { ...defaultStyle("table_view"), ...style },
         groupId,
         tablePreset,
+        tableOptions,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
         maxRows: typeof block.maxRows === "number" ? block.maxRows : undefined,
         resolved:

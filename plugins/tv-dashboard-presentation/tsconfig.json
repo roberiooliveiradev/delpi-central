@@ -7,7 +7,12 @@
     "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@delpi/plugin-ui": ["../plugin-ui/src/index.ts"],
+      "@delpi/plugin-ui/index": ["../plugin-ui/src/index.ts"],
+      "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"]
+    }
   },
   "include": ["src"]
 }

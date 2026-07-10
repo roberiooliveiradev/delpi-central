@@ -16,6 +16,7 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
@@ -234,11 +235,11 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
           />
         </DeckField>
         <DeckField id="td-chart-series-color" label="Cor da série">
-          <input
-            id="td-chart-series-color"
-            type="color"
+          <TvRibbonColorPicker
+            inline
+            label="Cor da série"
             value={options.seriesColor ?? "#0d7a8c"}
-            onChange={(event) => setOptions({ seriesColor: event.target.value })}
+            onChange={(color) => setOptions({ seriesColor: color })}
           />
         </DeckField>
       </DeckPropertySection>
