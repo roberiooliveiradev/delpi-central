@@ -633,6 +633,13 @@ class ChatDrawingStructureValidationService:
             return []
 
         content = ChatDrawingValidationContentService
+        haystack = cls._dimension_note_haystack(pdf_extract)
+        pdf_evidence = (
+            ChatDrawingDimensionsExtractionService.summarize_ambiguous_dimension_notes(
+                haystack
+            )
+            or content.evidence("pendingPdf")
+        )
 
         return [
             content.item_from_template(
@@ -644,7 +651,7 @@ class ChatDrawingStructureValidationService:
                     "ambiguousStatus",
                     "pending",
                 ),
-                pdf_evidence=content.evidence("pendingPdf"),
+                pdf_evidence=pdf_evidence,
                 api_evidence=content.evidence("dash"),
             )
         ]

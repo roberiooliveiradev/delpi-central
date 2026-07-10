@@ -94,6 +94,110 @@ class ChatDrawingValidationPresentationService:
         ]
 
     @classmethod
+    def describe_nonconformity(cls, item: dict[str, Any]) -> str:
+        recommendation = str(item.get("recommendation") or "").strip()
+        dash = ChatDrawingValidationContentService.evidence("dash")
+
+        if recommendation and recommendation != dash:
+            return recommendation
+
+        pdf_evidence = str(item.get("pdfEvidence") or "").strip()
+        pending_pdf = ChatDrawingValidationContentService.evidence("pendingPdf")
+
+        if pdf_evidence and pdf_evidence not in {dash, pending_pdf}:
+            return pdf_evidence
+
+        template_key = str(item.get("templateKey") or "").strip()
+        template = (
+            ChatDrawingValidationContentService.get_node("itemTemplates", template_key)
+            if template_key
+            else None
+        )
+
+        if isinstance(template, dict):
+            rule = str(template.get("rule") or "").strip()
+
+            if rule and rule != dash:
+                return rule
+
+        return ChatDrawingValidationContentService.get(
+            "presentation",
+            "nonconformityDetailFallback",
+            default="conferir manualmente no PDF",
+        )
+
+    @classmethod
+    def build_analysis_conclusion(cls, items: list[dict[str, Any]], *, has_pdf: bool) -> str:
+        non_ok = cls.nonconformity_items(items)
+
+        if not non_ok:
+            return ChatDrawingValidationContentService.get("conclusions", "approved")
+
+        if not has_pdf:
+            return ChatDrawingValidationContentService.get("conclusions", "noPdf")
+
+        lines = [
+            ChatDrawingValidationContentService.get("conclusions", "pendingWithPdfIntro"),
+        ]
+
+        for item in non_ok:
+            lines.append(
+                ChatDrawingValidationContentService.format(
+                    "presentation",
+                    "executiveSummaryPendingLine",
+                    section=str(item.get("section") or ChatDrawingValidationContentService.evidence("dash")),
+                    item=str(item.get("item") or ChatDrawingValidationContentService.evidence("dash")),
+                    detail=cls.describe_nonconformity(item),
+                )
+            )
+
+        lines.append(
+            ChatDrawingValidationContentService.get("conclusions", "pendingWithPdfAction")
+        )
+
+        return "\n\n".join(lines)
+
+    @classmethod
+    def build_executive_summary(
+        cls,
+        analysis: dict[str, Any],
+        product: dict[str, Any] | None = None,
+    ) -> str:
+        raw_items = analysis.get("items") if isinstance(analysis.get("items"), list) else []
+        non_ok = cls.nonconformity_items(
+            cls.prepare_display_items(raw_items if isinstance(raw_items, list) else [])
+        )
+
+        if not non_ok:
+            return ""
+
+        pending_lines = [
+            ChatDrawingValidationContentService.format(
+                "presentation",
+                "executiveSummaryPendingLine",
+                section=str(item.get("section") or ChatDrawingValidationContentService.evidence("dash")),
+                item=str(item.get("item") or ChatDrawingValidationContentService.evidence("dash")),
+                detail=cls.describe_nonconformity(item),
+            )
+            for item in non_ok
+        ]
+
+        code = cls.format_code(
+            product.get("code") if isinstance(product, dict) else None
+        ) or cls.format_code(analysis.get("productCode"))
+
+        return ChatDrawingValidationContentService.format(
+            "presentation",
+            "executiveSummaryWithPending",
+            code=code or ChatDrawingValidationContentService.evidence("dash"),
+            overall=str(
+                analysis.get("overallLabel")
+                or ChatDrawingValidationContentService.evidence("dash")
+            ),
+            pendingSummary=" ".join(pending_lines),
+        )
+
+    @classmethod
     def format_code(cls, value: Any) -> str:
         token = str(value or "").strip()
 

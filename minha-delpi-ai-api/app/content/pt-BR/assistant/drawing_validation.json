@@ -30,6 +30,8 @@
     "illegiblePdf": "O PDF está ilegível ou sem texto extraível suficiente. Informe o código na mensagem ou regenere o PDF.",
     "noPdf": "Anexe o PDF para validar carimho, BOM e cotas. A API já foi consultada para cadastro, roteiro e inspeção.",
     "pendingWithPdf": "Revise os itens pendentes ou com erro antes da liberação.",
+    "pendingWithPdfIntro": "A validação automática terminou com ressalvas. Conferir manualmente:",
+    "pendingWithPdfAction": "Revise os pontos acima no PDF e no cadastro antes de liberar o desenho.",
     "approved": "Nenhuma divergência crítica detectada na validação automática da API."
   },
   "criticalReport": {
@@ -77,7 +79,8 @@
     "revisionApiCurrent": "REV.{revision} (cadastro)",
     "checkIntermediate50xx": "Conferir intermediário 50xx",
     "missingDash": "—",
-    "pdfScopePrefix": " [{scope}]"
+    "pdfScopePrefix": " [{scope}]",
+    "dimensionNoteAmbiguous": "Notas conflitantes no PDF ({excerpt}) — {explanation}"
   },
   "regionalScopeSources": {
     "bom_region": "BOM — região superior",
@@ -688,6 +691,11 @@
     ],
     "codeListDelimiter": ", ",
     "maxGuideRows": 80,
-    "evidenceJoiner": "; "
+    "evidenceJoiner": "; ",
+    "ambiguousNoteExplanation": "há notas de termoencolhível ou ensaio junto com decape de cabo; o decape esquerdo (E) não foi inferido automaticamente para evitar falso positivo",
+    "ambiguousNoteExcerptFallback": "trecho dimensional ambíguo",
+    "executiveSummaryWithPending": "**Resumo:** produto `{code}` — **{overall}**. {pendingSummary}",
+    "executiveSummaryPendingLine": "• **{section}** — {item}: {detail}",
+    "nonconformityDetailFallback": "conferir manualmente no PDF"
   }
 }

@@ -621,6 +621,117 @@ class ChatDrawingDimensionsExtractionService:
         return has_decape and has_shrink
 
     @classmethod
+    def summarize_ambiguous_dimension_notes(cls, text: str) -> str | None:
+        if not cls.detect_ambiguous_dimension_notes(text):
+            return None
+
+        from app.domain.services.chat_drawing_validation_content_service import (
+            ChatDrawingValidationContentService,
+        )
+
+        excerpt = cls._extract_ambiguous_dimension_excerpt(text)
+        explanation = ChatDrawingValidationContentService.get(
+            "presentation",
+            "ambiguousNoteExplanation",
+        )
+
+        return ChatDrawingValidationContentService.evidence_format(
+            "dimensionNoteAmbiguous",
+            excerpt=excerpt,
+            explanation=explanation,
+        )
+
+    @classmethod
+    def _extract_ambiguous_dimension_excerpt(cls, text: str, *, max_len: int = 72) -> str:
+        from app.domain.services.chat_drawing_validation_content_service import (
+            ChatDrawingValidationContentService,
+        )
+
+        fallback = ChatDrawingValidationContentService.get(
+            "presentation",
+            "ambiguousNoteExcerptFallback",
+            default="trecho dimensional ambíguo",
+        )
+        normalized = cls._normalize_ocr_text(text)
+
+        if not normalized:
+            return fallback
+
+        shrink_markers: list[str] = []
+        decape_markers: list[str] = []
+
+        for note_type in ChatDrawingPatternsService.dimension_note_types_suppressing_decape():
+            shrink_markers.extend(
+                ChatDrawingPatternsService.dimension_note_context_markers(note_type)
+            )
+
+        decape_markers.extend(
+            ChatDrawingPatternsService.dimension_note_context_markers("decape_cable")
+        )
+
+        best_line = ""
+        best_score = -1
+
+        for raw_line in normalized.splitlines():
+            line = " ".join(raw_line.split()).strip()
+
+            if not line:
+                continue
+
+            upper = line.upper()
+            has_shrink = any(marker in upper for marker in shrink_markers if marker)
+            has_decape = any(marker in upper for marker in decape_markers if marker)
+            score = int(has_shrink) + int(has_decape)
+
+            if score > best_score:
+                best_score = score
+                best_line = line
+
+        if best_score < 2:
+            window = cls._ambiguous_note_window(normalized, shrink_markers, decape_markers)
+
+            if window:
+                best_line = window
+
+        if not best_line:
+            return fallback
+
+        if len(best_line) <= max_len:
+            return best_line
+
+        return best_line[: max_len - 1].rstrip() + "…"
+
+    @classmethod
+    def _ambiguous_note_window(
+        cls,
+        text: str,
+        shrink_markers: list[str],
+        decape_markers: list[str],
+        *,
+        radius: int = 90,
+    ) -> str:
+        upper = str(text or "").upper()
+        anchor = -1
+
+        for marker in shrink_markers + decape_markers:
+            if not marker:
+                continue
+
+            idx = upper.find(marker)
+
+            if idx >= 0 and (anchor < 0 or idx < anchor):
+                anchor = idx
+
+        if anchor < 0:
+            return ""
+
+        begin = max(0, anchor - radius)
+        end = min(len(text), anchor + radius)
+        snippet = " ".join(str(text[begin:end]).split()).strip()
+
+        return snippet
+
+    @classmethod
     def _should_skip_decape_in_context(cls, text: str, *, start: int = 0) -> bool:
         window = cls._context_window(text, start).upper()
 

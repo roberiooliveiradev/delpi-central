@@ -146,6 +146,55 @@ def test_detect_ambiguous_dimension_notes_when_shrink_and_decape_coexist():
     assert ChatDrawingDimensionsExtractionService.detect_ambiguous_dimension_notes(text)
 
 
+def test_summarize_ambiguous_dimension_notes_describes_conflict():
+    text = "TERMO ENCOLHÍVEL 25 MM DECAPE 14 MM"
+
+    summary = ChatDrawingDimensionsExtractionService.summarize_ambiguous_dimension_notes(
+        text
+    )
+
+    assert summary
+    assert "TERMO ENCOL" in summary.upper() or "termoencolhível" in summary.lower()
+    assert "decape" in summary.lower()
+    assert "Pendente leitura do PDF" not in summary
+
+
+def test_format_report_executive_summary_lists_pending_dimension_note():
+    from app.domain.services.chat_drawing_validation_orchestration_service import (
+        ChatDrawingValidationOrchestrationService,
+    )
+    from tests.unit.domain.services.test_external_action_result_presenter_analyser_humanized import (
+        _analyser_payload_with_guide_and_inspection,
+    )
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90260140",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "productCode": "90260140",
+            "revision": "01",
+            "legible": True,
+            "componentCodes": ["50212194"],
+            "intermediateCodes": ["50212194"],
+            "dimensions": {
+                "notesText": "TERMO ENCOLHÍVEL 25 MM DECAPE 14 MM",
+            },
+        },
+    )
+
+    analysis = package["drawingAnalysis"]
+    report = ChatDrawingValidationOrchestrationService.format_report_markdown(package)
+
+    assert analysis["status"] == "approved_with_notes"
+    assert "**Resumo:**" in report
+    assert "Nota dimensional ambígua" in report
+    assert "termoencolhível" in report.lower() or "TERMO ENCOL" in report.upper()
+    assert "Pendente leitura do PDF" not in report
+    assert "Revise os pontos acima" in report
+
+
 def test_extract_dimensions_ignores_process_sample_30mm():
     text = "PONTA DE ENSAIO COMP 30MM\n30±1"
 

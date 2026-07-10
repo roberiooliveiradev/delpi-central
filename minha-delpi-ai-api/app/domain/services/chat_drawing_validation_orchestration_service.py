@@ -374,21 +374,36 @@ class ChatDrawingValidationOrchestrationService:
             "",
             cls._content("report", "sections", "overall"),
             str(analysis.get("overallLabel") or cls._evidence("dash")),
-            "",
-            cls._content("report", "sections", "pdfData"),
-            table_header,
-            table_separator,
-            f"| {pdf_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(pdf_code) if pdf_code else cls._evidence('dash')} |",
-            f"| {pdf_fields.get('revision', 'Revisão (PDF)')} | {analysis.get('revisionPdf') or cls._evidence('dash')} |",
-            f"| {pdf_fields.get('attached', 'PDF anexado')} | {pdf_fields.get('attachedYes', 'Sim') if analysis.get('hasPdfAttachment') else pdf_fields.get('attachedNo', 'Não')} |",
-            "",
-            cls._content("report", "sections", "apiData"),
-            table_header,
-            table_separator,
-            f"| {api_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(product.get('code') or analysis.get('productCode') or cls._evidence('dash'))} |",
-            f"| {api_fields.get('description', 'Descrição')} | {product.get('description') or cls._evidence('dash')} |",
-            f"| {api_fields.get('revision', 'Revisão (API)')} | {product.get('last_revision_date') or cls._evidence('dash')} |",
         ]
+
+        executive_summary = (
+            ChatDrawingValidationPresentationService.build_executive_summary(
+                analysis,
+                product if isinstance(product, dict) else {},
+            )
+        )
+
+        if executive_summary:
+            lines.extend(["", executive_summary])
+
+        lines.extend(
+            [
+                "",
+                cls._content("report", "sections", "pdfData"),
+                table_header,
+                table_separator,
+                f"| {pdf_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(pdf_code) if pdf_code else cls._evidence('dash')} |",
+                f"| {pdf_fields.get('revision', 'Revisão (PDF)')} | {analysis.get('revisionPdf') or cls._evidence('dash')} |",
+                f"| {pdf_fields.get('attached', 'PDF anexado')} | {pdf_fields.get('attachedYes', 'Sim') if analysis.get('hasPdfAttachment') else pdf_fields.get('attachedNo', 'Não')} |",
+                "",
+                cls._content("report", "sections", "apiData"),
+                table_header,
+                table_separator,
+                f"| {api_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(product.get('code') or analysis.get('productCode') or cls._evidence('dash'))} |",
+                f"| {api_fields.get('description', 'Descrição')} | {product.get('description') or cls._evidence('dash')} |",
+                f"| {api_fields.get('revision', 'Revisão (API)')} | {product.get('last_revision_date') or cls._evidence('dash')} |",
+            ]
+        )
 
         lines.extend(
             ChatDrawingValidationPresentationService.format_analyser_detail_sections(
@@ -819,7 +834,10 @@ class ChatDrawingValidationOrchestrationService:
         elif errors or pending:
             overall = "approved_with_notes"
             overall_label = cls._content("overallLabels", "approvedWithNotes")
-            conclusion = cls._content("conclusions", "pendingWithPdf")
+            conclusion = ChatDrawingValidationPresentationService.build_analysis_conclusion(
+                items,
+                has_pdf=has_pdf_attachment,
+            )
         else:
             overall = "approved"
             overall_label = cls._content("overallLabels", "approved")
