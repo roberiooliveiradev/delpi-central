@@ -2,7 +2,8 @@ import ReactDOM from "react-dom/client";
 import App, { type AppProps } from "./App";
 import "./index.css";
 
-await import("@delpi/plugin-ui/styles");
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 
 /** Legado: removida do portal; limpa instalações com classe presa no html. */
 const LEGACY_PORTAL_LAYOUT_CLASS = "tv-dashboard-deck-active";

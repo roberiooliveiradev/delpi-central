@@ -2,7 +2,8 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-await import("@delpi/plugin-ui/styles");
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;

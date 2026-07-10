@@ -3,7 +3,8 @@ import App, { type AppProps } from "./App";
 import { resolvePropostasComerciaisRouteKey } from "./utils/route";
 import "./index.css";
 
-await import("@delpi/plugin-ui/styles");
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
 

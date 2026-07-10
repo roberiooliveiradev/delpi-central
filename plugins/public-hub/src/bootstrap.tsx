@@ -4,7 +4,8 @@ import { PublicShell } from "./shell/PublicShell";
 import "./shell/brand-tokens.css";
 import "./shell/shell.css";
 
-await import("@delpi/plugin-ui/styles");
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
+await preparePluginUiRemote();
 
 const root = document.getElementById("root");
 if (root) {

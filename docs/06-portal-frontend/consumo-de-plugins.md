@@ -107,7 +107,7 @@ Transição de rota no shell: `appHostRouteTransition.ts` → classe `app-host--
 1. `import(/* @vite-ignore */ entryUrl)` carrega `remoteEntry.js`
 2. Container deve expor `.get()` (Module Federation)
 3. Monta módulo exposto (ex. `./App`) em `federatedHostRef`
-4. O MFE pai registra React no share scope ao inicializar o nested remote `plugin-ui` — **não** pré-semeie React no portal (`__federation_shared__`), senão o remote consome instância diferente da do bundle do MFE (React #321).
+4. O MFE chama `preparePluginUiRemote()` no bootstrap (`plugins/vite/federationShareScope.ts`) antes do CSS do remote — registra React com versão semver para o nested `plugin-ui`.
 
 Gateway serve:
 

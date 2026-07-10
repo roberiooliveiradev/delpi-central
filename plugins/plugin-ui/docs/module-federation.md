@@ -102,10 +102,12 @@ export default defineConfig({
 ### Bootstrap
 
 ```ts
-import "./index.css";
+import { preparePluginUiRemote } from "../../vite/federationShareScope";
 
-await import("@delpi/plugin-ui/styles");
+await preparePluginUiRemote();
 ```
+
+`preparePluginUiRemote()` registra React/lucide do **MFE pai** em `__federation_shared__` (versão semver) antes de carregar o remote — obrigatório para `plugin-ui` com `importShared`. **Não** semear React no portal.
 
 ### tsconfig.app.json
 

@@ -5,7 +5,7 @@ import federation from "@originjs/vite-plugin-federation";
 import { defineConfig } from "vite";
 
 import {
-  FEDERATION_SHARED_REACT_REMOTE,
+  FEDERATION_SHARED_REACT,
   FEDERATION_SHARED_XYFLOW,
   PLUGIN_UI_DEV_PORT,
 } from "../vite/federation.shared";
@@ -19,7 +19,7 @@ export default defineConfig({
         "./index": "./src/index.ts",
         "./styles": "./src/styles-entry.ts",
       },
-      shared: { ...FEDERATION_SHARED_REACT_REMOTE, ...FEDERATION_SHARED_XYFLOW },
+      shared: { ...FEDERATION_SHARED_REACT, ...FEDERATION_SHARED_XYFLOW },
     }),
     react(),
   ],
