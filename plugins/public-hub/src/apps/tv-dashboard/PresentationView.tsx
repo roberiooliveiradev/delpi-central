@@ -4,6 +4,7 @@ import {
   NativeSlideView,
   usePresentationEngine,
   buildPublicPresentationWsUrl,
+  resolveSlideTransitionStyle,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PublicPresentationPayload, PublicSlide } from "./api";
@@ -34,7 +35,6 @@ export function PresentationView({
     index,
     slides,
     viewport,
-    transition,
   } = usePresentationEngine<PublicPresentationPayload>({
     initialPayload,
     onRefresh: onRefresh || token ? reloadPayload : undefined,
@@ -77,10 +77,11 @@ export function PresentationView({
       ) : null}
       {(slides as PublicSlide[]).map((slide: PublicSlide, slideIndex: number) => {
         const active = slideIndex === index;
+        const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
         return (
           <div
             key={slide.id}
-            className={`tdp-slide tdp-slide--${transition}${active ? " tdp-slide--active" : ""}`}
+            className={`tdp-slide tdp-slide--${slideTransition}${active ? " tdp-slide--active" : ""}`}
             aria-hidden={!active}
           >
             {slide.slideType === "native" && slide.native ? (

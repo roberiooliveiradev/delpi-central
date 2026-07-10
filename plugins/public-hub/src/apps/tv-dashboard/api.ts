@@ -12,6 +12,7 @@ export type PublicSlide = {
   slideType: "native" | "external";
   durationSec: number;
   title: string;
+  transitionStyle?: string | null;
   native?: PublicSlideNative;
   external?: { url: string; sandbox?: string | null };
 };

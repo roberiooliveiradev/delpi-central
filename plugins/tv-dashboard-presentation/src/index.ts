@@ -18,6 +18,12 @@ export type {
   PresentationSlide,
 } from "./types";
 export type { UsePresentationEngineOptions } from "./usePresentationEngine";
+export {
+  PRESENTATION_TRANSITION_STYLES,
+  isPresentationTransitionStyle,
+  resolveSlideTransitionStyle,
+  type PresentationTransitionStyle,
+} from "./presentationTransition";
 export type {
   ComunicadoBlock,
   ComunicadoConfig,

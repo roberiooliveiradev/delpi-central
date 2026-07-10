@@ -52,6 +52,7 @@ type DeckSettingsProps = {
       durationSec: number;
       nativeConfig?: Record<string, unknown>;
       externalUrl?: string;
+      transitionStyle?: string | null;
     },
   ) => void;
 };
@@ -299,6 +300,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       durationSec: number;
       nativeConfig?: Record<string, unknown>;
       externalUrl?: string;
+      transitionStyle?: string | null;
     },
   ) {
     if (!playlist) return;

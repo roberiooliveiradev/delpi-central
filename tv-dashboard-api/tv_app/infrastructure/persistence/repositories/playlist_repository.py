@@ -57,6 +57,7 @@ def _row_to_slide(row: dict[str, Any]) -> dict[str, Any]:
         "externalUrl": row["external_url"],
         "externalSandbox": row["external_sandbox"],
         "isActive": row["is_active"],
+        "transitionStyle": row.get("transition_style"),
     }
 
 
@@ -257,9 +258,10 @@ class PlaylistRepository:
                         """
                         INSERT INTO tv_dashboard.slides (
                           playlist_id, sort_order, slide_type, duration_sec, title,
-                          native_screen_key, native_config, external_url, external_sandbox, is_active
+                          native_screen_key, native_config, external_url, external_sandbox, is_active,
+                          transition_style
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s)
                         """,
                         (
                             str(new_id),
@@ -272,6 +274,7 @@ class PlaylistRepository:
                             slide.get("externalUrl"),
                             slide.get("externalSandbox"),
                             slide.get("isActive", True),
+                            slide.get("transitionStyle"),
                         ),
                     )
             conn.commit()
@@ -292,6 +295,7 @@ class PlaylistRepository:
                 "nativeConfig": slide.get("nativeConfig") or {},
                 "externalUrl": slide.get("externalUrl"),
                 "externalSandbox": slide.get("externalSandbox"),
+                "transitionStyle": slide.get("transitionStyle"),
             },
         )
 
@@ -365,9 +369,9 @@ class PlaylistRepository:
                     """
                     INSERT INTO tv_dashboard.slides (
                       playlist_id, sort_order, slide_type, duration_sec, title,
-                      native_screen_key, native_config, external_url, external_sandbox
+                      native_screen_key, native_config, external_url, external_sandbox, transition_style
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
                     RETURNING *
                     """,
                     (
@@ -380,6 +384,7 @@ class PlaylistRepository:
                         json.dumps(payload.get("nativeConfig") or {}),
                         payload.get("externalUrl"),
                         payload.get("externalSandbox"),
+                        payload.get("transitionStyle"),
                     ),
                 )
                 row = cur.fetchone()
@@ -389,6 +394,12 @@ class PlaylistRepository:
     def update_slide(self, slide_id: UUID, payload: dict[str, Any]) -> dict[str, Any]:
         fields: list[str] = []
         values: list[Any] = []
+        if "transitionStyle" in payload:
+            if payload["transitionStyle"] is None:
+                fields.append("transition_style = NULL")
+            else:
+                fields.append("transition_style = %s")
+                values.append(payload["transitionStyle"])
         mapping = {
             "sort_order": payload.get("sortOrder"),
             "duration_sec": payload.get("durationSec"),

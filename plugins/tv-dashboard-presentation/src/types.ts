@@ -4,6 +4,8 @@ export type PresentationSlide = {
   slideType: "native" | "external" | string;
   durationSec?: number | null;
   title?: string;
+  /** Override da transição da playlist (`fade` | `slide` | `none`). */
+  transitionStyle?: string | null;
   native?: { data?: Record<string, unknown> };
 };
 

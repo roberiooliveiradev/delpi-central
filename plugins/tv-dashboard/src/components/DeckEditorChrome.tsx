@@ -39,6 +39,7 @@ type Props = {
       durationSec: number;
       nativeConfig?: Record<string, unknown>;
       externalUrl?: string;
+      transitionStyle?: string | null;
     },
   ) => void;
 };

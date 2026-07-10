@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { NativeSlideView } from "./NativeScreens";
 import { usePresentationEngine } from "./usePresentationEngine";
+import { resolveSlideTransitionStyle } from "./presentationTransition";
 import type { PresentationPayloadLike } from "./types";
 
 const publicPayload: PresentationPayloadLike = {
@@ -64,7 +65,7 @@ const publicPayload: PresentationPayloadLike = {
 };
 
 function PublicStagePreview({ payload }: { payload: PresentationPayloadLike }) {
-  const { index, slides, viewport, transition } = usePresentationEngine({
+  const { index, slides, viewport } = usePresentationEngine({
     initialPayload: payload,
     enableHiddenPause: false,
   });
@@ -73,10 +74,11 @@ function PublicStagePreview({ payload }: { payload: PresentationPayloadLike }) {
     <div className="tdp-stage tdp-stage--kiosk" data-viewport={viewport}>
       {slides.map((slide, slideIndex) => {
         const active = slideIndex === index;
+        const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
         return (
           <div
             key={slide.id}
-            className={`tdp-slide tdp-slide--${transition}${active ? " tdp-slide--active" : ""}`}
+            className={`tdp-slide tdp-slide--${slideTransition}${active ? " tdp-slide--active" : ""}`}
           >
             {slide.slideType === "native" && slide.native ? (
               <NativeSlideView native={slide.native} />

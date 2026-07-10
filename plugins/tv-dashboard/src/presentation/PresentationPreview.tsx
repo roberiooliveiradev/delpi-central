@@ -4,6 +4,7 @@ import {
   useFullscreenStage,
   NativeSlideView,
   buildAdminPresentationWsUrl,
+  resolveSlideTransitionStyle,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
@@ -31,7 +32,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     index,
     slides,
     viewport,
-    transition,
+    payload,
     paused,
     setPaused,
     setIndex,
@@ -62,10 +63,11 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       <div className="tdp-preview-badge">Pré-visualização · duplo-clique = tela cheia · Espaço = pausar</div>
       {slides.map((slide, slideIndex) => {
         const active = slideIndex === index;
+        const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
         return (
           <div
             key={slide.id}
-            className={`tdp-slide tdp-slide--${transition}${active ? " tdp-slide--active" : ""}`}
+            className={`tdp-slide tdp-slide--${slideTransition}${active ? " tdp-slide--active" : ""}`}
             aria-hidden={!active}
           >
             {slide.slideType === "native" && slide.native ? (

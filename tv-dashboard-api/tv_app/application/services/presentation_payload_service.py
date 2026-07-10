@@ -96,6 +96,8 @@ class PresentationPayloadService:
                 "durationSec": duration,
                 "title": slide["title"],
             }
+            if slide.get("transitionStyle"):
+                item["transitionStyle"] = slide["transitionStyle"]
             if slide["slideType"] == "native":
                 item["native"] = {
                     "screenKey": slide["nativeScreenKey"],

@@ -49,6 +49,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     viewport:
       "Resolução de referência para o layout. Escolha o perfil mais próximo do monitor da TV.",
     transition: "Efeito visual ao trocar de tela na exibição (fade, deslizar ou corte direto).",
+    slideTransition:
+      "Substitui a transição padrão da programação só nesta tela. Deixe em «Herdar» para usar o padrão.",
     defaultDuration:
       "Duração aplicada a novas telas e às que não tiverem tempo individual definido.",
     refreshInterval:

@@ -36,6 +36,8 @@ export type Slide = {
   externalUrl?: string | null;
   externalSandbox?: string | null;
   isActive: boolean;
+  /** Override da transição da playlist; omitido = herdar. */
+  transitionStyle?: string | null;
 };
 
 export type NativeScreenCatalogItem = {
@@ -96,6 +98,7 @@ export type PresentationPayload = {
     slideType: "native" | "external";
     durationSec: number;
     title: string;
+    transitionStyle?: string | null;
     native?: { screenKey: string; config: Record<string, unknown>; data: Record<string, unknown> };
     external?: { url: string; sandbox?: string | null };
   }>;
@@ -301,6 +304,7 @@ export async function addSlide(
     nativeScreenKey?: string;
     nativeConfig?: Record<string, unknown>;
     externalUrl?: string;
+    transitionStyle?: string | null;
   },
 ) {
   return unwrap(
@@ -347,6 +351,7 @@ export async function updateSlide(
     nativeConfig: Record<string, unknown>;
     externalUrl: string;
     isActive: boolean;
+    transitionStyle: string | null;
   }>,
 ) {
   return unwrap(

@@ -41,6 +41,7 @@ class CreateSlideBody(BaseModel):
     nativeConfig: dict | None = None
     externalUrl: str | None = None
     externalSandbox: str | None = None
+    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
 
     @field_validator("externalUrl")
     @classmethod
@@ -69,6 +70,7 @@ class UpdateSlideBody(BaseModel):
     externalUrl: str | None = None
     externalSandbox: str | None = None
     isActive: bool | None = None
+    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
 
     @field_validator("externalUrl")
     @classmethod
@@ -139,6 +141,7 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
             "nativeConfig": native_config,
             "externalUrl": body.externalUrl,
             "externalSandbox": body.externalSandbox,
+            "transitionStyle": body.transitionStyle,
         },
     )
     notify_presentation_changed(

@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.3
 > **Data:** 2026-07-07
-> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **v1.3.1 (jul/2026):** 4A.9 cleanup ribbon legado. **v1.3.2–v1.3.4 (jul/2026):** 4C.1–4C.3 rich text + listas. **v1.3.5 (jul/2026):** 4C.4 estilos nomeados. **v1.3.6 (jul/2026):** 4C.5 Google Fonts. **Backlog:** 4E animações; **4F** indicadores live api-delpi (§18 — parcial).
+> **Status:** Ondas 0–3 concluídas (v1) + v1.1 (jul/2026): comunicados ricos, mídia, WebSocket, miniaturas. v2 parcial (jul/2026): telas nativas extras. **v1.2 (jul/2026):** editor deck + formatação. **v1.3 (jul/2026):** Onda 4A/4B/4D parcial — produtividade, visual, layout avançado (§17.6). **v1.3.1 (jul/2026):** 4A.9 cleanup ribbon legado. **v1.3.2–v1.3.4 (jul/2026):** 4C.1–4C.3 rich text + listas. **v1.3.5 (jul/2026):** 4C.4 estilos nomeados. **v1.3.6 (jul/2026):** 4C.5 Google Fonts. **v1.3.7 (jul/2026):** 4E.1 transição por slide. **Backlog:** 4E.2–4E.5 animações/master; **4F** indicadores live api-delpi (§18 — parcial).
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -804,7 +804,7 @@ Apresentação TV / preview
 
 | Recurso | Canva/PPT | Status | Notas |
 |---|---|---|---|
-| Transição **por slide** | ✓ | ❌ | Só playlist-level |
+| Transição **por slide** | ✓ | ✅ v1.3.7 (4E.1) | `slides.transition_style` + painel Tela |
 | Animação por objeto | ✓ | ❌ | Requer extensão do `PresentationEngine` |
 | Build sequencial (aparecer um a um) | ✓ | ❌ | |
 | Master slide / layout mestre | ✓ | ❌ | Logo/fundo fixos em todos os custom |
@@ -971,7 +971,7 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 
 | # | Entrega | Esforço |
 |---|---|---|
-| 4E.1 | Transição por slide (override playlist) | M |
+| 4E.1 | Transição por slide (override playlist) | M | ✅ v1.3.7 |
 | 4E.2 | Animações entrada por bloco (fade/slide-in) | L |
 | 4E.3 | Master slide playlist (logo + fundo fixos) | M |
 | 4E.4 | Build order (timeline simples no inspector) | L |
@@ -999,9 +999,9 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 ```text
 Impacto UX × esforço (jul/2026, pós v1.3)
 
-  Concluído v1.3                  → 4A (incl. 4A.9), 4B, 4D, 4C.1–4C.5
-  Próximo                         → 4E.1 transição por slide
-  Diferencial PowerPoint          → 4E animações / master slide
+  Concluído v1.3                  → 4A (incl. 4A.9), 4B, 4D, 4C.1–4C.5, 4E.1
+  Próximo                         → 4E.2 animações entrada por bloco
+  Diferencial PowerPoint          → 4E.2–4E.5 animações / master / export
   Diferencial DELPI (dados live)  → 4F completar §18 (parcial)
   Longo prazo                     → 4E animações, export PPTX
 ```

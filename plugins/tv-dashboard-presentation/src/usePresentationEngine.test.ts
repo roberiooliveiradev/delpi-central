@@ -67,6 +67,24 @@ describe("usePresentationEngine", () => {
     expect(result.current.index).toBe(0);
   });
 
+  it("resolves transition from current slide override", () => {
+    const withOverride: PresentationPayloadLike = {
+      ...payload,
+      slides: [
+        { ...payload.slides[0], transitionStyle: "slide" },
+        payload.slides[1],
+      ],
+    };
+    const { result } = renderHook(() =>
+      usePresentationEngine({ initialPayload: withOverride, enableHiddenPause: false }),
+    );
+    expect(result.current.transition).toBe("slide");
+    act(() => {
+      result.current.setIndex(1);
+    });
+    expect(result.current.transition).toBe("fade");
+  });
+
   it("does not refresh when current slide is external and refreshNativeSlidesOnly", () => {
     const onRefresh = vi.fn().mockResolvedValue(payload);
     const { result } = renderHook(() =>

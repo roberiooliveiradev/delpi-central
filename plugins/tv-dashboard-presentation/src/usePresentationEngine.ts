@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { PresentationPayloadLike, PresentationSlide } from "./types";
 import { usePresentationRealtime } from "./usePresentationRealtime";
+import { resolveSlideTransitionStyle } from "./presentationTransition";
 
 export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
   initialPayload: T;
@@ -34,10 +35,10 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
 
   const playlist = payload.playlist;
   const viewport = playlist.viewportProfile || "1080p";
-  const transition = playlist.transitionStyle || "fade";
   const refreshSec = playlist.globalRefreshSec || 300;
   const nativeErrorAdvanceSec = payload.presentationMeta?.nativeErrorAdvanceSec ?? 10;
   const current: PresentationSlide | undefined = slides[index];
+  const transition = resolveSlideTransitionStyle(current, playlist);
 
   const nativeError =
     current?.slideType === "native" &&
