@@ -18,6 +18,10 @@ export function useComunicadoEditorKeyboard({
   canRedo,
   duplicateSelected,
   removeSelected,
+  cutSelected,
+  copySelected,
+  pasteSelected,
+  canPaste,
   nudgeSelected,
   enableHistoryShortcuts = true,
 }: ComunicadoEditorKeyboardActions & { enableHistoryShortcuts?: boolean }) {
@@ -29,25 +33,41 @@ export function useComunicadoEditorKeyboard({
       if (editingTextId) return;
 
       const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
 
-      if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
+      if (mod && key === "z" && !event.shiftKey) {
         if (!enableHistoryShortcuts || !canUndo) return;
         event.preventDefault();
         undo();
         return;
       }
 
-      if (
-        (mod && event.key.toLowerCase() === "y") ||
-        (mod && event.shiftKey && event.key.toLowerCase() === "z")
-      ) {
+      if ((mod && key === "y") || (mod && event.shiftKey && key === "z")) {
         if (!enableHistoryShortcuts || !canRedo) return;
         event.preventDefault();
         redo();
         return;
       }
 
-      if (mod && event.key.toLowerCase() === "d") {
+      if (mod && key === "x" && hasSelection) {
+        event.preventDefault();
+        cutSelected();
+        return;
+      }
+
+      if (mod && key === "c" && hasSelection) {
+        event.preventDefault();
+        copySelected();
+        return;
+      }
+
+      if (mod && key === "v" && canPaste) {
+        event.preventDefault();
+        pasteSelected();
+        return;
+      }
+
+      if (mod && key === "d") {
         if (!hasSelection) return;
         event.preventDefault();
         duplicateSelected();
@@ -81,13 +101,17 @@ export function useComunicadoEditorKeyboard({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
+    canPaste,
     canRedo,
     canUndo,
+    copySelected,
+    cutSelected,
     duplicateSelected,
     editingTextId,
     hasSelection,
     enableHistoryShortcuts,
     nudgeSelected,
+    pasteSelected,
     redo,
     removeSelected,
     undo,

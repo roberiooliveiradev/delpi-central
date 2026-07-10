@@ -2,6 +2,7 @@
 @import "./file-preview.css";
 @import "./styles/diagram.css";
 @import "./styles/shape.css";
+@import "./styles/menu.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

@@ -52,6 +52,13 @@ import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
 import { snapComunicadoFrame } from "../utils/comunicadoSnap";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
+import { cloneBlocksForClipboard, pasteClipboardBlocks } from "../utils/comunicadoEditorClipboard";
+import {
+  bringForward,
+  bringToFront,
+  sendBackward,
+  sendToBack,
+} from "../utils/comunicadoLayerOrder";
 import { computeFitStageZoom } from "../utils/stageViewport";
 import {
   expandSelectionWithGroups,
@@ -64,6 +71,7 @@ import {
   ComunicadoEditorContext,
   useComunicadoEditor,
   type ComunicadoEditorContextValue,
+  type ComunicadoRibbonTabRequest,
   type TextEditorBridge,
   type TextEditSelection,
 } from "./comunicadoEditorContextCore";
@@ -97,6 +105,10 @@ function ComunicadoEditorKeyboardBridge() {
     canRedo,
     duplicateSelected,
     removeSelected,
+    cutSelected,
+    copySelected,
+    pasteSelected,
+    canPaste,
     nudgeSelected,
   } = useComunicadoEditor();
   useComunicadoEditorKeyboard({
@@ -108,6 +120,10 @@ function ComunicadoEditorKeyboardBridge() {
     canRedo,
     duplicateSelected,
     removeSelected,
+    cutSelected,
+    copySelected,
+    pasteSelected,
+    canPaste,
     nudgeSelected,
     enableHistoryShortcuts: !deckHistory,
   });
@@ -223,6 +239,9 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const snapEnabledRef = useRef(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [mediaLibraryTarget, setMediaLibraryTarget] = useState<MediaLibraryTarget>("block");
+  const [ribbonTabRequest, setRibbonTabRequest] = useState<ComunicadoRibbonTabRequest | null>(null);
+  const [clipboardRevision, setClipboardRevision] = useState(0);
+  const clipboardRef = useRef<ComunicadoBlock[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<"block" | "background">("block");
   const mediaLibraryTargetRef = useRef<MediaLibraryTarget>("block");
@@ -758,6 +777,31 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateBlocks([...(configRef.current.blocks ?? []), ...copies]);
   }
 
+  function copySelected() {
+    const sources = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
+    if (sources.length === 0) return;
+    clipboardRef.current = cloneBlocksForClipboard(sources);
+    setClipboardRevision((tick) => tick + 1);
+  }
+
+  function cutSelected() {
+    copySelected();
+    removeSelected();
+  }
+
+  function pasteSelected() {
+    if (clipboardRef.current.length === 0) return;
+    const { blocks: nextBlocks, pastedIds } = pasteClipboardBlocks(
+      configRef.current.blocks ?? [],
+      clipboardRef.current,
+    );
+    selectBlocksByIds(pastedIds);
+    updateBlocks(nextBlocks);
+  }
+
+  const canPaste = clipboardRef.current.length > 0;
+  void clipboardRevision;
+
   function replaceSelectedDataRoute(block: ComunicadoBlock) {
     if (!selected || !isDataBlockType(selected.type) || !isDataBlockType(block.type)) return;
     if (!("dataBinding" in selected) || !("dataBinding" in block)) return;
@@ -788,6 +832,38 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     const currentZ = selected.style?.zIndex ?? 1;
     updateSelectedStyle({ zIndex: Math.max(1, currentZ + (direction === "up" ? 1 : -1)) });
   }
+
+  function applyLayerOrder(
+    transform: (blocks: ComunicadoBlock[], selectedIds: string[]) => ComunicadoBlock[],
+  ) {
+    if (selectedIds.length === 0) return;
+    const nextBlocks = transform(configRef.current.blocks ?? [], selectedIds);
+    updateBlocks(nextBlocks);
+  }
+
+  function bringToFrontSelected() {
+    applyLayerOrder(bringToFront);
+  }
+
+  function sendToBackSelected() {
+    applyLayerOrder(sendToBack);
+  }
+
+  function bringForwardSelected() {
+    applyLayerOrder(bringForward);
+  }
+
+  function sendBackwardSelected() {
+    applyLayerOrder(sendBackward);
+  }
+
+  const requestRibbonTab = useCallback((tab: ComunicadoRibbonTabRequest) => {
+    setRibbonTabRequest(tab);
+  }, []);
+
+  const clearRibbonTabRequest = useCallback(() => {
+    setRibbonTabRequest(null);
+  }, []);
 
   function reorderBlockLayer(blockId: string, targetIndex: number) {
     const sorted = sortBlocksByZIndex(configRef.current.blocks ?? []);
@@ -976,6 +1052,17 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     updateSelectedStyle,
     removeSelected,
     duplicateSelected,
+    cutSelected,
+    copySelected,
+    pasteSelected,
+    canPaste,
+    bringToFront: bringToFrontSelected,
+    sendToBack: sendToBackSelected,
+    bringForward: bringForwardSelected,
+    sendBackward: sendBackwardSelected,
+    requestRibbonTab,
+    ribbonTabRequest,
+    clearRibbonTabRequest,
     replaceSelectedDataRoute,
     moveLayer,
     reorderBlockLayer,

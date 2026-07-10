@@ -1,0 +1,112 @@
+/* @delpi/plugin-ui — menu de contexto (estilo PowerPoint) */
+
+.delpi-ui-context-menu {
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 4px 0;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  border-radius: 8px;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  box-shadow:
+    0 4px 6px -1px color-mix(in srgb, #000 10%, transparent),
+    0 12px 28px -4px color-mix(in srgb, #000 18%, transparent);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.delpi-ui-context-menu__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+}
+
+.delpi-ui-context-menu__toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.delpi-ui-context-menu__toolbar-btn:hover:not(:disabled),
+.delpi-ui-context-menu__toolbar-btn--active {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, transparent);
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 25%, transparent);
+}
+
+.delpi-ui-context-menu__toolbar-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-context-menu__divider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--delpi-ui-border, var(--border, #e5e7eb));
+}
+
+.delpi-ui-context-menu__item {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 12px 4px 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.delpi-ui-context-menu__item:hover:not(:disabled),
+.delpi-ui-context-menu__item:focus-visible {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
+  outline: none;
+}
+
+.delpi-ui-context-menu__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-context-menu__item--destructive {
+  color: var(--danger, #dc2626);
+}
+
+.delpi-ui-context-menu__item-leading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-context-menu__item--destructive .delpi-ui-context-menu__item-leading {
+  color: inherit;
+}
+
+.delpi-ui-context-menu__item-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delpi-ui-context-menu__item-shortcut {
+  font-size: 11px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 50%, transparent));
+  letter-spacing: 0.02em;
+}

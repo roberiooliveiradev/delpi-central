@@ -9,6 +9,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
+import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
@@ -62,6 +63,7 @@ export function ComunicadoComposerCanvas() {
   useComunicadoGoogleFonts(config);
   const canvasStyle = useCanvasBackgroundStyle();
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const marqueeActiveRef = useRef(false);
   const marqueeStartClientRef = useRef<{ x: number; y: number } | null>(null);
   const marqueeRectRef = useRef<MarqueeRect | null>(null);
@@ -152,6 +154,28 @@ export function ComunicadoComposerCanvas() {
     [clientToCanvasPercent, editingTextId, finishMarquee],
   );
 
+  const handleCanvasContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      if (editingTextId) return;
+      setContextMenu({ x: event.clientX, y: event.clientY });
+    },
+    [editingTextId],
+  );
+
+  const handleBlockContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, blockId: string) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (editingTextId) return;
+      if (!isBlockSelected(blockId)) {
+        selectBlock(blockId);
+      }
+      setContextMenu({ x: event.clientX, y: event.clientY });
+    },
+    [editingTextId, isBlockSelected, selectBlock],
+  );
+
   const primarySelected = selectedId;
   const showResizeHandles = (blockId: string) => {
     if (blockId !== primarySelected || editingTextId === blockId || selectedIds.length > 1) {
@@ -179,6 +203,7 @@ export function ComunicadoComposerCanvas() {
         className="td-composer__canvas td-composer__canvas--zoomed"
         style={canvasStyle}
         onPointerDown={handleCanvasPointerDown}
+        onContextMenu={handleCanvasContextMenu}
       >
         {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
         {showStageGuides ? (
@@ -201,6 +226,7 @@ export function ComunicadoComposerCanvas() {
                   .filter(Boolean)
                   .join(" ")}
                 style={resolveBlockPlacementStyle(block)}
+                onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
                   event.stopPropagation();
                   selectBlock(block.id, { additive: event.shiftKey });
@@ -247,6 +273,11 @@ export function ComunicadoComposerCanvas() {
             <div className="td-composer__marquee" style={marqueeStyle} aria-hidden="true" />
           ) : null}
       </div>
+      <ComunicadoStageContextMenu
+        open={contextMenu != null}
+        position={contextMenu}
+        onClose={() => setContextMenu(null)}
+      />
     </ComunicadoStageShell>
   );
 }

@@ -9,5 +9,9 @@ export type ComunicadoEditorKeyboardActions = {
   canRedo: boolean;
   duplicateSelected: () => void;
   removeSelected: () => void;
+  cutSelected: () => void;
+  copySelected: () => void;
+  pasteSelected: () => void;
+  canPaste: boolean;
   nudgeSelected: (dx: number, dy: number) => void;
 };

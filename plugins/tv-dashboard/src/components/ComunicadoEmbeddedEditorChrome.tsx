@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
 
+import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
+
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckRibbonShell, resolveEmbeddedComunicadoRibbonTabs } from "./deck";
 
@@ -16,6 +18,8 @@ type Props = {
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const tabs = resolveEmbeddedComunicadoRibbonTabs();
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");
+
+  useComunicadoRibbonTabSync(setActiveTab);
 
   return (
     <section className="td-deck-chrome td-deck-chrome--embedded" aria-label="Editor do comunicado">

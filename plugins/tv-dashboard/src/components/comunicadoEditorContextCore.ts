@@ -37,6 +37,8 @@ export type TextEditorBridge = {
   commitPending?: () => void;
 };
 
+export type ComunicadoRibbonTabRequest = "insert" | "format" | "view";
+
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
@@ -88,6 +90,17 @@ export type ComunicadoEditorContextValue = {
   updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
+  cutSelected: () => void;
+  copySelected: () => void;
+  pasteSelected: () => void;
+  canPaste: boolean;
+  bringToFront: () => void;
+  sendToBack: () => void;
+  bringForward: () => void;
+  sendBackward: () => void;
+  requestRibbonTab: (tab: ComunicadoRibbonTabRequest) => void;
+  ribbonTabRequest: ComunicadoRibbonTabRequest | null;
+  clearRibbonTabRequest: () => void;
   replaceSelectedDataRoute: (block: ComunicadoBlock) => void;
   moveLayer: (direction: "up" | "down") => void;
   reorderBlockLayer: (blockId: string, targetIndex: number) => void;

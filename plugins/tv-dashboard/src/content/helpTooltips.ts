@@ -130,6 +130,22 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     publicUrl:
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
   },
+  contextMenu: {
+    menu: "Menu de contexto do elemento no palco.",
+    quickFormat: "Atalhos rápidos de preenchimento e contorno.",
+    fill: "Cor de preenchimento",
+    outline: "Cor do contorno",
+    cut: "Recortar",
+    copy: "Copiar",
+    paste: "Colar",
+    editText: "Editar texto",
+    bringToFront: "Trazer para frente",
+    sendToBack: "Enviar para trás",
+    bringForward: "Avançar",
+    sendBackward: "Recuar",
+    delete: "Excluir",
+    format: "Formatar…",
+  },
   element: {
     panel:
       "Clique em um elemento no palco ou arraste para reposicionar. Use as alças para redimensionar.",
