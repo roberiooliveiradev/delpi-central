@@ -47,6 +47,11 @@ import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
 import { useDeckEditorKeyboard } from "../hooks/useDeckEditorKeyboard";
 import type { DeckEditorSnapshot } from "../utils/deckEditorHistory";
+import {
+  pasteTitleFromClipboard,
+  slidePayloadForClipboard,
+  type SlideClipboardPayload,
+} from "../utils/slideDeckClipboard";
 
 type DeckSettingsProps = {
   onSaveSlide: (
@@ -83,6 +88,8 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     Record<string, PresentationPayload["slides"][number]>
   >({});
   const saveComunicadoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
+  const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
@@ -391,6 +398,29 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     setSelectedSlideId(copy.id);
   }
 
+  function handleCopySlide(slide: Slide) {
+    slideClipboardRef.current = slidePayloadForClipboard(slide);
+    setSlideClipboardRevision((value) => value + 1);
+  }
+
+  async function handlePasteSlide() {
+    if (!playlist || !slideClipboardRef.current) return;
+    const payload = slideClipboardRef.current;
+    deckHistory.recordBeforeChange();
+    const slide = await addSlide(playlist.id, {
+      ...payload,
+      title: pasteTitleFromClipboard(payload),
+      nativeScreenKey: payload.nativeScreenKey ?? undefined,
+      nativeConfig: payload.nativeConfig ?? undefined,
+      externalUrl: payload.externalUrl ?? undefined,
+    });
+    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+    setSelectedSlideId(slide.id);
+  }
+
+  const canPasteSlide = slideClipboardRef.current != null;
+  void slideClipboardRevision;
+
   async function handleToggleSlideActive(slide: Slide) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
@@ -498,10 +528,17 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     previewBySlideId,
     dragIndex,
     inactiveLabel: admin.slideInactive ?? "Pausada",
+    canPasteSlide,
     onSelect: setSelectedSlideId,
     onDragStart: setDragIndex,
     onDrop: (index: number) => void handleDropSlide(index),
     onDragEnd: () => setDragIndex(null),
+    onAdd: () => void handleAddCustomSlide(),
+    onCopySlide: handleCopySlide,
+    onPasteSlide: () => void handlePasteSlide(),
+    onDuplicateSlide: (slide: Slide) => void handleDuplicateSlide(slide),
+    onToggleSlideActive: (slide: Slide) => void handleToggleSlideActive(slide),
+    onRemoveSlide: (slide: Slide) => void handleRemoveSlide(slide),
   };
 
   return (

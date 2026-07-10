@@ -4,6 +4,10 @@ export {
 } from "./FilePreviewModal";
 export { FilePreviewMetaFooter } from "./FilePreviewMetaFooter";
 export { FilePreviewView, type FilePreviewViewProps } from "./FilePreviewView";
+export {
+  CenteredScaledPreview,
+  type CenteredScaledPreviewProps,
+} from "./CenteredScaledPreview";
 export { useFilePreviewLoader, type UseFilePreviewLoaderOptions } from "./useFilePreviewLoader";
 export {
   resolveFilePreviewKind,

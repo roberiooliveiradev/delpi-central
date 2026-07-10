@@ -164,6 +164,16 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     delete: "Excluir",
     format: "Formatar…",
   },
+  filmstripContextMenu: {
+    menu: "Menu de contexto da tela",
+    copy: "Copiar tela",
+    paste: "Colar tela",
+    newSlide: "Nova tela",
+    duplicate: "Duplicar tela",
+    hide: "Ocultar tela",
+    show: "Exibir tela",
+    delete: "Excluir tela",
+  },
   element: {
     panel:
       "Clique em um elemento no palco ou arraste para reposicionar. Use as alças para redimensionar.",

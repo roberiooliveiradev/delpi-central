@@ -246,17 +246,12 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--td-text) 4%, transparent);
 }
 
-.td-slide-thumb__scale {
+.td-slide-thumb__preview {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 320px;
-  height: 180px;
-  transform-origin: top left;
-  pointer-events: none;
+  inset: 0;
 }
 
-.td-slide-thumb__scale .tdp-native-screen {
+.td-slide-thumb__preview-content .tdp-native-screen {
   width: 320px;
   min-height: 180px;
   height: 180px;
@@ -297,10 +292,6 @@
     grid-column: 2 / -1;
     width: 100%;
     max-width: 180px;
-  }
-
-  .td-slide-thumb__scale {
-    transform: scale(0.5625);
   }
 }
 

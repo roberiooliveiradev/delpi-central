@@ -530,6 +530,22 @@ Carrega blob/`File`/fetch async e monta estado para `FilePreviewView` (object UR
 
 Render-only — imagem, PDF, texto, planilha e DOCX com classes `delpi-ui-file-preview*`.
 
+### `CenteredScaledPreview`
+
+Encaixa conteúdo arbitrário em um retângulo com escala uniforme (`min(width/refW, height/refH)`) e centralização — equivalente a `object-fit: contain` para miniaturas (filmstrip TV, palco reduzido).
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `referenceWidth` / `referenceHeight` | `number` | Tamanho lógico do conteúdo antes do `scale` |
+| `className` | `string?` | Container (preenche área pai) |
+| `contentClassName` | `string?` | Wrapper escalado |
+
+```tsx
+<CenteredScaledPreview referenceWidth={320} referenceHeight={180}>
+  <NativeSlideView native={native} />
+</CenteredScaledPreview>
+```
+
 ### `FilePreviewModal`
 
 Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`.

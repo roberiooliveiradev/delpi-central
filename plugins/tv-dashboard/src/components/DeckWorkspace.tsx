@@ -10,10 +10,17 @@ type Props = {
   previewBySlideId: Record<string, PresentationPayload["slides"][number]>;
   dragIndex: number | null;
   inactiveLabel: string;
+  canPasteSlide: boolean;
   onSelect: (slideId: string) => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
   onDragEnd: () => void;
+  onAdd: () => void;
+  onCopySlide: (slide: Slide) => void;
+  onPasteSlide: () => void;
+  onDuplicateSlide: (slide: Slide) => void;
+  onToggleSlideActive: (slide: Slide) => void;
+  onRemoveSlide: (slide: Slide) => void;
   stage: ReactNode;
   rightPanel?: ReactNode;
 };
@@ -25,10 +32,17 @@ export function DeckWorkspace({
   previewBySlideId,
   dragIndex,
   inactiveLabel,
+  canPasteSlide,
   onSelect,
   onDragStart,
   onDrop,
   onDragEnd,
+  onAdd,
+  onCopySlide,
+  onPasteSlide,
+  onDuplicateSlide,
+  onToggleSlideActive,
+  onRemoveSlide,
   stage,
   rightPanel,
 }: Props) {
@@ -41,10 +55,17 @@ export function DeckWorkspace({
         previewBySlideId={previewBySlideId}
         dragIndex={dragIndex}
         inactiveLabel={inactiveLabel}
+        canPasteSlide={canPasteSlide}
         onSelect={onSelect}
         onDragStart={onDragStart}
         onDrop={onDrop}
         onDragEnd={onDragEnd}
+        onAdd={onAdd}
+        onCopy={onCopySlide}
+        onPaste={onPasteSlide}
+        onDuplicate={onDuplicateSlide}
+        onToggleActive={onToggleSlideActive}
+        onRemove={onRemoveSlide}
       />
       <main className="td-deck-stage" aria-label="Palco da tela selecionada">
         <div className="td-deck-stage__inner">
