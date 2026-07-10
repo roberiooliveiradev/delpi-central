@@ -889,8 +889,8 @@ services:
   api-delpi-console:
     <<: *plugin-profile
     build:
-      context: ../plugins/api-delpi-console
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: api-delpi-console/Dockerfile
 
     container_name: delpi-api-delpi-console
     restart: unless-stopped

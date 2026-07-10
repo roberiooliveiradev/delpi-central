@@ -3,19 +3,30 @@ import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
 import { federationReactProxyFixPlugin } from "../vite/federationReactProxyFix";
 
+import {
+  FEDERATION_SHARED_REACT,
+  reactResolveAliases,
+} from "../vite/federation.shared";
+
 export default defineConfig({
   plugins: [
-    react(),
     federation({
       name: "api-delpi-console",
       filename: "remoteEntry.js",
       exposes: {
         "./App": "./src/bootstrap.tsx",
       },
-      shared: ["react", "react-dom"],
+      shared: { ...FEDERATION_SHARED_REACT },
     }),
     federationReactProxyFixPlugin(),
+    react(),
   ],
+  resolve: {
+    alias: {
+      ...reactResolveAliases(__dirname),
+    },
+    dedupe: ["react", "react-dom"],
+  },
   base: "/apps/api-delpi-console/",
   build: {
     target: "esnext",

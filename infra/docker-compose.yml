@@ -896,8 +896,8 @@ services:
 
   api-delpi-console:
     build:
-      context: ../plugins/api-delpi-console
-      dockerfile: Dockerfile
+      context: ../plugins
+      dockerfile: api-delpi-console/Dockerfile
 
     container_name: delpi-api-delpi-console
     restart: unless-stopped
@@ -906,8 +906,8 @@ services:
       TZ: ${TZ}
 
     volumes:
-      - ../plugins/api-delpi-console:/app
-      - /app/node_modules
+      - ../plugins/api-delpi-console:/app/api-delpi-console
+      - /app/api-delpi-console/node_modules
 
     networks:
       - delpi-network
