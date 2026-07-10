@@ -2,6 +2,12 @@ import type { CSSProperties } from "react";
 
 import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
+  COMUNICADO_MARKER_RADIUS_DEFAULT,
+  geometryToPersistedFrame,
+  resolveBlockPlacementStyle,
+  resolveShapeGeometry,
+} from "./comunicadoShapeGeometry";
+import {
   defaultStrokeWidthForPrimitive,
   isLineShapeKind,
   isPointShapeKind,
@@ -130,7 +136,7 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
-  if (shape && isPointShapeKind(shape)) return { x: 45, y: 45, w: 10, h: 10 };
+  if (shape && isPointShapeKind(shape)) return { x: 45, y: 45, w: 0, h: 0 };
   if (shape && isLineShapeKind(shape)) return { x: 10, y: 48, w: 80, h: 4 };
   if (
     shape === "arrow-right" ||
@@ -186,6 +192,9 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       strokeWidth: defaultStrokeWidthForPrimitive(primitive),
       opacity: primitive === "area" ? 0.9 : 1,
     };
+    if (isPointShapeKind(shape)) {
+      return { ...base, markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT };
+    }
     if (shape === "rounded-rect" || shape === "callout-rect") return { ...base, borderRadius: 16 };
     if (shape === "ellipse" || shape === "flowchart-terminator") return { ...base, borderRadius: 9999 };
     if (shape === "flowchart-process") return { ...base, borderRadius: 4 };
@@ -216,7 +225,11 @@ export function createBlock(
   }
   if (type === "shape") {
     const kind = shape ?? "rectangle";
-    return { ...base, type, shape: kind, content: content || "" };
+    const shapeBlock = { ...base, type, shape: kind, content: content || "" } as ComunicadoBlock;
+    if (shapeBlock.type === "shape") {
+      return { ...shapeBlock, frame: geometryToPersistedFrame(shapeBlock) };
+    }
+    return shapeBlock;
   }
   if (type === "image" || type === "video") {
     return { ...base, type };
@@ -639,12 +652,18 @@ function applySharedBlockVisualStyle(style: NonNullable<ComunicadoBlock["style"]
 export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
   const fontScale = options?.fontScale ?? 1;
   const style = block.style ?? {};
+  const placement = resolveBlockPlacementStyle(block);
+  const isPointShape = block.type === "shape" && isPointShapeKind(block.shape);
   const css: CSSProperties = {
-    ...frameStyle(block.frame),
+    ...placement,
     zIndex: style.zIndex ?? 1,
     opacity: style.opacity ?? 1,
-    ...(style.rotation ? { transform: `rotate(${style.rotation}deg)` } : {}),
   };
+  if (style.rotation) {
+    css.transform = isPointShape
+      ? `translate(-50%, -50%) rotate(${style.rotation}deg)`
+      : `rotate(${style.rotation}deg)`;
+  }
   applySharedBlockVisualStyle(style, css);
 
   if (isComunicadoVisualBoxBlock(block)) {

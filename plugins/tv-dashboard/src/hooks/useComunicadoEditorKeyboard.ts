@@ -19,7 +19,8 @@ export function useComunicadoEditorKeyboard({
   duplicateSelected,
   removeSelected,
   nudgeSelected,
-}: ComunicadoEditorKeyboardActions) {
+  enableHistoryShortcuts = true,
+}: ComunicadoEditorKeyboardActions & { enableHistoryShortcuts?: boolean }) {
   const hasSelection = selectedIds.length > 0;
 
   useEffect(() => {
@@ -30,14 +31,17 @@ export function useComunicadoEditorKeyboard({
       const mod = event.ctrlKey || event.metaKey;
 
       if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
-        if (!canUndo) return;
+        if (!enableHistoryShortcuts || !canUndo) return;
         event.preventDefault();
         undo();
         return;
       }
 
-      if ((mod && event.key.toLowerCase() === "y") || (mod && event.shiftKey && event.key.toLowerCase() === "z")) {
-        if (!canRedo) return;
+      if (
+        (mod && event.key.toLowerCase() === "y") ||
+        (mod && event.shiftKey && event.key.toLowerCase() === "z")
+      ) {
+        if (!enableHistoryShortcuts || !canRedo) return;
         event.preventDefault();
         redo();
         return;
@@ -82,6 +86,7 @@ export function useComunicadoEditorKeyboard({
     duplicateSelected,
     editingTextId,
     hasSelection,
+    enableHistoryShortcuts,
     nudgeSelected,
     redo,
     removeSelected,

@@ -21,8 +21,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Controla camadas e mídia do elemento selecionado: ordem (frente/fundo), troca de arquivo ou remoção.",
-    undo: "Desfazer a última alteração no slide (Ctrl+Z).",
-    redo: "Refazer alteração desfeita (Ctrl+Y ou Ctrl+Shift+Z).",
+    undo: "Desfazer a última alteração na programação ou no slide (Ctrl+Z).",
+    redo: "Refazer alteração desfeita na programação ou no slide (Ctrl+Y ou Ctrl+Shift+Z).",
     zoomOut: "Diminuir zoom do palco no editor.",
     zoomIn: "Aumentar zoom do palco no editor.",
     zoomReset: "Restaurar zoom do palco para 100%.",

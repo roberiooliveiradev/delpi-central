@@ -43,6 +43,13 @@ import { DeckEditorHeaderActions } from "../components/deck";
 import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SlideStagePreview } from "../components/SlideStagePreview";
+import {
+  DeckEditorHistoryProvider,
+  type DeckEditorHistoryContextValue,
+} from "../context/deckEditorHistoryContext";
+import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
+import { useDeckEditorKeyboard } from "../hooks/useDeckEditorKeyboard";
+import type { DeckEditorSnapshot } from "../utils/deckEditorHistory";
 
 type DeckSettingsProps = {
   onSaveSlide: (
@@ -80,6 +87,66 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     Record<string, PresentationPayload["slides"][number]>
   >({});
   const saveComunicadoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playlistRef = useRef<Playlist | null>(null);
+  const selectedSlideIdRef = useRef<string | null>(null);
+  const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
+
+  playlistRef.current = playlist;
+  selectedSlideIdRef.current = selectedSlideId;
+
+  const applyDeckSnapshot = useCallback((snapshot: DeckEditorSnapshot) => {
+    setPlaylist(snapshot.playlist);
+    setSelectedSlideId(snapshot.selectedSlideId);
+    const slide = snapshot.selectedSlideId
+      ? snapshot.playlist.slides?.find((item) => item.id === snapshot.selectedSlideId)
+      : null;
+    if (slide?.nativeScreenKey === "custom_message") {
+      liveComunicadoConfigRef.current = slide.nativeConfig ?? {};
+    }
+  }, []);
+
+  const deckHistory = useDeckEditorHistory({
+    playlistId,
+    getPlaylist: () => playlistRef.current,
+    getSelectedSlideId: () => selectedSlideIdRef.current,
+    getLiveComunicadoConfig: () => liveComunicadoConfigRef.current,
+    getComunicadoSlideId: () =>
+      selectedSlideIdRef.current &&
+      playlistRef.current?.slides?.some(
+        (slide) =>
+          slide.id === selectedSlideIdRef.current && slide.nativeScreenKey === "custom_message",
+      )
+        ? selectedSlideIdRef.current
+        : null,
+    applySnapshot: applyDeckSnapshot,
+  });
+
+  const deckHistoryValue = useMemo<DeckEditorHistoryContextValue>(
+    () => ({
+      recordBeforeChange: deckHistory.recordBeforeChange,
+      undo: deckHistory.undo,
+      redo: deckHistory.redo,
+      canUndo: deckHistory.canUndo,
+      canRedo: deckHistory.canRedo,
+      setLiveComunicadoConfig: (config) => {
+        liveComunicadoConfigRef.current = config;
+      },
+    }),
+    [
+      deckHistory.canRedo,
+      deckHistory.canUndo,
+      deckHistory.recordBeforeChange,
+      deckHistory.redo,
+      deckHistory.undo,
+    ],
+  );
+
+  useDeckEditorKeyboard({
+    undo: deckHistory.undo,
+    redo: deckHistory.redo,
+    canUndo: deckHistory.canUndo,
+    canRedo: deckHistory.canRedo,
+  });
 
   const slides = useMemo(
     () => [...(playlist?.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -208,6 +275,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   async function saveSettings(field: string, value: string | number) {
     if (!playlist) return;
+    deckHistory.recordBeforeChange();
     const updated = await updatePlaylist(playlist.id, { [field]: value });
     setPlaylist({ ...updated, slides: playlist.slides });
   }
@@ -219,6 +287,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     durationSec: number;
   }) {
     if (!playlist) return;
+    deckHistory.recordBeforeChange();
     const slide = await addSlide(playlist.id, {
       slideType: "native",
       title: payload.title,
@@ -232,6 +301,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   async function handleImportPreset(payload: { presetKey: string; branch?: string }) {
     if (!playlist) return;
+    deckHistory.recordBeforeChange();
     const slide = await addSlideFromPreset(playlist.id, payload);
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
     setSelectedSlideId(slide.id);
@@ -243,6 +313,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     durationSec: number;
   }) {
     if (!playlist) return;
+    deckHistory.recordBeforeChange();
     const slide = await addSlide(playlist.id, {
       slideType: "external",
       title: payload.title,
@@ -256,6 +327,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   async function handleRemoveSlide(slide: Slide) {
     if (!playlist) return;
     if (!window.confirm(`Remover a tela «${slide.title}»?`)) return;
+    deckHistory.recordBeforeChange();
     await deleteSlide(playlist.id, slide.id);
     const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
     setPlaylist({ ...playlist, slides: remaining });
@@ -324,6 +396,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   async function handleDuplicateSlide(slide: Slide) {
     if (!playlist) return;
+    deckHistory.recordBeforeChange();
     const copy = await duplicateSlide(playlist.id, slide.id);
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
     setSelectedSlideId(copy.id);
@@ -331,6 +404,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   async function handleToggleSlideActive(slide: Slide) {
     if (!playlist) return;
+    deckHistory.recordBeforeChange();
     const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
     setPlaylist({
       ...playlist,
@@ -355,6 +429,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   async function handleDropSlide(targetIndex: number) {
     if (!playlist || dragIndex === null || dragIndex === targetIndex) return;
+    deckHistory.recordBeforeChange();
     const reordered = [...slides];
     const [moved] = reordered.splice(dragIndex, 1);
     reordered.splice(targetIndex, 0, moved);
@@ -396,6 +471,10 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
     onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
     onRemove: (slide: Slide) => void handleRemoveSlide(slide),
+    undo: deckHistory.undo,
+    redo: deckHistory.redo,
+    canUndo: deckHistory.canUndo,
+    canRedo: deckHistory.canRedo,
   };
 
   const chromeProps = {
@@ -441,7 +520,8 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   };
 
   return (
-    <div className="td-deck td-deck--editor">
+    <DeckEditorHistoryProvider value={deckHistoryValue}>
+      <div className="td-deck td-deck--editor">
       {isCustomSlide && selectedSlide ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}
@@ -492,6 +572,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         onAddExternal={(payload) => void handleAddExternal(payload)}
         onImportPreset={(payload) => void handleImportPreset(payload)}
       />
-    </div>
+      </div>
+    </DeckEditorHistoryProvider>
   );
 }

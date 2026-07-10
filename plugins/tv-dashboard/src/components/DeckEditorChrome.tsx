@@ -19,6 +19,10 @@ type SlideDeckProps = {
   onDuplicate: (slide: Slide) => void;
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
+  undo?: () => void;
+  redo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 };
 
 type Props = {

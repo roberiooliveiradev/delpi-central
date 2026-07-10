@@ -1,6 +1,9 @@
 import type { ComunicadoShapeKind } from "./comunicadoTypes";
 
-/** Hierarquia geométrica: ponto → linha → forma fechada (área). */
+/**
+ * Hierarquia geométrica: ponto (0D) → linha (≥2 pontos) → forma fechada por arestas (≥3 vértices).
+ * Geometria canônica em `comunicadoShapeGeometry.ts`.
+ */
 export type ComunicadoVisualPrimitive = "point" | "line" | "area";
 
 const POINT_SHAPE_KINDS = new Set<ComunicadoShapeKind>(["point"]);

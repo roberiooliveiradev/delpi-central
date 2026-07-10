@@ -1,5 +1,6 @@
-import type { ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
-import { clampFrame } from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoBlock, ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
+import { isPointShapeKind } from "@delpi/tv-dashboard-presentation";
+import { clampFrameForBlock } from "@delpi/tv-dashboard-presentation";
 
 export const SNAP_GRID_PERCENT = 5;
 export const SNAP_CENTER_THRESHOLD = 1.5;
@@ -17,8 +18,20 @@ function snapCenterEdge(value: number, size: number): number {
 }
 
 /** Aplica grid 5% e guias ao centro do palco (após drag/resize). */
-export function snapComunicadoFrame(frame: ComunicadoFrame, mode: "move" | "resize"): ComunicadoFrame {
+export function snapComunicadoFrame(
+  block: ComunicadoBlock,
+  frame: ComunicadoFrame,
+  mode: "move" | "resize",
+): ComunicadoFrame {
   let next = { ...frame };
+
+  if (block.type === "shape" && isPointShapeKind(block.shape)) {
+    let x = snapToGrid(next.x);
+    let y = snapToGrid(next.y);
+    if (Math.abs(x - 50) <= SNAP_CENTER_THRESHOLD) x = 50;
+    if (Math.abs(y - 50) <= SNAP_CENTER_THRESHOLD) y = 50;
+    return clampFrameForBlock(block, { x, y, w: 0, h: 0 });
+  }
 
   if (mode === "move") {
     next.x = snapToGrid(next.x);
@@ -32,5 +45,5 @@ export function snapComunicadoFrame(frame: ComunicadoFrame, mode: "move" | "resi
     next.y = snapToGrid(next.y);
   }
 
-  return clampFrame(next);
+  return clampFrameForBlock(block, next);
 }

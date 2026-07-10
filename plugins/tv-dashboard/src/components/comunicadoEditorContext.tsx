@@ -29,7 +29,9 @@ import {
   sortBlocksByZIndex,
   syncTextBlockFields,
   syncTextBlockFromRuns,
-  clampFrame,
+  clampFrameForBlock,
+  isLineShapeKind,
+  syncLineVerticesFromFrame,
   toggleListTypeOnAllLines,
   type ComunicadoBlock,
   type ComunicadoConfig,
@@ -42,6 +44,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
+import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext";
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -83,6 +86,7 @@ type ProviderProps = {
 };
 
 function ComunicadoEditorKeyboardBridge() {
+  const deckHistory = useDeckEditorHistoryContext();
   const {
     selectedIds,
     editingTextId,
@@ -104,11 +108,13 @@ function ComunicadoEditorKeyboardBridge() {
     duplicateSelected,
     removeSelected,
     nudgeSelected,
+    enableHistoryShortcuts: !deckHistory,
   });
   return null;
 }
 
 export function ComunicadoEditorProvider({ playlistId, value, onChange, children }: ProviderProps) {
+  const deckHistory = useDeckEditorHistoryContext();
   const [config, setConfig] = useState<ComunicadoConfig>(() =>
     enrichComunicadoConfigForEditor(value, playlistId),
   );
@@ -246,9 +252,11 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
   const applyConfig = useCallback(
     (next: ComunicadoConfig) => {
       setConfig(next);
-      onChange(serializeComunicadoConfig(next));
+      const serialized = serializeComunicadoConfig(next);
+      deckHistory?.setLiveComunicadoConfig(serialized);
+      onChange(serialized);
     },
-    [onChange],
+    [deckHistory, onChange],
   );
 
   const pushPast = useCallback((snapshot: ComunicadoConfig) => {
@@ -259,30 +267,42 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
 
   const commitWithHistory = useCallback(
     (next: ComunicadoConfig) => {
-      pushPast(snapshotConfig(configRef.current));
+      if (deckHistory) {
+        deckHistory.recordBeforeChange();
+      } else {
+        pushPast(snapshotConfig(configRef.current));
+      }
       applyConfig(next);
     },
-    [applyConfig, pushPast],
+    [applyConfig, deckHistory, pushPast],
   );
 
   const undo = useCallback(() => {
+    if (deckHistory) {
+      deckHistory.undo();
+      return;
+    }
     const previous = pastRef.current.pop();
     if (!previous) return;
     futureRef.current.push(snapshotConfig(configRef.current));
     applyConfig(previous);
     setHistoryTick((tick) => tick + 1);
-  }, [applyConfig]);
+  }, [applyConfig, deckHistory]);
 
   const redo = useCallback(() => {
+    if (deckHistory) {
+      deckHistory.redo();
+      return;
+    }
     const next = futureRef.current.pop();
     if (!next) return;
     pastRef.current.push(snapshotConfig(configRef.current));
     applyConfig(next);
     setHistoryTick((tick) => tick + 1);
-  }, [applyConfig]);
+  }, [applyConfig, deckHistory]);
 
-  const canUndo = pastRef.current.length > 0;
-  const canRedo = futureRef.current.length > 0;
+  const canUndo = deckHistory ? deckHistory.canUndo : pastRef.current.length > 0;
+  const canRedo = deckHistory ? deckHistory.canRedo : futureRef.current.length > 0;
   void historyTick;
 
   function updateBlocks(nextBlocks: ComunicadoBlock[]) {
@@ -373,8 +393,12 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
           applyConfig(configRef.current);
           return;
         }
-        pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), before];
-        futureRef.current = [];
+        if (deckHistory) {
+          deckHistory.recordBeforeChange(serializeComunicadoConfig(before));
+        } else {
+          pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), before];
+          futureRef.current = [];
+        }
         applyConfig(configRef.current);
         setHistoryTick((tick) => tick + 1);
         return;
@@ -389,10 +413,22 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
       for (const id of idsToFinalize) {
         const index = nextBlocks.findIndex((block) => block.id === id);
         if (index < 0) continue;
+        const current = nextBlocks[index];
         const snappedFrame = snapEnabledRef.current
-          ? snapComunicadoFrame(nextBlocks[index].frame, mode)
-          : clampFrame(nextBlocks[index].frame);
-        nextBlocks[index] = { ...nextBlocks[index], frame: snappedFrame };
+          ? snapComunicadoFrame(current, current.frame, mode)
+          : clampFrameForBlock(current, current.frame);
+        let updated: ComunicadoBlock = { ...current, frame: snappedFrame };
+        if (
+          updated.type === "shape" &&
+          isLineShapeKind(updated.shape) &&
+          mode === "resize"
+        ) {
+          updated = {
+            ...updated,
+            vertices: syncLineVerticesFromFrame(updated, snappedFrame),
+          };
+        }
+        nextBlocks[index] = updated;
       }
 
       const nextConfig = { ...configRef.current, blocks: nextBlocks };
@@ -413,12 +449,16 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
         return;
       }
 
-      pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), before];
-      futureRef.current = [];
+      if (deckHistory) {
+        deckHistory.recordBeforeChange(serializeComunicadoConfig(before));
+      } else {
+        pastRef.current = [...pastRef.current.slice(-(HISTORY_LIMIT - 1)), before];
+        futureRef.current = [];
+      }
       applyConfig(nextConfig);
       setHistoryTick((tick) => tick + 1);
     },
-    [applyConfig],
+    [applyConfig, deckHistory],
   );
 
   const { canvasRef, startDrag } = useCanvasBlockInteraction({
@@ -426,6 +466,7 @@ export function ComunicadoEditorProvider({ playlistId, value, onChange, children
     onUpdateStyle: handleUpdateStyle,
     onInteractionStart: handleInteractionStart,
     onInteractionEnd: handleInteractionEnd,
+    resolveBlock: (blockId) => configRef.current.blocks?.find((block) => block.id === blockId),
   });
 
   function addBlock(type: ComunicadoBlock["type"]) {

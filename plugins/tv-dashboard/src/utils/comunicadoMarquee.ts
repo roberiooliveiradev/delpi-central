@@ -1,4 +1,5 @@
 import type { ComunicadoBlock, ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
+import { resolveBlockHitFrame } from "@delpi/tv-dashboard-presentation";
 
 export type MarqueeRect = {
   x1: number;
@@ -26,5 +27,5 @@ function frameIntersectsMarquee(frame: ComunicadoFrame, rect: MarqueeRect): bool
 
 export function blocksInMarquee(blocks: ComunicadoBlock[], rect: MarqueeRect): string[] {
   const normalized = normalizeMarqueeRect(rect);
-  return blocks.filter((block) => frameIntersectsMarquee(block.frame, normalized)).map((b) => b.id);
+  return blocks.filter((block) => frameIntersectsMarquee(resolveBlockHitFrame(block), normalized)).map((b) => b.id);
 }

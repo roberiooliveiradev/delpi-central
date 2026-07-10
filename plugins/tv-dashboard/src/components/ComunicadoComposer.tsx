@@ -1,6 +1,7 @@
 import {
   comunicadoBackgroundCssProperties,
-  frameStyle,
+  resolveBlockPlacementStyle,
+  shapeBlockAllowsResize,
   useComunicadoGoogleFonts,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -152,8 +153,13 @@ export function ComunicadoComposerCanvas() {
   );
 
   const primarySelected = selectedId;
-  const showResizeHandles = (blockId: string) =>
-    blockId === primarySelected && editingTextId !== blockId && selectedIds.length <= 1;
+  const showResizeHandles = (blockId: string) => {
+    if (blockId !== primarySelected || editingTextId === blockId || selectedIds.length > 1) {
+      return false;
+    }
+    const block = blocks.find((item) => item.id === blockId);
+    return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
+  };
 
   const marqueeStyle = useMemo(() => {
     if (!marquee) return null;
@@ -198,7 +204,7 @@ export function ComunicadoComposerCanvas() {
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                style={frameStyle(block.frame)}
+                style={resolveBlockPlacementStyle(block)}
                 onPointerDown={(event) => {
                   event.stopPropagation();
                   selectBlock(block.id, { additive: event.shiftKey });

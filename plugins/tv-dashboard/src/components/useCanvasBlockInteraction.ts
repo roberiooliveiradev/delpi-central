@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 
-import type { ComunicadoBlock, ComunicadoBlockStyle, ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
-import { clampFrame } from "@delpi/tv-dashboard-presentation";
+import {
+  clampFrame,
+  clampFrameForBlock,
+  isLineShapeKind,
+  isPointShapeKind,
+  resolveShapeGeometry,
+  syncLineVerticesFromFrame,
+  type ComunicadoBlock,
+  type ComunicadoBlockStyle,
+  type ComunicadoFrame,
+} from "@delpi/tv-dashboard-presentation";
 
 export type BlockDragMode =
   | "move"
@@ -37,6 +46,7 @@ type Options = {
   onUpdateStyle?: (blockId: string, patch: Partial<ComunicadoBlockStyle>) => void;
   onInteractionStart?: () => void;
   onInteractionEnd?: (blockId: string, frame: ComunicadoFrame, mode: "move" | "resize" | "rotate") => void;
+  resolveBlock?: (blockId: string) => ComunicadoBlock | undefined;
 };
 
 const DRAG_THRESHOLD_PX = 5;
@@ -104,6 +114,7 @@ export function useCanvasBlockInteraction({
   onUpdateStyle,
   onInteractionStart,
   onInteractionEnd,
+  resolveBlock,
 }: Options) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -127,6 +138,15 @@ export function useCanvasBlockInteraction({
   }, []);
 
   const applyDragMoveRef = useRef<(event: PointerEvent) => void>(() => {});
+  const resolveBlockRef = useRef(resolveBlock);
+  resolveBlockRef.current = resolveBlock;
+
+  const clampDragFrame = (blockId: string, frame: ComunicadoFrame) => {
+    const block = resolveBlockRef.current?.(blockId);
+    if (block) return clampFrameForBlock(block, frame);
+    return clampFrame(frame);
+  };
+
   applyDragMoveRef.current = (event: PointerEvent) => {
     const drag = dragRef.current;
     if (!drag) return;
@@ -150,7 +170,7 @@ export function useCanvasBlockInteraction({
     if (drag.mode === "move") {
       onUpdateFrameRef.current(
         drag.blockId,
-        clampFrame({
+        clampDragFrame(drag.blockId, {
           ...frame,
           x: frame.x + dx,
           y: frame.y + dy,
@@ -161,7 +181,10 @@ export function useCanvasBlockInteraction({
 
     onUpdateFrameRef.current(
       drag.blockId,
-      clampFrame(resizeFrame(frame, dx, dy, drag.mode, drag.aspectRatio, lockAspect)),
+      clampDragFrame(
+        drag.blockId,
+        resizeFrame(frame, dx, dy, drag.mode, drag.aspectRatio, lockAspect),
+      ),
     );
   };
 
@@ -250,8 +273,15 @@ export function useCanvasBlockInteraction({
       const listeners = pointerListenersRef.current;
 
       if (mode === "rotate") {
-        const centerX = block.frame.x + block.frame.w / 2;
-        const centerY = block.frame.y + block.frame.h / 2;
+        let centerX = block.frame.x + block.frame.w / 2;
+        let centerY = block.frame.y + block.frame.h / 2;
+        if (block.type === "shape" && isPointShapeKind(block.shape)) {
+          const geometry = resolveShapeGeometry(block);
+          if (geometry.primitive === "point") {
+            centerX = geometry.position.x;
+            centerY = geometry.position.y;
+          }
+        }
         const startPt = pointerToPercent(event.clientX, event.clientY);
         onInteractionStartRef.current?.();
         dragRef.current = {

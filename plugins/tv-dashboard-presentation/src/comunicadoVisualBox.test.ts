@@ -78,11 +78,11 @@ describe("comunicadoVisualBox", () => {
     );
   });
 
-  it("ponto usa primitivo point e frame compacto", () => {
+  it("ponto usa primitivo point, posição sem dimensão", () => {
     const point = createShapeBlock("point");
     expect(resolveVisualBoxProfile(point).primitive).toBe("point");
     expect(resolveVisualBoxChrome(point).strokeWidth).toBe(0);
-    expect(point.frame).toEqual({ x: 45, y: 45, w: 10, h: 10 });
+    expect(point.frame).toEqual({ x: 45, y: 45, w: 0, h: 0 });
     expect(visualBoxBlockModifierClasses(point)).toContain(
       "tdp-comunicado__visual-box--primitive-point",
     );

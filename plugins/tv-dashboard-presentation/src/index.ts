@@ -41,6 +41,7 @@ export type {
   ComunicadoNamedTextStyle,
   ComunicadoScreenData,
   ComunicadoShapeKind,
+  ComunicadoGeometryVertex,
   ComunicadoTextBlock,
 } from "./comunicadoTypes";
 export type { ComunicadoImageCrop } from "./comunicadoImageCrop";
@@ -76,6 +77,21 @@ export {
   shapeSupportsStroke,
   type ComunicadoVisualPrimitive,
 } from "./comunicadoVisualPrimitive";
+export {
+  COMUNICADO_MARKER_RADIUS_DEFAULT,
+  COMUNICADO_POINT_HIT_SIZE_PCT,
+  clampFrameForBlock,
+  clampFrameForShapeBlock,
+  geometryBoundingFrame,
+  geometryToPersistedFrame,
+  minimumVertexCount,
+  resolveBlockHitFrame,
+  resolveBlockPlacementStyle,
+  resolveShapeGeometry,
+  shapeBlockAllowsResize,
+  syncLineVerticesFromFrame,
+  type ComunicadoShapeGeometry,
+} from "./comunicadoShapeGeometry";
 export { ComunicadoShapeGraphic, ComunicadoShapePreview } from "./comunicadoShapeGraphic";
 export {
   COMUNICADO_GOOGLE_FONT_CATALOG,

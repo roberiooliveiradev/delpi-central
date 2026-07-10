@@ -91,6 +91,8 @@ export type ComunicadoBlockStyle = {
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
+  /** Raio visual do marcador (px) — só primitivo ponto. */
+  markerRadius?: number;
 };
 
 export type ComunicadoBlockAnimationKind = "fade" | "slide-in";
@@ -137,9 +139,13 @@ export type ComunicadoMediaBlock = ComunicadoBlockBase & {
   imageCrop?: ComunicadoImageCrop;
 };
 
+export type ComunicadoGeometryVertex = { x: number; y: number };
+
 export type ComunicadoShapeBlock = ComunicadoBlockBase & {
   type: "shape";
   shape: ComunicadoShapeKind;
+  /** Vértices explícitos (%): 1 ponto, ≥2 linha, ≥3 forma fechada. */
+  vertices?: ComunicadoGeometryVertex[];
   content?: string;
   href?: string;
   linkTarget?: "_blank" | "_self";

@@ -5,7 +5,9 @@ import {
   Eye,
   EyeOff,
   Plus,
+  Redo2,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui/index";
 
@@ -23,6 +25,10 @@ type Props = {
   onDuplicate: (slide: Slide) => void;
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
+  undo?: () => void;
+  redo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 };
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -35,6 +41,10 @@ export function SlideDeckRibbon({
   onDuplicate,
   onToggleActive,
   onRemove,
+  undo,
+  redo,
+  canUndo = false,
+  canRedo = false,
 }: Props) {
   const selectedIndex = selectedSlide
     ? slides.findIndex((slide) => slide.id === selectedSlide.id)
@@ -49,6 +59,13 @@ export function SlideDeckRibbon({
 
   return (
     <div className="td-deck-ribbon__groups">
+      <DeckRibbonGroup label="Histórico" hint={H.undo}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile icon={Undo2} label="Desfazer" hint={H.undo} disabled={!canUndo} onClick={() => undo?.()} />
+          <DeckRibbonTile icon={Redo2} label="Refazer" hint={H.redo} disabled={!canRedo} onClick={() => redo?.()} />
+        </div>
+      </DeckRibbonGroup>
+
       <DeckRibbonGroup label="Slides" hint={H.slides}>
         <div className="td-deck-ribbon__split">
           <DeckRibbonLargeButton

@@ -194,7 +194,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
 
   return (
     <div className="td-deck-ribbon__groups">
-      <DeckRibbonGroup label="Histórico" hint="Desfazer ou refazer alterações no slide (Ctrl+Z / Ctrl+Y).">
+      <DeckRibbonGroup label="Histórico" hint="Desfazer ou refazer alterações na programação ou no slide (Ctrl+Z / Ctrl+Y).">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile icon={Undo2} label="Desfazer" hint={H.undo} disabled={!canUndo} onClick={undo} />
           <DeckRibbonTile icon={Redo2} label="Refazer" hint={H.redo} disabled={!canRedo} onClick={redo} />

@@ -15,6 +15,7 @@ import {
   isComunicadoVisualBoxBlock,
   normalizeHrefInput,
   resolveEntranceAnimation,
+  isPointShapeKind,
   visualBoxSupportsShapeFormatting,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
@@ -259,7 +260,10 @@ export function ComunicadoElementInspector({
       {!multiSelect ? (
         <DeckPropertySection title="Posição e tamanho" hint={E.position}>
           <div className="td-deck-frame-grid">
-            {FRAME_KEYS.map((key) => (
+            {(selected.type === "shape" && isPointShapeKind(selected.shape)
+              ? (["x", "y"] as const)
+              : FRAME_KEYS
+            ).map((key) => (
               <DeckField
                 key={key}
                 id={`td-frame-${key}`}

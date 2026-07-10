@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import type { ComunicadoShapeGeometry } from "./comunicadoShapeGeometry";
+import { COMUNICADO_MARKER_RADIUS_DEFAULT, geometryBoundingFrame } from "./comunicadoShapeGeometry";
 import type { ComunicadoShapeKind } from "./comunicadoTypes";
 
 export type ShapeGraphicColors = {
@@ -20,6 +22,62 @@ function polygonPoints(coords: number[]): string {
     pairs.push(`${coords[index]},${coords[index + 1]}`);
   }
   return pairs.join(" ");
+}
+
+function renderLineGeometry(
+  geometry: Extract<ComunicadoShapeGeometry, { primitive: "line" }>,
+  kind: ComunicadoShapeKind,
+  colors: ShapeGraphicColors,
+): ReactNode {
+  const bbox = geometryBoundingFrame(geometry);
+  const { stroke, strokeWidth } = colors;
+  const sw = Math.max(3, strokeWidth * 2);
+  const normalized = geometry.points.map((point) => ({
+    x: bbox.w > 0 ? ((point.x - bbox.x) / bbox.w) * 100 : 50,
+    y: bbox.h > 0 ? ((point.y - bbox.y) / bbox.h) * 100 : 50,
+  }));
+  const [start, end] = normalized;
+  if (!start || !end) return null;
+
+  if (kind === "line-arrow-right") {
+    return (
+      <>
+        <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke={stroke} strokeWidth={sw} />
+        <polygon
+          points={`${end.x},${end.y - 12} ${end.x + 18},${end.y} ${end.x},${end.y + 12}`}
+          fill={stroke}
+        />
+      </>
+    );
+  }
+
+  return <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke={stroke} strokeWidth={sw} />;
+}
+
+function renderPointMarker(
+  fill: string,
+  stroke: string,
+  strokeWidth: number,
+  markerRadius: number,
+): ReactNode {
+  const size = markerRadius * 2;
+  return (
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      className="tdp-comunicado__shape-svg tdp-comunicado__shape-svg--point"
+      aria-hidden="true"
+      style={{ width: size, height: size, overflow: "visible" }}
+    >
+      <circle
+        cx={markerRadius}
+        cy={markerRadius}
+        r={markerRadius}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth > 0 ? strokeWidth : 0}
+      />
+    </svg>
+  );
 }
 
 function renderSvgShape(
@@ -223,19 +281,39 @@ export function ComunicadoShapeGraphic({
   stroke,
   strokeWidth,
   borderRadius,
+  geometry,
+  markerRadius = COMUNICADO_MARKER_RADIUS_DEFAULT,
 }: {
   kind: ComunicadoShapeKind;
   fill: string;
   stroke: string;
   strokeWidth: number;
   borderRadius?: number;
+  geometry?: ComunicadoShapeGeometry;
+  markerRadius?: number;
 }) {
-  if (kind === "line" || kind === "line-arrow-right" || kind === "point") {
+  if (geometry?.primitive === "point") {
+    return renderPointMarker(fill, stroke, strokeWidth, markerRadius);
+  }
+
+  if (geometry?.primitive === "line") {
+    return (
+      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true" preserveAspectRatio="none">
+        {renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth })}
+      </svg>
+    );
+  }
+
+  if (kind === "line" || kind === "line-arrow-right") {
     return (
       <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
         {renderSvgShape(kind, { fill, stroke, strokeWidth })}
       </svg>
     );
+  }
+
+  if (kind === "point") {
+    return renderPointMarker(fill, stroke, strokeWidth, markerRadius);
   }
 
   const cssKinds: ComunicadoShapeKind[] = ["rectangle", "rounded-rect", "ellipse", "flowchart-process"];

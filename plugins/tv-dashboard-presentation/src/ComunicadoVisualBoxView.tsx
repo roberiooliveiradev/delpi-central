@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoShapeGraphic } from "./comunicadoShapeGraphic";
+import { resolveShapeGeometry } from "./comunicadoShapeGeometry";
 import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
 import { comunicadoTextInnerStyle } from "./comunicadoHelpers";
 import type { ComunicadoVisualBoxBlock } from "./comunicadoVisualBox";
@@ -100,6 +101,8 @@ export function ComunicadoVisualBoxView({
           stroke={chrome.stroke}
           strokeWidth={chrome.strokeWidth}
           borderRadius={chrome.borderRadius}
+          geometry={block.type === "shape" ? resolveShapeGeometry(block) : undefined}
+          markerRadius={block.style?.markerRadius}
         />
       ) : null}
       {textNode ? (
