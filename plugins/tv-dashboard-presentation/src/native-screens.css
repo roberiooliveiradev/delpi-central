@@ -1196,10 +1196,99 @@
   cursor: pointer;
 }
 
+.tdp-series-chart__part--framed {
+  cursor: move;
+  max-width: calc(100% - 0.5rem);
+}
+
 .tdp-series-chart__part--selected,
 .tdp-series-chart [data-chart-part][aria-selected="true"] {
   outline: 2px solid var(--tdp-data-accent, #089bdb);
   outline-offset: 2px;
+}
+
+.tdp-series-chart__title.tdp-series-chart__part--selected,
+.tdp-series-chart__legend.tdp-series-chart__part--selected,
+.tdp-series-chart__data-table.tdp-series-chart__part--selected {
+  cursor: move;
+}
+
+/* Handles de resize — espelha plugin-ui/series-chart.css (prefixo tdp).
+   Sem position:absolute aqui os botões ficam em linha no texto do título. */
+.tdp-series-chart__part--resizable {
+  position: relative;
+}
+
+.tdp-series-chart__part-resize {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  background: var(--tdp-data-accent, #089bdb);
+  pointer-events: auto;
+  z-index: 5;
+  box-sizing: border-box;
+}
+
+.tdp-series-chart__part-resize--nw {
+  left: -5px;
+  top: -5px;
+  cursor: nwse-resize;
+}
+
+.tdp-series-chart__part-resize--n {
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.tdp-series-chart__part-resize--ne {
+  right: -5px;
+  top: -5px;
+  cursor: nesw-resize;
+}
+
+.tdp-series-chart__part-resize--w {
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.tdp-series-chart__part-resize--e {
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.tdp-series-chart__part-resize--sw {
+  left: -5px;
+  bottom: -5px;
+  cursor: nesw-resize;
+}
+
+.tdp-series-chart__part-resize--s {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.tdp-series-chart__part-resize--se {
+  right: -5px;
+  bottom: -5px;
+  cursor: nwse-resize;
+}
+
+.tdp-series-chart__part--editing {
+  outline: 2px solid var(--tdp-data-accent, #089bdb);
+  outline-offset: 2px;
+  cursor: text;
+  min-width: 2rem;
 }
 
 .tdp-series-chart__data-table td {
