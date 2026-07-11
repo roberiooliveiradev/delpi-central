@@ -1712,6 +1712,7 @@ type ChartPartState = {
 | 4L.11 | Handles de resize do bloco só no grupo (`selectedChartPart == null`) | ✅ |
 | 4L.12 | `normalizeChartPartsForLoad` — `plotArea.strokeWidth: 1` legado → `0` | ✅ |
 | 4L.13 | `categoryPaddingPercent` em `SeriesChartOptions` → `buildSeriesChartLayout` | ✅ |
+| 4L.14 | Handles de resize nas partes `resizable` (título/legenda/tabela) | ✅ |
 
 #### Anti-padrões 4L
 

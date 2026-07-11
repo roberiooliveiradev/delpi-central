@@ -7,6 +7,7 @@ export { ChartDataTable } from "./ChartDataTable";
 export { ChartFrame } from "./ChartFrame";
 export { ChartGrid } from "./ChartGrid";
 export { ChartLegend } from "./ChartLegend";
+export { ChartPartResizeHandles } from "./ChartPartResizeHandles";
 export { ChartPlotArea } from "./ChartPlotArea";
 export { ChartPlotAreaGroup } from "./ChartPlotAreaGroup";
 export { ChartSeriesBar } from "./ChartSeriesBar";

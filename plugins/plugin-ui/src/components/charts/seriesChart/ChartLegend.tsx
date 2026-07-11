@@ -1,13 +1,16 @@
-import type { CSSProperties } from "react";
+import { useLayoutEffect, useRef, type CSSProperties } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import type { SeriesChartLegendPosition } from "../seriesChartOptions";
 import {
   bindChartPartPointer,
+  chartPartAllowsResize,
+  clampChartPartFrame,
   getChartPartState,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import { ChartPartResizeHandles } from "./ChartPartResizeHandles";
 
 export type ChartLegendProps = {
   seriesName: string;
@@ -20,8 +23,11 @@ export type ChartLegendProps = {
 
 function partFrameStyle(
   frame: { x: number; y: number; w?: number; h?: number } | undefined,
+  selected: boolean,
 ): CSSProperties | undefined {
-  if (!frame) return undefined;
+  if (!frame) {
+    return selected ? { position: "relative", zIndex: 3 } : undefined;
+  }
   return {
     position: "absolute",
     left: `${frame.x}%`,
@@ -30,6 +36,7 @@ function partFrameStyle(
     height: frame.h != null ? `${frame.h}%` : "auto",
     zIndex: 3,
     margin: 0,
+    boxSizing: "border-box",
   };
 }
 
@@ -49,16 +56,38 @@ export function ChartLegend({
 
   const ref = { kind: "legend" as const };
   const frame = getChartPartState(chartParts, ref)?.frame;
-  const frameStyle = partFrameStyle(frame);
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction);
+  const frameStyle = partFrameStyle(frame, selected);
+  const showResize = selected && chartPartAllowsResize(ref);
+  const hostRef = useRef<HTMLUListElement>(null);
+
+  useLayoutEffect(() => {
+    if (!showResize || frame?.w != null || !interaction?.onPartFrameChange || !hostRef.current) return;
+    const chartRoot = hostRef.current.closest(".delpi-ui-series-chart, .tdp-series-chart");
+    if (!chartRoot) return;
+    const rect = chartRoot.getBoundingClientRect();
+    const el = hostRef.current.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;
+    interaction.onPartFrameChange(
+      ref,
+      clampChartPartFrame({
+        x: ((el.left - rect.left) / rect.width) * 100,
+        y: ((el.top - rect.top) / rect.height) * 100,
+        w: Math.max(8, (el.width / rect.width) * 100),
+        h: Math.max(4, (el.height / rect.height) * 100),
+      }),
+    );
+  }, [showResize, frame?.w, interaction]);
 
   return (
     <ul
+      ref={hostRef}
       className={[
         cn.legend,
-        frameStyle ? "" : positionClass,
-        frameStyle ? `${cn.root}__part--framed` : "",
+        frameStyle?.position === "absolute" ? "" : positionClass,
+        frameStyle?.position === "absolute" ? `${cn.root}__part--framed` : "",
         selected ? `${cn.root}__part--selected` : "",
+        showResize ? `${cn.root}__part--resizable` : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -72,6 +101,12 @@ export function ChartLegend({
         <span className={cn.legendSwatch} style={{ background: seriesColor }} aria-hidden />
         <span>{seriesName}</span>
       </li>
+      <ChartPartResizeHandles
+        visible={showResize}
+        onResizePointerDown={(handle, event) => {
+          interaction?.onPartResizePointerDown?.(ref, event, handle);
+        }}
+      />
     </ul>
   );
 }

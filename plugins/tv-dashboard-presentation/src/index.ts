@@ -275,6 +275,7 @@ export {
   chartPartAllowsDelete,
   chartPartAllowsEdit,
   chartPartAllowsMove,
+  chartPartAllowsResize,
   chartPartCapabilities,
   clampChartPartFrame,
   deleteChartPart,
@@ -288,6 +289,7 @@ export {
   nudgeChartPartFrame,
   parseChartPartRef,
   partsToChartOptions,
+  resizeChartPartFrame,
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
   serializeChartPartRef,
@@ -299,6 +301,7 @@ export {
   type ComunicadoChartInteraction,
   type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
+  type ComunicadoChartPartResizeHandle,
   type ComunicadoChartPartsMap,
 } from "./comunicadoChartParts";
 export { chartTypeLabel, tablePresetLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";

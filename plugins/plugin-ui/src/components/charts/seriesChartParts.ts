@@ -121,7 +121,28 @@ export type SeriesChartInteraction = {
   onPartEditCancel?: () => void;
   /** Inicia arraste de parte móvel (title/legend). */
   onPartMovePointerDown?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
+  /** Inicia resize de parte com frame (title/legend/dataTable). */
+  onPartResizePointerDown?: (
+    ref: ChartPartRef,
+    event: ReactPointerEvent,
+    handle: ChartPartResizeHandle,
+  ) => void;
+  /** Materializa frame % medido no DOM (seleção sem frame prévio). */
+  onPartFrameChange?: (ref: ChartPartRef, frame: ChartPartFrame) => void;
 };
+
+export type ChartPartResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
+
+export const CHART_PART_RESIZE_HANDLES: ChartPartResizeHandle[] = [
+  "nw",
+  "n",
+  "ne",
+  "e",
+  "se",
+  "s",
+  "sw",
+  "w",
+];
 
 export function serializeChartPartRef(ref: ChartPartRef): string {
   switch (ref.kind) {
@@ -214,20 +235,22 @@ export type ChartPartCapabilities = {
   movable: boolean;
   editable: boolean;
   deletable: boolean;
+  /** Handles de redimensionamento (title / legend / dataTable com frame). */
+  resizable: boolean;
 };
 
 const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabilities> = {
-  chartArea: { movable: false, editable: false, deletable: false },
-  plotArea: { movable: false, editable: false, deletable: false },
-  title: { movable: true, editable: true, deletable: true },
-  legend: { movable: true, editable: true, deletable: true },
-  series: { movable: false, editable: false, deletable: true },
-  marker: { movable: false, editable: false, deletable: true },
-  dataLabel: { movable: false, editable: true, deletable: true },
-  axis: { movable: false, editable: false, deletable: true },
-  axisTitle: { movable: false, editable: true, deletable: true },
-  grid: { movable: false, editable: false, deletable: true },
-  dataTable: { movable: true, editable: false, deletable: true },
+  chartArea: { movable: false, editable: false, deletable: false, resizable: false },
+  plotArea: { movable: false, editable: false, deletable: false, resizable: false },
+  title: { movable: true, editable: true, deletable: true, resizable: true },
+  legend: { movable: true, editable: true, deletable: true, resizable: true },
+  series: { movable: false, editable: false, deletable: true, resizable: false },
+  marker: { movable: false, editable: false, deletable: true, resizable: false },
+  dataLabel: { movable: false, editable: true, deletable: true, resizable: false },
+  axis: { movable: false, editable: false, deletable: true, resizable: false },
+  axisTitle: { movable: false, editable: true, deletable: true, resizable: false },
+  grid: { movable: false, editable: false, deletable: true, resizable: false },
+  dataTable: { movable: true, editable: false, deletable: true, resizable: true },
 };
 
 export function chartPartCapabilities(ref: ChartPartRef): ChartPartCapabilities {
@@ -601,6 +624,64 @@ export function chartPartAllowsDelete(ref: ChartPartRef): boolean {
 
 export function chartPartAllowsEdit(ref: ChartPartRef): boolean {
   return chartPartCapabilities(ref).editable;
+}
+
+export function chartPartAllowsResize(ref: ChartPartRef): boolean {
+  return chartPartCapabilities(ref).resizable;
+}
+
+/** Aplica delta % de resize no frame da parte (igual handles do bloco). */
+export function resizeChartPartFrame(
+  frame: ChartPartFrame,
+  handle: ChartPartResizeHandle,
+  dx: number,
+  dy: number,
+): ChartPartFrame {
+  let x = frame.x;
+  let y = frame.y;
+  let w = frame.w ?? 20;
+  let h = frame.h ?? 8;
+  switch (handle) {
+    case "se":
+      w += dx;
+      h += dy;
+      break;
+    case "e":
+      w += dx;
+      break;
+    case "s":
+      h += dy;
+      break;
+    case "n":
+      y += dy;
+      h -= dy;
+      break;
+    case "w":
+      x += dx;
+      w -= dx;
+      break;
+    case "ne":
+      y += dy;
+      h -= dy;
+      w += dx;
+      break;
+    case "nw":
+      x += dx;
+      y += dy;
+      w -= dx;
+      h -= dy;
+      break;
+    case "sw":
+      x += dx;
+      w -= dx;
+      h += dy;
+      break;
+    default: {
+      const _exhaustive: never = handle;
+      return _exhaustive;
+    }
+  }
+  return clampChartPartFrame({ x, y, w, h });
 }
 
 export function clampChartPartFrame(frame: ChartPartFrame): ChartPartFrame {

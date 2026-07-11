@@ -17,6 +17,7 @@ import {
   nudgeChartPartFrame,
   parseChartPartRef,
   partsToChartOptions,
+  resizeChartPartFrame,
   resolveChartAreaStyle,
   resolveMarkerStyle,
   resolveSeriesStrokeColor,
@@ -151,16 +152,29 @@ describe("seriesChartParts", () => {
     expect(merged.chartArea?.style?.fill).toBe("#ffffff");
   });
 
-  it("capabilities declarativas: title móvel/editável; plotArea não", () => {
+  it("capabilities declarativas: title móvel/editável/redimensionável; plotArea não", () => {
     expect(chartPartCapabilities({ kind: "title" })).toEqual({
       movable: true,
       editable: true,
       deletable: true,
+      resizable: true,
     });
     expect(chartPartAllowsMove({ kind: "title" })).toBe(true);
     expect(chartPartAllowsEdit({ kind: "dataLabel", seriesIndex: 0, pointIndex: 0 })).toBe(true);
     expect(chartPartAllowsMove({ kind: "plotArea" })).toBe(false);
     expect(chartPartCapabilities({ kind: "plotArea" }).deletable).toBe(false);
+    expect(chartPartCapabilities({ kind: "legend" }).resizable).toBe(true);
+  });
+
+  it("resizeChartPartFrame ajusta se e nw com clamp", () => {
+    const se = resizeChartPartFrame({ x: 10, y: 10, w: 20, h: 10 }, "se", 5, 4);
+    expect(se.w).toBe(25);
+    expect(se.h).toBe(14);
+    const nw = resizeChartPartFrame({ x: 20, y: 20, w: 30, h: 20 }, "nw", 5, 5);
+    expect(nw.x).toBe(25);
+    expect(nw.y).toBe(25);
+    expect(nw.w).toBe(25);
+    expect(nw.h).toBe(15);
   });
 
   it("normalizeChartPartsForLoad zera strokeWidth legado 1 do plotArea", () => {
