@@ -1,8 +1,35 @@
 import type { ComunicadoConfig, ComunicadoBlock, NativeSlidePayload } from "@delpi/tv-dashboard-presentation";
-import { parseComunicadoConfig, resolveTextBlockDisplayRuns } from "@delpi/tv-dashboard-presentation";
+import {
+  parseComunicadoConfig,
+  resolveTextBlockDisplayRuns,
+  serializeComunicadoConfig,
+} from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, type Slide } from "../api/tvDashboardApi";
 import type { PresentationPayload } from "../api/tvDashboardApi";
+
+/**
+ * Serializa o config do editor com `resolved` dos blocos de dados/views —
+ * necessário para o filmstrip ser o print do palco (gráficos/tabelas ao vivo).
+ * Não usar em save persistente (resolved é efêmero).
+ */
+export function serializeComunicadoConfigForThumbnail(
+  config: ComunicadoConfig,
+  blocksWithResolved: ComunicadoBlock[],
+): Record<string, unknown> {
+  const serialized = serializeComunicadoConfig({ ...config, blocks: blocksWithResolved });
+  const byId = new Map(blocksWithResolved.map((block) => [block.id, block]));
+  const rawBlocks = Array.isArray(serialized.blocks) ? serialized.blocks : [];
+  serialized.blocks = rawBlocks.map((raw) => {
+    if (!raw || typeof raw !== "object") return raw;
+    const row = raw as Record<string, unknown>;
+    const id = typeof row.id === "string" ? row.id : "";
+    const live = byId.get(id);
+    if (!live || !("resolved" in live) || !live.resolved) return row;
+    return { ...row, resolved: live.resolved };
+  });
+  return serialized;
+}
 
 export function buildSlideThumbnailNative(
   slide: Slide,
@@ -55,11 +82,12 @@ function buildComunicadoPreviewData(
   }
   const blocks = enrichBlocksForEditorThumbnail(cfg.blocks ?? [], playlistId);
   return {
-    version: 2,
+    version: cfg.version ?? 2,
     headline: cfg.headline,
     subtitle: cfg.subtitle,
     background: resolvedBackground,
     blocks,
+    ...(cfg.dataFilters ? { dataFilters: cfg.dataFilters } : {}),
   };
 }
 
@@ -88,6 +116,15 @@ function enrichBlocksForEditorThumbnail(
         ...block,
         url: adminMediaUrl(playlistId, block.assetId),
       };
+    }
+    // chart_view / table_view / data_*: preservar `resolved` (print do palco).
+    if (
+      block.type === "chart_view" ||
+      block.type === "table_view" ||
+      block.type === "data_source" ||
+      ("resolved" in block && block.resolved)
+    ) {
+      return block;
     }
     if (block.type !== "heading" && block.type !== "text") {
       return block;

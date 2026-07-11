@@ -1,6 +1,5 @@
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
-import { serializeComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
 import type { Slide } from "../api/tvDashboardApi";
 import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
@@ -10,6 +9,7 @@ import { DeckWorkspace } from "./DeckWorkspace";
 import { ComunicadoSlideTemplatesPanel } from "./deck/ComunicadoSlideTemplatesPanel";
 import { DeckElementSidePanel } from "./deck";
 import { SlideDataFiltersPanel } from "./SlideDataFiltersPanel";
+import { serializeComunicadoConfigForThumbnail } from "./slideCardPreview";
 
 type WorkspaceProps = ComponentProps<typeof DeckWorkspace>;
 type ChromeProps = ComponentProps<typeof DeckEditorChrome>;
@@ -28,16 +28,20 @@ export function CustomSlideEditorLayout({
   chromeProps,
   adminLabels,
 }: Props) {
-  const { config, dataPreviewLoading, dataPreviewError } = useComunicadoEditor();
+  const { config, blocks, dataPreviewLoading, dataPreviewError } = useComunicadoEditor();
 
   const slidesForFilmstrip = useMemo(
     () =>
       workspaceProps.slides.map((slide) =>
         slide.id === selectedSlide.id
-          ? { ...slide, nativeConfig: serializeComunicadoConfig(config) }
+          ? {
+              ...slide,
+              // Inclui `resolved` dos blocos de dados — print exato do gráfico/tabela no palco.
+              nativeConfig: serializeComunicadoConfigForThumbnail(config, blocks),
+            }
           : slide,
       ),
-    [workspaceProps.slides, selectedSlide.id, config],
+    [workspaceProps.slides, selectedSlide.id, config, blocks],
   );
 
   const slideTabExtra = (

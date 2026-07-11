@@ -34,6 +34,14 @@ export default defineConfig(({ mode }) => {
   ],
   resolve: {
     alias: [
+      ...(isVitest
+        ? [
+            {
+              find: "lucide-react",
+              replacement: path.resolve(__dirname, "node_modules/lucide-react"),
+            },
+          ]
+        : []),
       {
         find: "@delpi/tv-dashboard-presentation",
         replacement: path.resolve(__dirname, "../tv-dashboard-presentation/src/index.ts"),

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { Slide } from "../api/tvDashboardApi";
-import { buildSlideThumbnailNative, externalSlideHost } from "./slideCardPreview";
+import {
+  buildSlideThumbnailNative,
+  externalSlideHost,
+  serializeComunicadoConfigForThumbnail,
+} from "./slideCardPreview";
 
 describe("slideCardPreview", () => {
   it("comunicado ignora previewSlide.native stale e usa nativeConfig local", () => {
@@ -98,6 +102,56 @@ describe("slideCardPreview", () => {
     const native = buildSlideThumbnailNative(slide, "playlist-1");
     const data = native?.data as { blocks?: Array<{ content?: string }> };
     expect(data.blocks?.[0]?.content).toBe("Título");
+  });
+
+  it("serializeComunicadoConfigForThumbnail preserva resolved do chart_view", () => {
+    const config = {
+      version: 4 as const,
+      background: { type: "color" as const, value: "#ffffff" },
+      blocks: [],
+    };
+    const blocks = [
+      {
+        id: "chart-1",
+        type: "chart_view" as const,
+        chartType: "line" as const,
+        frame: { x: 10, y: 20, w: 80, h: 50 },
+        style: {},
+        chartOptions: { title: "OTD — série temporal" },
+        resolved: {
+          label: "OTD — série temporal",
+          chart: {
+            points: [
+              { label: "11/06/26", value: 42 },
+              { label: "10/07/26", value: 100 },
+            ],
+          },
+        },
+      },
+    ];
+    const serialized = serializeComunicadoConfigForThumbnail(config as never, blocks as never);
+    const outBlocks = serialized.blocks as Array<{
+      id?: string;
+      resolved?: { chart?: { points?: unknown[] } };
+    }>;
+    expect(outBlocks[0]?.id).toBe("chart-1");
+    expect(outBlocks[0]?.resolved?.chart?.points).toHaveLength(2);
+
+    const slide: Slide = {
+      id: "s1",
+      playlistId: "p1",
+      sortOrder: 0,
+      slideType: "native",
+      title: "Personalizado",
+      nativeScreenKey: "custom_message",
+      nativeConfig: serialized,
+      isActive: true,
+    };
+    const native = buildSlideThumbnailNative(slide, "playlist-1");
+    const data = native?.data as {
+      blocks?: Array<{ resolved?: { chart?: { points?: unknown[] } } }>;
+    };
+    expect(data.blocks?.[0]?.resolved?.chart?.points).toHaveLength(2);
   });
 
   it("extrai host de URL externa", () => {
