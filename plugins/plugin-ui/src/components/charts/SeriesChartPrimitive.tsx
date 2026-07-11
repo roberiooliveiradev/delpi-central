@@ -124,6 +124,7 @@ export function SeriesChartPrimitive({
     showXAxisTitle: config.showXAxisTitle === true,
     viewW: viewSize.w,
     viewH: viewSize.h,
+    categoryPaddingPercent: config.categoryPaddingPercent,
   });
 
   const seriesColor = resolveSeriesStrokeColor(config, chartParts);

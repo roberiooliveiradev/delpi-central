@@ -1,7 +1,6 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
-  chartPartDomProps,
-  isChartPartRefEqual,
+  bindChartPartPointer,
   resolvePlotAreaStyle,
   type ChartPartsMap,
   type SeriesChartInteraction,
@@ -24,9 +23,10 @@ export function ChartPlotArea({
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH } = layout;
   const ref = { kind: "plotArea" as const };
-  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const style = resolvePlotAreaStyle(chartParts);
+  const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction, {
+    moveWhenSelected: false,
+  });
 
   return (
     <rect
@@ -41,24 +41,9 @@ export function ChartPlotArea({
       className={[cn.plotArea, showAxes ? cn.plotAreaAxes : "", selected ? `${cn.root}__part--selected` : ""]
         .filter(Boolean)
         .join(" ")}
-      {...chartPartDomProps(ref, interaction?.selectedPart)}
-      onPointerDown={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              interaction?.onPartPointerDown?.(ref, event);
-            }
-          : undefined
-      }
-      onDoubleClick={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              event.preventDefault();
-              interaction?.onPartDoubleClick?.(ref, event);
-            }
-          : undefined
-      }
+      {...dom}
+      onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
     />
   );
 }

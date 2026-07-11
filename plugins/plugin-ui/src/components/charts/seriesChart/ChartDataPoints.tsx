@@ -1,8 +1,7 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   CHART_MARKER_RADIUS,
-  chartPartDomProps,
-  isChartPartRefEqual,
+  bindChartPartPointer,
   type ChartPartsMap,
   type SeriesChartInteraction,
   resolveMarkerStyle,
@@ -29,7 +28,6 @@ export function ChartDataPoints({
   if (!visible) return null;
 
   const { toX, toY } = layout;
-  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
   return (
     <>
@@ -37,7 +35,9 @@ export function ChartDataPoints({
         const marker = resolveMarkerStyle(chartParts, seriesIndex, index, seriesColor);
         if (!marker.visible) return null;
         const ref = { kind: "marker" as const, seriesIndex, pointIndex: index };
-        const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+        const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction, {
+          moveWhenSelected: false,
+        });
         return (
           <circle
             key={`dot-${index}`}
@@ -50,24 +50,9 @@ export function ChartDataPoints({
             className={[cn.seriesMarker, selected ? `${cn.root}__part--selected` : ""]
               .filter(Boolean)
               .join(" ")}
-            {...chartPartDomProps(ref, interaction?.selectedPart)}
-            onPointerDown={
-              interactive
-                ? (event) => {
-                    event.stopPropagation();
-                    interaction?.onPartPointerDown?.(ref, event);
-                  }
-                : undefined
-            }
-            onDoubleClick={
-              interactive
-                ? (event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    interaction?.onPartDoubleClick?.(ref, event);
-                  }
-                : undefined
-            }
+            {...dom}
+            onPointerDown={onPointerDown}
+            onDoubleClick={onDoubleClick}
           />
         );
       })}

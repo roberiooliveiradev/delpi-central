@@ -5,6 +5,7 @@ import {
   blockCssStyle,
   chartOptionsToParts,
   chartPartAllowsMove,
+  chartPartAllowsEdit,
   clampChartPartFrame,
   comunicadoImageCropCssProperties,
   getChartPartState,
@@ -142,13 +143,7 @@ function EditorChartViewBlock({
       } else {
         requestRibbonTab("chart");
       }
-      if (
-        same &&
-        (ref.kind === "title" ||
-          ref.kind === "legend" ||
-          ref.kind === "axisTitle" ||
-          ref.kind === "dataLabel")
-      ) {
+      if (same && chartPartAllowsEdit(ref)) {
         beginEditChartPart(block.id, ref);
       }
     },

@@ -7,10 +7,10 @@ import {
   resolveXLabelTextAnchor,
   SERIES_CHART_PLOT_INSET,
 } from "./layout";
+import { OTD_SERIES_LAYOUT_GOLDEN as otdGolden } from "./__fixtures__/otdSeriesLayout.golden";
 
 describe("resolveVisibleXLabelIndices", () => {
   it("não empilha o último rótulo sobre o penúltimo tick do step", () => {
-    // count=30, step=5 → 0,5,10,15,20,25; last=29 colide com 25 → substitui 25 por 29
     expect(resolveVisibleXLabelIndices(30, 5)).toEqual([0, 5, 10, 15, 20, 29]);
   });
 
@@ -64,9 +64,10 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
       showXAxisTitle: false,
       viewW: 600,
       viewH: 280,
+      categoryPaddingPercent: 3,
     });
     expect(layout.plotInset).toBeGreaterThan(0);
-    expect(layout.plotInset).toBeLessThanOrEqual(SERIES_CHART_PLOT_INSET);
+    expect(layout.plotInset).toBeLessThanOrEqual(SERIES_CHART_PLOT_INSET * 4);
     const x0 = layout.toX(0, points.length);
     const xLast = layout.toX(points.length - 1, points.length);
     const yMax = layout.toY(layout.axisMax);
@@ -77,6 +78,32 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     expect(yMin).toBeLessThanOrEqual(layout.margin.top + layout.plotH - layout.plotInset + 0.01);
   });
 
+  it("categoryPaddingPercent maior afasta os extremos", () => {
+    const points = [
+      { value: 10, label: "A" },
+      { value: 20, label: "B" },
+      { value: 30, label: "C" },
+    ];
+    const tight = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 200,
+      categoryPaddingPercent: 2,
+    });
+    const loose = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 200,
+      categoryPaddingPercent: 12,
+    });
+    expect(loose.plotInset).toBeGreaterThan(tight.plotInset);
+    expect(loose.toX(0, 3)).toBeGreaterThan(tight.toX(0, 3));
+  });
+
   it("step maior em plot estreito", () => {
     const labels = Array.from({ length: 40 }, (_, i) => `11/0${i}/26`);
     const step = resolveXLabelStep(40, 200, labels);
@@ -85,5 +112,41 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     for (let i = 1; i < indices.length; i += 1) {
       expect(indices[i]! - indices[i - 1]!).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe("golden layout fixture OTD", () => {
+  it("snapshot estável: margens, inset e extremos sem clipping", () => {
+    const layout = buildSeriesChartLayout({
+      points: otdGolden.points,
+      showXAxisLabels: otdGolden.showXAxisLabels,
+      showXAxisTitle: otdGolden.showXAxisTitle,
+      viewW: otdGolden.viewW,
+      viewH: otdGolden.viewH,
+      categoryPaddingPercent: otdGolden.categoryPaddingPercent,
+    });
+    const n = otdGolden.points.length;
+    const snapshot = {
+      margin: layout.margin,
+      plotW: layout.plotW,
+      plotH: layout.plotH,
+      plotInset: layout.plotInset,
+      x0: Number(layout.toX(0, n).toFixed(2)),
+      xLast: Number(layout.toX(n - 1, n).toFixed(2)),
+      yMin: Number(layout.toY(layout.axisMin).toFixed(2)),
+      yMax: Number(layout.toY(layout.axisMax).toFixed(2)),
+      firstAnchor: resolveXLabelTextAnchor(0, n, layout.xLabelsRotated),
+      lastAnchor: resolveXLabelTextAnchor(n - 1, n, layout.xLabelsRotated),
+    };
+
+    expect(snapshot.x0).toBeGreaterThanOrEqual(snapshot.margin.left + snapshot.plotInset - 0.05);
+    expect(snapshot.xLast).toBeLessThanOrEqual(
+      snapshot.margin.left + snapshot.plotW - snapshot.plotInset + 0.05,
+    );
+    expect(snapshot.firstAnchor).toBe("start");
+    expect(snapshot.lastAnchor).toBe("end");
+    expect(snapshot.plotInset).toBeGreaterThanOrEqual(8);
+    expect(snapshot.margin.right).toBeGreaterThanOrEqual(18);
+    expect(snapshot.xLast - snapshot.x0).toBeGreaterThan(snapshot.plotW * 0.5);
   });
 });

@@ -209,6 +209,110 @@ export function chartPartDomProps(
   };
 }
 
+/** Capacidades declarativas por kind (Excel Format Object). */
+export type ChartPartCapabilities = {
+  movable: boolean;
+  editable: boolean;
+  deletable: boolean;
+};
+
+const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabilities> = {
+  chartArea: { movable: false, editable: false, deletable: false },
+  plotArea: { movable: false, editable: false, deletable: false },
+  title: { movable: true, editable: true, deletable: true },
+  legend: { movable: true, editable: true, deletable: true },
+  series: { movable: false, editable: false, deletable: true },
+  marker: { movable: false, editable: false, deletable: true },
+  dataLabel: { movable: false, editable: true, deletable: true },
+  axis: { movable: false, editable: false, deletable: true },
+  axisTitle: { movable: false, editable: true, deletable: true },
+  grid: { movable: false, editable: false, deletable: true },
+  dataTable: { movable: true, editable: false, deletable: true },
+};
+
+export function chartPartCapabilities(ref: ChartPartRef): ChartPartCapabilities {
+  return CHART_PART_KIND_CAPABILITIES[ref.kind];
+}
+
+export type BindChartPartPointerOptions = {
+  /**
+   * Inicia arraste só com a parte já selecionada (default: true quando movable).
+   * Passar `false` para desligar move neste host.
+   */
+  moveWhenSelected?: boolean;
+  /** Força estado de edição inline (title contentEditable). */
+  editing?: boolean;
+};
+
+/**
+ * Hit-test unificado: data-attr + pointer/double-click (+ move se selecionada).
+ * Substitui boilerplate repetido em ChartTitle / Legend / Axis / …
+ */
+export function bindChartPartPointer(
+  ref: ChartPartRef,
+  interaction?: SeriesChartInteraction | null,
+  opts?: BindChartPartPointerOptions,
+) {
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
+  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+  const editing = opts?.editing ?? isChartPartRefEqual(ref, interaction?.editingPart);
+  const caps = chartPartCapabilities(ref);
+  const moveWhenSelected = opts?.moveWhenSelected !== false && caps.movable;
+  const dom = chartPartDomProps(ref, interaction?.selectedPart);
+
+  if (!interactive) {
+    return {
+      ...dom,
+      selected,
+      editing,
+      onPointerDown: undefined as undefined,
+      onDoubleClick: undefined as undefined,
+    };
+  }
+
+  return {
+    ...dom,
+    selected,
+    editing,
+    onPointerDown: (event: ReactPointerEvent) => {
+      if (editing) {
+        event.stopPropagation();
+        return;
+      }
+      event.stopPropagation();
+      interaction?.onPartPointerDown?.(ref, event);
+      if (moveWhenSelected && selected) {
+        interaction?.onPartMovePointerDown?.(ref, event);
+      }
+    },
+    onDoubleClick: (event: ReactMouseEvent) => {
+      event.stopPropagation();
+      event.preventDefault();
+      interaction?.onPartDoubleClick?.(ref, event);
+    },
+  };
+}
+
+/**
+ * Normaliza parts no load: garante projeção options→parts e desliga moldura
+ * legada do plot (`strokeWidth: 1` era o default antigo que vazava eixos).
+ */
+export function normalizeChartPartsForLoad(
+  parts: ChartPartsMap | null | undefined,
+  options?: SeriesChartOptions | null,
+): ChartPartsMap {
+  const merged = mergeChartPartsWithOptions(parts, options);
+  const plotKey = serializeChartPartRef({ kind: "plotArea" });
+  const plot = merged[plotKey];
+  if (plot?.style?.strokeWidth === 1) {
+    merged[plotKey] = {
+      ...plot,
+      style: { ...plot.style, strokeWidth: 0 },
+    };
+  }
+  return merged;
+}
+
 export function findChartPartFromTarget(target: EventTarget | null): ChartPartRef | null {
   if (!(target instanceof Element)) return null;
   const host = target.closest(`[${CHART_PART_DATA_ATTR}]`);
@@ -488,21 +592,15 @@ export function resolveSeriesLineStyle(
 }
 
 export function chartPartAllowsMove(ref: ChartPartRef): boolean {
-  return ref.kind === "title" || ref.kind === "legend" || ref.kind === "dataTable";
+  return chartPartCapabilities(ref).movable;
 }
 
 export function chartPartAllowsDelete(ref: ChartPartRef): boolean {
-  return (
-    ref.kind === "title" ||
-    ref.kind === "legend" ||
-    ref.kind === "marker" ||
-    ref.kind === "dataLabel" ||
-    ref.kind === "grid" ||
-    ref.kind === "dataTable" ||
-    ref.kind === "axis" ||
-    ref.kind === "axisTitle" ||
-    ref.kind === "series"
-  );
+  return chartPartCapabilities(ref).deletable;
+}
+
+export function chartPartAllowsEdit(ref: ChartPartRef): boolean {
+  return chartPartCapabilities(ref).editable;
 }
 
 export function clampChartPartFrame(frame: ChartPartFrame): ChartPartFrame {

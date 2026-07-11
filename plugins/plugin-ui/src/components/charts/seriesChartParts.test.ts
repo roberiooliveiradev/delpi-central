@@ -4,12 +4,16 @@ import { DEFAULT_SERIES_CHART_OPTIONS, mergeSeriesChartOptions } from "./seriesC
 import {
   applyMarkerStyleToAll,
   chartOptionsToParts,
+  chartPartAllowsEdit,
+  chartPartAllowsMove,
+  chartPartCapabilities,
   deleteChartPart,
   filterVisibleSeriesPoints,
   findChartPartFromTarget,
   isChartPartRefEqual,
   mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,
+  normalizeChartPartsForLoad,
   nudgeChartPartFrame,
   parseChartPartRef,
   partsToChartOptions,
@@ -145,5 +149,34 @@ describe("seriesChartParts", () => {
     expect(merged.chartArea?.style?.stroke).toBe("#ff0000");
     expect(merged.chartArea?.style?.strokeWidth).toBe(3);
     expect(merged.chartArea?.style?.fill).toBe("#ffffff");
+  });
+
+  it("capabilities declarativas: title móvel/editável; plotArea não", () => {
+    expect(chartPartCapabilities({ kind: "title" })).toEqual({
+      movable: true,
+      editable: true,
+      deletable: true,
+    });
+    expect(chartPartAllowsMove({ kind: "title" })).toBe(true);
+    expect(chartPartAllowsEdit({ kind: "dataLabel", seriesIndex: 0, pointIndex: 0 })).toBe(true);
+    expect(chartPartAllowsMove({ kind: "plotArea" })).toBe(false);
+    expect(chartPartCapabilities({ kind: "plotArea" }).deletable).toBe(false);
+  });
+
+  it("normalizeChartPartsForLoad zera strokeWidth legado 1 do plotArea", () => {
+    const legacy = upsertChartPartState(chartOptionsToParts(mergeSeriesChartOptions({})), {
+      kind: "plotArea",
+    }, { style: { strokeWidth: 1, stroke: "#b4b4b4" } });
+    expect(legacy.plotArea?.style?.strokeWidth).toBe(1);
+    const normalized = normalizeChartPartsForLoad(legacy, mergeSeriesChartOptions({}));
+    expect(normalized.plotArea?.style?.strokeWidth).toBe(0);
+  });
+
+  it("normalizeChartPartsForLoad preserva strokeWidth explícito > 1", () => {
+    const custom = upsertChartPartState(chartOptionsToParts(mergeSeriesChartOptions({})), {
+      kind: "plotArea",
+    }, { style: { strokeWidth: 2, stroke: "#333333" } });
+    const normalized = normalizeChartPartsForLoad(custom, mergeSeriesChartOptions({}));
+    expect(normalized.plotArea?.style?.strokeWidth).toBe(2);
   });
 });

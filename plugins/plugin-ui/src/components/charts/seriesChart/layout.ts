@@ -46,6 +46,11 @@ export type BuildSeriesChartLayoutInput = {
   /** ViewBox dinâmico (ResizeObserver). Default: constantes SERIES_CHART_VIEW_*. */
   viewW?: number;
   viewH?: number;
+  /**
+   * Padding de categoria no eixo X (% da largura do plot em cada lado).
+   * Default: usa SERIES_CHART_PLOT_INSET como piso em px se omitido.
+   */
+  categoryPaddingPercent?: number;
 };
 
 const BASE_MARGIN: SeriesChartMargin = {
@@ -188,7 +193,13 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
 
   const plotW = Math.max(1, viewW - margin.left - margin.right);
   const plotH = Math.max(1, viewH - margin.top - margin.bottom);
-  const plotInset = Math.min(SERIES_CHART_PLOT_INSET, Math.floor(Math.min(plotW, plotH) / 6));
+  const padPct = Math.max(0, Math.min(40, input.categoryPaddingPercent ?? 0));
+  const insetFromPercent =
+    padPct > 0 ? Math.round((plotW * padPct) / 100) : SERIES_CHART_PLOT_INSET;
+  const plotInset = Math.min(
+    Math.floor(Math.min(plotW, plotH) / 6),
+    Math.max(4, insetFromPercent),
+  );
   const innerW = Math.max(1, plotW - 2 * plotInset);
   const innerH = Math.max(1, plotH - 2 * plotInset);
 

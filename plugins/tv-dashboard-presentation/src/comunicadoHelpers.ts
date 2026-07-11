@@ -24,7 +24,11 @@ import {
   serializeBlockAnimations,
 } from "./comunicadoBlockAnimations";
 import { DEFAULT_COMUNICADO_CHART_OPTIONS, type ComunicadoChartOptions } from "./comunicadoChartOptions";
-import { chartOptionsToParts } from "./comunicadoChartParts";
+import {
+  chartOptionsToParts,
+  normalizeChartPartsForLoad,
+  type ComunicadoChartPartsMap,
+} from "./comunicadoChartParts";
 import {
   presetDefaultTableOptions,
   type ComunicadoTableOptions,
@@ -687,10 +691,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       block.chartOptions && typeof block.chartOptions === "object"
         ? ({ ...DEFAULT_COMUNICADO_CHART_OPTIONS, ...(block.chartOptions as ComunicadoChartOptions) })
         : { ...DEFAULT_COMUNICADO_CHART_OPTIONS };
-    const chartParts =
+    const rawParts =
       block.chartParts && typeof block.chartParts === "object"
-        ? { ...(block.chartParts as Record<string, unknown>) }
+        ? (block.chartParts as ComunicadoChartPartsMap)
         : undefined;
+    const chartParts = normalizeChartPartsForLoad(rawParts, chartOptions);
     return attachBlockAnimations(
       {
         id,

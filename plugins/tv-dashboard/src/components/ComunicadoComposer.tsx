@@ -54,6 +54,7 @@ export function ComunicadoComposerCanvas() {
     selected,
     selectedId,
     selectedIds,
+    selectedChartPart,
     isBlockSelected,
     selectBlock,
     selectBlocksByIds,
@@ -188,6 +189,10 @@ export function ComunicadoComposerCanvas() {
       return false;
     }
     const block = blocks.find((item) => item.id === blockId);
+    // Grupo chart_view: handles só no nível do bloco (sem parte selecionada).
+    if (block?.type === "chart_view" && selectedChartPart) {
+      return false;
+    }
     return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
   };
 

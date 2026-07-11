@@ -34,6 +34,12 @@ export type SeriesChartOptions = {
   /** Padrão Office: fundo claro. `dark` só sob pedido explícito. */
   theme?: SeriesChartTheme;
   backgroundColor?: string;
+  /**
+   * Padding de categoria no eixo X (% da largura do plot em cada lado).
+   * Evita marcadores/rótulos colados na borda (Excel Plot Area padding).
+   * Default: `DEFAULT_CATEGORY_PADDING_PERCENT`.
+   */
+  categoryPaddingPercent?: number;
 };
 
 export type SeriesChartPoint = {
@@ -42,6 +48,9 @@ export type SeriesChartPoint = {
 };
 
 export type SeriesChartKind = "line" | "bar";
+
+/** Padding padrão de categoria (~3% de cada lado do plot). */
+export const DEFAULT_CATEGORY_PADDING_PERCENT = 3;
 
 export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showTitle: true,
@@ -61,6 +70,7 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   seriesColor: OFFICE_CHART_SERIES_COLOR,
   theme: "light",
   backgroundColor: OFFICE_CHART_AREA_FILL,
+  categoryPaddingPercent: DEFAULT_CATEGORY_PADDING_PERCENT,
 };
 
 export function mergeSeriesChartOptions(partial?: SeriesChartOptions | null): SeriesChartOptions {

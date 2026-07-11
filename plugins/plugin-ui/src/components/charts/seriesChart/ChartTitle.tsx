@@ -2,9 +2,8 @@ import { useEffect, useRef, type CSSProperties } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
-  chartPartDomProps,
+  bindChartPartPointer,
   getChartPartState,
-  isChartPartRefEqual,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -34,12 +33,12 @@ function partFrameStyle(
 export function ChartTitle({ title, visible = true, interaction, chartParts }: ChartTitleProps) {
   const cn = useSeriesChartClasses();
   const ref = { kind: "title" as const };
-  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const editing = isChartPartRefEqual(ref, interaction?.editingPart);
-  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const editRef = useRef<HTMLDivElement>(null);
   const frame = getChartPartState(chartParts, ref)?.frame;
   const frameStyle = partFrameStyle(frame);
+  const pointer = bindChartPartPointer(ref, interaction);
+  const { selected, editing, onPointerDown, onDoubleClick, ...dom } = pointer;
+
+  const editRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!editing || !editRef.current) return;
@@ -73,36 +72,13 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
         .filter(Boolean)
         .join(" ")}
       style={frameStyle}
-      {...chartPartDomProps(ref, interaction?.selectedPart)}
+      {...dom}
       contentEditable={editing || undefined}
       suppressContentEditableWarning={editing || undefined}
       role={editing ? "textbox" : undefined}
       aria-label={editing ? "Editar título do gráfico" : undefined}
-      onPointerDown={
-        interactive
-          ? (event) => {
-              if (editing) {
-                event.stopPropagation();
-                return;
-              }
-              event.stopPropagation();
-              interaction?.onPartPointerDown?.(ref, event);
-              // Arraste só com a parte já selecionada (duplo clique → depois arrastar).
-              if (selected) {
-                interaction?.onPartMovePointerDown?.(ref, event);
-              }
-            }
-          : undefined
-      }
-      onDoubleClick={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              event.preventDefault();
-              interaction?.onPartDoubleClick?.(ref, event);
-            }
-          : undefined
-      }
+      onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
       onBlur={
         editing
           ? () => {

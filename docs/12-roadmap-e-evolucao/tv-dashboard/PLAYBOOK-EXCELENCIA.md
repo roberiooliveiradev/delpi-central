@@ -1702,6 +1702,17 @@ type ChartPartState = {
 | 4L.6 | Parte geométrica usa aba **Forma** (paridade primitivo point/line/area) | ✅ |
 | 4L.7 | Mover título/legenda/tabela só com parte selecionada; inset do plot + âncora X nas bordas | ✅ |
 
+### 19.15 Contrato de partes + layout declarativo (pós-4L)
+
+| # | Entrega | Status |
+|---|---|---|
+| 4L.8 | Capacidades `movable` / `editable` / `deletable` por kind (`chartPartCapabilities`) | ✅ |
+| 4L.9 | Hit-test unificado `bindChartPartPointer` (Title/Legend/DataTable/Plot/Series/Markers) | ✅ |
+| 4L.10 | Fixture golden OTD (`seriesChart/__fixtures__/otdSeriesLayout.golden.json`) | ✅ |
+| 4L.11 | Handles de resize do bloco só no grupo (`selectedChartPart == null`) | ✅ |
+| 4L.12 | `normalizeChartPartsForLoad` — `plotArea.strokeWidth: 1` legado → `0` | ✅ |
+| 4L.13 | `categoryPaddingPercent` em `SeriesChartOptions` → `buildSeriesChartLayout` | ✅ |
+
 #### Anti-padrões 4L
 
 - Forçar último rótulo X sem checar colisão com o step.
@@ -1712,6 +1723,10 @@ type ChartPartState = {
 - Chamar `onPartMovePointerDown` em todo `pointerdown` (arrasta sem ter selecionado a parte).
 - Plotar 1º/último ponto em `x = margem` (corta marcador e rótulo X).
 - Grade nos ticks extremos (moldura fantasma / “eixos vazando”).
+- Duplicar `if (kind === "title")` para move/edit/delete — usar `chartPartCapabilities`.
+- Boilerplate de `stopPropagation` + handlers em cada `Chart*` — usar `bindChartPartPointer`.
+- Persistir `plotArea.strokeWidth: 1` legado sem normalizar no `parseComunicadoConfig`.
+- Hardcode de inset em px no layout sem `categoryPaddingPercent`.
 
 ---
 

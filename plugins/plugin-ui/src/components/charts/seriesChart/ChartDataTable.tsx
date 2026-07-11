@@ -3,9 +3,8 @@ import type { CSSProperties } from "react";
 import { formatSeriesChartValue, type SeriesChartValueFormat, type SeriesChartPoint } from "../seriesChartOptions";
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
-  chartPartDomProps,
+  bindChartPartPointer,
   getChartPartState,
-  isChartPartRefEqual,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -46,10 +45,9 @@ export function ChartDataTable({
   if (!visible) return null;
 
   const ref = { kind: "dataTable" as const };
-  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const frame = getChartPartState(chartParts, ref)?.frame;
   const frameStyle = partFrameStyle(frame);
+  const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction);
 
   return (
     <table
@@ -61,27 +59,9 @@ export function ChartDataTable({
         .filter(Boolean)
         .join(" ")}
       style={frameStyle}
-      {...chartPartDomProps(ref, interaction?.selectedPart)}
-      onPointerDown={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              interaction?.onPartPointerDown?.(ref, event);
-              if (selected) {
-                interaction?.onPartMovePointerDown?.(ref, event);
-              }
-            }
-          : undefined
-      }
-      onDoubleClick={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              event.preventDefault();
-              interaction?.onPartDoubleClick?.(ref, event);
-            }
-          : undefined
-      }
+      {...dom}
+      onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
     >
       <thead>
         <tr>

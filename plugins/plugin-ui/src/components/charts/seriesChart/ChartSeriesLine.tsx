@@ -1,10 +1,9 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   CHART_SERIES_LINE_STROKE_WIDTH,
-  chartPartDomProps,
+  bindChartPartPointer,
   filterVisibleSeriesPoints,
   getChartPartState,
-  isChartPartRefEqual,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -29,13 +28,15 @@ export function ChartSeriesLine({
   const cn = useSeriesChartClasses();
   const { toX, toY } = layout;
   const ref = { kind: "series" as const, seriesIndex };
-  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const seriesVisible = getChartPartState(chartParts, ref)?.visible !== false;
   if (!seriesVisible) return null;
 
   const visiblePoints = filterVisibleSeriesPoints(points, chartParts, seriesIndex);
   if (visiblePoints.length === 0) return null;
+
+  const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction, {
+    moveWhenSelected: false,
+  });
 
   return (
     <polyline
@@ -49,24 +50,9 @@ export function ChartSeriesLine({
       strokeLinejoin="round"
       strokeLinecap="round"
       className={[cn.seriesLine, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
-      {...chartPartDomProps(ref, interaction?.selectedPart)}
-      onPointerDown={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              interaction?.onPartPointerDown?.(ref, event);
-            }
-          : undefined
-      }
-      onDoubleClick={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              event.preventDefault();
-              interaction?.onPartDoubleClick?.(ref, event);
-            }
-          : undefined
-      }
+      {...dom}
+      onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
     />
   );
 }

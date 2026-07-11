@@ -3,9 +3,8 @@ import type { CSSProperties } from "react";
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import type { SeriesChartLegendPosition } from "../seriesChartOptions";
 import {
-  chartPartDomProps,
+  bindChartPartPointer,
   getChartPartState,
-  isChartPartRefEqual,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -49,10 +48,9 @@ export function ChartLegend({
     position === "top" ? cn.legendTop : position === "right" ? cn.legendRight : cn.legendBottom;
 
   const ref = { kind: "legend" as const };
-  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const frame = getChartPartState(chartParts, ref)?.frame;
   const frameStyle = partFrameStyle(frame);
+  const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction);
 
   return (
     <ul
@@ -66,28 +64,9 @@ export function ChartLegend({
         .join(" ")}
       style={frameStyle}
       aria-label="Legenda"
-      {...chartPartDomProps(ref, interaction?.selectedPart)}
-      onPointerDown={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              interaction?.onPartPointerDown?.(ref, event);
-              // Arraste só com a parte já selecionada (duplo clique → depois arrastar).
-              if (selected) {
-                interaction?.onPartMovePointerDown?.(ref, event);
-              }
-            }
-          : undefined
-      }
-      onDoubleClick={
-        interactive
-          ? (event) => {
-              event.stopPropagation();
-              event.preventDefault();
-              interaction?.onPartDoubleClick?.(ref, event);
-            }
-          : undefined
-      }
+      {...dom}
+      onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
     >
       <li className={cn.legendItem}>
         <span className={cn.legendSwatch} style={{ background: seriesColor }} aria-hidden />
