@@ -7,19 +7,23 @@ import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
 
 import type { Slide } from "../api/tvDashboardApi";
 import type { PresentationPayload } from "../api/tvDashboardApi";
+import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { buildSlideThumbnailNative, externalSlideHost } from "./slideCardPreview";
-
-/** Referência 16:9 — mesma proporção do palco. */
-const THUMB_REF_WIDTH = 320;
-const THUMB_REF_HEIGHT = 180;
 
 type Props = {
   slide: Slide;
   playlistId: string;
   previewSlide?: PresentationPayload["slides"][number];
+  /** Viewport da playlist — miniaturiza o slide canônico (print exato). */
+  viewportProfile?: string;
 };
 
-export function SlideCardThumbnail({ slide, playlistId, previewSlide }: Props) {
+export function SlideCardThumbnail({
+  slide,
+  playlistId,
+  previewSlide,
+  viewportProfile = "1080p",
+}: Props) {
   if (slide.slideType === "external") {
     return (
       <div className="td-slide-thumb td-slide-thumb--external" aria-hidden="true">
@@ -34,15 +38,23 @@ export function SlideCardThumbnail({ slide, playlistId, previewSlide }: Props) {
     return <div className="td-slide-thumb td-slide-thumb--empty" aria-hidden="true" />;
   }
 
+  const { width, height } = resolveViewportPixelSize(viewportProfile);
+
   return (
     <div className="td-slide-thumb" aria-hidden="true">
       <CenteredScaledPreview
-        referenceWidth={THUMB_REF_WIDTH}
-        referenceHeight={THUMB_REF_HEIGHT}
+        referenceWidth={width}
+        referenceHeight={height}
         className="td-slide-thumb__preview"
         contentClassName="td-slide-thumb__preview-content"
       >
-        <NativeSlideView native={native} comunicadoFontScale={COMUNICADO_EDITOR_FONT_SCALE} />
+        <div
+          className="td-slide-thumb__stage"
+          data-viewport={viewportProfile || "1080p"}
+          style={{ width, height }}
+        >
+          <NativeSlideView native={native} comunicadoFontScale={COMUNICADO_EDITOR_FONT_SCALE} />
+        </div>
       </CenteredScaledPreview>
     </div>
   );

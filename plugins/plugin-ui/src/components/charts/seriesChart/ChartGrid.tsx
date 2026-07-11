@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
@@ -27,7 +27,7 @@ export function ChartGrid({
   const { margin, plotW, plotH, ticks, toX, toY } = layout;
   const ref = { kind: "grid" as const };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
   if (!showHorizontal && !showVertical) return null;
 
@@ -38,11 +38,20 @@ export function ChartGrid({
       }
     : undefined;
 
+  const onGridDoubleClick = interactive
+    ? (event: ReactMouseEvent) => {
+        event.stopPropagation();
+        event.preventDefault();
+        interaction?.onPartDoubleClick?.(ref, event);
+      }
+    : undefined;
+
   return (
     <g
       className={selected ? `${cn.root}__part--selected` : undefined}
       {...chartPartDomProps(ref, interaction?.selectedPart)}
       onPointerDown={onGridPointerDown}
+      onDoubleClick={onGridDoubleClick}
     >
       {showHorizontal
         ? ticks.map((tick) => {

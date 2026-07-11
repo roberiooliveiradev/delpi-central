@@ -22,7 +22,7 @@ export function ChartSeriesBar({
   const { margin, plotW, plotH, toY } = layout;
   const ref = { kind: "series" as const, seriesIndex };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
   return (
     <>
@@ -51,6 +51,15 @@ export function ChartSeriesBar({
                 ? (event) => {
                     event.stopPropagation();
                     interaction?.onPartPointerDown?.(ref, event);
+                  }
+                : undefined
+            }
+            onDoubleClick={
+              interactive
+                ? (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    interaction?.onPartDoubleClick?.(ref, event);
                   }
                 : undefined
             }

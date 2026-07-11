@@ -29,7 +29,7 @@ export function ChartDataPoints({
   if (!visible) return null;
 
   const { toX, toY } = layout;
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
   return (
     <>
@@ -56,6 +56,15 @@ export function ChartDataPoints({
                 ? (event) => {
                     event.stopPropagation();
                     interaction?.onPartPointerDown?.(ref, event);
+                  }
+                : undefined
+            }
+            onDoubleClick={
+              interactive
+                ? (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    interaction?.onPartDoubleClick?.(ref, event);
                   }
                 : undefined
             }

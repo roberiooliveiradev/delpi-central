@@ -65,10 +65,16 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
 
 export function resolveDeckRibbonTabs(
   isCustomSlide: boolean,
-  options?: { chartSelected?: boolean; shapeSelected?: boolean },
+  options?: {
+    chartSelected?: boolean;
+    shapeSelected?: boolean;
+    /** Parte de gráfico com primitivo point/line/area (duplo clique). */
+    chartPartPrimitiveSelected?: boolean;
+  },
 ): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
-  const shapeSelected = Boolean(options?.shapeSelected);
+  const shapeSelected =
+    Boolean(options?.shapeSelected) || Boolean(options?.chartPartPrimitiveSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (tab.customOnly && !isCustomSlide) return false;
     if (tab.chartOnly && !chartSelected) return false;
@@ -81,9 +87,11 @@ export function resolveDeckRibbonTabs(
 export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   chartSelected?: boolean;
   shapeSelected?: boolean;
+  chartPartPrimitiveSelected?: boolean;
 }): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
-  const shapeSelected = Boolean(options?.shapeSelected);
+  const shapeSelected =
+    Boolean(options?.shapeSelected) || Boolean(options?.chartPartPrimitiveSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (!tab.customOnly) return false;
     if (tab.chartOnly && !chartSelected) return false;

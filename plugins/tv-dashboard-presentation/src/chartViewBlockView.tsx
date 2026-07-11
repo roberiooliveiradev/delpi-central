@@ -1,5 +1,3 @@
-import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
-
 import { chartTypeLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
@@ -88,30 +86,24 @@ export function ChartViewBlockView({
     );
   }
 
+  // Sem CenteredScaledPreview: o plot preenche o frame do bloco (viewBox dinâmico no SeriesChartPrimitive).
   return (
     <div className={`tdp-data-block tdp-data-block--chart tdp-data-block--chart-${chartType}`}>
-      <CenteredScaledPreview
-        referenceWidth={400}
-        referenceHeight={chartType === "bar" ? 260 : 280}
-        className="tdp-centered-scaled-preview"
-        contentClassName="tdp-centered-scaled-preview__content"
-      >
-        {chartType === "bar" ? (
-          <TvDataBarChartWidget
-            resolved={resolved}
-            chartOptions={block.chartOptions}
-            chartParts={block.chartParts}
-            interaction={chartInteraction}
-          />
-        ) : (
-          <TvDataLineChartWidget
-            resolved={resolved}
-            chartOptions={block.chartOptions}
-            chartParts={block.chartParts}
-            interaction={chartInteraction}
-          />
-        )}
-      </CenteredScaledPreview>
+      {chartType === "bar" ? (
+        <TvDataBarChartWidget
+          resolved={resolved}
+          chartOptions={block.chartOptions}
+          chartParts={block.chartParts}
+          interaction={chartInteraction}
+        />
+      ) : (
+        <TvDataLineChartWidget
+          resolved={resolved}
+          chartOptions={block.chartOptions}
+          chartParts={block.chartParts}
+          interaction={chartInteraction}
+        />
+      )}
     </div>
   );
 }

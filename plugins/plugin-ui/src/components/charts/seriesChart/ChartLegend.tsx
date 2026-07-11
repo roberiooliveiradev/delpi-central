@@ -50,7 +50,7 @@ export function ChartLegend({
 
   const ref = { kind: "legend" as const };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const frame = getChartPartState(chartParts, ref)?.frame;
   const frameStyle = partFrameStyle(frame);
 
@@ -73,6 +73,15 @@ export function ChartLegend({
               event.stopPropagation();
               interaction?.onPartPointerDown?.(ref, event);
               interaction?.onPartMovePointerDown?.(ref, event);
+            }
+          : undefined
+      }
+      onDoubleClick={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+              interaction?.onPartDoubleClick?.(ref, event);
             }
           : undefined
       }

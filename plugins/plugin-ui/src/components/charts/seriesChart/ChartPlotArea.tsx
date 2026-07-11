@@ -25,7 +25,7 @@ export function ChartPlotArea({
   const { margin, plotW, plotH } = layout;
   const ref = { kind: "plotArea" as const };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const style = resolvePlotAreaStyle(chartParts);
 
   return (
@@ -47,6 +47,15 @@ export function ChartPlotArea({
           ? (event) => {
               event.stopPropagation();
               interaction?.onPartPointerDown?.(ref, event);
+            }
+          : undefined
+      }
+      onDoubleClick={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+              interaction?.onPartDoubleClick?.(ref, event);
             }
           : undefined
       }

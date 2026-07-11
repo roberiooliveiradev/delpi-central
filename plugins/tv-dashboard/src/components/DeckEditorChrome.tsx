@@ -83,7 +83,18 @@ export function DeckEditorChrome({
   const editor = useOptionalComunicadoEditor();
   const chartSelected = editor?.selected?.type === "chart_view";
   const shapeSelected = editor?.selected?.type === "shape";
-  const tabs = resolveDeckRibbonTabs(isCustomSlide, { chartSelected, shapeSelected });
+  const chartPartPrimitiveSelected = Boolean(
+    chartSelected &&
+      editor?.selectedChartPart &&
+      ["marker", "series", "chartArea", "plotArea", "axis", "grid"].includes(
+        editor.selectedChartPart.kind,
+      ),
+  );
+  const tabs = resolveDeckRibbonTabs(isCustomSlide, {
+    chartSelected,
+    shapeSelected,
+    chartPartPrimitiveSelected,
+  });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
 
   useComunicadoRibbonTabSync((tab) => {
@@ -100,17 +111,34 @@ export function DeckEditorChrome({
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(chartSelected ? "chart" : shapeSelected ? "shape" : "home");
+      setActiveTab(
+        chartPartPrimitiveSelected
+          ? "shape"
+          : chartSelected
+            ? "chart"
+            : shapeSelected
+              ? "shape"
+              : "home",
+      );
     }
-  }, [activeTab, tabs, chartSelected, shapeSelected]);
+  }, [activeTab, tabs, chartSelected, shapeSelected, chartPartPrimitiveSelected]);
 
   useEffect(() => {
-    if (chartSelected && isCustomSlide) {
+    if (chartPartPrimitiveSelected && isCustomSlide) {
+      setActiveTab("shape");
+    } else if (chartSelected && isCustomSlide) {
       setActiveTab("chart");
     } else if (shapeSelected && isCustomSlide) {
       setActiveTab("shape");
     }
-  }, [chartSelected, shapeSelected, isCustomSlide, editor?.selectedId]);
+  }, [
+    chartSelected,
+    shapeSelected,
+    chartPartPrimitiveSelected,
+    isCustomSlide,
+    editor?.selectedId,
+    editor?.selectedChartPart,
+  ]);
 
   useEffect(() => {
     if (activeTab === "slide" && !slide) {

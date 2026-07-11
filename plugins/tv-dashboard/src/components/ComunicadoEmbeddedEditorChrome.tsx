@@ -17,10 +17,19 @@ type Props = {
 
 /** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar/Gráfico/Forma do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
-  const { selected } = useComunicadoEditor();
+  const { selected, selectedChartPart } = useComunicadoEditor();
   const chartSelected = selected?.type === "chart_view";
   const shapeSelected = selected?.type === "shape";
-  const tabs = resolveEmbeddedComunicadoRibbonTabs({ chartSelected, shapeSelected });
+  const chartPartPrimitiveSelected = Boolean(
+    chartSelected &&
+      selectedChartPart &&
+      ["marker", "series", "chartArea", "plotArea", "axis", "grid"].includes(selectedChartPart.kind),
+  );
+  const tabs = resolveEmbeddedComunicadoRibbonTabs({
+    chartSelected,
+    shapeSelected,
+    chartPartPrimitiveSelected,
+  });
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");
 
   useComunicadoRibbonTabSync((tab) => {

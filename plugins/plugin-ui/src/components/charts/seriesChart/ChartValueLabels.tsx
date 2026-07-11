@@ -34,7 +34,7 @@ export function ChartValueLabels({
 
   const { margin, plotW, toX, toY } = layout;
   const visiblePoints = filterVisibleSeriesPoints(points, chartParts, seriesIndex);
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
   if (chartType === "bar") {
     return (
@@ -71,6 +71,15 @@ export function ChartValueLabels({
                     }
                   : undefined
               }
+              onDoubleClick={
+                interactive
+                  ? (event) => {
+                      event.stopPropagation();
+                      event.preventDefault();
+                      interaction?.onPartDoubleClick?.(ref, event);
+                    }
+                  : undefined
+              }
             >
               {formatChartTick(value, valueFormat)}
             </text>
@@ -104,6 +113,15 @@ export function ChartValueLabels({
                 ? (event) => {
                     event.stopPropagation();
                     interaction?.onPartPointerDown?.(ref, event);
+                  }
+                : undefined
+            }
+            onDoubleClick={
+              interactive
+                ? (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    interaction?.onPartDoubleClick?.(ref, event);
                   }
                 : undefined
             }

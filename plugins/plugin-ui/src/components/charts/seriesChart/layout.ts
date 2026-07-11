@@ -28,6 +28,8 @@ export type SeriesChartLayout = {
   axisRange: number;
   xLabelStep: number;
   xLabelsRotated: boolean;
+  /** Índices de rótulos X sem colisão (inclui último só se couber). */
+  visibleXLabelIndices: number[];
   toX: (index: number, count: number) => number;
   toY: (value: number) => number;
 };
@@ -36,11 +38,14 @@ export type BuildSeriesChartLayoutInput = {
   points: SeriesChartPoint[];
   showXAxisLabels: boolean;
   showXAxisTitle: boolean;
+  /** ViewBox dinâmico (ResizeObserver). Default: constantes SERIES_CHART_VIEW_*. */
+  viewW?: number;
+  viewH?: number;
 };
 
 const BASE_MARGIN: SeriesChartMargin = {
   top: 12,
-  right: 12,
+  right: 14,
   bottom: 28,
   left: 52,
 };
@@ -67,6 +72,34 @@ export function shouldRotateXLabels(count: number, step: number, plotW: number, 
   return visibleCount * (avgWidth + 4) > plotW * 0.92;
 }
 
+/**
+ * Índices de rótulos X sem empilhar o último sobre o penúltimo tick do step.
+ * Se o último ponto colide com o penúltimo visível, substitui o penúltimo pelo último.
+ */
+export function resolveVisibleXLabelIndices(count: number, step: number): number[] {
+  if (count <= 0) return [];
+  if (count === 1) return [0];
+  const safeStep = Math.max(1, step);
+  const indices: number[] = [];
+  for (let i = 0; i < count; i += safeStep) {
+    indices.push(i);
+  }
+  const last = count - 1;
+  if (indices[indices.length - 1] === last) return indices;
+  const prev = indices[indices.length - 1] ?? 0;
+  if (last - prev >= safeStep) {
+    indices.push(last);
+    return indices;
+  }
+  // Colisão: trocar o penúltimo tick pelo último ponto (Excel-like).
+  if (indices.length === 1) {
+    indices.push(last);
+  } else {
+    indices[indices.length - 1] = last;
+  }
+  return indices;
+}
+
 function resolveBottomMargin(
   showXAxisLabels: boolean,
   showXAxisTitle: boolean,
@@ -91,30 +124,35 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const axisMax = ticks[ticks.length - 1] ?? dataMax;
   const axisRange = Math.max(axisMax - axisMin, 1e-6);
 
+  const viewW = Math.max(120, input.viewW ?? SERIES_CHART_VIEW_W);
+  const viewH = Math.max(80, input.viewH ?? SERIES_CHART_VIEW_H);
+
   const labels = input.points.map((point, index) => String(point.label ?? index + 1));
-  const plotWProbe = SERIES_CHART_VIEW_W - BASE_MARGIN.left - BASE_MARGIN.right;
+  const plotWProbe = Math.max(40, viewW - BASE_MARGIN.left - BASE_MARGIN.right);
   const xLabelStep = input.showXAxisLabels
     ? resolveXLabelStep(input.points.length, plotWProbe, labels)
     : 1;
   const xLabelsRotated = input.showXAxisLabels
     ? shouldRotateXLabels(input.points.length, xLabelStep, plotWProbe, labels)
     : false;
+  const visibleXLabelIndices = input.showXAxisLabels
+    ? resolveVisibleXLabelIndices(input.points.length, xLabelStep)
+    : [];
 
   const margin: SeriesChartMargin = {
     ...BASE_MARGIN,
     bottom: resolveBottomMargin(input.showXAxisLabels, input.showXAxisTitle, xLabelsRotated),
   };
 
-  const viewH = SERIES_CHART_VIEW_H;
-  const plotW = SERIES_CHART_VIEW_W - margin.left - margin.right;
-  const plotH = viewH - margin.top - margin.bottom;
+  const plotW = Math.max(1, viewW - margin.left - margin.right);
+  const plotH = Math.max(1, viewH - margin.top - margin.bottom);
 
   const toX = (index: number, count: number) =>
     margin.left + (count > 1 ? (index / (count - 1)) * plotW : plotW / 2);
   const toY = (value: number) => margin.top + plotH - ((value - axisMin) / axisRange) * plotH;
 
   return {
-    viewW: SERIES_CHART_VIEW_W,
+    viewW,
     viewH,
     margin,
     plotW,
@@ -125,6 +163,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     axisRange,
     xLabelStep,
     xLabelsRotated,
+    visibleXLabelIndices,
     toX,
     toY,
   };

@@ -1,4 +1,11 @@
-import type { CSSProperties, ReactNode, PointerEvent as ReactPointerEvent } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 import {
   seriesChartThemeStyle,
@@ -27,6 +34,8 @@ import {
   ChartLegend,
   ChartTitle,
   resolveSeriesName,
+  SERIES_CHART_VIEW_H,
+  SERIES_CHART_VIEW_W,
   type SeriesChartLayout,
 } from "./seriesChart";
 
@@ -72,7 +81,30 @@ export function SeriesChartPrimitive({
   const cn = useSeriesChartClasses();
   const config = mergeSeriesChartOptionsWithParts(options, chartParts);
   const usable = usableSeriesChartPoints(points);
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [viewSize, setViewSize] = useState({ w: SERIES_CHART_VIEW_W, h: SERIES_CHART_VIEW_H });
+
+  useLayoutEffect(() => {
+    const node = bodyRef.current;
+    if (!node) return;
+
+    const update = () => {
+      const width = node.clientWidth;
+      const height = node.clientHeight;
+      if (width < 40 || height < 40) return;
+      setViewSize((prev) =>
+        Math.abs(prev.w - width) < 1 && Math.abs(prev.h - height) < 1
+          ? prev
+          : { w: width, h: height },
+      );
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [usable.length]);
 
   if (usable.length === 0) {
     return (
@@ -90,6 +122,8 @@ export function SeriesChartPrimitive({
     points: usable,
     showXAxisLabels: config.showAxes !== false && config.showXAxisLabels !== false,
     showXAxisTitle: config.showXAxisTitle === true,
+    viewW: viewSize.w,
+    viewH: viewSize.h,
   });
 
   const seriesColor = resolveSeriesStrokeColor(config, chartParts);
@@ -157,11 +191,23 @@ export function SeriesChartPrimitive({
       }
     : undefined;
 
+  const onChartAreaDoubleClick = interactive
+    ? (event: React.MouseEvent<HTMLDivElement>) => {
+        const host = (event.target as HTMLElement).closest("[data-chart-part]");
+        const partId = host?.getAttribute("data-chart-part");
+        if (partId && partId !== "chartArea") return;
+        event.stopPropagation();
+        event.preventDefault();
+        interaction?.onPartDoubleClick?.(chartAreaRef, event);
+      }
+    : undefined;
+
   return (
     <ChartContainer
       className={rootClass}
       style={themeStyle}
       onPointerDown={onChartAreaPointerDown}
+      onDoubleClick={onChartAreaDoubleClick}
       {...(interactive ? chartPartDomProps(chartAreaRef, interaction?.selectedPart) : {})}
     >
       <ChartTitle
@@ -172,7 +218,7 @@ export function SeriesChartPrimitive({
       />
       {config.legendPosition === "top" ? legend : null}
 
-      <div className={cn.body}>
+      <div className={cn.body} ref={bodyRef}>
         <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
           {renderPlotArea(plotProps)}
         </ChartFrame>

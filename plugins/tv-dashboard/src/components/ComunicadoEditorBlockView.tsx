@@ -8,6 +8,7 @@ import {
   clampChartPartFrame,
   comunicadoImageCropCssProperties,
   getChartPartState,
+  isChartPartRefEqual,
   isComunicadoVisualBoxBlock,
   mergeComunicadoChartOptions,
   partsToChartOptions,
@@ -92,6 +93,7 @@ function EditorChartViewBlock({
     selectedChartPart,
     editingChartPart,
     selectChartPart,
+    clearChartPartSelection,
     beginEditChartPart,
     commitChartPartContent,
     cancelEditChartPart,
@@ -99,25 +101,60 @@ function EditorChartViewBlock({
     updateBlock,
   } = useComunicadoEditor();
 
+  /** Clique simples: não entra na parte (só move se já selecionada). */
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef) => {
-      selectChartPart(block.id, ref);
-      requestRibbonTab("chart");
-    },
-    [block.id, requestRibbonTab, selectChartPart],
-  );
-
-  const onPartDoubleClick = useCallback(
-    (ref: ComunicadoChartPartRef) => {
-      if (ref.kind === "title" || ref.kind === "legend" || ref.kind === "axisTitle") {
-        beginEditChartPart(block.id, ref);
-        requestRibbonTab("chart");
-      } else {
-        selectChartPart(block.id, ref);
+      if (selectedId === block.id && selectedChartPart && isChartPartRefEqual(selectedChartPart, ref)) {
+        return;
+      }
+      // Mantém o grupo chart_view; limpa subseleção se clicou em outra área.
+      if (selectedId === block.id && selectedChartPart) {
+        clearChartPartSelection();
         requestRibbonTab("chart");
       }
     },
-    [beginEditChartPart, block.id, requestRibbonTab, selectChartPart],
+    [block.id, clearChartPartSelection, requestRibbonTab, selectedChartPart, selectedId],
+  );
+
+  /** Duplo clique: acessa a parte; texto já selecionado abre edição inline. */
+  const onPartDoubleClick = useCallback(
+    (ref: ComunicadoChartPartRef) => {
+      const same =
+        selectedId === block.id &&
+        selectedChartPart &&
+        isChartPartRefEqual(selectedChartPart, ref);
+      selectChartPart(block.id, ref);
+      const primitiveKinds = new Set([
+        "marker",
+        "series",
+        "chartArea",
+        "plotArea",
+        "axis",
+        "grid",
+      ]);
+      if (primitiveKinds.has(ref.kind)) {
+        requestRibbonTab("shape");
+      } else {
+        requestRibbonTab("chart");
+      }
+      if (
+        same &&
+        (ref.kind === "title" ||
+          ref.kind === "legend" ||
+          ref.kind === "axisTitle" ||
+          ref.kind === "dataLabel")
+      ) {
+        beginEditChartPart(block.id, ref);
+      }
+    },
+    [
+      beginEditChartPart,
+      block.id,
+      requestRibbonTab,
+      selectChartPart,
+      selectedChartPart,
+      selectedId,
+    ],
   );
 
   const onPartContentCommit = useCallback(

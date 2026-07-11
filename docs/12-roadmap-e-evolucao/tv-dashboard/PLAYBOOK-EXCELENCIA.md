@@ -1690,6 +1690,23 @@ type ChartPartState = {
 - Hardcode de lista de formas fora de `comunicadoShapeCatalog.ts`.
 - `re.compile` / textos PT de UI no pacote presentation (labels ficam no catálogo).
 
+### 19.14 Frame do gráfico + print do filmstrip + partes (Onda 4L)
+
+| # | Entrega | Status |
+|---|---|---|
+| 4L.1 | Remover letterbox `CenteredScaledPreview` do `chart_view`; viewBox dinâmico (ResizeObserver) | ✅ |
+| 4L.2 | Rótulos X sem empilhar (`resolveVisibleXLabelIndices`) | ✅ |
+| 4L.3 | Borda: plotArea strokeWidth 0 por default (sem moldura dupla) | ✅ |
+| 4L.4 | Filmstrip = print exato (viewport canônico + scale uniforme) | ✅ |
+| 4L.5 | Partes do gráfico só com **duplo clique**; clique simples = grupo | ✅ |
+| 4L.6 | Parte geométrica usa aba **Forma** (paridade primitivo point/line/area) | ✅ |
+
+#### Anti-padrões 4L
+
+- Forçar último rótulo X sem checar colisão com o step.
+- Reintroduzir `CenteredScaledPreview` com viewBox fixo dentro do bloco de gráfico.
+- Miniatura do filmstrip em 320×180 com reflow (quebrando a escala do slide).
+
 ---
 
 ## 20. Histórico — kickoff v1

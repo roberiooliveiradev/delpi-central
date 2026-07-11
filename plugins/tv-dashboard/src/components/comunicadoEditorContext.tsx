@@ -278,7 +278,15 @@ export function ComunicadoEditorProvider({
       setEditingTextId(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
-      setRibbonTabRequest("chart");
+      const primitiveKinds = new Set([
+        "marker",
+        "series",
+        "chartArea",
+        "plotArea",
+        "axis",
+        "grid",
+      ]);
+      setRibbonTabRequest(primitiveKinds.has(part.kind) ? "shape" : "chart");
     },
     [flushActiveTextEdit],
   );

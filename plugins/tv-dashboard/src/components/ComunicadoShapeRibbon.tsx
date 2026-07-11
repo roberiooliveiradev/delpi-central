@@ -7,11 +7,20 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  applyMarkerStyleToAll,
+  chartPartVisualPrimitive,
+  chartPrimitiveSupportsFill,
+  chartPrimitiveSupportsStroke,
   defaultFrame,
   defaultStrokeWidthForPrimitive,
+  getChartPartState,
+  mergeComunicadoChartOptions,
+  partsToChartOptions,
   resolveShapePrimitive,
   shapeSupportsFill,
   shapeSupportsStroke,
+  upsertChartPartState,
+  type ComunicadoChartViewBlock,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 import { ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
@@ -27,12 +36,12 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 /**
- * Faixa contextual «Forma» — espelha a aba Forma do PowerPoint Online:
- * Alterar forma · Estilos · Preenchimento · Contorno · Organizar · Tamanho.
+ * Faixa contextual «Forma» — bloco shape OU parte de gráfico com primitivo point/line/area.
  */
 export function ComunicadoShapeRibbon() {
   const {
     selected,
+    selectedChartPart,
     updateSelected,
     updateSelectedStyle,
     removeSelected,
@@ -42,18 +51,160 @@ export function ComunicadoShapeRibbon() {
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
 
-  if (!selected || selected.type !== "shape") {
+  const chartPartPrimitive =
+    selected?.type === "chart_view" && selectedChartPart
+      ? chartPartVisualPrimitive(selectedChartPart)
+      : null;
+  const isShapeBlock = selected?.type === "shape";
+  const isChartPartPrimitive = Boolean(chartPartPrimitive);
+
+  if (!isShapeBlock && !isChartPartPrimitive) {
     return (
       <div className="td-deck-ribbon__groups">
         <p className="td-subtitle td-deck-ribbon__hint">
-          Selecione uma forma no palco para editar estilo, preenchimento, contorno e tamanho (como no
-          PowerPoint).
+          Selecione uma forma ou dê duplo clique numa parte do gráfico (marcador, série, área) para
+          formatar como no PowerPoint/Excel.
         </p>
       </div>
     );
   }
 
-  const block = selected;
+  if (isChartPartPrimitive && selected?.type === "chart_view" && selectedChartPart && chartPartPrimitive) {
+    const block = selected as ComunicadoChartViewBlock;
+    const partState = getChartPartState(block.chartParts, selectedChartPart);
+    const showFill = chartPrimitiveSupportsFill(chartPartPrimitive);
+    const showStroke = chartPrimitiveSupportsStroke(chartPartPrimitive);
+    const fillValue = partState?.style?.fill ?? "#089bdb";
+    const strokeValue = partState?.style?.stroke ?? "#089bdb";
+    const strokeWidth =
+      partState?.style?.strokeWidth ?? defaultStrokeWidthForPrimitive(chartPartPrimitive);
+
+    const patchPartStyle = (style: Record<string, unknown>) => {
+      let nextParts = upsertChartPartState(block.chartParts, selectedChartPart, {
+        style: style as never,
+      });
+      if (selectedChartPart.kind === "marker" && "fill" in style) {
+        // keep single-point edit
+      }
+      const nextOptions = mergeComunicadoChartOptions({
+        ...block.chartOptions,
+        ...partsToChartOptions(nextParts),
+      });
+      if (selectedChartPart.kind === "series" && typeof style.stroke === "string") {
+        nextOptions.seriesColor = style.stroke;
+      }
+      if (selectedChartPart.kind === "chartArea" && typeof style.fill === "string") {
+        nextOptions.backgroundColor = style.fill;
+      }
+      updateSelected({
+        chartParts: nextParts,
+        chartOptions: nextOptions,
+      } as Partial<typeof selected>);
+    };
+
+    return (
+      <div className="td-deck-ribbon__groups">
+        <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+            <ShapeStyleMenu
+              onSelect={(preset) =>
+                patchPartStyle({
+                  fill: preset.fill,
+                  stroke: preset.stroke,
+                  strokeWidth: preset.strokeWidth,
+                })
+              }
+            />
+          </div>
+        </DeckRibbonGroup>
+
+        <DeckRibbonGroup label="Preenchimento" hint={H.shape}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+            {showFill ? (
+              <ShapeFillMenu
+                value={fillValue}
+                fillLabel={chartPartPrimitive === "point" ? "Cor" : "Preench."}
+                onChange={(color) => patchPartStyle({ fill: color })}
+                onNoFill={() => patchPartStyle({ fill: "transparent" })}
+              />
+            ) : (
+              <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento neste primitivo.</p>
+            )}
+          </div>
+        </DeckRibbonGroup>
+
+        <DeckRibbonGroup label="Contorno" hint={H.strokeWidth}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+            {showStroke ? (
+              <ShapeOutlineMenu
+                color={strokeValue}
+                strokeWidth={strokeWidth}
+                minWidth={0}
+                maxWidth={chartPartPrimitive === "point" ? 8 : 20}
+                outlineLabel="Contorno"
+                onColorChange={(color) => patchPartStyle({ stroke: color })}
+                onNoOutline={() => patchPartStyle({ stroke: "transparent", strokeWidth: 0 })}
+                onStrokeWidthChange={(width) => patchPartStyle({ strokeWidth: width })}
+              />
+            ) : (
+              <p className="td-subtitle td-deck-ribbon__hint">Sem contorno neste primitivo.</p>
+            )}
+          </div>
+        </DeckRibbonGroup>
+
+        {selectedChartPart.kind === "marker" ? (
+          <DeckRibbonGroup label="Marcador" hint={H.shape}>
+            <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
+              <label className="td-deck-ribbon__field-label" htmlFor="td-chart-marker-radius">
+                Raio
+              </label>
+              <input
+                id="td-chart-marker-radius"
+                type="number"
+                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                min={1}
+                max={12}
+                step={0.5}
+                value={partState?.style?.markerRadius ?? 2.5}
+                onChange={(e) =>
+                  patchPartStyle({ markerRadius: Number(e.target.value) || 2.5 })
+                }
+              />
+              <DeckRibbonTile
+                icon={Copy}
+                label="Aplicar a todos"
+                hint="Replica o estilo do marcador em todos os pontos da série."
+                onClick={() => {
+                  const style = partState?.style ?? {};
+                  const count =
+                    block.resolved?.chart?.points?.length ??
+                    Object.keys(block.chartParts ?? {}).filter((k) => k.startsWith("marker:0:"))
+                      .length ??
+                    8;
+                  const nextParts = applyMarkerStyleToAll(
+                    block.chartParts,
+                    Math.max(count, 1),
+                    selectedChartPart.seriesIndex,
+                    {
+                      fill: style.fill,
+                      stroke: style.stroke,
+                      strokeWidth: style.strokeWidth,
+                      markerRadius: style.markerRadius,
+                    },
+                  );
+                  updateSelected({ chartParts: nextParts } as Partial<typeof selected>);
+                }}
+              />
+            </div>
+          </DeckRibbonGroup>
+        ) : null}
+      </div>
+    );
+  }
+
+  const block = selected!;
+  if (block.type !== "shape") return null;
+
   const primitive = resolveShapePrimitive(block.shape);
   const showFill = shapeSupportsFill(primitive);
   const showStroke = shapeSupportsStroke(primitive);
@@ -160,7 +311,7 @@ export function ComunicadoShapeRibbon() {
             <ShapeOutlineMenu
               color={block.style?.stroke ?? "#ffffff"}
               strokeWidth={defaultStrokeWidth}
-              minWidth={primitive === "point" ? 0 : 0}
+              minWidth={0}
               maxWidth={primitive === "point" ? 8 : 20}
               outlineLabel="Contorno"
               onColorChange={(color) => updateSelectedStyle({ stroke: color })}

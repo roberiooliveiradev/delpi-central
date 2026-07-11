@@ -529,6 +529,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     dragIndex,
     inactiveLabel: admin.slideInactive ?? "Pausada",
     canPasteSlide,
+    viewportProfile: playlist.viewportProfile,
     onSelect: setSelectedSlideId,
     onDragStart: setDragIndex,
     onDrop: (index: number) => void handleDropSlide(index),

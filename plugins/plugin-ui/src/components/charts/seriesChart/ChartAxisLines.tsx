@@ -18,7 +18,7 @@ export function ChartAxisLines({ layout, visible = true, interaction }: ChartAxi
 
   const { margin, plotW, plotH } = layout;
   const xAxisY = margin.top + plotH;
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const xRef = { kind: "axis" as const, axis: "x" as const };
   const yRef = { kind: "axis" as const, axis: "y" as const };
   const xSelected = isChartPartRefEqual(xRef, interaction?.selectedPart);
@@ -33,6 +33,15 @@ export function ChartAxisLines({ layout, visible = true, interaction }: ChartAxi
             ? (event) => {
                 event.stopPropagation();
                 interaction?.onPartPointerDown?.(xRef, event);
+              }
+            : undefined
+        }
+        onDoubleClick={
+          interactive
+            ? (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                interaction?.onPartDoubleClick?.(xRef, event);
               }
             : undefined
         }
@@ -66,6 +75,15 @@ export function ChartAxisLines({ layout, visible = true, interaction }: ChartAxi
             ? (event) => {
                 event.stopPropagation();
                 interaction?.onPartPointerDown?.(yRef, event);
+              }
+            : undefined
+        }
+        onDoubleClick={
+          interactive
+            ? (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                interaction?.onPartDoubleClick?.(yRef, event);
               }
             : undefined
         }

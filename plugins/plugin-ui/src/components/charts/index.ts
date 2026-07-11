@@ -136,8 +136,11 @@ export {
 export {
   buildSeriesChartLayout,
   resolveSeriesName,
+  resolveVisibleXLabelIndices,
   resolveXLabelStep,
   shouldRotateXLabels,
+  SERIES_CHART_VIEW_H,
+  SERIES_CHART_VIEW_W,
   type SeriesChartLayout,
 } from "./seriesChart";
 export * from "./seriesChart";

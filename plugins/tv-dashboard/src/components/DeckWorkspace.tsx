@@ -11,6 +11,7 @@ type Props = {
   dragIndex: number | null;
   inactiveLabel: string;
   canPasteSlide: boolean;
+  viewportProfile?: string;
   onSelect: (slideId: string) => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
@@ -33,6 +34,7 @@ export function DeckWorkspace({
   dragIndex,
   inactiveLabel,
   canPasteSlide,
+  viewportProfile = "1080p",
   onSelect,
   onDragStart,
   onDrop,
@@ -56,6 +58,7 @@ export function DeckWorkspace({
         dragIndex={dragIndex}
         inactiveLabel={inactiveLabel}
         canPasteSlide={canPasteSlide}
+        viewportProfile={viewportProfile}
         onSelect={onSelect}
         onDragStart={onDragStart}
         onDrop={onDrop}

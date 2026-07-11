@@ -12,6 +12,7 @@ type Props = {
   dragIndex: number | null;
   inactiveLabel?: string;
   canPasteSlide: boolean;
+  viewportProfile?: string;
   onSelect: (slideId: string) => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
@@ -32,6 +33,7 @@ export function SlideFilmstrip({
   dragIndex,
   inactiveLabel = "Pausada",
   canPasteSlide,
+  viewportProfile = "1080p",
   onSelect,
   onDragStart,
   onDrop,
@@ -89,6 +91,7 @@ export function SlideFilmstrip({
                       slide={slide}
                       playlistId={playlistId}
                       previewSlide={previewBySlideId[slide.id]}
+                      viewportProfile={viewportProfile}
                     />
                     <span className="td-deck-filmstrip__title">{slide.title}</span>
                     {!slide.isActive ? (

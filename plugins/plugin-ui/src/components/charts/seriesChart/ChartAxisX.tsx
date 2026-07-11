@@ -25,14 +25,15 @@ export function ChartAxisX({
   interaction,
 }: ChartAxisXProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotH, viewH, xLabelStep, xLabelsRotated, toX, plotW } = layout;
+  const { margin, plotH, viewH, xLabelsRotated, toX, plotW, visibleXLabelIndices } = layout;
   const xAxisY = margin.top + plotH;
   const labelY = xLabelsRotated ? xAxisY + 18 : xAxisY + 14;
   const axisRef = { kind: "axis" as const, axis: "x" as const };
   const titleRef = { kind: "axisTitle" as const, axis: "x" as const };
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const axisSelected = isChartPartRefEqual(axisRef, interaction?.selectedPart);
   const titleSelected = isChartPartRefEqual(titleRef, interaction?.selectedPart);
+  const visibleSet = new Set(visibleXLabelIndices);
 
   return (
     <g
@@ -43,6 +44,15 @@ export function ChartAxisX({
           ? (event) => {
               event.stopPropagation();
               interaction?.onPartPointerDown?.(axisRef, event);
+            }
+          : undefined
+      }
+      onDoubleClick={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+              interaction?.onPartDoubleClick?.(axisRef, event);
             }
           : undefined
       }
@@ -60,7 +70,7 @@ export function ChartAxisX({
       ) : null}
       {showLabels
         ? points.map((point, index) => {
-            if (index % xLabelStep !== 0 && index !== points.length - 1) return null;
+            if (!visibleSet.has(index)) return null;
             const x = toX(index, points.length);
             const label = String(point.label ?? index + 1);
             const className = [cn.tick, cn.tickX, xLabelsRotated ? cn.tickXRotated : ""]
@@ -95,6 +105,15 @@ export function ChartAxisX({
               ? (event) => {
                   event.stopPropagation();
                   interaction?.onPartPointerDown?.(titleRef, event);
+                }
+              : undefined
+          }
+          onDoubleClick={
+            interactive
+              ? (event) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  interaction?.onPartDoubleClick?.(titleRef, event);
                 }
               : undefined
           }

@@ -29,7 +29,7 @@ export function ChartAxisY({
   const axisCenterY = margin.top + plotH / 2;
   const axisRef = { kind: "axis" as const, axis: "y" as const };
   const titleRef = { kind: "axisTitle" as const, axis: "y" as const };
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const axisSelected = isChartPartRefEqual(axisRef, interaction?.selectedPart);
   const titleSelected = isChartPartRefEqual(titleRef, interaction?.selectedPart);
 
@@ -42,6 +42,15 @@ export function ChartAxisY({
           ? (event) => {
               event.stopPropagation();
               interaction?.onPartPointerDown?.(axisRef, event);
+            }
+          : undefined
+      }
+      onDoubleClick={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+              interaction?.onPartDoubleClick?.(axisRef, event);
             }
           : undefined
       }
@@ -70,6 +79,15 @@ export function ChartAxisY({
               ? (event) => {
                   event.stopPropagation();
                   interaction?.onPartPointerDown?.(titleRef, event);
+                }
+              : undefined
+          }
+          onDoubleClick={
+            interactive
+              ? (event) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  interaction?.onPartDoubleClick?.(titleRef, event);
                 }
               : undefined
           }

@@ -1,16 +1,50 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveXLabelStep, shouldRotateXLabels } from "./layout";
+import {
+  buildSeriesChartLayout,
+  resolveVisibleXLabelIndices,
+  resolveXLabelStep,
+} from "./layout";
 
-describe("seriesChart layout", () => {
-  it("aumenta o passo de rótulos X quando há muitos pontos", () => {
-    const labels = Array.from({ length: 24 }, (_, index) => `2026-${String(index + 1).padStart(2, "0")}`);
-    const step = resolveXLabelStep(24, 336, labels);
-    expect(step).toBeGreaterThan(1);
+describe("resolveVisibleXLabelIndices", () => {
+  it("não empilha o último rótulo sobre o penúltimo tick do step", () => {
+    // count=30, step=5 → 0,5,10,15,20,25; last=29 colide com 25 → substitui 25 por 29
+    expect(resolveVisibleXLabelIndices(30, 5)).toEqual([0, 5, 10, 15, 20, 29]);
   });
 
-  it("rotaciona rótulos X quando a largura estimada excede a área", () => {
-    const labels = Array.from({ length: 12 }, (_, index) => `jan/${String(index + 1).padStart(2, "0")}`);
-    expect(shouldRotateXLabels(12, 1, 336, labels)).toBe(true);
+  it("inclui o último quando a distância ao penúltimo é >= step", () => {
+    expect(resolveVisibleXLabelIndices(11, 5)).toEqual([0, 5, 10]);
+  });
+
+  it("série curta com step 1 lista todos", () => {
+    expect(resolveVisibleXLabelIndices(4, 1)).toEqual([0, 1, 2, 3]);
+  });
+});
+
+describe("buildSeriesChartLayout viewBox dinâmico", () => {
+  it("respeita viewW/viewH informados", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { value: 1, label: "a" },
+        { value: 2, label: "b" },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 800,
+      viewH: 400,
+    });
+    expect(layout.viewW).toBe(800);
+    expect(layout.viewH).toBe(400);
+    expect(layout.visibleXLabelIndices.length).toBeGreaterThan(0);
+  });
+
+  it("step maior em plot estreito", () => {
+    const labels = Array.from({ length: 40 }, (_, i) => `11/0${i}/26`);
+    const step = resolveXLabelStep(40, 200, labels);
+    expect(step).toBeGreaterThan(1);
+    const indices = resolveVisibleXLabelIndices(40, step);
+    for (let i = 1; i < indices.length; i += 1) {
+      expect(indices[i]! - indices[i - 1]!).toBeGreaterThanOrEqual(1);
+    }
   });
 });

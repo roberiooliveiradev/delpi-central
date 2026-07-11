@@ -258,7 +258,8 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
     style: {
       fill: OFFICE_CHART_PLOT_FILL,
       stroke: OFFICE_CHART_PLOT_STROKE,
-      strokeWidth: 1,
+      // Contorno do plot desligado por default — eixos já delimitam (evita moldura dupla).
+      strokeWidth: 0,
       borderRadius: 0,
     },
   };
@@ -609,6 +610,6 @@ export function resolvePlotAreaStyle(parts?: ChartPartsMap | null): {
   return {
     fill: area?.style?.fill ?? OFFICE_CHART_PLOT_FILL,
     stroke: area?.style?.stroke ?? OFFICE_CHART_PLOT_STROKE,
-    strokeWidth: area?.style?.strokeWidth ?? 1,
+    strokeWidth: area?.style?.strokeWidth ?? 0,
   };
 }

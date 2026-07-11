@@ -26,7 +26,7 @@ export function ChartDataTable({
 
   const ref = { kind: "dataTable" as const };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
-  const interactive = Boolean(interaction?.onPartPointerDown);
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
   return (
     <table
@@ -37,6 +37,15 @@ export function ChartDataTable({
           ? (event) => {
               event.stopPropagation();
               interaction?.onPartPointerDown?.(ref, event);
+            }
+          : undefined
+      }
+      onDoubleClick={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+              interaction?.onPartDoubleClick?.(ref, event);
             }
           : undefined
       }
