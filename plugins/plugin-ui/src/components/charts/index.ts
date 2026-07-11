@@ -85,9 +85,14 @@ export {
 export {
   CHART_MARKER_RADIUS,
   CHART_PART_DATA_ATTR,
+  CHART_LINE_STROKE_WIDTH_SEMANTIC,
   CHART_SERIES_LINE_STROKE_WIDTH,
   chartOptionsToParts,
   chartPartDomProps,
+  chartPartVisualPrimitive,
+  chartPrimitiveSupportsFill,
+  chartPrimitiveSupportsStroke,
+  defaultStrokeWidthForChartPrimitive,
   findChartPartFromTarget,
   getChartPartState,
   isChartPartRefEqual,
@@ -95,6 +100,7 @@ export {
   parseChartPartRef,
   partsToChartOptions,
   resolveMarkerStyle,
+  resolveSeriesLineStyle,
   resolveSeriesStrokeColor,
   resolveSeriesStrokeWidth,
   serializeChartPartRef,
@@ -103,6 +109,7 @@ export {
   type ChartPartState,
   type ChartPartStyle,
   type ChartPartsMap,
+  type ChartVisualPrimitive,
   type SeriesChartInteraction,
 } from "./seriesChartParts";
 export {

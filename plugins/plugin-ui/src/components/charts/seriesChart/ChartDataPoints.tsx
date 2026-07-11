@@ -46,7 +46,7 @@ export function ChartDataPoints({
             r={marker.radius ?? CHART_MARKER_RADIUS}
             fill={marker.fill}
             stroke={marker.stroke}
-            strokeWidth={marker.stroke ? 1 : undefined}
+            strokeWidth={marker.stroke ? marker.strokeWidth || 1 : undefined}
             className={[cn.seriesMarker, selected ? `${cn.root}__part--selected` : ""]
               .filter(Boolean)
               .join(" ")}

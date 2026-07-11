@@ -10,16 +10,14 @@ import {
   isChartElementEnabled,
   mergeComunicadoChartOptions,
   partsToChartOptions,
-  serializeChartPartRef,
   setChartElementEnabled,
-  upsertChartPartState,
   type ComunicadoChartOptions,
-  type ComunicadoChartPartRef,
   type ComunicadoChartViewBlock,
   type ChartElementId,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { ChartPartInspector } from "./ChartPartInspector";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
@@ -34,31 +32,6 @@ function updateChartOptions(
   patch: Partial<ComunicadoChartOptions>,
 ): ComunicadoChartOptions {
   return { ...mergeComunicadoChartOptions(current), ...patch };
-}
-
-function chartPartLabel(part: ComunicadoChartPartRef): string {
-  switch (part.kind) {
-    case "title":
-      return "Título";
-    case "legend":
-      return "Legenda";
-    case "series":
-      return "Série";
-    case "marker":
-      return `Marcador ${part.pointIndex + 1}`;
-    case "dataLabel":
-      return `Rótulo ${part.pointIndex + 1}`;
-    case "axis":
-      return part.axis === "x" ? "Eixo X" : "Eixo Y";
-    case "axisTitle":
-      return part.axis === "x" ? "Título eixo X" : "Título eixo Y";
-    case "grid":
-      return "Grade";
-    case "dataTable":
-      return "Tabela de dados";
-    default:
-      return serializeChartPartRef(part);
-  }
 }
 
 function ChartElementPanel({
@@ -98,7 +71,7 @@ function ChartElementPanel({
 }
 
 export function ChartViewOptionsInspector({ pane = false }: Props) {
-  const { selected, updateSelected, selectedChartPart, clearChartPartSelection } = useComunicadoEditor();
+  const { selected, updateSelected } = useComunicadoEditor();
   if (!selected || selected.type !== "chart_view") return null;
 
   const block = selected as ComunicadoChartViewBlock;
@@ -119,19 +92,6 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
     persistOptions(updateChartOptions(block.chartOptions, patch));
   };
 
-  const patchSelectedPart = (patch: {
-    content?: string;
-    style?: { fill?: string; stroke?: string; markerRadius?: number };
-  }) => {
-    if (!selectedChartPart) return;
-    const nextParts = upsertChartPartState(block.chartParts, selectedChartPart, patch);
-    const nextOptions = mergeComunicadoChartOptions({
-      ...block.chartOptions,
-      ...partsToChartOptions(nextParts),
-    });
-    updateSelected({ chartParts: nextParts, chartOptions: nextOptions } as Partial<typeof selected>);
-  };
-
   const toggleElement = (elementId: ChartElementId, enabled: boolean) => {
     setOptions(setChartElementEnabled(elementId, enabled));
   };
@@ -140,58 +100,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
 
   return (
     <>
-      {selectedChartPart ? (
-        <DeckPropertySection
-          pane={pane}
-          title={`Parte: ${chartPartLabel(selectedChartPart)}`}
-          hint="Clique em outro elemento do gráfico no palco ou limpe a seleção."
-        >
-          <button type="button" className="td-deck-btn td-deck-btn--ghost" onClick={clearChartPartSelection}>
-            Limpar subseleção
-          </button>
-          {selectedChartPart.kind === "title" ? (
-            <DeckField id="td-chart-part-title" label="Texto do título">
-              <input
-                id="td-chart-part-title"
-                type="text"
-                value={options.title ?? ""}
-                placeholder="Ex.: ROL"
-                onChange={(event) => setOptions({ title: event.target.value, showTitle: true })}
-              />
-            </DeckField>
-          ) : null}
-          {selectedChartPart.kind === "series" || selectedChartPart.kind === "legend" ? (
-            <DeckField id="td-chart-part-series-color" label="Cor da série">
-              <TvRibbonColorPicker
-                inline
-                label="Cor da série"
-                value={options.seriesColor ?? "#0d7a8c"}
-                onChange={(color) => setOptions({ seriesColor: color })}
-              />
-            </DeckField>
-          ) : null}
-          {selectedChartPart.kind === "marker" ? (
-            <DeckField id="td-chart-part-marker-fill" label="Cor do marcador">
-              <TvRibbonColorPicker
-                inline
-                label="Cor do marcador"
-                value={options.seriesColor ?? "#0d7a8c"}
-                onChange={(color) => patchSelectedPart({ style: { fill: color } })}
-              />
-            </DeckField>
-          ) : null}
-          {selectedChartPart.kind === "legend" ? (
-            <DeckField id="td-chart-part-series-name" label="Nome da série">
-              <input
-                id="td-chart-part-series-name"
-                type="text"
-                value={options.seriesName ?? ""}
-                onChange={(event) => setOptions({ seriesName: event.target.value })}
-              />
-            </DeckField>
-          ) : null}
-        </DeckPropertySection>
-      ) : null}
+      <ChartPartInspector pane={pane} block={block} />
 
       <DeckPropertySection pane={pane} title="Elementos do gráfico" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartElements}>
         <div className="td-chart-elements" role="group" aria-label="Elementos do gráfico">

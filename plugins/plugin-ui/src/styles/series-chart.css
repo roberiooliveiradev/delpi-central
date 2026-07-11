@@ -152,6 +152,20 @@
   outline-offset: 2px;
 }
 
+.delpi-ui-series-chart__part--editing {
+  outline: 2px solid var(--primary, #089bdb);
+  outline-offset: 2px;
+  cursor: text;
+  min-width: 2rem;
+}
+
+.td-chart-part-inspector__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
 .delpi-ui-series-chart__series-line.delpi-ui-series-chart__part--selected,
 .delpi-ui-series-chart__series-line[aria-selected="true"] {
   stroke-width: 3;

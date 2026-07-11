@@ -60,6 +60,11 @@ export type ComunicadoEditorContextValue = {
   selectedChartPart: ComunicadoChartPartRef | null;
   selectChartPart: (blockId: string, part: ComunicadoChartPartRef) => void;
   clearChartPartSelection: () => void;
+  /** Edição inline de conteúdo da parte (título). */
+  editingChartPart: ComunicadoChartPartRef | null;
+  beginEditChartPart: (blockId: string, part: ComunicadoChartPartRef) => void;
+  commitChartPartContent: (content: string) => void;
+  cancelEditChartPart: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
   textEditSelection: TextEditSelection | null;

@@ -3,8 +3,12 @@ import {
   ComunicadoBlockView,
   ComunicadoMediaPlaceholder,
   blockCssStyle,
+  chartOptionsToParts,
   comunicadoImageCropCssProperties,
   isComunicadoVisualBoxBlock,
+  mergeComunicadoChartOptions,
+  partsToChartOptions,
+  upsertChartPartState,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartViewBlock,
@@ -80,25 +84,79 @@ function EditorChartViewBlock({
   className?: string;
   dataLoading?: boolean;
 }) {
-  const { selectedId, selectedChartPart, selectChartPart, requestRibbonTab } = useComunicadoEditor();
+  const {
+    selectedId,
+    selectedChartPart,
+    editingChartPart,
+    selectChartPart,
+    beginEditChartPart,
+    commitChartPartContent,
+    cancelEditChartPart,
+    requestRibbonTab,
+    updateBlock,
+  } = useComunicadoEditor();
 
   const onPartPointerDown = useCallback(
-    (ref: ComunicadoChartPartRef, _event: unknown) => {
+    (ref: ComunicadoChartPartRef) => {
       selectChartPart(block.id, ref);
       requestRibbonTab("format");
     },
     [block.id, requestRibbonTab, selectChartPart],
   );
 
+  const onPartDoubleClick = useCallback(
+    (ref: ComunicadoChartPartRef) => {
+      if (ref.kind === "title" || ref.kind === "legend" || ref.kind === "axisTitle") {
+        beginEditChartPart(block.id, ref);
+        requestRibbonTab("format");
+      } else {
+        selectChartPart(block.id, ref);
+        requestRibbonTab("format");
+      }
+    },
+    [beginEditChartPart, block.id, requestRibbonTab, selectChartPart],
+  );
+
+  const onPartContentCommit = useCallback(
+    (ref: ComunicadoChartPartRef, content: string) => {
+      if (editingChartPart && ref.kind === editingChartPart.kind) {
+        commitChartPartContent(content);
+        return;
+      }
+      const nextParts = upsertChartPartState(block.chartParts, ref, { content, visible: true });
+      const nextOptions = mergeComunicadoChartOptions({
+        ...block.chartOptions,
+        ...partsToChartOptions(nextParts),
+      });
+      if (ref.kind === "title") {
+        nextOptions.title = content;
+        nextOptions.showTitle = true;
+      }
+      updateBlock(block.id, {
+        chartParts: { ...chartOptionsToParts(nextOptions), ...nextParts },
+        chartOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+    },
+    [block, commitChartPartContent, editingChartPart, updateBlock],
+  );
+
   const interaction =
     selectedId === block.id
       ? {
           selectedPart: selectedChartPart,
+          editingPart: editingChartPart,
           onPartPointerDown,
+          onPartDoubleClick,
+          onPartContentCommit,
+          onPartEditCancel: cancelEditChartPart,
         }
       : {
           selectedPart: null,
+          editingPart: null,
           onPartPointerDown,
+          onPartDoubleClick,
+          onPartContentCommit,
+          onPartEditCancel: cancelEditChartPart,
         };
 
   return (

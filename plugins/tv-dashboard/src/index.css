@@ -1148,6 +1148,13 @@
   cursor: pointer;
 }
 
+.td-chart-part-inspector__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
 .td-composer__inline-text--shape {
   width: 100%;
   min-height: 1em;

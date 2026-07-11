@@ -57,9 +57,19 @@ describe("seriesChartParts", () => {
     expect(resolveMarkerStyle(parts, 0, 1, "#abcdef")).toEqual({
       fill: "#ff0000",
       stroke: undefined,
+      strokeWidth: 0,
       radius: 4,
       visible: true,
     });
+  });
+
+  it("série herda stroke como primitivo line; marcador herda fill da série", () => {
+    const parts = upsertChartPartState({}, { kind: "series", seriesIndex: 0 }, {
+      style: { stroke: "#0d7a8c", strokeWidth: 3 },
+    });
+    const options = mergeSeriesChartOptions({});
+    expect(resolveSeriesStrokeColor(options, parts)).toBe("#0d7a8c");
+    expect(resolveMarkerStyle(parts, 0, 0, "#000").fill).toBe("#0d7a8c");
   });
 
   it("findChartPartFromTarget lê data-chart-part", () => {

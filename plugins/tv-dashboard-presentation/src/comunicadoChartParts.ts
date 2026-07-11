@@ -1,14 +1,3 @@
-/**
- * Reexport canônico das partes do gráfico (Onda 4G) — sem duplicar lógica.
- */
-export type {
-  ChartPartRef as ComunicadoChartPartRef,
-  ChartPartState as ComunicadoChartPartState,
-  ChartPartStyle as ComunicadoChartPartStyle,
-  ChartPartsMap as ComunicadoChartPartsMap,
-  SeriesChartInteraction as ComunicadoChartInteraction,
-} from "@delpi/plugin-ui/index";
-
 export {
   CHART_MARKER_RADIUS,
   CHART_PART_DATA_ATTR,
@@ -26,4 +15,12 @@ export {
   resolveSeriesStrokeWidth,
   serializeChartPartRef,
   upsertChartPartState,
+  chartPartVisualPrimitive,
+  chartPrimitiveSupportsFill,
+  chartPrimitiveSupportsStroke,
+  type ChartPartRef as ComunicadoChartPartRef,
+  type ChartPartState as ComunicadoChartPartState,
+  type ChartPartStyle as ComunicadoChartPartStyle,
+  type ChartPartsMap as ComunicadoChartPartsMap,
+  type SeriesChartInteraction as ComunicadoChartInteraction,
 } from "@delpi/plugin-ui/index";

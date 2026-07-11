@@ -1579,10 +1579,10 @@ Pointer down no palco
 |---|---|---|---|
 | 4G.1 | Contrato `ChartPartRef` + adapter `chartOptions` ↔ `chartParts` + testes | M | ✅ |
 | 4G.2 | Props de seleção/hit nos filhos canônicos (`plugin-ui` seriesChart/*) | M | ✅ |
-| 4G.3 | Estado `selectedChartPart` + pointer no compositor (sem drag do frame) | L | ✅ parcial |
-| 4G.4 | Herança de estilo: série←`line`, marcador←`point` (unificar `seriesColor`) | M | ❌ |
-| 4G.5 | Edição inline do título (e axis titles) no palco | M | ❌ |
-| 4G.6 | `ChartPartInspector` unificado (reusa campos de forma/texto) | M | ❌ |
+| 4G.3 | Estado `selectedChartPart` + pointer no compositor (sem drag do frame) | L | ✅ |
+| 4G.4 | Herança de estilo: série←`line`, marcador←`point` (unificar `seriesColor`) | M | ✅ |
+| 4G.5 | Edição inline do título (e axis titles) no palco | M | ✅ |
+| 4G.6 | `ChartPartInspector` unificado (reusa campos de forma/texto) | M | ✅ |
 | 4G.7 | Migração UI: catálogo de elementos vira seleção/visibilidade de partes | S | ❌ |
 | 4G.8 | Extensão a `table_view` (célula/cabeçalho) — mesmo padrão de part ref | L | backlog |
 

@@ -13,10 +13,45 @@ export const CHART_PART_DATA_ATTR = "data-chart-part";
 
 /**
  * Defaults alinhados a `ComunicadoVisualPrimitive` (point → line → area):
- * linha usa stroke; ponto usa fill + radius de hit.
+ * linha usa stroke; ponto usa fill + radius.
+ * Unidades SVG do gráfico (não % do palco de formas).
  */
+export type ChartVisualPrimitive = "point" | "line" | "area";
+
+/** Espessura semântica da linha (igual `defaultStrokeWidthForPrimitive("line")`). */
+export const CHART_LINE_STROKE_WIDTH_SEMANTIC = 4;
+/** Espessura renderizada no SVG (escala do viewBox). */
 export const CHART_SERIES_LINE_STROKE_WIDTH = 2;
+/** Raio do marcador no SVG (primitivo point). */
 export const CHART_MARKER_RADIUS = 2.5;
+
+export function chartPartVisualPrimitive(ref: ChartPartRef): ChartVisualPrimitive | null {
+  switch (ref.kind) {
+    case "series":
+      return "line";
+    case "marker":
+      return "point";
+    case "grid":
+    case "axis":
+      return "line";
+    default:
+      return null;
+  }
+}
+
+export function defaultStrokeWidthForChartPrimitive(primitive: ChartVisualPrimitive): number {
+  if (primitive === "point") return 0;
+  if (primitive === "line") return CHART_SERIES_LINE_STROKE_WIDTH;
+  return CHART_SERIES_LINE_STROKE_WIDTH;
+}
+
+export function chartPrimitiveSupportsFill(primitive: ChartVisualPrimitive): boolean {
+  return primitive !== "line";
+}
+
+export function chartPrimitiveSupportsStroke(primitive: ChartVisualPrimitive): boolean {
+  return primitive === "line" || primitive === "area" || primitive === "point";
+}
 
 export type ChartPartRef =
   | { kind: "title" }
@@ -54,7 +89,12 @@ export type ChartPartsMap = Record<string, ChartPartState>;
 
 export type SeriesChartInteraction = {
   selectedPart?: ChartPartRef | null;
+  /** Parte em edição inline (ex.: título). */
+  editingPart?: ChartPartRef | null;
   onPartPointerDown?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
+  onPartDoubleClick?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
+  onPartContentCommit?: (ref: ChartPartRef, content: string) => void;
+  onPartEditCancel?: () => void;
 };
 
 export function serializeChartPartRef(ref: ChartPartRef): string {
@@ -297,7 +337,7 @@ export function mergeSeriesChartOptionsWithParts(
   return mergeSeriesChartOptions({ ...mergeSeriesChartOptions(options), ...fromParts });
 }
 
-/** Cor da série: primitivo line (stroke) com fallback options. */
+/** Cor da série: primitivo line (stroke) — única fonte; `seriesColor` só como fallback legado. */
 export function resolveSeriesStrokeColor(
   options: SeriesChartOptions,
   parts?: ChartPartsMap | null,
@@ -308,20 +348,40 @@ export function resolveSeriesStrokeColor(
 
 export function resolveSeriesStrokeWidth(parts?: ChartPartsMap | null): number {
   const series = getChartPartState(parts, { kind: "series", seriesIndex: 0 });
-  return series?.style?.strokeWidth ?? CHART_SERIES_LINE_STROKE_WIDTH;
+  const primitive = "line" as const;
+  return series?.style?.strokeWidth ?? defaultStrokeWidthForChartPrimitive(primitive);
 }
 
+/**
+ * Marcador (point): fill herda stroke da série; stroke/radius opcionais no part.
+ */
 export function resolveMarkerStyle(
   parts: ChartPartsMap | null | undefined,
   seriesIndex: number,
   pointIndex: number,
   seriesColor: string,
-): { fill: string; stroke?: string; radius: number; visible: boolean } {
+): { fill: string; stroke?: string; strokeWidth: number; radius: number; visible: boolean } {
   const marker = getChartPartState(parts, { kind: "marker", seriesIndex, pointIndex });
   const series = getChartPartState(parts, { kind: "series", seriesIndex });
-  const fill = marker?.style?.fill ?? series?.style?.fill ?? seriesColor;
+  const inheritedFill = series?.style?.stroke ?? series?.style?.fill ?? seriesColor;
+  const fill = marker?.style?.fill ?? inheritedFill;
   const stroke = marker?.style?.stroke;
+  const strokeWidth =
+    marker?.style?.strokeWidth ?? defaultStrokeWidthForChartPrimitive("point");
   const radius = marker?.style?.markerRadius ?? CHART_MARKER_RADIUS;
   const visible = marker?.visible !== false;
-  return { fill, stroke, radius, visible };
+  return { fill, stroke, strokeWidth, radius, visible };
+}
+
+/** Estilo efetivo da série como primitivo `line`. */
+export function resolveSeriesLineStyle(
+  options: SeriesChartOptions,
+  parts?: ChartPartsMap | null,
+): { stroke: string; strokeWidth: number; opacity?: number } {
+  const series = getChartPartState(parts, { kind: "series", seriesIndex: 0 });
+  return {
+    stroke: resolveSeriesStrokeColor(options, parts),
+    strokeWidth: resolveSeriesStrokeWidth(parts),
+    opacity: series?.style?.opacity,
+  };
 }

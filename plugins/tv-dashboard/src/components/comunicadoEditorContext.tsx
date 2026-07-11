@@ -49,6 +49,10 @@ import {
   type ComunicadoChartType,
   type ComunicadoChartPartRef,
   type ComunicadoTablePreset,
+  chartOptionsToParts,
+  mergeComunicadoChartOptions,
+  partsToChartOptions,
+  upsertChartPartState,
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
@@ -156,6 +160,7 @@ export function ComunicadoEditorProvider({
   });
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
+  const [editingChartPart, setEditingChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
@@ -196,6 +201,7 @@ export function ComunicadoEditorProvider({
     setSelectedIds(id ? [id] : []);
     setEditingTextId((current) => (id === current ? current : null));
     setSelectedChartPart(null);
+    setEditingChartPart(null);
     if (!id) {
       setTextEditSelection(null);
       setTextEditSelectionStyle(null);
@@ -210,6 +216,7 @@ export function ComunicadoEditorProvider({
     setSelectedIds(unique);
     setEditingTextId(null);
     setSelectedChartPart(null);
+    setEditingChartPart(null);
   }, [flushActiveTextEdit]);
 
   const selectBlock = useCallback(
@@ -236,6 +243,7 @@ export function ComunicadoEditorProvider({
       }
       setEditingTextId(null);
       setSelectedChartPart(null);
+      setEditingChartPart(null);
     },
     [flushActiveTextEdit],
   );
@@ -245,6 +253,7 @@ export function ComunicadoEditorProvider({
     setSelectedIds([]);
     setEditingTextId(null);
     setSelectedChartPart(null);
+    setEditingChartPart(null);
   }, [flushActiveTextEdit]);
 
   const selectChartPart = useCallback(
@@ -253,12 +262,29 @@ export function ComunicadoEditorProvider({
       setSelectedIds([blockId]);
       setEditingTextId(null);
       setSelectedChartPart(part);
+      setEditingChartPart(null);
     },
     [flushActiveTextEdit],
   );
 
   const clearChartPartSelection = useCallback(() => {
     setSelectedChartPart(null);
+    setEditingChartPart(null);
+  }, []);
+
+  const beginEditChartPart = useCallback(
+    (blockId: string, part: ComunicadoChartPartRef) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(part);
+      setEditingChartPart(part);
+    },
+    [flushActiveTextEdit],
+  );
+
+  const cancelEditChartPart = useCallback(() => {
+    setEditingChartPart(null);
   }, []);
 
   const isBlockSelected = useCallback(
@@ -656,6 +682,45 @@ export function ComunicadoEditorProvider({
     );
     updateBlocks(nextBlocks);
   }
+
+  const commitChartPartContent = useCallback(
+    (content: string) => {
+      const part = editingChartPart;
+      const blockId = selectedIds[selectedIds.length - 1] ?? null;
+      setEditingChartPart(null);
+      if (!part || !blockId) return;
+      const block = configRef.current.blocks?.find((item) => item.id === blockId);
+      if (!block || block.type !== "chart_view") return;
+
+      const nextParts = upsertChartPartState(block.chartParts, part, {
+        content,
+        visible: true,
+      });
+      const nextOptions = mergeComunicadoChartOptions({
+        ...block.chartOptions,
+        ...partsToChartOptions(nextParts),
+      });
+      if (part.kind === "title") {
+        nextOptions.title = content;
+        nextOptions.showTitle = true;
+      } else if (part.kind === "legend" || part.kind === "series") {
+        nextOptions.seriesName = content;
+      } else if (part.kind === "axisTitle" && part.axis === "x") {
+        nextOptions.xAxisTitle = content;
+        nextOptions.showXAxisTitle = true;
+      } else if (part.kind === "axisTitle" && part.axis === "y") {
+        nextOptions.yAxisTitle = content;
+        nextOptions.showYAxisTitle = true;
+      }
+      // Garante projeção completa options ↔ parts
+      const syncedParts = chartOptionsToParts(nextOptions);
+      updateBlock(blockId, {
+        chartParts: { ...nextParts, ...syncedParts },
+        chartOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+    },
+    [editingChartPart, selectedIds],
+  );
 
   function updateBlockContent(blockId: string, content: string) {
     updateBlockTextFields(blockId, syncTextBlockFields(content, undefined));
@@ -1100,6 +1165,10 @@ export function ComunicadoEditorProvider({
     selectedChartPart,
     selectChartPart,
     clearChartPartSelection,
+    editingChartPart,
+    beginEditChartPart,
+    commitChartPartContent,
+    cancelEditChartPart,
     editingTextId,
     setEditingTextId: setEditingTextIdWithSelection,
     textEditSelection,
