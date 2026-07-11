@@ -1,4 +1,12 @@
 import type { SeriesChartOptions, SeriesChartKind } from "./seriesChartOptions";
+import { mergeSeriesChartOptions } from "./seriesChartOptions";
+import {
+  chartOptionsToParts,
+  serializeChartPartRef,
+  upsertChartPartState,
+  type ChartPartRef,
+  type ChartPartsMap,
+} from "./seriesChartParts";
 
 export type SeriesChartElementId =
   | "axes"
@@ -8,7 +16,8 @@ export type SeriesChartElementId =
   | "dataTable"
   | "gridlines"
   | "legend"
-  | "markers";
+  | "markers"
+  | "series";
 
 export type SeriesChartElementDefinition = {
   id: SeriesChartElementId;
@@ -18,14 +27,15 @@ export type SeriesChartElementDefinition = {
 };
 
 export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
+  { id: "chartTitle", label: "Título do gráfico", hint: "Título central acima da área de plotagem." },
+  { id: "series", label: "Série", hint: "Linha ou colunas dos dados (primitivo line/area)." },
+  { id: "legend", label: "Legenda", hint: "Identificação da série de dados." },
   { id: "axes", label: "Eixos", hint: "Linhas dos eixos e rótulos de escala." },
   { id: "axisTitles", label: "Títulos dos eixos", hint: "Nome descritivo dos eixos X e Y." },
-  { id: "chartTitle", label: "Título do gráfico", hint: "Título central acima da área de plotagem." },
+  { id: "gridlines", label: "Linhas de grade", hint: "Linhas horizontais e verticais de referência." },
+  { id: "markers", label: "Marcadores", hint: "Pontos sobre a linha do gráfico.", chartTypes: ["line"] },
   { id: "dataLabels", label: "Rótulos de dados", hint: "Valor exibido em cada ponto ou barra." },
   { id: "dataTable", label: "Tabela de dados", hint: "Grade com períodos e valores abaixo do gráfico." },
-  { id: "gridlines", label: "Linhas de grade", hint: "Linhas horizontais e verticais de referência." },
-  { id: "legend", label: "Legenda", hint: "Identificação da série de dados." },
-  { id: "markers", label: "Marcadores", hint: "Pontos sobre a linha do gráfico.", chartTypes: ["line"] },
 ];
 
 export function isSeriesChartElementApplicable(
@@ -56,6 +66,8 @@ export function isSeriesChartElementEnabled(
       return options.showLegend !== false && options.legendPosition !== "hidden";
     case "markers":
       return options.showMarkers !== false;
+    case "series":
+      return true;
     default:
       return false;
   }
@@ -91,9 +103,107 @@ export function setSeriesChartElementEnabled(
         : { showLegend: false, legendPosition: "hidden" };
     case "markers":
       return { showMarkers: enabled };
+    case "series":
+      return {};
     default:
       return {};
   }
+}
+
+/** Partes endereçáveis cobertas pelo item do catálogo (Onda 4G.7). */
+export function chartElementPartRefs(elementId: SeriesChartElementId): ChartPartRef[] {
+  switch (elementId) {
+    case "chartTitle":
+      return [{ kind: "title" }];
+    case "legend":
+      return [{ kind: "legend" }];
+    case "series":
+      return [{ kind: "series", seriesIndex: 0 }];
+    case "axes":
+      return [
+        { kind: "axis", axis: "x" },
+        { kind: "axis", axis: "y" },
+      ];
+    case "axisTitles":
+      return [
+        { kind: "axisTitle", axis: "x" },
+        { kind: "axisTitle", axis: "y" },
+      ];
+    case "gridlines":
+      return [{ kind: "grid" }];
+    case "dataTable":
+      return [{ kind: "dataTable" }];
+    case "markers":
+    case "dataLabels":
+      return [];
+    default:
+      return [];
+  }
+}
+
+/** Parte principal para seleção no palco ao focar o item do catálogo. */
+export function chartElementPrimaryPartRef(elementId: SeriesChartElementId): ChartPartRef | null {
+  return chartElementPartRefs(elementId)[0] ?? null;
+}
+
+/**
+ * Liga/desliga elemento sincronizando `chartOptions` flat e `chartParts`.
+ * Fonte canônica para o inspetor (sem duplicar toggles só em options).
+ */
+export function applyChartElementVisibility(
+  elementId: SeriesChartElementId,
+  enabled: boolean,
+  options: SeriesChartOptions,
+  parts?: ChartPartsMap | null,
+): { options: SeriesChartOptions; parts: ChartPartsMap } {
+  const optionPatch = setSeriesChartElementEnabled(elementId, enabled);
+  const nextOptions = mergeSeriesChartOptions({ ...options, ...optionPatch });
+  let nextParts: ChartPartsMap = { ...(parts ?? {}), ...chartOptionsToParts(options) };
+
+  for (const ref of chartElementPartRefs(elementId)) {
+    nextParts = upsertChartPartState(nextParts, ref, { visible: enabled });
+  }
+
+  nextParts = { ...nextParts, ...chartOptionsToParts(nextOptions) };
+  return { options: nextOptions, parts: nextParts };
+}
+
+export function chartElementIdForPartRef(ref: ChartPartRef): SeriesChartElementId | null {
+  switch (ref.kind) {
+    case "title":
+      return "chartTitle";
+    case "legend":
+      return "legend";
+    case "series":
+      return "series";
+    case "axis":
+      return "axes";
+    case "axisTitle":
+      return "axisTitles";
+    case "grid":
+      return "gridlines";
+    case "dataTable":
+      return "dataTable";
+    case "marker":
+      return "markers";
+    case "dataLabel":
+      return "dataLabels";
+    default:
+      return null;
+  }
+}
+
+export function isChartElementOpenForPart(
+  elementId: SeriesChartElementId,
+  selectedPart: ChartPartRef | null | undefined,
+): boolean {
+  if (!selectedPart) return false;
+  return chartElementIdForPartRef(selectedPart) === elementId;
+}
+
+/** @deprecated prefer serializeChartPartRef */
+export function chartPartKey(ref: ChartPartRef): string {
+  return serializeChartPartRef(ref);
 }
 
 export const CHART_ELEMENT_CATALOG = SERIES_CHART_ELEMENT_CATALOG;

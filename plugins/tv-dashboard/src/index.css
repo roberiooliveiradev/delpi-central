@@ -3420,6 +3420,24 @@
   color: var(--td-text);
 }
 
+.td-chart-element__label-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--td-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.td-chart-element__label-btn:hover {
+  color: var(--td-accent, var(--primary, #089bdb));
+}
+
 .td-chart-element__hint {
   grid-column: 2 / -1;
   font-size: 11px;

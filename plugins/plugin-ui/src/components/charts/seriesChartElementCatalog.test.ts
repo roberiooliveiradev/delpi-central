@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   SERIES_CHART_ELEMENT_CATALOG,
+  applyChartElementVisibility,
+  chartElementIdForPartRef,
+  chartElementPartRefs,
+  chartElementPrimaryPartRef,
+  isChartElementOpenForPart,
   isSeriesChartElementApplicable,
   isSeriesChartElementEnabled,
   setSeriesChartElementEnabled,
@@ -14,6 +19,7 @@ describe("seriesChartElementCatalog", () => {
     expect(labels).toContain("Eixos");
     expect(labels).toContain("Tabela de dados");
     expect(labels).toContain("Legenda");
+    expect(labels).toContain("Série");
   });
 
   it("marcadores só em gráfico de linhas", () => {
@@ -34,5 +40,26 @@ describe("seriesChartElementCatalog", () => {
     expect(isSeriesChartElementEnabled("dataTable", DEFAULT_SERIES_CHART_OPTIONS)).toBe(false);
     const on = mergeSeriesChartOptions(setSeriesChartElementEnabled("dataTable", true));
     expect(isSeriesChartElementEnabled("dataTable", on)).toBe(true);
+  });
+
+  it("mapeia catálogo → ChartPartRef (4G.7)", () => {
+    expect(chartElementPrimaryPartRef("chartTitle")).toEqual({ kind: "title" });
+    expect(chartElementPartRefs("axes")).toEqual([
+      { kind: "axis", axis: "x" },
+      { kind: "axis", axis: "y" },
+    ]);
+    expect(chartElementIdForPartRef({ kind: "series", seriesIndex: 0 })).toBe("series");
+    expect(isChartElementOpenForPart("legend", { kind: "legend" })).toBe(true);
+  });
+
+  it("applyChartElementVisibility sincroniza options e parts", () => {
+    const base = mergeSeriesChartOptions({ showTitle: true, title: "OEE" });
+    const off = applyChartElementVisibility("chartTitle", false, base, null);
+    expect(off.options.showTitle).toBe(false);
+    expect(off.parts.title?.visible).toBe(false);
+
+    const on = applyChartElementVisibility("legend", false, base, off.parts);
+    expect(on.options.showLegend).toBe(false);
+    expect(on.parts.legend?.visible).toBe(false);
   });
 });

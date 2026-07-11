@@ -4,13 +4,15 @@ import {
   CHART_ELEMENT_CATALOG,
   CHART_LEGEND_POSITION_OPTIONS,
   CHART_VALUE_FORMAT_OPTIONS,
+  applyChartElementVisibility,
+  chartElementPrimaryPartRef,
   chartOptionsToParts,
   chartTypeToLegacyDisplayMode,
   isChartElementApplicable,
   isChartElementEnabled,
+  isChartElementOpenForPart,
   mergeComunicadoChartOptions,
   partsToChartOptions,
-  setChartElementEnabled,
   type ComunicadoChartOptions,
   type ComunicadoChartViewBlock,
   type ChartElementId,
@@ -37,20 +39,24 @@ function updateChartOptions(
 function ChartElementPanel({
   elementId,
   enabled,
+  open,
   onToggle,
+  onSelect,
   children,
   label,
   hint,
 }: {
   elementId: ChartElementId;
   enabled: boolean;
+  open: boolean;
   onToggle: (next: boolean) => void;
+  onSelect: () => void;
   children?: ReactNode;
   label: string;
   hint?: string;
 }) {
   return (
-    <details className="td-chart-element" open={enabled}>
+    <details className="td-chart-element" open={open || enabled}>
       <summary className="td-chart-element__summary">
         <label className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
           <input
@@ -60,9 +66,17 @@ function ChartElementPanel({
             onChange={(event) => onToggle(event.target.checked)}
           />
         </label>
-        <span className="td-chart-element__label" id={`td-chart-element-${elementId}`}>
+        <button
+          type="button"
+          className="td-chart-element__label-btn"
+          id={`td-chart-element-${elementId}`}
+          onClick={(event) => {
+            event.preventDefault();
+            onSelect();
+          }}
+        >
           {label}
-        </span>
+        </button>
         {hint ? <span className="td-chart-element__hint">{hint}</span> : null}
       </summary>
       {enabled && children ? <div className="td-chart-element__body">{children}</div> : null}
@@ -71,7 +85,7 @@ function ChartElementPanel({
 }
 
 export function ChartViewOptionsInspector({ pane = false }: Props) {
-  const { selected, updateSelected } = useComunicadoEditor();
+  const { selected, updateSelected, selectChartPart, selectedChartPart } = useComunicadoEditor();
   if (!selected || selected.type !== "chart_view") return null;
 
   const block = selected as ComunicadoChartViewBlock;
@@ -92,8 +106,25 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
     persistOptions(updateChartOptions(block.chartOptions, patch));
   };
 
+  const focusElement = (elementId: ChartElementId) => {
+    const primary = chartElementPrimaryPartRef(elementId);
+    if (primary) selectChartPart(block.id, primary);
+  };
+
   const toggleElement = (elementId: ChartElementId, enabled: boolean) => {
-    setOptions(setChartElementEnabled(elementId, enabled));
+    if (elementId === "series" && !enabled) {
+      focusElement(elementId);
+      return;
+    }
+    const result = applyChartElementVisibility(elementId, enabled, options, block.chartParts);
+    updateSelected({
+      chartOptions: result.options,
+      chartParts: result.parts,
+    } as Partial<typeof selected>);
+    if (enabled) {
+      const primary = chartElementPrimaryPartRef(elementId);
+      if (primary) selectChartPart(block.id, primary);
+    }
   };
 
   const elements = CHART_ELEMENT_CATALOG.filter((entry) => isChartElementApplicable(entry, chartKind));
@@ -106,6 +137,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
         <div className="td-chart-elements" role="group" aria-label="Elementos do gráfico">
           {elements.map((element) => {
             const enabled = isChartElementEnabled(element.id, options);
+            const open = isChartElementOpenForPart(element.id, selectedChartPart);
             return (
               <ChartElementPanel
                 key={element.id}
@@ -113,7 +145,9 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
                 label={element.label}
                 hint={element.hint}
                 enabled={enabled}
+                open={open}
                 onToggle={(next) => toggleElement(element.id, next)}
+                onSelect={() => focusElement(element.id)}
               >
                 {element.id === "chartTitle" ? (
                   <DeckField id="td-chart-title" label="Texto do título" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartTitle}>

@@ -257,6 +257,11 @@ export {
   isChartElementApplicable,
   isChartElementEnabled,
   setChartElementEnabled,
+  applyChartElementVisibility,
+  chartElementPartRefs,
+  chartElementPrimaryPartRef,
+  chartElementIdForPartRef,
+  isChartElementOpenForPart,
   type ChartElementDefinition,
   type ChartElementId,
 } from "./chartElementCatalog";

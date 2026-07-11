@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.4
 > **Data:** 2026-07-10
-> **Status:** … **v1.3.8 (jul/2026):** 4E.2 animações entrada por bloco. **v1.4 (jul/2026):** 4F parcial avançado — arquitetura `data_source` + `chart_view`/`table_view`, catálogo OpenAPI completo, gráficos com elementos configuráveis (§18). **Próximo (Onda 4G — §19):** gráfico composto por primitivos (ponto→linha→forma) com subseleção no palco (título, série, marcadores…). **Backlog:** 4E.3–4E.5 master/export; 4F tipos avançados; 4G composição editável.
+> **Status:** … **v1.4 (jul/2026):** 4F parcial. **Onda 4G (§19):** 4G.1–4G.7 ✅ (partes selecionáveis, herança point/line, título inline, inspetor, catálogo↔partes). **Backlog:** 4E.3–4E.5; 4F tipos avançados; 4G.8 table_view parts.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -1583,7 +1583,7 @@ Pointer down no palco
 | 4G.4 | Herança de estilo: série←`line`, marcador←`point` (unificar `seriesColor`) | M | ✅ |
 | 4G.5 | Edição inline do título (e axis titles) no palco | M | ✅ |
 | 4G.6 | `ChartPartInspector` unificado (reusa campos de forma/texto) | M | ✅ |
-| 4G.7 | Migração UI: catálogo de elementos vira seleção/visibilidade de partes | S | ❌ |
+| 4G.7 | Migração UI: catálogo de elementos vira seleção/visibilidade de partes | S | ✅ |
 | 4G.8 | Extensão a `table_view` (célula/cabeçalho) — mesmo padrão de part ref | L | backlog |
 
 **Critérios de aceite 4G:**

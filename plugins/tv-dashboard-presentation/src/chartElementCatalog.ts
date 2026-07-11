@@ -8,4 +8,9 @@ export {
   isSeriesChartElementApplicable as isChartElementApplicable,
   isSeriesChartElementEnabled as isChartElementEnabled,
   setSeriesChartElementEnabled as setChartElementEnabled,
+  applyChartElementVisibility,
+  chartElementPartRefs,
+  chartElementPrimaryPartRef,
+  chartElementIdForPartRef,
+  isChartElementOpenForPart,
 } from "@delpi/plugin-ui/index";
