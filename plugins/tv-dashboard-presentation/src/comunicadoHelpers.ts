@@ -225,8 +225,11 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     shape === "arrow-left" ||
     shape === "arrow-up" ||
     shape === "arrow-down" ||
+    shape === "arrow-left-right" ||
+    shape === "arrow-up-down" ||
     shape === "chevron-right" ||
-    shape === "chevron-left"
+    shape === "chevron-left" ||
+    shape === "notched-arrow-right"
   ) {
     return { x: 35, y: 40, w: 30, h: 20 };
   }
@@ -274,10 +277,13 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       strokeWidth: defaultStrokeWidthForPrimitive(primitive),
       opacity: primitive === "area" ? 0.9 : 1,
     };
-    if (isPointShapeKind(shape)) {
+    if (shape && isPointShapeKind(shape)) {
       return { ...base, markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT };
     }
-    if (shape === "rounded-rect" || shape === "callout-rect") return { ...base, borderRadius: 16 };
+    if (shape === "rounded-rect" || shape === "callout-rect" || shape === "callout-rounded") {
+      return { ...base, borderRadius: 16 };
+    }
+    if (shape === "round-same-side-rect") return { ...base, borderRadius: 12 };
     if (shape === "ellipse" || shape === "flowchart-terminator") return { ...base, borderRadius: 9999 };
     if (shape === "flowchart-process") return { ...base, borderRadius: 4 };
     return base;

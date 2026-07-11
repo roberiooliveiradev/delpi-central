@@ -1,8 +1,16 @@
-import { BarChart3, Home, Eye, LayoutTemplate, Paintbrush, Plus, Settings2 } from "lucide-react";
+import { BarChart3, Home, Eye, LayoutTemplate, Paintbrush, Plus, Settings2, Shapes } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
-export type DeckRibbonTabId = "home" | "insert" | "format" | "chart" | "view" | "slide" | "playlist";
+export type DeckRibbonTabId =
+  | "home"
+  | "insert"
+  | "format"
+  | "chart"
+  | "shape"
+  | "view"
+  | "slide"
+  | "playlist";
 
 export type DeckRibbonTabMeta = {
   id: DeckRibbonTabId;
@@ -12,6 +20,8 @@ export type DeckRibbonTabMeta = {
   customOnly?: boolean;
   /** Só aparece com gráfico selecionado (aba contextual Excel). */
   chartOnly?: boolean;
+  /** Só aparece com forma selecionada (aba contextual PowerPoint). */
+  shapeOnly?: boolean;
   disabledWhenNoSlide?: boolean;
 };
 
@@ -28,6 +38,14 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
     icon: BarChart3,
     customOnly: true,
     chartOnly: true,
+  },
+  {
+    id: "shape",
+    label: "Forma",
+    hint: T.shape ?? "Ferramentas da forma: estilos, preenchimento, contorno e tamanho (como no PowerPoint).",
+    icon: Shapes,
+    customOnly: true,
+    shapeOnly: true,
   },
   { id: "view", label: "Exibir", hint: T.view, icon: Eye, customOnly: true },
   {
@@ -47,24 +65,29 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
 
 export function resolveDeckRibbonTabs(
   isCustomSlide: boolean,
-  options?: { chartSelected?: boolean },
+  options?: { chartSelected?: boolean; shapeSelected?: boolean },
 ): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
+  const shapeSelected = Boolean(options?.shapeSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (tab.customOnly && !isCustomSlide) return false;
     if (tab.chartOnly && !chartSelected) return false;
+    if (tab.shapeOnly && !shapeSelected) return false;
     return true;
   });
 }
 
-/** Faixas Inserir + Formatar (+ Gráfico quando selecionado) — modal embutido. */
+/** Faixas Inserir + Formatar (+ Gráfico/Forma quando selecionados) — modal embutido. */
 export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   chartSelected?: boolean;
+  shapeSelected?: boolean;
 }): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
+  const shapeSelected = Boolean(options?.shapeSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (!tab.customOnly) return false;
     if (tab.chartOnly && !chartSelected) return false;
+    if (tab.shapeOnly && !shapeSelected) return false;
     return true;
   });
 }

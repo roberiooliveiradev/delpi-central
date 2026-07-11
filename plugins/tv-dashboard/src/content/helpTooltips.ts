@@ -18,6 +18,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paragraph:
       "Alinhamento horizontal e vertical, justificação, entrelinhas e espaçamento entre caracteres.",
     shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
+    shapeChange: "Substitui a forma selecionada por outra da biblioteca, mantendo posição e estilo quando possível.",
+    shapeSize: "Largura e altura da forma em percentual do slide (como no PowerPoint Online).",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Controla camadas e mídia do elemento selecionado: ordem (frente/fundo), troca de arquivo ou remoção.",
@@ -102,6 +104,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     format: "Formate o slide e o elemento selecionado: fundo, fonte, forma, camadas e mídia.",
     chart:
       "Ferramentas do gráfico selecionado (Excel Online): tipo, rótulos, eixos, grade e formato da parte.",
+    shape:
+      "Ferramentas da forma selecionada (PowerPoint Online): alterar forma, estilos, preenchimento, contorno e tamanho.",
     view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
   },
   view: {

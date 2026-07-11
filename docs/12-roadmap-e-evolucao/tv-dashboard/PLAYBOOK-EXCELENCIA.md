@@ -1674,6 +1674,22 @@ type ChartPartState = {
 - Permitir arrastar marcador para fora da série (quebra semântica de dados).
 - Reaplicar chrome escuro/`border-radius` de card TV em `chart_view`.
 
+### 19.13 Biblioteca de formas + aba Forma — PowerPoint Online (Onda 4K)
+
+| # | Entrega | Status |
+|---|---|---|
+| 4K.1 | Catálogo categorizado (linhas, retângulos, básicas, setas, equação, fluxograma, estrelas/faixas, balões) | ✅ |
+| 4K.2 | SVG de preview/render para os kinds do catálogo | ✅ |
+| 4K.3 | Menu Inserir → Formas com grade densa estilo Office | ✅ |
+| 4K.4 | Aba contextual **Forma** ao selecionar forma (Alterar · Estilos · Preench. · Contorno · Organizar · Tamanho) | ✅ |
+| 4K.5 | Auto-switch da aba ao inserir/selecionar forma (`requestRibbonTab("shape")`) | ✅ |
+
+#### Anti-padrões 4K
+
+- Duplicar controles de forma só no inspetor sem ribbon contextual.
+- Hardcode de lista de formas fora de `comunicadoShapeCatalog.ts`.
+- `re.compile` / textos PT de UI no pacote presentation (labels ficam no catálogo).
+
 ---
 
 ## 20. Histórico — kickoff v1

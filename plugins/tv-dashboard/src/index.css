@@ -631,33 +631,35 @@
 }
 
 .td-shape-library {
+  width: min(320px, calc(100vw - 16px));
+  max-height: min(70vh, 520px);
   overflow: auto;
-  padding: 8px 10px 10px;
-  border-radius: 12px;
+  padding: 6px 8px 10px;
+  border-radius: 2px;
   border: 1px solid var(--delpi-ui-border, var(--td-border));
-  background: var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)));
-  color: var(--delpi-ui-text, var(--td-text, var(--text, #111111)));
-  box-shadow: 0 12px 32px color-mix(in srgb, #000 16%, transparent);
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
   scrollbar-width: thin;
 }
 
 .td-shape-library__section + .td-shape-library__section {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, var(--td-border) 75%, transparent);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .td-shape-library__title {
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--delpi-ui-muted, var(--td-muted));
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .td-shape-library__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
 }
 
 .td-shape-library__grid--icons {
@@ -668,10 +670,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 6px 4px;
+  justify-content: center;
+  gap: 0;
+  min-height: 36px;
+  padding: 4px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 2px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -679,13 +683,13 @@
 }
 
 .td-shape-library__item:hover {
-  border-color: color-mix(in srgb, var(--td-accent) 25%, var(--td-border));
-  background: color-mix(in srgb, var(--td-accent) 8%, transparent);
+  border-color: #089bdb;
+  background: color-mix(in srgb, #089bdb 10%, transparent);
 }
 
 .td-shape-library__preview {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
 }
 
 .tdp-comunicado__shape-preview {
@@ -716,14 +720,7 @@
 }
 
 .td-shape-library__label {
-  max-width: 100%;
-  font-size: 9px;
-  line-height: 1.15;
-  text-align: center;
-  color: var(--td-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
 }
 
 .td-btn--active {

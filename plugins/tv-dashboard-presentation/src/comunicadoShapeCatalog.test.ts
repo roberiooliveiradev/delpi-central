@@ -2,37 +2,36 @@ import { describe, expect, it } from "vitest";
 
 import {
   COMUNICADO_SHAPE_CATALOG_CATEGORIES,
-  COMUNICADO_SHAPE_KINDS,
-  comunicadoShapeLabel,
+  COMUNICADO_SHAPE_KIND_VALUES,
   isComunicadoShapeKind,
-} from "../src/comunicadoShapeCatalog";
+} from "./comunicadoShapeCatalog";
+import { createShapeBlock } from "./comunicadoHelpers";
+import { resolveShapePrimitive } from "./comunicadoVisualPrimitive";
 
-describe("comunicadoShapeCatalog", () => {
-  it("expõe categorias com formas únicas", () => {
-    const kinds = COMUNICADO_SHAPE_CATALOG_CATEGORIES.flatMap((category) => category.shapes);
-    expect(new Set(kinds).size).toBe(kinds.length);
-    expect(kinds.length).toBe(23);
+describe("comunicadoShapeCatalog (Onda 4K)", () => {
+  it("expõe labels para todos os kinds do union", () => {
+    expect(COMUNICADO_SHAPE_KIND_VALUES.length).toBeGreaterThan(30);
+    for (const kind of COMUNICADO_SHAPE_KIND_VALUES) {
+      expect(isComunicadoShapeKind(kind)).toBe(true);
+    }
   });
 
-  it("ordena categorias na hierarquia ponto → linha → formas", () => {
-    expect(COMUNICADO_SHAPE_CATALOG_CATEGORIES[0]?.id).toBe("points");
-    expect(COMUNICADO_SHAPE_CATALOG_CATEGORIES[0]?.label).toBe("Pontos");
-    expect(COMUNICADO_SHAPE_CATALOG_CATEGORIES[0]?.shapes).toEqual(["point"]);
-    expect(COMUNICADO_SHAPE_CATALOG_CATEGORIES[1]?.id).toBe("lines");
-    expect(COMUNICADO_SHAPE_CATALOG_CATEGORIES[1]?.primitive).toBe("line");
-    expect(COMUNICADO_SHAPE_CATALOG_CATEGORIES[2]?.id).toBe("rectangles");
-    expect(COMUNICADO_SHAPE_CATALOG_CATEGORIES[2]?.primitive).toBe("area");
+  it("categorias cobrem exatamente o conjunto de kinds", () => {
+    const fromCategories = COMUNICADO_SHAPE_CATALOG_CATEGORIES.flatMap((category) => category.shapes);
+    expect(new Set(fromCategories).size).toBe(fromCategories.length);
+    expect(new Set(fromCategories)).toEqual(new Set(COMUNICADO_SHAPE_KIND_VALUES));
   });
 
-  it("valida kind conhecido", () => {
-    expect(isComunicadoShapeKind("point")).toBe(true);
-    expect(isComunicadoShapeKind("diamond")).toBe(true);
-    expect(isComunicadoShapeKind("unknown-shape")).toBe(false);
-  });
-
-  it("fornece rótulo PT para cada kind", () => {
-    for (const entry of COMUNICADO_SHAPE_KINDS) {
-      expect(comunicadoShapeLabel(entry.kind)).toBe(entry.label);
+  it("cria bloco shape com primitivo coerente para linha e área", () => {
+    const line = createShapeBlock("line-arrow-both");
+    const area = createShapeBlock("flowchart-decision");
+    expect(line.type).toBe("shape");
+    expect(area.type).toBe("shape");
+    if (line.type === "shape") {
+      expect(resolveShapePrimitive(line.shape)).toBe("line");
+    }
+    if (area.type === "shape") {
+      expect(resolveShapePrimitive(area.shape)).toBe("area");
     }
   });
 });

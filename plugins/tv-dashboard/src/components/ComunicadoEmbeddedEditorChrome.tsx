@@ -9,21 +9,28 @@ import { DeckRibbonShell, resolveEmbeddedComunicadoRibbonTabs } from "./deck";
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "format" | "chart" | "view";
+type EmbeddedTab = "insert" | "format" | "chart" | "shape" | "view";
 
 type Props = {
   labels?: Labels;
 };
 
-/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar/Gráfico do deck. */
+/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar/Gráfico/Forma do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const { selected } = useComunicadoEditor();
   const chartSelected = selected?.type === "chart_view";
-  const tabs = resolveEmbeddedComunicadoRibbonTabs({ chartSelected });
+  const shapeSelected = selected?.type === "shape";
+  const tabs = resolveEmbeddedComunicadoRibbonTabs({ chartSelected, shapeSelected });
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");
 
   useComunicadoRibbonTabSync((tab) => {
-    if (tab === "insert" || tab === "format" || tab === "chart" || tab === "view") {
+    if (
+      tab === "insert" ||
+      tab === "format" ||
+      tab === "chart" ||
+      tab === "shape" ||
+      tab === "view"
+    ) {
       setActiveTab(tab);
     }
   });

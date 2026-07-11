@@ -41,7 +41,7 @@ export type TextEditorBridge = {
   commitPending?: () => void;
 };
 
-export type ComunicadoRibbonTabRequest = "insert" | "format" | "chart" | "view";
+export type ComunicadoRibbonTabRequest = "insert" | "format" | "chart" | "shape" | "view";
 
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {

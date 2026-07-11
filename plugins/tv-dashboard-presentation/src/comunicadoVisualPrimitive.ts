@@ -7,7 +7,12 @@ import type { ComunicadoShapeKind } from "./comunicadoTypes";
 export type ComunicadoVisualPrimitive = "point" | "line" | "area";
 
 const POINT_SHAPE_KINDS = new Set<ComunicadoShapeKind>(["point"]);
-const LINE_SHAPE_KINDS = new Set<ComunicadoShapeKind>(["line", "line-arrow-right"]);
+const LINE_SHAPE_KINDS = new Set<ComunicadoShapeKind>([
+  "line",
+  "line-arrow-right",
+  "line-arrow-left",
+  "line-arrow-both",
+]);
 
 export function resolveShapePrimitive(kind: ComunicadoShapeKind): ComunicadoVisualPrimitive {
   if (POINT_SHAPE_KINDS.has(kind)) return "point";

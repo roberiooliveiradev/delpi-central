@@ -256,6 +256,8 @@ export function ComunicadoEditorProvider({
       setEditingChartPart(null);
       if (selectedBlockType === "chart_view") {
         setRibbonTabRequest("chart");
+      } else if (selectedBlockType === "shape") {
+        setRibbonTabRequest("shape");
       }
     },
     [flushActiveTextEdit],
@@ -661,6 +663,7 @@ export function ComunicadoEditorProvider({
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     setSelectedId(block.id);
     setShapeMenuOpen(false);
+    setRibbonTabRequest("shape");
     updateBlocks([...(configRef.current.blocks ?? []), block]);
   }
 

@@ -49,8 +49,17 @@ type Props = {
   ) => void;
 };
 
-function isRibbonTab(tab: DeckRibbonTabId): tab is "home" | "insert" | "format" | "chart" | "view" {
-  return tab === "home" || tab === "insert" || tab === "format" || tab === "chart" || tab === "view";
+function isRibbonTab(
+  tab: DeckRibbonTabId,
+): tab is "home" | "insert" | "format" | "chart" | "shape" | "view" {
+  return (
+    tab === "home" ||
+    tab === "insert" ||
+    tab === "format" ||
+    tab === "chart" ||
+    tab === "shape" ||
+    tab === "view"
+  );
 }
 
 function isSettingsTab(tab: DeckRibbonTabId): tab is "slide" | "playlist" {
@@ -73,26 +82,35 @@ export function DeckEditorChrome({
 }: Props) {
   const editor = useOptionalComunicadoEditor();
   const chartSelected = editor?.selected?.type === "chart_view";
-  const tabs = resolveDeckRibbonTabs(isCustomSlide, { chartSelected });
+  const shapeSelected = editor?.selected?.type === "shape";
+  const tabs = resolveDeckRibbonTabs(isCustomSlide, { chartSelected, shapeSelected });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
 
   useComunicadoRibbonTabSync((tab) => {
-    if (tab === "insert" || tab === "format" || tab === "chart" || tab === "view") {
+    if (
+      tab === "insert" ||
+      tab === "format" ||
+      tab === "chart" ||
+      tab === "shape" ||
+      tab === "view"
+    ) {
       setActiveTab(tab);
     }
   });
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(chartSelected ? "chart" : "home");
+      setActiveTab(chartSelected ? "chart" : shapeSelected ? "shape" : "home");
     }
-  }, [activeTab, tabs, chartSelected]);
+  }, [activeTab, tabs, chartSelected, shapeSelected]);
 
   useEffect(() => {
     if (chartSelected && isCustomSlide) {
       setActiveTab("chart");
+    } else if (shapeSelected && isCustomSlide) {
+      setActiveTab("shape");
     }
-  }, [chartSelected, isCustomSlide, editor?.selectedId]);
+  }, [chartSelected, shapeSelected, isCustomSlide, editor?.selectedId]);
 
   useEffect(() => {
     if (activeTab === "slide" && !slide) {
@@ -130,6 +148,7 @@ export function DeckEditorChrome({
             (activeTab === "insert" ||
               activeTab === "format" ||
               activeTab === "chart" ||
+              activeTab === "shape" ||
               activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}
