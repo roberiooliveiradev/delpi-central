@@ -92,8 +92,8 @@ function EditorChartViewBlock({
     selectedId,
     selectedChartPart,
     editingChartPart,
+    selectBlock,
     selectChartPart,
-    clearChartPartSelection,
     beginEditChartPart,
     commitChartPartContent,
     cancelEditChartPart,
@@ -101,19 +101,24 @@ function EditorChartViewBlock({
     updateBlock,
   } = useComunicadoEditor();
 
-  /** Clique simples: não entra na parte (só move se já selecionada). */
+  /**
+   * Clique simples no gráfico já selecionado: mantém o grupo `chart_view`
+   * (limpa subseleção). Arraste de parte móvel só se a mesma parte já estiver ativa.
+   * Com o gráfico não selecionado, `interaction` fica null para o clique subir ao compositor.
+   */
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef) => {
-      if (selectedId === block.id && selectedChartPart && isChartPartRefEqual(selectedChartPart, ref)) {
+      if (
+        selectedId === block.id &&
+        selectedChartPart &&
+        isChartPartRefEqual(selectedChartPart, ref) &&
+        chartPartAllowsMove(ref)
+      ) {
         return;
       }
-      // Mantém o grupo chart_view; limpa subseleção se clicou em outra área.
-      if (selectedId === block.id && selectedChartPart) {
-        clearChartPartSelection();
-        requestRibbonTab("chart");
-      }
+      selectBlock(block.id);
     },
-    [block.id, clearChartPartSelection, requestRibbonTab, selectedChartPart, selectedId],
+    [block.id, selectBlock, selectedChartPart, selectedId],
   );
 
   /** Duplo clique: acessa a parte; texto já selecionado abre edição inline. */
@@ -224,6 +229,7 @@ function EditorChartViewBlock({
     [block.chartParts, block.id, updateBlock],
   );
 
+  /** Partes só interceptam ponteiro com o grupo já selecionado (1º clique = grupo). */
   const interaction =
     selectedId === block.id
       ? {
@@ -235,15 +241,7 @@ function EditorChartViewBlock({
           onPartEditCancel: cancelEditChartPart,
           onPartMovePointerDown,
         }
-      : {
-          selectedPart: null,
-          editingPart: null,
-          onPartPointerDown,
-          onPartDoubleClick,
-          onPartContentCommit,
-          onPartEditCancel: cancelEditChartPart,
-          onPartMovePointerDown,
-        };
+      : null;
 
   return (
     <div

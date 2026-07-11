@@ -4,6 +4,8 @@ import {
   buildSeriesChartLayout,
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
+  resolveXLabelTextAnchor,
+  SERIES_CHART_PLOT_INSET,
 } from "./layout";
 
 describe("resolveVisibleXLabelIndices", () => {
@@ -18,6 +20,18 @@ describe("resolveVisibleXLabelIndices", () => {
 
   it("série curta com step 1 lista todos", () => {
     expect(resolveVisibleXLabelIndices(4, 1)).toEqual([0, 1, 2, 3]);
+  });
+});
+
+describe("resolveXLabelTextAnchor", () => {
+  it("ancora bordas para não cortar rótulos", () => {
+    expect(resolveXLabelTextAnchor(0, 10, false)).toBe("start");
+    expect(resolveXLabelTextAnchor(9, 10, false)).toBe("end");
+    expect(resolveXLabelTextAnchor(4, 10, false)).toBe("middle");
+  });
+
+  it("rotacionado usa end", () => {
+    expect(resolveXLabelTextAnchor(0, 10, true)).toBe("end");
   });
 });
 
@@ -36,6 +50,31 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     expect(layout.viewW).toBe(800);
     expect(layout.viewH).toBe(400);
     expect(layout.visibleXLabelIndices.length).toBeGreaterThan(0);
+  });
+
+  it("inset mantém primeiro e último ponto dentro do plot", () => {
+    const points = [
+      { value: 40, label: "11/06/26" },
+      { value: 70, label: "15/06/26" },
+      { value: 100, label: "10/07/26" },
+    ];
+    const layout = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 600,
+      viewH: 280,
+    });
+    expect(layout.plotInset).toBeGreaterThan(0);
+    expect(layout.plotInset).toBeLessThanOrEqual(SERIES_CHART_PLOT_INSET);
+    const x0 = layout.toX(0, points.length);
+    const xLast = layout.toX(points.length - 1, points.length);
+    const yMax = layout.toY(layout.axisMax);
+    const yMin = layout.toY(layout.axisMin);
+    expect(x0).toBeGreaterThanOrEqual(layout.margin.left + layout.plotInset - 0.01);
+    expect(xLast).toBeLessThanOrEqual(layout.margin.left + layout.plotW - layout.plotInset + 0.01);
+    expect(yMax).toBeGreaterThanOrEqual(layout.margin.top + layout.plotInset - 0.01);
+    expect(yMin).toBeLessThanOrEqual(layout.margin.top + layout.plotH - layout.plotInset + 0.01);
   });
 
   it("step maior em plot estreito", () => {

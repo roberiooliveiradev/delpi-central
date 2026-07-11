@@ -9,6 +9,9 @@ import {
 export const SERIES_CHART_VIEW_W = 400;
 export const SERIES_CHART_VIEW_H = 220;
 
+/** Inset interno do plot — marcadores/linha não colam nem cortam na borda. */
+export const SERIES_CHART_PLOT_INSET = 8;
+
 export type SeriesChartMargin = {
   top: number;
   right: number;
@@ -22,6 +25,8 @@ export type SeriesChartLayout = {
   margin: SeriesChartMargin;
   plotW: number;
   plotH: number;
+  /** Inset usado em toX/toY (marcadores dentro do plot). */
+  plotInset: number;
   ticks: number[];
   axisMin: number;
   axisMax: number;
@@ -44,8 +49,8 @@ export type BuildSeriesChartLayoutInput = {
 };
 
 const BASE_MARGIN: SeriesChartMargin = {
-  top: 12,
-  right: 14,
+  top: 16,
+  right: 18,
   bottom: 28,
   left: 52,
 };
@@ -100,6 +105,19 @@ export function resolveVisibleXLabelIndices(count: number, step: number): number
   return indices;
 }
 
+/** Âncora de texto X nas bordas — evita cortar o primeiro/último rótulo. */
+export function resolveXLabelTextAnchor(
+  index: number,
+  count: number,
+  rotated: boolean,
+): "start" | "middle" | "end" {
+  if (rotated) return "end";
+  if (count <= 1) return "middle";
+  if (index === 0) return "start";
+  if (index === count - 1) return "end";
+  return "middle";
+}
+
 function resolveBottomMargin(
   showXAxisLabels: boolean,
   showXAxisTitle: boolean,
@@ -113,6 +131,27 @@ function resolveBottomMargin(
     bottom += 12;
   }
   return bottom;
+}
+
+/** Margens laterais que cabem meia largura do 1º/último rótulo X + ticks Y. */
+function resolveSideMargins(
+  showXAxisLabels: boolean,
+  labels: string[],
+  visibleIndices: number[],
+): Pick<SeriesChartMargin, "left" | "right"> {
+  let left = BASE_MARGIN.left;
+  let right = BASE_MARGIN.right;
+  if (!showXAxisLabels || labels.length === 0) {
+    return { left, right };
+  }
+  const firstIdx = visibleIndices[0] ?? 0;
+  const lastIdx = visibleIndices[visibleIndices.length - 1] ?? labels.length - 1;
+  // Com textAnchor start/end nas bordas, basta folga pequena + inset.
+  const firstPad = Math.min(12, Math.ceil(estimateLabelWidth(labels[firstIdx] ?? "") * 0.15));
+  const lastPad = Math.min(28, Math.ceil(estimateLabelWidth(labels[lastIdx] ?? "") * 0.35) + 4);
+  left = Math.max(left, BASE_MARGIN.left + firstPad);
+  right = Math.max(right, BASE_MARGIN.right, lastPad);
+  return { left, right };
 }
 
 export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): SeriesChartLayout {
@@ -139,17 +178,24 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     ? resolveVisibleXLabelIndices(input.points.length, xLabelStep)
     : [];
 
+  const sides = resolveSideMargins(input.showXAxisLabels, labels, visibleXLabelIndices);
   const margin: SeriesChartMargin = {
-    ...BASE_MARGIN,
+    top: BASE_MARGIN.top,
+    left: sides.left,
+    right: sides.right,
     bottom: resolveBottomMargin(input.showXAxisLabels, input.showXAxisTitle, xLabelsRotated),
   };
 
   const plotW = Math.max(1, viewW - margin.left - margin.right);
   const plotH = Math.max(1, viewH - margin.top - margin.bottom);
+  const plotInset = Math.min(SERIES_CHART_PLOT_INSET, Math.floor(Math.min(plotW, plotH) / 6));
+  const innerW = Math.max(1, plotW - 2 * plotInset);
+  const innerH = Math.max(1, plotH - 2 * plotInset);
 
   const toX = (index: number, count: number) =>
-    margin.left + (count > 1 ? (index / (count - 1)) * plotW : plotW / 2);
-  const toY = (value: number) => margin.top + plotH - ((value - axisMin) / axisRange) * plotH;
+    margin.left + plotInset + (count > 1 ? (index / (count - 1)) * innerW : innerW / 2);
+  const toY = (value: number) =>
+    margin.top + plotInset + (1 - (value - axisMin) / axisRange) * innerH;
 
   return {
     viewW,
@@ -157,6 +203,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     margin,
     plotW,
     plotH,
+    plotInset,
     ticks,
     axisMin,
     axisMax,

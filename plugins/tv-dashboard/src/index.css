@@ -1141,6 +1141,12 @@
   pointer-events: auto;
 }
 
+/* Hit-test no bounding box do bloco — evita vários cliques em linhas/setas (SVG visiblePainted). */
+.td-composer__shape-block .tdp-comunicado__shape-svg,
+.td-composer__shape-block .tdp-comunicado__shape-line {
+  pointer-events: none;
+}
+
 /* Onda 4G — hit de partes do gráfico no palco */
 .td-composer__chart-view,
 .td-composer__block-wrap .tdp-comunicado__block--chart-view {

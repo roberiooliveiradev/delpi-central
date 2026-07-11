@@ -96,8 +96,15 @@ export function ChartAxisY({
         </text>
       ) : null}
       {showLabels
-        ? ticks.map((tick) => {
+        ? ticks.map((tick, tickIndex) => {
             const y = toY(tick);
+            // Extremos: baseline evita corte do tick no topo/base do plot.
+            const baseline =
+              tickIndex === ticks.length - 1
+                ? "hanging"
+                : tickIndex === 0
+                  ? "auto"
+                  : "middle";
             return (
               <text
                 key={`y-${tick}`}
@@ -105,7 +112,7 @@ export function ChartAxisY({
                 y={y}
                 className={`${cn.tick} ${cn.tickY}`}
                 textAnchor="end"
-                dominantBaseline="middle"
+                dominantBaseline={baseline}
               >
                 {formatChartTick(tick, valueFormat)}
               </text>

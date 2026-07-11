@@ -54,7 +54,9 @@ export function ChartGrid({
       onDoubleClick={onGridDoubleClick}
     >
       {showHorizontal
-        ? ticks.map((tick) => {
+        ? ticks.map((tick, tickIndex) => {
+            // Não desenha grade nos extremos — coincide com o topo/base do plot e “vaza” como moldura.
+            if (tickIndex === 0 || tickIndex === ticks.length - 1) return null;
             const y = toY(tick);
             return (
               <g key={`grid-h-${tick}`}>
@@ -83,6 +85,8 @@ export function ChartGrid({
         : null}
       {showVertical
         ? Array.from({ length: pointCount }, (_, index) => {
+            // Extremos verticais colam na borda do plot — evita moldura fantasma.
+            if (index === 0 || index === pointCount - 1) return null;
             const x = toX(index, pointCount);
             return (
               <g key={`grid-v-${index}`}>

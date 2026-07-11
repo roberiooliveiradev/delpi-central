@@ -35,6 +35,7 @@
   min-height: 0;
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
 
 .delpi-ui-series-chart__plot-area {
@@ -154,6 +155,12 @@
 .delpi-ui-series-chart [data-chart-part][aria-selected="true"] {
   outline: 2px solid var(--primary, #089bdb);
   outline-offset: 2px;
+}
+
+.delpi-ui-series-chart__title.delpi-ui-series-chart__part--selected,
+.delpi-ui-series-chart__legend.delpi-ui-series-chart__part--selected,
+.delpi-ui-series-chart__data-table.delpi-ui-series-chart__part--selected {
+  cursor: move;
 }
 
 .delpi-ui-series-chart__part--editing {

@@ -4,7 +4,7 @@ import {
   isChartPartRefEqual,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
-import type { SeriesChartLayout } from "./layout";
+import { resolveXLabelTextAnchor, type SeriesChartLayout } from "./layout";
 import type { SeriesChartPoint } from "../seriesChartOptions";
 
 export type ChartAxisXProps = {
@@ -83,7 +83,7 @@ export function ChartAxisX({
                 x={x}
                 y={labelY}
                 className={className}
-                textAnchor={xLabelsRotated ? "end" : "middle"}
+                textAnchor={resolveXLabelTextAnchor(index, points.length, xLabelsRotated)}
                 transform={xLabelsRotated ? `rotate(-38 ${x} ${labelY})` : undefined}
               >
                 {label}

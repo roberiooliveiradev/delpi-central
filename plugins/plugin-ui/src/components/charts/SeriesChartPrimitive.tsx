@@ -232,6 +232,7 @@ export function SeriesChartPrimitive({
         valueFormat={valueFormat}
         visible={Boolean(config.showDataTable)}
         interaction={interaction}
+        chartParts={chartParts}
       />
     </ChartContainer>
   );

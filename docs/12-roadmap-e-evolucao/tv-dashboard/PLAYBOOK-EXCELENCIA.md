@@ -1698,14 +1698,20 @@ type ChartPartState = {
 | 4L.2 | Rótulos X sem empilhar (`resolveVisibleXLabelIndices`) | ✅ |
 | 4L.3 | Borda: plotArea strokeWidth 0 por default (sem moldura dupla) | ✅ |
 | 4L.4 | Filmstrip = print exato (viewport canônico + scale uniforme) | ✅ |
-| 4L.5 | Partes do gráfico só com **duplo clique**; clique simples = grupo | ✅ |
+| 4L.5 | Partes do gráfico só com **duplo clique**; clique simples = grupo | ✅ (fix: `interaction` só com grupo selecionado) |
 | 4L.6 | Parte geométrica usa aba **Forma** (paridade primitivo point/line/area) | ✅ |
+| 4L.7 | Mover título/legenda/tabela só com parte selecionada; inset do plot + âncora X nas bordas | ✅ |
 
 #### Anti-padrões 4L
 
 - Forçar último rótulo X sem checar colisão com o step.
 - Reintroduzir `CenteredScaledPreview` com viewBox fixo dentro do bloco de gráfico.
 - Miniatura do filmstrip em 320×180 com reflow (quebrando a escala do slide).
+- Expor `onPartPointerDown` / `stopPropagation` com o `chart_view` **ainda não selecionado** (obriga vários cliques para selecionar o grupo).
+- Hit-test SVG de forma em `visiblePainted` sem bounding box (linhas/setas exigem vários cliques).
+- Chamar `onPartMovePointerDown` em todo `pointerdown` (arrasta sem ter selecionado a parte).
+- Plotar 1º/último ponto em `x = margem` (corta marcador e rótulo X).
+- Grade nos ticks extremos (moldura fantasma / “eixos vazando”).
 
 ---
 

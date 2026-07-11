@@ -72,7 +72,10 @@ export function ChartLegend({
           ? (event) => {
               event.stopPropagation();
               interaction?.onPartPointerDown?.(ref, event);
-              interaction?.onPartMovePointerDown?.(ref, event);
+              // Arraste só com a parte já selecionada (duplo clique → depois arrastar).
+              if (selected) {
+                interaction?.onPartMovePointerDown?.(ref, event);
+              }
             }
           : undefined
       }
