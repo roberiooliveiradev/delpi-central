@@ -164,7 +164,8 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     <DeckPropertySection
       pane={pane}
       title={`Parte: ${chartPartLabel(selectedChartPart)}`}
-      hint="Padrão Office: fundo branco, cantos retos, bordas editáveis. Del oculta a parte (não o gráfico)."
+      hint="Ajuste estilo e conteúdo desta parte. Del oculta a parte (não remove o gráfico)."
+      defaultOpen
     >
       <div className="td-chart-part-inspector__actions">
         <button type="button" className="td-deck-btn td-deck-btn--ghost" onClick={clearChartPartSelection}>
@@ -226,7 +227,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
             />
           </DeckField>
           {selectedChartPart.kind === "chartArea" ? (
-            <DeckField id="td-chart-part-area-radius" label="Cantos (px) — Office = 0">
+            <DeckField id="td-chart-part-area-radius" label="Cantos (px)">
               <input
                 id="td-chart-part-area-radius"
                 type="number"

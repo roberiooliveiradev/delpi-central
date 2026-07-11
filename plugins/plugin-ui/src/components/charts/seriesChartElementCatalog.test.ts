@@ -14,6 +14,12 @@ import {
 import { DEFAULT_SERIES_CHART_OPTIONS, mergeSeriesChartOptions } from "./seriesChartOptions";
 
 describe("seriesChartElementCatalog", () => {
+  it("hints do catálogo em português (sem jargão Office em inglês)", () => {
+    for (const entry of SERIES_CHART_ELEMENT_CATALOG) {
+      expect(entry.hint ?? "").not.toMatch(/Format Chart|Format Plot|Office/i);
+    }
+  });
+
   it("lista elementos no estilo Excel", () => {
     const labels = SERIES_CHART_ELEMENT_CATALOG.map((entry) => entry.label);
     expect(labels).toContain("Eixos");

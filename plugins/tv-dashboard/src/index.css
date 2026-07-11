@@ -3383,14 +3383,24 @@
 .td-chart-elements {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .td-chart-element {
-  border: 1px solid var(--td-border);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--td-text) 2%, var(--td-surface));
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
   overflow: hidden;
+}
+
+.td-chart-element--row {
+  border-color: transparent;
+}
+
+.td-chart-element--focused,
+.td-chart-element--expanded {
+  border-color: var(--td-border);
+  background: color-mix(in srgb, var(--td-text) 2%, var(--td-surface));
 }
 
 .td-chart-element__summary {
@@ -3398,25 +3408,13 @@
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  cursor: pointer;
+  padding: 6px 8px;
+  cursor: default;
   list-style: none;
 }
 
 .td-chart-element__summary::-webkit-details-marker {
   display: none;
-}
-
-.td-chart-element__summary::after {
-  content: "›";
-  justify-self: end;
-  color: var(--td-muted);
-  transform: rotate(90deg);
-  transition: transform 0.15s ease;
-}
-
-.td-chart-element[open] .td-chart-element__summary::after {
-  transform: rotate(-90deg);
 }
 
 .td-chart-element__toggle {
@@ -3461,6 +3459,11 @@
   gap: 10px;
   padding: 0 10px 10px;
   border-top: 1px solid var(--td-border);
+}
+
+.td-deck-inspector__hint--stage {
+  margin: 0 0 4px;
+  padding: 0 2px;
 }
 
 .td-deck-inspector__meta {

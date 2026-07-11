@@ -37,10 +37,11 @@ function updateChartOptions(
   return { ...mergeComunicadoChartOptions(current), ...patch };
 }
 
-function ChartElementPanel({
+/** Linha compacta de visibilidade — detalhes só quando a parte está focada (4M.5). */
+function ChartElementRow({
   elementId,
   enabled,
-  open,
+  expanded,
   onToggle,
   onSelect,
   children,
@@ -49,16 +50,28 @@ function ChartElementPanel({
 }: {
   elementId: ChartElementId;
   enabled: boolean;
-  open: boolean;
+  expanded: boolean;
   onToggle: (next: boolean) => void;
   onSelect: () => void;
   children?: ReactNode;
   label: string;
   hint?: string;
 }) {
+  const hasDetails = Boolean(children);
+  const showBody = expanded && enabled && hasDetails;
+
   return (
-    <details className="td-chart-element" open={open || enabled}>
-      <summary className="td-chart-element__summary">
+    <div
+      className={[
+        "td-chart-element",
+        "td-chart-element--row",
+        showBody ? "td-chart-element--expanded" : null,
+        expanded ? "td-chart-element--focused" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <div className="td-chart-element__summary">
         <label className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
           <input
             type="checkbox"
@@ -71,6 +84,7 @@ function ChartElementPanel({
           type="button"
           className="td-chart-element__label-btn"
           id={`td-chart-element-${elementId}`}
+          title={hint}
           onClick={(event) => {
             event.preventDefault();
             onSelect();
@@ -78,10 +92,9 @@ function ChartElementPanel({
         >
           {label}
         </button>
-        {hint ? <span className="td-chart-element__hint">{hint}</span> : null}
-      </summary>
-      {enabled && children ? <div className="td-chart-element__body">{children}</div> : null}
-    </details>
+      </div>
+      {showBody ? <div className="td-chart-element__body">{children}</div> : null}
+    </div>
   );
 }
 
@@ -95,6 +108,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
     ...partsToChartOptions(block.chartParts),
   });
   const chartKind = chartTypeToLegacyDisplayMode(block.chartType) === "bar_chart" ? "bar" : "line";
+  const hasPartSelection = Boolean(selectedChartPart);
 
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {
     updateSelected({
@@ -137,19 +151,30 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
     <>
       <ChartPartInspector pane={pane} block={block} />
 
-      <DeckPropertySection pane={pane} title="Elementos do gráfico" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartElements}>
+      {!hasPartSelection ? (
+        <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
+          Clique no título, série, legenda ou área no palco para formatar a parte.
+        </p>
+      ) : null}
+
+      <DeckPropertySection
+        pane={pane}
+        title="Elementos do gráfico"
+        hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartElements}
+        defaultOpen={!hasPartSelection}
+      >
         <div className="td-chart-elements" role="group" aria-label="Elementos do gráfico">
           {elements.map((element) => {
             const enabled = isChartElementEnabled(element.id, options);
-            const open = isChartElementOpenForPart(element.id, selectedChartPart);
+            const expanded = isChartElementOpenForPart(element.id, selectedChartPart);
             return (
-              <ChartElementPanel
+              <ChartElementRow
                 key={element.id}
                 elementId={element.id}
                 label={element.label}
                 hint={element.hint}
                 enabled={enabled}
-                open={open}
+                expanded={expanded}
                 onToggle={(next) => toggleElement(element.id, next)}
                 onSelect={() => focusElement(element.id)}
               >
@@ -267,13 +292,18 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
                     </DeckField>
                   </>
                 ) : null}
-              </ChartElementPanel>
+              </ChartElementRow>
             );
           })}
         </div>
       </DeckPropertySection>
 
-      <DeckPropertySection pane={pane} title="Aparência" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}>
+      <DeckPropertySection
+        pane={pane}
+        title="Aparência"
+        hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
+        defaultOpen={!hasPartSelection}
+      >
         <DeckField id="td-chart-value-format" label="Formato dos valores">
           <NativeSelectControl
             id="td-chart-value-format"

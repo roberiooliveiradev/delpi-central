@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
@@ -105,31 +106,23 @@ export function ComunicadoElementInspector({
 
   const pane = placement === "side";
 
+  const typeLabel = comunicadoBlockTypeLabel(selected.type);
+
   return (
     <DeckInspectorLayout variant={placement}>
       <DeckPropertySection
         pane={pane}
         title={labels.comunicadoBlocks ?? "Elemento selecionado"}
         hint={E.panel}
+        defaultOpen
       >
         {multiSelect ? (
           <p className="td-deck-inspector__meta td-deck-inspector__meta--multi">
             {selectedIds.length} elementos selecionados — edite texto e link direto no palco.
           </p>
         ) : (
-          <p className="td-deck-inspector__meta">Tipo: {selected.type}</p>
+          <p className="td-deck-inspector__meta">{typeLabel}</p>
         )}
-
-        {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} pane={pane} /> : null}
-        {!multiSelect && isViewBlock ? (
-          <VisualDataViewInspector pane={pane} onOpenDataSources={onOpenDataSources} />
-        ) : null}
-        {!multiSelect && selected?.type === "chart_view" ? (
-          <ChartViewOptionsInspector pane={pane} />
-        ) : null}
-        {!multiSelect && selected?.type === "table_view" ? (
-          <TableViewOptionsInspector pane={pane} />
-        ) : null}
 
         {!multiSelect && isShapeBlock ? (
           <>
@@ -198,6 +191,18 @@ export function ComunicadoElementInspector({
         ) : null}
       </DeckPropertySection>
 
+      {/* Irmãos L1 — evita FormatPaneSection aninhado (4M.3). */}
+      {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} pane={pane} /> : null}
+      {!multiSelect && isViewBlock ? (
+        <VisualDataViewInspector pane={pane} onOpenDataSources={onOpenDataSources} />
+      ) : null}
+      {!multiSelect && selected?.type === "chart_view" ? (
+        <ChartViewOptionsInspector pane={pane} />
+      ) : null}
+      {!multiSelect && selected?.type === "table_view" ? (
+        <TableViewOptionsInspector pane={pane} />
+      ) : null}
+
       {!multiSelect && selected.type === "image" ? (
         <div id="td-comunicado-crop-panel">
           <ComunicadoImageCropPanel />
@@ -205,7 +210,12 @@ export function ComunicadoElementInspector({
       ) : null}
 
       {!multiSelect ? (
-        <DeckPropertySection pane={pane} title="Animação de entrada" hint={E.entranceAnimation}>
+        <DeckPropertySection
+          pane={pane}
+          title="Animação de entrada"
+          hint={E.entranceAnimation}
+          defaultOpen={false}
+        >
           <DeckField id="td-entrance-kind" label="Efeito" hint={E.entranceAnimation}>
             <select
               id="td-entrance-kind"
@@ -278,7 +288,7 @@ export function ComunicadoElementInspector({
       ) : null}
 
       {!multiSelect ? (
-        <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position}>
+        <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position} defaultOpen={false}>
           <div className="td-deck-frame-grid">
             {(selected.type === "shape" && isPointShapeKind(selected.shape)
               ? (["x", "y"] as const)
@@ -321,7 +331,7 @@ export function ComunicadoElementInspector({
         </DeckPropertySection>
       ) : null}
 
-      <DeckPropertySection pane={pane} title="Ações" hint={E.layerUp}>
+      <DeckPropertySection pane={pane} title="Ações" hint={E.layerUp} defaultOpen={false}>
         <DeckActionRow>
           {!multiSelect ? (
             <>

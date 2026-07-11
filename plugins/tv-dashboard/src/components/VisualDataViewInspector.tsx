@@ -27,7 +27,12 @@ export function VisualDataViewInspector({ pane = false, onOpenDataSources }: Pro
   const openSources = onOpenDataSources ?? openDataPanel;
 
   return (
-    <DeckPropertySection pane={pane} title="Conexão de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewBinding}>
+    <DeckPropertySection
+      pane={pane}
+      title="Conexão de dados"
+      hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewBinding}
+      defaultOpen={!hasSource}
+    >
       {selected.type === "chart_view" ? (
         <p className="td-deck-inspector__meta">Gráfico: {chartTypeLabel(selected.chartType)}</p>
       ) : (

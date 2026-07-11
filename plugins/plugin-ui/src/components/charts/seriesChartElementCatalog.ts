@@ -29,10 +29,10 @@ export type SeriesChartElementDefinition = {
 };
 
 export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
-  { id: "chartArea", label: "Área do gráfico", hint: "Format Chart Area — fundo e borda externa (Office)." },
-  { id: "plotArea", label: "Área de plotagem", hint: "Format Plot Area — fundo e borda do gráfico." },
+  { id: "chartArea", label: "Área do gráfico", hint: "Fundo e borda externa do gráfico." },
+  { id: "plotArea", label: "Área de plotagem", hint: "Fundo e borda da área onde a série é desenhada." },
   { id: "chartTitle", label: "Título do gráfico", hint: "Título central acima da área de plotagem." },
-  { id: "series", label: "Série", hint: "Linha ou colunas dos dados (primitivo line/area)." },
+  { id: "series", label: "Série", hint: "Linha ou colunas dos dados." },
   { id: "legend", label: "Legenda", hint: "Identificação da série de dados." },
   { id: "axes", label: "Eixos", hint: "Linhas dos eixos e rótulos de escala." },
   { id: "axisTitles", label: "Títulos dos eixos", hint: "Nome descritivo dos eixos X e Y." },

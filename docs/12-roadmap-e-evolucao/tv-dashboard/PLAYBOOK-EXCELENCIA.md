@@ -1729,6 +1729,39 @@ type ChartPartState = {
 - Persistir `plotArea.strokeWidth: 1` legado sem normalizar no `parseComunicadoConfig`.
 - Hardcode de inset em px no layout sem `categoryPaddingPercent`.
 
+### 19.16 Painel «Definir elemento» — Formatar por seleção (Onda 4M)
+
+> **Problema:** a aba Elemento empilhava seções L1 abertas + cards L2 (`<details>`) com hints em inglês Office e `Tipo: chart_view` cru — scroll longo e chevrons confusos.  
+> **North star:** painel Formatar focado na **parte selecionada** (`ChartPartInspector`); catálogo = lista compacta de visibilidade; máx. 2 níveis de hierarquia.
+
+| # | Entrega | Status |
+|---|---|---|
+| 4M.1 | Plano documentado (§19.16) + labels PT (`comunicadoBlockTypeLabel`) | ✅ |
+| 4M.2 | Hints do catálogo 100% PT (sem «Format Chart Area — Office») | ✅ |
+| 4M.3 | Achatar L1: Conexão / Parte / Elementos / Aparência **irmãos**, não aninhados em «Elemento selecionado» | ✅ |
+| 4M.4 | Seções Animação / Posição / Ações com `defaultOpen={false}` no pane | ✅ |
+| 4M.5 | Lista de elementos = linhas compactas; expandir detalhes só com parte focada (sem `open \|\| enabled`) | ✅ |
+| 4M.6 | Com `selectedChartPart`: Parte em destaque; Elementos/Aparência recolhidos | ✅ |
+| 4M.7 | Enxugar toggles duplicados ribbon↔inspector (residual) | ⬜ |
+
+#### IA alvo (chart_view)
+
+```text
+Cabeçalho (tipo PT)          defaultOpen
+Conexão de dados             open se sem fonte
+Parte: …                     open se subseleção  ← canônico
+Elementos do gráfico         lista fina; open se sem parte
+Aparência (valores / cor)    open se sem parte
+Animação / Posição / Ações   fechados
+```
+
+#### Anti-padrões 4M
+
+- `Tipo: {selected.type}` cru na UI (usar `comunicadoBlockTypeLabel`).
+- `FormatPaneSection` aninhado dentro de outro (Conexão/Elementos dentro de «Elemento selecionado»).
+- `open={enabled}` forçando todos os cards ligados abertos.
+- Hints em inglês voltados ao gestor (manter jargão Office só no playbook técnico).
+
 ---
 
 ## 20. Histórico — kickoff v1
