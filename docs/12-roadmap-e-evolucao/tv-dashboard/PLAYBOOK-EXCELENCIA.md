@@ -1577,9 +1577,9 @@ Pointer down no palco
 
 | # | Entrega | Esforço | Status |
 |---|---|---|---|
-| 4G.1 | Contrato `ChartPartRef` + adapter `chartOptions` ↔ `chartParts` + testes | M | ❌ |
-| 4G.2 | Props de seleção/hit nos filhos canônicos (`plugin-ui` seriesChart/*) | M | ❌ |
-| 4G.3 | Estado `selectedChartPart` + pointer no compositor (sem drag do frame) | L | ❌ |
+| 4G.1 | Contrato `ChartPartRef` + adapter `chartOptions` ↔ `chartParts` + testes | M | ✅ |
+| 4G.2 | Props de seleção/hit nos filhos canônicos (`plugin-ui` seriesChart/*) | M | ✅ |
+| 4G.3 | Estado `selectedChartPart` + pointer no compositor (sem drag do frame) | L | ✅ parcial |
 | 4G.4 | Herança de estilo: série←`line`, marcador←`point` (unificar `seriesColor`) | M | ❌ |
 | 4G.5 | Edição inline do título (e axis titles) no palco | M | ❌ |
 | 4G.6 | `ChartPartInspector` unificado (reusa campos de forma/texto) | M | ❌ |

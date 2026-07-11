@@ -1,11 +1,28 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
+import {
+  chartPartDomProps,
+  isChartPartRefEqual,
+  type SeriesChartInteraction,
+} from "../seriesChartParts";
 import type { SeriesChartSharedProps } from "./types";
 
-export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor">;
+export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor"> & {
+  interaction?: SeriesChartInteraction | null;
+  seriesIndex?: number;
+};
 
-export function ChartSeriesBar({ layout, points, seriesColor }: ChartSeriesBarProps) {
+export function ChartSeriesBar({
+  layout,
+  points,
+  seriesColor,
+  interaction,
+  seriesIndex = 0,
+}: ChartSeriesBarProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH, toY } = layout;
+  const ref = { kind: "series" as const, seriesIndex };
+  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+  const interactive = Boolean(interaction?.onPartPointerDown);
 
   return (
     <>
@@ -27,7 +44,16 @@ export function ChartSeriesBar({ layout, points, seriesColor }: ChartSeriesBarPr
             height={height}
             fill={seriesColor}
             rx={1}
-            className={cn.seriesBar}
+            className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
+            {...(index === 0 ? chartPartDomProps(ref, interaction?.selectedPart) : {})}
+            onPointerDown={
+              interactive
+                ? (event) => {
+                    event.stopPropagation();
+                    interaction?.onPartPointerDown?.(ref, event);
+                  }
+                : undefined
+            }
           />
         );
       })}

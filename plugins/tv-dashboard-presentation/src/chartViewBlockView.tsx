@@ -1,6 +1,7 @@
 import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
 
 import { chartTypeLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
+import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
 import { TvDataBarChartWidget, TvDataLineChartWidget } from "./tvDataChartWidgets";
 import { resolveChartType } from "./tvDataPresentation";
@@ -9,6 +10,7 @@ type Props = {
   block: ComunicadoChartViewBlock;
   interactive?: boolean;
   loading?: boolean;
+  interaction?: ComunicadoChartInteraction | null;
 };
 
 function ChartTypePlaceholder({
@@ -32,9 +34,15 @@ function ChartTypePlaceholder({
   );
 }
 
-export function ChartViewBlockView({ block, interactive = false, loading = false }: Props) {
+export function ChartViewBlockView({
+  block,
+  interactive = false,
+  loading = false,
+  interaction = null,
+}: Props) {
   const resolved = block.resolved;
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
+  const chartInteraction = interactive ? interaction : null;
 
   if (resolved?.error) {
     return (
@@ -89,9 +97,19 @@ export function ChartViewBlockView({ block, interactive = false, loading = false
         contentClassName="tdp-centered-scaled-preview__content"
       >
         {chartType === "bar" ? (
-          <TvDataBarChartWidget resolved={resolved} chartOptions={block.chartOptions} />
+          <TvDataBarChartWidget
+            resolved={resolved}
+            chartOptions={block.chartOptions}
+            chartParts={block.chartParts}
+            interaction={chartInteraction}
+          />
         ) : (
-          <TvDataLineChartWidget resolved={resolved} chartOptions={block.chartOptions} />
+          <TvDataLineChartWidget
+            resolved={resolved}
+            chartOptions={block.chartOptions}
+            chartParts={block.chartParts}
+            interaction={chartInteraction}
+          />
         )}
       </CenteredScaledPreview>
     </div>

@@ -488,6 +488,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
     if (block.chartOptions) base.chartOptions = { ...block.chartOptions };
+    if (block.chartParts) base.chartParts = { ...block.chartParts };
   } else if (block.type === "table_view") {
     base.tablePreset = block.tablePreset;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
@@ -677,6 +678,10 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       block.chartOptions && typeof block.chartOptions === "object"
         ? ({ ...DEFAULT_COMUNICADO_CHART_OPTIONS, ...(block.chartOptions as ComunicadoChartOptions) })
         : { ...DEFAULT_COMUNICADO_CHART_OPTIONS };
+    const chartParts =
+      block.chartParts && typeof block.chartParts === "object"
+        ? { ...(block.chartParts as Record<string, unknown>) }
+        : undefined;
     return attachBlockAnimations(
       {
         id,
@@ -686,6 +691,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         groupId,
         chartType,
         chartOptions,
+        chartParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
         resolved:
           block.resolved && typeof block.resolved === "object"

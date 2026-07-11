@@ -7,6 +7,7 @@ import { ChartPlotArea } from "./ChartPlotArea";
 import { ChartSeriesBar } from "./ChartSeriesBar";
 import { ChartSeriesLine } from "./ChartSeriesLine";
 import { ChartValueLabels } from "./ChartValueLabels";
+import type { ChartPartsMap, SeriesChartInteraction } from "../seriesChartParts";
 import type { SeriesChartKindProps } from "./types";
 
 export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
@@ -15,6 +16,9 @@ export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
   showVerticalGrid: boolean;
   showMarkers: boolean;
   showDataLabels: boolean;
+  interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
+  strokeWidth?: number;
 };
 
 export function ChartPlotAreaGroup({
@@ -29,6 +33,9 @@ export function ChartPlotAreaGroup({
   showVerticalGrid,
   showMarkers,
   showDataLabels,
+  interaction,
+  chartParts,
+  strokeWidth,
 }: ChartPlotAreaGroupProps) {
   return (
     <>
@@ -51,11 +58,29 @@ export function ChartPlotAreaGroup({
       <ChartAxisLines layout={layout} visible={showAxes} />
 
       {chartType === "bar" ? (
-        <ChartSeriesBar layout={layout} points={points} seriesColor={seriesColor} />
+        <ChartSeriesBar
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+        />
       ) : (
         <>
-          <ChartSeriesLine layout={layout} points={points} seriesColor={seriesColor} />
-          <ChartDataPoints layout={layout} points={points} seriesColor={seriesColor} visible={showMarkers} />
+          <ChartSeriesLine
+            layout={layout}
+            points={points}
+            seriesColor={seriesColor}
+            strokeWidth={strokeWidth}
+            interaction={interaction}
+          />
+          <ChartDataPoints
+            layout={layout}
+            points={points}
+            seriesColor={seriesColor}
+            visible={showMarkers}
+            interaction={interaction}
+            chartParts={chartParts}
+          />
         </>
       )}
 

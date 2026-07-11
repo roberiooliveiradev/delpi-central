@@ -1137,6 +1137,17 @@
   pointer-events: auto;
 }
 
+/* Onda 4G — hit de partes do gráfico no palco */
+.td-composer__chart-view,
+.td-composer__block-wrap .tdp-comunicado__block--chart-view {
+  pointer-events: auto;
+}
+
+.td-composer__chart-view [data-chart-part] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .td-composer__inline-text--shape {
   width: 100%;
   min-height: 1em;

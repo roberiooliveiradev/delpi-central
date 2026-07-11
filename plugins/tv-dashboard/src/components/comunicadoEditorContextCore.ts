@@ -11,6 +11,7 @@ import type {
   ComunicadoTextBlock,
   ComunicadoDataDisplayMode,
   ComunicadoChartType,
+  ComunicadoChartPartRef,
   ComunicadoTablePreset,
   ContentRunListSelectionState,
   ContentRunNamedStyleSelectionState,
@@ -55,6 +56,10 @@ export type ComunicadoEditorContextValue = {
   selectBlocksByIds: (blockIds: string[]) => void;
   clearSelection: () => void;
   setSelectedId: (id: string | null) => void;
+  /** Onda 4G — subseleção de parte do gráfico (título, série, marcador…). */
+  selectedChartPart: ComunicadoChartPartRef | null;
+  selectChartPart: (blockId: string, part: ComunicadoChartPartRef) => void;
+  clearChartPartSelection: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
   textEditSelection: TextEditSelection | null;

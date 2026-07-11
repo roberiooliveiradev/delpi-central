@@ -1,6 +1,7 @@
 import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 import { resolveChartDisplayOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
+import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comunicadoChartParts";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
 import { formatNumber, formatPct } from "./nativeFormat";
 
@@ -13,13 +14,19 @@ export function formatCellValue(value: unknown): string {
   return String(value);
 }
 
+type ChartWidgetProps = {
+  resolved: ComunicadoDataResolved;
+  chartOptions?: ComunicadoChartOptions;
+  chartParts?: ComunicadoChartPartsMap | null;
+  interaction?: ComunicadoChartInteraction | null;
+};
+
 export function TvDataLineChartWidget({
   resolved,
   chartOptions,
-}: {
-  resolved: ComunicadoDataResolved;
-  chartOptions?: ComunicadoChartOptions;
-}) {
+  chartParts,
+  interaction,
+}: ChartWidgetProps) {
   const points = (resolved.chart?.points ?? []).map((point) => ({
     label: point.label != null ? String(point.label) : undefined,
     value: point.value == null ? null : Number(point.value),
@@ -29,6 +36,8 @@ export function TvDataLineChartWidget({
       chartType="line"
       points={points}
       options={resolveChartDisplayOptions(chartOptions, resolved)}
+      chartParts={chartParts}
+      interaction={interaction}
     />
   );
 }
@@ -36,10 +45,9 @@ export function TvDataLineChartWidget({
 export function TvDataBarChartWidget({
   resolved,
   chartOptions,
-}: {
-  resolved: ComunicadoDataResolved;
-  chartOptions?: ComunicadoChartOptions;
-}) {
+  chartParts,
+  interaction,
+}: ChartWidgetProps) {
   const points = (resolved.chart?.points ?? []).map((point) => ({
     label: point.label != null ? String(point.label) : undefined,
     value: point.value == null ? null : Number(point.value),
@@ -49,6 +57,8 @@ export function TvDataBarChartWidget({
       chartType="bar"
       points={points}
       options={resolveChartDisplayOptions(chartOptions, resolved)}
+      chartParts={chartParts}
+      interaction={interaction}
     />
   );
 }

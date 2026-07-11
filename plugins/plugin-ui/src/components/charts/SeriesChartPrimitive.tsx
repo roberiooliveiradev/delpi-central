@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import {
-  mergeSeriesChartOptions,
   seriesChartThemeStyle,
   usableSeriesChartPoints,
   type SeriesChartKind,
@@ -10,6 +9,13 @@ import {
   type SeriesChartValueFormat,
 } from "./seriesChartOptions";
 import { useSeriesChartClasses } from "./seriesChartClasses";
+import {
+  mergeSeriesChartOptionsWithParts,
+  resolveSeriesStrokeColor,
+  resolveSeriesStrokeWidth,
+  type ChartPartsMap,
+  type SeriesChartInteraction,
+} from "./seriesChartParts";
 import {
   buildSeriesChartLayout,
   ChartContainer,
@@ -33,12 +39,17 @@ export type SeriesPlotRenderProps = {
   showVerticalGrid: boolean;
   showMarkers: boolean;
   showDataLabels: boolean;
+  interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
+  strokeWidth?: number;
 };
 
 export type SeriesChartPrimitiveProps = {
   chartType: SeriesChartKind;
   points: SeriesChartPoint[];
   options?: SeriesChartOptions | null;
+  chartParts?: ChartPartsMap | null;
+  interaction?: SeriesChartInteraction | null;
   emptyMessage?: string;
   className?: string;
   renderPlotArea: (props: SeriesPlotRenderProps) => ReactNode;
@@ -49,13 +60,16 @@ export function SeriesChartPrimitive({
   chartType,
   points,
   options,
+  chartParts,
+  interaction,
   emptyMessage = "Sem série",
   className,
   renderPlotArea,
 }: SeriesChartPrimitiveProps) {
   const cn = useSeriesChartClasses();
-  const config = mergeSeriesChartOptions(options);
+  const config = mergeSeriesChartOptionsWithParts(options, chartParts);
   const usable = usableSeriesChartPoints(points);
+  const interactive = Boolean(interaction?.onPartPointerDown);
 
   if (usable.length === 0) {
     return (
@@ -75,7 +89,8 @@ export function SeriesChartPrimitive({
     showXAxisTitle: config.showXAxisTitle === true,
   });
 
-  const seriesColor = config.seriesColor || "#0d7a8c";
+  const seriesColor = resolveSeriesStrokeColor(config, chartParts);
+  const strokeWidth = resolveSeriesStrokeWidth(chartParts);
   const title = config.title?.trim();
   const seriesName = resolveSeriesName(config);
   const showLegend = config.showLegend !== false && config.legendPosition !== "hidden";
@@ -95,6 +110,9 @@ export function SeriesChartPrimitive({
     showVerticalGrid: Boolean(config.showVerticalGrid),
     showMarkers: config.showMarkers !== false,
     showDataLabels: Boolean(config.showDataLabels),
+    interaction,
+    chartParts,
+    strokeWidth,
   };
 
   const legend = (
@@ -103,12 +121,15 @@ export function SeriesChartPrimitive({
       seriesColor={seriesColor}
       position={config.legendPosition ?? "bottom"}
       visible={showLegend}
+      interaction={interaction}
     />
   );
 
+  const rootClass = [className, interactive ? `${cn.root}--interactive` : ""].filter(Boolean).join(" ") || undefined;
+
   return (
-    <ChartContainer className={className} style={themeStyle}>
-      <ChartTitle title={title} visible={config.showTitle !== false} />
+    <ChartContainer className={rootClass} style={themeStyle as CSSProperties}>
+      <ChartTitle title={title} visible={config.showTitle !== false} interaction={interaction} />
       {config.legendPosition === "top" ? legend : null}
 
       <div className={cn.body}>
@@ -124,6 +145,7 @@ export function SeriesChartPrimitive({
         seriesName={seriesName}
         valueFormat={valueFormat}
         visible={Boolean(config.showDataTable)}
+        interaction={interaction}
       />
     </ChartContainer>
   );

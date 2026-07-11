@@ -1,5 +1,6 @@
 import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
+import type { ComunicadoChartPartsMap } from "./comunicadoChartParts";
 import type { ComunicadoTableOptions } from "./comunicadoTableOptions";
 
 export type ComunicadoFrame = {
@@ -203,6 +204,8 @@ export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
   chartType: ComunicadoChartType;
   dataSourceId?: string;
   chartOptions?: ComunicadoChartOptions;
+  /** Onda 4G — estilo/visibilidade por parte (adapter com chartOptions). */
+  chartParts?: ComunicadoChartPartsMap;
   resolved?: ComunicadoDataResolved;
 };
 

@@ -47,6 +47,7 @@ import {
   type ComunicadoContentRun,
   type ComunicadoListType,
   type ComunicadoChartType,
+  type ComunicadoChartPartRef,
   type ComunicadoTablePreset,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -154,6 +155,7 @@ export function ComunicadoEditorProvider({
     return first ? [first] : [];
   });
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
@@ -193,6 +195,7 @@ export function ComunicadoEditorProvider({
     }
     setSelectedIds(id ? [id] : []);
     setEditingTextId((current) => (id === current ? current : null));
+    setSelectedChartPart(null);
     if (!id) {
       setTextEditSelection(null);
       setTextEditSelectionStyle(null);
@@ -206,6 +209,7 @@ export function ComunicadoEditorProvider({
     const unique = [...new Set(blockIds.filter(Boolean))];
     setSelectedIds(unique);
     setEditingTextId(null);
+    setSelectedChartPart(null);
   }, [flushActiveTextEdit]);
 
   const selectBlock = useCallback(
@@ -231,6 +235,7 @@ export function ComunicadoEditorProvider({
         }
       }
       setEditingTextId(null);
+      setSelectedChartPart(null);
     },
     [flushActiveTextEdit],
   );
@@ -239,7 +244,22 @@ export function ComunicadoEditorProvider({
     flushActiveTextEdit();
     setSelectedIds([]);
     setEditingTextId(null);
+    setSelectedChartPart(null);
   }, [flushActiveTextEdit]);
+
+  const selectChartPart = useCallback(
+    (blockId: string, part: ComunicadoChartPartRef) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(part);
+    },
+    [flushActiveTextEdit],
+  );
+
+  const clearChartPartSelection = useCallback(() => {
+    setSelectedChartPart(null);
+  }, []);
 
   const isBlockSelected = useCallback(
     (blockId: string) => selectedIds.includes(blockId),
@@ -1077,6 +1097,9 @@ export function ComunicadoEditorProvider({
     selectBlocksByIds,
     clearSelection,
     setSelectedId,
+    selectedChartPart,
+    selectChartPart,
+    clearChartPartSelection,
     editingTextId,
     setEditingTextId: setEditingTextIdWithSelection,
     textEditSelection,

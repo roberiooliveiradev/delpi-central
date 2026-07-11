@@ -260,6 +260,22 @@ export {
   type ChartElementDefinition,
   type ChartElementId,
 } from "./chartElementCatalog";
+export {
+  CHART_MARKER_RADIUS,
+  CHART_PART_DATA_ATTR,
+  CHART_SERIES_LINE_STROKE_WIDTH,
+  chartOptionsToParts,
+  findChartPartFromTarget,
+  isChartPartRefEqual,
+  mergeSeriesChartOptionsWithParts,
+  parseChartPartRef,
+  partsToChartOptions,
+  serializeChartPartRef,
+  upsertChartPartState,
+  type ComunicadoChartInteraction,
+  type ComunicadoChartPartRef,
+  type ComunicadoChartPartsMap,
+} from "./comunicadoChartParts";
 export { chartTypeLabel, tablePresetLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
 export {
   CHART_LEGEND_POSITION_OPTIONS,

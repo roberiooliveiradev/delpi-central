@@ -1173,6 +1173,18 @@
   background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 8%, transparent);
 }
 
+/* Onda 4G — subseleção (editor); TV ignora interactive */
+.tdp-series-chart--interactive [data-chart-part] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.tdp-series-chart__part--selected,
+.tdp-series-chart [data-chart-part][aria-selected="true"] {
+  outline: 2px solid var(--tdp-data-accent, #089bdb);
+  outline-offset: 2px;
+}
+
 .tdp-series-chart__data-table td {
   color: var(--tdp-data-text, #e2e8f0);
 }

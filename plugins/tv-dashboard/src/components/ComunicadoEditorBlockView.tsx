@@ -1,14 +1,18 @@
 import {
+  ChartViewBlockView,
   ComunicadoBlockView,
   ComunicadoMediaPlaceholder,
   blockCssStyle,
   comunicadoImageCropCssProperties,
   isComunicadoVisualBoxBlock,
   type ComunicadoBlock,
+  type ComunicadoChartPartRef,
+  type ComunicadoChartViewBlock,
 } from "@delpi/tv-dashboard-presentation";
-import type { CSSProperties } from "react";
+import { useCallback, type CSSProperties } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
+import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
 
@@ -25,7 +29,6 @@ function EditorImageBlock({
   block,
   style,
   className,
-  isSelected,
 }: {
   block: Extract<ComunicadoBlock, { type: "image" }>;
   style: CSSProperties;
@@ -62,6 +65,50 @@ function EditorImageBlock({
       ) : (
         <ComunicadoMediaPlaceholder kind="image" />
       )}
+    </div>
+  );
+}
+
+function EditorChartViewBlock({
+  block,
+  style,
+  className,
+  dataLoading,
+}: {
+  block: ComunicadoChartViewBlock;
+  style: CSSProperties;
+  className?: string;
+  dataLoading?: boolean;
+}) {
+  const { selectedId, selectedChartPart, selectChartPart, requestRibbonTab } = useComunicadoEditor();
+
+  const onPartPointerDown = useCallback(
+    (ref: ComunicadoChartPartRef, _event: unknown) => {
+      selectChartPart(block.id, ref);
+      requestRibbonTab("format");
+    },
+    [block.id, requestRibbonTab, selectChartPart],
+  );
+
+  const interaction =
+    selectedId === block.id
+      ? {
+          selectedPart: selectedChartPart,
+          onPartPointerDown,
+        }
+      : {
+          selectedPart: null,
+          onPartPointerDown,
+        };
+
+  return (
+    <div
+      className={["tdp-comunicado__block", "tdp-comunicado__block--chart-view", "td-composer__chart-view", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={style}
+    >
+      <ChartViewBlockView block={block} interactive loading={dataLoading} interaction={interaction} />
     </div>
   );
 }
@@ -105,6 +152,17 @@ export function ComunicadoEditorBlockView({
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <ComunicadoEditorVideoPreview block={block} style={style} className={className} />
       </div>
+    );
+  }
+
+  if (block.type === "chart_view") {
+    return (
+      <EditorChartViewBlock
+        block={block}
+        style={style}
+        className={className}
+        dataLoading={dataLoading}
+      />
     );
   }
 
