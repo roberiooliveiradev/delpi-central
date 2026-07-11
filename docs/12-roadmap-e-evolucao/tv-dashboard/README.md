@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.4 em produção (jul/2026) — editor deck + Onda 4A/4B/4D + **4F parcial** (dados live, gráficos configuráveis)  
-> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18
+> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18 · **Gráfico composto / subseleção:** §19 (Onda 4G)
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -136,6 +136,7 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados)
 
 - **Backlog 4F:** tipos de gráfico avançados (pizza, área, combo), Recharts em telas nativas fixas
+- **Onda 4G (§19):** gráfico como agregação de primitivos `point`→`line`→`area` + tipografia; clique no palco edita a parte (não só o bloco)
 
 ---
 
@@ -207,10 +208,11 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 |------|------|--------|
 | **4A** | Produtividade editor | ✅ completo (incl. 4A.9) |
 | **4B** | Templates, temas, visual | ✅ |
-| **4C** | Rich text, bullets, estilos nomeados | ❌ backlog |
+| **4C** | Rich text, bullets, estilos nomeados | ✅ (ver playbook §17) |
 | **4D** | Layout avançado | ✅ |
-| **4E** | Animações, master slide, export PNG | ❌ backlog |
+| **4E** | Animações, master slide, export PNG | ⚠ 4E.1–4E.2 ✅; 4E.3–4E.5 backlog |
 | **4F** | **Indicadores live api-delpi** — fonte + gráfico/tabela, catálogo OpenAPI, `chartOptions` | ⚠ parcial (§18 — **v1.4**) |
+| **4G** | **Gráfico composto por primitivos** — subseleção título/série/marcadores no palco | ❌ planejado (§19) |
 
 ---
 

@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.4
 > **Data:** 2026-07-10
-> **Status:** … **v1.3.8 (jul/2026):** 4E.2 animações entrada por bloco. **v1.4 (jul/2026):** 4F parcial avançado — arquitetura `data_source` + `chart_view`/`table_view`, catálogo OpenAPI completo, gráficos com elementos configuráveis (§18). **Backlog:** 4E.3–4E.5 master/export; 4F tipos de gráfico avançados (pizza, combo, Recharts nativas).
+> **Status:** … **v1.3.8 (jul/2026):** 4E.2 animações entrada por bloco. **v1.4 (jul/2026):** 4F parcial avançado — arquitetura `data_source` + `chart_view`/`table_view`, catálogo OpenAPI completo, gráficos com elementos configuráveis (§18). **Próximo (Onda 4G — §19):** gráfico composto por primitivos (ponto→linha→forma) com subseleção no palco (título, série, marcadores…). **Backlog:** 4E.3–4E.5 master/export; 4F tipos avançados; 4G composição editável.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente:** 4E.3–4E.5 master/export; 4F tipos de gráfico avançados e Recharts em telas nativas (§18 — **v1.4** cobre fonte + visual + `chartOptions`).
+**Ainda pendente:** 4E.3–4E.5 master/export; 4F tipos de gráfico avançados e Recharts em telas nativas; **4G** gráfico composto + subseleção no palco (§19).
 
 ---
 
@@ -997,13 +997,14 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 ### 17.7 Priorização recomendada
 
 ```text
-Impacto UX × esforço (jul/2026, pós v1.3)
+  Impacto UX × esforço (jul/2026, pós v1.4)
 
-  Concluído v1.3                  → 4A (incl. 4A.9), 4B, 4D, 4C.1–4C.5, 4E.1–4E.2
-  Próximo                         → 4E.3 master slide playlist
-  Diferencial PowerPoint          → 4E.2–4E.5 animações / master / export
-  Diferencial DELPI (dados live)  → 4F completar §18 (parcial)
-  Longo prazo                     → 4E animações, export PPTX
+  Concluído v1.3 / v1.4           → 4A–4D, 4C, 4E.1–4E.2, 4F parcial (§18)
+  Próximo (edição de gráfico)     → 4G composição + subseleção no palco (§19)
+  Próximo (PPT)                   → 4E.3 master slide playlist
+  Diferencial PowerPoint          → 4E.3–4E.5 master / build order / export
+  Diferencial DELPI (dados live)  → 4F tipos avançados + Recharts nativas
+  Longo prazo                     → export PPTX; 4G.8 partes em table_view
 ```
 
 ### 17.8 Gates de teste — editor
@@ -1433,10 +1434,193 @@ Estilo: prefixo `tdp-*` e `tdp-series-chart*`; respeitar viewport-fit; **proibid
 | §6.1 viewport-fit | Tabelas/gráficos no compositor obedecem overflow hidden |
 | §9 PresentationEngine | Refresh + WebSocket recarregam payload enriquecido |
 | `NativeScreenDataService` | Padrão atual de agregação server-side — evoluir para gateway genérico |
+| **§19** | Gráfico como composição de primitivos + subseleção no palco (Onda 4G) |
 
 ---
 
-## 19. Histórico — kickoff v1
+## 19. Gráfico composto por primitivos — edição no palco (Onda 4G)
+
+> **North star:** o gráfico **não** é um bitmap configurável por checkboxes. É um **agregado** de componentes canônicos (ponto → linha → forma/área + texto) que **herdam** estilo e interação do mesmo núcleo usado pelo canvas de formas. Clique no título, na série, num marcador ou na legenda seleciona **aquele** subelemento — inspector e atalhos atuam sobre ele, sem duplicar lógica de drag/estilo/hit-test.
+
+### 19.1 Problema (estado v1.4)
+
+| Aspecto | Hoje | Efeito |
+|---|---|---|
+| Modelo | `chartOptions` flat (`showTitle`, `seriesColor`, …) | «Elementos» = feature flags, não identidade |
+| Render | Compostos no `plugin-ui` (`ChartTitle`, `ChartSeriesLine`, `ChartDataPoints`…) | Peças paint-only, sem `onSelect` / `data-chart-part` |
+| Seleção no editor | Só `selectedId` do bloco `chart_view` | Clique move o frame inteiro; não edita título/linha/pontos |
+| Edição | `ChartViewOptionsInspector` (lateral) | UX PowerPoint incompleta |
+| Estilo | `seriesColor` paralelo a `ComunicadoBlockStyle` | Duplicação; forms e charts não compartilham fill/stroke/marker |
+
+**Causa raiz:** composição existe só na camada de paint; o **scene-graph de edição** para no bloco. Formas do canvas (`comunicadoVisualPrimitive`: `point` → `line` → `area`) já têm geometria, estilo e interação — o gráfico **não** as reutiliza.
+
+### 19.2 Princípios (obrigatórios)
+
+1. **Uma fonte de verdade por primitivo** — estilo, hit-test e defaults de `point` / `line` / `area` vivem em `comunicadoVisualPrimitive` + `comunicadoShapeGeometry` + `ComunicadoBlockStyle` (ou módulo derivado compartilhado no `plugin-ui`). Proibido reinventar `markerRadius` / `strokeWidth` só no chart.
+2. **Gráfico = compositor** — `chart_view` orquestra filhos tipados; não embute paint monolítico no editor.
+3. **Herança de propriedades** — série herda stroke/cor do primitivo `line`; marcador herda fill/stroke/radius do primitivo `point`; área (futuro pizza/área) herda fill do primitivo `area`; título/legenda reusam tipografia de texto (`contentRuns` / named styles) quando couber.
+4. **Subseleção no palco** — estado `selectedChartPart: { blockId, partKind, partKey }` (ou equivalente) no editor; pointer no filho **não** inicia drag do frame (salvo handle do bloco / clique no fundo do chart).
+5. **Sem duplicação API↔MFE↔TV** — contrato de partes no pacote canônico (`plugin-ui` charts + `tv-dashboard-presentation` types); admin e TV consomem o mesmo render; TV ignora handlers de edição (`interactive={false}`).
+6. **Segurança / persistência** — `native_config` salva só binding + opções/estilo das partes; **nunca** `resolved.points` como geometria editável persistida (pontos de dados continuam vindos do enrichment). Part keys estáveis (`title`, `series:0`, `marker:3`, `legend`, `xAxisTitle`…) — sem HTML/user scripts.
+7. **Compatibilidade** — `chartOptions` flat v1.4 permanece como **projeção** (leitura/escrita via adapter) até migração completa; novos campos em `chartParts` / estilo por parte.
+
+### 19.3 Hierarquia de componentes
+
+```text
+ComunicadoVisualPrimitive (canvas)
+  point  → marcador / vértice
+  line   → série (polyline) / eixo
+  area   → fill sob a série, pizza, barras (faces)
+
+Chart (agregado chart_view)
+  ├── ChartTitlePart          → tipografia (texto)
+  ├── ChartLegendPart         → tipografia + swatch (cor herdada da série)
+  ├── ChartAxisPart           → line + labels
+  ├── ChartGridPart           → line (decorativo)
+  ├── ChartSeriesLinePart     → primitive line  + style herdado
+  ├── ChartSeriesAreaPart     → primitive area  (quando chartType exigir)
+  ├── ChartDataPointPart[]    → primitive point + style herdado (posição = layout dos dados)
+  ├── ChartDataLabelPart[]    → tipografia ancorada ao ponto
+  └── ChartDataTablePart      → tabela compacta (já §18)
+```
+
+| Parte | Primitivo / base | Propriedades herdadas (não redefinir) |
+|---|---|---|
+| Marcador | `point` | `fill`, `stroke`, `strokeWidth`, `markerRadius` / hit size |
+| Série (linha) | `line` | `stroke`, `strokeWidth`, opacidade |
+| Faixa / barra / pizza | `area` | `fill`, `stroke`, `opacity` |
+| Título, eixos, rótulos | texto | `fontFamily`, `fontSize`, `color`, namedStyle, contentRuns |
+| Legenda | texto + swatch | tipografia + cor da série vinculada |
+
+**Dados vs geometria de canvas:** a **posição** dos marcadores/série vem do layout (`toX`/`toY` + `resolved.points`). O **estilo** e a **seleção** vêm dos primitivos. Não transformar cada ponto de KPI em bloco `shape` independente no filmstrip — são **partes internas** do `chart_view`.
+
+### 19.4 Contrato de modelo (evolução)
+
+```ts
+/** Parte endereçável dentro do chart_view — identidade estável para seleção e estilo. */
+type ChartPartRef =
+  | { kind: "title" }
+  | { kind: "legend" }
+  | { kind: "series"; seriesIndex: number }
+  | { kind: "marker"; seriesIndex: number; pointIndex: number }
+  | { kind: "dataLabel"; seriesIndex: number; pointIndex: number }
+  | { kind: "axis"; axis: "x" | "y" }
+  | { kind: "axisTitle"; axis: "x" | "y" }
+  | { kind: "grid" }
+  | { kind: "dataTable" };
+
+type ChartPartStyle = Pick<
+  ComunicadoBlockStyle,
+  "fill" | "stroke" | "strokeWidth" | "opacity" | "fontFamily" | "fontSize" | "color" | "fontWeight"
+  // … subset tipado; defaults via primitive
+>;
+
+type ComunicadoChartViewBlockV2 = {
+  type: "chart_view";
+  chartType: ComunicadoChartType;
+  dataSourceId?: string;
+  /** Preferencial: estilo/visibilidade por parte. */
+  chartParts?: Partial<Record<string /* serialized ChartPartRef */, {
+    visible?: boolean;
+    style?: ChartPartStyle;
+    content?: string; // título, axisTitle, seriesName…
+  }>>;
+  /** Legado v1.4 — adapter bidirecional com chartParts. */
+  chartOptions?: ComunicadoChartOptions;
+  frame: ComunicadoFrame;
+  style?: ComunicadoBlockStyle; // chrome do bloco (fundo do card)
+};
+```
+
+Regras:
+
+- Adapter `chartOptionsToParts` / `partsToChartOptions` no **módulo canônico** (`plugin-ui`), único — MFE e presentation não implementam merge paralelo.
+- Remover um marcador da série **não** apaga o ponto de dados; só `visible: false` na parte (dados continuam no enrichment).
+- Cor da série: escrever em `chartParts[series:0].style.stroke` (e fill do ponto) — `seriesColor` legado espelha via adapter.
+
+### 19.5 Interação no editor
+
+```text
+Pointer down no palco
+  ├─ hit parte do chart? → selectChartPart(ref); NÃO startDrag(move) do bloco
+  │     ├─ double-click título / axisTitle / dataLabel → editingChartPart (inline)
+  │     └─ inspector → ChartPartInspector (estilo do primitivo + conteúdo)
+  ├─ hit fundo / margem do chart_view? → selectBlock(chart); drag/resize frame
+  └─ hit outro bloco → fluxo atual
+```
+
+| Gesto | Comportamento |
+|---|---|
+| Clique título | Seleciona `title`; ribbon Formatar / inspetor editam texto e tipografia |
+| Clique linha da série | Seleciona `series:0`; stroke/cor/espessura (primitivo `line`) |
+| Clique marcador | Seleciona `marker:i`; fill/stroke/radius (primitivo `point`) |
+| Clique legenda | Seleciona `legend`; tipografia + toggle |
+| Esc / clique fora | Limpa `selectedChartPart`; mantém bloco selecionado se ainda no chart |
+| Del com parte selecionada | `visible: false` na parte (não remove o bloco) |
+| Del com só o bloco | fluxo atual (exclui slide element) |
+
+**Pointer-events:** no modo editor, filhos do chart com `pointer-events: auto` e `data-chart-part="…"`; no modo TV/preview kiosk, `pointer-events: none` no miolo (só o engine de slides).
+
+### 19.6 Onde implementar (sem espalhar)
+
+| Camada | Módulo canônico | Não fazer |
+|---|---|---|
+| Primitivos + estilo | `comunicadoVisualPrimitive`, `ComunicadoBlockStyle`, geometry | Copiar defaults em `ChartDataPoints` |
+| Partes + adapter options↔parts | `plugin-ui` (`seriesChartParts.ts` novo) | Adapter só no MFE |
+| Render interativo | `ChartTitle`, `ChartSeriesLine`, `ChartDataPoints` + prop `selection` / `onPartPointerDown` | Fork do chart no `tv-dashboard` |
+| Estado seleção | `comunicadoEditorContext` (`selectedChartPart`) | `useState` local no `ConfigurableSeriesChart` |
+| Hit / pointer | `ComunicadoComposer` + composer chart wrapper | `if chart` espalhado em `useCanvasBlockInteraction` sem API clara |
+| Inspector | `ChartPartInspector` (reusa campos de forma/texto) + deprecar toggles soltos do `ChartViewOptionsInspector` gradualmente | Segundo inspetor paralelo com as mesmas props |
+| TV | mesmo render, `interactive={false}` | Lógica de seleção na view pública |
+
+### 19.7 Roadmap Onda 4G
+
+| # | Entrega | Esforço | Status |
+|---|---|---|---|
+| 4G.1 | Contrato `ChartPartRef` + adapter `chartOptions` ↔ `chartParts` + testes | M | ❌ |
+| 4G.2 | Props de seleção/hit nos filhos canônicos (`plugin-ui` seriesChart/*) | M | ❌ |
+| 4G.3 | Estado `selectedChartPart` + pointer no compositor (sem drag do frame) | L | ❌ |
+| 4G.4 | Herança de estilo: série←`line`, marcador←`point` (unificar `seriesColor`) | M | ❌ |
+| 4G.5 | Edição inline do título (e axis titles) no palco | M | ❌ |
+| 4G.6 | `ChartPartInspector` unificado (reusa campos de forma/texto) | M | ❌ |
+| 4G.7 | Migração UI: catálogo de elementos vira seleção/visibilidade de partes | S | ❌ |
+| 4G.8 | Extensão a `table_view` (célula/cabeçalho) — mesmo padrão de part ref | L | backlog |
+
+**Critérios de aceite 4G:**
+
+- [ ] Clique no título do gráfico seleciona só o título; digitar/alterar tipografia atualiza `chartParts` (e adapter preenche `chartOptions.title` para legado).
+- [ ] Clique na linha altera stroke sem abrir só o painel genérico do bloco.
+- [ ] Clique num marcador altera fill/radius via primitivos `point` (mesmo default/hit que forma ponto do canvas).
+- [ ] Preview TV e admin renderizam idêntico com `interactive={false}`; zero handlers na rota pública.
+- [ ] Nenhum `seriesColor` / `markerRadius` hardcoded fora do módulo de estilo do primitivo (exceto adapter de compat).
+- [ ] Undo/redo da pilha do deck cobre mudança de parte.
+- [ ] Testes: adapter round-trip; hit-test part; regressão `ConfigurableSeriesChart` / filmstrip.
+
+### 19.8 Anti-padrões
+
+- Duplicar `ChartTitle` no MFE «só para editar».
+- Transformar cada ponto de dados em `ComunicadoBlock` solto na playlist (quebra filmstrip, enrichment e z-order).
+- Seleção só no inspector sem hit no SVG/DOM.
+- Persistir coordenadas absolutas dos markers no JSON (posições são função dos dados + layout).
+- Segundo sistema de cores (`seriesColor`) após 4G.4 — apenas projeção legada.
+
+### 19.9 Referências de código
+
+| Área | Caminho |
+|---|---|
+| Primitivos canvas | `tv-dashboard-presentation/src/comunicadoVisualPrimitive.ts` |
+| Geometria / hit ponto | `comunicadoShapeGeometry.ts` |
+| Options flat (legado) | `plugin-ui/.../seriesChartOptions.ts` |
+| Catálogo flags (legado) | `plugin-ui/.../seriesChartElementCatalog.ts` |
+| Partes de paint | `plugin-ui/.../seriesChart/ChartTitle.tsx`, `ChartSeriesLine.tsx`, `ChartDataPoints.tsx`, … |
+| Bloco chart | `comunicadoTypes.ts` → `ComunicadoChartViewBlock` |
+| Inspector atual | `tv-dashboard/.../ChartViewOptionsInspector.tsx` |
+| Seleção de bloco | `ComunicadoComposer.tsx`, `comunicadoEditorContext.tsx` |
+| Dados live | §18 — enrichment inalterado; 4G só mexe em estilo/seleção/composição |
+
+---
+
+## 20. Histórico — kickoff v1
 
 1. Validar com stakeholders o **catálogo inicial** de telas nativas (§6.2).
 2. Decidir conta de serviço api-delpi para agregação server-side.
