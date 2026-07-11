@@ -53,6 +53,10 @@ import {
   mergeComunicadoChartOptions,
   partsToChartOptions,
   upsertChartPartState,
+  chartPartAllowsDelete,
+  chartPartAllowsMove,
+  deleteChartPart,
+  nudgeChartPartFrame,
 } from "@delpi/tv-dashboard-presentation";
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
@@ -962,6 +966,25 @@ export function ComunicadoEditorProvider({
   }
 
   function removeSelected() {
+    const chartBlock =
+      selected?.type === "chart_view" ? selected : selectedBlocks.find((b) => b.type === "chart_view");
+    if (
+      selectedChartPart &&
+      chartBlock &&
+      chartBlock.type === "chart_view" &&
+      selectedIds.includes(chartBlock.id) &&
+      chartPartAllowsDelete(selectedChartPart)
+    ) {
+      const result = deleteChartPart(chartBlock.chartParts, selectedChartPart, chartBlock.chartOptions);
+      updateBlock(chartBlock.id, {
+        chartParts: result.parts,
+        chartOptions: result.options,
+      } as Partial<ComunicadoBlock>);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      return;
+    }
+
     if (selectedIds.length === 0) return;
     const removeSet = new Set(selectedIds);
     const nextBlocks = (configRef.current.blocks ?? []).filter((block) => !removeSet.has(block.id));
@@ -1022,6 +1045,20 @@ export function ComunicadoEditorProvider({
   }
 
   function nudgeSelected(dx: number, dy: number) {
+    const chartBlock =
+      selected?.type === "chart_view" ? selected : selectedBlocks.find((b) => b.type === "chart_view");
+    if (
+      selectedChartPart &&
+      chartBlock &&
+      chartBlock.type === "chart_view" &&
+      selectedIds.includes(chartBlock.id) &&
+      chartPartAllowsMove(selectedChartPart)
+    ) {
+      const nextParts = nudgeChartPartFrame(chartBlock.chartParts, selectedChartPart, dx, dy);
+      updateBlock(chartBlock.id, { chartParts: nextParts } as Partial<ComunicadoBlock>);
+      return;
+    }
+
     const targets = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
     if (targets.length === 0) return;
     const idSet = new Set(targets.map((block) => block.id));

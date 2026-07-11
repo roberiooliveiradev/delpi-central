@@ -122,6 +122,7 @@ export function SeriesChartPrimitive({
       position={config.legendPosition ?? "bottom"}
       visible={showLegend}
       interaction={interaction}
+      chartParts={chartParts}
     />
   );
 
@@ -129,7 +130,12 @@ export function SeriesChartPrimitive({
 
   return (
     <ChartContainer className={rootClass} style={themeStyle as CSSProperties}>
-      <ChartTitle title={title} visible={config.showTitle !== false} interaction={interaction} />
+      <ChartTitle
+        title={title}
+        visible={config.showTitle !== false}
+        interaction={interaction}
+        chartParts={chartParts}
+      />
       {config.legendPosition === "top" ? legend : null}
 
       <div className={cn.body}>

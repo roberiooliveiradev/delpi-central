@@ -4,7 +4,10 @@ import {
   ComunicadoMediaPlaceholder,
   blockCssStyle,
   chartOptionsToParts,
+  chartPartAllowsMove,
+  clampChartPartFrame,
   comunicadoImageCropCssProperties,
+  getChartPartState,
   isComunicadoVisualBoxBlock,
   mergeComunicadoChartOptions,
   partsToChartOptions,
@@ -13,7 +16,7 @@ import {
   type ComunicadoChartPartRef,
   type ComunicadoChartViewBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { useCallback, type CSSProperties } from "react";
+import { useCallback, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -140,6 +143,48 @@ function EditorChartViewBlock({
     [block, commitChartPartContent, editingChartPart, updateBlock],
   );
 
+  const onPartMovePointerDown = useCallback(
+    (ref: ComunicadoChartPartRef, event: ReactPointerEvent) => {
+      if (!chartPartAllowsMove(ref)) return;
+      const chartRoot = (event.currentTarget as HTMLElement).closest(".delpi-ui-series-chart");
+      if (!chartRoot) return;
+      event.preventDefault();
+      const rect = chartRoot.getBoundingClientRect();
+      const elRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      const existing = getChartPartState(block.chartParts, ref)?.frame;
+      const origin = existing ?? {
+        x: ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
+        y: ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
+      };
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
+      let lastParts = block.chartParts;
+      let dragged = false;
+
+      const onMove = (ev: PointerEvent) => {
+        const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
+        const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
+        if (!dragged && Math.abs(dx) + Math.abs(dy) < 0.4) return;
+        dragged = true;
+        const nextFrame = clampChartPartFrame({
+          ...origin,
+          x: origin.x + dx,
+          y: origin.y + dy,
+        });
+        lastParts = upsertChartPartState(lastParts, ref, { frame: nextFrame });
+        updateBlock(block.id, { chartParts: lastParts } as Partial<ComunicadoBlock>);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [block.chartParts, block.id, updateBlock],
+  );
+
   const interaction =
     selectedId === block.id
       ? {
@@ -149,6 +194,7 @@ function EditorChartViewBlock({
           onPartDoubleClick,
           onPartContentCommit,
           onPartEditCancel: cancelEditChartPart,
+          onPartMovePointerDown,
         }
       : {
           selectedPart: null,
@@ -157,6 +203,7 @@ function EditorChartViewBlock({
           onPartDoubleClick,
           onPartContentCommit,
           onPartEditCancel: cancelEditChartPart,
+          onPartMovePointerDown,
         };
 
   return (

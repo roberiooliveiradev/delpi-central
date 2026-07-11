@@ -1586,37 +1586,66 @@ Pointer down no palco
 | 4G.7 | Migração UI: catálogo de elementos vira seleção/visibilidade de partes | S | ✅ |
 | 4G.8 | Extensão a `table_view` (célula/cabeçalho) — mesmo padrão de part ref | L | backlog |
 
-**Critérios de aceite 4G:**
+### 19.8 Aceite rápido (4G)
 
-- [ ] Clique no título do gráfico seleciona só o título; digitar/alterar tipografia atualiza `chartParts` (e adapter preenche `chartOptions.title` para legado).
-- [ ] Clique na linha altera stroke sem abrir só o painel genérico do bloco.
-- [ ] Clique num marcador altera fill/radius via primitivos `point` (mesmo default/hit que forma ponto do canvas).
-- [ ] Preview TV e admin renderizam idêntico com `interactive={false}`; zero handlers na rota pública.
-- [ ] Nenhum `seriesColor` / `markerRadius` hardcoded fora do módulo de estilo do primitivo (exceto adapter de compat).
-- [ ] Undo/redo da pilha do deck cobre mudança de parte.
-- [ ] Testes: adapter round-trip; hit-test part; regressão `ConfigurableSeriesChart` / filmstrip.
+- Clique em título/série/marcador seleciona a parte (não só o frame do bloco).
+- Inspetor e catálogo de elementos operam sobre `chartParts`.
+- Estilos de série/marcador seguem primitivos `line`/`point`.
 
-### 19.8 Anti-padrões
+### 19.9 Fora de escopo 4G
 
-- Duplicar `ChartTitle` no MFE «só para editar».
-- Transformar cada ponto de dados em `ComunicadoBlock` solto na playlist (quebra filmstrip, enrichment e z-order).
-- Seleção só no inspector sem hit no SVG/DOM.
-- Persistir coordenadas absolutas dos markers no JSON (posições são função dos dados + layout).
-- Segundo sistema de cores (`seriesColor`) após 4G.4 — apenas projeção legada.
+- Arraste livre de marcadores (posição = dados).
+- Transformar partes em blocos do filmstrip.
 
-### 19.9 Referências de código
+### 19.10 Gráfico como grupo de objetos — paridade Excel (Onda 4H)
 
-| Área | Caminho |
+> **Feedback produto (jul/2026):** seleção/estilo de partes ainda é insuficiente. O gráfico deve comportar-se como **conjunto de objetos agrupados** (como um grupo PowerPoint / gráfico Excel): mover itens soltos, formatar todos os pontos, excluir um ponto ou elemento — sem apagar o `chart_view` inteiro.
+
+#### Modelo mental (Excel)
+
+| Ação no Excel | Equivalente DELPI (`chart_view`) |
 |---|---|
-| Primitivos canvas | `tv-dashboard-presentation/src/comunicadoVisualPrimitive.ts` |
-| Geometria / hit ponto | `comunicadoShapeGeometry.ts` |
-| Options flat (legado) | `plugin-ui/.../seriesChartOptions.ts` |
-| Catálogo flags (legado) | `plugin-ui/.../seriesChartElementCatalog.ts` |
-| Partes de paint | `plugin-ui/.../seriesChart/ChartTitle.tsx`, `ChartSeriesLine.tsx`, `ChartDataPoints.tsx`, … |
-| Bloco chart | `comunicadoTypes.ts` → `ComunicadoChartViewBlock` |
-| Inspector atual | `tv-dashboard/.../ChartViewOptionsInspector.tsx` |
-| Seleção de bloco | `ComunicadoComposer.tsx`, `comunicadoEditorContext.tsx` |
-| Dados live | §18 — enrichment inalterado; 4G só mexe em estilo/seleção/composição |
+| Clique no título / legenda / série / ponto | `selectedChartPart` |
+| Arrastar título ou legenda | `chartParts[…].frame` % relativo ao bloco |
+| Format Data Series | estilo do primitivo `line` / `area` na parte `series` |
+| Format Data Point | estilo do primitivo `point` em `marker:i:j` |
+| Format Data Point → Apply to all | `applyMarkerStyleToAll` |
+| Delete ponto / elemento do gráfico | `visible: false` na parte (Del) — **não** remove o bloco |
+| Format Chart Area | `style` / fundo do bloco `chart_view` |
+| Não vira shape solta na slide | Partes **permanecem internas** ao grupo (sem `ComunicadoBlock` por ponto) |
+
+**Regra de posição:** marcadores e série **não** têm frame livre — posição vem dos dados + layout. Título, legenda e tabela **podem** ter `frame` relativo. Excluir marcador oculta o ponto (série continua; valor some do traço se `visible: false` filtrar no render).
+
+#### Contrato extra
+
+```ts
+type ChartPartFrame = { x: number; y: number; w?: number; h?: number }; // % do bloco chart
+
+type ChartPartState = {
+  visible?: boolean;
+  style?: ChartPartStyle;
+  content?: string;
+  frame?: ChartPartFrame; // title | legend | dataTable
+};
+```
+
+#### Roadmap 4H
+
+| # | Entrega | Status |
+|---|---|---|
+| 4H.1 | Del/Backspace exclui parte selecionada (não o bloco) | ✅ |
+| 4H.2 | «Aplicar a todos os pontos» + editar estilo em lote | ✅ |
+| 4H.3 | Arrastar título/legenda (`frame` relativo) + setas quando parte selecionada | ✅ |
+| 4H.4 | Painel Formatar (Excel): preenchimento, contorno, tamanho do marcador, espessura da série | ✅ parcial (inspetor) |
+| 4H.5 | Filtrar pontos ocultos no path da série / labels | ✅ (série + marcadores) |
+| 4H.6 | Plot area / eixos com resize relativo | backlog |
+| 4H.7 | Tipos pizza/área/combo com as mesmas partes | backlog (§18 4F) |
+
+#### Anti-padrões 4H
+
+- Transformar cada marcador em bloco do filmstrip.
+- Del no teclado apagar o gráfico quando há `selectedChartPart`.
+- Permitir arrastar marcador para fora da série (quebra semântica de dados).
 
 ---
 

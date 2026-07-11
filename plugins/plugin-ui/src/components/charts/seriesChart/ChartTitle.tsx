@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
+  getChartPartState,
   isChartPartRefEqual,
+  type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 
@@ -11,15 +13,33 @@ export type ChartTitleProps = {
   title?: string;
   visible?: boolean;
   interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
 };
 
-export function ChartTitle({ title, visible = true, interaction }: ChartTitleProps) {
+function partFrameStyle(
+  frame: { x: number; y: number; w?: number; h?: number } | undefined,
+): CSSProperties | undefined {
+  if (!frame) return undefined;
+  return {
+    position: "absolute",
+    left: `${frame.x}%`,
+    top: `${frame.y}%`,
+    width: frame.w != null ? `${frame.w}%` : "auto",
+    height: frame.h != null ? `${frame.h}%` : "auto",
+    zIndex: 3,
+    margin: 0,
+  };
+}
+
+export function ChartTitle({ title, visible = true, interaction, chartParts }: ChartTitleProps) {
   const cn = useSeriesChartClasses();
   const ref = { kind: "title" as const };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
   const editing = isChartPartRefEqual(ref, interaction?.editingPart);
   const interactive = Boolean(interaction?.onPartPointerDown);
   const editRef = useRef<HTMLDivElement>(null);
+  const frame = getChartPartState(chartParts, ref)?.frame;
+  const frameStyle = partFrameStyle(frame);
 
   useEffect(() => {
     if (!editing || !editRef.current) return;
@@ -46,11 +66,13 @@ export function ChartTitle({ title, visible = true, interaction }: ChartTitlePro
       ref={editing ? editRef : undefined}
       className={[
         cn.title,
+        frameStyle ? `${cn.root}__part--framed` : "",
         selected ? `${cn.root}__part--selected` : "",
         editing ? `${cn.root}__part--editing` : "",
       ]
         .filter(Boolean)
         .join(" ")}
+      style={frameStyle}
       {...chartPartDomProps(ref, interaction?.selectedPart)}
       contentEditable={editing || undefined}
       suppressContentEditableWarning={editing || undefined}
@@ -65,6 +87,7 @@ export function ChartTitle({ title, visible = true, interaction }: ChartTitlePro
               }
               event.stopPropagation();
               interaction?.onPartPointerDown?.(ref, event);
+              interaction?.onPartMovePointerDown?.(ref, event);
             }
           : undefined
       }

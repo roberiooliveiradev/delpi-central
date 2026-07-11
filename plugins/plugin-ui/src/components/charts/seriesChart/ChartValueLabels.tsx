@@ -1,4 +1,8 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
+import {
+  filterVisibleSeriesPoints,
+  type ChartPartsMap,
+} from "../seriesChartParts";
 import { formatChartTick } from "./layout";
 import type { SeriesChartKindProps } from "./types";
 
@@ -7,6 +11,8 @@ export type ChartValueLabelsProps = Pick<
   "chartType" | "layout" | "points" | "valueFormat"
 > & {
   visible?: boolean;
+  chartParts?: ChartPartsMap | null;
+  seriesIndex?: number;
 };
 
 export function ChartValueLabels({
@@ -15,26 +21,29 @@ export function ChartValueLabels({
   points,
   valueFormat,
   visible = true,
+  chartParts,
+  seriesIndex = 0,
 }: ChartValueLabelsProps) {
   const cn = useSeriesChartClasses();
   if (!visible) return null;
 
-  const { margin, plotW, plotH, toX, toY } = layout;
+  const { margin, plotW, toX, toY } = layout;
+  const visiblePoints = filterVisibleSeriesPoints(points, chartParts, seriesIndex);
 
   if (chartType === "bar") {
     return (
       <>
-        {points.map((point, index) => {
+        {visiblePoints.map((point) => {
           const value = Number(point.value);
           const barW = plotW / Math.max(points.length, 1);
           const gap = Math.min(barW * 0.2, 8);
           const width = Math.max(barW - gap, 2);
-          const x = margin.left + index * barW + gap / 2;
+          const x = margin.left + point.sourceIndex * barW + gap / 2;
           const y = toY(value);
 
           return (
             <text
-              key={`bar-label-${index}`}
+              key={`bar-label-${point.sourceIndex}`}
               x={x + width / 2}
               y={y - 4}
               className={cn.dataLabel}
@@ -50,10 +59,10 @@ export function ChartValueLabels({
 
   return (
     <>
-      {points.map((point, index) => (
+      {visiblePoints.map((point) => (
         <text
-          key={`line-label-${index}`}
-          x={toX(index, points.length)}
+          key={`line-label-${point.sourceIndex}`}
+          x={toX(point.sourceIndex, points.length)}
           y={toY(Number(point.value)) - 6}
           className={cn.dataLabel}
           textAnchor="middle"

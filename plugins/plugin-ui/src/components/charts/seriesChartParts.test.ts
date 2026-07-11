@@ -2,10 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { DEFAULT_SERIES_CHART_OPTIONS, mergeSeriesChartOptions } from "./seriesChartOptions";
 import {
+  applyMarkerStyleToAll,
   chartOptionsToParts,
+  deleteChartPart,
+  filterVisibleSeriesPoints,
   findChartPartFromTarget,
   isChartPartRefEqual,
   mergeSeriesChartOptionsWithParts,
+  nudgeChartPartFrame,
   parseChartPartRef,
   partsToChartOptions,
   resolveMarkerStyle,
@@ -72,12 +76,48 @@ describe("seriesChartParts", () => {
     expect(resolveMarkerStyle(parts, 0, 0, "#000").fill).toBe("#0d7a8c");
   });
 
-  it("findChartPartFromTarget lê data-chart-part", () => {
-    const root = document.createElement("div");
-    const child = document.createElement("span");
-    child.setAttribute("data-chart-part", "legend");
-    root.appendChild(child);
-    expect(findChartPartFromTarget(child)).toEqual({ kind: "legend" });
-    expect(isChartPartRefEqual({ kind: "legend" }, { kind: "legend" })).toBe(true);
+  it("deleteChartPart oculta marcador sem apagar options da série", () => {
+    const options = mergeSeriesChartOptions({ title: "ROL", seriesColor: "#123456" });
+    const parts = chartOptionsToParts(options);
+    const result = deleteChartPart(parts, { kind: "marker", seriesIndex: 0, pointIndex: 2 }, options);
+    expect(result.parts["marker:0:2"]?.visible).toBe(false);
+    expect(result.options.title).toBe("ROL");
+    expect(result.options.seriesColor).toBe("#123456");
+  });
+
+  it("deleteChartPart oculta título via options flat", () => {
+    const options = mergeSeriesChartOptions({ title: "OEE", showTitle: true });
+    const result = deleteChartPart(chartOptionsToParts(options), { kind: "title" }, options);
+    expect(result.parts.title?.visible).toBe(false);
+    expect(result.options.showTitle).toBe(false);
+  });
+
+  it("applyMarkerStyleToAll replica estilo em todos os pontos", () => {
+    const next = applyMarkerStyleToAll({}, 3, 0, { fill: "#ff00aa", markerRadius: 5 });
+    expect(next["marker:0:0"]?.style?.fill).toBe("#ff00aa");
+    expect(next["marker:0:1"]?.style?.markerRadius).toBe(5);
+    expect(next["marker:0:2"]?.style?.fill).toBe("#ff00aa");
+  });
+
+  it("filterVisibleSeriesPoints remove pontos ocultos preservando sourceIndex", () => {
+    const parts = upsertChartPartState({}, { kind: "marker", seriesIndex: 0, pointIndex: 1 }, {
+      visible: false,
+    });
+    const filtered = filterVisibleSeriesPoints(
+      [{ value: 1 }, { value: 2 }, { value: 3 }],
+      parts,
+      0,
+    );
+    expect(filtered.map((p) => p.sourceIndex)).toEqual([0, 2]);
+  });
+
+  it("nudgeChartPartFrame move título com clamp", () => {
+    const nudged = nudgeChartPartFrame(
+      upsertChartPartState({}, { kind: "title" }, { frame: { x: 10, y: 10 } }),
+      { kind: "title" },
+      5,
+      -3,
+    );
+    expect(nudged.title?.frame).toEqual({ x: 15, y: 7, w: undefined, h: undefined });
   });
 });

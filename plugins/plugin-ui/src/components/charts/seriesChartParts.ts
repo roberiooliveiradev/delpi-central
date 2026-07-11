@@ -3,7 +3,7 @@
  * Uma fonte de verdade: identidade + adapter com `SeriesChartOptions` flat (legado v1.4).
  */
 
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 
 import type { SeriesChartOptions } from "./seriesChartOptions";
 import { mergeSeriesChartOptions } from "./seriesChartOptions";
@@ -83,6 +83,16 @@ export type ChartPartState = {
   style?: ChartPartStyle;
   /** Título, axisTitle, seriesName, etc. */
   content?: string;
+  /** Posição % relativa ao bloco chart (title / legend / dataTable) — Onda 4H. */
+  frame?: ChartPartFrame;
+};
+
+/** Frame relativo ao bloco `chart_view` (0–100%). */
+export type ChartPartFrame = {
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
 };
 
 export type ChartPartsMap = Record<string, ChartPartState>;
@@ -92,9 +102,11 @@ export type SeriesChartInteraction = {
   /** Parte em edição inline (ex.: título). */
   editingPart?: ChartPartRef | null;
   onPartPointerDown?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
-  onPartDoubleClick?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
+  onPartDoubleClick?: (ref: ChartPartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
   onPartContentCommit?: (ref: ChartPartRef, content: string) => void;
   onPartEditCancel?: () => void;
+  /** Inicia arraste de parte móvel (title/legend). */
+  onPartMovePointerDown?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
 };
 
 export function serializeChartPartRef(ref: ChartPartRef): string {
@@ -384,4 +396,103 @@ export function resolveSeriesLineStyle(
     strokeWidth: resolveSeriesStrokeWidth(parts),
     opacity: series?.style?.opacity,
   };
+}
+
+export function chartPartAllowsMove(ref: ChartPartRef): boolean {
+  return ref.kind === "title" || ref.kind === "legend" || ref.kind === "dataTable";
+}
+
+export function chartPartAllowsDelete(ref: ChartPartRef): boolean {
+  return (
+    ref.kind === "title" ||
+    ref.kind === "legend" ||
+    ref.kind === "marker" ||
+    ref.kind === "dataLabel" ||
+    ref.kind === "grid" ||
+    ref.kind === "dataTable" ||
+    ref.kind === "axis" ||
+    ref.kind === "axisTitle" ||
+    ref.kind === "series"
+  );
+}
+
+export function clampChartPartFrame(frame: ChartPartFrame): ChartPartFrame {
+  const x = Math.max(0, Math.min(95, frame.x));
+  const y = Math.max(0, Math.min(95, frame.y));
+  const w = frame.w == null ? undefined : Math.max(5, Math.min(100 - x, frame.w));
+  const h = frame.h == null ? undefined : Math.max(5, Math.min(100 - y, frame.h));
+  return { x, y, w, h };
+}
+
+/** Oculta parte (Delete Excel) e projeta options flat — não remove o bloco chart. */
+export function deleteChartPart(
+  parts: ChartPartsMap | null | undefined,
+  ref: ChartPartRef,
+  options?: SeriesChartOptions | null,
+): { parts: ChartPartsMap; options: SeriesChartOptions } {
+  if (!chartPartAllowsDelete(ref)) {
+    return {
+      parts: parts ?? {},
+      options: mergeSeriesChartOptions(options),
+    };
+  }
+  const nextParts = upsertChartPartState(parts, ref, { visible: false });
+  const fromParts = partsToChartOptions(nextParts);
+  const base = mergeSeriesChartOptions({ ...options, ...fromParts });
+  if (ref.kind === "series") {
+    base.showMarkers = false;
+  }
+  return { parts: nextParts, options: base };
+}
+
+/** Aplica estilo de marcador a todos os pontos (Excel: Format Data Point → Apply to All). */
+export function applyMarkerStyleToAll(
+  parts: ChartPartsMap | null | undefined,
+  pointCount: number,
+  seriesIndex: number,
+  style: ChartPartStyle,
+): ChartPartsMap {
+  let next = parts ?? {};
+  const count = Math.max(0, pointCount);
+  for (let pointIndex = 0; pointIndex < count; pointIndex += 1) {
+    next = upsertChartPartState(next, { kind: "marker", seriesIndex, pointIndex }, { style });
+  }
+  return next;
+}
+
+/**
+ * Pontos efetivos para desenhar a série: remove índices com marker visible:false.
+ * Índices originais preservados via `sourceIndex` para hit-test.
+ */
+export function filterVisibleSeriesPoints<T extends { value?: number | null }>(
+  points: T[],
+  parts: ChartPartsMap | null | undefined,
+  seriesIndex = 0,
+): Array<T & { sourceIndex: number }> {
+  return points
+    .map((point, sourceIndex) => ({ ...point, sourceIndex }))
+    .filter((point) => {
+      const marker = getChartPartState(parts, {
+        kind: "marker",
+        seriesIndex,
+        pointIndex: point.sourceIndex,
+      });
+      return marker?.visible !== false;
+    });
+}
+
+export function nudgeChartPartFrame(
+  parts: ChartPartsMap | null | undefined,
+  ref: ChartPartRef,
+  dx: number,
+  dy: number,
+): ChartPartsMap {
+  if (!chartPartAllowsMove(ref)) return parts ?? {};
+  const current = getChartPartState(parts, ref)?.frame ?? { x: 50, y: ref.kind === "title" ? 2 : 85 };
+  const next = clampChartPartFrame({
+    ...current,
+    x: current.x + dx,
+    y: current.y + dy,
+  });
+  return upsertChartPartState(parts, ref, { frame: next });
 }

@@ -72,6 +72,7 @@ export function ChartPlotAreaGroup({
             seriesColor={seriesColor}
             strokeWidth={strokeWidth}
             interaction={interaction}
+            chartParts={chartParts}
           />
           <ChartDataPoints
             layout={layout}
@@ -90,6 +91,7 @@ export function ChartPlotAreaGroup({
         points={points}
         valueFormat={valueFormat}
         visible={showDataLabels}
+        chartParts={chartParts}
       />
 
       <ChartAxisX

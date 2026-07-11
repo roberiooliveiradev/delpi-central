@@ -1,8 +1,11 @@
 import {
+  applyMarkerStyleToAll,
   chartOptionsToParts,
+  chartPartAllowsDelete,
   chartPartVisualPrimitive,
   chartPrimitiveSupportsFill,
   chartPrimitiveSupportsStroke,
+  deleteChartPart,
   mergeComunicadoChartOptions,
   partsToChartOptions,
   serializeChartPartRef,
@@ -47,8 +50,18 @@ function chartPartLabel(part: ComunicadoChartPartRef): string {
   }
 }
 
+function resolveSeriesPointCount(block: ComunicadoChartViewBlock): number {
+  const points = block.resolved?.chart?.points;
+  if (Array.isArray(points) && points.length > 0) return points.length;
+  const markerKeys = Object.keys(block.chartParts ?? {}).filter((key) => key.startsWith("marker:0:"));
+  if (markerKeys.length > 0) {
+    return Math.max(...markerKeys.map((key) => Number(key.split(":")[2]) + 1), 0);
+  }
+  return 8;
+}
+
 /**
- * Inspetor da parte selecionada do gráfico (Onda 4G.6).
+ * Inspetor da parte selecionada do gráfico (Onda 4G.6 / 4H).
  * Estilo herda semântica point/line — stroke na série, fill no marcador.
  */
 export function ChartPartInspector({ pane = false, block }: Props) {
@@ -64,6 +77,8 @@ export function ChartPartInspector({ pane = false, block }: Props) {
   const primitive = chartPartVisualPrimitive(selectedChartPart);
   const seriesColor = options.seriesColor ?? "#0d7a8c";
   const partKey = serializeChartPartRef(selectedChartPart);
+  const partState = block.chartParts?.[partKey];
+  const canDelete = chartPartAllowsDelete(selectedChartPart);
 
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {
     updateSelected({
@@ -98,11 +113,38 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     } as Partial<typeof block>);
   };
 
+  const hideSelectedPart = () => {
+    if (!canDelete) return;
+    const result = deleteChartPart(block.chartParts, selectedChartPart, block.chartOptions);
+    updateSelected({
+      chartParts: result.parts,
+      chartOptions: result.options,
+    } as Partial<typeof block>);
+    clearChartPartSelection();
+  };
+
+  const applyStyleToAllMarkers = () => {
+    if (selectedChartPart.kind !== "marker") return;
+    const style = {
+      fill: partState?.style?.fill ?? seriesColor,
+      stroke: partState?.style?.stroke,
+      strokeWidth: partState?.style?.strokeWidth,
+      markerRadius: partState?.style?.markerRadius ?? 2.5,
+    };
+    const nextParts = applyMarkerStyleToAll(
+      block.chartParts,
+      resolveSeriesPointCount(block),
+      selectedChartPart.seriesIndex,
+      style,
+    );
+    updateSelected({ chartParts: nextParts } as Partial<typeof block>);
+  };
+
   return (
     <DeckPropertySection
       pane={pane}
       title={`Parte: ${chartPartLabel(selectedChartPart)}`}
-      hint="Duplo clique no título para editar no palco. Estilo segue primitivos ponto/linha."
+      hint="Como no Excel: Del oculta a parte (não o gráfico). Arraste título/legenda. Marcadores: Formatar → aplicar a todos."
     >
       <div className="td-chart-part-inspector__actions">
         <button type="button" className="td-deck-btn td-deck-btn--ghost" onClick={clearChartPartSelection}>
@@ -115,6 +157,11 @@ export function ChartPartInspector({ pane = false, block }: Props) {
             onClick={() => beginEditChartPart(block.id, selectedChartPart)}
           >
             Editar no palco
+          </button>
+        ) : null}
+        {canDelete ? (
+          <button type="button" className="td-btn td-btn--danger td-btn--sm" onClick={hideSelectedPart}>
+            Excluir parte
           </button>
         ) : null}
       </div>
@@ -200,7 +247,15 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               onChange={(color) => patchPart({ style: { fill: color } })}
             />
           </DeckField>
-          <DeckField id="td-chart-part-marker-radius" label="Raio">
+          <DeckField id="td-chart-part-marker-stroke" label="Contorno">
+            <TvRibbonColorPicker
+              inline
+              label="Contorno do marcador"
+              value={block.chartParts?.[partKey]?.style?.stroke ?? ""}
+              onChange={(color) => patchPart({ style: { stroke: color, strokeWidth: 1 } })}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-marker-radius" label="Tamanho (raio)">
             <input
               id="td-chart-part-marker-radius"
               type="number"
@@ -213,6 +268,9 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               }
             />
           </DeckField>
+          <button type="button" className="td-deck-btn" onClick={applyStyleToAllMarkers}>
+            Aplicar a todos os pontos
+          </button>
         </>
       ) : null}
     </DeckPropertySection>
