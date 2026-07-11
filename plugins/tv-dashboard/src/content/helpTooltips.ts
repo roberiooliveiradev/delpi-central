@@ -81,6 +81,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
     insertVideo: "Vídeo em loop no slide; envie o arquivo após inserir.",
     insertShape: "Formas geométricas com preenchimento e contorno configuráveis.",
+    chartData: "Fonte e vínculo dos dados do gráfico.",
+    chartType: "Altera o tipo de gráfico (linha, coluna…).",
+    chartLabels: "Título, legenda, rótulos de dados e tabela.",
+    chartAxes: "Eixos e linhas de grade.",
+    chartFormat: "Abre Formatar para a parte selecionada do gráfico.",
   },
   tabs: {
     element:
@@ -95,6 +100,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
     insert: "Insira elementos no slide personalizado: títulos, textos, imagens, vídeos e formas.",
     format: "Formate o slide e o elemento selecionado: fundo, fonte, forma, camadas e mídia.",
+    chart:
+      "Ferramentas do gráfico selecionado (Excel Online): tipo, rótulos, eixos, grade e formato da parte.",
     view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
   },
   view: {

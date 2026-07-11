@@ -4,22 +4,29 @@ import { TabHintCell } from "@delpi/plugin-ui/index";
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
 
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
+import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckRibbonShell, resolveEmbeddedComunicadoRibbonTabs } from "./deck";
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "format" | "view";
+type EmbeddedTab = "insert" | "format" | "chart" | "view";
 
 type Props = {
   labels?: Labels;
 };
 
-/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar do deck. */
+/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar/Gráfico do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
-  const tabs = resolveEmbeddedComunicadoRibbonTabs();
+  const { selected } = useComunicadoEditor();
+  const chartSelected = selected?.type === "chart_view";
+  const tabs = resolveEmbeddedComunicadoRibbonTabs({ chartSelected });
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");
 
-  useComunicadoRibbonTabSync(setActiveTab);
+  useComunicadoRibbonTabSync((tab) => {
+    if (tab === "insert" || tab === "format" || tab === "chart" || tab === "view") {
+      setActiveTab(tab);
+    }
+  });
 
   return (
     <section className="td-deck-chrome td-deck-chrome--embedded" aria-label="Editor do comunicado">

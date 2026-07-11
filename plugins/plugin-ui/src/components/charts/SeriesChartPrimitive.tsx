@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactNode, PointerEvent as ReactPointerEvent } from "react";
 
 import {
   seriesChartThemeStyle,
@@ -10,7 +10,10 @@ import {
 } from "./seriesChartOptions";
 import { useSeriesChartClasses } from "./seriesChartClasses";
 import {
+  chartPartDomProps,
+  isChartPartRefEqual,
   mergeSeriesChartOptionsWithParts,
+  resolveChartAreaStyle,
   resolveSeriesStrokeColor,
   resolveSeriesStrokeWidth,
   type ChartPartsMap,
@@ -91,12 +94,21 @@ export function SeriesChartPrimitive({
 
   const seriesColor = resolveSeriesStrokeColor(config, chartParts);
   const strokeWidth = resolveSeriesStrokeWidth(chartParts);
+  const chartArea = resolveChartAreaStyle(config, chartParts);
   const title = config.title?.trim();
   const seriesName = resolveSeriesName(config);
   const showLegend = config.showLegend !== false && config.legendPosition !== "hidden";
   const showAxes = config.showAxes !== false;
   const ariaLabel = title || seriesName;
-  const themeStyle = seriesChartThemeStyle(config);
+  const chartAreaRef = { kind: "chartArea" as const };
+  const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
+  const themeStyle: CSSProperties = {
+    ...seriesChartThemeStyle({ ...config, backgroundColor: chartArea.fill }),
+    background: chartArea.fill,
+    border: `${Math.max(0, chartArea.strokeWidth)}px solid ${chartArea.stroke}`,
+    borderRadius: chartArea.borderRadius,
+    boxSizing: "border-box",
+  };
 
   const plotProps: SeriesPlotRenderProps = {
     chartType,
@@ -126,10 +138,32 @@ export function SeriesChartPrimitive({
     />
   );
 
-  const rootClass = [className, interactive ? `${cn.root}--interactive` : ""].filter(Boolean).join(" ") || undefined;
+  const rootClass =
+    [
+      className,
+      interactive ? `${cn.root}--interactive` : "",
+      chartAreaSelected ? `${cn.root}__part--selected` : "",
+    ]
+      .filter(Boolean)
+      .join(" ") || undefined;
+
+  const onChartAreaPointerDown = interactive
+    ? (event: ReactPointerEvent<HTMLDivElement>) => {
+        const host = (event.target as HTMLElement).closest("[data-chart-part]");
+        const partId = host?.getAttribute("data-chart-part");
+        if (partId && partId !== "chartArea") return;
+        event.stopPropagation();
+        interaction?.onPartPointerDown?.(chartAreaRef, event);
+      }
+    : undefined;
 
   return (
-    <ChartContainer className={rootClass} style={themeStyle as CSSProperties}>
+    <ChartContainer
+      className={rootClass}
+      style={themeStyle}
+      onPointerDown={onChartAreaPointerDown}
+      {...(interactive ? chartPartDomProps(chartAreaRef, interaction?.selectedPart) : {})}
+    >
       <ChartTitle
         title={title}
         visible={config.showTitle !== false}

@@ -102,7 +102,7 @@ function EditorChartViewBlock({
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef) => {
       selectChartPart(block.id, ref);
-      requestRibbonTab("format");
+      requestRibbonTab("chart");
     },
     [block.id, requestRibbonTab, selectChartPart],
   );
@@ -111,10 +111,10 @@ function EditorChartViewBlock({
     (ref: ComunicadoChartPartRef) => {
       if (ref.kind === "title" || ref.kind === "legend" || ref.kind === "axisTitle") {
         beginEditChartPart(block.id, ref);
-        requestRibbonTab("format");
+        requestRibbonTab("chart");
       } else {
         selectChartPart(block.id, ref);
-        requestRibbonTab("format");
+        requestRibbonTab("chart");
       }
     },
     [beginEditChartPart, block.id, requestRibbonTab, selectChartPart],
@@ -146,7 +146,9 @@ function EditorChartViewBlock({
   const onPartMovePointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event: ReactPointerEvent) => {
       if (!chartPartAllowsMove(ref)) return;
-      const chartRoot = (event.currentTarget as HTMLElement).closest(".delpi-ui-series-chart");
+      const chartRoot = (event.currentTarget as HTMLElement).closest(
+        ".delpi-ui-series-chart, .tdp-series-chart",
+      );
       if (!chartRoot) return;
       event.preventDefault();
       const rect = chartRoot.getBoundingClientRect();

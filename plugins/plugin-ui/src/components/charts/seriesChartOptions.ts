@@ -4,6 +4,13 @@ export type SeriesChartLegendPosition = "top" | "bottom" | "right" | "hidden";
 
 export type SeriesChartTheme = "light" | "dark";
 
+/** Azul padrão das formas do deck (`#089bdb`) — alinhado ao Office/Excel. */
+export const OFFICE_CHART_SERIES_COLOR = "#089bdb";
+export const OFFICE_CHART_AREA_FILL = "#ffffff";
+export const OFFICE_CHART_AREA_STROKE = "#b4b4b4";
+export const OFFICE_CHART_PLOT_FILL = "#ffffff";
+export const OFFICE_CHART_PLOT_STROKE = "#b4b4b4";
+
 export type SeriesChartOptions = {
   title?: string;
   showTitle?: boolean;
@@ -24,7 +31,7 @@ export type SeriesChartOptions = {
   showMarkers?: boolean;
   valueFormat?: SeriesChartValueFormat;
   seriesColor?: string;
-  /** Padrão: fundo claro. */
+  /** Padrão Office: fundo claro. `dark` só sob pedido explícito. */
   theme?: SeriesChartTheme;
   backgroundColor?: string;
 };
@@ -51,12 +58,24 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showVerticalGrid: false,
   showMarkers: true,
   valueFormat: "auto",
-  seriesColor: "#0d7a8c",
+  seriesColor: OFFICE_CHART_SERIES_COLOR,
   theme: "light",
+  backgroundColor: OFFICE_CHART_AREA_FILL,
 };
 
 export function mergeSeriesChartOptions(partial?: SeriesChartOptions | null): SeriesChartOptions {
-  return { ...DEFAULT_SERIES_CHART_OPTIONS, ...(partial ?? {}) };
+  const merged = { ...DEFAULT_SERIES_CHART_OPTIONS, ...(partial ?? {}) };
+  /* Migra default legado (teal) → azul das formas Office. */
+  if (merged.seriesColor === "#0d7a8c") {
+    merged.seriesColor = OFFICE_CHART_SERIES_COLOR;
+  }
+  if (!merged.backgroundColor) {
+    merged.backgroundColor = OFFICE_CHART_AREA_FILL;
+  }
+  if (!merged.theme) {
+    merged.theme = "light";
+  }
+  return merged;
 }
 
 export function resolveSeriesChartDisplayOptions(
@@ -132,12 +151,19 @@ const DARK_CHART_THEME = {
 export function seriesChartThemeStyle(options: SeriesChartOptions): Record<string, string> {
   const theme = options.theme ?? "light";
   const palette = theme === "dark" ? DARK_CHART_THEME : LIGHT_CHART_THEME;
+  const bg = options.backgroundColor ?? palette.bg;
   const style: Record<string, string> = {
-    "--delpi-ui-series-chart-bg": options.backgroundColor ?? palette.bg,
+    "--delpi-ui-series-chart-bg": bg,
     "--delpi-ui-series-chart-text": palette.text,
     "--delpi-ui-series-chart-text-strong": palette.textStrong,
     "--delpi-ui-series-chart-muted": palette.muted,
     "--delpi-ui-series-chart-grid": palette.grid,
+    /* Aliases para o prefixo `tdp-series-chart` (presentation / TV). */
+    "--tdp-series-chart-bg": bg,
+    "--tdp-series-chart-text": palette.text,
+    "--tdp-series-chart-text-strong": palette.textStrong,
+    "--tdp-series-chart-muted": palette.muted,
+    "--tdp-series-chart-grid": palette.grid,
   };
   return style;
 }

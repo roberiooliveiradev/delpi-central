@@ -6,12 +6,13 @@ import {
   CHART_VALUE_FORMAT_OPTIONS,
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
-  chartOptionsToParts,
   chartTypeToLegacyDisplayMode,
   isChartElementApplicable,
   isChartElementEnabled,
   isChartElementOpenForPart,
+  mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
+  OFFICE_CHART_SERIES_COLOR,
   partsToChartOptions,
   type ComunicadoChartOptions,
   type ComunicadoChartViewBlock,
@@ -98,7 +99,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {
     updateSelected({
       chartOptions: nextOptions,
-      chartParts: chartOptionsToParts(nextOptions),
+      chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
     } as Partial<typeof selected>);
   };
 
@@ -112,7 +113,10 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
   };
 
   const toggleElement = (elementId: ChartElementId, enabled: boolean) => {
-    if (elementId === "series" && !enabled) {
+    if (
+      (elementId === "series" || elementId === "chartArea" || elementId === "plotArea") &&
+      !enabled
+    ) {
       focusElement(elementId);
       return;
     }
@@ -285,7 +289,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
           <TvRibbonColorPicker
             inline
             label="Cor da série"
-            value={options.seriesColor ?? "#0d7a8c"}
+            value={options.seriesColor ?? OFFICE_CHART_SERIES_COLOR}
             onChange={(color) => setOptions({ seriesColor: color })}
           />
         </DeckField>

@@ -8,10 +8,12 @@ import {
   filterVisibleSeriesPoints,
   findChartPartFromTarget,
   isChartPartRefEqual,
+  mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,
   nudgeChartPartFrame,
   parseChartPartRef,
   partsToChartOptions,
+  resolveChartAreaStyle,
   resolveMarkerStyle,
   resolveSeriesStrokeColor,
   serializeChartPartRef,
@@ -119,5 +121,29 @@ describe("seriesChartParts", () => {
       -3,
     );
     expect(nudged.title?.frame).toEqual({ x: 15, y: 7, w: undefined, h: undefined });
+  });
+
+  it("defaults Office: série azul da forma e chartArea com cantos 0", () => {
+    const parts = chartOptionsToParts(mergeSeriesChartOptions({}));
+    expect(parts.chartArea?.style?.fill).toBe("#ffffff");
+    expect(parts.chartArea?.style?.borderRadius).toBe(0);
+    expect(parts.plotArea?.style?.stroke).toBeTruthy();
+    const options = mergeSeriesChartOptions({});
+    expect(options.seriesColor).toBe("#089bdb");
+    expect(resolveChartAreaStyle(options, parts).borderRadius).toBe(0);
+  });
+
+  it("mergeChartPartsWithOptions preserva borda custom da chartArea", () => {
+    const base = chartOptionsToParts(mergeSeriesChartOptions({}));
+    const customized = upsertChartPartState(base, { kind: "chartArea" }, {
+      style: { stroke: "#ff0000", strokeWidth: 3 },
+    });
+    const merged = mergeChartPartsWithOptions(
+      customized,
+      mergeSeriesChartOptions({ title: "X", backgroundColor: "#ffffff" }),
+    );
+    expect(merged.chartArea?.style?.stroke).toBe("#ff0000");
+    expect(merged.chartArea?.style?.strokeWidth).toBe(3);
+    expect(merged.chartArea?.style?.fill).toBe("#ffffff");
   });
 });

@@ -786,8 +786,16 @@
 }
 
 .tdp-data-block--chart {
-  padding: 0.25em;
+  /* Office: gráfico é retângulo branco com bordas retas — não herda card TV escuro. */
+  padding: 0;
   overflow: hidden;
+  align-items: stretch;
+  justify-content: stretch;
+  text-align: left;
+  background: var(--tdp-series-chart-bg, #ffffff);
+  color: var(--tdp-series-chart-text, #1e293b);
+  border: none;
+  border-radius: 0;
 }
 
 .tdp-centered-scaled-preview {
@@ -1021,13 +1029,18 @@
 }
 
 .tdp-series-chart {
+  position: relative;
   width: 100%;
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  color: var(--tdp-data-text, #e2e8f0);
+  box-sizing: border-box;
+  border-radius: 0;
+  padding: 0.35rem 0.45rem;
+  background: var(--tdp-series-chart-bg, var(--delpi-ui-series-chart-bg, #ffffff));
+  color: var(--tdp-series-chart-text, var(--delpi-ui-series-chart-text, #1e293b));
 }
 
 .tdp-series-chart__title {
@@ -1035,7 +1048,7 @@
   font-weight: 600;
   font-size: clamp(11px, 1.4vw, 16px);
   line-height: 1.2;
-  color: var(--tdp-data-text-strong, #f8fafc);
+  color: var(--tdp-series-chart-text-strong, var(--delpi-ui-series-chart-text-strong, #0f172a));
 }
 
 .tdp-series-chart__body {
@@ -1055,18 +1068,15 @@
 }
 
 .tdp-series-chart__plot-area {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+  /* fill/stroke via Format Plot Area (atributos SVG) */
 }
 
 .tdp-series-chart__plot-area--axes {
-  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 35%, transparent);
+  /* contorno do plot vem do part style */
 }
 
 .tdp-series-chart__axis-line {
-  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 55%, transparent);
+  stroke: color-mix(in srgb, var(--tdp-series-chart-muted, #64748b) 55%, transparent);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
@@ -1076,13 +1086,13 @@
 }
 
 .tdp-series-chart__grid-line {
-  stroke: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 22%, transparent);
+  stroke: var(--tdp-series-chart-grid, color-mix(in srgb, #94a3b8 35%, transparent));
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
 .tdp-series-chart__tick {
-  fill: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 90%, transparent);
+  fill: var(--tdp-series-chart-muted, #64748b);
   font-size: 9px;
 }
 
@@ -1091,13 +1101,13 @@
 }
 
 .tdp-series-chart__axis-title {
-  fill: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 80%, transparent);
+  fill: var(--tdp-series-chart-text, #1e293b);
   font-size: 9px;
   font-weight: 500;
 }
 
 .tdp-series-chart__data-label {
-  fill: var(--tdp-data-text, #e2e8f0);
+  fill: var(--tdp-series-chart-text-strong, #0f172a);
   font-size: 8px;
   font-weight: 500;
 }
@@ -1116,7 +1126,7 @@
   flex-wrap: wrap;
   gap: 0.5rem 0.75rem;
   font-size: clamp(9px, 1vw, 12px);
-  color: color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 95%, transparent);
+  color: var(--tdp-series-chart-muted, #64748b);
 }
 
 .tdp-series-chart__legend--right {
@@ -1150,7 +1160,7 @@
   align-items: center;
   justify-content: center;
   font-size: clamp(10px, 1.2vw, 13px);
-  color: var(--tdp-data-muted, #94a3b8);
+  color: var(--tdp-series-chart-muted, #64748b);
 }
 
 .tdp-series-chart__data-table {
@@ -1162,15 +1172,15 @@
 
 .tdp-series-chart__data-table th,
 .tdp-series-chart__data-table td {
-  border: 1px solid color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 28%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tdp-series-chart-muted, #64748b) 28%, transparent);
   padding: 0.2em 0.35em;
   text-align: center;
 }
 
 .tdp-series-chart__data-table th {
   font-weight: 600;
-  color: var(--tdp-data-text-strong, #f8fafc);
-  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 8%, transparent);
+  color: var(--tdp-series-chart-text-strong, #0f172a);
+  background: color-mix(in srgb, var(--tdp-series-chart-muted, #64748b) 12%, var(--tdp-series-chart-bg, #fff));
 }
 
 /* Onda 4G — subseleção (editor); TV ignora interactive */

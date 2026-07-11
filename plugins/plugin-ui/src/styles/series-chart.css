@@ -7,7 +7,7 @@
   flex-direction: column;
   gap: 0.35rem;
   box-sizing: border-box;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 0.35rem 0.45rem;
   background: var(--delpi-ui-series-chart-bg, #ffffff);
   color: var(--delpi-ui-series-chart-text, #1e293b);
@@ -38,13 +38,11 @@
 }
 
 .delpi-ui-series-chart__plot-area {
-  fill: var(--delpi-ui-series-chart-bg, #ffffff);
-  stroke: transparent;
+  /* fill/stroke via atributos SVG (Format Plot Area) */
 }
 
 .delpi-ui-series-chart__plot-area--axes {
-  stroke: color-mix(in srgb, var(--delpi-ui-series-chart-muted, #64748b) 35%, transparent);
-  stroke-width: 0.5;
+  /* contorno do plot vem do part style; eixos são elementos separados */
 }
 
 .delpi-ui-series-chart__axis-line {

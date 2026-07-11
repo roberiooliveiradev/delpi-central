@@ -41,7 +41,7 @@ export type TextEditorBridge = {
   commitPending?: () => void;
 };
 
-export type ComunicadoRibbonTabRequest = "insert" | "format" | "view";
+export type ComunicadoRibbonTabRequest = "insert" | "format" | "chart" | "view";
 
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
@@ -169,4 +169,9 @@ export function useComunicadoEditor(): ComunicadoEditorContextValue {
     throw new Error("useComunicadoEditor deve ser usado dentro de ComunicadoEditorProvider");
   }
   return ctx;
+}
+
+/** Chrome / hooks que existem fora do provider em slides nativos. */
+export function useOptionalComunicadoEditor(): ComunicadoEditorContextValue | null {
+  return useContext(ComunicadoEditorContext);
 }

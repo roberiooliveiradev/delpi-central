@@ -24,6 +24,7 @@ import {
   serializeBlockAnimations,
 } from "./comunicadoBlockAnimations";
 import { DEFAULT_COMUNICADO_CHART_OPTIONS, type ComunicadoChartOptions } from "./comunicadoChartOptions";
+import { chartOptionsToParts } from "./comunicadoChartParts";
 import {
   presetDefaultTableOptions,
   type ComunicadoTableOptions,
@@ -139,13 +140,15 @@ export function createDataSourceBlock(
 }
 
 export function createChartViewBlock(chartType: ComunicadoChartType): ComunicadoBlock {
+  const chartOptions = { ...DEFAULT_COMUNICADO_CHART_OPTIONS };
   return {
     id: newBlockId(),
     type: "chart_view",
     chartType,
-    chartOptions: { ...DEFAULT_COMUNICADO_CHART_OPTIONS },
+    chartOptions,
+    chartParts: chartOptionsToParts(chartOptions),
     frame: { x: 10, y: 28, w: 80, h: 45 },
-    style: { zIndex: 2, color: "#ffffff" },
+    style: { zIndex: 2, borderRadius: 0, color: "#0f172a" },
   };
 }
 

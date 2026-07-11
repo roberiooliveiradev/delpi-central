@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, PointerEventHandler, ReactNode } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 
@@ -8,6 +8,9 @@ export type ChartContainerProps = {
   emptyMessage?: string;
   style?: CSSProperties;
   children?: ReactNode;
+  onPointerDown?: PointerEventHandler<HTMLDivElement>;
+  "data-chart-part"?: string;
+  "aria-selected"?: boolean;
 };
 
 export function ChartContainer({
@@ -16,6 +19,8 @@ export function ChartContainer({
   emptyMessage = "Sem série",
   style,
   children,
+  onPointerDown,
+  ...domProps
 }: ChartContainerProps) {
   const cn = useSeriesChartClasses();
 
@@ -28,7 +33,12 @@ export function ChartContainer({
   }
 
   return (
-    <div className={[cn.root, className].filter(Boolean).join(" ")} style={style}>
+    <div
+      className={[cn.root, className].filter(Boolean).join(" ")}
+      style={style}
+      onPointerDown={onPointerDown}
+      {...domProps}
+    >
       {children}
     </div>
   );

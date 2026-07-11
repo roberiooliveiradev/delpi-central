@@ -1641,11 +1641,38 @@ type ChartPartState = {
 | 4H.6 | Plot area / eixos com resize relativo | backlog |
 | 4H.7 | Tipos pizza/área/combo com as mesmas partes | backlog (§18 4F) |
 
-#### Anti-padrões 4H
+### 19.11 Visual Office — área do gráfico como formas (Onda 4I)
+
+> **Feedback produto (jul/2026):** o gráfico ainda herdava o chrome escuro/arredondado de `.tdp-data-block` (TV). Deve seguir o **padrão Office**: fundo branco, cantos retos, série no azul das formas (`#089bdb`), e **Format Chart Area / Plot Area** (preenchimento + borda + espessura + cantos).
+
+| Excel | DELPI |
+|---|---|
+| Format Chart Area | parte `chartArea` (fill/stroke/strokeWidth/borderRadius) |
+| Format Plot Area | parte `plotArea` |
+| Cor da série padrão | `OFFICE_CHART_SERIES_COLOR` = fill das formas |
+| Cantos arredondados | **proibido** por default (`borderRadius: 0`) |
+
+| # | Entrega | Status |
+|---|---|---|
+| 4I.1 | Remover chrome TV do `tdp-data-block--chart` (branco, `border-radius: 0`) | ✅ |
+| 4I.2 | Defaults Office (`#089bdb`, tema light, fundo `#fff`) | ✅ |
+| 4I.3 | Partes `chartArea` / `plotArea` + inspetor de bordas | ✅ |
+| 4I.4 | CSS `tdp-series-chart` alinhado a tokens claros | ✅ |
+
+### 19.12 Aba contextual Gráfico — Excel Online (Onda 4J)
+
+| # | Entrega | Status |
+|---|---|---|
+| 4J.1 | Aba **Gráfico** ao selecionar `chart_view` (Dados · Tipo · Rótulos · Eixos · Formato) | ✅ |
+| 4J.2 | Hit-test em eixos, grade, rótulos de dados, área de plotagem | ✅ |
+| 4J.3 | Clique no gráfico / parte abre a aba Gráfico | ✅ |
+
+#### Anti-padrões 4H/4I/4J
 
 - Transformar cada marcador em bloco do filmstrip.
 - Del no teclado apagar o gráfico quando há `selectedChartPart`.
 - Permitir arrastar marcador para fora da série (quebra semântica de dados).
+- Reaplicar chrome escuro/`border-radius` de card TV em `chart_view`.
 
 ---
 

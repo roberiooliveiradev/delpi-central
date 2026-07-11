@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
+import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
@@ -48,8 +49,8 @@ type Props = {
   ) => void;
 };
 
-function isRibbonTab(tab: DeckRibbonTabId): tab is "home" | "insert" | "format" | "view" {
-  return tab === "home" || tab === "insert" || tab === "format" || tab === "view";
+function isRibbonTab(tab: DeckRibbonTabId): tab is "home" | "insert" | "format" | "chart" | "view" {
+  return tab === "home" || tab === "insert" || tab === "format" || tab === "chart" || tab === "view";
 }
 
 function isSettingsTab(tab: DeckRibbonTabId): tab is "slide" | "playlist" {
@@ -70,20 +71,28 @@ export function DeckEditorChrome({
   onSavePlaylistSettings,
   onSaveSlide,
 }: Props) {
-  const tabs = resolveDeckRibbonTabs(isCustomSlide);
+  const editor = useOptionalComunicadoEditor();
+  const chartSelected = editor?.selected?.type === "chart_view";
+  const tabs = resolveDeckRibbonTabs(isCustomSlide, { chartSelected });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
 
   useComunicadoRibbonTabSync((tab) => {
-    if (tab === "insert" || tab === "format" || tab === "view") {
+    if (tab === "insert" || tab === "format" || tab === "chart" || tab === "view") {
       setActiveTab(tab);
     }
   });
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab("home");
+      setActiveTab(chartSelected ? "chart" : "home");
     }
-  }, [activeTab, tabs]);
+  }, [activeTab, tabs, chartSelected]);
+
+  useEffect(() => {
+    if (chartSelected && isCustomSlide) {
+      setActiveTab("chart");
+    }
+  }, [chartSelected, isCustomSlide, editor?.selectedId]);
 
   useEffect(() => {
     if (activeTab === "slide" && !slide) {
@@ -117,7 +126,11 @@ export function DeckEditorChrome({
         <div className="td-deck-chrome__ribbon">
           <DeckRibbonShell>
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
-            {isCustomSlide && (activeTab === "insert" || activeTab === "format" || activeTab === "view") ? (
+            {isCustomSlide &&
+            (activeTab === "insert" ||
+              activeTab === "format" ||
+              activeTab === "chart" ||
+              activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}
           </DeckRibbonShell>

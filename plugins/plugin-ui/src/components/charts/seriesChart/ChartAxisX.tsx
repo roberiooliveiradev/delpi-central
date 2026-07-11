@@ -1,4 +1,9 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
+import {
+  chartPartDomProps,
+  isChartPartRefEqual,
+  type SeriesChartInteraction,
+} from "../seriesChartParts";
 import type { SeriesChartLayout } from "./layout";
 import type { SeriesChartPoint } from "../seriesChartOptions";
 
@@ -8,6 +13,7 @@ export type ChartAxisXProps = {
   showLabels?: boolean;
   showTitle?: boolean;
   title?: string;
+  interaction?: SeriesChartInteraction | null;
 };
 
 export function ChartAxisX({
@@ -16,14 +22,42 @@ export function ChartAxisX({
   showLabels = true,
   showTitle = false,
   title,
+  interaction,
 }: ChartAxisXProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotH, viewH, xLabelStep, xLabelsRotated, toX } = layout;
+  const { margin, plotH, viewH, xLabelStep, xLabelsRotated, toX, plotW } = layout;
   const xAxisY = margin.top + plotH;
   const labelY = xLabelsRotated ? xAxisY + 18 : xAxisY + 14;
+  const axisRef = { kind: "axis" as const, axis: "x" as const };
+  const titleRef = { kind: "axisTitle" as const, axis: "x" as const };
+  const interactive = Boolean(interaction?.onPartPointerDown);
+  const axisSelected = isChartPartRefEqual(axisRef, interaction?.selectedPart);
+  const titleSelected = isChartPartRefEqual(titleRef, interaction?.selectedPart);
 
   return (
-    <>
+    <g
+      className={axisSelected ? `${cn.root}__part--selected` : undefined}
+      {...chartPartDomProps(axisRef, interaction?.selectedPart)}
+      onPointerDown={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              interaction?.onPartPointerDown?.(axisRef, event);
+            }
+          : undefined
+      }
+    >
+      {/* Área de hit sob os rótulos do eixo X */}
+      {interactive ? (
+        <rect
+          x={margin.left}
+          y={xAxisY}
+          width={plotW}
+          height={Math.max(viewH - xAxisY, 18)}
+          fill="transparent"
+          pointerEvents="all"
+        />
+      ) : null}
       {showLabels
         ? points.map((point, index) => {
             if (index % xLabelStep !== 0 && index !== points.length - 1) return null;
@@ -51,12 +85,23 @@ export function ChartAxisX({
         <text
           x={margin.left + layout.plotW / 2}
           y={viewH - 4}
-          className={`${cn.axisTitle} ${cn.axisTitleX}`}
+          className={[cn.axisTitle, cn.axisTitleX, titleSelected ? `${cn.root}__part--selected` : ""]
+            .filter(Boolean)
+            .join(" ")}
           textAnchor="middle"
+          {...chartPartDomProps(titleRef, interaction?.selectedPart)}
+          onPointerDown={
+            interactive
+              ? (event) => {
+                  event.stopPropagation();
+                  interaction?.onPartPointerDown?.(titleRef, event);
+                }
+              : undefined
+          }
         >
           {title}
         </text>
       ) : null}
-    </>
+    </g>
   );
 }

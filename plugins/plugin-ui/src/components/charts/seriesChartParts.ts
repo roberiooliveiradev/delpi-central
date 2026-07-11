@@ -6,7 +6,14 @@
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 
 import type { SeriesChartOptions } from "./seriesChartOptions";
-import { mergeSeriesChartOptions } from "./seriesChartOptions";
+import {
+  mergeSeriesChartOptions,
+  OFFICE_CHART_AREA_FILL,
+  OFFICE_CHART_AREA_STROKE,
+  OFFICE_CHART_PLOT_FILL,
+  OFFICE_CHART_PLOT_STROKE,
+  OFFICE_CHART_SERIES_COLOR,
+} from "./seriesChartOptions";
 
 /** Atributo DOM para hit-test no editor (sem HTML livre). */
 export const CHART_PART_DATA_ATTR = "data-chart-part";
@@ -34,6 +41,9 @@ export function chartPartVisualPrimitive(ref: ChartPartRef): ChartVisualPrimitiv
     case "grid":
     case "axis":
       return "line";
+    case "chartArea":
+    case "plotArea":
+      return "area";
     default:
       return null;
   }
@@ -54,6 +64,8 @@ export function chartPrimitiveSupportsStroke(primitive: ChartVisualPrimitive): b
 }
 
 export type ChartPartRef =
+  | { kind: "chartArea" }
+  | { kind: "plotArea" }
   | { kind: "title" }
   | { kind: "legend" }
   | { kind: "series"; seriesIndex: number }
@@ -76,6 +88,8 @@ export type ChartPartStyle = {
   fontWeight?: "normal" | "bold";
   /** Raio do marcador (primitivo point). */
   markerRadius?: number;
+  /** Cantos (Format Shape) — padrão Office do gráfico = 0. */
+  borderRadius?: number;
 };
 
 export type ChartPartState = {
@@ -111,6 +125,10 @@ export type SeriesChartInteraction = {
 
 export function serializeChartPartRef(ref: ChartPartRef): string {
   switch (ref.kind) {
+    case "chartArea":
+      return "chartArea";
+    case "plotArea":
+      return "plotArea";
     case "title":
       return "title";
     case "legend":
@@ -139,6 +157,8 @@ export function serializeChartPartRef(ref: ChartPartRef): string {
 export function parseChartPartRef(raw: string | null | undefined): ChartPartRef | null {
   const value = (raw ?? "").trim();
   if (!value) return null;
+  if (value === "chartArea") return { kind: "chartArea" };
+  if (value === "plotArea") return { kind: "plotArea" };
   if (value === "title") return { kind: "title" };
   if (value === "legend") return { kind: "legend" };
   if (value === "grid") return { kind: "grid" };
@@ -223,6 +243,26 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   const config = mergeSeriesChartOptions(options);
   const parts: ChartPartsMap = {};
 
+  parts[serializeChartPartRef({ kind: "chartArea" })] = {
+    visible: true,
+    style: {
+      fill: config.backgroundColor ?? OFFICE_CHART_AREA_FILL,
+      stroke: OFFICE_CHART_AREA_STROKE,
+      strokeWidth: 1,
+      borderRadius: 0,
+    },
+  };
+
+  parts[serializeChartPartRef({ kind: "plotArea" })] = {
+    visible: true,
+    style: {
+      fill: OFFICE_CHART_PLOT_FILL,
+      stroke: OFFICE_CHART_PLOT_STROKE,
+      strokeWidth: 1,
+      borderRadius: 0,
+    },
+  };
+
   parts[serializeChartPartRef({ kind: "title" })] = {
     visible: config.showTitle !== false,
     content: config.title?.trim() || undefined,
@@ -267,6 +307,48 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   return parts;
 }
 
+/**
+ * Projeta options → parts preservando estilos custom (área/bordas/marcadores).
+ * Usar no inspetor em vez de `chartOptionsToParts` puro.
+ */
+export function mergeChartPartsWithOptions(
+  parts: ChartPartsMap | null | undefined,
+  options?: SeriesChartOptions | null,
+): ChartPartsMap {
+  const projected = chartOptionsToParts(options);
+  const prev = parts ?? {};
+  const merged: ChartPartsMap = { ...projected };
+
+  for (const key of Object.keys(prev)) {
+    const prevState = prev[key];
+    const projectedState = projected[key];
+    if (!prevState) continue;
+    if (key === "chartArea" || key === "plotArea" || key.startsWith("marker:") || key.startsWith("dataLabel:")) {
+      merged[key] = {
+        ...projectedState,
+        ...prevState,
+        style: {
+          ...projectedState?.style,
+          ...prevState.style,
+          ...(key === "chartArea" && projectedState?.style?.fill
+            ? { fill: projectedState.style.fill }
+            : {}),
+        },
+      };
+    } else if (prevState.style || prevState.frame || prevState.content !== undefined) {
+      merged[key] = {
+        ...projectedState,
+        ...prevState,
+        visible: projectedState?.visible ?? prevState.visible,
+        style: { ...projectedState?.style, ...prevState.style },
+        frame: prevState.frame ?? projectedState?.frame,
+      };
+    }
+  }
+
+  return merged;
+}
+
 /** Partes → options flat (compat v1.4 / inspector legado). */
 export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<SeriesChartOptions> {
   if (!parts) return {};
@@ -274,6 +356,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   const title = getChartPartState(parts, { kind: "title" });
   const legend = getChartPartState(parts, { kind: "legend" });
   const series = getChartPartState(parts, { kind: "series", seriesIndex: 0 });
+  const chartArea = getChartPartState(parts, { kind: "chartArea" });
   const axisX = getChartPartState(parts, { kind: "axis", axis: "x" });
   const axisY = getChartPartState(parts, { kind: "axis", axis: "y" });
   const axisTitleX = getChartPartState(parts, { kind: "axisTitle", axis: "x" });
@@ -282,6 +365,11 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   const dataTable = getChartPartState(parts, { kind: "dataTable" });
 
   const patch: Partial<SeriesChartOptions> = {};
+
+  if (chartArea?.style?.fill) {
+    patch.backgroundColor = chartArea.style.fill;
+    patch.theme = "light";
+  }
 
   if (axisX?.visible === false && axisY?.visible === false) {
     patch.showAxes = false;
@@ -355,7 +443,7 @@ export function resolveSeriesStrokeColor(
   parts?: ChartPartsMap | null,
 ): string {
   const series = getChartPartState(parts, { kind: "series", seriesIndex: 0 });
-  return series?.style?.stroke ?? series?.style?.fill ?? options.seriesColor ?? "#0d7a8c";
+  return series?.style?.stroke ?? series?.style?.fill ?? options.seriesColor ?? OFFICE_CHART_SERIES_COLOR;
 }
 
 export function resolveSeriesStrokeWidth(parts?: ChartPartsMap | null): number {
@@ -495,4 +583,32 @@ export function nudgeChartPartFrame(
     y: current.y + dy,
   });
   return upsertChartPartState(parts, ref, { frame: next });
+}
+
+/** Format Chart Area (Excel) — preenchimento + contorno + cantos. */
+export function resolveChartAreaStyle(
+  options: SeriesChartOptions,
+  parts?: ChartPartsMap | null,
+): { fill: string; stroke: string; strokeWidth: number; borderRadius: number } {
+  const area = getChartPartState(parts, { kind: "chartArea" });
+  return {
+    fill: area?.style?.fill ?? options.backgroundColor ?? OFFICE_CHART_AREA_FILL,
+    stroke: area?.style?.stroke ?? OFFICE_CHART_AREA_STROKE,
+    strokeWidth: area?.style?.strokeWidth ?? 1,
+    borderRadius: area?.style?.borderRadius ?? 0,
+  };
+}
+
+/** Format Plot Area (Excel). */
+export function resolvePlotAreaStyle(parts?: ChartPartsMap | null): {
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+} {
+  const area = getChartPartState(parts, { kind: "plotArea" });
+  return {
+    fill: area?.style?.fill ?? OFFICE_CHART_PLOT_FILL,
+    stroke: area?.style?.stroke ?? OFFICE_CHART_PLOT_STROKE,
+    strokeWidth: area?.style?.strokeWidth ?? 1,
+  };
 }

@@ -45,6 +45,7 @@ export function ChartPlotAreaGroup({
         showTitle={config.showYAxisTitle === true}
         title={config.yAxisTitle}
         valueFormat={valueFormat}
+        interaction={interaction}
       />
 
       <ChartGrid
@@ -52,10 +53,16 @@ export function ChartPlotAreaGroup({
         showHorizontal={showGrid}
         showVertical={showVerticalGrid}
         pointCount={points.length}
+        interaction={interaction}
       />
 
-      <ChartPlotArea layout={layout} showAxes={showAxes} />
-      <ChartAxisLines layout={layout} visible={showAxes} />
+      <ChartPlotArea
+        layout={layout}
+        showAxes={showAxes}
+        interaction={interaction}
+        chartParts={chartParts}
+      />
+      <ChartAxisLines layout={layout} visible={showAxes} interaction={interaction} />
 
       {chartType === "bar" ? (
         <ChartSeriesBar
@@ -92,6 +99,7 @@ export function ChartPlotAreaGroup({
         valueFormat={valueFormat}
         visible={showDataLabels}
         chartParts={chartParts}
+        interaction={interaction}
       />
 
       <ChartAxisX
@@ -100,6 +108,7 @@ export function ChartPlotAreaGroup({
         showLabels={showAxes && config.showXAxisLabels !== false}
         showTitle={config.showXAxisTitle === true}
         title={config.xAxisTitle}
+        interaction={interaction}
       />
     </>
   );

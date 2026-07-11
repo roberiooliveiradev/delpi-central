@@ -9,6 +9,8 @@ import {
 } from "./seriesChartParts";
 
 export type SeriesChartElementId =
+  | "chartArea"
+  | "plotArea"
   | "axes"
   | "axisTitles"
   | "chartTitle"
@@ -27,6 +29,8 @@ export type SeriesChartElementDefinition = {
 };
 
 export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
+  { id: "chartArea", label: "Área do gráfico", hint: "Format Chart Area — fundo e borda externa (Office)." },
+  { id: "plotArea", label: "Área de plotagem", hint: "Format Plot Area — fundo e borda do gráfico." },
   { id: "chartTitle", label: "Título do gráfico", hint: "Título central acima da área de plotagem." },
   { id: "series", label: "Série", hint: "Linha ou colunas dos dados (primitivo line/area)." },
   { id: "legend", label: "Legenda", hint: "Identificação da série de dados." },
@@ -50,6 +54,10 @@ export function isSeriesChartElementEnabled(
   options: SeriesChartOptions,
 ): boolean {
   switch (elementId) {
+    case "chartArea":
+    case "plotArea":
+    case "series":
+      return true;
     case "axes":
       return options.showAxes !== false;
     case "axisTitles":
@@ -66,8 +74,6 @@ export function isSeriesChartElementEnabled(
       return options.showLegend !== false && options.legendPosition !== "hidden";
     case "markers":
       return options.showMarkers !== false;
-    case "series":
-      return true;
     default:
       return false;
   }
@@ -103,6 +109,8 @@ export function setSeriesChartElementEnabled(
         : { showLegend: false, legendPosition: "hidden" };
     case "markers":
       return { showMarkers: enabled };
+    case "chartArea":
+    case "plotArea":
     case "series":
       return {};
     default:
@@ -113,6 +121,10 @@ export function setSeriesChartElementEnabled(
 /** Partes endereçáveis cobertas pelo item do catálogo (Onda 4G.7). */
 export function chartElementPartRefs(elementId: SeriesChartElementId): ChartPartRef[] {
   switch (elementId) {
+    case "chartArea":
+      return [{ kind: "chartArea" }];
+    case "plotArea":
+      return [{ kind: "plotArea" }];
     case "chartTitle":
       return [{ kind: "title" }];
     case "legend":

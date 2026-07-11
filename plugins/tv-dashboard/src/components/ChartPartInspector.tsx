@@ -1,13 +1,16 @@
 import {
   applyMarkerStyleToAll,
-  chartOptionsToParts,
   chartPartAllowsDelete,
   chartPartVisualPrimitive,
   chartPrimitiveSupportsFill,
   chartPrimitiveSupportsStroke,
   deleteChartPart,
+  mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
+  OFFICE_CHART_SERIES_COLOR,
   partsToChartOptions,
+  resolveChartAreaStyle,
+  resolvePlotAreaStyle,
   serializeChartPartRef,
   upsertChartPartState,
   type ComunicadoChartOptions,
@@ -27,6 +30,10 @@ type Props = {
 
 function chartPartLabel(part: ComunicadoChartPartRef): string {
   switch (part.kind) {
+    case "chartArea":
+      return "Área do gráfico";
+    case "plotArea":
+      return "Área de plotagem";
     case "title":
       return "Título";
     case "legend":
@@ -75,22 +82,31 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     ...partsToChartOptions(block.chartParts),
   });
   const primitive = chartPartVisualPrimitive(selectedChartPart);
-  const seriesColor = options.seriesColor ?? "#0d7a8c";
+  const seriesColor = options.seriesColor ?? OFFICE_CHART_SERIES_COLOR;
   const partKey = serializeChartPartRef(selectedChartPart);
   const partState = block.chartParts?.[partKey];
   const canDelete = chartPartAllowsDelete(selectedChartPart);
+  const chartAreaStyle = resolveChartAreaStyle(options, block.chartParts);
+  const plotAreaStyle = resolvePlotAreaStyle(block.chartParts);
 
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {
     updateSelected({
       chartOptions: nextOptions,
-      chartParts: chartOptionsToParts(nextOptions),
+      chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
     } as Partial<typeof block>);
   };
 
   const patchPart = (patch: {
     content?: string;
     visible?: boolean;
-    style?: { fill?: string; stroke?: string; strokeWidth?: number; markerRadius?: number; opacity?: number };
+    style?: {
+      fill?: string;
+      stroke?: string;
+      strokeWidth?: number;
+      markerRadius?: number;
+      opacity?: number;
+      borderRadius?: number;
+    };
   }) => {
     const nextParts = upsertChartPartState(block.chartParts, selectedChartPart, patch);
     const nextOptions = mergeComunicadoChartOptions({
@@ -106,6 +122,10 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     }
     if (selectedChartPart.kind === "legend" && patch.content !== undefined) {
       nextOptions.seriesName = patch.content;
+    }
+    if (selectedChartPart.kind === "chartArea" && patch.style?.fill) {
+      nextOptions.backgroundColor = patch.style.fill;
+      nextOptions.theme = "light";
     }
     updateSelected({
       chartParts: nextParts,
@@ -144,7 +164,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     <DeckPropertySection
       pane={pane}
       title={`Parte: ${chartPartLabel(selectedChartPart)}`}
-      hint="Como no Excel: Del oculta a parte (não o gráfico). Arraste título/legenda. Marcadores: Formatar → aplicar a todos."
+      hint="Padrão Office: fundo branco, cantos retos, bordas editáveis. Del oculta a parte (não o gráfico)."
     >
       <div className="td-chart-part-inspector__actions">
         <button type="button" className="td-deck-btn td-deck-btn--ghost" onClick={clearChartPartSelection}>
@@ -165,6 +185,63 @@ export function ChartPartInspector({ pane = false, block }: Props) {
           </button>
         ) : null}
       </div>
+
+      {selectedChartPart.kind === "chartArea" || selectedChartPart.kind === "plotArea" ? (
+        <>
+          <DeckField id="td-chart-part-area-fill" label="Preenchimento">
+            <TvRibbonColorPicker
+              inline
+              label="Preenchimento"
+              value={
+                selectedChartPart.kind === "chartArea" ? chartAreaStyle.fill : plotAreaStyle.fill
+              }
+              onChange={(color) => patchPart({ style: { fill: color } })}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-area-stroke" label="Cor da borda">
+            <TvRibbonColorPicker
+              inline
+              label="Contorno"
+              value={
+                selectedChartPart.kind === "chartArea" ? chartAreaStyle.stroke : plotAreaStyle.stroke
+              }
+              onChange={(color) => patchPart({ style: { stroke: color } })}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-area-stroke-width" label="Espessura da borda">
+            <input
+              id="td-chart-part-area-stroke-width"
+              type="number"
+              min={0}
+              max={12}
+              step={0.5}
+              value={
+                selectedChartPart.kind === "chartArea"
+                  ? chartAreaStyle.strokeWidth
+                  : plotAreaStyle.strokeWidth
+              }
+              onChange={(event) =>
+                patchPart({ style: { strokeWidth: Number(event.target.value) || 0 } })
+              }
+            />
+          </DeckField>
+          {selectedChartPart.kind === "chartArea" ? (
+            <DeckField id="td-chart-part-area-radius" label="Cantos (px) — Office = 0">
+              <input
+                id="td-chart-part-area-radius"
+                type="number"
+                min={0}
+                max={32}
+                step={1}
+                value={chartAreaStyle.borderRadius}
+                onChange={(event) =>
+                  patchPart({ style: { borderRadius: Math.max(0, Number(event.target.value) || 0) } })
+                }
+              />
+            </DeckField>
+          ) : null}
+        </>
+      ) : null}
 
       {selectedChartPart.kind === "title" ? (
         <DeckField id="td-chart-part-title" label="Texto do título">

@@ -94,7 +94,11 @@ import {
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
 
 export type { MediaLibraryTarget } from "./comunicadoEditorTypes";
-export { useComunicadoEditor, type ComunicadoEditorContextValue } from "./comunicadoEditorContextCore";
+export {
+  useComunicadoEditor,
+  useOptionalComunicadoEditor,
+  type ComunicadoEditorContextValue,
+} from "./comunicadoEditorContextCore";
 
 const HISTORY_LIMIT = 50;
 
@@ -226,6 +230,7 @@ export function ComunicadoEditorProvider({
   const selectBlock = useCallback(
     (blockId: string, options?: { additive?: boolean }) => {
       flushActiveTextEdit();
+      let selectedBlockType: string | undefined;
       if (options?.additive) {
         setSelectedIds((current) => {
           const set = new Set(current);
@@ -235,6 +240,7 @@ export function ComunicadoEditorProvider({
         });
       } else {
         const block = configRef.current.blocks?.find((item) => item.id === blockId);
+        selectedBlockType = block?.type;
         if (block?.groupId) {
           const memberIds =
             configRef.current.blocks
@@ -248,6 +254,9 @@ export function ComunicadoEditorProvider({
       setEditingTextId(null);
       setSelectedChartPart(null);
       setEditingChartPart(null);
+      if (selectedBlockType === "chart_view") {
+        setRibbonTabRequest("chart");
+      }
     },
     [flushActiveTextEdit],
   );
@@ -267,6 +276,7 @@ export function ComunicadoEditorProvider({
       setEditingTextId(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
+      setRibbonTabRequest("chart");
     },
     [flushActiveTextEdit],
   );
