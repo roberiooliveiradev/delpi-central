@@ -341,6 +341,11 @@
   overflow: hidden;
 }
 
+/* box-shadow é pintado fora da caixa — overflow:hidden no mesmo nó corta a sombra. */
+.tdp-comunicado__block.tdp-comunicado__block--with-shadow {
+  overflow: visible;
+}
+
 .tdp-comunicado__block--heading h1,
 .tdp-comunicado__block--text p,
 .tdp-comunicado__block--heading .tdp-comunicado__rich-text,

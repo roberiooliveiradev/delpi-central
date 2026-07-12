@@ -474,6 +474,12 @@ export function ComunicadoEditorBlockView({
   isEditingText = false,
   dataLoading = false,
 }: Props) {
+  const resolvedClassName = [
+    className,
+    block.style?.boxShadow?.trim() ? "tdp-comunicado__block--with-shadow" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
     position: "relative",
@@ -490,7 +496,7 @@ export function ComunicadoEditorBlockView({
       <ComunicadoEditorVisualBoxBlock
         block={block}
         fontScale={fontScale}
-        className={className}
+        className={resolvedClassName}
         isSelected={isSelected}
         isEditingText={isEditingText}
       />
@@ -498,13 +504,13 @@ export function ComunicadoEditorBlockView({
   }
 
   if (block.type === "image") {
-    return <EditorImageBlock block={block} style={style} className={className} isSelected={isSelected} />;
+    return <EditorImageBlock block={block} style={style} className={resolvedClassName} isSelected={isSelected} />;
   }
 
   if (block.type === "video") {
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <ComunicadoEditorVideoPreview block={block} style={style} className={className} />
+        <ComunicadoEditorVideoPreview block={block} style={style} className={resolvedClassName} />
       </div>
     );
   }
@@ -514,7 +520,7 @@ export function ComunicadoEditorBlockView({
       <EditorChartViewBlock
         block={block}
         style={style}
-        className={className}
+        className={resolvedClassName}
         dataLoading={dataLoading}
       />
     );
@@ -525,7 +531,7 @@ export function ComunicadoEditorBlockView({
       <EditorTableViewBlock
         block={block}
         style={style}
-        className={className}
+        className={resolvedClassName}
         dataLoading={dataLoading}
       />
     );
@@ -536,7 +542,7 @@ export function ComunicadoEditorBlockView({
       <EditorKpiViewBlock
         block={block}
         style={style}
-        className={className}
+        className={resolvedClassName}
         dataLoading={dataLoading}
       />
     );
@@ -550,7 +556,7 @@ export function ComunicadoEditorBlockView({
           fontScale={fontScale}
           interactive
           embedded
-          className={className}
+          className={resolvedClassName}
           dataLoading={dataLoading}
         />
       </div>
@@ -563,7 +569,7 @@ export function ComunicadoEditorBlockView({
       fontScale={fontScale}
       interactive
       embedded
-      className={className}
+      className={resolvedClassName}
       dataLoading={dataLoading}
     />
   );

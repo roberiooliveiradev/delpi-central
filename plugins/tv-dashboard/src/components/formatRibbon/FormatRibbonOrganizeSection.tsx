@@ -1,5 +1,5 @@
+import { FieldLabel, HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
 import { ArrowDown, ArrowUp, Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
-import { HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
@@ -80,9 +80,12 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
           <DeckRibbonTile icon={Trash2} label="Remover" hint={E.remove} onClick={removeSelected} />
         </div>
         <div className="td-deck-ribbon__organize-props">
-          <label className="td-deck-ribbon__field-label" htmlFor="td-block-opacity">
-            Opacidade
-          </label>
+          <FieldLabel
+            htmlFor="td-block-opacity"
+            label="Opacidade"
+            hint={H.opacity}
+            className="td-deck-ribbon__field-label"
+          />
           <HintAction hint={H.opacity} ariaLabel="Ajuda: Opacidade">
             <input
               id="td-block-opacity"
@@ -97,9 +100,12 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
           </HintAction>
           {isMediaBlock ? (
             <>
-              <label className="td-deck-ribbon__field-label" htmlFor="td-block-object-fit">
-                Ajuste
-              </label>
+              <FieldLabel
+                htmlFor="td-block-object-fit"
+                label="Ajuste"
+                hint={H.objectFit}
+                className="td-deck-ribbon__field-label"
+              />
               <TdRibbonSelect
                 id="td-block-object-fit"
                 className="td-deck-ribbon__select td-deck-ribbon__select--compact"
@@ -117,9 +123,12 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
               />
             </>
           ) : null}
-          <label className="td-deck-ribbon__field-label" htmlFor="td-block-border-width">
-            Borda
-          </label>
+          <FieldLabel
+            htmlFor="td-block-border-width"
+            label="Borda"
+            hint={H.borderWidth}
+            className="td-deck-ribbon__field-label"
+          />
           <NativeTextControl
             id="td-block-border-width"
             type="number"
@@ -140,6 +149,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
           <TvRibbonColorPicker
             label="Borda"
             ariaLabel="Cor da borda"
+            hint={H.borderColor}
             inline
             variant="outline"
             value={
@@ -157,9 +167,12 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
               updateSelectedStyle({ borderColor: "transparent", borderWidth: 0 })
             }
           />
-          <label className="td-deck-ribbon__field-label" htmlFor="td-block-radius">
-            Raio
-          </label>
+          <FieldLabel
+            htmlFor="td-block-radius"
+            label="Raio"
+            hint={H.borderRadius}
+            className="td-deck-ribbon__field-label"
+          />
           <NativeTextControl
             id="td-block-radius"
             type="number"
@@ -169,12 +182,15 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             value={selected.style?.borderRadius ?? 0}
             onChange={(value) => updateSelectedStyle({ borderRadius: Number(value) || 0 })}
           />
-          <label className="td-deck-ribbon__field-label" htmlFor="td-block-shadow">
-            Sombra
-          </label>
+          <FieldLabel
+            htmlFor="td-block-shadow"
+            label="Sombra"
+            hint={H.boxShadow}
+            className="td-deck-ribbon__field-label"
+          />
           <TdRibbonSelect
             id="td-block-shadow"
-            className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+            className="td-deck-ribbon__select td-deck-ribbon__select--compact td-deck-ribbon__select--shadow"
             aria-label="Sombra"
             value={matchBoxShadowPreset(selected.style?.boxShadow)}
             onChange={(value) => {

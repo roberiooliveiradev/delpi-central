@@ -104,9 +104,11 @@ export function ComunicadoBlockView({
     : blockCssStyle(block, { fontScale });
   const animClass = blockEntranceAnimationClass(block.animations);
   const style: CSSProperties = { ...baseStyle, ...blockEntranceAnimationStyle(block.animations) };
+  const withShadow = Boolean(block.style?.boxShadow?.trim());
   const blockClass = (extra = "") =>
     [
       `tdp-comunicado__block tdp-comunicado__block--${block.type}`,
+      withShadow ? "tdp-comunicado__block--with-shadow" : "",
       animClass,
       className,
       extra,

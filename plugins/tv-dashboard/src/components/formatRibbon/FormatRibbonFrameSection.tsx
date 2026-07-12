@@ -1,4 +1,4 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   isPointShapeKind,
   type ComunicadoBlock,
@@ -20,6 +20,13 @@ const FRAME_LABELS: Record<"x" | "y" | "w" | "h", string> = {
   y: "Y %",
   w: "Larg. %",
   h: "Alt. %",
+};
+
+const FRAME_HINTS: Record<"x" | "y" | "w" | "h", string> = {
+  x: H.frameX,
+  y: H.frameY,
+  w: H.frameW,
+  h: H.frameH,
 };
 
 function formatFrameValue(value: number): number {
@@ -73,9 +80,12 @@ export function FormatRibbonFrameSection() {
       <div className="td-deck-ribbon__frame-grid">
         {frameKeys.map((key) => (
           <span key={key} className="td-deck-ribbon__frame-field">
-            <label className="td-deck-ribbon__field-label" htmlFor={`td-ribbon-frame-${key}`}>
-              {FRAME_LABELS[key]}
-            </label>
+            <FieldLabel
+              htmlFor={`td-ribbon-frame-${key}`}
+              label={FRAME_LABELS[key]}
+              hint={FRAME_HINTS[key]}
+              className="td-deck-ribbon__field-label"
+            />
             <NativeTextControl
               id={`td-ribbon-frame-${key}`}
               type="number"
@@ -90,9 +100,12 @@ export function FormatRibbonFrameSection() {
           </span>
         ))}
         <span className="td-deck-ribbon__frame-field">
-          <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-frame-rotation">
-            Rot. °
-          </label>
+          <FieldLabel
+            htmlFor="td-ribbon-frame-rotation"
+            label="Rot. °"
+            hint={H.frameRotation}
+            className="td-deck-ribbon__field-label"
+          />
           <NativeTextControl
             id="td-ribbon-frame-rotation"
             type="number"

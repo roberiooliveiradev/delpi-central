@@ -1,4 +1,4 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
@@ -23,9 +23,12 @@ export function ShapeCornerRadiusControl({
 }: Props & { embedded?: boolean }) {
   const control = (
     <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-      <label className="td-deck-ribbon__field-label" htmlFor={id}>
-        Raio (px)
-      </label>
+      <FieldLabel
+        htmlFor={id}
+        label="Raio (px)"
+        hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.borderRadius}
+        className="td-deck-ribbon__field-label"
+      />
       <NativeTextControl
         id={id}
         type="number"
