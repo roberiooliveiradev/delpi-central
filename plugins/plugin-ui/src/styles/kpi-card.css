@@ -192,8 +192,7 @@
 
 .delpi-kpi-part-adjust {
   position: absolute;
-  left: 14%;
-  top: 10%;
+  /* left/top via style inline (track de raio, igual td-composer__adjust) */
   width: 10px;
   height: 10px;
   padding: 0;

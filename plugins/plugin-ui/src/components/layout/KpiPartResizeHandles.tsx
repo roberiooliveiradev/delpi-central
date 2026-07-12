@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 
 import {
   KPI_PART_RESIZE_HANDLES,
@@ -21,6 +21,8 @@ export type KpiPartResizeHandlesProps = {
   onResizePointerDown: (handle: KpiPartResizeHandle, event: ReactPointerEvent) => void;
   /** Handle amarelo de raio (paridade com chrome do bloco). */
   showCornerAdjust?: boolean;
+  /** left/top % — acompanha o raio (mesmo track do bloco). */
+  cornerAdjustStyle?: CSSProperties;
   onCornerAdjustPointerDown?: (event: ReactPointerEvent) => void;
 };
 
@@ -29,6 +31,7 @@ export function KpiPartResizeHandles({
   visible,
   onResizePointerDown,
   showCornerAdjust = false,
+  cornerAdjustStyle,
   onCornerAdjustPointerDown,
 }: KpiPartResizeHandlesProps) {
   if (!visible) return null;
@@ -52,6 +55,7 @@ export function KpiPartResizeHandles({
         <button
           type="button"
           className="delpi-kpi-part-adjust"
+          style={cornerAdjustStyle}
           aria-label="Ajustar raio dos cantos"
           title="Raio"
           onPointerDown={(event) => {

@@ -12,12 +12,14 @@ import { FitText } from "./FitText";
 import { KpiPartResizeHandles } from "./KpiPartResizeHandles";
 import { metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard";
 import {
+  KPI_ICON_DEFAULT_RADIUS_PX,
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
   clampKpiPartFrame,
   getKpiPartState,
   isKpiPartVisible,
   kpiPartAllowsResize,
+  kpiPartCornerAdjustCssPosition,
   mergeKpiPartsWithOptions,
   resolveKpiIconBoxStyle,
   resolveKpiPartFontSize,
@@ -80,11 +82,15 @@ export {
   kpiPartAllowsMove,
   kpiPartAllowsResize,
   kpiPartCapabilities,
+  kpiPartCornerAdjFromLocalX,
+  kpiPartCornerAdjustCssPosition,
   mergeKpiPartsWithOptions,
   normalizeKpiPartsForLoad,
   parseKpiPartRef,
   partsToKpiOptions,
   resizeKpiPartFrame,
+  borderRadiusPxToKpiCornerAdj,
+  kpiCornerAdjToBorderRadiusPx,
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
   resolveKpiPartFontSize,
@@ -350,6 +356,19 @@ export function DelpiKpiCard({
     iconPtr.selected && !iconPtr.editing && kpiPartAllowsResize({ kind: "icon" }) &&
     Boolean(interaction?.onPartResizePointerDown);
 
+  const partCornerStyle = (host: HTMLElement | null, radiusPx: number) => {
+    const shortSide = Math.min(
+      Math.max(1, host?.clientWidth ?? 64),
+      Math.max(1, host?.clientHeight ?? 64),
+    );
+    return kpiPartCornerAdjustCssPosition(radiusPx, shortSide);
+  };
+
+  const titleCornerRadius = parts.title?.style?.borderRadius ?? 0;
+  const valueCornerRadius = parts.value?.style?.borderRadius ?? 0;
+  const hintCornerRadius = parts.hint?.style?.borderRadius ?? 0;
+  const iconCornerRadius = parts.icon?.style?.borderRadius ?? KPI_ICON_DEFAULT_RADIUS_PX;
+
   useMaterializeKpiPartFrame(
     { kind: "title" },
     titleHostRef,
@@ -483,6 +502,7 @@ export function DelpiKpiCard({
                     interaction?.onPartResizePointerDown?.({ kind: "title" }, event, handle)
                   }
                   showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                  cornerAdjustStyle={partCornerStyle(titleHostRef.current, titleCornerRadius)}
                   onCornerAdjustPointerDown={(event) =>
                     interaction?.onPartCornerAdjustPointerDown?.({ kind: "title" }, event)
                   }
@@ -515,6 +535,7 @@ export function DelpiKpiCard({
                     interaction?.onPartResizePointerDown?.({ kind: "value" }, event, handle)
                   }
                   showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                  cornerAdjustStyle={partCornerStyle(valueHostRef.current, valueCornerRadius)}
                   onCornerAdjustPointerDown={(event) =>
                     interaction?.onPartCornerAdjustPointerDown?.({ kind: "value" }, event)
                   }
@@ -566,6 +587,7 @@ export function DelpiKpiCard({
                     interaction?.onPartResizePointerDown?.({ kind: "hint" }, event, handle)
                   }
                   showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                  cornerAdjustStyle={partCornerStyle(hintHostRef.current, hintCornerRadius)}
                   onCornerAdjustPointerDown={(event) =>
                     interaction?.onPartCornerAdjustPointerDown?.({ kind: "hint" }, event)
                   }
@@ -600,6 +622,7 @@ export function DelpiKpiCard({
                   interaction?.onPartResizePointerDown?.({ kind: "icon" }, event, handle)
                 }
                 showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                cornerAdjustStyle={partCornerStyle(iconHostRef.current, iconCornerRadius)}
                 onCornerAdjustPointerDown={(event) =>
                   interaction?.onPartCornerAdjustPointerDown?.({ kind: "icon" }, event)
                 }

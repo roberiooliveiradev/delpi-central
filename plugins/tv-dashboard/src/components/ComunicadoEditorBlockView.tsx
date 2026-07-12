@@ -20,12 +20,15 @@ import {
   upsertChartPartState,
   KpiViewBlockView,
   KPI_ICON_DEFAULT_RADIUS_PX,
+  borderRadiusPxToKpiCornerAdj,
   clampKpiPartFrame,
   getKpiPartState,
+  kpiCornerAdjToBorderRadiusPx,
   kpiPartAllowsEdit,
   kpiPartAllowsFrame,
   kpiPartAllowsMove,
   kpiPartAllowsResize,
+  kpiPartCornerAdjFromLocalX,
   partsToKpiOptions,
   resizeKpiPartFrame,
   resolveKpiPartFrameRoot,
@@ -609,17 +612,27 @@ function EditorKpiViewBlock({
   const onPartCornerAdjustPointerDown = useCallback(
     (ref: ComunicadoKpiPartRef, event: ReactPointerEvent) => {
       if (!kpiPartAllowsFrame(ref)) return;
+      const host = (event.currentTarget as HTMLElement).closest("[data-kpi-part]");
+      if (!host) return;
       event.preventDefault();
-      const startClientX = event.clientX;
-      const startClientY = event.clientY;
-      const origin =
+      const rect = host.getBoundingClientRect();
+      const shortSide = Math.min(Math.max(1, rect.width), Math.max(1, rect.height));
+      const originPx =
         getKpiPartState(block.kpiParts, ref)?.style?.borderRadius ??
         (ref.kind === "icon" ? KPI_ICON_DEFAULT_RADIUS_PX : 0);
+      const startAdj = borderRadiusPxToKpiCornerAdj(originPx, shortSide);
+      const startLocalX = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 100;
+      const startRaw = kpiPartCornerAdjFromLocalX(startLocalX);
       let lastParts = block.kpiParts;
 
       const onMove = (ev: PointerEvent) => {
-        const delta = ((ev.clientX - startClientX) + (ev.clientY - startClientY)) / 2;
-        const nextRadius = Math.max(0, Math.min(64, Math.round(origin + delta * 0.35)));
+        const localX = ((ev.clientX - rect.left) / Math.max(rect.width, 1)) * 100;
+        const rawNow = kpiPartCornerAdjFromLocalX(localX);
+        const nextAdj = Math.min(
+          0.5,
+          Math.max(0, startAdj + (rawNow - startRaw)),
+        );
+        const nextRadius = kpiCornerAdjToBorderRadiusPx(nextAdj, shortSide);
         lastParts = upsertKpiPartState(lastParts, ref, {
           style: { borderRadius: nextRadius },
         });

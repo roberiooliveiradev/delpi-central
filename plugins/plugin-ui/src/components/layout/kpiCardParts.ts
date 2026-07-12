@@ -138,6 +138,53 @@ export const KPI_PART_DEFAULT_FRAMES: Record<"title" | "value" | "hint" | "icon"
 export const KPI_ICON_DEFAULT_SIZE_PX = 44;
 export const KPI_ICON_DEFAULT_RADIUS_PX = 14;
 
+/**
+ * Track do handle amarelo de cantos — mesmo padrão do `cornerSpec` (bloco/forma).
+ * Move ao longo do topo (12%→50%); valor 0–0.5 = fração do lado curto.
+ */
+const KPI_CORNER_TRACK_START = 12;
+const KPI_CORNER_TRACK_END = 50;
+const KPI_CORNER_TRACK = KPI_CORNER_TRACK_END - KPI_CORNER_TRACK_START;
+const KPI_CORNER_ADJ_MAX = 0.5;
+
+function clampKpiCorner(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function borderRadiusPxToKpiCornerAdj(px: number, shortSidePx: number): number {
+  if (!(shortSidePx > 0)) return clampKpiCorner(px / 64, 0, KPI_CORNER_ADJ_MAX);
+  return clampKpiCorner(px / shortSidePx, 0, KPI_CORNER_ADJ_MAX);
+}
+
+export function kpiCornerAdjToBorderRadiusPx(adj: number, shortSidePx: number): number {
+  return Math.round(
+    clampKpiCorner(adj, 0, KPI_CORNER_ADJ_MAX) * Math.max(0, shortSidePx),
+  );
+}
+
+/** Posição % do handle amarelo no bbox da parte (igual chrome do bloco). */
+export function kpiPartCornerAdjustCssPosition(
+  borderRadiusPx: number,
+  shortSidePx: number,
+): { left: string; top: string } {
+  const adj = borderRadiusPxToKpiCornerAdj(borderRadiusPx, shortSidePx);
+  const x = clampKpiCorner(
+    KPI_CORNER_TRACK_START + (adj / KPI_CORNER_ADJ_MAX) * KPI_CORNER_TRACK,
+    KPI_CORNER_TRACK_START,
+    KPI_CORNER_TRACK_END,
+  );
+  return { left: `${x}%`, top: "0%" };
+}
+
+/** Converte ponteiro local X (0–100 % no bbox) → ajuste 0–0.5. */
+export function kpiPartCornerAdjFromLocalX(localX: number): number {
+  return clampKpiCorner(
+    ((localX - KPI_CORNER_TRACK_START) / KPI_CORNER_TRACK) * KPI_CORNER_ADJ_MAX,
+    0,
+    KPI_CORNER_ADJ_MAX,
+  );
+}
+
 /** Tipografia padrão das partes — mesma base da ribbon Formatar. */
 export const KPI_PART_FONT_SIZE_DEFAULTS = {
   title: 14,

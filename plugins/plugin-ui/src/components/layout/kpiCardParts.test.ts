@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  borderRadiusPxToKpiCornerAdj,
   clampKpiPartFrame,
   deleteKpiPart,
+  kpiCornerAdjToBorderRadiusPx,
   kpiOptionsToParts,
   kpiPartAllowsFrame,
   kpiPartAllowsResize,
+  kpiPartCornerAdjustCssPosition,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
   resizeKpiPartFrame,
@@ -150,6 +153,16 @@ describe("kpi icon layout", () => {
     expect(nw.y).toBe(17);
     expect(nw.w).toBe(34);
     expect(nw.h).toBe(43);
+  });
+
+  it("kpiPartCornerAdjustCssPosition acompanha o raio no track do topo", () => {
+    const low = kpiPartCornerAdjustCssPosition(0, 100);
+    const high = kpiPartCornerAdjustCssPosition(50, 100);
+    expect(Number.parseFloat(low.left)).toBeLessThan(Number.parseFloat(high.left));
+    expect(low.top).toBe("0%");
+    expect(high.top).toBe("0%");
+    expect(kpiCornerAdjToBorderRadiusPx(0.5, 80)).toBe(40);
+    expect(borderRadiusPxToKpiCornerAdj(40, 80)).toBe(0.5);
   });
 
   it("kpiPartAllowsResize cobre partes internas e não o card", () => {
