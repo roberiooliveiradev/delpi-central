@@ -10,6 +10,7 @@ import {
   resolveBlockShapeChromeAdjustmentValues,
   resolveViewportPixelSize,
   shouldHideDataSourceOnStage,
+  isLineShapeKind,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
   useComunicadoGoogleFonts,
@@ -315,6 +316,9 @@ export function ComunicadoComposerCanvas() {
                   isSelected ? "td-composer__block-wrap--selected" : "",
                   isSelected && !isPrimary ? "td-composer__block-wrap--multi" : "",
                   hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
+                  block.type === "shape" && isLineShapeKind(block.shape)
+                    ? "td-composer__block-wrap--line-shape"
+                    : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}

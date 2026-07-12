@@ -1289,6 +1289,28 @@
   pointer-events: auto;
 }
 
+/*
+ * Linha/conector: a bbox retangular não deve roubar clique/arraste dos blocos
+ * vizinhos — hit só no traço SVG (stroke).
+ */
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape {
+  pointer-events: none;
+}
+
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .tdp-comunicado__shape-svg {
+  pointer-events: none;
+  overflow: visible;
+}
+
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .tdp-comunicado__shape-svg * {
+  pointer-events: stroke;
+}
+
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles,
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles * {
+  pointer-events: auto;
+}
+
 .dashboard-tv-dashboard .td-composer__block-wrap--multi {
   outline-style: dotted;
   outline-color: color-mix(in srgb, var(--td-accent) 45%, #fff);

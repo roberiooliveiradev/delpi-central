@@ -68,6 +68,12 @@ function ComunicadoEditorKeyboardBridge() {
   const {
     selectedIds,
     editingTextId,
+    selectedChartPart,
+    selectedKpiPart,
+    selectedTablePart,
+    clearChartPartSelection,
+    clearKpiPartSelection,
+    clearTablePartSelection,
     undo,
     redo,
     canUndo,
@@ -83,6 +89,12 @@ function ComunicadoEditorKeyboardBridge() {
   useComunicadoEditorKeyboard({
     selectedIds,
     editingTextId,
+    hasPartSelection: Boolean(selectedChartPart || selectedKpiPart || selectedTablePart),
+    clearPartSelection: () => {
+      clearChartPartSelection();
+      clearKpiPartSelection();
+      clearTablePartSelection();
+    },
     undo,
     redo,
     canUndo,

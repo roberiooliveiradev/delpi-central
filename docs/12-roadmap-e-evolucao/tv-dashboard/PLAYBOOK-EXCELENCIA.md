@@ -1855,17 +1855,19 @@ Ribbon Gráfico = atalhos de visibilidade/tipo; FormatPane = detalhe da parte.
 #### Modelo canônico
 
 ```text
-1º clique no widget     → seleção GLOBAL (selected*Part = null)
+1º clique no widget     → seleção GLOBAL (selected*Part = null) + arraste do bloco
                            handles + outline com --td-global-selection-pad (12px)
                            Posição/tamanho/rotação/camadas do bloco
                            ribbon Forma: sem Preench. do fundo (mensagem de escopo)
 
-2º clique no fundo      → parte card | chartArea | table frame
+Duplo clique (selecionado) → parte card | chartArea | table frame | valor | título | …
                            outline + handles na borda da PARTE
                            fill/stroke/sombra/raio/opacidade/frame % da parte
-                           resize/move alteram frame da parte — NÃO startDrag do bloco
+                           resize/move da parte — NÃO startDrag do bloco
 
-Clique em valor/título/… → parte interna (mesmo contrato de frame + chrome)
+Esc / clique simples     → volta ao GLOBAL (destravar movimento do bloco)
+
+Linha/conector           → hit só no traço SVG (bbox não bloqueia vizinhos)
 ```
 
 | Peça | Contrato | Resolver chrome Forma |
@@ -1903,7 +1905,7 @@ O escopo **global** **não** unifica cor/fonte/fill das partes. Cada parte mant�
 #### Testes
 
 - `plugin-ui`: `kpiCardParts.test.ts`, `seriesChartParts.test.ts`, `configurableTableParts.test.ts`
-- Aceite manual: 1º clique → handles afastados; 2º no fundo → resize encolhe só o card; valor/título independentes.
+- Aceite manual: 1º clique → handles afastados + arraste do bloco; duplo clique no fundo/valor → parte; Esc destravar; arraste próximo a conector sem roubo de hit da bbox.
 
 ### 19.20 Aplicar estilo a partes irmãs + séries nativas (jul/2026)
 

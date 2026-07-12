@@ -43,8 +43,7 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 | Clique | Escopo | O que controla |
 |--------|--------|----------------|
 | **1º** no widget | **Global** | Posição, tamanho, rotação e camadas do **bloco** no slide. Outline/handles com padding (`--td-global-selection-pad`). Não altera fill/fonte das partes. |
-| **2º** no fundo (card / chartArea / moldura) | **Parte fundo** | Preench., contorno, sombra, raio, opacidade e **frame %** só do fundo — resize **não** move o bloco global. |
-| Clique em valor / título / legenda / … | **Parte interna** | Tipografia, chrome e frame daquela parte. |
+| **Duplo clique** (já selecionado) | **Parte** | Fundo, valor, título, chartArea, etc. — chrome e frame da parte. **Esc** ou clique simples no bloco volta ao global. |
 
 - Opacidade: **0%–100%** (Organizar); com parte selecionada grava na parte, senão no bloco.
 - Preench./Contorno na ribbon Forma miram a **parte selecionada** (`resolveKpiShapeChromePartRef` / `resolveTableShapeChromePartRef` / chart part) — sem parte = só controles globais.

@@ -12,6 +12,8 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function useComunicadoEditorKeyboard({
   selectedIds,
   editingTextId,
+  hasPartSelection = false,
+  clearPartSelection,
   undo,
   redo,
   canUndo,
@@ -34,6 +36,12 @@ export function useComunicadoEditorKeyboard({
 
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
+
+      if (event.key === "Escape" && hasPartSelection) {
+        event.preventDefault();
+        clearPartSelection?.();
+        return;
+      }
 
       if (mod && key === "z" && !event.shiftKey) {
         if (!enableHistoryShortcuts || !canUndo) return;
@@ -104,10 +112,12 @@ export function useComunicadoEditorKeyboard({
     canPaste,
     canRedo,
     canUndo,
+    clearPartSelection,
     copySelected,
     cutSelected,
     duplicateSelected,
     editingTextId,
+    hasPartSelection,
     hasSelection,
     enableHistoryShortcuts,
     nudgeSelected,

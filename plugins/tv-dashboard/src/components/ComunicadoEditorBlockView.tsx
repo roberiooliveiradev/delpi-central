@@ -50,6 +50,7 @@ import {
 import { useCallback, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
+import { resolveCompositePartPointerAction } from "../utils/compositePartSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
@@ -133,59 +134,28 @@ function EditorChartViewBlock({
   } = useComunicadoEditor();
 
   /**
-   * Clique: 1º no gráfico (chartArea) = seleção global; 2º = parte chartArea
-   * com frame próprio. Demais partes selecionam direto.
+   * Clique simples: seleção global + arraste do bloco (ou move da parte já ativa).
+   * Duplo clique: entra na parte / subcomponente.
    */
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event?: ReactPointerEvent) => {
-      if (ref.kind === "chartArea" && event) {
-        if (selectedId !== block.id) {
-          selectBlock(block.id);
-          startDrag(event, block, "move");
-          return;
-        }
-        if (!selectedChartPart || selectedChartPart.kind !== "chartArea") {
-          selectChartPart(block.id, { kind: "chartArea" });
-          requestRibbonTab("shape");
-          return;
-        }
-        return;
-      }
-      if (
+      if (!event) return;
+      const samePartSelected =
         selectedId === block.id &&
-        selectedChartPart &&
-        isChartPartRefEqual(selectedChartPart, ref) &&
-        chartPartAllowsMove(ref)
-      ) {
-        return;
-      }
-      selectChartPart(block.id, ref);
-      const primitiveKinds = new Set([
-        "marker",
-        "series",
-        "chartArea",
-        "plotArea",
-        "axis",
-        "grid",
-      ]);
-      if (primitiveKinds.has(ref.kind)) {
-        requestRibbonTab("shape");
-      } else {
-        requestRibbonTab("chart");
-      }
+        Boolean(selectedChartPart && isChartPartRefEqual(selectedChartPart, ref));
+      const action = resolveCompositePartPointerAction({
+        blockSelected: selectedId === block.id,
+        samePartSelected,
+        partAllowsMove: chartPartAllowsMove(ref),
+      });
+      if (action === "part-move") return;
+      selectBlock(block.id);
+      startDrag(event, block, "move");
     },
-    [
-      block,
-      requestRibbonTab,
-      selectBlock,
-      selectChartPart,
-      selectedChartPart,
-      selectedId,
-      startDrag,
-    ],
+    [block, selectBlock, selectedChartPart, selectedId, startDrag],
   );
 
-  /** Duplo clique na parte já selecionada: abre edição inline quando editável. */
+  /** Duplo clique: seleciona a parte; se já era a mesma e editável, abre inline. */
   const onPartDoubleClick = useCallback(
     (ref: ComunicadoChartPartRef) => {
       const same =
@@ -389,41 +359,27 @@ function EditorTableViewBlock({
 
   const onPartPointerDown = useCallback(
     (ref: ComunicadoTablePartRef, event?: ReactPointerEvent) => {
-      /*
-       * Moldura: 1º clique = global; 2º = parte `frame` (sem startDrag do bloco).
-       */
-      if (ref.kind === "frame" && event) {
-        if (selectedId !== block.id) {
-          selectBlock(block.id);
-          startDrag(event, block, "move");
-          return;
-        }
-        if (!selectedTablePart || selectedTablePart.kind !== "frame") {
-          selectTablePart(block.id, { kind: "frame" });
-          requestRibbonTab("shape");
-          return;
-        }
-        return;
-      }
+      if (!event) return;
+      const samePartSelected =
+        selectedId === block.id &&
+        Boolean(selectedTablePart && selectedTablePart.kind === ref.kind);
+      const action = resolveCompositePartPointerAction({
+        blockSelected: selectedId === block.id,
+        samePartSelected,
+        /* Tabela ainda não move frame no palco — clique sempre destravar o bloco. */
+        partAllowsMove: false,
+      });
+      if (action === "part-move") return;
       selectBlock(block.id);
-      selectTablePart(block.id, ref);
-      requestRibbonTab("table");
+      startDrag(event, block, "move");
     },
-    [
-      block,
-      requestRibbonTab,
-      selectBlock,
-      selectTablePart,
-      selectedId,
-      selectedTablePart,
-      startDrag,
-    ],
+    [block, selectBlock, selectedId, selectedTablePart, startDrag],
   );
 
   const onPartDoubleClick = useCallback(
     (ref: ComunicadoTablePartRef) => {
       selectTablePart(block.id, ref);
-      requestRibbonTab("table");
+      requestRibbonTab(ref.kind === "frame" ? "shape" : "table");
     },
     [block.id, requestRibbonTab, selectTablePart],
   );
@@ -481,40 +437,20 @@ function EditorKpiViewBlock({
 
   const onPartPointerDown = useCallback(
     (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
-      /*
-       * Fundo (card): 1º clique = seleção global do widget; 2º = parte `card`
-       * (frame próprio). Arrastar handles/move da parte não chama startDrag do bloco.
-       */
-      if (part.kind === "card" && event) {
-        if (selectedId !== block.id) {
-          selectBlock(block.id);
-          startDrag(event, block, "move");
-          return;
-        }
-        if (!selectedKpiPart || selectedKpiPart.kind !== "card") {
-          selectKpiPart(block.id, { kind: "card" });
-          requestRibbonTab("shape");
-          return;
-        }
-        /* Já no card: bindKpiPartPointer dispara onPartMovePointerDown. */
-        return;
-      }
-      /* Parte já selecionada: move trata o drag (não re-seleciona). */
-      if (
+      if (!event) return;
+      const samePartSelected =
         selectedId === block.id &&
-        selectedKpiPart &&
-        selectedKpiPart.kind === part.kind &&
-        kpiPartAllowsMove(part)
-      ) {
-        return;
-      }
+        Boolean(selectedKpiPart && selectedKpiPart.kind === part.kind);
+      const action = resolveCompositePartPointerAction({
+        blockSelected: selectedId === block.id,
+        samePartSelected,
+        partAllowsMove: kpiPartAllowsMove(part),
+      });
+      if (action === "part-move") return;
       selectBlock(block.id);
-      if (kpiPartAllowsFrame(part)) {
-        selectKpiPart(block.id, part);
-        requestRibbonTab("shape");
-      }
+      startDrag(event, block, "move");
     },
-    [block, requestRibbonTab, selectBlock, selectKpiPart, selectedId, selectedKpiPart, startDrag],
+    [block, selectBlock, selectedId, selectedKpiPart, startDrag],
   );
 
   const onPartDoubleClick = useCallback(

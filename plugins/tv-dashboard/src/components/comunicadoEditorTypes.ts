@@ -8,6 +8,9 @@ export type MediaLibraryTarget =
 export type ComunicadoEditorKeyboardActions = {
   selectedIds: string[];
   editingTextId: string | null;
+  /** Há parte de KPI/chart/tabela selecionada (Esc volta ao escopo global). */
+  hasPartSelection?: boolean;
+  clearPartSelection?: () => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
