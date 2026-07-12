@@ -196,11 +196,31 @@ export function DelpiKpiCard({
   const iconPtr = bindKpiPartPointer({ kind: "icon" }, interaction);
 
   const shellStyle: CSSProperties = {
-    ...(resolvedBg ? { backgroundColor: resolvedBg } : {}),
-    ...(cardStroke && cardStrokeWidth != null && cardStrokeWidth > 0
-      ? { border: `${cardStrokeWidth}px solid ${cardStroke}` }
+    ...(resolvedBg
+      ? ({
+          backgroundColor: resolvedBg,
+          ["--delpi-kpi-card-bg" as string]: resolvedBg,
+        } as CSSProperties)
       : {}),
-    ...(cardRadius != null ? { borderRadius: cardRadius, overflow: "hidden" } : {}),
+    ...(cardStroke && cardStrokeWidth != null && cardStrokeWidth > 0
+      ? ({
+          border: `${cardStrokeWidth}px solid ${cardStroke}`,
+          ["--delpi-kpi-card-border-width" as string]: `${cardStrokeWidth}px`,
+          ["--delpi-kpi-card-border-color" as string]: cardStroke,
+        } as CSSProperties)
+      : cardStrokeWidth === 0
+        ? ({
+            ["--delpi-kpi-card-border-width" as string]: "0px",
+            ["--delpi-kpi-card-border-color" as string]: "transparent",
+          } as CSSProperties)
+        : {}),
+    ...(cardRadius != null
+      ? ({
+          borderRadius: cardRadius,
+          overflow: "hidden",
+          ["--delpi-kpi-card-radius" as string]: `${cardRadius}px`,
+        } as CSSProperties)
+      : {}),
     ...(resolvedValueColor
       ? ({ ["--delpi-kpi-value-color" as string]: resolvedValueColor } as CSSProperties)
       : {}),

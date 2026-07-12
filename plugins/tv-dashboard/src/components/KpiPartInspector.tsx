@@ -84,7 +84,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     if (selectedKpiPart.kind === "hint" && patch.content !== undefined) {
       nextOptions.subtitle = patch.content.trim() || undefined;
     }
-    if (selectedKpiPart.kind === "card" && patch.style?.fill) {
+    if (selectedKpiPart.kind === "card" && patch.style?.fill !== undefined) {
       nextOptions.backgroundColor = patch.style.fill;
     }
     if (selectedKpiPart.kind === "card" && patch.style?.borderRadius != null) {

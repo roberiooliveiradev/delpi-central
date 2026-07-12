@@ -16,9 +16,10 @@
   width: 100%;
   min-height: 0;
   padding: 16px 18px;
-  border-radius: 12px;
-  border: 1px solid var(--delpi-ui-border, color-mix(in srgb, #94a3b8 35%, transparent));
-  background: var(--delpi-ui-surface, #ffffff);
+  border-radius: var(--delpi-kpi-card-radius, 12px);
+  border: var(--delpi-kpi-card-border-width, 1px) solid
+    var(--delpi-kpi-card-border-color, var(--delpi-ui-border, color-mix(in srgb, #94a3b8 35%, transparent)));
+  background: var(--delpi-kpi-card-bg, var(--delpi-ui-surface, #ffffff));
   box-sizing: border-box;
   color: var(--delpi-ui-text, #0f172a);
 }

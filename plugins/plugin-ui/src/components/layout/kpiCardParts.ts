@@ -213,8 +213,8 @@ export function partsToKpiOptions(parts?: KpiPartsMap | null): Partial<KpiCardFl
   if (hint?.content != null) patch.subtitle = hint.content;
   if (hint?.visible === false) patch.subtitle = undefined;
   if (icon?.visible != null) patch.showIcon = icon.visible !== false;
-  if (card?.style?.fill) patch.backgroundColor = card.style.fill;
-  if (value?.style?.color) patch.valueColor = value.style.color;
+  if (card?.style?.fill !== undefined) patch.backgroundColor = card.style.fill;
+  if (value?.style?.color !== undefined) patch.valueColor = value.style.color;
   return patch;
 }
 

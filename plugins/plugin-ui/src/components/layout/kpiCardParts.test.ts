@@ -51,6 +51,15 @@ describe("kpiCardParts adapters", () => {
     expect(merged.title?.content).toBe("Custom");
     expect(merged.icon?.visible).toBe(false);
   });
+
+  it("sincroniza fill do card com backgroundColor (incl. cor custom)", () => {
+    const parts = mergeKpiPartsWithOptions(
+      { card: { style: { fill: "#089bdb" } } },
+      { backgroundColor: "#ffffff" },
+    );
+    expect(parts.card?.style?.fill).toBe("#089bdb");
+    expect(partsToKpiOptions(parts).backgroundColor).toBe("#089bdb");
+  });
 });
 
 describe("kpiElementCatalog", () => {

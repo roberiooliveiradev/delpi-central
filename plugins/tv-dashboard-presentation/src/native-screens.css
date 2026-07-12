@@ -804,15 +804,15 @@
 }
 
 .tdp-data-block--kpi {
-  /* Mesmo chrome claro do gráfico — o card KPI preenche o bloco. */
+  /* Moldura do card vem do DelpiKpiCard (--delpi-kpi-card-*). */
   padding: 0;
   overflow: hidden;
   align-items: stretch;
   justify-content: stretch;
   text-align: left;
-  background: var(--tdp-data-surface, #ffffff);
+  background: transparent;
   color: var(--tdp-data-text, #1e293b);
-  border: 1px solid var(--tdp-data-border, #b4b4b4);
+  border: none;
   border-radius: 0;
 }
 
@@ -893,11 +893,13 @@
   width: 100%;
 }
 
-/* KPI herda DelpiKpiCard claro (catálogo) — sem override escuro. */
+/* KPI herda DelpiKpiCard — chrome via --delpi-kpi-card-* (não forçar branco/zero). */
 .tdp-kpi-view .delpi-kpi-card {
-  background: var(--delpi-ui-surface, #ffffff);
-  border: none;
-  border-radius: 0;
+  background: var(--delpi-kpi-card-bg, var(--delpi-ui-surface, #ffffff));
+  border-width: var(--delpi-kpi-card-border-width, 0px);
+  border-style: solid;
+  border-color: var(--delpi-kpi-card-border-color, transparent);
+  border-radius: var(--delpi-kpi-card-radius, 0px);
   padding: 0.55em 0.75em;
   color: var(--delpi-ui-text, #0f172a);
 }

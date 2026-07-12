@@ -26,6 +26,7 @@ import {
   shapeSupportsStroke,
   upsertChartPartState,
   upsertKpiPartState,
+  mergeKpiPartsWithOptions,
   type ComunicadoChartViewBlock,
   type ComunicadoKpiViewBlock,
   type ComunicadoShapeKind,
@@ -257,16 +258,18 @@ export function ComunicadoShapeRibbon() {
       const nextParts = upsertKpiPartState(block.kpiParts, { kind: "card" }, {
         style: style as never,
       });
+      const fromParts = partsToKpiOptions(nextParts);
       const nextOptions = mergeComunicadoKpiOptions({
         ...block.kpiOptions,
-        ...partsToKpiOptions(nextParts),
+        ...fromParts,
+        ...(typeof style.fill === "string" ? { backgroundColor: style.fill } : {}),
       });
       const nextBlockStyle = { ...block.style };
       if (typeof style.borderRadius === "number") {
         nextBlockStyle.borderRadius = style.borderRadius;
       }
       updateSelected({
-        kpiParts: nextParts,
+        kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
         kpiOptions: nextOptions,
         style: nextBlockStyle,
       } as Partial<typeof selected>);
