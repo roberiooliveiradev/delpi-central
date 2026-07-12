@@ -483,8 +483,6 @@ export function ComunicadoEditorBlockView({
     height: "100%",
     // Rotação fica no wrap de seleção (handles/outline alinhados ao bloco).
     transform: undefined,
-    // Sombra no wrap do editor — overflow:hidden do bloco cortaria o box-shadow.
-    boxShadow: undefined,
   };
 
   if (isComunicadoVisualBoxBlock(block)) {

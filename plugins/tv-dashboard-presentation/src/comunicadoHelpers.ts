@@ -991,6 +991,23 @@ function stripOuterChromeStyle(css: CSSProperties) {
   delete css.borderRadius;
 }
 
+/**
+ * KPI/chart/tabela: sombra na moldura interna (já com fill + radius), não no wrapper.
+ * Wrapper retangular + box-shadow cria “placa” extra e ignora o raio do card.
+ */
+function promoteBlockShadowToInnerChrome(
+  css: CSSProperties,
+  style: NonNullable<ComunicadoBlock["style"]>,
+) {
+  const shadow = typeof style.boxShadow === "string" ? style.boxShadow.trim() : "";
+  if (!shadow) {
+    delete css.boxShadow;
+    return;
+  }
+  (css as CSSProperties & Record<string, string>)["--tdp-block-box-shadow"] = shadow;
+  delete css.boxShadow;
+}
+
 export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
   const fontScale = options?.fontScale ?? 1;
   const style = block.style ?? {};
@@ -1055,6 +1072,7 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
   /* KPI/chart/tabela: moldura no componente interno (DelpiKpiCard / chart / table). */
   if (block.type === "kpi_view" || block.type === "chart_view" || block.type === "table_view") {
     stripOuterChromeStyle(css);
+    promoteBlockShadowToInnerChrome(css, style);
   }
 
   return css;

@@ -80,72 +80,10 @@ function wrapWithLink(node: ReactNode, block: ComunicadoBlock) {
   );
 }
 
-/**
- * Sombra no slot externo: o bloco tem overflow:hidden (conteúdo),
- * então box-shadow no mesmo nó era cortado. No editor o wrap faz esse papel.
- */
-function mountBlockRoot(
-  className: string,
-  style: CSSProperties,
-  children: ReactNode,
-  embedded: boolean,
-) {
-  const shadow = typeof style.boxShadow === "string" ? style.boxShadow.trim() : "";
-  if (embedded || !shadow) {
-    const nextStyle = embedded ? { ...style, boxShadow: undefined } : style;
-    return (
-      <div className={className} style={nextStyle}>
-        {children}
-      </div>
-    );
-  }
-
-  const {
-    left,
-    top,
-    right,
-    bottom,
-    width,
-    height,
-    position,
-    zIndex,
-    transform,
-    boxShadow,
-    opacity,
-    ...inner
-  } = style;
-
+function mountBlockRoot(className: string, style: CSSProperties, children: ReactNode) {
   return (
-    <div
-      className="tdp-comunicado__block-slot"
-      style={{
-        left,
-        top,
-        right,
-        bottom,
-        width,
-        height,
-        position: position ?? "absolute",
-        zIndex,
-        transform,
-        boxShadow,
-        opacity,
-      }}
-    >
-      <div
-        className={className}
-        style={{
-          ...inner,
-          position: "relative",
-          left: undefined,
-          top: undefined,
-          width: "100%",
-          height: "100%",
-          boxShadow: undefined,
-        }}
-      >
-        {children}
-      </div>
+    <div className={className} style={style}>
+      {children}
     </div>
   );
 }
@@ -170,7 +108,6 @@ export function ComunicadoBlockView({
         top: undefined,
         width: "100%",
         height: "100%",
-        boxShadow: undefined,
       }
     : blockCssStyle(block, { fontScale });
   const animClass = blockEntranceAnimationClass(block.animations);
@@ -201,7 +138,6 @@ export function ComunicadoBlockView({
       blockClass([...modifiers, "tdp-comunicado__visual-box"].join(" ")),
       style,
       wrapWithLink(content, block),
-      embedded,
     );
   }
 
@@ -220,7 +156,6 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--media"),
       style,
       wrapWithLink(media, block),
-      embedded,
     );
   }
 
@@ -241,7 +176,6 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--media"),
       style,
       wrapWithLink(media, block),
-      embedded,
     );
   }
 
@@ -251,7 +185,6 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--icon"),
       style,
       wrapWithLink(iconNode, block),
-      embedded,
     );
   }
 
@@ -264,7 +197,6 @@ export function ComunicadoBlockView({
         interactive={interactive}
         loading={dataLoading}
       />,
-      embedded,
     );
   }
 
@@ -279,7 +211,6 @@ export function ComunicadoBlockView({
         loading={dataLoading}
         editorMode={interactive}
       />,
-      embedded,
     );
   }
 
@@ -288,7 +219,6 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--chart-view"),
       style,
       <ChartViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
-      embedded,
     );
   }
 
@@ -297,7 +227,6 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--table-view"),
       style,
       <TableViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
-      embedded,
     );
   }
 
@@ -306,7 +235,6 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--kpi-view"),
       style,
       <KpiViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
-      embedded,
     );
   }
 

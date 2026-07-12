@@ -308,8 +308,6 @@ export function ComunicadoComposerCanvas() {
                     ? { transform: `rotate(${block.style.rotation}deg)` }
                     : {}),
                   ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
-                  /* Sombra no wrap: overflow do bloco interno não corta o box-shadow. */
-                  ...(block.style?.boxShadow ? { boxShadow: block.style.boxShadow } : {}),
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
