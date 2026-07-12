@@ -11,6 +11,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { previewDataBlockV2 } from "../api/tvDashboardApi";
+import { readDataPreviewCache, writeDataPreviewCache } from "../utils/editorSessionCache";
 
 type Options = {
   playlistId: string;
@@ -26,9 +27,29 @@ function stripResolved(block: FetchableBlock): Record<string, unknown> {
   return blockPayload as Record<string, unknown>;
 }
 
+function seedFromConfigBlocks(config: ComunicadoConfig): Record<string, ComunicadoDataResolved> {
+  const seeded: Record<string, ComunicadoDataResolved> = {};
+  for (const block of config.blocks ?? []) {
+    if (!isFetchableDataBlockType(block.type)) continue;
+    if (!("resolved" in block) || !block.resolved || typeof block.resolved !== "object") continue;
+    seeded[block.id] = block.resolved as ComunicadoDataResolved;
+  }
+  return seeded;
+}
+
+function initialResolvedMap(
+  playlistId: string,
+  config: ComunicadoConfig,
+): Record<string, ComunicadoDataResolved> {
+  const fingerprint = buildDataPreviewFingerprint(config);
+  const fromSession = readDataPreviewCache(playlistId, fingerprint);
+  const fromBlocks = seedFromConfigBlocks(config);
+  return { ...fromSession, ...fromBlocks };
+}
+
 /**
- * Preview de dados do editor — cache por blockId sobrevive à troca de slide.
- * Não zerar o mapa ao abrir um slide sem fontes (evita flicker do gráfico na volta).
+ * Preview de dados do editor — cache por blockId sobrevive à troca de slide e ao F5
+ * (sessionStorage + equality no merge). Não zerar o mapa ao abrir um slide sem fontes.
  */
 export function useComunicadoDataPreview({
   playlistId,
@@ -36,7 +57,9 @@ export function useComunicadoDataPreview({
   globalRefreshSec,
   debounceMs = 650,
 }: Options) {
-  const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>({});
+  const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>(
+    () => initialResolvedMap(playlistId, config),
+  );
   const [initialLoading, setInitialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,8 +70,10 @@ export function useComunicadoDataPreview({
   const resolvedRef = useRef(resolvedByBlockId);
   resolvedRef.current = resolvedByBlockId;
   const playlistIdRef = useRef(playlistId);
+  const fingerprintRef = useRef(buildDataPreviewFingerprint(config));
 
   const dataFingerprint = useMemo(() => buildDataPreviewFingerprint(config), [config]);
+  fingerprintRef.current = dataFingerprint;
 
   const readDataBlocks = useCallback(
     () =>
@@ -59,15 +84,36 @@ export function useComunicadoDataPreview({
     [],
   );
 
-  // Troca de playlist: cache anterior não se aplica.
+  // Troca de playlist: recarrega seed da sessão; cache da playlist anterior não se aplica.
   useEffect(() => {
     if (playlistIdRef.current === playlistId) return;
     playlistIdRef.current = playlistId;
-    setResolvedByBlockId({});
+    const seeded = initialResolvedMap(playlistId, configRef.current);
+    setResolvedByBlockId(seeded);
     setInitialLoading(false);
     setError(null);
     requestIdRef.current += 1;
   }, [playlistId]);
+
+  const mergeResolved = useCallback(
+    (pairs: ReadonlyArray<readonly [string, unknown]>) => {
+      setResolvedByBlockId((previous) => {
+        const next = { ...previous };
+        let changed = false;
+        for (const [blockId, resolved] of pairs) {
+          if (!resolved || typeof resolved !== "object") continue;
+          const value = resolved as ComunicadoDataResolved;
+          if (JSON.stringify(previous[blockId]) === JSON.stringify(value)) continue;
+          next[blockId] = value;
+          changed = true;
+        }
+        if (!changed) return previous;
+        writeDataPreviewCache(playlistIdRef.current, fingerprintRef.current, next);
+        return next;
+      });
+    },
+    [],
+  );
 
   const fetchBlocks = useCallback(
     async (blocks: FetchableBlock[], options: { showLoading: boolean; blockIds?: Set<string> }) => {
@@ -78,10 +124,12 @@ export function useComunicadoDataPreview({
       }
 
       const targetIds = options.blockIds ?? new Set(blocks.map((block) => block.id));
-      const hasExistingData = blocks.some(
-        (block) => targetIds.has(block.id) && resolvedRef.current[block.id] !== undefined,
+      const targets = blocks.filter((block) => targetIds.has(block.id));
+      const hasExistingData = targets.some(
+        (block) => resolvedRef.current[block.id] !== undefined,
       );
 
+      // Só banner/placeholder quando o palco ainda não tem nada para mostrar.
       if (options.showLoading && !hasExistingData) {
         setInitialLoading(true);
       }
@@ -93,30 +141,20 @@ export function useComunicadoDataPreview({
 
       try {
         const pairs = await Promise.all(
-          blocks
-            .filter((block) => targetIds.has(block.id))
-            .map(async (block) => {
-              const response = await previewDataBlockV2({
-                block: stripResolved(block),
-                nativeConfig,
-                playlistId,
-              });
-              const resolved = response.block?.resolved;
-              return [block.id, resolved] as const;
-            }),
+          targets.map(async (block) => {
+            const response = await previewDataBlockV2({
+              block: stripResolved(block),
+              nativeConfig,
+              playlistId: playlistIdRef.current,
+            });
+            const resolved = response.block?.resolved;
+            return [block.id, resolved] as const;
+          }),
         );
 
         if (requestIdRef.current !== requestId) return;
 
-        setResolvedByBlockId((previous) => {
-          const next = { ...previous };
-          for (const [blockId, resolved] of pairs) {
-            if (resolved && typeof resolved === "object") {
-              next[blockId] = resolved as ComunicadoDataResolved;
-            }
-          }
-          return next;
-        });
+        mergeResolved(pairs);
       } catch (err) {
         if (requestIdRef.current !== requestId) return;
         setError(err instanceof Error ? err.message : "Falha ao carregar dados.");
@@ -127,7 +165,7 @@ export function useComunicadoDataPreview({
         }
       }
     },
-    [playlistId],
+    [mergeResolved],
   );
 
   useEffect(() => {

@@ -53,6 +53,7 @@ import {
   type SlideClipboardPayload,
 } from "../utils/slideDeckClipboard";
 import { exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
+import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 type DeckSettingsProps = {
@@ -77,11 +78,11 @@ type Props = {
 
 export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: Props) {
   const confirm = useConfirm();
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
+  const [playlist, setPlaylist] = useState<Playlist | null>(() => readPlaylistShell(playlistId));
   const [catalog, setCatalog] = useState<NativeScreenCatalogItem[]>([]);
   const [uiContent, setUiContent] = useState<TvDashboardUiContent | null>(null);
   const [branchScope, setBranchScope] = useState<BranchScope | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !readPlaylistShell(playlistId));
   const [error, setError] = useState<string | null>(null);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
@@ -99,6 +100,10 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   playlistRef.current = playlist;
   selectedSlideIdRef.current = selectedSlideId;
+
+  useEffect(() => {
+    if (playlist) writePlaylistShell(playlist);
+  }, [playlist]);
 
   /** Troca de slide: alinha o ref live ao nativeConfig do alvo (evita merge WS/thumb do slide anterior). */
   const selectSlide = useCallback((slideId: string, slideHint?: Slide | null) => {
@@ -211,7 +216,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       for (const slide of payload.slides) next[slide.id] = slide;
       setPreviewBySlideId(next);
     } catch {
-      setPreviewBySlideId({});
+      // Mantém miniaturas anteriores — limpar no erro apaga o filmstrip e causa flash.
     }
   }, [playlistId, slides.length]);
 
@@ -264,7 +269,14 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   });
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const cached = readPlaylistShell(playlistId);
+    // Soft-load: com shell em sessão, não blanka a página no F5 enquanto a API responde.
+    if (cached) {
+      setPlaylist(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const [pl, screens, ui, scope] = await Promise.all([
@@ -274,11 +286,16 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         getBranchScope(),
       ]);
       setPlaylist(pl);
+      writePlaylistShell(pl);
       setCatalog(screens);
       setUiContent(ui);
       setBranchScope(scope);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar programação.");
+      if (!cached) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar programação.");
+      } else {
+        tvDashboardNotice(err instanceof Error ? err.message : "Erro ao atualizar programação.");
+      }
     } finally {
       setLoading(false);
     }

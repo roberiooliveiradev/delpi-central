@@ -31,8 +31,7 @@ export function CustomSlideEditorLayout({
   chromeProps,
   adminLabels,
 }: Props) {
-  const { config, blocks, appliedSlideId, dataPreviewLoading, dataPreviewError } =
-    useComunicadoEditor();
+  const { config, blocks, appliedSlideId, dataPreviewError } = useComunicadoEditor();
   /** Cache de print do filmstrip (com `resolved`) — sobrevive à troca de slide. */
   const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
 
@@ -67,10 +66,6 @@ export function CustomSlideEditorLayout({
       {dataPreviewError ? (
         <p className="td-deck-preview-banner td-deck-preview-banner--error" role="status">
           Preview de dados: {dataPreviewError}
-        </p>
-      ) : dataPreviewLoading ? (
-        <p className="td-deck-preview-banner" role="status">
-          Atualizando dados…
         </p>
       ) : null}
       <DeckEditorChrome {...chromeWithSlideExtras} />
