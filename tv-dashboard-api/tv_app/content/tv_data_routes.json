@@ -18,16 +18,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         }
       },
       "paramStrategy": "date_range",
@@ -57,16 +48,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "customer_segment": {
           "type": "string",
@@ -106,16 +88,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         }
       },
       "paramStrategy": "date_range",
@@ -145,16 +118,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -177,14 +141,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -204,16 +168,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         }
       },
       "paramStrategy": "date_range",
@@ -243,16 +198,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "customer_segment": {
           "type": "string",
@@ -292,16 +238,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         }
       },
       "paramStrategy": "date_range",
@@ -331,16 +268,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -386,16 +314,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -427,16 +346,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -472,16 +382,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -629,16 +530,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "granularity": {
           "type": "string",
@@ -687,16 +579,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -738,16 +621,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "customer_segment": {
           "type": "string",
@@ -783,16 +657,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -869,16 +734,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "granularity": {
           "type": "string",
@@ -993,16 +849,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "department_id": {
           "type": "string",
@@ -1626,16 +1473,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "id": {
           "type": "string",
@@ -1686,16 +1524,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "filial_id": {
           "type": "string",
@@ -1726,16 +1555,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -1773,16 +1593,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -1870,16 +1681,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -1930,16 +1732,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -1984,16 +1777,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2043,16 +1827,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2102,16 +1877,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2147,16 +1913,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2192,16 +1949,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2233,16 +1981,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2287,16 +2026,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2341,16 +2071,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2382,16 +2103,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2889,16 +2601,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -2934,16 +2637,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -3196,16 +2890,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -3326,16 +3011,7 @@
           "default": 7,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -3374,16 +3050,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -3584,16 +3251,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -3659,16 +3317,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -3707,16 +3356,7 @@
           "default": 7,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -3795,16 +3435,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -4171,7 +3802,7 @@
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Linhas (TOP N)",
+          "label": "Tamanho da página",
           "default": 5,
           "description": "Quantidade de linhas por página."
         },
@@ -4191,15 +3822,15 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       },
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      }
+      "tableFields": "items"
     },
     {
       "operationId": "get_product_detail",
@@ -6203,16 +5834,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -7046,23 +6668,24 @@
         "periodDays": {
           "type": "integer",
           "default": 30,
-          "label": "Período (dias)"
+          "label": "Período (dias)",
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         }
       },
       "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "description": "Indicador numérico para «Qualidade — PPM externo».",
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "description": "Indicador numérico para «Qualidade — PPM externo»."
     },
     {
       "operationId": "list_ppm_internal",
@@ -7202,23 +6825,24 @@
         "periodDays": {
           "type": "integer",
           "default": 30,
-          "label": "Período (dias)"
+          "label": "Período (dias)",
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         }
       },
       "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "description": "Indicador numérico para «Qualidade — PPM interno».",
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "description": "Indicador numérico para «Qualidade — PPM interno»."
     },
     {
       "operationId": "get_produced_quantity",
@@ -7792,16 +7416,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -7839,16 +7454,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -7891,16 +7497,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -7932,16 +7529,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -7986,16 +7574,7 @@
           "default": 30,
           "label": "Período (dias)",
           "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-          "enum": [
-            7,
-            14,
-            30,
-            60,
-            90,
-            180,
-            365
-          ]
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         },
         "branch": {
           "type": "string",
@@ -8039,16 +7618,16 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
+      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ],
-      "tableFields": "top_products",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "get_caller_stats_system_caller_stats_get",

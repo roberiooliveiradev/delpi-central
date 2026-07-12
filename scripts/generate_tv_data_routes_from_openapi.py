@@ -151,11 +151,27 @@ def enrich_param_schema_entry(name: str, entry: dict[str, Any]) -> dict[str, Any
         enriched["description"] = hint
     if name in KNOWN_PARAM_ENUMS and not enriched.get("enum"):
         enriched["enum"] = list(KNOWN_PARAM_ENUMS[name])
+    # Período em dias: input numérico livre — nunca enum/select.
+    if name == "periodDays":
+        enriched.pop("enum", None)
     if name in KNOWN_PARAM_DEFAULTS and enriched.get("default") is None:
         enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
         # Com default TV, não bloquear preview se o campo vier vazio na UI.
         enriched["optional"] = True
     return enriched
+
+
+def normalize_route_param_schema(route: dict[str, Any]) -> dict[str, Any]:
+    """Reaplica enrich após merge (remove enums obsoletos herdados do catálogo)."""
+    schema = route.get("paramSchema")
+    if not isinstance(schema, dict) or not schema:
+        return route
+    updated = dict(route)
+    updated["paramSchema"] = {
+        key: enrich_param_schema_entry(key, value if isinstance(value, dict) else {})
+        for key, value in schema.items()
+    }
+    return updated
 
 
 def strip_fixed_params_from_schema(route: dict[str, Any]) -> dict[str, Any]:
@@ -500,7 +516,8 @@ def generate_routes(
         base = build_base_route(operation)
         with_existing = merge_with_existing(base, existing.get(operation_id))
         with_overlay = apply_overlay(with_existing, overlays.get(operation_id))
-        generated.append(strip_fixed_params_from_schema(with_overlay))
+        normalized = normalize_route_param_schema(with_overlay)
+        generated.append(strip_fixed_params_from_schema(normalized))
     return generated
 
 
