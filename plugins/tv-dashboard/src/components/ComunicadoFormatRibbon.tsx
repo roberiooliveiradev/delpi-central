@@ -8,14 +8,10 @@ import {
   AlignVerticalJustifyStart,
   ArrowDown,
   ArrowUp,
-  AlignHorizontalJustifyCenter,
-  AlignHorizontalJustifyEnd,
-  AlignHorizontalJustifyStart,
   Bold,
   Copy,
   Crop,
   FolderOpen,
-  Group,
   Italic,
   List,
   ListOrdered,
@@ -25,7 +21,6 @@ import {
   Strikethrough,
   Trash2,
   Underline,
-  Ungroup,
   Upload,
 } from "lucide-react";
 import {
@@ -52,7 +47,7 @@ import {
   shapeSupportsFill,
   shapeSupportsStroke,
   visualBoxSupportsShapeFormatting,
-  visualBoxSupportsTextFormatting,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { DECK_SHAPE_DEFAULTS, HintAction, NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
 
@@ -61,13 +56,13 @@ import {
   COMUNICADO_BOX_SHADOW_PRESETS,
   matchBoxShadowPreset,
 } from "../content/comunicadoVisualPresets";
-import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import { selectedHasGroup } from "../utils/comunicadoGrouping";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { TdRibbonIconButton, TdRibbonSelect } from "./tdRibbonUi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { FormatRibbonAlignSection } from "./FormatRibbonAlignSection";
 
 type Labels = Record<string, string>;
 
@@ -107,14 +102,14 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const canGroup = selectedIds.length >= 2;
   const canUngroup = selectedHasGroup(blocks, selectedIds);
 
-  const isTextBlock =
-    selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsTextFormatting(selected);
+  const textBlock =
+    selected && (selected.type === "heading" || selected.type === "text") ? selected : null;
+  const isTextBlock = textBlock != null;
   const partialTextSelectionActive = Boolean(
-    isTextBlock &&
-      selected &&
-      editingTextId === selected.id &&
+    textBlock &&
+      editingTextId === textBlock.id &&
       textEditSelection &&
-      textEditSelection.blockId === selected.id &&
+      textEditSelection.blockId === textBlock.id &&
       textEditSelection.end > textEditSelection.start,
   );
   const blockFontWeightActive = selected?.style?.fontWeight === "bold";
@@ -141,38 +136,31 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const strikethroughActive = partialTextSelectionActive
     ? partialStrikethroughActive
     : blockDecorationFlags.strikethrough;
-  const listSelectionState =
-    isTextBlock && selected
-      ? editingTextId === selected.id && textEditListSelection
-        ? textEditListSelection
-        : selectionListTypeState(
-            resolveTextBlockDisplayRuns(selected),
-            0,
-            Math.max(0, selected.content.length),
-          )
-      : null;
+  const listSelectionState = textBlock
+    ? editingTextId === textBlock.id && textEditListSelection
+      ? textEditListSelection
+      : selectionListTypeState(
+          resolveTextBlockDisplayRuns(textBlock),
+          0,
+          Math.max(0, textBlock.content.length),
+        )
+    : null;
   const bulletListActive =
     listSelectionState?.bullet === true || listSelectionState?.bullet === "mixed";
   const orderedListActive =
     listSelectionState?.ordered === true || listSelectionState?.ordered === "mixed";
-  const namedStyleSelection =
-    isTextBlock && selected
-      ? editingTextId === selected.id && textEditNamedStyleSelection
-        ? textEditNamedStyleSelection
-        : resolveNamedStyleSelectionForBlock(
-            selected,
-            0,
-            Math.max(0, selected.content.length),
-          )
-      : null;
+  const namedStyleSelection = textBlock
+    ? editingTextId === textBlock.id && textEditNamedStyleSelection
+      ? textEditNamedStyleSelection
+      : resolveNamedStyleSelectionForBlock(textBlock, 0, Math.max(0, textBlock.content.length))
+    : null;
   const namedStyleValue =
     namedStyleSelection && namedStyleSelection !== "mixed"
       ? namedStyleSelection
-      : defaultNamedStyleForBlockType(selected?.type === "heading" ? "heading" : "text");
-  const textVerticalAlign =
-    isTextBlock && selected
-      ? selected.style?.verticalAlign ?? defaultVerticalAlignForBlock(selected.type)
-      : "top";
+      : defaultNamedStyleForBlockType(textBlock?.type === "heading" ? "heading" : "text");
+  const textVerticalAlign = textBlock
+    ? textBlock.style?.verticalAlign ?? defaultVerticalAlignForBlock(textBlock.type)
+    : "top";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isImageBlock = selected?.type === "image";
   const isShapeBlock =
@@ -214,59 +202,17 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       </DeckRibbonGroup>
 
       {multiSelected ? (
-        <DeckRibbonGroup label="Alinhar" hint={H.alignSelection}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-            {(
-              [
-                ["align-left", AlignHorizontalJustifyStart, "Esquerda", H.alignSelectionLeft],
-                ["align-center-h", AlignHorizontalJustifyCenter, "Centro H", H.alignSelectionCenterH],
-                ["align-right", AlignHorizontalJustifyEnd, "Direita", H.alignSelectionRight],
-                ["align-top", AlignVerticalJustifyStart, "Topo", H.alignSelectionTop],
-                ["align-center-v", AlignVerticalJustifyCenter, "Centro V", H.alignSelectionCenterV],
-                ["align-bottom", AlignVerticalJustifyEnd, "Base", H.alignSelectionBottom],
-              ] as const
-            ).map(([command, Icon, label, hint]) => (
-              <DeckRibbonTile
-                key={command}
-                icon={Icon}
-                label={label}
-                hint={hint}
-                onClick={() => alignSelected(command as LayoutAlignCommand)}
-              />
-            ))}
-            <DeckRibbonTile
-              icon={AlignHorizontalJustifyCenter}
-              label="Dist. H"
-              hint={H.distributeH}
-              disabled={!canDistribute}
-              onClick={() => alignSelected("distribute-h")}
-            />
-            <DeckRibbonTile
-              icon={AlignVerticalJustifyCenter}
-              label="Dist. V"
-              hint={H.distributeV}
-              disabled={!canDistribute}
-              onClick={() => alignSelected("distribute-v")}
-            />
-            <DeckRibbonTile
-              icon={Group}
-              label="Agrupar"
-              hint={H.groupSelection}
-              disabled={!canGroup}
-              onClick={groupSelected}
-            />
-            <DeckRibbonTile
-              icon={Ungroup}
-              label="Desagrupar"
-              hint={H.ungroupSelection}
-              disabled={!canUngroup}
-              onClick={ungroupSelected}
-            />
-          </div>
-        </DeckRibbonGroup>
+        <FormatRibbonAlignSection
+          canDistribute={canDistribute}
+          canGroup={canGroup}
+          canUngroup={canUngroup}
+          alignSelected={alignSelected}
+          groupSelected={groupSelected}
+          ungroupSelected={ungroupSelected}
+        />
       ) : null}
 
-      {isTextBlock && selected ? (
+      {isTextBlock && textBlock ? (
         <>
           <DeckRibbonGroup label="Fonte" hint={H.font} wide>
             <div className="td-deck-ribbon__toolbar">
@@ -274,7 +220,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
                   <TdRibbonSelect
                     aria-label="Família da fonte"
-                    value={selected.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
+                    value={textBlock.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
                     onChange={(value) => {
                       ensureComunicadoGoogleFontsLoaded([value]);
                       updateSelectedStyle({ fontFamily: value });
@@ -288,11 +234,11 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <TdRibbonIconButton
                   hint={H.fontSizeDown}
                   ariaLabel="Diminuir fonte"
-                  disabled={(selected.style?.fontSize ?? 32) <= COMUNICADO_FONT_SIZE_MIN}
+                  disabled={(textBlock.style?.fontSize ?? 32) <= COMUNICADO_FONT_SIZE_MIN}
                   onClick={() =>
                     updateSelectedStyle({
                       fontSize: clampFontSize(
-                        (selected.style?.fontSize ?? 32) - COMUNICADO_FONT_SIZE_STEP,
+                        (textBlock.style?.fontSize ?? 32) - COMUNICADO_FONT_SIZE_STEP,
                       ),
                     })
                   }
@@ -306,7 +252,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     aria-label="Tamanho da fonte"
                     min={COMUNICADO_FONT_SIZE_MIN}
                     max={COMUNICADO_FONT_SIZE_MAX}
-                    value={selected.style?.fontSize ?? 32}
+                    value={textBlock.style?.fontSize ?? 32}
                     onChange={(value) =>
                       updateSelectedStyle({ fontSize: clampFontSize(Number(value)) })
                     }
@@ -315,11 +261,11 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <TdRibbonIconButton
                   hint={H.fontSizeUp}
                   ariaLabel="Aumentar fonte"
-                  disabled={(selected.style?.fontSize ?? 32) >= COMUNICADO_FONT_SIZE_MAX}
+                  disabled={(textBlock.style?.fontSize ?? 32) >= COMUNICADO_FONT_SIZE_MAX}
                   onClick={() =>
                     updateSelectedStyle({
                       fontSize: clampFontSize(
-                        (selected.style?.fontSize ?? 32) + COMUNICADO_FONT_SIZE_STEP,
+                        (textBlock.style?.fontSize ?? 32) + COMUNICADO_FONT_SIZE_STEP,
                       ),
                     })
                   }
@@ -338,7 +284,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       return;
                     }
                     updateSelectedStyle({
-                      fontWeight: selected.style?.fontWeight === "bold" ? "normal" : "bold",
+                      fontWeight: textBlock.style?.fontWeight === "bold" ? "normal" : "bold",
                     });
                   }}
                 >
@@ -354,7 +300,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       return;
                     }
                     updateSelectedStyle({
-                      fontStyle: selected.style?.fontStyle === "italic" ? "normal" : "italic",
+                      fontStyle: textBlock.style?.fontStyle === "italic" ? "normal" : "italic",
                     });
                   }}
                 >
@@ -404,7 +350,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   label="Realce"
                   ariaLabel="Realce do texto"
                   inline
-                  value={selected.style?.textHighlight ?? "#fef08a"}
+                  value={textBlock.style?.textHighlight ?? "#fef08a"}
                   onChange={(color) => updateSelectedStyle({ textHighlight: color })}
                 />
                 <TvRibbonColorPicker
@@ -412,17 +358,17 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   label="Cor texto"
                   ariaLabel="Cor do texto"
                   inline
-                  value={selected.style?.color ?? "#ffffff"}
+                  value={textBlock.style?.color ?? "#ffffff"}
                   onChange={(color) => updateSelectedStyle({ color })}
                 />
                 <TdRibbonIconButton
                   hint={H.clearFormatting}
                   ariaLabel="Limpar formatação"
                   onClick={() => {
-                    const defaults = defaultTextBlockStyle(selected.type);
+                    const defaults = defaultTextBlockStyle(textBlock.type);
                     updateSelected({
-                      style: { ...defaults, zIndex: selected.style?.zIndex ?? defaults.zIndex },
-                    } as Partial<typeof selected>);
+                      style: { ...defaults, zIndex: textBlock.style?.zIndex ?? defaults.zIndex },
+                    } as Partial<ComunicadoBlock>);
                   }}
                 >
                   <RemoveFormatting size={15} aria-hidden="true" />
@@ -446,7 +392,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     key={align}
                     hint={hint}
                     ariaLabel={label}
-                    active={selected.style?.textAlign === align}
+                    active={textBlock.style?.textAlign === align}
                     onClick={() => updateSelectedStyle({ textAlign: align })}
                   >
                     <Icon size={15} aria-hidden="true" />
@@ -527,7 +473,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   id="td-ribbon-line-height"
                   className="td-deck-ribbon__select td-deck-ribbon__select--compact"
                   aria-label="Entrelinhas"
-                  value={String(selected.style?.lineHeight ?? 1.15)}
+                  value={String(textBlock.style?.lineHeight ?? 1.15)}
                   onChange={(value) => updateSelectedStyle({ lineHeight: Number(value) })}
                   options={COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => ({
                     value: String(value),
@@ -545,7 +491,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   min={-2}
                   max={24}
                   step={0.5}
-                  value={selected.style?.letterSpacing ?? 0}
+                  value={textBlock.style?.letterSpacing ?? 0}
                   onChange={(value) =>
                     updateSelectedStyle({ letterSpacing: Number(value) || 0 })
                   }

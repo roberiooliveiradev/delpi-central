@@ -2,6 +2,7 @@ import {
   COMUNICADO_IMAGE_CROP_FULL,
   normalizeComunicadoImageCrop,
   type ComunicadoImageCrop,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -27,7 +28,7 @@ export function ComunicadoImageCropPanel() {
   function setCrop(next: ComunicadoImageCrop) {
     updateSelected({
       imageCrop: normalizeComunicadoImageCrop(next),
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
   }
 
   function updateCropKey(key: keyof ComunicadoImageCrop, value: number) {
@@ -55,7 +56,7 @@ export function ComunicadoImageCropPanel() {
       <button
         type="button"
         className="td-btn td-btn--sm"
-        onClick={() => updateSelected({ imageCrop: undefined } as Partial<typeof selected>)}
+        onClick={() => updateSelected({ imageCrop: undefined } as Partial<ComunicadoBlock>)}
       >
         Resetar recorte
       </button>

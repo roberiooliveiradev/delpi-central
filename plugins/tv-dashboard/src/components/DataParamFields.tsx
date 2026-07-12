@@ -1,5 +1,6 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { BranchScope } from "../api/tvDashboardApi";
+import { ENUM_OPTION_LABELS, UI_FALLBACK_ENUMS } from "../content/dataParamCatalog";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BranchField } from "./BranchField";
 import { DeckField } from "./deck/DeckField";
@@ -37,43 +38,6 @@ const DATE_PARAM_KEYS = new Set([
   "from",
   "to",
 ]);
-
-const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
-  granularity: { day: "Dia", week: "Semana", month: "Mês", year: "Ano" },
-  customer_segment: { weg: "WEG", new_business: "Novos negócios" },
-  loss_type: { refugo: "Refugo", scrap: "Scrap", both: "Ambos" },
-  product_type: { PA: "Produto acabado (PA)", PI: "Produto intermediário (PI)" },
-  sort_dir: { asc: "Crescente", desc: "Decrescente" },
-  direction: { asc: "Crescente", desc: "Decrescente" },
-  orderDir: { asc: "Crescente", desc: "Decrescente" },
-  linked_sort_dir: { asc: "Crescente", desc: "Decrescente" },
-  stock_method: {
-    auto: "Automático",
-    hybrid: "Híbrido",
-    estimated: "Estimado",
-    official_closure: "Fechamento oficial",
-  },
-  view: {
-    by_material: "Por material",
-    by_finished_product: "Por produto acabado",
-    full: "Completo",
-    summary: "Resumo",
-  },
-  orderBy: { horas: "Horas", custo: "Custo", data: "Data" },
-  listing_type: { Todos: "Todos", LMP: "LMP", Amostra: "Amostra", Outro: "Outro" },
-  group_by: { general: "Geral", branch: "Filial", product: "Produto" },
-};
-
-/** Enums de UI quando o OpenAPI não declara `enum` (valores estáveis entre rotas). */
-const UI_FALLBACK_ENUMS: Record<string, Array<string | number>> = {
-  sort_dir: ["asc", "desc"],
-  direction: ["asc", "desc"],
-  orderDir: ["asc", "desc"],
-  linked_sort_dir: ["asc", "desc"],
-  product_type: ["PA", "PI"],
-  loss_type: ["refugo", "scrap", "both"],
-  stock_method: ["auto", "hybrid", "estimated", "official_closure"],
-};
 
 function hintForParam(key: string, field: DataParamSchemaField): string | undefined {
   const fromSchema = field.description?.trim();
@@ -139,7 +103,7 @@ function displayParamValue(
 
 type Props = {
   schema: DataParamSchema;
-  values: Record<string, string | number | boolean | undefined> | undefined;
+  values: Record<string, string | number | boolean | null | undefined> | undefined;
   inheritedKeys?: Set<string>;
   branchScope?: BranchScope | null;
   idPrefix?: string;

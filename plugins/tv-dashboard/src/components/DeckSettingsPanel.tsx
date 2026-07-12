@@ -21,6 +21,7 @@ import type {
 } from "../api/tvDashboardApi";
 import { adminMediaUrl, uploadPlaylistMedia } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import { BranchField } from "./BranchField";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
 import { DeckIconField } from "./deck/DeckIconField";
@@ -147,7 +148,7 @@ export function DeckSettingsPanel({
         );
       }
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Falha no upload.");
+      tvDashboardNotice(err instanceof Error ? err.message : "Falha no upload.");
     } finally {
       setMasterUploading(false);
     }

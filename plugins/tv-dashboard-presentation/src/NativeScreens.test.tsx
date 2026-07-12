@@ -149,7 +149,7 @@ describe("NativeScreens public payload", () => {
     expect(stage).toBeTruthy();
     expect(stage?.style.position).toBe("");
     expect(screen.getAllByText("OTD — série temporal").length).toBeGreaterThan(0);
-    expect(container.querySelector(".tdp-series-chart")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__series-line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
   });
 });

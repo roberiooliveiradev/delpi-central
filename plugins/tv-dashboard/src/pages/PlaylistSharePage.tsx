@@ -12,6 +12,7 @@ import {
 } from "../api/tvDashboardApi";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { playlistPath } from "../routing";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 type Props = {
   playlistId: string;
@@ -43,7 +44,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
   function copyLink() {
     if (!playlist?.publicUrl) return;
     void navigator.clipboard.writeText(playlist.publicUrl);
-    window.alert("Link copiado.");
+    tvDashboardNotice("Link copiado.");
   }
 
   function openQr() {
@@ -54,7 +55,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
         window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       })
       .catch((err) => {
-        window.alert(err instanceof Error ? err.message : "Erro ao gerar QR.");
+        tvDashboardNotice(err instanceof Error ? err.message : "Erro ao gerar QR.");
       });
   }
 
@@ -80,7 +81,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
     }
     const updated = await regeneratePlaylistToken(playlist.id);
     setPlaylist({ ...updated, slides: playlist.slides });
-    window.alert("Novo link gerado.");
+    tvDashboardNotice("Novo link gerado.");
   }
 
   if (loading) return <div className="td-state">Carregando…</div>;

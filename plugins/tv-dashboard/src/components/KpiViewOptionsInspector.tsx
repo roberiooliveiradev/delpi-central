@@ -21,6 +21,7 @@ import {
   type ComunicadoKpiOptions,
   type ComunicadoKpiViewBlock,
   type KpiElementId,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -115,7 +116,7 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
     updateSelected({
       kpiOptions: nextOptions,
       kpiParts: mergeKpiPartsWithOptions(block.kpiParts, nextOptions),
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
   };
 
   const patchOptions = (patch: Partial<ComunicadoKpiOptions>) => {
@@ -135,7 +136,7 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
     updateSelected({
       kpiOptions: mergeComunicadoKpiOptions(result.options),
       kpiParts: result.parts,
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
     if (enabled) focusElement(elementId);
   };
 

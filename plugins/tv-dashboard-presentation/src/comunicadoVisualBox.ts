@@ -60,10 +60,11 @@ export function resolveVisualBoxProfile(block: ComunicadoVisualBoxBlock): Comuni
   if (block.type === "text") {
     return { mode: "text", variant: "text", textTag: "p", isRichTextBlock: true };
   }
+  const shapeBlock = block as ComunicadoShapeBlock;
   return {
     mode: "shape",
-    variant: block.shape,
-    primitive: resolveShapePrimitive(block.shape),
+    variant: shapeBlock.shape,
+    primitive: resolveShapePrimitive(shapeBlock.shape),
     textTag: "span",
     isRichTextBlock: false,
   };
@@ -75,8 +76,9 @@ export function resolveVisualBoxChrome(block: ComunicadoVisualBoxBlock): Comunic
     return { showShapeGraphic: false, ...TEXT_BOX_DEFAULTS };
   }
 
-  const style = block.style ?? {};
-  const shape = block.shape;
+  const shapeBlock = block as ComunicadoShapeBlock;
+  const style = shapeBlock.style ?? {};
+  const shape = shapeBlock.shape;
   const primitive = resolveShapePrimitive(shape);
   return {
     showShapeGraphic: true,
@@ -106,7 +108,8 @@ export function visualBoxBlockModifierClasses(block: ComunicadoVisualBoxBlock): 
   if (profile.mode === "text") {
     return [`tdp-comunicado__block--${block.type}`, "tdp-comunicado__visual-box--text"];
   }
-  const primitive = profile.primitive ?? resolveShapePrimitive(block.shape);
+  const shapeBlock = block as ComunicadoShapeBlock;
+  const primitive = profile.primitive ?? resolveShapePrimitive(shapeBlock.shape);
   return [
     "tdp-comunicado__block--shape",
     "tdp-comunicado__visual-box--shape",

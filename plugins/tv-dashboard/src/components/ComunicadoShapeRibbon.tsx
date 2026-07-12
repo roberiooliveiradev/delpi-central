@@ -32,6 +32,7 @@ import {
   type ComunicadoKpiViewBlock,
   type ComunicadoShapeKind,
   type ComunicadoTableViewBlock,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import {
   DECK_COLOR_ACCENT,
@@ -147,7 +148,7 @@ export function ComunicadoShapeRibbon() {
       updateSelected({
         chartParts: nextParts,
         chartOptions: nextOptions,
-      } as Partial<typeof selected>);
+      } as Partial<ComunicadoBlock>);
     };
 
     return (
@@ -236,9 +237,9 @@ export function ComunicadoShapeRibbon() {
                     block.chartParts,
                     block.resolved?.chart?.points?.length ?? 0,
                     effectiveChartPart.kind === "marker" ? effectiveChartPart.seriesIndex ?? 0 : 0,
-                    style,
+                    partState?.style ?? {},
                   );
-                  updateSelected({ chartParts: nextParts } as Partial<typeof selected>);
+                  updateSelected({ chartParts: nextParts } as Partial<ComunicadoBlock>);
                 }}
               />
             </div>
@@ -269,7 +270,7 @@ export function ComunicadoShapeRibbon() {
       updateSelected({
         kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
         kpiOptions: nextOptions,
-      } as Partial<typeof selected>);
+      } as Partial<ComunicadoBlock>);
     };
 
     return (
@@ -412,7 +413,7 @@ export function ComunicadoShapeRibbon() {
           : {}),
       };
     }
-    updateSelected(patch as Partial<typeof selected>);
+    updateSelected(patch as Partial<ComunicadoBlock>);
     rememberComunicadoShape(kind);
     setChangeShapeOpen(false);
   };
@@ -425,7 +426,7 @@ export function ComunicadoShapeRibbon() {
     } else {
       next.y = Math.max(0, Math.min(100 - value, block.frame.y));
     }
-    updateSelected({ frame: next } as Partial<typeof selected>);
+    updateSelected({ frame: next } as Partial<ComunicadoBlock>);
   };
 
   return (

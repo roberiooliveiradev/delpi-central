@@ -753,7 +753,7 @@ Apresentação TV / preview
 |---|---|---|---|
 | Undo / redo | ✓ | ✅ v1.3 | Pilha ~50 no `ComunicadoEditorProvider` |
 | Duplicar bloco | ✓ | ✅ v1.3 | Ctrl+D + ribbon Organizar |
-| Copiar/colar bloco ou estilo | ✓ | ❌ | |
+| Copiar/colar bloco ou estilo | ✓ | ✅ | Clipboard de blocos no editor (`comunicadoEditorClipboard` + Ctrl+C/V) |
 | Multi-seleção | ✓ | ✅ v1.3 | Shift+click, marquee |
 | Agrupar / desagrupar | ✓ | ✅ v1.3 | `groupId` + `comunicadoGrouping.ts` |
 | Alinhar / distribuir objetos | ✓ | ✅ v1.3 | `comunicadoLayoutAlign.ts` |

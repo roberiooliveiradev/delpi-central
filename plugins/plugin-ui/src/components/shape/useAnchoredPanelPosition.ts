@@ -70,7 +70,7 @@ export function useAnchoredPanelPosition(
     const panel = panelRef.current;
     const resizeObserver =
       panel && typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
-    resizeObserver?.observe(panel);
+    if (resizeObserver && panel) resizeObserver.observe(panel);
 
     return () => {
       cancelAnimationFrame(raf);

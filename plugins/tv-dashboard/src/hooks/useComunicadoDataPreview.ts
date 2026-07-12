@@ -4,6 +4,7 @@ import {
   isFetchableDataBlockType,
   resolveDataBlockRefreshSec,
   serializeComunicadoConfig,
+  type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoDataBinding,
   type ComunicadoDataResolved,
@@ -18,12 +19,7 @@ type Options = {
   debounceMs?: number;
 };
 
-type FetchableBlock = {
-  id: string;
-  type: string;
-  dataBinding: ComunicadoDataBinding;
-  resolved?: ComunicadoDataResolved;
-};
+type FetchableBlock = Extract<ComunicadoBlock, { dataBinding: ComunicadoDataBinding }>;
 
 function stripResolved(block: FetchableBlock): Record<string, unknown> {
   const { resolved: _resolved, ...blockPayload } = block;

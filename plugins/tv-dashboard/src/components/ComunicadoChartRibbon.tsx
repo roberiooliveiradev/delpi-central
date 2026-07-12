@@ -29,6 +29,7 @@ import {
   type ComunicadoChartType,
   type ComunicadoChartViewBlock,
   type ChartElementId,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -73,7 +74,7 @@ export function ComunicadoChartRibbon() {
     updateSelected({
       chartOptions: result.options,
       chartParts: result.parts,
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
     if (enabled) {
       const part = chartElementPrimaryPartRef(elementId);
       if (part) selectChartPart(block.id, part);
@@ -81,7 +82,7 @@ export function ComunicadoChartRibbon() {
   };
 
   const setChartType = (chartType: ComunicadoChartType) => {
-    updateSelected({ chartType } as Partial<typeof selected>);
+    updateSelected({ chartType } as Partial<ComunicadoBlock>);
   };
 
   const openFormatSelection = () => {

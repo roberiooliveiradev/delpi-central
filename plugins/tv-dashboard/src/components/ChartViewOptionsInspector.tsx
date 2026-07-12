@@ -15,6 +15,7 @@ import {
   type ComunicadoChartOptions,
   type ComunicadoChartViewBlock,
   type ChartElementId,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -100,7 +101,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
     updateSelected({
       chartOptions: nextOptions,
       chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
   };
 
   const setOptions = (patch: Partial<ComunicadoChartOptions>) => {
@@ -124,7 +125,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
     updateSelected({
       chartOptions: result.options,
       chartParts: result.parts,
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
     if (enabled) {
       const primary = chartElementPrimaryPartRef(elementId);
       if (primary) selectChartPart(block.id, primary);

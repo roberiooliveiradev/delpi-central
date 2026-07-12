@@ -5,11 +5,17 @@ import {
   type ConfigurableSeriesChartProps as PluginUiConfigurableSeriesChartProps,
 } from "@delpi/plugin-ui/index";
 
+/** CSS canônico do gráfico de séries (fonte única: plugin-ui). */
+import "../../plugin-ui/src/styles/series-chart.css";
+
 export type ConfigurableSeriesChartProps = PluginUiConfigurableSeriesChartProps;
+
+/** Prefixo BEM padrão do plugin-ui (`delpi-ui-series-chart`). */
+const DEFAULT_SERIES_CHART_PREFIX = "delpi-ui-series-chart";
 
 export function ConfigurableSeriesChart(props: ConfigurableSeriesChartProps) {
   return (
-    <SeriesChartClassesProvider prefix="tdp-series-chart">
+    <SeriesChartClassesProvider prefix={DEFAULT_SERIES_CHART_PREFIX}>
       <PluginUiConfigurableSeriesChart {...props} />
     </SeriesChartClassesProvider>
   );
@@ -17,7 +23,7 @@ export function ConfigurableSeriesChart(props: ConfigurableSeriesChartProps) {
 
 export function ConfigurableSeriesChartWithProvider({
   children,
-  prefix = "tdp-series-chart",
+  prefix = DEFAULT_SERIES_CHART_PREFIX,
 }: {
   children: ReactNode;
   prefix?: string;

@@ -4,25 +4,38 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * Regressão: prefixo `tdp-series-chart` no TV precisa espelhar os handles
- * de resize do plugin-ui — sem CSS absoluto, os botões ficam em linha no título.
+ * Regressão: handles de resize do gráfico vivem em plugin-ui/series-chart.css
+ * (prefixo `delpi-ui-series-chart`). Sem position:absolute, os botões ficam em linha no título.
  */
-describe("native-screens chart part resize CSS", () => {
+describe("series chart part resize CSS (plugin-ui)", () => {
   const css = readFileSync(
+    join(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../plugin-ui/src/styles/series-chart.css",
+    ),
+    "utf8",
+  );
+
+  const nativeCss = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), "native-screens.css"),
     "utf8",
   );
 
-  it("define position absolute nos handles tdp (não só delpi-ui)", () => {
-    expect(css).toMatch(/\.tdp-series-chart__part--resizable\s*\{[^}]*position:\s*relative/);
-    expect(css).toMatch(/\.tdp-series-chart__part-resize\s*\{[^}]*position:\s*absolute/);
+  it("define position absolute nos handles delpi-ui", () => {
+    expect(css).toMatch(/\.delpi-ui-series-chart__part--resizable\s*\{[^}]*position:\s*relative/);
+    expect(css).toMatch(/\.delpi-ui-series-chart__part-resize\s*\{[^}]*position:\s*absolute/);
     for (const handle of ["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const) {
-      expect(css).toContain(`.tdp-series-chart__part-resize--${handle}`);
+      expect(css).toContain(`.delpi-ui-series-chart__part-resize--${handle}`);
     }
   });
 
+  it("native-screens não duplica paint tdp-series-chart", () => {
+    expect(nativeCss).not.toMatch(/\.tdp-series-chart\s*\{/);
+    expect(nativeCss).toMatch(/\.tdp-data-block--chart\s*>\s*\.delpi-ui-series-chart/);
+  });
+
   it("comunicado não herda grid KPI (prévia/filmstrip em branco)", () => {
-    expect(css).toMatch(/\.tdp-native-screen\.tdp-comunicado\s*\{[^}]*display:\s*block/);
-    expect(css).toMatch(/\.tdp-comunicado__stage\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0/s);
+    expect(nativeCss).toMatch(/\.tdp-native-screen\.tdp-comunicado\s*\{[^}]*display:\s*block/);
+    expect(nativeCss).toMatch(/\.tdp-comunicado__stage\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0/s);
   });
 });

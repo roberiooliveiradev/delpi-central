@@ -20,6 +20,7 @@ import {
   isPointShapeKind,
   shapeHasAdjustments,
   visualBoxSupportsShapeFormatting,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -136,7 +137,7 @@ export function ComunicadoElementInspector({
                 id="td-shape-content"
                 type="text"
                 value={selected.content ?? ""}
-                onChange={(value) => updateSelected({ content: value } as Partial<typeof selected>)}
+                onChange={(value) => updateSelected({ content: value } as Partial<ComunicadoBlock>)}
               />
             </DeckField>
             <DeckField id="td-shape-stroke-width" label="Espessura do contorno" hint={E.strokeWidth}>
@@ -238,7 +239,7 @@ export function ComunicadoElementInspector({
                     delayMs: entrance?.delayMs ?? 0,
                     durationMs: entrance?.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
                   }),
-                } as Partial<typeof selected>);
+                } as Partial<ComunicadoBlock>);
               }}
               options={BLOCK_ENTRANCE_PRESET_OPTIONS.map((option) => ({
                 value: option.value,
@@ -264,7 +265,7 @@ export function ComunicadoElementInspector({
                         delayMs: Number(value),
                         durationMs: entrance.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
                       }),
-                    } as Partial<typeof selected>);
+                    } as Partial<ComunicadoBlock>);
                   }}
                 />
               </DeckField>
@@ -287,7 +288,7 @@ export function ComunicadoElementInspector({
                         delayMs: entrance.delayMs ?? 0,
                         durationMs: Number(value),
                       }),
-                    } as Partial<typeof selected>);
+                    } as Partial<ComunicadoBlock>);
                   }}
                 />
               </DeckField>
@@ -320,7 +321,7 @@ export function ComunicadoElementInspector({
                   onChange={(value) =>
                     updateSelected({
                       frame: { ...selected.frame, [key]: Number(value) },
-                    } as Partial<typeof selected>)
+                    } as Partial<ComunicadoBlock>)
                   }
                 />
               </DeckField>

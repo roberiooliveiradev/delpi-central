@@ -11,6 +11,7 @@ import {
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
   useComunicadoGoogleFonts,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, useMemo, useRef, useState } from "react";
 
@@ -277,10 +278,12 @@ export function ComunicadoComposerCanvas() {
                   if (
                     isDataSourceBlockType(block.type) &&
                     selected &&
-                    isDataViewBlockType(selected.type) &&
+                    (selected.type === "chart_view" ||
+                      selected.type === "kpi_view" ||
+                      selected.type === "table_view") &&
                     !selected.dataSourceId?.trim()
                   ) {
-                    updateBlock(selected.id, { dataSourceId: block.id } as Partial<typeof selected>);
+                    updateBlock(selected.id, { dataSourceId: block.id } as Partial<ComunicadoBlock>);
                     return;
                   }
                   selectBlock(block.id, { additive: event.shiftKey });

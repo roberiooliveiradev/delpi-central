@@ -29,6 +29,7 @@ import {
   type ComunicadoChartViewBlock,
   type ComunicadoKpiPartRef,
   type ComunicadoKpiViewBlock,
+  type ComunicadoMediaBlock,
   type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -53,7 +54,7 @@ function EditorImageBlock({
   style,
   className,
 }: {
-  block: Extract<ComunicadoBlock, { type: "image" }>;
+  block: ComunicadoMediaBlock;
   style: CSSProperties;
   className?: string;
   isSelected?: boolean;

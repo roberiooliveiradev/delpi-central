@@ -297,10 +297,10 @@ export function contentRunsFromEditableRoot(root: HTMLElement): ComunicadoConten
   if (lineElements.length > 0) {
     const lines = [...lineElements].map((element) => {
       const listTypeRaw = element.getAttribute(LIST_TYPE_ATTR);
-      const listType =
+      const listType: ComunicadoListType | undefined =
         listTypeRaw === "bullet" || listTypeRaw === "ordered" ? listTypeRaw : undefined;
       const namedStyleRaw = element.getAttribute(NAMED_STYLE_ATTR);
-      const namedStyle =
+      const namedStyle: ComunicadoNamedTextStyle | undefined =
         namedStyleRaw === "title1" || namedStyleRaw === "subtitle" || namedStyleRaw === "body"
           ? namedStyleRaw
           : undefined;

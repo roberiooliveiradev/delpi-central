@@ -2,8 +2,8 @@ import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   chartTypeLabel,
   dataSourceOptionsForInspector,
-  isDataViewBlockType,
   tablePresetLabel,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -20,7 +20,14 @@ type Props = {
 export function VisualDataViewInspector({ pane = false, onOpenDataSources }: Props) {
   const { selected, blocks, updateSelected, openDataPanel } = useComunicadoEditor();
 
-  if (!selected || !isDataViewBlockType(selected.type)) return null;
+  if (
+    !selected ||
+    (selected.type !== "chart_view" &&
+      selected.type !== "kpi_view" &&
+      selected.type !== "table_view")
+  ) {
+    return null;
+  }
 
   const sourceOptions = dataSourceOptionsForInspector(blocks, selected.id);
   const hasSource = Boolean(selected.dataSourceId?.trim());
@@ -56,7 +63,7 @@ export function VisualDataViewInspector({ pane = false, onOpenDataSources }: Pro
           onChange={(value) =>
             updateSelected({
               dataSourceId: value || undefined,
-            } as Partial<typeof selected>)
+            } as Partial<ComunicadoBlock>)
           }
           options={[
             { value: "", label: sourceOptions.length === 0 ? "Insira uma fonte (aba Dados)" : "Selecione…" },
@@ -76,7 +83,7 @@ export function VisualDataViewInspector({ pane = false, onOpenDataSources }: Pro
               const raw = value.trim();
               updateSelected({
                 maxRows: raw ? Number(raw) : undefined,
-              } as Partial<typeof selected>);
+              } as Partial<ComunicadoBlock>);
             }}
           />
         </DeckField>

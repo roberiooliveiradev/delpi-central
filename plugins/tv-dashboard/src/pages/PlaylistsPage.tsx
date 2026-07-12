@@ -7,6 +7,7 @@ import {
   type Playlist,
 } from "../api/tvDashboardApi";
 import { useConfirm } from "../context/ConfirmDialogProvider";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 function formatLastPresented(value?: string | null) {
   if (!value) return "—";
@@ -53,7 +54,7 @@ export function PlaylistsPage({ onOpen, onCreate }: Props) {
       const copy = await duplicatePlaylist(item.id);
       onOpen(copy.id);
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Erro ao duplicar programação.");
+      tvDashboardNotice(err instanceof Error ? err.message : "Erro ao duplicar programação.");
     }
   }
 

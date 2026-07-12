@@ -14,7 +14,7 @@ import {
   serializeComunicadoConfigForThumbnail,
 } from "./slideCardPreview";
 
-type WorkspaceProps = ComponentProps<typeof DeckWorkspace>;
+type WorkspaceProps = Omit<ComponentProps<typeof DeckWorkspace>, "stage">;
 type ChromeProps = ComponentProps<typeof DeckEditorChrome>;
 
 type Props = {

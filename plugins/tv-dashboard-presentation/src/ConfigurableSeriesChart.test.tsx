@@ -63,12 +63,12 @@ describe("ConfigurableSeriesChart", () => {
       />,
     );
 
-    expect(container.querySelector(".tdp-series-chart__title")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__legend")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__series-line")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__series-marker")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__data-label")).toBeTruthy();
-    expect(container.querySelector(".tdp-series-chart__grid-line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__title")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__legend")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__series-marker")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__data-label")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__grid-line")).toBeTruthy();
   });
 
   it("omite marcadores quando desabilitados", () => {
@@ -80,8 +80,8 @@ describe("ConfigurableSeriesChart", () => {
       />,
     );
 
-    expect(container.querySelector(".tdp-series-chart__series-marker")).toBeNull();
-    expect(container.querySelector(".tdp-series-chart__series-line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart__series-marker")).toBeNull();
+    expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
   });
 });
 

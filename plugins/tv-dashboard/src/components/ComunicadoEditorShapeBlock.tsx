@@ -94,7 +94,13 @@ export function ComunicadoEditorShapeBlock({
       return;
     }
 
-    registerTextEditorBridge(block.id, { commitPending: commitDraft });
+    registerTextEditorBridge(block.id, {
+      applyPartialStyleToggle: () => {},
+      applyListToggle: () => {},
+      applyNamedStyleToggle: () => {},
+      refreshSelectionState: () => {},
+      commitPending: commitDraft,
+    });
 
     return () => registerTextEditorBridge(block.id, null);
   }, [isEditing, block.id, commitDraft, registerTextEditorBridge]);

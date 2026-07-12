@@ -67,7 +67,7 @@ function ShapeLibraryButton({
   const label = comunicadoShapeLabel(kind);
 
   return (
-    <HintAction hint={`${H.insertShape} — ${label}`} ariaLabel={`Inserir ${label}`} placement="right">
+    <HintAction hint={`${H.insertShape} — ${label}`} ariaLabel={`Inserir ${label}`} placement="top">
       <button
         type="button"
         role="menuitem"

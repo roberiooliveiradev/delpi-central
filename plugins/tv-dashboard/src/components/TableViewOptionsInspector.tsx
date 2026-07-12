@@ -12,6 +12,7 @@ import {
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
   type TableElementId,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -86,7 +87,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
     updateSelected({
       tableOptions: nextOptions,
       tableParts: mergeTablePartsWithOptions(block.tableParts, nextOptions),
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
   };
 
   const toggleElement = (elementId: TableElementId, enabled: boolean) => {

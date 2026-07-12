@@ -15,7 +15,7 @@ import type { ComunicadoContentRun, ComunicadoTextBlock } from "./comunicadoType
 
 type Props = {
   block: Pick<ComunicadoTextBlock, "content" | "contentRuns">;
-  as: "h1" | "p";
+  as: "h1" | "p" | "span";
   baseStyle?: CSSProperties;
   fontScale?: number;
   className?: string;

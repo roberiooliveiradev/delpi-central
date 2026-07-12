@@ -148,7 +148,7 @@ export function createDataSourceBlock(
   operationId: string,
   options: {
     label?: string;
-    defaultParams?: Record<string, string | number>;
+    defaultParams?: Record<string, string | number | boolean | null>;
     refreshSec?: number;
   } = {},
 ): ComunicadoBlock {
@@ -222,7 +222,7 @@ export function createDataBlock(
     blockType?: ComunicadoDataBlockType;
     label?: string;
     displayMode?: ComunicadoDataBinding["displayMode"];
-    defaultParams?: Record<string, string | number>;
+    defaultParams?: Record<string, string | number | boolean | null>;
   } = {},
 ): ComunicadoBlock {
   const blockType = options.blockType ?? "data_kpi";

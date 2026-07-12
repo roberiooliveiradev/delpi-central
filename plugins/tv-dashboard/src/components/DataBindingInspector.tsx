@@ -13,6 +13,7 @@ import {
   resolveDataBlockRefreshSec,
   type ComunicadoDataBinding,
   type ComunicadoDataDisplayMode,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope, TvDataRouteCatalogItem } from "../api/tvDashboardApi";
@@ -94,7 +95,7 @@ export function DataBindingInspector({
     }
     updateSelected({
       dataBinding: { ...binding, params: nextParams },
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
   }
 
   function updateDisplayMode(displayMode: ComunicadoDataDisplayMode) {
@@ -104,7 +105,7 @@ export function DataBindingInspector({
       type: blockType,
       frame: defaultFrame(blockType),
       dataBinding: { ...binding, displayMode: displayMode === "auto" ? "kpi" : displayMode },
-    } as Partial<typeof selected>);
+    } as Partial<ComunicadoBlock>);
   }
 
   return (
@@ -142,7 +143,7 @@ export function DataBindingInspector({
             onChange={(value) =>
               updateSelected({
                 dataBinding: { ...binding, label: value || undefined },
-              } as Partial<typeof selected>)
+              } as Partial<ComunicadoBlock>)
             }
           />
         </DeckField>
@@ -159,7 +160,7 @@ export function DataBindingInspector({
                 } else {
                   nextBinding.valueField = value;
                 }
-                updateSelected({ dataBinding: nextBinding } as Partial<typeof selected>);
+                updateSelected({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
               }}
               options={[
                 { value: "", label: "Automático (primeiro disponível)" },
@@ -188,7 +189,7 @@ export function DataBindingInspector({
                     nextBinding.maxRows = Math.min(Math.round(parsed), maxRowsLimit);
                   }
                 }
-                updateSelected({ dataBinding: nextBinding } as Partial<typeof selected>);
+                updateSelected({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
               }}
             />
           </DeckField>
@@ -223,7 +224,7 @@ export function DataBindingInspector({
                   nextBinding.refreshSec = parsed;
                 }
               }
-              updateSelected({ dataBinding: nextBinding } as Partial<typeof selected>);
+              updateSelected({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
             }}
           />
         </DeckField>

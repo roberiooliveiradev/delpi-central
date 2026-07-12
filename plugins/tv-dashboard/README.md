@@ -105,27 +105,33 @@ Permissões: `tv-dashboard.read`, `.write`, `.manage`, `.view.filial-*`, `.view.
 
 ```bash
 npm install
-npm run build
-npm test          # vitest (routing, snap, alinhar, grouping, slideCardPreview)
+npm run check:css-scope   # gate anti-vazamento CSS (.dashboard-tv-dashboard)
+npm test                  # vitest
+npm run typecheck         # tsc (tsconfig.build.json)
+npm run build             # typecheck + vite build
+npm run ci                # circular + css + lint + test + build
 ```
 
-Docker: contexto `plugins/` (ver `Dockerfile`). Copiar **`plugin-ui`** + `tv-dashboard-presentation` no build. Container: `delpi-tv-dashboard`.
+Docker: contexto `plugins/` (ver `Dockerfile`). Bundled: **`tv-dashboard-presentation`** apenas. **`plugin-ui`** entra via Module Federation (`pluginUiRemote()` + `preparePluginUiRemote()`), sem `COPY plugin-ui`. Container: `delpi-tv-dashboard`.
 
 ---
 
 ## Deploy
 
-Alterou **só o admin** → rebuild `tv-dashboard`.  
-Alterou **preview + link público** (pacote `tv-dashboard-presentation` ou view no `public-hub`) → rebuild **`public-hub`** também.
+Alterou **só o admin** → rebuild `tv-dashboard` (fase **mfe**).  
+Alterou **preview + link público** (`tv-dashboard-presentation` ou view no `public-hub`) → rebuild **`public-hub`** também.  
+Alterou **`plugin-ui`** → rebuild remote **antes** dos MFEs consumidores.
 
 ```bash
-cd infra
-docker compose -f docker-compose.dev.yml up --build -d tv-dashboard public-hub tv-dashboard-api
+# Preferir scripts sequenciais (evita OOM e garante ordem remote → mfe)
+./infra/scripts/up-dev-sequential.sh --fase remote
+./infra/scripts/up-dev-sequential.sh --fase mfe
 ```
 
 Antes do merge (regressão Docker):
 
 ```bash
 python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
+python3 scripts/ci/check_tv_dashboard_css_scope.py --check
 bash scripts/ci/build-tv-dashboard.sh
 ```

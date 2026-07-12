@@ -1,4 +1,4 @@
-import type { CSSProperties, PointerEventHandler, ReactNode } from "react";
+import type { CSSProperties, MouseEventHandler, PointerEventHandler, ReactNode } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 
@@ -9,6 +9,7 @@ export type ChartContainerProps = {
   style?: CSSProperties;
   children?: ReactNode;
   onPointerDown?: PointerEventHandler<HTMLDivElement>;
+  onDoubleClick?: MouseEventHandler<HTMLDivElement>;
   "data-chart-part"?: string;
   "aria-selected"?: boolean;
 };
@@ -20,6 +21,7 @@ export function ChartContainer({
   style,
   children,
   onPointerDown,
+  onDoubleClick,
   ...domProps
 }: ChartContainerProps) {
   const cn = useSeriesChartClasses();
@@ -37,6 +39,7 @@ export function ChartContainer({
       className={[cn.root, className].filter(Boolean).join(" ")}
       style={style}
       onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
       {...domProps}
     >
       {children}

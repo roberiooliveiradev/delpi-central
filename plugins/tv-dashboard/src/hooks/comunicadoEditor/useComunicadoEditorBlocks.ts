@@ -1,0 +1,738 @@
+import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+
+import {
+  chartOptionsToParts,
+  chartPartAllowsDelete,
+  chartPartAllowsMove,
+  createBlock,
+  createChartViewBlock,
+  createIconBlock,
+  createKpiViewBlock,
+  createShapeBlock,
+  createTableViewBlock,
+  deleteChartPart,
+  deleteKpiPart,
+  deleteTablePart,
+  isDataBlockType,
+  isDataViewBlockType,
+  kpiPartAllowsDelete,
+  mergeComunicadoChartOptions,
+  mergeComunicadoKpiOptions,
+  newBlockId,
+  nextZIndex,
+  nudgeChartPartFrame,
+  parseComunicadoConfig,
+  partsToChartOptions,
+  partsToKpiOptions,
+  resolvePreferredDataSourceId,
+  sortBlocksByZIndex,
+  syncTextBlockFields,
+  tablePartAllowsDelete,
+  upsertChartPartState,
+  upsertKpiPartState,
+  type ComunicadoBlock,
+  type ComunicadoChartPartRef,
+  type ComunicadoChartType,
+  type ComunicadoConfig,
+  type ComunicadoDataDisplayMode,
+  type ComunicadoDataFilters,
+  type ComunicadoKpiPartRef,
+  type ComunicadoShapeKind,
+  type ComunicadoTablePartRef,
+  type ComunicadoTablePreset,
+  type ComunicadoTextBlock,
+} from "@delpi/tv-dashboard-presentation";
+
+import {
+  applyComunicadoSlideTheme,
+  type ComunicadoSlideTheme,
+} from "../../content/comunicadoSlideThemes";
+import type { ComunicadoRibbonTabRequest } from "../../components/comunicadoEditorContextCore";
+import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
+import {
+  bringForward,
+  bringToFront,
+  sendBackward,
+  sendToBack,
+} from "../../utils/comunicadoLayerOrder";
+import { groupBlocks, ungroupBlocks } from "../../utils/comunicadoGrouping";
+
+type Options = {
+  configRef: MutableRefObject<ComunicadoConfig>;
+  commitWithHistory: (next: ComunicadoConfig) => void;
+  selectedIds: string[];
+  selectedId: string | null;
+  selected: ComunicadoBlock | null;
+  selectedBlocks: ComunicadoBlock[];
+  selectedChartPart: ComunicadoChartPartRef | null;
+  selectedTablePart: ComunicadoTablePartRef | null;
+  selectedKpiPart: ComunicadoKpiPartRef | null;
+  editingChartPart: ComunicadoChartPartRef | null;
+  editingKpiPart: ComunicadoKpiPartRef | null;
+  setSelectedId: (id: string | null) => void;
+  selectBlocksByIds: (blockIds: string[]) => void;
+  setSelectedChartPart: Dispatch<SetStateAction<ComunicadoChartPartRef | null>>;
+  setEditingChartPart: Dispatch<SetStateAction<ComunicadoChartPartRef | null>>;
+  setSelectedTablePart: Dispatch<SetStateAction<ComunicadoTablePartRef | null>>;
+  setSelectedKpiPart: Dispatch<SetStateAction<ComunicadoKpiPartRef | null>>;
+  setEditingKpiPart: Dispatch<SetStateAction<ComunicadoKpiPartRef | null>>;
+  setLastDataDisplayMode: Dispatch<SetStateAction<ComunicadoDataDisplayMode>>;
+  setDataPanelOpen: Dispatch<SetStateAction<boolean>>;
+  setShapeMenuOpen: Dispatch<SetStateAction<boolean>>;
+  setRibbonTabRequest: Dispatch<SetStateAction<ComunicadoRibbonTabRequest | null>>;
+  /** Preenchido pelo Provider para o clipboard. */
+  removeSelectedRef: MutableRefObject<() => void>;
+  /** Preenchido pelo Provider para o bridge de texto na seleção. */
+  updateBlockTextFieldsRef: MutableRefObject<
+    (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => void
+  >;
+};
+
+/**
+ * Mutações de blocos (add/update/remove/group/layer/nudge/align/theme) via histórico.
+ */
+export function useComunicadoEditorBlocks({
+  configRef,
+  commitWithHistory,
+  selectedIds,
+  selectedId,
+  selected,
+  selectedBlocks,
+  selectedChartPart,
+  selectedTablePart,
+  selectedKpiPart,
+  editingChartPart,
+  editingKpiPart,
+  setSelectedId,
+  selectBlocksByIds,
+  setSelectedChartPart,
+  setEditingChartPart,
+  setSelectedTablePart,
+  setSelectedKpiPart,
+  setEditingKpiPart,
+  setLastDataDisplayMode,
+  setDataPanelOpen,
+  setShapeMenuOpen,
+  setRibbonTabRequest,
+  removeSelectedRef,
+  updateBlockTextFieldsRef,
+}: Options) {
+  const updateBlocks = useCallback(
+    (nextBlocks: ComunicadoBlock[]) => {
+      commitWithHistory({ ...configRef.current, blocks: nextBlocks });
+    },
+    [commitWithHistory, configRef],
+  );
+
+  const addBlock = useCallback(
+    (type: ComunicadoBlock["type"]) => {
+      const block = createBlock(
+        type,
+        type === "heading" ? "Novo título" : type === "text" ? "Texto" : "",
+      );
+      block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      setSelectedId(block.id);
+      updateBlocks([...(configRef.current.blocks ?? []), block]);
+    },
+    [configRef, setSelectedId, updateBlocks],
+  );
+
+  const addDataBlock = useCallback(
+    (block: ComunicadoBlock) => {
+      const withZ = {
+        ...block,
+        style: { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) },
+      };
+      if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
+        const mode = withZ.dataBinding.displayMode;
+        if (mode && mode !== "auto") {
+          setLastDataDisplayMode(mode);
+        }
+      }
+      setSelectedId(withZ.id);
+      updateBlocks([...(configRef.current.blocks ?? []), withZ]);
+    },
+    [configRef, setLastDataDisplayMode, setSelectedId, updateBlocks],
+  );
+
+  const addChartViewBlock = useCallback(
+    (chartType: ComunicadoChartType) => {
+      const block = createChartViewBlock(chartType);
+      const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+      if (sourceId) {
+        (block as { dataSourceId?: string }).dataSourceId = sourceId;
+      }
+      block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      setSelectedId(block.id);
+      updateBlocks([...(configRef.current.blocks ?? []), block]);
+    },
+    [configRef, selectedId, setSelectedId, updateBlocks],
+  );
+
+  const addTableViewBlock = useCallback(
+    (rows: number, cols: number, preset: ComunicadoTablePreset) => {
+      const block = createTableViewBlock(rows, cols, preset);
+      const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+      if (sourceId) {
+        (block as { dataSourceId?: string }).dataSourceId = sourceId;
+      }
+      block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      setSelectedId(block.id);
+      updateBlocks([...(configRef.current.blocks ?? []), block]);
+    },
+    [configRef, selectedId, setSelectedId, updateBlocks],
+  );
+
+  const addKpiViewBlock = useCallback(() => {
+    const block = createKpiViewBlock();
+    const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+    if (sourceId) {
+      (block as { dataSourceId?: string }).dataSourceId = sourceId;
+    }
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    setSelectedId(block.id);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }, [configRef, selectedId, setSelectedId, updateBlocks]);
+
+  const addDataSourceBlock = useCallback(
+    (block: ComunicadoBlock) => {
+      const selectedBlock = configRef.current.blocks?.find((item) => item.id === selectedId);
+      let nextBlocks = [...(configRef.current.blocks ?? [])];
+      const withZ = {
+        ...block,
+        style: { ...block.style, zIndex: nextZIndex(nextBlocks) },
+      };
+      nextBlocks = [...nextBlocks, withZ];
+      if (
+        selectedBlock &&
+        isDataViewBlockType(selectedBlock.type) &&
+        !("dataSourceId" in selectedBlock && selectedBlock.dataSourceId?.trim())
+      ) {
+        nextBlocks = nextBlocks.map((item) =>
+          item.id === selectedBlock.id
+            ? ({ ...item, dataSourceId: withZ.id } as ComunicadoBlock)
+            : item,
+        );
+      }
+      if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
+        const mode = withZ.dataBinding.displayMode;
+        if (mode && mode !== "auto") {
+          setLastDataDisplayMode(mode);
+        }
+      }
+      setDataPanelOpen(false);
+      setSelectedId(withZ.id);
+      updateBlocks(nextBlocks);
+    },
+    [configRef, selectedId, setDataPanelOpen, setLastDataDisplayMode, setSelectedId, updateBlocks],
+  );
+
+  const openDataPanel = useCallback(() => {
+    setDataPanelOpen(true);
+    setRibbonTabRequest("insert");
+  }, [setDataPanelOpen, setRibbonTabRequest]);
+
+  const setDataFilters = useCallback(
+    (filters: ComunicadoDataFilters | undefined) => {
+      commitWithHistory({
+        ...configRef.current,
+        dataFilters: filters,
+        version: Math.max(configRef.current.version ?? 3, 4),
+      });
+    },
+    [commitWithHistory, configRef],
+  );
+
+  const addShape = useCallback(
+    (shape: ComunicadoShapeKind) => {
+      const block = createShapeBlock(shape);
+      block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      setSelectedId(block.id);
+      setShapeMenuOpen(false);
+      setRibbonTabRequest("shape");
+      updateBlocks([...(configRef.current.blocks ?? []), block]);
+    },
+    [configRef, setRibbonTabRequest, setSelectedId, setShapeMenuOpen, updateBlocks],
+  );
+
+  const addIconBlock = useCallback(
+    (iconName: string) => {
+      const block = createIconBlock(iconName);
+      block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      setSelectedId(block.id);
+      updateBlocks([...(configRef.current.blocks ?? []), block]);
+    },
+    [configRef, setSelectedId, updateBlocks],
+  );
+
+  const groupSelected = useCallback(() => {
+    if (selectedIds.length < 2) return;
+    updateBlocks(groupBlocks(configRef.current.blocks ?? [], selectedIds));
+  }, [configRef, selectedIds, updateBlocks]);
+
+  const ungroupSelected = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    updateBlocks(ungroupBlocks(configRef.current.blocks ?? [], selectedIds));
+  }, [configRef, selectedIds, updateBlocks]);
+
+  const updateSelected = useCallback(
+    (patch: Partial<ComunicadoBlock>) => {
+      if (selectedIds.length === 0) return;
+      const idSet = new Set(selectedIds);
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        idSet.has(block.id) ? ({ ...block, ...patch } as ComunicadoBlock) : block,
+      );
+      updateBlocks(nextBlocks);
+    },
+    [configRef, selectedIds, updateBlocks],
+  );
+
+  const updateBlock = useCallback(
+    (blockId: string, patch: Partial<ComunicadoBlock>) => {
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        block.id === blockId ? ({ ...block, ...patch } as ComunicadoBlock) : block,
+      );
+      updateBlocks(nextBlocks);
+    },
+    [configRef, updateBlocks],
+  );
+
+  const commitChartPartContent = useCallback(
+    (content: string) => {
+      const part = editingChartPart;
+      const blockId = selectedIds[selectedIds.length - 1] ?? null;
+      setEditingChartPart(null);
+      if (!part || !blockId) return;
+      const block = configRef.current.blocks?.find((item) => item.id === blockId);
+      if (!block || block.type !== "chart_view") return;
+
+      const nextParts = upsertChartPartState(block.chartParts, part, {
+        content,
+        visible: true,
+      });
+      const nextOptions = mergeComunicadoChartOptions({
+        ...block.chartOptions,
+        ...partsToChartOptions(nextParts),
+      });
+      if (part.kind === "title") {
+        nextOptions.title = content;
+        nextOptions.showTitle = true;
+      } else if (part.kind === "legend" || part.kind === "series") {
+        nextOptions.seriesName = content;
+      } else if (part.kind === "axisTitle" && part.axis === "x") {
+        nextOptions.xAxisTitle = content;
+        nextOptions.showXAxisTitle = true;
+      } else if (part.kind === "axisTitle" && part.axis === "y") {
+        nextOptions.yAxisTitle = content;
+        nextOptions.showYAxisTitle = true;
+      }
+      const syncedParts = chartOptionsToParts(nextOptions);
+      updateBlock(blockId, {
+        chartParts: { ...nextParts, ...syncedParts },
+        chartOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+    },
+    [configRef, editingChartPart, selectedIds, setEditingChartPart, updateBlock],
+  );
+
+  const commitKpiPartContent = useCallback(
+    (content: string) => {
+      const part = editingKpiPart;
+      const blockId = selectedIds[selectedIds.length - 1] ?? null;
+      setEditingKpiPart(null);
+      if (!part || !blockId) return;
+      const block = configRef.current.blocks?.find((item) => item.id === blockId);
+      if (!block || block.type !== "kpi_view") return;
+
+      const nextParts = upsertKpiPartState(block.kpiParts, part, {
+        content,
+        visible: true,
+      });
+      const nextOptions = mergeComunicadoKpiOptions({
+        ...block.kpiOptions,
+        ...partsToKpiOptions(nextParts),
+      });
+      if (part.kind === "title") {
+        nextOptions.title = content.trim() || undefined;
+      } else if (part.kind === "hint") {
+        nextOptions.subtitle = content.trim() || undefined;
+      }
+      updateBlock(blockId, {
+        kpiParts: nextParts,
+        kpiOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+    },
+    [configRef, editingKpiPart, selectedIds, setEditingKpiPart, updateBlock],
+  );
+
+  const updateBlockTextFields = useCallback(
+    (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => {
+      const textFields = syncTextBlockFields(fields.content, fields.contentRuns);
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        if (block.id !== blockId) return block;
+        if (block.type === "heading" || block.type === "text") {
+          return { ...block, ...textFields } as ComunicadoBlock;
+        }
+        if (block.type === "shape") {
+          return { ...block, content: textFields.content } as ComunicadoBlock;
+        }
+        return block;
+      });
+      updateBlocks(nextBlocks);
+    },
+    [configRef, updateBlocks],
+  );
+  updateBlockTextFieldsRef.current = updateBlockTextFields;
+
+  const updateBlockContent = useCallback(
+    (blockId: string, content: string) => {
+      updateBlockTextFields(blockId, syncTextBlockFields(content, undefined));
+    },
+    [updateBlockTextFields],
+  );
+
+  const updateBlockLink = useCallback(
+    (blockId: string, href: string | undefined) => {
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        if (block.id !== blockId) return block;
+        if (
+          block.type !== "heading" &&
+          block.type !== "text" &&
+          block.type !== "image" &&
+          block.type !== "video" &&
+          block.type !== "shape" &&
+          block.type !== "icon"
+        ) {
+          return block;
+        }
+        return {
+          ...block,
+          href: href?.trim() || undefined,
+          linkTarget: href?.trim() ? "_blank" : undefined,
+        } as ComunicadoBlock;
+      });
+      updateBlocks(nextBlocks);
+    },
+    [configRef, updateBlocks],
+  );
+
+  const updateSelectedStyle = useCallback(
+    (patch: NonNullable<ComunicadoBlock["style"]>) => {
+      const targets = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
+      if (targets.length === 0) return;
+      const idSet = new Set(targets.map((block) => block.id));
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        idSet.has(block.id)
+          ? ({ ...block, style: { ...block.style, ...patch } } as ComunicadoBlock)
+          : block,
+      );
+      updateBlocks(nextBlocks);
+    },
+    [configRef, selected, selectedBlocks, updateBlocks],
+  );
+
+  const duplicateSelected = useCallback(() => {
+    const sources = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
+    if (sources.length === 0) return;
+    let nextZ = nextZIndex(configRef.current.blocks ?? []);
+    const copies: ComunicadoBlock[] = sources.map((source) => {
+      const { resolved: _omit, url: _url, ...rest } = source as ComunicadoBlock & {
+        resolved?: unknown;
+        url?: string;
+      };
+      const copy = {
+        ...rest,
+        id: newBlockId(),
+        frame: {
+          ...source.frame,
+          x: Math.min(92, source.frame.x + 2),
+          y: Math.min(92, source.frame.y + 2),
+        },
+        style: { ...source.style, zIndex: nextZ },
+      } as ComunicadoBlock;
+      nextZ += 1;
+      return copy;
+    });
+    selectBlocksByIds(copies.map((copy) => copy.id));
+    updateBlocks([...(configRef.current.blocks ?? []), ...copies]);
+  }, [configRef, selectBlocksByIds, selected, selectedBlocks, updateBlocks]);
+
+  const replaceSelectedDataRoute = useCallback(
+    (block: ComunicadoBlock) => {
+      if (!selected || !isDataBlockType(selected.type) || !isDataBlockType(block.type)) return;
+      if (!("dataBinding" in selected) || !("dataBinding" in block)) return;
+      updateSelected({
+        type: block.type,
+        frame: block.frame,
+        dataBinding: {
+          ...selected.dataBinding,
+          operationId: block.dataBinding.operationId,
+          label: block.dataBinding.label,
+          displayMode: block.dataBinding.displayMode,
+          params: { ...(block.dataBinding.params ?? {}) },
+        },
+      } as Partial<ComunicadoBlock>);
+      setSelectedId(selected.id);
+    },
+    [selected, setSelectedId, updateSelected],
+  );
+
+  const removeSelected = useCallback(() => {
+    const chartBlock =
+      selected?.type === "chart_view" ? selected : selectedBlocks.find((b) => b.type === "chart_view");
+    if (
+      selectedChartPart &&
+      chartBlock &&
+      chartBlock.type === "chart_view" &&
+      selectedIds.includes(chartBlock.id) &&
+      chartPartAllowsDelete(selectedChartPart)
+    ) {
+      const result = deleteChartPart(chartBlock.chartParts, selectedChartPart, chartBlock.chartOptions);
+      updateBlock(chartBlock.id, {
+        chartParts: result.parts,
+        chartOptions: result.options,
+      } as Partial<ComunicadoBlock>);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      setSelectedTablePart(null);
+      return;
+    }
+
+    const tableBlock =
+      selected?.type === "table_view" ? selected : selectedBlocks.find((b) => b.type === "table_view");
+    if (
+      selectedTablePart &&
+      tableBlock &&
+      tableBlock.type === "table_view" &&
+      selectedIds.includes(tableBlock.id) &&
+      tablePartAllowsDelete(selectedTablePart)
+    ) {
+      const result = deleteTablePart(tableBlock.tableParts, selectedTablePart, tableBlock.tableOptions);
+      updateBlock(tableBlock.id, {
+        tableParts: result.parts,
+        tableOptions: result.options,
+      } as Partial<ComunicadoBlock>);
+      setSelectedTablePart(null);
+      return;
+    }
+
+    const kpiBlock =
+      selected?.type === "kpi_view" ? selected : selectedBlocks.find((b) => b.type === "kpi_view");
+    if (
+      selectedKpiPart &&
+      kpiBlock &&
+      kpiBlock.type === "kpi_view" &&
+      selectedIds.includes(kpiBlock.id) &&
+      kpiPartAllowsDelete(selectedKpiPart)
+    ) {
+      const result = deleteKpiPart(kpiBlock.kpiParts, selectedKpiPart, kpiBlock.kpiOptions);
+      updateBlock(kpiBlock.id, {
+        kpiParts: result.parts,
+        kpiOptions: mergeComunicadoKpiOptions(result.options),
+      } as Partial<ComunicadoBlock>);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
+      return;
+    }
+
+    if (selectedIds.length === 0) return;
+    const removeSet = new Set(selectedIds);
+    const nextBlocks = (configRef.current.blocks ?? []).filter((block) => !removeSet.has(block.id));
+    selectBlocksByIds(nextBlocks[0]?.id ? [nextBlocks[0].id] : []);
+    updateBlocks(nextBlocks);
+  }, [
+    configRef,
+    selectBlocksByIds,
+    selected,
+    selectedBlocks,
+    selectedChartPart,
+    selectedIds,
+    selectedKpiPart,
+    selectedTablePart,
+    setEditingChartPart,
+    setEditingKpiPart,
+    setSelectedChartPart,
+    setSelectedKpiPart,
+    setSelectedTablePart,
+    updateBlock,
+    updateBlocks,
+  ]);
+  removeSelectedRef.current = removeSelected;
+
+  const moveLayer = useCallback(
+    (direction: "up" | "down") => {
+      if (!selected) return;
+      const currentZ = selected.style?.zIndex ?? 1;
+      updateSelectedStyle({ zIndex: Math.max(1, currentZ + (direction === "up" ? 1 : -1)) });
+    },
+    [selected, updateSelectedStyle],
+  );
+
+  const applyLayerOrder = useCallback(
+    (transform: (blocks: ComunicadoBlock[], selectedIds: string[]) => ComunicadoBlock[]) => {
+      if (selectedIds.length === 0) return;
+      const nextBlocks = transform(configRef.current.blocks ?? [], selectedIds);
+      updateBlocks(nextBlocks);
+    },
+    [configRef, selectedIds, updateBlocks],
+  );
+
+  const bringToFrontSelected = useCallback(() => {
+    applyLayerOrder(bringToFront);
+  }, [applyLayerOrder]);
+
+  const sendToBackSelected = useCallback(() => {
+    applyLayerOrder(sendToBack);
+  }, [applyLayerOrder]);
+
+  const bringForwardSelected = useCallback(() => {
+    applyLayerOrder(bringForward);
+  }, [applyLayerOrder]);
+
+  const sendBackwardSelected = useCallback(() => {
+    applyLayerOrder(sendBackward);
+  }, [applyLayerOrder]);
+
+  const reorderBlockLayer = useCallback(
+    (blockId: string, targetIndex: number) => {
+      const sorted = sortBlocksByZIndex(configRef.current.blocks ?? []);
+      const fromIndex = sorted.findIndex((block) => block.id === blockId);
+      if (fromIndex < 0 || fromIndex === targetIndex) return;
+      const reordered = [...sorted];
+      const [moved] = reordered.splice(fromIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      const nextBlocks = reordered.map((block, index) => ({
+        ...block,
+        style: { ...block.style, zIndex: index + 1 },
+      }));
+      updateBlocks(nextBlocks);
+    },
+    [configRef, updateBlocks],
+  );
+
+  const nudgeSelected = useCallback(
+    (dx: number, dy: number) => {
+      const chartBlock =
+        selected?.type === "chart_view" ? selected : selectedBlocks.find((b) => b.type === "chart_view");
+      if (
+        selectedChartPart &&
+        chartBlock &&
+        chartBlock.type === "chart_view" &&
+        selectedIds.includes(chartBlock.id) &&
+        chartPartAllowsMove(selectedChartPart)
+      ) {
+        const nextParts = nudgeChartPartFrame(chartBlock.chartParts, selectedChartPart, dx, dy);
+        updateBlock(chartBlock.id, { chartParts: nextParts } as Partial<ComunicadoBlock>);
+        return;
+      }
+
+      const targets = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
+      if (targets.length === 0) return;
+      const idSet = new Set(targets.map((block) => block.id));
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        if (!idSet.has(block.id)) return block;
+        return {
+          ...block,
+          frame: {
+            ...block.frame,
+            x: Math.max(0, Math.min(100 - block.frame.w, block.frame.x + dx)),
+            y: Math.max(0, Math.min(100 - block.frame.h, block.frame.y + dy)),
+          },
+        };
+      });
+      updateBlocks(nextBlocks);
+    },
+    [configRef, selected, selectedBlocks, selectedChartPart, selectedIds, updateBlock, updateBlocks],
+  );
+
+  const applySlideTemplate = useCallback(
+    (nativeConfig: Record<string, unknown>) => {
+      const parsed = parseComunicadoConfig(nativeConfig);
+      const blocksWithIds = (parsed.blocks ?? []).map((block) => ({
+        ...block,
+        id: newBlockId(),
+      }));
+      commitWithHistory({
+        ...configRef.current,
+        version: Math.max(parsed.version ?? 4, 4),
+        background: parsed.background ?? configRef.current.background,
+        dataFilters: parsed.dataFilters ?? configRef.current.dataFilters,
+        blocks: blocksWithIds,
+      });
+      selectBlocksByIds(blocksWithIds[0]?.id ? [blocksWithIds[0].id] : []);
+    },
+    [commitWithHistory, configRef, selectBlocksByIds],
+  );
+
+  const applySlideTheme = useCallback(
+    (theme: ComunicadoSlideTheme) => {
+      commitWithHistory(applyComunicadoSlideTheme(configRef.current, theme));
+    },
+    [commitWithHistory, configRef],
+  );
+
+  const alignSelected = useCallback(
+    (command: LayoutAlignCommand) => {
+      if (selectedIds.length === 0) return;
+      const nextBlocks = alignComunicadoBlocks(configRef.current.blocks ?? [], selectedIds, command);
+      updateBlocks(nextBlocks);
+    },
+    [configRef, selectedIds, updateBlocks],
+  );
+
+  const setBackgroundColor = useCallback(
+    (color: string) => {
+      commitWithHistory({ ...configRef.current, background: { type: "color", value: color } });
+    },
+    [commitWithHistory, configRef],
+  );
+
+  const setBackgroundGradient = useCallback(
+    (from: string, to: string, angle = 180) => {
+      commitWithHistory({
+        ...configRef.current,
+        background: { type: "gradient", from, to, angle },
+      });
+    },
+    [commitWithHistory, configRef],
+  );
+
+  return {
+    updateBlocks,
+    addBlock,
+    addDataBlock,
+    addDataSourceBlock,
+    addChartViewBlock,
+    addTableViewBlock,
+    addKpiViewBlock,
+    openDataPanel,
+    setDataFilters,
+    addShape,
+    addIconBlock,
+    groupSelected,
+    ungroupSelected,
+    updateSelected,
+    updateBlock,
+    commitChartPartContent,
+    commitKpiPartContent,
+    updateBlockContent,
+    updateBlockTextFields,
+    updateBlockLink,
+    updateSelectedStyle,
+    duplicateSelected,
+    replaceSelectedDataRoute,
+    removeSelected,
+    moveLayer,
+    bringToFront: bringToFrontSelected,
+    sendToBack: sendToBackSelected,
+    bringForward: bringForwardSelected,
+    sendBackward: sendBackwardSelected,
+    reorderBlockLayer,
+    nudgeSelected,
+    applySlideTemplate,
+    applySlideTheme,
+    alignSelected,
+    setBackgroundColor,
+    setBackgroundGradient,
+  };
+}

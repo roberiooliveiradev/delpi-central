@@ -25,8 +25,15 @@ echo "[CI] npm install bibliotecas compartilhadas"
 (cd "$PRESENTATION_DIR" && npm ci 2>/dev/null || npm install)
 (cd "$PLUGIN_UI_DIR" && npm ci 2>/dev/null || npm install)
 
+echo "[CI] Gate CSS anti-vazamento (tv-dashboard)"
+python3 "$ROOT/scripts/ci/check_tv_dashboard_css_scope.py" --check
+
 echo "[CI] Gate imports circulares (tv-dashboard)"
 (cd "$PLUGIN_DIR" && npm run check:circular)
+
+echo "[CI] Testes unitários (tv-dashboard + presentation)"
+(cd "$PRESENTATION_DIR" && npm test)
+(cd "$PLUGIN_DIR" && npm test)
 
 echo "[CI] tv-dashboard em $PLUGIN_DIR"
 cd "$PLUGIN_DIR"

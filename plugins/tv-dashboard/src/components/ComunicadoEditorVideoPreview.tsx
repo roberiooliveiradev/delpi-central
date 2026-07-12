@@ -2,10 +2,10 @@ import { Pause, Play, Square } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoMediaBlock } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoMediaPlaceholder } from "@delpi/tv-dashboard-presentation";
 
-type VideoBlock = Extract<ComunicadoBlock, { type: "video" }>;
+type VideoBlock = ComunicadoMediaBlock;
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";

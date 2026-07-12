@@ -53,6 +53,7 @@ import {
   type SlideClipboardPayload,
 } from "../utils/slideDeckClipboard";
 import { exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 type DeckSettingsProps = {
   onSaveSlide: (
@@ -88,7 +89,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const [previewBySlideId, setPreviewBySlideId] = useState<
     Record<string, PresentationPayload["slides"][number]>
   >({});
-  const saveComunicadoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveComunicadoTimerRef = useRef<number | null>(null);
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
@@ -287,7 +288,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     if (!selectedSlide) return;
     const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
     if (!target) {
-      window.alert("Não foi possível localizar o palco para exportar.");
+      tvDashboardNotice("Não foi possível localizar o palco para exportar.");
       return;
     }
     setExportBusy(true);
@@ -295,7 +296,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
       await exportSlideElementToPng(target, { fileName: `${safeTitle}.png` });
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Falha ao exportar PNG.");
+      tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PNG.");
     } finally {
       setExportBusy(false);
     }
@@ -376,7 +377,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     }
     const updated = await regeneratePlaylistToken(playlist.id);
     setPlaylist({ ...updated, slides: playlist.slides });
-    window.alert("Novo link gerado.");
+    tvDashboardNotice("Novo link gerado.");
   }
 
   async function handleSaveSlide(
@@ -481,7 +482,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   function copyLink() {
     if (!playlist?.publicUrl) return;
     void navigator.clipboard.writeText(playlist.publicUrl);
-    window.alert("Link copiado.");
+    tvDashboardNotice("Link copiado.");
   }
 
   function openQr() {
@@ -492,7 +493,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       })
       .catch((err) => {
-        window.alert(err instanceof Error ? err.message : "Erro ao gerar QR.");
+        tvDashboardNotice(err instanceof Error ? err.message : "Erro ao gerar QR.");
       });
   }
 
