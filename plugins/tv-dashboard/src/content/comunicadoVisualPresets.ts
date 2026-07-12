@@ -1,3 +1,5 @@
+import { boxShadowsEqual } from "@delpi/plugin-ui";
+
 export const COMUNICADO_BOX_SHADOW_PRESETS = [
   { key: "none", label: "Nenhuma", value: undefined },
   { key: "soft", label: "Suave", value: "0 4px 14px rgba(0, 0, 0, 0.28)" },
@@ -7,6 +9,6 @@ export const COMUNICADO_BOX_SHADOW_PRESETS = [
 
 export function matchBoxShadowPreset(value?: string): string {
   if (!value) return "none";
-  const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => item.value === value);
-  return preset?.key ?? "none";
+  const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => boxShadowsEqual(item.value, value));
+  return preset?.key ?? "custom";
 }

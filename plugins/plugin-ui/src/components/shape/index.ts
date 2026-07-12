@@ -15,6 +15,16 @@ export { ShapeEffectsMenu } from "./ShapeEffectsMenu";
 export type { ShapeEffectsMenuProps, ShapeEffectItem } from "./ShapeEffectsMenu";
 export { ShapeShadowMenu } from "./ShapeShadowMenu";
 export type { ShapeShadowMenuProps, ShapeShadowPreset } from "./ShapeShadowMenu";
+export {
+  DEFAULT_BOX_SHADOW_MODEL,
+  boxShadowsEqual,
+  clampBoxShadowModel,
+  formatBoxShadow,
+  parseBoxShadow,
+  patchBoxShadow,
+  resolveBoxShadowModel,
+} from "./boxShadowModel";
+export type { BoxShadowModel } from "./boxShadowModel";
 export { ShapeStyleGallery, ShapeStyleMenu } from "./ShapeStyleGallery";
 export type { ShapeStyleGalleryProps, ShapeStyleMenuProps } from "./ShapeStyleGallery";
 export {

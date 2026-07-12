@@ -59,7 +59,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     borderRadius: "Arredondamento dos cantos em pixels.",
     shapeAdjustment:
       "Ajuste de geometria da forma (igual aos losangos amarelos do PowerPoint). Cantos usam pixels; demais valores são relativos (0–1).",
-    boxShadow: "Sombra projetada do elemento (Nenhuma, Suave, Média ou Forte).",
+    boxShadow:
+      "Sombra projetada: presets (Nenhuma, Suave, Média, Forte) ou ajuste fino de X, Y, desfoque, expansão, opacidade e cor.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
     frameX: "Posição horizontal do canto esquerdo, em % da largura do palco (0–100).",
     frameY: "Posição vertical do topo, em % da altura do palco (0–100).",

@@ -339,6 +339,69 @@
   min-width: 180px;
 }
 
+.delpi-ui-shape-menu__panel--shadow {
+  min-width: 260px;
+  max-width: 300px;
+}
+
+.delpi-ui-shape-shadow__presets {
+  border-top: none;
+}
+
+.delpi-ui-shape-shadow__custom-hint {
+  margin: 0;
+  padding: 4px 8px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-shape-shadow__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 8px;
+  padding: 8px;
+  border-top: 1px solid var(--delpi-ui-border, #e5e7eb);
+}
+
+.delpi-ui-shape-shadow__fields--inactive {
+  opacity: 0.72;
+}
+
+.delpi-ui-shape-shadow__field {
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-shape-shadow__field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  font: inherit;
+  font-size: 12px;
+}
+
+.delpi-ui-shape-shadow__field input:focus {
+  outline: 2px solid color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.delpi-ui-shape-shadow__color {
+  border-top: 1px solid var(--delpi-ui-border, #e5e7eb);
+}
+
+.delpi-ui-shape-shadow__color-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .delpi-ui-shape-outline__width-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
