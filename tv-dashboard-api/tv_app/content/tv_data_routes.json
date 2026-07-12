@@ -141,14 +141,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "sales_conversion_rate_pct",
         "value"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -394,7 +394,7 @@
           "type": "string",
           "optional": true,
           "label": "Status",
-          "description": "Filtro: won (ganhas), open (demais) ou omitir para todas."
+          "description": "Status do registro no fluxo."
         },
         "customer_segment": {
           "type": "string",
@@ -440,8 +440,8 @@
         "search": {
           "type": "string",
           "optional": true,
-          "label": "Search",
-          "description": "Busca textual em filial, número da proposta, revisão, descrição, status, cliente, loja e estágio."
+          "label": "Busca",
+          "description": "Texto livre de busca."
         }
       },
       "paramStrategy": "date_range",
@@ -471,7 +471,8 @@
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Revision"
+          "label": "Revisão",
+          "description": "Número ou código da revisão."
         }
       },
       "paramStrategy": "direct"
@@ -498,7 +499,8 @@
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Revision"
+          "label": "Revisão",
+          "description": "Número ou código da revisão."
         },
         "date_start": {
           "type": "string",
@@ -681,8 +683,8 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Filtro de status: on_time ou late.",
-          "description": "Filtro de status: on_time ou late."
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "page": {
           "type": "integer",
@@ -805,19 +807,19 @@
           "type": "string",
           "optional": true,
           "label": "Código",
-          "description": "Código do cliente (SA1)."
+          "description": "Código do registro a filtrar."
         },
         "name": {
           "type": "string",
           "optional": true,
-          "label": "Nome ou parte do nome.",
-          "description": "Nome ou parte do nome."
+          "label": "Nome",
+          "description": "Nome (ou parte do nome) para filtrar."
         },
         "store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do cliente.",
-          "description": "Loja do cliente."
+          "label": "Loja",
+          "description": "Código da loja do cliente."
         },
         "page": {
           "type": "integer",
@@ -865,7 +867,8 @@
         "competence": {
           "type": "string",
           "optional": true,
-          "label": "Competence"
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
         },
         "branch": {
           "type": "string",
@@ -967,7 +970,8 @@
           "type": "string",
           "optional": true,
           "label": "Status",
-          "default": "Todos"
+          "default": "Todos",
+          "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
@@ -1027,7 +1031,8 @@
           "type": "string",
           "optional": true,
           "label": "Status",
-          "default": "Todos"
+          "default": "Todos",
+          "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
@@ -1073,7 +1078,8 @@
           "type": "string",
           "optional": true,
           "label": "Status",
-          "default": "Todos"
+          "default": "Todos",
+          "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
@@ -1133,7 +1139,8 @@
           "type": "string",
           "optional": true,
           "label": "Status",
-          "default": "Todos"
+          "default": "Todos",
+          "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
@@ -1218,8 +1225,8 @@
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Filtra eventos de uma revisão específica da OV.",
-          "description": "Filtra eventos de uma revisão específica da OV."
+          "label": "Revisão",
+          "description": "Número ou código da revisão."
         }
       },
       "paramStrategy": "direct"
@@ -1258,8 +1265,8 @@
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Revision",
-          "description": "Filtra transições de uma revisão específica da OV."
+          "label": "Revisão",
+          "description": "Número ou código da revisão."
         }
       },
       "paramStrategy": "direct"
@@ -1280,17 +1287,20 @@
         "codigo": {
           "type": "string",
           "optional": true,
-          "label": "Codigo"
+          "label": "Código",
+          "description": "Código do registro a filtrar."
         },
         "descricao": {
           "type": "string",
           "optional": true,
-          "label": "Descricao"
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
         },
         "filial": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "page": {
           "type": "integer",
@@ -1327,17 +1337,20 @@
           "type": "boolean",
           "optional": true,
           "label": "Incluir bloqueados",
-          "default": false
+          "default": false,
+          "description": "Inclui registros bloqueados na listagem."
         },
         "codigo_peca": {
           "type": "string",
           "optional": true,
-          "label": "Código da peça"
+          "label": "Código da peça",
+          "description": "Código da peça no cadastro de ferramentas."
         },
         "descricao_peca": {
           "type": "string",
           "optional": true,
-          "label": "Descrição da peça"
+          "label": "Descrição da peça",
+          "description": "Descrição da peça no cadastro."
         }
       },
       "paramStrategy": "direct"
@@ -1371,7 +1384,8 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         }
       },
       "paramStrategy": "direct"
@@ -1392,7 +1406,8 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "data_inicial": {
           "type": "string",
@@ -1438,12 +1453,14 @@
         "codigo": {
           "type": "string",
           "optional": true,
-          "label": "Codigo"
+          "label": "Código",
+          "description": "Código do registro a filtrar."
         },
         "descricao": {
           "type": "string",
           "optional": true,
-          "label": "Descricao"
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
         },
         "page": {
           "type": "integer",
@@ -1502,12 +1519,14 @@
         "id": {
           "type": "string",
           "optional": true,
-          "label": "Id"
+          "label": "ID",
+          "description": "Identificador único do registro."
         },
         "name_process": {
           "type": "string",
           "optional": true,
-          "label": "Nome do processo"
+          "label": "Nome do processo",
+          "description": "Nome do processo Transforma Mais."
         },
         "filial_id": {
           "type": "string",
@@ -1518,12 +1537,14 @@
         "sector_name": {
           "type": "string",
           "optional": true,
-          "label": "Setor"
+          "label": "Setor",
+          "description": "Nome do setor."
         },
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         }
       },
       "paramStrategy": "date_range",
@@ -1592,8 +1613,8 @@
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo.",
-          "description": "Centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         }
       },
       "paramStrategy": "date_range",
@@ -1630,26 +1651,26 @@
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo.",
-          "description": "Centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor.",
-          "description": "Código do fornecedor."
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor.",
+          "label": "Loja do fornecedor",
           "description": "Loja do fornecedor."
         },
         "search": {
           "type": "string",
           "optional": true,
-          "label": "Search",
-          "description": "Busca textual em documento, pedido, produto, observações e fornecedor."
+          "label": "Busca",
+          "description": "Texto livre de busca."
         },
         "page": {
           "type": "integer",
@@ -1718,13 +1739,13 @@
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor.",
-          "description": "Código do fornecedor."
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor.",
+          "label": "Loja do fornecedor",
           "description": "Loja do fornecedor."
         },
         "limit": {
@@ -1769,8 +1790,8 @@
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo.",
-          "description": "Centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "limit": {
           "type": "integer",
@@ -1814,19 +1835,19 @@
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo.",
-          "description": "Centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor.",
-          "description": "Código do fornecedor."
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor.",
+          "label": "Loja do fornecedor",
           "description": "Loja do fornecedor."
         }
       },
@@ -1864,19 +1885,19 @@
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo.",
-          "description": "Centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor.",
-          "description": "Código do fornecedor."
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor.",
+          "label": "Loja do fornecedor",
           "description": "Loja do fornecedor."
         }
       },
@@ -2179,7 +2200,8 @@
         "result": {
           "type": "string",
           "optional": true,
-          "label": "Result"
+          "label": "Resultado",
+          "description": "Resultado da inspeção ou avaliação."
         },
         "date_from": {
           "type": "string",
@@ -2196,7 +2218,8 @@
         "supplier": {
           "type": "string",
           "optional": true,
-          "label": "Supplier"
+          "label": "Fornecedor",
+          "description": "Código ou nome do fornecedor."
         },
         "product_code": {
           "type": "string",
@@ -2207,17 +2230,20 @@
         "inspector": {
           "type": "string",
           "optional": true,
-          "label": "Inspector"
+          "label": "Inspetor",
+          "description": "Código ou nome do inspetor."
         },
         "invoice_number": {
           "type": "string",
           "optional": true,
-          "label": "Número da nota"
+          "label": "Número da nota",
+          "description": "Número da nota fiscal."
         },
         "lot": {
           "type": "string",
           "optional": true,
-          "label": "Lot"
+          "label": "Lote",
+          "description": "Número do lote."
         }
       },
       "paramStrategy": "direct"
@@ -2244,7 +2270,8 @@
         "inspection_id": {
           "type": "string",
           "optional": false,
-          "label": "Inspeção"
+          "label": "Inspeção",
+          "description": "Identificador da inspeção."
         }
       },
       "paramStrategy": "direct"
@@ -2480,7 +2507,8 @@
         "product_group": {
           "type": "string",
           "optional": true,
-          "label": "Grupo de produto"
+          "label": "Grupo de produto",
+          "description": "Grupo de produto no Protheus."
         },
         "limit": {
           "type": "integer",
@@ -2730,12 +2758,14 @@
         "op": {
           "type": "string",
           "optional": true,
-          "label": "Op"
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
         },
         "employee": {
           "type": "string",
           "optional": true,
-          "label": "Employee"
+          "label": "Colaborador",
+          "description": "Código ou matrícula do colaborador."
         },
         "work_center": {
           "type": "string",
@@ -2747,7 +2777,8 @@
           "type": "boolean",
           "optional": true,
           "label": "Somente status OK",
-          "default": false
+          "default": false,
+          "description": "Retorna apenas registros com status OK."
         }
       },
       "paramStrategy": "direct"
@@ -2786,12 +2817,14 @@
         "op": {
           "type": "string",
           "optional": true,
-          "label": "Op"
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
         },
         "employee": {
           "type": "string",
           "optional": true,
-          "label": "Employee"
+          "label": "Colaborador",
+          "description": "Código ou matrícula do colaborador."
         },
         "work_center": {
           "type": "string",
@@ -2803,7 +2836,8 @@
           "type": "boolean",
           "optional": true,
           "label": "Somente status OK",
-          "default": true
+          "default": true,
+          "description": "Retorna apenas registros com status OK."
         },
         "page": {
           "type": "integer",
@@ -2954,13 +2988,14 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "efficiency_bands": {
           "type": "string",
           "optional": true,
-          "label": "Faixas de eficiência (csv): ok, low, verify",
-          "description": "Faixas de eficiência (csv): ok, low, verify"
+          "label": "Faixas de eficiência",
+          "description": "Faixas de eficiência em CSV (ex.: ok, low, verify)."
         },
         "work_center": {
           "type": "string",
@@ -2971,14 +3006,14 @@
         "production_order": {
           "type": "string",
           "optional": true,
-          "label": "Ordem(ns) de produção (csv)",
-          "description": "Ordem(ns) de produção (csv)"
+          "label": "Ordem de produção",
+          "description": "Ordem(ns) de produção (CSV)."
         },
         "operator_code": {
           "type": "string",
           "optional": true,
-          "label": "Código(s) do operador (csv)",
-          "description": "Código(s) do operador (csv)"
+          "label": "Código do operador",
+          "description": "Código(s) do operador (CSV)."
         },
         "product_type": {
           "type": "string",
@@ -3080,12 +3115,12 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       }
     },
     {
@@ -3161,13 +3196,15 @@
         "linked_sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Ordenar vínculos por"
+          "label": "Ordenar vínculos por",
+          "description": "Campo de ordenação dos itens vinculados."
         },
         "linked_sort_dir": {
           "type": "string",
           "optional": true,
           "label": "Direção da ordenação dos vínculos",
           "default": "asc",
+          "description": "Direção da ordenação dos vínculos: asc ou desc.",
           "enum": [
             "asc",
             "desc"
@@ -3325,7 +3362,8 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "page": {
           "type": "integer",
@@ -3395,12 +3433,12 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       }
     },
     {
@@ -3638,7 +3676,8 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "branch": {
           "type": "string",
@@ -3666,66 +3705,68 @@
           "type": "string",
           "optional": true,
           "label": "Código",
-          "description": "Filtro por código DELPI (prefixo por padrão; use code_exact=true para match exato)."
+          "description": "Código do registro a filtrar."
         },
         "code_exact": {
           "type": "boolean",
           "optional": true,
           "label": "Código exato",
           "default": false,
-          "description": "Quando true, exige match exato do código informado."
+          "description": "Busca pelo código exato (sem correspondência parcial)."
         },
         "filename": {
           "type": "string",
           "optional": true,
-          "label": "Filtro parcial pelo nome do arquivo PDF.",
-          "description": "Filtro parcial pelo nome do arquivo PDF."
+          "label": "Nome do arquivo",
+          "description": "Filtro parcial pelo nome do arquivo."
         },
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Revision",
-          "description": "Filtro por revisão extraída do sufixo _R{NN} no filename."
+          "label": "Revisão",
+          "description": "Número ou código da revisão."
         },
         "file_kind": {
           "type": "string",
           "optional": true,
           "label": "Tipo de arquivo",
-          "description": "Tipo do arquivo: exact, revision, variant ou other."
+          "description": "Tipo/categoria do arquivo."
         },
         "has_variant": {
           "type": "boolean",
           "optional": true,
-          "label": "Filtra arquivos com sufixo variante (-N).",
-          "description": "Filtra arquivos com sufixo variante (-N)."
+          "label": "Com variante",
+          "description": "Filtra arquivos que possuem sufixo de variante."
         },
         "has_revision": {
           "type": "boolean",
           "optional": true,
-          "label": "Filtra arquivos com sufixo de revisão (_RNN).",
-          "description": "Filtra arquivos com sufixo de revisão (_RNN)."
+          "label": "Com revisão",
+          "description": "Filtra arquivos que possuem sufixo de revisão."
         },
         "modified_from": {
           "type": "string",
           "optional": true,
-          "label": "Data/hora ISO mínima de modificação do arquivo.",
-          "description": "Data/hora ISO mínima de modificação do arquivo."
+          "label": "Modificado a partir de",
+          "description": "Data/hora mínima de modificação (ISO)."
         },
         "modified_to": {
           "type": "string",
           "optional": true,
-          "label": "Data/hora ISO máxima de modificação do arquivo.",
-          "description": "Data/hora ISO máxima de modificação do arquivo."
+          "label": "Modificado até",
+          "description": "Data/hora máxima de modificação (ISO)."
         },
         "min_size_bytes": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho mínimo (bytes)"
+          "label": "Tamanho mínimo (bytes)",
+          "description": "Tamanho mínimo do arquivo em bytes."
         },
         "max_size_bytes": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho máximo (bytes)"
+          "label": "Tamanho máximo (bytes)",
+          "description": "Tamanho máximo do arquivo em bytes."
         },
         "page": {
           "type": "integer",
@@ -3744,16 +3785,16 @@
         "sort": {
           "type": "string",
           "optional": true,
-          "label": "Sort",
+          "label": "Ordenação",
           "default": "product_code",
-          "description": "product_code, filename, modified_at, size_bytes, revision ou file_kind."
+          "description": "Critério de ordenação da listagem."
         },
         "direction": {
           "type": "string",
           "optional": true,
-          "label": "asc ou desc.",
+          "label": "Direção",
           "default": "asc",
-          "description": "asc ou desc.",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -3780,7 +3821,7 @@
           "optional": true,
           "label": "Visão",
           "default": "by_material",
-          "description": "by_material=lista MPs exclusivas; by_finished_product=lista PAs com MP exclusiva"
+          "description": "Modo de visualização dos dados retornados."
         },
         "limit": {
           "type": "integer",
@@ -3797,35 +3838,40 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "finished_product_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do produto acabado"
+          "label": "Código do produto acabado",
+          "description": "Código do produto acabado (PA)."
         },
         "raw_material_code": {
           "type": "string",
           "optional": true,
-          "label": "Código da matéria-prima"
+          "label": "Código da matéria-prima",
+          "description": "Código da matéria-prima."
         },
         "group_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do grupo"
+          "label": "Código do grupo",
+          "description": "Código do grupo de produto/material."
         },
         "include_test_products": {
           "type": "boolean",
           "optional": true,
           "label": "Incluir produtos de teste",
-          "default": false
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Modo legado",
           "default": false,
-          "description": "Reservado para normalização futura"
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
       "paramStrategy": "direct"
@@ -3846,22 +3892,26 @@
         "code": {
           "type": "string",
           "optional": true,
-          "label": "Código"
+          "label": "Código",
+          "description": "Código do registro a filtrar."
         },
         "group_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do grupo"
+          "label": "Código do grupo",
+          "description": "Código do grupo de produto/material."
         },
         "description": {
           "type": "string",
           "optional": true,
-          "label": "Descrição contém"
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
         },
         "customer_reference": {
           "type": "string",
           "optional": true,
-          "label": "Referência do cliente"
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
         },
         "page": {
           "type": "integer",
@@ -3880,12 +3930,14 @@
         "sort": {
           "type": "string",
           "optional": true,
-          "label": "Sort"
+          "label": "Ordenação",
+          "description": "Critério de ordenação da listagem."
         },
         "direction": {
           "type": "string",
           "optional": true,
-          "label": "Direction",
+          "label": "Direção",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -3893,11 +3945,11 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
       },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
@@ -3921,14 +3973,14 @@
           "optional": true,
           "label": "Visão",
           "default": "full",
-          "description": "full=cadastro completo; summary=subconjunto (~15 campos)"
+          "description": "Modo de visualização dos dados retornados."
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Modo legado",
           "default": false,
-          "description": "Reservado para campos normalizados futuros no cadastro"
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
       "paramStrategy": "direct"
@@ -3951,7 +4003,7 @@
           "optional": true,
           "label": "Visão",
           "default": "full",
-          "description": "full=dimensões completas; summary=amostra leve (opt-in)"
+          "description": "Modo de visualização dos dados retornados."
         }
       },
       "paramStrategy": "direct"
@@ -3972,21 +4024,22 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "price_source": {
           "type": "string",
           "optional": true,
           "label": "Fonte de preço",
           "default": "standard_cost",
-          "description": "Fonte de custo unitário: standard_cost (B1_CUSTD) ou last_purchase (B1_UPRC)"
+          "description": "Origem do preço usado no cálculo."
         },
         "adjustment_percent": {
           "type": "number",
           "optional": true,
           "label": "Ajuste (%)",
           "default": 0.0,
-          "description": "Reajuste percentual simulado aplicado a todas as MPs"
+          "description": "Percentual de ajuste aplicado no cálculo."
         },
         "top_n": {
           "type": "integer",
@@ -4087,7 +4140,8 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "branch": {
           "type": "string",
@@ -4100,7 +4154,7 @@
           "optional": true,
           "label": "Modo legado",
           "default": false,
-          "description": "Devolve SIM/NAO em vez de booleanos"
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
       "paramStrategy": "direct"
@@ -4139,7 +4193,8 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         }
       },
       "paramStrategy": "direct"
@@ -4186,7 +4241,8 @@
         "supplier": {
           "type": "string",
           "optional": true,
-          "label": "Supplier"
+          "label": "Fornecedor",
+          "description": "Código ou nome do fornecedor."
         },
         "branch": {
           "type": "string",
@@ -4225,7 +4281,8 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         }
       },
       "paramStrategy": "direct"
@@ -4278,17 +4335,20 @@
         "location": {
           "type": "string",
           "optional": true,
-          "label": "Location"
+          "label": "Localização",
+          "description": "Localização / endereço de estoque no Protheus."
         },
         "tm": {
           "type": "string",
           "optional": true,
-          "label": "Tm"
+          "label": "TM",
+          "description": "Código TM (Transforma Mais)."
         },
         "op": {
           "type": "string",
           "optional": true,
-          "label": "Op"
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
         }
       },
       "paramStrategy": "direct"
@@ -4357,7 +4417,8 @@
         "customer": {
           "type": "string",
           "optional": true,
-          "label": "Customer"
+          "label": "Cliente",
+          "description": "Código ou identificador do cliente."
         },
         "branch": {
           "type": "string",
@@ -4384,7 +4445,8 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "page": {
           "type": "integer",
@@ -4436,7 +4498,8 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "branch": {
           "type": "string",
@@ -4449,7 +4512,7 @@
           "optional": true,
           "label": "Modo legado",
           "default": false,
-          "description": "Devolve SIM/NAO em vez de booleanos"
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
       "paramStrategy": "direct"
@@ -4522,7 +4585,8 @@
         "history_limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite do histórico"
+          "label": "Limite do histórico",
+          "description": "Máximo de pontos no histórico retornado."
         }
       },
       "paramStrategy": "direct"
@@ -4591,7 +4655,8 @@
         "history_limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite do histórico"
+          "label": "Limite do histórico",
+          "description": "Máximo de pontos no histórico retornado."
         }
       },
       "paramStrategy": "direct"
@@ -4677,7 +4742,7 @@
           "optional": true,
           "label": "Modo legado",
           "default": false,
-          "description": "Omite datas ISO normalizadas"
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
       "paramStrategy": "direct"
@@ -4718,21 +4783,21 @@
         "warehouse": {
           "type": "string",
           "optional": true,
-          "label": "Warehouse",
-          "description": "Filtra por armazém (preferido; equivalente a location)"
+          "label": "Armazém",
+          "description": "Código do armazém/estoque."
         },
         "location": {
           "type": "string",
           "optional": true,
-          "label": "Alias legado de warehouse — preferir warehouse",
-          "description": "Alias legado de warehouse — preferir warehouse"
+          "label": "Localização",
+          "description": "Localização / endereço de estoque no Protheus."
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Modo legado",
           "default": false,
-          "description": "Omite alias location nos itens de estoque"
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
       "paramStrategy": "direct"
@@ -4753,7 +4818,8 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "page": {
           "type": "integer",
@@ -4785,8 +4851,9 @@
         "format": {
           "type": "string",
           "optional": true,
-          "label": "Format",
-          "default": "json"
+          "label": "Formato",
+          "default": "json",
+          "description": "Formato de saída ou apresentação do dado."
         }
       },
       "paramStrategy": "direct",
@@ -4808,14 +4875,15 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Profundidade máxima"
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Modo legado",
           "default": false,
-          "description": "Devolve SIM/NAO em vez de booleanos"
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
       "paramStrategy": "direct"
@@ -4981,12 +5049,14 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "severity": {
           "type": "string",
           "optional": true,
-          "label": "Severity"
+          "label": "Severidade",
+          "description": "Nível de severidade."
         },
         "product_code": {
           "type": "string",
@@ -4997,12 +5067,14 @@
         "customer_name": {
           "type": "string",
           "optional": true,
-          "label": "Nome do cliente"
+          "label": "Nome do cliente",
+          "description": "Nome (ou parte do nome) do cliente."
         },
         "owner_user_id": {
           "type": "string",
           "optional": true,
-          "label": "Responsável"
+          "label": "Responsável",
+          "description": "Usuário responsável pelo registro."
         },
         "branch_code": {
           "type": "string",
@@ -5013,33 +5085,39 @@
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Escopo de NC"
+          "label": "Escopo de NC",
+          "description": "Escopo das não conformidades consideradas."
         },
         "code": {
           "type": "string",
           "optional": true,
-          "label": "Código"
+          "label": "Código",
+          "description": "Código do registro a filtrar."
         },
         "department": {
           "type": "string",
           "optional": true,
-          "label": "Department"
+          "label": "Departamento",
+          "description": "Identificador ou nome do departamento."
         },
         "root_cause_category": {
           "type": "string",
           "optional": true,
-          "label": "Categoria da causa raiz"
+          "label": "Categoria da causa raiz",
+          "description": "Categoria da causa raiz."
         },
         "failure_mode": {
           "type": "string",
           "optional": true,
-          "label": "Modo de falha"
+          "label": "Modo de falha",
+          "description": "Modo de falha associado à NC ou PAC."
         },
         "overdue_only": {
           "type": "boolean",
           "optional": true,
           "label": "Somente atrasados",
-          "default": false
+          "default": false,
+          "description": "Lista apenas itens atrasados."
         },
         "page": {
           "type": "integer",
@@ -5074,7 +5152,8 @@
         "q": {
           "type": "string",
           "optional": true,
-          "label": "Q"
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
         },
         "limit": {
           "type": "integer",
@@ -5108,7 +5187,8 @@
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Escopo de NC"
+          "label": "Escopo de NC",
+          "description": "Escopo das não conformidades consideradas."
         },
         "product_code": {
           "type": "string",
@@ -5119,18 +5199,21 @@
         "customer_name": {
           "type": "string",
           "optional": true,
-          "label": "Nome do cliente"
+          "label": "Nome do cliente",
+          "description": "Nome (ou parte do nome) do cliente."
         },
         "failure_mode": {
           "type": "string",
           "optional": true,
-          "label": "Modo de falha"
+          "label": "Modo de falha",
+          "description": "Modo de falha associado à NC ou PAC."
         },
         "months": {
           "type": "integer",
           "optional": true,
-          "label": "Months",
-          "default": 12
+          "label": "Meses",
+          "default": 12,
+          "description": "Quantidade de meses no intervalo analisado."
         }
       },
       "paramStrategy": "direct"
@@ -5181,12 +5264,14 @@
         "q": {
           "type": "string",
           "optional": false,
-          "label": "Q"
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
         },
         "plan_id": {
           "type": "string",
           "optional": true,
-          "label": "Plano"
+          "label": "Plano",
+          "description": "Identificador do plano de ação."
         },
         "branch_code": {
           "type": "string",
@@ -5197,12 +5282,14 @@
         "section": {
           "type": "string",
           "optional": true,
-          "label": "Section"
+          "label": "Seção",
+          "description": "Seção ou bloco do formulário/checklist."
         },
         "evidence_type": {
           "type": "string",
           "optional": true,
-          "label": "Tipo de evidência"
+          "label": "Tipo de evidência",
+          "description": "Tipo de evidência anexa ao registro."
         },
         "page": {
           "type": "integer",
@@ -5291,13 +5378,15 @@
           "type": "boolean",
           "optional": true,
           "label": "Somente atrasados",
-          "default": false
+          "default": false,
+          "description": "Lista apenas itens atrasados."
         },
         "include_completed": {
           "type": "boolean",
           "optional": true,
           "label": "Incluir concluídos",
-          "default": false
+          "default": false,
+          "description": "Inclui itens já concluídos no resultado."
         },
         "page": {
           "type": "integer",
@@ -5338,7 +5427,8 @@
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Escopo de NC"
+          "label": "Escopo de NC",
+          "description": "Escopo das não conformidades consideradas."
         },
         "page": {
           "type": "integer",
@@ -5379,13 +5469,15 @@
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Escopo de NC"
+          "label": "Escopo de NC",
+          "description": "Escopo das não conformidades consideradas."
         },
         "min_plans": {
           "type": "integer",
           "optional": true,
           "label": "Mínimo de planos",
-          "default": 2
+          "default": 2,
+          "description": "Quantidade mínima de planos para incluir no resultado."
         },
         "page": {
           "type": "integer",
@@ -5463,7 +5555,8 @@
         "q": {
           "type": "string",
           "optional": true,
-          "label": "Q"
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
         }
       },
       "paramStrategy": "direct"
@@ -5523,7 +5616,8 @@
         "template_key": {
           "type": "string",
           "optional": true,
-          "label": "Chave do template"
+          "label": "Chave do template",
+          "description": "Chave do modelo/template usado."
         }
       },
       "paramStrategy": "direct"
@@ -5630,22 +5724,26 @@
         "area_id": {
           "type": "string",
           "optional": true,
-          "label": "Área"
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
         },
         "shift": {
           "type": "string",
           "optional": true,
-          "label": "Shift"
+          "label": "Turno",
+          "description": "Turno de produção."
         },
         "audit_status": {
           "type": "string",
           "optional": true,
-          "label": "Status da auditoria"
+          "label": "Status da auditoria",
+          "description": "Status da auditoria no fluxo (aberta, concluída etc.)."
         },
         "senso_order": {
           "type": "integer",
           "optional": true,
-          "label": "Ordem do senso"
+          "label": "Ordem do senso",
+          "description": "Ordem do senso na auditoria 5S."
         },
         "granularity": {
           "type": "string",
@@ -5699,8 +5797,9 @@
         "active": {
           "type": "boolean",
           "optional": true,
-          "label": "Active",
-          "default": true
+          "label": "Ativo",
+          "default": true,
+          "description": "Filtra apenas registros ativos (sim) ou inativos (não)."
         }
       },
       "paramStrategy": "direct",
@@ -5727,7 +5826,8 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         }
       },
       "paramStrategy": "direct",
@@ -5870,7 +5970,8 @@
         "catalog_version": {
           "type": "integer",
           "optional": true,
-          "label": "Versão do catálogo"
+          "label": "Versão do catálogo",
+          "description": "Versão do catálogo a consultar."
         },
         "branch": {
           "type": "string",
@@ -6003,17 +6104,20 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "savings_type": {
           "type": "string",
           "optional": true,
-          "label": "Tipo de economia"
+          "label": "Tipo de economia",
+          "description": "Tipo de economia (Kaizen)."
         },
         "title": {
           "type": "string",
           "optional": true,
-          "label": "Title"
+          "label": "Título",
+          "description": "Título (ou parte dele) para filtrar."
         },
         "date_start": {
           "type": "string",
@@ -6119,8 +6223,8 @@
         "date": {
           "type": "string",
           "optional": false,
-          "label": "Data YYYY-MM-DD",
-          "description": "Data YYYY-MM-DD"
+          "label": "Data",
+          "description": "Data de referência (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct",
@@ -6248,12 +6352,14 @@
         "title": {
           "type": "string",
           "optional": true,
-          "label": "Title"
+          "label": "Título",
+          "description": "Título (ou parte dele) para filtrar."
         },
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
@@ -6304,12 +6410,14 @@
         "search": {
           "type": "string",
           "optional": true,
-          "label": "Search"
+          "label": "Busca",
+          "description": "Texto livre de busca."
         },
         "branches": {
           "type": "string",
           "optional": true,
-          "label": "Branches"
+          "label": "Filiais",
+          "description": "Lista de filiais (CSV). Vazio = todas as filiais permitidas."
         },
         "limit": {
           "type": "integer",
@@ -6344,12 +6452,14 @@
         "search": {
           "type": "string",
           "optional": true,
-          "label": "Search"
+          "label": "Busca",
+          "description": "Texto livre de busca."
         },
         "eventTypes": {
           "type": "string",
           "optional": true,
-          "label": "Eventtypes"
+          "label": "Tipos de evento",
+          "description": "Tipos de evento a incluir (CSV)."
         },
         "limit": {
           "type": "integer",
@@ -6445,12 +6555,14 @@
         "q": {
           "type": "string",
           "optional": false,
-          "label": "Q"
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
         },
         "branches": {
           "type": "string",
           "optional": true,
-          "label": "Branches"
+          "label": "Filiais",
+          "description": "Lista de filiais (CSV). Vazio = todas as filiais permitidas."
         },
         "limit": {
           "type": "integer",
@@ -6530,8 +6642,9 @@
         "type": {
           "type": "string",
           "optional": true,
-          "label": "Type",
-          "default": "all"
+          "label": "Tipo",
+          "default": "all",
+          "description": "Tipo do registro a filtrar."
         },
         "branch": {
           "type": "string",
@@ -6554,7 +6667,8 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "item_code": {
           "type": "string",
@@ -6565,7 +6679,8 @@
         "description": {
           "type": "string",
           "optional": true,
-          "label": "Description"
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
         },
         "page": {
           "type": "integer",
@@ -6598,8 +6713,9 @@
         "type": {
           "type": "string",
           "optional": true,
-          "label": "Type",
-          "default": "all"
+          "label": "Tipo",
+          "default": "all",
+          "description": "Tipo do registro a filtrar."
         },
         "granularity": {
           "type": "string",
@@ -6635,7 +6751,8 @@
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Status do registro no fluxo."
         },
         "item_code": {
           "type": "string",
@@ -6646,7 +6763,8 @@
         "description": {
           "type": "string",
           "optional": true,
-          "label": "Description"
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
         }
       },
       "paramStrategy": "direct",
@@ -6698,7 +6816,7 @@
           "type": "string",
           "optional": true,
           "label": "Prefixo do produto",
-          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
+          "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
       "paramStrategy": "direct",
@@ -6751,7 +6869,7 @@
           "type": "string",
           "optional": true,
           "label": "Prefixo do produto",
-          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
+          "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
       "paramStrategy": "direct",
@@ -6791,7 +6909,7 @@
           "type": "string",
           "optional": true,
           "label": "Prefixo do produto",
-          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
+          "description": "Prefixo do código de produto para filtrar famílias."
         },
         "periodDays": {
           "type": "integer",
@@ -6801,6 +6919,11 @@
         }
       },
       "paramStrategy": "date_range",
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "defaultParams": {
         "periodDays": 30
       },
@@ -6808,12 +6931,7 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ]
+      }
     },
     {
       "operationId": "list_ppm_internal",
@@ -6861,7 +6979,7 @@
           "type": "string",
           "optional": true,
           "label": "Prefixo do produto",
-          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
+          "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
       "paramStrategy": "direct",
@@ -6914,7 +7032,7 @@
           "type": "string",
           "optional": true,
           "label": "Prefixo do produto",
-          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
+          "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
       "paramStrategy": "direct",
@@ -6954,7 +7072,7 @@
           "type": "string",
           "optional": true,
           "label": "Prefixo do produto",
-          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
+          "description": "Prefixo do código de produto para filtrar famílias."
         },
         "periodDays": {
           "type": "integer",
@@ -6964,6 +7082,11 @@
         }
       },
       "paramStrategy": "date_range",
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "defaultParams": {
         "periodDays": 30
       },
@@ -6971,12 +7094,7 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ]
+      }
     },
     {
       "operationId": "get_produced_quantity",
@@ -6993,8 +7111,8 @@
         "product": {
           "type": "string",
           "optional": false,
-          "label": "Product",
-          "description": "Código(s) do produto; repetível ou separado por vírgula"
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
         },
         "branch": {
           "type": "string",
@@ -7034,18 +7152,20 @@
         "problem_category": {
           "type": "string",
           "optional": true,
-          "label": "Categoria do problema"
+          "label": "Categoria do problema",
+          "description": "Categoria do problema reportado."
         },
         "failure_mode": {
           "type": "string",
           "optional": true,
-          "label": "Modo de falha"
+          "label": "Modo de falha",
+          "description": "Modo de falha associado à NC ou PAC."
         },
         "q": {
           "type": "string",
           "optional": true,
-          "label": "Busca em título, categoria e modo de falha",
-          "description": "Busca em título, categoria e modo de falha"
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
         },
         "page": {
           "type": "integer",
@@ -7080,45 +7200,45 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\").",
-          "description": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio",
-          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
-          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso.",
-          "description": "Filtro por recurso."
+          "label": "Recurso",
+          "description": "Código do recurso de produção."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo.",
-          "description": "Filtro por centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador.",
-          "description": "Filtro por código do operador."
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
         },
         "orderBy": {
           "type": "string",
           "optional": true,
-          "label": "Ordenação do ranking: horas ou custo.",
+          "label": "Ordenar por",
           "default": "horas",
-          "description": "Ordenação do ranking: horas ou custo."
+          "description": "Campo usado para ordenar o ranking (ex.: horas, custo)."
         },
         "limit": {
           "type": "integer",
@@ -7146,38 +7266,38 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\").",
-          "description": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio",
-          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
-          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso.",
-          "description": "Filtro por recurso."
+          "label": "Recurso",
+          "description": "Código do recurso de produção."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo.",
-          "description": "Filtro por centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador.",
-          "description": "Filtro por código do operador."
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
         },
         "page": {
           "type": "integer",
@@ -7189,23 +7309,23 @@
         "pageSize": {
           "type": "integer",
           "optional": true,
-          "label": "Registros por página (máximo 100).",
+          "label": "Tamanho da página",
           "default": 50,
-          "description": "Registros por página (máximo 100)."
+          "description": "Quantidade de linhas por página."
         },
         "orderBy": {
           "type": "string",
           "optional": true,
-          "label": "Ordenação dos detalhes: data, horas ou custo.",
+          "label": "Ordenar por",
           "default": "data",
-          "description": "Ordenação dos detalhes: data, horas ou custo."
+          "description": "Campo usado para ordenar o ranking (ex.: horas, custo)."
         },
         "orderDir": {
           "type": "string",
           "optional": true,
-          "label": "Direção da ordenação: asc ou desc.",
+          "label": "Direção da ordenação",
           "default": "desc",
-          "description": "Direção da ordenação: asc ou desc.",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -7230,20 +7350,20 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\").",
-          "description": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio",
-          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
-          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct"
@@ -7277,38 +7397,38 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\").",
-          "description": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio",
-          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
-          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso.",
-          "description": "Filtro por recurso."
+          "label": "Recurso",
+          "description": "Código do recurso de produção."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo.",
-          "description": "Filtro por centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador.",
-          "description": "Filtro por código do operador."
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
         }
       },
       "paramStrategy": "direct"
@@ -7329,45 +7449,45 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\").",
-          "description": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio",
-          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
-          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso.",
-          "description": "Filtro por recurso."
+          "label": "Recurso",
+          "description": "Código do recurso de produção."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo.",
-          "description": "Filtro por centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador.",
-          "description": "Filtro por código do operador."
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
         },
         "orderBy": {
           "type": "string",
           "optional": true,
-          "label": "Ordenação do ranking: horas ou custo.",
+          "label": "Ordenar por",
           "default": "horas",
-          "description": "Ordenação do ranking: horas ou custo."
+          "description": "Campo usado para ordenar o ranking (ex.: horas, custo)."
         },
         "limit": {
           "type": "integer",
@@ -7395,38 +7515,38 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\").",
-          "description": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio",
-          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
-          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso.",
-          "description": "Filtro por recurso."
+          "label": "Recurso",
+          "description": "Código do recurso de produção."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo.",
-          "description": "Filtro por centro de custo."
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador.",
-          "description": "Filtro por código do operador."
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
         }
       },
       "paramStrategy": "direct"
@@ -7492,17 +7612,20 @@
         "from": {
           "type": "string",
           "optional": false,
-          "label": "From"
+          "label": "De",
+          "description": "Início do intervalo (data ou valor)."
         },
         "to": {
           "type": "string",
           "optional": false,
-          "label": "To"
+          "label": "Até",
+          "description": "Fim do intervalo (data ou valor)."
         },
         "resource_id": {
           "type": "string",
           "optional": true,
-          "label": "Recurso"
+          "label": "Recurso",
+          "description": "Identificador do recurso de agendamento."
         }
       },
       "paramStrategy": "direct",
@@ -7529,8 +7652,9 @@
         "active": {
           "type": "boolean",
           "optional": true,
-          "label": "Active",
-          "default": true
+          "label": "Ativo",
+          "default": true,
+          "description": "Filtra apenas registros ativos (sim) ou inativos (não)."
         }
       },
       "paramStrategy": "direct",
@@ -7604,13 +7728,15 @@
         "location": {
           "type": "string",
           "optional": true,
-          "label": "Location"
+          "label": "Localização",
+          "description": "Localização / endereço de estoque no Protheus."
         },
         "strict_idd_period": {
           "type": "boolean",
           "optional": true,
           "label": "Período IDD estrito",
-          "default": false
+          "default": false,
+          "description": "Exige período estrito no cálculo do IDD."
         }
       },
       "paramStrategy": "date_range",
@@ -7687,7 +7813,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite de detalhes",
-          "default": 20
+          "default": 20,
+          "description": "Máximo de linhas de detalhe retornadas."
         }
       },
       "paramStrategy": "date_range",
@@ -7725,7 +7852,8 @@
         "location": {
           "type": "string",
           "optional": true,
-          "label": "Location"
+          "label": "Localização",
+          "description": "Localização / endereço de estoque no Protheus."
         },
         "top_limit": {
           "type": "integer",
@@ -7760,15 +7888,15 @@
         "periodDays": 30
       },
       "tableFields": "top_products",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_caller_stats_system_caller_stats_get",
@@ -7808,8 +7936,8 @@
         "description": {
           "type": "string",
           "optional": false,
-          "label": "Description",
-          "description": "Texto descritivo da coluna (ex: 'Amarração produto fornecedor')"
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
         },
         "page": {
           "type": "integer",
@@ -7963,7 +8091,7 @@
           "type": "string",
           "optional": true,
           "label": "Operação",
-          "description": "Filtra drill-down por operation id; use __none__ para amostras sem id."
+          "description": "Identificador da operação."
         }
       },
       "paramStrategy": "direct",
@@ -7984,8 +8112,8 @@
         "description": {
           "type": "string",
           "optional": false,
-          "label": "Descrição parcial ou completa da tabela",
-          "description": "Descrição parcial ou completa da tabela"
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
         },
         "page": {
           "type": "integer",
@@ -8063,7 +8191,8 @@
         "q": {
           "type": "string",
           "optional": false,
-          "label": "Q"
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
         }
       },
       "paramStrategy": "direct",
