@@ -230,6 +230,55 @@ describe("slideCardPreview", () => {
     expect(afterSwitch[1]?.nativeConfig?.background).toEqual({ type: "color", value: "#ffffff" });
   });
 
+  it("não sobrescreve print com resolved ao reentrar sem dados ainda", () => {
+    const cache: Record<string, Record<string, unknown>> = {};
+    const chartConfig = {
+      version: 4,
+      blocks: [
+        {
+          id: "c1",
+          type: "chart_view",
+          resolved: { chart: { points: [{ x: "a", y: 1 }] } },
+        },
+      ],
+    };
+    const pendingConfig = {
+      version: 4,
+      blocks: [{ id: "c1", type: "chart_view" }],
+    };
+    const slides: Slide[] = [
+      {
+        id: "s1",
+        playlistId: "p1",
+        sortOrder: 0,
+        slideType: "native",
+        title: "Com gráfico",
+        nativeScreenKey: "custom_message",
+        nativeConfig: { version: 4, blocks: [] },
+        isActive: true,
+      },
+    ];
+
+    buildFilmstripSlidesWithThumbnailCache({
+      slides,
+      selectedSlideId: "s1",
+      liveThumbnailConfig: chartConfig,
+      cache,
+    });
+
+    const reentered = buildFilmstripSlidesWithThumbnailCache({
+      slides,
+      selectedSlideId: "s1",
+      liveThumbnailConfig: pendingConfig,
+      cache,
+    });
+
+    const blocks = reentered[0]?.nativeConfig?.blocks as Array<{
+      resolved?: { chart?: { points?: unknown[] } };
+    }>;
+    expect(blocks?.[0]?.resolved?.chart?.points).toHaveLength(1);
+  });
+
   it("tela vazia na miniatura usa fundo branco explícito", () => {
     const slide: Slide = {
       id: "s2",

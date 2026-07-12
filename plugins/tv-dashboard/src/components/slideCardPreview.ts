@@ -31,9 +31,24 @@ export function serializeComunicadoConfigForThumbnail(
   return serialized;
 }
 
+/** True se algum bloco do nativeConfig carrega `resolved` (print com dados). */
+export function nativeConfigHasResolvedData(config: Record<string, unknown> | null | undefined): boolean {
+  if (!config || typeof config !== "object") return false;
+  const blocks = config.blocks;
+  if (!Array.isArray(blocks)) return false;
+  return blocks.some(
+    (block) =>
+      block != null &&
+      typeof block === "object" &&
+      "resolved" in block &&
+      (block as { resolved?: unknown }).resolved != null,
+  );
+}
+
 /**
  * Monta a lista do filmstrip: slide ativo usa snapshot ao vivo (com resolved);
  * demais slides reutilizam cache para não “sumir” o gráfico ao trocar de tela.
+ * Não sobrescreve um print bom com live ainda sem `resolved` (reentrada no slide).
  */
 export function buildFilmstripSlidesWithThumbnailCache(params: {
   slides: Slide[];
@@ -42,19 +57,27 @@ export function buildFilmstripSlidesWithThumbnailCache(params: {
   cache: Record<string, Record<string, unknown>>;
 }): Slide[] {
   const { slides, selectedSlideId, liveThumbnailConfig, cache } = params;
-  cache[selectedSlideId] = liveThumbnailConfig;
+  const previous = cache[selectedSlideId];
+  const liveHasResolved = nativeConfigHasResolvedData(liveThumbnailConfig);
+  const previousHasResolved = nativeConfigHasResolvedData(previous);
+  if (liveHasResolved || !previousHasResolved) {
+    cache[selectedSlideId] = liveThumbnailConfig;
+  }
 
   const liveIds = new Set(slides.map((slide) => slide.id));
   for (const id of Object.keys(cache)) {
     if (!liveIds.has(id)) delete cache[id];
   }
 
+  const selectedNativeConfig =
+    liveHasResolved || !previousHasResolved ? liveThumbnailConfig : (previous ?? liveThumbnailConfig);
+
   return slides.map((slide) => {
     if (slide.slideType !== "native" || slide.nativeScreenKey !== "custom_message") {
       return slide;
     }
     if (slide.id === selectedSlideId) {
-      return { ...slide, nativeConfig: liveThumbnailConfig };
+      return { ...slide, nativeConfig: selectedNativeConfig };
     }
     const cached = cache[slide.id];
     if (cached) {

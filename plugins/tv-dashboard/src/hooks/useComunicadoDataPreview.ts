@@ -30,6 +30,10 @@ function stripResolved(block: FetchableBlock): Record<string, unknown> {
   return blockPayload as Record<string, unknown>;
 }
 
+/**
+ * Preview de dados do editor — cache por blockId sobrevive à troca de slide.
+ * Não zerar o mapa ao abrir um slide sem fontes (evita flicker do gráfico na volta).
+ */
 export function useComunicadoDataPreview({
   playlistId,
   config,
@@ -46,6 +50,7 @@ export function useComunicadoDataPreview({
   const requestIdRef = useRef(0);
   const resolvedRef = useRef(resolvedByBlockId);
   resolvedRef.current = resolvedByBlockId;
+  const playlistIdRef = useRef(playlistId);
 
   const dataFingerprint = useMemo(() => buildDataPreviewFingerprint(config), [config]);
 
@@ -58,10 +63,19 @@ export function useComunicadoDataPreview({
     [],
   );
 
+  // Troca de playlist: cache anterior não se aplica.
+  useEffect(() => {
+    if (playlistIdRef.current === playlistId) return;
+    playlistIdRef.current = playlistId;
+    setResolvedByBlockId({});
+    setInitialLoading(false);
+    setError(null);
+    requestIdRef.current += 1;
+  }, [playlistId]);
+
   const fetchBlocks = useCallback(
     async (blocks: FetchableBlock[], options: { showLoading: boolean; blockIds?: Set<string> }) => {
       if (blocks.length === 0) {
-        setResolvedByBlockId({});
         setInitialLoading(false);
         setError(null);
         return;
@@ -110,9 +124,7 @@ export function useComunicadoDataPreview({
       } catch (err) {
         if (requestIdRef.current !== requestId) return;
         setError(err instanceof Error ? err.message : "Falha ao carregar dados.");
-        if (!hasExistingData) {
-          setResolvedByBlockId({});
-        }
+        // Mantém cache anterior nos blocos afetados — evita apagar o gráfico na tela.
       } finally {
         if (requestIdRef.current === requestId) {
           setInitialLoading(false);
@@ -125,7 +137,7 @@ export function useComunicadoDataPreview({
   useEffect(() => {
     const blocks = readDataBlocks();
     if (blocks.length === 0) {
-      setResolvedByBlockId({});
+      // Slide sem fontes: não limpar resolved de outros slides (volta ao gráfico sem piscar).
       setInitialLoading(false);
       setError(null);
       return;

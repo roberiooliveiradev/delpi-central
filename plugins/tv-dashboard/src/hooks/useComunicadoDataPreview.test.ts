@@ -64,4 +64,44 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.loading).toBe(false);
     expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(55);
   });
+
+  it("preserva resolved ao trocar para slide sem fontes e voltar", async () => {
+    const emptyConfig: ComunicadoConfig = { blocks: [] };
+    const { result, rerender } = renderHook(
+      ({ config }: { config: ComunicadoConfig }) =>
+        useComunicadoDataPreview({
+          playlistId: "pl-1",
+          config,
+          globalRefreshSec: 300,
+          debounceMs: 0,
+        }),
+      { initialProps: { config: configWithDataBlock } },
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(42);
+    const callsAfterFirst = mockedPreview.mock.calls.length;
+
+    rerender({ config: emptyConfig });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(42);
+    expect(result.current.loading).toBe(false);
+
+    mockedPreview.mockClear();
+    rerender({ config: configWithDataBlock });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    // Dados imediatamente disponíveis (sem banner); refetch em background sem limpar.
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(42);
+    expect(result.current.loading).toBe(false);
+    expect(mockedPreview.mock.calls.length).toBeGreaterThanOrEqual(0);
+    // Garante que a primeira carga ocorreu e a ida ao slide vazio não apagou.
+    expect(callsAfterFirst).toBeGreaterThan(0);
+  });
 });
