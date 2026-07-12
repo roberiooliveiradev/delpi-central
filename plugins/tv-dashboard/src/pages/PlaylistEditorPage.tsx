@@ -52,6 +52,7 @@ import {
   slidePayloadForClipboard,
   type SlideClipboardPayload,
 } from "../utils/slideDeckClipboard";
+import { exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
 
 type DeckSettingsProps = {
   onSaveSlide: (
@@ -90,6 +91,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const saveComunicadoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
+  const [exportBusy, setExportBusy] = useState(false);
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
@@ -274,11 +276,29 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     };
   }, []);
 
-  async function saveSettings(field: string, value: string | number) {
+  async function saveSettings(field: string, value: string | number | Record<string, unknown>) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
-    const updated = await updatePlaylist(playlist.id, { [field]: value });
+    const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
     setPlaylist({ ...updated, slides: playlist.slides });
+  }
+
+  async function handleExportPng() {
+    if (!selectedSlide) return;
+    const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
+    if (!target) {
+      window.alert("Não foi possível localizar o palco para exportar.");
+      return;
+    }
+    setExportBusy(true);
+    try {
+      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
+      await exportSlideElementToPng(target, { fileName: `${safeTitle}.png` });
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Falha ao exportar PNG.");
+    } finally {
+      setExportBusy(false);
+    }
   }
 
   async function handleAddCustomSlide() {
@@ -490,6 +510,8 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
     onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
     onRemove: (slide: Slide) => void handleRemoveSlide(slide),
+    onExportPng: () => void handleExportPng(),
+    exportBusy,
   };
 
   const chromeProps = {
@@ -516,7 +538,8 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
         onDelete={() => void handleDelete()}
       />
     ),
-    onSavePlaylistSettings: (field: string, value: string | number) => void saveSettings(field, value),
+    onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) =>
+      void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
       void handleSaveSlide(slide, payload, { recordHistory: true }),
   };
@@ -530,6 +553,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     inactiveLabel: admin.slideInactive ?? "Pausada",
     canPasteSlide,
     viewportProfile: playlist.viewportProfile,
+    masterConfig: playlist.masterConfig,
     onSelect: setSelectedSlideId,
     onDragStart: setDragIndex,
     onDrop: (index: number) => void handleDropSlide(index),
@@ -550,6 +574,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
           playlistId={playlistId}
           globalRefreshSec={playlist.globalRefreshSec}
           slideId={selectedSlide.id}
+          masterConfig={playlist.masterConfig}
           value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
@@ -576,6 +601,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
                     slide={selectedSlide}
                     playlistId={playlistId}
                     previewSlide={previewBySlideId[selectedSlide.id]}
+                    masterConfig={playlist.masterConfig}
                   />
                 </div>
               )

@@ -47,8 +47,32 @@ export type SeriesChartPoint = {
   value?: number | null;
 };
 
-/** Tipos com paint SVG nativo (4H.7). */
-export type SeriesChartKind = "line" | "bar" | "area" | "pie" | "combo";
+/** Tipos com paint SVG nativo (4H.7 + avançados). */
+export type SeriesChartKind =
+  | "line"
+  | "bar"
+  | "area"
+  | "pie"
+  | "combo"
+  | "stacked_bar"
+  | "histogram"
+  | "scatter"
+  | "bubble"
+  | "radar"
+  | "waterfall"
+  | "funnel";
+
+/** Paleta cíclica para fatias / segmentos / categorias (Office-like). */
+export const SERIES_CHART_CATEGORY_PALETTE = [
+  OFFICE_CHART_SERIES_COLOR,
+  "#0d9488",
+  "#f59e0b",
+  "#6366f1",
+  "#ef4444",
+  "#84cc16",
+  "#a855f7",
+  "#64748b",
+] as const;
 
 /** Padding padrão de categoria (~3% de cada lado do plot). */
 export const DEFAULT_CATEGORY_PADDING_PERCENT = 3;

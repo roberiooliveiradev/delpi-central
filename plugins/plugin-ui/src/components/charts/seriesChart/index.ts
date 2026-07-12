@@ -13,8 +13,15 @@ export { ChartPlotAreaChrome } from "./ChartPlotAreaChrome";
 export { ChartPlotAreaGroup } from "./ChartPlotAreaGroup";
 export { ChartSeriesArea } from "./ChartSeriesArea";
 export { ChartSeriesBar } from "./ChartSeriesBar";
+export { ChartSeriesBubble } from "./ChartSeriesBubble";
+export { ChartSeriesFunnel } from "./ChartSeriesFunnel";
+export { ChartSeriesHistogram } from "./ChartSeriesHistogram";
 export { ChartSeriesLine } from "./ChartSeriesLine";
 export { ChartSeriesPie } from "./ChartSeriesPie";
+export { ChartSeriesRadar } from "./ChartSeriesRadar";
+export { ChartSeriesScatter } from "./ChartSeriesScatter";
+export { ChartSeriesStackedBar } from "./ChartSeriesStackedBar";
+export { ChartSeriesWaterfall } from "./ChartSeriesWaterfall";
 export { ChartTitle } from "./ChartTitle";
 export { ChartValueLabels } from "./ChartValueLabels";
 export {

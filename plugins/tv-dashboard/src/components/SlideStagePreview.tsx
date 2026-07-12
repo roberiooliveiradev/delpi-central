@@ -1,7 +1,7 @@
 import { Globe } from "lucide-react";
 import { NativeSlideView } from "@delpi/tv-dashboard-presentation";
 
-import type { PresentationPayload, Slide } from "../api/tvDashboardApi";
+import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import { ExternalSlidePreview } from "../presentation/ExternalSlidePreview";
 import { buildSlideThumbnailNative, externalSlideHost } from "./slideCardPreview";
 
@@ -9,9 +9,10 @@ type Props = {
   slide: Slide;
   playlistId: string;
   previewSlide?: PresentationPayload["slides"][number];
+  masterConfig?: PlaylistMasterConfig;
 };
 
-export function SlideStagePreview({ slide, playlistId, previewSlide }: Props) {
+export function SlideStagePreview({ slide, playlistId, previewSlide, masterConfig }: Props) {
   if (slide.slideType === "external") {
     return (
       <div className="td-deck-stage__preview">
@@ -29,7 +30,7 @@ export function SlideStagePreview({ slide, playlistId, previewSlide }: Props) {
     );
   }
 
-  const native = buildSlideThumbnailNative(slide, playlistId, previewSlide);
+  const native = buildSlideThumbnailNative(slide, playlistId, previewSlide, masterConfig);
   if (!native) {
     return <div className="td-deck-stage__preview td-deck-stage__preview--empty" />;
   }

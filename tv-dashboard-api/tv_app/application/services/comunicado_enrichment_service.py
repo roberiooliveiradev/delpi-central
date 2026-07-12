@@ -180,6 +180,50 @@ class ComunicadoEnrichmentService:
                 enriched["resolved"] = resolved
         return enriched
 
+    def enrich_master_config(
+        self,
+        master: dict[str, Any] | None,
+        *,
+        api_root_path: str,
+        playlist_id: str,
+        public_token: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Resolve URLs de fundo/logo do master slide (4E.3)."""
+        if not isinstance(master, dict) or not master.get("enabled"):
+            return None
+        out: dict[str, Any] = {"enabled": True}
+        background = self._enrich_background(
+            master.get("background"),
+            api_root_path=api_root_path,
+            playlist_id=playlist_id,
+            public_token=public_token,
+        )
+        if background:
+            out["background"] = background
+        logo = master.get("logo")
+        if isinstance(logo, dict):
+            asset_id = logo.get("assetId")
+            logo_out: dict[str, Any] = {}
+            if isinstance(asset_id, str) and asset_id.strip():
+                logo_out["assetId"] = asset_id.strip()
+                url = self._resolve_asset_url(
+                    asset_id.strip(),
+                    api_root_path=api_root_path,
+                    playlist_id=playlist_id,
+                    public_token=public_token,
+                )
+                if url:
+                    logo_out["url"] = url
+            frame = logo.get("frame")
+            if isinstance(frame, dict):
+                logo_out["frame"] = frame
+            opacity = logo.get("opacity")
+            if isinstance(opacity, (int, float)):
+                logo_out["opacity"] = max(0.0, min(1.0, float(opacity)))
+            if logo_out:
+                out["logo"] = logo_out
+        return out
+
     def _resolve_asset_url(
         self,
         asset_id: str,

@@ -26,6 +26,13 @@ export type SeriesChartClassNames = {
   seriesArea: string;
   seriesPie: string;
   seriesPieSlice: string;
+  seriesStackedBar: string;
+  seriesHistogram: string;
+  seriesScatter: string;
+  seriesBubble: string;
+  seriesRadar: string;
+  seriesWaterfall: string;
+  seriesFunnel: string;
   seriesMarker: string;
   legend: string;
   legendTop: string;
@@ -63,6 +70,13 @@ export function seriesChartBemClasses(prefix = "delpi-ui-series-chart"): SeriesC
     seriesArea: `${prefix}__series-area`,
     seriesPie: `${prefix}__series-pie`,
     seriesPieSlice: `${prefix}__series-pie-slice`,
+    seriesStackedBar: `${prefix}__series-stacked-bar`,
+    seriesHistogram: `${prefix}__series-histogram`,
+    seriesScatter: `${prefix}__series-scatter`,
+    seriesBubble: `${prefix}__series-bubble`,
+    seriesRadar: `${prefix}__series-radar`,
+    seriesWaterfall: `${prefix}__series-waterfall`,
+    seriesFunnel: `${prefix}__series-funnel`,
     seriesMarker: `${prefix}__series-marker`,
     legend: `${prefix}__legend`,
     legendTop: `${prefix}__legend--top`,

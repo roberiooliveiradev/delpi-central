@@ -155,3 +155,70 @@ export function blockEntranceAnimationStyle(
     ["--tdp-block-anim-easing" as string]: anim.easing ?? "ease-out",
   };
 }
+
+export function assignStaggeredEntranceDelays(
+  blocks: Array<{ id: string; animations?: ComunicadoBlockAnimation[] }>,
+  options?: {
+    stepMs?: number;
+    preset?: string;
+    durationMs?: number;
+    startMs?: number;
+  },
+): Map<string, ComunicadoBlockAnimation[] | undefined> {
+  const step = Math.max(
+    BLOCK_ENTRANCE_DELAY_STEP_MS,
+    options?.stepMs ?? 300,
+  );
+  const start = options?.startMs ?? 0;
+  const preset = options?.preset ?? "fade";
+  const durationMs = options?.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS;
+  const result = new Map<string, ComunicadoBlockAnimation[] | undefined>();
+  blocks.forEach((block, index) => {
+    const delayMs = Math.min(
+      BLOCK_ENTRANCE_DELAY_MAX_MS,
+      start + index * step,
+    );
+    const existing = resolveEntranceAnimation(block.animations);
+    const nextPreset = existing ? entrancePresetValue(existing) : preset;
+    result.set(
+      block.id,
+      entranceAnimationFromPreset(nextPreset === "none" ? preset : nextPreset, {
+        delayMs,
+        durationMs: existing?.durationMs ?? durationMs,
+      }),
+    );
+  });
+  return result;
+}
+
+export function clearEntranceAnimations(
+  blocks: Array<{ id: string }>,
+): Map<string, ComunicadoBlockAnimation[] | undefined> {
+  const result = new Map<string, ComunicadoBlockAnimation[] | undefined>();
+  for (const block of blocks) {
+    result.set(block.id, undefined);
+  }
+  return result;
+}
+
+export function syncEntranceDelaysSameInstant(
+  blocks: Array<{ id: string; animations?: ComunicadoBlockAnimation[] }>,
+  delayMs = 0,
+): Map<string, ComunicadoBlockAnimation[] | undefined> {
+  const result = new Map<string, ComunicadoBlockAnimation[] | undefined>();
+  for (const block of blocks) {
+    const existing = resolveEntranceAnimation(block.animations);
+    if (!existing) {
+      result.set(block.id, undefined);
+      continue;
+    }
+    result.set(
+      block.id,
+      entranceAnimationFromPreset(entrancePresetValue(existing), {
+        delayMs,
+        durationMs: existing.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
+      }),
+    );
+  }
+  return result;
+}

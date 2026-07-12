@@ -1,6 +1,6 @@
 import { useCallback, useState, type MouseEvent } from "react";
 
-import type { PresentationPayload, Slide } from "../api/tvDashboardApi";
+import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import { SlideCardThumbnail } from "./SlideCardThumbnail";
 import { SlideFilmstripContextMenu } from "./SlideFilmstripContextMenu";
 
@@ -13,6 +13,7 @@ type Props = {
   inactiveLabel?: string;
   canPasteSlide: boolean;
   viewportProfile?: string;
+  masterConfig?: PlaylistMasterConfig;
   onSelect: (slideId: string) => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
@@ -34,6 +35,7 @@ export function SlideFilmstrip({
   inactiveLabel = "Pausada",
   canPasteSlide,
   viewportProfile = "1080p",
+  masterConfig,
   onSelect,
   onDragStart,
   onDrop,
@@ -92,6 +94,7 @@ export function SlideFilmstrip({
                       playlistId={playlistId}
                       previewSlide={previewBySlideId[slide.id]}
                       viewportProfile={viewportProfile}
+                      masterConfig={masterConfig}
                     />
                     <span className="td-deck-filmstrip__title">{slide.title}</span>
                     {!slide.isActive ? (

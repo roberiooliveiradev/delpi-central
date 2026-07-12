@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from tv_app.application.services.comunicado_enrichment_service import ComunicadoEnrichmentService
 from tv_app.application.services.native_screen_data_service import NativeScreenDataService
 from tv_app.application.services.tv_dashboard_content_service import (
     heartbeat_interval_sec,
@@ -20,9 +21,11 @@ class PresentationPayloadService:
         self,
         repository: PlaylistRepository | None = None,
         native_data: NativeScreenDataService | None = None,
+        comunicado_enrichment: ComunicadoEnrichmentService | None = None,
     ) -> None:
         self._repo = repository or PlaylistRepository()
         self._native_data = native_data or NativeScreenDataService()
+        self._comunicado = comunicado_enrichment or ComunicadoEnrichmentService()
 
     def build_public_url(self, public_token: str) -> str:
         base = (settings.PUBLIC_BASE_URL or "http://localhost").rstrip("/")
@@ -119,6 +122,25 @@ class PresentationPayloadService:
                 }
             rendered_slides.append(item)
 
+        master_raw = playlist.get("masterConfig") if isinstance(playlist.get("masterConfig"), dict) else {}
+        master = self._comunicado.enrich_master_config(
+            master_raw,
+            api_root_path=settings.TV_DASHBOARD_API_ROOT_PATH,
+            playlist_id=playlist_id,
+            public_token=public_token,
+        )
+
+        if master:
+            for item in rendered_slides:
+                native = item.get("native")
+                if not isinstance(native, dict):
+                    continue
+                if native.get("screenKey") != "custom_message":
+                    continue
+                data = native.get("data")
+                if isinstance(data, dict):
+                    native["data"] = {**data, "master": master}
+
         return {
             "playlist": {
                 "id": playlist["id"],
@@ -129,6 +151,7 @@ class PresentationPayloadService:
                 "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
                 "defaultDurationSec": default_duration,
                 "publicUrl": self.build_public_url(playlist["publicToken"]),
+                **({"masterConfig": master} if master else {}),
             },
             "presentationMeta": {
                 "nativeErrorAdvanceSec": presentation_setting_int("nativeErrorAdvanceSec", 10),

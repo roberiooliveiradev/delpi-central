@@ -5,7 +5,7 @@ import {
   serializeComunicadoConfig,
 } from "@delpi/tv-dashboard-presentation";
 
-import { adminMediaUrl, type Slide } from "../api/tvDashboardApi";
+import { adminMediaUrl, type PlaylistMasterConfig, type Slide } from "../api/tvDashboardApi";
 import type { PresentationPayload } from "../api/tvDashboardApi";
 
 /**
@@ -31,10 +31,39 @@ export function serializeComunicadoConfigForThumbnail(
   return serialized;
 }
 
+export function resolveMasterForPreview(
+  master: PlaylistMasterConfig | undefined,
+  playlistId: string,
+): Record<string, unknown> | undefined {
+  if (!master?.enabled) return undefined;
+  const out: Record<string, unknown> = { enabled: true };
+  const background = master.background;
+  if (background) {
+    if (background.type === "image" && background.assetId) {
+      out.background = {
+        ...background,
+        url: background.url ?? adminMediaUrl(playlistId, background.assetId),
+      };
+    } else {
+      out.background = background;
+    }
+  }
+  const logo = master.logo;
+  if (logo) {
+    const logoOut: Record<string, unknown> = { ...logo };
+    if (logo.assetId && !logo.url) {
+      logoOut.url = adminMediaUrl(playlistId, logo.assetId);
+    }
+    out.logo = logoOut;
+  }
+  return out;
+}
+
 export function buildSlideThumbnailNative(
   slide: Slide,
   playlistId: string,
   previewSlide?: PresentationPayload["slides"][number],
+  masterConfig?: PlaylistMasterConfig,
 ): NativeSlidePayload | null {
   if (slide.slideType !== "native" || !slide.nativeScreenKey) return null;
 
@@ -44,7 +73,7 @@ export function buildSlideThumbnailNative(
     return {
       screenKey: "custom_message",
       config: slide.nativeConfig ?? {},
-      data: buildComunicadoPreviewData(slide.nativeConfig ?? {}, playlistId),
+      data: buildComunicadoPreviewData(slide.nativeConfig ?? {}, playlistId, masterConfig),
     };
   }
 
@@ -70,6 +99,7 @@ export function enrichComunicadoConfigForEditor(
 function buildComunicadoPreviewData(
   raw: Record<string, unknown>,
   playlistId: string,
+  masterConfig?: PlaylistMasterConfig,
 ): Record<string, unknown> {
   const cfg = parseComunicadoConfig(raw);
   const background = cfg.background;
@@ -81,6 +111,7 @@ function buildComunicadoPreviewData(
     };
   }
   const blocks = enrichBlocksForEditorThumbnail(cfg.blocks ?? [], playlistId);
+  const master = resolveMasterForPreview(masterConfig, playlistId);
   return {
     version: cfg.version ?? 2,
     headline: cfg.headline,
@@ -88,6 +119,7 @@ function buildComunicadoPreviewData(
     background: resolvedBackground,
     blocks,
     ...(cfg.dataFilters ? { dataFilters: cfg.dataFilters } : {}),
+    ...(master ? { master } : {}),
   };
 }
 

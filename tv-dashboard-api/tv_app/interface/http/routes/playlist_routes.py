@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Request
@@ -37,6 +38,7 @@ class UpdatePlaylistBody(BaseModel):
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
     globalRefreshSec: int | None = Field(default=None, ge=30, le=3600)
     dataDefaults: dict[str, Any] | None = None
+    masterConfig: dict[str, Any] | None = None
 
 
 @router.get("")
@@ -114,6 +116,7 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
             default_duration_sec=body.defaultDurationSec,
             global_refresh_sec=body.globalRefreshSec,
             data_defaults=body.dataDefaults,
+            master_config=body.masterConfig,
         )
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", 404)

@@ -36,7 +36,7 @@ export function ChartValueLabels({
   const visiblePoints = filterVisibleSeriesPoints(points, chartParts, seriesIndex);
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
-  if (chartType === "bar") {
+  if (chartType === "bar" || chartType === "histogram" || chartType === "waterfall") {
     return (
       <>
         {visiblePoints.map((point) => {

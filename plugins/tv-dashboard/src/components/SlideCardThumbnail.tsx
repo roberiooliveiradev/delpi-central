@@ -5,7 +5,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
 
-import type { Slide } from "../api/tvDashboardApi";
+import type { PlaylistMasterConfig, Slide } from "../api/tvDashboardApi";
 import type { PresentationPayload } from "../api/tvDashboardApi";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { buildSlideThumbnailNative, externalSlideHost } from "./slideCardPreview";
@@ -16,6 +16,7 @@ type Props = {
   previewSlide?: PresentationPayload["slides"][number];
   /** Viewport da playlist — miniaturiza o slide canônico (print exato). */
   viewportProfile?: string;
+  masterConfig?: PlaylistMasterConfig;
 };
 
 export function SlideCardThumbnail({
@@ -23,6 +24,7 @@ export function SlideCardThumbnail({
   playlistId,
   previewSlide,
   viewportProfile = "1080p",
+  masterConfig,
 }: Props) {
   if (slide.slideType === "external") {
     return (
@@ -33,7 +35,7 @@ export function SlideCardThumbnail({
     );
   }
 
-  const native = buildSlideThumbnailNative(slide, playlistId, previewSlide);
+  const native = buildSlideThumbnailNative(slide, playlistId, previewSlide, masterConfig);
   if (!native) {
     return <div className="td-slide-thumb td-slide-thumb--empty" aria-hidden="true" />;
   }

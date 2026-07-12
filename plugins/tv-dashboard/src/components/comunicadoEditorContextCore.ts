@@ -134,6 +134,12 @@ export type ComunicadoEditorContextValue = {
   canUndo: boolean;
   canRedo: boolean;
   playlistId: string;
+  /** Master slide da programação (fundo/logo herdados no palco — 4E.3). */
+  masterLogo: {
+    url?: string;
+    frame?: { x?: number; y?: number; w?: number; h?: number };
+    opacity?: number;
+  } | null;
   mediaLibraryOpen: boolean;
   mediaLibraryTarget: MediaLibraryTarget;
   openMediaLibrary: (target: MediaLibraryTarget) => void;

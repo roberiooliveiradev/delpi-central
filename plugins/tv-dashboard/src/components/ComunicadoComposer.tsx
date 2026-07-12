@@ -47,6 +47,33 @@ function useCanvasBackgroundStyle() {
   );
 }
 
+function MasterLogoOverlay() {
+  const { masterLogo } = useComunicadoEditor();
+  const { src: logoBlobUrl } = useAuthenticatedBlobUrl(masterLogo?.url);
+  if (!masterLogo?.url && !logoBlobUrl) return null;
+  const frame = masterLogo?.frame;
+  return (
+    <div
+      className="td-composer__master-logo"
+      aria-hidden
+      style={{
+        position: "absolute",
+        left: `${frame?.x ?? 2}%`,
+        top: `${frame?.y ?? 2}%`,
+        width: `${frame?.w ?? 12}%`,
+        height: `${frame?.h ?? 10}%`,
+        opacity: masterLogo?.opacity ?? 1,
+        zIndex: 0,
+        pointerEvents: "none",
+        backgroundImage: `url(${logoBlobUrl ?? masterLogo?.url})`,
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+    />
+  );
+}
+
 export function ComunicadoComposerCanvas() {
   const {
     config,
@@ -216,6 +243,7 @@ export function ComunicadoComposerCanvas() {
         onPointerDown={handleCanvasPointerDown}
         onContextMenu={handleCanvasContextMenu}
       >
+        <MasterLogoOverlay />
         {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
         {showStageGuides ? (
           <>

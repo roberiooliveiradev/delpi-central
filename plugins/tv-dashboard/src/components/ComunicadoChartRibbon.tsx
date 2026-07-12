@@ -1,11 +1,17 @@
 import {
   BarChart3,
   ChartArea,
-  ChartLine,
   ChartColumn,
+  ChartColumnStacked,
+  ChartLine,
+  ChartNetwork,
+  ChartNoAxesCombined,
   ChartPie,
+  ChartScatter,
   ChartSpline,
+  CircleDot,
   Database,
+  Filter,
   Grid3x3,
   Heading,
   ListOrdered,
@@ -106,8 +112,22 @@ export function ComunicadoChartRibbon() {
             icon={ChartColumn}
             label="Coluna"
             hint="Gráfico de colunas/barras."
-            active={block.chartType === "bar" || block.chartType === "stacked_bar" || block.chartType === "histogram"}
+            active={block.chartType === "bar"}
             onClick={() => setChartType("bar")}
+          />
+          <DeckRibbonTile
+            icon={ChartColumnStacked}
+            label="Empilhado"
+            hint="Colunas empilhadas."
+            active={block.chartType === "stacked_bar"}
+            onClick={() => setChartType("stacked_bar")}
+          />
+          <DeckRibbonTile
+            icon={BarChart3}
+            label="Histograma"
+            hint="Histograma (faixas)."
+            active={block.chartType === "histogram"}
+            onClick={() => setChartType("histogram")}
           />
           <DeckRibbonTile
             icon={ChartLine}
@@ -136,6 +156,41 @@ export function ComunicadoChartRibbon() {
             hint="Colunas + linha no mesmo gráfico."
             active={block.chartType === "combo"}
             onClick={() => setChartType("combo")}
+          />
+          <DeckRibbonTile
+            icon={ChartScatter}
+            label="Dispersão"
+            hint="Gráfico de dispersão (XY)."
+            active={block.chartType === "scatter"}
+            onClick={() => setChartType("scatter")}
+          />
+          <DeckRibbonTile
+            icon={CircleDot}
+            label="Bolhas"
+            hint="Gráfico de bolhas."
+            active={block.chartType === "bubble"}
+            onClick={() => setChartType("bubble")}
+          />
+          <DeckRibbonTile
+            icon={ChartNetwork}
+            label="Radar"
+            hint="Gráfico radar / teia."
+            active={block.chartType === "radar"}
+            onClick={() => setChartType("radar")}
+          />
+          <DeckRibbonTile
+            icon={ChartNoAxesCombined}
+            label="Cascata"
+            hint="Gráfico em cascata (waterfall)."
+            active={block.chartType === "waterfall"}
+            onClick={() => setChartType("waterfall")}
+          />
+          <DeckRibbonTile
+            icon={Filter}
+            label="Funil"
+            hint="Gráfico de funil."
+            active={block.chartType === "funnel"}
+            onClick={() => setChartType("funnel")}
           />
         </div>
       </DeckRibbonGroup>

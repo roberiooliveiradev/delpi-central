@@ -1,9 +1,9 @@
 # Playbook de Excelência — TV Dashboard DELPI
 
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
-> **Versão:** 1.4
+> **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.4 (jul/2026):** 4F parcial. **Onda 4G (§19):** 4G.1–4G.8 ✅ (partes selecionáveis, herança point/line, título inline, inspetor, catálogo↔partes, table_view parts). **Onda 4H:** 4H.1–4H.7 ✅ (pizza/área/combo com chartParts). **Backlog:** 4E.3–4E.5; tipos avançados restantes (scatter/radar/…).
+> **Status:** … **v1.5 (jul/2026):** 4E.3–4E.5 ✅ (master slide, build order, export PNG); tipos avançados SVG ✅ (stacked/histogram/scatter/bubble/radar/waterfall/funnel). **Onda 4G/4H** ✅. **Backlog v2:** Recharts em telas nativas OEE/OTD.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente:** 4E.3–4E.5 master/export; 4F tipos de gráfico avançados e Recharts em telas nativas; **4G** gráfico composto + subseleção no palco (§19).
+**Ainda pendente:** Recharts em telas nativas OEE/OTD (v2). 4E.3–4E.5 e tipos avançados SVG concluídos (v1.5).
 
 ---
 
@@ -882,7 +882,7 @@ Extensões previstas (compatíveis — campos opcionais):
 | `contentRuns[].style.namedStyle` | 4C | ✅ v1.3.5 (4C.4) | `title1` \| `subtitle` \| `body` por linha |
 | `animations[]` por bloco | 4E | ✅ v1.3.8 | `{ phase, kind, delayMs, durationMs, easing, direction }` |
 | `slideTemplateKey` | 4B | ⚠ | Presets via painel templates (sem campo persistido) |
-| `masterRef` (playlist-level) | 4E | ❌ | Logo/fundo compartilhado |
+| `masterConfig` (playlist-level) | 4E | ✅ | Logo/fundo compartilhado (`master_config` JSONB) |
 | Blocos `data_*` (operationId + params) | 4F | ⚠ | Indicadores api-delpi — §18 |
 | `dataBinding.refreshSec` por bloco | 4F | ⚠ | Override do refresh global |
 | `dataBinding.displayMode` | 4F | ⚠ | `kpi` \| `chart` \| `table` \| `auto` |
@@ -969,13 +969,13 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 
 #### Onda 4E — Apresentação e master
 
-| # | Entrega | Esforço |
-|---|---|---|
+| # | Entrega | Esforço | Status |
+|---|---|---|---|
 | 4E.1 | Transição por slide (override playlist) | M | ✅ v1.3.7 |
 | 4E.2 | Animações entrada por bloco (fade/slide-in) | L | ✅ v1.3.8 |
-| 4E.3 | Master slide playlist (logo + fundo fixos) | M |
-| 4E.4 | Build order (timeline simples no inspector) | L |
-| 4E.5 | Export PNG do slide (html2canvas ou server render) | M |
+| 4E.3 | Master slide playlist (logo + fundo fixos) | M | ✅ v1.5 |
+| 4E.4 | Build order (timeline simples no inspector) | L | ✅ v1.5 |
+| 4E.5 | Export PNG do slide (`html-to-image`) | M | ✅ v1.5 |
 
 #### Onda 4F — Indicadores live api-delpi no slide personalizado (§18)
 
@@ -1344,7 +1344,7 @@ Exemplo no `native_config` (v4):
 - [x] Gráfico com **elementos configuráveis** (`chartOptions` / `CHART_ELEMENT_CATALOG`) — título, legenda, eixos, grade, tabela de dados, marcadores.
 - [x] Séries temporais renderizam tabela derivada de `points` quando não há `items`.
 - [x] Filmstrip com prévia centralizada (`CenteredScaledPreview`) e menu de contexto nas telas.
-- [x] Tipos de gráfico avançados (pizza, área, combo) — paint SVG nativo com `chartParts` (4H.7).
+- [x] Tipos de gráfico avançados (pizza, área, combo, empilhado, histograma, dispersão, bolhas, radar, cascata, funil) — paint SVG nativo com `chartParts` (4H.7 + v1.5).
 - [ ] Recharts em telas nativas fixas (OEE/OTD dashboard) — backlog v2.
 - [x] `native_config` sanitizado no save — sem `resolved` nem URLs de mídia runtime.
 - [x] Limite de blocos `data_*` por slide (settings `comunicadoDataBlocks.maxPerSlide`).
@@ -1640,7 +1640,7 @@ type ChartPartState = {
 | 4H.4 | Painel Formatar (Excel): preenchimento, contorno, tamanho do marcador, espessura da série | ✅ parcial (inspetor) |
 | 4H.5 | Filtrar pontos ocultos no path da série / labels | ✅ (série + marcadores) |
 | 4H.6 | Plot area / eixos com resize relativo | ✅ (`plotArea.frame` → margens; eixos via inset) |
-| 4H.7 | Tipos pizza/área/combo com as mesmas partes | ✅ (area/pie/doughnut/combo; demais tipos → placeholder) |
+| 4H.7 | Tipos pizza/área/combo + avançados com as mesmas partes | ✅ (area/pie/doughnut/combo/stacked/histogram/scatter/bubble/radar/waterfall/funnel) |
 
 ### 19.11 Visual Office — área do gráfico como formas (Onda 4I)
 

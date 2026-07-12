@@ -39,11 +39,24 @@ export function chartPartVisualPrimitive(
 ): ChartVisualPrimitive | null {
   switch (ref.kind) {
     case "series":
-      if (chartType === "area" || chartType === "pie" || chartType === "bar") return "area";
+      if (
+        chartType === "area" ||
+        chartType === "pie" ||
+        chartType === "bar" ||
+        chartType === "stacked_bar" ||
+        chartType === "histogram" ||
+        chartType === "waterfall" ||
+        chartType === "funnel" ||
+        chartType === "radar" ||
+        chartType === "bubble"
+      ) {
+        return "area";
+      }
       if (chartType === "combo") return "line";
+      if (chartType === "scatter") return "point";
       return "line";
     case "marker":
-      return chartType === "pie" ? "area" : "point";
+      return chartType === "pie" || chartType === "funnel" ? "area" : "point";
     case "grid":
     case "axis":
       return "line";

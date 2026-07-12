@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import type { PresentationPayload, Slide } from "../api/tvDashboardApi";
+import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import { SlideFilmstrip } from "./SlideFilmstrip";
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
   inactiveLabel: string;
   canPasteSlide: boolean;
   viewportProfile?: string;
+  masterConfig?: PlaylistMasterConfig;
   onSelect: (slideId: string) => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
@@ -35,6 +36,7 @@ export function DeckWorkspace({
   inactiveLabel,
   canPasteSlide,
   viewportProfile = "1080p",
+  masterConfig,
   onSelect,
   onDragStart,
   onDrop,
@@ -59,6 +61,7 @@ export function DeckWorkspace({
         inactiveLabel={inactiveLabel}
         canPasteSlide={canPasteSlide}
         viewportProfile={viewportProfile}
+        masterConfig={masterConfig}
         onSelect={onSelect}
         onDragStart={onDragStart}
         onDrop={onDrop}

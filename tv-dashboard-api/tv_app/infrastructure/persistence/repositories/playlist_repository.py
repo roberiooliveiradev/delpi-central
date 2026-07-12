@@ -41,6 +41,7 @@ def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
         "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
         "updatedAt": row["updated_at"].isoformat() if row["updated_at"] else None,
         "dataDefaults": row.get("data_defaults") or {},
+        "masterConfig": row.get("master_config") or {},
     }
 
 
@@ -124,6 +125,7 @@ class PlaylistRepository:
         default_duration_sec: int | None = None,
         global_refresh_sec: int | None = None,
         data_defaults: dict[str, Any] | None = None,
+        master_config: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         fields: list[str] = []
         values: list[Any] = []
@@ -142,6 +144,9 @@ class PlaylistRepository:
         if data_defaults is not None:
             fields.append("data_defaults = %s::jsonb")
             values.append(json.dumps(data_defaults))
+        if master_config is not None:
+            fields.append("master_config = %s::jsonb")
+            values.append(json.dumps(master_config))
         if not fields:
             existing = self.get_by_id(playlist_id)
             if not existing:
@@ -234,9 +239,9 @@ class PlaylistRepository:
                     """
                     INSERT INTO tv_dashboard.playlists (
                       public_token, name, description, viewport_profile, transition_style,
-                      default_duration_sec, global_refresh_sec, data_defaults, is_active, created_by
+                      default_duration_sec, global_refresh_sec, data_defaults, master_config, is_active, created_by
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, FALSE, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, FALSE, %s)
                     RETURNING *
                     """,
                     (
@@ -248,6 +253,7 @@ class PlaylistRepository:
                         source["defaultDurationSec"],
                         source["globalRefreshSec"],
                         json.dumps(source.get("dataDefaults") or {}),
+                        json.dumps(source.get("masterConfig") or {}),
                         created_by,
                     ),
                 )

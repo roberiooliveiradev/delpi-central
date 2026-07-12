@@ -27,30 +27,39 @@ export function tablePresetLabel(preset: string): string {
   return "Grade padrão";
 }
 
-/** Tipos com paint SVG nativo no palco (4H.7). */
+/** Tipos com paint SVG nativo no palco (4H.7 + avançados). */
 export function chartTypeHasBasicRender(chartType: ComunicadoChartType): boolean {
   return toSeriesChartKind(chartType) != null;
 }
 
-/**
- * Mapeia tipo de bloco → kind SVG.
- * Empilhados/histograma → bar; rosca → pie; demais avançados → null (placeholder).
- */
+/** Mapeia tipo de bloco → kind SVG nativo (4H.7 + avançados). */
 export function toSeriesChartKind(chartType: ComunicadoChartType): SeriesChartKind | null {
   switch (chartType) {
     case "line":
       return "line";
     case "bar":
-    case "stacked_bar":
-    case "histogram":
       return "bar";
+    case "stacked_bar":
+      return "stacked_bar";
+    case "histogram":
+      return "histogram";
     case "area":
       return "area";
     case "pie":
     case "doughnut":
       return "pie";
+    case "scatter":
+      return "scatter";
+    case "bubble":
+      return "bubble";
+    case "radar":
+      return "radar";
     case "combo":
       return "combo";
+    case "waterfall":
+      return "waterfall";
+    case "funnel":
+      return "funnel";
     default:
       return null;
   }
@@ -65,6 +74,14 @@ export function pieInnerRadiusForChartType(chartType: ComunicadoChartType): numb
 export function chartTypeToLegacyDisplayMode(
   chartType: ComunicadoChartType,
 ): "line_chart" | "bar_chart" {
-  if (toSeriesChartKind(chartType) === "bar") return "bar_chart";
+  const kind = toSeriesChartKind(chartType);
+  if (
+    kind === "bar" ||
+    kind === "stacked_bar" ||
+    kind === "histogram" ||
+    kind === "waterfall"
+  ) {
+    return "bar_chart";
+  }
   return "line_chart";
 }

@@ -6,8 +6,15 @@ import { ChartGrid } from "./ChartGrid";
 import { ChartPlotArea } from "./ChartPlotArea";
 import { ChartSeriesArea } from "./ChartSeriesArea";
 import { ChartSeriesBar } from "./ChartSeriesBar";
+import { ChartSeriesBubble } from "./ChartSeriesBubble";
+import { ChartSeriesFunnel } from "./ChartSeriesFunnel";
+import { ChartSeriesHistogram } from "./ChartSeriesHistogram";
 import { ChartSeriesLine } from "./ChartSeriesLine";
 import { ChartSeriesPie } from "./ChartSeriesPie";
+import { ChartSeriesRadar } from "./ChartSeriesRadar";
+import { ChartSeriesScatter } from "./ChartSeriesScatter";
+import { ChartSeriesStackedBar } from "./ChartSeriesStackedBar";
+import { ChartSeriesWaterfall } from "./ChartSeriesWaterfall";
 import { ChartValueLabels } from "./ChartValueLabels";
 import type { ChartPartsMap, SeriesChartInteraction } from "../seriesChartParts";
 import type { SeriesChartKindProps } from "./types";
@@ -24,6 +31,12 @@ export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
   /** Rosca: raio interno relativo (só `pie`). */
   pieInnerRadiusRatio?: number;
 };
+
+const NON_CARTESIAN: ReadonlySet<SeriesChartKindProps["chartType"]> = new Set([
+  "pie",
+  "radar",
+  "funnel",
+]);
 
 export function ChartPlotAreaGroup({
   chartType,
@@ -42,13 +55,13 @@ export function ChartPlotAreaGroup({
   strokeWidth,
   pieInnerRadiusRatio = 0,
 }: ChartPlotAreaGroupProps) {
-  const isPie = chartType === "pie";
-  const cartesianAxes = showAxes && !isPie;
-  const cartesianGrid = showGrid && !isPie;
+  const skipCartesian = NON_CARTESIAN.has(chartType);
+  const cartesianAxes = showAxes && !skipCartesian;
+  const cartesianGrid = showGrid && !skipCartesian;
 
   return (
     <>
-      {!isPie ? (
+      {!skipCartesian ? (
         <ChartAxisY
           layout={layout}
           showLabels={cartesianAxes && config.showYAxisLabels !== false}
@@ -59,11 +72,11 @@ export function ChartPlotAreaGroup({
         />
       ) : null}
 
-      {!isPie ? (
+      {!skipCartesian ? (
         <ChartGrid
           layout={layout}
           showHorizontal={cartesianGrid}
-          showVertical={showVerticalGrid && !isPie}
+          showVertical={showVerticalGrid && !skipCartesian}
           pointCount={points.length}
           interaction={interaction}
         />
@@ -75,7 +88,7 @@ export function ChartPlotAreaGroup({
         interaction={interaction}
         chartParts={chartParts}
       />
-      {!isPie ? <ChartAxisLines layout={layout} visible={cartesianAxes} interaction={interaction} /> : null}
+      {!skipCartesian ? <ChartAxisLines layout={layout} visible={cartesianAxes} interaction={interaction} /> : null}
 
       {chartType === "bar" ? (
         <ChartSeriesBar
@@ -83,6 +96,76 @@ export function ChartPlotAreaGroup({
           points={points}
           seriesColor={seriesColor}
           interaction={interaction}
+        />
+      ) : null}
+
+      {chartType === "stacked_bar" ? (
+        <ChartSeriesStackedBar
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
+      {chartType === "histogram" ? (
+        <ChartSeriesHistogram
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
+      {chartType === "scatter" ? (
+        <ChartSeriesScatter
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
+      {chartType === "bubble" ? (
+        <ChartSeriesBubble
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
+      {chartType === "radar" ? (
+        <ChartSeriesRadar
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
+      {chartType === "waterfall" ? (
+        <ChartSeriesWaterfall
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
+      {chartType === "funnel" ? (
+        <ChartSeriesFunnel
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
         />
       ) : null}
 
@@ -170,7 +253,7 @@ export function ChartPlotAreaGroup({
         />
       ) : null}
 
-      {!isPie ? (
+      {!skipCartesian ? (
         <ChartValueLabels
           chartType={chartType}
           layout={layout}
@@ -182,7 +265,7 @@ export function ChartPlotAreaGroup({
         />
       ) : null}
 
-      {!isPie ? (
+      {!skipCartesian ? (
         <ChartAxisX
           layout={layout}
           points={points}

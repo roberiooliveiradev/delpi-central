@@ -17,7 +17,7 @@ export type ConfigurableSeriesChartProps = {
   pieInnerRadiusRatio?: number;
 };
 
-/** Despacha para o paint SVG conforme `chartType` (4H.7: area/pie/combo). */
+/** Despacha para o paint SVG conforme `chartType` (4H.7 + kinds avançados). */
 export function ConfigurableSeriesChart({
   chartType,
   points,

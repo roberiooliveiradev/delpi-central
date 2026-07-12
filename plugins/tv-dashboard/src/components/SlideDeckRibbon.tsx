@@ -2,6 +2,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  Download,
   Eye,
   EyeOff,
   Plus,
@@ -23,6 +24,8 @@ type Props = {
   onDuplicate: (slide: Slide) => void;
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
+  onExportPng?: () => void;
+  exportBusy?: boolean;
 };
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -35,6 +38,8 @@ export function SlideDeckRibbon({
   onDuplicate,
   onToggleActive,
   onRemove,
+  onExportPng,
+  exportBusy = false,
 }: Props) {
   const selectedIndex = selectedSlide
     ? slides.findIndex((slide) => slide.id === selectedSlide.id)
@@ -44,7 +49,7 @@ export function SlideDeckRibbon({
     if (!slides.length) return;
     const base = selectedIndex >= 0 ? selectedIndex : 0;
     const next = (base + offset + slides.length) % slides.length;
-    onSelect(slides[next].id);
+    onSelect(slides[next]!.id);
   }
 
   return (
@@ -103,6 +108,15 @@ export function SlideDeckRibbon({
               hint={H.duplicate}
               onClick={() => onDuplicate(selectedSlide)}
             />
+            {onExportPng ? (
+              <DeckRibbonTile
+                icon={Download}
+                label={exportBusy ? "…" : "PNG"}
+                hint="Exportar a tela atual como PNG (4E.5)."
+                disabled={exportBusy}
+                onClick={onExportPng}
+              />
+            ) : null}
             <DeckRibbonTile
               icon={Trash2}
               label="Excluir"

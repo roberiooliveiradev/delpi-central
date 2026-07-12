@@ -62,12 +62,12 @@ import {
   nudgeChartPartFrame,
 } from "@delpi/tv-dashboard-presentation";
 
-import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../api/tvDashboardApi";
+import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset, type PlaylistMasterConfig } from "../api/tvDashboardApi";
 import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext";
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { MediaLibraryModal } from "./MediaLibraryModal";
-import { enrichComunicadoConfigForEditor } from "./slideCardPreview";
+import { enrichComunicadoConfigForEditor, resolveMasterForPreview } from "./slideCardPreview";
 import { useCanvasBlockInteraction } from "./useCanvasBlockInteraction";
 import { snapComunicadoFrame } from "../utils/comunicadoSnap";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
@@ -113,6 +113,7 @@ type ProviderProps = {
   playlistId: string;
   slideId?: string;
   globalRefreshSec?: number;
+  masterConfig?: PlaylistMasterConfig;
   value: Record<string, unknown>;
   onChange: (config: Record<string, unknown>) => void;
   children: ReactNode;
@@ -157,6 +158,7 @@ function ComunicadoEditorKeyboardBridge() {
 export function ComunicadoEditorProvider({
   playlistId,
   globalRefreshSec = 300,
+  masterConfig,
   value,
   onChange,
   children,
@@ -1251,7 +1253,22 @@ export function ComunicadoEditorProvider({
     });
   }
 
-  const background = config.background ?? { type: "color", value: "#ffffff" };
+  const resolvedMaster = useMemo(
+    () => resolveMasterForPreview(masterConfig, playlistId),
+    [masterConfig, playlistId],
+  );
+
+  const background = config.background
+    ?? (resolvedMaster?.background as ComunicadoConfig["background"] | undefined)
+    ?? { type: "color", value: "#ffffff" };
+  const masterLogo =
+    resolvedMaster && typeof resolvedMaster.logo === "object" && resolvedMaster.logo
+      ? (resolvedMaster.logo as {
+          url?: string;
+          frame?: { x?: number; y?: number; w?: number; h?: number };
+          opacity?: number;
+        })
+      : null;
 
   const ctxValue: ComunicadoEditorContextValue = {
     config,
@@ -1333,6 +1350,7 @@ export function ComunicadoEditorProvider({
     canUndo,
     canRedo,
     playlistId,
+    masterLogo,
     mediaLibraryOpen,
     mediaLibraryTarget,
     openMediaLibrary,

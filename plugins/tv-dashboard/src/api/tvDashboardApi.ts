@@ -8,6 +8,25 @@ async function unwrap<T>(promise: Promise<ApiEnvelope<T>>): Promise<T> {
   return env.data;
 }
 
+export type PlaylistMasterConfig = {
+  enabled?: boolean;
+  background?: {
+    type: "color" | "image" | "gradient";
+    value?: string;
+    assetId?: string;
+    url?: string;
+    from?: string;
+    to?: string;
+    angle?: number;
+  };
+  logo?: {
+    assetId?: string;
+    url?: string;
+    frame?: { x?: number; y?: number; w?: number; h?: number };
+    opacity?: number;
+  };
+};
+
 export type Playlist = {
   id: string;
   publicToken: string;
@@ -21,6 +40,8 @@ export type Playlist = {
   viewCount: number;
   lastPresentedAt?: string | null;
   publicUrl?: string;
+  dataDefaults?: Record<string, unknown>;
+  masterConfig?: PlaylistMasterConfig;
   slides?: Slide[];
 };
 
@@ -177,6 +198,8 @@ export async function updatePlaylist(
     transitionStyle: string;
     defaultDurationSec: number;
     globalRefreshSec: number;
+    dataDefaults: Record<string, unknown>;
+    masterConfig: PlaylistMasterConfig;
   }>,
 ) {
   return unwrap(httpPatch<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}`, body));

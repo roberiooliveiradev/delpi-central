@@ -24,6 +24,8 @@ type SlideDeckProps = {
   onDuplicate: (slide: Slide) => void;
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
+  onExportPng?: () => void;
+  exportBusy?: boolean;
 };
 
 type Props = {
@@ -36,7 +38,7 @@ type Props = {
   slideTabExtra?: ReactNode;
   headerActions?: ReactNode;
   slideDeck: SlideDeckProps;
-  onSavePlaylistSettings: (field: string, value: string | number) => void;
+  onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) => void;
   onSaveSlide: (
     slide: Slide,
     payload: {

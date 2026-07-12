@@ -280,21 +280,60 @@ function RichComunicadoScreen({
   data,
   fontScale = 1,
 }: {
-  data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
+  data: ComunicadoScreenDataLike & {
+    background?: ComunicadoBackground;
+    master?: {
+      enabled?: boolean;
+      background?: ComunicadoBackground;
+      logo?: {
+        url?: string;
+        assetId?: string;
+        frame?: { x?: number; y?: number; w?: number; h?: number };
+        opacity?: number;
+      };
+    };
+  };
   fontScale?: number;
 }) {
   useComunicadoGoogleFonts({ blocks: data.blocks });
 
-  const background = data.background ?? { type: "color", value: "#ffffff" };
+  const master = data.master?.enabled ? data.master : null;
+  const slideBackground = data.background;
+  const background =
+    slideBackground ??
+    master?.background ??
+    ({ type: "color", value: "#ffffff" } as ComunicadoBackground);
   const imageUrl =
     background.type === "image" ? background.url ?? background.value : undefined;
   const bgStyle: CSSProperties = comunicadoBackgroundCssProperties(background, imageUrl);
 
   const blocks = sortBlocksByZIndex(data.blocks ?? []);
+  const logo = master?.logo;
+  const logoFrame = logo?.frame;
 
   return (
     <div className="tdp-native-screen tdp-comunicado" style={bgStyle}>
-      <div className="tdp-comunicado__stage">
+      {logo?.url ? (
+        <div
+          className="tdp-comunicado__master-logo"
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: `${logoFrame?.x ?? 2}%`,
+            top: `${logoFrame?.y ?? 2}%`,
+            width: `${logoFrame?.w ?? 12}%`,
+            height: `${logoFrame?.h ?? 10}%`,
+            opacity: logo.opacity ?? 1,
+            zIndex: 0,
+            pointerEvents: "none",
+            backgroundImage: `url(${logo.url})`,
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+          }}
+        />
+      ) : null}
+      <div className="tdp-comunicado__stage" style={{ position: "relative", zIndex: 1 }}>
         {blocks.map((block) => (
           <ComunicadoBlockView key={block.id} block={block} fontScale={fontScale} />
         ))}
