@@ -1220,12 +1220,23 @@
 .tdp-series-chart__data-table td {
   border: 1px solid color-mix(in srgb, var(--tdp-series-chart-muted, #64748b) 28%, transparent);
   padding: 0.2em 0.35em;
-  text-align: center;
   background: var(--tdp-series-chart-bg, #fff);
   color: var(--tdp-series-chart-text, #1e293b);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tdp-series-chart__data-table th:first-child,
+.tdp-series-chart__data-table td:first-child {
+  width: 28%;
+  text-align: left;
+}
+
+.tdp-series-chart__data-table th:last-child,
+.tdp-series-chart__data-table td:last-child {
+  width: 72%;
+  text-align: right;
 }
 
 .tdp-series-chart__data-table th {

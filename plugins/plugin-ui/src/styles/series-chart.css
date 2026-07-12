@@ -164,12 +164,24 @@
 .delpi-ui-series-chart__data-table td {
   border: 1px solid color-mix(in srgb, var(--delpi-ui-series-chart-muted, #64748b) 25%, transparent);
   padding: 0.15rem 0.35rem;
-  text-align: center;
   background: var(--delpi-ui-series-chart-bg, #ffffff);
   color: var(--delpi-ui-series-chart-text, #1e293b);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Período estreito + valor à direita — evita “coluna vazia” no meio (fixed + center). */
+.delpi-ui-series-chart__data-table th:first-child,
+.delpi-ui-series-chart__data-table td:first-child {
+  width: 28%;
+  text-align: left;
+}
+
+.delpi-ui-series-chart__data-table th:last-child,
+.delpi-ui-series-chart__data-table td:last-child {
+  width: 72%;
+  text-align: right;
 }
 
 .delpi-ui-series-chart__data-table th {

@@ -92,7 +92,10 @@ class ComunicadoEnrichmentService:
     def _detect_version(blocks: list[dict[str, Any]]) -> int:
         for block in blocks:
             block_type = str(block.get("type") or "")
-            if block_type.startswith("data_"):
+            if (
+                block_type.startswith("data_")
+                or block_type in {"chart_view", "table_view"}
+            ):
                 return 4
         return 3 if blocks else 2
 
@@ -140,12 +143,26 @@ class ComunicadoEnrichmentService:
         public_token: str | None,
     ) -> dict[str, Any]:
         block_type = str(block.get("type") or "text")
+        # Fonte + views: preservar config do editor (binding, chartType, parts…).
+        # Strip aqui quebrava prévia admin e link público (tela branca / sem gráfico).
+        if block_type in {"data_source", "chart_view", "table_view"}:
+            enriched = dict(block)
+            enriched["id"] = str(block.get("id") or "")
+            enriched["type"] = block_type
+            enriched["frame"] = self._normalize_frame(block.get("frame"))
+            if not isinstance(enriched.get("style"), dict):
+                enriched["style"] = {}
+            return enriched
+
         enriched: dict[str, Any] = {
             "id": str(block.get("id") or ""),
             "type": block_type,
             "frame": self._normalize_frame(block.get("frame")),
             "style": block.get("style") if isinstance(block.get("style"), dict) else {},
         }
+        animations = block.get("animations")
+        if isinstance(animations, dict):
+            enriched["animations"] = animations
         if block_type in {"heading", "text"}:
             enriched["content"] = str(block.get("content") or "")
             href = block.get("href")
@@ -154,6 +171,9 @@ class ComunicadoEnrichmentService:
             link_target = block.get("linkTarget")
             if link_target in {"_blank", "_self"}:
                 enriched["linkTarget"] = link_target
+            content_runs = block.get("contentRuns")
+            if isinstance(content_runs, list):
+                enriched["contentRuns"] = content_runs
         elif block_type == "shape":
             enriched["shape"] = str(block.get("shape") or "rectangle")
             content = block.get("content")
@@ -171,6 +191,11 @@ class ComunicadoEnrichmentService:
                 if url:
                     enriched["url"] = url
                 enriched["assetId"] = asset_id.strip()
+        elif block_type == "icon":
+            for key in ("iconName", "iconSet", "content", "href", "linkTarget"):
+                value = block.get(key)
+                if value is not None and value != "":
+                    enriched[key] = value
         elif block_type in {"data_kpi", "data_chart", "data_table", "data_metric"}:
             binding = block.get("dataBinding")
             if isinstance(binding, dict):

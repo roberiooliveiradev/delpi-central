@@ -74,3 +74,55 @@ def test_custom_message_with_blocks():
     )
     assert data["version"] >= 2
     assert data["blocks"][0]["content"] == "Evento"
+
+
+def test_enrich_preserves_data_source_and_chart_view_for_preview():
+    """Prévia/link público: não stripar binding nem chartType (tela branca)."""
+    data_enrichment = MagicMock()
+    data_enrichment.enrich_blocks.side_effect = lambda blocks, **_kw: blocks
+    service = ComunicadoEnrichmentService(
+        media_repo=MagicMock(),
+        data_enrichment=data_enrichment,
+    )
+    playlist_id = str(uuid4())
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "src-1",
+                    "type": "data_source",
+                    "frame": {"x": 0, "y": 0, "w": 10, "h": 10},
+                    "dataBinding": {
+                        "operationId": "get_on_time_delivery_pct",
+                        "params": {"periodDays": 30},
+                        "displayMode": "auto",
+                    },
+                },
+                {
+                    "id": "chart-1",
+                    "type": "chart_view",
+                    "dataSourceId": "src-1",
+                    "chartType": "line",
+                    "chartOptions": {"showDataTable": True},
+                    "chartParts": {"title": {"visible": True}},
+                    "frame": {"x": 5, "y": 5, "w": 90, "h": 80},
+                    "animations": {"entrance": "fade"},
+                },
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=playlist_id,
+        public_token="share-token",
+    )
+    assert data["version"] == 4
+    passed = data_enrichment.enrich_blocks.call_args.args[0]
+    assert passed[0]["type"] == "data_source"
+    assert passed[0]["dataBinding"]["operationId"] == "get_on_time_delivery_pct"
+    assert passed[1]["type"] == "chart_view"
+    assert passed[1]["dataSourceId"] == "src-1"
+    assert passed[1]["chartType"] == "line"
+    assert passed[1]["chartOptions"]["showDataTable"] is True
+    assert passed[1]["chartParts"]["title"]["visible"] is True
+    assert passed[1]["animations"]["entrance"] == "fade"
+    data_enrichment.enrich_blocks.assert_called_once()
+    assert data_enrichment.enrich_blocks.call_args.kwargs.get("authorization") is None
