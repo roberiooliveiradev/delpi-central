@@ -1,4 +1,4 @@
-import { NativeCheckboxControl, NativeSelectControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import {
   CHART_ELEMENT_CATALOG,
   CHART_VALUE_FORMAT_OPTIONS,
@@ -177,8 +177,9 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
             defaultOpen
           >
             <DeckField id="td-chart-value-format" label="Formato dos valores">
-              <NativeSelectControl
+              <FormSelectControl
                 id="td-chart-value-format"
+                ariaLabel="Formato dos valores"
                 value={options.valueFormat ?? "auto"}
                 onChange={(value) =>
                   setOptions({ valueFormat: value as ComunicadoChartOptions["valueFormat"] })

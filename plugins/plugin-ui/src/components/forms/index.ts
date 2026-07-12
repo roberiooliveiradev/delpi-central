@@ -140,10 +140,16 @@ export {
 } from "./nativeControlClasses";
 
 export {
+  DEFAULT_FORM_SELECT_LABELS,
+  FORM_SELECT_PREFIX,
+  FormSelectControl,
+  selectControlFormBemClasses,
+} from "./FormSelectControl";
+
+export {
   NativeSelectControl,
   type NativeSelectControlProps,
 } from "./NativeSelectControl";
-
 export {
   NativeCheckboxControl,
   type NativeCheckboxControlProps,

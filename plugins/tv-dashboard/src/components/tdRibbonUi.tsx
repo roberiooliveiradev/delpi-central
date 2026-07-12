@@ -1,8 +1,7 @@
 import {
+  FormSelectControl,
   HintAction,
   mergeClassNames,
-  NativeSelectControl,
-  NATIVE_CONTROL_COMPACT_CLASS,
   type NativeSelectOption,
 } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
@@ -17,7 +16,7 @@ type TdRibbonSelectProps = {
   "aria-label"?: string;
 };
 
-/** Select nativo compacto da ribbon do deck (sem FormFieldShell). */
+/** Select compacto da ribbon do deck — visual FormSelectControl (painel DELPI). */
 export function TdRibbonSelect({
   id,
   value,
@@ -28,14 +27,14 @@ export function TdRibbonSelect({
   "aria-label": ariaLabel,
 }: TdRibbonSelectProps) {
   return (
-    <NativeSelectControl
+    <FormSelectControl
       id={id}
       value={value}
       onChange={onChange}
       options={options}
       disabled={disabled}
-      className={mergeClassNames("td-deck-ribbon__select", NATIVE_CONTROL_COMPACT_CLASS, className)}
-      aria-label={ariaLabel}
+      className={mergeClassNames("td-deck-ribbon__select", "delpi-ui-select--compact", className)}
+      ariaLabel={ariaLabel}
     />
   );
 }

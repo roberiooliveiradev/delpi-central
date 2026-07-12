@@ -1,4 +1,4 @@
-import { NativeCheckboxControl, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 import {
   TABLE_ELEMENT_CATALOG,
@@ -158,8 +158,9 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
 
       <DeckPropertySection pane={pane} title="Células" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableCells}>
         <DeckField id="td-table-value-format" label="Formato dos valores">
-          <NativeSelectControl
+          <FormSelectControl
             id="td-table-value-format"
+            ariaLabel="Formato dos valores"
             value={options.valueFormat ?? "auto"}
             onChange={(value) => setOptions({ valueFormat: value as ComunicadoTableOptions["valueFormat"] })}
             options={TABLE_VALUE_FORMAT_OPTIONS.map((entry) => ({
@@ -169,8 +170,9 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
           />
         </DeckField>
         <DeckField id="td-table-text-align" label="Alinhamento">
-          <NativeSelectControl
+          <FormSelectControl
             id="td-table-text-align"
+            ariaLabel="Alinhamento"
             value={options.textAlign ?? "left"}
             onChange={(value) => setOptions({ textAlign: value as ComunicadoTableOptions["textAlign"] })}
             options={TABLE_TEXT_ALIGN_OPTIONS.map((entry) => ({

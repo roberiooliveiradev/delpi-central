@@ -1,4 +1,4 @@
-import { NativeCheckboxControl, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   applyMarkerStyleToAll,
   chartPartAllowsDelete,
@@ -271,8 +271,9 @@ export function ChartPartInspector({ pane = false, block }: Props) {
             />
           </DeckField>
           <DeckField id="td-chart-part-legend-position" label="Posição">
-            <NativeSelectControl
+            <FormSelectControl
               id="td-chart-part-legend-position"
+              ariaLabel="Posição"
               value={options.legendPosition ?? "bottom"}
               onChange={(value) =>
                 persistOptions({

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Copy, RefreshCw } from "lucide-react";
-import { NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   blockTypeForDisplayMode,
   DATA_REFRESH_SEC_MAX,
@@ -147,8 +147,9 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
         </div>
         {showPresentationMode ? (
           <DeckField id="td-data-display-mode" label="Formato de apresentação">
-            <NativeSelectControl
+            <FormSelectControl
               id="td-data-display-mode"
+              ariaLabel="Formato de apresentação"
               value={currentDisplayMode === "auto" ? "kpi" : currentDisplayMode}
               onChange={(value) => updateDisplayMode(value as ComunicadoDataDisplayMode)}
               options={presentationOptions.map((option) => ({
@@ -171,8 +172,9 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
         </DeckField>
         {valueFieldOptions.length > 0 ? (
           <DeckField id="td-data-value-field" label="Campo de valor">
-            <NativeSelectControl
+            <FormSelectControl
               id="td-data-value-field"
+              ariaLabel="Campo de valor"
               value={binding.valueField ?? ""}
               onChange={(value) => {
                 const nextBinding: ComunicadoDataBinding = { ...binding };

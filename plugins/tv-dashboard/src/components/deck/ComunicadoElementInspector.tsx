@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, FolderOpen, Trash2, Upload } from "lucide-react";
-import { HintAction, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   BLOCK_ENTRANCE_DELAY_MAX_MS,
   BLOCK_ENTRANCE_DELAY_MIN_MS,
@@ -217,8 +217,9 @@ export function ComunicadoElementInspector({
           defaultOpen={false}
         >
           <DeckField id="td-entrance-kind" label="Efeito" hint={E.entranceAnimation}>
-            <NativeSelectControl
+            <FormSelectControl
               id="td-entrance-kind"
+              ariaLabel="Efeito"
               value={entrancePresetValue(resolveEntranceAnimation(selected.animations))}
               onChange={(value) => {
                 const entrance = resolveEntranceAnimation(selected.animations);

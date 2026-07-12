@@ -2422,7 +2422,12 @@
   min-height: 34px;
 }
 
-.td-deck-ribbon__select:not(.delpi-ui-native-control),
+.td-deck-ribbon__select.delpi-ui-select {
+  width: auto;
+  min-width: 120px;
+}
+
+.td-deck-ribbon__select:not(.delpi-ui-native-control):not(.delpi-ui-select),
 .td-deck-ribbon__number:not(.delpi-ui-native-control) {
   height: 34px;
   border: 1px solid var(--td-border);

@@ -1,4 +1,4 @@
-import { NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   chartTypeLabel,
   dataSourceOptionsForInspector,
@@ -47,8 +47,9 @@ export function VisualDataViewInspector({ pane = false, onOpenDataSources }: Pro
         </div>
       ) : null}
       <DeckField id="td-view-data-source" label="Fonte de dados">
-        <NativeSelectControl
+        <FormSelectControl
           id="td-view-data-source"
+          ariaLabel="Fonte de dados"
           value={selected.dataSourceId ?? ""}
           onChange={(value) =>
             updateSelected({

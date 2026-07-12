@@ -1,0 +1,168 @@
+/**
+ * SelectControl canônico (trigger + painel) — mesmo padrão visual dos dashboards (SI/PAC).
+ * Prefixo BEM: delpi-ui-select. Tokens --delpi-ui-* com fallback portal/--td-*.
+ */
+
+.delpi-ui-select {
+  --delpi-ui-select-bg: var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)));
+  --delpi-ui-select-text: var(--delpi-ui-text, var(--td-text, var(--text, #111111)));
+  --delpi-ui-select-border: var(--delpi-ui-border, var(--td-border, var(--border, #d0d7de)));
+  --delpi-ui-select-muted: var(
+    --delpi-ui-text-muted,
+    var(--td-muted, color-mix(in srgb, var(--delpi-ui-select-text) 55%, transparent))
+  );
+  --delpi-ui-select-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
+  --delpi-ui-select-radius: 10px;
+  --delpi-ui-select-min-height: 36px;
+  --delpi-ui-select-font-size: 13px;
+
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.delpi-ui-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--delpi-ui-select-min-height);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--delpi-ui-select-border);
+  border-radius: var(--delpi-ui-select-radius);
+  background: var(--delpi-ui-select-bg);
+  color: var(--delpi-ui-select-text);
+  font: inherit;
+  font-size: var(--delpi-ui-select-font-size);
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.delpi-ui-select__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--delpi-ui-select-accent) 45%, var(--delpi-ui-select-border));
+}
+
+.delpi-ui-select__trigger:focus-visible {
+  outline: none;
+  border-color: var(--delpi-ui-select-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--delpi-ui-select-accent) 22%, transparent);
+}
+
+.delpi-ui-select--open .delpi-ui-select__trigger {
+  border-color: var(--delpi-ui-select-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--delpi-ui-select-accent) 22%, transparent);
+}
+
+.delpi-ui-select__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.delpi-ui-select__trigger svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--delpi-ui-select-muted);
+}
+
+.delpi-ui-select__panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--delpi-ui-select-border);
+  border-radius: var(--delpi-ui-select-radius);
+  background: var(--delpi-ui-select-bg);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--delpi-ui-select-text) 14%, transparent);
+}
+
+.delpi-ui-select__search {
+  min-height: var(--delpi-ui-select-min-height);
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--delpi-ui-select-border);
+  border-radius: calc(var(--delpi-ui-select-radius) - 2px);
+  background: var(--delpi-ui-select-bg);
+  color: var(--delpi-ui-select-text);
+  font: inherit;
+  font-size: var(--delpi-ui-select-font-size);
+}
+
+.delpi-ui-select__search:focus {
+  outline: none;
+  border-color: var(--delpi-ui-select-accent);
+}
+
+.delpi-ui-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow: auto;
+  display: grid;
+  gap: 2px;
+}
+
+.delpi-ui-select__list li {
+  margin: 0;
+  list-style: none;
+}
+
+.delpi-ui-select__option {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--delpi-ui-select-text);
+  font: inherit;
+  font-size: var(--delpi-ui-select-font-size);
+  text-align: left;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.delpi-ui-select__option:hover,
+.delpi-ui-select__option--active {
+  background: color-mix(in srgb, var(--delpi-ui-select-accent) 14%, transparent);
+  color: var(--delpi-ui-select-accent);
+}
+
+.delpi-ui-select__empty {
+  padding: 8px;
+  color: var(--delpi-ui-select-muted);
+  font-size: 12px;
+}
+
+/* Densidade compacta (ribbon / painéis densos) */
+.delpi-ui-select--compact {
+  --delpi-ui-select-min-height: 30px;
+  --delpi-ui-select-font-size: 12px;
+  --delpi-ui-select-radius: 8px;
+}
+
+.delpi-ui-select--compact .delpi-ui-select__trigger {
+  padding: 4px 8px;
+}
+
+.delpi-ui-select--compact .delpi-ui-select__option {
+  padding: 5px 6px;
+}
