@@ -408,8 +408,9 @@ export function useComunicadoEditorSelection({
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
   }, [configRef, editingTextId, selected, updateBlockTextFieldsRef]);
 
-  const resetSelectionForSlide = useCallback((firstBlockId: string | undefined) => {
-    setSelectedIds(firstBlockId ? [firstBlockId] : []);
+  /** Ao trocar de slide: limpa seleção (não auto-seleciona o 1º bloco). */
+  const resetSelectionForSlide = useCallback(() => {
+    setSelectedIds([]);
     setEditingTextId(null);
     clearPartSelections();
     clearTextEditUi();

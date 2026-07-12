@@ -34,4 +34,26 @@ describe("useComunicadoEditorSelection", () => {
     });
     expect(result.current.selectedIds).toEqual([]);
   });
+
+  it("troca de slide limpa seleção sem auto-selecionar bloco", () => {
+    const { result } = renderHook(() => {
+      const configRef = useRef<ComunicadoConfig>({ version: 2, blocks });
+      const updateBlockTextFieldsRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks,
+        updateBlockTextFieldsRef,
+      });
+    });
+
+    act(() => {
+      result.current.selectBlock("b");
+    });
+    expect(result.current.selectedIds).toEqual(["b"]);
+
+    act(() => {
+      result.current.resetSelectionForSlide();
+    });
+    expect(result.current.selectedIds).toEqual([]);
+  });
 });

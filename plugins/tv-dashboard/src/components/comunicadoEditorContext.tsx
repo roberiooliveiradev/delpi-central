@@ -172,7 +172,7 @@ export function ComunicadoEditorProvider({
       serializeComunicadoConfig(enriched),
     );
     syncIdentityRef.current = `${playlistId}:${slideId ?? ""}`;
-    selection.resetSelectionForSlide(enriched.blocks?.[0]?.id);
+    selection.resetSelectionForSlide();
   }
 
   const stage = useComunicadoEditorStage();
