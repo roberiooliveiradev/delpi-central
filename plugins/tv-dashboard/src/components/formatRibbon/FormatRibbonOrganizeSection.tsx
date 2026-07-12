@@ -2,7 +2,6 @@ import { FieldLabel, HintAction } from "@delpi/plugin-ui/index";
 import {
   getChartPartState,
   getKpiPartState,
-  kpiPartAllowsFrame,
   mergeComunicadoChartOptions,
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
@@ -28,12 +27,9 @@ type Labels = Record<string, string>;
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
-/** Piso de opacidade (help: 10%–100%). O range visual usa 0–100 para o thumb chegar ao fim em 100%. */
-const OPACITY_MIN = 0.1;
-
 function clampOpacity(value: number): number {
   if (!Number.isFinite(value)) return 1;
-  return Math.min(1, Math.max(OPACITY_MIN, value));
+  return Math.min(1, Math.max(0, value));
 }
 
 /** Organizar / opacidade — borda/contorno, sombra e raio ficam em Aparência e Posição e tamanho. */
@@ -60,7 +56,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
   const kpiChromePart =
     selected.type === "kpi_view" ? resolveKpiShapeChromePartRef(selectedKpiPart) : null;
   const kpiPartOpacity =
-    selected.type === "kpi_view" && kpiChromePart && kpiChromePart.kind !== "card"
+    selected.type === "kpi_view" && kpiChromePart
       ? (getKpiPartState((selected as ComunicadoKpiViewBlock).kpiParts, kpiChromePart)?.style
           ?.opacity ?? 1)
       : null;
@@ -81,11 +77,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
 
   const setOpacity = (raw: number) => {
     const opacity = clampOpacity(raw);
-    if (
-      selected.type === "kpi_view" &&
-      kpiChromePart &&
-      kpiPartAllowsFrame(kpiChromePart)
-    ) {
+    if (selected.type === "kpi_view" && kpiChromePart) {
       const block = selected as ComunicadoKpiViewBlock;
       const nextParts = upsertKpiPartState(block.kpiParts, kpiChromePart, {
         style: { opacity },
@@ -177,7 +169,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
               max={100}
               step={5}
               aria-label="Opacidade"
-              aria-valuemin={10}
+              aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={opacityPercent}
               value={opacityPercent}

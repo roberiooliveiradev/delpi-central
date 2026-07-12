@@ -421,6 +421,11 @@ export function DelpiKpiCard({
           ["--delpi-kpi-card-radius" as string]: `${cardRadius}px`,
         } as CSSProperties)
       : {}),
+    ...(parts.card?.style?.opacity != null
+      ? ({
+          ["--delpi-kpi-card-opacity" as string]: String(parts.card.style.opacity),
+        } as CSSProperties)
+      : {}),
     ["--delpi-kpi-value-color" as string]: resolvedValueColor,
   };
 

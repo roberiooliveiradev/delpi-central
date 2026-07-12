@@ -212,16 +212,17 @@ export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
 
 /**
  * Alvo do chrome Preench./Contorno na ribbon Forma.
- * Sem parte (ou parte sem chrome próprio) → card; senão a parte selecionada.
+ * Sem parte → seleção global do widget (sem chrome de fundo).
+ * Fundo do KPI = parte `card` selecionada explicitamente.
  */
 export function resolveKpiShapeChromePartRef(
   selectedPart: KpiPartRef | null | undefined,
-): KpiPartRef {
-  if (!selectedPart) return { kind: "card" };
+): KpiPartRef | null {
+  if (!selectedPart) return null;
   if (selectedPart.kind === "card" || kpiPartAllowsFrame(selectedPart)) {
     return selectedPart;
   }
-  return { kind: "card" };
+  return null;
 }
 
 export function defaultKpiPartFrame(kind: KpiFramePartKind): KpiPartFrame {

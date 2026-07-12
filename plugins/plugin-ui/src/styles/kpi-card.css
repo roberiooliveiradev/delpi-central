@@ -22,6 +22,7 @@
     var(--delpi-kpi-card-border-color, var(--delpi-ui-border, color-mix(in srgb, #94a3b8 35%, transparent)));
   background: var(--delpi-kpi-card-bg, #ffffff);
   box-sizing: border-box;
+  opacity: var(--delpi-kpi-card-opacity, 1);
   /* Tipografia do card — tokens de conteúdo, NÃO tema chrome do host (evita branco em fundo claro). */
   color: var(--delpi-kpi-fg, #0f172a);
 }

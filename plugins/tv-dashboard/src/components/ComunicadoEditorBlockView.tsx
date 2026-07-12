@@ -444,9 +444,21 @@ function EditorKpiViewBlock({
 
   const onPartPointerDown = useCallback(
     (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
-      /* Card = moldura do bloco: arrastar move o KPI. */
+      /*
+       * Fundo (card): 1º clique no KPI = seleção global (handles do widget);
+       * clique seguinte no fundo = parte `card` (aparência individual).
+       * Arrastar sempre move o bloco.
+       */
       if (part.kind === "card" && event) {
-        selectBlock(block.id);
+        if (selectedId !== block.id) {
+          selectBlock(block.id);
+          startDrag(event, block, "move");
+          return;
+        }
+        if (!selectedKpiPart || selectedKpiPart.kind !== "card") {
+          selectKpiPart(block.id, { kind: "card" });
+          requestRibbonTab("shape");
+        }
         startDrag(event, block, "move");
         return;
       }

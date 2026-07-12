@@ -1226,11 +1226,20 @@
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap--selected {
-  /* Um único contorno; border-radius no wrap (JS) alinha ao chrome interno — evita “borda fantasma”. */
+  /*
+   * Padding da seleção global: afasta outline + handles do conteúdo
+   * para não confundir com outline/handles de partes (fundo, valor, etc.).
+   */
+  --td-global-selection-pad: 12px;
   outline: 1px dashed color-mix(in srgb, var(--td-accent) 70%, #fff);
-  outline-offset: 0;
+  outline-offset: var(--td-global-selection-pad);
   overflow: visible;
   isolation: isolate;
+}
+
+/* Parte individual (fundo/card, valor, etc.): chrome da parte manda — sem outline global. */
+.dashboard-tv-dashboard .td-composer__block-wrap--selected.td-composer__block-wrap--part-chrome {
+  outline: none;
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > .tdp-comunicado__block,
@@ -1242,7 +1251,8 @@
 
 .dashboard-tv-dashboard .td-composer__block-handles {
   position: absolute;
-  inset: 0;
+  /* Expande a área dos handles pelo mesmo pad da seleção global. */
+  inset: calc(-1 * var(--td-global-selection-pad, 12px));
   z-index: 20;
   pointer-events: none;
 }
@@ -1548,6 +1558,7 @@
   z-index: 21;
 }
 
+/* Handles alinhados à borda do layer já expandido por --td-global-selection-pad. */
 .dashboard-tv-dashboard .td-composer__resize--nw {
   left: -6px;
   top: -6px;
@@ -1643,7 +1654,8 @@
   left: 50%;
   top: 100%;
   width: 1px;
-  height: 12px;
+  /* Liga o pivô ao outline global (já afastado por --td-global-selection-pad). */
+  height: calc(12px + var(--td-global-selection-pad, 12px));
   background: var(--td-accent, #089bdb);
   transform: translateX(-50%);
 }
@@ -2710,7 +2722,6 @@
 
 /*
  * Range de opacidade: escala visual 0–100 (em 100% o preenchimento chega ao fim).
- * O piso de 10% é enforced no onChange — min={10} no input deixava um vão à direita em 100%.
  */
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range {
   appearance: none;

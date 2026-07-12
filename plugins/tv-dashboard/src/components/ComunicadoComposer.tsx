@@ -89,6 +89,7 @@ export function ComunicadoComposerCanvas() {
     selectedIds,
     selectedChartPart,
     selectedKpiPart,
+    selectedTablePart,
     isBlockSelected,
     selectBlock,
     selectBlocksByIds,
@@ -235,15 +236,14 @@ export function ComunicadoComposerCanvas() {
       return false;
     }
     const block = blocks.find((item) => item.id === blockId);
-    // Handles do bloco só no nível global — com parte interna selecionada, chrome da parte manda.
+    // Handles do bloco só no nível global — com qualquer parte selecionada, chrome da parte manda.
     if (block?.type === "chart_view" && selectedChartPart) {
       return false;
     }
-    if (
-      block?.type === "kpi_view" &&
-      selectedKpiPart &&
-      selectedKpiPart.kind !== "card"
-    ) {
+    if (block?.type === "kpi_view" && selectedKpiPart) {
+      return false;
+    }
+    if (block?.type === "table_view" && selectedTablePart) {
       return false;
     }
     return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
@@ -297,6 +297,11 @@ export function ComunicadoComposerCanvas() {
             }
             const isSelected = isBlockSelected(block.id);
             const isPrimary = block.id === primarySelected;
+            const hasPartChrome =
+              isPrimary &&
+              ((block.type === "kpi_view" && Boolean(selectedKpiPart)) ||
+                (block.type === "chart_view" && Boolean(selectedChartPart)) ||
+                (block.type === "table_view" && Boolean(selectedTablePart)));
             const selectionRadius = isSelected
               ? resolveBlockSelectionBorderRadiusPx(block)
               : undefined;
@@ -307,6 +312,7 @@ export function ComunicadoComposerCanvas() {
                   "td-composer__block-wrap",
                   isSelected ? "td-composer__block-wrap--selected" : "",
                   isSelected && !isPrimary ? "td-composer__block-wrap--multi" : "",
+                  hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -370,7 +376,8 @@ export function ComunicadoComposerCanvas() {
                         onPointerDown={(event) => startDrag(event, block, mode)}
                       />
                     ))}
-                    {blockSupportsShapeChromeHandles(block)
+                    {/* KPI: raio do fundo só com parte `card` (ribbon), não diamante global. */}
+                    {blockSupportsShapeChromeHandles(block) && block.type !== "kpi_view"
                       ? blockShapeChromeAdjustmentSpecs(block).map((spec) => {
                           const shortSidePx = Math.min(
                             (block.frame.w / 100) * designSize.width,

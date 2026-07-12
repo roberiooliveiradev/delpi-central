@@ -52,7 +52,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     mediaLibrary: "Escolher arquivo já enviado à playlist.",
     duplicateBlock: "Duplicar elemento selecionado (Ctrl+D).",
     cropImage: "Abrir painel de recorte da imagem no inspetor lateral.",
-    opacity: "Transparência do elemento (10% a 100%).",
+    opacity: "Transparência do elemento (0% a 100%).",
     objectFit: "Como a mídia preenche o quadro: cortar ou conter.",
     borderWidth: "Espessura da borda em pixels.",
     borderColor: "Cor da borda do elemento.",

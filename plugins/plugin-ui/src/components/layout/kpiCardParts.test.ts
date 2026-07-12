@@ -137,8 +137,8 @@ describe("kpi icon layout", () => {
     expect(css.background).toBe("#111");
   });
 
-  it("resolveKpiShapeChromePartRef mira a parte selecionada, não o card", () => {
-    expect(resolveKpiShapeChromePartRef(null)).toEqual({ kind: "card" });
+  it("resolveKpiShapeChromePartRef só com parte explícita (global ≠ card)", () => {
+    expect(resolveKpiShapeChromePartRef(null)).toBeNull();
     expect(resolveKpiShapeChromePartRef({ kind: "value" })).toEqual({ kind: "value" });
     expect(resolveKpiShapeChromePartRef({ kind: "icon" })).toEqual({ kind: "icon" });
     expect(resolveKpiShapeChromePartRef({ kind: "card" })).toEqual({ kind: "card" });

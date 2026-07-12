@@ -238,7 +238,9 @@ export function FormatRibbonFrameSection() {
     ? resolveBlockShapeChromeStyle(selected)
     : null;
   const borderRadius = innerChrome?.borderRadius ?? selected.style?.borderRadius ?? 0;
-  const showCornerRadius = !pointOnly;
+  const showCornerRadius =
+    !pointOnly &&
+    !(selected.type === "kpi_view" && selectedKpiPart == null);
 
   const setFrameKey = (key: "x" | "y" | "w" | "h", raw: number) => {
     updateSelected({

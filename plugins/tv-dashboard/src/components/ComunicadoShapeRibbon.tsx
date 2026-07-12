@@ -332,6 +332,14 @@ export function ComunicadoShapeRibbon() {
   if (isKpiChrome && selected?.type === "kpi_view") {
     const block = selected as ComunicadoKpiViewBlock;
     const chromePart = resolveKpiShapeChromePartRef(selectedKpiPart);
+    if (!chromePart) {
+      return shell(
+        <p className="td-subtitle td-deck-ribbon__hint">
+          Seleção global do KPI — posição, tamanho e organizar. Clique no fundo ou numa parte
+          para formatar preenchimento e contorno.
+        </p>,
+      );
+    }
     const partState = getKpiPartState(block.kpiParts, chromePart);
     const isCardChrome = chromePart.kind === "card";
     const cardState = getKpiPartState(block.kpiParts, { kind: "card" });
@@ -392,12 +400,14 @@ export function ComunicadoShapeRibbon() {
               onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
               onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
             />
-            <ShapeShadowMenu
-              value={block.style?.boxShadow}
-              presets={SHADOW_MENU_PRESETS}
-              shadowLabel="Sombra"
-              onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-            />
+            {isCardChrome ? (
+              <ShapeShadowMenu
+                value={block.style?.boxShadow}
+                presets={SHADOW_MENU_PRESETS}
+                shadowLabel="Sombra"
+                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+              />
+            ) : null}
           </div>
         </DeckRibbonGroup>
       </>,
