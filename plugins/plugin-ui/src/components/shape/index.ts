@@ -35,6 +35,10 @@ export {
   parseHexColor,
   relativeLuminance,
   resolveAutomaticTextColor,
+  resolvePaintTextColor,
+  AUTOMATIC_TEXT_COLOR,
+  isAutomaticTextColor,
+  hasIllegibleTextContrast,
   rgbToHex,
 } from "./colorUtils";
 export { DEFAULT_SHAPE_COLOR_LABELS, mergeShapeColorLabels } from "./shapeLabels";

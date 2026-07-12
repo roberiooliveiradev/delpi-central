@@ -247,3 +247,53 @@ export function resolveAutomaticTextColor(background?: string | null): "#000000"
   }
   return relativeLuminance(bg.hex) >= 0.45 ? "#000000" : "#ffffff";
 }
+
+/** Sentinel persistido pela opção Automático do seletor de cor. */
+export const AUTOMATIC_TEXT_COLOR = "auto";
+
+export function isAutomaticTextColor(color?: string | null): boolean {
+  if (color == null) return true;
+  const trimmed = color.trim().toLowerCase();
+  return trimmed === "" || trimmed === AUTOMATIC_TEXT_COLOR;
+}
+
+/**
+ * Cor efetiva para paint: explícita, ou Automático (contraste com o fundo).
+ * `unsetIsAutomatic` — quando true, ausência de cor também resolve por contraste.
+ */
+export function resolvePaintTextColor(
+  color: string | null | undefined,
+  background?: string | null,
+  options?: { unsetIsAutomatic?: boolean },
+): string | undefined {
+  const unsetIsAutomatic = options?.unsetIsAutomatic ?? true;
+  if (color != null && color.trim() !== "" && !isAutomaticTextColor(color)) {
+    if (hasIllegibleTextContrast(color, background)) {
+      return resolveAutomaticTextColor(background);
+    }
+    return color;
+  }
+  if (!unsetIsAutomatic && (color == null || color.trim() === "")) {
+    return undefined;
+  }
+  return resolveAutomaticTextColor(background);
+}
+
+/**
+ * Detecta branco-em-fundo-claro (ou preto-em-fundo-escuro) — tipicamente herança
+ * quebrada do tema chrome, não escolha deliberada de contraste.
+ */
+export function hasIllegibleTextContrast(
+  color?: string | null,
+  background?: string | null,
+): boolean {
+  if (!color || isAutomaticTextColor(color)) return false;
+  const fg = cssToColorValue(color);
+  const bg = cssToColorValue(background ?? "#ffffff");
+  if (fg.alpha < 0.5 || bg.alpha < 0.45) return false;
+  const fgL = relativeLuminance(fg.hex);
+  const bgL = relativeLuminance(bg.hex);
+  const bothLight = fgL >= 0.75 && bgL >= 0.45;
+  const bothDark = fgL <= 0.25 && bgL <= 0.45;
+  return bothLight || bothDark;
+}

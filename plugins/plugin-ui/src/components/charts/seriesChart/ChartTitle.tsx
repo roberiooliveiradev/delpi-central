@@ -9,6 +9,8 @@ import {
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import { resolvePaintTextColor } from "../../shape/colorUtils";
+import { DECK_COLOR_TEXT_STRONG, DECK_COLOR_SURFACE } from "../../../theme/deckColorCatalog";
 import { ChartPartResizeHandles } from "./ChartPartResizeHandles";
 
 export type ChartTitleProps = {
@@ -46,13 +48,15 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
   const { selected, editing, onPointerDown, onDoubleClick, ...dom } = pointer;
   const frameStyle = partFrameStyle(frame, selected && !editing);
   const showResize = selected && !editing && chartPartAllowsResize(ref);
+  const chartAreaFill =
+    getChartPartState(chartParts, { kind: "chartArea" })?.style?.fill ?? DECK_COLOR_SURFACE;
   const textStyle: CSSProperties = {
     ...frameStyle,
     fontFamily: partStyle?.fontFamily,
     fontSize: partStyle?.fontSize != null ? `${partStyle.fontSize}px` : undefined,
     fontWeight: partStyle?.fontWeight,
     fontStyle: partStyle?.fontStyle,
-    color: partStyle?.color,
+    color: resolvePaintTextColor(partStyle?.color, chartAreaFill) ?? DECK_COLOR_TEXT_STRONG,
   };
 
   const hostRef = useRef<HTMLDivElement>(null);

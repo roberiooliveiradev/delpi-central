@@ -850,6 +850,20 @@
   aspect-ratio: 16 / 9;
   border-radius: 0;
   overflow: hidden;
+  /*
+   * Conteúdo do slide ≠ chrome UI.
+   * No tema escuro do host, --delpi-ui-text/--tdp-data-text ficam claros e
+   * KPI/formas com fundo claro herdavam branco (título “some” ao desselecionar).
+   */
+  --delpi-ui-text: #0f172a;
+  --delpi-ui-muted: #64748b;
+  --delpi-ui-surface: #ffffff;
+  --tdp-data-text: #1e293b;
+  --tdp-data-text-strong: #0f172a;
+  --tdp-data-muted: #64748b;
+  --tdp-data-bg: #ffffff;
+  --tdp-data-surface: #ffffff;
+  --tdp-data-border: #b4b4b4;
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap {

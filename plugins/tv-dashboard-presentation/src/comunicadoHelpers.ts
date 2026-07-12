@@ -6,6 +6,7 @@ import {
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
   DECK_SHAPE_DEFAULTS,
+  resolvePaintTextColor,
 } from "@delpi/plugin-ui/index";
 
 import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
@@ -932,7 +933,11 @@ export function comunicadoTextInnerStyle(
   if (style.textHighlight) css.backgroundColor = style.textHighlight;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-  if (style.color) css.color = style.color;
+  const paintColor = resolvePaintTextColor(style.color, style.backgroundColor ?? style.fill ?? "#ffffff", {
+    unsetIsAutomatic: false,
+  });
+  if (paintColor) css.color = paintColor;
+  else if (style.color && style.color !== "auto") css.color = style.color;
   if (style.fontFamily) css.fontFamily = style.fontFamily;
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;
@@ -988,7 +993,13 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
       if (style.textAlign) css.textAlign = style.textAlign;
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-      if (style.color) css.color = style.color;
+      const textPaint = resolvePaintTextColor(
+        style.color,
+        style.backgroundColor ?? style.fill ?? "#ffffff",
+        { unsetIsAutomatic: false },
+      );
+      if (textPaint) css.color = textPaint;
+      else if (style.color && style.color !== "auto") css.color = style.color;
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.fontWeight) css.fontWeight = style.fontWeight;
       if (style.fontStyle) css.fontStyle = style.fontStyle;
@@ -1000,7 +1011,8 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     stripOuterChromeStyle(css);
     if (block.content) {
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-      if (style.color) css.color = style.color;
+      const shapeFill = style.fill ?? DECK_SHAPE_DEFAULTS.fill;
+      css.color = resolvePaintTextColor(style.color, shapeFill) ?? DECK_COLOR_TEXT_STRONG;
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.textAlign) css.textAlign = style.textAlign;
       if (style.fontWeight) css.fontWeight = style.fontWeight;

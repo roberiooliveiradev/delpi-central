@@ -19,9 +19,10 @@
   border-radius: var(--delpi-kpi-card-radius, 12px);
   border: var(--delpi-kpi-card-border-width, 1px) solid
     var(--delpi-kpi-card-border-color, var(--delpi-ui-border, color-mix(in srgb, #94a3b8 35%, transparent)));
-  background: var(--delpi-kpi-card-bg, var(--delpi-ui-surface, #ffffff));
+  background: var(--delpi-kpi-card-bg, #ffffff);
   box-sizing: border-box;
-  color: var(--delpi-ui-text, #0f172a);
+  /* Tipografia do card — tokens de conteúdo, NÃO tema chrome do host (evita branco em fundo claro). */
+  color: var(--delpi-kpi-fg, #0f172a);
 }
 
 .delpi-kpi-header {
@@ -47,7 +48,7 @@
   margin: 0 0 6px;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--delpi-ui-muted, #64748b);
+  color: var(--delpi-kpi-label-color, #64748b);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -65,7 +66,7 @@
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  color: var(--delpi-ui-text, #0f172a);
+  color: var(--delpi-kpi-value-fg, #0f172a);
 }
 
 .delpi-kpi-card--value-dominant .delpi-kpi-card__value {
@@ -76,7 +77,7 @@
 .delpi-kpi-card__hint {
   margin: 8px 0 0;
   font-size: 0.78rem;
-  color: var(--delpi-ui-muted, #64748b);
+  color: var(--delpi-kpi-hint-color, #64748b);
   flex-shrink: 0;
 }
 

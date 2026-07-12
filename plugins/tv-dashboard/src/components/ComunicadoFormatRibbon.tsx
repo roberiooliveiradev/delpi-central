@@ -382,6 +382,10 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   inline
                   variant="text"
                   contrastBackground={
+                    (selected?.type === "kpi_view"
+                      ? selected.kpiParts?.card?.style?.fill ??
+                        selected.kpiOptions?.backgroundColor
+                      : undefined) ??
                     (selected?.style?.fill && selected.style.fill !== "transparent"
                       ? selected.style.fill
                       : undefined) ??
@@ -391,7 +395,11 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       : undefined) ??
                     (background?.type === "color" ? background.value : "#ffffff")
                   }
-                  value={formatStyle?.color ?? "#0f172a"}
+                  value={
+                    formatStyle?.color === "auto"
+                      ? undefined
+                      : (formatStyle?.color ?? "#0f172a")
+                  }
                   onChange={(color) => updateSelectedTextFormatStyle({ color })}
                 />
                 {isTextBlock && textBlock ? (

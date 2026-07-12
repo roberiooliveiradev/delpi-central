@@ -20,7 +20,7 @@ describe("ColorPickerPopover", () => {
     expect(onChange).toHaveBeenCalledWith("transparent");
   });
 
-  it("mostra Automático no variant text e escolhe contraste", () => {
+  it("mostra Automático no variant text e grava sentinel auto", () => {
     const onChange = vi.fn();
     const { container } = render(
       <ColorPickerPopover
@@ -33,7 +33,7 @@ describe("ColorPickerPopover", () => {
     const view = within(container);
 
     fireEvent.click(view.getByRole("button", { name: "Automático" }));
-    expect(onChange).toHaveBeenCalledWith("#ffffff");
+    expect(onChange).toHaveBeenCalledWith("auto");
   });
 
   it("mostra Sem contorno no variant outline", () => {

@@ -10,6 +10,8 @@ import {
   parseHexColor,
   relativeLuminance,
   resolveAutomaticTextColor,
+  resolvePaintTextColor,
+  hasIllegibleTextContrast,
   rgbToHex,
 } from "./colorUtils";
 import { DELPI_THEME_BASE_COLORS } from "./colorPalettes";
@@ -74,5 +76,12 @@ describe("shape colorUtils", () => {
     expect(resolveAutomaticTextColor("#0f172a")).toBe("#ffffff");
     expect(resolveAutomaticTextColor("#003866")).toBe("#ffffff");
     expect(resolveAutomaticTextColor("transparent")).toBe("#000000");
+  });
+
+  it("corrige branco ilegível em fundo claro no paint", () => {
+    expect(hasIllegibleTextContrast("#ffffff", "#ffffff")).toBe(true);
+    expect(hasIllegibleTextContrast("#0f172a", "#ffffff")).toBe(false);
+    expect(resolvePaintTextColor("#ffffff", "#f8fafc")).toBe("#000000");
+    expect(resolvePaintTextColor("auto", "#0f172a")).toBe("#ffffff");
   });
 });

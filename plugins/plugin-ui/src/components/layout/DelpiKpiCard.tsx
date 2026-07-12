@@ -1,6 +1,13 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import {
+  hasIllegibleTextContrast,
+  isAutomaticTextColor,
+  resolveAutomaticTextColor,
+  resolvePaintTextColor,
+} from "../shape/colorUtils";
+import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import { FitText } from "./FitText";
 import { MetricKpiCard, metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard";
 import {
@@ -12,6 +19,19 @@ import {
   type KpiCardInteraction,
   type KpiPartsMap,
 } from "./kpiCardParts";
+
+function resolveKpiPartForeground(
+  explicit: string | undefined,
+  cardBg: string,
+  role: "label" | "value",
+): string {
+  const auto = resolveAutomaticTextColor(cardBg);
+  const muted = auto === "#000000" ? DECK_KPI_DEFAULTS.labelColor : "#94a3b8";
+  if (isAutomaticTextColor(explicit) || hasIllegibleTextContrast(explicit, cardBg)) {
+    return role === "value" ? auto : muted;
+  }
+  return explicit!;
+}
 
 export type { MetricKpiCardTone as DelpiKpiCardTone };
 export type {
@@ -184,7 +204,15 @@ export function DelpiKpiCard({
 
   const titleContent = parts.title?.content?.trim() || label;
   const hintContent = parts.hint?.content?.trim() || hint;
-  const resolvedValueColor = parts.value?.style?.color ?? valueColor;
+  const cardBg = parts.card?.style?.fill ?? backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor;
+  const autoFg = resolveAutomaticTextColor(cardBg);
+  const resolvedTitleColor = resolveKpiPartForeground(parts.title?.style?.color, cardBg, "label");
+  const resolvedValueColor = resolveKpiPartForeground(
+    parts.value?.style?.color ?? valueColor,
+    cardBg,
+    "value",
+  );
+  const resolvedHintColor = resolveKpiPartForeground(parts.hint?.style?.color, cardBg, "label");
   const resolvedBg = parts.card?.style?.fill ?? backgroundColor;
   const cardStroke = parts.card?.style?.stroke;
   const cardStrokeWidth = parts.card?.style?.strokeWidth;
@@ -192,38 +220,35 @@ export function DelpiKpiCard({
 
   const titleTextStyle: CSSProperties | undefined = (() => {
     const s = parts.title?.style;
-    if (!s) return undefined;
     return {
-      fontFamily: s.fontFamily,
-      fontSize: s.fontSize != null ? `${s.fontSize}px` : undefined,
-      fontWeight: s.fontWeight,
-      fontStyle: s.fontStyle,
-      color: s.color,
-      textDecoration: s.textDecoration,
+      fontFamily: s?.fontFamily,
+      fontSize: s?.fontSize != null ? `${s.fontSize}px` : undefined,
+      fontWeight: s?.fontWeight,
+      fontStyle: s?.fontStyle,
+      color: resolvedTitleColor,
+      textDecoration: s?.textDecoration,
     };
   })();
   const valueTextStyle: CSSProperties | undefined = (() => {
     const s = parts.value?.style;
-    if (!s) return undefined;
     return {
-      fontFamily: s.fontFamily,
-      fontSize: s.fontSize != null ? `${s.fontSize}px` : undefined,
-      fontWeight: s.fontWeight,
-      fontStyle: s.fontStyle,
-      color: s.color ?? resolvedValueColor,
-      textDecoration: s.textDecoration,
+      fontFamily: s?.fontFamily,
+      fontSize: s?.fontSize != null ? `${s.fontSize}px` : undefined,
+      fontWeight: s?.fontWeight,
+      fontStyle: s?.fontStyle,
+      color: resolvedValueColor,
+      textDecoration: s?.textDecoration,
     };
   })();
   const hintTextStyle: CSSProperties | undefined = (() => {
     const s = parts.hint?.style;
-    if (!s) return undefined;
     return {
-      fontFamily: s.fontFamily,
-      fontSize: s.fontSize != null ? `${s.fontSize}px` : undefined,
-      fontWeight: s.fontWeight,
-      fontStyle: s.fontStyle,
-      color: s.color,
-      textDecoration: s.textDecoration,
+      fontFamily: s?.fontFamily,
+      fontSize: s?.fontSize != null ? `${s.fontSize}px` : undefined,
+      fontWeight: s?.fontWeight,
+      fontStyle: s?.fontStyle,
+      color: resolvedHintColor,
+      textDecoration: s?.textDecoration,
     };
   })();
 
@@ -234,11 +259,11 @@ export function DelpiKpiCard({
   const iconPtr = bindKpiPartPointer({ kind: "icon" }, interaction);
 
   const shellStyle: CSSProperties = {
-    ...(resolvedBg
-      ? ({
-          ["--delpi-kpi-card-bg" as string]: resolvedBg,
-        } as CSSProperties)
-      : {}),
+    ["--delpi-kpi-fg" as string]: autoFg,
+    ["--delpi-kpi-label-color" as string]: resolvedTitleColor,
+    ["--delpi-kpi-hint-color" as string]: resolvedHintColor,
+    ["--delpi-kpi-value-fg" as string]: resolvedValueColor,
+    ["--delpi-kpi-card-bg" as string]: resolvedBg ?? DECK_KPI_DEFAULTS.backgroundColor,
     ...(cardStroke && cardStrokeWidth != null && cardStrokeWidth > 0
       ? ({
           ["--delpi-kpi-card-border-width" as string]: `${cardStrokeWidth}px`,
@@ -255,9 +280,7 @@ export function DelpiKpiCard({
           ["--delpi-kpi-card-radius" as string]: `${cardRadius}px`,
         } as CSSProperties)
       : {}),
-    ...(resolvedValueColor
-      ? ({ ["--delpi-kpi-value-color" as string]: resolvedValueColor } as CSSProperties)
-      : {}),
+    ["--delpi-kpi-value-color" as string]: resolvedValueColor,
   };
 
   const articleClass = [

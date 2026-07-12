@@ -5,7 +5,7 @@ import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorDialog } from "./ColorDialog";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
-import { cssToColorValue, resolveAutomaticTextColor } from "./colorUtils";
+import { cssToColorValue, resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR } from "./colorUtils";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
 import { useClickOutside } from "./useClickOutside";
@@ -86,12 +86,11 @@ export function ColorPickerPopover({
   };
 
   const handleAutomatic = () => {
-    const color = resolveAutomaticTextColor(contrastBackground);
+    // Persiste sentinel — o paint resolve contraste contra o fundo atual.
     if (onAutomatic) {
-      onAutomatic(color);
-      return;
+      onAutomatic(resolveAutomaticTextColor(contrastBackground));
     }
-    onChange(color);
+    onChange(AUTOMATIC_TEXT_COLOR);
   };
 
   const defaultNoFillLabel =

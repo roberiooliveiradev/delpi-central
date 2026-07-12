@@ -319,6 +319,13 @@
   position: relative;
   overflow: hidden;
   padding: 0;
+  /* Tipografia de conteúdo do slide — independente do tema chrome do host. */
+  --delpi-ui-text: #0f172a;
+  --delpi-ui-muted: #64748b;
+  --delpi-ui-surface: #ffffff;
+  --tdp-data-text: #1e293b;
+  --tdp-data-text-strong: #0f172a;
+  --tdp-data-muted: #64748b;
 }
 
 .tdp-comunicado__stage {
@@ -985,27 +992,27 @@
   width: 100%;
 }
 
-/* KPI herda DelpiKpiCard — chrome via --delpi-kpi-card-* (não forçar branco/zero). */
+/* KPI — tipografia pelo contraste do fundo do card (não herda tema chrome do host). */
 .tdp-kpi-view .delpi-kpi-card {
-  background: var(--delpi-kpi-card-bg, var(--delpi-ui-surface, #ffffff));
+  background: var(--delpi-kpi-card-bg, #ffffff);
   border-width: var(--delpi-kpi-card-border-width, 0px);
   border-style: solid;
   border-color: var(--delpi-kpi-card-border-color, transparent);
   border-radius: var(--delpi-kpi-card-radius, 0px);
   padding: 0.55em 0.75em;
-  color: var(--delpi-ui-text, #0f172a);
+  color: var(--delpi-kpi-fg, #0f172a);
 }
 
 .tdp-kpi-view .delpi-kpi-card__label {
-  color: var(--delpi-ui-muted, #64748b);
+  color: var(--delpi-kpi-label-color, #64748b);
 }
 
 .tdp-kpi-view .delpi-kpi-card__value {
-  color: var(--delpi-kpi-value-color, var(--delpi-ui-text, #0f172a));
+  color: var(--delpi-kpi-value-color, var(--delpi-kpi-value-fg, #0f172a));
 }
 
 .tdp-kpi-view .delpi-kpi-card__hint {
-  color: var(--delpi-ui-muted, #64748b);
+  color: var(--delpi-kpi-hint-color, #64748b);
 }
 
 .tdp-kpi-view .delpi-kpi-icon {
