@@ -253,7 +253,10 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   /** Onda 4G.8 — estilo/visibilidade por parte (adapter com tableOptions). */
   tableParts?: ComunicadoTablePartsMap;
   dataSourceId?: string;
+  /** Truncamento de exibição: máx. de linhas (vazio = todas do resolved, com scroll). */
   maxRows?: number;
+  /** Truncamento de exibição: máx. de colunas (vazio = todas). */
+  maxCols?: number;
   resolved?: ComunicadoDataResolved;
 };
 

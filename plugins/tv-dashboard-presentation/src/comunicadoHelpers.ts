@@ -57,6 +57,11 @@ import {
   type ComunicadoTablePartsMap,
 } from "./comunicadoTableParts";
 import {
+  TABLE_VIEW_MAX_COLS_CAP,
+  TABLE_VIEW_MAX_ROWS_CAP,
+  normalizeTableViewLimit,
+} from "./tableViewLimits";
+import {
   comunicadoVerticalAlignToJustifyContent,
   defaultVerticalAlignForVisualBox,
   isComunicadoVisualBoxBlock,
@@ -551,6 +556,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     base.tablePreset = block.tablePreset;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
     if (block.maxRows != null) base.maxRows = block.maxRows;
+    if (block.maxCols != null) base.maxCols = block.maxCols;
     if (block.tableOptions) base.tableOptions = { ...block.tableOptions };
     if (block.tableParts) base.tableParts = { ...block.tableParts };
   } else if (block.type === "kpi_view") {
@@ -788,7 +794,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         tableOptions,
         tableParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
-        maxRows: typeof block.maxRows === "number" ? block.maxRows : undefined,
+        maxRows: normalizeTableViewLimit(block.maxRows, TABLE_VIEW_MAX_ROWS_CAP),
+        maxCols: normalizeTableViewLimit(block.maxCols, TABLE_VIEW_MAX_COLS_CAP),
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)

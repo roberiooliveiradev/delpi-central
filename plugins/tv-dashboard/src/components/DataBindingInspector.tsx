@@ -191,13 +191,13 @@ export function DataBindingInspector({
           </DeckField>
         ) : null}
         {showTableOptions ? (
-          <DeckField id="td-data-max-rows" label="Máximo de linhas">
+          <DeckField id="td-data-max-rows" label="Máximo de linhas (consulta)">
             <NativeTextControl
               id="td-data-max-rows"
               type="number"
               min={1}
               max={maxRowsLimit}
-              placeholder={`Padrão (até ${maxRowsLimit})`}
+              placeholder={`Padrão da rota (até ${maxRowsLimit})`}
               value={binding.maxRows ?? ""}
               onChange={(value) => {
                 const raw = value.trim();

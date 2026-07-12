@@ -57,5 +57,6 @@ describe("comunicadoBlockShapeChrome", () => {
   it("createTableViewBlock não grava maxRows a partir do picker", () => {
     const block = createTableViewBlock(5, 2) as ComunicadoTableViewBlock;
     expect(block.maxRows).toBeUndefined();
+    expect(block.maxCols).toBeUndefined();
   });
 });

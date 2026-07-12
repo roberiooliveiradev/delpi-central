@@ -448,5 +448,11 @@ export {
   resolveTableColumns,
   type TvDataTableColumn,
 } from "./tvDataPresentation";
+export {
+  TABLE_VIEW_MAX_COLS_CAP,
+  TABLE_VIEW_MAX_ROWS_CAP,
+  applyTableViewDisplayLimits,
+  normalizeTableViewLimit,
+} from "./tableViewLimits";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

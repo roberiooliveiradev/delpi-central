@@ -3,6 +3,7 @@ import { tablePresetLabel } from "./comunicadoChartView";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoTableInteraction } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
+import { applyTableViewDisplayLimits } from "./tableViewLimits";
 import { resolveTableColumns } from "./tvDataPresentation";
 
 type Props = {
@@ -41,11 +42,12 @@ export function TableViewBlockView({
     );
   }
 
-  // Limite de linhas vem do enrichment (`dataBinding.maxRows` / tvConstraints).
-  // Não aplicar `block.maxRows` aqui: o picker de inserção gravava o tamanho da grade
-  // (ex.: 5) e truncava a série — a tabela cabia no bloco e o scroll nunca aparecia.
-  const rows = resolved.table?.rows ?? [];
-  const columns = resolveTableColumns(resolved, rows);
+  const allRows = resolved.table?.rows ?? [];
+  const allColumns = resolveTableColumns(resolved, allRows);
+  const { rows, columns } = applyTableViewDisplayLimits(allRows, allColumns, {
+    maxRows: block.maxRows,
+    maxCols: block.maxCols,
+  });
   const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 
   return (
