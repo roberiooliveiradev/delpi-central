@@ -42,6 +42,9 @@ type DragState = {
   adjIndex?: number;
   startAdjustments?: number[];
   shortSidePx?: number;
+  /** Posição local (0–100) no quadro no pointerdown — evita salto ao clicar. */
+  startLocalX?: number;
+  startLocalY?: number;
 };
 
 type PendingDragState = DragState & {
@@ -201,8 +204,18 @@ export function useCanvasBlockInteraction({
       const specs = blockShapeChromeAdjustmentSpecs(block);
       const spec = specs.find((item) => item.index === drag.adjIndex) ?? specs[drag.adjIndex];
       if (!spec) return;
-      const startValues = drag.startAdjustments ?? resolveBlockShapeChromeAdjustmentValues(block);
-      const value = spec.valueFromPointer(localX, localY, startValues);
+      const startValues =
+        drag.startAdjustments ??
+        resolveBlockShapeChromeAdjustmentValues(block, drag.shortSidePx ?? 64);
+      const startValue = startValues[spec.index] ?? spec.defaultValue;
+      const startLocalX = drag.startLocalX ?? localX;
+      const startLocalY = drag.startLocalY ?? localY;
+      const rawNow = spec.valueFromPointer(localX, localY, startValues);
+      const rawAtStart = spec.valueFromPointer(startLocalX, startLocalY, startValues);
+      const value = Math.min(
+        spec.max,
+        Math.max(spec.min, startValue + (rawNow - rawAtStart)),
+      );
       const patch = applyBlockShapeChromeAdjustment(block, spec.index, value, drag.shortSidePx ?? 64);
       if (!patch) return;
       if (onUpdateBlockRef.current) {
@@ -326,14 +339,25 @@ export function useCanvasBlockInteraction({
 
       if (adjIndex != null && blockSupportsShapeChromeHandles(block)) {
         const wrap = (event.currentTarget as HTMLElement).closest(".td-composer__block-wrap");
-        const rect = wrap?.getBoundingClientRect();
-        const shortSidePx = rect ? Math.min(rect.width, rect.height) : 64;
+        // offsetWidth/Height = espaço de layout (design), não getBoundingClientRect (já com zoom).
+        const shortSidePx = wrap
+          ? Math.min(
+              (wrap as HTMLElement).offsetWidth || 64,
+              (wrap as HTMLElement).offsetHeight || 64,
+            )
+          : 64;
+        const startPt = pointerToPercent(event.clientX, event.clientY);
+        const frame = dragState.startFrame;
+        const startLocalX = frame.w > 0 ? ((startPt.x - frame.x) / frame.w) * 100 : 50;
+        const startLocalY = frame.h > 0 ? ((startPt.y - frame.y) / frame.h) * 100 : 50;
         onInteractionStartRef.current?.();
         dragRef.current = {
           ...dragState,
           adjIndex,
-          startAdjustments: resolveBlockShapeChromeAdjustmentValues(block),
+          startAdjustments: resolveBlockShapeChromeAdjustmentValues(block, shortSidePx),
           shortSidePx,
+          startLocalX,
+          startLocalY,
         };
         window.addEventListener("pointermove", listeners.onPointerMove);
         window.addEventListener("pointerup", listeners.onPointerUp);
