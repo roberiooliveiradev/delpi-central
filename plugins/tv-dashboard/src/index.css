@@ -260,7 +260,8 @@
 .td-slide-thumb__stage {
   position: relative;
   overflow: hidden;
-  background: #05070a;
+  /* Canvas do comunicado é branco — fundo escuro vazava thumb “tudo preto”. */
+  background: #ffffff;
 }
 
 .td-slide-thumb__stage .tdp-native-screen,

@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import type { Slide } from "../api/tvDashboardApi";
 import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
@@ -9,7 +9,10 @@ import { DeckWorkspace } from "./DeckWorkspace";
 import { ComunicadoSlideTemplatesPanel } from "./deck/ComunicadoSlideTemplatesPanel";
 import { DeckElementSidePanel } from "./deck";
 import { SlideDataFiltersPanel } from "./SlideDataFiltersPanel";
-import { serializeComunicadoConfigForThumbnail } from "./slideCardPreview";
+import {
+  buildFilmstripSlidesWithThumbnailCache,
+  serializeComunicadoConfigForThumbnail,
+} from "./slideCardPreview";
 
 type WorkspaceProps = ComponentProps<typeof DeckWorkspace>;
 type ChromeProps = ComponentProps<typeof DeckEditorChrome>;
@@ -29,19 +32,23 @@ export function CustomSlideEditorLayout({
   adminLabels,
 }: Props) {
   const { config, blocks, dataPreviewLoading, dataPreviewError } = useComunicadoEditor();
+  /** Cache de print do filmstrip (com `resolved`) — sobrevive à troca de slide. */
+  const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
+
+  const liveThumbnailConfig = useMemo(
+    () => serializeComunicadoConfigForThumbnail(config, blocks),
+    [config, blocks],
+  );
 
   const slidesForFilmstrip = useMemo(
     () =>
-      workspaceProps.slides.map((slide) =>
-        slide.id === selectedSlide.id
-          ? {
-              ...slide,
-              // Inclui `resolved` dos blocos de dados — print exato do gráfico/tabela no palco.
-              nativeConfig: serializeComunicadoConfigForThumbnail(config, blocks),
-            }
-          : slide,
-      ),
-    [workspaceProps.slides, selectedSlide.id, config, blocks],
+      buildFilmstripSlidesWithThumbnailCache({
+        slides: workspaceProps.slides,
+        selectedSlideId: selectedSlide.id,
+        liveThumbnailConfig,
+        cache: thumbnailCacheRef.current,
+      }),
+    [workspaceProps.slides, selectedSlide.id, liveThumbnailConfig],
   );
 
   const slideTabExtra = (

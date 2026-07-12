@@ -31,6 +31,39 @@ export function serializeComunicadoConfigForThumbnail(
   return serialized;
 }
 
+/**
+ * Monta a lista do filmstrip: slide ativo usa snapshot ao vivo (com resolved);
+ * demais slides reutilizam cache para não “sumir” o gráfico ao trocar de tela.
+ */
+export function buildFilmstripSlidesWithThumbnailCache(params: {
+  slides: Slide[];
+  selectedSlideId: string;
+  liveThumbnailConfig: Record<string, unknown>;
+  cache: Record<string, Record<string, unknown>>;
+}): Slide[] {
+  const { slides, selectedSlideId, liveThumbnailConfig, cache } = params;
+  cache[selectedSlideId] = liveThumbnailConfig;
+
+  const liveIds = new Set(slides.map((slide) => slide.id));
+  for (const id of Object.keys(cache)) {
+    if (!liveIds.has(id)) delete cache[id];
+  }
+
+  return slides.map((slide) => {
+    if (slide.slideType !== "native" || slide.nativeScreenKey !== "custom_message") {
+      return slide;
+    }
+    if (slide.id === selectedSlideId) {
+      return { ...slide, nativeConfig: liveThumbnailConfig };
+    }
+    const cached = cache[slide.id];
+    if (cached) {
+      return { ...slide, nativeConfig: cached };
+    }
+    return slide;
+  });
+}
+
 export function resolveMasterForPreview(
   master: PlaylistMasterConfig | undefined,
   playlistId: string,
@@ -103,11 +136,11 @@ function buildComunicadoPreviewData(
 ): Record<string, unknown> {
   const cfg = parseComunicadoConfig(raw);
   const background = cfg.background;
-  let resolvedBackground = background;
-  if (background?.type === "image" && background.assetId) {
+  let resolvedBackground = background ?? { type: "color" as const, value: "#ffffff" };
+  if (resolvedBackground.type === "image" && resolvedBackground.assetId) {
     resolvedBackground = {
-      ...background,
-      url: adminMediaUrl(playlistId, background.assetId),
+      ...resolvedBackground,
+      url: adminMediaUrl(playlistId, resolvedBackground.assetId),
     };
   }
   const blocks = enrichBlocksForEditorThumbnail(cfg.blocks ?? [], playlistId);
@@ -116,6 +149,7 @@ function buildComunicadoPreviewData(
     version: cfg.version ?? 2,
     headline: cfg.headline,
     subtitle: cfg.subtitle,
+    // Sempre enviar fundo explícito — evita thumb preto (stage/#master escuro) em tela vazia.
     background: resolvedBackground,
     blocks,
     ...(cfg.dataFilters ? { dataFilters: cfg.dataFilters } : {}),
