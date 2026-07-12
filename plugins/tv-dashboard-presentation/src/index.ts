@@ -133,6 +133,7 @@ export {
   createDataSourceBlock,
   createChartViewBlock,
   createTableViewBlock,
+  createKpiViewBlock,
   createIconBlock,
   createShapeBlock,
   defaultDataBlockTypeForRoute,
@@ -253,6 +254,16 @@ export {
 } from "./comunicadoTextBlockLink";
 export { TvDataBlockView } from "./tvDataBlockView";
 export { ChartViewBlockView } from "./chartViewBlockView";
+export { KpiViewBlockView } from "./kpiViewBlockView";
+export {
+  DEFAULT_COMUNICADO_KPI_OPTIONS,
+  mergeComunicadoKpiOptions,
+  type ComunicadoKpiOptions,
+} from "./comunicadoKpiOptions";
+export {
+  resolveKpiViewPresentation,
+  type KpiViewPresentation,
+} from "./resolveKpiPresentation";
 export { TableViewBlockView } from "./tableViewBlockView";
 export { DataSourceBlockView } from "./dataSourceBlockView";
 export {
@@ -370,7 +381,7 @@ export {
 } from "./tableElementCatalog";
 export { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 export { ConfigurableTable } from "./ConfigurableTable";
-export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock } from "./comunicadoTypes";
+export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock, ComunicadoKpiViewBlock } from "./comunicadoTypes";
 export {
   resolveChartType,
   resolveEffectiveDisplayMode,

@@ -48,6 +48,7 @@ export function nativeConfigHasResolvedData(config: Record<string, unknown> | nu
 const DATAISH_BLOCK_TYPES = new Set([
   "chart_view",
   "table_view",
+  "kpi_view",
   "data_source",
   "data_kpi",
   "data_chart",
@@ -235,10 +236,11 @@ function enrichBlocksForEditorThumbnail(
         url: adminMediaUrl(playlistId, block.assetId),
       };
     }
-    // chart_view / table_view / data_*: preservar `resolved` (print do palco).
+    // chart_view / table_view / kpi_view / data_*: preservar `resolved` (print do palco).
     if (
       block.type === "chart_view" ||
       block.type === "table_view" ||
+      block.type === "kpi_view" ||
       block.type === "data_source" ||
       ("resolved" in block && block.resolved)
     ) {

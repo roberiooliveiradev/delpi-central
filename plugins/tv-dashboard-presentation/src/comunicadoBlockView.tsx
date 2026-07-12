@@ -16,6 +16,7 @@ import {
 import type { ComunicadoBlock, ComunicadoDataBlock } from "./comunicadoTypes";
 import { ChartViewBlockView } from "./chartViewBlockView";
 import { DataSourceBlockView } from "./dataSourceBlockView";
+import { KpiViewBlockView } from "./kpiViewBlockView";
 import { TableViewBlockView } from "./tableViewBlockView";
 import { TvDataBlockView } from "./tvDataBlockView";
 
@@ -196,7 +197,7 @@ export function ComunicadoBlockView({
     return (
       <div className={blockClass("tdp-comunicado__block--data-source")} style={style}>
         <DataSourceBlockView
-          block={block}
+          block={block as import("./comunicadoTypes").ComunicadoDataSourceBlock}
           interactive={interactive}
           loading={dataLoading}
           editorMode={interactive}
@@ -217,6 +218,14 @@ export function ComunicadoBlockView({
     return (
       <div className={blockClass("tdp-comunicado__block--table-view")} style={style}>
         <TableViewBlockView block={block} interactive={interactive} loading={dataLoading} />
+      </div>
+    );
+  }
+
+  if (block.type === "kpi_view") {
+    return (
+      <div className={blockClass("tdp-comunicado__block--kpi-view")} style={style}>
+        <KpiViewBlockView block={block} interactive={interactive} loading={dataLoading} />
       </div>
     );
   }

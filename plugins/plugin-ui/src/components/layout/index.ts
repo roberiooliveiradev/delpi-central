@@ -32,6 +32,16 @@ export {
   type KpiScopeBadge,
 } from "./KpiCard";
 export {
+  DelpiKpiCard,
+  parseKpiNumericValue,
+  resolveDelpiKpiTone,
+  type DelpiKpiCardProps,
+  type DelpiKpiCardTone,
+  type DelpiKpiColorRule,
+  type DelpiKpiColorRuleOp,
+  type DelpiKpiResolvedPresentation,
+} from "./DelpiKpiCard";
+export {
   SimpleKpiCard,
   createAnalyticsKpiCard,
   createKaizenKpiCard,

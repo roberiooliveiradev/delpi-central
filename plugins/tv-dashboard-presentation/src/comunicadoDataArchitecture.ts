@@ -1,12 +1,12 @@
 import type { ComunicadoBlock, ComunicadoDataSourceBlock } from "./comunicadoTypes";
 
-const DATA_VIEW_BLOCK_TYPES = new Set(["chart_view", "table_view"]);
+const DATA_VIEW_BLOCK_TYPES = new Set(["chart_view", "table_view", "kpi_view"]);
 
 export function isDataSourceBlockType(type: string): type is "data_source" {
   return type === "data_source";
 }
 
-export function isDataViewBlockType(type: string): type is "chart_view" | "table_view" {
+export function isDataViewBlockType(type: string): type is "chart_view" | "table_view" | "kpi_view" {
   return DATA_VIEW_BLOCK_TYPES.has(type);
 }
 
@@ -15,12 +15,12 @@ export function isFetchableDataBlockType(type: string): boolean {
   return type === "data_source" || type.startsWith("data_");
 }
 
-/** IDs de `data_source` referenciados por `chart_view` / `table_view`. */
+/** IDs de `data_source` referenciados por views (chart / table / kpi). */
 export function getLinkedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
   const linked = new Set<string>();
   for (const block of blocks) {
-    if (block.type === "chart_view" || block.type === "table_view") {
-      const sourceId = block.dataSourceId?.trim();
+    if (isDataViewBlockType(block.type)) {
+      const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
       if (sourceId) linked.add(sourceId);
     }
   }

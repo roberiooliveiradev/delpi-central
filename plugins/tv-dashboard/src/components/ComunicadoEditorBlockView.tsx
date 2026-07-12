@@ -421,6 +421,22 @@ export function ComunicadoEditorBlockView({
     );
   }
 
+  if (block.type === "kpi_view") {
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <ComunicadoBlockView
+          block={block}
+          fontScale={fontScale}
+          style={style}
+          className={className}
+          interactive
+          embedded
+          dataLoading={dataLoading}
+        />
+      </div>
+    );
+  }
+
   if (block.type === "icon") {
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>

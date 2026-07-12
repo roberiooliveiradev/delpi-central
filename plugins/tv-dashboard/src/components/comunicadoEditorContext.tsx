@@ -13,6 +13,7 @@ import {
   createShapeBlock,
   createChartViewBlock,
   createTableViewBlock,
+  createKpiViewBlock,
   isDataBlockType,
   isFetchableDataBlockType,
   isDataViewBlockType,
@@ -697,6 +698,13 @@ export function ComunicadoEditorProvider({
     updateBlocks([...(configRef.current.blocks ?? []), block]);
   }
 
+  function addKpiViewBlock() {
+    const block = createKpiViewBlock();
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    setSelectedId(block.id);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }
+
   function openDataPanel() {
     setDataPanelOpen(true);
     setRibbonTabRequest("insert");
@@ -1330,6 +1338,7 @@ export function ComunicadoEditorProvider({
     addDataSourceBlock,
     addChartViewBlock,
     addTableViewBlock,
+    addKpiViewBlock,
     openDataPanel,
     dataPanelOpen,
     setDataPanelOpen,

@@ -8,7 +8,7 @@ from typing import Any
 ROUTES_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_data_routes.json"
 
 DATA_BLOCK_TYPES = frozenset({"data_kpi", "data_chart", "data_table", "data_metric", "data_source"})
-DATA_VIEW_BLOCK_TYPES = frozenset({"chart_view", "table_view"})
+DATA_VIEW_BLOCK_TYPES = frozenset({"chart_view", "table_view", "kpi_view"})
 FETCHABLE_DATA_BLOCK_TYPES = DATA_BLOCK_TYPES
 
 

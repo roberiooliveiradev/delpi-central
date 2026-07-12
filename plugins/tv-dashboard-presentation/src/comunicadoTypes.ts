@@ -252,6 +252,13 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   resolved?: ComunicadoDataResolved;
 };
 
+export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
+  type: "kpi_view";
+  dataSourceId?: string;
+  kpiOptions?: import("./comunicadoKpiOptions").ComunicadoKpiOptions;
+  resolved?: ComunicadoDataResolved;
+};
+
 export type ComunicadoDataBlock = ComunicadoBlockBase & {
   type: ComunicadoDataBlockType;
   dataBinding: ComunicadoDataBinding;
@@ -288,7 +295,8 @@ export type ComunicadoBlock =
   | ComunicadoDataBlock
   | ComunicadoDataSourceBlock
   | ComunicadoChartViewBlock
-  | ComunicadoTableViewBlock;
+  | ComunicadoTableViewBlock
+  | ComunicadoKpiViewBlock;
 
 export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
 
@@ -336,9 +344,16 @@ export const COMUNICADO_ICON_OPTIONS: Array<{ name: string; label: string }> = [
   { name: "Star", label: "Estrela" },
   { name: "Factory", label: "Fábrica" },
   { name: "TrendingUp", label: "Tendência" },
+  { name: "TrendingDown", label: "Queda" },
+  { name: "Gauge", label: "Indicador" },
+  { name: "Activity", label: "Atividade" },
+  { name: "Target", label: "Meta" },
   { name: "Users", label: "Equipe" },
   { name: "Shield", label: "Segurança" },
   { name: "AlertTriangle", label: "Alerta" },
   { name: "CheckCircle2", label: "Concluído" },
   { name: "BarChart3", label: "Gráfico" },
+  { name: "Percent", label: "Percentual" },
+  { name: "DollarSign", label: "Financeiro" },
+  { name: "Package", label: "Produto" },
 ];

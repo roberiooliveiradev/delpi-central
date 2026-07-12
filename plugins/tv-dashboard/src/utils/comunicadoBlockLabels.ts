@@ -6,14 +6,15 @@ const TYPE_LABELS: Record<string, string> = {
   image: "Imagem",
   video: "Vídeo",
   shape: "Forma",
+  icon: "Ícone",
+  data_source: "Fonte de dados",
+  chart_view: "Gráfico",
+  table_view: "Tabela",
+  kpi_view: "KPI",
   data_kpi: "Dados — KPI",
   data_chart: "Dados — Gráfico",
   data_table: "Dados — Tabela",
   data_metric: "Dados",
-  data_source: "Fonte de dados",
-  chart_view: "Gráfico",
-  table_view: "Tabela",
-  icon: "Ícone",
 };
 
 export function comunicadoBlockTypeLabel(type: string): string {

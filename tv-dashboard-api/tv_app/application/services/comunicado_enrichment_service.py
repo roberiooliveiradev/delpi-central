@@ -94,7 +94,7 @@ class ComunicadoEnrichmentService:
             block_type = str(block.get("type") or "")
             if (
                 block_type.startswith("data_")
-                or block_type in {"chart_view", "table_view"}
+                or block_type in {"chart_view", "table_view", "kpi_view"}
             ):
                 return 4
         return 3 if blocks else 2
@@ -145,7 +145,7 @@ class ComunicadoEnrichmentService:
         block_type = str(block.get("type") or "text")
         # Fonte + views: preservar config do editor (binding, chartType, parts…).
         # Strip aqui quebrava prévia admin e link público (tela branca / sem gráfico).
-        if block_type in {"data_source", "chart_view", "table_view"}:
+        if block_type in {"data_source", "chart_view", "table_view", "kpi_view"}:
             enriched = dict(block)
             enriched["id"] = str(block.get("id") or "")
             enriched["type"] = block_type

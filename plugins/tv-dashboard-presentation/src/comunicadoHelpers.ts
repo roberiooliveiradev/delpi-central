@@ -25,6 +25,11 @@ import {
 } from "./comunicadoBlockAnimations";
 import { DEFAULT_COMUNICADO_CHART_OPTIONS, type ComunicadoChartOptions } from "./comunicadoChartOptions";
 import {
+  DEFAULT_COMUNICADO_KPI_OPTIONS,
+  mergeComunicadoKpiOptions,
+  type ComunicadoKpiOptions,
+} from "./comunicadoKpiOptions";
+import {
   chartOptionsToParts,
   normalizeChartPartsForLoad,
   type ComunicadoChartPartsMap,
@@ -180,6 +185,22 @@ export function createTableViewBlock(
   };
 }
 
+export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): ComunicadoBlock {
+  const kpiOptions = mergeComunicadoKpiOptions({
+    ...DEFAULT_COMUNICADO_KPI_OPTIONS,
+    iconName: options?.iconName ?? "Gauge",
+    showIcon: options?.showIcon ?? true,
+    ...options,
+  });
+  return {
+    id: newBlockId(),
+    type: "kpi_view",
+    kpiOptions,
+    frame: { x: 8, y: 28, w: 32, h: 24 },
+    style: { zIndex: 2, borderRadius: 0, color: "#0f172a" },
+  };
+}
+
 export function createDataBlock(
   operationId: string,
   options: {
@@ -224,6 +245,7 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "data_source") return { x: 8, y: 30, w: 18, h: 18 };
   if (type === "chart_view") return { x: 10, y: 28, w: 80, h: 45 };
   if (type === "table_view") return { x: 5, y: 55, w: 90, h: 35 };
+  if (type === "kpi_view") return { x: 8, y: 28, w: 32, h: 24 };
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
@@ -514,6 +536,9 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.maxRows != null) base.maxRows = block.maxRows;
     if (block.tableOptions) base.tableOptions = { ...block.tableOptions };
     if (block.tableParts) base.tableParts = { ...block.tableParts };
+  } else if (block.type === "kpi_view") {
+    if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
   }
   return base;
 }
@@ -746,6 +771,28 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         tableParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
         maxRows: typeof block.maxRows === "number" ? block.maxRows : undefined,
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
+      } as ComunicadoBlock,
+      block,
+    );
+  }
+  if (type === "kpi_view") {
+    const kpiOptions =
+      block.kpiOptions && typeof block.kpiOptions === "object"
+        ? mergeComunicadoKpiOptions(block.kpiOptions as ComunicadoKpiOptions)
+        : mergeComunicadoKpiOptions(DEFAULT_COMUNICADO_KPI_OPTIONS);
+    return attachBlockAnimations(
+      {
+        id,
+        type: "kpi_view",
+        frame,
+        style: { ...defaultStyle("kpi_view"), ...style },
+        groupId,
+        dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        kpiOptions,
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, Database, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
+import { BarChart3, Database, Gauge, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
 import {
   AnchoredPanelPortal,
   ChartTypeCatalogPanel,
@@ -37,6 +37,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     addIconBlock,
     addChartViewBlock,
     addTableViewBlock,
+    addKpiViewBlock,
     openDataPanel,
     openMediaLibrary,
   } = useComunicadoEditor();
@@ -204,6 +205,12 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             label={labels.comunicadoAddDataSource ?? "Dados"}
             hint={H.insertDataSource ?? H.insertIndicator}
             onClick={() => openDataPanel()}
+          />
+          <DeckRibbonTile
+            icon={Gauge}
+            label={labels.comunicadoAddKpi ?? "KPI"}
+            hint={H.insertKpi ?? H.insertIndicator}
+            onClick={() => addKpiViewBlock()}
           />
           <div ref={chartAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile

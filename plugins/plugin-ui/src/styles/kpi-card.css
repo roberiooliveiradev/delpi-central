@@ -1,0 +1,107 @@
+/* Card KPI canônico Delpi — usado por TV e dashboards via DelpiKpiCard */
+
+.delpi-kpi-card-shell {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.delpi-kpi-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--delpi-ui-border, color-mix(in srgb, #94a3b8 35%, transparent));
+  background: var(--delpi-ui-surface, #ffffff);
+  box-sizing: border-box;
+  color: var(--delpi-ui-text, #0f172a);
+}
+
+.delpi-kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 0;
+}
+
+.delpi-kpi-card__label {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--delpi-ui-muted, #64748b);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.delpi-kpi-card__value {
+  display: block;
+  margin: 0;
+  font-size: clamp(1.35rem, 2.8vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--delpi-ui-text, #0f172a);
+}
+
+.delpi-kpi-card__hint {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+  color: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-kpi-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.delpi-kpi-card--positive .delpi-kpi-card__value {
+  color: var(--delpi-ui-success, #16a34a);
+}
+
+.delpi-kpi-card--negative .delpi-kpi-card__value {
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
+.delpi-kpi-card--warning .delpi-kpi-card__value {
+  color: var(--delpi-ui-warning, #ea580c);
+}
+
+.delpi-kpi-card--positive .delpi-kpi-icon {
+  background: color-mix(in srgb, var(--delpi-ui-success, #16a34a) 14%, transparent);
+  color: var(--delpi-ui-success, #16a34a);
+}
+
+.delpi-kpi-card--negative .delpi-kpi-icon {
+  background: color-mix(in srgb, var(--delpi-ui-danger, #dc2626) 14%, transparent);
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
+.delpi-kpi-card--warning .delpi-kpi-icon {
+  background: color-mix(in srgb, var(--delpi-ui-warning, #ea580c) 14%, transparent);
+  color: var(--delpi-ui-warning, #ea580c);
+}
+
+.delpi-kpi-card-shell[data-custom-value="true"] .delpi-kpi-card__value {
+  color: var(--delpi-kpi-value-color) !important;
+}

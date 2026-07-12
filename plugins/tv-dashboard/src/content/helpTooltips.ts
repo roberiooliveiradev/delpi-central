@@ -74,9 +74,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",
-    insertDataGroup: "Fontes de dados, gráficos e tabelas desacoplados — estilo PowerPoint/Excel.",
+    insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados — estilo PowerPoint/Excel.",
     insertDataSource: "Abre o catálogo de rotas api-delpi para inserir uma fonte de dados no palco.",
     insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",
+    insertKpi: "Insere um card KPI. Conecte a uma fonte de dados e configure ícone, textos e cores.",
     insertTable: "Escolha o tamanho ou estilo da tabela e conecte-a a uma fonte de dados.",
     insertHeading: "Caixa de título em destaque para comunicados e chamadas principais.",
     insertText: "Bloco de texto livre para mensagens e legendas.",
@@ -152,11 +153,14 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   data: {
     catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",
     sourceConfig: "Parâmetros da consulta e intervalo de atualização da fonte de dados.",
-    viewBinding: "Conecte o gráfico ou tabela a uma fonte inserida no palco (ícone de banco).",
+    viewBinding: "Conecte o gráfico, tabela ou KPI a uma fonte inserida no palco (ícone de banco).",
     connectFlow:
-      "1) Inserir → Dados → escolha uma rota (cria data_source no palco). 2) Inserir → Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → aba Elemento → Conexão de dados → Fonte de dados.",
+      "1) Inserir → Dados → escolha uma rota (cria data_source no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → aba Elemento → Conexão de dados → Fonte de dados.",
     connectOnStage:
-      "Com um gráfico ou tabela selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
+      "Com um gráfico, tabela ou KPI selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
+    kpiCard: "Título, subtítulo, unidade, ícone e tom de cor do card KPI (padrão visual Delpi).",
+    kpiColorRules:
+      "Regras por limiar: a primeira condição verdadeira aplica o tom (positivo/negativo/atenção) ao valor.",
     chartOptions: "Título, legenda, eixos, rótulos de dados e formato dos valores exibidos no gráfico.",
     chartElements:
       "Ligue ou desligue partes. O detalhe (texto, eixos, grade) abre ao selecionar a parte no palco ou na faixa Gráfico.",

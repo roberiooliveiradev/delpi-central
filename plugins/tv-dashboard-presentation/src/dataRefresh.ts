@@ -65,10 +65,13 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
       dataBinding: serializeBindingForFingerprint(block.dataBinding),
     }));
   const viewLinks = (config.blocks ?? [])
-    .filter((block) => block.type === "chart_view" || block.type === "table_view")
+    .filter((block) => block.type === "chart_view" || block.type === "table_view" || block.type === "kpi_view")
     .map((block) => ({
       id: block.id,
-      dataSourceId: block.type === "chart_view" || block.type === "table_view" ? block.dataSourceId : undefined,
+      dataSourceId:
+        block.type === "chart_view" || block.type === "table_view" || block.type === "kpi_view"
+          ? block.dataSourceId
+          : undefined,
     }));
   return JSON.stringify({ dataFilters, blocks: [...legacyBlocks, ...sourceBlocks], viewLinks });
 }

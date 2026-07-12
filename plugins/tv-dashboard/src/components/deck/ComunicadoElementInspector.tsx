@@ -27,6 +27,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
+import { KpiViewOptionsInspector } from "../KpiViewOptionsInspector";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -201,6 +202,9 @@ export function ComunicadoElementInspector({
       ) : null}
       {!multiSelect && selected?.type === "table_view" ? (
         <TableViewOptionsInspector pane={pane} />
+      ) : null}
+      {!multiSelect && selected?.type === "kpi_view" ? (
+        <KpiViewOptionsInspector pane={pane} />
       ) : null}
 
       {!multiSelect && selected.type === "image" ? (
