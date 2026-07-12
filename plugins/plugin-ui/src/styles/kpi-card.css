@@ -98,9 +98,21 @@
   border: 0 solid transparent;
 }
 
-.delpi-kpi-icon--framed {
-  /* Fora do fluxo do header — posição absoluta relativa ao card. */
-  margin: 0;
+.delpi-kpi-part--framed {
+  z-index: 2;
+  overflow: hidden;
+  max-width: none;
+}
+
+.delpi-kpi-card__label.delpi-kpi-part--framed,
+.delpi-kpi-card__hint.delpi-kpi-part--framed {
+  display: flex;
+  align-items: center;
+}
+
+.delpi-kpi-card__value.delpi-kpi-part--framed {
+  flex: 0 0 auto;
+  width: auto;
 }
 
 .delpi-kpi-icon svg {

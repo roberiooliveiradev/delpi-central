@@ -17,9 +17,9 @@ import {
   isKpiPartVisible,
   mergeKpiPartsWithOptions,
   resolveKpiIconBoxStyle,
-  resolveKpiIconFrame,
-  KPI_PART_FONT_SIZE_DEFAULTS,
+  resolveKpiPartFrame,
   resolveKpiPartFontSize,
+  resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
@@ -43,20 +43,24 @@ export type { MetricKpiCardTone as DelpiKpiCardTone };
 export type {
   KpiCardFlatOptions,
   KpiCardInteraction,
+  KpiFramePartKind,
   KpiPartFrame,
   KpiPartRef,
   KpiPartsMap,
   KpiPartState,
   KpiPartStyle,
+  KpiTextPartKind,
 } from "./kpiCardParts";
 export {
   KPI_ICON_DEFAULT_FRAME,
   KPI_ICON_DEFAULT_RADIUS_PX,
   KPI_ICON_DEFAULT_SIZE_PX,
+  KPI_PART_DEFAULT_FRAMES,
   KPI_PART_FONT_SIZE_DEFAULTS,
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
   clampKpiPartFrame,
+  defaultKpiPartFrame,
   deleteKpiPart,
   findKpiPartFromTarget,
   getKpiPartState,
@@ -65,6 +69,9 @@ export {
   kpiOptionsToParts,
   kpiPartAllowsDelete,
   kpiPartAllowsEdit,
+  kpiPartAllowsFrame,
+  kpiPartAllowsMove,
+  kpiPartAllowsResize,
   kpiPartCapabilities,
   mergeKpiPartsWithOptions,
   normalizeKpiPartsForLoad,
@@ -73,6 +80,8 @@ export {
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
   resolveKpiPartFontSize,
+  resolveKpiPartFrame,
+  resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
   serializeKpiPartRef,
   upsertKpiPartState,
@@ -234,30 +243,49 @@ export function DelpiKpiCard({
   const cardStrokeWidth = parts.card?.style?.strokeWidth;
   const cardRadius = parts.card?.style?.borderRadius;
 
-  const titleTextStyle = resolveKpiPartTypographyStyle(
-    {
-      ...parts.title?.style,
-      fontSize: resolveKpiPartFontSize("title", parts.title?.style),
-      color: resolvedTitleColor,
-    },
-    { flexPart: false },
-  );
-  const valueTextStyle = resolveKpiPartTypographyStyle(
-    {
-      ...parts.value?.style,
-      fontSize: resolveKpiPartFontSize("value", parts.value?.style),
-      color: resolvedValueColor,
-    },
-    { flexPart: true },
-  );
-  const hintTextStyle = resolveKpiPartTypographyStyle(
-    {
-      ...parts.hint?.style,
-      fontSize: resolveKpiPartFontSize("hint", parts.hint?.style),
-      color: resolvedHintColor,
-    },
-    { flexPart: false },
-  );
+  const titleState = getKpiPartState(parts, { kind: "title" }) ?? parts.title;
+  const valueState = getKpiPartState(parts, { kind: "value" }) ?? parts.value;
+  const hintState = getKpiPartState(parts, { kind: "hint" }) ?? parts.hint;
+  const titleFramed = Boolean(resolveKpiPartFrame(titleState));
+  const valueFramed = Boolean(resolveKpiPartFrame(valueState));
+  const hintFramed = Boolean(resolveKpiPartFrame(hintState));
+  const titleLayoutStyle = resolveKpiPartLayoutStyle(titleState);
+  const valueLayoutStyle = resolveKpiPartLayoutStyle(valueState);
+  const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState);
+
+  const titleTextStyle = {
+    ...resolveKpiPartTypographyStyle(
+      {
+        ...parts.title?.style,
+        fontSize: resolveKpiPartFontSize("title", parts.title?.style),
+        color: resolvedTitleColor,
+      },
+      { flexPart: false },
+    ),
+    ...titleLayoutStyle,
+  };
+  const valueTextStyle = {
+    ...resolveKpiPartTypographyStyle(
+      {
+        ...parts.value?.style,
+        fontSize: resolveKpiPartFontSize("value", parts.value?.style),
+        color: resolvedValueColor,
+      },
+      { flexPart: true },
+    ),
+    ...valueLayoutStyle,
+  };
+  const hintTextStyle = {
+    ...resolveKpiPartTypographyStyle(
+      {
+        ...parts.hint?.style,
+        fontSize: resolveKpiPartFontSize("hint", parts.hint?.style),
+        color: resolvedHintColor,
+      },
+      { flexPart: false },
+    ),
+    ...hintLayoutStyle,
+  };
 
   const cardPtr = bindKpiPartPointer({ kind: "card" }, interaction);
   const titlePtr = bindKpiPartPointer({ kind: "title" }, interaction);
@@ -321,6 +349,7 @@ export function DelpiKpiCard({
               <p
                 className={[
                   DELPI_KPI_CLASS_NAMES.label,
+                  titleFramed ? "delpi-kpi-part--framed" : "",
                   titlePtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
                   .filter(Boolean)
@@ -368,6 +397,7 @@ export function DelpiKpiCard({
               <strong
                 className={[
                   DELPI_KPI_CLASS_NAMES.value,
+                  valueFramed ? "delpi-kpi-part--framed" : "",
                   valuePtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
                   .filter(Boolean)
@@ -387,6 +417,7 @@ export function DelpiKpiCard({
               <p
                 className={[
                   DELPI_KPI_CLASS_NAMES.hint,
+                  hintFramed ? "delpi-kpi-part--framed" : "",
                   hintPtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
                   .filter(Boolean)
@@ -426,7 +457,7 @@ export function DelpiKpiCard({
             <div
               className={[
                 DELPI_KPI_CLASS_NAMES.icon,
-                resolveKpiIconFrame(parts.icon) ? "delpi-kpi-icon--framed" : "",
+                resolveKpiPartFrame(parts.icon) ? "delpi-kpi-icon--framed" : "",
                 iconPtr.selected ? "delpi-kpi-part--selected" : "",
               ]
                 .filter(Boolean)

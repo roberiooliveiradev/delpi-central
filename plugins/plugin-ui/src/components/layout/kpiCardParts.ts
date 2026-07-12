@@ -78,9 +78,9 @@ export type KpiPartCapabilities = {
 
 const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities> = {
   card: { movable: false, editable: false, deletable: false, resizable: false },
-  title: { movable: false, editable: true, deletable: true, resizable: false },
-  value: { movable: false, editable: false, deletable: false, resizable: false },
-  hint: { movable: false, editable: true, deletable: true, resizable: false },
+  title: { movable: true, editable: true, deletable: true, resizable: true },
+  value: { movable: true, editable: false, deletable: false, resizable: true },
+  hint: { movable: true, editable: true, deletable: true, resizable: true },
   icon: { movable: true, editable: false, deletable: true, resizable: true },
 };
 
@@ -102,6 +102,14 @@ export type KpiCardFlatOptions = {
 /** Frame padrão do ícone (canto superior direito). */
 export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 8, w: 14, h: 28 };
 
+/** Frames iniciais ao ativar posição/tamanho em cada parte ( % do card ). */
+export const KPI_PART_DEFAULT_FRAMES: Record<"title" | "value" | "hint" | "icon", KpiPartFrame> = {
+  title: { x: 4, y: 6, w: 72, h: 16 },
+  value: { x: 4, y: 24, w: 72, h: 48 },
+  hint: { x: 4, y: 78, w: 60, h: 14 },
+  icon: KPI_ICON_DEFAULT_FRAME,
+};
+
 export const KPI_ICON_DEFAULT_SIZE_PX = 44;
 export const KPI_ICON_DEFAULT_RADIUS_PX = 14;
 
@@ -113,6 +121,7 @@ export const KPI_PART_FONT_SIZE_DEFAULTS = {
 } as const;
 
 export type KpiTextPartKind = keyof typeof KPI_PART_FONT_SIZE_DEFAULTS;
+export type KpiFramePartKind = keyof typeof KPI_PART_DEFAULT_FRAMES;
 
 export function resolveKpiPartFontSize(
   kind: KpiTextPartKind,
@@ -125,9 +134,17 @@ export function resolveKpiPartFontSize(
   return KPI_PART_FONT_SIZE_DEFAULTS[kind];
 }
 
+export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
+  return ref.kind === "title" || ref.kind === "value" || ref.kind === "hint" || ref.kind === "icon";
+}
+
+export function defaultKpiPartFrame(kind: KpiFramePartKind): KpiPartFrame {
+  return { ...KPI_PART_DEFAULT_FRAMES[kind] };
+}
+
 export function clampKpiPartFrame(frame: KpiPartFrame): KpiPartFrame {
-  const w = Math.max(4, Math.min(80, frame.w ?? KPI_ICON_DEFAULT_FRAME.w ?? 14));
-  const h = Math.max(4, Math.min(80, frame.h ?? KPI_ICON_DEFAULT_FRAME.h ?? 28));
+  const w = Math.max(4, Math.min(96, frame.w ?? KPI_ICON_DEFAULT_FRAME.w ?? 14));
+  const h = Math.max(4, Math.min(96, frame.h ?? KPI_ICON_DEFAULT_FRAME.h ?? 28));
   return {
     x: Math.max(0, Math.min(100 - w, frame.x)),
     y: Math.max(0, Math.min(100 - h, frame.y)),
@@ -136,19 +153,30 @@ export function clampKpiPartFrame(frame: KpiPartFrame): KpiPartFrame {
   };
 }
 
-export function resolveKpiIconFrame(
+export function resolveKpiPartFrame(
   state: KpiPartState | null | undefined,
 ): KpiPartFrame | null {
   if (!state?.frame) return null;
   return clampKpiPartFrame(state.frame);
 }
 
-/** Estilo do box do ícone a partir de `kpiParts.icon` (cores, raio, frame/% ou size px). */
-export function resolveKpiIconBoxStyle(
+/** @deprecated Preferir `resolveKpiPartFrame`. */
+export function resolveKpiIconFrame(
   state: KpiPartState | null | undefined,
+): KpiPartFrame | null {
+  return resolveKpiPartFrame(state);
+}
+
+/**
+ * Layout absoluto (% do card) + chrome (raio/fundo/contorno).
+ * Usado por ícone e partes textuais com `frame`.
+ */
+export function resolveKpiPartLayoutStyle(
+  state: KpiPartState | null | undefined,
+  options?: { iconSizeFallback?: boolean },
 ): CSSProperties {
   const style = state?.style;
-  const frame = resolveKpiIconFrame(state);
+  const frame = resolveKpiPartFrame(state);
   const css: CSSProperties = {};
 
   if (style?.fill != null && style.fill !== "") css.background = style.fill;
@@ -174,13 +202,27 @@ export function resolveKpiIconBoxStyle(
     css.height = `${frame.h}%`;
     css.alignSelf = "auto";
     css.zIndex = 2;
-  } else if (style?.iconSize != null && Number.isFinite(style.iconSize) && style.iconSize > 0) {
+    css.boxSizing = "border-box";
+    css.margin = 0;
+  } else if (
+    options?.iconSizeFallback &&
+    style?.iconSize != null &&
+    Number.isFinite(style.iconSize) &&
+    style.iconSize > 0
+  ) {
     const size = Math.max(16, Math.min(160, Math.round(style.iconSize)));
     css.width = `${size}px`;
     css.height = `${size}px`;
   }
 
   return css;
+}
+
+/** Estilo do box do ícone a partir de `kpiParts.icon` (cores, raio, frame/% ou size px). */
+export function resolveKpiIconBoxStyle(
+  state: KpiPartState | null | undefined,
+): CSSProperties {
+  return resolveKpiPartLayoutStyle(state, { iconSizeFallback: true });
 }
 
 export function serializeKpiPartRef(ref: KpiPartRef): string {
@@ -210,6 +252,14 @@ export function kpiPartAllowsDelete(ref: KpiPartRef): boolean {
 
 export function kpiPartAllowsEdit(ref: KpiPartRef): boolean {
   return kpiPartCapabilities(ref).editable;
+}
+
+export function kpiPartAllowsMove(ref: KpiPartRef): boolean {
+  return kpiPartCapabilities(ref).movable;
+}
+
+export function kpiPartAllowsResize(ref: KpiPartRef): boolean {
+  return kpiPartCapabilities(ref).resizable;
 }
 
 export function getKpiPartState(

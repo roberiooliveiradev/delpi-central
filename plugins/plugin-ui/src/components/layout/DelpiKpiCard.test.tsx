@@ -144,6 +144,29 @@ describe("DelpiKpiCard chrome", () => {
     expect(icon.style.color).toBe("rgb(125, 211, 252)");
   });
 
+  it("título com frame usa posição absoluta no card", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="10"
+        kpiParts={{
+          title: {
+            visible: true,
+            frame: { x: 5, y: 10, w: 50, h: 20 },
+            style: { borderRadius: 6 },
+          },
+        }}
+      />,
+    );
+    const title = container.querySelector(".delpi-kpi-card__label") as HTMLElement;
+    expect(title.className).toContain("delpi-kpi-part--framed");
+    expect(title.style.left).toBe("5%");
+    expect(title.style.top).toBe("10%");
+    expect(title.style.width).toBe("50%");
+    expect(title.style.height).toBe("20%");
+    expect(title.style.borderRadius).toBe("6px");
+  });
+
   it("Tamanho fixo (px) dimensiona o box do ícone quando sem frame", () => {
     const { container } = render(
       <DelpiKpiCard

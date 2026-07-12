@@ -1,10 +1,19 @@
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   blockUsesInnerShapeChrome,
+  clampKpiPartFrame,
+  defaultKpiPartFrame,
+  getKpiPartState,
   isPointShapeKind,
+  kpiPartAllowsFrame,
+  mergeKpiPartsWithOptions,
+  partsToKpiOptions,
   resolveBlockShapeChromeStyle,
+  upsertKpiPartState,
   type ComunicadoBlock,
   type ComunicadoFrame,
+  type ComunicadoKpiViewBlock,
+  type KpiFramePartKind,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -57,13 +66,102 @@ export function patchComunicadoFrame(
 }
 
 /**
- * Posição / tamanho / rotação / raio do bloco no palco — faixa Forma (qualquer tipo).
- * Espelha «Posição e tamanho» do inspetor, para edição rápida na top bar.
+ * Posição / tamanho / rotação / raio — bloco no palco ou parte do KPI
+ * (title/value/hint/icon), espelhando o inspetor.
  */
 export function FormatRibbonFrameSection() {
-  const { selected, selectedIds, updateSelected, updateSelectedStyle } = useComunicadoEditor();
+  const {
+    selected,
+    selectedIds,
+    selectedKpiPart,
+    updateSelected,
+    updateSelectedStyle,
+  } = useComunicadoEditor();
 
   if (!selected || selectedIds.length > 1) return null;
+
+  const kpiPartTarget =
+    selected.type === "kpi_view" && selectedKpiPart && kpiPartAllowsFrame(selectedKpiPart)
+      ? selectedKpiPart
+      : null;
+
+  if (kpiPartTarget && selected.type === "kpi_view") {
+    const block = selected as ComunicadoKpiViewBlock;
+    const partState = getKpiPartState(block.kpiParts, kpiPartTarget);
+    const frameKind = kpiPartTarget.kind as KpiFramePartKind;
+    const partFrame = clampKpiPartFrame(
+      partState?.frame ?? defaultKpiPartFrame(frameKind),
+    );
+    const borderRadius = partState?.style?.borderRadius ?? 0;
+    const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
+
+    const setPartFrameKey = (key: "x" | "y" | "w" | "h", raw: number) => {
+      const nextFrame = clampKpiPartFrame({
+        ...partFrame,
+        [key]: Number.isFinite(raw) ? raw : partFrame[key],
+      });
+      const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, { frame: nextFrame });
+      updateSelected({
+        kpiParts: mergeKpiPartsWithOptions(nextParts, partsToKpiOptions(nextParts)),
+      } as Partial<ComunicadoBlock>);
+    };
+
+    const setPartRadius = (raw: number) => {
+      const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, {
+        style: { borderRadius: Math.max(0, Math.min(64, Number(raw) || 0)) },
+      });
+      updateSelected({
+        kpiParts: mergeKpiPartsWithOptions(nextParts, partsToKpiOptions(nextParts)),
+      } as Partial<ComunicadoBlock>);
+    };
+
+    return (
+      <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
+        <div className="td-deck-ribbon__frame-grid">
+          {frameKeys.map((key) => (
+            <span key={key} className="td-deck-ribbon__frame-field">
+              <FieldLabel
+                htmlFor={`td-ribbon-kpi-part-frame-${key}`}
+                label={FRAME_LABELS[key]}
+                hint={FRAME_HINTS[key]}
+                className="td-deck-ribbon__field-label"
+              />
+              <NativeTextControl
+                id={`td-ribbon-kpi-part-frame-${key}`}
+                type="number"
+                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                min={key === "w" || key === "h" ? 4 : 0}
+                max={key === "w" || key === "h" ? 96 : 100}
+                step={0.5}
+                aria-label={FRAME_LABELS[key]}
+                value={formatFrameValue(partFrame[key] ?? 0)}
+                onChange={(value) => setPartFrameKey(key, Number(value))}
+              />
+            </span>
+          ))}
+          <span className="td-deck-ribbon__frame-field">
+            <FieldLabel
+              htmlFor="td-ribbon-kpi-part-frame-radius"
+              label="Raio px"
+              hint={H.borderRadius}
+              className="td-deck-ribbon__field-label"
+            />
+            <NativeTextControl
+              id="td-ribbon-kpi-part-frame-radius"
+              type="number"
+              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+              min={0}
+              max={64}
+              step={1}
+              aria-label="Raio dos cantos em pixels"
+              value={borderRadius}
+              onChange={(value) => setPartRadius(Number(value))}
+            />
+          </span>
+        </div>
+      </DeckRibbonGroup>
+    );
+  }
 
   const pointOnly =
     selected.type === "shape" && isPointShapeKind(selected.shape);

@@ -4,10 +4,12 @@ import {
   clampKpiPartFrame,
   deleteKpiPart,
   kpiOptionsToParts,
+  kpiPartAllowsFrame,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
   resolveKpiIconBoxStyle,
   resolveKpiPartFontSize,
+  resolveKpiPartLayoutStyle,
   upsertKpiPartState,
 } from "./kpiCardParts";
 import {
@@ -113,6 +115,28 @@ describe("kpi icon layout", () => {
     expect(css.color).toBe("#0af");
     expect(css.borderRadius).toBe("10px");
     expect(css.borderWidth).toBe("2px");
+  });
+
+  it("resolveKpiPartLayoutStyle aplica frame absoluto e raio", () => {
+    const css = resolveKpiPartLayoutStyle({
+      frame: { x: 10, y: 20, w: 40, h: 30 },
+      style: { borderRadius: 8, fill: "#111" },
+    });
+    expect(css.position).toBe("absolute");
+    expect(css.left).toBe("10%");
+    expect(css.top).toBe("20%");
+    expect(css.width).toBe("40%");
+    expect(css.height).toBe("30%");
+    expect(css.borderRadius).toBe("8px");
+    expect(css.background).toBe("#111");
+  });
+
+  it("kpiPartAllowsFrame cobre title/value/hint/icon", () => {
+    expect(kpiPartAllowsFrame({ kind: "title" })).toBe(true);
+    expect(kpiPartAllowsFrame({ kind: "value" })).toBe(true);
+    expect(kpiPartAllowsFrame({ kind: "hint" })).toBe(true);
+    expect(kpiPartAllowsFrame({ kind: "icon" })).toBe(true);
+    expect(kpiPartAllowsFrame({ kind: "card" })).toBe(false);
   });
 
   it("resolveKpiPartFontSize usa defaults canônicos quando sem fontSize", () => {
