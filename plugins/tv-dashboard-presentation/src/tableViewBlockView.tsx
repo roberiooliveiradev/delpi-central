@@ -41,7 +41,10 @@ export function TableViewBlockView({
     );
   }
 
-  const rows = (resolved.table?.rows ?? []).slice(0, block.maxRows ?? undefined);
+  // Limite de linhas vem do enrichment (`dataBinding.maxRows` / tvConstraints).
+  // Não aplicar `block.maxRows` aqui: o picker de inserção gravava o tamanho da grade
+  // (ex.: 5) e truncava a série — a tabela cabia no bloco e o scroll nunca aparecia.
+  const rows = resolved.table?.rows ?? [];
   const columns = resolveTableColumns(resolved, rows);
   const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 

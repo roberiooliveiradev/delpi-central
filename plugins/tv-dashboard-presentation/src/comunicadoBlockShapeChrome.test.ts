@@ -53,4 +53,9 @@ describe("comunicadoBlockShapeChrome", () => {
     expect(resolveBlockSelectionBorderRadiusPx(kpi)).toBe(14);
     expect(resolveBlockSelectionBorderRadiusPx(createShapeBlock("point"))).toBeUndefined();
   });
+
+  it("createTableViewBlock não grava maxRows a partir do picker", () => {
+    const block = createTableViewBlock(5, 2) as ComunicadoTableViewBlock;
+    expect(block.maxRows).toBeUndefined();
+  });
 });

@@ -105,7 +105,7 @@ def validate_data_binding(
 
     max_rows = binding.get("maxRows")
     if max_rows is not None:
-        limit = int(route.get("tvConstraints", {}).get("maxRows") or 6)
+        limit = int(route.get("tvConstraints", {}).get("maxRows") or 90)
         if int(max_rows) > limit:
             raise ValueError(message("dataRowsLimitExceeded", "Limite de linhas excedido para esta rota."))
 

@@ -344,6 +344,43 @@ def test_enrich_data_source_resolves_series_as_table_rows():
     assert enriched[1]["resolved"]["table"]["rows"][0]["value"] == 88.0
 
 
+def test_enrich_data_source_series_table_keeps_full_series_without_max_rows():
+    """Tabela alinhada ao gráfico: sem maxRows explícito, não truncar a série em 5."""
+    points = [
+        {"periodo": f"2026-06-{day:02d}", "value": 70.0 + day}
+        for day in range(1, 13)
+    ]
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {"points": points},
+        "route": {
+            "label": "OEE — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {"requiresBranchPermission": True},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "params": {"periodDays": 30},
+                "displayMode": "auto",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    resolved = enriched[0]["resolved"]
+    assert len(resolved["chart"]["points"]) == 12
+    assert len(resolved["table"]["rows"]) == 12
+
+
 def test_enrich_honors_value_field_override():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()

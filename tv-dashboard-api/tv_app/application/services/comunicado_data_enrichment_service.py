@@ -20,6 +20,19 @@ from tv_app.infrastructure.gateways.delpi_operational_gateway import DelpiOperat
 
 _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
 
+# Sem maxRows explícito: série diária (~3 meses) cabe no scroll do bloco; não truncar em 5
+# (gráfico recebe a série inteira — tabela deve acompanhar).
+_DEFAULT_TABLE_MAX_ROWS = 90
+
+
+def _resolve_table_max_rows(binding: dict[str, Any], route_info: dict[str, Any]) -> int:
+    if binding.get("maxRows") is not None:
+        return max(1, int(binding["maxRows"]))
+    constraints = route_info.get("tvConstraints")
+    if isinstance(constraints, dict) and constraints.get("maxRows") is not None:
+        return max(1, int(constraints["maxRows"]))
+    return _DEFAULT_TABLE_MAX_ROWS
+
 
 def _build_data_cache_key(
     *,
@@ -348,7 +361,7 @@ class ComunicadoDataEnrichmentService:
         value_fields = _value_fields_for_binding(route_info, binding)
         branch = merged_params.get("branch")
         branch_str = str(branch).strip() if branch else None
-        max_rows = int(binding.get("maxRows") or route_info.get("tvConstraints", {}).get("maxRows") or 5)
+        max_rows = _resolve_table_max_rows(binding, route_info)
 
         if mode == "kpi":
             scalar = _extract_scalar_value(data, value_fields)

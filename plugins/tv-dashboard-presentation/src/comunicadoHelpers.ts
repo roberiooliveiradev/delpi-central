@@ -195,7 +195,7 @@ export function createTableViewBlock(
     tablePreset: preset,
     tableOptions: presetDefaultTableOptions(preset),
     tableParts: tableOptionsToParts(presetDefaultTableOptions(preset)),
-    maxRows: rows,
+    // rows/cols do picker só dimensionam o frame — limite de dados fica no binding da fonte.
     frame: { x: 5, y: 55 - height / 2, w: width, h: height },
     style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
   };

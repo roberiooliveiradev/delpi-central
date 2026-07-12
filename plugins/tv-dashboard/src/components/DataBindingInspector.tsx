@@ -36,7 +36,7 @@ function routeValueFieldOptions(route: TvDataRouteCatalogItem | null): string[] 
 
 function routeMaxRowsLimit(route: TvDataRouteCatalogItem | null): number {
   const limit = route?.tvConstraints?.maxRows;
-  return typeof limit === "number" && Number.isFinite(limit) ? Math.round(limit) : 20;
+  return typeof limit === "number" && Number.isFinite(limit) ? Math.round(limit) : 90;
 }
 
 export function DataBindingInspector({
@@ -197,7 +197,7 @@ export function DataBindingInspector({
               type="number"
               min={1}
               max={maxRowsLimit}
-              placeholder={`Padrão (até ${Math.min(maxRowsLimit, 5)})`}
+              placeholder={`Padrão (até ${maxRowsLimit})`}
               value={binding.maxRows ?? ""}
               onChange={(value) => {
                 const raw = value.trim();
