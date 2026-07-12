@@ -215,8 +215,8 @@
 
 .delpi-ui-series-chart__part--selected,
 .delpi-ui-series-chart [data-chart-part][aria-selected="true"] {
-  outline: 2px solid var(--primary, #089bdb);
-  outline-offset: 2px;
+  outline: 1px dashed color-mix(in srgb, var(--primary, #089bdb) 70%, #fff);
+  outline-offset: 0;
 }
 
 .delpi-ui-series-chart__title.delpi-ui-series-chart__part--selected,
