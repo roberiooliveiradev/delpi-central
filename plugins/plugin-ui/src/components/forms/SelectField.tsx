@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
+import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 
 export type SelectOption = {
   value: string;
@@ -39,6 +40,8 @@ export type SelectControlProps = {
   emptyLabel?: string;
   ariaLabel?: string;
   className?: string;
+  /** Escopo CSS do MFE no portal do painel (ex.: `dashboard-tv-dashboard`). */
+  portalScopeClassName?: string;
   classNames: SelectControlClassNames;
   labels: SelectControlLabels;
 };
@@ -71,12 +74,14 @@ export function SelectControl({
   emptyLabel = "—",
   ariaLabel,
   className,
+  portalScopeClassName,
   classNames,
   labels,
 }: SelectControlProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const listId = `${fieldId}-list`;
@@ -91,7 +96,9 @@ export function SelectControl({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current?.contains(event.target as Node)) return;
+      const target = event.target as Node;
+      if (wrapperRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
       setOpen(false);
       setQuery("");
     }
@@ -115,6 +122,13 @@ export function SelectControl({
     .filter(Boolean)
     .join(" ");
 
+  const panelClassName = [classNames.panel, `${classNames.panel}--portal`].filter(Boolean).join(" ");
+
+  const closePanel = () => {
+    setOpen(false);
+    setQuery("");
+  };
+
   return (
     <div className={rootClass} ref={wrapperRef}>
       <button
@@ -137,59 +151,64 @@ export function SelectControl({
         <ChevronDown size={16} aria-hidden={true} />
       </button>
 
-      {open ? (
-        <div className={classNames.panel}>
-          {searchable ? (
-            <input
-              type="search"
-              className={classNames.search}
-              placeholder={labels.searchPlaceholder}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label={labels.searchAriaLabel(ariaLabel)}
-            />
-          ) : null}
+      <AnchoredPanelPortal
+        open={open}
+        anchorRef={wrapperRef}
+        panelRef={panelRef}
+        className={panelClassName}
+        variant="bare"
+        matchAnchorWidth
+        role="presentation"
+        portalScopeClassName={portalScopeClassName}
+      >
+        {searchable ? (
+          <input
+            type="search"
+            className={classNames.search}
+            placeholder={labels.searchPlaceholder}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label={labels.searchAriaLabel(ariaLabel)}
+          />
+        ) : null}
 
-          <ul id={listId} className={classNames.list} role="listbox">
-            {allowEmpty ? (
-              <li>
+        <ul id={listId} className={classNames.list} role="listbox">
+          {allowEmpty ? (
+            <li>
+              <button
+                type="button"
+                className={!value ? classNames.optionActive : classNames.option}
+                onClick={() => {
+                  onChange("");
+                  closePanel();
+                }}
+              >
+                {emptyLabel}
+              </button>
+            </li>
+          ) : null}
+          {filteredOptions.length === 0 ? (
+            <li className={classNames.empty}>{labels.emptyOptions}</li>
+          ) : (
+            filteredOptions.map((option) => (
+              <li key={option.value}>
                 <button
                   type="button"
-                  className={!value ? classNames.optionActive : classNames.option}
+                  className={
+                    option.value === value ? classNames.optionActive : classNames.option
+                  }
                   onClick={() => {
-                    onChange("");
-                    setOpen(false);
-                    setQuery("");
+                    onChange(option.value);
+                    closePanel();
                   }}
                 >
-                  {emptyLabel}
+                  {option.label}
                 </button>
               </li>
-            ) : null}
-            {filteredOptions.length === 0 ? (
-              <li className={classNames.empty}>{labels.emptyOptions}</li>
-            ) : (
-              filteredOptions.map((option) => (
-                <li key={option.value}>
-                  <button
-                    type="button"
-                    className={
-                      option.value === value ? classNames.optionActive : classNames.option
-                    }
-                    onClick={() => {
-                      onChange(option.value);
-                      setOpen(false);
-                      setQuery("");
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-      ) : null}
+            ))
+          )}
+        </ul>
+      </AnchoredPanelPortal>
     </div>
   );
 }

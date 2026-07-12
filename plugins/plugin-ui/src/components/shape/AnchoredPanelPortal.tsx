@@ -13,6 +13,8 @@ export type AnchoredPanelPortalProps = {
   variant?: "shape" | "bare";
   role?: string;
   "aria-label"?: string;
+  /** Larga o painel no mínimo com a largura do gatilho. */
+  matchAnchorWidth?: boolean;
   /**
    * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`).
    * Sem escopo, CSS do plugin sob `.dashboard-*` não aplica no body.
@@ -30,10 +32,13 @@ export function AnchoredPanelPortal({
   variant = "shape",
   role,
   "aria-label": ariaLabel,
+  matchAnchorWidth = false,
   portalScopeClassName,
   children,
 }: AnchoredPanelPortalProps) {
-  const style = useAnchoredPanelPosition(open, anchorRef, panelRef);
+  const style = useAnchoredPanelPosition(open, anchorRef, panelRef, {
+    matchAnchorWidth,
+  });
   const theme = useDelpiUiPortalTheme(open, anchorRef);
 
   if (!open || typeof document === "undefined") return null;

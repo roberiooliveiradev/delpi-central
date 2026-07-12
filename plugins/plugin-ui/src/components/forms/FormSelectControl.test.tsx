@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { FormSelectControl } from "./FormSelectControl";
 
 describe("FormSelectControl", () => {
-  it("abre painel custom e dispara onChange", () => {
+  it("abre painel custom no portal e dispara onChange", () => {
     const values: string[] = [];
     render(
       <FormSelectControl
@@ -19,7 +19,8 @@ describe("FormSelectControl", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Formato" }));
-    expect(document.querySelector(".delpi-ui-select__panel")).toBeTruthy();
+    const panel = document.body.querySelector(".delpi-ui-select__panel--portal");
+    expect(panel).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Número" }));
     expect(values).toEqual(["number"]);
   });

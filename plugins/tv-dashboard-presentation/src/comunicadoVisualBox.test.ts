@@ -118,6 +118,19 @@ describe("comunicadoVisualBox", () => {
     expect(layout.justifyContent).toBe("flex-start");
   });
 
+  it("caixa de texto aplica justifyContent do verticalAlign no content", () => {
+    const block = {
+      ...createBlock("text", "Texto"),
+      style: { verticalAlign: "middle" as const },
+    };
+    expect(resolveVisualBoxContentLayoutStyle(block).justifyContent).toBe("center");
+    const bottom = {
+      ...createBlock("text", "Texto"),
+      style: { verticalAlign: "bottom" as const },
+    };
+    expect(resolveVisualBoxContentLayoutStyle(bottom).justifyContent).toBe("flex-end");
+  });
+
   it("caixas visuais suportam edição inline no palco", () => {
     expect(visualBoxSupportsInlineTextEditing(createBlock("text", "A"))).toBe(true);
     expect(visualBoxSupportsInlineTextEditing(createShapeBlock("rectangle"))).toBe(true);

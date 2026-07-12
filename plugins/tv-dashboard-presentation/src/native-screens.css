@@ -413,6 +413,15 @@
 .tdp-comunicado__visual-box-content {
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
+}
+
+.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > h1,
+.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > p,
+.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > span {
+  margin: 0;
+  flex: 0 0 auto;
+  width: 100%;
 }
 
 .tdp-comunicado__block--shape,

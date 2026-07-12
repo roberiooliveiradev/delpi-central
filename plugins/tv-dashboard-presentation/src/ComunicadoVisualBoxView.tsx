@@ -92,7 +92,11 @@ export function ComunicadoVisualBoxView({
     );
 
   if (profile.mode === "text") {
-    return <div className="tdp-comunicado__visual-box-content">{textNode}</div>;
+    return (
+      <div className="tdp-comunicado__visual-box-content" style={contentLayoutStyle}>
+        {textNode}
+      </div>
+    );
   }
 
   return (

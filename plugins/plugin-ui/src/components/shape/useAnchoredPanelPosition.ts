@@ -4,12 +4,31 @@ import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
 
 const PANEL_Z_INDEX = DELPI_UI_OVERLAY_Z_INDEX.anchoredPanel;
 
+export type AnchoredPanelPositionOptions = {
+  gap?: number;
+  /** Larga o painel no mínimo com a largura do gatilho (selects). */
+  matchAnchorWidth?: boolean;
+};
+
+function resolvePositionOptions(
+  options: number | AnchoredPanelPositionOptions | undefined,
+): Required<AnchoredPanelPositionOptions> {
+  if (typeof options === "number") {
+    return { gap: options, matchAnchorWidth: false };
+  }
+  return {
+    gap: options?.gap ?? 4,
+    matchAnchorWidth: Boolean(options?.matchAnchorWidth),
+  };
+}
+
 export function useAnchoredPanelPosition(
   open: boolean,
   anchorRef: RefObject<HTMLElement | null>,
   panelRef: RefObject<HTMLElement | null>,
-  gap = 4,
+  options: number | AnchoredPanelPositionOptions = 4,
 ): CSSProperties {
+  const { gap, matchAnchorWidth } = resolvePositionOptions(options);
   const [style, setStyle] = useState<CSSProperties>({
     position: "fixed",
     top: -9999,
@@ -36,7 +55,7 @@ export function useAnchoredPanelPosition(
 
       const rect = anchor.getBoundingClientRect();
       const panel = panelRef.current;
-      const panelWidth = panel?.offsetWidth ?? 0;
+      const panelWidth = Math.max(panel?.offsetWidth ?? 0, matchAnchorWidth ? rect.width : 0);
       const panelHeight = panel?.offsetHeight ?? 0;
       const margin = 8;
 
@@ -58,6 +77,7 @@ export function useAnchoredPanelPosition(
         left,
         zIndex: PANEL_Z_INDEX,
         visibility: "visible",
+        ...(matchAnchorWidth ? { minWidth: rect.width } : null),
       });
     };
 
@@ -82,7 +102,7 @@ export function useAnchoredPanelPosition(
       window.visualViewport?.removeEventListener("scroll", update);
       resizeObserver?.disconnect();
     };
-  }, [anchorRef, gap, open, panelRef]);
+  }, [anchorRef, gap, matchAnchorWidth, open, panelRef]);
 
   return style;
 }

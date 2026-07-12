@@ -95,6 +95,15 @@
   box-shadow: 0 12px 32px color-mix(in srgb, var(--delpi-ui-select-text) 14%, transparent);
 }
 
+/* Portal no body: posição vem do AnchoredPanelPortal (fixed); evita stretch por `right: 0`. */
+.delpi-ui-select__panel--portal {
+  right: auto;
+  top: auto;
+  left: auto;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 16px));
+}
+
 .delpi-ui-select__search {
   min-height: var(--delpi-ui-select-min-height);
   box-sizing: border-box;
