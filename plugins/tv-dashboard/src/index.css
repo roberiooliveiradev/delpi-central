@@ -2052,12 +2052,15 @@
   width: 100%;
   min-width: 0;
   min-height: 0;
-  max-height: 148px;
-  padding: 4px 6px;
-  gap: 8px 12px;
+  height: 100%;
+  max-height: 100%;
+  padding: 2px 4px;
+  gap: 6px 10px;
   align-items: start;
   justify-content: start;
-  overflow: auto;
+  /* Sem scroll vertical — conteúdo cabe na altura fixa da ribbon. */
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__panel--ribbon {
@@ -2077,13 +2080,15 @@
 .dashboard-tv-dashboard .td-deck-ribbon__panel-zone {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   min-height: 0;
+  max-height: 100%;
   max-width: 100%;
   padding-right: 8px;
   border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* Controles do painel ribbon: densidade compacta (evita form 36px). */
@@ -2148,16 +2153,25 @@
 
 .dashboard-tv-dashboard .td-deck-ribbon__organize {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px 10px;
+  width: max-content;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__organize-props {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 4px 8px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 2px 8px;
+  max-width: 340px;
+  max-height: 56px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* legado — preferir .td-deck-ribbon__panel */
@@ -2288,15 +2302,14 @@
   min-width: 56px;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__organize {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
 .dashboard-tv-dashboard .td-deck-ribbon--compact {
-  padding: 4px 6px;
+  --td-ribbon-height: 88px;
+  box-sizing: border-box;
+  height: var(--td-ribbon-height);
+  max-height: var(--td-ribbon-height);
+  padding: 2px 6px 0;
+  overflow: hidden;
+  align-items: stretch;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups {
@@ -2304,16 +2317,23 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  align-items: flex-start;
+  align-items: stretch;
   width: 100%;
   flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group {
+  box-sizing: border-box;
+  height: 100%;
+  max-height: 100%;
   min-height: 0;
   flex: 0 0 auto;
   flex-shrink: 0;
   padding: 2px 8px 0;
+  justify-content: space-between;
+  overflow: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group--wide {
@@ -2321,14 +2341,32 @@
   min-width: min(240px, max-content);
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__body {
+  flex: 1 1 auto;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__caption {
-  margin-top: auto;
-  padding-top: 2px;
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding-top: 1px;
+}
+
+/* Uma faixa horizontal — cabe na altura fixa sem scroll vertical. */
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__tiles {
+  grid-template-rows: auto;
+  align-items: center;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-tile {
-  min-width: 48px;
-  min-height: 48px;
+  min-width: 44px;
+  min-height: 52px;
   padding: 4px 4px;
   gap: 2px;
 }
@@ -2350,6 +2388,52 @@
   padding: 4px 8px;
   gap: 2px;
   font-size: 11px;
+}
+
+/* Shape menus / color triggers alinhados à faixa (sem estourar a altura). */
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-shape-menu__trigger,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-color-picker-trigger__button {
+  min-height: 0;
+  max-height: 56px;
+  padding: 4px 6px;
+  gap: 2px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-shape-menu__trigger-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups--inspector {
+  height: 100%;
+  align-items: stretch;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid {
+  grid-template-columns: repeat(5, minmax(56px, 68px));
+  width: max-content;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props .td-deck-ribbon__field-label {
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props .td-deck-ribbon__number,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props .td-deck-ribbon__select {
+  width: 56px;
+  min-width: 56px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  gap: 4px 8px;
+  overflow: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__split {
@@ -3043,6 +3127,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel__collapsed-rail {
