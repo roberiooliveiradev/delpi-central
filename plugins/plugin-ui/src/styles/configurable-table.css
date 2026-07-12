@@ -8,7 +8,7 @@
   box-sizing: border-box;
   background: var(--delpi-ui-config-table-bg, #ffffff);
   color: var(--delpi-ui-config-table-text, #1e293b);
-  /* Moldura Office via tableParts.frame (Onda 4O.A) — default reto. */
+  /* Moldura (contorno do bloco) — DECK_TABLE_DEFAULTS.frame*; sem radius TV legado. */
   border-radius: var(--delpi-ui-config-table-frame-radius, 0);
   border: var(--delpi-ui-config-table-frame-border-width, 1px) solid
     var(--delpi-ui-config-table-frame-border-color, #b4b4b4);
@@ -33,6 +33,7 @@
 .delpi-ui-config-table__header-cell,
 .delpi-ui-config-table__cell {
   padding: 0.25rem 0.4rem;
+  /* Grade interna — DECK_TABLE_DEFAULTS.borderColor (#e2e8f0), não o contorno do bloco. */
   border-bottom: 1px solid var(--delpi-ui-config-table-border-color, #e2e8f0);
   text-align: left;
   overflow: hidden;

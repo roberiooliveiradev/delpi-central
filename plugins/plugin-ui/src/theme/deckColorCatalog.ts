@@ -99,13 +99,18 @@ export const DECK_KPI_DEFAULTS = {
   accent: DECK_COLOR_ACCENT,
 } as const;
 
-/** Defaults de tabela (claro, alinhado ao gráfico). */
+/** Defaults de tabela — células (grade) vs moldura (contorno Office). */
 export const DECK_TABLE_DEFAULTS = {
   headerBg: DECK_COLOR_TABLE_HEADER_BG,
   headerTextColor: DECK_COLOR_MUTED,
   cellBg: DECK_COLOR_TABLE_CELL_BG,
   cellTextColor: DECK_COLOR_TABLE_CELL_TEXT,
+  /** Bordas entre células (grade interna — mais suave que o contorno do bloco). */
   borderColor: DECK_COLOR_TABLE_BORDER,
+  /** Fundo da moldura (`tableParts.frame`) — superfície Office. */
+  frameFill: DECK_COLOR_SURFACE,
+  /** Contorno da moldura — mesmo `#b4b4b4` de gráfico/KPI (`DECK_COLOR_BORDER`). */
+  frameStroke: DECK_COLOR_BORDER,
 } as const;
 
 /**

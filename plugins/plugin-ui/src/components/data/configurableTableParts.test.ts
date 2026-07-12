@@ -39,8 +39,10 @@ describe("configurableTableParts", () => {
   });
 
   it("resolveTableFrameStyle usa defaults Office e honra partes", () => {
-    expect(resolveTableFrameStyle(undefined).borderRadius).toBe(0);
-    expect(resolveTableFrameStyle(undefined).fill).toBe("#ffffff");
+    const defaults = resolveTableFrameStyle(undefined);
+    expect(defaults.borderRadius).toBe(0);
+    expect(defaults.fill).toBe("#ffffff");
+    expect(defaults.stroke).toBe("#b4b4b4");
     const custom = upsertTablePartState({}, { kind: "frame" }, {
       style: { fill: "#111111", stroke: "#ef4444", strokeWidth: 4, borderRadius: 12 },
     });

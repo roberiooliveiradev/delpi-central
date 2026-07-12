@@ -1800,7 +1800,7 @@ Ribbon Gráfico = atalhos de visibilidade/tipo; FormatPane = detalhe da parte.
 | **0** | Aba contextual **Tabela** (Dados · Estilos · Opções de estilo · Formato) + opções Excel (totais, 1ª/última col., listras cols) | ✅ |
 | **A** | Chrome Office: parte `frame`, CSS host, ribbon Forma + handles → `tableParts.frame` | ✅ |
 | **B** | `TablePartInspector` + aplicar `style` de header/células no DOM | ✅ |
-| **C** | Tokens `DECK_TABLE_*` vs outline Office; playbook aceite; polish | ⬜ |
+| **C** | Tokens `DECK_TABLE_*` vs outline Office; playbook aceite; polish | ✅ |
 
 #### Fase 0 — aceite (feito)
 
@@ -1831,13 +1831,15 @@ Ribbon Gráfico = atalhos de visibilidade/tipo; FormatPane = detalhe da parte.
 | 4O.B.2 | Aplicar `tableParts.*.style` em header/células | ✅ |
 | 4O.B.3 | Separar UI «Contorno do bloco» vs «Bordas das células» | ✅ |
 
-#### Fase C — polish
+#### Fase C — polish (feito)
 
 | # | Entrega | Status |
 |---|---|---|
-| 4O.C.1 | Revisar `DECK_TABLE_DEFAULTS.borderColor` vs `DECK_COLOR_BORDER` | ⬜ |
-| 4O.C.2 | Remover radius interno duplicado se sobrar | ⬜ |
-| 4O.C.3 | Aceite documentado + regressão visual mínima | ⬜ |
+| 4O.C.1 | `DECK_TABLE_DEFAULTS.frameFill` / `frameStroke` vs `borderColor` (grade) | ✅ |
+| 4O.C.2 | Moldura com radius 0 por default; sem card TV / radius 8px legado | ✅ |
+| 4O.C.3 | Aceite: tokens + CSS documentados; testes de catálogo | ✅ |
+
+**Aceite Onda 4O (resumo):** com `table_view` selecionado → abas **Tabela** + **Forma**; opções Excel na faixa; moldura via `tableParts.frame`; inspetor de parte; grade `#e2e8f0` ≠ contorno `#b4b4b4`.
 
 #### Anti-padrões 4O
 

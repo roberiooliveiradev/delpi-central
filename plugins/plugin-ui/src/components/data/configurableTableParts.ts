@@ -4,7 +4,7 @@
 
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 
-import { OFFICE_CHART_AREA_FILL, OFFICE_CHART_AREA_STROKE } from "../../theme/deckColorCatalog";
+import { DECK_TABLE_DEFAULTS } from "../../theme/deckColorCatalog";
 import type { ConfigurableTableOptions } from "./configurableTableOptions";
 import { mergeConfigurableTableOptions } from "./configurableTableOptions";
 import type { ConfigurableTableElementId } from "./configurableTableElementCatalog";
@@ -190,8 +190,8 @@ export function tableOptionsToParts(
     frame: {
       visible: true,
       style: {
-        fill: OFFICE_CHART_AREA_FILL,
-        stroke: OFFICE_CHART_AREA_STROKE,
+        fill: DECK_TABLE_DEFAULTS.frameFill,
+        stroke: DECK_TABLE_DEFAULTS.frameStroke,
         strokeWidth: 1,
         borderRadius: 0,
       },
@@ -236,8 +236,8 @@ export function resolveTableFrameStyle(
   const merged = mergeTablePartsWithOptions(parts);
   const frame = getTablePartState(merged, { kind: "frame" });
   return {
-    fill: frame?.style?.fill ?? OFFICE_CHART_AREA_FILL,
-    stroke: frame?.style?.stroke ?? OFFICE_CHART_AREA_STROKE,
+    fill: frame?.style?.fill ?? DECK_TABLE_DEFAULTS.frameFill,
+    stroke: frame?.style?.stroke ?? DECK_TABLE_DEFAULTS.frameStroke,
     strokeWidth: frame?.style?.strokeWidth ?? 1,
     borderRadius: frame?.style?.borderRadius ?? 0,
   };

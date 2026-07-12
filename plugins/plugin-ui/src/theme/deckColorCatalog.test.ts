@@ -21,6 +21,13 @@ describe("deckColorCatalog", () => {
     expect(DECK_KPI_DEFAULTS.accent).toBe(DECK_COLOR_ACCENT);
   });
 
+  it("separa grade de células e contorno de moldura na tabela", () => {
+    expect(DECK_TABLE_DEFAULTS.borderColor).toBe("#e2e8f0");
+    expect(DECK_TABLE_DEFAULTS.frameStroke).toBe("#b4b4b4");
+    expect(DECK_TABLE_DEFAULTS.frameFill).toBe(DECK_THEME_LIGHT.bg);
+    expect(DECK_TABLE_DEFAULTS.frameStroke).not.toBe(DECK_TABLE_DEFAULTS.borderColor);
+  });
+
   it("usa superfície clara no KPI e na tabela", () => {
     expect(DECK_KPI_DEFAULTS.backgroundColor).toBe(DECK_THEME_LIGHT.bg);
     expect(DECK_TABLE_DEFAULTS.cellBg).toBe(DECK_THEME_LIGHT.bg);

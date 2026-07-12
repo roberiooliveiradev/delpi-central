@@ -998,6 +998,7 @@
   min-height: 0;
   box-sizing: border-box;
   background: var(--tdp-table-bg, #ffffff);
+  /* Moldura = frameStroke Office; grade de células = --tdp-table-border-color. */
   border-radius: var(--tdp-table-frame-radius, 0);
   border: var(--tdp-table-frame-border-width, 1px) solid
     var(--tdp-table-frame-border-color, #b4b4b4);
