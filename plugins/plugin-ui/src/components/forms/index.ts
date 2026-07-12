@@ -204,6 +204,8 @@ export {
   groupLucideIconsBySection,
   isLucideIconName,
   listLucideIconNames,
+  lucideIconMatchesQuery,
+  lucideIconPtLabel,
   resolveLucideIcon,
   toKebabCase,
   toPascalCaseFromKebab,

@@ -50,6 +50,16 @@ describe("lucideIconResolver", () => {
     expect(flat).toContain("Plane");
   });
 
+  it("busca por alias em português", () => {
+    const sections = groupLucideIconsBySection({
+      curatedOnly: false,
+      query: "indicador",
+      maxResults: 80,
+    });
+    const flat = sections.flatMap((section) => section.icons);
+    expect(flat).toContain("Gauge");
+  });
+
   it("exclui prefixo Lucide* da lista", () => {
     expect(isPascalCaseLucideExport("LucideEye")).toBe(false);
     expect(listLucideIconNames()).not.toContain("LucideEye");

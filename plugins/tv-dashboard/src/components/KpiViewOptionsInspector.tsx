@@ -1,15 +1,13 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
-  AnchoredPanelPortal,
   FormSelectControl,
-  LucideIconGridPanel,
+  LucideIconPicker,
   NativeCheckboxControl,
   NativeTextControl,
   type DelpiKpiCardTone,
   type DelpiKpiColorRuleOp,
 } from "@delpi/plugin-ui/index";
 import {
-  COMUNICADO_ICON_OPTIONS,
   KPI_ELEMENT_CATALOG,
   applyKpiElementVisibility,
   isKpiElementEnabled,
@@ -98,9 +96,7 @@ function KpiElementRow({
 
 export function KpiViewOptionsInspector({ pane = false }: Props) {
   const { selected, updateSelected, selectKpiPart, selectedKpiPart } = useComunicadoEditor();
-  const iconAnchorRef = useRef<HTMLDivElement>(null);
-  const iconPanelRef = useRef<HTMLDivElement>(null);
-  const [iconMenuOpen, setIconMenuOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
   if (!selected || selected.type !== "kpi_view") return null;
 
@@ -218,40 +214,29 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
               />
             </DeckField>
             {options.showIcon !== false ? (
-              <div ref={iconAnchorRef} className="td-composer__dropdown">
-                <DeckField id="td-kpi-icon" label="Ícone">
-                  <button
-                    type="button"
-                    className="td-btn td-btn--sm td-btn--ghost"
-                    onClick={() => setIconMenuOpen((open) => !open)}
-                  >
-                    {options.iconName ?? "Gauge"}
-                  </button>
-                </DeckField>
-                {iconMenuOpen ? (
-                  <AnchoredPanelPortal
-                    open={iconMenuOpen}
-                    anchorRef={iconAnchorRef}
-                    panelRef={iconPanelRef}
-                    variant="bare"
-                    className="td-icon-library-portal"
-                    role="menu"
-                    aria-label="Ícone do KPI"
-                  >
-                    <LucideIconGridPanel
-                      title="Ícone do KPI"
-                      items={COMUNICADO_ICON_OPTIONS.map((item) => ({
-                        name: item.name,
-                        label: item.label,
-                      }))}
-                      onSelect={(name) => {
-                        patchOptions({ iconName: name });
-                        setIconMenuOpen(false);
-                      }}
-                    />
-                  </AnchoredPanelPortal>
+              <DeckField id="td-kpi-icon" label="Ícone">
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm td-btn--ghost"
+                  onClick={() => setIconPickerOpen((open) => !open)}
+                >
+                  {options.iconName ?? "Gauge"}
+                </button>
+                {iconPickerOpen ? (
+                  <LucideIconPicker
+                    embedded
+                    curatedOnly={false}
+                    nameFormat="pascal"
+                    value={options.iconName ?? "Gauge"}
+                    onChange={(name) => {
+                      patchOptions({ iconName: name?.trim() || "Gauge", showIcon: true });
+                      setIconPickerOpen(false);
+                    }}
+                    onClose={() => setIconPickerOpen(false)}
+                    labels={{ clear: "Usar ícone padrão", close: "Fechar" }}
+                  />
                 ) : null}
-              </div>
+              </DeckField>
             ) : null}
           </DeckPropertySection>
 

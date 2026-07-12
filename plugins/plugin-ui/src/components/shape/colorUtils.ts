@@ -91,22 +91,57 @@ export function mixWithBlack(hex: string, ratio: number): string {
   return rgbToHex(mixChannel(r, 0, ratio), mixChannel(g, 0, ratio), mixChannel(b, 0, ratio));
 }
 
+/** Gera 6 tons a partir de uma cor-base (estilo PowerPoint). */
+export function buildThemeColorColumn(base: string): string[] {
+  const hex = normalizeHex(base);
+  const { r, g, b } = hexToRgb(hex);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+
+  // Branco (e quase-branco): misturar com branco não muda a cor — usar escala de cinzas.
+  if (luminance >= 0.97) {
+    return [
+      hex,
+      mixWithBlack(hex, 0.08),
+      mixWithBlack(hex, 0.18),
+      mixWithBlack(hex, 0.35),
+      mixWithBlack(hex, 0.5),
+      mixWithBlack(hex, 0.65),
+    ];
+  }
+
+  // Preto (e quase-preto): misturar com preto não muda — clarear com branco.
+  if (luminance <= 0.03) {
+    return [
+      hex,
+      mixWithWhite(hex, 0.35),
+      mixWithWhite(hex, 0.5),
+      mixWithWhite(hex, 0.65),
+      mixWithWhite(hex, 0.8),
+      mixWithWhite(hex, 0.9),
+    ];
+  }
+
+  return [
+    hex,
+    mixWithWhite(hex, 0.2),
+    mixWithWhite(hex, 0.4),
+    mixWithWhite(hex, 0.6),
+    mixWithBlack(hex, 0.25),
+    mixWithBlack(hex, 0.5),
+  ];
+}
+
 /** Gera 6 linhas × N colunas (estilo PowerPoint) a partir das cores-base do tema. */
 export function buildThemeColorGrid(baseColors: readonly string[]): string[][] {
-  return baseColors.map((base) => [
-    base,
-    mixWithWhite(base, 0.2),
-    mixWithWhite(base, 0.4),
-    mixWithWhite(base, 0.6),
-    mixWithBlack(base, 0.25),
-    mixWithBlack(base, 0.5),
-  ]).reduce<string[][]>((rows, column) => {
-    column.forEach((color, rowIndex) => {
-      if (!rows[rowIndex]) rows[rowIndex] = [];
-      rows[rowIndex].push(color);
-    });
-    return rows;
-  }, []);
+  return baseColors
+    .map((base) => buildThemeColorColumn(base))
+    .reduce<string[][]>((rows, column) => {
+      column.forEach((color, rowIndex) => {
+        if (!rows[rowIndex]) rows[rowIndex] = [];
+        rows[rowIndex].push(color);
+      });
+      return rows;
+    }, []);
 }
 
 export function colorsEqual(a: ColorValue, b: ColorValue): boolean {

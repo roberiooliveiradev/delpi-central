@@ -1,4 +1,4 @@
-import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, LucideIconPicker, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   deleteKpiPart,
   getKpiPartState,
@@ -206,9 +206,28 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       ) : null}
 
       {selectedKpiPart.kind === "icon" ? (
-        <p className="td-deck-inspector__hint">
-          Ícone e tom ficam nas opções gerais do KPI. Use «Voltar aos elementos» ou oculte esta parte.
-        </p>
+        <DeckField id="td-kpi-part-icon" label="Ícone Lucide">
+          <LucideIconPicker
+            embedded
+            curatedOnly={false}
+            nameFormat="pascal"
+            value={options.iconName ?? "Gauge"}
+            onChange={(name) => {
+              const nextOptions = mergeComunicadoKpiOptions({
+                ...options,
+                iconName: name?.trim() || "Gauge",
+                showIcon: true,
+              });
+              updateSelected({
+                kpiOptions: nextOptions,
+                kpiParts: mergeKpiPartsWithOptions(block.kpiParts, nextOptions),
+              } as Partial<typeof block>);
+            }}
+            labels={{
+              clear: "Usar ícone padrão",
+            }}
+          />
+        </DeckField>
       ) : null}
     </DeckPropertySection>
   );

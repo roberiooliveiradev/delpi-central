@@ -1,6 +1,8 @@
 import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { LUCIDE_ICON_PT_ALIASES, LUCIDE_ICON_PT_LABELS } from "./lucideIconPtLabels";
+
 const iconCache = new Map<string, LucideIcon | null>();
 
 export function toPascalCaseFromKebab(kebab: string): string {
@@ -400,6 +402,35 @@ function existingPascalFromKebab(kebab: string): string | null {
   return null;
 }
 
+/** Rótulo em português quando houver; senão o kebab-case. */
+export function lucideIconPtLabel(pascalOrKebab: string): string {
+  const raw = String(pascalOrKebab ?? "").trim();
+  if (!raw) return "";
+  const kebab = raw.includes("-") ? raw.toLowerCase() : toKebabCase(raw);
+  return LUCIDE_ICON_PT_LABELS[kebab] ?? kebab;
+}
+
+/** Busca por kebab, PascalCase, rótulo PT ou alias (acentos ignorados). */
+export function lucideIconMatchesQuery(pascal: string, query: string): boolean {
+  const q = String(query ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  if (!q) return true;
+  const kebab = toKebabCase(pascal);
+  const fold = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+  if (fold(kebab).includes(q) || fold(pascal).includes(q)) return true;
+  const label = LUCIDE_ICON_PT_LABELS[kebab];
+  if (label && fold(label).includes(q)) return true;
+  const aliases = LUCIDE_ICON_PT_ALIASES[kebab] ?? [];
+  return aliases.some((alias) => fold(alias).includes(q));
+}
+
 /**
  * Agrupa ícones em seções.
  * - Sem busca: mostra as seções (ícones declarados que existem no Lucide).
@@ -417,11 +448,7 @@ export function groupLucideIconsBySection(options: {
     .toLowerCase();
   const maxResults = Math.max(1, options.maxResults ?? 480);
 
-  const matchesQuery = (pascal: string): boolean => {
-    if (!query) return true;
-    const kebab = toKebabCase(pascal);
-    return kebab.includes(query) || pascal.toLowerCase().includes(query);
-  };
+  const matchesQuery = (pascal: string): boolean => lucideIconMatchesQuery(pascal, query);
 
   const searchPool = (() => {
     if (!query) {

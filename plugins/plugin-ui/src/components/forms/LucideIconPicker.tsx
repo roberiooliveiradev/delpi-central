@@ -6,6 +6,7 @@ import {
   countGroupedLucideIcons,
   countLucideCatalogSize,
   groupLucideIconsBySection,
+  lucideIconPtLabel,
   resolveLucideIcon,
   toKebabCase,
   toPascalCaseFromKebab,
@@ -25,19 +26,23 @@ export type LucideIconPickerLabels = {
 
 export type LucideIconPickerProps = {
   value?: string | null;
-  /** kebab-case Lucide, ex.: "eye". `null` = remover. */
-  onChange: (iconKebab: string | null) => void;
+  /** Nome do ícone; formato conforme `nameFormat`. `null` = remover. */
+  onChange: (iconName: string | null) => void;
   onClose?: () => void;
   /**
    * Se true, a busca fica limitada ao catálogo curado.
-   * Se false (recomendado no CX), a busca cobre o Lucide completo.
+   * Se false (recomendado), a busca cobre o Lucide completo.
    */
   curatedOnly?: boolean;
+  /** kebab (padrão CX) ou PascalCase (TV / KPI). */
+  nameFormat?: "kebab" | "pascal";
   maxResults?: number;
   title?: string;
   labels?: LucideIconPickerLabels;
   className?: string;
   style?: CSSProperties;
+  /** Painel embutido no inspetor (sem cabeçalho de diálogo). */
+  embedded?: boolean;
 };
 
 type IconCardProps = {
@@ -49,7 +54,7 @@ type IconCardProps = {
 function IconCard({ name, active, onSelect }: IconCardProps) {
   const Icon = (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[name];
   if (!Icon) return null;
-  const kebab = toKebabCase(name);
+  const label = lucideIconPtLabel(name);
 
   return (
     <button
@@ -60,41 +65,43 @@ function IconCard({ name, active, onSelect }: IconCardProps) {
           : "delpi-ui-lucide-icon-card"
       }
       onClick={onSelect}
-      title={kebab}
-      aria-label={kebab}
+      title={label}
+      aria-label={label}
       aria-pressed={active}
     >
       <span className="delpi-ui-lucide-icon-card__icon" aria-hidden="true">
         <Icon size={32} strokeWidth={1.75} />
       </span>
-      <span className="delpi-ui-lucide-icon-card__label">{kebab}</span>
+      <span className="delpi-ui-lucide-icon-card__label">{label}</span>
     </button>
   );
 }
 
 const DEFAULT_LABELS: Required<LucideIconPickerLabels> = {
   title: "Selecionar ícone",
-  searchPlaceholder: "Buscar ícone (ex: eye, heart…)",
+  searchPlaceholder: "Buscar (ex.: indicador, gauge, meta…)",
   selectedHint: "Selecionado:",
   emptyHint: "Nenhum ícone selecionado",
   clear: "Remover ícone",
   close: "Fechar",
   showingLimit: "Mostrando {limit} resultados. Refine a busca.",
-  catalogHint: "Browse por seção ou busque entre {count} ícones Lucide.",
+  catalogHint: "Navegue por seção ou busque entre {count} ícones Lucide.",
   noResults: "Nenhum ícone encontrado para essa busca.",
 };
 
-/** Painel de seleção Lucide (seções + busca no catálogo completo). */
+/** Painel de seleção Lucide (seções em PT + busca no catálogo completo). */
 export function LucideIconPicker({
   value,
   onChange,
   onClose,
   curatedOnly = false,
+  nameFormat = "kebab",
   maxResults = 480,
   title,
   labels,
   className,
   style,
+  embedded = false,
 }: LucideIconPickerProps) {
   const [query, setQuery] = useState("");
   const L = { ...DEFAULT_LABELS, ...labels };
@@ -123,31 +130,38 @@ export function LucideIconPicker({
   }, [value]);
 
   const SelectedIcon = useMemo(() => resolveLucideIcon(value), [value]);
-  const rootClass = ["delpi-ui-lucide-icon-picker", className].filter(Boolean).join(" ");
+  const rootClass = [
+    "delpi-ui-lucide-icon-picker",
+    embedded ? "delpi-ui-lucide-icon-picker--embedded" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const hasQuery = Boolean(query.trim());
   const truncated = hasQuery && !curatedOnly && catalogSize > 0 && visibleCount >= maxResults;
 
+  const emitName = (pascal: string) =>
+    nameFormat === "pascal" ? pascal : toKebabCase(pascal);
+
   return (
     <div className={rootClass} style={style} role="dialog" aria-label={title ?? L.title}>
-      <header className="delpi-ui-lucide-icon-picker__header">
-        <h2>{title ?? L.title}</h2>
-        {onClose ? (
-          <button
-            type="button"
-            className="delpi-ui-lucide-icon-picker__close"
-            onClick={onClose}
-            aria-label={L.close}
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        ) : null}
-      </header>
+      {!embedded ? (
+        <header className="delpi-ui-lucide-icon-picker__header">
+          <h2>{title ?? L.title}</h2>
+          {onClose ? (
+            <button
+              type="button"
+              className="delpi-ui-lucide-icon-picker__close"
+              onClick={onClose}
+              aria-label={L.close}
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          ) : null}
+        </header>
+      ) : null}
 
       <div className="delpi-ui-lucide-icon-picker__body">
-        {/*
-          div (não label): hosts com `.cx-field { flex-direction: column }` /
-          estilo em inputs aninhados quebravam a barra em coluna (lupa acima do campo).
-        */}
         <div className="delpi-ui-lucide-icon-picker__search-wrap" role="search">
           <Search size={18} className="delpi-ui-lucide-icon-picker__search-icon" aria-hidden="true" />
           <input
@@ -177,7 +191,7 @@ export function LucideIconPicker({
             <div className="delpi-ui-lucide-icon-picker__selected">
               <span>{L.selectedHint}</span>
               {SelectedIcon ? <SelectedIcon size={20} aria-hidden="true" /> : null}
-              <code>{value.includes("-") ? value : toKebabCase(value)}</code>
+              <code>{lucideIconPtLabel(value)}</code>
             </div>
           ) : (
             <span className="delpi-ui-lucide-icon-picker__empty">{L.emptyHint}</span>
@@ -203,7 +217,7 @@ export function LucideIconPicker({
                       name={pascal}
                       active={pascal === normalizedSelectedPascal}
                       onSelect={() => {
-                        onChange(toKebabCase(pascal));
+                        onChange(emitName(pascal));
                         onClose?.();
                       }}
                     />
@@ -232,7 +246,7 @@ export function LucideIconPicker({
         >
           {L.clear}
         </button>
-        {onClose ? (
+        {onClose && !embedded ? (
           <button
             type="button"
             className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--primary"

@@ -141,6 +141,12 @@
   box-shadow: 0 18px 40px color-mix(in srgb, #000 18%, transparent);
 }
 
+.delpi-ui-lucide-icon-picker--embedded {
+  max-height: min(52vh, 28rem);
+  box-shadow: none;
+  margin-top: 0.5rem;
+}
+
 .delpi-ui-lucide-icon-picker__header {
   display: flex;
   align-items: flex-start;
