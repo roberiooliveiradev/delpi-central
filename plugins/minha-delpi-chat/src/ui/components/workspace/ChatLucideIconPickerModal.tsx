@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import { useMemo, useState, type ComponentType } from "react";
 import { X } from "lucide-react";
 import * as LucideIcons from "lucide-react";
@@ -116,7 +117,7 @@ export function ChatLucideIconPickerModal({
       </header>
 
       <div className="mdc-chat-lucide-icon-picker__body">
-        <input
+        <ChatNativeTextInput
           className="mdc-chat-lucide-icon-picker__search"
           placeholder="Buscar ícone (ex: book, user, bell...)"
           value={query}

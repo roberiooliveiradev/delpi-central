@@ -13,6 +13,7 @@ import {
   emptyFlowchart,
   DiagramMermaidPreview,
   DiagramFullscreenFrame,
+  NativeCheckboxControl,
   type FlowchartEscopo,
   type FlowchartV1,
 } from "@delpi/plugin-ui/index";
@@ -131,33 +132,29 @@ export function InstanciaDiagramEscopoSection({
         <FieldLabel className="tm-field__label" label="Escopo no diagrama" hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo} />
       ) : null}
 
-      <label className="tm-diagram-section__checkbox">
-        <input
-          type="checkbox"
-          checked={escopo.inherit_all}
-          disabled={readOnly}
-          onChange={(event) =>
-            setEscopo((current) => ({
-              ...current,
-              inherit_all: event.target.checked,
-              node_ids: event.target.checked ? [] : macro.nodes.map((node) => node.id),
-            }))
-          }
-        />
-        Usar diagrama macro completo nesta instância
-      </label>
+      <NativeCheckboxControl
+        className="tm-diagram-section__checkbox"
+        checked={escopo.inherit_all}
+        disabled={readOnly}
+        onChange={(inherit_all) =>
+          setEscopo((current) => ({
+            ...current,
+            inherit_all,
+            node_ids: inherit_all ? [] : macro.nodes.map((node) => node.id),
+          }))
+        }
+        label="Usar diagrama macro completo nesta instância"
+      />
 
-      <label className="tm-diagram-section__checkbox">
-        <input
-          type="checkbox"
-          checked={Boolean(escopo.include_boundary_edges)}
-          disabled={readOnly || escopo.inherit_all}
-          onChange={(event) =>
-            setEscopo((current) => ({ ...current, include_boundary_edges: event.target.checked }))
-          }
-        />
-        Incluir arestas na fronteira do escopo
-      </label>
+      <NativeCheckboxControl
+        className="tm-diagram-section__checkbox"
+        checked={Boolean(escopo.include_boundary_edges)}
+        disabled={readOnly || escopo.inherit_all}
+        onChange={(include_boundary_edges) =>
+          setEscopo((current) => ({ ...current, include_boundary_edges }))
+        }
+        label="Incluir arestas na fronteira do escopo"
+      />
 
       <DiagramFullscreenFrame
         title="Escopo no diagrama"

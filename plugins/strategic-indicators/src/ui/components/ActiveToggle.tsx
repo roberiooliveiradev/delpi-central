@@ -1,4 +1,5 @@
 import "./ActiveToggle.css";
+import { SiNativeSwitchControl } from "./siNativeFormFields";
 
 type ActiveToggleProps = {
   active: boolean;
@@ -14,22 +15,15 @@ export function ActiveToggle({
   ariaLabel = "Alternar situação ativa",
 }: ActiveToggleProps) {
   return (
-    <label
+    <SiNativeSwitchControl
       className={`si-active-toggle ${active ? "is-on" : ""} ${disabled ? "is-disabled" : ""}`}
-      title={active ? "Ativo — clique para desativar" : "Inativo — clique para ativar"}
-    >
-      <input
-        type="checkbox"
-        className="si-active-toggle__input"
-        checked={active}
-        disabled={disabled}
-        aria-label={ariaLabel}
-        onChange={(event) => onToggle(event.target.checked)}
-      />
-      <span className="si-active-toggle__track" aria-hidden="true">
-        <span className="si-active-toggle__thumb" />
-      </span>
-      <span className="si-active-toggle__label">{active ? "Ativo" : "Inativo"}</span>
-    </label>
+      inputClassName="si-active-toggle__input"
+      trackClassName="si-active-toggle__track"
+      checked={active}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      onChange={onToggle}
+      label={<span className="si-active-toggle__label">{active ? "Ativo" : "Inativo"}</span>}
+    />
   );
 }

@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../chatNativeFormFields";
 import { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
@@ -92,7 +93,7 @@ export function ChatPromptDialog({
       >
         <label className="mdc-chat-prompt__field">
           <span>{label ?? "Nome"}</span>
-          <input
+          <ChatNativeTextInput
             ref={inputRef}
             type="text"
             defaultValue={defaultValue}

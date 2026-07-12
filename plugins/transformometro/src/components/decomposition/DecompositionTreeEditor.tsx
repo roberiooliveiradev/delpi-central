@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
@@ -165,7 +166,7 @@ export function DecompositionTreeEditor({
                   }
                   const invalid = invalidNodeIds?.has(node.id) ?? false;
                   return (
-                    <input
+                    <NativeTextControl
                       className={[
                         "tm-rich-tree__input",
                         invalid ? "tm-rich-tree__input--invalid" : "",
@@ -176,7 +177,7 @@ export function DecompositionTreeEditor({
                       placeholder={DECOMPOSITION_LEVEL_LABELS[source.level]}
                       data-decomposition-node-id={node.id}
                       aria-invalid={invalid || undefined}
-                      onChange={(event) => updateNode(node.id, { label: event.target.value })}
+                      onChange={(label) => updateNode(node.id, { label })}
                       aria-label={`Rótulo ${source.label || DECOMPOSITION_LEVEL_LABELS[source.level]}`}
                     />
                   );

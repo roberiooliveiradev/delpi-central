@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 
@@ -101,7 +102,7 @@ export function ChatProjectCreateModal({
           <span className="mdc-chat-project-create-modal__input-icon" aria-hidden="true">
             <ChatProjectIcon icon={icon} size={16} />
           </span>
-          <input
+          <ChatNativeTextInput
             value={name}
             autoFocus
             onChange={(event) => setName(event.target.value)}

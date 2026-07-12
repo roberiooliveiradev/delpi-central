@@ -6,6 +6,7 @@ import {
   HelpTooltip,
   ImpactEffortMatrix,
   ImpactEffortMatrixLegend,
+  NativeTextControl,
   impactEffortMatrixTransformometroClasses,
   type ImpactEffortMatrixMode,
   type ImpactEffortPoint,
@@ -404,14 +405,14 @@ export function RevisaoMatrizImpactoSection({
                 />
                 <label className="ds-filter-box tm-field">
                   <FieldLabel className="tm-field__label" label="Pessoas afetadas" hint={M.pessoasAfetadas} />
-                  <input
+                  <NativeTextControl
                     type="number"
                     min={0}
                     value={inputs.pessoas_afetadas ?? ""}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setInputs((prev) => ({
                         ...prev,
-                        pessoas_afetadas: event.target.value === "" ? undefined : Number(event.target.value),
+                        pessoas_afetadas: value === "" ? undefined : Number(value),
                       }))
                     }
                   />

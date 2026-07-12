@@ -5,6 +5,7 @@ import type { ChatSession } from "../../../../data/api/chatTypes";
 import type { ChatAgent } from "../../../../data/api/chatTypes";
 import { simulateAdminAgent } from "../../../../data/api/adminApi";
 import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   ChatAdminNativeSelectField,
@@ -149,23 +150,19 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           onChange={setSessionId}
         />
 
-        <label className="mdc-admin-simulate__checkbox">
-          <input
-            type="checkbox"
-            checked={executeToolsInSandbox}
-            onChange={(event) => setExecuteToolsInSandbox(event.target.checked)}
-          />
-          <span>Executar tools em sandbox (com token do admin)</span>
-        </label>
+        <NativeCheckboxControl
+          className="mdc-admin-simulate__checkbox"
+          checked={executeToolsInSandbox}
+          label="Executar tools em sandbox (com token do admin)"
+          onChange={setExecuteToolsInSandbox}
+        />
 
-        <label className="mdc-admin-simulate__checkbox">
-          <input
-            type="checkbox"
-            checked={generateAnswer}
-            onChange={(event) => setGenerateAnswer(event.target.checked)}
-          />
-          <span>Gerar resposta com LLM (mais lento)</span>
-        </label>
+        <NativeCheckboxControl
+          className="mdc-admin-simulate__checkbox"
+          checked={generateAnswer}
+          label="Gerar resposta com LLM (mais lento)"
+          onChange={setGenerateAnswer}
+        />
 
         <button
           type="button"

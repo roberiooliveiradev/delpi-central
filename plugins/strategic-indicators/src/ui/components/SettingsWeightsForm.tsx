@@ -1,4 +1,5 @@
 import type { SettingsWeightItem } from "../../data/types/settings";
+import { SiNativeTextControl } from "./siNativeFormFields";
 import "./SettingsWeightsForm.css";
 
 type SettingsWeightsFormProps = {
@@ -32,29 +33,29 @@ export function SettingsWeightsForm({
         >
           <div className="si-settings-weights-form__grid">
             <Field label="Departamento">
-              <input
+              <SiNativeTextControl
                 value={item.department_name}
-                onChange={(e) =>
-                  updateItem(index, "department_name", e.target.value)
+                onChange={(value) =>
+                  updateItem(index, "department_name", value)
                 }
               />
             </Field>
 
             <Field label="ID do departamento">
-              <input
+              <SiNativeTextControl
                 value={item.department_id}
-                onChange={(e) =>
-                  updateItem(index, "department_id", e.target.value)
+                onChange={(value) =>
+                  updateItem(index, "department_id", value)
                 }
               />
             </Field>
 
             <Field label="Peso (%)">
-              <input
+              <SiNativeTextControl
                 type="number"
                 value={item.weight_pct}
-                onChange={(e) =>
-                  updateItem(index, "weight_pct", Number(e.target.value))
+                onChange={(value) =>
+                  updateItem(index, "weight_pct", Number(value))
                 }
               />
             </Field>

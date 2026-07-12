@@ -17,4 +17,9 @@ export const {
   classNames: CHAT_ADMIN_FIELD_CLASS_NAMES,
 });
 
-export { ChatNativeTextAreaControl } from "../../shared/chatNativeFormFields";
+export {
+  ChatNativeTextAreaControl,
+  NativeCheckboxControl,
+  NativeSwitchControl,
+  NativeTextControl,
+} from "../../shared/chatNativeFormFields";

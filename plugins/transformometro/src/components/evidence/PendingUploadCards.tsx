@@ -3,6 +3,7 @@ import { ChevronDown, FileText, X } from "lucide-react";
 
 import {
   FilePreviewModal,
+  NativeTextControl,
   canPreviewFile,
   resolveFilePreviewKind,
 } from "@delpi/plugin-ui/index";
@@ -159,12 +160,12 @@ function PendingUploadCard({
           <ChevronDown size={14} aria-hidden="true" className="tm-evidence-pending-card__chevron" />
           Descrição (opcional)
         </summary>
-        <input
+        <NativeTextControl
           type="text"
           placeholder="Ex.: POP vigente, instrução de trabalho…"
           value={item.descricao}
           disabled={disabled}
-          onChange={(event) => onUpdateDescription(item.id, event.target.value)}
+          onChange={(value) => onUpdateDescription(item.id, value)}
         />
       </details>
 

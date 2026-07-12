@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { ChevronRight, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
@@ -189,7 +190,7 @@ export function AdminSidebar({
 
       <div className="mdc-admin-sidebar__search">
         <Search size={16} aria-hidden="true" />
-        <input
+        <ChatNativeTextInput
           ref={searchInputRef}
           type="search"
           value={searchQuery}

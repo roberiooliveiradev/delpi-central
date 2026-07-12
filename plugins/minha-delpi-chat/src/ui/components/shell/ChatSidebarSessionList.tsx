@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import { Archive, Check, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
@@ -143,7 +144,7 @@ export function ChatSidebarSessionList({
       >
         {isEditing ? (
           <div className="mdc-chat-session-edit-card">
-            <input
+            <ChatNativeTextInput
               className="mdc-chat-session-edit-input"
               value={editingTitle}
               autoFocus

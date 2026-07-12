@@ -1,5 +1,6 @@
 import { LayoutPanelLeft } from "lucide-react";
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import type { ChatCanvasOpenPayload } from "../../../data/api/chatTypes";
 import {
   BarChart,
@@ -534,21 +535,18 @@ export function ChatRichChart({
                   />
                 ) : null}
                 {periodCompareSpec ? (
-                  <label className="mdc-rich-chart__ux-toggle">
-                    <input
-                      type="checkbox"
-                      checked={periodCompareEnabled}
-                      onChange={(event) => {
-                        const enabled = event.target.checked;
+                  <NativeCheckboxControl
+                    className="mdc-rich-chart__ux-toggle"
+                    checked={periodCompareEnabled}
+                    label="Comparar períodos"
+                    onChange={(enabled) => {
                         setPeriodCompareEnabled(enabled);
 
                         if (enabled) {
                           setChartTypeOverride("grouped_bar");
                         }
                       }}
-                    />
-                    <span>Comparar períodos</span>
-                  </label>
+                  />
                 ) : null}
               </div>
             ) : null}

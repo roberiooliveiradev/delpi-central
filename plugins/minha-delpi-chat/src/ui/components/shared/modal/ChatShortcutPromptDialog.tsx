@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../chatNativeFormFields";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import {
@@ -110,7 +111,7 @@ export function ChatShortcutPromptDialog({
                 }}
               />
             ) : (
-              <input
+              <ChatNativeTextInput
                 type="text"
                 inputMode={field.inputMode === "numeric" ? "numeric" : "text"}
                 autoComplete="off"

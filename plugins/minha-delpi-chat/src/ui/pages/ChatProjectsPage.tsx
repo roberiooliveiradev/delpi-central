@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../components/shared/chatNativeFormFields";
 import {
   ArrowLeft,
   ChevronRight,
@@ -135,7 +136,7 @@ export function ChatProjectsPage({
 
           <label className="mdc-chat-ws-directory__search">
             <Search size={17} aria-hidden="true" />
-            <input
+            <ChatNativeTextInput
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Buscar projetos"

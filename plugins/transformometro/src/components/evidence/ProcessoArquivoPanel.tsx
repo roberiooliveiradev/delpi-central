@@ -19,7 +19,7 @@ import {
   inferProcessoArquivoTypeFromFile,
   uploadProcessoArquivo,
 } from "../../data/api/transformometroProcessoArquivoApi";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoArquivo } from "../../types/processoArquivo";
 import { isSpreadsheetAttachedFile } from "../../utils/evidenceFilePreview";
@@ -464,24 +464,24 @@ export function ProcessoArquivoPanel({
                 <label htmlFor="tm-proc-arq-url">
                   <FieldLabel className="tm-field__label" label="URL" hint={P.arquivoUrl} />
                 </label>
-                <input
+                <NativeTextControl
                   id="tm-proc-arq-url"
                   type="url"
                   placeholder="https://…"
                   value={externalUrl}
                   disabled={uploading}
-                  onChange={(event) => setExternalUrl(event.target.value)}
+                  onChange={setExternalUrl}
                 />
               </div>
               <div className="ds-field">
                 <label htmlFor="tm-proc-arq-desc">
                   <FieldLabel className="tm-field__label" label="Descrição" hint={P.arquivoDescription} />
                 </label>
-                <input
+                <NativeTextControl
                   id="tm-proc-arq-desc"
                   value={linkDescription}
                   disabled={uploading}
-                  onChange={(event) => setLinkDescription(event.target.value)}
+                  onChange={setLinkDescription}
                 />
               </div>
               <button

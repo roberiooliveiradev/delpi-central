@@ -23,6 +23,10 @@ import { buildEmptyCurveTargets } from "../utils/curveTargets";
 import { resolveGoalValueForApi } from "../utils/goalValuePolicy";
 import "./AnnualGoalsWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
+import {
+  SiNativeCheckboxControl,
+  SiNativeTextControl,
+} from "./siNativeFormFields";
 
 type AnnualGoalsWorkspaceMode =
   | "create_year"
@@ -286,7 +290,7 @@ export function AnnualGoalsWorkspace({
             <label className="si-admin-form-field">
               <span>Ano de destino (criar/atualizar)</span>
               {typeof fixedTargetYear === "number" ? (
-                <input type="number" value={resolvedTargetYear} readOnly />
+                <SiNativeTextControl type="number" value={resolvedTargetYear} readOnly onChange={() => undefined} />
               ) : (
                 <SiSelectControl
                   value={String(targetYear)}
@@ -303,7 +307,7 @@ export function AnnualGoalsWorkspace({
           <label className="si-admin-form-field">
             <span>Ano de destino</span>
             {typeof fixedTargetYear === "number" ? (
-              <input type="number" value={resolvedTargetYear} readOnly />
+              <SiNativeTextControl type="number" value={resolvedTargetYear} readOnly onChange={() => undefined} />
             ) : (
               <SiSelectControl
                 value={String(resolvedTargetYear)}
@@ -332,16 +336,12 @@ export function AnnualGoalsWorkspace({
         ) : null}
 
         {mode === "duplicate_into_year" ? (
-          <label className="si-admin-form-field si-admin-form-field--full">
-            <span>
-              <input
-                type="checkbox"
-                checked={overwriteExisting}
-                onChange={(event) => setOverwriteExisting(event.target.checked)}
-              />{" "}
-              Sobrescrever metas já existentes no ano de destino
-            </span>
-          </label>
+          <SiNativeCheckboxControl
+            className="si-admin-form-field si-admin-form-field--full"
+            checked={overwriteExisting}
+            onChange={setOverwriteExisting}
+            label="Sobrescrever metas já existentes no ano de destino"
+          />
         ) : null}
 
         {mode === "create_year" ? (
@@ -374,14 +374,14 @@ export function AnnualGoalsWorkspace({
                       options={indicatorOptions}
                     />
                   ) : (
-                    <input
+                    <SiNativeTextControl
                       placeholder="ID do indicador"
                       value={row.indicator_id}
-                      onChange={(event) =>
+                      onChange={(value) =>
                         setBulkRows((current) =>
                           current.map((item, itemIndex) =>
                             itemIndex === index
-                              ? { ...item, indicator_id: event.target.value }
+                              ? { ...item, indicator_id: value }
                               : item,
                           ),
                         )
@@ -389,14 +389,14 @@ export function AnnualGoalsWorkspace({
                     />
                   )}
 
-                  <input
+                  <SiNativeTextControl
                     placeholder="Nome da meta"
                     value={row.goal_label}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setBulkRows((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index
-                            ? { ...item, goal_label: event.target.value }
+                            ? { ...item, goal_label: value }
                             : item,
                         ),
                       )
@@ -404,17 +404,17 @@ export function AnnualGoalsWorkspace({
                   />
 
                   {row.goal_mode === "standard" ? (
-                    <input
+                    <SiNativeTextControl
                       type="number"
                       placeholder="Valor da meta"
                       value={row.goal_value}
-                      onChange={(event) =>
+                      onChange={(value) =>
                         setBulkRows((current) =>
                           current.map((item, itemIndex) =>
                             itemIndex === index
                               ? {
                                   ...item,
-                                  goal_value: Number(event.target.value || 0),
+                                  goal_value: Number(value || 0),
                                 }
                               : item,
                           ),

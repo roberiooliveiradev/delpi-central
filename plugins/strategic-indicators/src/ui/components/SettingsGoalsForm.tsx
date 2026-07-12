@@ -1,5 +1,5 @@
 import type { SettingsGoalItem } from "../../data/types/settings";
-import { SiNativeTextAreaControl } from "./siNativeFormFields";
+import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 import "./SettingsGoalsForm.css";
 
 type SettingsGoalsFormProps = {
@@ -33,28 +33,28 @@ export function SettingsGoalsForm({
         >
           <div className="si-settings-goals-form__grid">
             <Field label="Departamento">
-              <input
+              <SiNativeTextControl
                 value={item.department_name}
-                onChange={(e) =>
-                  updateItem(index, "department_name", e.target.value)
+                onChange={(value) =>
+                  updateItem(index, "department_name", value)
                 }
               />
             </Field>
 
             <Field label="ID do departamento">
-              <input
+              <SiNativeTextControl
                 value={item.department_id}
-                onChange={(e) =>
-                  updateItem(index, "department_id", e.target.value)
+                onChange={(value) =>
+                  updateItem(index, "department_id", value)
                 }
               />
             </Field>
 
             <Field label="Meta principal">
-              <input
+              <SiNativeTextControl
                 value={item.headline_goal}
-                onChange={(e) =>
-                  updateItem(index, "headline_goal", e.target.value)
+                onChange={(value) =>
+                  updateItem(index, "headline_goal", value)
                 }
               />
             </Field>

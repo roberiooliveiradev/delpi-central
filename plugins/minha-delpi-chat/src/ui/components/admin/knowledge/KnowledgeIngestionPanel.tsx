@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useState } from "react";
 
 import { workspaceFileProjectIngestLabels } from "../../../../content/workspaceFileIngestContent";
@@ -272,7 +273,7 @@ export function KnowledgeIngestionPanel({
 
         <label className="mdc-admin-field">
           <span>Título</span>
-          <input
+          <ChatNativeTextInput
             value={title}
             disabled={isMutating || !canManageKnowledge}
             placeholder="Ex.: Diretrizes gerais do atendimento"
@@ -298,7 +299,7 @@ export function KnowledgeIngestionPanel({
 
         <label className="mdc-admin-field">
           <span>Referência</span>
-          <input
+          <ChatNativeTextInput
             value={sourceRef}
             disabled={isMutating}
             placeholder="Ex.: global:diretrizes-atendimento"

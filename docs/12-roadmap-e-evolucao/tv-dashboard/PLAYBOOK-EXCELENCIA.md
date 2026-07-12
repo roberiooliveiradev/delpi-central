@@ -1778,6 +1778,7 @@ Ribbon Gráfico = atalhos de visibilidade/tipo; FormatPane = detalhe da parte.
 | 4N.5 | `NativeCheckboxControl` + `NativeTextControl` no plugin-ui; uso nos inspetores chart/table/elemento | ✅ |
 | 4N.6 | Context menu só `TvRibbonColorPicker` | ✅ |
 | 4N.7 | Gate CI estrito a input/checkbox no `tv-dashboard` (+ migração residual ribbon/painéis) | ✅ |
+| 4N.8 | Gate STRICT expandido: `minha-delpi-chat`, `transformometro`, `strategic-indicators` (+ NativeSwitch) | ✅ |
 
 #### Anti-padrões 4N
 

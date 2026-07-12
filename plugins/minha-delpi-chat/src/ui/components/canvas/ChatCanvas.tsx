@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import { Check, Copy, Download, Edit3, Eye, Maximize2, Minimize2, Save, X } from "lucide-react";
 import { useState } from "react";
 import { ChatMarkdown } from "../message/ChatMarkdown";
@@ -80,7 +81,7 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
               : null}
             {document.documentType ? ` · ${document.documentType}` : null}
           </p>
-          <input
+          <ChatNativeTextInput
             value={document.title}
             onChange={(event) =>
               updateDocument({

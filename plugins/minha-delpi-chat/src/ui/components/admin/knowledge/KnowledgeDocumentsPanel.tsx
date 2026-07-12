@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { KnowledgeDocumentCard } from "./KnowledgeDocumentCard";
 import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 import type {
@@ -96,7 +97,7 @@ export function KnowledgeDocumentsPanel({
       <div className="mdc-admin-filter-bar" aria-label="Filtros da base global">
         <label className="mdc-admin-field mdc-admin-filter-bar__search">
           <span>Buscar</span>
-          <input
+          <ChatNativeTextInput
             value={documentSearch}
             placeholder="Título, categoria, tags..."
             onChange={(event) => setDocumentSearch(event.target.value)}

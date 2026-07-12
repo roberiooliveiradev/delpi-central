@@ -7,6 +7,7 @@ import { IndicatorGoalForm } from "./IndicatorGoalForm";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import type { StrategicIndicatorGoalItem } from "../../data/types/indicatorGoals";
 import type { AdminDepartmentIndicatorItem } from "../../data/types/settings";
+import { SiNativeTextControl } from "./siNativeFormFields";
 import "./DepartmentGoalsPanel.css";
 
 type DepartmentGoalsPanelProps = {
@@ -97,12 +98,12 @@ export function DepartmentGoalsPanel({
           <div className="si-admin-inline-actions">
             <label className="si-admin-form-field si-admin-form-field--compact">
               <span>Ano</span>
-              <input
+              <SiNativeTextControl
                 type="number"
                 value={goals.selectedGoalYear}
-                onChange={(event) =>
+                onChange={(value) =>
                   goals.setSelectedGoalYear(
-                    Number(event.target.value || new Date().getFullYear()),
+                    Number(value || new Date().getFullYear()),
                   )
                 }
               />

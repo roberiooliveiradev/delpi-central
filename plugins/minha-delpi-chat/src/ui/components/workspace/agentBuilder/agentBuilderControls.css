@@ -20,7 +20,7 @@
   cursor: pointer;
 }
 
-.mdc-ab-checkbox__label {
+.mdc-ab-checkbox .delpi-ui-native-checkbox__label {
   flex: 1 1 auto;
   min-width: 0;
   color: var(--mdc-text);
@@ -97,23 +97,11 @@
   cursor: not-allowed;
 }
 
-.mdc-ab-switch__label {
+.mdc-ab-switch .delpi-ui-native-switch__label {
   color: var(--mdc-text);
   font-size: 0.84rem;
   font-weight: 650;
   line-height: 1.2;
-}
-
-.mdc-ab-switch__sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .mdc-ab-switch--compact .mdc-ab-switch__track {
@@ -132,7 +120,7 @@
   transform: translateX(0.875rem);
 }
 
-.mdc-ab-switch--compact .mdc-ab-switch__label {
+.mdc-ab-switch--compact .delpi-ui-native-switch__label {
   font-size: 0.8rem;
 }
 

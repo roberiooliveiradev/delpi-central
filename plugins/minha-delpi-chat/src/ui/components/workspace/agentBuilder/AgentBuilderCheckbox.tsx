@@ -1,5 +1,6 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { ChangeEvent, InputHTMLAttributes, ReactNode } from "react";
 
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import "./agentBuilderControls.css";
 
 type AgentBuilderCheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
@@ -9,12 +10,20 @@ type AgentBuilderCheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, "ty
 export function AgentBuilderCheckbox({
   label,
   className,
+  checked,
+  defaultChecked: _defaultChecked,
+  onChange,
   ...inputProps
 }: AgentBuilderCheckboxProps) {
   return (
-    <label className={["mdc-ab-checkbox", className].filter(Boolean).join(" ")}>
-      <input type="checkbox" {...inputProps} />
-      <span className="mdc-ab-checkbox__label">{label}</span>
-    </label>
+    <NativeCheckboxControl
+      {...inputProps}
+      checked={Boolean(checked)}
+      className={["mdc-ab-checkbox", className].filter(Boolean).join(" ")}
+      label={label}
+      onChange={(nextChecked) =>
+        onChange?.({ target: { checked: nextChecked } } as ChangeEvent<HTMLInputElement>)
+      }
+    />
   );
 }

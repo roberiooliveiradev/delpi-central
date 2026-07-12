@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchRevisaoDecomposicaoMerged,
@@ -153,7 +153,7 @@ export function RevisaoDecompositionSection({
                     node.id === "decomposition-root" ? (
                       <span className="tm-rich-tree__label">{node.label}</span>
                     ) : (
-                      <input
+                      <NativeTextControl
                         className="tm-rich-tree__input"
                         value={
                           overlay.node_overrides?.[node.id]?.label !== undefined
@@ -161,7 +161,7 @@ export function RevisaoDecompositionSection({
                             : node.label
                         }
                         placeholder={node.badge === "PK" ? "Processo-chave" : node.badge === "T" ? "Tarefa" : "Sub-tarefa"}
-                        onChange={(event) => updateOverride(node.id, event.target.value)}
+                        onChange={(label) => updateOverride(node.id, label)}
                         aria-label={`Rótulo ${node.label}`}
                       />
                     )

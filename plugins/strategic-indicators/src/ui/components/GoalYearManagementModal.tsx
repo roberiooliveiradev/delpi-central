@@ -4,6 +4,10 @@ import { SectionBlock } from "./SectionBlock";
 import { InfoState } from "./InfoState";
 import { ActionButtons } from "./ActionButtons";
 import { IndicatorGoalForm } from "./IndicatorGoalForm";
+import {
+  SiNativeCheckboxControl,
+  SiNativeTextControl,
+} from "./siNativeFormFields";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import type {
   DuplicateStrategicIndicatorGoalsYearRequest,
@@ -169,22 +173,18 @@ export function GoalYearManagementModal({
             <div className="si-admin-form-grid">
               <label className="si-admin-form-field">
                 <span>Departamento</span>
-                <input
+                <SiNativeTextControl
                   value={goals.selectedDepartmentId}
-                  onChange={(event) =>
-                    goals.setSelectedDepartmentId(event.target.value)
-                  }
+                  onChange={goals.setSelectedDepartmentId}
                   placeholder="ID do departamento"
                 />
               </label>
 
               <label className="si-admin-form-field">
                 <span>Indicador</span>
-                <input
+                <SiNativeTextControl
                   value={goals.selectedIndicatorId}
-                  onChange={(event) =>
-                    goals.setSelectedIndicatorId(event.target.value)
-                  }
+                  onChange={goals.setSelectedIndicatorId}
                   placeholder="ID do indicador"
                 />
               </label>
@@ -325,27 +325,21 @@ export function GoalYearManagementModal({
         <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
             <span>Ano de origem</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={sourceYear}
-              onChange={(event) =>
-                setSourceYear(Number(event.target.value || 0))
+              onChange={(value) =>
+                setSourceYear(Number(value || 0))
               }
             />
           </label>
 
-          <label className="si-admin-form-field si-admin-form-field--full">
-            <span>
-              <input
-                type="checkbox"
-                checked={overwriteExisting}
-                onChange={(event) =>
-                  setOverwriteExisting(event.target.checked)
-                }
-              />{" "}
-              Sobrescrever metas existentes no ano de destino
-            </span>
-          </label>
+          <SiNativeCheckboxControl
+            className="si-admin-form-field si-admin-form-field--full"
+            checked={overwriteExisting}
+            onChange={setOverwriteExisting}
+            label="Sobrescrever metas existentes no ano de destino"
+          />
         </div>
       </Modal>
 
@@ -378,11 +372,11 @@ export function GoalYearManagementModal({
         <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
             <span>Copiar de</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={copyFromYear}
-              onChange={(event) =>
-                setCopyFromYear(Number(event.target.value || 0))
+              onChange={(value) =>
+                setCopyFromYear(Number(value || 0))
               }
             />
           </label>

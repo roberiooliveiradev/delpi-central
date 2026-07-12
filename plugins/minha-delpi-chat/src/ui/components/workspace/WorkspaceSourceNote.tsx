@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import type { ReactNode } from "react";
 
 import { ChatNativeTextAreaControl } from "../admin/shared/chatAdminFormFields";
@@ -44,7 +45,7 @@ export function WorkspaceSourceNoteForm({
 }: WorkspaceSourceNoteFormProps) {
   return (
     <div className="mdc-workspace-source-note">
-      <input
+      <ChatNativeTextInput
         type="text"
         value={title}
         onChange={(event) => onTitleChange(event.target.value)}

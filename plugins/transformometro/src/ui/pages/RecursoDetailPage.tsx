@@ -11,7 +11,7 @@ import { CollaborativePresenceBanner } from "../../components/collaboration/Coll
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
+import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TableHeader } from "../../components/TableHeader";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { cenarioLabel } from "../../content/cenarioLabels";
@@ -432,12 +432,12 @@ export function RecursoDetailPage({
               <div className="ds-table-toolbar">
                 <div className="ds-table-search" role="search">
                   <Search size={16} aria-hidden="true" className="ds-table-search__icon" />
-                  <input
+                  <NativeTextControl
                     type="search"
                     className="ds-table-search__input"
                     value={search}
                     placeholder="Código, processo, unidade, departamento…"
-                    onChange={(event) => setSearch(event.target.value)}
+                    onChange={setSearch}
                     aria-label="Filtrar processos vinculados"
                   />
                 </div>
@@ -474,70 +474,60 @@ export function RecursoDetailPage({
                                 <div className="ds-filters-row">
                                   <label className="ds-filter-box">
                                     <FieldLabel className="tm-field__label" label="Início do uso" hint={R.vinculoInicio} />
-                                    <input
+                                    <NativeTextControl
                                       type="date"
                                       value={editVinculoForm.data_inicio_uso}
-                                      onChange={(event) =>
+                                      onChange={(data_inicio_uso) =>
                                         setEditVinculoForm({
                                           ...editVinculoForm,
-                                          data_inicio_uso: event.target.value,
+                                          data_inicio_uso,
                                         })
                                       }
                                     />
                                   </label>
                                   <label className="ds-filter-box">
                                     <FieldLabel className="tm-field__label" label="Fim do uso" hint={R.vinculoFim} />
-                                    <input
+                                    <NativeTextControl
                                       type="date"
                                       value={editVinculoForm.data_fim_uso}
-                                      onChange={(event) =>
+                                      onChange={(data_fim_uso) =>
                                         setEditVinculoForm({
                                           ...editVinculoForm,
-                                          data_fim_uso: event.target.value,
+                                          data_fim_uso,
                                         })
                                       }
                                     />
                                   </label>
                                   <label className="ds-filter-box">
                                     <FieldLabel className="tm-field__label" label="Peso do rateio" hint={R.peso} />
-                                    <input
+                                    <NativeTextControl
                                       type="number"
                                       min={0}
                                       step="any"
                                       value={editVinculoForm.peso_rateio}
-                                      onChange={(event) =>
+                                      onChange={(peso_rateio) =>
                                         setEditVinculoForm({
                                           ...editVinculoForm,
-                                          peso_rateio: event.target.value,
+                                          peso_rateio,
                                         })
                                       }
                                     />
                                   </label>
-                                  <label className="ds-check-label">
-                                    <input
-                                      type="checkbox"
-                                      checked={editVinculoForm.ativo}
-                                      onChange={(event) =>
-                                        setEditVinculoForm({
-                                          ...editVinculoForm,
-                                          ativo: event.target.checked,
-                                        })
-                                      }
-                                    />
-                                    <span className="tm-field__label">
-                                      Vínculo ativo
-                                      <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" />
-                                    </span>
-                                  </label>
+                                  <NativeCheckboxControl
+                                    className="ds-check-label"
+                                    checked={editVinculoForm.ativo}
+                                    onChange={(ativo) => setEditVinculoForm({ ...editVinculoForm, ativo })}
+                                    label={<span className="tm-field__label">Vínculo ativo <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" /></span>}
+                                  />
                                 </div>
                                 <label className="ds-filter-box ds-filter-box--wide">
                                   <FieldLabel className="tm-field__label" label="Observações" hint={R.vinculoObservacoes} />
-                                  <input
+                                  <NativeTextControl
                                     value={editVinculoForm.observacoes}
-                                    onChange={(event) =>
+                                    onChange={(observacoes) =>
                                       setEditVinculoForm({
                                         ...editVinculoForm,
-                                        observacoes: event.target.value,
+                                        observacoes,
                                       })
                                     }
                                   />

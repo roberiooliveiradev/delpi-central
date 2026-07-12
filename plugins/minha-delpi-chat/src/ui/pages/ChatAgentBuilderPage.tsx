@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../components/shared/chatNativeFormFields";
 import {
   ArrowLeft,
   Check,
@@ -1583,7 +1584,7 @@ export function ChatAgentBuilderPage({
             </span>
             <label className="mdc-chat-agent-builder__hero-name-wrap">
               <span className="mdc-chat-agent-builder__sr-only">Nome do agente</span>
-              <input
+              <ChatNativeTextInput
                 className="mdc-chat-agent-builder__hero-name"
                 value={name}
                 maxLength={120}
@@ -1664,7 +1665,7 @@ export function ChatAgentBuilderPage({
             <div className="mdc-chat-agent-builder__grid mdc-chat-agent-builder__grid--three">
               <label className="mdc-chat-ws-field">
                 <span>Categoria</span>
-                <input
+                <ChatNativeTextInput
                   value={category}
                   maxLength={80}
                   onChange={(event) => setCategory(event.target.value)}
@@ -2080,7 +2081,7 @@ export function ChatAgentBuilderPage({
 
             <label className="mdc-chat-ws-field mdc-chat-agent-builder__field--compact">
               <span>Máximo de chamadas de ferramentas</span>
-              <input
+              <ChatNativeTextInput
                 type="number"
                 min={1}
                 max={20}

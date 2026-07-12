@@ -191,11 +191,11 @@
   margin: 0;
 }
 
-.mdc-chat-intelligence-setting__control .mdc-admin-form-row__title {
+.mdc-chat-intelligence-setting__control .mdc-admin-form-row .delpi-ui-native-checkbox__label {
   font-size: 0.875rem;
 }
 
-.mdc-chat-intelligence-setting__control .mdc-admin-form-row__hint {
+.mdc-chat-intelligence-setting__control .mdc-admin-form-row .delpi-ui-native-checkbox__hint {
   font-size: 0.8125rem;
 }
 

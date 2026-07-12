@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import { Copy, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -141,7 +142,7 @@ export function ChatProjectSettingsModal({
 
         <label className="mdc-chat-project-settings__field">
           <span>Nome do projeto</span>
-          <input value={name} onChange={(event) => setName(event.target.value)} />
+          <ChatNativeTextInput value={name} onChange={(event) => setName(event.target.value)} />
         </label>
 
         <div className="mdc-chat-project-settings__field">
@@ -158,7 +159,7 @@ export function ChatProjectSettingsModal({
 
         <label className="mdc-chat-project-settings__field">
           <span>Descrição</span>
-          <input
+          <ChatNativeTextInput
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Explique o objetivo deste projeto..."

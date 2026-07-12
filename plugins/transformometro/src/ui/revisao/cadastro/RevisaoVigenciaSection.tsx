@@ -1,5 +1,5 @@
 import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
+import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../../components/ui/SelectField";
 import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
@@ -115,10 +115,10 @@ export function RevisaoVigenciaSection({
         <div className="ds-filters-row">
           <label className="ds-filter-box">
             <FieldLabel className="tm-field__label" label="Versão *" hint={R.versao} />
-            <input
+            <NativeTextControl
               required
               value={revisaoVigencia.versao_revisao}
-              onChange={(e) => onChange({ ...revisaoVigencia, versao_revisao: e.target.value })}
+              onChange={(versao_revisao) => onChange({ ...revisaoVigencia, versao_revisao })}
             />
           </label>
           <SelectField
@@ -155,70 +155,66 @@ export function RevisaoVigenciaSection({
           ) : null}
           <label className="ds-filter-box">
             <FieldLabel className="tm-field__label" label="Início vigência *" hint={R.inicioVigencia} />
-            <input
+            <NativeTextControl
               type="date"
               required
               value={revisaoVigencia.data_inicio_vigencia}
-              onChange={(e) =>
-                onChange({ ...revisaoVigencia, data_inicio_vigencia: e.target.value })
+              onChange={(data_inicio_vigencia) =>
+                onChange({ ...revisaoVigencia, data_inicio_vigencia })
               }
             />
           </label>
           <label className="ds-filter-box">
             <FieldLabel className="tm-field__label" label="Implantação" hint={R.implantacao} />
-            <input
+            <NativeTextControl
               type="date"
               value={revisaoVigencia.data_implantacao}
-              onChange={(e) =>
-                onChange({ ...revisaoVigencia, data_implantacao: e.target.value })
+              onChange={(data_implantacao) =>
+                onChange({ ...revisaoVigencia, data_implantacao })
               }
             />
           </label>
           <label className="ds-filter-box">
             <FieldLabel className="tm-field__label" label="Fim vigência" hint={R.fimVigencia} />
-            <input
+            <NativeTextControl
               type="date"
               value={revisaoVigencia.data_fim_vigencia}
-              onChange={(e) =>
+              onChange={(data_fim_vigencia) =>
                 onChange({
                   ...revisaoVigencia,
-                  data_fim_vigencia: e.target.value,
-                  revisao_ativa: e.target.value || isBaseline ? false : revisaoVigencia.revisao_ativa,
+                  data_fim_vigencia,
+                  revisao_ativa: data_fim_vigencia || isBaseline ? false : revisaoVigencia.revisao_ativa,
                 })
               }
             />
           </label>
-          <label className="ds-check-label">
-            <input
-              type="checkbox"
-              checked={revisaoVigencia.revisao_ativa}
-              disabled={isBaseline || Boolean(revisaoVigencia.data_fim_vigencia)}
-              onChange={(e) =>
-                onChange({ ...revisaoVigencia, revisao_ativa: e.target.checked })
-              }
-            />
-            <span className="tm-field__label">
+          <NativeCheckboxControl
+            className="ds-check-label"
+            checked={revisaoVigencia.revisao_ativa}
+            disabled={isBaseline || Boolean(revisaoVigencia.data_fim_vigencia)}
+            onChange={(revisao_ativa) => onChange({ ...revisaoVigencia, revisao_ativa })}
+            label={<span className="tm-field__label">
               Marcar como revisão ativa
               <HelpTooltip content={R.revisaoAtiva} ariaLabel="Ajuda: Marcar como revisão ativa" />
-            </span>
-          </label>
+            </span>}
+          />
         </div>
         <label className="ds-filter-box ds-filter-box--wide">
           <FieldLabel className="tm-field__label" label="Descrição da revisão" hint={R.descricao} />
-          <input
+          <NativeTextControl
             value={revisaoVigencia.descricao_revisao}
-            onChange={(e) =>
-              onChange({ ...revisaoVigencia, descricao_revisao: e.target.value })
+            onChange={(descricao_revisao) =>
+              onChange({ ...revisaoVigencia, descricao_revisao })
             }
             placeholder="Ex.: Automação do fechamento mensal"
           />
         </label>
         <label className="ds-filter-box ds-filter-box--wide">
           <FieldLabel className="tm-field__label" label="Motivo da revisão" hint={R.motivo} />
-          <input
+          <NativeTextControl
             value={revisaoVigencia.motivo_revisao}
-            onChange={(e) =>
-              onChange({ ...revisaoVigencia, motivo_revisao: e.target.value })
+            onChange={(motivo_revisao) =>
+              onChange({ ...revisaoVigencia, motivo_revisao })
             }
             placeholder="Ex.: Nova ferramenta / mudança de escopo"
           />

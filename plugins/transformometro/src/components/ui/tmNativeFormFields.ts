@@ -3,6 +3,11 @@ import {
   type FormFieldShellClassNames,
 } from "@delpi/plugin-ui/index";
 
+export {
+  NativeTextControl as TmNativeTextControl,
+  NativeCheckboxControl as TmNativeCheckboxControl,
+} from "@delpi/plugin-ui/index";
+
 /** Campos nativos alinhados ao shell `ds-filter-box` / `tm-field__label`. */
 const TM_NATIVE_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
   root: "ds-filter-box",

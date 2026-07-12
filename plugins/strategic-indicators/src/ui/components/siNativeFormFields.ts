@@ -1,1 +1,6 @@
-export { NativeTextAreaControl as SiNativeTextAreaControl } from "@delpi/plugin-ui/index";
+export {
+  NativeCheckboxControl as SiNativeCheckboxControl,
+  NativeSwitchControl as SiNativeSwitchControl,
+  NativeTextAreaControl as SiNativeTextAreaControl,
+  NativeTextControl as SiNativeTextControl,
+} from "@delpi/plugin-ui/index";

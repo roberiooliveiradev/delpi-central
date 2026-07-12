@@ -71,7 +71,7 @@
   padding: 0;
 }
 
-.mdc-action-routes-table__name .mdc-ab-checkbox__label {
+.mdc-action-routes-table__name .mdc-ab-checkbox .delpi-ui-native-checkbox__label {
   font-size: 0.84rem;
 }
 

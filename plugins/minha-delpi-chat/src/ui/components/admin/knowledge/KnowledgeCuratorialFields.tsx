@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import "./KnowledgeCuratorialFields.css";
 
 type KnowledgeCuratorialFieldsProps = {
@@ -36,7 +37,7 @@ export function KnowledgeCuratorialFields({
       <div className="mdc-knowledge-curatorial__grid">
         <label className="mdc-admin-field">
           <span>Categoria</span>
-          <input
+          <ChatNativeTextInput
             value={category}
             disabled={disabled}
             placeholder="Ex.: atendimento"
@@ -46,7 +47,7 @@ export function KnowledgeCuratorialFields({
 
         <label className="mdc-admin-field">
           <span>Namespace</span>
-          <input
+          <ChatNativeTextInput
             value={namespace}
             disabled={disabled}
             placeholder="Ex.: global:rh"
@@ -56,7 +57,7 @@ export function KnowledgeCuratorialFields({
 
         <label className="mdc-admin-field">
           <span>Domínio</span>
-          <input
+          <ChatNativeTextInput
             value={domain}
             disabled={disabled}
             placeholder="Ex.: recursos-humanos"
@@ -66,7 +67,7 @@ export function KnowledgeCuratorialFields({
 
         <label className="mdc-admin-field">
           <span>Prioridade (1-5)</span>
-          <input
+          <ChatNativeTextInput
             type="number"
             min={1}
             max={5}
@@ -78,7 +79,7 @@ export function KnowledgeCuratorialFields({
 
         <label className="mdc-admin-field">
           <span>Pontuação de qualidade (0-100)</span>
-          <input
+          <ChatNativeTextInput
             type="number"
             min={0}
             max={100}
@@ -91,7 +92,7 @@ export function KnowledgeCuratorialFields({
 
       <label className="mdc-admin-field">
         <span>Tags (vírgula)</span>
-        <input
+        <ChatNativeTextInput
           value={tags}
           disabled={disabled}
           placeholder="Ex.: onboarding, faq"

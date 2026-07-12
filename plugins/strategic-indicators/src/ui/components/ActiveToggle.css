@@ -39,7 +39,8 @@
   border-color: color-mix(in srgb, var(--success, #067647) 50%, transparent);
 }
 
-.si-active-toggle__thumb {
+.si-active-toggle__track::after {
+  content: "";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -51,7 +52,7 @@
   transition: transform 0.2s ease;
 }
 
-.si-active-toggle.is-on .si-active-toggle__thumb {
+.si-active-toggle.is-on .si-active-toggle__track::after {
   transform: translateX(20px);
 }
 

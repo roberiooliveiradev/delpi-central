@@ -1,6 +1,6 @@
-import { FieldLabel } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
+import { TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import type { FilialFormState } from "./filialCatalogForm";
@@ -17,30 +17,25 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
 
   return (
     <div className="ds-filters-row ds-filters-row--extended">
-      <div className="ds-filter-box">
-        <label htmlFor="tm-filial-codigo">
-          <FieldLabel className="tm-field__label" label="Código TOTVS *" hint={TM_HELP_TOOLTIPS.filiais.codigo} />
-        </label>
-        <input
-          id="tm-filial-codigo"
-          required
-          readOnly={editing}
-          placeholder="ex.: 01"
-          value={form.codigo_filial}
-          onChange={(e) => set({ codigo_filial: e.target.value.trim() })}
-        />
-      </div>
-      <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-filial-nome">
-          <FieldLabel className="tm-field__label" label="Nome da unidade *" hint={TM_HELP_TOOLTIPS.filiais.nome} />
-        </label>
-        <input
-          id="tm-filial-nome"
-          required
-          value={form.nome_filial}
-          onChange={(e) => set({ nome_filial: e.target.value })}
-        />
-      </div>
+      <TmNativeTextField
+        id="tm-filial-codigo"
+        label="Código TOTVS *"
+        hint={TM_HELP_TOOLTIPS.filiais.codigo}
+        required
+        readOnly={editing}
+        placeholder="ex.: 01"
+        value={form.codigo_filial}
+        onChange={(codigo_filial) => set({ codigo_filial: codigo_filial.trim() })}
+      />
+      <TmNativeTextField
+        id="tm-filial-nome"
+        label="Nome da unidade *"
+        hint={TM_HELP_TOOLTIPS.filiais.nome}
+        className="ds-filter-box--wide"
+        required
+        value={form.nome_filial}
+        onChange={(nome_filial) => set({ nome_filial })}
+      />
       <SelectField
         id="tm-filial-status"
         label="Status *"

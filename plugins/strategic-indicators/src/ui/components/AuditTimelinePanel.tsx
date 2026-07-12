@@ -5,6 +5,7 @@ import type {
 } from "../../data/types/settingsAudit";
 import "./AuditTimelinePanel.css";
 import { SiSelectControl } from "./siFiltersUi";
+import { SiNativeTextControl } from "./siNativeFormFields";
 
 type AuditTimelinePanelProps = {
   items: StrategicIndicatorsSettingsAuditItem[];
@@ -167,10 +168,10 @@ export function AuditTimelinePanel({
 
           <label className="si-audit-panel__filter si-audit-panel__filter--search">
             <span>Buscar</span>
-            <input
+            <SiNativeTextControl
               type="text"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={setSearch}
               placeholder="ator, evento ou bloco"
             />
           </label>

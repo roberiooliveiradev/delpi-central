@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../components/shared/chatNativeFormFields";
 import { Plus, Route, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -41,7 +42,7 @@ function ParameterField({
         {field.required ? <em>obrigatório</em> : null}
       </span>
 
-      <input
+      <ChatNativeTextInput
         value={field.value}
         onChange={(event) => onChange(index, { value: event.target.value })}
         placeholder={`Valor para ${field.key}`}
@@ -159,7 +160,7 @@ export function ActionTestPanel({
 
         {queryFields.map((field, index) => (
           <div className="mdc-action-test-panel__query-row" key={`${field.key}-${index}`}>
-            <input
+            <ChatNativeTextInput
               value={field.key}
               onChange={(event) =>
                 setQueryFields((current) =>
@@ -170,7 +171,7 @@ export function ActionTestPanel({
               readOnly={Boolean(field.required)}
             />
 
-            <input
+            <ChatNativeTextInput
               value={field.value}
               onChange={(event) =>
                 setQueryFields((current) =>

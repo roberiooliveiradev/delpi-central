@@ -1,6 +1,6 @@
-import { FieldLabel } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
+import { TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import {
@@ -41,14 +41,7 @@ export function RecursoCatalogFormFields({
   return (
     <>
       <div className="ds-filters-row">
-        <label className="ds-filter-box ds-filter-box--wide">
-          <FieldLabel className="tm-field__label" label="Nome *" hint={R.nome} />
-          <input
-            required
-            value={form.nome_recurso}
-            onChange={(e) => onChange({ ...form, nome_recurso: e.target.value })}
-          />
-        </label>
+        <TmNativeTextField label="Nome *" hint={R.nome} className="ds-filter-box--wide" required value={form.nome_recurso} onChange={(nome_recurso) => onChange({ ...form, nome_recurso })} />
         <SelectField
           label="Categoria"
           hint={R.categoria}
@@ -61,13 +54,7 @@ export function RecursoCatalogFormFields({
             (c) => c
           )}
         />
-        <label className="ds-filter-box">
-          <FieldLabel className="tm-field__label" label="Fornecedor" hint={R.fornecedor} />
-          <input
-            value={form.fornecedor}
-            onChange={(e) => onChange({ ...form, fornecedor: e.target.value })}
-          />
-        </label>
+        <TmNativeTextField label="Fornecedor" hint={R.fornecedor} value={form.fornecedor} onChange={(fornecedor) => onChange({ ...form, fornecedor })} />
         <SelectField
           label="Tipo de custo *"
           hint={R.tipoCusto}
@@ -134,37 +121,11 @@ export function RecursoCatalogFormFields({
             (s) => s
           )}
         />
-        <label className="ds-filter-box">
-          <FieldLabel className="tm-field__label" label="Centro de custo" hint={R.centroCusto} />
-          <input
-            value={form.centro_custo}
-            onChange={(e) => onChange({ ...form, centro_custo: e.target.value })}
-          />
-        </label>
-        <label className="ds-filter-box">
-          <FieldLabel className="tm-field__label" label="Início vigência do recurso" hint={R.inicioVigencia} />
-          <input
-            type="date"
-            value={form.data_inicio_vigencia}
-            onChange={(e) => onChange({ ...form, data_inicio_vigencia: e.target.value })}
-          />
-        </label>
-        <label className="ds-filter-box">
-          <FieldLabel className="tm-field__label" label="Fim vigência do recurso" hint={R.fimVigencia} />
-          <input
-            type="date"
-            value={form.data_fim_vigencia}
-            onChange={(e) => onChange({ ...form, data_fim_vigencia: e.target.value })}
-          />
-        </label>
+        <TmNativeTextField label="Centro de custo" hint={R.centroCusto} value={form.centro_custo} onChange={(centro_custo) => onChange({ ...form, centro_custo })} />
+        <TmNativeTextField label="Início vigência do recurso" hint={R.inicioVigencia} type="date" value={form.data_inicio_vigencia} onChange={(data_inicio_vigencia) => onChange({ ...form, data_inicio_vigencia })} />
+        <TmNativeTextField label="Fim vigência do recurso" hint={R.fimVigencia} type="date" value={form.data_fim_vigencia} onChange={(data_fim_vigencia) => onChange({ ...form, data_fim_vigencia })} />
       </div>
-      <label className="ds-filter-box ds-filter-box--wide">
-        <FieldLabel className="tm-field__label" label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} />
-        <input
-          value={form.observacoes}
-          onChange={(e) => onChange({ ...form, observacoes: e.target.value })}
-        />
-      </label>
+      <TmNativeTextField label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} className="ds-filter-box--wide" value={form.observacoes} onChange={(observacoes) => onChange({ ...form, observacoes })} />
       {hideSubmit ? null : (
         <button type="submit" className="ds-primary-btn">
           {submitLabel}

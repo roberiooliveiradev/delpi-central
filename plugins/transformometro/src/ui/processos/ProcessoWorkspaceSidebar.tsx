@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   collectExpandedNodeIds,
@@ -204,10 +205,10 @@ export function ProcessoWorkspaceSidebar({
 
       <div className="tm-processo-workspace-sidebar__search">
         <Search size={15} aria-hidden="true" />
-        <input
+        <NativeTextControl
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={setQuery}
           placeholder="Pesquisar tópicos, melhorias, revisões…"
           aria-label="Pesquisar na árvore do processo"
         />

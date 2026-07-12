@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import type { AuditBackendPlaceholders, AuditFilters } from "./auditTypes";
 
 import "./AuditFiltersPanel.css";
@@ -28,7 +29,7 @@ export function AuditFiltersPanel({
       <div className="mdc-admin-filter-bar">
         <label className="mdc-admin-field mdc-admin-filter-bar__search">
           <span>Buscar</span>
-          <input
+          <ChatNativeTextInput
             value={filters.search}
             placeholder="Ação, usuário, contexto ou hash"
             onChange={(event) => updateFilter("search", event.target.value)}
@@ -38,7 +39,7 @@ export function AuditFiltersPanel({
         <div className="mdc-admin-filter-bar__row">
           <label className="mdc-admin-field">
             <span>Contexto</span>
-            <input
+            <ChatNativeTextInput
               value={filters.context}
               placeholder="Ex.: admin, chat, knowledge"
               onChange={(event) => updateFilter("context", event.target.value)}
@@ -47,7 +48,7 @@ export function AuditFiltersPanel({
 
           <label className="mdc-admin-field">
             <span>Ação</span>
-            <input
+            <ChatNativeTextInput
               value={filters.action}
               placeholder="Ex.: chat.message.sent"
               onChange={(event) => updateFilter("action", event.target.value)}
@@ -56,7 +57,7 @@ export function AuditFiltersPanel({
 
           <label className="mdc-admin-field">
             <span>Usuário</span>
-            <input
+            <ChatNativeTextInput
               value={filters.userId}
               placeholder="UUID do usuário"
               onChange={(event) => updateFilter("userId", event.target.value)}
@@ -65,7 +66,7 @@ export function AuditFiltersPanel({
 
           <label className="mdc-admin-field">
             <span>Trace ID</span>
-            <input
+            <ChatNativeTextInput
               value={filters.traceId}
               placeholder="Correlacionar requisição / fluxo"
               onChange={(event) => updateFilter("traceId", event.target.value)}
@@ -74,7 +75,7 @@ export function AuditFiltersPanel({
 
           <label className="mdc-admin-field">
             <span>Data inicial</span>
-            <input
+            <ChatNativeTextInput
               type="date"
               value={filters.dateFrom}
               onChange={(event) => updateFilter("dateFrom", event.target.value)}
@@ -83,7 +84,7 @@ export function AuditFiltersPanel({
 
           <label className="mdc-admin-field">
             <span>Data final</span>
-            <input
+            <ChatNativeTextInput
               type="date"
               value={filters.dateTo}
               onChange={(event) => updateFilter("dateTo", event.target.value)}

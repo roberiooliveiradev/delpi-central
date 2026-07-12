@@ -1,3 +1,5 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { BarChart3, ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -375,16 +377,12 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                 )}
               </div>
 
-              <label className="mdc-admin-agents__toggle">
-                <input
-                  type="checkbox"
-                  checked={form.enabled}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, enabled: event.target.checked }))
-                  }
-                />
-                Especialização ativa
-              </label>
+              <NativeCheckboxControl
+                className="mdc-admin-agents__toggle"
+                checked={form.enabled}
+                label="Especialização ativa"
+                onChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
+              />
 
               {form.enabled ? (
                 <>
@@ -409,7 +407,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                   <div className="mdc-admin-agents__grid">
                     <label>
                       <span>Rótulo</span>
-                      <input
+                      <ChatNativeTextInput
                         value={form.label ?? ""}
                         onChange={(event) =>
                           setForm((current) => ({ ...current, label: event.target.value }))
@@ -418,7 +416,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                     </label>
                     <label>
                       <span>Domínio</span>
-                      <input
+                      <ChatNativeTextInput
                         value={form.domain ?? ""}
                         onChange={(event) =>
                           setForm((current) => ({ ...current, domain: event.target.value }))
@@ -429,7 +427,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
                   <label>
                     <span>Domínios de conhecimento (vírgula)</span>
-                    <input
+                    <ChatNativeTextInput
                       value={(form.knowledgeDomains ?? []).join(", ")}
                       onChange={(event) => updateListField("knowledgeDomains", event.target.value)}
                     />
@@ -437,7 +435,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
                   <label>
                     <span>Namespaces (vírgula)</span>
-                    <input
+                    <ChatNativeTextInput
                       value={(form.knowledgeNamespaces ?? []).join(", ")}
                       onChange={(event) => updateListField("knowledgeNamespaces", event.target.value)}
                     />
@@ -445,7 +443,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
                   <label>
                     <span>Categorias de conhecimento (vírgula)</span>
-                    <input
+                    <ChatNativeTextInput
                       value={(form.knowledgeCategories ?? []).join(", ")}
                       onChange={(event) => updateListField("knowledgeCategories", event.target.value)}
                     />
@@ -453,7 +451,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
                   <label>
                     <span>Tags de conhecimento (vírgula)</span>
-                    <input
+                    <ChatNativeTextInput
                       value={(form.knowledgeTags ?? []).join(", ")}
                       onChange={(event) => updateListField("knowledgeTags", event.target.value)}
                     />
@@ -461,7 +459,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
                   <label>
                     <span>Categorias de diretrizes (vírgula)</span>
-                    <input
+                    <ChatNativeTextInput
                       value={(form.guidelineCategories ?? []).join(", ")}
                       onChange={(event) => updateListField("guidelineCategories", event.target.value)}
                     />
@@ -469,25 +467,20 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
                   <label>
                     <span>Tools permitidas (vírgula)</span>
-                    <input
+                    <ChatNativeTextInput
                       value={(form.allowedTools ?? []).join(", ")}
                       onChange={(event) => updateListField("allowedTools", event.target.value)}
                     />
                   </label>
 
-                  <label className="mdc-admin-agents__toggle">
-                    <input
-                      type="checkbox"
-                      checked={form.includeGlobalKnowledge ?? true}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          includeGlobalKnowledge: event.target.checked,
-                        }))
-                      }
-                    />
-                    Incluir base global além do domínio
-                  </label>
+                  <NativeCheckboxControl
+                    className="mdc-admin-agents__toggle"
+                    checked={form.includeGlobalKnowledge ?? true}
+                    label="Incluir base global além do domínio"
+                    onChange={(includeGlobalKnowledge) =>
+                      setForm((current) => ({ ...current, includeGlobalKnowledge }))
+                    }
+                  />
                 </>
               ) : null}
 

@@ -1,5 +1,6 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { ChangeEvent, InputHTMLAttributes, ReactNode } from "react";
 
+import { NativeSwitchControl } from "@delpi/plugin-ui/index";
 import "./agentBuilderControls.css";
 
 type AgentBuilderSwitchProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "size"> & {
@@ -13,12 +14,21 @@ export function AgentBuilderSwitch({
   ariaLabel,
   size = "default",
   className,
+  checked,
+  defaultChecked: _defaultChecked,
+  onChange,
   ...inputProps
 }: AgentBuilderSwitchProps) {
   const accessibleLabel = ariaLabel ?? (typeof label === "string" ? label : undefined);
 
   return (
-    <label
+    <NativeSwitchControl
+      {...inputProps}
+      checked={Boolean(checked)}
+      onChange={(nextChecked) =>
+        onChange?.({ target: { checked: nextChecked } } as ChangeEvent<HTMLInputElement>)
+      }
+      aria-label={accessibleLabel}
       className={[
         "mdc-ab-switch",
         size === "compact" ? "mdc-ab-switch--compact" : null,
@@ -26,13 +36,8 @@ export function AgentBuilderSwitch({
       ]
         .filter(Boolean)
         .join(" ")}
-    >
-      <input type="checkbox" role="switch" aria-label={accessibleLabel} {...inputProps} />
-      <span className="mdc-ab-switch__track" aria-hidden="true" />
-      {label ? <span className="mdc-ab-switch__label">{label}</span> : null}
-      {!label && accessibleLabel ? (
-        <span className="mdc-ab-switch__sr-only">{accessibleLabel}</span>
-      ) : null}
-    </label>
+      trackClassName="mdc-ab-switch__track"
+      label={label}
+    />
   );
 }

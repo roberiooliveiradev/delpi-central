@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useEffect, useState, type ReactNode } from "react";
 
 import {
@@ -162,7 +163,7 @@ function NumberSettingCard({
       <div className="mdc-chat-intelligence-setting__control">
         <label className="mdc-admin-field">
           <span>Valor atual</span>
-          <input
+          <ChatNativeTextInput
             type="number"
             min={meta.min}
             max={meta.max}

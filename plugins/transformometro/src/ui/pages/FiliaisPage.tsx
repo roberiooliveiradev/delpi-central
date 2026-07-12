@@ -23,7 +23,7 @@ import {
   type OptionsData,
 } from "../../data/api/transformometroApi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";
@@ -193,17 +193,15 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
       <DataTableSection
         title="Catálogo de unidades"
         filters={
-          <label className="ds-check-label">
-            <input
-              type="checkbox"
-              checked={includeInactive}
-              onChange={(e) => setIncludeInactive(e.target.checked)}
-            />
-            <span className="tm-field__label">
+          <NativeCheckboxControl
+            className="ds-check-label"
+            checked={includeInactive}
+            onChange={setIncludeInactive}
+            label={<span className="tm-field__label">
               Incluir unidades inativas
               <HelpTooltip content={F.incluirInativas} ariaLabel="Ajuda: Incluir unidades inativas" />
-            </span>
-          </label>
+            </span>}
+          />
         }
         columns={columns}
         rows={items}

@@ -4,7 +4,7 @@ import { Copy, Plus, Trash2 } from "lucide-react";
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DataTableSection } from "../../components/DataTableSection";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
+import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
@@ -612,16 +612,7 @@ export function ProcessoInstanciasPanel({
             (id) => id.toLowerCase() === filial.id.toLowerCase()
           );
           return (
-            <label key={filial.id} className="tm-check-option">
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggleFilial(filial.id)}
-              />
-              <span>
-                {filial.label}
-              </span>
-            </label>
+            <NativeCheckboxControl key={filial.id} className="tm-check-option" checked={checked} onChange={() => toggleFilial(filial.id)} label={filial.label} />
           );
         })}
       </div>
@@ -644,15 +635,7 @@ export function ProcessoInstanciasPanel({
           setoresDisponiveis.map((setor) => {
             const { checked, disabled } = setorState(setor.id);
             return (
-              <label key={setor.id} className="tm-check-option">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={disabled}
-                  onChange={() => toggleSetor(setor.id)}
-                />
-                <span>{setor.label}</span>
-              </label>
+              <NativeCheckboxControl key={setor.id} className="tm-check-option" checked={checked} disabled={disabled} onChange={() => toggleSetor(setor.id)} label={setor.label} />
             );
           })
         )}
@@ -677,10 +660,10 @@ export function ProcessoInstanciasPanel({
           <label htmlFor="tm-melhoria-responsavel">
             <FieldLabel className="tm-field__label" label="Responsável local" hint={TM_HELP_TOOLTIPS.instancias.responsavel} />
           </label>
-          <input
+          <NativeTextControl
             id="tm-melhoria-responsavel"
             value={responsavelLocal}
-            onChange={(e) => setResponsavelLocal(e.target.value)}
+            onChange={setResponsavelLocal}
             placeholder="Nome do gestor ou patrocinador"
           />
         </div>
@@ -698,11 +681,11 @@ export function ProcessoInstanciasPanel({
           <label htmlFor="tm-melhoria-data-alvo">
             <FieldLabel className="tm-field__label" label="Data-alvo de go-live" hint={TM_HELP_TOOLTIPS.instancias.dataAlvo} />
           </label>
-          <input
+          <NativeTextControl
             id="tm-melhoria-data-alvo"
             type="date"
             value={dataAlvoGoLive}
-            onChange={(e) => setDataAlvoGoLive(e.target.value)}
+          onChange={setDataAlvoGoLive}
           />
         </div>
         <SelectField
@@ -722,10 +705,10 @@ export function ProcessoInstanciasPanel({
       <label htmlFor="tm-inst-rotulo">
         <FieldLabel className="tm-field__label" label="Título (opcional)" hint={TM_HELP_TOOLTIPS.instancias.rotulo} />
       </label>
-      <input
+      <NativeTextControl
         id="tm-inst-rotulo"
         value={rotulo}
-        onChange={(e) => setRotulo(e.target.value)}
+        onChange={setRotulo}
         placeholder="Ex.: Automação do fechamento — Q2/2026"
       />
     </div>
@@ -796,45 +779,38 @@ export function ProcessoInstanciasPanel({
                 <>
                   {processoTemEscopo ? (
                     <div className="ds-filter-box ds-filter-box--checkbox tm-inst-form__field--full">
-                      <label className="ds-check-label">
-                        <input
-                          type="checkbox"
-                          checked={usarEscopoProcesso}
-                          onChange={(event) => {
-                            const next = event.target.checked;
+                      <NativeCheckboxControl
+                        className="ds-check-label"
+                        checked={usarEscopoProcesso}
+                        onChange={(next) => {
                             setUsarEscopoProcesso(next);
                             if (next) {
                               applyProcessoEscopo();
                             }
-                          }}
-                        />
-                        <span>Usar unidades e departamentos do processo</span>
-                      </label>
+                        }}
+                        label="Usar unidades e departamentos do processo"
+                      />
                     </div>
                   ) : null}
 
                   {!usarEscopoProcesso || !processoTemEscopo ? (
                     <>
                       <div className="ds-filter-box ds-filter-box--checkbox">
-                        <label className="ds-check-label">
-                          <input
-                            type="checkbox"
-                            checked={todasFiliais}
-                            onChange={(e) => {
-                              const next = e.target.checked;
+                        <NativeCheckboxControl
+                          className="ds-check-label"
+                          checked={todasFiliais}
+                          onChange={(next) => {
                               setTodasFiliais(next);
                               if (!next) {
                                 const firstFilial = filialIds[0] ?? options.filiais[0]?.id ?? "01";
                                 setSetorIds(defaultSetorIds(options.setores, firstFilial));
                               }
                             }}
-                          />
-                          <span>Todas as unidades ativas (melhoria multi-unidade)</span>
-                          <HelpTooltip
+                          label={<><span>Todas as unidades ativas (melhoria multi-unidade)</span><HelpTooltip
                             content={multiplicadorHint(activeFilialCount)}
                             ariaLabel="Ajuda: Instância multi-unidade"
-                          />
-                        </label>
+                          /></>}
+                        />
                       </div>
 
                       {todasFiliais ? (
@@ -882,12 +858,10 @@ export function ProcessoInstanciasPanel({
               {editingInstanciaId ? (
                 <>
                   <div className="ds-filter-box ds-filter-box--checkbox">
-                    <label className="ds-check-label">
-                      <input
-                        type="checkbox"
-                        checked={todasFiliais}
-                        onChange={(e) => {
-                          const next = e.target.checked;
+                    <NativeCheckboxControl
+                      className="ds-check-label"
+                      checked={todasFiliais}
+                      onChange={(next) => {
                           setTodasFiliais(next);
                           if (!next) {
                             const fallback =
@@ -896,13 +870,11 @@ export function ProcessoInstanciasPanel({
                             setSetorIds(defaultSetorIds(options.setores, fallback));
                           }
                         }}
-                      />
-                      <span>Todas as unidades ativas (melhoria multi-unidade)</span>
-                      <HelpTooltip
+                      label={<><span>Todas as unidades ativas (melhoria multi-unidade)</span><HelpTooltip
                         content={multiplicadorHint(activeFilialCount)}
                         ariaLabel="Ajuda: Instância multi-unidade"
-                      />
-                    </label>
+                      /></>}
+                    />
                   </div>
 
                   {todasFiliais ? (

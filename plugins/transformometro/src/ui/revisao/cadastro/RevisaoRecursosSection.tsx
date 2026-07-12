@@ -18,7 +18,7 @@ import {
   payloadFromRecursoForm,
 } from "../../recursos/recursoCatalogForm";
 import { Pagination } from "../../../components/Pagination";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
+import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TableHeader } from "../../../components/TableHeader";
 import { SelectField } from "../../../components/ui/SelectField";
 import { mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
@@ -201,70 +201,63 @@ export function RevisaoRecursosSection({
                         <div className="ds-filters-row">
                           <label className="ds-filter-box">
                             <FieldLabel className="tm-field__label" label="Início do uso" hint={R.vinculoInicio} />
-                            <input
+                            <NativeTextControl
                               type="date"
                               value={editVinculoForm.data_inicio_uso}
-                              onChange={(e) =>
+                              onChange={(data_inicio_uso) =>
                                 setEditVinculoForm({
                                   ...editVinculoForm,
-                                  data_inicio_uso: e.target.value,
+                                  data_inicio_uso,
                                 })
                               }
                             />
                           </label>
                           <label className="ds-filter-box">
                             <FieldLabel className="tm-field__label" label="Fim do uso" hint={R.vinculoFim} />
-                            <input
+                            <NativeTextControl
                               type="date"
                               value={editVinculoForm.data_fim_uso}
-                              onChange={(e) =>
+                              onChange={(data_fim_uso) =>
                                 setEditVinculoForm({
                                   ...editVinculoForm,
-                                  data_fim_uso: e.target.value,
+                                  data_fim_uso,
                                 })
                               }
                             />
                           </label>
                           <label className="ds-filter-box">
                             <FieldLabel className="tm-field__label" label="Peso" hint={R.peso} />
-                            <input
+                            <NativeTextControl
                               type="number"
                               min={0}
                               step="any"
                               value={editVinculoForm.peso_rateio}
-                              onChange={(e) =>
+                              onChange={(peso_rateio) =>
                                 setEditVinculoForm({
                                   ...editVinculoForm,
-                                  peso_rateio: e.target.value,
+                                  peso_rateio,
                                 })
                               }
                             />
                           </label>
-                          <label className="ds-check-label">
-                            <input
-                              type="checkbox"
-                              checked={editVinculoForm.ativo}
-                              onChange={(e) =>
-                                setEditVinculoForm({
-                                  ...editVinculoForm,
-                                  ativo: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="tm-field__label">
+                          <NativeCheckboxControl
+                            className="ds-check-label"
+                            checked={editVinculoForm.ativo}
+                            onChange={(ativo) => setEditVinculoForm({ ...editVinculoForm, ativo })}
+                            label={<span className="tm-field__label">
                               Ativo
                               <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Ativo" />
-                            </span>
-                          </label>
+                            </span>}
+                          />
                         </div>
                         <label className="ds-filter-box ds-filter-box--wide">
                           <FieldLabel className="tm-field__label" label="Observações" hint={R.vinculoObservacoes} />
-                          <input
+                          <NativeTextControl
                             value={editVinculoForm.observacoes}
-                            onChange={(e) =>
+                            onChange={(observacoes) =>
                               setEditVinculoForm({
                                 ...editVinculoForm,
-                                observacoes: e.target.value,
+                                observacoes,
                               })
                             }
                           />
@@ -367,53 +360,51 @@ export function RevisaoRecursosSection({
           />
           <label className="ds-filter-box">
             <FieldLabel className="tm-field__label" label="Início do uso" hint={R.vinculoInicio} />
-            <input
+            <NativeTextControl
               type="date"
               value={vinculoForm.data_inicio_uso}
-              onChange={(e) =>
-                setVinculoForm({ ...vinculoForm, data_inicio_uso: e.target.value })
+              onChange={(data_inicio_uso) =>
+                setVinculoForm({ ...vinculoForm, data_inicio_uso })
               }
             />
           </label>
           <label className="ds-filter-box">
             <FieldLabel className="tm-field__label" label="Fim do uso" hint={R.vinculoFim} />
-            <input
+            <NativeTextControl
               type="date"
               value={vinculoForm.data_fim_uso}
-              onChange={(e) => setVinculoForm({ ...vinculoForm, data_fim_uso: e.target.value })}
+            onChange={(data_fim_uso) => setVinculoForm({ ...vinculoForm, data_fim_uso })}
             />
           </label>
           <label className="ds-filter-box">
             <FieldLabel className="tm-field__label" label="Peso do rateio" hint={R.peso} />
-            <input
+            <NativeTextControl
               type="number"
               min={0}
               step="any"
               placeholder={exigePeso ? "Usado no critério por_peso" : "Só se critério = por_peso"}
               value={vinculoForm.peso_rateio}
-              onChange={(e) =>
-                setVinculoForm({ ...vinculoForm, peso_rateio: e.target.value })
+              onChange={(peso_rateio) =>
+                setVinculoForm({ ...vinculoForm, peso_rateio })
               }
             />
           </label>
-          <label className="ds-check-label">
-            <input
-              type="checkbox"
-              checked={vinculoForm.ativo}
-              onChange={(e) => setVinculoForm({ ...vinculoForm, ativo: e.target.checked })}
-            />
-            <span className="tm-field__label">
+          <NativeCheckboxControl
+            className="ds-check-label"
+            checked={vinculoForm.ativo}
+            onChange={(ativo) => setVinculoForm({ ...vinculoForm, ativo })}
+            label={<span className="tm-field__label">
               Vínculo ativo
               <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" />
-            </span>
-          </label>
+            </span>}
+          />
         </div>
         <label className="ds-filter-box ds-filter-box--wide">
           <FieldLabel className="tm-field__label" label="Observações do vínculo" hint={R.vinculoObservacoes} />
-          <input
+          <NativeTextControl
             placeholder="Ex.: uso apenas nesta automação"
             value={vinculoForm.observacoes}
-            onChange={(e) => setVinculoForm({ ...vinculoForm, observacoes: e.target.value })}
+          onChange={(observacoes) => setVinculoForm({ ...vinculoForm, observacoes })}
           />
         </label>
 

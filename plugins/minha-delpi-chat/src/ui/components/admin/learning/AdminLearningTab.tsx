@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -684,7 +685,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
 
                 <label className="mdc-admin-field">
                   <span>Termo</span>
-                  <input
+                  <ChatNativeTextInput
                     value={termOverride}
                     onChange={(event) => setTermOverride(event.target.value)}
                     placeholder="forma que o chat deve reconhecer"
@@ -693,7 +694,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
 
                 <label className="mdc-admin-field">
                   <span>Correção / forma normalizada</span>
-                  <input
+                  <ChatNativeTextInput
                     value={normalizedOverride}
                     onChange={(event) => setNormalizedOverride(event.target.value)}
                     placeholder="ex.: como voce se chama"
@@ -746,7 +747,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             <h3 className="mdc-admin-learning__subtitle">Novo termo</h3>
             <label className="mdc-admin-field">
               <span>Termo (forma a reconhecer)</span>
-              <input
+              <ChatNativeTextInput
                 value={newTerm}
                 onChange={(event) => setNewTerm(event.target.value)}
                 placeholder="ex.: como vc s chama"
@@ -754,7 +755,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             </label>
             <label className="mdc-admin-field">
               <span>Forma normalizada</span>
-              <input
+              <ChatNativeTextInput
                 value={newNormalized}
                 onChange={(event) => setNewNormalized(event.target.value)}
                 placeholder="ex.: como voce se chama"
@@ -892,7 +893,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             <h3 className="mdc-admin-learning__subtitle">Novo caso</h3>
             <label className="mdc-admin-field">
               <span>Pergunta / entrada</span>
-              <input
+              <ChatNativeTextInput
                 value={evalInput}
                 onChange={(event) => setEvalInput(event.target.value)}
                 placeholder='ex.: "como vc s chama?"'
@@ -900,7 +901,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             </label>
             <label className="mdc-admin-field">
               <span>Intenção esperada</span>
-              <input
+              <ChatNativeTextInput
                 value={evalIntent}
                 onChange={(event) => setEvalIntent(event.target.value)}
                 placeholder="assistant_identity"
@@ -978,7 +979,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             <h3 className="mdc-admin-learning__subtitle">Datasets</h3>
             <label className="mdc-admin-field">
               <span>Nome</span>
-              <input
+              <ChatNativeTextInput
                 value={ftDatasetName}
                 onChange={(event) => setFtDatasetName(event.target.value)}
                 placeholder="ex.: chat-v1-mar-2026"

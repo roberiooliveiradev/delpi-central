@@ -12,6 +12,7 @@ import {
 } from "../utils/goalValuePolicy";
 import "./IndicatorGoalsWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
+import { SiNativeTextControl } from "./siNativeFormFields";
 
 type IndicatorGoalsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -178,11 +179,11 @@ export function IndicatorGoalsWorkspace({
 
           <label className="si-settings-form-field">
             <span className="si-settings-form-field__label">Ano da meta</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={selectedGoalYear}
-              onChange={(e) =>
-                setSelectedGoalYear(e.target.value ? Number(e.target.value) : "")
+              onChange={(value) =>
+                setSelectedGoalYear(value ? Number(value) : "")
               }
             />
           </label>

@@ -21,7 +21,7 @@ import {
 import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
 import "./AdminDepartmentsWorkspace.css";
 import { SI_VALUE_UNIT_OPTIONS, SiSelectControl } from "./siFiltersUi";
-import { SiNativeTextAreaControl } from "./siNativeFormFields";
+import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -583,12 +583,12 @@ export function AdminDepartmentsWorkspace({
         <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
             <span>ID</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.department_id}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  department_id: event.target.value,
+                  department_id: value,
                 }))
               }
             />
@@ -596,12 +596,12 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Nome</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.department_name}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  department_name: event.target.value,
+                  department_name: value,
                 }))
               }
             />
@@ -609,12 +609,12 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Sigla</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.short_name}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  short_name: event.target.value,
+                  short_name: value,
                 }))
               }
             />
@@ -622,13 +622,13 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Peso</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={departmentForm.weight_pct}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  weight_pct: Number(event.target.value || 0),
+                  weight_pct: Number(value || 0),
                 }))
               }
             />
@@ -656,13 +656,13 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Ordem</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={departmentForm.display_order}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  display_order: Number(event.target.value || 0),
+                  display_order: Number(value || 0),
                 }))
               }
             />
@@ -685,12 +685,12 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Meta principal</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.headline_goal}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  headline_goal: event.target.value,
+                  headline_goal: value,
                 }))
               }
             />
@@ -698,12 +698,12 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Foco complementar</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.supporting_focus}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  supporting_focus: event.target.value,
+                  supporting_focus: value,
                 }))
               }
             />
@@ -747,12 +747,12 @@ export function AdminDepartmentsWorkspace({
         <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
             <span>ID</span>
-            <input
+            <SiNativeTextControl
               value={indicatorForm.indicator_id}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  indicator_id: event.target.value,
+                  indicator_id: value,
                 }))
               }
             />
@@ -760,12 +760,12 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Nome</span>
-            <input
+            <SiNativeTextControl
               value={indicatorForm.indicator_name}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  indicator_name: event.target.value,
+                  indicator_name: value,
                 }))
               }
             />
@@ -773,13 +773,13 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Peso</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={indicatorForm.weight_pct}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  weight_pct: Number(event.target.value || 0),
+                  weight_pct: Number(value || 0),
                 }))
               }
             />
@@ -827,13 +827,13 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Chave da fonte (obrigatória se ativo)</span>
-            <input
+            <SiNativeTextControl
               value={indicatorForm.source_key}
               placeholder="ex.: commercial_rol, production_otd"
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  source_key: event.target.value,
+                  source_key: value,
                 }))
               }
             />
@@ -867,13 +867,13 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Prefixo</span>
-            <input
+            <SiNativeTextControl
               placeholder="Ex.: R$"
               value={indicatorForm.value_prefix}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  value_prefix: event.target.value,
+                  value_prefix: value,
                 }))
               }
             />
@@ -881,13 +881,13 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Sufixo</span>
-            <input
+            <SiNativeTextControl
               placeholder="Ex.: %, PPM, /mês, dias"
               value={indicatorForm.value_suffix}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  value_suffix: event.target.value,
+                  value_suffix: value,
                 }))
               }
             />
@@ -895,15 +895,15 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Casas decimais</span>
-            <input
+            <SiNativeTextControl
               type="number"
               min={0}
               max={6}
               value={indicatorForm.value_decimals}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  value_decimals: Number(event.target.value || 0),
+                  value_decimals: Number(value || 0),
                 }))
               }
             />
@@ -911,13 +911,13 @@ export function AdminDepartmentsWorkspace({
 
           <label className="si-admin-form-field">
             <span>Ordem</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={indicatorForm.display_order}
-              onChange={(event) =>
+              onChange={(value) =>
                 setIndicatorForm((current) => ({
                   ...current,
-                  display_order: Number(event.target.value || 0),
+                  display_order: Number(value || 0),
                 }))
               }
             />

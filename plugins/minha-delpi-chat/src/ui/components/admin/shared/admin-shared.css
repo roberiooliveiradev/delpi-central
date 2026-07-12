@@ -58,20 +58,20 @@
   cursor: not-allowed;
 }
 
-.mdc-admin-form-row__copy {
+.mdc-admin-form-row .delpi-ui-native-checkbox__copy {
   display: grid;
   gap: 0.12rem;
   min-width: 0;
 }
 
-.mdc-admin-form-row__title {
+.mdc-admin-form-row .delpi-ui-native-checkbox__label {
   color: var(--mdc-text);
   font-size: 0.9rem;
   font-weight: 500;
   line-height: 1.35;
 }
 
-.mdc-admin-form-row__hint {
+.mdc-admin-form-row .delpi-ui-native-checkbox__hint {
   color: var(--mdc-text-muted);
   font-size: 0.8rem;
   line-height: 1.4;

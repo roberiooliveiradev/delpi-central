@@ -10,6 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { NativeSwitchControl } from "@delpi/plugin-ui/index";
 
 import {
   listChatAgentSkills,
@@ -251,18 +252,14 @@ export function ChatAgentSkillsPage({
                       <p>{binding.description}</p>
                     </div>
 
-                    <label className="mdc-agent-skills__switch">
-                      <input
-                        type="checkbox"
-                        checked={binding.enabled}
-                        disabled={isSaving}
-                        onChange={(event) => void handleToggle(binding, event.target.checked)}
-                      />
-                      <span className="mdc-agent-skills__switch-track" aria-hidden="true" />
-                      <span className="sr-only">
-                        {binding.enabled ? "Desativar" : "Ativar"} {binding.label}
-                      </span>
-                    </label>
+                    <NativeSwitchControl
+                      className="mdc-agent-skills__switch"
+                      trackClassName="mdc-agent-skills__switch-track"
+                      checked={binding.enabled}
+                      disabled={isSaving}
+                      aria-label={`${binding.enabled ? "Desativar" : "Ativar"} ${binding.label}`}
+                      onChange={(enabled) => void handleToggle(binding, enabled)}
+                    />
                   </div>
 
                   <footer className="mdc-agent-skills__card-foot">

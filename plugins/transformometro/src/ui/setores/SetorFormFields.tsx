@@ -1,6 +1,7 @@
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
+import { TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import type { SetorFormState } from "./setorCatalogForm";
@@ -26,29 +27,8 @@ export function SetorFormFields({ form, options, onChange }: Props) {
 
   return (
     <div className="ds-filters-row ds-filters-row--extended">
-      <div className="ds-filter-box">
-        <label htmlFor="tm-setor-codigo">
-          <FieldLabel className="tm-field__label" label="Código de negócio *" hint={TM_HELP_TOOLTIPS.setores.codigo} />
-        </label>
-        <input
-          id="tm-setor-codigo"
-          required
-          placeholder="ex.: engenharia"
-          value={form.codigo_setor}
-          onChange={(e) => set({ codigo_setor: e.target.value.toLowerCase() })}
-        />
-      </div>
-      <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-setor-nome">
-          <FieldLabel className="tm-field__label" label="Nome do departamento *" hint={TM_HELP_TOOLTIPS.setores.nome} />
-        </label>
-        <input
-          id="tm-setor-nome"
-          required
-          value={form.nome_setor}
-          onChange={(e) => set({ nome_setor: e.target.value })}
-        />
-      </div>
+      <TmNativeTextField id="tm-setor-codigo" label="Código de negócio *" hint={TM_HELP_TOOLTIPS.setores.codigo} required placeholder="ex.: engenharia" value={form.codigo_setor} onChange={(codigo_setor) => set({ codigo_setor: codigo_setor.toLowerCase() })} />
+      <TmNativeTextField id="tm-setor-nome" label="Nome do departamento *" hint={TM_HELP_TOOLTIPS.setores.nome} className="ds-filter-box--wide" required value={form.nome_setor} onChange={(nome_setor) => set({ nome_setor })} />
       <SelectField
         id="tm-setor-status"
         label="Status *"
@@ -66,14 +46,13 @@ export function SetorFormFields({ form, options, onChange }: Props) {
         </span>
         <div className="tm-inst-setores-grid">
           {options.filiais.map((filial) => (
-            <label key={filial.id} className="tm-inst-setor-option ds-check-label">
-              <input
-                type="checkbox"
-                checked={form.filiais.includes(filial.id)}
-                onChange={() => toggleFilial(filial.id)}
-              />
-              <span>{filial.label}</span>
-            </label>
+            <NativeCheckboxControl
+              key={filial.id}
+              className="tm-inst-setor-option ds-check-label"
+              checked={form.filiais.includes(filial.id)}
+              onChange={() => toggleFilial(filial.id)}
+              label={filial.label}
+            />
           ))}
         </div>
       </div>

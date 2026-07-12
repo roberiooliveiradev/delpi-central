@@ -31,7 +31,7 @@ import {
 } from "../utils/goalValuePolicy";
 import "./IndicatorGoalForm.css";
 import { SiSelectControl } from "./siFiltersUi";
-import { SiNativeTextAreaControl } from "./siNativeFormFields";
+import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 
 type IndicatorOption = {
   value: string;
@@ -259,29 +259,28 @@ export function IndicatorGoalForm({
               options={normalizedIndicatorOptions}
             />
           ) : (
-            <input
+            <SiNativeTextControl
               value={indicatorId}
-              onChange={(e) => setIndicatorId(e.target.value)}
-              autoFocus={!isEditing}
+              onChange={setIndicatorId}
             />
           )}
         </Field>
 
         <Field label="Ano da meta">
-          <input
+          <SiNativeTextControl
             type="number"
             min={MIN_GOAL_YEAR}
             max={MAX_GOAL_YEAR}
             value={goalYear}
             readOnly={lockGoalYear}
-            onChange={(e) => setGoalYear(clampGoalYear(Number(e.target.value)))}
+            onChange={(value) => setGoalYear(clampGoalYear(Number(value)))}
           />
         </Field>
 
         <Field label="Nome da meta" fullWidth>
-          <input
+          <SiNativeTextControl
             value={goalLabel}
-            onChange={(e) => setGoalLabel(e.target.value)}
+            onChange={setGoalLabel}
           />
         </Field>
 
@@ -338,28 +337,28 @@ export function IndicatorGoalForm({
 
         {goalMode === "standard" ? (
           <Field label="Valor da meta">
-            <input
+            <SiNativeTextControl
               type="number"
               step="0.0001"
               value={goalValue}
-              onChange={(e) => setGoalValue(Number(e.target.value))}
+              onChange={(value) => setGoalValue(Number(value))}
             />
           </Field>
         ) : null}
 
         <Field label="Vigência inicial">
-          <input
+          <SiNativeTextControl
             type="date"
             value={validFrom}
-            onChange={(e) => setValidFrom(e.target.value)}
+            onChange={setValidFrom}
           />
         </Field>
 
         <Field label="Vigência final">
-          <input
+          <SiNativeTextControl
             type="date"
             value={validTo}
-            onChange={(e) => setValidTo(e.target.value)}
+            onChange={setValidTo}
           />
         </Field>
 
@@ -393,14 +392,14 @@ export function IndicatorGoalForm({
                   className="si-monthly-targets-grid__item"
                 >
                   <span>{curvePointLabels[index] ?? `#${item.month_number}`}</span>
-                  <input
+                  <SiNativeTextControl
                     type="number"
                     step="0.0001"
                     value={item.target_value}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       updateMonthlyTarget(
                         item.month_number,
-                        Number(event.target.value || 0),
+                        Number(value || 0),
                       )
                     }
                   />

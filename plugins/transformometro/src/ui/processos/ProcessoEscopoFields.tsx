@@ -1,4 +1,4 @@
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
+import { FieldLabel, HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
@@ -66,13 +66,11 @@ export function ProcessoEscopoFields({
     <>
       {showTodasFiliais ? (
         <div className="ds-filter-box ds-filter-box--checkbox tm-inst-form__field--full">
-          <label className="ds-check-label">
-            <input
-              type="checkbox"
-              checked={value.todas_filiais_ativas}
-              disabled={disabled}
-              onChange={(event) => {
-                const next = event.target.checked;
+          <NativeCheckboxControl
+            className="ds-check-label"
+            checked={value.todas_filiais_ativas}
+            disabled={disabled}
+            onChange={(next) => {
                 onChange({
                   ...value,
                   todas_filiais_ativas: next,
@@ -90,13 +88,11 @@ export function ProcessoEscopoFields({
                         ),
                 });
               }}
-            />
-            <span>Todas as unidades ativas</span>
-            <HelpTooltip
+            label={<><span>Todas as unidades ativas</span><HelpTooltip
               content={multiplicadorHint(activeFilialCount)}
               ariaLabel="Ajuda: todas as unidades"
-            />
-          </label>
+            /></>}
+          />
         </div>
       ) : null}
 
@@ -115,15 +111,7 @@ export function ProcessoEscopoFields({
                 (id) => id.toLowerCase() === filial.id.toLowerCase()
               );
               return (
-                <label key={filial.id} className="tm-check-option">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={disabled}
-                    onChange={() => toggleFilial(filial.id)}
-                  />
-                  <span>{filial.label}</span>
-                </label>
+                <NativeCheckboxControl key={filial.id} className="tm-check-option" checked={checked} disabled={disabled} onChange={() => toggleFilial(filial.id)} label={filial.label} />
               );
             })}
           </div>
@@ -151,15 +139,7 @@ export function ProcessoEscopoFields({
                 (id) => id.toLowerCase() === setor.id.toLowerCase()
               );
               return (
-                <label key={setor.id} className="tm-check-option">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={disabled}
-                    onChange={() => toggleSetor(setor.id)}
-                  />
-                  <span>{setor.label}</span>
-                </label>
+                <NativeCheckboxControl key={setor.id} className="tm-check-option" checked={checked} disabled={disabled} onChange={() => toggleSetor(setor.id)} label={setor.label} />
               );
             })
           )}

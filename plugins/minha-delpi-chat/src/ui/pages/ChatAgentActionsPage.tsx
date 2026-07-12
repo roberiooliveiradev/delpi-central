@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../components/shared/chatNativeFormFields";
 import {
   ArrowLeft,
   Plus,
@@ -906,7 +907,7 @@ export function ChatAgentActionsPage({
                 <div className="mdc-chat-agent-actions-page__grid">
                   <label className="mdc-chat-ws-field">
                     <span>Nome da API</span>
-                    <input
+                    <ChatNativeTextInput
                       value={newProviderName}
                       onChange={(event) => setNewProviderName(event.target.value)}
                       placeholder="API DELPI"
@@ -915,7 +916,7 @@ export function ChatAgentActionsPage({
 
                   <label className="mdc-chat-ws-field">
                     <span>URL base</span>
-                    <input
+                    <ChatNativeTextInput
                       value={newProviderBaseUrl}
                       onChange={(event) => setNewProviderBaseUrl(event.target.value)}
                       placeholder="https://api.exemplo.com.br"
@@ -926,7 +927,7 @@ export function ChatAgentActionsPage({
                 <div className="mdc-chat-agent-actions-page__grid">
                   <label className="mdc-chat-ws-field">
                     <span>URL OpenAPI</span>
-                    <input
+                    <ChatNativeTextInput
                       value={newProviderOpenApiUrl}
                       onChange={(event) => setNewProviderOpenApiUrl(event.target.value)}
                       placeholder="https://api.exemplo.com.br/openapi.json"
@@ -935,7 +936,7 @@ export function ChatAgentActionsPage({
 
                   <label className="mdc-chat-ws-field">
                     <span>Política de privacidade</span>
-                    <input
+                    <ChatNativeTextInput
                       value={newProviderPrivacyPolicyUrl}
                       onChange={(event) =>
                         setNewProviderPrivacyPolicyUrl(event.target.value)
@@ -1003,7 +1004,7 @@ export function ChatAgentActionsPage({
                   <div className="mdc-chat-agent-actions-page__grid">
                     <label className="mdc-chat-ws-field">
                       <span>Nome da API</span>
-                      <input
+                      <ChatNativeTextInput
                         value={providerName}
                         onChange={(event) => setProviderName(event.target.value)}
                       />
@@ -1011,7 +1012,7 @@ export function ChatAgentActionsPage({
 
                     <label className="mdc-chat-ws-field">
                       <span>URL base</span>
-                      <input
+                      <ChatNativeTextInput
                         value={providerBaseUrl}
                         onChange={(event) => setProviderBaseUrl(event.target.value)}
                       />
@@ -1021,7 +1022,7 @@ export function ChatAgentActionsPage({
                   <div className="mdc-chat-agent-actions-page__grid">
                     <label className="mdc-chat-ws-field">
                       <span>URL OpenAPI</span>
-                      <input
+                      <ChatNativeTextInput
                         value={providerOpenApiUrl}
                         onChange={(event) => setProviderOpenApiUrl(event.target.value)}
                       />
@@ -1029,7 +1030,7 @@ export function ChatAgentActionsPage({
 
                     <label className="mdc-chat-ws-field">
                       <span>Política de privacidade</span>
-                      <input
+                      <ChatNativeTextInput
                         value={providerPrivacyPolicyUrl}
                         onChange={(event) =>
                           setProviderPrivacyPolicyUrl(event.target.value)
@@ -1106,7 +1107,7 @@ export function ChatAgentActionsPage({
                     <div className="mdc-chat-agent-actions-page__grid">
                       <label className="mdc-chat-ws-field">
                         <span>Chave API</span>
-                        <input
+                        <ChatNativeTextInput
                           value={authConfig.apiKey}
                           onChange={(event) =>
                             setAuthConfig((current) => ({
@@ -1121,7 +1122,7 @@ export function ChatAgentActionsPage({
 
                       <label className="mdc-chat-ws-field">
                         <span>Nome do cabeçalho</span>
-                        <input
+                        <ChatNativeTextInput
                           value={authConfig.headerName}
                           onChange={(event) =>
                             setAuthConfig((current) => ({
@@ -1158,7 +1159,7 @@ export function ChatAgentActionsPage({
                       <div className="mdc-chat-agent-actions-page__grid">
                         <label className="mdc-chat-ws-field">
                           <span>ID do cliente</span>
-                          <input
+                          <ChatNativeTextInput
                             value={authConfig.clientId}
                             onChange={(event) =>
                               setAuthConfig((current) => ({
@@ -1171,7 +1172,7 @@ export function ChatAgentActionsPage({
 
                         <label className="mdc-chat-ws-field">
                           <span>Segredo do cliente</span>
-                          <input
+                          <ChatNativeTextInput
                             value={authConfig.clientSecret}
                             onChange={(event) =>
                               setAuthConfig((current) => ({
@@ -1186,7 +1187,7 @@ export function ChatAgentActionsPage({
 
                       <label className="mdc-chat-ws-field">
                         <span>URL de autorização</span>
-                        <input
+                        <ChatNativeTextInput
                           value={authConfig.authorizationUrl}
                           onChange={(event) =>
                             setAuthConfig((current) => ({
@@ -1199,7 +1200,7 @@ export function ChatAgentActionsPage({
 
                       <label className="mdc-chat-ws-field">
                         <span>Token URL</span>
-                        <input
+                        <ChatNativeTextInput
                           value={authConfig.tokenUrl}
                           onChange={(event) =>
                             setAuthConfig((current) => ({
@@ -1212,7 +1213,7 @@ export function ChatAgentActionsPage({
 
                       <label className="mdc-chat-ws-field">
                         <span>Escopo</span>
-                        <input
+                        <ChatNativeTextInput
                           value={authConfig.scope}
                           onChange={(event) =>
                             setAuthConfig((current) => ({

@@ -142,6 +142,11 @@ export {
 } from "./NativeCheckboxControl";
 
 export {
+  NativeSwitchControl,
+  type NativeSwitchControlProps,
+} from "./NativeSwitchControl";
+
+export {
   NativeTextControl,
   type NativeTextControlProps,
 } from "./NativeTextControl";

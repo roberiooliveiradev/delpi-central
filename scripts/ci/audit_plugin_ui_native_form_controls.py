@@ -3,7 +3,7 @@
 
 Detecta JSX/TSX com:
   - `<select>` / `<textarea>` em todos os plugins MFE (escopo)
-  - `<input>` texto/número/search/checkbox em plugins STRICT (hoje: tv-dashboard)
+  - `<input>` texto/número/search/checkbox em plugins STRICT (tv-dashboard, minha-delpi-chat, transformometro, strategic-indicators)
 
 Exclui tipos legítimos: file, hidden, range, radio, submit, button, image.
 
@@ -36,7 +36,7 @@ NATIVE_TEXTAREA_RE = re.compile(r"<textarea\b")
 NATIVE_INPUT_RE = re.compile(r"<input\b")
 # type= no mesmo bloco (até 8 linhas)
 INPUT_TYPE_RE = re.compile(
-    r"""type\s*=\s*(?:['"](?P<q>file|hidden|range|radio|submit|button|image|checkbox|text|number|search|url|email|password|date|datetime-local|tel)['"]|\{(?P<br>[^}]+)\})""",
+    r"""type\s*=\s*(?:['"](?P<q>file|hidden|range|radio|submit|button|image|checkbox|text|number|search|url|email|password|date|datetime-local|tel|month)['"]|\{(?P<br>[^}]+)\})""",
     re.I,
 )
 EXCLUDED_INPUT_TYPES = frozenset(
@@ -52,8 +52,15 @@ EXCLUDED_PLUGINS = frozenset(
     }
 )
 
-# Plugins com gate estrito também para <input> / checkbox (Onda 4N.7).
-STRICT_INPUT_PLUGINS = frozenset({"tv-dashboard"})
+# Plugins com gate estrito também para <input> / checkbox (Onda 4N.7 + expansão).
+STRICT_INPUT_PLUGINS = frozenset(
+    {
+        "tv-dashboard",
+        "minha-delpi-chat",
+        "transformometro",
+        "strategic-indicators",
+    }
+)
 
 # Chave: path relativo a plugins/ (POSIX). Valor: motivo curto.
 KNOWN_ALLOWLIST: dict[str, str] = {
@@ -73,9 +80,16 @@ class NativeControlHit:
 
 def iter_source_files(plugin_dir: Path) -> list[Path]:
     files: list[Path] = []
+    skip_parts = {"node_modules", "dist", "build", ".vite", "coverage"}
     for pattern in SCAN_GLOBS:
         files.extend(plugin_dir.glob(pattern))
-    return sorted({path for path in files if "node_modules" not in path.parts})
+    return sorted(
+        {
+            path
+            for path in files
+            if not any(part in skip_parts for part in path.parts)
+        }
+    )
 
 
 def _input_kind_from_block(block: str) -> str | None:

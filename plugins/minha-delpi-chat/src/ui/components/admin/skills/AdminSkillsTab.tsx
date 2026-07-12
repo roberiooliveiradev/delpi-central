@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -328,7 +329,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
               <div className="mdc-admin-skills__form-grid">
                 <label className="mdc-admin-field">
                   <span>Chave (slug)</span>
-                  <input
+                  <ChatNativeTextInput
                     value={draft.skillKey}
                     disabled={!isCreating || isSaving}
                     onChange={(event) =>
@@ -341,7 +342,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
                 <label className="mdc-admin-field">
                   <span>Nome exibido</span>
-                  <input
+                  <ChatNativeTextInput
                     value={draft.label}
                     disabled={isSaving}
                     onChange={(event) =>
@@ -378,7 +379,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
                 <label className="mdc-admin-field">
                   <span>Arquivo policy (fallback)</span>
-                  <input
+                  <ChatNativeTextInput
                     value={draft.policyFile}
                     disabled={isSaving}
                     onChange={(event) =>
@@ -390,7 +391,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
                 <label className="mdc-admin-field">
                   <span>Flag no metadata</span>
-                  <input
+                  <ChatNativeTextInput
                     value={draft.metadataFlag}
                     disabled={isSaving}
                     onChange={(event) =>
@@ -402,7 +403,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
                 <label className="mdc-admin-field">
                   <span>Flag legada (opcional)</span>
-                  <input
+                  <ChatNativeTextInput
                     value={draft.legacyMetadataFlag}
                     disabled={isSaving}
                     onChange={(event) =>
@@ -417,7 +418,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
                 <label className="mdc-admin-field">
                   <span>Dica de execução</span>
-                  <input
+                  <ChatNativeTextInput
                     value={draft.executionPathHint}
                     disabled={isSaving}
                     onChange={(event) =>
@@ -432,7 +433,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
                 <label className="mdc-admin-field">
                   <span>Chave derivada</span>
-                  <input
+                  <ChatNativeTextInput
                     value={draft.executionDerivedKey}
                     disabled={isSaving}
                     onChange={(event) =>
@@ -447,7 +448,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
                 <label className="mdc-admin-field">
                   <span>Ordem</span>
-                  <input
+                  <ChatNativeTextInput
                     type="number"
                     value={draft.sortOrder}
                     disabled={isSaving}

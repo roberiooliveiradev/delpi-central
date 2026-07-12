@@ -10,7 +10,7 @@ import {
 } from "../presentation/labels";
 import "./ChangeRequestsWorkspacePanel.css";
 import { SiSelectControl } from "./siFiltersUi";
-import { SiNativeTextAreaControl } from "./siNativeFormFields";
+import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 
 type ChangeRequestsWorkspacePanelProps = {
   getAccessToken?: () => string | undefined;
@@ -83,7 +83,7 @@ export function ChangeRequestsWorkspacePanel({
 
           <label className="si-change-requests__field">
             <span>Título</span>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <SiNativeTextControl value={title} onChange={setTitle} />
           </label>
 
           <label className="si-change-requests__field">

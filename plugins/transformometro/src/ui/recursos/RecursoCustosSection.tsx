@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AppProps } from "../../App";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TableHeader } from "../../components/TableHeader";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
@@ -188,48 +188,48 @@ export function RecursoCustosSection({
                         <div className="ds-filters-row">
                           <label className="ds-filter-box">
                             <FieldLabel className="tm-field__label" label="Valor (R$)" hint={C.valorMes} />
-                            <input
+                            <NativeTextControl
                               type="number"
                               min={0}
                               step="any"
                               required
                               value={editForm.valor_mensal}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, valor_mensal: e.target.value })
+                              onChange={(valor_mensal) =>
+                                setEditForm({ ...editForm, valor_mensal })
                               }
                             />
                           </label>
                           <label className="ds-filter-box">
                             <FieldLabel className="tm-field__label" label="Início *" hint={C.inicio} />
-                            <input
+                            <NativeTextControl
                               type="date"
                               required
                               value={editForm.data_inicio_vigencia}
-                              onChange={(e) =>
+                              onChange={(data_inicio_vigencia) =>
                                 setEditForm({
                                   ...editForm,
-                                  data_inicio_vigencia: e.target.value,
+                                  data_inicio_vigencia,
                                 })
                               }
                             />
                           </label>
                           <label className="ds-filter-box">
                             <FieldLabel className="tm-field__label" label="Fim" hint={C.fim} />
-                            <input
+                            <NativeTextControl
                               type="date"
                               value={editForm.data_fim_vigencia}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, data_fim_vigencia: e.target.value })
+                              onChange={(data_fim_vigencia) =>
+                                setEditForm({ ...editForm, data_fim_vigencia })
                               }
                             />
                           </label>
                         </div>
                         <label className="ds-filter-box ds-filter-box--wide">
                           <FieldLabel className="tm-field__label" label="Observações" hint={C.observacoes} />
-                          <input
+                          <NativeTextControl
                             value={editForm.observacoes}
-                            onChange={(e) =>
-                              setEditForm({ ...editForm, observacoes: e.target.value })
+                            onChange={(observacoes) =>
+                              setEditForm({ ...editForm, observacoes })
                             }
                           />
                         </label>
@@ -290,30 +290,30 @@ export function RecursoCustosSection({
           <div className="ds-filters-row">
             <label className="ds-filter-box">
               <FieldLabel className="tm-field__label" label="Novo valor mensal (R$) *" hint={R.reajusteValor} />
-              <input
+              <NativeTextControl
                 type="number"
                 min={0}
                 step="any"
                 required
                 value={reajuste.valor_mensal}
-                onChange={(e) => setReajuste({ ...reajuste, valor_mensal: e.target.value })}
+              onChange={(valor_mensal) => setReajuste({ ...reajuste, valor_mensal })}
               />
             </label>
             <label className="ds-filter-box">
               <FieldLabel className="tm-field__label" label="Vigente a partir de *" hint={R.reajusteDesde} />
-              <input
+              <NativeTextControl
                 type="date"
                 required
                 value={reajuste.vigente_desde}
-                onChange={(e) => setReajuste({ ...reajuste, vigente_desde: e.target.value })}
+              onChange={(vigente_desde) => setReajuste({ ...reajuste, vigente_desde })}
               />
             </label>
           </div>
           <label className="ds-filter-box ds-filter-box--wide">
             <FieldLabel className="tm-field__label" label="Observações" hint={C.observacoes} />
-            <input
+            <NativeTextControl
               value={reajuste.observacoes}
-              onChange={(e) => setReajuste({ ...reajuste, observacoes: e.target.value })}
+            onChange={(observacoes) => setReajuste({ ...reajuste, observacoes })}
               placeholder="Ex.: Renovação anual / renegociação"
             />
           </label>

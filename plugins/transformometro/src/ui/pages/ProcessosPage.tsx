@@ -14,7 +14,7 @@ import {
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -229,12 +229,12 @@ export function ProcessosPage({
           <section className="ds-filters-row ds-filters-row--extended">
             <div className="ds-filter-box ds-filter-box--wide">
               <FieldLabel className="tm-field__label" label="Buscar" hint={P.busca} />
-              <input
+              <NativeTextControl
                 id="tm-proc-q"
                 type="search"
                 placeholder="Nome ou código…"
                 value={searchQ}
-                onChange={(e) => setSearchQ(e.target.value)}
+                onChange={setSearchQ}
               />
             </div>
             <SelectField

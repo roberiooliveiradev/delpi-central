@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -147,7 +148,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
         <aside className="mdc-admin-split__aside mdc-admin-panel mdc-admin-evaluations__candidates">
           <label className="mdc-admin-field">
             <span>Buscar respostas</span>
-            <input
+            <ChatNativeTextInput
               value={search}
               placeholder="Texto da resposta ou título da sessão"
               onChange={(event) => setSearch(event.target.value)}

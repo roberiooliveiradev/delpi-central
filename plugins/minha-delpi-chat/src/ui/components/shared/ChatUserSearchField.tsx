@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "./chatNativeFormFields";
 import { useEffect, useId, useState } from "react";
 
 import { searchChatUsers } from "../../../data/api/chatApi";
@@ -82,7 +83,7 @@ export function ChatUserSearchField({
     <div className="mdc-chat-user-search">
       <label>
         <span>Usuário</span>
-        <input
+        <ChatNativeTextInput
           value={query}
           disabled={disabled}
           list={listId}

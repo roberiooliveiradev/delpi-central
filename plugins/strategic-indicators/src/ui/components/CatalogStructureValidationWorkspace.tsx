@@ -9,6 +9,7 @@ import {
 } from "../presentation/labels";
 import "./CatalogStructureValidationWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
+import { SiNativeCheckboxControl } from "./siNativeFormFields";
 
 type CatalogStructureValidationWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -177,14 +178,12 @@ export function CatalogStructureValidationWorkspace({
           />
         </label>
 
-        <label className="si-catalog-validation__checkbox">
-          <input
-            type="checkbox"
-            checked={onlyIssues}
-            onChange={(event) => setOnlyIssues(event.target.checked)}
-          />
-          Mostrar só linhas com apontamento
-        </label>
+        <SiNativeCheckboxControl
+          className="si-catalog-validation__checkbox"
+          checked={onlyIssues}
+          onChange={setOnlyIssues}
+          label="Mostrar só linhas com apontamento"
+        />
       </div>
 
       {filteredRows.length === 0 ? (

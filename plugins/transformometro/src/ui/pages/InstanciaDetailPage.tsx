@@ -19,7 +19,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { cenarioSelectLabel } from "../../content/cenarioLabels";
@@ -512,11 +512,11 @@ export function InstanciaDetailPage({
             <div className="ds-filters-row">
               <div className="ds-filter-box">
                 <FieldLabel className="tm-field__label" label="Versão" hint={TM_HELP_TOOLTIPS.revisao.versao} />
-                <input
+                <NativeTextControl
                   id="tm-rev-versao"
                   required
                   value={revForm.versao_revisao}
-                  onChange={(e) => setRevForm({ ...revForm, versao_revisao: e.target.value })}
+                  onChange={(versao_revisao) => setRevForm({ ...revForm, versao_revisao })}
                 />
               </div>
               <SelectField
@@ -552,12 +552,12 @@ export function InstanciaDetailPage({
               ) : null}
               <div className="ds-filter-box">
                 <FieldLabel className="tm-field__label" label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
-                <input
+                <NativeTextControl
                   id="tm-rev-inicio"
                   type="date"
                   required
                   value={revForm.data_inicio_vigencia}
-                  onChange={(e) => setRevForm({ ...revForm, data_inicio_vigencia: e.target.value })}
+                  onChange={(data_inicio_vigencia) => setRevForm({ ...revForm, data_inicio_vigencia })}
                 />
               </div>
             </div>

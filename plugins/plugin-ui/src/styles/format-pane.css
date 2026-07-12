@@ -129,7 +129,7 @@
 /* Controles nativos compactos (FormatPane / inspetores) */
 .delpi-ui-native-checkbox {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin: 0;
   font-size: 13px;
@@ -138,6 +138,77 @@
 }
 
 .delpi-ui-native-checkbox input {
-  margin: 0;
+  margin: 0.15em 0 0;
+  flex-shrink: 0;
   accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-native-checkbox__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.delpi-ui-native-checkbox__hint {
+  font-size: 12px;
+  color: var(--delpi-ui-text-muted, var(--td-text-muted, #64748b));
+}
+
+.delpi-ui-native-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.delpi-ui-native-switch[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-native-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.delpi-ui-native-switch__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--delpi-ui-border, #cbd5e1);
+  transition: background 0.15s ease;
+}
+
+.delpi-ui-native-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  transition: transform 0.15s ease;
+}
+
+.delpi-ui-native-switch[data-checked="true"] .delpi-ui-native-switch__track {
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-native-switch[data-checked="true"] .delpi-ui-native-switch__track::after {
+  transform: translateX(16px);
+}
+
+.delpi-ui-native-switch__label {
+  font-size: 13px;
+  color: var(--delpi-ui-text, #111);
 }

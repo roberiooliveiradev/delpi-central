@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import { MessageSquarePlus, Search, Settings2, X } from "lucide-react";
 import type { RefObject } from "react";
 
@@ -69,7 +70,7 @@ export function ChatSidebarNav({
       {isSearchOpen ? (
         <label className="mdc-chat-sidebar__search">
           <Search size={15} aria-hidden="true" />
-          <input
+          <ChatNativeTextInput
             ref={searchInputRef}
             value={searchTerm}
             onChange={(event) => onSearchChange(event.target.value)}

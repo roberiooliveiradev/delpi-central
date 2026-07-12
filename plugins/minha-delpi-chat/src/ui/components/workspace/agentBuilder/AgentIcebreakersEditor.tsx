@@ -1,5 +1,7 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { ChevronDown, ChevronUp, Copy, GripVertical, Plus, X } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   AGENT_ICEBREAKER_FIELD_ID_MAX_CHARS,
@@ -437,7 +439,7 @@ export function AgentIcebreakersEditor({
                   <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--2">
                     <label className="mdc-chat-ws-field">
                       <span>Título do card</span>
-                      <input
+                      <ChatNativeTextInput
                         type="text"
                         value={entry.label ?? ""}
                         maxLength={AGENT_ICEBREAKER_TITLE_MAX_CHARS}
@@ -454,7 +456,7 @@ export function AgentIcebreakersEditor({
 
                     <label className="mdc-chat-ws-field">
                       <span>Subtítulo</span>
-                      <input
+                      <ChatNativeTextInput
                         type="text"
                         value={entry.hint ?? ""}
                         maxLength={AGENT_ICEBREAKER_HINT_MAX_CHARS}
@@ -556,7 +558,7 @@ export function AgentIcebreakersEditor({
                             <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--2">
                               <label className="mdc-chat-ws-field">
                                 <span>ID na pergunta</span>
-                                <input
+                                <ChatNativeTextInput
                                   type="text"
                                   value={field.id}
                                   maxLength={AGENT_ICEBREAKER_FIELD_ID_MAX_CHARS}
@@ -574,7 +576,7 @@ export function AgentIcebreakersEditor({
 
                               <label className="mdc-chat-ws-field">
                                 <span>Rótulo no diálogo</span>
-                                <input
+                                <ChatNativeTextInput
                                   type="text"
                                   value={field.label}
                                   maxLength={AGENT_ICEBREAKER_FIELD_LABEL_MAX_CHARS}
@@ -613,7 +615,7 @@ export function AgentIcebreakersEditor({
 
                               <label className="mdc-chat-ws-field">
                                 <span>Placeholder</span>
-                                <input
+                                <ChatNativeTextInput
                                   type="text"
                                   value={field.placeholder ?? ""}
                                   placeholder="Opcional"
@@ -628,20 +630,16 @@ export function AgentIcebreakersEditor({
                               </label>
 
                               <div className="mdc-agent-icebreakers-editor__required-wrap">
-                                <label className="mdc-chat-ws-checkbox-row mdc-agent-icebreakers-editor__required">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.required !== false}
-                                    onChange={(event) =>
-                                      onChange(
-                                        updateField(entries, index, fieldIndex, {
-                                          required: event.target.checked,
-                                        }),
-                                      )
-                                    }
-                                  />
-                                  <span>Obrigatório</span>
-                                </label>
+                                <NativeCheckboxControl
+                                  className="mdc-chat-ws-checkbox-row mdc-agent-icebreakers-editor__required"
+                                  checked={field.required !== false}
+                                  label="Obrigatório"
+                                  onChange={(required) =>
+                                    onChange(
+                                      updateField(entries, index, fieldIndex, { required }),
+                                    )
+                                  }
+                                />
                               </div>
                             </div>
                           </div>

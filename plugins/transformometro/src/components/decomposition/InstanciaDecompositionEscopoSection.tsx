@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { AppProps } from "../../App";
 import { FieldLabel } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { TmNativeCheckboxControl } from "../ui/tmNativeFormFields";
 import {
   fetchInstanciaDecomposicaoEscopo,
   fetchProcessoDecomposicao,
@@ -131,37 +132,31 @@ export function InstanciaDecompositionEscopoSection({
         <FieldLabel className="tm-field__label" label="Escopo no mapeamento" hint={TM_HELP_TOOLTIPS.decomposition.escopoInstancia} />
       ) : null}
 
-      <label className="ds-check-label">
-        <input
-          type="checkbox"
-          checked={escopo.inherit_all}
-          disabled={readOnly}
-          onChange={(event) =>
-            setEscopo({
-              node_ids: [],
-              inherit_all: event.target.checked,
-              include_descendants: escopo.include_descendants,
-            })
-          }
-        />
-        <span>Usar mapeamento completo nesta instância</span>
-      </label>
+      <TmNativeCheckboxControl
+        className="ds-check-label"
+        checked={escopo.inherit_all}
+        disabled={readOnly}
+        onChange={(inherit_all) =>
+          setEscopo({
+            node_ids: [],
+            inherit_all,
+            include_descendants: escopo.include_descendants,
+          })
+        }
+        label="Usar mapeamento completo nesta instância"
+      />
 
       {!escopo.inherit_all ? (
         <ul className="tm-decomposition-escopo__list">
           {processosChave.map((node) => (
             <li key={node.id}>
-              <label className="ds-check-label">
-                <input
-                  type="checkbox"
-                  checked={selected.has(node.id)}
-                  disabled={readOnly}
-                  onChange={() => toggleNode(node.id)}
-                />
-                <span>
-                  {node.ordem}. {node.label}
-                </span>
-              </label>
+              <TmNativeCheckboxControl
+                className="ds-check-label"
+                checked={selected.has(node.id)}
+                disabled={readOnly}
+                onChange={() => toggleNode(node.id)}
+                label={`${node.ordem}. ${node.label}`}
+              />
             </li>
           ))}
         </ul>

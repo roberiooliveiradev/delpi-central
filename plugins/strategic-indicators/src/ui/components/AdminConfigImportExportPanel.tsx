@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { exportAdminConfigBundle, importAdminConfigBundle } from "../../data/api/adminConfigBundleApi";
 import type { AdminConfigBundle } from "../../data/types/adminConfigBundle";
 import { InfoState } from "./InfoState";
+import { SiNativeCheckboxControl } from "./siNativeFormFields";
 import "./AdminConfigImportExportPanel.css";
 
 type AdminConfigImportExportPanelProps = {
@@ -141,15 +142,13 @@ export function AdminConfigImportExportPanel({
         </label>
       </div>
 
-      <label className="si-config-io-panel__checkbox">
-        <input
-          type="checkbox"
-          checked={includeGoals}
-          onChange={(event) => setIncludeGoals(event.target.checked)}
-          disabled={loading}
-        />
-        Incluir metas analíticas na importação (somente cria metas ativas que ainda não existem)
-      </label>
+      <SiNativeCheckboxControl
+        className="si-config-io-panel__checkbox"
+        checked={includeGoals}
+        onChange={setIncludeGoals}
+        disabled={loading}
+        label="Incluir metas analíticas na importação (somente cria metas ativas que ainda não existem)"
+      />
     </section>
   );
 }

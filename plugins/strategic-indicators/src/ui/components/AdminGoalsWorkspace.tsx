@@ -30,6 +30,7 @@ import { buildGoalDuplicateSeed } from "../utils/goalDuplicateHelpers";
 import type { ScopeType } from "../../data/types/settings";
 import "./AdminGoalsWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
+import { SiNativeCheckboxControl } from "./siNativeFormFields";
 
 type AdminGoalsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -502,16 +503,12 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                         }))}
                       />
                     </label>
-                    <label className="si-admin-form-field si-admin-form-field--full">
-                      <span>
-                        <input
-                          type="checkbox"
-                          checked={overwriteExisting}
-                          onChange={(e) => setOverwriteExisting(e.target.checked)}
-                        />{" "}
-                        Sobrescrever metas existentes no ano de destino
-                      </span>
-                    </label>
+                    <SiNativeCheckboxControl
+                      className="si-admin-form-field si-admin-form-field--full"
+                      checked={overwriteExisting}
+                      onChange={setOverwriteExisting}
+                      label="Sobrescrever metas existentes no ano de destino"
+                    />
                   </div>
                 </AdminInlineToolPanel>
               ) : null}

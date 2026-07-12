@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../components/shared/chatNativeFormFields";
 import { ArrowLeft, Bot, ChevronRight, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -378,7 +379,7 @@ export function ChatAgentsPage({
 
           <label className="mdc-chat-ws-directory__search">
             <Search size={17} aria-hidden="true" />
-            <input
+            <ChatNativeTextInput
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Buscar agentes"

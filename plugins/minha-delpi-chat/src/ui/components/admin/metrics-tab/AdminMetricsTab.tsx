@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useEffect, useState } from "react";
 
 import {
@@ -166,7 +167,7 @@ function CostTablePanel({
               <tr key={`${entry.provider}-${entry.model}-${index}`}>
                 <td>
                   {editable ? (
-                    <input
+                    <ChatNativeTextInput
                       value={entry.provider}
                       onChange={(event) => {
                         const next = [...draft];
@@ -180,7 +181,7 @@ function CostTablePanel({
                 </td>
                 <td>
                   {editable ? (
-                    <input
+                    <ChatNativeTextInput
                       value={entry.model}
                       onChange={(event) => {
                         const next = [...draft];
@@ -194,7 +195,7 @@ function CostTablePanel({
                 </td>
                 <td>
                   {editable ? (
-                    <input
+                    <ChatNativeTextInput
                       type="number"
                       step="0.0001"
                       value={entry.promptCostPer1k}
@@ -213,7 +214,7 @@ function CostTablePanel({
                 </td>
                 <td>
                   {editable ? (
-                    <input
+                    <ChatNativeTextInput
                       type="number"
                       step="0.0001"
                       value={entry.completionCostPer1k}

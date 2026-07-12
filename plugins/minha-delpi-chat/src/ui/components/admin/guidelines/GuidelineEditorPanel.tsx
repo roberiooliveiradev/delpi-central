@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useEffect, useState } from "react";
 
 import type { SaveAdminGuidelinePayload } from "../../../../data/api/adminApi";
@@ -128,7 +129,7 @@ export function GuidelineEditorPanel({
 
       <label>
         <span>Título</span>
-        <input
+        <ChatNativeTextInput
           value={title}
           disabled={!canCreateGuidelines}
           placeholder="Ex.: Não inventar respostas"
@@ -138,7 +139,7 @@ export function GuidelineEditorPanel({
 
       <label>
         <span>Descrição</span>
-        <input
+        <ChatNativeTextInput
           value={description}
           disabled={!canCreateGuidelines}
           placeholder="Resumo curto da diretriz"

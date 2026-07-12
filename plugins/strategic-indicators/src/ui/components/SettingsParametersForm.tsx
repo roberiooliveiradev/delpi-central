@@ -1,4 +1,5 @@
 import type { SettingsParameterItem } from "../../data/types/settings";
+import { SiNativeTextControl } from "./siNativeFormFields";
 import "./SettingsParametersForm.css";
 
 type SettingsParametersFormProps = {
@@ -29,23 +30,23 @@ export function SettingsParametersForm({
         <article key={item.key} className="si-settings-parameters-form__card">
           <div className="si-settings-parameters-form__grid">
             <Field label="Chave">
-              <input
+              <SiNativeTextControl
                 value={item.key}
-                onChange={(e) => updateItem(index, "key", e.target.value)}
+                onChange={(value) => updateItem(index, "key", value)}
               />
             </Field>
 
             <Field label="Rótulo">
-              <input
+              <SiNativeTextControl
                 value={item.label}
-                onChange={(e) => updateItem(index, "label", e.target.value)}
+                onChange={(value) => updateItem(index, "label", value)}
               />
             </Field>
 
             <Field label="Valor">
-              <input
+              <SiNativeTextControl
                 value={item.value}
-                onChange={(e) => updateItem(index, "value", e.target.value)}
+                onChange={(value) => updateItem(index, "value", value)}
               />
             </Field>
           </div>

@@ -1,4 +1,4 @@
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 
 type DateFieldProps = {
   label: string;
@@ -13,11 +13,11 @@ export function DateField({ label, value, onChange, id, hint }: DateFieldProps) 
   return (
     <label className="ds-filter-box" htmlFor={inputId}>
       <FieldLabel className="tm-field__label" label={label} hint={hint} />
-      <input
+      <NativeTextControl
         id={inputId}
         type="date"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
       />
     </label>
   );

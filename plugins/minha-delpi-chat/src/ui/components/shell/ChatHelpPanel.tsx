@@ -1,3 +1,4 @@
+import { ChatNativeTextInput } from "../shared/chatNativeFormFields";
 import { CircleHelp, Search, X } from "lucide-react";
 import { useMemo } from "react";
 
@@ -177,7 +178,7 @@ export function ChatHelpPanel({
       <div className="mdc-chat-help-panel__search">
         <div className="mdc-chat-help-panel__search-wrap">
           <Search size={16} aria-hidden="true" />
-          <input
+          <ChatNativeTextInput
             type="search"
             value={searchQuery}
             placeholder="Buscar funcionalidade (ex.: estoque, gráfico)"

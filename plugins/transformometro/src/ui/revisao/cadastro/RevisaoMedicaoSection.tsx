@@ -1,5 +1,5 @@
 import type { Medicao } from "../../../data/api/transformometroApi";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { toMonthInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
@@ -62,129 +62,129 @@ export function RevisaoMedicaoSection({
       <div className="ds-filters-row">
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Volume mensal" hint={R.volumeMensal} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.volume_mensal}
-            onChange={(e) => onChange({ ...medicao, volume_mensal: Number(e.target.value) })}
+            onChange={(value) => onChange({ ...medicao, volume_mensal: Number(value) })}
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Tempo médio (min)" hint={R.tempoMedio} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.tempo_medio_execucao_min}
-            onChange={(e) =>
-              onChange({ ...medicao, tempo_medio_execucao_min: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, tempo_medio_execucao_min: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Tempo retrabalho (min)" hint={R.tempoRetrabalho} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.tempo_retrabalho_min}
-            onChange={(e) =>
-              onChange({ ...medicao, tempo_retrabalho_min: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, tempo_retrabalho_min: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Custo hora MO (R$)" hint={R.custoHoraMo} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.custo_hora_mao_obra}
-            onChange={(e) =>
-              onChange({ ...medicao, custo_hora_mao_obra: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, custo_hora_mao_obra: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="% retrabalho" hint={R.percentualRetrabalho} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.percentual_retrabalho}
-            onChange={(e) =>
-              onChange({ ...medicao, percentual_retrabalho: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, percentual_retrabalho: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="% erro" hint={R.percentualErro} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.percentual_erro}
-            onChange={(e) => onChange({ ...medicao, percentual_erro: Number(e.target.value) })}
+            onChange={(value) => onChange({ ...medicao, percentual_erro: Number(value) })}
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Qtd. erros/mês" hint={R.quantidadeErros} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.quantidade_erros_mes}
-            onChange={(e) =>
-              onChange({ ...medicao, quantidade_erros_mes: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, quantidade_erros_mes: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Custo unit. erro (R$)" hint={R.custoUnitarioErro} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.custo_unitario_erro}
-            onChange={(e) =>
-              onChange({ ...medicao, custo_unitario_erro: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, custo_unitario_erro: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Custo unit. retrabalho (R$)" hint={R.custoUnitarioRetrabalho} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.custo_unitario_retrabalho}
-            onChange={(e) =>
-              onChange({ ...medicao, custo_unitario_retrabalho: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, custo_unitario_retrabalho: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Outros desperdícios (R$/mês)" hint={R.outrosDesperdicios} />
-          <input
+          <NativeTextControl
             type="number"
             min={0}
             step="any"
             value={medicao.custo_outros_desperdicios}
-            onChange={(e) =>
-              onChange({ ...medicao, custo_outros_desperdicios: Number(e.target.value) })
+            onChange={(value) =>
+              onChange({ ...medicao, custo_outros_desperdicios: Number(value) })
             }
           />
         </label>
         <label className="ds-filter-box">
           <FieldLabel className="tm-field__label" label="Mês de referência" hint={R.mesReferencia} />
-          <input
+          <NativeTextControl
             type="month"
             value={toMonthInputValue(medicao.base_referencia_mes)}
-            onChange={(e) =>
+            onChange={(value) =>
               onChange({
                 ...medicao,
-                base_referencia_mes: e.target.value || undefined,
+                base_referencia_mes: value || undefined,
               })
             }
           />

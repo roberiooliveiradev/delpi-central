@@ -1,5 +1,5 @@
 import type { SettingsGovernanceItem } from "../../data/types/settings";
-import { SiNativeTextAreaControl } from "./siNativeFormFields";
+import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 import "./SettingsGovernanceForm.css";
 
 type SettingsGovernanceFormProps = {
@@ -30,23 +30,23 @@ export function SettingsGovernanceForm({
         <article key={item.key} className="si-settings-governance-form__card">
           <div className="si-settings-governance-form__grid">
             <Field label="Chave">
-              <input
+              <SiNativeTextControl
                 value={item.key}
-                onChange={(e) => updateItem(index, "key", e.target.value)}
+                onChange={(value) => updateItem(index, "key", value)}
               />
             </Field>
 
             <Field label="Rótulo">
-              <input
+              <SiNativeTextControl
                 value={item.label}
-                onChange={(e) => updateItem(index, "label", e.target.value)}
+                onChange={(value) => updateItem(index, "label", value)}
               />
             </Field>
 
             <Field label="Valor">
-              <input
+              <SiNativeTextControl
                 value={item.value}
-                onChange={(e) => updateItem(index, "value", e.target.value)}
+                onChange={(value) => updateItem(index, "value", value)}
               />
             </Field>
 

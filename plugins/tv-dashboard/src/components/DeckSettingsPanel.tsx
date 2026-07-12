@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import {
   ArrowLeftRight,
   Building2,
@@ -384,16 +385,12 @@ export function DeckSettingsPanel({
           <div className="td-deck-master__header">
             <ImageIcon size={14} aria-hidden="true" />
             <strong>Master slide</strong>
-            <label className="td-deck-master__toggle">
-              <input
-                type="checkbox"
-                checked={masterEnabled}
-                onChange={(event) =>
-                  saveMaster(patchMaster(master, { enabled: event.target.checked }))
-                }
-              />
-              Ativo em telas livres
-            </label>
+            <NativeCheckboxControl
+              className="td-deck-master__toggle"
+              label="Ativo em telas livres"
+              checked={masterEnabled}
+              onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
+            />
           </div>
           <p className="td-subtitle">
             Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3).

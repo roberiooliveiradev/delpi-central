@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { InfoState } from "./InfoState";
 import { Modal } from "./Modal";
-import { SiNativeTextAreaControl } from "./siNativeFormFields";
+import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { ActionButtons } from "./ActionButtons";
 import { useStrategicIndicatorsAdminDepartments } from "../../state/hooks/useStrategicIndicatorsAdminDepartments";
@@ -190,9 +190,9 @@ export function DepartmentsListPanel({
         <div className="si-admin-list-toolbar">
           <label className="si-admin-form-field si-admin-form-field--compact">
             <span>Busca</span>
-            <input
+            <SiNativeTextControl
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={setSearch}
               placeholder="Nome, sigla ou ID"
             />
           </label>
@@ -276,13 +276,13 @@ export function DepartmentsListPanel({
         <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
             <span>ID</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.department_id}
               disabled={departmentFormMode === "edit"}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  department_id: event.target.value,
+                  department_id: value,
                 }))
               }
             />
@@ -290,12 +290,12 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field">
             <span>Nome</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.department_name}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  department_name: event.target.value,
+                  department_name: value,
                 }))
               }
             />
@@ -303,12 +303,12 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field">
             <span>Sigla</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.short_name}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  short_name: event.target.value,
+                  short_name: value,
                 }))
               }
             />
@@ -316,13 +316,13 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field">
             <span>Peso</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={departmentForm.weight_pct}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  weight_pct: Number(event.target.value || 0),
+                  weight_pct: Number(value || 0),
                 }))
               }
             />
@@ -350,13 +350,13 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field">
             <span>Ordem</span>
-            <input
+            <SiNativeTextControl
               type="number"
               value={departmentForm.display_order}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  display_order: Number(event.target.value || 0),
+                  display_order: Number(value || 0),
                 }))
               }
             />
@@ -379,12 +379,12 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field">
             <span>Meta principal</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.headline_goal}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  headline_goal: event.target.value,
+                  headline_goal: value,
                 }))
               }
             />
@@ -392,12 +392,12 @@ export function DepartmentsListPanel({
 
           <label className="si-admin-form-field">
             <span>Foco complementar</span>
-            <input
+            <SiNativeTextControl
               value={departmentForm.supporting_focus}
-              onChange={(event) =>
+              onChange={(value) =>
                 setDepartmentForm((current) => ({
                   ...current,
-                  supporting_focus: event.target.value,
+                  supporting_focus: value,
                 }))
               }
             />

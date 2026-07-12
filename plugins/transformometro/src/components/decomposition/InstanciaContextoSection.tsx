@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchInstanciaContexto,
@@ -92,18 +92,18 @@ export function InstanciaContextoSection({
       <div className="tm-inst-form__row">
         <label className="ds-field">
           <FieldLabel className="tm-field__label" label="Responsável local" hint={C.contextoResponsavel} />
-          <input
+          <NativeTextControl
             value={contexto.responsavel_local ?? ""}
-            onChange={(event) =>
-              setContexto({ ...contexto, responsavel_local: event.target.value || null })
+            onChange={(responsavel_local) =>
+              setContexto({ ...contexto, responsavel_local: responsavel_local || null })
             }
           />
         </label>
         <label className="ds-field">
           <FieldLabel className="tm-field__label" label="Contato" hint={C.contextoContato} />
-          <input
+          <NativeTextControl
             value={contexto.contato ?? ""}
-            onChange={(event) => setContexto({ ...contexto, contato: event.target.value || null })}
+            onChange={(contato) => setContexto({ ...contexto, contato: contato || null })}
           />
         </label>
       </div>
