@@ -45,7 +45,8 @@
   min-height: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  /* Séries (barras) não podem vazar do viewBox / plot. */
+  overflow: hidden;
 }
 
 .delpi-ui-series-chart__plot-area-chrome {

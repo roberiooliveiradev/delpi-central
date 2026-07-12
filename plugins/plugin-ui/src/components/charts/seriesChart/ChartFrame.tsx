@@ -18,8 +18,8 @@ export function ChartFrame({ viewW, viewH, ariaLabel, children }: ChartFrameProp
       preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label={ariaLabel}
-      overflow="visible"
-      style={{ overflow: "visible" }}
+      overflow="hidden"
+      style={{ overflow: "hidden" }}
     >
       {children}
     </svg>

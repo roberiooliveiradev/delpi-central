@@ -11,6 +11,10 @@ export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "point
   seriesIndex?: number;
 };
 
+/**
+ * Colunas cartesianas — topo via toY (domínio do eixo); base no fundo do plot.
+ * Valores fora do domínio são clampados para não furar a moldura.
+ */
 export function ChartSeriesBar({
   layout,
   points,
@@ -19,21 +23,25 @@ export function ChartSeriesBar({
   seriesIndex = 0,
 }: ChartSeriesBarProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotW, plotH, toY } = layout;
+  const { margin, plotW, plotH, toY, axisMin, axisMax } = layout;
   const ref = { kind: "series" as const, seriesIndex };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
+  const baseline = margin.top + plotH;
 
   return (
     <>
       {points.map((point, index) => {
-        const value = Number(point.value);
+        const raw = Number(point.value);
+        const value = Number.isFinite(raw)
+          ? Math.min(axisMax, Math.max(axisMin, raw))
+          : axisMin;
         const barW = plotW / Math.max(points.length, 1);
         const gap = Math.min(barW * 0.2, 8);
         const width = Math.max(barW - gap, 2);
         const x = margin.left + index * barW + gap / 2;
         const y = toY(value);
-        const height = margin.top + plotH - y;
+        const height = Math.max(0, baseline - y);
 
         return (
           <rect

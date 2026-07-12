@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import { ChartAxisLines } from "./ChartAxisLines";
 import { ChartAxisX } from "./ChartAxisX";
 import { ChartAxisY } from "./ChartAxisY";
@@ -58,38 +60,11 @@ export function ChartPlotAreaGroup({
   const skipCartesian = NON_CARTESIAN.has(chartType);
   const cartesianAxes = showAxes && !skipCartesian;
   const cartesianGrid = showGrid && !skipCartesian;
+  const clipRawId = useId().replace(/:/g, "");
+  const plotClipId = `delpi-series-plot-clip-${clipRawId}`;
 
-  return (
+  const series = (
     <>
-      {!skipCartesian ? (
-        <ChartAxisY
-          layout={layout}
-          showLabels={cartesianAxes && config.showYAxisLabels !== false}
-          showTitle={config.showYAxisTitle === true}
-          title={config.yAxisTitle}
-          valueFormat={valueFormat}
-          interaction={interaction}
-        />
-      ) : null}
-
-      {!skipCartesian ? (
-        <ChartGrid
-          layout={layout}
-          showHorizontal={cartesianGrid}
-          showVertical={showVerticalGrid && !skipCartesian}
-          pointCount={points.length}
-          interaction={interaction}
-        />
-      ) : null}
-
-      <ChartPlotArea
-        layout={layout}
-        showAxes={cartesianAxes}
-        interaction={interaction}
-        chartParts={chartParts}
-      />
-      {!skipCartesian ? <ChartAxisLines layout={layout} visible={cartesianAxes} interaction={interaction} /> : null}
-
       {chartType === "bar" ? (
         <ChartSeriesBar
           layout={layout}
@@ -252,6 +227,57 @@ export function ChartPlotAreaGroup({
           chartParts={chartParts}
         />
       ) : null}
+    </>
+  );
+
+  return (
+    <>
+      {!skipCartesian ? (
+        <ChartAxisY
+          layout={layout}
+          showLabels={cartesianAxes && config.showYAxisLabels !== false}
+          showTitle={config.showYAxisTitle === true}
+          title={config.yAxisTitle}
+          valueFormat={valueFormat}
+          interaction={interaction}
+        />
+      ) : null}
+
+      {!skipCartesian ? (
+        <ChartGrid
+          layout={layout}
+          showHorizontal={cartesianGrid}
+          showVertical={showVerticalGrid && !skipCartesian}
+          pointCount={points.length}
+          interaction={interaction}
+        />
+      ) : null}
+
+      <ChartPlotArea
+        layout={layout}
+        showAxes={cartesianAxes}
+        interaction={interaction}
+        chartParts={chartParts}
+      />
+      {!skipCartesian ? <ChartAxisLines layout={layout} visible={cartesianAxes} interaction={interaction} /> : null}
+
+      {!skipCartesian ? (
+        <>
+          <defs>
+            <clipPath id={plotClipId}>
+              <rect
+                x={layout.margin.left}
+                y={layout.margin.top}
+                width={layout.plotW}
+                height={layout.plotH}
+              />
+            </clipPath>
+          </defs>
+          <g clipPath={`url(#${plotClipId})`}>{series}</g>
+        </>
+      ) : (
+        series
+      )}
 
       {!skipCartesian ? (
         <ChartValueLabels
