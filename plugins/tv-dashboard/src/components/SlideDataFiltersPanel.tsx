@@ -1,14 +1,10 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
-import { BranchField } from "./BranchField";
+import { DataParamFields, type DataParamSchema } from "./DataParamFields";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { DeckSettingsAccordion } from "./deck/DeckSettingsAccordion";
-
-type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
 
 type Props = {
   branchScope?: BranchScope | null;
@@ -26,10 +22,12 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
 
   const schema = useMemo(() => mergeParamSchemas(routes), [routes]);
 
-  function updateFilter(key: string, raw: string | number) {
+  function updateFilter(key: string, raw: string) {
     const next = { ...filters };
+    const fieldType = schema[key]?.type;
     if (raw === "" || raw === null || raw === undefined) delete next[key];
-    else if (schema[key]?.type === "integer") next[key] = Number(raw);
+    else if (fieldType === "integer" || fieldType === "number") next[key] = Number(raw);
+    else if (fieldType === "boolean") next[key] = raw === "true";
     else next[key] = String(raw).trim();
     setDataFilters(Object.keys(next).length > 0 ? next : undefined);
   }
@@ -42,28 +40,13 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
       hint="Aplicam-se a todos os blocos de dados deste slide."
       compact={compact}
     >
-      {Object.entries(schema).map(([key, field]) =>
-        key === "branch" ? (
-          <BranchField
-            key={key}
-            id={`td-slide-filter-${key}`}
-            label={field.label ?? "Filial"}
-            scope={branchScope}
-            value={String(filters[key] ?? "")}
-            onChange={(value) => updateFilter(key, value)}
-          />
-        ) : (
-          <DeckField key={key} id={`td-slide-filter-${key}`} label={field.label ?? key}>
-            <NativeTextControl
-              id={`td-slide-filter-${key}`}
-              type={field.type === "integer" ? "number" : "text"}
-              placeholder={field.optional ? "Opcional" : ""}
-              value={filters[key] === undefined ? "" : String(filters[key])}
-              onChange={(value) => updateFilter(key, value)}
-            />
-          </DeckField>
-        ),
-      )}
+      <DataParamFields
+        schema={schema}
+        values={filters}
+        branchScope={branchScope}
+        idPrefix="td-slide-filter"
+        onChange={updateFilter}
+      />
     </DeckPropertySection>
   );
 
@@ -78,11 +61,11 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
   return body;
 }
 
-function mergeParamSchemas(routes: TvDataRouteCatalogItem[]): ParamSchema {
-  const merged: ParamSchema = {};
+function mergeParamSchemas(routes: TvDataRouteCatalogItem[]): DataParamSchema {
+  const merged: DataParamSchema = {};
   for (const route of routes) {
     for (const [key, field] of Object.entries(route.paramSchema ?? {})) {
-      if (!merged[key]) merged[key] = field as ParamSchema[string];
+      if (!merged[key]) merged[key] = field as DataParamSchema[string];
     }
   }
   return merged;

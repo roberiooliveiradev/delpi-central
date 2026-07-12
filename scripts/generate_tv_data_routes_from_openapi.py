@@ -111,6 +111,68 @@ PARAM_LABELS_PT: dict[str, str] = {
     "product_code": "Código do produto",
 }
 
+# Explicações curtas no inspetor (DeckField hint) — complementam o OpenAPI.
+PARAM_HINTS_PT: dict[str, str] = {
+    "branch": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+    "periodDays": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+    "granularity": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+    "customer_segment": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+    "start_date": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema calcula automaticamente.",
+    "end_date": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema calcula automaticamente.",
+    "page": "Número da página na listagem paginada.",
+    "page_size": "Quantidade de linhas por página.",
+    "limit": "Máximo de registros retornados pela API.",
+}
+
+KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {
+    "granularity": ["day", "week", "month", "year"],
+    "customer_segment": ["weg", "new_business"],
+    "loss_type": ["refugo", "scrap", "both"],
+    "product_type": ["PA", "PI"],
+    "sort_dir": ["asc", "desc"],
+    "direction": ["asc", "desc"],
+    "orderDir": ["asc", "desc"],
+    "linked_sort_dir": ["asc", "desc"],
+    "stock_method": ["auto", "hybrid", "estimated", "official_closure"],
+    "periodDays": [7, 14, 30, 60, 90, 180, 365],
+}
+
+KNOWN_PARAM_DEFAULTS: dict[str, Any] = {
+    "granularity": "day",
+}
+
+
+def enrich_param_schema_entry(name: str, entry: dict[str, Any]) -> dict[str, Any]:
+    """Aplica label, hint, enum e default canônicos TV sobre o campo OpenAPI."""
+    enriched = dict(entry)
+    if name in PARAM_LABELS_PT:
+        enriched["label"] = PARAM_LABELS_PT[name]
+    hint = PARAM_HINTS_PT.get(name) or str(enriched.get("description") or "").strip()
+    if hint:
+        enriched["description"] = hint
+    if name in KNOWN_PARAM_ENUMS and not enriched.get("enum"):
+        enriched["enum"] = list(KNOWN_PARAM_ENUMS[name])
+    if name in KNOWN_PARAM_DEFAULTS and enriched.get("default") is None:
+        enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
+        # Com default TV, não bloquear preview se o campo vier vazio na UI.
+        enriched["optional"] = True
+    return enriched
+
+
+def strip_fixed_params_from_schema(route: dict[str, Any]) -> dict[str, Any]:
+    """Remove do inspetor parâmetros já fixados no catálogo (ex.: granularity=day)."""
+    fixed = route.get("fixedQueryParams")
+    schema = route.get("paramSchema")
+    if not isinstance(fixed, dict) or not isinstance(schema, dict):
+        return route
+    next_schema = {key: value for key, value in schema.items() if key not in fixed}
+    updated = dict(route)
+    if next_schema:
+        updated["paramSchema"] = next_schema
+    else:
+        updated.pop("paramSchema", None)
+    return updated
+
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -190,12 +252,15 @@ def build_param_schema_from_openapi(
     schema: dict[str, Any] = {}
 
     if has_date_range:
-        schema["periodDays"] = {
-            "type": "integer",
-            "default": 30,
-            "label": PARAM_LABELS_PT["periodDays"],
-            "optional": True,
-        }
+        schema["periodDays"] = enrich_param_schema_entry(
+            "periodDays",
+            {
+                "type": "integer",
+                "default": 30,
+                "label": PARAM_LABELS_PT["periodDays"],
+                "optional": True,
+            },
+        )
 
     for param in params:
         name = str(param["name"])
@@ -210,7 +275,10 @@ def build_param_schema_from_openapi(
             entry["default"] = param["default"]
         if isinstance(param.get("enum"), list) and param["enum"]:
             entry["enum"] = list(param["enum"])
-        schema[name] = entry
+        openapi_desc = str(param.get("description") or "").strip()
+        if openapi_desc:
+            entry["description"] = openapi_desc
+        schema[name] = enrich_param_schema_entry(name, entry)
 
     return schema, strategy
 
@@ -432,7 +500,8 @@ def generate_routes(
         operation_id = str(operation.get("operationId") or "").strip()
         base = build_base_route(operation)
         with_existing = merge_with_existing(base, existing.get(operation_id))
-        generated.append(apply_overlay(with_existing, overlays.get(operation_id)))
+        with_overlay = apply_overlay(with_existing, overlays.get(operation_id))
+        generated.append(strip_fixed_params_from_schema(with_overlay))
     return generated
 
 

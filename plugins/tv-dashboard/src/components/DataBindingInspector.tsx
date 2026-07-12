@@ -15,23 +15,13 @@ import {
   type ComunicadoDataDisplayMode,
 } from "@delpi/tv-dashboard-presentation";
 
-import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import type { BranchScope, TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DataParamFields, visibleParamSchema, type DataParamSchema } from "./DataParamFields";
 import { DataRoutePickerModal } from "./DataRoutePickerModal";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
-
-type ParamSchema = Record<
-  string,
-  {
-    type?: string;
-    label?: string;
-    default?: string | number;
-    optional?: boolean;
-    enum?: string[];
-  }
->;
 
 function routeSuggestedModes(route: TvDataRouteCatalogItem | null): string[] | undefined {
   if (!route) return undefined;
@@ -48,59 +38,15 @@ function routeMaxRowsLimit(route: TvDataRouteCatalogItem | null): number {
   return typeof limit === "number" && Number.isFinite(limit) ? Math.round(limit) : 20;
 }
 
-function ParamFields({
-  schema,
-  values,
-  inheritedKeys,
-  onChange,
+export function DataBindingInspector({
+  route,
+  pane = false,
+  branchScope = null,
 }: {
-  schema: ParamSchema;
-  values: ComunicadoDataBinding["params"];
-  inheritedKeys: Set<string>;
-  onChange: (key: string, value: string) => void;
+  route: TvDataRouteCatalogItem | null;
+  pane?: boolean;
+  branchScope?: BranchScope | null;
 }) {
-  const entries = Object.entries(schema);
-  if (entries.length === 0) return null;
-  return (
-    <>
-      {entries.map(([key, field]) => {
-        const inherited = inheritedKeys.has(key);
-        const current = values?.[key];
-        const enumOptions = Array.isArray(field.enum) ? field.enum.filter(Boolean) : [];
-        return (
-          <DeckField
-            key={key}
-            id={`td-data-param-${key}`}
-            label={`${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`}
-          >
-            {enumOptions.length > 0 ? (
-              <FormSelectControl
-                id={`td-data-param-${key}`}
-                ariaLabel={field.label ?? key}
-                value={current === undefined || current === null ? "" : String(current)}
-                onChange={(value) => onChange(key, value)}
-                options={[
-                  { value: "", label: inherited ? "Herdado do slide" : field.optional ? "Opcional" : "Selecione" },
-                  ...enumOptions.map((item) => ({ value: String(item), label: String(item) })),
-                ]}
-              />
-            ) : (
-              <NativeTextControl
-                id={`td-data-param-${key}`}
-                type={field.type === "integer" || field.type === "number" ? "number" : "text"}
-                placeholder={inherited ? "Herdado do slide" : field.optional ? "Opcional" : ""}
-                value={current === undefined || current === null ? "" : String(current)}
-                onChange={(value) => onChange(key, value)}
-              />
-            )}
-          </DeckField>
-        );
-      })}
-    </>
-  );
-}
-
-export function DataBindingInspector({ route, pane = false }: { route: TvDataRouteCatalogItem | null; pane?: boolean }) {
   const {
     selected,
     config,
@@ -129,13 +75,20 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
   const maxRowsLimit = routeMaxRowsLimit(route);
   const showPresentationMode = isDataBlockType(selected.type) && !isDataSourceBlockType(selected.type);
   const showTableOptions = showPresentationMode && currentDisplayMode === "table";
+  const paramSchema = visibleParamSchema(
+    (route?.paramSchema ?? undefined) as DataParamSchema | undefined,
+    route?.fixedQueryParams,
+  );
 
   function updateParam(key: string, raw: string) {
     const nextParams = { ...(binding.params ?? {}) };
+    const fieldType = (paramSchema[key] as { type?: string } | undefined)?.type;
     if (!raw.trim()) {
       delete nextParams[key];
-    } else if ((route?.paramSchema?.[key] as { type?: string } | undefined)?.type === "integer") {
+    } else if (fieldType === "integer" || fieldType === "number") {
       nextParams[key] = Number(raw);
+    } else if (fieldType === "boolean") {
+      nextParams[key] = raw === "true";
     } else {
       nextParams[key] = raw.trim();
     }
@@ -240,10 +193,11 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
             />
           </DeckField>
         ) : null}
-        <ParamFields
-          schema={(route?.paramSchema as ParamSchema) ?? {}}
+        <DataParamFields
+          schema={paramSchema}
           values={blockParams}
           inheritedKeys={inheritedKeys}
+          branchScope={branchScope}
           onChange={updateParam}
         />
         <DeckField

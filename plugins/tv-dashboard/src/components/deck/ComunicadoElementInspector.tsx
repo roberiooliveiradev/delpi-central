@@ -22,7 +22,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
 
-import { listDataRoutes, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
+import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
@@ -57,10 +57,12 @@ export function ComunicadoElementInspector({
   labels = {},
   placement = "default",
   onOpenDataSources,
+  branchScope = null,
 }: {
   labels?: Labels;
   placement?: "default" | "side";
   onOpenDataSources?: () => void;
+  branchScope?: BranchScope | null;
 }) {
   const {
     selected,
@@ -193,7 +195,9 @@ export function ComunicadoElementInspector({
       </DeckPropertySection>
 
       {/* Irmãos L1 — evita FormatPaneSection aninhado (4M.3). */}
-      {!multiSelect && isDataBlock ? <DataBindingInspector route={selectedRoute} pane={pane} /> : null}
+      {!multiSelect && isDataBlock ? (
+        <DataBindingInspector route={selectedRoute} pane={pane} branchScope={branchScope} />
+      ) : null}
       {!multiSelect && isViewBlock ? (
         <VisualDataViewInspector pane={pane} onOpenDataSources={onOpenDataSources} />
       ) : null}

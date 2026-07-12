@@ -2,7 +2,7 @@ import { ChevronLeft, Database, Layers, MousePointer2 } from "lucide-react";
 import { FormatPaneShell } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 
-import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import type { BranchScope } from "../../api/tvDashboardApi";
 import { DataRoutesSidePanel } from "../DataRoutesSidePanel";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ComunicadoElementInspector } from "./ComunicadoElementInspector";
@@ -27,10 +27,11 @@ type Props = {
   labels?: Labels;
   /** Dentro do card do palco (não coluna externa do grid). */
   embedded?: boolean;
+  branchScope?: BranchScope | null;
 };
 
 /** Painel lateral estilo PowerPoint — propriedades, dados e camadas. */
-export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
+export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope = null }: Props) {
   const { selectedIds, dataPanelOpen, setDataPanelOpen } = useComunicadoEditor();
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<SideTab>("element");
@@ -83,10 +84,14 @@ export function DeckElementSidePanel({ labels = {}, embedded = true }: Props) {
             <ComunicadoElementInspector
               labels={labels}
               placement="side"
+              branchScope={branchScope}
               onOpenDataSources={() => handleTabChange("data")}
             />
           ) : tab === "data" ? (
-            <DataRoutesSidePanel onInserted={() => handleTabChange("element")} />
+            <DataRoutesSidePanel
+              branchScope={branchScope}
+              onInserted={() => handleTabChange("element")}
+            />
           ) : (
             <ComunicadoLayersPanel />
           )}

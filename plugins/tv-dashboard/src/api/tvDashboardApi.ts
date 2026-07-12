@@ -255,6 +255,7 @@ export type TvDataRouteCatalogItem = {
   valueFields?: string[];
   defaultParams?: Record<string, unknown>;
   paramSchema?: Record<string, unknown>;
+  fixedQueryParams?: Record<string, unknown>;
   tvConstraints?: Record<string, unknown>;
   metaShape?: string;
 };

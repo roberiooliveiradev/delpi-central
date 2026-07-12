@@ -8,9 +8,10 @@ import {
   type ComunicadoDataBinding,
 } from "@delpi/tv-dashboard-presentation";
 
-import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
@@ -44,8 +45,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "Outros",
 };
 
-type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
-
 function CategoryIcon({ category }: { category: string }) {
   if (category === "quality") return <ShieldCheck size={16} aria-hidden />;
   if (category === "supplies" || category === "products") return <Package size={16} aria-hidden />;
@@ -55,9 +54,10 @@ function CategoryIcon({ category }: { category: string }) {
 type Props = {
   /** Chamado após inserir fonte no palco (ex.: voltar aba Elemento). */
   onInserted?: () => void;
+  branchScope?: BranchScope | null;
 };
 
-export function DataRoutesSidePanel({ onInserted }: Props) {
+export function DataRoutesSidePanel({ onInserted, branchScope = null }: Props) {
   const { config, addDataSourceBlock, globalRefreshSec } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -112,7 +112,13 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
   }
 
   if (pickedRoute) {
-    const schema = (pickedRoute.paramSchema as ParamSchema) ?? {};
+    const schema = visibleParamSchema(
+      pickedRoute.paramSchema as DataParamSchema,
+      pickedRoute.fixedQueryParams as Record<string, unknown> | undefined,
+    );
+    const inheritedKeys = new Set(
+      Object.keys(slideFilters).filter((key) => params?.[key] === undefined || params?.[key] === ""),
+    );
     return (
       <div className="td-data-routes-panel">
         <button
@@ -146,35 +152,29 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
               onChange={setRefreshSec}
             />
           </DeckField>
-          {Object.entries(schema).map(([key, field]) => {
-            const inherited = slideFilters[key] !== undefined && (params?.[key] === undefined || params?.[key] === "");
-            return (
-              <DeckField
-                key={key}
-                id={`td-data-source-param-${key}`}
-                label={`${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`}
-              >
-                <NativeTextControl
-                  id={`td-data-source-param-${key}`}
-                  type={field.type === "integer" ? "number" : "text"}
-                  value={params?.[key] === undefined || params?.[key] === null ? "" : String(params[key])}
-                  onChange={(raw) => {
-                    setParams((previous) => {
-                      const next = { ...(previous ?? {}) };
-                      if (!raw.trim()) {
-                        delete next[key];
-                      } else if (field.type === "integer") {
-                        next[key] = Number(raw);
-                      } else {
-                        next[key] = raw;
-                      }
-                      return next;
-                    });
-                  }}
-                />
-              </DeckField>
-            );
-          })}
+          <DataParamFields
+            schema={schema}
+            values={params}
+            inheritedKeys={inheritedKeys}
+            branchScope={branchScope}
+            idPrefix="td-data-source-param"
+            onChange={(key, raw) => {
+              setParams((previous) => {
+                const next = { ...(previous ?? {}) };
+                const fieldType = schema[key]?.type;
+                if (!raw.trim()) {
+                  delete next[key];
+                } else if (fieldType === "integer" || fieldType === "number") {
+                  next[key] = Number(raw);
+                } else if (fieldType === "boolean") {
+                  next[key] = raw === "true";
+                } else {
+                  next[key] = raw;
+                }
+                return next;
+              });
+            }}
+          />
           <button type="button" className="td-btn td-btn--primary td-btn--sm" onClick={handleInsert}>
             Inserir fonte de dados
           </button>

@@ -153,6 +153,13 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   data: {
     catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",
     sourceConfig: "Parâmetros da consulta e intervalo de atualização da fonte de dados.",
+    paramGranularity:
+      "Como agrupar os pontos da série no tempo: dia, semana, mês ou ano. Em algumas rotas o valor já vem fixo (ex.: dia).",
+    paramPeriodDays:
+      "Quantos dias para trás entram no cálculo (ex.: 30 = do dia de hoje menos 30 dias).",
+    paramBranch:
+      "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+    paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     viewBinding: "Conecte o gráfico, tabela ou KPI a uma fonte inserida no palco (ícone de banco).",
     connectFlow:
       "1) Inserir → Dados → escolha uma rota (cria data_source no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → aba Elemento → Conexão de dados → Fonte de dados.",

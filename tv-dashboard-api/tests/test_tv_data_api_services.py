@@ -23,10 +23,36 @@ def test_suggested_display_modes_from_shape():
     assert block_type_for_display_mode("table") == "data_table"
 
 
-def test_validate_params_rejects_unknown_key():
-    schema = {"branch": {"type": "string", "optional": True}}
-    with pytest.raises(ValueError, match="não permitido"):
-        validate_params_against_schema({"branch": "01", "foo": "bar"}, schema)
+def test_validate_params_applies_default_when_empty():
+    schema = {"granularity": {"type": "string", "optional": False, "default": "day"}}
+    assert validate_params_against_schema({"granularity": ""}, schema) == {"granularity": "day"}
+
+
+def test_validate_params_skips_required_when_fixed_query_params():
+    schema = {"granularity": {"type": "string", "optional": False}}
+    assert (
+        validate_params_against_schema(
+            {},
+            schema,
+            fixed_query_params={"granularity": "day"},
+        )
+        == {}
+    )
+
+
+def test_validate_data_binding_otd_series_without_granularity():
+    route = TvDataRouteCatalogService().get_route("get_production_otd_series") or {}
+    if not route:
+        pytest.skip("Catálogo OTD série indisponível")
+    validate_data_binding(
+        {
+            "operationId": route["operationId"],
+            "params": {"periodDays": 30, "branch": "02"},
+            "displayMode": "line_chart",
+        },
+        block_type="data_chart",
+        route=route,
+    )
 
 
 def test_validate_data_binding_rejects_non_get():

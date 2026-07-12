@@ -76,7 +76,7 @@ export function CustomSlideEditorLayout({
         {...workspaceProps}
         slides={slidesForFilmstrip}
         selectedSlideId={selectedSlide.id}
-        rightPanel={<DeckElementSidePanel labels={adminLabels} />}
+        rightPanel={<DeckElementSidePanel labels={adminLabels} branchScope={chromeProps.branchScope} />}
         stage={
           <div className="td-deck-stage__editor">
             <ComunicadoComposerCanvas />

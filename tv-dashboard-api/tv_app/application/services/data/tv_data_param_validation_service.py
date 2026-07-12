@@ -28,30 +28,45 @@ def _coerce_param_value(field_type: str, raw: Any) -> Any:
 def validate_params_against_schema(
     params: dict[str, Any] | None,
     param_schema: dict[str, Any] | None,
+    *,
+    fixed_query_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Valida e normaliza params do bloco/filtro conforme paramSchema do catálogo."""
+    """Valida e normaliza params do bloco/filtro conforme paramSchema do catálogo.
+
+    `fixedQueryParams` do catálogo satisfaz parâmetros obrigatórios (não pedem valor na UI).
+    Valor vazio no bloco usa `default` do schema quando existir.
+    """
     schema = param_schema if isinstance(param_schema, dict) else {}
     raw = params if isinstance(params, dict) else {}
+    fixed = fixed_query_params if isinstance(fixed_query_params, dict) else {}
     normalized: dict[str, Any] = {}
 
     for key, spec in schema.items():
         if not isinstance(spec, dict):
             continue
-        if key not in raw:
+        if key in fixed and fixed.get(key) not in (None, ""):
+            continue
+        raw_value = raw.get(key) if key in raw else None
+        empty = raw_value is None or raw_value == ""
+        if empty:
             if spec.get("default") is not None:
                 normalized[key] = spec.get("default")
             elif not spec.get("optional", False):
                 raise ValueError(message("dataParamRequired", f"Parâmetro obrigatório: {key}"))
             continue
-        value = _coerce_param_value(str(spec.get("type") or "string"), raw.get(key))
+        value = _coerce_param_value(str(spec.get("type") or "string"), raw_value)
         if value is None or value == "":
-            if not spec.get("optional", False):
+            if spec.get("default") is not None:
+                normalized[key] = spec.get("default")
+            elif not spec.get("optional", False):
                 raise ValueError(message("dataParamRequired", f"Parâmetro obrigatório: {key}"))
             continue
         normalized[key] = value
 
     for key, value in raw.items():
         if key in normalized or value is None or value == "":
+            continue
+        if key in fixed:
             continue
         if key not in schema:
             raise ValueError(message("dataParamUnknown", f"Parâmetro não permitido: {key}"))
@@ -80,7 +95,13 @@ def validate_data_binding(
     validate_block_type_for_binding(block_type, str(display_mode) if display_mode is not None else "auto")
 
     params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
-    validate_params_against_schema(params, route.get("paramSchema"))
+    validate_params_against_schema(
+        params,
+        route.get("paramSchema"),
+        fixed_query_params=route.get("fixedQueryParams")
+        if isinstance(route.get("fixedQueryParams"), dict)
+        else None,
+    )
 
     max_rows = binding.get("maxRows")
     if max_rows is not None:

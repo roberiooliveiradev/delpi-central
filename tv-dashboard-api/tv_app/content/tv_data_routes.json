@@ -17,7 +17,17 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -46,12 +56,27 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -80,7 +105,17 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -109,31 +144,47 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "sales_conversion_rate_pct",
         "value"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -152,7 +203,17 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -181,12 +242,27 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -215,7 +291,17 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -244,17 +330,33 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -283,12 +385,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -313,12 +426,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -347,50 +471,75 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Status"
+          "label": "Status",
+          "description": "Filtro: won (ganhas), open (demais) ou omitir para todas."
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Sort by"
+          "label": "Sort by",
+          "description": "Coluna de ordenação: branch, proposal_number, revision, description, proposal_date, end_date, status_code, customer_code, customer_store."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
           "label": "Sort dir",
-          "default": "asc"
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         },
         "search": {
           "type": "string",
           "optional": true,
-          "label": "Search"
+          "label": "Search",
+          "description": "Busca textual em filial, número da proposta, revisão, descrição, status, cliente, loja e estágio."
         }
       },
       "paramStrategy": "date_range",
@@ -414,7 +563,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
@@ -440,7 +590,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
@@ -477,17 +628,40 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "granularity": {
           "type": "string",
           "optional": false,
-          "label": "Granularidade"
+          "label": "Granularidade",
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "default": "day"
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -512,17 +686,33 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -547,12 +737,27 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -577,34 +782,53 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         },
         "status": {
           "type": "string",
           "optional": true,
-          "label": "Filtro de status: on_time ou late."
+          "label": "Filtro de status: on_time ou late.",
+          "description": "Filtro de status: on_time ou late."
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 20
+          "default": 20,
+          "description": "Quantidade de linhas por página."
         },
         "sort_by": {
           "type": "string",
@@ -615,7 +839,11 @@
           "type": "string",
           "optional": true,
           "label": "Sort dir",
-          "default": "asc"
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -640,22 +868,46 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "granularity": {
           "type": "string",
           "optional": false,
-          "label": "Granularidade"
+          "label": "Granularidade",
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "default": "day"
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)"
+          "label": "Segmento (weg | new_business)",
+          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -691,29 +943,34 @@
         "code": {
           "type": "string",
           "optional": true,
-          "label": "Código"
+          "label": "Código",
+          "description": "Código do cliente (SA1)."
         },
         "name": {
           "type": "string",
           "optional": true,
-          "label": "Nome ou parte do nome."
+          "label": "Nome ou parte do nome.",
+          "description": "Nome ou parte do nome."
         },
         "store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do cliente."
+          "label": "Loja do cliente.",
+          "description": "Loja do cliente."
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 20
+          "default": 20,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct",
@@ -735,12 +992,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "department_id": {
           "type": "string",
           "optional": false,
-          "label": "Department id"
+          "label": "Department id",
+          "description": "Departamento no SI (commercial, hr, production, financial, supplies, engineering, quality)."
         },
         "competence": {
           "type": "string",
@@ -750,7 +1018,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -785,27 +1054,32 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
           "optional": true,
-          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
+          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro.",
+          "description": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
         },
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         },
         "include_qtd_pi": {
           "type": "boolean",
           "optional": true,
-          "label": "Include qtd pi"
+          "label": "Include qtd pi",
+          "description": "Incluir contagem de PI via BOM (mais lento). Padrão: false."
         }
       },
       "paramStrategy": "direct"
@@ -842,24 +1116,28 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
           "optional": true,
-          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
+          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro.",
+          "description": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -896,7 +1174,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -938,7 +1217,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -949,13 +1229,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -992,7 +1274,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -1018,17 +1301,20 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Date start",
+          "description": "Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Date end",
+          "description": "Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -1049,22 +1335,26 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Date start",
+          "description": "Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Date end",
+          "description": "Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Filtra eventos de uma revisão específica da OV."
+          "label": "Filtra eventos de uma revisão específica da OV.",
+          "description": "Filtra eventos de uma revisão específica da OV."
         }
       },
       "paramStrategy": "direct"
@@ -1085,22 +1375,26 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Date start",
+          "description": "Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Date end",
+          "description": "Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Revision"
+          "label": "Revision",
+          "description": "Filtra transições de uma revisão específica da OV."
         }
       },
       "paramStrategy": "direct"
@@ -1137,13 +1431,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "sort_by": {
           "type": "string",
@@ -1154,7 +1450,11 @@
           "type": "string",
           "optional": true,
           "label": "Sort dir",
-          "default": "asc"
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         },
         "incluir_bloqueados": {
           "type": "boolean",
@@ -1280,13 +1580,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "sort_by": {
           "type": "string",
@@ -1297,7 +1599,11 @@
           "type": "string",
           "optional": true,
           "label": "Sort dir",
-          "default": "asc"
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "direct"
@@ -1319,7 +1625,17 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "id": {
           "type": "string",
@@ -1369,7 +1685,17 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "filial_id": {
           "type": "string",
@@ -1399,17 +1725,29 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo."
+          "label": "Centro de custo.",
+          "description": "Centro de custo."
         }
       },
       "paramStrategy": "date_range",
@@ -1434,56 +1772,79 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo."
+          "label": "Centro de custo.",
+          "description": "Centro de custo."
         },
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor."
+          "label": "Código do fornecedor.",
+          "description": "Código do fornecedor."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor."
+          "label": "Loja do fornecedor.",
+          "description": "Loja do fornecedor."
         },
         "search": {
           "type": "string",
           "optional": true,
-          "label": "Search"
+          "label": "Search",
+          "description": "Busca textual em documento, pedido, produto, observações e fornecedor."
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "sort_by": {
           "type": "string",
           "optional": true,
           "label": "Campo de ordenação permitido.",
-          "default": "data_emissao"
+          "default": "data_emissao",
+          "description": "Campo de ordenação permitido."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
           "label": "Direção da ordenação: asc ou desc.",
-          "default": "desc"
+          "default": "desc",
+          "description": "Direção da ordenação: asc ou desc.",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -1508,28 +1869,42 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor."
+          "label": "Código do fornecedor.",
+          "description": "Código do fornecedor."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor."
+          "label": "Loja do fornecedor.",
+          "description": "Loja do fornecedor."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 10
+          "default": 10,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "date_range",
@@ -1554,23 +1929,36 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo."
+          "label": "Centro de custo.",
+          "description": "Centro de custo."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 10
+          "default": 10,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "date_range",
@@ -1595,27 +1983,41 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo."
+          "label": "Centro de custo.",
+          "description": "Centro de custo."
         },
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor."
+          "label": "Código do fornecedor.",
+          "description": "Código do fornecedor."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor."
+          "label": "Loja do fornecedor.",
+          "description": "Loja do fornecedor."
         }
       },
       "paramStrategy": "date_range",
@@ -1640,27 +2042,41 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro de custo."
+          "label": "Centro de custo.",
+          "description": "Centro de custo."
         },
         "supplier_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do fornecedor."
+          "label": "Código do fornecedor.",
+          "description": "Código do fornecedor."
         },
         "supplier_store": {
           "type": "string",
           "optional": true,
-          "label": "Loja do fornecedor."
+          "label": "Loja do fornecedor.",
+          "description": "Loja do fornecedor."
         }
       },
       "paramStrategy": "date_range",
@@ -1685,12 +2101,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1719,12 +2146,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1753,12 +2191,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1783,12 +2232,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1826,12 +2286,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1869,12 +2340,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1899,12 +2381,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1928,19 +2421,22 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "result": {
           "type": "string",
@@ -2001,7 +2497,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "inspection_id": {
           "type": "string",
@@ -2027,19 +2524,22 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -2060,7 +2560,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -2081,7 +2582,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -2102,13 +2604,15 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 50
+          "default": 50,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2129,7 +2633,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -2181,7 +2686,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -2191,7 +2697,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2222,7 +2729,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "product_group": {
           "type": "string",
@@ -2232,7 +2740,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2263,12 +2772,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         },
         "group_by": {
           "type": "string",
@@ -2305,7 +2816,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -2315,7 +2827,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2346,12 +2859,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2373,12 +2888,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2407,12 +2933,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2450,7 +2987,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "op": {
           "type": "string",
@@ -2502,7 +3040,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "op": {
           "type": "string",
@@ -2529,12 +3068,14 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -2565,12 +3106,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         },
         "loss_type": {
           "type": "string",
@@ -2612,12 +3155,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         },
         "loss_type": {
           "type": "string",
@@ -2650,12 +3195,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
@@ -2665,39 +3221,49 @@
         "efficiency_bands": {
           "type": "string",
           "optional": true,
-          "label": "Faixas de eficiência (csv): ok, low, verify"
+          "label": "Faixas de eficiência (csv): ok, low, verify",
+          "description": "Faixas de eficiência (csv): ok, low, verify"
         },
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro(s) de trabalho (csv)"
+          "label": "Centro(s) de trabalho (csv)",
+          "description": "Centro(s) de trabalho (csv)"
         },
         "production_order": {
           "type": "string",
           "optional": true,
-          "label": "Ordem(ns) de produção (csv)"
+          "label": "Ordem(ns) de produção (csv)",
+          "description": "Ordem(ns) de produção (csv)"
         },
         "operator_code": {
           "type": "string",
           "optional": true,
-          "label": "Código(s) do operador (csv)"
+          "label": "Código(s) do operador (csv)",
+          "description": "Código(s) do operador (csv)"
         },
         "product_type": {
           "type": "string",
           "optional": true,
-          "label": "Product type"
+          "label": "Product type",
+          "enum": [
+            "PA",
+            "PI"
+          ]
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 20
+          "default": 20,
+          "description": "Quantidade de linhas por página."
         },
         "sort_by": {
           "type": "string",
@@ -2708,7 +3274,11 @@
           "type": "string",
           "optional": true,
           "label": "Sort dir",
-          "default": "asc"
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -2732,7 +3302,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -2754,28 +3325,34 @@
           "type": "integer",
           "default": 7,
           "label": "Período (dias)",
-          "optional": true
-        },
-        "granularity": {
-          "type": "string",
-          "optional": false,
-          "label": "Granularidade"
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
       "defaultParams": {
         "periodDays": 7
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "fixedQueryParams": {
         "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       },
       "seriesField": "points"
     },
@@ -2796,12 +3373,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2834,7 +3422,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "product_type": {
           "type": "string",
@@ -2854,7 +3443,11 @@
           "type": "string",
           "optional": true,
           "label": "Linked sort dir",
-          "default": "asc"
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "direct"
@@ -2880,7 +3473,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -2890,7 +3484,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2916,7 +3511,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -2926,7 +3522,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2952,7 +3549,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -2962,7 +3560,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -2984,12 +3583,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
@@ -3000,13 +3610,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 20
+          "default": 20,
+          "description": "Quantidade de linhas por página."
         },
         "sort_by": {
           "type": "string",
@@ -3017,7 +3629,11 @@
           "type": "string",
           "optional": true,
           "label": "Sort dir",
-          "default": "asc"
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "date_range",
@@ -3042,28 +3658,34 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
-        },
-        "granularity": {
-          "type": "string",
-          "optional": false,
-          "label": "Granularidade"
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "fixedQueryParams": {
         "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       },
       "seriesField": "points"
     },
@@ -3084,12 +3706,23 @@
           "type": "integer",
           "default": 7,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3127,7 +3760,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -3137,7 +3771,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -3159,12 +3794,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3197,12 +3843,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -3228,12 +3876,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -3259,12 +3909,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -3290,7 +3942,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -3311,48 +3964,57 @@
         "code": {
           "type": "string",
           "optional": true,
-          "label": "Código"
+          "label": "Código",
+          "description": "Filtro por código DELPI (prefixo por padrão; use code_exact=true para match exato)."
         },
         "code_exact": {
           "type": "boolean",
           "optional": true,
           "label": "Code exact",
-          "default": false
+          "default": false,
+          "description": "Quando true, exige match exato do código informado."
         },
         "filename": {
           "type": "string",
           "optional": true,
-          "label": "Filtro parcial pelo nome do arquivo PDF."
+          "label": "Filtro parcial pelo nome do arquivo PDF.",
+          "description": "Filtro parcial pelo nome do arquivo PDF."
         },
         "revision": {
           "type": "string",
           "optional": true,
-          "label": "Revision"
+          "label": "Revision",
+          "description": "Filtro por revisão extraída do sufixo _R{NN} no filename."
         },
         "file_kind": {
           "type": "string",
           "optional": true,
-          "label": "File kind"
+          "label": "File kind",
+          "description": "Tipo do arquivo: exact, revision, variant ou other."
         },
         "has_variant": {
           "type": "boolean",
           "optional": true,
-          "label": "Filtra arquivos com sufixo variante (-N)."
+          "label": "Filtra arquivos com sufixo variante (-N).",
+          "description": "Filtra arquivos com sufixo variante (-N)."
         },
         "has_revision": {
           "type": "boolean",
           "optional": true,
-          "label": "Filtra arquivos com sufixo de revisão (_RNN)."
+          "label": "Filtra arquivos com sufixo de revisão (_RNN).",
+          "description": "Filtra arquivos com sufixo de revisão (_RNN)."
         },
         "modified_from": {
           "type": "string",
           "optional": true,
-          "label": "Data/hora ISO mínima de modificação do arquivo."
+          "label": "Data/hora ISO mínima de modificação do arquivo.",
+          "description": "Data/hora ISO mínima de modificação do arquivo."
         },
         "modified_to": {
           "type": "string",
           "optional": true,
-          "label": "Data/hora ISO máxima de modificação do arquivo."
+          "label": "Data/hora ISO máxima de modificação do arquivo.",
+          "description": "Data/hora ISO máxima de modificação do arquivo."
         },
         "min_size_bytes": {
           "type": "integer",
@@ -3368,25 +4030,33 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "sort": {
           "type": "string",
           "optional": true,
           "label": "Sort",
-          "default": "product_code"
+          "default": "product_code",
+          "description": "product_code, filename, modified_at, size_bytes, revision ou file_kind."
         },
         "direction": {
           "type": "string",
           "optional": true,
           "label": "asc ou desc.",
-          "default": "asc"
+          "default": "asc",
+          "description": "asc ou desc.",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "direct"
@@ -3408,12 +4078,14 @@
           "type": "string",
           "optional": true,
           "label": "View",
-          "default": "by_material"
+          "default": "by_material",
+          "description": "by_material=lista MPs exclusivas; by_finished_product=lista PAs com MP exclusiva"
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         },
         "offset": {
           "type": "integer",
@@ -3450,7 +4122,8 @@
           "type": "boolean",
           "optional": true,
           "label": "Reservado para normalização futura",
-          "default": false
+          "default": false,
+          "description": "Reservado para normalização futura"
         }
       },
       "paramStrategy": "direct"
@@ -3492,13 +4165,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Linhas (TOP N)",
-          "default": 5
+          "default": 5,
+          "description": "Quantidade de linhas por página."
         },
         "sort": {
           "type": "string",
@@ -3508,18 +4183,22 @@
         "direction": {
           "type": "string",
           "optional": true,
-          "label": "Direction"
+          "label": "Direction",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "direct",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": false
-      },
       "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
+      },
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": false
       }
     },
     {
@@ -3539,13 +4218,15 @@
           "type": "string",
           "optional": true,
           "label": "View",
-          "default": "full"
+          "default": "full",
+          "description": "full=cadastro completo; summary=subconjunto (~15 campos)"
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Legacy",
-          "default": false
+          "default": false,
+          "description": "Reservado para campos normalizados futuros no cadastro"
         }
       },
       "paramStrategy": "direct"
@@ -3567,7 +4248,8 @@
           "type": "string",
           "optional": true,
           "label": "View",
-          "default": "full"
+          "default": "full",
+          "description": "full=dimensões completas; summary=amostra leve (opt-in)"
         }
       },
       "paramStrategy": "direct"
@@ -3594,18 +4276,21 @@
           "type": "string",
           "optional": true,
           "label": "Price source",
-          "default": "standard_cost"
+          "default": "standard_cost",
+          "description": "Fonte de custo unitário: standard_cost (B1_CUSTD) ou last_purchase (B1_UPRC)"
         },
         "adjustment_percent": {
           "type": "number",
           "optional": true,
           "label": "Adjustment percent",
-          "default": 0.0
+          "default": 0.0,
+          "description": "Reajuste percentual simulado aplicado a todas as MPs"
         },
         "top_n": {
           "type": "integer",
           "optional": true,
-          "label": "Top n"
+          "label": "Top n",
+          "description": "Limita o ranking retornado às N MPs de maior impacto"
         }
       },
       "paramStrategy": "direct"
@@ -3627,13 +4312,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -3700,13 +4387,15 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Devolve SIM/NAO em vez de booleanos",
-          "default": false
+          "default": false,
+          "description": "Devolve SIM/NAO em vez de booleanos"
         }
       },
       "paramStrategy": "direct"
@@ -3727,17 +4416,20 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         },
         "max_depth": {
           "type": "integer",
@@ -3764,13 +4456,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "issue_date_start": {
           "type": "string",
@@ -3790,7 +4484,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -3811,12 +4506,14 @@
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         },
         "max_depth": {
           "type": "integer",
@@ -3843,13 +4540,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "date_start": {
           "type": "string",
@@ -3864,7 +4563,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "location": {
           "type": "string",
@@ -3900,7 +4600,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -3922,13 +4623,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "issue_date_start": {
           "type": "string",
@@ -3948,7 +4651,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -3974,12 +4678,14 @@
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4023,13 +4729,15 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Devolve SIM/NAO em vez de booleanos",
-          "default": false
+          "default": false,
+          "description": "Devolve SIM/NAO em vez de booleanos"
         }
       },
       "paramStrategy": "direct"
@@ -4060,7 +4768,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -4091,7 +4800,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "history_limit": {
           "type": "integer",
@@ -4118,13 +4828,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4155,7 +4867,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "history_limit": {
           "type": "integer",
@@ -4235,13 +4948,15 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Omite datas ISO normalizadas",
-          "default": false
+          "default": false,
+          "description": "Omite datas ISO normalizadas"
         }
       },
       "paramStrategy": "direct"
@@ -4263,34 +4978,40 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "warehouse": {
           "type": "string",
           "optional": true,
-          "label": "Warehouse"
+          "label": "Warehouse",
+          "description": "Filtra por armazém (preferido; equivalente a location)"
         },
         "location": {
           "type": "string",
           "optional": true,
-          "label": "Alias legado de warehouse — preferir warehouse"
+          "label": "Alias legado de warehouse — preferir warehouse",
+          "description": "Alias legado de warehouse — preferir warehouse"
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
           "label": "Omite alias location nos itens de estoque",
-          "default": false
+          "default": false,
+          "description": "Omite alias location nos itens de estoque"
         }
       },
       "paramStrategy": "direct"
@@ -4316,12 +5037,14 @@
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4370,7 +5093,8 @@
           "type": "boolean",
           "optional": true,
           "label": "Devolve SIM/NAO em vez de booleanos",
-          "default": false
+          "default": false,
+          "description": "Devolve SIM/NAO em vez de booleanos"
         }
       },
       "paramStrategy": "direct"
@@ -4405,13 +5129,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4433,7 +5159,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 100
+          "default": 100,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -4503,12 +5230,14 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -4591,13 +5320,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4624,7 +5355,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 20
+          "default": 20,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -4693,13 +5425,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 20
+          "default": 20,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4746,13 +5480,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4796,7 +5532,8 @@
         "limit": {
           "type": "integer",
           "optional": true,
-          "label": "Limite"
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -4835,13 +5572,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4873,13 +5612,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4917,13 +5658,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -4958,13 +5701,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -5080,13 +5825,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 20
+          "default": 20,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -5132,7 +5879,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -5168,19 +5916,28 @@
           "type": "string",
           "optional": true,
           "label": "Granularidade",
-          "default": "month"
+          "default": "month",
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 20
+          "default": 20,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct",
@@ -5201,7 +5958,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "active": {
           "type": "boolean",
@@ -5228,7 +5986,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
@@ -5332,7 +6091,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct",
@@ -5353,7 +6113,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct",
@@ -5379,7 +6140,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct",
@@ -5440,12 +6202,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5496,7 +6269,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
@@ -5527,13 +6301,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -5566,7 +6342,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -5610,7 +6387,8 @@
         "date": {
           "type": "string",
           "optional": false,
-          "label": "Data YYYY-MM-DD"
+          "label": "Data YYYY-MM-DD",
+          "description": "Data YYYY-MM-DD"
         }
       },
       "paramStrategy": "direct",
@@ -5746,7 +6524,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -5800,7 +6579,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 50
+          "default": 50,
+          "description": "Máximo de registros retornados pela API."
         },
         "offset": {
           "type": "integer",
@@ -5838,7 +6618,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 100
+          "default": 100,
+          "description": "Máximo de registros retornados pela API."
         },
         "offset": {
           "type": "integer",
@@ -5904,7 +6685,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct",
@@ -5936,7 +6718,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 8
+          "default": 8,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct",
@@ -6015,7 +6798,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6045,12 +6829,14 @@
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct",
@@ -6078,12 +6864,20 @@
           "type": "string",
           "optional": true,
           "label": "Granularidade",
-          "default": "month"
+          "default": "month",
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6129,7 +6923,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6144,17 +6939,20 @@
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         },
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix"
+          "label": "Product prefix",
+          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
       "paramStrategy": "direct",
@@ -6176,12 +6974,20 @@
           "type": "string",
           "optional": true,
           "label": "Granularidade",
-          "default": "month"
+          "default": "month",
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6196,7 +7002,8 @@
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix"
+          "label": "Product prefix",
+          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
       "paramStrategy": "direct",
@@ -6217,7 +7024,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6232,7 +7040,8 @@
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix"
+          "label": "Product prefix",
+          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         },
         "periodDays": {
           "type": "integer",
@@ -6241,10 +7050,6 @@
         }
       },
       "paramStrategy": "date_range",
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "ppm",
@@ -6253,6 +7058,10 @@
       "description": "Indicador numérico para «Qualidade — PPM externo».",
       "defaultParams": {
         "periodDays": 30
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -6270,7 +7079,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6285,17 +7095,20 @@
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         },
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix"
+          "label": "Product prefix",
+          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
       "paramStrategy": "direct",
@@ -6317,12 +7130,20 @@
           "type": "string",
           "optional": true,
           "label": "Granularidade",
-          "default": "month"
+          "default": "month",
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6337,7 +7158,8 @@
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix"
+          "label": "Product prefix",
+          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
       "paramStrategy": "direct",
@@ -6358,7 +7180,8 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6373,7 +7196,8 @@
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix"
+          "label": "Product prefix",
+          "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         },
         "periodDays": {
           "type": "integer",
@@ -6382,10 +7206,6 @@
         }
       },
       "paramStrategy": "date_range",
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "ppm",
@@ -6394,6 +7214,10 @@
       "description": "Indicador numérico para «Qualidade — PPM interno».",
       "defaultParams": {
         "periodDays": 30
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -6411,12 +7235,14 @@
         "product": {
           "type": "string",
           "optional": false,
-          "label": "Product"
+          "label": "Product",
+          "description": "Código(s) do produto; repetível ou separado por vírgula"
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "date_start": {
           "type": "string",
@@ -6458,19 +7284,22 @@
         "q": {
           "type": "string",
           "optional": true,
-          "label": "Busca em título, categoria e modo de falha"
+          "label": "Busca em título, categoria e modo de falha",
+          "description": "Busca em título, categoria e modo de falha"
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
           "label": "Tamanho da página",
-          "default": 50
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -6491,44 +7320,52 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial Protheus (\"01\" ou \"02\").",
+          "description": "Filial Protheus (\"01\" ou \"02\")."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio"
+          "label": "Datainicio",
+          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
+          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso."
+          "label": "Filtro por recurso.",
+          "description": "Filtro por recurso."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo."
+          "label": "Filtro por centro de custo.",
+          "description": "Filtro por centro de custo."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador."
+          "label": "Filtro por código do operador.",
+          "description": "Filtro por código do operador."
         },
         "orderBy": {
           "type": "string",
           "optional": true,
           "label": "Ordenação do ranking: horas ou custo.",
-          "default": "horas"
+          "default": "horas",
+          "description": "Ordenação do ranking: horas ou custo."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 10
+          "default": 10,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -6549,56 +7386,70 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial Protheus (\"01\" ou \"02\").",
+          "description": "Filial Protheus (\"01\" ou \"02\")."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio"
+          "label": "Datainicio",
+          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
+          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso."
+          "label": "Filtro por recurso.",
+          "description": "Filtro por recurso."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo."
+          "label": "Filtro por centro de custo.",
+          "description": "Filtro por centro de custo."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador."
+          "label": "Filtro por código do operador.",
+          "description": "Filtro por código do operador."
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "pageSize": {
           "type": "integer",
           "optional": true,
           "label": "Registros por página (máximo 100).",
-          "default": 50
+          "default": 50,
+          "description": "Registros por página (máximo 100)."
         },
         "orderBy": {
           "type": "string",
           "optional": true,
           "label": "Ordenação dos detalhes: data, horas ou custo.",
-          "default": "data"
+          "default": "data",
+          "description": "Ordenação dos detalhes: data, horas ou custo."
         },
         "orderDir": {
           "type": "string",
           "optional": true,
           "label": "Direção da ordenação: asc ou desc.",
-          "default": "desc"
+          "default": "desc",
+          "description": "Direção da ordenação: asc ou desc.",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       },
       "paramStrategy": "direct"
@@ -6619,17 +7470,20 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial Protheus (\"01\" ou \"02\").",
+          "description": "Filial Protheus (\"01\" ou \"02\")."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio"
+          "label": "Datainicio",
+          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
+          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
         }
       },
       "paramStrategy": "direct"
@@ -6663,32 +7517,38 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial Protheus (\"01\" ou \"02\").",
+          "description": "Filial Protheus (\"01\" ou \"02\")."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio"
+          "label": "Datainicio",
+          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
+          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso."
+          "label": "Filtro por recurso.",
+          "description": "Filtro por recurso."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo."
+          "label": "Filtro por centro de custo.",
+          "description": "Filtro por centro de custo."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador."
+          "label": "Filtro por código do operador.",
+          "description": "Filtro por código do operador."
         }
       },
       "paramStrategy": "direct"
@@ -6709,44 +7569,52 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial Protheus (\"01\" ou \"02\").",
+          "description": "Filial Protheus (\"01\" ou \"02\")."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio"
+          "label": "Datainicio",
+          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
+          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso."
+          "label": "Filtro por recurso.",
+          "description": "Filtro por recurso."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo."
+          "label": "Filtro por centro de custo.",
+          "description": "Filtro por centro de custo."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador."
+          "label": "Filtro por código do operador.",
+          "description": "Filtro por código do operador."
         },
         "orderBy": {
           "type": "string",
           "optional": true,
           "label": "Ordenação do ranking: horas ou custo.",
-          "default": "horas"
+          "default": "horas",
+          "description": "Ordenação do ranking: horas ou custo."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 10
+          "default": 10,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct"
@@ -6767,32 +7635,38 @@
         "filial": {
           "type": "string",
           "optional": false,
-          "label": "Filial Protheus (\"01\" ou \"02\")."
+          "label": "Filial Protheus (\"01\" ou \"02\").",
+          "description": "Filial Protheus (\"01\" ou \"02\")."
         },
         "dataInicio": {
           "type": "string",
           "optional": true,
-          "label": "Datainicio"
+          "label": "Datainicio",
+          "description": "Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
-          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje.",
+          "description": "Data final (YYYY-MM-DD). Padrão: hoje."
         },
         "recurso": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por recurso."
+          "label": "Filtro por recurso.",
+          "description": "Filtro por recurso."
         },
         "centroCusto": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por centro de custo."
+          "label": "Filtro por centro de custo.",
+          "description": "Filtro por centro de custo."
         },
         "codigoOperador": {
           "type": "string",
           "optional": true,
-          "label": "Filtro por código do operador."
+          "label": "Filtro por código do operador.",
+          "description": "Filtro por código do operador."
         }
       },
       "paramStrategy": "direct"
@@ -6823,12 +7697,14 @@
         "page": {
           "type": "integer",
           "optional": true,
-          "label": "Página"
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
         },
         "page_size": {
           "type": "integer",
           "optional": true,
-          "label": "Tamanho da página"
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -6848,7 +7724,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "from": {
           "type": "string",
@@ -6884,7 +7761,8 @@
         "branch": {
           "type": "string",
           "optional": false,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "active": {
           "type": "boolean",
@@ -6913,12 +7791,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "top_limit": {
           "type": "integer",
@@ -6949,12 +7838,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "location": {
           "type": "string",
@@ -6990,12 +7890,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -7020,12 +7931,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "top_limit": {
           "type": "integer",
@@ -7063,12 +7985,23 @@
           "type": "integer",
           "default": 30,
           "label": "Período (dias)",
-          "optional": true
+          "optional": true,
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
+          "enum": [
+            7,
+            14,
+            30,
+            60,
+            90,
+            180,
+            365
+          ]
         },
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial"
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "location": {
           "type": "string",
@@ -7085,29 +8018,37 @@
           "type": "boolean",
           "optional": true,
           "label": "Summary only",
-          "default": false
+          "default": false,
+          "description": "Quando true, retorna apenas o resumo consolidado (sem breakdown por filial/local/produto)."
         },
         "stock_method": {
           "type": "string",
           "optional": true,
           "label": "Stock method",
-          "default": "auto"
+          "default": "auto",
+          "description": "Método do estoque histórico: auto, hybrid, estimated ou official_closure.",
+          "enum": [
+            "auto",
+            "hybrid",
+            "estimated",
+            "official_closure"
+          ]
         }
       },
       "paramStrategy": "direct",
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
-      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tableFields": "top_products",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_caller_stats_system_caller_stats_get",
@@ -7125,7 +8066,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 25
+          "default": 25,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct",
@@ -7146,19 +8088,22 @@
         "description": {
           "type": "string",
           "optional": false,
-          "label": "Description"
+          "label": "Description",
+          "description": "Texto descritivo da coluna (ex: 'Amarração produto fornecedor')"
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 20
+          "default": 20,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct",
@@ -7180,7 +8125,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 25
+          "default": 25,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct",
@@ -7228,7 +8174,8 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 25
+          "default": 25,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct",
@@ -7289,12 +8236,14 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 25
+          "default": 25,
+          "description": "Máximo de registros retornados pela API."
         },
         "operation_id": {
           "type": "string",
           "optional": true,
-          "label": "Operation id"
+          "label": "Operation id",
+          "description": "Filtra drill-down por operation id; use __none__ para amostras sem id."
         }
       },
       "paramStrategy": "direct",
@@ -7315,19 +8264,22 @@
         "description": {
           "type": "string",
           "optional": false,
-          "label": "Descrição parcial ou completa da tabela"
+          "label": "Descrição parcial ou completa da tabela",
+          "description": "Descrição parcial ou completa da tabela"
         },
         "page": {
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 20
+          "default": 20,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct",
@@ -7362,13 +8314,15 @@
           "type": "integer",
           "optional": true,
           "label": "Página",
-          "default": 1
+          "default": 1,
+          "description": "Número da página na listagem paginada."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "default": 50
+          "default": 50,
+          "description": "Máximo de registros retornados pela API."
         }
       },
       "paramStrategy": "direct",
