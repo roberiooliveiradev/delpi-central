@@ -226,7 +226,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               onChange={(value) => patchPart({ style: { strokeWidth: Number(value) || 0 } })}
             />
           </DeckField>
-          {selectedChartPart.kind === "chartArea" ? (
+          {selectedChartPart.kind === "chartArea" || selectedChartPart.kind === "plotArea" ? (
             <DeckField id="td-chart-part-area-radius" label="Cantos (px)">
               <NativeTextControl
                 id="td-chart-part-area-radius"
@@ -234,7 +234,11 @@ export function ChartPartInspector({ pane = false, block }: Props) {
                 min={0}
                 max={32}
                 step={1}
-                value={chartAreaStyle.borderRadius}
+                value={
+                  selectedChartPart.kind === "chartArea"
+                    ? chartAreaStyle.borderRadius
+                    : plotAreaStyle.borderRadius
+                }
                 onChange={(value) =>
                   patchPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
                 }

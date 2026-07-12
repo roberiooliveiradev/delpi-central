@@ -185,6 +185,9 @@ export function DelpiKpiCard({
   const hintContent = parts.hint?.content?.trim() || hint;
   const resolvedValueColor = parts.value?.style?.color ?? valueColor;
   const resolvedBg = parts.card?.style?.fill ?? backgroundColor;
+  const cardStroke = parts.card?.style?.stroke;
+  const cardStrokeWidth = parts.card?.style?.strokeWidth;
+  const cardRadius = parts.card?.style?.borderRadius;
 
   const cardPtr = bindKpiPartPointer({ kind: "card" }, interaction);
   const titlePtr = bindKpiPartPointer({ kind: "title" }, interaction);
@@ -194,6 +197,10 @@ export function DelpiKpiCard({
 
   const shellStyle: CSSProperties = {
     ...(resolvedBg ? { backgroundColor: resolvedBg } : {}),
+    ...(cardStroke && cardStrokeWidth != null && cardStrokeWidth > 0
+      ? { border: `${cardStrokeWidth}px solid ${cardStroke}` }
+      : {}),
+    ...(cardRadius != null ? { borderRadius: cardRadius, overflow: "hidden" } : {}),
     ...(resolvedValueColor
       ? ({ ["--delpi-kpi-value-color" as string]: resolvedValueColor } as CSSProperties)
       : {}),
@@ -237,6 +244,7 @@ export function DelpiKpiCard({
     >
       <article
         className={articleClass}
+        style={Object.keys(shellStyle).length ? shellStyle : undefined}
         {...{ [KPI_PART_DATA_ATTR]: cardPtr[KPI_PART_DATA_ATTR], "aria-selected": cardPtr["aria-selected"] }}
         onPointerDown={cardPtr.onPointerDown}
         onDoubleClick={cardPtr.onDoubleClick}

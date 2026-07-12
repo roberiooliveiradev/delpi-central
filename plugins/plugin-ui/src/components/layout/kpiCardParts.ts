@@ -20,6 +20,11 @@ export type KpiPartStyle = {
   color?: string;
   fontWeight?: string | number;
   opacity?: number;
+  /** Contorno do card (herda chrome de forma). */
+  stroke?: string;
+  strokeWidth?: number;
+  /** Cantos arredondados do card (px). */
+  borderRadius?: number;
 };
 
 export type KpiPartState = {

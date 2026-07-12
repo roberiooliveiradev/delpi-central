@@ -932,8 +932,11 @@ export function comunicadoTextInnerStyle(
 }
 
 function applySharedBlockVisualStyle(style: NonNullable<ComunicadoBlock["style"]>, css: CSSProperties) {
-  if (style.borderWidth != null && style.borderWidth > 0 && style.borderColor) {
-    css.border = `${style.borderWidth}px solid ${style.borderColor}`;
+  if (style.backgroundColor) css.backgroundColor = style.backgroundColor;
+  if (style.borderWidth != null && style.borderWidth > 0 && (style.borderColor || style.stroke)) {
+    css.border = `${style.borderWidth}px solid ${style.borderColor ?? style.stroke}`;
+  } else if (style.strokeWidth != null && style.strokeWidth > 0 && style.stroke) {
+    css.border = `${style.strokeWidth}px solid ${style.stroke}`;
   }
   if (style.borderRadius != null) css.borderRadius = style.borderRadius;
   if (style.boxShadow) css.boxShadow = style.boxShadow;

@@ -146,14 +146,47 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       ) : null}
 
       {selectedKpiPart.kind === "card" ? (
-        <DeckField id="td-kpi-part-card-fill" label="Fundo do card">
-          <TvRibbonColorPicker
-            inline
-            label="Fundo"
-            value={partState?.style?.fill ?? options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor}
-            onChange={(color) => persistPart({ style: { fill: color } })}
-          />
-        </DeckField>
+        <>
+          <DeckField id="td-kpi-part-card-fill" label="Fundo do card">
+            <TvRibbonColorPicker
+              inline
+              label="Fundo"
+              value={partState?.style?.fill ?? options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor}
+              onChange={(color) => persistPart({ style: { fill: color } })}
+            />
+          </DeckField>
+          <DeckField id="td-kpi-part-card-stroke" label="Contorno">
+            <TvRibbonColorPicker
+              inline
+              label="Contorno"
+              value={partState?.style?.stroke ?? "#b4b4b4"}
+              onChange={(color) => persistPart({ style: { stroke: color } })}
+            />
+          </DeckField>
+          <DeckField id="td-kpi-part-card-stroke-width" label="Espessura">
+            <NativeTextControl
+              id="td-kpi-part-card-stroke-width"
+              type="number"
+              min={0}
+              max={12}
+              step={0.5}
+              value={partState?.style?.strokeWidth ?? 1}
+              onChange={(value) => persistPart({ style: { strokeWidth: Number(value) || 0 } })}
+            />
+          </DeckField>
+          <DeckField id="td-kpi-part-card-radius" label="Cantos (px)">
+            <NativeTextControl
+              id="td-kpi-part-card-radius"
+              type="number"
+              min={0}
+              max={64}
+              value={partState?.style?.borderRadius ?? 0}
+              onChange={(value) =>
+                persistPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
+              }
+            />
+          </DeckField>
+        </>
       ) : null}
 
       {selectedKpiPart.kind === "value" ? (

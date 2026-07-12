@@ -35,6 +35,8 @@ export function ChartPlotArea({
       fill={style.fill}
       stroke={style.stroke}
       strokeWidth={style.strokeWidth}
+      rx={style.borderRadius}
+      ry={style.borderRadius}
       vectorEffect="non-scaling-stroke"
       className={[cn.plotArea, showAxes ? cn.plotAreaAxes : "", selected ? `${cn.root}__part--selected` : ""]
         .filter(Boolean)

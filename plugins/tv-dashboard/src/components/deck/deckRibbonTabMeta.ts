@@ -70,11 +70,15 @@ export function resolveDeckRibbonTabs(
     shapeSelected?: boolean;
     /** Parte de gráfico com primitivo point/line/area (duplo clique). */
     chartPartPrimitiveSelected?: boolean;
+    /** KPI / tabela / gráfico usam chrome de forma (preenchimento, contorno, cantos). */
+    shapeChromeSelected?: boolean;
   },
 ): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
   const shapeSelected =
-    Boolean(options?.shapeSelected) || Boolean(options?.chartPartPrimitiveSelected);
+    Boolean(options?.shapeSelected) ||
+    Boolean(options?.chartPartPrimitiveSelected) ||
+    Boolean(options?.shapeChromeSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (tab.customOnly && !isCustomSlide) return false;
     if (tab.chartOnly && !chartSelected) return false;
@@ -88,10 +92,13 @@ export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   chartSelected?: boolean;
   shapeSelected?: boolean;
   chartPartPrimitiveSelected?: boolean;
+  shapeChromeSelected?: boolean;
 }): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
   const shapeSelected =
-    Boolean(options?.shapeSelected) || Boolean(options?.chartPartPrimitiveSelected);
+    Boolean(options?.shapeSelected) ||
+    Boolean(options?.chartPartPrimitiveSelected) ||
+    Boolean(options?.shapeChromeSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (!tab.customOnly) return false;
     if (tab.chartOnly && !chartSelected) return false;

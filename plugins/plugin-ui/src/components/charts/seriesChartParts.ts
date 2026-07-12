@@ -849,11 +849,13 @@ export function resolvePlotAreaStyle(parts?: ChartPartsMap | null): {
   fill: string;
   stroke: string;
   strokeWidth: number;
+  borderRadius: number;
 } {
   const area = getChartPartState(parts, { kind: "plotArea" });
   return {
     fill: area?.style?.fill ?? OFFICE_CHART_PLOT_FILL,
     stroke: area?.style?.stroke ?? OFFICE_CHART_PLOT_STROKE,
     strokeWidth: area?.style?.strokeWidth ?? 0,
+    borderRadius: area?.style?.borderRadius ?? 0,
   };
 }

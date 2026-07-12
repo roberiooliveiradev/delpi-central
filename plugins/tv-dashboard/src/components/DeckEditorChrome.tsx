@@ -85,6 +85,10 @@ export function DeckEditorChrome({
   const editor = useOptionalComunicadoEditor();
   const chartSelected = editor?.selected?.type === "chart_view";
   const shapeSelected = editor?.selected?.type === "shape";
+  const shapeChromeSelected =
+    editor?.selected?.type === "kpi_view" ||
+    editor?.selected?.type === "table_view" ||
+    chartSelected;
   const chartPartPrimitiveSelected = Boolean(
     chartSelected &&
       editor?.selectedChartPart &&
@@ -96,6 +100,7 @@ export function DeckEditorChrome({
     chartSelected,
     shapeSelected,
     chartPartPrimitiveSelected,
+    shapeChromeSelected,
   });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
 
@@ -128,14 +133,17 @@ export function DeckEditorChrome({
   useEffect(() => {
     if (chartPartPrimitiveSelected && isCustomSlide) {
       setActiveTab("shape");
-    } else if (chartSelected && isCustomSlide) {
-      setActiveTab("chart");
     } else if (shapeSelected && isCustomSlide) {
       setActiveTab("shape");
+    } else if (shapeChromeSelected && isCustomSlide && !chartSelected) {
+      setActiveTab("shape");
+    } else if (chartSelected && isCustomSlide) {
+      setActiveTab("chart");
     }
   }, [
     chartSelected,
     shapeSelected,
+    shapeChromeSelected,
     chartPartPrimitiveSelected,
     isCustomSlide,
     editor?.selectedId,

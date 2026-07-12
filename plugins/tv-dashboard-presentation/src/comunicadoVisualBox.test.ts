@@ -60,6 +60,14 @@ describe("comunicadoVisualBox", () => {
     );
   });
 
+  it("propaga borderRadius no chrome da forma (cantos arredondados)", () => {
+    const block = {
+      ...createShapeBlock("rectangle"),
+      style: { ...createShapeBlock("rectangle").style, borderRadius: 12 },
+    };
+    expect(resolveVisualBoxChrome(block).borderRadius).toBe(12);
+  });
+
   it("texto usa flex coluna; forma com texto usa overlay absoluto", () => {
     const text = createBlock("heading", "A");
     const shape = { ...createShapeBlock("rectangle"), content: "Dentro" };

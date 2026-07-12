@@ -500,7 +500,7 @@ function renderSvgShape(
           y="12"
           width="84"
           height="76"
-          rx={kind === "rectangle" ? 0 : borderRadius ?? 14}
+          rx={borderRadius ?? (kind === "rectangle" ? 0 : 14)}
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
@@ -574,8 +574,8 @@ export function ComunicadoShapeGraphic({
       borderRadius:
         kind === "ellipse"
           ? "50%"
-          : kind === "rounded-rect" || kind === "flowchart-process"
-            ? borderRadius ?? 16
+          : kind === "rectangle" || kind === "rounded-rect" || kind === "flowchart-process"
+            ? borderRadius ?? (kind === "rectangle" ? 0 : 16)
             : 0,
     };
     return <div className="tdp-comunicado__shape-fill" style={shapeStyle} />;

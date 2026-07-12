@@ -20,6 +20,8 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const { selected, selectedChartPart } = useComunicadoEditor();
   const chartSelected = selected?.type === "chart_view";
   const shapeSelected = selected?.type === "shape";
+  const shapeChromeSelected =
+    selected?.type === "kpi_view" || selected?.type === "table_view" || chartSelected;
   const chartPartPrimitiveSelected = Boolean(
     chartSelected &&
       selectedChartPart &&
@@ -29,6 +31,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     chartSelected,
     shapeSelected,
     chartPartPrimitiveSelected,
+    shapeChromeSelected,
   });
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");
 

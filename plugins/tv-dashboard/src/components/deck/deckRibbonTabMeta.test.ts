@@ -6,11 +6,9 @@ import {
 } from "./deckRibbonTabMeta";
 
 describe("deckRibbonTabMeta (Onda 4K/4L)", () => {
-  it("mostra aba Forma só com shape selecionada", () => {
-    const without = resolveDeckRibbonTabs(true, { shapeSelected: false });
-    const withShape = resolveDeckRibbonTabs(true, { shapeSelected: true });
-    expect(without.some((tab) => tab.id === "shape")).toBe(false);
-    expect(withShape.some((tab) => tab.id === "shape")).toBe(true);
+  it("mostra aba Forma para KPI/tabela/gráfico (chrome de forma)", () => {
+    const tabs = resolveDeckRibbonTabs(true, { shapeChromeSelected: true });
+    expect(tabs.some((tab) => tab.id === "shape")).toBe(true);
   });
 
   it("mostra aba Forma com parte geométrica de gráfico", () => {
