@@ -357,6 +357,28 @@
   z-index: 35;
 }
 
+.dashboard-tv-dashboard .td-preview-page__status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #05070a;
+  z-index: 31;
+}
+
+/* Editor permanece montado sob a prévia — sem remount/loading ao Voltar. */
+.dashboard-tv-dashboard .td-deck-editor-host--under-preview {
+  visibility: hidden;
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
 .dashboard-tv-dashboard .td-external-preview-box {
   height: 220px;
   border: 1px solid var(--td-border);

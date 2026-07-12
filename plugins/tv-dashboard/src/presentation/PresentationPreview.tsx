@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   usePresentationEngine,
   useFullscreenStage,
@@ -22,6 +22,7 @@ type Props = {
 
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {
   const { ref, toggleFullscreen } = useFullscreenStage();
+  const [booting, setBooting] = useState(true);
   const wsUrl = useMemo(() => {
     if (!playlistId) return null;
     const token = getAccessToken();
@@ -45,6 +46,19 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     realtimeWsUrl: wsUrl,
   });
 
+  // Primeiro paint: sem fade/entrada — evita flash ao abrir a prévia.
+  useEffect(() => {
+    setBooting(true);
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => setBooting(false));
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
+    };
+  }, [playlistId, initial.playlist?.id]);
+
   if (!slides.length) {
     return (
       <div className="tdp-stage" data-viewport={viewport}>
@@ -56,7 +70,13 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   return (
     <div
       ref={ref}
-      className="tdp-stage tdp-stage--preview-shell"
+      className={[
+        "tdp-stage",
+        "tdp-stage--preview-shell",
+        booting ? "tdp-stage--boot" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-viewport={viewport}
       onDoubleClick={() => void toggleFullscreen()}
     >

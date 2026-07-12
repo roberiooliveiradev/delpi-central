@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { ConfirmDialogProvider } from "./context/ConfirmDialogProvider";
@@ -22,6 +22,20 @@ export type AppProps = {
   pathname?: string;
 };
 
+/**
+ * Mantém o editor montado sob a prévia da mesma playlist para não piscar
+ * «Carregando programação…» nem refetch ao Voltar.
+ */
+export function shouldKeepEditorUnderPreview(
+  view: string,
+  playlistId: string | undefined,
+  editorSessionPlaylistId: string | null,
+): boolean {
+  if (view === "edit" && playlistId) return true;
+  if (view === "preview" && playlistId && editorSessionPlaylistId === playlistId) return true;
+  return false;
+}
+
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
 
@@ -29,8 +43,25 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   const path = normalizeTvDashboardPath(pathname);
   const route = useMemo(() => parseTvDashboardRoute(path), [path]);
 
+  const editorSessionPlaylistIdRef = useRef<string | null>(null);
+  if (route.view === "edit") {
+    editorSessionPlaylistIdRef.current = route.id;
+  } else if (route.view !== "preview") {
+    editorSessionPlaylistIdRef.current = null;
+  }
+
   const isFullscreenView = route.view === "preview";
   const isDeckEditor = route.view === "edit";
+  const playlistId =
+    route.view === "edit" || route.view === "preview" || route.view === "share"
+      ? route.id
+      : undefined;
+  const keepEditor = shouldKeepEditorUnderPreview(
+    route.view,
+    playlistId,
+    editorSessionPlaylistIdRef.current,
+  );
+  const deckChrome = isDeckEditor || (isFullscreenView && keepEditor);
 
   function navigate(next: string) {
     if (typeof window === "undefined") return;
@@ -54,13 +85,6 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
             onCreated={(id) => navigate(playlistPath(id))}
           />
         );
-      case "preview":
-        return (
-          <PlaylistPreviewPage
-            playlistId={route.id}
-            onBack={() => navigate(playlistPath(route.id))}
-          />
-        );
       case "share":
         return (
           <PlaylistSharePage
@@ -69,13 +93,33 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
           />
         );
       case "edit":
+      case "preview":
         return (
-          <PlaylistEditorPage
-            playlistId={route.id}
-            onBack={() => navigate("/apps/tv-dashboard")}
-            onPreview={() => navigate(playlistPreviewPath(route.id))}
-            onShare={() => navigate(playlistSharePath(route.id))}
-          />
+          <>
+            {keepEditor && playlistId ? (
+              <div
+                className={
+                  route.view === "preview"
+                    ? "td-deck-editor-host td-deck-editor-host--under-preview"
+                    : "td-deck-editor-host"
+                }
+                aria-hidden={route.view === "preview"}
+              >
+                <PlaylistEditorPage
+                  playlistId={playlistId}
+                  onBack={() => navigate("/apps/tv-dashboard")}
+                  onPreview={() => navigate(playlistPreviewPath(playlistId))}
+                  onShare={() => navigate(playlistSharePath(playlistId))}
+                />
+              </div>
+            ) : null}
+            {route.view === "preview" ? (
+              <PlaylistPreviewPage
+                playlistId={route.id}
+                onBack={() => navigate(playlistPath(route.id))}
+              />
+            ) : null}
+          </>
         );
       default:
         return null;
@@ -89,12 +133,12 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
           "dashboard-tv-dashboard",
           "dashboard-page",
           isFullscreenView ? "td-app-shell--preview" : null,
-          isDeckEditor ? "dashboard-page--deck-edit" : null,
+          deckChrome ? "dashboard-page--deck-edit" : null,
         ]
           .filter(Boolean)
           .join(" ")}
       >
-        <div className={`td-app-shell${isDeckEditor ? " td-app-shell--deck" : ""}`}>
+        <div className={`td-app-shell${deckChrome ? " td-app-shell--deck" : ""}`}>
           {!isFullscreenView && !isDeckEditor ? (
             <header className="td-hero">
               <p className="td-eyebrow">Operações · Displays</p>
@@ -104,7 +148,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
               </p>
             </header>
           ) : null}
-          <div className={isDeckEditor ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
+          <div className={deckChrome ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
             {renderBody()}
           </div>
         </div>

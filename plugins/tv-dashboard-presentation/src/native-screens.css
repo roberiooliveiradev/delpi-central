@@ -42,6 +42,23 @@
   animation: tdp-fade-in 0.8s ease;
 }
 
+/* Admin preview: primeiro paint sem fade/entrada (evita flash ao abrir). */
+.tdp-stage--boot .tdp-slide--fade.tdp-slide--active {
+  animation: none;
+  opacity: 1;
+}
+
+.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-fade,
+.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in,
+.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-up,
+.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-down,
+.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-left,
+.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-right {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 @keyframes tdp-fade-in {
   from {
     opacity: 0;

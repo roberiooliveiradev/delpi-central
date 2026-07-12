@@ -10,35 +10,45 @@ type Props = {
   onBack: () => void;
 };
 
+/** Cache de sessão: reabrir prévia não mostra tela vazia «Carregando…». */
+const previewPayloadCache = new Map<string, PresentationPayload>();
+
+export function peekPreviewPayloadCache(playlistId: string): PresentationPayload | null {
+  return previewPayloadCache.get(playlistId) ?? null;
+}
+
+export function rememberPreviewPayloadCache(playlistId: string, payload: PresentationPayload): void {
+  previewPayloadCache.set(playlistId, payload);
+}
+
+export function clearPreviewPayloadCache(playlistId?: string): void {
+  if (playlistId) previewPayloadCache.delete(playlistId);
+  else previewPayloadCache.clear();
+}
+
 export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
-  const [payload, setPayload] = useState<PresentationPayload | null>(null);
+  const [payload, setPayload] = useState<PresentationPayload | null>(
+    () => peekPreviewPayloadCache(playlistId),
+  );
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      setPayload(await getPreviewPayload(playlistId));
+      const next = await getPreviewPayload(playlistId);
+      rememberPreviewPayloadCache(playlistId, next);
+      setPayload(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar preview.");
     }
   }, [playlistId]);
 
   useEffect(() => {
+    // Troca de playlist: usa cache da nova id (sem apagar a tela se já houver).
+    setPayload(peekPreviewPayloadCache(playlistId));
+    setError(null);
     void load();
-  }, [load]);
-
-  if (error) {
-    return (
-      <div className="td-state">
-        {error}
-        <button type="button" className="td-btn" onClick={onBack}>
-          Voltar
-        </button>
-      </div>
-    );
-  }
-
-  if (!payload) return <div className="td-state">Carregando preview…</div>;
+  }, [playlistId, load]);
 
   return (
     <div className="td-preview-page">
@@ -46,11 +56,27 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
         <ArrowLeft size={16} />
         Voltar ao editor
       </button>
-      <PresentationPreview
-        payload={payload}
-        playlistId={playlistId}
-        onRefresh={() => getPreviewPayload(playlistId)}
-      />
+      {error ? (
+        <div className="td-state td-preview-page__status">
+          {error}
+          <button type="button" className="td-btn" onClick={onBack}>
+            Voltar
+          </button>
+        </div>
+      ) : null}
+      {!payload && !error ? (
+        <div className="td-state td-preview-page__status" role="status">
+          Carregando preview…
+        </div>
+      ) : null}
+      {payload ? (
+        <PresentationPreview
+          key={playlistId}
+          payload={payload}
+          playlistId={playlistId}
+          onRefresh={() => getPreviewPayload(playlistId)}
+        />
+      ) : null}
     </div>
   );
 }
