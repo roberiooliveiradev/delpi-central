@@ -23,6 +23,10 @@ type Props = {
 };
 
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {
+  const presenterMode = useMemo(
+    () => new URLSearchParams(window.location.search).get("presenter") === "1",
+    [],
+  );
   const { ref, toggleFullscreen } = useFullscreenStage();
   const [booting, setBooting] = useState(true);
   const { visible: chromeVisible } = usePresentationChromeVisibility();
@@ -71,12 +75,19 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     );
   }
 
+  const currentSlide = slides[index];
+  const notesSource = currentSlide?.native?.config ?? currentSlide?.native?.data;
+  const speakerNotes =
+    notesSource && typeof notesSource.speakerNotes === "string" ? notesSource.speakerNotes : "";
+  const nextSlide = slides.length > 1 ? slides[(index + 1) % slides.length] : undefined;
+
   return (
     <div
       ref={ref}
       className={[
         "tdp-stage",
         "tdp-stage--preview-shell",
+        presenterMode ? "tdp-stage--presenter" : null,
         booting ? "tdp-stage--boot" : null,
       ]
         .filter(Boolean)
@@ -127,6 +138,18 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
         onPrevious={goPrevious}
         onNext={goNext}
       />
+      {presenterMode ? (
+        <aside className="tdp-presenter-panel" aria-label="Notas do apresentador">
+          <h2>Notas do apresentador</h2>
+          <div className="tdp-presenter-panel__notes">
+            {speakerNotes || "Sem notas para esta tela."}
+          </div>
+          <div className="tdp-presenter-panel__next">
+            <span>Próxima tela</span>
+            <strong>{nextSlide?.title ?? "—"}</strong>
+          </div>
+        </aside>
+      ) : null}
     </div>
   );
 }

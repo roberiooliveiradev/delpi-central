@@ -70,7 +70,7 @@ def list_media(request: Request, playlist_id: UUID, media_kind: str | None = Non
     if not _ensure_playlist(playlist_id):
         return fail(message("playlistNotFound"), 404)
     kind = media_kind.strip() if isinstance(media_kind, str) and media_kind.strip() else None
-    if kind and kind not in {"image", "video"}:
+    if kind and kind not in {"image", "video", "font"}:
         return fail(message("mediaKindInvalid", "Tipo de mídia inválido."), 422)
     items = _media_repo.list_for_playlist(playlist_id, media_kind=kind)
     return ok({"items": items})

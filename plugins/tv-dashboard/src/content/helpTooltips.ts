@@ -15,8 +15,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     background:
       "Define a cor ou imagem de fundo do slide personalizado. A imagem cobre toda a área do palco.",
     font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
-    textEffects: "Sombra tipográfica e contorno do glifo (como efeitos de texto no PowerPoint).",
+    textEffects: "Sombra, contorno e reflexo tipográfico (como efeitos de texto no PowerPoint).",
     textStroke: "Cor e espessura do contorno ao redor das letras.",
+    textReflection: "Espelha o texto abaixo do bloco (melhor suporte em Chromium/TV).",
     paragraph:
       "Alinhamento horizontal e vertical, justificação, entrelinhas e espaçamento entre caracteres.",
     shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
@@ -48,6 +49,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     alignMiddle: "Centraliza o texto verticalmente na caixa.",
     alignBottom: "Alinha o texto à base da caixa.",
     fontFamily: "Família tipográfica do bloco de texto.",
+    uploadFont: "Envia uma fonte WOFF2, TTF ou OTF para esta playlist.",
     fontSizeDown: "Diminuir tamanho da fonte.",
     fontSizeUp: "Aumentar tamanho da fonte.",
     fontSize: "Escolha um tamanho da lista ou digite o valor em pixels (12–120).",

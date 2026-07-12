@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { buildPublicPresentationWsUrl } from "./usePresentationRealtime";
+import {
+  buildPublicPresentationWsUrl,
+  parsePresentationRealtimeEvent,
+} from "./usePresentationRealtime";
 
 describe("usePresentationRealtime urls", () => {
   it("monta URL pública com token", () => {
@@ -11,5 +14,32 @@ describe("usePresentationRealtime urls", () => {
       "wss://portal.exemplo.com/apps/tv-dashboard-api/public/present/abc%20123/ws",
     );
     vi.unstubAllGlobals();
+  });
+});
+
+describe("parsePresentationRealtimeEvent", () => {
+  it("normaliza atualização de presença", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "presence_update",
+        playlistId: "playlist-1",
+        peers: [
+          { clientId: "1", displayName: "Ana", role: "editor" },
+          { clientId: "2", displayName: "TV", role: "viewer" },
+          { clientId: "inválido", displayName: "X", role: "admin" },
+        ],
+      }),
+    ).toEqual({
+      type: "presence_update",
+      playlistId: "playlist-1",
+      peers: [
+        { clientId: "1", displayName: "Ana", role: "editor" },
+        { clientId: "2", displayName: "TV", role: "viewer" },
+      ],
+    });
+  });
+
+  it("rejeita frame sem tipo", () => {
+    expect(parsePresentationRealtimeEvent({ peers: [] })).toBeNull();
   });
 });

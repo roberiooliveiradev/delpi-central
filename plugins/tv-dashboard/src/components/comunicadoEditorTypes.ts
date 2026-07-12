@@ -1,4 +1,9 @@
-export type MediaLibraryTarget = "block" | "background" | "insert-image" | "insert-video";
+export type MediaLibraryTarget =
+  | "block"
+  | "background"
+  | "insert-image"
+  | "insert-video"
+  | "custom-font";
 
 export type ComunicadoEditorKeyboardActions = {
   selectedIds: string[];

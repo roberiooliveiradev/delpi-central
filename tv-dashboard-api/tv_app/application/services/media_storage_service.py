@@ -27,6 +27,8 @@ class MediaStorageService:
     def _max_bytes(self, media_kind: str) -> int:
         if media_kind == "video":
             return media_setting_int("maxVideoBytes", 100 * 1024 * 1024)
+        if media_kind == "font":
+            return media_setting_int("maxFontBytes", 5 * 1024 * 1024)
         return media_setting_int("maxImageBytes", 10 * 1024 * 1024)
 
     def detect_kind(self, mime_type: str | None) -> str | None:
@@ -35,13 +37,15 @@ class MediaStorageService:
             return "image"
         if normalized in self._mime_map("video"):
             return "video"
+        if normalized in self._mime_map("font"):
+            return "font"
         return None
 
     def validate(self, *, content: bytes, mime_type: str | None) -> tuple[str, str]:
         kind = self.detect_kind(mime_type)
         if not kind:
             raise MediaValidationError(
-                "Formato não suportado. Envie JPG, PNG, WEBP, GIF, MP4 ou WEBM."
+                "Formato não suportado. Envie JPG, PNG, WEBP, GIF, MP4, WEBM, WOFF2, TTF ou OTF."
             )
         if not content:
             raise MediaValidationError("Arquivo vazio.")

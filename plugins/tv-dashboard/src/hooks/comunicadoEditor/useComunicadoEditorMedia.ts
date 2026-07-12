@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, type MutableRefObject, type RefObject } 
 
 import {
   createBlock,
+  ensureComunicadoCustomFontsLoaded,
   type ComunicadoBlock,
   type ComunicadoConfig,
 } from "@delpi/tv-dashboard-presentation";
@@ -18,6 +19,11 @@ type Options = {
   updateBlocks: (nextBlocks: ComunicadoBlock[]) => void;
   setSelectedId: (id: string | null) => void;
 };
+
+function fontFamilyFromFilename(filename: string | null | undefined): string {
+  const name = (filename ?? "Fonte personalizada").replace(/\.(woff2?|ttf|otf)$/i, "").trim();
+  return name || "Fonte personalizada";
+}
 
 /**
  * Upload de mídia + biblioteca (estado + handlers para o Provider renderizar input/modal).
@@ -42,6 +48,20 @@ export function useComunicadoEditorMedia({
     (asset: MediaAsset, target?: MediaLibraryTarget) => {
       const resolvedTarget = target ?? mediaLibraryTargetRef.current;
       const url = adminMediaUrl(playlistId, asset.id);
+
+      if (resolvedTarget === "custom-font" || asset.mediaKind === "font") {
+        const familyName = fontFamilyFromFilename(asset.originalName ?? asset.storedName);
+        const customFont = { assetId: asset.id, familyName, url };
+        const current = configRef.current.customFonts ?? [];
+        const nextFonts = [...current.filter((font) => font.assetId !== asset.id), customFont];
+        ensureComunicadoCustomFontsLoaded(
+          nextFonts.flatMap((font) =>
+            font.url ? [{ familyName: font.familyName, url: font.url }] : [],
+          ),
+        );
+        commitWithHistory({ ...configRef.current, customFonts: nextFonts });
+        return;
+      }
 
       if (resolvedTarget === "background") {
         commitWithHistory({
@@ -102,6 +122,19 @@ export function useComunicadoEditorMedia({
     [applyMediaAsset, playlistId],
   );
 
+  const uploadCustomFont = useCallback(
+    async (file: File) => {
+      setUploading(true);
+      try {
+        const asset = await uploadPlaylistMedia(playlistId, file);
+        applyMediaAsset(asset, "custom-font");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [applyMediaAsset, playlistId],
+  );
+
   const openMediaLibrary = useCallback((target: MediaLibraryTarget) => {
     mediaLibraryTargetRef.current = target;
     setMediaLibraryTarget(target);
@@ -128,5 +161,6 @@ export function useComunicadoEditorMedia({
     applyMediaAsset,
     triggerUpload,
     handleUploadFile,
+    uploadCustomFont,
   };
 }

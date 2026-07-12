@@ -259,6 +259,15 @@ function buildComunicadoPreviewData(
     background: resolvedBackground,
     blocks,
     ...(cfg.dataFilters ? { dataFilters: cfg.dataFilters } : {}),
+    ...(cfg.speakerNotes ? { speakerNotes: cfg.speakerNotes } : {}),
+    ...(cfg.customFonts
+      ? {
+          customFonts: cfg.customFonts.map((font) => ({
+            ...font,
+            url: adminMediaUrl(playlistId, font.assetId),
+          })),
+        }
+      : {}),
     ...(master ? { master } : {}),
   };
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, Database, Gauge, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
+import { BarChart3, Database, Gauge, Grid3X3, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
 import {
   AnchoredPanelPortal,
   ChartTypeCatalogPanel,
@@ -37,6 +37,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     addShape,
     addIconBlock,
     addChartViewBlock,
+    addCanvasTableBlock,
     addTableViewBlock,
     addKpiViewBlock,
     openDataCatalog,
@@ -197,6 +198,12 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               </AnchoredPanelPortal>
             ) : null}
           </div>
+          <DeckRibbonTile
+            icon={Grid3X3}
+            label="Grade"
+            hint="Inserir Tabela (canvas), estática e editável."
+            onClick={() => addCanvasTableBlock()}
+          />
         </div>
       </DeckRibbonGroup>
 

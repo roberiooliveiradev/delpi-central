@@ -1,6 +1,6 @@
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image as ImageIcon, Upload, Video, X } from "lucide-react";
+import { Image as ImageIcon, Type, Upload, Video, X } from "lucide-react";
 
 import {
   adminMediaUrl,
@@ -30,6 +30,14 @@ function formatBytes(bytes: number): string {
 function MediaLibraryThumbnail({ asset, playlistId }: { asset: MediaAsset; playlistId: string }) {
   const url = adminMediaUrl(playlistId, asset.id);
   const { src, loading, error } = useAuthenticatedBlobUrl(url);
+
+  if (asset.mediaKind === "font") {
+    return (
+      <div className="td-media-library__thumb td-media-library__thumb--font">
+        <Type size={28} aria-hidden />
+      </div>
+    );
+  }
 
   if (asset.mediaKind === "video") {
     return (
@@ -62,9 +70,10 @@ function MediaLibraryThumbnail({ asset, playlistId }: { asset: MediaAsset; playl
   );
 }
 
-function targetMediaKind(target: MediaLibraryTarget): "image" | "video" | undefined {
+function targetMediaKind(target: MediaLibraryTarget): "image" | "video" | "font" | undefined {
   if (target === "insert-image" || target === "background") return "image";
   if (target === "insert-video") return "video";
+  if (target === "custom-font") return "font";
   return undefined;
 }
 
@@ -72,6 +81,7 @@ function targetTitle(target: MediaLibraryTarget): string {
   if (target === "background") return "Biblioteca — fundo do slide";
   if (target === "insert-image") return "Biblioteca — inserir imagem";
   if (target === "insert-video") return "Biblioteca — inserir vídeo";
+  if (target === "custom-font") return "Biblioteca — fontes personalizadas";
   return "Biblioteca de mídia";
 }
 
@@ -171,9 +181,11 @@ export function MediaLibraryModal({
               accept={
                 kindFilter === "video"
                   ? "video/mp4,video/webm"
+                  : kindFilter === "font"
+                    ? ".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
                   : kindFilter === "image"
                     ? "image/jpeg,image/png,image/webp,image/gif"
-                    : "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                    : "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,.woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
               }
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -203,7 +215,12 @@ export function MediaLibraryModal({
                     {asset.originalName ?? asset.storedName}
                   </span>
                   <span className="td-media-library__meta">
-                    {asset.mediaKind === "video" ? "Vídeo" : "Imagem"} · {formatBytes(asset.fileSizeBytes)}
+                    {asset.mediaKind === "video"
+                      ? "Vídeo"
+                      : asset.mediaKind === "font"
+                        ? "Fonte"
+                        : "Imagem"}{" "}
+                    · {formatBytes(asset.fileSizeBytes)}
                   </span>
                 </button>
               </li>

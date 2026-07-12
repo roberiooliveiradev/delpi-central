@@ -122,6 +122,7 @@ export type ComunicadoEditorContextValue = {
   addDataBlock: (block: ComunicadoBlock) => void;
   addDataSourceBlock: (block: ComunicadoBlock) => void;
   addChartViewBlock: (chartType: ComunicadoChartType) => void;
+  addCanvasTableBlock: (rows?: number, cols?: number) => void;
   addTableViewBlock: (rows: number, cols: number, preset: ComunicadoTablePreset) => void;
   addKpiViewBlock: () => void;
   openDataPanel: () => void;
@@ -143,6 +144,7 @@ export type ComunicadoEditorContextValue = {
   /** Liga os dois blocos selecionados com uma seta (MVP conector). */
   connectSelected: () => void;
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
+  setSpeakerNotes: (notes: string) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
   updateBlockContent: (blockId: string, content: string) => void;
@@ -166,6 +168,7 @@ export type ComunicadoEditorContextValue = {
     textShadow?: string;
     textStrokeColor?: string;
     textStrokeWidth?: number;
+    textReflection?: boolean;
   }) => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
@@ -220,6 +223,7 @@ export type ComunicadoEditorContextValue = {
   setSnapEnabled: (enabled: boolean) => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
   handleUploadFile: (file: File, target: "block" | "background") => void;
+  uploadCustomFont: (file: File) => Promise<void>;
   dataPreviewLoading: boolean;
   dataPreviewError: string | null;
   globalRefreshSec: number;

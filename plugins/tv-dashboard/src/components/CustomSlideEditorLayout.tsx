@@ -32,7 +32,7 @@ export function CustomSlideEditorLayout({
   chromeProps,
   adminLabels,
 }: Props) {
-  const { config, blocks, appliedSlideId, dataPreviewError } = useComunicadoEditor();
+  const { config, blocks, appliedSlideId, dataPreviewError, setSpeakerNotes } = useComunicadoEditor();
   /** Cache de print do filmstrip (com `resolved`) — sobrevive à troca de slide. */
   const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
 
@@ -75,7 +75,20 @@ export function CustomSlideEditorLayout({
         {...workspaceProps}
         slides={slidesForFilmstrip}
         selectedSlideId={selectedSlide.id}
-        rightPanel={<DeckElementSidePanel labels={adminLabels} branchScope={chromeProps.branchScope} />}
+        rightPanel={
+          <div className="td-deck-right-stack">
+            <DeckElementSidePanel labels={adminLabels} branchScope={chromeProps.branchScope} />
+            <label className="td-deck-speaker-notes">
+              <span>Notas do apresentador</span>
+              <textarea
+                rows={5}
+                value={config.speakerNotes ?? ""}
+                placeholder="Anotações visíveis apenas no modo apresentador."
+                onChange={(event) => setSpeakerNotes(event.target.value)}
+              />
+            </label>
+          </div>
+        }
         stage={
           <div className="td-deck-stage__editor">
             <ComunicadoComposerCanvas />

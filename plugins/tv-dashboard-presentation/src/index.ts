@@ -10,9 +10,14 @@ export {
   buildAdminPresentationWsUrl,
   buildPresentationWsUrl,
   buildPublicPresentationWsUrl,
+  parsePresentationRealtimeEvent,
   usePresentationRealtime,
 } from "./usePresentationRealtime";
-export type { PresentationRealtimeEvent } from "./usePresentationRealtime";
+export type {
+  PresentationPresencePeer,
+  PresentationPresenceRole,
+  PresentationRealtimeEvent,
+} from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
 export { DesignViewportStage } from "./DesignViewportStage";
@@ -42,7 +47,9 @@ export type {
   ComunicadoBlockAnimationEasing,
   ComunicadoBlockAnimationKind,
   ComunicadoBlockStyle,
+  ComunicadoCanvasTableBlock,
   ComunicadoConfig,
+  ComunicadoCustomFontRef,
   ComunicadoContentRun,
   ComunicadoContentRunStyle,
   ComunicadoDataBinding,
@@ -163,12 +170,20 @@ export {
   buildGoogleFontsStylesheetUrl,
   collectFontFamiliesFromComunicadoConfig,
   comunicadoFontFamilyOptions,
+  listComunicadoFontFamilyOptions,
   ensureComunicadoGoogleFontsLoaded,
   resolveGoogleFontEntry,
   useComunicadoGoogleFonts,
   type ComunicadoFontFamilyOption,
   type ComunicadoGoogleFontEntry,
 } from "./comunicadoGoogleFonts";
+export {
+  buildCustomFontFamilyCss,
+  comunicadoCustomFontFamilyOptions,
+  ensureComunicadoCustomFontsLoaded,
+  useComunicadoCustomFonts,
+  type ComunicadoLoadedCustomFont,
+} from "./comunicadoCustomFonts";
 export { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 export {
   blockTypeForDisplayMode,
@@ -197,6 +212,7 @@ export {
   createDataBlock,
   createDataSourceBlock,
   createChartViewBlock,
+  createCanvasTableBlock,
   createTableViewBlock,
   createKpiViewBlock,
   createIconBlock,
@@ -224,8 +240,14 @@ export {
   newBlockId,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
+  normalizeCanvasTableCells,
+  CANVAS_TABLE_MIN_ROWS,
+  CANVAS_TABLE_MAX_ROWS,
+  CANVAS_TABLE_MIN_COLS,
+  CANVAS_TABLE_MAX_COLS,
 } from "./comunicadoHelpers";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
+export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
 export { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
 export {
   type ComunicadoVisualBoxBlock,

@@ -4,6 +4,7 @@ import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 import { ComunicadoBlockView } from "./comunicadoBlockView";
 import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 import { useComunicadoGoogleFonts } from "./comunicadoGoogleFonts";
+import { useComunicadoCustomFonts } from "./comunicadoCustomFonts";
 import { hasRichComunicado, sortBlocksByZIndex, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
 import type { ComunicadoBackground } from "./comunicadoTypes";
 import { formatNumber, formatPct } from "./nativeFormat";
@@ -348,6 +349,7 @@ function RichComunicadoScreen({
   fontScale?: number;
 }) {
   useComunicadoGoogleFonts({ blocks: data.blocks });
+  useComunicadoCustomFonts(data.customFonts);
 
   const master = data.master?.enabled ? data.master : null;
   const slideBackground = data.background;

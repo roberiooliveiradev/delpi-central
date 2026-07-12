@@ -6,6 +6,7 @@ import {
   chartPartAllowsMove,
   createBlock,
   createChartViewBlock,
+  createCanvasTableBlock,
   createConnectorBlock,
   createIconBlock,
   createKpiViewBlock,
@@ -215,6 +216,16 @@ export function useComunicadoEditorBlocks({
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
     [configRef, selectedId, setSelectedId, updateBlocks],
+  );
+
+  const addCanvasTableBlock = useCallback(
+    (rows = 3, cols = 3) => {
+      const block = createCanvasTableBlock(rows, cols);
+      block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      setSelectedId(block.id);
+      updateBlocks([...(configRef.current.blocks ?? []), block]);
+    },
+    [configRef, setSelectedId, updateBlocks],
   );
 
   const addKpiViewBlock = useCallback(() => {
@@ -487,6 +498,7 @@ export function useComunicadoEditorBlocks({
             textShadow: patch.textShadow ?? prev?.textShadow,
             textStrokeColor: patch.textStrokeColor ?? prev?.textStrokeColor,
             textStrokeWidth: patch.textStrokeWidth ?? prev?.textStrokeWidth,
+            textReflection: patch.textReflection ?? prev?.textReflection,
             textAlign:
               patch.textAlign === "left" ||
               patch.textAlign === "center" ||
@@ -539,6 +551,7 @@ export function useComunicadoEditorBlocks({
             textShadow: patch.textShadow ?? prev?.textShadow,
             textStrokeColor: patch.textStrokeColor ?? prev?.textStrokeColor,
             textStrokeWidth: patch.textStrokeWidth ?? prev?.textStrokeWidth,
+            textReflection: patch.textReflection ?? prev?.textReflection,
             textAlign:
               patch.textAlign === "left" ||
               patch.textAlign === "center" ||
@@ -842,6 +855,7 @@ export function useComunicadoEditorBlocks({
     addDataBlock,
     addDataSourceBlock,
     addChartViewBlock,
+    addCanvasTableBlock,
     addTableViewBlock,
     addKpiViewBlock,
     openDataPanel,

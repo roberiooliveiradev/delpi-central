@@ -47,6 +47,63 @@ def test_public_presentation_ws_ping():
             assert pong["type"] == "pong"
 
 
+def test_public_presentation_ws_broadcasts_editor_presence():
+    client = TestClient(app)
+    playlist = {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "publicToken": "tok-presence",
+        "isActive": True,
+    }
+    with patch(
+        "tv_app.interface.http.routes.presentation_realtime_routes._repo.get_by_token",
+        return_value=playlist,
+    ):
+        with client.websocket_connect("/public/present/tok-presence/ws") as first:
+            assert first.receive_json()["type"] == "connected"
+            first.send_json(
+                {
+                    "type": "presence_join",
+                    "clientId": "editor-1",
+                    "displayName": "Ana",
+                    "role": "editor",
+                }
+            )
+            assert first.receive_json() == {
+                "type": "presence_update",
+                "playlistId": playlist["id"],
+                "peers": [
+                    {
+                        "clientId": "editor-1",
+                        "displayName": "Ana",
+                        "role": "editor",
+                    }
+                ],
+            }
+
+            with client.websocket_connect("/public/present/tok-presence/ws") as second:
+                assert second.receive_json()["type"] == "connected"
+                second.send_json(
+                    {
+                        "type": "presence_join",
+                        "clientId": "editor-2",
+                        "displayName": "Bruno",
+                        "role": "editor",
+                    }
+                )
+                peers = first.receive_json()["peers"]
+                assert {peer["clientId"] for peer in peers} == {"editor-1", "editor-2"}
+                assert second.receive_json()["type"] == "presence_update"
+
+                second.send_json({"type": "presence_leave", "clientId": "editor-2"})
+                assert first.receive_json()["peers"] == [
+                    {
+                        "clientId": "editor-1",
+                        "displayName": "Ana",
+                        "role": "editor",
+                    }
+                ]
+
+
 def test_public_presentation_ws_rejects_invalid_token():
     client = TestClient(app)
     with patch(

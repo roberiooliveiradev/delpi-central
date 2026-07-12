@@ -14,7 +14,7 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 |---|---|---|
 | `GET` | `/public/present/{token}` | Payload completo da apresentação (+ view count) |
 | `WS` | `/public/present/{token}/ws` | Push `presentation_updated` para a TV |
-| `GET` | `/public/present/{token}/media/{assetId}` | Mídia de comunicado (imagem/vídeo) |
+| `GET` | `/public/present/{token}/media/{assetId}` | Mídia de comunicado (imagem/vídeo/fonte) |
 | `POST` | `/public/present/{token}/heartbeat` | Sinal «TV online» para o admin |
 
 ### Admin (JWT + RBAC)
@@ -23,7 +23,7 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 |---|---|
 | Programações | `/playlists` |
 | Telas | `/playlists/{id}/slides` |
-| Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload, `GET /{assetId}` serve |
+| Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload de imagem/vídeo/fonte, `GET /{assetId}` serve |
 | Tempo real | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Catálogo nativo | `/native-screens` |
 | Conteúdo UI / presets | `/content/ui`, `/content/slide-presets`, `/content/branch-scope` |
@@ -90,7 +90,7 @@ O gerador monta `paramSchema` / `paramStrategy` (`date_range` quando há `start_
 |---|---|---|
 | `TV_DASHBOARD_MEDIA_UPLOAD_DIR` | `/app/data/tv-dashboard/media` | `${DELPI_DATA_HOST_DIR}/tv-dashboard/media` |
 
-Migration: `V002__media_assets.sql`
+Migrations: `V002__media_assets.sql`, `V006__media_assets_font_kind.sql`
 
 ---
 

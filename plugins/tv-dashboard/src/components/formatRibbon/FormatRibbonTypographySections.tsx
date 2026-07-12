@@ -15,6 +15,8 @@ import {
   RemoveFormatting,
   Strikethrough,
   Underline,
+  Upload,
+  FlipVertical2,
 } from "lucide-react";
 import {
   COMUNICADO_FONT_FAMILIES,
@@ -27,7 +29,7 @@ import {
   KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
   clampFontSize,
-  comunicadoFontFamilyOptions,
+  listComunicadoFontFamilyOptions,
   defaultNamedStyleForBlockType,
   ensureComunicadoGoogleFontsLoaded,
   defaultTextBlockStyle,
@@ -46,7 +48,7 @@ import {
   NativeTextControl,
   isAutomaticTextColor,
 } from "@delpi/plugin-ui/index";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
@@ -61,12 +63,6 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const PART_FONT_SIZE_DEFAULT = 16;
 
-const FONT_FAMILY_SELECT_OPTIONS = comunicadoFontFamilyOptions().map((font) => ({
-  value: font.value,
-  label: font.source === "google" ? `${font.label} · Google` : font.label,
-  style: { fontFamily: font.value },
-}));
-
 /**
  * Fonte + Parágrafo — só renderiza se o objeto selecionado admite tipografia
  * (texto, forma com texto, parte textual de KPI/gráfico).
@@ -74,6 +70,7 @@ const FONT_FAMILY_SELECT_OPTIONS = comunicadoFontFamilyOptions().map((font) => (
 export function FormatRibbonTypographySections() {
   const {
     selected,
+    config,
     selectedKpiPart,
     selectedChartPart,
     background,
@@ -88,11 +85,28 @@ export function FormatRibbonTypographySections() {
     toggleSelectedTextListType,
     textEditNamedStyleSelection,
     applySelectedNamedTextStyle,
+    uploadCustomFont,
+    uploading,
   } = useComunicadoEditor();
+  const fontUploadInputRef = useRef<HTMLInputElement>(null);
+  const fontFamilySelectOptions = useMemo(
+    () =>
+      listComunicadoFontFamilyOptions(config.customFonts).map((font) => ({
+        value: font.value,
+        label:
+          font.source === "google"
+            ? `${font.label} · Google`
+            : font.source === "custom"
+              ? `${font.label} · Personalizada`
+              : font.label,
+        style: { fontFamily: font.value },
+      })),
+    [config.customFonts],
+  );
 
   useEffect(() => {
-    ensureComunicadoGoogleFontsLoaded(FONT_FAMILY_SELECT_OPTIONS.map((option) => option.value));
-  }, []);
+    ensureComunicadoGoogleFontsLoaded(fontFamilySelectOptions.map((option) => option.value));
+  }, [fontFamilySelectOptions]);
 
   const textFormatTarget = resolveSelectedTextFormatTarget({
     selected,
@@ -210,9 +224,28 @@ export function FormatRibbonTypographySections() {
                   ensureComunicadoGoogleFontsLoaded([value]);
                   updateSelectedTextFormatStyle({ fontFamily: value });
                 }}
-                options={FONT_FAMILY_SELECT_OPTIONS}
+                options={fontFamilySelectOptions}
               />
             </HintAction>
+            <TdRibbonIconButton
+              hint={H.uploadFont}
+              ariaLabel="Enviar fonte personalizada"
+              disabled={uploading}
+              onClick={() => fontUploadInputRef.current?.click()}
+            >
+              <Upload size={15} aria-hidden="true" />
+            </TdRibbonIconButton>
+            <input
+              ref={fontUploadInputRef}
+              type="file"
+              hidden
+              accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void uploadCustomFont(file);
+              }}
+            />
             <div className="td-deck-ribbon__font-size" role="group" aria-label="Tamanho da fonte">
               <TdRibbonIconButton
                 hint={H.fontSizeDown}
@@ -451,6 +484,18 @@ export function FormatRibbonTypographySections() {
                 })
               }
             />
+            <TdRibbonIconButton
+              hint={H.textReflection}
+              ariaLabel="Reflexo tipográfico"
+              active={Boolean(formatStyle?.textReflection)}
+              onClick={() =>
+                updateSelectedTextFormatStyle({
+                  textReflection: !formatStyle?.textReflection,
+                })
+              }
+            >
+              <FlipVertical2 size={15} aria-hidden="true" />
+            </TdRibbonIconButton>
           </div>
         </div>
       </DeckRibbonGroup>

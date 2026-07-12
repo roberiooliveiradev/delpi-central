@@ -22,6 +22,7 @@ export type TextFormatStyleSnapshot = {
   textShadow?: string;
   textStrokeColor?: string;
   textStrokeWidth?: number;
+  textReflection?: boolean;
 };
 
 export type SelectedTextFormatTarget =
@@ -125,6 +126,7 @@ export function resolveSelectedTextFormatTarget(params: {
         textShadow: selected.style?.textShadow,
         textStrokeColor: selected.style?.textStrokeColor,
         textStrokeWidth: selected.style?.textStrokeWidth,
+        textReflection: selected.style?.textReflection,
       },
       textAlign: selected.style?.textAlign,
       verticalAlign: selected.style?.verticalAlign,
@@ -148,6 +150,7 @@ export function resolveSelectedTextFormatTarget(params: {
         textShadow: selected.style?.textShadow,
         textStrokeColor: selected.style?.textStrokeColor,
         textStrokeWidth: selected.style?.textStrokeWidth,
+        textReflection: selected.style?.textReflection,
       },
       textAlign: selected.style?.textAlign,
       verticalAlign: selected.style?.verticalAlign,
@@ -175,6 +178,7 @@ export function resolveSelectedTextFormatTarget(params: {
         textShadow: partStyle?.textShadow,
         textStrokeColor: partStyle?.textStrokeColor,
         textStrokeWidth: partStyle?.textStrokeWidth,
+        textReflection: partStyle?.textReflection,
       },
       textAlign: partStyle?.textAlign,
       verticalAlign: partStyle?.verticalAlign,
@@ -199,6 +203,7 @@ export function resolveSelectedTextFormatTarget(params: {
         textShadow: partStyle?.textShadow,
         textStrokeColor: partStyle?.textStrokeColor,
         textStrokeWidth: partStyle?.textStrokeWidth,
+        textReflection: partStyle?.textReflection,
       },
       textAlign: partStyle?.textAlign,
       verticalAlign: partStyle?.verticalAlign,

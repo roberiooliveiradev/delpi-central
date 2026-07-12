@@ -120,6 +120,7 @@ export type ChartPartStyle = {
   textShadow?: string;
   textStrokeColor?: string;
   textStrokeWidth?: number;
+  textReflection?: boolean;
 };
 
 export type ChartPartFrame = {

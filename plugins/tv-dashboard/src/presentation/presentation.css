@@ -1,2 +1,61 @@
 /* Estilos de apresentação canônicos vêm de @delpi/tv-dashboard-presentation (native-screens.css).
    Este arquivo mantém apenas ajustes locais do preview admin, se necessário. */
+
+.tdp-stage--presenter .tdp-stage__design {
+  right: 340px;
+}
+
+.tdp-presenter-panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 12;
+  width: 340px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  overflow: auto;
+  color: #e2e8f0;
+  background: #0f172a;
+  border-left: 1px solid #334155;
+}
+
+.tdp-presenter-panel h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.tdp-presenter-panel__notes {
+  flex: 1;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.tdp-presenter-panel__next {
+  display: grid;
+  gap: 5px;
+  padding-top: 16px;
+  border-top: 1px solid #334155;
+}
+
+.tdp-presenter-panel__next span {
+  color: #94a3b8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 800px) {
+  .tdp-stage--presenter .tdp-stage__design {
+    right: 0;
+    bottom: 180px;
+  }
+
+  .tdp-presenter-panel {
+    inset: auto 0 0;
+    width: auto;
+    height: 180px;
+    padding: 14px 18px;
+  }
+}

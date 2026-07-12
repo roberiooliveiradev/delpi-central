@@ -142,7 +142,7 @@ export type MediaAsset = {
   storedName: string;
   originalName?: string | null;
   mimeType: string;
-  mediaKind: "image" | "video";
+  mediaKind: "image" | "video" | "font";
   fileSizeBytes: number;
 };
 
@@ -158,7 +158,7 @@ export async function uploadPlaylistMedia(playlistId: string, file: File) {
   );
 }
 
-export async function listPlaylistMedia(playlistId: string, mediaKind?: "image" | "video") {
+export async function listPlaylistMedia(playlistId: string, mediaKind?: "image" | "video" | "font") {
   const query = mediaKind ? `?media_kind=${encodeURIComponent(mediaKind)}` : "";
   const data = await unwrap(
     httpGet<ApiEnvelope<{ items: MediaAsset[] }>>(

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import type { ComunicadoConfig, ComunicadoTextBlock } from "./comunicadoTypes";
 import { COMUNICADO_FONT_FAMILIES } from "./comunicadoTypes";
+import { comunicadoCustomFontFamilyOptions } from "./comunicadoCustomFonts";
 
 export type ComunicadoGoogleFontEntry = {
   id: string;
@@ -58,7 +59,7 @@ export const COMUNICADO_GOOGLE_FONT_CATALOG: readonly ComunicadoGoogleFontEntry[
 export type ComunicadoFontFamilyOption = {
   value: string;
   label: string;
-  source: "system" | "google";
+  source: "system" | "google" | "custom";
 };
 
 const GOOGLE_FONT_BY_FAMILY = new Map(
@@ -83,6 +84,12 @@ export function comunicadoFontFamilyOptions(): ComunicadoFontFamilyOption[] {
     source: "google",
   }));
   return [...system, ...google];
+}
+
+export function listComunicadoFontFamilyOptions(
+  customFonts?: ComunicadoConfig["customFonts"],
+): ComunicadoFontFamilyOption[] {
+  return [...comunicadoFontFamilyOptions(), ...comunicadoCustomFontFamilyOptions(customFonts)];
 }
 
 export function resolveGoogleFontEntry(fontFamily: string | undefined): ComunicadoGoogleFontEntry | null {

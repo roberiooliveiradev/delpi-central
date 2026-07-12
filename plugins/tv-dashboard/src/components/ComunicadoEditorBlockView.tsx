@@ -756,6 +756,7 @@ export function ComunicadoEditorBlockView({
   isEditingText = false,
   dataLoading = false,
 }: Props) {
+  const { updateBlock } = useComunicadoEditor();
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
     position: "relative",
@@ -809,6 +810,23 @@ export function ComunicadoEditorBlockView({
         style={style}
         className={className}
         dataLoading={dataLoading}
+      />
+    );
+  }
+
+  if (block.type === "canvas_table") {
+    return (
+      <ComunicadoBlockView
+        block={block}
+        fontScale={fontScale}
+        interactive
+        embedded
+        className={className}
+        onCanvasTableCellChange={(row, col, value) => {
+          const cells = block.cells.map((currentRow) => [...currentRow]);
+          cells[row]![col] = value;
+          updateBlock(block.id, { cells });
+        }}
       />
     );
   }

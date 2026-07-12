@@ -8,6 +8,7 @@ export type ComunicadoTextEffectFields = {
   textShadow?: string;
   textStrokeColor?: string;
   textStrokeWidth?: number;
+  textReflection?: boolean;
 };
 
 export type ComunicadoTextShadowPreset = {

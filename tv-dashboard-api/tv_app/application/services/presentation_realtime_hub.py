@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import time
 from typing import Any
 
 from fastapi import WebSocket
@@ -15,6 +17,7 @@ class PresentationRealtimeHub:
 
     def __init__(self) -> None:
         self._rooms: dict[str, set[WebSocket]] = {}
+        self._client_meta: dict[str, dict[WebSocket, dict[str, Any]]] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
@@ -48,16 +51,103 @@ class PresentationRealtimeHub:
                 message = await websocket.receive_text()
                 if message.strip().lower() == "ping":
                     await websocket.send_json({"type": "pong"})
+                    continue
+                await self._handle_message(websocket, playlist_id=playlist_id, message=message)
         except WebSocketDisconnect:
             pass
         finally:
+            presence_changed = await self._remove_connection(websocket, playlist_id=playlist_id)
+            if presence_changed:
+                await self._broadcast_presence(playlist_id)
+
+    async def _handle_message(
+        self,
+        websocket: WebSocket,
+        *,
+        playlist_id: str,
+        message: str,
+    ) -> None:
+        try:
+            payload = json.loads(message)
+        except (json.JSONDecodeError, TypeError):
+            return
+        if not isinstance(payload, dict):
+            return
+
+        message_type = payload.get("type")
+        client_id = self._clean_text(payload.get("clientId"))
+        if message_type == "presence_join":
+            display_name = self._clean_text(payload.get("displayName"))
+            role = payload.get("role")
+            if not client_id or not display_name or role not in {"editor", "viewer"}:
+                return
             async with self._lock:
-                room = self._rooms.get(playlist_id)
-                if not room:
-                    return
+                self._client_meta.setdefault(playlist_id, {})[websocket] = {
+                    "clientId": client_id,
+                    "displayName": display_name,
+                    "role": role,
+                    "lastSeen": time.monotonic(),
+                }
+            await self._broadcast_presence(playlist_id)
+            return
+
+        if message_type == "presence_leave" and client_id:
+            removed = False
+            async with self._lock:
+                room_meta = self._client_meta.get(playlist_id)
+                current = room_meta.get(websocket) if room_meta else None
+                if current and current["clientId"] == client_id:
+                    del room_meta[websocket]
+                    removed = True
+                    if not room_meta:
+                        del self._client_meta[playlist_id]
+            if removed:
+                await self._broadcast_presence(playlist_id)
+            return
+
+        if message_type == "presence_ping" and client_id:
+            async with self._lock:
+                current = self._client_meta.get(playlist_id, {}).get(websocket)
+                if current and current["clientId"] == client_id:
+                    current["lastSeen"] = time.monotonic()
+
+    @staticmethod
+    def _clean_text(value: Any) -> str | None:
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip()
+        return cleaned or None
+
+    async def _presence_payload(self, playlist_id: str) -> dict[str, Any]:
+        async with self._lock:
+            peers_by_id: dict[str, dict[str, str]] = {}
+            for meta in self._client_meta.get(playlist_id, {}).values():
+                peers_by_id[meta["clientId"]] = {
+                    "clientId": meta["clientId"],
+                    "displayName": meta["displayName"],
+                    "role": meta["role"],
+                }
+        return {
+            "type": "presence_update",
+            "playlistId": playlist_id,
+            "peers": list(peers_by_id.values()),
+        }
+
+    async def _broadcast_presence(self, playlist_id: str) -> None:
+        await self.broadcast_now(playlist_id, await self._presence_payload(playlist_id))
+
+    async def _remove_connection(self, websocket: WebSocket, *, playlist_id: str) -> bool:
+        async with self._lock:
+            room = self._rooms.get(playlist_id)
+            if room:
                 room.discard(websocket)
                 if not room:
                     del self._rooms[playlist_id]
+            room_meta = self._client_meta.get(playlist_id)
+            presence_changed = bool(room_meta and room_meta.pop(websocket, None))
+            if room_meta is not None and not room_meta:
+                del self._client_meta[playlist_id]
+            return presence_changed
 
     async def broadcast_now(self, playlist_id: str, payload: dict[str, Any]) -> None:
         async with self._lock:
@@ -72,14 +162,14 @@ class PresentationRealtimeHub:
                 dead.append(websocket)
         if not dead:
             return
-        async with self._lock:
-            room = self._rooms.get(playlist_id)
-            if not room:
-                return
-            for websocket in dead:
-                room.discard(websocket)
-            if not room:
-                del self._rooms[playlist_id]
+        presence_changed = False
+        for websocket in dead:
+            presence_changed = (
+                await self._remove_connection(websocket, playlist_id=playlist_id)
+                or presence_changed
+            )
+        if presence_changed:
+            await self._broadcast_presence(playlist_id)
 
 
 presentation_realtime_hub = PresentationRealtimeHub()

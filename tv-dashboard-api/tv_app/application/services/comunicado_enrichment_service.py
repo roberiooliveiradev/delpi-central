@@ -43,12 +43,21 @@ class ComunicadoEnrichmentService:
         playlist_defaults: dict[str, Any] | None = None,
         user: Any | None = None,
     ) -> dict[str, Any]:
+        custom_fonts = self._enrich_custom_fonts(
+            cfg.get("customFonts"),
+            api_root_path=api_root_path,
+            playlist_id=playlist_id,
+            public_token=public_token,
+        )
         blocks_raw = cfg.get("blocks")
         if not isinstance(blocks_raw, list) or not blocks_raw:
-            return {
+            legacy_payload: dict[str, Any] = {
                 "headline": str(cfg.get("headline") or message("comunicadoDefaultHeadline", "Comunicado")),
                 "subtitle": str(cfg.get("subtitle") or ""),
             }
+            if custom_fonts:
+                legacy_payload["customFonts"] = custom_fonts
+            return legacy_payload
 
         background = self._enrich_background(
             cfg.get("background"),
@@ -86,7 +95,45 @@ class ComunicadoEnrichmentService:
         }
         if data_filters:
             payload["dataFilters"] = data_filters
+        if custom_fonts:
+            payload["customFonts"] = custom_fonts
         return payload
+
+    def _enrich_custom_fonts(
+        self,
+        fonts: Any,
+        *,
+        api_root_path: str,
+        playlist_id: str,
+        public_token: str | None,
+    ) -> list[dict[str, str]]:
+        if not isinstance(fonts, list):
+            return []
+        enriched: list[dict[str, str]] = []
+        for font in fonts:
+            if not isinstance(font, dict):
+                continue
+            asset_id = font.get("assetId")
+            family_name = font.get("familyName")
+            if not isinstance(asset_id, str) or not asset_id.strip():
+                continue
+            if not isinstance(family_name, str) or not family_name.strip():
+                continue
+            url = self._resolve_asset_url(
+                asset_id.strip(),
+                api_root_path=api_root_path,
+                playlist_id=playlist_id,
+                public_token=public_token,
+            )
+            if url:
+                enriched.append(
+                    {
+                        "assetId": asset_id.strip(),
+                        "familyName": family_name.strip(),
+                        "url": url,
+                    }
+                )
+        return enriched
 
     @staticmethod
     def _detect_version(blocks: list[dict[str, Any]]) -> int:

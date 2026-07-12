@@ -19,14 +19,19 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - **Link público** sem login: `/p/tv-dashboard/present/{token}`
 - Copiar link, QR, regenerar token, desativar / excluir
 - Status «TV online» via heartbeat na rota pública
+- Presença colaborativa leve no editor («Também editando»), sem edição simultânea/CRDT
 - Catálogo de presets e importação de telas prontas
 - RBAC por filial e visão consolidada
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
 - **Dois escopos no palco:** seleção **global** do widget (frame no slide) vs **subcomponente** (fundo, valor, título, chartArea, etc.) — ver [§19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 - **Aplicar estilo a irmãos:** botão no inspetor KPI (título/valor/subtítulo), tabela (células/cabeçalhos) e marcadores do gráfico
-- **Efeitos tipográficos:** sombra e contorno do texto (aba Formatar → Efeitos)
-- **Cores recentes** no seletor de cor; **export PNG/PDF** na faixa Início
+- **Efeitos tipográficos:** sombra, contorno e **reflexo** (aba Formatar → Efeitos; reflexo Chromium)
+- **Fontes personalizadas:** upload WOFF2/TTF/OTF na faixa Fonte, persistido como mídia da playlist e disponível no seletor tipográfico
+- **Cores recentes** no seletor de cor; **export PNG/PDF/PPTX (MVP)** na faixa Início
+- **Tabela (canvas):** grade estática editável, separada de `table_view` (dados live)
+- **Notas do apresentador:** salvas por tela; preview admin com `?presenter=1` mostra notas e próxima tela sem afetar o kiosk
+- **Presença no editor:** chip «Também editando» via WebSocket (sem merge CRDT)
 - **Conectores MVP:** selecione 2 elementos → **Conectar** no ribbon Alinhar (seta entre centros); arrastar a seta solta a ligação — [§19.22](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1922-conectores-mvp-entre-blocos-jul2026)
 - **Telas nativas OEE/OTD/PPM:** dual-KPI + série temporal SVG (`ConfigurableSeriesChart`)
 - Filmstrip: prévia centralizada (`CenteredScaledPreview`), menu de contexto nas telas
@@ -86,6 +91,7 @@ GET    /apps/tv-dashboard-api/playlists/{id}
 PATCH  /apps/tv-dashboard-api/playlists/{id}
 DELETE /apps/tv-dashboard-api/playlists/{id}
 GET    /apps/tv-dashboard-api/playlists/{id}/preview-payload
+WS     /apps/tv-dashboard-api/playlists/{id}/presentation-ws # refresh + presença no editor
 GET    /apps/tv-dashboard-api/playlists/{id}/slides
 POST   /apps/tv-dashboard-api/playlists/{id}/slides
 PATCH  /apps/tv-dashboard-api/playlists/{id}/slides/{slideId}

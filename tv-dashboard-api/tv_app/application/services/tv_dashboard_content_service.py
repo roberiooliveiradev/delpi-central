@@ -91,6 +91,8 @@ def media_setting_mime_ext(media_kind: str) -> dict[str, str]:
     media = _load_settings().get("mediaUpload") or {}
     if media_kind == "video":
         raw = media.get("videoMimeExtensions") or {}
+    elif media_kind == "font":
+        raw = media.get("fontMimeExtensions") or {}
     else:
         raw = media.get("imageMimeExtensions") or {}
     if not isinstance(raw, dict):

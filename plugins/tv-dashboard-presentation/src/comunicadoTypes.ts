@@ -101,6 +101,8 @@ export type ComunicadoContentRunStyle = {
   textStrokeColor?: string;
   /** Contorno do glifo (px). */
   textStrokeWidth?: number;
+  /** Reflexo tipográfico espelhado. */
+  textReflection?: boolean;
 };
 
 export type ComunicadoContentRun = {
@@ -130,6 +132,8 @@ export type ComunicadoBlockStyle = {
   textShadow?: string;
   textStrokeColor?: string;
   textStrokeWidth?: number;
+  /** Reflexo tipográfico (`-webkit-box-reflect`). */
+  textReflection?: boolean;
   opacity?: number;
   rotation?: number;
   zIndex?: number;
@@ -283,6 +287,15 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   resolved?: ComunicadoDataResolved;
 };
 
+/** Grade estática editável, independente de fontes de dados. */
+export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
+  type: "canvas_table";
+  rows: number;
+  cols: number;
+  cells: string[][];
+  headerRow?: boolean;
+};
+
 export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
   type: "kpi_view";
   dataSourceId?: string;
@@ -329,6 +342,7 @@ export type ComunicadoBlock =
   | ComunicadoDataSourceBlock
   | ComunicadoChartViewBlock
   | ComunicadoTableViewBlock
+  | ComunicadoCanvasTableBlock
   | ComunicadoKpiViewBlock;
 
 export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
@@ -340,6 +354,18 @@ export type ComunicadoConfig = {
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
   dataFilters?: ComunicadoDataFilters;
+  /** Notas do apresentador (não exibidas no kiosk TV). */
+  speakerNotes?: string;
+  /** Fontes custom da playlist referenciadas neste slide. */
+  customFonts?: ComunicadoCustomFontRef[];
+};
+
+export type ComunicadoCustomFontRef = {
+  assetId: string;
+  familyName: string;
+  /** URL enriquecida no payload (admin/public); opcional no persistido. */
+  url?: string;
+  fontFamily?: string;
 };
 
 export type ComunicadoScreenData = {
@@ -349,6 +375,7 @@ export type ComunicadoScreenData = {
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
   dataFilters?: ComunicadoDataFilters;
+  customFonts?: ComunicadoCustomFontRef[];
 };
 
 export type ComunicadoBackground =

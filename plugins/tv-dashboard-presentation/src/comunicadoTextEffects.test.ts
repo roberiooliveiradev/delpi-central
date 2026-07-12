@@ -9,11 +9,17 @@ describe("comunicadoTextEffects", () => {
   it("aplica textShadow e stroke no CSS", () => {
     const css: Record<string, unknown> = {};
     applyComunicadoTextEffectsToCss(
-      { textShadow: "1px 1px 0 #000", textStrokeColor: "#fff", textStrokeWidth: 1.5 },
+      {
+        textShadow: "1px 1px 0 #000",
+        textStrokeColor: "#fff",
+        textStrokeWidth: 1.5,
+        textReflection: true,
+      },
       css,
     );
     expect(css.textShadow).toBe("1px 1px 0 #000");
     expect(css.WebkitTextStroke).toBe("1.5px #fff");
+    expect(String(css.WebkitBoxReflect)).toContain("below");
   });
 
   it("resolve preset id", () => {

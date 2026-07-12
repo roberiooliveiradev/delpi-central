@@ -18,6 +18,15 @@ def test_media_storage_accepts_png():
         assert storage.read(stored) == b"\x89PNG"
 
 
+def test_media_storage_accepts_woff2_font():
+    with tempfile.TemporaryDirectory() as tmp:
+        storage = MediaStorageService(base_dir=tmp)
+        stored, mime, kind = storage.save(content=b"wOF2", mime_type="font/woff2")
+        assert stored.endswith(".woff2")
+        assert kind == "font"
+        assert mime == "font/woff2"
+
+
 def test_media_storage_rejects_unknown_type():
     with tempfile.TemporaryDirectory() as tmp:
         storage = MediaStorageService(base_dir=tmp)
@@ -59,6 +68,29 @@ def test_comunicado_enrichment_resolves_media_url():
     )
     assert data["version"] >= 2
     assert data["blocks"][0]["url"] == f"/apps/tv-dashboard-api/playlists/{playlist_id}/media/{asset_id}"
+
+
+def test_comunicado_enrichment_resolves_custom_font_url():
+    asset_id = str(uuid4())
+    playlist_id = str(uuid4())
+    repo = MagicMock()
+    repo.get_for_playlist.return_value = {"id": asset_id, "mediaKind": "font"}
+    service = ComunicadoEnrichmentService(media_repo=repo)
+    data = service.enrich(
+        {
+            "blocks": [],
+            "customFonts": [{"assetId": asset_id, "familyName": "Minha Fonte"}],
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=playlist_id,
+    )
+    assert data["customFonts"] == [
+        {
+            "assetId": asset_id,
+            "familyName": "Minha Fonte",
+            "url": f"/apps/tv-dashboard-api/playlists/{playlist_id}/media/{asset_id}",
+        }
+    ]
 
 
 def test_custom_message_with_blocks():

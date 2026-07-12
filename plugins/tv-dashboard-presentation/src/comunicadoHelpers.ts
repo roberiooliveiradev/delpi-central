@@ -73,6 +73,7 @@ import type {
   ComunicadoBackground,
   ComunicadoBlock,
   ComunicadoBlockStyle,
+  ComunicadoCanvasTableBlock,
   ComunicadoConfig,
   ComunicadoDataBinding,
   ComunicadoDataBlockType,
@@ -82,6 +83,7 @@ import type {
   ComunicadoTablePreset,
   ComunicadoFrame,
   ComunicadoGeometryVertex,
+  ComunicadoCustomFontRef,
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
@@ -213,6 +215,59 @@ export function createTableViewBlock(
   };
 }
 
+export const CANVAS_TABLE_MIN_ROWS = 1;
+export const CANVAS_TABLE_MAX_ROWS = 20;
+export const CANVAS_TABLE_MIN_COLS = 1;
+export const CANVAS_TABLE_MAX_COLS = 12;
+
+function clampCanvasTableDimension(value: unknown, min: number, max: number, fallback: number): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(parsed)));
+}
+
+export function normalizeCanvasTableCells(
+  value: unknown,
+  rows: number,
+  cols: number,
+): string[][] {
+  const source = Array.isArray(value) ? value : [];
+  return Array.from({ length: rows }, (_, rowIndex) => {
+    const row = Array.isArray(source[rowIndex]) ? source[rowIndex] : [];
+    return Array.from({ length: cols }, (_, colIndex) => {
+      const cell = row[colIndex];
+      return cell == null ? "" : String(cell);
+    });
+  });
+}
+
+export function createCanvasTableBlock(rows = 3, cols = 3): ComunicadoCanvasTableBlock {
+  const safeRows = clampCanvasTableDimension(
+    rows,
+    CANVAS_TABLE_MIN_ROWS,
+    CANVAS_TABLE_MAX_ROWS,
+    3,
+  );
+  const safeCols = clampCanvasTableDimension(
+    cols,
+    CANVAS_TABLE_MIN_COLS,
+    CANVAS_TABLE_MAX_COLS,
+    3,
+  );
+  const height = Math.min(60, 10 + safeRows * 6);
+  const width = Math.min(92, 18 + safeCols * 10);
+  return {
+    id: newBlockId(),
+    type: "canvas_table",
+    rows: safeRows,
+    cols: safeCols,
+    cells: normalizeCanvasTableCells([], safeRows, safeCols),
+    headerRow: true,
+    frame: { x: 50 - width / 2, y: 50 - height / 2, w: width, h: height },
+    style: defaultStyle("canvas_table"),
+  };
+}
+
 export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): ComunicadoBlock {
   const kpiOptions = mergeComunicadoKpiOptions({
     ...DEFAULT_COMUNICADO_KPI_OPTIONS,
@@ -274,6 +329,7 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "data_source") return { x: 8, y: 30, w: 18, h: 18 };
   if (type === "chart_view") return { x: 10, y: 28, w: 80, h: 45 };
   if (type === "table_view") return { x: 5, y: 55, w: 90, h: 35 };
+  if (type === "canvas_table") return { x: 20, y: 30, w: 60, h: 30 };
   if (type === "kpi_view") return { x: 8, y: 28, w: 32, h: 24 };
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
@@ -376,6 +432,18 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (isDataViewBlockType(type)) {
     return { zIndex: 2, color: DECK_COLOR_TEXT_STRONG };
   }
+  if (type === "canvas_table") {
+    return {
+      zIndex: 2,
+      color: DECK_COLOR_TEXT_STRONG,
+      backgroundColor: "#ffffff",
+      borderColor: "#94a3b8",
+      borderWidth: 1,
+      fontSize: 18,
+      fontFamily: "Inter, system-ui, sans-serif",
+      textAlign: "left" as const,
+    };
+  }
   return {};
 }
 
@@ -463,6 +531,8 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
       background: normalizeBackground(cfg.background),
       blocks: blocks.map(normalizeBlock),
       dataFilters: normalizeDataFilters(cfg.dataFilters),
+      customFonts: normalizeCustomFonts(cfg.customFonts),
+      speakerNotes: typeof cfg.speakerNotes === "string" ? cfg.speakerNotes : undefined,
     };
   }
 
@@ -473,10 +543,12 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
     headline,
     subtitle,
     background: normalizeBackground(cfg.background),
+    customFonts: normalizeCustomFonts(cfg.customFonts),
     blocks: [
       createBlock("heading", headline),
       ...(subtitle ? [createBlock("text", subtitle)] : []),
     ],
+    speakerNotes: typeof cfg.speakerNotes === "string" ? cfg.speakerNotes : undefined,
   };
 }
 
@@ -537,6 +609,13 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
   if (config.dataFilters && Object.keys(config.dataFilters).length > 0) {
     payload.dataFilters = config.dataFilters;
   }
+  if (config.customFonts?.length) {
+    payload.customFonts = config.customFonts.map(({ assetId, familyName }) => ({
+      assetId,
+      familyName,
+    }));
+  }
+  if (config.speakerNotes) payload.speakerNotes = config.speakerNotes;
   return payload;
 }
 
@@ -612,6 +691,11 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.maxCols != null) base.maxCols = block.maxCols;
     if (block.tableOptions) base.tableOptions = { ...block.tableOptions };
     if (block.tableParts) base.tableParts = { ...block.tableParts };
+  } else if (block.type === "canvas_table") {
+    base.rows = block.rows;
+    base.cols = block.cols;
+    base.cells = block.cells.map((row) => [...row]);
+    if (block.headerRow != null) base.headerRow = block.headerRow;
   } else if (block.type === "kpi_view") {
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
     if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
@@ -639,6 +723,23 @@ function normalizeDataFilters(value: unknown): ComunicadoDataFilters | undefined
     }
   }
   return Object.keys(filters).length > 0 ? filters : undefined;
+}
+
+function normalizeCustomFonts(value: unknown): ComunicadoCustomFontRef[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const fonts = value.flatMap((item): ComunicadoCustomFontRef[] => {
+    if (!item || typeof item !== "object") return [];
+    const raw = item as Record<string, unknown>;
+    const assetId = typeof raw.assetId === "string" ? raw.assetId.trim() : "";
+    const familyName = typeof raw.familyName === "string" ? raw.familyName.trim() : "";
+    if (!assetId || !familyName) return [];
+    return [{
+      assetId,
+      familyName,
+      url: typeof raw.url === "string" && raw.url.trim() ? raw.url.trim() : undefined,
+    }];
+  });
+  return fonts.length ? fonts : undefined;
 }
 
 function normalizeBackground(value: unknown): ComunicadoBackground {
@@ -858,6 +959,34 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
             ? (block.resolved as ComunicadoDataResolved)
             : undefined,
       } as ComunicadoBlock,
+      block,
+    );
+  }
+  if (type === "canvas_table") {
+    const rows = clampCanvasTableDimension(
+      block.rows,
+      CANVAS_TABLE_MIN_ROWS,
+      CANVAS_TABLE_MAX_ROWS,
+      3,
+    );
+    const cols = clampCanvasTableDimension(
+      block.cols,
+      CANVAS_TABLE_MIN_COLS,
+      CANVAS_TABLE_MAX_COLS,
+      3,
+    );
+    return attachBlockAnimations(
+      {
+        id,
+        type: "canvas_table",
+        frame,
+        style: { ...defaultStyle("canvas_table"), ...style },
+        groupId,
+        rows,
+        cols,
+        cells: normalizeCanvasTableCells(block.cells, rows, cols),
+        headerRow: block.headerRow !== false,
+      },
       block,
     );
   }
@@ -1129,6 +1258,7 @@ export type ComunicadoScreenDataLike = {
   blocks?: ComunicadoBlock[];
   headline?: string;
   subtitle?: string;
+  customFonts?: ComunicadoCustomFontRef[];
 };
 
 export function clampFrame(frame: ComunicadoFrame): ComunicadoFrame {

@@ -6,7 +6,7 @@ export type PresentationSlide = {
   title?: string;
   /** Override da transição da playlist (`fade` | `slide` | `none`). */
   transitionStyle?: string | null;
-  native?: { data?: Record<string, unknown> };
+  native?: { config?: Record<string, unknown>; data?: Record<string, unknown> };
 };
 
 export type PresentationPlaylist = {

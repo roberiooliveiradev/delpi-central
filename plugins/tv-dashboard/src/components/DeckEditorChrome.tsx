@@ -33,6 +33,7 @@ type SlideDeckProps = {
   onRemove: (slide: Slide) => void;
   onExportPng?: () => void;
   onExportPdf?: () => void;
+  onExportPptx?: () => void;
   exportBusy?: boolean;
 };
 

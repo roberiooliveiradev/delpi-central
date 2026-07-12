@@ -4,6 +4,7 @@ import {
   parseComunicadoConfig,
   serializeComunicadoConfig,
   usePresentationRealtime,
+  type PresentationPresencePeer,
 } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -39,6 +40,7 @@ import { DeckEditorHeaderActions } from "../components/deck";
 import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SlideStagePreview } from "../components/SlideStagePreview";
+import { enrichComunicadoConfigForEditor } from "../components/slideCardPreview";
 import {
   DeckEditorHistoryProvider,
   type DeckEditorHistoryContextValue,
@@ -53,7 +55,12 @@ import {
   type SlideClipboardPayload,
 } from "../utils/slideDeckClipboard";
 import { exportSlideElementToPdf, exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
+import { exportSlidePptx } from "../utils/exportSlidePptx";
 import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
+import {
+  getEditorPresenceClientId,
+  resolveEditorDisplayName,
+} from "../utils/editorPresence";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 type DeckSettingsProps = {
@@ -94,6 +101,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
+  const [presencePeers, setPresencePeers] = useState<PresentationPresencePeer[]>([]);
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
@@ -201,11 +209,27 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     [slides],
   );
 
-  const thumbnailWsUrl = useMemo(() => {
+  const realtimeConnection = useMemo(() => {
     const token = getAccessToken();
-    if (!token) return null;
-    return buildAdminPresentationWsUrl(playlistId, token);
+    if (!token) return { wsUrl: null, presence: undefined };
+    return {
+      wsUrl: buildAdminPresentationWsUrl(playlistId, token),
+      presence: {
+        clientId: getEditorPresenceClientId(),
+        displayName: resolveEditorDisplayName(token),
+        role: "editor" as const,
+      },
+    };
   }, [playlistId]);
+
+  const otherEditors = useMemo(
+    () =>
+      presencePeers.filter(
+        (peer) =>
+          peer.role === "editor" && peer.clientId !== realtimeConnection.presence?.clientId,
+      ),
+    [presencePeers, realtimeConnection.presence?.clientId],
+  );
 
   const refreshPreviewThumbnails = useCallback(async () => {
     if (!slides.length) {
@@ -263,8 +287,10 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   }, [slides, selectedSlideId]);
 
   usePresentationRealtime({
-    enabled: Boolean(playlistId && slides.length > 0 && thumbnailWsUrl),
-    wsUrl: thumbnailWsUrl,
+    enabled: Boolean(playlistId && realtimeConnection.wsUrl),
+    wsUrl: realtimeConnection.wsUrl,
+    presence: realtimeConnection.presence,
+    onPresenceUpdate: setPresencePeers,
     onPresentationUpdated: () => {
       void reloadPlaylistFromServer();
     },
@@ -369,6 +395,27 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       await exportSlideElementToPdf(target, { fileName: `${safeTitle}.pdf` });
     } catch (err) {
       tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PDF.");
+    } finally {
+      setExportBusy(false);
+    }
+  }
+
+  async function handleExportPptx() {
+    if (!selectedSlide) return;
+    if (selectedSlide.nativeScreenKey !== "custom_message") {
+      tvDashboardNotice("A exportação PPTX MVP está disponível para telas personalizadas.");
+      return;
+    }
+    setExportBusy(true);
+    try {
+      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
+      const rawConfig = liveComunicadoConfigRef.current ?? selectedSlide.nativeConfig ?? {};
+      await exportSlidePptx(
+        enrichComunicadoConfigForEditor(rawConfig, playlistId),
+        `${safeTitle}.pptx`,
+      );
+    } catch (err) {
+      tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PPTX.");
     } finally {
       setExportBusy(false);
     }
@@ -602,6 +649,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     onRemove: (slide: Slide) => void handleRemoveSlide(slide),
     onExportPng: () => void handleExportPng(),
     onExportPdf: () => void handleExportPdf(),
+    onExportPptx: isCustomSlide ? () => void handleExportPptx() : undefined,
     exportBusy,
   };
 
@@ -660,6 +708,11 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   return (
     <DeckEditorHistoryProvider value={deckHistoryValue}>
       <div className="td-deck td-deck--editor">
+      {otherEditors.length > 0 ? (
+        <div className="td-editor-presence" role="status" aria-live="polite">
+          Também editando: {otherEditors.map((peer) => peer.displayName).join(", ")}
+        </div>
+      ) : null}
       {isCustomSlide && selectedSlide && editorComunicadoValue ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}

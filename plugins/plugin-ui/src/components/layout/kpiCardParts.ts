@@ -40,6 +40,7 @@ export type KpiPartStyle = {
   textShadow?: string;
   textStrokeColor?: string;
   textStrokeWidth?: number;
+  textReflection?: boolean;
   /**
    * Tamanho do box do ícone em px quando sem `frame`.
    * Com `frame`, largura/altura vêm de `frame.w`/`frame.h` (% do card).

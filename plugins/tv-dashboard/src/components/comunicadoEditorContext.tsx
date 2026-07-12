@@ -287,6 +287,16 @@ export function ComunicadoEditorProvider({
     updateBlockTextFieldsRef,
   });
 
+  const setSpeakerNotes = useCallback(
+    (speakerNotes: string) => {
+      commitWithHistory({
+        ...configRef.current,
+        speakerNotes: speakerNotes || undefined,
+      });
+    },
+    [commitWithHistory],
+  );
+
   const getClipboardSources = useCallback(
     () =>
       selection.selectedBlocks.length > 0
@@ -396,6 +406,7 @@ export function ComunicadoEditorProvider({
     addDataBlock: blockActions.addDataBlock,
     addDataSourceBlock: blockActions.addDataSourceBlock,
     addChartViewBlock: blockActions.addChartViewBlock,
+    addCanvasTableBlock: blockActions.addCanvasTableBlock,
     addTableViewBlock: blockActions.addTableViewBlock,
     addKpiViewBlock: blockActions.addKpiViewBlock,
     openDataPanel: blockActions.openDataPanel,
@@ -414,6 +425,7 @@ export function ComunicadoEditorProvider({
     ungroupSelected: blockActions.ungroupSelected,
     connectSelected: blockActions.connectSelected,
     setDataFilters: blockActions.setDataFilters,
+    setSpeakerNotes,
     updateSelected: blockActions.updateSelected,
     updateBlock: blockActions.updateBlock,
     updateBlockContent: blockActions.updateBlockContent,
@@ -469,6 +481,7 @@ export function ComunicadoEditorProvider({
     setSnapEnabled: stage.setSnapEnabled,
     fileInputRef: media.fileInputRef,
     handleUploadFile: media.handleUploadFile,
+    uploadCustomFont: media.uploadCustomFont,
     dataPreviewLoading,
     dataPreviewError,
     globalRefreshSec,

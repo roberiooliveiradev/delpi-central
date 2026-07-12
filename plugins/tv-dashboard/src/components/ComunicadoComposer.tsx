@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
+import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
@@ -106,6 +107,7 @@ export function ComunicadoComposerCanvas() {
     fitStageToView,
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
+  useAuthenticatedComunicadoCustomFonts(config.customFonts);
   const canvasStyle = useCanvasBackgroundStyle();
   const designSize = useMemo(
     () => resolveViewportPixelSize(viewportProfile),

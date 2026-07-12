@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
+import { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
 import { ComunicadoIconGraphic } from "./comunicadoIconView";
 import {
   blockEntranceAnimationClass,
@@ -34,6 +35,7 @@ type Props = {
   visualBoxInnerStyle?: CSSProperties;
   /** Palco do editor: texto interativo dentro de formas. */
   visualBoxEditorInteractive?: boolean;
+  onCanvasTableCellChange?: (row: number, col: number, value: string) => void;
 };
 
 function blockLinkHref(block: ComunicadoBlock): string | undefined {
@@ -99,6 +101,7 @@ export function ComunicadoBlockView({
   visualBoxTextClassName,
   visualBoxInnerStyle,
   visualBoxEditorInteractive = false,
+  onCanvasTableCellChange,
 }: Props) {
   const baseStyle = embedded
     ? {
@@ -227,6 +230,18 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--table-view"),
       style,
       <TableViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
+    );
+  }
+
+  if (block.type === "canvas_table") {
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--canvas-table"),
+      style,
+      <ComunicadoCanvasTableView
+        block={block}
+        editable={interactive}
+        onCellChange={onCanvasTableCellChange}
+      />,
     );
   }
 

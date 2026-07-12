@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.5+ (jul/2026):** … **§19.21** sombra/contorno tipográfico + cores recentes + export PDF. **§19.22** conectores MVP entre blocos. **Backlog restante:** upload de fonte, reflexo tipográfico, tabelas canvas, PPTX, modo apresentador, colaboração.
+> **Status:** … **v1.5+ (jul/2026):** … **§19.21–§19.23** tipografia/PDF, conectores, e backlog PPT MVP (fonte, reflexo, grade canvas, notas/apresentador, PPTX, presença). **Backlog restante / longo prazo:** import PPTX completo, colaboração CRDT, reflexo cross-browser, âncoras avançadas de conectores.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente (paridade PPT / longo prazo):** upload de fonte; reflexo tipográfico; tabelas canvas simples; modo apresentador; import/export PPTX; colaboração. Conectores MVP, sombra/contorno tipográfico, cores recentes e export PDF concluídos (§19.21–§19.22).
+**Ainda pendente (paridade PPT / longo prazo):** import PPTX completo; colaboração CRDT/OT; reflexo tipográfico fora do Chromium; âncoras avançadas de conectores. MVPs de upload de fonte, reflexo Chromium, grade canvas, notas/apresentador, export PPTX e presença de editores concluídos (§19.21–§19.23).
 
 ---
 
@@ -677,7 +677,7 @@ sequenceDiagram
 
 1. Upload de fonte; reflexo tipográfico.
 2. Tabelas canvas simples; upload de fonte.
-3. Import/export PPTX; modo apresentador; colaboração (longo prazo).
+3. Import PPTX completo; colaboração CRDT; âncoras avançadas de conectores.
 
 ### Concluído v2 (jul/2026)
 
@@ -767,9 +767,9 @@ Apresentação TV / preview
 | Rich text (runs, negrito parcial) | ✓ | ✅ v1.3.2–4C.2 | `contentRuns` + editor inline |
 | Bullets / listas numeradas | ✓ | ✅ v1.3.4 (4C.3) | `style.listType` + ribbon Marcadores/Numerada |
 | Estilos nomeados (Título 1, Corpo) | ✓ | ✅ v1.3.5 (4C.4) | `style.namedStyle` + ribbon Estilo |
-| Sombra / contorno / reflexo texto | ✓ | ⚠ | Sombra + contorno ✅ (§19.21); reflexo ❌ |
+| Sombra / contorno / reflexo texto | ✓ | ⚠ | Sombra + contorno + reflexo Chromium ✅ (§19.21/§19.23); Safari/Firefox limitados |
 | Mais formas / conectores | ✓ | ⚠ | Catálogo amplo + **conectores MVP** ✅ (§19.22) |
-| Google Fonts / upload de fonte | ✓ | ✅ v1.3.6 (4C.5) | Catálogo curado + lazy load (`comunicadoGoogleFonts.ts`); upload ❌ |
+| Google Fonts / upload de fonte | ✓ | ✅ | Catálogo + **upload WOFF2/TTF/OTF** ✅ (§19.23) |
 | Hiperlink em imagem/forma | ✓ | ✅ v1.3 | Também vídeo e ícone |
 
 #### Visual, mídia e assets (prioridade média)
@@ -783,7 +783,7 @@ Apresentação TV / preview
 | Gradientes de fundo | ✓ | ✅ v1.3 | `background.type: gradient` |
 | Biblioteca de mídia da playlist | ✓ | ✅ v1.3 | `GET …/media` + `MediaLibraryModal` |
 | Ícones / stickers | ✓ | ✅ v1.3 | Bloco `icon` (Lucide) |
-| Tabelas simples | ✓ | ❌ | |
+| Tabelas simples | ✓ | ⚠ | Grade canvas `canvas_table` ✅ (§19.23); não confundir com `table_view` live |
 | Mais formas / conectores | ✓ | ⚠ | Catálogo amplo + conectores MVP ✅ (§19.22); âncoras avançadas ❌ |
 | Paleta / cores recentes / tema marca | ✓ | ⚠ | Temas de slide ✅; **cores recentes** ✅ (§19.21) |
 
@@ -807,15 +807,15 @@ Apresentação TV / preview
 | Animação por objeto | ✓ | ✅ v1.3.8 (4E.2) | `animations[]` fade/slide-in no inspector + TV |
 | Build sequencial (aparecer um a um) | ✓ | ✅ v1.5 (4E.4) | Build order no inspector |
 | Master slide / layout mestre | ✓ | ✅ v1.5 (4E.3) | Logo/fundo fixos na playlist |
-| Modo apresentador / notas | ✓ | ❌ | |
+| Modo apresentador / notas | ✓ | ⚠ | `speakerNotes` + preview `?presenter=1` ✅ (§19.23); notas no kiosk ❌ |
 
 #### Colaboração e export (prioridade baixa)
 
 | Recurso | Canva/PPT | Status |
 |---|---|---|
 | Export PNG/PDF do slide | ✓ | ✅ | PNG 4E.5 + PDF §19.21 (`jspdf` + captura) |
-| Import/export PPTX | ✓ | ❌ |
-| Colaboração tempo real | ✓ | ❌ |
+| Import/export PPTX | ✓ | ⚠ | **Export** MVP (`pptxgenjs`) ✅ (§19.23); import ❌ |
+| Colaboração tempo real | ✓ | ⚠ | **Presença** de editores via WS ✅ (§19.23); CRDT/OT ❌ |
 | Comentários / histórico de versões | ✓ | ❌ |
 
 ### 17.4 Dívida técnica a resolver (pós v1.3)
@@ -1002,8 +1002,9 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
   Concluído (escopos / apply-all)    → §19.19–§19.20; séries nativas SVG; tv_present_zone
   Concluído (tipografia / export)    → §19.21 sombra/contorno texto; cores recentes; PDF
   Concluído (conectores MVP)         → §19.22 linha/seta entre dois blocos
-  Backlog restante                   → upload fonte, PPTX, apresentador, tabelas canvas
-  Longo prazo                        → colaboração
+  Concluído (backlog PPT MVP)        → §19.23 fonte, reflexo, grade, notas, PPTX, presença
+  Backlog restante                   → import PPTX; colaboração CRDT; âncoras conectores
+  Longo prazo                        → comentários / histórico de versões
 ```
 
 ### 17.8 Gates de teste — editor
@@ -1943,6 +1944,19 @@ O escopo **global** **não** unifica cor/fonte/fill das partes. Cada parte mant�
 | 19.22.3 | Reattach ao mover/redimensionar alvos; detach se a linha for editada; prune órfãos | drag + `updateBlocks` |
 
 **Anti-padrões:** import circular helpers↔connectors; recriar geometria no MFE em vez de `reconcileConnectorsAfterDrag` / `syncAllConnectors`.
+
+### 19.23 Backlog PPT — MVPs (jul/2026)
+
+| # | Entrega | Onde |
+|---|---------|------|
+| 19.23.1 | Upload de fonte (`media_kind=font`) + `@font-face` + ribbon Fonte | API V006 + `comunicadoCustomFonts` + MFE |
+| 19.23.2 | Reflexo tipográfico (`textReflection` / `-webkit-box-reflect`) | `textEffectStyle` + ribbon Efeitos |
+| 19.23.3 | Grade canvas `canvas_table` (células estáticas; ≠ `table_view`) | presentation + Insert «Grade» |
+| 19.23.4 | `speakerNotes` + preview `?presenter=1` | config + `PresentationPreview` |
+| 19.23.5 | Export PPTX (`pptxgenjs`) mapeando blocos básicos | `exportSlidePptx.ts` + ribbon |
+| 19.23.6 | Presença de editores (`presence_*` no WS da programação) | hub + chip «Também editando» |
+
+**Anti-padrões:** misturar `canvas_table` com `table_view` live; tratar presença como merge automático de `native_config`; import PPTX sem contrato de fidelidade.
 
 ---
 

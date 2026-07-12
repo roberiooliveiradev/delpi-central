@@ -27,6 +27,7 @@ import {
   mergeChartPartsWithOptions,
   mergeKpiPartsWithOptions,
   normalizeHrefInput,
+  normalizeCanvasTableCells,
   partsToChartOptions,
   partsToKpiOptions,
   resolveEntranceAnimation,
@@ -217,6 +218,51 @@ export function ComunicadoElementInspector({
       </DeckPropertySection>
 
       {/* Irmãos L1 — evita FormatPaneSection aninhado (4M.3). */}
+      {!multiSelect && selected.type === "canvas_table" ? (
+        <DeckPropertySection pane={pane} title="Tabela (canvas)" defaultOpen>
+          <DeckField id="td-canvas-table-rows" label="Linhas">
+            <NativeTextControl
+              id="td-canvas-table-rows"
+              type="number"
+              min={1}
+              max={20}
+              value={selected.rows}
+              onChange={(value) => {
+                const rows = Math.max(1, Math.min(20, Number(value) || 1));
+                updateSelected({
+                  rows,
+                  cells: normalizeCanvasTableCells(selected.cells, rows, selected.cols),
+                });
+              }}
+            />
+          </DeckField>
+          <DeckField id="td-canvas-table-cols" label="Colunas">
+            <NativeTextControl
+              id="td-canvas-table-cols"
+              type="number"
+              min={1}
+              max={12}
+              value={selected.cols}
+              onChange={(value) => {
+                const cols = Math.max(1, Math.min(12, Number(value) || 1));
+                updateSelected({
+                  cols,
+                  cells: normalizeCanvasTableCells(selected.cells, selected.rows, cols),
+                });
+              }}
+            />
+          </DeckField>
+          <label className="td-deck-inspector__checkbox">
+            <input
+              type="checkbox"
+              checked={selected.headerRow ?? false}
+              onChange={(event) => updateSelected({ headerRow: event.target.checked })}
+            />
+            Primeira linha como cabeçalho
+          </label>
+        </DeckPropertySection>
+      ) : null}
+
       {!multiSelect && isDataBlock ? (
         <DataBindingInspector route={selectedRoute} pane={pane} branchScope={branchScope} />
       ) : null}
