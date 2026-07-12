@@ -1,5 +1,5 @@
 import { Globe } from "lucide-react";
-import { NativeSlideView } from "@delpi/tv-dashboard-presentation";
+import { DesignViewportStage, NativeSlideView } from "@delpi/tv-dashboard-presentation";
 
 import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import { ExternalSlidePreview } from "../presentation/ExternalSlidePreview";
@@ -9,10 +9,17 @@ type Props = {
   slide: Slide;
   playlistId: string;
   previewSlide?: PresentationPayload["slides"][number];
+  viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
 };
 
-export function SlideStagePreview({ slide, playlistId, previewSlide, masterConfig }: Props) {
+export function SlideStagePreview({
+  slide,
+  playlistId,
+  previewSlide,
+  viewportProfile = "1080p",
+  masterConfig,
+}: Props) {
   if (slide.slideType === "external") {
     return (
       <div className="td-deck-stage__preview">
@@ -37,7 +44,9 @@ export function SlideStagePreview({ slide, playlistId, previewSlide, masterConfi
 
   return (
     <div className="td-deck-stage__preview">
-      <NativeSlideView native={native} />
+      <DesignViewportStage viewportProfile={viewportProfile}>
+        <NativeSlideView native={native} comunicadoFontScale={1} />
+      </DesignViewportStage>
     </div>
   );
 }

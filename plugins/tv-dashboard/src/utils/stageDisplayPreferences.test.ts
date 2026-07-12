@@ -54,6 +54,6 @@ describe("stageDisplayPreferences", () => {
 
   it("limita zoom ao intervalo válido", () => {
     expect(normalizeStageDisplayPreferences({ stageZoom: 9 }).stageZoom).toBe(2);
-    expect(normalizeStageDisplayPreferences({ stageZoom: 0.1 }).stageZoom).toBe(0.5);
+    expect(normalizeStageDisplayPreferences({ stageZoom: 0.05 }).stageZoom).toBe(0.1);
   });
 });

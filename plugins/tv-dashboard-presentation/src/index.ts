@@ -15,6 +15,11 @@ export {
 export type { PresentationRealtimeEvent } from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
+export { DesignViewportStage } from "./DesignViewportStage";
+export {
+  resolveViewportPixelSize,
+  type ViewportPixelSize,
+} from "./viewportPixelSize";
 export { formatPct, formatNumber } from "./nativeFormat";
 export type {
   PresentationMeta,

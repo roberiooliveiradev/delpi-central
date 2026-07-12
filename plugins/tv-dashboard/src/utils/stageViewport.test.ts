@@ -8,8 +8,8 @@ import {
 } from "./stageViewport";
 
 describe("stageViewport", () => {
-  it("limita zoom entre 50% e 200%", () => {
-    expect(clampStageZoom(0.2)).toBe(0.5);
+  it("limita zoom entre 10% e 200%", () => {
+    expect(clampStageZoom(0.05)).toBe(0.1);
     expect(clampStageZoom(3)).toBe(2);
     expect(clampStageZoom(1.234)).toBe(1.23);
   });

@@ -644,6 +644,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
           playlistId={playlistId}
           globalRefreshSec={playlist.globalRefreshSec}
           slideId={selectedSlide.id}
+          viewportProfile={playlist.viewportProfile}
           masterConfig={playlist.masterConfig}
           value={editorComunicadoValue}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
@@ -671,6 +672,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
                     slide={selectedSlide}
                     playlistId={playlistId}
                     previewSlide={previewBySlideId[selectedSlide.id]}
+                    viewportProfile={playlist.viewportProfile}
                     masterConfig={playlist.masterConfig}
                   />
                 </div>

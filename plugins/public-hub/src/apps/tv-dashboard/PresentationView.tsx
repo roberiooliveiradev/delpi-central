@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
 
 import {
+  DesignViewportStage,
   NativeSlideView,
   PresentationStageControls,
   usePresentationChromeVisibility,
@@ -92,23 +93,25 @@ export function PresentationView({
           Pré-visualização · ← → slides · Espaço pausa
         </div>
       ) : null}
-      {(slides as PublicSlide[]).map((slide: PublicSlide, slideIndex: number) => {
-        const active = slideIndex === index;
-        const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
-        return (
-          <div
-            key={slide.id}
-            className={`tdp-slide tdp-slide--${slideTransition}${active ? " tdp-slide--active" : ""}`}
-            aria-hidden={!active}
-          >
-            {slide.slideType === "native" && slide.native ? (
-              <NativeSlideView native={slide.native} />
-            ) : (
-              <ExternalSlideView slide={slide} active={active} />
-            )}
-          </div>
-        );
-      })}
+      <DesignViewportStage viewportProfile={viewport} className="tdp-stage__design">
+        {(slides as PublicSlide[]).map((slide: PublicSlide, slideIndex: number) => {
+          const active = slideIndex === index;
+          const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
+          return (
+            <div
+              key={slide.id}
+              className={`tdp-slide tdp-slide--${slideTransition}${active ? " tdp-slide--active" : ""}`}
+              aria-hidden={!active}
+            >
+              {slide.slideType === "native" && slide.native ? (
+                <NativeSlideView native={slide.native} comunicadoFontScale={1} />
+              ) : (
+                <ExternalSlideView slide={slide} active={active} />
+              )}
+            </div>
+          );
+        })}
+      </DesignViewportStage>
       <PresentationStageControls
         index={index}
         total={slides.length}

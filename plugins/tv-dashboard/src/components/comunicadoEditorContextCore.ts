@@ -58,6 +58,8 @@ export type DataPanelIntent = "binding" | "catalog";
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
+  /** Perfil de viewport da playlist — define o tamanho de design do palco. */
+  viewportProfile: string;
   /** Slide cujo config já foi aplicado no provider (pode atrasar 1 frame vs selectedSlideId). */
   appliedSlideId?: string;
   blocks: ComunicadoBlock[];

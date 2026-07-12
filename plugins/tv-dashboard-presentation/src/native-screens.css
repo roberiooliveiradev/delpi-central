@@ -664,6 +664,18 @@
   flex: 1 1 auto;
 }
 
+.tdp-stage__design {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.tdp-design-viewport__stage {
+  position: relative;
+  overflow: hidden;
+  background: inherit;
+}
+
 .tdp-stage--preview-shell:fullscreen {
   background: #05070a;
 }

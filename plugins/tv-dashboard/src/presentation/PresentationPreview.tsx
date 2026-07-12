@@ -5,6 +5,7 @@ import {
   usePresentationChromeVisibility,
   PresentationStageControls,
   NativeSlideView,
+  DesignViewportStage,
   buildAdminPresentationWsUrl,
   resolveSlideTransitionStyle,
 } from "@delpi/tv-dashboard-presentation";
@@ -93,28 +94,30 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       >
         Pré-visualização · ← → slides · Espaço pausa · duplo-clique = tela cheia
       </div>
-      {slides.map((slide, slideIndex) => {
-        const active = slideIndex === index;
-        const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
-        return (
-          <div
-            key={slide.id}
-            className={`tdp-slide tdp-slide--${slideTransition}${active ? " tdp-slide--active" : ""}`}
-            aria-hidden={!active}
-          >
-            {slide.slideType === "native" && slide.native ? (
-              <NativeSlideView native={slide.native} />
-            ) : (
-              <ExternalSlidePreview
-                url={slide.external?.url}
-                title={slide.title}
-                sandbox={slide.external?.sandbox}
-                active={active}
-              />
-            )}
-          </div>
-        );
-      })}
+      <DesignViewportStage viewportProfile={viewport} className="tdp-stage__design">
+        {slides.map((slide, slideIndex) => {
+          const active = slideIndex === index;
+          const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
+          return (
+            <div
+              key={slide.id}
+              className={`tdp-slide tdp-slide--${slideTransition}${active ? " tdp-slide--active" : ""}`}
+              aria-hidden={!active}
+            >
+              {slide.slideType === "native" && slide.native ? (
+                <NativeSlideView native={slide.native} comunicadoFontScale={1} />
+              ) : (
+                <ExternalSlidePreview
+                  url={slide.external?.url}
+                  title={slide.title}
+                  sandbox={slide.external?.sandbox}
+                  active={active}
+                />
+              )}
+            </div>
+          );
+        })}
+      </DesignViewportStage>
       <PresentationStageControls
         index={index}
         total={slides.length}

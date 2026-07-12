@@ -117,8 +117,12 @@ export function newBlockId(): string {
 const DEFAULT_BACKGROUND: ComunicadoBackground = { type: "color", value: "#ffffff" };
 const DEFAULT_HEADLINE = "Título";
 
-/** Escala tipográfica do palco no editor (miniatura e preview devem usar o mesmo valor). */
-export const COMUNICADO_EDITOR_FONT_SCALE = 0.35;
+/**
+ * Escala tipográfica quando o palco já está no tamanho de design do `viewportProfile`.
+ * Preferir `fontScale={1}` + escala CSS uniforme (`DesignViewportStage` / zoom do editor).
+ * @deprecated Mantido em 1 para compatibilidade; não usar fator fixo (ex.: 0.35).
+ */
+export const COMUNICADO_EDITOR_FONT_SCALE = 1;
 
 const DATA_BLOCK_TYPES = new Set(["data_kpi", "data_chart", "data_table", "data_metric"]);
 
@@ -962,14 +966,18 @@ export function comunicadoTextInnerStyle(
   return css;
 }
 
-function applySharedBlockVisualStyle(style: NonNullable<ComunicadoBlock["style"]>, css: CSSProperties) {
+function applySharedBlockVisualStyle(
+  style: NonNullable<ComunicadoBlock["style"]>,
+  css: CSSProperties,
+  fontScale = 1,
+) {
   if (style.backgroundColor) css.backgroundColor = style.backgroundColor;
   if (style.borderWidth != null && style.borderWidth > 0 && (style.borderColor || style.stroke)) {
-    css.border = `${style.borderWidth}px solid ${style.borderColor ?? style.stroke}`;
+    css.border = `${style.borderWidth * fontScale}px solid ${style.borderColor ?? style.stroke}`;
   } else if (style.strokeWidth != null && style.strokeWidth > 0 && style.stroke) {
-    css.border = `${style.strokeWidth}px solid ${style.stroke}`;
+    css.border = `${style.strokeWidth * fontScale}px solid ${style.stroke}`;
   }
-  if (style.borderRadius != null) css.borderRadius = style.borderRadius;
+  if (style.borderRadius != null) css.borderRadius = style.borderRadius * fontScale;
   if (style.boxShadow) css.boxShadow = style.boxShadow;
 }
 
@@ -996,7 +1004,7 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     // Ponto: placement já é bbox (não centro com translate); só rotaciona no próprio box.
     css.transform = `rotate(${style.rotation}deg)`;
   }
-  applySharedBlockVisualStyle(style, css);
+  applySharedBlockVisualStyle(style, css, fontScale);
 
   if (isComunicadoVisualBoxBlock(block)) {
     const profile = resolveVisualBoxProfile(block);

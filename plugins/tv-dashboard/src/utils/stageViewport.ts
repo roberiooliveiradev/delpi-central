@@ -1,4 +1,5 @@
-export const STAGE_ZOOM_MIN = 0.5;
+/** Mínimo baixo o bastante para encaixar 4K (3840×2160) no wrap do editor. */
+export const STAGE_ZOOM_MIN = 0.1;
 export const STAGE_ZOOM_MAX = 2;
 export const STAGE_RULER_UNITS = 100;
 export const STAGE_RULER_SIZE_PX = 22;

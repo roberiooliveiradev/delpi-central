@@ -846,8 +846,10 @@
 
 .dashboard-tv-dashboard .td-composer__canvas {
   position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
+  flex: none;
+  width: auto;
+  height: auto;
+  aspect-ratio: auto;
   border-radius: 0;
   overflow: hidden;
   /*
@@ -864,6 +866,11 @@
   --tdp-data-bg: #ffffff;
   --tdp-data-surface: #ffffff;
   --tdp-data-border: #b4b4b4;
+}
+
+.dashboard-tv-dashboard .td-composer__canvas-zoom-sizer {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap {
@@ -902,8 +909,8 @@
 }
 
 .dashboard-tv-dashboard .td-composer__canvas--zoomed {
-  transform: scale(var(--td-composer-zoom, 1));
-  transform-origin: top center;
+  /* Zoom passa a ser inline no canvas (pixels de design × stageZoom). */
+  transform: none;
 }
 
 .dashboard-tv-dashboard .td-composer__stage-grid {
@@ -3775,8 +3782,7 @@
 
 .dashboard-tv-dashboard .td-deck-filmstrip .td-slide-thumb {
   width: 100%;
-  /* height explícita (não só aspect-ratio) — CenteredScaledPreview precisa clientHeight > 0 */
-  aspect-ratio: 16 / 9;
+  /* Proporção via style inline (viewportProfile); altura mínima para CenteredScaledPreview. */
   height: auto;
   min-height: 72px;
   position: relative;
@@ -3836,7 +3842,7 @@
   width: 100%;
   height: 100%;
   max-height: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: auto;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--td-border) 80%, transparent);
@@ -3906,8 +3912,8 @@
 }
 
 .dashboard-tv-dashboard .td-deck-stage__editor .td-composer__canvas-wrap--full .td-composer__canvas {
-  flex: 1;
-  min-height: 240px;
+  flex: none;
+  min-height: 0;
 }
 
 .dashboard-tv-dashboard .td-deck-stage__editor .td-composer__layout {

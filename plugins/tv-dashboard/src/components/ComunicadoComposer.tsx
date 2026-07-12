@@ -1,5 +1,4 @@
 import {
-  COMUNICADO_EDITOR_FONT_SCALE,
   adjustmentHandleCssPosition,
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
@@ -9,13 +8,14 @@ import {
   isFetchableDataBlockType,
   resolveBlockSelectionBorderRadiusPx,
   resolveBlockShapeChromeAdjustmentValues,
+  resolveViewportPixelSize,
   shouldHideDataSourceOnStage,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
   useComunicadoGoogleFonts,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
@@ -99,14 +99,26 @@ export function ComunicadoComposerCanvas() {
     showStageGrid,
     showStageGuides,
     updateBlock,
+    viewportProfile,
+    stageZoom,
+    fitStageToView,
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
   const canvasStyle = useCanvasBackgroundStyle();
+  const designSize = useMemo(
+    () => resolveViewportPixelSize(viewportProfile),
+    [viewportProfile],
+  );
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const marqueeActiveRef = useRef(false);
   const marqueeStartClientRef = useRef<{ x: number; y: number } | null>(null);
   const marqueeRectRef = useRef<MarqueeRect | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => fitStageToView(), 0);
+    return () => window.clearTimeout(timer);
+  }, [designSize.width, designSize.height, fitStageToView, viewportProfile]);
 
   const clientToCanvasPercent = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -243,20 +255,34 @@ export function ComunicadoComposerCanvas() {
   return (
     <ComunicadoStageShell>
       <div
-        ref={canvasRef}
-        className="td-composer__canvas td-composer__canvas--zoomed"
-        style={canvasStyle}
-        onPointerDown={handleCanvasPointerDown}
-        onContextMenu={handleCanvasContextMenu}
+        className="td-composer__canvas-zoom-sizer"
+        style={{
+          width: designSize.width * stageZoom,
+          height: designSize.height * stageZoom,
+        }}
       >
-        <MasterLogoOverlay />
-        {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
-        {showStageGuides ? (
-          <>
-            <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
-            <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
-          </>
-        ) : null}
+        <div
+          ref={canvasRef}
+          className="td-composer__canvas"
+          data-viewport={viewportProfile || "1080p"}
+          style={{
+            ...canvasStyle,
+            width: designSize.width,
+            height: designSize.height,
+            transform: `scale(${stageZoom})`,
+            transformOrigin: "top left",
+          }}
+          onPointerDown={handleCanvasPointerDown}
+          onContextMenu={handleCanvasContextMenu}
+        >
+          <MasterLogoOverlay />
+          {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
+          {showStageGuides ? (
+            <>
+              <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
+              <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
+            </>
+          ) : null}
           {blocks.map((block) => {
             if (isDataSourceBlockType(block.type) && shouldHideDataSourceOnStage(block.id, blocks)) {
               return null;
@@ -306,7 +332,7 @@ export function ComunicadoComposerCanvas() {
               >
                 <ComunicadoEditorBlockView
                   block={block}
-                  fontScale={COMUNICADO_EDITOR_FONT_SCALE}
+                  fontScale={1}
                   isSelected={isSelected}
                   isEditingText={editingTextId === block.id}
                   className={isSelected ? "td-composer__block--selected" : ""}
@@ -360,6 +386,7 @@ export function ComunicadoComposerCanvas() {
           {marqueeStyle ? (
             <div className="td-composer__marquee" style={marqueeStyle} aria-hidden="true" />
           ) : null}
+        </div>
       </div>
       <ComunicadoStageContextMenu
         open={contextMenu != null}

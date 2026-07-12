@@ -55,6 +55,8 @@ type ProviderProps = {
   playlistId: string;
   slideId?: string;
   globalRefreshSec?: number;
+  /** Dimensão canônica do slide (720p / 1080p / 4k / portrait). */
+  viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
   value: Record<string, unknown>;
   onChange: (config: Record<string, unknown>) => void;
@@ -101,6 +103,7 @@ export function ComunicadoEditorProvider({
   playlistId,
   slideId,
   globalRefreshSec = 300,
+  viewportProfile = "1080p",
   masterConfig,
   value,
   onChange,
@@ -333,6 +336,7 @@ export function ComunicadoEditorProvider({
 
   const ctxValue: ComunicadoEditorContextValue = {
     config,
+    viewportProfile: viewportProfile || "1080p",
     appliedSlideId,
     blocks,
     selectedIds: selection.selectedIds,

@@ -1,8 +1,5 @@
 import { Globe } from "lucide-react";
-import {
-  COMUNICADO_EDITOR_FONT_SCALE,
-  NativeSlideView,
-} from "@delpi/tv-dashboard-presentation";
+import { NativeSlideView } from "@delpi/tv-dashboard-presentation";
 import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
 
 import type { PlaylistMasterConfig, Slide } from "../api/tvDashboardApi";
@@ -43,7 +40,11 @@ export function SlideCardThumbnail({
   const { width, height } = resolveViewportPixelSize(viewportProfile);
 
   return (
-    <div className="td-slide-thumb" aria-hidden="true">
+    <div
+      className="td-slide-thumb"
+      aria-hidden="true"
+      style={{ aspectRatio: `${width} / ${height}` }}
+    >
       <CenteredScaledPreview
         referenceWidth={width}
         referenceHeight={height}
@@ -55,7 +56,7 @@ export function SlideCardThumbnail({
           data-viewport={viewportProfile || "1080p"}
           style={{ width, height }}
         >
-          <NativeSlideView native={native} comunicadoFontScale={COMUNICADO_EDITOR_FONT_SCALE} />
+          <NativeSlideView native={native} comunicadoFontScale={1} />
         </div>
       </CenteredScaledPreview>
     </div>
