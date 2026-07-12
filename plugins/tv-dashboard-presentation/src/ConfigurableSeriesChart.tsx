@@ -5,8 +5,11 @@ import {
   type ConfigurableSeriesChartProps as PluginUiConfigurableSeriesChartProps,
 } from "@delpi/plugin-ui/index";
 
-/** CSS canônico do gráfico de séries (fonte única: plugin-ui). */
-import "../../plugin-ui/src/styles/series-chart.css";
+/**
+ * Estilos do gráfico: `@delpi/plugin-ui/styles` (remote MF via preparePluginUiRemote).
+ * Não importar CSS por caminho relativo a `plugin-ui/` — quebra o build Docker
+ * (contexto sem COPY de plugin-ui).
+ */
 
 export type ConfigurableSeriesChartProps = PluginUiConfigurableSeriesChartProps;
 
