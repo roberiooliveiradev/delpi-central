@@ -7,6 +7,7 @@ import {
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
   resolveKpiIconBoxStyle,
+  resolveKpiPartFontSize,
   upsertKpiPartState,
 } from "./kpiCardParts";
 import {
@@ -29,7 +30,9 @@ describe("kpiCardParts adapters", () => {
     expect(parts.hint?.content).toBe("meta");
     expect(parts.icon?.visible).toBe(true);
     expect(parts.card?.style?.fill).toBe("#fff");
-
+    expect(parts.title?.style?.fontSize).toBe(14);
+    expect(parts.value?.style?.fontSize).toBe(48);
+    expect(parts.hint?.style?.fontSize).toBe(12);
     const back = partsToKpiOptions(parts);
     expect(back.title).toBe("OEE");
     expect(back.subtitle).toBe("meta");
@@ -110,6 +113,13 @@ describe("kpi icon layout", () => {
     expect(css.color).toBe("#0af");
     expect(css.borderRadius).toBe("10px");
     expect(css.borderWidth).toBe("2px");
+  });
+
+  it("resolveKpiPartFontSize usa defaults canônicos quando sem fontSize", () => {
+    expect(resolveKpiPartFontSize("title")).toBe(14);
+    expect(resolveKpiPartFontSize("value")).toBe(48);
+    expect(resolveKpiPartFontSize("hint")).toBe(12);
+    expect(resolveKpiPartFontSize("value", { fontSize: 72 })).toBe(72);
   });
 
   it("upsertKpiPartState faz merge de frame e limpa com null", () => {

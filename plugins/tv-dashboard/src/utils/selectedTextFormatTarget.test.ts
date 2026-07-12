@@ -65,6 +65,17 @@ describe("selectedTextFormatTarget", () => {
     }
   });
 
+  it("resolve valor do KPI com default 48 quando sem fontSize persistido", () => {
+    const target = resolveSelectedTextFormatTarget({
+      selected: kpiBlock,
+      selectedKpiPart: { kind: "value" },
+    });
+    expect(target?.mode).toBe("part");
+    if (target?.mode === "part") {
+      expect(target.style.fontSize).toBe(48);
+    }
+  });
+
   it("resolve parte título do gráfico", () => {
     const target = resolveSelectedTextFormatTarget({
       selected: chartBlock,

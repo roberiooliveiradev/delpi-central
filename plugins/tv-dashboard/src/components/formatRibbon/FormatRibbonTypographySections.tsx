@@ -24,6 +24,7 @@ import {
   COMUNICADO_FONT_SIZE_STEP,
   COMUNICADO_LINE_HEIGHT_OPTIONS,
   COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
+  KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
   clampFontSize,
   comunicadoFontFamilyOptions,
@@ -109,7 +110,22 @@ export function FormatRibbonTypographySections() {
     textFormatTarget.mode === "block" && textFormatTarget.blockType === "shape";
   const showParagraphAlign = textFormatTargetSupportsParagraphAlign(textFormatTarget);
   const formatStyle = textFormatTarget.style;
-  const fontSizeDefault = isTextBlock ? 32 : isShapeTextTarget ? 18 : PART_FONT_SIZE_DEFAULT;
+  const kpiPartKind =
+    textFormatTarget.mode === "part" && textFormatTarget.source === "kpi"
+      ? selectedKpiPart?.kind
+      : null;
+  const fontSizeDefault =
+    isTextBlock
+      ? 32
+      : isShapeTextTarget
+        ? 18
+        : kpiPartKind === "value"
+          ? KPI_PART_FONT_SIZE_DEFAULTS.value
+          : kpiPartKind === "title"
+            ? KPI_PART_FONT_SIZE_DEFAULTS.title
+            : kpiPartKind === "hint"
+              ? KPI_PART_FONT_SIZE_DEFAULTS.hint
+              : PART_FONT_SIZE_DEFAULT;
   const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
   const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
   const textAlignActive =

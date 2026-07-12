@@ -163,4 +163,12 @@ describe("DelpiKpiCard chrome", () => {
     expect(icon.style.height).toBe("96px");
   });
 
+  it("valor usa tipografia padrão 48px (alinhada à ribbon), sem auto-fit", () => {
+    const { container } = render(
+      <DelpiKpiCard label="Consumo" value="10" />,
+    );
+    const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
+    expect(fit?.style.fontSize).toBe("48px");
+  });
+
 });

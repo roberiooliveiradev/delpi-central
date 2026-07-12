@@ -18,6 +18,8 @@ import {
   mergeKpiPartsWithOptions,
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
+  KPI_PART_FONT_SIZE_DEFAULTS,
+  resolveKpiPartFontSize,
   resolveKpiPartTypographyStyle,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
@@ -51,6 +53,7 @@ export {
   KPI_ICON_DEFAULT_FRAME,
   KPI_ICON_DEFAULT_RADIUS_PX,
   KPI_ICON_DEFAULT_SIZE_PX,
+  KPI_PART_FONT_SIZE_DEFAULTS,
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
   clampKpiPartFrame,
@@ -69,6 +72,7 @@ export {
   partsToKpiOptions,
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
+  resolveKpiPartFontSize,
   resolveKpiPartTypographyStyle,
   serializeKpiPartRef,
   upsertKpiPartState,
@@ -233,6 +237,7 @@ export function DelpiKpiCard({
   const titleTextStyle = resolveKpiPartTypographyStyle(
     {
       ...parts.title?.style,
+      fontSize: resolveKpiPartFontSize("title", parts.title?.style),
       color: resolvedTitleColor,
     },
     { flexPart: false },
@@ -240,6 +245,7 @@ export function DelpiKpiCard({
   const valueTextStyle = resolveKpiPartTypographyStyle(
     {
       ...parts.value?.style,
+      fontSize: resolveKpiPartFontSize("value", parts.value?.style),
       color: resolvedValueColor,
     },
     { flexPart: true },
@@ -247,6 +253,7 @@ export function DelpiKpiCard({
   const hintTextStyle = resolveKpiPartTypographyStyle(
     {
       ...parts.hint?.style,
+      fontSize: resolveKpiPartFontSize("hint", parts.hint?.style),
       color: resolvedHintColor,
     },
     { flexPart: false },
@@ -292,7 +299,7 @@ export function DelpiKpiCard({
     .filter(Boolean)
     .join(" ");
 
-  const valueFontSizePx = parts.value?.style?.fontSize;
+  const valueFontSizePx = resolveKpiPartFontSize("value", parts.value?.style);
 
   /* Uma única árvore de render: tipografia de kpiParts vale com ou sem interaction
    * (TV / deselect no editor). Handlers só existem quando interaction está setada. */

@@ -2,6 +2,7 @@ import {
   chartPartAllowsEdit,
   getChartPartState,
   getKpiPartState,
+  resolveKpiPartFontSize,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoKpiPartRef,
@@ -146,6 +147,7 @@ export function resolveSelectedTextFormatTarget(params: {
 
   if (selected.type === "kpi_view" && isKpiTextFormatPart(selectedKpiPart) && selectedKpiPart) {
     const partStyle = getKpiPartState(selected.kpiParts, selectedKpiPart)?.style;
+    const kind = selectedKpiPart.kind as "title" | "value" | "hint";
     return {
       mode: "part",
       source: "kpi",
@@ -153,7 +155,7 @@ export function resolveSelectedTextFormatTarget(params: {
       partLabel: kpiPartLabel(selectedKpiPart),
       style: {
         fontFamily: partStyle?.fontFamily,
-        fontSize: partStyle?.fontSize,
+        fontSize: resolveKpiPartFontSize(kind, partStyle),
         fontWeight:
           partStyle?.fontWeight != null ? String(partStyle.fontWeight) : undefined,
         fontStyle: partStyle?.fontStyle,

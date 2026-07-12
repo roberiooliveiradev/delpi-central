@@ -105,6 +105,26 @@ export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 8, w: 14, h: 28 
 export const KPI_ICON_DEFAULT_SIZE_PX = 44;
 export const KPI_ICON_DEFAULT_RADIUS_PX = 14;
 
+/** Tipografia padrão das partes — mesma base da ribbon Formatar. */
+export const KPI_PART_FONT_SIZE_DEFAULTS = {
+  title: 14,
+  value: 48,
+  hint: 12,
+} as const;
+
+export type KpiTextPartKind = keyof typeof KPI_PART_FONT_SIZE_DEFAULTS;
+
+export function resolveKpiPartFontSize(
+  kind: KpiTextPartKind,
+  style?: KpiPartStyle | null,
+): number {
+  const explicit = style?.fontSize;
+  if (explicit != null && Number.isFinite(explicit) && explicit > 0) {
+    return Math.round(explicit);
+  }
+  return KPI_PART_FONT_SIZE_DEFAULTS[kind];
+}
+
 export function clampKpiPartFrame(frame: KpiPartFrame): KpiPartFrame {
   const w = Math.max(4, Math.min(80, frame.w ?? KPI_ICON_DEFAULT_FRAME.w ?? 14));
   const h = Math.max(4, Math.min(80, frame.h ?? KPI_ICON_DEFAULT_FRAME.h ?? 28));
@@ -332,14 +352,19 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
     title: {
       visible: options?.showTitle !== false,
       content: options?.title,
+      style: { fontSize: KPI_PART_FONT_SIZE_DEFAULTS.title },
     },
     value: {
       visible: true,
-      style: { color: options?.valueColor },
+      style: {
+        color: options?.valueColor,
+        fontSize: KPI_PART_FONT_SIZE_DEFAULTS.value,
+      },
     },
     hint: {
       visible: Boolean(options?.subtitle?.trim()),
       content: options?.subtitle,
+      style: { fontSize: KPI_PART_FONT_SIZE_DEFAULTS.hint },
     },
     icon: {
       visible: options?.showIcon !== false,
