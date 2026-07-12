@@ -63,30 +63,30 @@ export function SlideDeckRibbon({
             primary
             onClick={onAdd}
           />
-          <div className="td-deck-ribbon__split-side">
+          <div className="td-deck-ribbon__slide-nav" role="group" aria-label="Trocar slide">
             <HintAction hint={H.prevSlide} ariaLabel="Ajuda: Anterior">
               <button
                 type="button"
-                className="td-btn td-btn--sm td-btn--icon"
+                className="td-btn td-btn--sm td-btn--icon td-deck-ribbon__slide-nav-btn"
                 disabled={slides.length < 2}
                 onClick={() => goTo(-1)}
                 aria-label="Slide anterior"
               >
-                <ChevronLeft size={15} aria-hidden="true" />
+                <ChevronLeft size={16} aria-hidden="true" />
               </button>
             </HintAction>
-            <span className="td-deck-ribbon__counter">
-              {slides.length ? `${selectedIndex + 1} / ${slides.length}` : "0 / 0"}
+            <span className="td-deck-ribbon__counter" aria-live="polite">
+              {slides.length ? `${Math.max(selectedIndex, 0) + 1} / ${slides.length}` : "0 / 0"}
             </span>
             <HintAction hint={H.nextSlide} ariaLabel="Ajuda: Próximo">
               <button
                 type="button"
-                className="td-btn td-btn--sm td-btn--icon"
+                className="td-btn td-btn--sm td-btn--icon td-deck-ribbon__slide-nav-btn"
                 disabled={slides.length < 2}
                 onClick={() => goTo(1)}
                 aria-label="Próximo slide"
               >
-                <ChevronRight size={15} aria-hidden="true" />
+                <ChevronRight size={16} aria-hidden="true" />
               </button>
             </HintAction>
           </div>

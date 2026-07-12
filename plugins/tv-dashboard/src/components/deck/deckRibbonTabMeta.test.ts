@@ -31,4 +31,12 @@ describe("deckRibbonTabMeta (Onda 4K/4L)", () => {
       expect.arrayContaining(["insert", "format", "chart", "shape", "view"]),
     );
   });
+
+  it("sempre inclui Programação e Página Inicial", () => {
+    const tabs = resolveDeckRibbonTabs(true);
+    expect(tabs.map((tab) => tab.id)).toEqual(
+      expect.arrayContaining(["home", "playlist", "slide", "insert"]),
+    );
+    expect(tabs.find((tab) => tab.id === "playlist")?.label).toBe("Programação");
+  });
 });

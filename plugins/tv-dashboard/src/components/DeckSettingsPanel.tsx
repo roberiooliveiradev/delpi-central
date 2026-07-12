@@ -4,6 +4,7 @@ import {
   ArrowLeftRight,
   Building2,
   CalendarRange,
+  Copy,
   Globe,
   Image as ImageIcon,
   LayoutTemplate,
@@ -24,6 +25,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BranchField } from "./BranchField";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
 import { DeckIconField } from "./deck/DeckIconField";
+import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
@@ -94,6 +96,7 @@ export function DeckSettingsPanel({
   const [branch, setBranch] = useState("");
   const [periodDays, setPeriodDays] = useState(30);
   const [masterUploading, setMasterUploading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
 
@@ -332,139 +335,167 @@ export function DeckSettingsPanel({
 
   if (activeTab === "playlist") {
     return (
-      <div className="td-deck-settings-strip">
-        <div className="td-deck-tabs__grid">
-          <TdNativeSelectField
-            id="td-viewport"
-            label="Resolução alvo"
-            hint={F.viewport}
-            value={playlist.viewportProfile}
-            onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
-            options={VIEWPORT_OPTIONS}
-          />
-          <TdNativeSelectField
-            id="td-transition"
-            label="Transição"
-            hint={F.transition}
-            value={playlist.transitionStyle}
-            onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
-            options={TRANSITION_OPTIONS}
-          />
-          <TdNativeTextField
-            id="td-duration-default"
-            label="Duração padrão (s)"
-            hint={F.defaultDuration}
-            type="number"
-            min={5}
-            max={600}
-            value={String(playlist.defaultDurationSec)}
-            onChange={(value) => onSavePlaylistSettings("defaultDurationSec", Number(value))}
-          />
-          <TdNativeTextField
-            id="td-refresh"
-            label="Atualizar dados a cada (s)"
-            hint={F.refreshInterval}
-            type="number"
-            min={30}
-            max={3600}
-            value={String(playlist.globalRefreshSec)}
-            onChange={(value) => onSavePlaylistSettings("globalRefreshSec", Number(value))}
-          />
-          <TdNativeTextField
-            id="td-public-url"
-            label="Link público"
-            hint={F.publicUrl}
-            className="td-deck-tabs__field--wide"
-            value={playlist.publicUrl ?? ""}
-            onChange={() => undefined}
-            readOnly
-          />
-        </div>
+      <div className="td-deck-settings-strip td-deck-settings-strip--playlist">
+        <div className="td-deck-playlist-groups">
+          <DeckRibbonGroup label="Rotação" hint={F.viewport}>
+            <div className="td-deck-tabs__grid td-deck-tabs__grid--playlist-rotation">
+              <TdNativeSelectField
+                id="td-viewport"
+                label="Resolução alvo"
+                hint={F.viewport}
+                value={playlist.viewportProfile}
+                onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
+                options={VIEWPORT_OPTIONS}
+              />
+              <TdNativeSelectField
+                id="td-transition"
+                label="Transição"
+                hint={F.transition}
+                value={playlist.transitionStyle}
+                onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
+                options={TRANSITION_OPTIONS}
+              />
+              <TdNativeTextField
+                id="td-duration-default"
+                label="Duração padrão (s)"
+                hint={F.defaultDuration}
+                type="number"
+                min={5}
+                max={600}
+                value={String(playlist.defaultDurationSec)}
+                onChange={(value) => onSavePlaylistSettings("defaultDurationSec", Number(value))}
+              />
+              <TdNativeTextField
+                id="td-refresh"
+                label="Atualizar dados a cada (s)"
+                hint={F.refreshInterval}
+                type="number"
+                min={30}
+                max={3600}
+                value={String(playlist.globalRefreshSec)}
+                onChange={(value) => onSavePlaylistSettings("globalRefreshSec", Number(value))}
+              />
+            </div>
+          </DeckRibbonGroup>
 
-        <div className="td-deck-master">
-          <div className="td-deck-master__header">
-            <ImageIcon size={14} aria-hidden="true" />
-            <strong>Master slide</strong>
-            <NativeCheckboxControl
-              className="td-deck-master__toggle"
-              label="Ativo em telas livres"
-              checked={masterEnabled}
-              onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
-            />
-          </div>
-          <p className="td-subtitle">
-            Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3).
-          </p>
-          <div className="td-deck-master__row">
-            <TvRibbonColorPicker
-              label="Fundo sólido"
-              value={masterBgColor}
-              onChange={(color) =>
-                saveMaster(
-                  patchMaster(master, {
-                    enabled: true,
-                    background: { type: "color", value: color },
-                  }),
-                )
-              }
-            />
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
-              disabled={masterUploading}
-              onClick={() => bgInputRef.current?.click()}
-            >
-              <Upload size={14} aria-hidden="true" />
-              Fundo imagem
-            </button>
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
-              disabled={masterUploading}
-              onClick={() => logoInputRef.current?.click()}
-            >
-              <Upload size={14} aria-hidden="true" />
-              Logo
-            </button>
-            {logoUrl ? (
+          <DeckRibbonGroup label="Link público" hint={F.publicUrl} wide>
+            <div className="td-deck-playlist-link">
+              <TdNativeTextField
+                id="td-public-url"
+                label="URL"
+                hint={F.publicUrl}
+                className="td-deck-playlist-link__field"
+                value={playlist.publicUrl ?? ""}
+                onChange={() => undefined}
+                readOnly
+              />
               <button
                 type="button"
                 className="td-btn td-btn--sm"
-                onClick={() => saveMaster(patchMaster(master, { logo: undefined }))}
+                disabled={!playlist.publicUrl}
+                onClick={() => {
+                  const url = playlist.publicUrl;
+                  if (!url) return;
+                  void navigator.clipboard.writeText(url).then(() => {
+                    setLinkCopied(true);
+                    window.setTimeout(() => setLinkCopied(false), 2000);
+                  });
+                }}
+                aria-label="Copiar link público"
               >
-                Remover logo
+                <Copy size={14} aria-hidden="true" />
+                {linkCopied ? "Copiado" : "Copiar"}
               </button>
-            ) : null}
-          </div>
-          {logoUrl ? (
-            <div
-              className="td-deck-master__logo-preview"
-              style={{ backgroundImage: `url(${logoUrl})` }}
-              title="Logo do master"
-            />
-          ) : null}
-          <input
-            ref={logoInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void uploadMasterAsset("logo", file);
-            }}
-          />
-          <input
-            ref={bgInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void uploadMasterAsset("background", file);
-            }}
-          />
+            </div>
+          </DeckRibbonGroup>
+
+          <DeckRibbonGroup
+            label="Master slide"
+            hint="Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3)."
+            wide
+          >
+            <div className="td-deck-master td-deck-master--compact">
+              <div className="td-deck-master__header">
+                <ImageIcon size={14} aria-hidden="true" />
+                <NativeCheckboxControl
+                  className="td-deck-master__toggle"
+                  label="Ativo em telas livres"
+                  checked={masterEnabled}
+                  onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
+                />
+              </div>
+              <div className="td-deck-master__row">
+                <TvRibbonColorPicker
+                  label="Fundo sólido"
+                  value={masterBgColor}
+                  onChange={(color) =>
+                    saveMaster(
+                      patchMaster(master, {
+                        enabled: true,
+                        background: { type: "color", value: color },
+                      }),
+                    )
+                  }
+                />
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm"
+                  disabled={masterUploading}
+                  onClick={() => bgInputRef.current?.click()}
+                >
+                  <Upload size={14} aria-hidden="true" />
+                  Fundo imagem
+                </button>
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm"
+                  disabled={masterUploading}
+                  onClick={() => logoInputRef.current?.click()}
+                >
+                  <Upload size={14} aria-hidden="true" />
+                  Logo
+                </button>
+                {logoUrl ? (
+                  <button
+                    type="button"
+                    className="td-btn td-btn--sm"
+                    onClick={() => saveMaster(patchMaster(master, { logo: undefined }))}
+                  >
+                    Remover logo
+                  </button>
+                ) : null}
+                {logoUrl ? (
+                  <div
+                    className="td-deck-master__logo-preview"
+                    style={{ backgroundImage: `url(${logoUrl})` }}
+                    title="Logo do master"
+                  />
+                ) : null}
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void uploadMasterAsset("logo", file);
+                }}
+              />
+              <input
+                ref={bgInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void uploadMasterAsset("background", file);
+                }}
+              />
+            </div>
+          </DeckRibbonGroup>
         </div>
       </div>
     );

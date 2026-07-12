@@ -158,6 +158,7 @@ export function DeckEditorChrome({
               key={tab.id}
               label={tab.label}
               hint={tab.hint}
+              icon={tab.icon}
               active={activeTab === tab.id}
               disabled={tab.disabledWhenNoSlide ? !slide : false}
               onSelect={() => setActiveTab(tab.id)}
