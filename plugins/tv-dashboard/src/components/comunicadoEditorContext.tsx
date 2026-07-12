@@ -157,6 +157,7 @@ function ComunicadoEditorKeyboardBridge() {
 
 export function ComunicadoEditorProvider({
   playlistId,
+  slideId,
   globalRefreshSec = 300,
   masterConfig,
   value,
@@ -189,6 +190,21 @@ export function ComunicadoEditorProvider({
   >(null);
   const [uploading, setUploading] = useState(false);
   const [historyTick, setHistoryTick] = useState(0);
+  const [appliedSlideId, setAppliedSlideId] = useState(slideId);
+
+  // Troca de slide: sincroniza config no mesmo render (evita 1 frame com gráfico do slide anterior
+  // contaminando o cache do filmstrip / miniatura com gráfico nas duas prévias).
+  if (slideId !== appliedSlideId) {
+    setAppliedSlideId(slideId);
+    const enriched = enrichComunicadoConfigForEditor(value, playlistId);
+    setConfig(enriched);
+    const first = enriched.blocks?.[0]?.id;
+    setSelectedIds(first ? [first] : []);
+    setEditingTextId(null);
+    setSelectedChartPart(null);
+    setEditingChartPart(null);
+    setSelectedTablePart(null);
+  }
 
   const pastRef = useRef<ComunicadoConfig[]>([]);
   const futureRef = useRef<ComunicadoConfig[]>([]);
@@ -371,7 +387,7 @@ export function ComunicadoEditorProvider({
     futureRef.current = [];
     dragSnapshotRef.current = null;
     setHistoryTick((tick) => tick + 1);
-  }, [value, playlistId]);
+  }, [value, playlistId, slideId]);
 
   const { resolvedByBlockId, loading: dataPreviewLoading, error: dataPreviewError } =
     useComunicadoDataPreview({

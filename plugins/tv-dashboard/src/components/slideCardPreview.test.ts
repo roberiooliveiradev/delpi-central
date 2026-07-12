@@ -194,7 +194,11 @@ describe("slideCardPreview", () => {
         slideType: "native",
         title: "Com gráfico",
         nativeScreenKey: "custom_message",
-        nativeConfig: { version: 4, blocks: [] },
+        // Estrutura alinhada ao live (sem resolved) — como no nativeConfig persistido.
+        nativeConfig: {
+          version: 4,
+          blocks: [{ id: "chart-1", type: "chart_view" }],
+        },
         isActive: true,
       },
       {
@@ -254,7 +258,7 @@ describe("slideCardPreview", () => {
         slideType: "native",
         title: "Com gráfico",
         nativeScreenKey: "custom_message",
-        nativeConfig: { version: 4, blocks: [] },
+        nativeConfig: pendingConfig,
         isActive: true,
       },
     ];
@@ -277,6 +281,78 @@ describe("slideCardPreview", () => {
       resolved?: { chart?: { points?: unknown[] } };
     }>;
     expect(blocks?.[0]?.resolved?.chart?.points).toHaveLength(1);
+  });
+
+  it("não contamina prévia do slide B com gráfico do slide A na troca", () => {
+    const cache: Record<string, Record<string, unknown>> = {};
+    const chartConfig = {
+      version: 4,
+      blocks: [
+        {
+          id: "c1",
+          type: "chart_view",
+          resolved: { chart: { points: [{ x: "a", y: 1 }] } },
+        },
+      ],
+    };
+    const blankConfig = {
+      version: 4,
+      background: { type: "color", value: "#ffffff" },
+      blocks: [],
+    };
+    const slides: Slide[] = [
+      {
+        id: "s1",
+        playlistId: "p1",
+        sortOrder: 0,
+        slideType: "native",
+        title: "Com gráfico",
+        nativeScreenKey: "custom_message",
+        nativeConfig: {
+          version: 4,
+          blocks: [{ id: "c1", type: "chart_view" }],
+        },
+        isActive: true,
+      },
+      {
+        id: "s2",
+        playlistId: "p1",
+        sortOrder: 1,
+        slideType: "native",
+        title: "Em branco",
+        nativeScreenKey: "custom_message",
+        nativeConfig: blankConfig,
+        isActive: true,
+      },
+    ];
+
+    buildFilmstripSlidesWithThumbnailCache({
+      slides,
+      selectedSlideId: "s1",
+      liveThumbnailConfig: chartConfig,
+      cache,
+    });
+
+    // Frame da troca: selected já é s2, mas live ainda é o gráfico de s1 (contamina o slot).
+    buildFilmstripSlidesWithThumbnailCache({
+      slides,
+      selectedSlideId: "s2",
+      liveThumbnailConfig: chartConfig,
+      cache,
+    });
+
+    // Catch-up: live em branco deve sobrescrever o fantasma (não manter print anterior).
+    const afterCatchUp = buildFilmstripSlidesWithThumbnailCache({
+      slides,
+      selectedSlideId: "s2",
+      liveThumbnailConfig: blankConfig,
+      cache,
+    });
+    expect(afterCatchUp[1]?.nativeConfig?.blocks ?? []).toEqual([]);
+    const s1Blocks = afterCatchUp[0]?.nativeConfig?.blocks as Array<{
+      resolved?: { chart?: { points?: unknown[] } };
+    }>;
+    expect(s1Blocks?.[0]?.resolved?.chart?.points).toHaveLength(1);
   });
 
   it("tela vazia na miniatura usa fundo branco explícito", () => {

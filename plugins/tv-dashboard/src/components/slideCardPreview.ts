@@ -45,10 +45,35 @@ export function nativeConfigHasResolvedData(config: Record<string, unknown> | nu
   );
 }
 
+const DATAISH_BLOCK_TYPES = new Set([
+  "chart_view",
+  "table_view",
+  "data_source",
+  "data_kpi",
+  "data_chart",
+  "data_table",
+  "data_metric",
+]);
+
+/** True se o config tem blocos de dados/visão que ainda precisam de `resolved` no print. */
+export function nativeConfigNeedsResolvedData(config: Record<string, unknown> | null | undefined): boolean {
+  if (!config || typeof config !== "object") return false;
+  const blocks = config.blocks;
+  if (!Array.isArray(blocks)) return false;
+  return blocks.some((block) => {
+    if (block == null || typeof block !== "object") return false;
+    const type = String((block as { type?: unknown }).type ?? "");
+    return DATAISH_BLOCK_TYPES.has(type);
+  });
+}
+
 /**
  * Monta a lista do filmstrip: slide ativo usa snapshot ao vivo (com resolved);
  * demais slides reutilizam cache para não “sumir” o gráfico ao trocar de tela.
- * Não sobrescreve um print bom com live ainda sem `resolved` (reentrada no slide).
+ *
+ * Mantém print anterior só enquanto o live ainda tem blocos de dados sem `resolved`
+ * (preview carregando). Slide vazio/branco sempre grava o live — evita gráfico
+ * fantasma nas duas prévias após contaminar o cache na troca de slide.
  */
 export function buildFilmstripSlidesWithThumbnailCache(params: {
   slides: Slide[];
@@ -60,7 +85,10 @@ export function buildFilmstripSlidesWithThumbnailCache(params: {
   const previous = cache[selectedSlideId];
   const liveHasResolved = nativeConfigHasResolvedData(liveThumbnailConfig);
   const previousHasResolved = nativeConfigHasResolvedData(previous);
-  if (liveHasResolved || !previousHasResolved) {
+  const liveNeedsResolved = nativeConfigNeedsResolvedData(liveThumbnailConfig);
+  const keepPreviousPrint = !liveHasResolved && liveNeedsResolved && previousHasResolved;
+
+  if (!keepPreviousPrint) {
     cache[selectedSlideId] = liveThumbnailConfig;
   }
 
@@ -69,8 +97,9 @@ export function buildFilmstripSlidesWithThumbnailCache(params: {
     if (!liveIds.has(id)) delete cache[id];
   }
 
-  const selectedNativeConfig =
-    liveHasResolved || !previousHasResolved ? liveThumbnailConfig : (previous ?? liveThumbnailConfig);
+  const selectedNativeConfig = keepPreviousPrint
+    ? (previous as Record<string, unknown>)
+    : liveThumbnailConfig;
 
   return slides.map((slide) => {
     if (slide.slideType !== "native" || slide.nativeScreenKey !== "custom_message") {
