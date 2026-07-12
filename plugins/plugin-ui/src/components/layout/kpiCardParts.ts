@@ -67,7 +67,30 @@ export type KpiCardInteraction = {
   onPartDoubleClick?: (ref: KpiPartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
   onPartContentCommit?: (ref: KpiPartRef, content: string) => void;
   onPartEditCancel?: () => void;
+  /** Arrastar parte já selecionada (frame % relativo ao card). */
+  onPartMovePointerDown?: (ref: KpiPartRef, event: ReactPointerEvent) => void;
+  /** Resize pelos handles (paridade com chart_view). */
+  onPartResizePointerDown?: (
+    ref: KpiPartRef,
+    event: ReactPointerEvent,
+    handle: KpiPartResizeHandle,
+  ) => void;
+  /** Materializa frame % medido no DOM (seleção sem frame prévio). */
+  onPartFrameChange?: (ref: KpiPartRef, frame: KpiPartFrame) => void;
 };
+
+export type KpiPartResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
+
+export const KPI_PART_RESIZE_HANDLES: KpiPartResizeHandle[] = [
+  "nw",
+  "n",
+  "ne",
+  "e",
+  "se",
+  "s",
+  "sw",
+  "w",
+];
 
 export type KpiPartCapabilities = {
   movable: boolean;
@@ -151,6 +174,63 @@ export function clampKpiPartFrame(frame: KpiPartFrame): KpiPartFrame {
     w,
     h,
   };
+}
+
+/** Aplica delta % de resize no frame da parte (igual handles do bloco/chart). */
+export function resizeKpiPartFrame(
+  frame: KpiPartFrame,
+  handle: KpiPartResizeHandle,
+  dx: number,
+  dy: number,
+): KpiPartFrame {
+  let x = frame.x;
+  let y = frame.y;
+  let w = frame.w ?? 20;
+  let h = frame.h ?? 20;
+  switch (handle) {
+    case "se":
+      w += dx;
+      h += dy;
+      break;
+    case "e":
+      w += dx;
+      break;
+    case "s":
+      h += dy;
+      break;
+    case "n":
+      y += dy;
+      h -= dy;
+      break;
+    case "w":
+      x += dx;
+      w -= dx;
+      break;
+    case "ne":
+      y += dy;
+      h -= dy;
+      w += dx;
+      break;
+    case "nw":
+      x += dx;
+      y += dy;
+      w -= dx;
+      h -= dy;
+      break;
+    case "sw":
+      x += dx;
+      w -= dx;
+      h += dy;
+      break;
+    default:
+      break;
+  }
+  return clampKpiPartFrame({ x, y, w, h });
+}
+
+/** Raiz de coordenadas % das partes — o article do card. */
+export function resolveKpiPartFrameRoot(fromEl: HTMLElement | null): HTMLElement | null {
+  return fromEl?.closest(".delpi-kpi-card") ?? null;
 }
 
 export function resolveKpiPartFrame(
@@ -357,6 +437,7 @@ export function bindKpiPartPointer(ref: KpiPartRef, interaction?: KpiCardInterac
   const selected = isKpiPartRefEqual(ref, interaction?.selectedPart);
   const editing = isKpiPartRefEqual(ref, interaction?.editingPart);
   const dom = kpiPartDomProps(ref, interaction?.selectedPart);
+  const moveWhenSelected = kpiPartAllowsMove(ref);
 
   if (!interactive) {
     return {
@@ -373,8 +454,15 @@ export function bindKpiPartPointer(ref: KpiPartRef, interaction?: KpiCardInterac
     selected,
     editing,
     onPointerDown: (event: ReactPointerEvent) => {
+      if (editing) {
+        event.stopPropagation();
+        return;
+      }
       event.stopPropagation();
       interaction?.onPartPointerDown?.(ref, event);
+      if (moveWhenSelected && selected) {
+        interaction?.onPartMovePointerDown?.(ref, event);
+      }
     },
     onDoubleClick: (event: ReactMouseEvent) => {
       event.stopPropagation();

@@ -5,8 +5,10 @@ import {
   deleteKpiPart,
   kpiOptionsToParts,
   kpiPartAllowsFrame,
+  kpiPartAllowsResize,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
+  resizeKpiPartFrame,
   resolveKpiIconBoxStyle,
   resolveKpiPartFontSize,
   resolveKpiPartLayoutStyle,
@@ -137,6 +139,22 @@ describe("kpi icon layout", () => {
     expect(kpiPartAllowsFrame({ kind: "hint" })).toBe(true);
     expect(kpiPartAllowsFrame({ kind: "icon" })).toBe(true);
     expect(kpiPartAllowsFrame({ kind: "card" })).toBe(false);
+  });
+
+  it("resizeKpiPartFrame aplica delta pelos handles", () => {
+    const origin = { x: 10, y: 20, w: 30, h: 40 };
+    expect(resizeKpiPartFrame(origin, "e", 5, 0).w).toBe(35);
+    expect(resizeKpiPartFrame(origin, "s", 0, 5).h).toBe(45);
+    const nw = resizeKpiPartFrame(origin, "nw", -4, -3);
+    expect(nw.x).toBe(6);
+    expect(nw.y).toBe(17);
+    expect(nw.w).toBe(34);
+    expect(nw.h).toBe(43);
+  });
+
+  it("kpiPartAllowsResize cobre partes internas e não o card", () => {
+    expect(kpiPartAllowsResize({ kind: "value" })).toBe(true);
+    expect(kpiPartAllowsResize({ kind: "card" })).toBe(false);
   });
 
   it("resolveKpiPartFontSize usa defaults canônicos quando sem fontSize", () => {

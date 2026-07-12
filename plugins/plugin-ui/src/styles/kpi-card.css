@@ -100,8 +100,18 @@
 
 .delpi-kpi-part--framed {
   z-index: 2;
-  overflow: hidden;
+  overflow: visible;
   max-width: none;
+}
+
+.delpi-kpi-part--resizable {
+  position: relative;
+  overflow: visible;
+}
+
+.delpi-kpi-card:has(.delpi-kpi-part--resizable),
+.delpi-kpi-card:has(.delpi-kpi-part--selected) {
+  overflow: visible;
 }
 
 .delpi-kpi-card__label.delpi-kpi-part--framed,
@@ -113,6 +123,71 @@
 .delpi-kpi-card__value.delpi-kpi-part--framed {
   flex: 0 0 auto;
   width: auto;
+}
+
+.delpi-kpi-part-resize {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  pointer-events: auto;
+  z-index: 5;
+  box-sizing: border-box;
+}
+
+.delpi-kpi-part-resize--nw {
+  left: -5px;
+  top: -5px;
+  cursor: nwse-resize;
+}
+
+.delpi-kpi-part-resize--n {
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.delpi-kpi-part-resize--ne {
+  right: -5px;
+  top: -5px;
+  cursor: nesw-resize;
+}
+
+.delpi-kpi-part-resize--w {
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.delpi-kpi-part-resize--e {
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.delpi-kpi-part-resize--sw {
+  left: -5px;
+  bottom: -5px;
+  cursor: nesw-resize;
+}
+
+.delpi-kpi-part-resize--s {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.delpi-kpi-part-resize--se {
+  right: -5px;
+  bottom: -5px;
+  cursor: nwse-resize;
 }
 
 .delpi-kpi-icon svg {

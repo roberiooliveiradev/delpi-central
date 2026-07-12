@@ -19,15 +19,24 @@ import {
   resolveChartPartFrameRoot,
   upsertChartPartState,
   KpiViewBlockView,
+  clampKpiPartFrame,
+  getKpiPartState,
   kpiPartAllowsEdit,
+  kpiPartAllowsFrame,
+  kpiPartAllowsMove,
+  kpiPartAllowsResize,
   partsToKpiOptions,
+  resizeKpiPartFrame,
+  resolveKpiPartFrameRoot,
   upsertKpiPartState,
   type ComunicadoBlock,
   type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
   type ComunicadoChartViewBlock,
+  type ComunicadoKpiPartFrame,
   type ComunicadoKpiPartRef,
+  type ComunicadoKpiPartResizeHandle,
   type ComunicadoKpiViewBlock,
   type ComunicadoMediaBlock,
   type ComunicadoTablePartRef,
@@ -409,13 +418,28 @@ function EditorKpiViewBlock({
 
   const onPartPointerDown = useCallback(
     (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
-      selectBlock(block.id);
-      /* Card = moldura do bloco: arrastar move o KPI (partes internas só selecionam). */
+      /* Card = moldura do bloco: arrastar move o KPI. */
       if (part.kind === "card" && event) {
+        selectBlock(block.id);
         startDrag(event, block, "move");
+        return;
+      }
+      /* Parte já selecionada: move trata o drag (não re-seleciona). */
+      if (
+        selectedId === block.id &&
+        selectedKpiPart &&
+        selectedKpiPart.kind === part.kind &&
+        kpiPartAllowsMove(part)
+      ) {
+        return;
+      }
+      selectBlock(block.id);
+      if (kpiPartAllowsFrame(part)) {
+        selectKpiPart(block.id, part);
+        requestRibbonTab("shape");
       }
     },
-    [block, selectBlock, startDrag],
+    [block, requestRibbonTab, selectBlock, selectKpiPart, selectedId, selectedKpiPart, startDrag],
   );
 
   const onPartDoubleClick = useCallback(
@@ -464,6 +488,101 @@ function EditorKpiViewBlock({
     [block, commitKpiPartContent, editingKpiPart, updateBlock],
   );
 
+  const onPartMovePointerDown = useCallback(
+    (ref: ComunicadoKpiPartRef, event: ReactPointerEvent) => {
+      if (!kpiPartAllowsMove(ref)) return;
+      const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement);
+      if (!cardRoot) return;
+      event.preventDefault();
+      const rect = cardRoot.getBoundingClientRect();
+      const elRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      const existing = getKpiPartState(block.kpiParts, ref)?.frame;
+      const origin = clampKpiPartFrame({
+        x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
+        y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+      });
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
+      let lastParts = upsertKpiPartState(block.kpiParts, ref, { frame: origin });
+      let dragged = false;
+
+      const onMove = (ev: PointerEvent) => {
+        const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
+        const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
+        if (!dragged && Math.abs(dx) + Math.abs(dy) < 0.4) return;
+        dragged = true;
+        const nextFrame = clampKpiPartFrame({
+          ...origin,
+          x: origin.x + dx,
+          y: origin.y + dy,
+        });
+        lastParts = upsertKpiPartState(lastParts, ref, { frame: nextFrame });
+        updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [block.id, block.kpiParts, updateBlock],
+  );
+
+  const onPartResizePointerDown = useCallback(
+    (
+      ref: ComunicadoKpiPartRef,
+      event: ReactPointerEvent,
+      handle: ComunicadoKpiPartResizeHandle,
+    ) => {
+      if (!kpiPartAllowsResize(ref)) return;
+      const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement);
+      const host = (event.currentTarget as HTMLElement).closest("[data-kpi-part]");
+      if (!cardRoot || !host) return;
+      event.preventDefault();
+      const rect = cardRoot.getBoundingClientRect();
+      const elRect = host.getBoundingClientRect();
+      const existing = getKpiPartState(block.kpiParts, ref)?.frame;
+      const origin = clampKpiPartFrame({
+        x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
+        y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+      });
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
+      let lastParts = upsertKpiPartState(block.kpiParts, ref, { frame: origin });
+
+      const onMove = (ev: PointerEvent) => {
+        const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
+        const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
+        const nextFrame = resizeKpiPartFrame(origin, handle, dx, dy);
+        lastParts = upsertKpiPartState(lastParts, ref, { frame: nextFrame });
+        updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [block.id, block.kpiParts, updateBlock],
+  );
+
+  const onPartFrameChange = useCallback(
+    (ref: ComunicadoKpiPartRef, frame: ComunicadoKpiPartFrame) => {
+      if (!kpiPartAllowsResize(ref) && !kpiPartAllowsMove(ref)) return;
+      const nextParts = upsertKpiPartState(block.kpiParts, ref, { frame });
+      updateBlock(block.id, { kpiParts: nextParts } as Partial<ComunicadoBlock>);
+    },
+    [block.id, block.kpiParts, updateBlock],
+  );
+
   const interaction =
     selectedId === block.id
       ? {
@@ -473,6 +592,9 @@ function EditorKpiViewBlock({
           onPartDoubleClick,
           onPartContentCommit,
           onPartEditCancel: cancelEditKpiPart,
+          onPartMovePointerDown,
+          onPartResizePointerDown,
+          onPartFrameChange,
         }
       : null;
 

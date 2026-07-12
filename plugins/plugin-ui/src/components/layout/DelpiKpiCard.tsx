@@ -1,28 +1,33 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import {
   hasIllegibleTextContrast,
   isAutomaticTextColor,
   resolveAutomaticTextColor,
-  resolvePaintTextColor,
 } from "../shape/colorUtils";
 import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import { FitText } from "./FitText";
+import { KpiPartResizeHandles } from "./KpiPartResizeHandles";
 import { metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard";
 import {
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
+  clampKpiPartFrame,
   getKpiPartState,
   isKpiPartVisible,
+  kpiPartAllowsResize,
   mergeKpiPartsWithOptions,
   resolveKpiIconBoxStyle,
-  resolveKpiPartFrame,
   resolveKpiPartFontSize,
+  resolveKpiPartFrame,
+  resolveKpiPartFrameRoot,
   resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
+  type KpiPartRef,
   type KpiPartsMap,
 } from "./kpiCardParts";
 
@@ -46,6 +51,7 @@ export type {
   KpiFramePartKind,
   KpiPartFrame,
   KpiPartRef,
+  KpiPartResizeHandle,
   KpiPartsMap,
   KpiPartState,
   KpiPartStyle,
@@ -58,6 +64,7 @@ export {
   KPI_PART_DEFAULT_FRAMES,
   KPI_PART_FONT_SIZE_DEFAULTS,
   KPI_PART_DATA_ATTR,
+  KPI_PART_RESIZE_HANDLES,
   bindKpiPartPointer,
   clampKpiPartFrame,
   defaultKpiPartFrame,
@@ -77,10 +84,12 @@ export {
   normalizeKpiPartsForLoad,
   parseKpiPartRef,
   partsToKpiOptions,
+  resizeKpiPartFrame,
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
   resolveKpiPartFontSize,
   resolveKpiPartFrame,
+  resolveKpiPartFrameRoot,
   resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
   serializeKpiPartRef,
@@ -195,6 +204,34 @@ export type DelpiKpiCardProps = {
   interaction?: KpiCardInteraction | null;
 };
 
+function useMaterializeKpiPartFrame(
+  partRef: KpiPartRef,
+  hostRef: { current: HTMLElement | null },
+  showResize: boolean,
+  framed: boolean,
+  onPartFrameChange: KpiCardInteraction["onPartFrameChange"],
+) {
+  useLayoutEffect(() => {
+    if (!showResize || framed || !onPartFrameChange) return;
+    const host = hostRef.current;
+    if (!host) return;
+    const card = resolveKpiPartFrameRoot(host);
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const el = host.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;
+    onPartFrameChange(
+      partRef,
+      clampKpiPartFrame({
+        x: ((el.left - rect.left) / rect.width) * 100,
+        y: ((el.top - rect.top) / rect.height) * 100,
+        w: Math.max(8, (el.width / rect.width) * 100),
+        h: Math.max(4, (el.height / rect.height) * 100),
+      }),
+    );
+  }, [framed, hostRef, onPartFrameChange, partRef, showResize]);
+}
+
 /**
  * Card KPI canônico Delpi composto por primitivos (`card`/`title`/`value`/`hint`/`icon`)
  * com `data-kpi-part` — mesmo padrão de ConfigurableSeriesChart.
@@ -213,6 +250,11 @@ export function DelpiKpiCard({
   kpiOptions,
   interaction = null,
 }: DelpiKpiCardProps) {
+  const titleHostRef = useRef<HTMLParagraphElement>(null);
+  const valueHostRef = useRef<HTMLElement>(null);
+  const hintHostRef = useRef<HTMLParagraphElement>(null);
+  const iconHostRef = useRef<HTMLDivElement>(null);
+
   const parts = mergeKpiPartsWithOptions(kpiParts, {
     title: label,
     subtitle: hint,
@@ -246,14 +288,16 @@ export function DelpiKpiCard({
   const titleState = getKpiPartState(parts, { kind: "title" }) ?? parts.title;
   const valueState = getKpiPartState(parts, { kind: "value" }) ?? parts.value;
   const hintState = getKpiPartState(parts, { kind: "hint" }) ?? parts.hint;
+  const iconState = getKpiPartState(parts, { kind: "icon" }) ?? parts.icon;
   const titleFramed = Boolean(resolveKpiPartFrame(titleState));
   const valueFramed = Boolean(resolveKpiPartFrame(valueState));
   const hintFramed = Boolean(resolveKpiPartFrame(hintState));
+  const iconFramed = Boolean(resolveKpiPartFrame(iconState));
   const titleLayoutStyle = resolveKpiPartLayoutStyle(titleState);
   const valueLayoutStyle = resolveKpiPartLayoutStyle(valueState);
   const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState);
 
-  const titleTextStyle = {
+  const titleTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.title?.style,
@@ -264,7 +308,7 @@ export function DelpiKpiCard({
     ),
     ...titleLayoutStyle,
   };
-  const valueTextStyle = {
+  const valueTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.value?.style,
@@ -275,7 +319,7 @@ export function DelpiKpiCard({
     ),
     ...valueLayoutStyle,
   };
-  const hintTextStyle = {
+  const hintTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.hint?.style,
@@ -292,6 +336,48 @@ export function DelpiKpiCard({
   const valuePtr = bindKpiPartPointer({ kind: "value" }, interaction);
   const hintPtr = bindKpiPartPointer({ kind: "hint" }, interaction);
   const iconPtr = bindKpiPartPointer({ kind: "icon" }, interaction);
+
+  const titleShowResize =
+    titlePtr.selected && !titlePtr.editing && kpiPartAllowsResize({ kind: "title" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
+  const valueShowResize =
+    valuePtr.selected && !valuePtr.editing && kpiPartAllowsResize({ kind: "value" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
+  const hintShowResize =
+    hintPtr.selected && !hintPtr.editing && kpiPartAllowsResize({ kind: "hint" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
+  const iconShowResize =
+    iconPtr.selected && !iconPtr.editing && kpiPartAllowsResize({ kind: "icon" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
+
+  useMaterializeKpiPartFrame(
+    { kind: "title" },
+    titleHostRef,
+    titleShowResize,
+    titleFramed,
+    interaction?.onPartFrameChange,
+  );
+  useMaterializeKpiPartFrame(
+    { kind: "value" },
+    valueHostRef,
+    valueShowResize,
+    valueFramed,
+    interaction?.onPartFrameChange,
+  );
+  useMaterializeKpiPartFrame(
+    { kind: "hint" },
+    hintHostRef,
+    hintShowResize,
+    hintFramed,
+    interaction?.onPartFrameChange,
+  );
+  useMaterializeKpiPartFrame(
+    { kind: "icon" },
+    iconHostRef,
+    iconShowResize,
+    iconFramed,
+    interaction?.onPartFrameChange,
+  );
 
   const shellStyle: CSSProperties = {
     ["--delpi-kpi-fg" as string]: autoFg,
@@ -329,8 +415,6 @@ export function DelpiKpiCard({
 
   const valueFontSizePx = resolveKpiPartFontSize("value", parts.value?.style);
 
-  /* Uma única árvore de render: tipografia de kpiParts vale com ou sem interaction
-   * (TV / deselect no editor). Handlers só existem quando interaction está setada. */
   return (
     <div
       className="delpi-kpi-card-shell"
@@ -347,9 +431,11 @@ export function DelpiKpiCard({
           <div className="delpi-kpi-card__body">
             {showTitle ? (
               <p
+                ref={titleHostRef}
                 className={[
                   DELPI_KPI_CLASS_NAMES.label,
                   titleFramed ? "delpi-kpi-part--framed" : "",
+                  titleShowResize ? "delpi-kpi-part--resizable" : "",
                   titlePtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
                   .filter(Boolean)
@@ -391,13 +477,21 @@ export function DelpiKpiCard({
                     ) : null}
                   </>
                 )}
+                <KpiPartResizeHandles
+                  visible={titleShowResize}
+                  onResizePointerDown={(handle, event) =>
+                    interaction?.onPartResizePointerDown?.({ kind: "title" }, event, handle)
+                  }
+                />
               </p>
             ) : null}
             {showValue ? (
               <strong
+                ref={valueHostRef}
                 className={[
                   DELPI_KPI_CLASS_NAMES.value,
                   valueFramed ? "delpi-kpi-part--framed" : "",
+                  valueShowResize ? "delpi-kpi-part--resizable" : "",
                   valuePtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
                   .filter(Boolean)
@@ -411,13 +505,21 @@ export function DelpiKpiCard({
                 onDoubleClick={valuePtr.onDoubleClick}
               >
                 <FitText fixedPx={valueFontSizePx}>{value}</FitText>
+                <KpiPartResizeHandles
+                  visible={valueShowResize}
+                  onResizePointerDown={(handle, event) =>
+                    interaction?.onPartResizePointerDown?.({ kind: "value" }, event, handle)
+                  }
+                />
               </strong>
             ) : null}
             {showHint && hintContent && DELPI_KPI_CLASS_NAMES.hint ? (
               <p
+                ref={hintHostRef}
                 className={[
                   DELPI_KPI_CLASS_NAMES.hint,
                   hintFramed ? "delpi-kpi-part--framed" : "",
+                  hintShowResize ? "delpi-kpi-part--resizable" : "",
                   hintPtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
                   .filter(Boolean)
@@ -450,19 +552,27 @@ export function DelpiKpiCard({
                 ) : (
                   hintContent
                 )}
+                <KpiPartResizeHandles
+                  visible={hintShowResize}
+                  onResizePointerDown={(handle, event) =>
+                    interaction?.onPartResizePointerDown?.({ kind: "hint" }, event, handle)
+                  }
+                />
               </p>
             ) : null}
           </div>
           {showIcon && icon && DELPI_KPI_CLASS_NAMES.icon ? (
             <div
+              ref={iconHostRef}
               className={[
                 DELPI_KPI_CLASS_NAMES.icon,
-                resolveKpiPartFrame(parts.icon) ? "delpi-kpi-icon--framed" : "",
+                iconFramed ? "delpi-kpi-icon--framed" : "",
+                iconShowResize ? "delpi-kpi-part--resizable" : "",
                 iconPtr.selected ? "delpi-kpi-part--selected" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              style={resolveKpiIconBoxStyle(getKpiPartState(parts, { kind: "icon" }) ?? parts.icon)}
+              style={resolveKpiIconBoxStyle(iconState)}
               aria-hidden="true"
               {...{
                 [KPI_PART_DATA_ATTR]: iconPtr[KPI_PART_DATA_ATTR],
@@ -472,6 +582,12 @@ export function DelpiKpiCard({
               onDoubleClick={iconPtr.onDoubleClick}
             >
               {icon}
+              <KpiPartResizeHandles
+                visible={iconShowResize}
+                onResizePointerDown={(handle, event) =>
+                  interaction?.onPartResizePointerDown?.({ kind: "icon" }, event, handle)
+                }
+              />
             </div>
           ) : null}
         </div>
