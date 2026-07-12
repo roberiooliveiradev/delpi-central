@@ -6,6 +6,8 @@
   --td-muted: color-mix(in srgb, var(--td-text) 55%, transparent);
   --td-stage-chrome: color-mix(in srgb, var(--td-text) 8%, var(--td-surface));
   --td-stage-preview: color-mix(in srgb, var(--td-text) 92%, var(--td-surface));
+  /* Linhas da grade no slide (fundo típico #fff) — não usar --td-border do chrome UI. */
+  --td-stage-grid-line: color-mix(in srgb, #0f172a 16%, transparent);
   --delpi-ui-accent: var(--td-accent);
   --delpi-ui-surface: var(--td-surface);
   --delpi-ui-text: var(--td-text);
@@ -833,12 +835,12 @@
   background-image:
     linear-gradient(
       to right,
-      color-mix(in srgb, var(--td-border) 55%, transparent) 1px,
+      var(--td-stage-grid-line) 1px,
       transparent 1px
     ),
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--td-border) 55%, transparent) 1px,
+      var(--td-stage-grid-line) 1px,
       transparent 1px
     );
   background-size: 5% 5%;
@@ -846,7 +848,7 @@
 
 .dashboard-tv-dashboard .td-composer__stage-guide {
   position: absolute;
-  z-index: 1;
+  z-index: 3;
   pointer-events: none;
   background: color-mix(in srgb, var(--td-accent) 70%, transparent);
 }
