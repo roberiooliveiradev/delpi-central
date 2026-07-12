@@ -3,6 +3,7 @@ import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
 import { ConfigurableTable } from "./ConfigurableTable";
 import { tablePresetLabel } from "./comunicadoChartView";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
+import type { ComunicadoTableInteraction } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
 import { resolveTableColumns } from "./tvDataPresentation";
 
@@ -10,11 +11,18 @@ type Props = {
   block: ComunicadoTableViewBlock;
   interactive?: boolean;
   loading?: boolean;
+  interaction?: ComunicadoTableInteraction | null;
 };
 
-export function TableViewBlockView({ block, interactive = false, loading = false }: Props) {
+export function TableViewBlockView({
+  block,
+  interactive = false,
+  loading = false,
+  interaction = null,
+}: Props) {
   const resolved = block.resolved;
   const label = tablePresetLabel(block.tablePreset);
+  const tableInteraction = interactive ? interaction : null;
 
   if (resolved?.error) {
     return (
@@ -53,6 +61,8 @@ export function TableViewBlockView({ block, interactive = false, loading = false
             rows={rows}
             options={tableOptions}
             preset={block.tablePreset}
+            tableParts={block.tableParts}
+            interaction={tableInteraction}
           />
         </div>
       </CenteredScaledPreview>

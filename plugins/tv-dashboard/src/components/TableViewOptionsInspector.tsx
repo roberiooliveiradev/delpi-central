@@ -6,7 +6,9 @@ import {
   TABLE_VALUE_FORMAT_OPTIONS,
   isTableElementEnabled,
   mergeComunicadoTableOptions,
+  mergeTablePartsWithOptions,
   setTableElementEnabled,
+  tableElementPrimaryPartRef,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
   type TableElementId,
@@ -73,24 +75,47 @@ function TableElementPanel({
 }
 
 export function TableViewOptionsInspector({ pane = false }: Props) {
-  const { selected, updateSelected } = useComunicadoEditor();
+  const { selected, selectedTablePart, selectTablePart, updateSelected } = useComunicadoEditor();
   if (!selected || selected.type !== "table_view") return null;
 
   const block = selected as ComunicadoTableViewBlock;
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
 
   const setOptions = (patch: Partial<ComunicadoTableOptions>) => {
+    const nextOptions = updateTableOptions(block.tableOptions, block.tablePreset, patch);
     updateSelected({
-      tableOptions: updateTableOptions(block.tableOptions, block.tablePreset, patch),
+      tableOptions: nextOptions,
+      tableParts: mergeTablePartsWithOptions(block.tableParts, nextOptions),
     } as Partial<typeof selected>);
   };
 
   const toggleElement = (elementId: TableElementId, enabled: boolean) => {
     setOptions(setTableElementEnabled(elementId, enabled));
+    if (enabled) {
+      const part = tableElementPrimaryPartRef(elementId);
+      if (part) selectTablePart(block.id, part);
+    }
   };
+
+  const partLabel =
+    selectedTablePart?.kind === "title"
+      ? "Título"
+      : selectedTablePart?.kind === "header"
+        ? "Cabeçalho"
+        : selectedTablePart?.kind === "headerCell"
+          ? `Coluna ${selectedTablePart.colIndex + 1}`
+          : selectedTablePart?.kind === "cell"
+            ? `Célula ${selectedTablePart.rowIndex + 1}:${selectedTablePart.colIndex + 1}`
+            : null;
 
   return (
     <>
+      {partLabel ? (
+        <DeckPropertySection pane={pane} title="Parte selecionada">
+          <p className="td-subtitle">{partLabel} — duplo clique no palco seleciona título, cabeçalho ou célula.</p>
+        </DeckPropertySection>
+      ) : null}
+
       <DeckPropertySection pane={pane} title="Elementos da tabela" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableElements}>
         <div className="td-chart-elements" role="group" aria-label="Elementos da tabela">
           {TABLE_ELEMENT_CATALOG.map((element) => {

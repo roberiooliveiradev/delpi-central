@@ -47,7 +47,8 @@ export type SeriesChartPoint = {
   value?: number | null;
 };
 
-export type SeriesChartKind = "line" | "bar";
+/** Tipos com paint SVG nativo (4H.7). */
+export type SeriesChartKind = "line" | "bar" | "area" | "pie" | "combo";
 
 /** Padding padrão de categoria (~3% de cada lado do plot). */
 export const DEFAULT_CATEGORY_PADDING_PERCENT = 3;

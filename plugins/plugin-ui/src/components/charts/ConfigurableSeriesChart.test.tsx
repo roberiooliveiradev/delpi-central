@@ -1,8 +1,17 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 import { formatSeriesChartValue, mergeSeriesChartOptions } from "./seriesChartOptions";
+
+beforeAll(() => {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
+});
 
 describe("ConfigurableSeriesChart", () => {
   it("renderiza título e legenda configuráveis", () => {

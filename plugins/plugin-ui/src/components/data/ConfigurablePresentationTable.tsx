@@ -5,6 +5,8 @@ import {
   type ConfigurableTablePreset,
   type PresentationTableColumn,
 } from "./configurableTableOptions";
+import type { TableInteraction, TablePartsMap } from "./configurableTableParts";
+import { useConfigurableTableClasses } from "./configurableTableClasses";
 import {
   TableBody,
   TableCell,
@@ -23,6 +25,8 @@ export type ConfigurablePresentationTableProps = {
   preset?: ConfigurableTablePreset;
   emptyMessage?: string;
   className?: string;
+  tableParts?: TablePartsMap | null;
+  interaction?: TableInteraction | null;
 };
 
 /** Tabela configurável para apresentação (cabeçalho, células, cores). */
@@ -33,12 +37,16 @@ export function ConfigurablePresentationTable({
   preset = "grid",
   emptyMessage = "Sem linhas",
   className,
+  tableParts,
+  interaction,
 }: ConfigurablePresentationTableProps) {
+  const cn = useConfigurableTableClasses();
   const config = mergeConfigurableTableOptions(options, preset);
   const valueFormat = config.valueFormat ?? "auto";
   const title = config.title?.trim();
   const showHeader = config.showHeader !== false;
   const ariaLabel = title || "Tabela de dados";
+  const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
 
   if (rows.length === 0) {
     return (
@@ -47,19 +55,34 @@ export function ConfigurablePresentationTable({
   }
 
   return (
-    <TableContainer options={config} className={className}>
-      <TableTitle title={title} visible={config.showTitle !== false} />
+    <TableContainer
+      options={config}
+      className={[className, interactive ? `${cn.root}--interactive` : null].filter(Boolean).join(" ")}
+    >
+      <TableTitle
+        title={title}
+        visible={config.showTitle !== false}
+        interaction={interaction}
+        tableParts={tableParts}
+      />
       <TableFrame ariaLabel={ariaLabel}>
-        <TableHeader visible={showHeader}>
-          {columns.map((column) => (
-            <TableHeaderCell key={column.key}>{column.label}</TableHeaderCell>
+        <TableHeader visible={showHeader} interaction={interaction} tableParts={tableParts}>
+          {columns.map((column, colIndex) => (
+            <TableHeaderCell key={column.key} colIndex={colIndex} interaction={interaction}>
+              {column.label}
+            </TableHeaderCell>
           ))}
         </TableHeader>
         <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={`row-${index}`} rowIndex={index}>
-              {columns.map((column) => (
-                <TableCell key={`${column.key}-${index}`}>
+          {rows.map((row, rowIndex) => (
+            <TableRow key={`row-${rowIndex}`} rowIndex={rowIndex}>
+              {columns.map((column, colIndex) => (
+                <TableCell
+                  key={`${column.key}-${rowIndex}`}
+                  rowIndex={rowIndex}
+                  colIndex={colIndex}
+                  interaction={interaction}
+                >
                   {formatConfigurableTableCellValue(row[column.key], valueFormat)}
                 </TableCell>
               ))}

@@ -305,7 +305,14 @@ export {
   type ComunicadoChartPartResizeHandle,
   type ComunicadoChartPartsMap,
 } from "./comunicadoChartParts";
-export { chartTypeLabel, tablePresetLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
+export {
+  chartTypeLabel,
+  tablePresetLabel,
+  chartTypeToLegacyDisplayMode,
+  chartTypeHasBasicRender,
+  toSeriesChartKind,
+  pieInnerRadiusForChartType,
+} from "./comunicadoChartView";
 export {
   CHART_LEGEND_POSITION_OPTIONS,
   CHART_VALUE_FORMAT_OPTIONS,
@@ -334,6 +341,23 @@ export {
   type ComunicadoTableTextAlign,
   type ComunicadoTableValueFormat,
 } from "./comunicadoTableOptions";
+export {
+  TABLE_PART_DATA_ATTR,
+  deleteTablePart,
+  isTablePartRefEqual,
+  mergeTablePartsWithOptions,
+  parseTablePartRef,
+  partsToTableOptions,
+  serializeTablePartRef,
+  tableElementPrimaryPartRef,
+  tableOptionsToParts,
+  tablePartAllowsDelete,
+  tablePartAllowsEdit,
+  upsertTablePartState,
+  type ComunicadoTableInteraction,
+  type ComunicadoTablePartRef,
+  type ComunicadoTablePartsMap,
+} from "./comunicadoTableParts";
 export {
   TABLE_ELEMENT_CATALOG,
   isTableElementEnabled,

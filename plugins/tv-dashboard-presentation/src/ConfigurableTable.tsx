@@ -7,13 +7,19 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import type { ComunicadoTableOptions } from "./comunicadoTableOptions";
+import type { ComunicadoTableInteraction, ComunicadoTablePartsMap } from "./comunicadoTableParts";
 import type { ComunicadoTablePreset } from "./comunicadoTypes";
 import type { TvDataTableColumn } from "./tvDataPresentation";
 
-export type ConfigurableTableProps = Omit<PluginUiConfigurablePresentationTableProps, "columns" | "options" | "preset"> & {
+export type ConfigurableTableProps = Omit<
+  PluginUiConfigurablePresentationTableProps,
+  "columns" | "options" | "preset"
+> & {
   columns: TvDataTableColumn[];
   options?: ComunicadoTableOptions | null;
   preset?: ComunicadoTablePreset;
+  tableParts?: ComunicadoTablePartsMap | null;
+  interaction?: ComunicadoTableInteraction | null;
 };
 
 export function ConfigurableTable({
@@ -23,6 +29,8 @@ export function ConfigurableTable({
   preset = "grid",
   emptyMessage = "Sem linhas",
   className,
+  tableParts,
+  interaction,
 }: ConfigurableTableProps) {
   return (
     <ConfigurableTableClassesProvider classNames={configurableTableTvClasses()}>
@@ -33,6 +41,8 @@ export function ConfigurableTable({
         preset={preset}
         emptyMessage={emptyMessage}
         className={className}
+        tableParts={tableParts}
+        interaction={interaction}
       />
     </ConfigurableTableClassesProvider>
   );

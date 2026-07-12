@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.4
 > **Data:** 2026-07-10
-> **Status:** … **v1.4 (jul/2026):** 4F parcial. **Onda 4G (§19):** 4G.1–4G.7 ✅ (partes selecionáveis, herança point/line, título inline, inspetor, catálogo↔partes). **Backlog:** 4E.3–4E.5; 4F tipos avançados; 4G.8 table_view parts.
+> **Status:** … **v1.4 (jul/2026):** 4F parcial. **Onda 4G (§19):** 4G.1–4G.8 ✅ (partes selecionáveis, herança point/line, título inline, inspetor, catálogo↔partes, table_view parts). **Onda 4H:** 4H.1–4H.7 ✅ (pizza/área/combo com chartParts). **Backlog:** 4E.3–4E.5; tipos avançados restantes (scatter/radar/…).
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -1344,7 +1344,7 @@ Exemplo no `native_config` (v4):
 - [x] Gráfico com **elementos configuráveis** (`chartOptions` / `CHART_ELEMENT_CATALOG`) — título, legenda, eixos, grade, tabela de dados, marcadores.
 - [x] Séries temporais renderizam tabela derivada de `points` quando não há `items`.
 - [x] Filmstrip com prévia centralizada (`CenteredScaledPreview`) e menu de contexto nas telas.
-- [ ] Tipos de gráfico avançados (pizza, área, combo) — placeholder estilizado até implementação.
+- [x] Tipos de gráfico avançados (pizza, área, combo) — paint SVG nativo com `chartParts` (4H.7).
 - [ ] Recharts em telas nativas fixas (OEE/OTD dashboard) — backlog v2.
 - [x] `native_config` sanitizado no save — sem `resolved` nem URLs de mídia runtime.
 - [x] Limite de blocos `data_*` por slide (settings `comunicadoDataBlocks.maxPerSlide`).
@@ -1584,7 +1584,7 @@ Pointer down no palco
 | 4G.5 | Edição inline do título (e axis titles) no palco | M | ✅ |
 | 4G.6 | `ChartPartInspector` unificado (reusa campos de forma/texto) | M | ✅ |
 | 4G.7 | Migração UI: catálogo de elementos vira seleção/visibilidade de partes | S | ✅ |
-| 4G.8 | Extensão a `table_view` (célula/cabeçalho) — mesmo padrão de part ref | L | backlog |
+| 4G.8 | Extensão a `table_view` (célula/cabeçalho) — mesmo padrão de part ref | L | ✅ |
 
 ### 19.8 Aceite rápido (4G)
 
@@ -1640,7 +1640,7 @@ type ChartPartState = {
 | 4H.4 | Painel Formatar (Excel): preenchimento, contorno, tamanho do marcador, espessura da série | ✅ parcial (inspetor) |
 | 4H.5 | Filtrar pontos ocultos no path da série / labels | ✅ (série + marcadores) |
 | 4H.6 | Plot area / eixos com resize relativo | ✅ (`plotArea.frame` → margens; eixos via inset) |
-| 4H.7 | Tipos pizza/área/combo com as mesmas partes | backlog (§18 4F) |
+| 4H.7 | Tipos pizza/área/combo com as mesmas partes | ✅ (area/pie/doughnut/combo; demais tipos → placeholder) |
 
 ### 19.11 Visual Office — área do gráfico como formas (Onda 4I)
 

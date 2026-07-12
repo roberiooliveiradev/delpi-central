@@ -103,6 +103,7 @@ export function SeriesChartPrimitive({
     };
 
     update();
+    if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(update);
     observer.observe(node);
     return () => observer.disconnect();

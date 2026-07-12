@@ -48,6 +48,7 @@ import {
   type ComunicadoListType,
   type ComunicadoChartType,
   type ComunicadoChartPartRef,
+  type ComunicadoTablePartRef,
   type ComunicadoTablePreset,
   chartOptionsToParts,
   mergeComunicadoChartOptions,
@@ -56,6 +57,8 @@ import {
   chartPartAllowsDelete,
   chartPartAllowsMove,
   deleteChartPart,
+  deleteTablePart,
+  tablePartAllowsDelete,
   nudgeChartPartFrame,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -169,6 +172,7 @@ export function ComunicadoEditorProvider({
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [editingChartPart, setEditingChartPart] = useState<ComunicadoChartPartRef | null>(null);
+  const [selectedTablePart, setSelectedTablePart] = useState<ComunicadoTablePartRef | null>(null);
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
@@ -210,6 +214,7 @@ export function ComunicadoEditorProvider({
     setEditingTextId((current) => (id === current ? current : null));
     setSelectedChartPart(null);
     setEditingChartPart(null);
+    setSelectedTablePart(null);
     if (!id) {
       setTextEditSelection(null);
       setTextEditSelectionStyle(null);
@@ -225,6 +230,7 @@ export function ComunicadoEditorProvider({
     setEditingTextId(null);
     setSelectedChartPart(null);
     setEditingChartPart(null);
+    setSelectedTablePart(null);
   }, [flushActiveTextEdit]);
 
   const selectBlock = useCallback(
@@ -269,6 +275,7 @@ export function ComunicadoEditorProvider({
     setEditingTextId(null);
     setSelectedChartPart(null);
     setEditingChartPart(null);
+    setSelectedTablePart(null);
   }, [flushActiveTextEdit]);
 
   const selectChartPart = useCallback(
@@ -276,6 +283,7 @@ export function ComunicadoEditorProvider({
       flushActiveTextEdit();
       setSelectedIds([blockId]);
       setEditingTextId(null);
+      setSelectedTablePart(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
       const primitiveKinds = new Set([
@@ -294,6 +302,24 @@ export function ComunicadoEditorProvider({
   const clearChartPartSelection = useCallback(() => {
     setSelectedChartPart(null);
     setEditingChartPart(null);
+    setSelectedTablePart(null);
+  }, []);
+
+  const selectTablePart = useCallback(
+    (blockId: string, part: ComunicadoTablePartRef) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      setSelectedTablePart(part);
+      setRibbonTabRequest("format");
+    },
+    [flushActiveTextEdit],
+  );
+
+  const clearTablePartSelection = useCallback(() => {
+    setSelectedTablePart(null);
   }, []);
 
   const beginEditChartPart = useCallback(
@@ -1003,6 +1029,25 @@ export function ComunicadoEditorProvider({
       } as Partial<ComunicadoBlock>);
       setSelectedChartPart(null);
       setEditingChartPart(null);
+      setSelectedTablePart(null);
+      return;
+    }
+
+    const tableBlock =
+      selected?.type === "table_view" ? selected : selectedBlocks.find((b) => b.type === "table_view");
+    if (
+      selectedTablePart &&
+      tableBlock &&
+      tableBlock.type === "table_view" &&
+      selectedIds.includes(tableBlock.id) &&
+      tablePartAllowsDelete(selectedTablePart)
+    ) {
+      const result = deleteTablePart(tableBlock.tableParts, selectedTablePart, tableBlock.tableOptions);
+      updateBlock(tableBlock.id, {
+        tableParts: result.parts,
+        tableOptions: result.options,
+      } as Partial<ComunicadoBlock>);
+      setSelectedTablePart(null);
       return;
     }
 
@@ -1227,6 +1272,9 @@ export function ComunicadoEditorProvider({
     beginEditChartPart,
     commitChartPartContent,
     cancelEditChartPart,
+    selectedTablePart,
+    selectTablePart,
+    clearTablePartSelection,
     editingTextId,
     setEditingTextId: setEditingTextIdWithSelection,
     textEditSelection,

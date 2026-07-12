@@ -1,14 +1,37 @@
 import type { ReactNode } from "react";
 
 import { useConfigurableTableClasses } from "../configurableTableClasses";
+import { bindTablePartPointer, type TableInteraction } from "../configurableTableParts";
 
 export type TableCellProps = {
   children: ReactNode;
+  rowIndex?: number;
+  colIndex?: number;
+  interaction?: TableInteraction | null;
 };
 
-export function TableCell({ children }: TableCellProps) {
+export function TableCell({
+  children,
+  rowIndex = 0,
+  colIndex = 0,
+  interaction,
+}: TableCellProps) {
   const cn = useConfigurableTableClasses();
-  return <td className={cn.cell}>{children}</td>;
+  const ref = { kind: "cell" as const, rowIndex, colIndex };
+  const { selected, onPointerDown, onDoubleClick, editing: _e, ...dom } = bindTablePartPointer(
+    ref,
+    interaction,
+  );
+  return (
+    <td
+      className={[cn.cell, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
+      {...dom}
+      onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
+    >
+      {children}
+    </td>
+  );
 }
 
 export type TableRowProps = {

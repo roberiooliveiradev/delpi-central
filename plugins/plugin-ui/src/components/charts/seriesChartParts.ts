@@ -13,6 +13,7 @@ import {
   OFFICE_CHART_PLOT_FILL,
   OFFICE_CHART_PLOT_STROKE,
   OFFICE_CHART_SERIES_COLOR,
+  type SeriesChartKind,
 } from "./seriesChartOptions";
 
 /** Atributo DOM para hit-test no editor (sem HTML livre). */
@@ -32,12 +33,17 @@ export const CHART_SERIES_LINE_STROKE_WIDTH = 2;
 /** Raio do marcador no SVG (primitivo point). */
 export const CHART_MARKER_RADIUS = 2.5;
 
-export function chartPartVisualPrimitive(ref: ChartPartRef): ChartVisualPrimitive | null {
+export function chartPartVisualPrimitive(
+  ref: ChartPartRef,
+  chartType?: SeriesChartKind,
+): ChartVisualPrimitive | null {
   switch (ref.kind) {
     case "series":
+      if (chartType === "area" || chartType === "pie" || chartType === "bar") return "area";
+      if (chartType === "combo") return "line";
       return "line";
     case "marker":
-      return "point";
+      return chartType === "pie" ? "area" : "point";
     case "grid":
     case "axis":
       return "line";

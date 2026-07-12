@@ -23,6 +23,32 @@ export {
 } from "./configurableTableElementCatalog";
 
 export {
+  TABLE_PART_DATA_ATTR,
+  bindTablePartPointer,
+  deleteTablePart,
+  findTablePartFromTarget,
+  getTablePartState,
+  isTablePartRefEqual,
+  mergeTablePartsWithOptions,
+  parseTablePartRef,
+  partsToTableOptions,
+  serializeTablePartRef,
+  tableElementPrimaryPartRef,
+  tableOptionsToParts,
+  tablePartAllowsDelete,
+  tablePartAllowsEdit,
+  tablePartCapabilities,
+  tablePartDomProps,
+  upsertTablePartState,
+  type TableInteraction,
+  type TablePartCapabilities,
+  type TablePartRef,
+  type TablePartState,
+  type TablePartStyle,
+  type TablePartsMap,
+} from "./configurableTableParts";
+
+export {
   CONFIGURABLE_TABLE_TEXT_ALIGN_OPTIONS,
   CONFIGURABLE_TABLE_VALUE_FORMAT_OPTIONS,
   DEFAULT_CONFIGURABLE_TABLE_OPTIONS,

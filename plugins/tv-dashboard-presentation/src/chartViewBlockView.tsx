@@ -1,8 +1,11 @@
-import { chartTypeLabel, chartTypeToLegacyDisplayMode } from "./comunicadoChartView";
+import {
+  chartTypeHasBasicRender,
+  chartTypeLabel,
+  toSeriesChartKind,
+} from "./comunicadoChartView";
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
-import { TvDataBarChartWidget, TvDataLineChartWidget } from "./tvDataChartWidgets";
-import { resolveChartType } from "./tvDataPresentation";
+import { TvDataSeriesChartWidget } from "./tvDataChartWidgets";
 
 type Props = {
   block: ComunicadoChartViewBlock;
@@ -63,8 +66,6 @@ export function ChartViewBlockView({
     );
   }
 
-  const displayMode = chartTypeToLegacyDisplayMode(block.chartType);
-  const chartType = resolveChartType(displayMode, resolved);
   const points = resolved.chart?.points ?? [];
 
   if (points.length === 0 && !resolved.kpi?.value) {
@@ -86,24 +87,30 @@ export function ChartViewBlockView({
     );
   }
 
-  // Sem CenteredScaledPreview: o plot preenche o frame do bloco (viewBox dinâmico no SeriesChartPrimitive).
+  if (!chartTypeHasBasicRender(block.chartType) || toSeriesChartKind(block.chartType) == null) {
+    return (
+      <div className="tdp-data-block tdp-data-block--chart">
+        <ChartTypePlaceholder
+          chartType={block.chartType}
+          label={`${chartTypeLabel(block.chartType)} — em breve`}
+          loading={loading}
+          interactive={interactive}
+        />
+      </div>
+    );
+  }
+
+  const kind = toSeriesChartKind(block.chartType)!;
+
   return (
-    <div className={`tdp-data-block tdp-data-block--chart tdp-data-block--chart-${chartType}`}>
-      {chartType === "bar" ? (
-        <TvDataBarChartWidget
-          resolved={resolved}
-          chartOptions={block.chartOptions}
-          chartParts={block.chartParts}
-          interaction={chartInteraction}
-        />
-      ) : (
-        <TvDataLineChartWidget
-          resolved={resolved}
-          chartOptions={block.chartOptions}
-          chartParts={block.chartParts}
-          interaction={chartInteraction}
-        />
-      )}
+    <div className={`tdp-data-block tdp-data-block--chart tdp-data-block--chart-${kind}`}>
+      <TvDataSeriesChartWidget
+        resolved={resolved}
+        chartOptions={block.chartOptions}
+        chartParts={block.chartParts}
+        interaction={chartInteraction}
+        chartType={block.chartType}
+      />
     </div>
   );
 }

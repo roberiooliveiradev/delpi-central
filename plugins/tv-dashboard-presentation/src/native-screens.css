@@ -980,6 +980,18 @@
   font-size: 0.9em;
 }
 
+/* Onda 4G.8 — subseleção de partes da tabela */
+.tdp-configurable-table--interactive [data-table-part] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.tdp-configurable-table__part--selected,
+.tdp-configurable-table [data-table-part][aria-selected="true"] {
+  outline: 2px solid var(--tdp-data-accent, #089bdb);
+  outline-offset: 1px;
+}
+
 .tdp-data-source {
   width: 100%;
   height: 100%;

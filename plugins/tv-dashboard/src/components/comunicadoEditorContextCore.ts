@@ -12,6 +12,7 @@ import type {
   ComunicadoDataDisplayMode,
   ComunicadoChartType,
   ComunicadoChartPartRef,
+  ComunicadoTablePartRef,
   ComunicadoTablePreset,
   ContentRunListSelectionState,
   ContentRunNamedStyleSelectionState,
@@ -65,6 +66,10 @@ export type ComunicadoEditorContextValue = {
   beginEditChartPart: (blockId: string, part: ComunicadoChartPartRef) => void;
   commitChartPartContent: (content: string) => void;
   cancelEditChartPart: () => void;
+  /** Onda 4G.8 — subseleção de parte da tabela. */
+  selectedTablePart: ComunicadoTablePartRef | null;
+  selectTablePart: (blockId: string, part: ComunicadoTablePartRef) => void;
+  clearTablePartSelection: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
   textEditSelection: TextEditSelection | null;

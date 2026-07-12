@@ -11,8 +11,10 @@ export { ChartPartResizeHandles } from "./ChartPartResizeHandles";
 export { ChartPlotArea } from "./ChartPlotArea";
 export { ChartPlotAreaChrome } from "./ChartPlotAreaChrome";
 export { ChartPlotAreaGroup } from "./ChartPlotAreaGroup";
+export { ChartSeriesArea } from "./ChartSeriesArea";
 export { ChartSeriesBar } from "./ChartSeriesBar";
 export { ChartSeriesLine } from "./ChartSeriesLine";
+export { ChartSeriesPie } from "./ChartSeriesPie";
 export { ChartTitle } from "./ChartTitle";
 export { ChartValueLabels } from "./ChartValueLabels";
 export {

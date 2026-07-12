@@ -80,3 +80,15 @@
   color: var(--delpi-ui-config-table-muted, #64748b);
   font-size: 0.9em;
 }
+
+/* Onda 4G.8 — subseleção de partes */
+.delpi-ui-config-table--interactive [data-table-part] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.delpi-ui-config-table__part--selected,
+.delpi-ui-config-table [data-table-part][aria-selected="true"] {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 1px;
+}

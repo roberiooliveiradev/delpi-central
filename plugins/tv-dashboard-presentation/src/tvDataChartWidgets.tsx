@@ -2,7 +2,8 @@ import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 import { resolveChartDisplayOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comunicadoChartParts";
-import type { ComunicadoDataResolved } from "./comunicadoTypes";
+import { pieInnerRadiusForChartType, toSeriesChartKind } from "./comunicadoChartView";
+import type { ComunicadoChartType, ComunicadoDataResolved } from "./comunicadoTypes";
 import { formatNumber, formatPct } from "./nativeFormat";
 
 export function formatCellValue(value: unknown): string {
@@ -19,48 +20,41 @@ type ChartWidgetProps = {
   chartOptions?: ComunicadoChartOptions;
   chartParts?: ComunicadoChartPartsMap | null;
   interaction?: ComunicadoChartInteraction | null;
+  chartType?: ComunicadoChartType;
 };
 
-export function TvDataLineChartWidget({
+export function TvDataSeriesChartWidget({
   resolved,
   chartOptions,
   chartParts,
   interaction,
+  chartType = "line",
 }: ChartWidgetProps) {
+  const kind = toSeriesChartKind(chartType) ?? "line";
   const points = (resolved.chart?.points ?? []).map((point) => ({
     label: point.label != null ? String(point.label) : undefined,
     value: point.value == null ? null : Number(point.value),
   }));
   return (
     <ConfigurableSeriesChart
-      chartType="line"
+      chartType={kind}
       points={points}
       options={resolveChartDisplayOptions(chartOptions, resolved)}
       chartParts={chartParts}
       interaction={interaction}
+      pieInnerRadiusRatio={pieInnerRadiusForChartType(chartType)}
     />
   );
 }
 
-export function TvDataBarChartWidget({
-  resolved,
-  chartOptions,
-  chartParts,
-  interaction,
-}: ChartWidgetProps) {
-  const points = (resolved.chart?.points ?? []).map((point) => ({
-    label: point.label != null ? String(point.label) : undefined,
-    value: point.value == null ? null : Number(point.value),
-  }));
-  return (
-    <ConfigurableSeriesChart
-      chartType="bar"
-      points={points}
-      options={resolveChartDisplayOptions(chartOptions, resolved)}
-      chartParts={chartParts}
-      interaction={interaction}
-    />
-  );
+/** @deprecated Use TvDataSeriesChartWidget. */
+export function TvDataLineChartWidget(props: ChartWidgetProps) {
+  return <TvDataSeriesChartWidget {...props} chartType={props.chartType ?? "line"} />;
+}
+
+/** @deprecated Use TvDataSeriesChartWidget. */
+export function TvDataBarChartWidget(props: ChartWidgetProps) {
+  return <TvDataSeriesChartWidget {...props} chartType={props.chartType ?? "bar"} />;
 }
 
 export function TvDataKpiWidget({ resolved }: { resolved: ComunicadoDataResolved }) {

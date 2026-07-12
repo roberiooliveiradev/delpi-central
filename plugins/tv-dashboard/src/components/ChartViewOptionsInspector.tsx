@@ -4,7 +4,7 @@ import {
   CHART_VALUE_FORMAT_OPTIONS,
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
-  chartTypeToLegacyDisplayMode,
+  toSeriesChartKind,
   isChartElementApplicable,
   isChartElementEnabled,
   isChartElementOpenForPart,
@@ -93,7 +93,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
   });
-  const chartKind = chartTypeToLegacyDisplayMode(block.chartType) === "bar_chart" ? "bar" : "line";
+  const chartKind = toSeriesChartKind(block.chartType) ?? "line";
   const hasPartSelection = Boolean(selectedChartPart);
 
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {

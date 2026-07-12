@@ -2,6 +2,7 @@ import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartPartsMap } from "./comunicadoChartParts";
 import type { ComunicadoTableOptions } from "./comunicadoTableOptions";
+import type { ComunicadoTablePartsMap } from "./comunicadoTableParts";
 
 export type ComunicadoFrame = {
   x: number;
@@ -244,6 +245,8 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   type: "table_view";
   tablePreset: ComunicadoTablePreset;
   tableOptions?: ComunicadoTableOptions;
+  /** Onda 4G.8 — estilo/visibilidade por parte (adapter com tableOptions). */
+  tableParts?: ComunicadoTablePartsMap;
   dataSourceId?: string;
   maxRows?: number;
   resolved?: ComunicadoDataResolved;

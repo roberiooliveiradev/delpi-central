@@ -1,5 +1,6 @@
 import {
   ChartViewBlockView,
+  TableViewBlockView,
   ComunicadoBlockView,
   ComunicadoMediaPlaceholder,
   blockCssStyle,
@@ -22,6 +23,8 @@ import {
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
   type ComunicadoChartViewBlock,
+  type ComunicadoTablePartRef,
+  type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 
@@ -304,6 +307,56 @@ function EditorChartViewBlock({
   );
 }
 
+function EditorTableViewBlock({
+  block,
+  style,
+  className,
+  dataLoading,
+}: {
+  block: ComunicadoTableViewBlock;
+  style: CSSProperties;
+  className?: string;
+  dataLoading?: boolean;
+}) {
+  const { selectedId, selectedTablePart, selectBlock, selectTablePart, requestRibbonTab } =
+    useComunicadoEditor();
+
+  const onPartPointerDown = useCallback(
+    (_ref: ComunicadoTablePartRef) => {
+      selectBlock(block.id);
+    },
+    [block.id, selectBlock],
+  );
+
+  const onPartDoubleClick = useCallback(
+    (ref: ComunicadoTablePartRef) => {
+      selectTablePart(block.id, ref);
+      requestRibbonTab("format");
+    },
+    [block.id, requestRibbonTab, selectTablePart],
+  );
+
+  const interaction =
+    selectedId === block.id
+      ? {
+          selectedPart: selectedTablePart,
+          onPartPointerDown,
+          onPartDoubleClick,
+        }
+      : null;
+
+  return (
+    <div
+      className={["tdp-comunicado__block", "tdp-comunicado__block--table-view", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={style}
+    >
+      <TableViewBlockView block={block} interactive loading={dataLoading} interaction={interaction} />
+    </div>
+  );
+}
+
 /** Renderização de blocos no editor — mídia autenticada e controles de vídeo. */
 export function ComunicadoEditorBlockView({
   block,
@@ -349,6 +402,17 @@ export function ComunicadoEditorBlockView({
   if (block.type === "chart_view") {
     return (
       <EditorChartViewBlock
+        block={block}
+        style={style}
+        className={className}
+        dataLoading={dataLoading}
+      />
+    );
+  }
+
+  if (block.type === "table_view") {
+    return (
+      <EditorTableViewBlock
         block={block}
         style={style}
         className={className}

@@ -1,3 +1,5 @@
+import type { SeriesChartKind } from "@delpi/plugin-ui/index";
+
 import type { ComunicadoChartType } from "./comunicadoTypes";
 
 export function chartTypeLabel(chartType: ComunicadoChartType): string {
@@ -25,16 +27,44 @@ export function tablePresetLabel(preset: string): string {
   return "Grade padrão";
 }
 
-/** Tipos com render SVG básico no palco (demais exibem placeholder estilizado). */
+/** Tipos com paint SVG nativo no palco (4H.7). */
 export function chartTypeHasBasicRender(chartType: ComunicadoChartType): boolean {
-  return chartType === "line" || chartType === "bar" || chartType === "area" || chartType === "stacked_bar";
+  return toSeriesChartKind(chartType) != null;
 }
 
+/**
+ * Mapeia tipo de bloco → kind SVG.
+ * Empilhados/histograma → bar; rosca → pie; demais avançados → null (placeholder).
+ */
+export function toSeriesChartKind(chartType: ComunicadoChartType): SeriesChartKind | null {
+  switch (chartType) {
+    case "line":
+      return "line";
+    case "bar":
+    case "stacked_bar":
+    case "histogram":
+      return "bar";
+    case "area":
+      return "area";
+    case "pie":
+    case "doughnut":
+      return "pie";
+    case "combo":
+      return "combo";
+    default:
+      return null;
+  }
+}
+
+/** Furo da rosca (0 = pizza cheia). */
+export function pieInnerRadiusForChartType(chartType: ComunicadoChartType): number {
+  return chartType === "doughnut" ? 0.55 : 0;
+}
+
+/** @deprecated Preferir `toSeriesChartKind` — mantido para widgets legados. */
 export function chartTypeToLegacyDisplayMode(
   chartType: ComunicadoChartType,
 ): "line_chart" | "bar_chart" {
-  if (chartType === "bar" || chartType === "stacked_bar" || chartType === "histogram") {
-    return "bar_chart";
-  }
+  if (toSeriesChartKind(chartType) === "bar") return "bar_chart";
   return "line_chart";
 }

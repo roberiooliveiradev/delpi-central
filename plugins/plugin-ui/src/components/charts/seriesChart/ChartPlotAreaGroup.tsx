@@ -4,8 +4,10 @@ import { ChartAxisY } from "./ChartAxisY";
 import { ChartDataPoints } from "./ChartDataPoints";
 import { ChartGrid } from "./ChartGrid";
 import { ChartPlotArea } from "./ChartPlotArea";
+import { ChartSeriesArea } from "./ChartSeriesArea";
 import { ChartSeriesBar } from "./ChartSeriesBar";
 import { ChartSeriesLine } from "./ChartSeriesLine";
+import { ChartSeriesPie } from "./ChartSeriesPie";
 import { ChartValueLabels } from "./ChartValueLabels";
 import type { ChartPartsMap, SeriesChartInteraction } from "../seriesChartParts";
 import type { SeriesChartKindProps } from "./types";
@@ -19,6 +21,8 @@ export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
   strokeWidth?: number;
+  /** Rosca: raio interno relativo (só `pie`). */
+  pieInnerRadiusRatio?: number;
 };
 
 export function ChartPlotAreaGroup({
@@ -36,33 +40,42 @@ export function ChartPlotAreaGroup({
   interaction,
   chartParts,
   strokeWidth,
+  pieInnerRadiusRatio = 0,
 }: ChartPlotAreaGroupProps) {
+  const isPie = chartType === "pie";
+  const cartesianAxes = showAxes && !isPie;
+  const cartesianGrid = showGrid && !isPie;
+
   return (
     <>
-      <ChartAxisY
-        layout={layout}
-        showLabels={showAxes && config.showYAxisLabels !== false}
-        showTitle={config.showYAxisTitle === true}
-        title={config.yAxisTitle}
-        valueFormat={valueFormat}
-        interaction={interaction}
-      />
+      {!isPie ? (
+        <ChartAxisY
+          layout={layout}
+          showLabels={cartesianAxes && config.showYAxisLabels !== false}
+          showTitle={config.showYAxisTitle === true}
+          title={config.yAxisTitle}
+          valueFormat={valueFormat}
+          interaction={interaction}
+        />
+      ) : null}
 
-      <ChartGrid
-        layout={layout}
-        showHorizontal={showGrid}
-        showVertical={showVerticalGrid}
-        pointCount={points.length}
-        interaction={interaction}
-      />
+      {!isPie ? (
+        <ChartGrid
+          layout={layout}
+          showHorizontal={cartesianGrid}
+          showVertical={showVerticalGrid && !isPie}
+          pointCount={points.length}
+          interaction={interaction}
+        />
+      ) : null}
 
       <ChartPlotArea
         layout={layout}
-        showAxes={showAxes}
+        showAxes={cartesianAxes}
         interaction={interaction}
         chartParts={chartParts}
       />
-      <ChartAxisLines layout={layout} visible={showAxes} interaction={interaction} />
+      {!isPie ? <ChartAxisLines layout={layout} visible={cartesianAxes} interaction={interaction} /> : null}
 
       {chartType === "bar" ? (
         <ChartSeriesBar
@@ -71,7 +84,61 @@ export function ChartPlotAreaGroup({
           seriesColor={seriesColor}
           interaction={interaction}
         />
-      ) : (
+      ) : null}
+
+      {chartType === "area" ? (
+        <ChartSeriesArea
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          strokeWidth={strokeWidth}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
+      {chartType === "pie" ? (
+        <ChartSeriesPie
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          interaction={interaction}
+          chartParts={chartParts}
+          innerRadiusRatio={pieInnerRadiusRatio}
+        />
+      ) : null}
+
+      {chartType === "combo" ? (
+        <>
+          <ChartSeriesBar
+            layout={layout}
+            points={points}
+            seriesColor={seriesColor}
+            interaction={interaction}
+            seriesIndex={0}
+          />
+          <ChartSeriesLine
+            layout={layout}
+            points={points}
+            seriesColor={seriesColor}
+            strokeWidth={strokeWidth}
+            interaction={interaction}
+            chartParts={chartParts}
+            seriesIndex={1}
+          />
+          <ChartDataPoints
+            layout={layout}
+            points={points}
+            seriesColor={seriesColor}
+            visible={showMarkers}
+            interaction={interaction}
+            chartParts={chartParts}
+            seriesIndex={1}
+          />
+        </>
+      ) : null}
+
+      {chartType === "line" ? (
         <>
           <ChartSeriesLine
             layout={layout}
@@ -90,26 +157,41 @@ export function ChartPlotAreaGroup({
             chartParts={chartParts}
           />
         </>
-      )}
+      ) : null}
 
-      <ChartValueLabels
-        chartType={chartType}
-        layout={layout}
-        points={points}
-        valueFormat={valueFormat}
-        visible={showDataLabels}
-        chartParts={chartParts}
-        interaction={interaction}
-      />
+      {chartType === "area" && showMarkers ? (
+        <ChartDataPoints
+          layout={layout}
+          points={points}
+          seriesColor={seriesColor}
+          visible={showMarkers}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
 
-      <ChartAxisX
-        layout={layout}
-        points={points}
-        showLabels={showAxes && config.showXAxisLabels !== false}
-        showTitle={config.showXAxisTitle === true}
-        title={config.xAxisTitle}
-        interaction={interaction}
-      />
+      {!isPie ? (
+        <ChartValueLabels
+          chartType={chartType}
+          layout={layout}
+          points={points}
+          valueFormat={valueFormat}
+          visible={showDataLabels}
+          chartParts={chartParts}
+          interaction={interaction}
+        />
+      ) : null}
+
+      {!isPie ? (
+        <ChartAxisX
+          layout={layout}
+          points={points}
+          showLabels={cartesianAxes && config.showXAxisLabels !== false}
+          showTitle={config.showXAxisTitle === true}
+          title={config.xAxisTitle}
+          interaction={interaction}
+        />
+      ) : null}
     </>
   );
 }

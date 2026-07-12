@@ -1,7 +1,10 @@
 import {
   BarChart3,
+  ChartArea,
   ChartLine,
   ChartColumn,
+  ChartPie,
+  ChartSpline,
   Database,
   Grid3x3,
   Heading,
@@ -103,7 +106,7 @@ export function ComunicadoChartRibbon() {
             icon={ChartColumn}
             label="Coluna"
             hint="Gráfico de colunas/barras."
-            active={block.chartType === "bar"}
+            active={block.chartType === "bar" || block.chartType === "stacked_bar" || block.chartType === "histogram"}
             onClick={() => setChartType("bar")}
           />
           <DeckRibbonTile
@@ -112,6 +115,27 @@ export function ComunicadoChartRibbon() {
             hint="Gráfico de linhas."
             active={block.chartType === "line"}
             onClick={() => setChartType("line")}
+          />
+          <DeckRibbonTile
+            icon={ChartArea}
+            label="Área"
+            hint="Gráfico de área (preenchimento sob a série)."
+            active={block.chartType === "area"}
+            onClick={() => setChartType("area")}
+          />
+          <DeckRibbonTile
+            icon={ChartPie}
+            label="Pizza"
+            hint="Gráfico de pizza (fatias selecionáveis)."
+            active={block.chartType === "pie" || block.chartType === "doughnut"}
+            onClick={() => setChartType("pie")}
+          />
+          <DeckRibbonTile
+            icon={ChartSpline}
+            label="Combo"
+            hint="Colunas + linha no mesmo gráfico."
+            active={block.chartType === "combo"}
+            onClick={() => setChartType("combo")}
           />
         </div>
       </DeckRibbonGroup>
