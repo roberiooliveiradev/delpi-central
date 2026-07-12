@@ -1,12 +1,13 @@
 import {
   createDashboardNativeFormFields,
+  NativeCheckboxControl,
+  NativeTextControl,
   type FormFieldShellClassNames,
 } from "@delpi/plugin-ui/index";
 
-export {
-  NativeTextControl as TmNativeTextControl,
-  NativeCheckboxControl as TmNativeCheckboxControl,
-} from "@delpi/plugin-ui/index";
+/** Alias estáveis — um único import do remote evita duplicate export no Vite/MF. */
+export const TmNativeTextControl = NativeTextControl;
+export const TmNativeCheckboxControl = NativeCheckboxControl;
 
 /** Campos nativos alinhados ao shell `ds-filter-box` / `tm-field__label`. */
 const TM_NATIVE_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
