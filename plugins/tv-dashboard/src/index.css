@@ -1,5 +1,7 @@
 .dashboard-tv-dashboard {
   --td-accent: var(--primary, #089bdb);
+  /* Abas contextuais (Gráfico/Tabela/Forma) — distinto do azul das abas permanentes. */
+  --td-contextual-accent: #0f766e;
   --td-surface: var(--surface, #ffffff);
   --td-text: var(--text, #111111);
   --td-border: var(--border, #e5e7eb);
@@ -31,6 +33,7 @@
   --td-text: rgba(255, 255, 255, 0.88);
   --td-border: rgba(255, 255, 255, 0.1);
   --td-muted: rgba(255, 255, 255, 0.72);
+  --td-contextual-accent: #2dd4bf;
   --td-stage-chrome: color-mix(in srgb, var(--td-text) 10%, var(--td-surface));
   --td-stage-preview: color-mix(in srgb, var(--td-text) 88%, var(--td-surface));
   --delpi-ui-surface: var(--td-surface);
@@ -3324,6 +3327,27 @@
   color: var(--td-text);
   border-bottom-color: var(--td-accent);
   background: var(--td-surface);
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__tab-cell--contextual-start {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid color-mix(in srgb, var(--td-border) 90%, transparent);
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__tab--contextual {
+  color: color-mix(in srgb, var(--td-contextual-accent) 72%, var(--td-muted));
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__tab--contextual:hover:not(:disabled) {
+  color: var(--td-contextual-accent);
+  background: color-mix(in srgb, var(--td-contextual-accent) 8%, transparent);
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__tab--contextual-active {
+  color: var(--td-contextual-accent);
+  border-bottom-color: var(--td-contextual-accent);
+  background: color-mix(in srgb, var(--td-contextual-accent) 8%, var(--td-surface));
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__tab:disabled {

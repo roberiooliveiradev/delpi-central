@@ -30,10 +30,28 @@ export type DeckRibbonTabMeta = {
 
 const T = TV_DASHBOARD_HELP_TOOLTIPS.ribbonTabs;
 
+/**
+ * Ordem canônica: abas permanentes primeiro; contextuais (Gráfico/Tabela/Forma)
+ * no final — só aparecem com o elemento selecionado.
+ */
 export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   { id: "home", label: "Página Inicial", hint: T.home, icon: Home },
   { id: "insert", label: "Inserir", hint: T.insert, icon: Plus, customOnly: true },
   { id: "format", label: "Formatar", hint: T.format, icon: Paintbrush, customOnly: true },
+  { id: "view", label: "Exibir", hint: T.view, icon: Eye, customOnly: true },
+  {
+    id: "slide",
+    label: "Tela",
+    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.slide,
+    icon: LayoutTemplate,
+    disabledWhenNoSlide: true,
+  },
+  {
+    id: "playlist",
+    label: "Programação",
+    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.playlist,
+    icon: Settings2,
+  },
   {
     id: "chart",
     label: "Gráfico",
@@ -60,21 +78,14 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
     customOnly: true,
     shapeOnly: true,
   },
-  { id: "view", label: "Exibir", hint: T.view, icon: Eye, customOnly: true },
-  {
-    id: "slide",
-    label: "Tela",
-    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.slide,
-    icon: LayoutTemplate,
-    disabledWhenNoSlide: true,
-  },
-  {
-    id: "playlist",
-    label: "Programação",
-    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.playlist,
-    icon: Settings2,
-  },
 ];
+
+/** Aba contextual (só com elemento selecionado) — destaque visual distinto das permanentes. */
+export function isContextualDeckRibbonTab(
+  tab: Pick<DeckRibbonTabMeta, "chartOnly" | "tableOnly" | "shapeOnly">,
+): boolean {
+  return Boolean(tab.chartOnly || tab.tableOnly || tab.shapeOnly);
+}
 
 export function resolveDeckRibbonTabs(
   isCustomSlide: boolean,

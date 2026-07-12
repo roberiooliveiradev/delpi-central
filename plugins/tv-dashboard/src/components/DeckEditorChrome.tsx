@@ -12,6 +12,7 @@ import {
   ComunicadoSlideBackgroundRibbon,
   DeckHistoryTabActions,
   DeckRibbonShell,
+  isContextualDeckRibbonTab,
   type DeckRibbonTabId,
   resolveDeckRibbonTabs,
 } from "./deck";
@@ -170,20 +171,41 @@ export function DeckEditorChrome({
       <div className="td-deck-chrome__head">
         <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
           <DeckHistoryTabActions />
-          {tabs.map((tab) => (
-            <TabHintCell
-              key={tab.id}
-              label={tab.label}
-              hint={tab.hint}
-              icon={tab.icon}
-              active={activeTab === tab.id}
-              disabled={tab.disabledWhenNoSlide ? !slide : false}
-              onSelect={() => setActiveTab(tab.id)}
-              cellClassName="td-deck-chrome__tab-cell"
-              tabClassName="td-deck-chrome__tab"
-              tabActiveClassName="td-deck-chrome__tab--active"
-            />
-          ))}
+          {tabs.map((tab, index) => {
+            const contextual = isContextualDeckRibbonTab(tab);
+            const firstContextual =
+              contextual && tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
+            return (
+              <TabHintCell
+                key={tab.id}
+                label={tab.label}
+                hint={tab.hint}
+                icon={tab.icon}
+                active={activeTab === tab.id}
+                disabled={tab.disabledWhenNoSlide ? !slide : false}
+                onSelect={() => setActiveTab(tab.id)}
+                cellClassName={[
+                  "td-deck-chrome__tab-cell",
+                  contextual ? "td-deck-chrome__tab-cell--contextual" : "",
+                  firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                tabClassName={[
+                  "td-deck-chrome__tab",
+                  contextual ? "td-deck-chrome__tab--contextual" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                tabActiveClassName={[
+                  "td-deck-chrome__tab--active",
+                  contextual ? "td-deck-chrome__tab--contextual-active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              />
+            );
+          })}
         </div>
         {headerActions}
       </div>

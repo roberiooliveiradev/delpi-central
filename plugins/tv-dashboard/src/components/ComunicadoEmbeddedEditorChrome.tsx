@@ -5,7 +5,11 @@ import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync"
 
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { DeckRibbonShell, resolveEmbeddedComunicadoRibbonTabs } from "./deck";
+import {
+  DeckRibbonShell,
+  isContextualDeckRibbonTab,
+  resolveEmbeddedComunicadoRibbonTabs,
+} from "./deck";
 
 type Labels = Record<string, string>;
 
@@ -54,18 +58,39 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     <section className="td-deck-chrome td-deck-chrome--embedded" aria-label="Editor do comunicado">
       <div className="td-deck-chrome__head">
         <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
-          {tabs.map((tab) => (
-            <TabHintCell
-              key={tab.id}
-              label={tab.label}
-              hint={tab.hint}
-              active={activeTab === tab.id}
-              onSelect={() => setActiveTab(tab.id as EmbeddedTab)}
-              cellClassName="td-deck-chrome__tab-cell"
-              tabClassName="td-deck-chrome__tab"
-              tabActiveClassName="td-deck-chrome__tab--active"
-            />
-          ))}
+          {tabs.map((tab, index) => {
+            const contextual = isContextualDeckRibbonTab(tab);
+            const firstContextual =
+              contextual && tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
+            return (
+              <TabHintCell
+                key={tab.id}
+                label={tab.label}
+                hint={tab.hint}
+                active={activeTab === tab.id}
+                onSelect={() => setActiveTab(tab.id as EmbeddedTab)}
+                cellClassName={[
+                  "td-deck-chrome__tab-cell",
+                  contextual ? "td-deck-chrome__tab-cell--contextual" : "",
+                  firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                tabClassName={[
+                  "td-deck-chrome__tab",
+                  contextual ? "td-deck-chrome__tab--contextual" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                tabActiveClassName={[
+                  "td-deck-chrome__tab--active",
+                  contextual ? "td-deck-chrome__tab--contextual-active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              />
+            );
+          })}
         </div>
       </div>
       <div className="td-deck-chrome__ribbon">
