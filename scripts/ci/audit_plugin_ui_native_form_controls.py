@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Varredura de <select> e <textarea> nativos fora de @delpi/plugin-ui.
+"""Varredura de controles nativos fora de @delpi/plugin-ui.
 
-Detecta JSX/TSX com controles nativos inline nos plugins MFE. O canônico é
-NativeSelectControl / SelectControl / NativeTextAreaControl / Native*Field
-(importados de @delpi/plugin-ui ou wrappers finos locais).
+Detecta JSX/TSX com:
+  - `<select>` / `<textarea>` em todos os plugins MFE (escopo)
+  - `<input>` texto/número/search/checkbox em plugins STRICT (hoje: tv-dashboard)
+
+Exclui tipos legítimos: file, hidden, range, radio, submit, button, image.
+
+Canônicos: NativeSelectControl, NativeTextControl, NativeCheckboxControl,
+NativeTextAreaControl, Native*Field, wrappers finos locais.
 
 Uso:
   python3 scripts/ci/audit_plugin_ui_native_form_controls.py
@@ -28,8 +33,16 @@ PLUGINS_DIR = ROOT / "plugins"
 SCAN_GLOBS = ("**/*.tsx", "**/*.jsx")
 NATIVE_SELECT_RE = re.compile(r"<select\b")
 NATIVE_TEXTAREA_RE = re.compile(r"<textarea\b")
+NATIVE_INPUT_RE = re.compile(r"<input\b")
+# type= no mesmo bloco (até 8 linhas)
+INPUT_TYPE_RE = re.compile(
+    r"""type\s*=\s*(?:['"](?P<q>file|hidden|range|radio|submit|button|image|checkbox|text|number|search|url|email|password|date|datetime-local|tel)['"]|\{(?P<br>[^}]+)\})""",
+    re.I,
+)
+EXCLUDED_INPUT_TYPES = frozenset(
+    {"file", "hidden", "range", "radio", "submit", "button", "image"}
+)
 
-# Plugins fora do escopo de migração plugin-ui (informativo — não entra na allowlist).
 EXCLUDED_PLUGINS = frozenset(
     {
         "plugin-ui",
@@ -39,10 +52,13 @@ EXCLUDED_PLUGINS = frozenset(
     }
 )
 
-# Ocorrências conhecidas e aceitas até migração (domínio ou backlog documentado).
+# Plugins com gate estrito também para <input> / checkbox (Onda 4N.7).
+STRICT_INPUT_PLUGINS = frozenset({"tv-dashboard"})
+
 # Chave: path relativo a plugins/ (POSIX). Valor: motivo curto.
-# Vazio = nenhum `<textarea>`/`<select>` nativo inline fora de @delpi/plugin-ui nos plugins MFE.
-KNOWN_ALLOWLIST: dict[str, str] = {}
+KNOWN_ALLOWLIST: dict[str, str] = {
+    # Upload oculto — type=file (não deveria aparecer se o parser excluir file).
+}
 
 
 @dataclass(frozen=True)
@@ -50,7 +66,7 @@ class NativeControlHit:
     plugin: str
     rel_path: str
     line: int
-    kind: str  # select | textarea
+    kind: str  # select | textarea | input | checkbox
     allowlisted: bool
     reason: str | None
 
@@ -60,6 +76,26 @@ def iter_source_files(plugin_dir: Path) -> list[Path]:
     for pattern in SCAN_GLOBS:
         files.extend(plugin_dir.glob(pattern))
     return sorted({path for path in files if "node_modules" not in path.parts})
+
+
+def _input_kind_from_block(block: str) -> str | None:
+    """Retorna 'checkbox' | 'input' | None se o tipo for excluído."""
+    match = INPUT_TYPE_RE.search(block)
+    if match:
+        raw = (match.group("q") or match.group("br") or "").strip().strip("\"'")
+        # type={expr} dinâmico — tratar como input auditável
+        if raw.startswith("field.") or "integer" in raw or "?" in raw:
+            return "input"
+        lowered = raw.lower()
+        if lowered in EXCLUDED_INPUT_TYPES:
+            return None
+        if lowered == "checkbox":
+            return "checkbox"
+        return "input"
+    # Sem type explícito = text
+    if "checkbox" in block.lower() and "type=" not in block.lower():
+        return "input"
+    return "input"
 
 
 def scan_file(plugin: str, path: Path) -> list[NativeControlHit]:
@@ -78,6 +114,9 @@ def scan_file(plugin: str, path: Path) -> list[NativeControlHit]:
             kind = "select"
         elif NATIVE_TEXTAREA_RE.search(line):
             kind = "textarea"
+        elif NATIVE_INPUT_RE.search(line) and plugin in STRICT_INPUT_PLUGINS:
+            block = "\n".join(lines[index - 1 : index + 8])
+            kind = _input_kind_from_block(block)
         if kind is None:
             continue
 
@@ -120,6 +159,7 @@ def print_report(hits: list[NativeControlHit]) -> None:
 
     print("Varredura — controles nativos fora de @delpi/plugin-ui")
     print(f"Plugins excluídos: {', '.join(sorted(EXCLUDED_PLUGINS))}")
+    print(f"Input estrito (4N.7): {', '.join(sorted(STRICT_INPUT_PLUGINS))}")
     print(f"Total: {len(hits)} ({len(allowlisted)} allowlist, {len(unlisted)} novos/bloqueantes)")
     print()
 
@@ -156,6 +196,7 @@ def main() -> int:
     if args.json:
         payload = {
             "excluded_plugins": sorted(EXCLUDED_PLUGINS),
+            "strict_input_plugins": sorted(STRICT_INPUT_PLUGINS),
             "allowlist_size": len(KNOWN_ALLOWLIST),
             "total": len(hits),
             "allowlisted": len(hits) - len(unlisted),

@@ -1775,7 +1775,7 @@ Animação / Posição / Ações   fechados
 | 4N.4 | Animação de entrada → `NativeSelectControl` | ✅ |
 | 4N.5 | `NativeCheckboxControl` + `NativeTextControl` no plugin-ui; uso nos inspetores chart/table/elemento | ✅ |
 | 4N.6 | Context menu só `TvRibbonColorPicker` | ✅ |
-| 4N.7 | Estender gate CI a checkbox/input cru (residual) | ⬜ |
+| 4N.7 | Gate CI estrito a input/checkbox no `tv-dashboard` (+ migração residual ribbon/painéis) | ✅ |
 
 #### Anti-padrões 4N
 

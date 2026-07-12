@@ -54,7 +54,7 @@ import {
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
 } from "@delpi/tv-dashboard-presentation";
-import { HintAction, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
+import { HintAction, NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
@@ -300,15 +300,15 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   <Minus size={14} aria-hidden="true" />
                 </TdRibbonIconButton>
                 <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
-                  <input
+                  <NativeTextControl
                     type="number"
                     className="td-deck-ribbon__number"
                     aria-label="Tamanho da fonte"
                     min={COMUNICADO_FONT_SIZE_MIN}
                     max={COMUNICADO_FONT_SIZE_MAX}
                     value={selected.style?.fontSize ?? 32}
-                    onChange={(e) =>
-                      updateSelectedStyle({ fontSize: clampFontSize(Number(e.target.value)) })
+                    onChange={(value) =>
+                      updateSelectedStyle({ fontSize: clampFontSize(Number(value)) })
                     }
                   />
                 </HintAction>
@@ -537,7 +537,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-letter-spacing">
                   Espaçamento
                 </label>
-                <input
+                <NativeTextControl
                   id="td-ribbon-letter-spacing"
                   type="number"
                   className="td-deck-ribbon__number td-deck-ribbon__number--compact"
@@ -546,8 +546,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   max={24}
                   step={0.5}
                   value={selected.style?.letterSpacing ?? 0}
-                  onChange={(e) =>
-                    updateSelectedStyle({ letterSpacing: Number(e.target.value) || 0 })
+                  onChange={(value) =>
+                    updateSelectedStyle({ letterSpacing: Number(value) || 0 })
                   }
                 />
               </div>
@@ -697,16 +697,16 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-border-width">
               Borda
             </label>
-            <input
+            <NativeTextControl
               id="td-block-border-width"
               type="number"
               className="td-deck-ribbon__number td-deck-ribbon__number--compact"
               min={0}
               max={12}
               value={selected.style?.borderWidth ?? 0}
-              onChange={(e) =>
+              onChange={(value) =>
                 updateSelectedStyle({
-                  borderWidth: Number(e.target.value) || 0,
+                  borderWidth: Number(value) || 0,
                   borderColor: selected.style?.borderColor ?? "#ffffff",
                 })
               }
@@ -721,14 +721,14 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-radius">
               Raio
             </label>
-            <input
+            <NativeTextControl
               id="td-block-radius"
               type="number"
               className="td-deck-ribbon__number td-deck-ribbon__number--compact"
               min={0}
               max={64}
               value={selected.style?.borderRadius ?? 0}
-              onChange={(e) => updateSelectedStyle({ borderRadius: Number(e.target.value) || 0 })}
+              onChange={(value) => updateSelectedStyle({ borderRadius: Number(value) || 0 })}
             />
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-shadow">
               Sombra

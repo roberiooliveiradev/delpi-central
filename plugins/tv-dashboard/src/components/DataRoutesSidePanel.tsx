@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Factory, Package, ShieldCheck } from "lucide-react";
-import { DataRouteCatalogPanel, FieldLabel } from "@delpi/plugin-ui/index";
+import { DataRouteCatalogPanel, FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   createDataSourceBlock,
   DATA_REFRESH_SEC_MAX,
@@ -126,21 +126,21 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
         <DeckPropertySection pane title="Configurar fonte" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.sourceConfig}>
           <p className="td-deck-inspector__meta">{pickedRoute.label}</p>
           <DeckField id="td-data-source-label" label="Rótulo">
-            <input id="td-data-source-label" value={label} onChange={(event) => setLabel(event.target.value)} />
+            <NativeTextControl id="td-data-source-label" value={label} onChange={setLabel} />
           </DeckField>
           <DeckField
             id="td-data-source-refresh"
             label="Atualizar a cada (s)"
             hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.dataBlockRefreshInterval}
           >
-            <input
+            <NativeTextControl
               id="td-data-source-refresh"
               type="number"
               min={DATA_REFRESH_SEC_MIN}
               max={DATA_REFRESH_SEC_MAX}
               placeholder={`Padrão (${globalRefreshSec}s)`}
               value={refreshSec}
-              onChange={(event) => setRefreshSec(event.target.value)}
+              onChange={setRefreshSec}
             />
           </DeckField>
           {Object.entries(schema).map(([key, field]) => {
@@ -151,12 +151,11 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
                 id={`td-data-source-param-${key}`}
                 label={`${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`}
               >
-                <input
+                <NativeTextControl
                   id={`td-data-source-param-${key}`}
                   type={field.type === "integer" ? "number" : "text"}
                   value={params?.[key] === undefined || params?.[key] === null ? "" : String(params[key])}
-                  onChange={(event) => {
-                    const raw = event.target.value;
+                  onChange={(raw) => {
                     setParams((previous) => {
                       const next = { ...(previous ?? {}) };
                       if (!raw.trim()) {
@@ -164,7 +163,7 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
                       } else if (field.type === "integer") {
                         next[key] = Number(raw);
                       } else {
-                        next[key] = raw.trim();
+                        next[key] = raw;
                       }
                       return next;
                     });

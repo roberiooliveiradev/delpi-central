@@ -23,7 +23,7 @@ import {
   type ComunicadoChartViewBlock,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
-import { ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
+import { NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
@@ -158,7 +158,7 @@ export function ComunicadoShapeRibbon() {
               <label className="td-deck-ribbon__field-label" htmlFor="td-chart-marker-radius">
                 Raio
               </label>
-              <input
+              <NativeTextControl
                 id="td-chart-marker-radius"
                 type="number"
                 className="td-deck-ribbon__number td-deck-ribbon__number--compact"
@@ -166,8 +166,8 @@ export function ComunicadoShapeRibbon() {
                 max={12}
                 step={0.5}
                 value={partState?.style?.markerRadius ?? 2.5}
-                onChange={(e) =>
-                  patchPartStyle({ markerRadius: Number(e.target.value) || 2.5 })
+                onChange={(value) =>
+                  patchPartStyle({ markerRadius: Number(value) || 2.5 })
                 }
               />
               <DeckRibbonTile
@@ -338,7 +338,7 @@ export function ComunicadoShapeRibbon() {
           <label className="td-deck-ribbon__field-label" htmlFor="td-shape-width">
             Largura %
           </label>
-          <input
+          <NativeTextControl
             id="td-shape-width"
             type="number"
             className="td-deck-ribbon__number td-deck-ribbon__number--compact"
@@ -347,12 +347,12 @@ export function ComunicadoShapeRibbon() {
             step={0.5}
             aria-label="Largura da forma em percentual do slide"
             value={Number(block.frame.w.toFixed(1))}
-            onChange={(e) => setFrameSize("w", Number(e.target.value))}
+            onChange={(value) => setFrameSize("w", Number(value))}
           />
           <label className="td-deck-ribbon__field-label" htmlFor="td-shape-height">
             Altura %
           </label>
-          <input
+          <NativeTextControl
             id="td-shape-height"
             type="number"
             className="td-deck-ribbon__number td-deck-ribbon__number--compact"
@@ -361,7 +361,7 @@ export function ComunicadoShapeRibbon() {
             step={0.5}
             aria-label="Altura da forma em percentual do slide"
             value={Number(block.frame.h.toFixed(1))}
-            onChange={(e) => setFrameSize("h", Number(e.target.value))}
+            onChange={(value) => setFrameSize("h", Number(value))}
           />
         </div>
       </DeckRibbonGroup>

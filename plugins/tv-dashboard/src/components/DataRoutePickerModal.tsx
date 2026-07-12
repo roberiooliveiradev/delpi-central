@@ -1,3 +1,4 @@
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Factory, Package, ShieldCheck, X } from "lucide-react";
 import {
@@ -158,11 +159,12 @@ export function DataRoutePickerModal({ open, onClose, onSelect }: Props) {
         <div className="td-modal__body">
           {!pickedRoute ? (
             <>
-              <input
-                type="search"
+              <NativeTextControl
+                type="text"
                 placeholder="Buscar por nome ou categoria…"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                aria-label="Buscar rota de dados"
+                onChange={setQuery}
               />
               {loading ? <p className="td-subtitle">Carregando catálogo…</p> : null}
               {error ? <p className="td-error">{error}</p> : null}

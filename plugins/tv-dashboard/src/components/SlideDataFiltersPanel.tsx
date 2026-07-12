@@ -1,3 +1,4 @@
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
@@ -53,12 +54,12 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
           />
         ) : (
           <DeckField key={key} id={`td-slide-filter-${key}`} label={field.label ?? key}>
-            <input
+            <NativeTextControl
               id={`td-slide-filter-${key}`}
               type={field.type === "integer" ? "number" : "text"}
               placeholder={field.optional ? "Opcional" : ""}
               value={filters[key] === undefined ? "" : String(filters[key])}
-              onChange={(event) => updateFilter(key, event.target.value)}
+              onChange={(value) => updateFilter(key, value)}
             />
           </DeckField>
         ),

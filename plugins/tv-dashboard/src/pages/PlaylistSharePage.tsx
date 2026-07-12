@@ -1,3 +1,4 @@
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Copy, Link2, QrCode, RefreshCw } from "lucide-react";
 
@@ -100,7 +101,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
           {playlist.isActive ? "" : " · link inativo"}
         </p>
         <div className="td-link-box">
-          <input readOnly value={playlist.publicUrl ?? ""} aria-label="Link público" />
+          <NativeTextControl readOnly value={playlist.publicUrl ?? ""} aria-label="Link público" onChange={() => undefined} />
         </div>
         <div className="td-toolbar" style={{ marginTop: 16 }}>
           <button type="button" className="td-btn" onClick={copyLink}>

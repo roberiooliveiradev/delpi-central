@@ -1,3 +1,4 @@
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Image as ImageIcon, Upload, Video, X } from "lucide-react";
 
@@ -147,11 +148,12 @@ export function MediaLibraryModal({
         </header>
         <div className="td-modal__body">
           <div className="td-media-library__toolbar">
-            <input
-              type="search"
+            <NativeTextControl
+              type="text"
               placeholder="Buscar por nome…"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              aria-label="Buscar por nome"
+              onChange={setQuery}
             />
             <button
               type="button"

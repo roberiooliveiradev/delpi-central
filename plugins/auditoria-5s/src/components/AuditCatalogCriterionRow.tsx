@@ -1,4 +1,5 @@
 import { Trash2 } from "lucide-react";
+import { NativeTextAreaControl, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import type { EditableCriterion } from "../utils/catalogEditor";
 
@@ -22,21 +23,21 @@ export function AuditCatalogCriterionRow({
       <div className="a5s-catalog-row__index" aria-hidden>
         {index}
       </div>
-      <input
+      <NativeTextControl
         id={`catalog-code-${item.clientId}`}
         className="a5s-catalog-row__input a5s-catalog-row__input--code"
         value={item.code}
-        onChange={(event) => onChange(item.clientId, { code: event.target.value })}
+        onChange={(value) => onChange(item.clientId, { code: value })}
         maxLength={20}
         aria-label={`Código do critério ${index}`}
         placeholder="Ex.: U01"
       />
-      <textarea
+      <NativeTextAreaControl
         id={`catalog-desc-${item.clientId}`}
         className="a5s-catalog-row__input a5s-catalog-row__input--description"
         rows={3}
         value={item.description}
-        onChange={(event) => onChange(item.clientId, { description: event.target.value })}
+        onChange={(value) => onChange(item.clientId, { description: value })}
         aria-label={`Descrição do critério ${index}`}
         placeholder="Descreva o que será avaliado neste critério"
       />
