@@ -116,6 +116,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Ferramentas da tabela selecionada (Excel Table Design): estilos, opções de estilo (cabeçalho, totais, listras) e formato.",
     shape:
       "Ferramentas da forma selecionada (PowerPoint Online): alterar forma, estilos, preenchimento, contorno e tamanho.",
+    data: "Fonte de dados e parâmetros do elemento selecionado (gráfico, tabela, KPI ou fonte).",
     view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
   },
   view: {

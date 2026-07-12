@@ -47,7 +47,10 @@ import {
   applyComunicadoSlideTheme,
   type ComunicadoSlideTheme,
 } from "../../content/comunicadoSlideThemes";
-import type { ComunicadoRibbonTabRequest } from "../../components/comunicadoEditorContextCore";
+import type {
+  ComunicadoRibbonTabRequest,
+  DataPanelIntent,
+} from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
 import {
   bringForward,
@@ -78,6 +81,7 @@ type Options = {
   setEditingKpiPart: Dispatch<SetStateAction<ComunicadoKpiPartRef | null>>;
   setLastDataDisplayMode: Dispatch<SetStateAction<ComunicadoDataDisplayMode>>;
   setDataPanelOpen: Dispatch<SetStateAction<boolean>>;
+  setDataPanelIntent: Dispatch<SetStateAction<DataPanelIntent>>;
   setShapeMenuOpen: Dispatch<SetStateAction<boolean>>;
   setRibbonTabRequest: Dispatch<SetStateAction<ComunicadoRibbonTabRequest | null>>;
   /** Preenchido pelo Provider para o clipboard. */
@@ -112,6 +116,7 @@ export function useComunicadoEditorBlocks({
   setEditingKpiPart,
   setLastDataDisplayMode,
   setDataPanelOpen,
+  setDataPanelIntent,
   setShapeMenuOpen,
   setRibbonTabRequest,
   removeSelectedRef,
@@ -228,9 +233,16 @@ export function useComunicadoEditorBlocks({
   );
 
   const openDataPanel = useCallback(() => {
+    setDataPanelIntent("binding");
+    setDataPanelOpen(true);
+    setRibbonTabRequest("data");
+  }, [setDataPanelIntent, setDataPanelOpen, setRibbonTabRequest]);
+
+  const openDataCatalog = useCallback(() => {
+    setDataPanelIntent("catalog");
     setDataPanelOpen(true);
     setRibbonTabRequest("insert");
-  }, [setDataPanelOpen, setRibbonTabRequest]);
+  }, [setDataPanelIntent, setDataPanelOpen, setRibbonTabRequest]);
 
   const setDataFilters = useCallback(
     (filters: ComunicadoDataFilters | undefined) => {
@@ -706,6 +718,7 @@ export function useComunicadoEditorBlocks({
     addTableViewBlock,
     addKpiViewBlock,
     openDataPanel,
+    openDataCatalog,
     setDataFilters,
     addShape,
     addIconBlock,

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
+import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
 
@@ -13,18 +14,19 @@ import {
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "format" | "chart" | "table" | "shape" | "view";
+type EmbeddedTab = "insert" | "format" | "chart" | "table" | "shape" | "data" | "view";
 
 type Props = {
   labels?: Labels;
 };
 
-/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar/Gráfico/Tabela/Forma do deck. */
+/** Chrome compacto do compositor embutido — mesmas faixas do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const { selected, selectedChartPart } = useComunicadoEditor();
   const chartSelected = selected?.type === "chart_view";
   const tableSelected = selected?.type === "table_view";
   const shapeSelected = selected?.type === "shape";
+  const dataSelected = Boolean(selected && isDataBoundEditorBlockType(selected.type));
   const shapeChromeSelected =
     selected?.type === "kpi_view" || tableSelected || chartSelected;
   const chartPartPrimitiveSelected = Boolean(
@@ -36,6 +38,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     chartSelected,
     tableSelected,
     shapeSelected,
+    dataSelected,
     chartPartPrimitiveSelected,
     shapeChromeSelected,
   });
@@ -48,6 +51,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       tab === "chart" ||
       tab === "table" ||
       tab === "shape" ||
+      tab === "data" ||
       tab === "view"
     ) {
       setActiveTab(tab);

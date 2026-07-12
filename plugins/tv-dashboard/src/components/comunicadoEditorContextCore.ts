@@ -43,7 +43,17 @@ export type TextEditorBridge = {
   commitPending?: () => void;
 };
 
-export type ComunicadoRibbonTabRequest = "insert" | "format" | "chart" | "table" | "shape" | "view";
+export type ComunicadoRibbonTabRequest =
+  | "insert"
+  | "format"
+  | "chart"
+  | "table"
+  | "shape"
+  | "data"
+  | "view";
+
+/** Intenção ao abrir a aba Dados do painel lateral. */
+export type DataPanelIntent = "binding" | "catalog";
 
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
@@ -108,8 +118,12 @@ export type ComunicadoEditorContextValue = {
   addTableViewBlock: (rows: number, cols: number, preset: ComunicadoTablePreset) => void;
   addKpiViewBlock: () => void;
   openDataPanel: () => void;
+  /** Abre aba Dados do painel com o catálogo de inserção. */
+  openDataCatalog: () => void;
   dataPanelOpen: boolean;
   setDataPanelOpen: (open: boolean) => void;
+  dataPanelIntent: DataPanelIntent;
+  setDataPanelIntent: (intent: DataPanelIntent) => void;
   addShape: (shape: ComunicadoShapeKind) => void;
   addIconBlock: (iconName: string) => void;
   groupSelected: () => void;

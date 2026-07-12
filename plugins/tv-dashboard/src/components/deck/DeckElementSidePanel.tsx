@@ -1,10 +1,12 @@
 import { ChevronLeft, Database, Layers, MousePointer2 } from "lucide-react";
 import { FormatPaneShell } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
+import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope } from "../../api/tvDashboardApi";
-import { DataRoutesSidePanel } from "../DataRoutesSidePanel";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { SelectedDataSidePanel } from "../SelectedDataSidePanel";
+import { resolveSelectedDataContext } from "../../utils/selectedDataContext";
 import { ComunicadoElementInspector } from "./ComunicadoElementInspector";
 import { ComunicadoLayersPanel } from "./ComunicadoLayersPanel";
 
@@ -17,12 +19,6 @@ const PANEL_TABS = [
   { id: "layers" as const, label: "Camadas" },
 ];
 
-const PANEL_TITLES: Record<SideTab, string> = {
-  element: "Definir elemento",
-  data: "Fontes de dados",
-  layers: "Camadas",
-};
-
 type Props = {
   labels?: Labels;
   /** Dentro do card do palco (não coluna externa do grid). */
@@ -32,9 +28,23 @@ type Props = {
 
 /** Painel lateral estilo PowerPoint — propriedades, dados e camadas. */
 export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope = null }: Props) {
-  const { selectedIds, dataPanelOpen, setDataPanelOpen } = useComunicadoEditor();
+  const {
+    selected,
+    selectedIds,
+    blocks,
+    dataPanelOpen,
+    setDataPanelOpen,
+    dataPanelIntent,
+    setDataPanelIntent,
+    openDataCatalog,
+  } = useComunicadoEditor();
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<SideTab>("element");
+
+  const dataContext = useMemo(
+    () => resolveSelectedDataContext(blocks, selectedIds),
+    [blocks, selectedIds],
+  );
 
   useEffect(() => {
     if (selectedIds.length > 0) setOpen(true);
@@ -47,11 +57,22 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     }
   }, [dataPanelOpen]);
 
-  const panelTitle = useMemo(() => PANEL_TITLES[tab], [tab]);
+  const panelTitle = useMemo(() => {
+    if (tab !== "data") {
+      return tab === "element" ? "Definir elemento" : "Camadas";
+    }
+    if (dataPanelIntent === "catalog" || dataContext.kind === "none") {
+      return "Fontes de dados";
+    }
+    return "Dados do elemento";
+  }, [tab, dataPanelIntent, dataContext.kind]);
 
   function handleTabChange(next: SideTab) {
     setTab(next);
     if (next === "data") {
+      const preferCatalog =
+        !selected || !isDataBoundEditorBlockType(selected.type);
+      setDataPanelIntent(preferCatalog ? "catalog" : "binding");
       setDataPanelOpen(true);
     } else {
       setDataPanelOpen(false);
@@ -85,12 +106,13 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
               labels={labels}
               placement="side"
               branchScope={branchScope}
-              onOpenDataSources={() => handleTabChange("data")}
+              onOpenDataSources={() => openDataCatalog()}
             />
           ) : tab === "data" ? (
-            <DataRoutesSidePanel
+            <SelectedDataSidePanel
               branchScope={branchScope}
               onInserted={() => handleTabChange("element")}
+              onOpenCatalog={() => openDataCatalog()}
             />
           ) : (
             <ComunicadoLayersPanel />
@@ -127,7 +149,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
               handleTabChange("data");
             }}
             aria-label="Dados"
-            title="Fontes de dados"
+            title="Dados"
           >
             <Database size={16} aria-hidden="true" />
           </button>

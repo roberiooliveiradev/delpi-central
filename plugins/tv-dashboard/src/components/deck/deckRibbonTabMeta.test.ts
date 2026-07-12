@@ -6,7 +6,7 @@ import {
   resolveEmbeddedComunicadoRibbonTabs,
 } from "./deckRibbonTabMeta";
 
-describe("deckRibbonTabMeta (Onda 4K/4L/Tabela)", () => {
+describe("deckRibbonTabMeta (Onda 4K/4L/Tabela/Dados)", () => {
   it("mostra aba Forma para KPI/tabela/gráfico (chrome de forma)", () => {
     const tabs = resolveDeckRibbonTabs(true, { shapeChromeSelected: true });
     expect(tabs.some((tab) => tab.id === "shape")).toBe(true);
@@ -16,29 +16,29 @@ describe("deckRibbonTabMeta (Onda 4K/4L/Tabela)", () => {
     const tabs = resolveDeckRibbonTabs(true, {
       tableSelected: true,
       shapeChromeSelected: true,
+      dataSelected: true,
     });
     expect(tabs.some((tab) => tab.id === "table")).toBe(true);
     expect(tabs.some((tab) => tab.id === "shape")).toBe(true);
+    expect(tabs.some((tab) => tab.id === "data")).toBe(true);
     expect(tabs.find((tab) => tab.id === "table")?.label).toBe("Tabela");
   });
 
-  it("coloca abas contextuais depois das permanentes", () => {
+  it("coloca abas contextuais depois das permanentes, Dados no fim", () => {
     const tabs = resolveDeckRibbonTabs(true, {
       chartSelected: true,
       tableSelected: true,
       shapeChromeSelected: true,
+      dataSelected: true,
     });
     const ids = tabs.map((tab) => tab.id);
     const playlistIdx = ids.indexOf("playlist");
     const chartIdx = ids.indexOf("chart");
-    const tableIdx = ids.indexOf("table");
-    const shapeIdx = ids.indexOf("shape");
+    const dataIdx = ids.indexOf("data");
     expect(playlistIdx).toBeGreaterThan(-1);
     expect(chartIdx).toBeGreaterThan(playlistIdx);
-    expect(tableIdx).toBeGreaterThan(playlistIdx);
-    expect(shapeIdx).toBeGreaterThan(playlistIdx);
-    expect(isContextualDeckRibbonTab(tabs[chartIdx]!)).toBe(true);
-    expect(isContextualDeckRibbonTab(tabs[tableIdx]!)).toBe(true);
+    expect(dataIdx).toBe(ids.length - 1);
+    expect(isContextualDeckRibbonTab(tabs[dataIdx]!)).toBe(true);
     expect(isContextualDeckRibbonTab(tabs.find((t) => t.id === "home")!)).toBe(false);
   });
 
@@ -51,11 +51,12 @@ describe("deckRibbonTabMeta (Onda 4K/4L/Tabela)", () => {
     expect(tabs.some((tab) => tab.id === "chart")).toBe(true);
   });
 
-  it("mantém Gráfico, Tabela e Forma no final do chrome embutido", () => {
+  it("mantém contextuais no final do chrome embutido", () => {
     const both = resolveEmbeddedComunicadoRibbonTabs({
       chartSelected: true,
       tableSelected: true,
       shapeSelected: true,
+      dataSelected: true,
     });
     expect(both.map((tab) => tab.id)).toEqual([
       "insert",
@@ -64,6 +65,7 @@ describe("deckRibbonTabMeta (Onda 4K/4L/Tabela)", () => {
       "chart",
       "table",
       "shape",
+      "data",
     ]);
   });
 
@@ -73,5 +75,6 @@ describe("deckRibbonTabMeta (Onda 4K/4L/Tabela)", () => {
       expect.arrayContaining(["home", "playlist", "slide", "insert"]),
     );
     expect(tabs.find((tab) => tab.id === "playlist")?.label).toBe("Programação");
+    expect(tabs.some((tab) => tab.id === "data")).toBe(false);
   });
 });

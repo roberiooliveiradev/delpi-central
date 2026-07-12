@@ -54,7 +54,7 @@ type Props = {
 
 function isRibbonTab(
   tab: DeckRibbonTabId,
-): tab is "home" | "insert" | "format" | "chart" | "table" | "shape" | "view" {
+): tab is "home" | "insert" | "format" | "chart" | "table" | "shape" | "data" | "view" {
   return (
     tab === "home" ||
     tab === "insert" ||
@@ -62,6 +62,7 @@ function isRibbonTab(
     tab === "chart" ||
     tab === "table" ||
     tab === "shape" ||
+    tab === "data" ||
     tab === "view"
   );
 }
@@ -88,6 +89,14 @@ export function DeckEditorChrome({
   const chartSelected = editor?.selected?.type === "chart_view";
   const tableSelected = editor?.selected?.type === "table_view";
   const shapeSelected = editor?.selected?.type === "shape";
+  const dataSelected = Boolean(
+    editor?.selected &&
+      (editor.selected.type === "chart_view" ||
+        editor.selected.type === "table_view" ||
+        editor.selected.type === "kpi_view" ||
+        editor.selected.type === "data_source" ||
+        editor.selected.type.startsWith("data_")),
+  );
   const shapeChromeSelected =
     editor?.selected?.type === "kpi_view" ||
     tableSelected ||
@@ -103,6 +112,7 @@ export function DeckEditorChrome({
     chartSelected,
     tableSelected,
     shapeSelected,
+    dataSelected,
     chartPartPrimitiveSelected,
     shapeChromeSelected,
   });
@@ -115,6 +125,7 @@ export function DeckEditorChrome({
       tab === "chart" ||
       tab === "table" ||
       tab === "shape" ||
+      tab === "data" ||
       tab === "view"
     ) {
       setActiveTab(tab);
@@ -132,10 +143,20 @@ export function DeckEditorChrome({
               ? "table"
               : shapeSelected
                 ? "shape"
-                : "home",
+                : dataSelected
+                  ? "data"
+                  : "home",
       );
     }
-  }, [activeTab, tabs, chartSelected, tableSelected, shapeSelected, chartPartPrimitiveSelected]);
+  }, [
+    activeTab,
+    tabs,
+    chartSelected,
+    tableSelected,
+    shapeSelected,
+    dataSelected,
+    chartPartPrimitiveSelected,
+  ]);
 
   useEffect(() => {
     if (chartPartPrimitiveSelected && isCustomSlide) {
@@ -148,6 +169,8 @@ export function DeckEditorChrome({
       setActiveTab("shape");
     } else if (chartSelected && isCustomSlide) {
       setActiveTab("chart");
+    } else if (dataSelected && isCustomSlide && !chartSelected && !tableSelected && !shapeSelected) {
+      setActiveTab("data");
     }
   }, [
     chartSelected,
@@ -155,6 +178,7 @@ export function DeckEditorChrome({
     shapeSelected,
     shapeChromeSelected,
     chartPartPrimitiveSelected,
+    dataSelected,
     isCustomSlide,
     editor?.selectedId,
     editor?.selectedChartPart,
@@ -220,6 +244,7 @@ export function DeckEditorChrome({
               activeTab === "chart" ||
               activeTab === "table" ||
               activeTab === "shape" ||
+              activeTab === "data" ||
               activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}

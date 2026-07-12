@@ -39,7 +39,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     addChartViewBlock,
     addTableViewBlock,
     addKpiViewBlock,
-    openDataPanel,
+    openDataCatalog,
     openMediaLibrary,
   } = useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
@@ -206,7 +206,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             icon={Database}
             label={labels.comunicadoAddDataSource ?? "Dados"}
             hint={H.insertDataSource ?? H.insertIndicator}
-            onClick={() => openDataPanel()}
+            onClick={() => openDataCatalog()}
           />
           <DeckRibbonTile
             icon={Gauge}

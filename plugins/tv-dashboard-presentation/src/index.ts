@@ -175,6 +175,7 @@ export {
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
+  isDataBoundEditorBlockType,
   isFetchableDataBlockType,
   getLinkedDataSourceIds,
   shouldHideDataSourceOnStage,

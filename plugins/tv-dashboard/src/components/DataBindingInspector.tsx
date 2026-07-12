@@ -43,15 +43,19 @@ export function DataBindingInspector({
   route,
   pane = false,
   branchScope = null,
+  /** Quando definido, edita este bloco (ex.: fonte ligada a um visual) em vez do selecionado. */
+  block: blockOverride = null,
 }: {
   route: TvDataRouteCatalogItem | null;
   pane?: boolean;
   branchScope?: BranchScope | null;
+  block?: ComunicadoBlock | null;
 }) {
   const {
     selected,
     config,
     updateSelected,
+    updateBlock,
     duplicateSelected,
     replaceSelectedDataRoute,
     globalRefreshSec,
@@ -59,10 +63,19 @@ export function DataBindingInspector({
   } = useComunicadoEditor();
   const [routePickerOpen, setRoutePickerOpen] = useState(false);
 
-  if (!selected || !("dataBinding" in selected)) return null;
-  if (!isDataBlockType(selected.type) && !isDataSourceBlockType(selected.type)) return null;
+  const target = blockOverride ?? selected;
+  if (!target || !("dataBinding" in target)) return null;
+  if (!isDataBlockType(target.type) && !isDataSourceBlockType(target.type)) return null;
 
-  const binding = selected.dataBinding;
+  const editingLinkedSource = Boolean(blockOverride && selected && blockOverride.id !== selected.id);
+  const binding = target.dataBinding;
+  const applyPatch = (patch: Partial<ComunicadoBlock>) => {
+    if (blockOverride) {
+      updateBlock(blockOverride.id, patch);
+    } else {
+      updateSelected(patch);
+    }
+  };
   const slideFilters = config.dataFilters ?? {};
   const blockParams = binding.params ?? {};
   const inheritedKeys = new Set(
@@ -74,7 +87,7 @@ export function DataBindingInspector({
   const inheritedRefreshSec = resolveDataBlockRefreshSec(undefined, globalRefreshSec);
   const valueFieldOptions = routeValueFieldOptions(route);
   const maxRowsLimit = routeMaxRowsLimit(route);
-  const showPresentationMode = isDataBlockType(selected.type) && !isDataSourceBlockType(selected.type);
+  const showPresentationMode = isDataBlockType(target.type) && !isDataSourceBlockType(target.type);
   const showTableOptions = showPresentationMode && currentDisplayMode === "table";
   const paramSchema = visibleParamSchema(
     (route?.paramSchema ?? undefined) as DataParamSchema | undefined,
@@ -93,7 +106,7 @@ export function DataBindingInspector({
     } else {
       nextParams[key] = raw.trim();
     }
-    updateSelected({
+    applyPatch({
       dataBinding: { ...binding, params: nextParams },
     } as Partial<ComunicadoBlock>);
   }
@@ -101,7 +114,7 @@ export function DataBindingInspector({
   function updateDisplayMode(displayMode: ComunicadoDataDisplayMode) {
     const blockType = blockTypeForDisplayMode(displayMode, suggestedModes);
     setLastDataDisplayMode(displayMode === "auto" ? "kpi" : displayMode);
-    updateSelected({
+    applyPatch({
       type: blockType,
       frame: defaultFrame(blockType),
       dataBinding: { ...binding, displayMode: displayMode === "auto" ? "kpi" : displayMode },
@@ -110,17 +123,25 @@ export function DataBindingInspector({
 
   return (
     <>
-      <DeckPropertySection pane={pane} title="Dados" hint="Parâmetros deste bloco sobrescrevem filtros do slide.">
+      <DeckPropertySection
+        pane={pane}
+        title={editingLinkedSource ? "Parâmetros da fonte" : "Dados"}
+        hint="Parâmetros deste bloco sobrescrevem filtros do slide."
+      >
         <p className="td-deck-inspector__meta">{route?.label ?? binding.operationId}</p>
         <div className="td-deck-inspector__actions">
-          <button type="button" className="td-btn td-btn--sm" onClick={() => duplicateSelected()}>
-            <Copy size={14} aria-hidden="true" />
-            Duplicar
-          </button>
-          <button type="button" className="td-btn td-btn--sm" onClick={() => setRoutePickerOpen(true)}>
-            <RefreshCw size={14} aria-hidden="true" />
-            Trocar rota
-          </button>
+          {!editingLinkedSource ? (
+            <button type="button" className="td-btn td-btn--sm" onClick={() => duplicateSelected()}>
+              <Copy size={14} aria-hidden="true" />
+              Duplicar
+            </button>
+          ) : null}
+          {!editingLinkedSource ? (
+            <button type="button" className="td-btn td-btn--sm" onClick={() => setRoutePickerOpen(true)}>
+              <RefreshCw size={14} aria-hidden="true" />
+              Trocar rota
+            </button>
+          ) : null}
         </div>
         {showPresentationMode ? (
           <DeckField id="td-data-display-mode" label="Formato de apresentação">
@@ -141,7 +162,7 @@ export function DataBindingInspector({
             id="td-data-label"
             value={binding.label ?? ""}
             onChange={(value) =>
-              updateSelected({
+              applyPatch({
                 dataBinding: { ...binding, label: value || undefined },
               } as Partial<ComunicadoBlock>)
             }
@@ -160,7 +181,7 @@ export function DataBindingInspector({
                 } else {
                   nextBinding.valueField = value;
                 }
-                updateSelected({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
+                applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
               }}
               options={[
                 { value: "", label: "Automático (primeiro disponível)" },
@@ -189,7 +210,7 @@ export function DataBindingInspector({
                     nextBinding.maxRows = Math.min(Math.round(parsed), maxRowsLimit);
                   }
                 }
-                updateSelected({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
+                applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
               }}
             />
           </DeckField>
@@ -224,19 +245,21 @@ export function DataBindingInspector({
                   nextBinding.refreshSec = parsed;
                 }
               }
-              updateSelected({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
+              applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
             }}
           />
         </DeckField>
       </DeckPropertySection>
-      <DataRoutePickerModal
-        open={routePickerOpen}
-        onClose={() => setRoutePickerOpen(false)}
-        onSelect={(block) => {
-          replaceSelectedDataRoute(block);
-          setRoutePickerOpen(false);
-        }}
-      />
+      {!editingLinkedSource ? (
+        <DataRoutePickerModal
+          open={routePickerOpen}
+          onClose={() => setRoutePickerOpen(false)}
+          onSelect={(block) => {
+            replaceSelectedDataRoute(block);
+            setRoutePickerOpen(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }

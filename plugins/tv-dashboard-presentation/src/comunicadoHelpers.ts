@@ -83,12 +83,14 @@ import {
   COMUNICADO_FONT_SIZE_MIN,
 } from "./comunicadoTypes";
 import {
+  isDataBoundEditorBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
 } from "./comunicadoDataArchitecture";
 
 export {
+  isDataBoundEditorBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,

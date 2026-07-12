@@ -10,6 +10,14 @@ export function isDataViewBlockType(type: string): type is "chart_view" | "table
   return DATA_VIEW_BLOCK_TYPES.has(type);
 }
 
+/**
+ * Bloco que participa do fluxo de dados no editor (fonte, visual ligado ou legado data_*).
+ * Usado para aba contextual «Dados» e painel lateral.
+ */
+export function isDataBoundEditorBlockType(type: string): boolean {
+  return isDataViewBlockType(type) || isFetchableDataBlockType(type);
+}
+
 /** Blocos cujo binding dispara fetch na api-delpi. */
 export function isFetchableDataBlockType(type: string): boolean {
   return type === "data_source" || type.startsWith("data_");

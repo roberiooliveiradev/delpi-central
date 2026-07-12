@@ -1,4 +1,4 @@
-import { BarChart3, Home, Eye, LayoutTemplate, Paintbrush, Plus, Settings2, Shapes, Table2 } from "lucide-react";
+import { BarChart3, Database, Home, Eye, LayoutTemplate, Paintbrush, Plus, Settings2, Shapes, Table2 } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
@@ -9,6 +9,7 @@ export type DeckRibbonTabId =
   | "chart"
   | "table"
   | "shape"
+  | "data"
   | "view"
   | "slide"
   | "playlist";
@@ -25,14 +26,16 @@ export type DeckRibbonTabMeta = {
   tableOnly?: boolean;
   /** Só aparece com forma selecionada (aba contextual PowerPoint). */
   shapeOnly?: boolean;
+  /** Só aparece com bloco de dados / visual ligado a fonte. */
+  dataOnly?: boolean;
   disabledWhenNoSlide?: boolean;
 };
 
 const T = TV_DASHBOARD_HELP_TOOLTIPS.ribbonTabs;
 
 /**
- * Ordem canônica: abas permanentes primeiro; contextuais (Gráfico/Tabela/Forma)
- * no final — só aparecem com o elemento selecionado.
+ * Ordem canônica: abas permanentes primeiro; contextuais no final —
+ * só aparecem com o elemento selecionado.
  */
 export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   { id: "home", label: "Página Inicial", hint: T.home, icon: Home },
@@ -78,13 +81,21 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
     customOnly: true,
     shapeOnly: true,
   },
+  {
+    id: "data",
+    label: "Dados",
+    hint: T.data ?? "Fonte e parâmetros do elemento de dados selecionado.",
+    icon: Database,
+    customOnly: true,
+    dataOnly: true,
+  },
 ];
 
 /** Aba contextual (só com elemento selecionado) — destaque visual distinto das permanentes. */
 export function isContextualDeckRibbonTab(
-  tab: Pick<DeckRibbonTabMeta, "chartOnly" | "tableOnly" | "shapeOnly">,
+  tab: Pick<DeckRibbonTabMeta, "chartOnly" | "tableOnly" | "shapeOnly" | "dataOnly">,
 ): boolean {
-  return Boolean(tab.chartOnly || tab.tableOnly || tab.shapeOnly);
+  return Boolean(tab.chartOnly || tab.tableOnly || tab.shapeOnly || tab.dataOnly);
 }
 
 export function resolveDeckRibbonTabs(
@@ -93,6 +104,7 @@ export function resolveDeckRibbonTabs(
     chartSelected?: boolean;
     tableSelected?: boolean;
     shapeSelected?: boolean;
+    dataSelected?: boolean;
     /** Parte de gráfico com primitivo point/line/area (duplo clique). */
     chartPartPrimitiveSelected?: boolean;
     /** KPI / tabela / gráfico usam chrome de forma (preenchimento, contorno, cantos). */
@@ -101,6 +113,7 @@ export function resolveDeckRibbonTabs(
 ): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
   const tableSelected = Boolean(options?.tableSelected);
+  const dataSelected = Boolean(options?.dataSelected);
   const shapeSelected =
     Boolean(options?.shapeSelected) ||
     Boolean(options?.chartPartPrimitiveSelected) ||
@@ -110,20 +123,23 @@ export function resolveDeckRibbonTabs(
     if (tab.chartOnly && !chartSelected) return false;
     if (tab.tableOnly && !tableSelected) return false;
     if (tab.shapeOnly && !shapeSelected) return false;
+    if (tab.dataOnly && !dataSelected) return false;
     return true;
   });
 }
 
-/** Faixas Inserir + Formatar (+ Gráfico/Tabela/Forma quando selecionados) — modal embutido. */
+/** Faixas Inserir + Formatar (+ contextuais) — modal embutido. */
 export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   chartSelected?: boolean;
   tableSelected?: boolean;
   shapeSelected?: boolean;
+  dataSelected?: boolean;
   chartPartPrimitiveSelected?: boolean;
   shapeChromeSelected?: boolean;
 }): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
   const tableSelected = Boolean(options?.tableSelected);
+  const dataSelected = Boolean(options?.dataSelected);
   const shapeSelected =
     Boolean(options?.shapeSelected) ||
     Boolean(options?.chartPartPrimitiveSelected) ||
@@ -133,6 +149,7 @@ export function resolveEmbeddedComunicadoRibbonTabs(options?: {
     if (tab.chartOnly && !chartSelected) return false;
     if (tab.tableOnly && !tableSelected) return false;
     if (tab.shapeOnly && !shapeSelected) return false;
+    if (tab.dataOnly && !dataSelected) return false;
     return true;
   });
 }

@@ -113,6 +113,7 @@ export function ComunicadoEditorProvider({
   const [appliedSlideId, setAppliedSlideId] = useState(slideId);
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
+  const [dataPanelIntent, setDataPanelIntent] = useState<"binding" | "catalog">("binding");
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
 
   const configRef = useRef(config);
@@ -266,6 +267,7 @@ export function ComunicadoEditorProvider({
     setEditingKpiPart: selection.setEditingKpiPart,
     setLastDataDisplayMode,
     setDataPanelOpen,
+    setDataPanelIntent,
     setShapeMenuOpen,
     setRibbonTabRequest: selection.setRibbonTabRequest,
     removeSelectedRef,
@@ -383,8 +385,11 @@ export function ComunicadoEditorProvider({
     addTableViewBlock: blockActions.addTableViewBlock,
     addKpiViewBlock: blockActions.addKpiViewBlock,
     openDataPanel: blockActions.openDataPanel,
+    openDataCatalog: blockActions.openDataCatalog,
     dataPanelOpen,
     setDataPanelOpen,
+    dataPanelIntent,
+    setDataPanelIntent,
     addShape: blockActions.addShape,
     addIconBlock: blockActions.addIconBlock,
     groupSelected: blockActions.groupSelected,
