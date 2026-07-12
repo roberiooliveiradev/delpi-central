@@ -292,6 +292,7 @@ export type Nonconformity = {
   root_cause: string | null;
   corrective_action: string | null;
   responsible_name: string;
+  responsible_user_id?: string | null;
   due_date: string;
   priority: NcPriority | null;
   status: string;
@@ -349,6 +350,7 @@ export async function createNonconformity(
     response_id: string;
     description: string;
     responsible_name: string;
+    responsible_user_id?: string | null;
     due_date: string;
     root_cause?: string | null;
     corrective_action?: string | null;
@@ -369,6 +371,7 @@ export async function updateNonconformity(
     root_cause: string | null;
     corrective_action: string | null;
     responsible_name: string;
+    responsible_user_id: string | null;
     due_date: string;
     priority: NcPriority | null;
   }>,
@@ -413,10 +416,17 @@ export async function fetchNcActions(ncId: string) {
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
-export async function addNcAction(ncId: string, description: string) {
+export async function addNcAction(
+  ncId: string,
+  description: string,
+  mentionedUserIds: string[] = [],
+) {
   const res = await httpPost<ApiEnvelope<NcAction>>(
     `${API_BASE}/nonconformities/${ncId}/actions`,
-    { description },
+    {
+      description,
+      mentioned_user_ids: mentionedUserIds,
+    },
   );
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }

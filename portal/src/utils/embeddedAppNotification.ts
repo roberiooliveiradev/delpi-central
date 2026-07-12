@@ -89,16 +89,36 @@ export function portalPathMatchesAppBase(pathname: string, appBasePath: string):
 
 /**
  * Resolve action.target para o basePath registrado no portal (Admin → Apps).
+ * Preserva sufixos de deep link (ex.: /apps/auditoria-5s/filial-01/nc-board).
+ * Só reescreve o prefixo quando há alias (_ vs -) no base registrado.
  */
 export function resolvePortalRoute(
   target: string,
   registeredBasePaths: string[] = []
 ): string {
-  const normalized = normalizeAppPath(target);
-  const match = registeredBasePaths.find((base) =>
-    portalPathsEquivalent(normalized, base)
-  );
-  return match ? normalizeAppPath(match) : normalized;
+  const normalized = normalizeAppPath(target).replace(/\/+$/, "") || "/";
+  if (!registeredBasePaths.length) {
+    return normalized;
+  }
+
+  const bases = registeredBasePaths
+    .map((base) => normalizeAppPath(base).replace(/\/+$/, "") || "/")
+    .sort((a, b) => b.length - a.length);
+
+  const normalizedAlias = normalized.replace(/_/g, "-");
+
+  for (const base of bases) {
+    const baseAlias = base.replace(/_/g, "-");
+    if (normalizedAlias === baseAlias) {
+      return base;
+    }
+    if (normalizedAlias.startsWith(`${baseAlias}/`)) {
+      const suffix = normalizedAlias.slice(baseAlias.length);
+      return `${baseAlias}${suffix}`;
+    }
+  }
+
+  return normalized;
 }
 
 export function isEmbeddedDeepLinkNotification(

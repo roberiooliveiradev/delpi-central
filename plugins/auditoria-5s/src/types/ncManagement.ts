@@ -40,6 +40,7 @@ export type NcBoardItem = {
   root_cause: string | null;
   corrective_action: string | null;
   responsible_name: string | null;
+  responsible_user_id?: string | null;
   due_date: string | null;
   priority: string | null;
   status: string;

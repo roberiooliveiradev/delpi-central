@@ -1,5 +1,5 @@
 import type { AuditArea, AuditListItem } from "../api/audit5sApi";
-import { auditNeedsNcAttention } from "../constants/audit5s";
+import { auditRequiresNcTreatment } from "../constants/audit5s";
 
 export function formatAuditDate(value: string): string {
   const [year, month, day] = value.split("-");
@@ -11,7 +11,8 @@ export function scorePercentClass(
   value: number | null | undefined,
   status?: string,
 ): string {
-  if (status && auditNeedsNcAttention(status)) {
+  // Destaque vermelho só quando há NC a tratar — 100% usa a faixa alta (verde).
+  if (status && auditRequiresNcTreatment(status, value)) {
     return "a5s-score-pill--attention";
   }
   if (value == null) return "a5s-score-pill--empty";

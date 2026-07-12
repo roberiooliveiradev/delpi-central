@@ -14,6 +14,19 @@ import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
 /** Amarrado ao bundle — invalida hash quando o patch MF muda. */
 void DELPI_MF_PATCH_VERSION;
 
+/**
+ * Ícones consumidos pelo `@delpi/plugin-ui` via share scope de `lucide-react`.
+ * Sem keepalive, o Rollup/Vite pode tree-shakar o namespace do MFE e o remote
+ * recebe `ChevronDown`/`HelpCircle` como undefined → tela em branco no SelectControl.
+ */
+void [
+  LucideReact.ChevronDown,
+  LucideReact.HelpCircle,
+  LucideReact.Search,
+  LucideReact.Upload,
+  LucideReact.X,
+];
+
 type FederationShareFrom = "mfe-host" | "portal-host";
 
 type FederationShareEntry = {

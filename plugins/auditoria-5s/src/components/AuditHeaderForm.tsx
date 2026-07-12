@@ -75,12 +75,15 @@ export function AuditHeaderForm({
         </button>
       </div>
       <AuditResponsiblePicker
-        value={form.area_responsible}
+        value={{
+          user_id: null,
+          display_name: form.area_responsible,
+        }}
         disabled={loading}
         label="Responsável pela área"
         hint="Busque e selecione o responsável pela área auditada no Minha Delpi."
         searchAriaLabel="Buscar responsável da área por nome ou e-mail"
-        onChange={(area_responsible) => onFormChange({ area_responsible })}
+        onChange={(responsible) => onFormChange({ area_responsible: responsible.display_name })}
       />
       <AuditNativeSelectField
         id="a5s-audit-shift"

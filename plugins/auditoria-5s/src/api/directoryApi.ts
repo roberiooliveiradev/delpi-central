@@ -14,9 +14,11 @@ export async function searchDirectoryUsers(
   query: string,
   limit = 10,
   signal?: AbortSignal,
+  options?: { minLength?: number },
 ): Promise<DirectoryUser[]> {
   const normalized = query.trim();
-  if (normalized.length < 2) {
+  const minLength = options?.minLength ?? 2;
+  if (normalized.length < minLength) {
     return [];
   }
 

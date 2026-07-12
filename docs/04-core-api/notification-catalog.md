@@ -112,6 +112,7 @@ Não é necessário editar `NotificationPreferencesPanel`, `NotificationCard` et
 |-----------|-------|-----------|--------|
 | `api_console` | Console API DELPI | `api-delpi-console` | `api-delpi-console` |
 | `quality_action_plans` | Planos de ação (PAC) | `quality-action-plans` | `quality-action-plans` |
+| `auditoria_5s` | Auditoria 5S | `auditoria-5s` | `auditoria-5s` |
 | `controle_mp` | Controle MP | `controle_mp` | `controle-mp` |
 
 Categorias `platform` (boas-vindas, aniversário, comunicado, …) não têm `sourceApp` — são disparadas pela Core API ou Admin.

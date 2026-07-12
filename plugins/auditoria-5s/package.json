@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "ci": "npm run lint && npm run build",
+    "check:perfect-score": "node --experimental-strip-types scripts/check-audit-perfect-score.ts",
     "preview": "vite preview"
   },
   "dependencies": {

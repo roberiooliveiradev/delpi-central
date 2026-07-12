@@ -36,7 +36,7 @@ type Props = {
   finalizing?: boolean;
   uploadingType?: NcAttachmentType | null;
   onChange: (patch: Partial<NcFormState>) => void;
-  onBlurSave: () => void;
+  onBlurSave: (patch?: Partial<NcFormState>) => void;
   onUpload: (type: NcAttachmentType, file: File) => Promise<void>;
   onFinalize: () => void;
 };
@@ -154,10 +154,25 @@ export function AuditNcItemEditor({
 
       <div className="a5s-nc-item__fields">
         <AuditResponsiblePicker
-          value={form.responsible_name}
+          value={{
+            user_id: form.responsible_user_id,
+            display_name: form.responsible_name,
+          }}
           disabled={fieldLocked}
-          onChange={(responsible_name) => onChange({ responsible_name })}
-          onBlur={onBlurSave}
+          onChange={(responsible) =>
+            onChange({
+              responsible_name: responsible.display_name,
+              responsible_user_id: responsible.user_id,
+            })
+          }
+          onCommit={(responsible) => {
+            const patch = {
+              responsible_name: responsible.display_name,
+              responsible_user_id: responsible.user_id,
+            };
+            onChange(patch);
+            onBlurSave(patch);
+          }}
         />
       </div>
 

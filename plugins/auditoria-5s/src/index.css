@@ -4437,6 +4437,11 @@ button.a5s-criterion-photo__thumb:focus-visible {
   white-space: pre-wrap;
 }
 
+.a5s-nc-note-mention {
+  font-weight: 700;
+  color: var(--a5s-title);
+}
+
 .a5s-nc-notes__composer {
   display: flex;
   flex-direction: column;
@@ -4448,6 +4453,16 @@ button.a5s-criterion-photo__thumb:focus-visible {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--a5s-title);
+}
+
+.a5s-nc-notes__composer-hint {
+  font-size: 0.78rem;
+  color: var(--a5s-text-muted, var(--a5s-text));
+  opacity: 0.85;
+}
+
+.a5s-nc-notes__composer-field {
+  position: relative;
 }
 
 .a5s-nc-notes__composer textarea {
@@ -4466,6 +4481,91 @@ button.a5s-criterion-photo__thumb:focus-visible {
 .a5s-nc-notes__composer textarea:focus {
   outline: 2px solid color-mix(in srgb, var(--a5s-accent) 35%, transparent);
   outline-offset: 1px;
+}
+
+.a5s-nc-notes__mention-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 12px;
+  border: 1px solid var(--a5s-border);
+  background: var(--a5s-surface);
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.a5s-nc-notes__mention-empty {
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  color: var(--a5s-text);
+  opacity: 0.75;
+}
+
+.a5s-nc-notes__mention-option {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--a5s-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.a5s-nc-notes__mention-option strong {
+  font-size: 0.88rem;
+  color: var(--a5s-title);
+}
+
+.a5s-nc-notes__mention-option span {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.a5s-nc-notes__mention-option:hover,
+.a5s-nc-notes__mention-option.is-active {
+  background: color-mix(in srgb, var(--a5s-accent) 14%, transparent);
+}
+
+.a5s-nc-notes__mention-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.a5s-nc-notes__mention-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--a5s-accent) 16%, transparent);
+  color: var(--a5s-title);
+  font-size: 0.78rem;
+}
+
+.a5s-nc-notes__mention-chip-remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
 }
 
 .a5s-nc-notes__history h3 {

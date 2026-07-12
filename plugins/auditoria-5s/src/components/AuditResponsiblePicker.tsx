@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 
 import { searchDirectoryUsers, type DirectoryUser } from "../api/directoryApi";
+import type { AuditResponsibleSelection } from "../types/auditResponsible";
 import { formatPersonName } from "../utils/formatPersonName";
 
 type Props = {
-  value: string;
-  onChange: (responsibleName: string) => void;
-  onBlur?: () => void;
+  value: AuditResponsibleSelection;
+  onChange: (value: AuditResponsibleSelection) => void;
+  /** Chamado com o valor já escolhido (select/clear) — use para persistir sem race com setState. */
+  onCommit?: (value: AuditResponsibleSelection) => void;
   disabled?: boolean;
   label?: string;
   hint?: string;
@@ -17,7 +19,7 @@ type Props = {
 export function AuditResponsiblePicker({
   value,
   onChange,
-  onBlur,
+  onCommit,
   disabled = false,
   label = "Responsável",
   hint = "Busque e selecione um usuário do Minha Delpi — o nome não pode ser digitado manualmente.",
@@ -61,19 +63,24 @@ export function AuditResponsiblePicker({
     };
   }, [query]);
 
-  const selectedName = value.trim();
+  const selectedName = value.display_name.trim();
 
   const selectUser = (user: DirectoryUser) => {
     const displayName = formatPersonName(user.name.trim() || user.email) || user.email;
-    onChange(displayName);
+    const next: AuditResponsibleSelection = {
+      user_id: user.id,
+      display_name: displayName,
+    };
+    onChange(next);
     setQuery("");
     setResults([]);
-    onBlur?.();
+    onCommit?.(next);
   };
 
   const clearSelection = () => {
-    onChange("");
-    onBlur?.();
+    const next: AuditResponsibleSelection = { user_id: null, display_name: "" };
+    onChange(next);
+    onCommit?.(next);
   };
 
   return (

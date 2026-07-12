@@ -8,6 +8,19 @@ import {
   type FilterSelectFieldProps,
 } from "@delpi/plugin-ui/index";
 
+function assertPluginUiExport(name: string, value: unknown): void {
+  if (value == null) {
+    throw new Error(
+      `@delpi/plugin-ui não exportou "${name}". Rebuild do remote plugin-ui e hard refresh do portal.`,
+    );
+  }
+}
+
+assertPluginUiExport("FilterInputField", PluginFilterInputField);
+assertPluginUiExport("FilterSelectField", PluginFilterSelectField);
+assertPluginUiExport("createFilterBarShell", createFilterBarShell);
+assertPluginUiExport("selectControlBemClasses", selectControlBemClasses);
+
 const FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
   filterBox: "a5s-analytics-filter-field",
   fieldLabel: "a5s-analytics-filter-field__label",

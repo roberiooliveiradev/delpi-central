@@ -127,13 +127,23 @@ export function AuditNcPanel({
     }, 1800);
   };
 
-  const handleSave = async (responseId: string) => {
+  const handleSave = async (
+    responseId: string,
+    override?: Partial<NcFormState>,
+  ) => {
     if (readOnly) return;
 
     const item = items.find((entry) => entry.responseId === responseId);
-    const form = forms[responseId];
+    const baseForm = forms[responseId];
+    if (!item || !baseForm) return;
+
+    const form: NcFormState = { ...baseForm, ...override };
+    if (override) {
+      setForms((prev) => ({ ...prev, [responseId]: form }));
+    }
+
     const persisted = persistedFormsRef.current[responseId];
-    if (!item || !form || !persisted || formsEqual(form, persisted)) {
+    if (!persisted || formsEqual(form, persisted)) {
       return;
     }
     if (item.nc?.status === "closed") return;
@@ -151,6 +161,7 @@ export function AuditNcPanel({
           response_id: responseId,
           description: form.description.trim(),
           responsible_name: form.responsible_name.trim(),
+          responsible_user_id: form.responsible_user_id,
           due_date: form.due_date,
           root_cause: normalizeOptionalText(form.root_cause),
           corrective_action: normalizeOptionalText(form.corrective_action),
@@ -166,11 +177,17 @@ export function AuditNcPanel({
           // Plano já salvo; anexos podem ser atualizados no próximo refresh.
         }
       } else {
+        if (!form.responsible_name.trim() || !form.responsible_user_id?.trim()) {
+          setForms((prev) => ({ ...prev, [responseId]: form }));
+          return;
+        }
+
         const updated = await updateNonconformity(item.nc.id, {
           description: form.description.trim(),
           root_cause: normalizeOptionalText(form.root_cause),
           corrective_action: normalizeOptionalText(form.corrective_action),
           responsible_name: form.responsible_name.trim(),
+          responsible_user_id: form.responsible_user_id,
           due_date: form.due_date,
           priority: form.priority || null,
         });
@@ -316,8 +333,8 @@ export function AuditNcPanel({
                 [item.responseId]: { ...(prev[item.responseId] ?? emptyNcForm()), ...patch },
               }))
             }
-            onBlurSave={() => {
-              void handleSave(item.responseId);
+            onBlurSave={(patch) => {
+              void handleSave(item.responseId, patch);
             }}
             onUpload={(type, file) => handleUpload(item.responseId, type, file)}
             onFinalize={() => {

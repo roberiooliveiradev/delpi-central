@@ -24,7 +24,8 @@ function formatAuditDate(value: string): string {
 }
 
 export function AuditNcSummary({ audit, stats }: Props) {
-  const statusVariant = auditStatusVariant(audit.status);
+  const overallScore = audit.scores.overall_percentual ?? audit.overall_score_pct;
+  const statusVariant = auditStatusVariant(audit.status, overallScore);
   const auditorNames = audit.auditors.map((item) => item.display_name).filter(Boolean);
 
   return (
@@ -35,7 +36,7 @@ export function AuditNcSummary({ audit, stats }: Props) {
           <h3 className="a5s-nc-summary__area">{audit.area_name}</h3>
         </div>
         <span className={`a5s-status-badge a5s-status-badge--${statusVariant}`}>
-          {auditStatusLabel(audit.status)}
+          {auditStatusLabel(audit.status, overallScore)}
         </span>
       </div>
 

@@ -173,6 +173,40 @@
   color: var(--text-muted);
 }
 
+.notification-card__html p {
+  margin: 0 0 8px;
+}
+
+.notification-card__html p:last-child {
+  margin-bottom: 0;
+}
+
+.notification-card__html blockquote,
+.notification-card__html .notification-note-bubble {
+  display: block;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border-left: 3px solid var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface, #fff));
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.notification-card__html .notification-note-bubble ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.notification-card__html .notification-note-bubble li {
+  margin: 0 0 4px;
+}
+
+.notification-card__html .notification-note-bubble li:last-child {
+  margin-bottom: 0;
+}
+
 .notification-card__html a {
   color: var(--primary);
   text-decoration: underline;

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from fastapi import APIRouter, Body, File, Form, Query, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
@@ -29,6 +30,11 @@ from app.application.services.audit_5s.catalog_publish_service import (
     CatalogPublishValidationError,
     catalogs_are_equal,
     validate_publish_payload,
+)
+from app.application.services.audit_5s_portal_notification_service import (
+    action_label_for_nc,
+    notify_nc_note_mentions,
+    notify_nc_responsible_assigned,
 )
 from app.application.services.audit_5s.scoring_service import (
     can_attach_criterion_photo,
@@ -93,6 +99,7 @@ class CreateNonconformityBody(BaseModel):
     response_id: str
     description: str = Field(..., min_length=3)
     responsible_name: str = Field(..., min_length=2, max_length=200)
+    responsible_user_id: str | None = Field(default=None, max_length=100)
     due_date: str
     root_cause: str | None = None
     corrective_action: str | None = None
@@ -101,15 +108,64 @@ class CreateNonconformityBody(BaseModel):
 
 class UpdateNonconformityBody(BaseModel):
     description: str | None = Field(default=None, min_length=3)
-    responsible_name: str | None = Field(default=None, min_length=2, max_length=200)
+    responsible_name: str | None = Field(default=None, max_length=200)
+    responsible_user_id: str | None = Field(default=None, max_length=100)
     due_date: str | None = None
     root_cause: str | None = None
     corrective_action: str | None = None
-    priority: str | None = Field(default=None, pattern="^(high|medium|low)$")
+    priority: str | None = Field(default=None)
+
+    @field_validator("responsible_name", mode="before")
+    @classmethod
+    def _normalize_responsible_name(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            trimmed = value.strip()
+            return trimmed or None
+        return value
+
+    @field_validator("responsible_name")
+    @classmethod
+    def _validate_responsible_name(cls, value: str | None) -> str | None:
+        if value is not None and len(value) < 2:
+            raise ValueError("responsible_name deve ter ao menos 2 caracteres")
+        return value
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def _normalize_priority(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            trimmed = value.strip()
+            return trimmed or None
+        return value
+
+    @field_validator("priority")
+    @classmethod
+    def _validate_priority(cls, value: str | None) -> str | None:
+        if value is not None and value not in {"high", "medium", "low"}:
+            raise ValueError("priority deve ser high, medium ou low")
+        return value
 
 
 class AddNcActionBody(BaseModel):
     description: str = Field(..., min_length=3)
+    mentioned_user_ids: list[str] = Field(default_factory=list, max_length=20)
+
+    @field_validator("mentioned_user_ids")
+    @classmethod
+    def _normalize_mentioned_user_ids(cls, value: list[str]) -> list[str]:
+        unique: list[str] = []
+        seen: set[str] = set()
+        for raw in value or []:
+            uid = str(raw or "").strip()
+            if not uid or uid in seen:
+                continue
+            seen.add(uid)
+            unique.append(uid)
+        return unique
 
 
 class CatalogCriterionBody(BaseModel):
@@ -143,6 +199,111 @@ def _current_user_name() -> str:
     if user is None:
         return "Usuário"
     return format_person_name(str(getattr(user, "name", "Usuário")))
+
+
+def _notify_nc_note_mentions_if_needed(
+    *,
+    repo: Any,
+    nc_id: str,
+    action: dict[str, Any],
+    mentioned_user_ids: list[str],
+    note_text: str,
+    actor_user_id: str,
+    actor_name: str,
+) -> None:
+    if not mentioned_user_ids:
+        return
+    nc = repo.fetch_one(
+        """
+        SELECT id, audit_id, description, corrective_action
+          FROM quality.audit_5s_nonconformities
+         WHERE id = %s
+        """,
+        (nc_id,),
+    )
+    if not nc:
+        return
+    audit = repo.get_audit(str(nc.get("audit_id") or ""))
+    try:
+        notify_nc_note_mentions(
+            nc_id=nc_id,
+            action_id=str(action.get("id") or ""),
+            mentioned_user_ids=mentioned_user_ids,
+            note_text=note_text,
+            branch_code=str((audit or {}).get("branch_code") or "") or None,
+            action_label=action_label_for_nc(
+                corrective_action=str(nc.get("corrective_action") or "") or None,
+                description=str(nc.get("description") or "") or None,
+            ),
+            actor_user_id=actor_user_id,
+            actor_name=actor_name,
+            audit_code=str((audit or {}).get("audit_code") or "") or None,
+        )
+    except Exception as notify_exc:
+        log_error(f"Falha ao notificar menções em nota NC 5S: {notify_exc}")
+
+
+def _notify_nc_responsible_if_needed(
+    *,
+    repo: Any,
+    nc: dict[str, Any],
+    previous_user_id: str | None,
+    actor_user_id: str,
+    actor_name: str | None = None,
+) -> None:
+    recipient = str(nc.get("responsible_user_id") or "").strip()
+    if not recipient:
+        return
+    nc_id = str(nc.get("id") or "").strip()
+    if not nc_id:
+        return
+
+    context = repo.fetch_one(
+        """
+        SELECT nc.id,
+               nc.audit_id,
+               nc.description,
+               nc.root_cause,
+               nc.corrective_action,
+               nc.due_date,
+               nc.priority,
+               c.code AS criterion_code,
+               c.description AS criterion_description
+          FROM quality.audit_5s_nonconformities nc
+          JOIN quality.audit_5s_responses r ON r.id = nc.response_id
+          JOIN quality.audit_5s_criteria c ON c.id = r.criterion_id
+         WHERE nc.id = %s
+        """,
+        (nc_id,),
+    )
+    merged = {**(context or {}), **nc}
+    audit_id = str(merged.get("audit_id") or nc.get("audit_id") or "")
+    audit = repo.get_audit(audit_id) if audit_id else None
+    due_raw = merged.get("due_date")
+    due_date = None
+    if due_raw is not None:
+        due_date = due_raw.isoformat() if hasattr(due_raw, "isoformat") else str(due_raw)
+
+    try:
+        notify_nc_responsible_assigned(
+            nc_id=nc_id,
+            recipient_user_id=recipient,
+            branch_code=str((audit or {}).get("branch_code") or ""),
+            audit_code=str((audit or {}).get("audit_code") or "") or None,
+            criterion_code=str(merged.get("criterion_code") or "") or None,
+            criterion_description=str(merged.get("criterion_description") or "") or None,
+            area_name=str((audit or {}).get("area_name") or "") or None,
+            corrective_action=str(merged.get("corrective_action") or "") or None,
+            description=str(merged.get("description") or "") or None,
+            root_cause=str(merged.get("root_cause") or "") or None,
+            due_date=due_date,
+            priority=str(merged.get("priority") or "") or None,
+            previous_user_id=previous_user_id,
+            actor_user_id=actor_user_id,
+            actor_name=actor_name,
+        )
+    except Exception as notify_exc:
+        log_error(f"Falha ao notificar responsável NC 5S: {notify_exc}")
 
 
 @router.get("/areas")
@@ -761,16 +922,18 @@ def list_audit_nonconformities(audit_id: str):
 async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Body(...)):
     try:
         repo = build_audit_5s_repository()
+        actor_user_id = _current_user_id()
         data = repo.create_nonconformity(
             audit_id=audit_id,
             response_id=body.response_id,
             description=body.description,
             responsible_name=body.responsible_name,
+            responsible_user_id=body.responsible_user_id,
             due_date=body.due_date,
             root_cause=body.root_cause,
             corrective_action=body.corrective_action,
             priority=body.priority,
-            created_by_user_id=_current_user_id(),
+            created_by_user_id=actor_user_id,
         )
         audit = repo.get_audit(audit_id)
         if audit:
@@ -779,11 +942,18 @@ async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Bo
                     audit_id=audit_id,
                     audit=audit,
                     event_type="nc_created",
-                    actor_user_id=_current_user_id(),
+                    actor_user_id=actor_user_id,
                     actor_display_name=_current_user_name(),
                 )
             except Exception as publish_exc:
                 log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
+        _notify_nc_responsible_if_needed(
+            repo=repo,
+            nc=data,
+            previous_user_id=None,
+            actor_user_id=actor_user_id,
+            actor_name=_current_user_name(),
+        )
         return api_delpi_success(data, operation_id="create_audit_5s_nonconformity")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
@@ -797,16 +967,21 @@ async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Bo
 async def update_nonconformity(nc_id: str, body: UpdateNonconformityBody = Body(...)):
     try:
         repo = build_audit_5s_repository()
+        actor_user_id = _current_user_id()
+        update_responsible_user = "responsible_user_id" in body.model_fields_set
         data = repo.update_nonconformity(
             nonconformity_id=nc_id,
             description=body.description,
             responsible_name=body.responsible_name,
+            responsible_user_id=body.responsible_user_id,
+            update_responsible_user_id=update_responsible_user,
             due_date=body.due_date,
             root_cause=body.root_cause,
             corrective_action=body.corrective_action,
             priority=body.priority,
-            actor_user_id=_current_user_id(),
+            actor_user_id=actor_user_id,
         )
+        previous_user_id = data.pop("previous_responsible_user_id", None)
         audit_id = str(data["audit_id"])
         audit = repo.get_audit(audit_id)
         if audit:
@@ -815,11 +990,19 @@ async def update_nonconformity(nc_id: str, body: UpdateNonconformityBody = Body(
                     audit_id=audit_id,
                     audit=audit,
                     event_type="nc_updated",
-                    actor_user_id=_current_user_id(),
+                    actor_user_id=actor_user_id,
                     actor_display_name=_current_user_name(),
                 )
             except Exception as publish_exc:
                 log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
+        if update_responsible_user:
+            _notify_nc_responsible_if_needed(
+                repo=repo,
+                nc=data,
+                previous_user_id=previous_user_id,
+                actor_user_id=actor_user_id,
+                actor_name=_current_user_name(),
+            )
         return api_delpi_success(data, operation_id="update_audit_5s_nonconformity")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
@@ -845,11 +1028,22 @@ def list_nc_actions(nc_id: str):
 def add_nc_action(nc_id: str, body: AddNcActionBody = Body(...)):
     try:
         repo = build_audit_5s_repository()
+        actor_user_id = _current_user_id()
+        actor_name = _current_user_name()
         data = repo.add_nc_action(
             nonconformity_id=nc_id,
             description=body.description,
-            actor_user_id=_current_user_id(),
-            actor_display_name=_current_user_name(),
+            actor_user_id=actor_user_id,
+            actor_display_name=actor_name,
+        )
+        _notify_nc_note_mentions_if_needed(
+            repo=repo,
+            nc_id=nc_id,
+            action=data,
+            mentioned_user_ids=body.mentioned_user_ids,
+            note_text=body.description,
+            actor_user_id=actor_user_id,
+            actor_name=actor_name,
         )
         return api_delpi_success(data, operation_id="create_audit_5s_nc_action")
     except PluginsRepositoryError as exc:

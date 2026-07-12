@@ -26,11 +26,13 @@ import { NativeTextControl } from "@delpi/plugin-ui/index";
 import type { AuditArea, AuditListItem } from "../api/audit5sApi";
 import { getAccessToken } from "../api/httpClient";
 import {
-  auditNeedsNcAttention,
+  auditRequiresNcTreatment,
   auditStatusLabel,
   auditStatusVariant,
   canAccessNc,
+  canFinalizeWithoutNc,
   canReopenEvaluation,
+  listPrimaryActionLabel,
   ncActionLabel,
   shiftLabel,
 } from "../constants/audit5s";
@@ -71,32 +73,37 @@ type Props = {
   onOpenAudit: (auditId: string) => void;
   onOpenNc: (auditId: string) => void;
   onEditAudit: (auditId: string) => void;
+  onFinalizeAudit: (auditId: string) => Promise<void>;
   onReopenAudit: (auditId: string) => Promise<void>;
   onDeleteAudit: (auditId: string, status: string) => Promise<void>;
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const variant = auditStatusVariant(status);
-  const Icon = status === "closed"
-    ? Lock
-    : status === "draft"
-      ? Clock3
-      : auditNeedsNcAttention(status)
-        ? AlertCircle
-        : CheckCircle2;
+function StatusBadge({
+  status,
+  scorePct,
+}: {
+  status: string;
+  scorePct?: number | null;
+}) {
+  const variant = auditStatusVariant(status, scorePct);
+  const needsNc = auditRequiresNcTreatment(status, scorePct);
+  const Icon =
+    status === "closed" ? (
+      <Lock size={13} aria-hidden />
+    ) : status === "draft" ? (
+      <Clock3 size={13} aria-hidden />
+    ) : needsNc ? (
+      <AlertCircle size={13} aria-hidden />
+    ) : (
+      <CheckCircle2 size={13} aria-hidden />
+    );
 
   return (
     <span className={`a5s-status-badge a5s-status-badge--${variant} a5s-status-badge--table`}>
-      <Icon size={13} aria-hidden />
-      {auditStatusLabel(status)}
+      {Icon}
+      {auditStatusLabel(status, scorePct)}
     </span>
   );
-}
-
-function primaryActionLabel(status: string): string {
-  if (status === "draft") return "Continuar";
-  if (canAccessNc(status)) return ncActionLabel(status);
-  return "Ver avaliação";
 }
 
 function countRowMenuItems(item: AuditListItem): number {
@@ -119,6 +126,7 @@ export function AuditListView({
   onOpenAudit,
   onOpenNc,
   onEditAudit,
+  onFinalizeAudit,
   onReopenAudit,
   onDeleteAudit,
 }: Props) {
@@ -127,8 +135,10 @@ export function AuditListView({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AuditListItem | null>(null);
   const [pendingReopen, setPendingReopen] = useState<AuditListItem | null>(null);
+  const [pendingFinalize, setPendingFinalize] = useState<AuditListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [reopening, setReopening] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
   const [exportingAuditId, setExportingAuditId] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -166,6 +176,10 @@ export function AuditListView({
       onOpenAudit(item.id);
       return;
     }
+    if (canFinalizeWithoutNc(item.status, item.overall_score_pct)) {
+      setPendingFinalize(item);
+      return;
+    }
     if (canAccessNc(item.status)) {
       onOpenNc(item.id);
       return;
@@ -184,6 +198,20 @@ export function AuditListView({
       // Erro exibido pelo Audit5sPage via banner.
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleConfirmFinalize = async () => {
+    if (!pendingFinalize) return;
+    setFinalizing(true);
+    try {
+      await onFinalizeAudit(pendingFinalize.id);
+      setPendingFinalize(null);
+      setOpenMenuId(null);
+    } catch {
+      // Erro exibido pelo Audit5sPage via banner.
+    } finally {
+      setFinalizing(false);
     }
   };
 
@@ -397,7 +425,10 @@ export function AuditListView({
                         </span>
                       </td>
                       <td data-label="Status">
-                        <StatusBadge status={item.status} />
+                        <StatusBadge
+                          status={item.status}
+                          scorePct={item.overall_score_pct}
+                        />
                       </td>
                       <td className="a5s-table__actions-cell" data-label="Ações">
                         <div className="a5s-table__actions a5s-table__actions--dashboard">
@@ -414,7 +445,7 @@ export function AuditListView({
                             className="a5s-btn a5s-btn--small a5s-btn--table-action"
                             onClick={() => handlePrimaryAction(item)}
                           >
-                            {primaryActionLabel(item.status)}
+                            {listPrimaryActionLabel(item.status, item.overall_score_pct)}
                           </button>
                           <div className="a5s-row-menu">
                             <button
@@ -446,7 +477,18 @@ export function AuditListView({
                               >
                                 Ver avaliação
                               </button>
-                              {canAccessNc(item.status) ? (
+                              {canFinalizeWithoutNc(item.status, item.overall_score_pct) ? (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setPendingFinalize(item);
+                                  }}
+                                >
+                                  Finalizar
+                                </button>
+                              ) : canAccessNc(item.status) ? (
                                 <button
                                   type="button"
                                   role="menuitem"
@@ -455,7 +497,7 @@ export function AuditListView({
                                     onOpenNc(item.id);
                                   }}
                                 >
-                                  {ncActionLabel(item.status)}
+                                  {ncActionLabel(item.status, item.overall_score_pct)}
                                 </button>
                               ) : null}
                               {canReopenEvaluation(item.status) ? (
@@ -565,6 +607,50 @@ export function AuditListView({
         )}
       </section>
 
+      {pendingFinalize ? (
+        <div
+          className="a5s-confirm-overlay"
+          role="presentation"
+          onClick={() => !finalizing && setPendingFinalize(null)}
+        >
+          <div
+            className="a5s-confirm-dialog"
+            role="alertdialog"
+            aria-labelledby="a5s-finalize-title"
+            aria-describedby="a5s-finalize-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="a5s-finalize-title" className="a5s-confirm-dialog__title">
+              Finalizar auditoria?
+            </h2>
+            <p id="a5s-finalize-desc" className="a5s-confirm-dialog__text">
+              A auditoria <strong>{pendingFinalize.audit_code}</strong> (
+              {formatAuditDate(pendingFinalize.audit_date)}, {pendingFinalize.area_name}) atingiu{" "}
+              <strong>100%</strong> — todos os critérios foram atendidos e não há não conformidades
+              a tratar. Ao finalizar, ela será encerrada.
+            </p>
+            <div className="a5s-confirm-dialog__actions">
+              <button
+                type="button"
+                className="a5s-btn a5s-btn--ghost"
+                disabled={finalizing}
+                onClick={() => setPendingFinalize(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="a5s-btn"
+                disabled={finalizing}
+                onClick={() => void handleConfirmFinalize()}
+              >
+                {finalizing ? "Finalizando..." : "Finalizar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {pendingReopen ? (
         <div
           className="a5s-confirm-overlay"
@@ -635,7 +721,11 @@ export function AuditListView({
               {pendingDelete.status !== "draft" ? (
                 <>
                   {" "}
-                  O status atual é <strong>{auditStatusLabel(pendingDelete.status)}</strong> — esta
+                  O status atual é{" "}
+                  <strong>
+                    {auditStatusLabel(pendingDelete.status, pendingDelete.overall_score_pct)}
+                  </strong>{" "}
+                  — esta
                   ação não pode ser desfeita.
                 </>
               ) : (
