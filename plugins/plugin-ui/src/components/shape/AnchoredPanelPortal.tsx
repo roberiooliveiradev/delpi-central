@@ -13,6 +13,11 @@ export type AnchoredPanelPortalProps = {
   variant?: "shape" | "bare";
   role?: string;
   "aria-label"?: string;
+  /**
+   * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`).
+   * Sem escopo, CSS do plugin sob `.dashboard-*` não aplica no body.
+   */
+  portalScopeClassName?: string;
   children: ReactNode;
 };
 
@@ -25,6 +30,7 @@ export function AnchoredPanelPortal({
   variant = "shape",
   role,
   "aria-label": ariaLabel,
+  portalScopeClassName,
   children,
 }: AnchoredPanelPortalProps) {
   const style = useAnchoredPanelPosition(open, anchorRef, panelRef);
@@ -34,26 +40,28 @@ export function AnchoredPanelPortal({
 
   const panelClass =
     variant === "bare"
-      ? [theme.hostClassName, className].filter(Boolean).join(" ")
-      : [
-          theme.hostClassName,
-          "delpi-ui-shape-menu__panel",
-          "delpi-ui-shape-menu__panel--portal",
-          className,
-        ]
+      ? className
+      : ["delpi-ui-shape-menu__panel", "delpi-ui-shape-menu__panel--portal", className]
           .filter(Boolean)
           .join(" ");
 
-  return createPortal(
+  const scopeClass = [portalScopeClassName, theme.hostClassName].filter(Boolean).join(" ");
+
+  const panel = (
     <div
       ref={panelRef}
       className={panelClass}
-      style={{ ...theme.style, ...style }}
-      data-theme={theme.dataTheme}
+      style={style}
       role={role}
       aria-label={ariaLabel}
     >
       {children}
+    </div>
+  );
+
+  return createPortal(
+    <div className={scopeClass} style={theme.style} data-theme={theme.dataTheme}>
+      {panel}
     </div>,
     document.body,
   );

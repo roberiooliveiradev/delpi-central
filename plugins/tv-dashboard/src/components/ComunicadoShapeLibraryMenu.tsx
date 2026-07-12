@@ -7,6 +7,7 @@ import {
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { readRecentComunicadoShapes } from "../utils/comunicadoRecentShapes";
 
@@ -28,6 +29,7 @@ export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect }: Props)
       anchorRef={anchorRef}
       panelRef={panelRef}
       variant="bare"
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
       className="td-shape-library td-shape-library--portal"
       role="menu"
       aria-label="Biblioteca de formas"

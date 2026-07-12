@@ -17,6 +17,7 @@ import {
   type ComunicadoTablePreset,
 } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
@@ -176,6 +177,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 anchorRef={iconAnchorRef}
                 panelRef={iconPanelRef}
                 variant="bare"
+                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
                 className="td-icon-library-portal"
                 role="menu"
                 aria-label="Biblioteca de ícones"
@@ -231,6 +233,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 anchorRef={chartAnchorRef}
                 panelRef={chartPanelRef}
                 variant="bare"
+                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
                 className="td-chart-catalog-portal"
                 role="menu"
                 aria-label="Catálogo de gráficos"
@@ -258,6 +261,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 anchorRef={tableAnchorRef}
                 panelRef={tablePanelRef}
                 variant="bare"
+                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
                 className="td-table-catalog-portal"
                 role="menu"
                 aria-label="Catálogo de tabelas"

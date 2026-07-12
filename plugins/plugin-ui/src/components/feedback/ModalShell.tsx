@@ -34,6 +34,11 @@ export type ModalShellProps = {
   /** Substitui o lock padrão (`document.body.style.overflow`). */
   lockPageScroll?: () => () => void;
   overlayAriaHidden?: boolean;
+  /**
+   * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`).
+   * Portais vão para `document.body` — sem este escopo o CSS do plugin não aplica.
+   */
+  portalScopeClassName?: string;
 };
 
 export function modalShellBemClasses(prefix: string): ModalShellClassNames {
@@ -63,6 +68,7 @@ export function ModalShell({
   dialogRef,
   lockPageScroll,
   overlayAriaHidden = false,
+  portalScopeClassName,
 }: ModalShellProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -145,9 +151,8 @@ export function ModalShell({
   }
 
   const dialogClass = [classNames.dialog, className].filter(Boolean).join(" ");
-  const overlayClass = [overlayClassName, classNames.overlay, portalTheme.hostClassName]
-    .filter(Boolean)
-    .join(" ");
+  const overlayClass = [overlayClassName, classNames.overlay].filter(Boolean).join(" ");
+  const scopeClass = [portalScopeClassName, portalTheme.hostClassName].filter(Boolean).join(" ");
 
   const titleNode = (
     <h2 id={titleId} className={classNames.title}>
@@ -162,11 +167,9 @@ export function ModalShell({
       </p>
     ) : null;
 
-  return createPortal(
+  const overlay = (
     <div
       className={overlayClass}
-      style={portalTheme.style}
-      data-theme={portalTheme.dataTheme ?? undefined}
       onClick={onClose}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
@@ -206,17 +209,28 @@ export function ModalShell({
         <div className={classNames.body}>{children}</div>
         {footer && classNames.footer ? <div className={classNames.footer}>{footer}</div> : null}
       </div>
+    </div>
+  );
+
+  return createPortal(
+    <div className={scopeClass} style={portalTheme.style} data-theme={portalTheme.dataTheme ?? undefined}>
+      {overlay}
     </div>,
     document.body,
   );
 }
 
-export type DashboardModalShellProps = Omit<ModalShellProps, "classNames" | "overlayClassName">;
+export type DashboardModalShellProps = Omit<
+  ModalShellProps,
+  "classNames" | "overlayClassName" | "portalScopeClassName"
+>;
 
 export function createModalShell(config: {
   prefix: string;
   overlayClassName?: string;
   closeAriaLabel?: string;
+  /** Escopo CSS do MFE para portais no body — ver `portalScopeClassName` em ModalShell. */
+  portalScopeClassName?: string;
 }) {
   const classNames = modalShellBemClasses(config.prefix);
 
@@ -226,6 +240,7 @@ export function createModalShell(config: {
         classNames={classNames}
         overlayClassName={config.overlayClassName}
         closeAriaLabel={config.closeAriaLabel}
+        portalScopeClassName={config.portalScopeClassName}
         {...props}
       />
     );

@@ -52,4 +52,22 @@ describe("ModalShell", () => {
     expect(screen.getByText("Ajuste os valores do indicador.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Salvar" })).toBeTruthy();
   });
+
+  it("envolve o overlay com portalScopeClassName do plugin", () => {
+    render(
+      <ModalShell
+        open
+        title="Remover tela"
+        onClose={vi.fn()}
+        classNames={modalShellBemClasses("td")}
+        portalScopeClassName="dashboard-tv-dashboard"
+      >
+        <p>Confirmar</p>
+      </ModalShell>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Remover tela" });
+    expect(dialog.closest(".dashboard-tv-dashboard")).toBeTruthy();
+    expect(dialog.closest(".td-modal-overlay")).toBeTruthy();
+  });
 });

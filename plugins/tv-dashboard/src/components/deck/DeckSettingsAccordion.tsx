@@ -1,6 +1,8 @@
 import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
+
 type Props = {
   summary: string;
   ariaLabel: string;
@@ -44,6 +46,7 @@ export function DeckSettingsAccordion({ summary, ariaLabel, children }: Props) {
         anchorRef={anchorRef}
         panelRef={panelRef}
         variant="bare"
+        portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
         className="td-deck-settings-accordion__body td-deck-settings-accordion__body--portal"
         role="dialog"
         aria-label={ariaLabel}
