@@ -6,7 +6,6 @@ import {
   CalendarRange,
   Copy,
   Globe,
-  Image as ImageIcon,
   LayoutTemplate,
   Timer,
   Type,
@@ -415,16 +414,13 @@ export function DeckSettingsPanel({
             wide
           >
             <div className="td-deck-master td-deck-master--compact">
-              <div className="td-deck-master__header">
-                <ImageIcon size={14} aria-hidden="true" />
+              <div className="td-deck-master__row td-deck-master__row--dense">
                 <NativeCheckboxControl
                   className="td-deck-master__toggle"
                   label="Ativo em telas livres"
                   checked={masterEnabled}
                   onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
                 />
-              </div>
-              <div className="td-deck-master__row">
                 <TvRibbonColorPicker
                   label="Fundo sólido"
                   value={masterBgColor}
