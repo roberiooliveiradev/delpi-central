@@ -84,7 +84,7 @@ export function KpiViewBlockView({
         tone={presentation.tone}
         valueColor={presentation.valueColor}
         backgroundColor={presentation.backgroundColor}
-        icon={showIcon && Icon ? <Icon aria-hidden size={22} strokeWidth={2} /> : undefined}
+        icon={showIcon && Icon ? <Icon aria-hidden strokeWidth={2} /> : undefined}
         kpiOptions={block.kpiOptions}
         kpiParts={block.kpiParts}
         interaction={kpiInteraction}

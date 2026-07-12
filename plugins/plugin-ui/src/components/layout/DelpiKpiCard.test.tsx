@@ -137,9 +137,30 @@ describe("DelpiKpiCard chrome", () => {
     const icon = container.querySelector(".delpi-kpi-icon") as HTMLElement;
     expect(icon.className).toContain("delpi-kpi-icon--framed");
     expect(icon.style.left).toBe("70%");
+    expect(icon.style.width).toBe("18%");
+    expect(icon.style.height).toBe("30%");
     expect(icon.style.borderRadius).toBe("20px");
     expect(icon.style.background).toBe("rgb(16, 42, 67)");
     expect(icon.style.color).toBe("rgb(125, 211, 252)");
+  });
+
+  it("Tamanho fixo (px) dimensiona o box do ícone quando sem frame", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="10"
+        icon={<span data-testid="kpi-icon">i</span>}
+        kpiParts={{
+          icon: {
+            visible: true,
+            style: { iconSize: 96 },
+          },
+        }}
+      />,
+    );
+    const icon = container.querySelector(".delpi-kpi-icon") as HTMLElement;
+    expect(icon.style.width).toBe("96px");
+    expect(icon.style.height).toBe("96px");
   });
 
 });
