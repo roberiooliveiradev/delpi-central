@@ -1,6 +1,6 @@
-import { boxShadowsEqual } from "@delpi/plugin-ui";
-
-/** Presets de sombra do comunicado (1 ou 2 camadas / inset). */
+/** Presets de sombra do comunicado (1 ou 2 camadas / inset).
+ * Sem import de `@delpi/plugin-ui` — o MF externaliza o pacote no build Docker.
+ */
 export const COMUNICADO_BOX_SHADOW_PRESETS = [
   { key: "none", label: "Nenhuma", value: undefined },
   { key: "soft", label: "Suave", value: "0 4px 14px rgba(0, 0, 0, 0.28)" },
@@ -20,6 +20,6 @@ export const COMUNICADO_BOX_SHADOW_PRESETS = [
 
 export function matchBoxShadowPreset(value?: string): string {
   if (!value) return "none";
-  const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => boxShadowsEqual(item.value, value));
+  const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => item.value === value);
   return preset?.key ?? "custom";
 }
