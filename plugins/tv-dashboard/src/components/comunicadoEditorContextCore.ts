@@ -138,6 +138,16 @@ export type ComunicadoEditorContextValue = {
   ) => void;
   updateBlockLink: (blockId: string, href: string | undefined) => void;
   updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
+  /** Tipografia Formatar — bloco text/heading ou parte textual KPI/chart. */
+  updateSelectedTextFormatStyle: (patch: {
+    fontFamily?: string;
+    fontSize?: number;
+    fontWeight?: string;
+    fontStyle?: string;
+    color?: string;
+    textDecoration?: string;
+    textHighlight?: string;
+  }) => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
   cutSelected: () => void;

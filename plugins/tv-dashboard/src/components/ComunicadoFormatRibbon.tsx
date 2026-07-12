@@ -57,6 +57,7 @@ import {
   matchBoxShadowPreset,
 } from "../content/comunicadoVisualPresets";
 import { selectedHasGroup } from "../utils/comunicadoGrouping";
+import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
@@ -68,14 +69,18 @@ type Labels = Record<string, string>;
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
+const PART_FONT_SIZE_DEFAULT = 16;
 
 export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const {
     selected,
     selectedIds,
+    selectedKpiPart,
+    selectedChartPart,
     uploading,
     background,
     updateSelectedStyle,
+    updateSelectedTextFormatStyle,
     updateSelected,
     removeSelected,
     duplicateSelected,
@@ -102,9 +107,21 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const canGroup = selectedIds.length >= 2;
   const canUngroup = selectedHasGroup(blocks, selectedIds);
 
+  const textFormatTarget = resolveSelectedTextFormatTarget({
+    selected,
+    selectedKpiPart,
+    selectedChartPart,
+  });
   const textBlock =
-    selected && (selected.type === "heading" || selected.type === "text") ? selected : null;
+    textFormatTarget?.mode === "block" && selected && (selected.type === "heading" || selected.type === "text")
+      ? selected
+      : null;
   const isTextBlock = textBlock != null;
+  const showFontControls = textFormatTarget != null;
+  const formatStyle = textFormatTarget?.style;
+  const fontSizeDefault = isTextBlock ? 32 : PART_FONT_SIZE_DEFAULT;
+  const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
+  const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
   const partialTextSelectionActive = Boolean(
     textBlock &&
       editingTextId === textBlock.id &&
@@ -112,9 +129,11 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       textEditSelection.blockId === textBlock.id &&
       textEditSelection.end > textEditSelection.start,
   );
-  const blockFontWeightActive = selected?.style?.fontWeight === "bold";
-  const blockFontStyleActive = selected?.style?.fontStyle === "italic";
-  const blockDecorationFlags = parseTextDecorationFlags(selected?.style?.textDecoration);
+  const blockFontWeightActive = formatStyle?.fontWeight === "bold";
+  const blockFontStyleActive = formatStyle?.fontStyle === "italic";
+  const blockDecorationFlags = parseTextDecorationFlags(
+    formatStyle?.textDecoration as Parameters<typeof parseTextDecorationFlags>[0],
+  );
   const partialFontWeightActive =
     partialTextSelectionActive &&
     (textEditSelectionStyle?.fontWeight === "bold" || textEditSelectionStyle?.fontWeight === "mixed");
@@ -212,18 +231,21 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
         />
       ) : null}
 
-      {isTextBlock && textBlock ? (
-        <>
-          <DeckRibbonGroup label="Fonte" hint={H.font} wide>
+      {showFontControls && textFormatTarget ? (
+        <DeckRibbonGroup
+          label={textFormatTarget.mode === "part" ? `Fonte · ${textFormatTarget.partLabel}` : "Fonte"}
+          hint={H.font}
+          wide
+        >
             <div className="td-deck-ribbon__toolbar">
               <div className="td-deck-ribbon__toolbar-row">
                 <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
                   <TdRibbonSelect
                     aria-label="Família da fonte"
-                    value={textBlock.style?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]}
+                    value={currentFontFamily}
                     onChange={(value) => {
                       ensureComunicadoGoogleFontsLoaded([value]);
-                      updateSelectedStyle({ fontFamily: value });
+                      updateSelectedTextFormatStyle({ fontFamily: value });
                     }}
                     options={comunicadoFontFamilyOptions().map((font) => ({
                       value: font.value,
@@ -234,12 +256,10 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 <TdRibbonIconButton
                   hint={H.fontSizeDown}
                   ariaLabel="Diminuir fonte"
-                  disabled={(textBlock.style?.fontSize ?? 32) <= COMUNICADO_FONT_SIZE_MIN}
+                  disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
                   onClick={() =>
-                    updateSelectedStyle({
-                      fontSize: clampFontSize(
-                        (textBlock.style?.fontSize ?? 32) - COMUNICADO_FONT_SIZE_STEP,
-                      ),
+                    updateSelectedTextFormatStyle({
+                      fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
                     })
                   }
                 >
@@ -252,21 +272,19 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     aria-label="Tamanho da fonte"
                     min={COMUNICADO_FONT_SIZE_MIN}
                     max={COMUNICADO_FONT_SIZE_MAX}
-                    value={textBlock.style?.fontSize ?? 32}
+                    value={currentFontSize}
                     onChange={(value) =>
-                      updateSelectedStyle({ fontSize: clampFontSize(Number(value)) })
+                      updateSelectedTextFormatStyle({ fontSize: clampFontSize(Number(value)) })
                     }
                   />
                 </HintAction>
                 <TdRibbonIconButton
                   hint={H.fontSizeUp}
                   ariaLabel="Aumentar fonte"
-                  disabled={(textBlock.style?.fontSize ?? 32) >= COMUNICADO_FONT_SIZE_MAX}
+                  disabled={currentFontSize >= COMUNICADO_FONT_SIZE_MAX}
                   onClick={() =>
-                    updateSelectedStyle({
-                      fontSize: clampFontSize(
-                        (textBlock.style?.fontSize ?? 32) + COMUNICADO_FONT_SIZE_STEP,
-                      ),
+                    updateSelectedTextFormatStyle({
+                      fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
                     })
                   }
                 >
@@ -283,8 +301,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       toggleEditingTextRunStyle("fontWeight");
                       return;
                     }
-                    updateSelectedStyle({
-                      fontWeight: textBlock.style?.fontWeight === "bold" ? "normal" : "bold",
+                    updateSelectedTextFormatStyle({
+                      fontWeight: formatStyle?.fontWeight === "bold" ? "normal" : "bold",
                     });
                   }}
                 >
@@ -299,8 +317,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       toggleEditingTextRunStyle("fontStyle");
                       return;
                     }
-                    updateSelectedStyle({
-                      fontStyle: textBlock.style?.fontStyle === "italic" ? "normal" : "italic",
+                    updateSelectedTextFormatStyle({
+                      fontStyle: formatStyle?.fontStyle === "italic" ? "normal" : "italic",
                     });
                   }}
                 >
@@ -315,7 +333,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       toggleEditingTextRunStyle("underline");
                       return;
                     }
-                    updateSelectedStyle({
+                    updateSelectedTextFormatStyle({
                       textDecoration: buildTextDecoration(
                         !blockDecorationFlags.underline,
                         blockDecorationFlags.strikethrough,
@@ -334,7 +352,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                       toggleEditingTextRunStyle("strikethrough");
                       return;
                     }
-                    updateSelectedStyle({
+                    updateSelectedTextFormatStyle({
                       textDecoration: buildTextDecoration(
                         blockDecorationFlags.underline,
                         !blockDecorationFlags.strikethrough,
@@ -345,38 +363,44 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   <Strikethrough size={15} aria-hidden="true" />
                 </TdRibbonIconButton>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                <TvRibbonColorPicker
-                  hint={H.textHighlight}
-                  label="Realce"
-                  ariaLabel="Realce do texto"
-                  inline
-                  value={textBlock.style?.textHighlight ?? "#fef08a"}
-                  onChange={(color) => updateSelectedStyle({ textHighlight: color })}
-                />
+                {isTextBlock && textBlock ? (
+                  <TvRibbonColorPicker
+                    hint={H.textHighlight}
+                    label="Realce"
+                    ariaLabel="Realce do texto"
+                    inline
+                    value={textBlock.style?.textHighlight ?? "#fef08a"}
+                    onChange={(color) => updateSelectedTextFormatStyle({ textHighlight: color })}
+                  />
+                ) : null}
                 <TvRibbonColorPicker
                   hint={H.textColor}
                   label="Cor texto"
                   ariaLabel="Cor do texto"
                   inline
-                  value={textBlock.style?.color ?? "#ffffff"}
-                  onChange={(color) => updateSelectedStyle({ color })}
+                  value={formatStyle?.color ?? "#0f172a"}
+                  onChange={(color) => updateSelectedTextFormatStyle({ color })}
                 />
-                <TdRibbonIconButton
-                  hint={H.clearFormatting}
-                  ariaLabel="Limpar formatação"
-                  onClick={() => {
-                    const defaults = defaultTextBlockStyle(textBlock.type);
-                    updateSelected({
-                      style: { ...defaults, zIndex: textBlock.style?.zIndex ?? defaults.zIndex },
-                    } as Partial<ComunicadoBlock>);
-                  }}
-                >
-                  <RemoveFormatting size={15} aria-hidden="true" />
-                </TdRibbonIconButton>
+                {isTextBlock && textBlock ? (
+                  <TdRibbonIconButton
+                    hint={H.clearFormatting}
+                    ariaLabel="Limpar formatação"
+                    onClick={() => {
+                      const defaults = defaultTextBlockStyle(textBlock.type);
+                      updateSelected({
+                        style: { ...defaults, zIndex: textBlock.style?.zIndex ?? defaults.zIndex },
+                      } as Partial<ComunicadoBlock>);
+                    }}
+                  >
+                    <RemoveFormatting size={15} aria-hidden="true" />
+                  </TdRibbonIconButton>
+                ) : null}
               </div>
             </div>
           </DeckRibbonGroup>
+      ) : null}
 
+      {isTextBlock && textBlock ? (
           <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} wide>
             <div className="td-deck-ribbon__toolbar">
               <div className="td-deck-ribbon__toolbar-row">
@@ -499,7 +523,6 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               </div>
             </div>
           </DeckRibbonGroup>
-        </>
       ) : null}
 
       {isShapeBlock && selected ? (

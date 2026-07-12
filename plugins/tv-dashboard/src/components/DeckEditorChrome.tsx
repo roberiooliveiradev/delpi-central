@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
+import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
@@ -108,6 +109,14 @@ export function DeckEditorChrome({
         editor.selectedChartPart.kind,
       ),
   );
+  const textFormatTarget = resolveSelectedTextFormatTarget({
+    selected: editor?.selected ?? null,
+    selectedKpiPart: editor?.selectedKpiPart,
+    selectedChartPart: editor?.selectedChartPart,
+  });
+  // Eixo permanece primitivo de Forma; tipografia de título/legenda/KPI abre Formatar.
+  const textPartFormatSelected =
+    textFormatTarget?.mode === "part" && editor?.selectedChartPart?.kind !== "axis";
   const tabs = resolveDeckRibbonTabs(isCustomSlide, {
     chartSelected,
     tableSelected,
@@ -135,17 +144,19 @@ export function DeckEditorChrome({
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
       setActiveTab(
-        chartPartPrimitiveSelected
-          ? "shape"
-          : chartSelected
-            ? "chart"
-            : tableSelected
-              ? "table"
-              : shapeSelected
-                ? "shape"
-                : dataSelected
-                  ? "data"
-                  : "home",
+        textPartFormatSelected
+          ? "format"
+          : chartPartPrimitiveSelected
+            ? "shape"
+            : chartSelected
+              ? "chart"
+              : tableSelected
+                ? "table"
+                : shapeSelected
+                  ? "shape"
+                  : dataSelected
+                    ? "data"
+                    : "home",
       );
     }
   }, [
@@ -156,18 +167,27 @@ export function DeckEditorChrome({
     shapeSelected,
     dataSelected,
     chartPartPrimitiveSelected,
+    textPartFormatSelected,
   ]);
 
   useEffect(() => {
-    if (chartPartPrimitiveSelected && isCustomSlide) {
+    if (textPartFormatSelected && isCustomSlide) {
+      setActiveTab("format");
+    } else if (chartPartPrimitiveSelected && isCustomSlide) {
       setActiveTab("shape");
     } else if (shapeSelected && isCustomSlide) {
       setActiveTab("shape");
     } else if (tableSelected && isCustomSlide) {
       setActiveTab("table");
-    } else if (shapeChromeSelected && isCustomSlide && !chartSelected && !tableSelected) {
+    } else if (
+      shapeChromeSelected &&
+      isCustomSlide &&
+      !chartSelected &&
+      !tableSelected &&
+      !textPartFormatSelected
+    ) {
       setActiveTab("shape");
-    } else if (chartSelected && isCustomSlide) {
+    } else if (chartSelected && isCustomSlide && !textPartFormatSelected) {
       setActiveTab("chart");
     } else if (dataSelected && isCustomSlide && !chartSelected && !tableSelected && !shapeSelected) {
       setActiveTab("data");
@@ -178,10 +198,12 @@ export function DeckEditorChrome({
     shapeSelected,
     shapeChromeSelected,
     chartPartPrimitiveSelected,
+    textPartFormatSelected,
     dataSelected,
     isCustomSlide,
     editor?.selectedId,
     editor?.selectedChartPart,
+    editor?.selectedKpiPart,
   ]);
 
   useEffect(() => {

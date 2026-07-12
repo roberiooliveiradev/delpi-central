@@ -190,6 +190,43 @@ export function DelpiKpiCard({
   const cardStrokeWidth = parts.card?.style?.strokeWidth;
   const cardRadius = parts.card?.style?.borderRadius;
 
+  const titleTextStyle: CSSProperties | undefined = (() => {
+    const s = parts.title?.style;
+    if (!s) return undefined;
+    return {
+      fontFamily: s.fontFamily,
+      fontSize: s.fontSize != null ? `${s.fontSize}px` : undefined,
+      fontWeight: s.fontWeight,
+      fontStyle: s.fontStyle,
+      color: s.color,
+      textDecoration: s.textDecoration,
+    };
+  })();
+  const valueTextStyle: CSSProperties | undefined = (() => {
+    const s = parts.value?.style;
+    if (!s) return undefined;
+    return {
+      fontFamily: s.fontFamily,
+      fontSize: s.fontSize != null ? `${s.fontSize}px` : undefined,
+      fontWeight: s.fontWeight,
+      fontStyle: s.fontStyle,
+      color: s.color ?? resolvedValueColor,
+      textDecoration: s.textDecoration,
+    };
+  })();
+  const hintTextStyle: CSSProperties | undefined = (() => {
+    const s = parts.hint?.style;
+    if (!s) return undefined;
+    return {
+      fontFamily: s.fontFamily,
+      fontSize: s.fontSize != null ? `${s.fontSize}px` : undefined,
+      fontWeight: s.fontWeight,
+      fontStyle: s.fontStyle,
+      color: s.color,
+      textDecoration: s.textDecoration,
+    };
+  })();
+
   const cardPtr = bindKpiPartPointer({ kind: "card" }, interaction);
   const titlePtr = bindKpiPartPointer({ kind: "title" }, interaction);
   const valuePtr = bindKpiPartPointer({ kind: "value" }, interaction);
@@ -277,6 +314,7 @@ export function DelpiKpiCard({
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                style={titleTextStyle}
                 {...{
                   [KPI_PART_DATA_ATTR]: titlePtr[KPI_PART_DATA_ATTR],
                   "aria-selected": titlePtr["aria-selected"],
@@ -323,6 +361,7 @@ export function DelpiKpiCard({
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                style={valueTextStyle}
                 {...{
                   [KPI_PART_DATA_ATTR]: valuePtr[KPI_PART_DATA_ATTR],
                   "aria-selected": valuePtr["aria-selected"],
@@ -341,6 +380,7 @@ export function DelpiKpiCard({
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                style={hintTextStyle}
                 {...{
                   [KPI_PART_DATA_ATTR]: hintPtr[KPI_PART_DATA_ATTR],
                   "aria-selected": hintPtr["aria-selected"],

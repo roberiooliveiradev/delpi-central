@@ -41,10 +41,19 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
   const cn = useSeriesChartClasses();
   const ref = { kind: "title" as const };
   const frame = getChartPartState(chartParts, ref)?.frame;
+  const partStyle = getChartPartState(chartParts, ref)?.style;
   const pointer = bindChartPartPointer(ref, interaction);
   const { selected, editing, onPointerDown, onDoubleClick, ...dom } = pointer;
   const frameStyle = partFrameStyle(frame, selected && !editing);
   const showResize = selected && !editing && chartPartAllowsResize(ref);
+  const textStyle: CSSProperties = {
+    ...frameStyle,
+    fontFamily: partStyle?.fontFamily,
+    fontSize: partStyle?.fontSize != null ? `${partStyle.fontSize}px` : undefined,
+    fontWeight: partStyle?.fontWeight,
+    fontStyle: partStyle?.fontStyle,
+    color: partStyle?.color,
+  };
 
   const hostRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
@@ -102,7 +111,7 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
       ]
         .filter(Boolean)
         .join(" ")}
-      style={frameStyle}
+      style={textStyle}
       {...dom}
       contentEditable={editing || undefined}
       suppressContentEditableWarning={editing || undefined}

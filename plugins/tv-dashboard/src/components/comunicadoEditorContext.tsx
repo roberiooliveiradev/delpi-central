@@ -401,6 +401,7 @@ export function ComunicadoEditorProvider({
     updateBlockTextFields: blockActions.updateBlockTextFields,
     updateBlockLink: blockActions.updateBlockLink,
     updateSelectedStyle: blockActions.updateSelectedStyle,
+    updateSelectedTextFormatStyle: blockActions.updateSelectedTextFormatStyle,
     removeSelected: blockActions.removeSelected,
     duplicateSelected: blockActions.duplicateSelected,
     cutSelected,

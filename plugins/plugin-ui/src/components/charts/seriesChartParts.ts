@@ -105,6 +105,7 @@ export type ChartPartStyle = {
   fontSize?: number;
   color?: string;
   fontWeight?: "normal" | "bold";
+  fontStyle?: "normal" | "italic";
   /** Raio do marcador (primitivo point). */
   markerRadius?: number;
   /** Cantos (Format Shape) — padrão Office do gráfico = 0. */

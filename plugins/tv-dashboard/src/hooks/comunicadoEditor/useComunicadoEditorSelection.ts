@@ -187,7 +187,17 @@ export function useComunicadoEditorSelection({
         "axis",
         "grid",
       ]);
-      setRibbonTabRequest(primitiveKinds.has(part.kind) ? "shape" : "chart");
+      // Partes textuais → Formatar (tipografia); primitivos de desenho → Forma; resto → Gráfico.
+      if (
+        part.kind === "title" ||
+        part.kind === "legend" ||
+        part.kind === "axisTitle" ||
+        part.kind === "dataLabel"
+      ) {
+        setRibbonTabRequest("format");
+      } else {
+        setRibbonTabRequest(primitiveKinds.has(part.kind) ? "shape" : "chart");
+      }
     },
     [flushActiveTextEdit],
   );

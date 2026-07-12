@@ -30,6 +30,9 @@ import {
   tablePartAllowsDelete,
   upsertChartPartState,
   upsertKpiPartState,
+  getChartPartState,
+  getKpiPartState,
+  mergeKpiPartsWithOptions,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -59,6 +62,11 @@ import {
   sendToBack,
 } from "../../utils/comunicadoLayerOrder";
 import { groupBlocks, ungroupBlocks } from "../../utils/comunicadoGrouping";
+import {
+  isChartTextFormatPart,
+  isKpiTextFormatPart,
+  type TextFormatStyleSnapshot,
+} from "../../utils/selectedTextFormatTarget";
 
 type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
@@ -443,6 +451,75 @@ export function useComunicadoEditorBlocks({
     [configRef, selected, selectedBlocks, updateBlocks],
   );
 
+  /** Tipografia da ribbon Formatar — bloco text/heading ou parte textual KPI/chart. */
+  const updateSelectedTextFormatStyle = useCallback(
+    (patch: TextFormatStyleSnapshot) => {
+      if (!selected) return;
+
+      if (selected.type === "kpi_view" && isKpiTextFormatPart(selectedKpiPart) && selectedKpiPart) {
+        const prev = getKpiPartState(selected.kpiParts, selectedKpiPart)?.style;
+        const nextParts = upsertKpiPartState(selected.kpiParts, selectedKpiPart, {
+          style: {
+            ...prev,
+            fontFamily: patch.fontFamily ?? prev?.fontFamily,
+            fontSize: patch.fontSize ?? prev?.fontSize,
+            fontWeight: patch.fontWeight ?? prev?.fontWeight,
+            fontStyle: patch.fontStyle ?? prev?.fontStyle,
+            color: patch.color ?? prev?.color,
+            textDecoration: patch.textDecoration ?? prev?.textDecoration,
+          },
+        });
+        const options = mergeComunicadoKpiOptions({
+          ...selected.kpiOptions,
+          ...partsToKpiOptions(nextParts),
+        });
+        if (selectedKpiPart.kind === "value" && patch.color) {
+          options.valueColor = patch.color;
+        }
+        updateSelected({
+          kpiParts: mergeKpiPartsWithOptions(nextParts, options),
+          kpiOptions: options,
+        } as Partial<ComunicadoBlock>);
+        return;
+      }
+
+      if (
+        selected.type === "chart_view" &&
+        isChartTextFormatPart(selectedChartPart) &&
+        selectedChartPart
+      ) {
+        const prev = getChartPartState(selected.chartParts, selectedChartPart)?.style;
+        const nextParts = upsertChartPartState(selected.chartParts, selectedChartPart, {
+          style: {
+            ...prev,
+            fontFamily: patch.fontFamily ?? prev?.fontFamily,
+            fontSize: patch.fontSize ?? prev?.fontSize,
+            fontWeight:
+              patch.fontWeight === "bold" || patch.fontWeight === "normal"
+                ? patch.fontWeight
+                : prev?.fontWeight,
+            fontStyle:
+              patch.fontStyle === "italic" || patch.fontStyle === "normal"
+                ? patch.fontStyle
+                : prev?.fontStyle,
+            color: patch.color ?? prev?.color,
+          },
+        });
+        updateSelected({ chartParts: nextParts } as Partial<ComunicadoBlock>);
+        return;
+      }
+
+      updateSelectedStyle(patch as NonNullable<ComunicadoBlock["style"]>);
+    },
+    [
+      selected,
+      selectedChartPart,
+      selectedKpiPart,
+      updateSelected,
+      updateSelectedStyle,
+    ],
+  );
+
   const duplicateSelected = useCallback(() => {
     const sources = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
     if (sources.length === 0) return;
@@ -732,6 +809,7 @@ export function useComunicadoEditorBlocks({
     updateBlockTextFields,
     updateBlockLink,
     updateSelectedStyle,
+    updateSelectedTextFormatStyle,
     duplicateSelected,
     replaceSelectedDataRoute,
     removeSelected,

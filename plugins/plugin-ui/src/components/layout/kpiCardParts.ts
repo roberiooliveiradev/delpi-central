@@ -18,7 +18,11 @@ export type KpiPartRef =
 export type KpiPartStyle = {
   fill?: string;
   color?: string;
+  fontFamily?: string;
+  fontSize?: number;
   fontWeight?: string | number;
+  fontStyle?: string;
+  textDecoration?: string;
   opacity?: number;
   /** Contorno do card (herda chrome de forma). */
   stroke?: string;
