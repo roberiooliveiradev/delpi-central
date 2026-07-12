@@ -140,7 +140,12 @@ export function DataRoutesSidePanel({
             <p className="td-subtitle td-data-routes-panel__desc">{pickedRoute.description}</p>
           ) : null}
           <DeckField id="td-data-source-label" label="Rótulo">
-            <NativeTextControl id="td-data-source-label" value={label} onChange={setLabel} />
+            <NativeTextControl
+              id="td-data-source-label"
+              className={layout === "ribbon" ? "delpi-ui-native-control--compact" : undefined}
+              value={label}
+              onChange={setLabel}
+            />
           </DeckField>
           <DeckField
             id="td-data-source-refresh"
@@ -150,6 +155,7 @@ export function DataRoutesSidePanel({
             <NativeTextControl
               id="td-data-source-refresh"
               type="number"
+              className={layout === "ribbon" ? "delpi-ui-native-control--compact" : undefined}
               min={DATA_REFRESH_SEC_MIN}
               max={DATA_REFRESH_SEC_MAX}
               placeholder={`Padrão (${globalRefreshSec}s)`}

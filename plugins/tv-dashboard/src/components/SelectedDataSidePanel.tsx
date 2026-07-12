@@ -47,6 +47,7 @@ export function SelectedDataSidePanel({
   const showCatalog =
     dataPanelIntent === "catalog" || context.kind === "none";
   const isRibbon = layout === "ribbon";
+  const openCatalog = onOpenCatalog ?? openDataCatalog;
 
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const bindingTarget = context.bindingTarget;
@@ -77,13 +78,13 @@ export function SelectedDataSidePanel({
 
   if (context.kind === "mixed") {
     return (
-      <div className={isRibbon ? "td-deck-ribbon__panel td-deck-ribbon__panel--ribbon" : undefined}>
+      <div className={isRibbon ? "td-deck-ribbon__panel td-deck-ribbon__panel--dados" : undefined}>
         <DeckPropertySection pane={!isRibbon} title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">{context.message}</p>
           <button
             type="button"
             className="td-btn td-btn--sm td-btn--ghost"
-            onClick={() => (onOpenCatalog ?? openDataCatalog)()}
+            onClick={() => openCatalog()}
           >
             Inserir nova fonte
           </button>
@@ -94,6 +95,8 @@ export function SelectedDataSidePanel({
 
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
+  const editingLinked =
+    Boolean(bindingTarget && selected && bindingTarget.id !== selected.id && isView);
 
   const body = (
     <>
@@ -108,7 +111,7 @@ export function SelectedDataSidePanel({
         <VisualDataViewInspector
           pane={!isRibbon}
           layout={layout}
-          onOpenDataSources={() => (onOpenCatalog ?? openDataCatalog)()}
+          onOpenDataSources={() => openCatalog()}
         />
       ) : null}
 
@@ -119,6 +122,12 @@ export function SelectedDataSidePanel({
           layout={layout}
           branchScope={branchScope}
           block={selected?.id !== bindingTarget.id ? bindingTarget : null}
+          sections={
+            isRibbon && editingLinked
+              ? ["params", "refresh"]
+              : undefined
+          }
+          onOpenCatalog={isRibbon ? () => openCatalog() : undefined}
         />
       ) : isView ? (
         <DeckPropertySection pane={!isRibbon} title="Parâmetros da fonte" defaultOpen>
@@ -128,7 +137,7 @@ export function SelectedDataSidePanel({
           <button
             type="button"
             className="td-btn td-btn--sm td-btn--ghost"
-            onClick={() => (onOpenCatalog ?? openDataCatalog)()}
+            onClick={() => openCatalog()}
           >
             Abrir catálogo de fontes
           </button>
@@ -141,21 +150,23 @@ export function SelectedDataSidePanel({
         </DeckPropertySection>
       ) : null}
 
-      <div className="td-deck-inspector__actions" style={isRibbon ? undefined : { padding: "8px 12px" }}>
-        <button
-          type="button"
-          className="td-btn td-btn--sm td-btn--ghost"
-          onClick={() => (onOpenCatalog ?? openDataCatalog)()}
-        >
-          Inserir nova fonte…
-        </button>
-      </div>
+      {!isRibbon ? (
+        <div className="td-deck-inspector__actions" style={{ padding: "8px 12px" }}>
+          <button
+            type="button"
+            className="td-btn td-btn--sm td-btn--ghost"
+            onClick={() => openCatalog()}
+          >
+            Inserir nova fonte…
+          </button>
+        </div>
+      ) : null}
     </>
   );
 
   if (!isRibbon) return body;
 
-  return <div className="td-deck-ribbon__panel td-deck-ribbon__panel--ribbon">{body}</div>;
+  return <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados">{body}</div>;
 }
 
 export type { ComunicadoBlock };

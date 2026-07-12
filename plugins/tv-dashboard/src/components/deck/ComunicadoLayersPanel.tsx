@@ -141,7 +141,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                   onDrop={() => onDrop(block.id)}
                   onClick={(event) => selectBlock(block.id, { additive: event.shiftKey })}
                 >
-                  <GripVertical size={14} className="td-layers-list__handle" aria-hidden="true" />
+                  <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
                   <span className="td-layers-list__meta">
                     <span className="td-layers-list__type">{comunicadoBlockTypeLabel(block.type)}</span>
                     <span className="td-layers-list__summary">{comunicadoBlockSummary(block)}</span>

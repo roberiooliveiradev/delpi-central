@@ -36,6 +36,8 @@ export function VisualDataViewInspector({
 }: Props) {
   const { selected, blocks, updateSelected, openDataPanel } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
+  const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
+  const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
 
   if (
     !selected ||
@@ -71,6 +73,7 @@ export function VisualDataViewInspector({
       <DeckField id="td-view-data-source" label="Fonte de dados">
         <FormSelectControl
           id="td-view-data-source"
+          className={compactSelect}
           ariaLabel="Fonte de dados"
           value={selected.dataSourceId ?? ""}
           onChange={(value) =>
@@ -100,6 +103,7 @@ export function VisualDataViewInspector({
         <NativeTextControl
           id="td-view-max-rows"
           type="number"
+          className={compactNative}
           min={1}
           max={TABLE_VIEW_MAX_ROWS_CAP}
           placeholder={`Todas (até ${TABLE_VIEW_MAX_ROWS_CAP})`}
@@ -119,6 +123,7 @@ export function VisualDataViewInspector({
         <NativeTextControl
           id="td-view-max-cols"
           type="number"
+          className={compactNative}
           min={1}
           max={TABLE_VIEW_MAX_COLS_CAP}
           placeholder={`Todas (até ${TABLE_VIEW_MAX_COLS_CAP})`}
@@ -137,7 +142,7 @@ export function VisualDataViewInspector({
     return (
       <>
         <div className="td-deck-ribbon__panel-zone">
-          <h4 className="td-deck-ribbon__panel-zone-title">Conexão de dados</h4>
+          <h4 className="td-deck-ribbon__panel-zone-title">Conexão</h4>
           <div className="td-deck-ribbon__field-grid">{connectionBody}</div>
         </div>
         {truncationBody ? (

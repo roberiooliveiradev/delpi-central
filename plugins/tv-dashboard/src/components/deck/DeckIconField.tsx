@@ -34,7 +34,7 @@ export function DeckIconField({
     >
       <div className="td-deck-icon-field__head">
         <span className="td-deck-icon-field__icon" aria-hidden="true">
-          <Icon size={14} strokeWidth={2} />
+          <Icon size={16} strokeWidth={2} />
         </span>
         <FieldLabel
           htmlFor={id}

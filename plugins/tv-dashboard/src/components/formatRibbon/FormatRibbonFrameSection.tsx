@@ -69,7 +69,7 @@ export function FormatRibbonFrameSection() {
   };
 
   return (
-    <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize} wide>
+    <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
       <div className="td-deck-ribbon__frame-grid">
         {frameKeys.map((key) => (
           <span key={key} className="td-deck-ribbon__frame-field">

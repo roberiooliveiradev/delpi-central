@@ -1928,7 +1928,7 @@
 .dashboard-tv-dashboard .td-deck-ribbon__group {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 4px;
   min-height: 78px;
   padding: 4px 10px 2px;
@@ -1941,12 +1941,12 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__group--wide {
-  min-width: min(380px, 100%);
+  min-width: min(280px, max-content);
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__body {
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
@@ -2051,24 +2051,27 @@
   display: grid;
   width: 100%;
   min-width: 0;
-  min-height: 112px;
-  max-height: 168px;
+  min-height: 0;
+  max-height: 148px;
   padding: 4px 6px;
   gap: 8px 12px;
-  align-items: stretch;
+  align-items: start;
+  justify-content: start;
   overflow: auto;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__panel--ribbon {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__panel--layers {
-  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
+  width: auto;
+  max-width: 100%;
+  grid-template-columns: minmax(280px, 420px) minmax(280px, 420px);
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__panel--dados {
-  grid-template-columns: minmax(200px, 0.9fr) minmax(280px, 1.4fr) minmax(160px, 0.7fr);
+  grid-template-columns: minmax(200px, 280px) minmax(240px, 360px) minmax(160px, 240px);
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__panel-zone {
@@ -2077,9 +2080,36 @@
   gap: 6px;
   min-width: 0;
   min-height: 0;
+  max-width: 100%;
   padding-right: 8px;
   border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
   overflow: auto;
+}
+
+/* Controles do painel ribbon: densidade compacta (evita form 36px). */
+.dashboard-tv-dashboard .td-deck-ribbon__panel .delpi-ui-native-control,
+.dashboard-tv-dashboard .td-deck-ribbon__panel .delpi-ui-native-control--compact {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel .delpi-ui-select--compact .delpi-ui-select__trigger,
+.dashboard-tv-dashboard .td-deck-ribbon__panel .delpi-ui-select .delpi-ui-select__trigger {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 12px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel .td-btn:not(.td-btn--sm) {
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 12px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__panel-zone:last-child {
@@ -2274,50 +2304,52 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  align-items: stretch;
+  align-items: flex-start;
   width: 100%;
   flex: 1 1 auto;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group {
   min-height: 0;
+  flex: 0 0 auto;
   flex-shrink: 0;
-  padding: 1px 6px 0;
+  padding: 2px 8px 0;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group--wide {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-width: min(240px, max-content);
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__caption {
-  padding-top: 1px;
+  margin-top: auto;
+  padding-top: 2px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-tile {
-  min-width: 36px;
-  min-height: 34px;
-  padding: 1px 2px;
-  gap: 1px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 4px 4px;
+  gap: 2px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-tile__icon {
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-tile__label {
-  font-size: 8px;
-  max-width: 40px;
-  line-height: 1.05;
+  font-size: 10px;
+  max-width: 56px;
+  line-height: 1.1;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-large-btn {
-  min-width: 52px;
-  min-height: 44px;
+  min-width: 56px;
+  min-height: 52px;
   padding: 4px 8px;
   gap: 2px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__split {
@@ -3145,8 +3177,8 @@
   grid-template-columns: 28px 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  min-height: 40px;
+  padding: 6px 8px;
+  min-height: 36px;
   border: 1px solid var(--td-border);
   border-radius: 8px;
   background: var(--td-surface);
@@ -3191,6 +3223,8 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 4px;
+  width: max-content;
+  max-width: 100%;
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__panel--compact:has(.td-deck-settings-strip--playlist) {
@@ -3221,8 +3255,9 @@
 }
 
 .dashboard-tv-dashboard .td-deck-playlist-groups > .td-deck-ribbon__group--wide {
-  flex: 1 1 200px;
+  flex: 0 1 280px;
   min-width: 180px;
+  max-width: 360px;
 }
 
 .dashboard-tv-dashboard .td-deck-playlist-groups > .td-deck-ribbon__group .td-deck-ribbon__body {
@@ -3347,8 +3382,8 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 8px 10px;
-  min-height: 40px;
+  padding: 6px 8px;
+  min-height: 36px;
   border: 1px solid var(--td-border);
   border-radius: 8px;
   background: var(--td-surface);

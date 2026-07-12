@@ -39,6 +39,9 @@ const DATE_PARAM_KEYS = new Set([
   "to",
 ]);
 
+/** Máximo de campos inline na ribbon; acima disso abre modal. */
+export const RIBBON_INLINE_PARAM_LIMIT = 4;
+
 function hintForParam(key: string, field: DataParamSchemaField): string | undefined {
   const fromSchema = field.description?.trim();
   if (fromSchema) return fromSchema;
@@ -124,84 +127,90 @@ export function DataParamFields({
   const entries = Object.entries(schema);
   if (entries.length === 0) return null;
 
+  const compact = layout === "ribbon";
+  const selectClass = compact ? "delpi-ui-select--compact" : undefined;
+  const nativeClass = compact ? "delpi-ui-native-control--compact" : undefined;
+
   const fields = entries.map(([key, field]) => {
-        const inherited = inheritedKeys.has(key);
-        const current = values?.[key];
-        const label = `${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`;
-        const hint = hintForParam(key, field);
-        const fieldId = `${idPrefix}-${key}`;
-        const selectOptions = resolveParamSelectOptions(key, field);
-        const displayValue = displayParamValue(current, field);
+    const inherited = inheritedKeys.has(key);
+    const current = values?.[key];
+    const label = `${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`;
+    const hint = hintForParam(key, field);
+    const fieldId = `${idPrefix}-${key}`;
+    const selectOptions = resolveParamSelectOptions(key, field);
+    const displayValue = displayParamValue(current, field);
 
-        if (BRANCH_PARAM_KEYS.has(key)) {
-          return (
-            <BranchField
-              key={key}
-              id={fieldId}
-              label={label}
-              hint={hint}
-              scope={branchScope}
-              value={displayValue}
-              onChange={(value) => onChange(key, value)}
-              placeholder={inherited ? "Herdado do slide" : "Ex.: 01"}
-            />
-          );
-        }
+    if (BRANCH_PARAM_KEYS.has(key)) {
+      return (
+        <BranchField
+          key={key}
+          id={fieldId}
+          label={label}
+          hint={hint}
+          scope={branchScope}
+          value={displayValue}
+          onChange={(value) => onChange(key, value)}
+          placeholder={inherited ? "Herdado do slide" : "Ex.: 01"}
+        />
+      );
+    }
 
-        if (selectOptions) {
-          const emptyLabel = inherited
-            ? "Herdado do slide"
-            : field.optional || field.default !== undefined
-              ? "Opcional"
-              : "Selecione…";
-          const showEmpty =
-            field.optional ||
-            field.default !== undefined ||
-            inherited ||
-            !selectOptions.some((option) => option.value === displayValue);
+    if (selectOptions) {
+      const emptyLabel = inherited
+        ? "Herdado do slide"
+        : field.optional || field.default !== undefined
+          ? "Opcional"
+          : "Selecione…";
+      const showEmpty =
+        field.optional ||
+        field.default !== undefined ||
+        inherited ||
+        !selectOptions.some((option) => option.value === displayValue);
 
-          return (
-            <DeckField key={key} id={fieldId} label={label} hint={hint}>
-              <FormSelectControl
-                id={fieldId}
-                ariaLabel={field.label ?? key}
-                value={displayValue}
-                onChange={(value: string) => onChange(key, value)}
-              options={[
-                  ...(showEmpty ? [{ value: "", label: emptyLabel }] : []),
-                  ...selectOptions,
-                ]}
-              />
-            </DeckField>
-          );
-        }
+      return (
+        <DeckField key={key} id={fieldId} label={label} hint={hint}>
+          <FormSelectControl
+            id={fieldId}
+            className={selectClass}
+            ariaLabel={field.label ?? key}
+            value={displayValue}
+            onChange={(value: string) => onChange(key, value)}
+            options={[
+              ...(showEmpty ? [{ value: "", label: emptyLabel }] : []),
+              ...selectOptions,
+            ]}
+          />
+        </DeckField>
+      );
+    }
 
-        const inputType = isDateParam(key, field)
-          ? "date"
-          : field.type === "integer" || field.type === "number"
-            ? "number"
-            : "text";
+    const inputType = isDateParam(key, field)
+      ? "date"
+      : field.type === "integer" || field.type === "number"
+        ? "number"
+        : "text";
 
-        return (
-          <DeckField key={key} id={fieldId} label={label} hint={hint}>
-            <NativeTextControl
-              id={fieldId}
-              type={inputType}
-              placeholder={
-                inherited
-                  ? "Herdado do slide"
-                  : field.default !== undefined
-                    ? `Padrão: ${field.default}`
-                    : field.optional
-                      ? "Opcional"
-                      : ""
-              }
-              value={current === undefined || current === null ? "" : String(current)}
-              onChange={(value: string) => onChange(key, value)}
-            />
-          </DeckField>
-        );
-      });
+    return (
+      <DeckField key={key} id={fieldId} label={label} hint={hint}>
+        <NativeTextControl
+          id={fieldId}
+          type={inputType}
+          className={nativeClass}
+          placeholder={
+            inherited
+              ? "Herdado do slide"
+              : field.default !== undefined
+                ? `Padrão: ${field.default}`
+                : field.optional
+                  ? "Opcional"
+                  : ""
+          }
+          value={current === undefined || current === null ? "" : String(current)}
+          onChange={(value: string) => onChange(key, value)}
+        />
+      </DeckField>
+    );
+  });
 
   if (layout === "ribbon") {
     return <div className="td-deck-ribbon__field-grid">{fields}</div>;

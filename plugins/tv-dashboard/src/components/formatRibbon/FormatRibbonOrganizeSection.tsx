@@ -36,7 +36,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
   const isImageBlock = selected.type === "image";
 
   return (
-    <DeckRibbonGroup label="Organizar" hint={H.organize} wide>
+    <DeckRibbonGroup label="Organizar" hint={H.organize}>
       <div className="td-deck-ribbon__organize">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile icon={Copy} label="Duplicar" hint={H.duplicateBlock} onClick={duplicateSelected} />

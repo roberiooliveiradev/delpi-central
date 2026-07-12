@@ -31,7 +31,7 @@ export function DeckRibbonTile({
       aria-label={label}
     >
       <span className="td-ribbon-tile__icon">
-        <Icon size={14} aria-hidden="true" />
+        <Icon size={18} aria-hidden="true" />
       </span>
       <span className="td-ribbon-tile__label">{label}</span>
       {children}
