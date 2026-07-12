@@ -62,6 +62,7 @@ export {
   partsToKpiOptions,
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
+  resolveKpiPartTypographyStyle,
   serializeKpiPartRef,
   setKpiElementEnabled,
   upsertKpiPartState,

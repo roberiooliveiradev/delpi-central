@@ -77,6 +77,25 @@ describe("selectedTextFormatTarget", () => {
     }
   });
 
+  it("resolve alinhamento tipográfico da parte KPI", () => {
+    const aligned = {
+      ...kpiBlock,
+      kpiParts: {
+        value: { style: { fontSize: 48, textAlign: "right", verticalAlign: "bottom" } },
+      },
+    } as ComunicadoBlock;
+    const target = resolveSelectedTextFormatTarget({
+      selected: aligned,
+      selectedKpiPart: { kind: "value" },
+    });
+    expect(target?.mode).toBe("part");
+    if (target?.mode === "part") {
+      expect(target.textAlign).toBe("right");
+      expect(target.verticalAlign).toBe("bottom");
+      expect(target.style.textAlign).toBe("right");
+    }
+  });
+
   it("não resolve tipografia quando KPI está no card", () => {
     expect(
       resolveSelectedTextFormatTarget({

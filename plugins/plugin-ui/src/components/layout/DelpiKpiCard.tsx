@@ -18,6 +18,7 @@ import {
   mergeKpiPartsWithOptions,
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
+  resolveKpiPartTypographyStyle,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
   type KpiPartsMap,
@@ -68,6 +69,7 @@ export {
   partsToKpiOptions,
   resolveKpiIconBoxStyle,
   resolveKpiIconFrame,
+  resolveKpiPartTypographyStyle,
   serializeKpiPartRef,
   upsertKpiPartState,
 } from "./kpiCardParts";
@@ -228,39 +230,27 @@ export function DelpiKpiCard({
   const cardStrokeWidth = parts.card?.style?.strokeWidth;
   const cardRadius = parts.card?.style?.borderRadius;
 
-  const titleTextStyle: CSSProperties | undefined = (() => {
-    const s = parts.title?.style;
-    return {
-      fontFamily: s?.fontFamily,
-      fontSize: s?.fontSize != null ? `${s.fontSize}px` : undefined,
-      fontWeight: s?.fontWeight,
-      fontStyle: s?.fontStyle,
+  const titleTextStyle = resolveKpiPartTypographyStyle(
+    {
+      ...parts.title?.style,
       color: resolvedTitleColor,
-      textDecoration: s?.textDecoration,
-    };
-  })();
-  const valueTextStyle: CSSProperties | undefined = (() => {
-    const s = parts.value?.style;
-    return {
-      fontFamily: s?.fontFamily,
-      fontSize: s?.fontSize != null ? `${s.fontSize}px` : undefined,
-      fontWeight: s?.fontWeight,
-      fontStyle: s?.fontStyle,
+    },
+    { flexPart: false },
+  );
+  const valueTextStyle = resolveKpiPartTypographyStyle(
+    {
+      ...parts.value?.style,
       color: resolvedValueColor,
-      textDecoration: s?.textDecoration,
-    };
-  })();
-  const hintTextStyle: CSSProperties | undefined = (() => {
-    const s = parts.hint?.style;
-    return {
-      fontFamily: s?.fontFamily,
-      fontSize: s?.fontSize != null ? `${s.fontSize}px` : undefined,
-      fontWeight: s?.fontWeight,
-      fontStyle: s?.fontStyle,
+    },
+    { flexPart: true },
+  );
+  const hintTextStyle = resolveKpiPartTypographyStyle(
+    {
+      ...parts.hint?.style,
       color: resolvedHintColor,
-      textDecoration: s?.textDecoration,
-    };
-  })();
+    },
+    { flexPart: false },
+  );
 
   const cardPtr = bindKpiPartPointer({ kind: "card" }, interaction);
   const titlePtr = bindKpiPartPointer({ kind: "title" }, interaction);

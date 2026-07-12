@@ -46,7 +46,10 @@ import {
 import { useEffect } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { resolveSelectedTextFormatTarget } from "../../utils/selectedTextFormatTarget";
+import {
+  resolveSelectedTextFormatTarget,
+  textFormatTargetSupportsParagraphAlign,
+} from "../../utils/selectedTextFormatTarget";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonIconButton, TdRibbonSelect } from "../tdRibbonUi";
@@ -104,19 +107,23 @@ export function FormatRibbonTypographySections() {
   const isTextBlock = textBlock != null;
   const isShapeTextTarget =
     textFormatTarget.mode === "block" && textFormatTarget.blockType === "shape";
-  const showParagraphAlign = isTextBlock || isShapeTextTarget;
+  const showParagraphAlign = textFormatTargetSupportsParagraphAlign(textFormatTarget);
   const formatStyle = textFormatTarget.style;
   const fontSizeDefault = isTextBlock ? 32 : isShapeTextTarget ? 18 : PART_FONT_SIZE_DEFAULT;
   const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
   const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
   const textAlignActive =
-    (textFormatTarget.mode === "block" ? textFormatTarget.textAlign : undefined) ??
+    textFormatTarget.textAlign ??
+    formatStyle?.textAlign ??
     textBlock?.style?.textAlign;
   const textVerticalAlign =
-    (textFormatTarget.mode === "block" ? textFormatTarget.verticalAlign : undefined) ??
+    textFormatTarget.verticalAlign ??
+    formatStyle?.verticalAlign ??
     (textBlock
       ? (textBlock.style?.verticalAlign ?? defaultVerticalAlignForBlock(textBlock.type))
-      : "middle");
+      : isShapeTextTarget
+        ? "middle"
+        : "middle");
   const partialTextSelectionActive = Boolean(
     textBlock &&
       editingTextId === textBlock.id &&
@@ -387,7 +394,7 @@ export function FormatRibbonTypographySections() {
                   hint={hint}
                   ariaLabel={label}
                   active={textAlignActive === align}
-                  onClick={() => updateSelectedStyle({ textAlign: align })}
+                  onClick={() => updateSelectedTextFormatStyle({ textAlign: align })}
                 >
                   <Icon size={15} aria-hidden="true" />
                 </TdRibbonIconButton>
@@ -441,7 +448,7 @@ export function FormatRibbonTypographySections() {
                   hint={hint}
                   ariaLabel={label}
                   active={textVerticalAlign === align}
-                  onClick={() => updateSelectedStyle({ verticalAlign: align })}
+                  onClick={() => updateSelectedTextFormatStyle({ verticalAlign: align })}
                 >
                   <Icon size={15} aria-hidden="true" />
                 </TdRibbonIconButton>

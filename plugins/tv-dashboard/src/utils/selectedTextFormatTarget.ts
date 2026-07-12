@@ -16,6 +16,8 @@ export type TextFormatStyleSnapshot = {
   color?: string;
   textDecoration?: string;
   textHighlight?: string;
+  textAlign?: string;
+  verticalAlign?: string;
 };
 
 export type SelectedTextFormatTarget =
@@ -33,6 +35,8 @@ export type SelectedTextFormatTarget =
       blockId: string;
       partLabel: string;
       style: TextFormatStyleSnapshot;
+      textAlign?: string;
+      verticalAlign?: string;
     };
 
 const KPI_TEXT_FORMAT_KINDS = new Set(["title", "hint", "value"]);
@@ -48,6 +52,13 @@ export function isChartTextFormatPart(part: ComunicadoChartPartRef | null | unde
   // axis/dataLabel: tipografia mesmo quando editable=false em alguns kinds
   if (part.kind === "axis" || part.kind === "dataLabel") return true;
   return chartPartAllowsEdit(part);
+}
+
+/** Alvo tipográfico admite seção Parágrafo (alinhamento H/V). */
+export function textFormatTargetSupportsParagraphAlign(
+  target: SelectedTextFormatTarget | null | undefined,
+): boolean {
+  return Boolean(target);
 }
 
 function kpiPartLabel(part: ComunicadoKpiPartRef): string {
@@ -105,6 +116,8 @@ export function resolveSelectedTextFormatTarget(params: {
         color: selected.style?.color,
         textDecoration: selected.style?.textDecoration,
         textHighlight: selected.style?.textHighlight,
+        textAlign: selected.style?.textAlign,
+        verticalAlign: selected.style?.verticalAlign,
       },
       textAlign: selected.style?.textAlign,
       verticalAlign: selected.style?.verticalAlign,
@@ -123,6 +136,8 @@ export function resolveSelectedTextFormatTarget(params: {
         fontStyle: selected.style?.fontStyle,
         color: selected.style?.color,
         textDecoration: selected.style?.textDecoration,
+        textAlign: selected.style?.textAlign,
+        verticalAlign: selected.style?.verticalAlign,
       },
       textAlign: selected.style?.textAlign,
       verticalAlign: selected.style?.verticalAlign,
@@ -144,7 +159,11 @@ export function resolveSelectedTextFormatTarget(params: {
         fontStyle: partStyle?.fontStyle,
         color: partStyle?.color,
         textDecoration: partStyle?.textDecoration,
+        textAlign: partStyle?.textAlign,
+        verticalAlign: partStyle?.verticalAlign,
       },
+      textAlign: partStyle?.textAlign,
+      verticalAlign: partStyle?.verticalAlign,
     };
   }
 
@@ -161,7 +180,11 @@ export function resolveSelectedTextFormatTarget(params: {
         fontWeight: partStyle?.fontWeight,
         fontStyle: partStyle?.fontStyle,
         color: partStyle?.color,
+        textAlign: partStyle?.textAlign,
+        verticalAlign: partStyle?.verticalAlign,
       },
+      textAlign: partStyle?.textAlign,
+      verticalAlign: partStyle?.verticalAlign,
     };
   }
 

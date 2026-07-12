@@ -27,6 +27,8 @@ export type KpiPartStyle = {
   fontWeight?: string | number;
   fontStyle?: string;
   textDecoration?: string;
+  textAlign?: "left" | "center" | "right" | "justify";
+  verticalAlign?: "top" | "middle" | "bottom";
   opacity?: number;
   /** Contorno do card/ícone (herda chrome de forma). */
   stroke?: string;
@@ -234,6 +236,50 @@ export function kpiPartDomProps(ref: KpiPartRef, selectedPart?: KpiPartRef | nul
     [KPI_PART_DATA_ATTR]: serializeKpiPartRef(ref),
     "aria-selected": selected ? true : undefined,
   };
+}
+
+/** Tipografia + alinhamento de parte textual do KPI (title/value/hint). */
+export function resolveKpiPartTypographyStyle(
+  style: KpiPartStyle | null | undefined,
+  options?: { flexPart?: boolean },
+): CSSProperties | undefined {
+  if (!style) return undefined;
+  const css: CSSProperties = {};
+  if (style.fontFamily) css.fontFamily = style.fontFamily;
+  if (style.fontSize != null && Number.isFinite(style.fontSize)) {
+    css.fontSize = `${style.fontSize}px`;
+  }
+  if (style.fontWeight != null) css.fontWeight = style.fontWeight;
+  if (style.fontStyle) css.fontStyle = style.fontStyle;
+  if (style.textDecoration) css.textDecoration = style.textDecoration;
+  if (style.color) css.color = style.color;
+  if (style.textAlign) css.textAlign = style.textAlign;
+
+  const flexPart = options?.flexPart ?? false;
+  if (flexPart) {
+    if (style.textAlign === "left") css.justifyContent = "flex-start";
+    else if (style.textAlign === "right") css.justifyContent = "flex-end";
+    else if (style.textAlign === "center" || style.textAlign === "justify") {
+      css.justifyContent = "center";
+    }
+    if (style.verticalAlign === "top") css.alignItems = "flex-start";
+    else if (style.verticalAlign === "middle") css.alignItems = "center";
+    else if (style.verticalAlign === "bottom") css.alignItems = "flex-end";
+  } else {
+    if (style.textAlign) {
+      css.width = "100%";
+      css.display = "flex";
+      css.flexWrap = "wrap";
+      css.justifyContent =
+        style.textAlign === "right"
+          ? "flex-end"
+          : style.textAlign === "center" || style.textAlign === "justify"
+            ? "center"
+            : "flex-start";
+    }
+  }
+
+  return Object.keys(css).length > 0 ? css : undefined;
 }
 
 export function bindKpiPartPointer(ref: KpiPartRef, interaction?: KpiCardInteraction | null) {

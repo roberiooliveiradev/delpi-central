@@ -467,6 +467,19 @@ export function useComunicadoEditorBlocks({
             fontStyle: patch.fontStyle ?? prev?.fontStyle,
             color: patch.color ?? prev?.color,
             textDecoration: patch.textDecoration ?? prev?.textDecoration,
+            textAlign:
+              patch.textAlign === "left" ||
+              patch.textAlign === "center" ||
+              patch.textAlign === "right" ||
+              patch.textAlign === "justify"
+                ? patch.textAlign
+                : prev?.textAlign,
+            verticalAlign:
+              patch.verticalAlign === "top" ||
+              patch.verticalAlign === "middle" ||
+              patch.verticalAlign === "bottom"
+                ? patch.verticalAlign
+                : prev?.verticalAlign,
           },
         });
         const options = mergeComunicadoKpiOptions({
@@ -503,6 +516,19 @@ export function useComunicadoEditorBlocks({
                 ? patch.fontStyle
                 : prev?.fontStyle,
             color: patch.color ?? prev?.color,
+            textAlign:
+              patch.textAlign === "left" ||
+              patch.textAlign === "center" ||
+              patch.textAlign === "right" ||
+              patch.textAlign === "justify"
+                ? patch.textAlign
+                : prev?.textAlign,
+            verticalAlign:
+              patch.verticalAlign === "top" ||
+              patch.verticalAlign === "middle" ||
+              patch.verticalAlign === "bottom"
+                ? patch.verticalAlign
+                : prev?.verticalAlign,
           },
         });
         updateSelected({ chartParts: nextParts } as Partial<ComunicadoBlock>);

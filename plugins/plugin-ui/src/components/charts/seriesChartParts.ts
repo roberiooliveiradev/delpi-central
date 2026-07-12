@@ -110,6 +110,8 @@ export type ChartPartStyle = {
   color?: string;
   fontWeight?: "normal" | "bold";
   fontStyle?: "normal" | "italic";
+  textAlign?: "left" | "center" | "right" | "justify";
+  verticalAlign?: "top" | "middle" | "bottom";
   /** Raio do marcador (primitivo point). */
   markerRadius?: number;
   /** Cantos (Format Shape) — padrão Office do gráfico = 0. */
@@ -418,6 +420,10 @@ export function chartPartTypographyStyle(
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;
   if (style.color) css.color = style.color;
+  if (style.textAlign) css.textAlign = style.textAlign;
+  if (style.verticalAlign === "top") css.justifyContent = "flex-start";
+  else if (style.verticalAlign === "middle") css.justifyContent = "center";
+  else if (style.verticalAlign === "bottom") css.justifyContent = "flex-end";
   return Object.keys(css).length > 0 ? css : undefined;
 }
 

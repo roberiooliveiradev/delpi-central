@@ -94,6 +94,25 @@ describe("DelpiKpiCard chrome", () => {
     expect(deselectedValue.style.fontSize).toBe("64px");
   });
 
+  it("aplica alinhamento tipográfico das parts", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="10"
+        kpiParts={{
+          title: { style: { textAlign: "right" } },
+          value: { style: { textAlign: "center", verticalAlign: "bottom" } },
+        }}
+      />,
+    );
+    const title = container.querySelector(".delpi-kpi-card__label") as HTMLElement;
+    const value = container.querySelector(".delpi-kpi-card__value") as HTMLElement;
+    expect(title.style.textAlign).toBe("right");
+    expect(title.style.justifyContent).toBe("flex-end");
+    expect(value.style.justifyContent).toBe("center");
+    expect(value.style.alignItems).toBe("flex-end");
+  });
+
   it("ícone respeita frame e chrome (cores/cantos)", () => {
     const { container } = render(
       <DelpiKpiCard
