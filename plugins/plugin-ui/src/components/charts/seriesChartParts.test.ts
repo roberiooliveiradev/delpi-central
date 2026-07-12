@@ -196,4 +196,15 @@ describe("seriesChartParts", () => {
     const normalized = normalizeChartPartsForLoad(custom, mergeSeriesChartOptions({}));
     expect(normalized.plotArea?.style?.strokeWidth).toBe(2);
   });
+
+  it("normalizeChartPartsForLoad remove frame da dataTable e plotArea inválido", () => {
+    const withFrames = {
+      ...chartOptionsToParts(mergeSeriesChartOptions({ showDataTable: true })),
+      dataTable: { visible: true, frame: { x: 0, y: 10, w: 40, h: 50 } },
+      plotArea: { visible: true, frame: { x: 0, y: 0, w: 2, h: 2 } },
+    };
+    const normalized = normalizeChartPartsForLoad(withFrames, mergeSeriesChartOptions({ showDataTable: true }));
+    expect(normalized.dataTable?.frame).toBeUndefined();
+    expect(normalized.plotArea?.frame).toBeUndefined();
+  });
 });

@@ -77,17 +77,19 @@ export function chartPartFrameFromPlotLayout(layout: {
   };
 }
 
-/** Margens a partir do frame % do plotArea; null se incompleto. */
+/** Margens a partir do frame % do plotArea; null se incompleto ou área inútil. */
 export function marginsFromPlotFrame(
   frame: ChartPartFrame | null | undefined,
   viewW: number,
   viewH: number,
 ): SeriesChartMargin | null {
   if (frame == null || frame.w == null || frame.h == null) return null;
+  if (frame.w < 15 || frame.h < 15) return null;
   const left = (frame.x / 100) * viewW;
   const top = (frame.y / 100) * viewH;
   const plotW = (frame.w / 100) * viewW;
   const plotH = (frame.h / 100) * viewH;
+  if (plotW < 24 || plotH < 24) return null;
   return {
     top,
     left,

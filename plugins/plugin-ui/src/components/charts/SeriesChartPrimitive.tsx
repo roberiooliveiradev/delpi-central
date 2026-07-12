@@ -94,11 +94,14 @@ export function SeriesChartPrimitive({
     const update = () => {
       const width = node.clientWidth;
       const height = node.clientHeight;
-      if (width < 40 || height < 40) return;
+      // Host ainda medindo (0) — mantém viewBox anterior; evita “congelar” em size inválido.
+      if (width < 8 || height < 8) return;
+      const nextW = Math.max(width, 40);
+      const nextH = Math.max(height, 40);
       setViewSize((prev) =>
-        Math.abs(prev.w - width) < 1 && Math.abs(prev.h - height) < 1
+        Math.abs(prev.w - nextW) < 1 && Math.abs(prev.h - nextH) < 1
           ? prev
-          : { w: width, h: height },
+          : { w: nextW, h: nextH },
       );
     };
 

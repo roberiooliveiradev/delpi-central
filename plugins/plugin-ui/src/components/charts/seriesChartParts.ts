@@ -345,6 +345,7 @@ export function bindChartPartPointer(
 /**
  * Normaliza parts no load: garante projeção options→parts e desliga moldura
  * legada do plot (`strokeWidth: 1` era o default antigo que vazava eixos).
+ * Remove frame da dataTable (sempre no fluxo) e plotArea com geometria inválida.
  */
 export function normalizeChartPartsForLoad(
   parts: ChartPartsMap | null | undefined,
@@ -359,7 +360,30 @@ export function normalizeChartPartsForLoad(
       style: { ...plot.style, strokeWidth: 0 },
     };
   }
+  const plotAfter = merged[plotKey];
+  if (plotAfter?.frame && !isUsablePlotFrame(plotAfter.frame)) {
+    const { frame: _drop, ...rest } = plotAfter;
+    merged[plotKey] = rest;
+  }
+  const tableKey = serializeChartPartRef({ kind: "dataTable" });
+  const table = merged[tableKey];
+  if (table?.frame) {
+    const { frame: _dropTableFrame, ...tableRest } = table;
+    merged[tableKey] = tableRest;
+  }
   return merged;
+}
+
+/** Frame do plot precisa de área útil; senão o SVG some (w/h ~0). */
+function isUsablePlotFrame(frame: ChartPartFrame): boolean {
+  return (
+    frame.w != null &&
+    frame.h != null &&
+    Number.isFinite(frame.w) &&
+    Number.isFinite(frame.h) &&
+    frame.w >= 15 &&
+    frame.h >= 15
+  );
 }
 
 export function findChartPartFromTarget(target: EventTarget | null): ChartPartRef | null {
