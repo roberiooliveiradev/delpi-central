@@ -115,15 +115,17 @@ function EditorChartViewBlock({
     cancelEditChartPart,
     requestRibbonTab,
     updateBlock,
+    startDrag,
   } = useComunicadoEditor();
 
   /**
    * Clique simples no gráfico já selecionado: mantém o grupo `chart_view`
    * (limpa subseleção). Arraste de parte móvel só se a mesma parte já estiver ativa.
    * Com o gráfico não selecionado, `interaction` fica null para o clique subir ao compositor.
+   * chartArea: inicia move do bloco (senão stopPropagation nas partes impede arrastar).
    */
   const onPartPointerDown = useCallback(
-    (ref: ComunicadoChartPartRef) => {
+    (ref: ComunicadoChartPartRef, event?: ReactPointerEvent) => {
       if (
         selectedId === block.id &&
         selectedChartPart &&
@@ -133,8 +135,11 @@ function EditorChartViewBlock({
         return;
       }
       selectBlock(block.id);
+      if (ref.kind === "chartArea" && event) {
+        startDrag(event, block, "move");
+      }
     },
-    [block.id, selectBlock, selectedChartPart, selectedId],
+    [block, selectBlock, selectedChartPart, selectedId, startDrag],
   );
 
   /** Duplo clique: acessa a parte; texto já selecionado abre edição inline. */
@@ -309,7 +314,12 @@ function EditorChartViewBlock({
         .join(" ")}
       style={style}
     >
-      <ChartViewBlockView block={block} interactive loading={dataLoading} interaction={interaction} />
+      <ChartViewBlockView
+        block={block}
+        interactive={Boolean(interaction)}
+        loading={dataLoading}
+        interaction={interaction}
+      />
     </div>
   );
 }
@@ -325,14 +335,17 @@ function EditorTableViewBlock({
   className?: string;
   dataLoading?: boolean;
 }) {
-  const { selectedId, selectedTablePart, selectBlock, selectTablePart, requestRibbonTab } =
+  const { selectedId, selectedTablePart, selectBlock, selectTablePart, requestRibbonTab, startDrag } =
     useComunicadoEditor();
 
   const onPartPointerDown = useCallback(
-    (_ref: ComunicadoTablePartRef) => {
+    (ref: ComunicadoTablePartRef, event?: ReactPointerEvent) => {
       selectBlock(block.id);
+      if (ref.kind === "frame" && event) {
+        startDrag(event, block, "move");
+      }
     },
-    [block.id, selectBlock],
+    [block, selectBlock, startDrag],
   );
 
   const onPartDoubleClick = useCallback(
@@ -359,7 +372,12 @@ function EditorTableViewBlock({
         .join(" ")}
       style={style}
     >
-      <TableViewBlockView block={block} interactive loading={dataLoading} interaction={interaction} />
+      <TableViewBlockView
+        block={block}
+        interactive={Boolean(interaction)}
+        loading={dataLoading}
+        interaction={interaction}
+      />
     </div>
   );
 }
@@ -386,13 +404,18 @@ function EditorKpiViewBlock({
     cancelEditKpiPart,
     requestRibbonTab,
     updateBlock,
+    startDrag,
   } = useComunicadoEditor();
 
   const onPartPointerDown = useCallback(
-    (_part: ComunicadoKpiPartRef) => {
+    (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
       selectBlock(block.id);
+      /* Card = moldura do bloco: arrastar move o KPI (partes internas só selecionam). */
+      if (part.kind === "card" && event) {
+        startDrag(event, block, "move");
+      }
     },
-    [block.id, selectBlock],
+    [block, selectBlock, startDrag],
   );
 
   const onPartDoubleClick = useCallback(
@@ -460,7 +483,12 @@ function EditorKpiViewBlock({
         .join(" ")}
       style={style}
     >
-      <KpiViewBlockView block={block} interactive loading={dataLoading} interaction={interaction} />
+      <KpiViewBlockView
+        block={block}
+        interactive={Boolean(interaction)}
+        loading={dataLoading}
+        interaction={interaction}
+      />
     </div>
   );
 }

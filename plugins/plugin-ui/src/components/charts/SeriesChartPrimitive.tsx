@@ -198,6 +198,7 @@ export function SeriesChartPrimitive({
         const host = (event.target as HTMLElement).closest("[data-chart-part]");
         const partId = host?.getAttribute("data-chart-part");
         if (partId && partId !== "chartArea") return;
+        /* chartArea: propaga só a seleção/move via interaction (editor inicia startDrag). */
         event.stopPropagation();
         interaction?.onPartPointerDown?.(chartAreaRef, event);
       }
