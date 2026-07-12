@@ -17,6 +17,7 @@ describe("deckColorCatalog", () => {
     expect(OFFICE_CHART_SERIES_COLOR).toBe(DECK_COLOR_ACCENT);
     expect(DECK_CHART_DEFAULTS.seriesColor).toBe(DECK_COLOR_ACCENT);
     expect(DECK_SHAPE_DEFAULTS.fill).toBe(DECK_COLOR_ACCENT);
+    expect(DECK_SHAPE_DEFAULTS.stroke).toBe("#000000");
     expect(DECK_SHAPE_DEFAULTS.lineStroke).toBe(DECK_COLOR_ACCENT);
     expect(DECK_KPI_DEFAULTS.accent).toBe(DECK_COLOR_ACCENT);
   });

@@ -22,8 +22,8 @@ export const DECK_COLOR_TEXT_STRONG = "#0f172a";
 /** Texto secundário / eixos / legendas. */
 export const DECK_COLOR_MUTED = "#64748b";
 
-/** Contorno padrão de forma sobre fill accent (Office). */
-export const DECK_COLOR_SHAPE_STROKE = "#ffffff";
+/** Contorno padrão de forma sobre fill accent (Office) — preto. */
+export const DECK_COLOR_SHAPE_STROKE = "#000000";
 
 /** Header de tabela (zebra leve). */
 export const DECK_COLOR_TABLE_HEADER_BG = "#f1f5f9";

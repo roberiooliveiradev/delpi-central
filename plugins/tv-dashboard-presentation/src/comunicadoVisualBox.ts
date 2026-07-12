@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import { DECK_SHAPE_DEFAULTS } from "@delpi/plugin-ui/index";
+import { DECK_SHAPE_DEFAULTS, resolvePaintTextColor } from "@delpi/plugin-ui/index";
 
 import type {
   ComunicadoBlock,
@@ -171,7 +171,19 @@ export function resolveVisualBoxContentLayoutStyle(
   }
 
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-  if (style.color) css.color = style.color;
+  const fillForContrast =
+    profile.mode === "shape"
+      ? (style.fill && style.fill !== "transparent" ? style.fill : DECK_SHAPE_DEFAULTS.fill)
+      : (style.backgroundColor && style.backgroundColor !== "transparent"
+          ? style.backgroundColor
+          : style.fill && style.fill !== "transparent"
+            ? style.fill
+            : "#ffffff");
+  const paintColor = resolvePaintTextColor(style.color, fillForContrast, {
+    unsetIsAutomatic: false,
+  });
+  if (paintColor) css.color = paintColor;
+  else if (style.color && style.color !== "auto") css.color = style.color;
   if (style.fontFamily) css.fontFamily = style.fontFamily;
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;

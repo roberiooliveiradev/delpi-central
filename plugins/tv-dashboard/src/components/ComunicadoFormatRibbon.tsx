@@ -49,7 +49,16 @@ import {
   visualBoxSupportsShapeFormatting,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { DECK_SHAPE_DEFAULTS, HintAction, NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
+import {
+  DECK_SHAPE_DEFAULTS,
+  HintAction,
+  NativeTextControl,
+  ShapeEffectsMenu,
+  ShapeFillMenu,
+  ShapeOutlineMenu,
+  ShapeStyleMenu,
+  isAutomaticTextColor,
+} from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
@@ -122,7 +131,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
   const showFontControls = textFormatTarget != null;
   const showParagraphAlign = isTextBlock || isShapeTextTarget;
   const formatStyle = textFormatTarget?.style;
-  const fontSizeDefault = isTextBlock ? 32 : isShapeTextTarget ? 14 : PART_FONT_SIZE_DEFAULT;
+  const fontSizeDefault = isTextBlock ? 32 : isShapeTextTarget ? 18 : PART_FONT_SIZE_DEFAULT;
   const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
   const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
   const textAlignActive =
@@ -404,7 +413,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     (background?.type === "color" ? background.value : "#ffffff")
                   }
                   value={
-                    formatStyle?.color === "auto"
+                    isAutomaticTextColor(formatStyle?.color)
                       ? undefined
                       : (formatStyle?.color ?? "#0f172a")
                   }
@@ -725,7 +734,10 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               onChange={(value) =>
                 updateSelectedStyle({
                   borderWidth: Number(value) || 0,
-                  borderColor: selected.style?.borderColor ?? "#ffffff",
+                  borderColor:
+                    selected.style?.borderColor && selected.style.borderColor !== "transparent"
+                      ? selected.style.borderColor
+                      : "#000000",
                 })
               }
             />
@@ -734,8 +746,20 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               ariaLabel="Cor da borda"
               inline
               variant="outline"
-              value={selected.style?.borderColor ?? "#ffffff"}
-              onChange={(color) => updateSelectedStyle({ borderColor: color })}
+              value={
+                !selected.style?.borderColor || selected.style.borderColor === "transparent"
+                  ? undefined
+                  : selected.style.borderColor
+              }
+              onChange={(color) =>
+                updateSelectedStyle({
+                  borderColor: color,
+                  borderWidth: Math.max(1, selected.style?.borderWidth ?? 1),
+                })
+              }
+              onNoFill={() =>
+                updateSelectedStyle({ borderColor: "transparent", borderWidth: 0 })
+              }
             />
             <label className="td-deck-ribbon__field-label" htmlFor="td-block-radius">
               Raio

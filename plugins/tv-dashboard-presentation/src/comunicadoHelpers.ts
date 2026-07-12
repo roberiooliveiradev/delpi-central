@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 
 import {
   DECK_COLOR_ACCENT,
-  DECK_COLOR_MUTED,
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
   DECK_SHAPE_DEFAULTS,
@@ -299,24 +298,36 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "heading") {
     return {
       fontSize: 56,
-      color: DECK_COLOR_TEXT_STRONG,
+      color: "auto" as const,
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
       verticalAlign: "middle" as const,
       lineHeight: 1.15,
       fontWeight: "bold" as const,
+      fill: "transparent",
+      backgroundColor: "transparent",
+      stroke: "transparent",
+      strokeWidth: 0,
+      borderWidth: 0,
+      borderColor: "transparent",
       zIndex: 2,
     };
   }
   if (type === "text") {
     return {
       fontSize: 28,
-      color: DECK_COLOR_MUTED,
+      color: "auto" as const,
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
       verticalAlign: "top" as const,
       lineHeight: 1.15,
       fontWeight: "normal" as const,
+      fill: "transparent",
+      backgroundColor: "transparent",
+      stroke: "transparent",
+      strokeWidth: 0,
+      borderWidth: 0,
+      borderColor: "transparent",
       zIndex: 2,
     };
   }
@@ -331,6 +342,12 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       stroke: primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke,
       strokeWidth: defaultStrokeWidthForPrimitive(primitive),
       opacity: primitive === "area" ? 0.9 : 1,
+      color: "auto" as const,
+      fontSize: 18,
+      fontFamily: "Inter, system-ui, sans-serif",
+      textAlign: "center" as const,
+      verticalAlign: "middle" as const,
+      fontWeight: "normal" as const,
     };
     if (shape && isPointShapeKind(shape)) {
       return { ...base, markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT };

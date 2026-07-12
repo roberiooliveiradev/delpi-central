@@ -41,6 +41,29 @@ describe("comunicadoVisualBox", () => {
     expect(visualBoxBlockModifierClasses(block)).toContain("tdp-comunicado__visual-box--text");
   });
 
+  it("caixa de texto nasce sem fundo/borda e com cor Automático", () => {
+    const text = createBlock("text", "Olá");
+    expect(text.style?.color).toBe("auto");
+    expect(text.style?.fill).toBe("transparent");
+    expect(text.style?.backgroundColor).toBe("transparent");
+    expect(text.style?.stroke).toBe("transparent");
+    expect(text.style?.strokeWidth).toBe(0);
+    expect(text.style?.borderWidth).toBe(0);
+    expect(text.style?.borderColor).toBe("transparent");
+    expect(resolveVisualBoxChrome(text).fill).toBe("transparent");
+    expect(resolveVisualBoxChrome(text).strokeWidth).toBe(0);
+  });
+
+  it("forma nasce com fill azul, borda preta e texto Automático", () => {
+    const shape = createShapeBlock("rectangle");
+    expect(shape.style?.fill).toBe("#089bdb");
+    expect(shape.style?.stroke).toBe("#000000");
+    expect(shape.style?.color).toBe("auto");
+    expect(shape.style?.fontSize).toBe(18);
+    const layout = resolveVisualBoxContentLayoutStyle({ ...shape, content: "A" });
+    expect(layout.color).toBe("#ffffff");
+  });
+
   it("deriva perfil forma com preenchimento e contorno", () => {
     const block = createShapeBlock("ellipse");
     const profile = resolveVisualBoxProfile(block);
@@ -50,7 +73,7 @@ describe("comunicadoVisualBox", () => {
     const chrome = resolveVisualBoxChrome(block);
     expect(chrome.showShapeGraphic).toBe(true);
     expect(chrome.fill).toBe("#089bdb");
-    expect(chrome.stroke).toBe("#ffffff");
+    expect(chrome.stroke).toBe("#000000");
     expect(chrome.strokeWidth).toBe(2);
     expect(chrome.shapeKind).toBe("ellipse");
     expect(visualBoxSupportsShapeFormatting(block)).toBe(true);
