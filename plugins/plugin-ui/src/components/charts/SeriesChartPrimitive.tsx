@@ -151,6 +151,9 @@ export function SeriesChartPrimitive({
     border: `${Math.max(0, chartArea.strokeWidth)}px solid ${chartArea.stroke}`,
     borderRadius: chartArea.borderRadius,
     boxSizing: "border-box",
+    // Clip ao radius da chartArea — evita cantos brancos “quebrando” a moldura.
+    overflow: "hidden",
+    backgroundClip: "padding-box",
   };
 
   const plotProps: SeriesPlotRenderProps = {

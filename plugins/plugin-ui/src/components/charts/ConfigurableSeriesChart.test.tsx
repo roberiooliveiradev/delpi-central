@@ -110,6 +110,26 @@ describe("ConfigurableSeriesChart", () => {
     expect(container.querySelector(".delpi-ui-series-chart__grid-line")).toBeTruthy();
   });
 
+  it("clipa cantos arredondados da chartArea (overflow hidden na raiz)", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="line"
+        points={[{ label: "jan/26", value: 10 }]}
+        options={{ showLegend: false, legendPosition: "hidden" }}
+        chartParts={{
+          chartArea: {
+            visible: true,
+            style: { borderRadius: 16, stroke: "#b4b4b4", strokeWidth: 1, fill: "#ffffff" },
+          },
+        }}
+      />,
+    );
+    const root = container.querySelector(".delpi-ui-series-chart") as HTMLElement;
+    expect(root).toBeTruthy();
+    expect(root.style.overflow).toBe("hidden");
+    expect(root.style.borderRadius).toMatch(/16/);
+  });
+
   it("omite marcadores quando desabilitados", () => {
     const { container } = render(
       <ConfigurableSeriesChart

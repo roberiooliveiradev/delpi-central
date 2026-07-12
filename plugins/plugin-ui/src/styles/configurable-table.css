@@ -14,6 +14,8 @@
     var(--delpi-ui-config-table-frame-border-color, #b4b4b4);
   padding: 0.25rem;
   overflow: hidden;
+  /* Garante que o fill acompanhe o radius (evita triângulos nos cantos com borda). */
+  background-clip: padding-box;
 }
 
 .delpi-ui-config-table__title {
@@ -24,7 +26,7 @@
   color: var(--delpi-ui-config-table-text-strong, #0f172a);
 }
 
-/* Scroll interno — linhas/colunas além do bloco. */
+/* Scroll interno — linhas/colunas além do bloco; radius herda p/ scrollbar não “quadrar” o canto. */
 .delpi-ui-config-table__frame {
   flex: 1 1 auto;
   min-height: 0;
@@ -32,6 +34,10 @@
   width: 100%;
   overflow: auto;
   overscroll-behavior: contain;
+  border-radius: max(
+    0px,
+    calc(var(--delpi-ui-config-table-frame-radius, 0px) - 0.25rem)
+  );
 }
 
 .delpi-ui-config-table__data-table {

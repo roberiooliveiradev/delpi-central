@@ -840,13 +840,14 @@
 }
 
 .tdp-data-block--chart {
-  /* Office: gráfico é retângulo branco com bordas retas — não herda card TV escuro. */
+  /* Office: moldura/fill/radius vêm do chartArea (.delpi-ui-series-chart).
+     Fundo branco aqui é quadrado e “quebra” cantos arredondados do filho. */
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   align-items: stretch;
   justify-content: stretch;
   text-align: left;
-  background: var(--delpi-ui-series-chart-bg, #ffffff);
+  background: transparent;
   color: var(--delpi-ui-series-chart-text, #1e293b);
   border: none;
   border-radius: 0;
@@ -1033,6 +1034,7 @@
     var(--tdp-table-frame-border-color, #b4b4b4);
   padding: 0.25rem;
   overflow: hidden;
+  background-clip: padding-box;
 }
 
 .tdp-table-title {
@@ -1054,6 +1056,7 @@
   width: 100%;
   overflow: auto;
   overscroll-behavior: contain;
+  border-radius: max(0px, calc(var(--tdp-table-frame-radius, 0px) - 0.25rem));
 }
 
 .tdp-table-header-cell,
