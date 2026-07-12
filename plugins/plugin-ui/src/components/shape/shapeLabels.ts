@@ -32,6 +32,7 @@ export const DEFAULT_SHAPE_COLOR_LABELS: Required<ShapeColorLabels> = {
   shadowLayer: "Camada",
   shadowAddLayer: "Camada",
   shadowRemoveLayer: "Remover",
+  shadowPreview: "Pré-visualização",
   reflection: "Reflexo",
   glow: "Brilho",
   softEdges: "Bordas suaves",

@@ -356,6 +356,31 @@
   color: var(--delpi-ui-accent, #089bdb);
 }
 
+.delpi-ui-shape-shadow__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px;
+  padding: 16px 12px;
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-color: #f8fafc;
+}
+
+.delpi-ui-shape-shadow__preview-card {
+  width: 72px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--delpi-ui-surface, #fff);
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 80%, transparent);
+}
+
 .delpi-ui-shape-shadow__mode {
   display: grid;
   grid-template-columns: 1fr 1fr;

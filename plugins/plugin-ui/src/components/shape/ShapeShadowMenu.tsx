@@ -178,6 +178,13 @@ export function ShapeShadowMenu({
             <p className="delpi-ui-shape-shadow__custom-hint">{L.shadowCustom}</p>
           ) : null}
 
+          <div className="delpi-ui-shape-shadow__preview" aria-label={L.shadowPreview}>
+            <div
+              className="delpi-ui-shape-shadow__preview-card"
+              style={{ boxShadow: hasShadow ? value : "none" }}
+            />
+          </div>
+
           <div
             className={[
               "delpi-ui-shape-shadow__mode",
