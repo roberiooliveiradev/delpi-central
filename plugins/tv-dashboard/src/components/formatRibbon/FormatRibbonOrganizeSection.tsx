@@ -6,10 +6,6 @@ import {
 import { ArrowDown, ArrowUp, Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import {
-  COMUNICADO_BOX_SHADOW_PRESETS,
-  matchBoxShadowPreset,
-} from "../../content/comunicadoVisualPresets";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
@@ -21,7 +17,7 @@ type Labels = Record<string, string>;
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
-/** Organizar / opacidade / borda CSS / raio / sombra — para qualquer bloco selecionado. */
+/** Organizar / opacidade / borda — sombra e raio ficam em Aparência e Posição e tamanho. */
 export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }) {
   const {
     selected,
@@ -49,7 +45,6 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
     : !selected.style?.borderColor || selected.style.borderColor === "transparent"
       ? undefined
       : selected.style.borderColor;
-  const borderRadius = innerChrome?.borderRadius ?? selected.style?.borderRadius ?? 0;
 
   return (
     <DeckRibbonGroup label="Organizar" hint={H.organize}>
@@ -175,41 +170,6 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             onNoFill={() =>
               updateSelectedStyle({ borderColor: "transparent", borderWidth: 0 })
             }
-          />
-          <FieldLabel
-            htmlFor="td-block-radius"
-            label="Raio"
-            hint={H.borderRadius}
-            className="td-deck-ribbon__field-label"
-          />
-          <NativeTextControl
-            id="td-block-radius"
-            type="number"
-            className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-            min={0}
-            max={64}
-            value={borderRadius}
-            onChange={(value) => updateSelectedStyle({ borderRadius: Number(value) || 0 })}
-          />
-          <FieldLabel
-            htmlFor="td-block-shadow"
-            label="Sombra"
-            hint={H.boxShadow}
-            className="td-deck-ribbon__field-label"
-          />
-          <TdRibbonSelect
-            id="td-block-shadow"
-            className="td-deck-ribbon__select td-deck-ribbon__select--compact td-deck-ribbon__select--shadow"
-            aria-label="Sombra"
-            value={matchBoxShadowPreset(selected.style?.boxShadow)}
-            onChange={(value) => {
-              const preset = COMUNICADO_BOX_SHADOW_PRESETS.find((item) => item.key === value);
-              updateSelectedStyle({ boxShadow: preset?.value });
-            }}
-            options={COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
-              value: preset.key,
-              label: preset.label,
-            }))}
           />
         </div>
       </div>

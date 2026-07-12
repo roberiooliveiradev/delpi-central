@@ -1,6 +1,8 @@
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
+  blockUsesInnerShapeChrome,
   isPointShapeKind,
+  resolveBlockShapeChromeStyle,
   type ComunicadoBlock,
   type ComunicadoFrame,
 } from "@delpi/tv-dashboard-presentation";
@@ -55,7 +57,7 @@ export function patchComunicadoFrame(
 }
 
 /**
- * Posição / tamanho / rotação do bloco no palco — faixa Forma (qualquer tipo).
+ * Posição / tamanho / rotação / raio do bloco no palco — faixa Forma (qualquer tipo).
  * Espelha «Posição e tamanho» do inspetor, para edição rápida na top bar.
  */
 export function FormatRibbonFrameSection() {
@@ -68,6 +70,12 @@ export function FormatRibbonFrameSection() {
   const frameKeys = pointOnly
     ? POSITION_KEYS
     : ([...POSITION_KEYS, ...SIZE_KEYS] as const);
+
+  const innerChrome = blockUsesInnerShapeChrome(selected)
+    ? resolveBlockShapeChromeStyle(selected)
+    : null;
+  const borderRadius = innerChrome?.borderRadius ?? selected.style?.borderRadius ?? 0;
+  const showCornerRadius = !pointOnly;
 
   const setFrameKey = (key: "x" | "y" | "w" | "h", raw: number) => {
     updateSelected({
@@ -122,6 +130,31 @@ export function FormatRibbonFrameSection() {
             }
           />
         </span>
+        {showCornerRadius ? (
+          <span className="td-deck-ribbon__frame-field">
+            <FieldLabel
+              htmlFor="td-ribbon-frame-radius"
+              label="Raio px"
+              hint={H.borderRadius}
+              className="td-deck-ribbon__field-label"
+            />
+            <NativeTextControl
+              id="td-ribbon-frame-radius"
+              type="number"
+              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+              min={0}
+              max={64}
+              step={1}
+              aria-label="Raio dos cantos em pixels"
+              value={borderRadius}
+              onChange={(value) =>
+                updateSelectedStyle({
+                  borderRadius: Math.max(0, Math.min(64, Number(value) || 0)),
+                })
+              }
+            />
+          </span>
+        ) : null}
       </div>
     </DeckRibbonGroup>
   );

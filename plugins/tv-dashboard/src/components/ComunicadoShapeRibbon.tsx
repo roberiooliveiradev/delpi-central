@@ -37,13 +37,14 @@ import {
   DECK_COLOR_SURFACE,
   DECK_SHAPE_DEFAULTS,
   NativeTextControl,
-  ShapeEffectsMenu,
   ShapeFillMenu,
   ShapeOutlineMenu,
+  ShapeShadowMenu,
   ShapeStyleMenu,
 } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { COMUNICADO_BOX_SHADOW_PRESETS } from "../content/comunicadoVisualPresets";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { selectedHasGroup } from "../utils/comunicadoGrouping";
 import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
@@ -57,11 +58,16 @@ import {
   FormatRibbonFrameSection,
 } from "./formatRibbon";
 import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
-import { ShapeCornerRadiusControl } from "./ShapeCornerRadiusControl";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+
+const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
+  id: preset.key,
+  label: preset.label,
+  value: preset.value,
+}));
 
 /**
  * Faixa contextual «Forma» — chrome + tipografia por capacidade do objeto
@@ -259,16 +265,16 @@ export function ComunicadoShapeRibbon() {
             ) : (
               <p className="td-subtitle td-deck-ribbon__hint">Sem contorno neste primitivo.</p>
             )}
+            {showCorners ? (
+              <ShapeShadowMenu
+                value={block.style?.boxShadow}
+                presets={SHADOW_MENU_PRESETS}
+                shadowLabel="Sombra"
+                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+              />
+            ) : null}
           </div>
         </DeckRibbonGroup>
-
-        {showCorners ? (
-          <ShapeCornerRadiusControl
-            id="td-chart-area-corner-radius"
-            value={cornerRadius}
-            onChange={(radius) => patchPartStyle({ borderRadius: radius })}
-          />
-        ) : null}
 
         {effectiveChartPart.kind === "marker" ? (
           <DeckRibbonGroup label="Marcador" hint={H.shape}>
@@ -315,7 +321,6 @@ export function ComunicadoShapeRibbon() {
     const fillValue = cardState?.style?.fill ?? block.kpiOptions?.backgroundColor ?? DECK_COLOR_SURFACE;
     const strokeValue = cardState?.style?.stroke ?? DECK_COLOR_BORDER;
     const strokeWidth = cardState?.style?.strokeWidth ?? 1;
-    const cornerRadius = cardState?.style?.borderRadius ?? block.style?.borderRadius ?? 0;
 
     const patchCardStyle = (style: Record<string, unknown>) => {
       const nextParts = upsertKpiPartState(block.kpiParts, { kind: "card" }, {
@@ -362,13 +367,13 @@ export function ComunicadoShapeRibbon() {
               onNoOutline={() => patchCardStyle({ stroke: "transparent", strokeWidth: 0 })}
               onStrokeWidthChange={(width) => patchCardStyle({ strokeWidth: width })}
             />
+            <ShapeShadowMenu
+              value={block.style?.boxShadow}
+              presets={SHADOW_MENU_PRESETS}
+              shadowLabel="Sombra"
+              onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+            />
           </div>
-          <ShapeCornerRadiusControl
-            id="td-kpi-card-corner-radius"
-            value={cornerRadius}
-            onChange={(radius) => patchCardStyle({ borderRadius: radius })}
-            embedded
-          />
         </DeckRibbonGroup>
       </>,
     );
@@ -380,7 +385,6 @@ export function ComunicadoShapeRibbon() {
     const fillValue = frame.fill;
     const strokeValue = frame.stroke;
     const strokeWidth = frame.strokeWidth;
-    const cornerRadius = frame.borderRadius;
 
     const patchFrameStyle = (style: Record<string, unknown>) => {
       const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, {
@@ -423,13 +427,13 @@ export function ComunicadoShapeRibbon() {
               onNoOutline={() => patchFrameStyle({ stroke: "transparent", strokeWidth: 0 })}
               onStrokeWidthChange={(width) => patchFrameStyle({ strokeWidth: width })}
             />
+            <ShapeShadowMenu
+              value={block.style?.boxShadow}
+              presets={SHADOW_MENU_PRESETS}
+              shadowLabel="Sombra"
+              onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+            />
           </div>
-          <ShapeCornerRadiusControl
-            id="td-table-corner-radius"
-            value={cornerRadius}
-            onChange={(radius) => patchFrameStyle({ borderRadius: radius })}
-            embedded
-          />
         </DeckRibbonGroup>
       </>,
     );
@@ -445,7 +449,6 @@ export function ComunicadoShapeRibbon() {
   const showFill = shapeSupportsFill(primitive);
   const showStroke = shapeSupportsStroke(primitive);
   const defaultStrokeWidth = block.style?.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive);
-  const showCorners = primitive === "area";
   const showShapeAdjustments = shapeHasAdjustments(block.shape);
 
   const applyShapeKind = (kind: ComunicadoShapeKind) => {
@@ -507,12 +510,11 @@ export function ComunicadoShapeRibbon() {
               })
             }
           />
-          <ShapeEffectsMenu
-            onSelect={(effectId, optionId) => {
-              if (effectId === "shadow" && !optionId) {
-                updateSelectedStyle({ boxShadow: "0 4px 14px rgba(0, 0, 0, 0.28)" });
-              }
-            }}
+          <ShapeShadowMenu
+            value={block.style?.boxShadow}
+            presets={SHADOW_MENU_PRESETS}
+            shadowLabel="Sombra"
+            onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
           />
         </div>
       </DeckRibbonGroup>
@@ -560,12 +562,6 @@ export function ComunicadoShapeRibbon() {
           style={block.style}
           onChange={(patch) => updateSelectedStyle(patch)}
           variant="ribbon"
-        />
-      ) : showCorners ? (
-        <ShapeCornerRadiusControl
-          id="td-shape-corner-radius"
-          value={block.style?.borderRadius ?? 0}
-          onChange={(radius) => updateSelectedStyle({ borderRadius: radius })}
         />
       ) : null}
 

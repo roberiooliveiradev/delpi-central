@@ -13,6 +13,8 @@ export { ShapeOutlineMenu } from "./ShapeOutlineMenu";
 export type { ShapeOutlineMenuProps } from "./ShapeOutlineMenu";
 export { ShapeEffectsMenu } from "./ShapeEffectsMenu";
 export type { ShapeEffectsMenuProps, ShapeEffectItem } from "./ShapeEffectsMenu";
+export { ShapeShadowMenu } from "./ShapeShadowMenu";
+export type { ShapeShadowMenuProps, ShapeShadowPreset } from "./ShapeShadowMenu";
 export { ShapeStyleGallery, ShapeStyleMenu } from "./ShapeStyleGallery";
 export type { ShapeStyleGalleryProps, ShapeStyleMenuProps } from "./ShapeStyleGallery";
 export {

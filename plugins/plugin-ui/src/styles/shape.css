@@ -330,6 +330,11 @@
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
 }
 
+.delpi-ui-shape-effects__toggle--selected {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 18%, transparent);
+  font-weight: 600;
+}
+
 .delpi-ui-shape-menu__panel--narrow {
   min-width: 180px;
 }
