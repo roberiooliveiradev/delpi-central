@@ -5,6 +5,9 @@ export type ConfigurableTableClassNames = {
   rootEmpty: string;
   rootMinimal: string;
   rootBanded: string;
+  rootBandedCols: string;
+  rootFirstColumn: string;
+  rootLastColumn: string;
   rootAlignCenter: string;
   rootAlignRight: string;
   rootHeaderNormalCase: string;
@@ -16,6 +19,7 @@ export type ConfigurableTableClassNames = {
   body: string;
   row: string;
   rowHeader: string;
+  rowTotal: string;
   cell: string;
   emptyState: string;
   cssVarPrefix: string;
@@ -30,6 +34,9 @@ export function configurableTableBemClasses(
     rootEmpty: `${prefix}--empty`,
     rootMinimal: `${prefix}--minimal`,
     rootBanded: `${prefix}--banded`,
+    rootBandedCols: `${prefix}--banded-cols`,
+    rootFirstColumn: `${prefix}--first-column`,
+    rootLastColumn: `${prefix}--last-column`,
     rootAlignCenter: `${prefix}--align-center`,
     rootAlignRight: `${prefix}--align-right`,
     rootHeaderNormalCase: `${prefix}--header-normal-case`,
@@ -41,6 +48,7 @@ export function configurableTableBemClasses(
     body: `${prefix}__body`,
     row: `${prefix}__row`,
     rowHeader: `${prefix}__row--header`,
+    rowTotal: `${prefix}__row--total`,
     cell: `${prefix}__cell`,
     emptyState: `${prefix}__empty-state`,
     cssVarPrefix,
@@ -54,6 +62,9 @@ export function configurableTableTvClasses(): ConfigurableTableClassNames {
     rootEmpty: "tdp-configurable-table--empty",
     rootMinimal: "tdp-configurable-table--minimal",
     rootBanded: "tdp-configurable-table--banded",
+    rootBandedCols: "tdp-configurable-table--banded-cols",
+    rootFirstColumn: "tdp-configurable-table--first-column",
+    rootLastColumn: "tdp-configurable-table--last-column",
     rootAlignCenter: "tdp-configurable-table--align-center",
     rootAlignRight: "tdp-configurable-table--align-right",
     rootHeaderNormalCase: "tdp-configurable-table--header-normal-case",
@@ -65,6 +76,7 @@ export function configurableTableTvClasses(): ConfigurableTableClassNames {
     body: "tdp-table-body",
     row: "tdp-table-row",
     rowHeader: "tdp-table-row--header",
+    rowTotal: "tdp-table-row--total",
     cell: "tdp-table-cell",
     emptyState: "tdp-table-empty-state",
     cssVarPrefix: "tdp-table",

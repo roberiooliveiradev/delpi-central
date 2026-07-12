@@ -9,19 +9,20 @@ import { DeckRibbonShell, resolveEmbeddedComunicadoRibbonTabs } from "./deck";
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "format" | "chart" | "shape" | "view";
+type EmbeddedTab = "insert" | "format" | "chart" | "table" | "shape" | "view";
 
 type Props = {
   labels?: Labels;
 };
 
-/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar/Gráfico/Forma do deck. */
+/** Chrome compacto do compositor embutido — mesmas faixas Inserir/Formatar/Gráfico/Tabela/Forma do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const { selected, selectedChartPart } = useComunicadoEditor();
   const chartSelected = selected?.type === "chart_view";
+  const tableSelected = selected?.type === "table_view";
   const shapeSelected = selected?.type === "shape";
   const shapeChromeSelected =
-    selected?.type === "kpi_view" || selected?.type === "table_view" || chartSelected;
+    selected?.type === "kpi_view" || tableSelected || chartSelected;
   const chartPartPrimitiveSelected = Boolean(
     chartSelected &&
       selectedChartPart &&
@@ -29,6 +30,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   );
   const tabs = resolveEmbeddedComunicadoRibbonTabs({
     chartSelected,
+    tableSelected,
     shapeSelected,
     chartPartPrimitiveSelected,
     shapeChromeSelected,
@@ -40,6 +42,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       tab === "insert" ||
       tab === "format" ||
       tab === "chart" ||
+      tab === "table" ||
       tab === "shape" ||
       tab === "view"
     ) {

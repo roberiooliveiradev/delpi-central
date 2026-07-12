@@ -8,8 +8,12 @@
   box-sizing: border-box;
   background: var(--delpi-ui-config-table-bg, #ffffff);
   color: var(--delpi-ui-config-table-text, #1e293b);
-  border-radius: 8px;
+  /* Moldura Office via tableParts.frame (Onda 4O.A) — default reto. */
+  border-radius: var(--delpi-ui-config-table-frame-radius, 0);
+  border: var(--delpi-ui-config-table-frame-border-width, 1px) solid
+    var(--delpi-ui-config-table-frame-border-color, #b4b4b4);
   padding: 0.25rem;
+  overflow: hidden;
 }
 
 .delpi-ui-config-table__title {
@@ -65,6 +69,29 @@
 
 .delpi-ui-config-table--banded .delpi-ui-config-table__body .delpi-ui-config-table__row:nth-child(even) .delpi-ui-config-table__cell {
   background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 45%, transparent);
+}
+
+.delpi-ui-config-table--banded-cols .delpi-ui-config-table__header-cell:nth-child(even),
+.delpi-ui-config-table--banded-cols .delpi-ui-config-table__cell:nth-child(even) {
+  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 45%, transparent);
+}
+
+.delpi-ui-config-table--first-column .delpi-ui-config-table__header-cell:first-child,
+.delpi-ui-config-table--first-column .delpi-ui-config-table__cell:first-child {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 70%, transparent);
+}
+
+.delpi-ui-config-table--last-column .delpi-ui-config-table__header-cell:last-child,
+.delpi-ui-config-table--last-column .delpi-ui-config-table__cell:last-child {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 70%, transparent);
+}
+
+.delpi-ui-config-table__row--total .delpi-ui-config-table__cell {
+  font-weight: 700;
+  border-top: 2px solid var(--delpi-ui-config-table-border-color, #e2e8f0);
+  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 55%, transparent);
 }
 
 .delpi-ui-config-table--minimal .delpi-ui-config-table__header-cell,

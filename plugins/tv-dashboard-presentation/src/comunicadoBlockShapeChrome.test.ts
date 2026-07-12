@@ -14,7 +14,8 @@ import {
   createTableViewBlock,
 } from "./comunicadoHelpers";
 import { getKpiPartState } from "./comunicadoKpiParts";
-import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
+import { getTablePartState } from "./comunicadoTableParts";
+import type { ComunicadoKpiViewBlock, ComunicadoTableViewBlock } from "./comunicadoTypes";
 
 describe("comunicadoBlockShapeChrome", () => {
   it("herda handles de cantos em KPI, tabela e chart (além da forma)", () => {
@@ -36,10 +37,13 @@ describe("comunicadoBlockShapeChrome", () => {
     expect(getKpiPartState(next.kpiParts, { kind: "card" })?.style?.borderRadius).toBe(20);
   });
 
-  it("aplica ajuste de canto na moldura da tabela", () => {
-    const block = createTableViewBlock(3, 3);
+  it("aplica ajuste de canto na moldura da tabela (tableParts.frame)", () => {
+    const block = createTableViewBlock(3, 3) as ComunicadoTableViewBlock;
     const patch = applyBlockShapeChromeAdjustment(block, 0, 0.125, 64);
     expect(patch?.style?.borderRadius).toBe(8);
+    const next = { ...block, ...patch } as ComunicadoTableViewBlock;
+    expect(getTablePartState(next.tableParts, { kind: "frame" })?.style?.borderRadius).toBe(8);
+    expect(resolveBlockShapeChromeCornerPx(next)).toBe(8);
   });
 
   it("alinhar outline de seleção ao raio do chrome", () => {

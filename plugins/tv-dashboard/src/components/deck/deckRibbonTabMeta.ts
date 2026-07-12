@@ -1,4 +1,4 @@
-import { BarChart3, Home, Eye, LayoutTemplate, Paintbrush, Plus, Settings2, Shapes } from "lucide-react";
+import { BarChart3, Home, Eye, LayoutTemplate, Paintbrush, Plus, Settings2, Shapes, Table2 } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
@@ -7,6 +7,7 @@ export type DeckRibbonTabId =
   | "insert"
   | "format"
   | "chart"
+  | "table"
   | "shape"
   | "view"
   | "slide"
@@ -20,6 +21,8 @@ export type DeckRibbonTabMeta = {
   customOnly?: boolean;
   /** Só aparece com gráfico selecionado (aba contextual Excel). */
   chartOnly?: boolean;
+  /** Só aparece com tabela selecionada (aba contextual Excel Table Design). */
+  tableOnly?: boolean;
   /** Só aparece com forma selecionada (aba contextual PowerPoint). */
   shapeOnly?: boolean;
   disabledWhenNoSlide?: boolean;
@@ -38,6 +41,16 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
     icon: BarChart3,
     customOnly: true,
     chartOnly: true,
+  },
+  {
+    id: "table",
+    label: "Tabela",
+    hint:
+      T.table ??
+      "Ferramentas da tabela (Excel Table Design): estilos, opções de estilo e formato.",
+    icon: Table2,
+    customOnly: true,
+    tableOnly: true,
   },
   {
     id: "shape",
@@ -67,6 +80,7 @@ export function resolveDeckRibbonTabs(
   isCustomSlide: boolean,
   options?: {
     chartSelected?: boolean;
+    tableSelected?: boolean;
     shapeSelected?: boolean;
     /** Parte de gráfico com primitivo point/line/area (duplo clique). */
     chartPartPrimitiveSelected?: boolean;
@@ -75,6 +89,7 @@ export function resolveDeckRibbonTabs(
   },
 ): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
+  const tableSelected = Boolean(options?.tableSelected);
   const shapeSelected =
     Boolean(options?.shapeSelected) ||
     Boolean(options?.chartPartPrimitiveSelected) ||
@@ -82,19 +97,22 @@ export function resolveDeckRibbonTabs(
   return DECK_RIBBON_TABS.filter((tab) => {
     if (tab.customOnly && !isCustomSlide) return false;
     if (tab.chartOnly && !chartSelected) return false;
+    if (tab.tableOnly && !tableSelected) return false;
     if (tab.shapeOnly && !shapeSelected) return false;
     return true;
   });
 }
 
-/** Faixas Inserir + Formatar (+ Gráfico/Forma quando selecionados) — modal embutido. */
+/** Faixas Inserir + Formatar (+ Gráfico/Tabela/Forma quando selecionados) — modal embutido. */
 export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   chartSelected?: boolean;
+  tableSelected?: boolean;
   shapeSelected?: boolean;
   chartPartPrimitiveSelected?: boolean;
   shapeChromeSelected?: boolean;
 }): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
+  const tableSelected = Boolean(options?.tableSelected);
   const shapeSelected =
     Boolean(options?.shapeSelected) ||
     Boolean(options?.chartPartPrimitiveSelected) ||
@@ -102,6 +120,7 @@ export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   return DECK_RIBBON_TABS.filter((tab) => {
     if (!tab.customOnly) return false;
     if (tab.chartOnly && !chartSelected) return false;
+    if (tab.tableOnly && !tableSelected) return false;
     if (tab.shapeOnly && !shapeSelected) return false;
     return true;
   });

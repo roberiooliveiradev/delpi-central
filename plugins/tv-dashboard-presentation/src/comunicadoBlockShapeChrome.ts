@@ -17,6 +17,11 @@ import {
   upsertKpiPartState,
 } from "./comunicadoKpiParts";
 import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
+import {
+  getTablePartState,
+  mergeTablePartsWithOptions,
+  upsertTablePartState,
+} from "./comunicadoTableParts";
 import type { ComunicadoBlock } from "./comunicadoTypes";
 import { isAreaShapeKind, resolveShapePrimitive } from "./comunicadoVisualPrimitive";
 
@@ -57,7 +62,8 @@ export function resolveBlockShapeChromeCornerPx(block: ComunicadoBlock): number 
     return card?.style?.borderRadius ?? block.style?.borderRadius ?? 0;
   }
   if (block.type === "table_view") {
-    return block.style?.borderRadius ?? 0;
+    const frame = getTablePartState(block.tableParts, { kind: "frame" });
+    return frame?.style?.borderRadius ?? block.style?.borderRadius ?? 0;
   }
   if (block.type === "chart_view") {
     const area = resolveChartAreaStyle(block.chartOptions ?? {}, block.chartParts);
@@ -79,7 +85,7 @@ export function resolveBlockShapeChromeAdjustmentValues(block: ComunicadoBlock):
 
 /**
  * Aplica ajuste de chrome (handle amarelo) → patch de bloco.
- * KPI atualiza `kpiParts.card`; chart atualiza `chartArea`; tabela/forma usam `style`.
+ * KPI atualiza `kpiParts.card`; chart atualiza `chartArea`; tabela atualiza `tableParts.frame`.
  */
 export function applyBlockShapeChromeAdjustment(
   block: ComunicadoBlock,
@@ -118,11 +124,12 @@ export function applyBlockShapeChromeAdjustment(
   }
 
   if (block.type === "table_view") {
+    const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, {
+      style: { borderRadius: px },
+    });
     return {
-      style: {
-        ...block.style,
-        borderRadius: px,
-      },
+      tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
+      style: { ...block.style, borderRadius: px },
     };
   }
 

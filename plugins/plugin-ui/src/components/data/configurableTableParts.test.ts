@@ -3,12 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   deleteTablePart,
   isTablePartRefEqual,
+  migrateLegacyTableChromeToFrame,
   parseTablePartRef,
   partsToTableOptions,
+  resolveTableFrameStyle,
+  resolveTableHeaderCellPaintStyle,
+  resolveTablePartPaintStyle,
   serializeTablePartRef,
   tableOptionsToParts,
   tablePartAllowsDelete,
   tablePartAllowsEdit,
+  upsertTablePartState,
 } from "./configurableTableParts";
 
 describe("configurableTableParts", () => {
@@ -25,11 +30,46 @@ describe("configurableTableParts", () => {
     expect(parts.title?.visible).toBe(false);
     expect(parts.title?.content).toBe("OTD");
     expect(parts.header?.visible).toBe(true);
+    expect(parts.frame?.style?.borderRadius).toBe(0);
     expect(partsToTableOptions(parts)).toEqual({
       showTitle: false,
       title: "OTD",
       showHeader: true,
     });
+  });
+
+  it("resolveTableFrameStyle usa defaults Office e honra partes", () => {
+    expect(resolveTableFrameStyle(undefined).borderRadius).toBe(0);
+    expect(resolveTableFrameStyle(undefined).fill).toBe("#ffffff");
+    const custom = upsertTablePartState({}, { kind: "frame" }, {
+      style: { fill: "#111111", stroke: "#ef4444", strokeWidth: 4, borderRadius: 12 },
+    });
+    expect(resolveTableFrameStyle(custom)).toEqual({
+      fill: "#111111",
+      stroke: "#ef4444",
+      strokeWidth: 4,
+      borderRadius: 12,
+    });
+  });
+
+  it("migrateLegacyTableChromeToFrame copia style legado sem sobrescrever frame", () => {
+    const migrated = migrateLegacyTableChromeToFrame(undefined, {
+      backgroundColor: "#abcabc",
+      borderColor: "#123123",
+      borderWidth: 3,
+      borderRadius: 8,
+    });
+    expect(migrated.frame?.style?.fill).toBe("#abcabc");
+    expect(migrated.frame?.style?.stroke).toBe("#123123");
+    expect(migrated.frame?.style?.strokeWidth).toBe(3);
+    expect(migrated.frame?.style?.borderRadius).toBe(8);
+
+    const keep = migrateLegacyTableChromeToFrame(
+      upsertTablePartState({}, { kind: "frame" }, { style: { fill: "#000000", borderRadius: 2 } }),
+      { backgroundColor: "#ffffff", borderRadius: 99 },
+    );
+    expect(keep.frame?.style?.fill).toBe("#000000");
+    expect(keep.frame?.style?.borderRadius).toBe(2);
   });
 
   it("capabilities: título editável/deletável; célula só selecionável", () => {
@@ -43,5 +83,26 @@ describe("configurableTableParts", () => {
     const result = deleteTablePart({}, { kind: "title" }, { title: "X", showTitle: true });
     expect(result.parts.title?.visible).toBe(false);
     expect(result.options.showTitle).toBe(false);
+  });
+
+  it("resolveTablePartPaintStyle e herança headerCell ← header", () => {
+    const parts = upsertTablePartState({}, { kind: "header" }, {
+      style: { fill: "#111111", color: "#eeeeee" },
+    });
+    const withCell = upsertTablePartState(parts, { kind: "headerCell", colIndex: 1 }, {
+      style: { fill: "#222222" },
+    });
+    expect(resolveTablePartPaintStyle(withCell, { kind: "header" })).toEqual({
+      backgroundColor: "#111111",
+      color: "#eeeeee",
+    });
+    expect(resolveTableHeaderCellPaintStyle(withCell, 0)).toEqual({
+      backgroundColor: "#111111",
+      color: "#eeeeee",
+    });
+    expect(resolveTableHeaderCellPaintStyle(withCell, 1)).toEqual({
+      backgroundColor: "#222222",
+      color: "#eeeeee",
+    });
   });
 });

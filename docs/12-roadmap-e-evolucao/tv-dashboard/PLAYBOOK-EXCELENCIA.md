@@ -1787,6 +1787,65 @@ Ribbon Gráfico = atalhos de visibilidade/tipo; FormatPane = detalhe da parte.
 - `<select>` / `<textarea>` nativos no TV (gate `audit_plugin_ui_native_form_controls`).
 - Misturar `RibbonColorPicker` e `TvRibbonColorPicker` na mesma superfície sem motivo.
 
+### 19.18 Tabela Office — paridade Excel Table Design + chrome (Onda 4O)
+
+> **Problema:** `table_view` ainda herdava o **card TV** de `.tdp-data-block` (borda + `border-radius: 10px`). O ribbon Forma gravava `block.style`, mas o wrapper faz `stripOuterChromeStyle` — **sem efeito visual**. Opções de estilo Excel (cabeçalho, totais, listras…) ficavam só no inspetor lateral, sem aba contextual como a **Gráfico**.
+>
+> **North star:** mesma história de chart/KPI — aba **Tabela** (Table Design) + aba **Forma** (moldura `tableParts.frame`); host sem card TV; moldura no componente interno.
+
+#### Fases
+
+| Fase | Escopo | Status |
+|------|--------|--------|
+| **0** | Aba contextual **Tabela** (Dados · Estilos · Opções de estilo · Formato) + opções Excel (totais, 1ª/última col., listras cols) | ✅ |
+| **A** | Chrome Office: parte `frame`, CSS host, ribbon Forma + handles → `tableParts.frame` | ✅ |
+| **B** | `TablePartInspector` + aplicar `style` de header/células no DOM | ✅ |
+| **C** | Tokens `DECK_TABLE_*` vs outline Office; playbook aceite; polish | ⬜ |
+
+#### Fase 0 — aceite (feito)
+
+| # | Entrega | Status |
+|---|---|---|
+| 4O.0.1 | Aba **Tabela** (`tableOnly`) + `ComunicadoTableRibbon` | ✅ |
+| 4O.0.2 | Opções: Header / Total / Banded Rows / First / Last / Banded Columns / Borders / Title | ✅ |
+| 4O.0.3 | Presets Grade · Minimalista · Faixas na faixa | ✅ |
+| 4O.0.4 | Auto-tab `table` ao selecionar `table_view`; Forma permanece para moldura | ✅ |
+
+#### Fase A — chrome Office (feito)
+
+| # | Entrega | Status |
+|---|---|---|
+| 4O.A.1 | Parte `frame` em `tableParts` (fill/stroke/strokeWidth/borderRadius) | ✅ |
+| 4O.A.2 | `resolveTableFrameStyle` + defaults Office (`#fff`, `#b4b4b4`, radius 0) | ✅ |
+| 4O.A.3 | Aplicar chrome no `TableContainer` (CSS vars / inline) | ✅ |
+| 4O.A.4 | `.tdp-data-block--table` sem card TV (paridade `--chart` / `--kpi`) | ✅ |
+| 4O.A.5 | Ribbon Forma + handles amarelos → `tableParts.frame` (não `block.style`) | ✅ |
+| 4O.A.6 | Migração legado: `block.style` chrome → `frame` no load | ✅ |
+| 4O.A.7 | Testes unitários (resolve + container + chrome handles) | ✅ |
+
+#### Fase B — inspetor (feito)
+
+| # | Entrega | Status |
+|---|---|---|
+| 4O.B.1 | `TablePartInspector` (espelho KPI/Chart) | ✅ |
+| 4O.B.2 | Aplicar `tableParts.*.style` em header/células | ✅ |
+| 4O.B.3 | Separar UI «Contorno do bloco» vs «Bordas das células» | ✅ |
+
+#### Fase C — polish
+
+| # | Entrega | Status |
+|---|---|---|
+| 4O.C.1 | Revisar `DECK_TABLE_DEFAULTS.borderColor` vs `DECK_COLOR_BORDER` | ⬜ |
+| 4O.C.2 | Remover radius interno duplicado se sobrar | ⬜ |
+| 4O.C.3 | Aceite documentado + regressão visual mínima | ⬜ |
+
+#### Anti-padrões 4O
+
+- Gravar fill/contorno/cantos da tabela só em `block.style` (chrome stripped no wrapper).
+- Reaplicar card TV (`border-radius: 10px` / borda fixa) em `.tdp-data-block--table`.
+- Duplicar toggles de estilo só no ribbon sem modelo em `ConfigurableTableOptions` / `tableParts`.
+- Fork de tabela só no MFE — primitivos em `@delpi/plugin-ui`.
+
 ---
 
 ## 20. Histórico — kickoff v1

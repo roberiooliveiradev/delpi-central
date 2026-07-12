@@ -17,17 +17,20 @@ import {
   getKpiPartState,
   mergeComunicadoChartOptions,
   mergeComunicadoKpiOptions,
+  mergeKpiPartsWithOptions,
+  mergeTablePartsWithOptions,
   partsToChartOptions,
   partsToKpiOptions,
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
   resolveShapePrimitive,
+  resolveTableFrameStyle,
   shapeHasAdjustments,
   shapeSupportsFill,
   shapeSupportsStroke,
   upsertChartPartState,
   upsertKpiPartState,
-  mergeKpiPartsWithOptions,
+  upsertTablePartState,
   type ComunicadoChartViewBlock,
   type ComunicadoKpiViewBlock,
   type ComunicadoShapeKind,
@@ -40,7 +43,6 @@ import {
   DECK_COLOR_SURFACE,
   DECK_SHAPE_DEFAULTS,
   NativeTextControl,
-  OFFICE_CHART_AREA_STROKE,
   ShapeEffectsMenu,
   ShapeFillMenu,
   ShapeOutlineMenu,
@@ -323,10 +325,23 @@ export function ComunicadoShapeRibbon() {
 
   if (isTableChrome && selected?.type === "table_view") {
     const block = selected as ComunicadoTableViewBlock;
-    const fillValue = block.style?.backgroundColor ?? block.style?.fill ?? DECK_COLOR_SURFACE;
-    const strokeValue = block.style?.borderColor ?? block.style?.stroke ?? OFFICE_CHART_AREA_STROKE;
-    const strokeWidth = block.style?.borderWidth ?? block.style?.strokeWidth ?? 1;
-    const cornerRadius = block.style?.borderRadius ?? 0;
+    const frame = resolveTableFrameStyle(block.tableParts);
+    const fillValue = frame.fill;
+    const strokeValue = frame.stroke;
+    const strokeWidth = frame.strokeWidth;
+    const cornerRadius = frame.borderRadius;
+
+    const patchFrameStyle = (style: Record<string, unknown>) => {
+      const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, {
+        style: style as never,
+      });
+      updateSelected({
+        tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
+        ...(typeof style.borderRadius === "number"
+          ? { style: { ...block.style, borderRadius: style.borderRadius } }
+          : {}),
+      } as Partial<ComunicadoBlock>);
+    };
 
     return (
       <div className="td-deck-ribbon__groups">
@@ -334,14 +349,10 @@ export function ComunicadoShapeRibbon() {
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
               onSelect={(preset) =>
-                updateSelectedStyle({
+                patchFrameStyle({
                   fill: preset.fill,
-                  backgroundColor: preset.fill,
                   stroke: preset.stroke,
-                  borderColor: preset.stroke,
                   strokeWidth: preset.strokeWidth,
-                  borderWidth: preset.strokeWidth,
-                  boxShadow: preset.boxShadow,
                 })
               }
             />
@@ -352,8 +363,8 @@ export function ComunicadoShapeRibbon() {
             <ShapeFillMenu
               value={fillValue}
               fillLabel="Preench."
-              onChange={(color) => updateSelectedStyle({ fill: color, backgroundColor: color })}
-              onNoFill={() => updateSelectedStyle({ fill: "transparent", backgroundColor: "transparent" })}
+              onChange={(color) => patchFrameStyle({ fill: color })}
+              onNoFill={() => patchFrameStyle({ fill: "transparent" })}
             />
           </div>
         </DeckRibbonGroup>
@@ -365,20 +376,16 @@ export function ComunicadoShapeRibbon() {
               minWidth={0}
               maxWidth={20}
               outlineLabel="Contorno"
-              onColorChange={(color) => updateSelectedStyle({ stroke: color, borderColor: color })}
-              onNoOutline={() =>
-                updateSelectedStyle({ stroke: "transparent", borderColor: "transparent", borderWidth: 0, strokeWidth: 0 })
-              }
-              onStrokeWidthChange={(width) =>
-                updateSelectedStyle({ strokeWidth: width, borderWidth: width })
-              }
+              onColorChange={(color) => patchFrameStyle({ stroke: color })}
+              onNoOutline={() => patchFrameStyle({ stroke: "transparent", strokeWidth: 0 })}
+              onStrokeWidthChange={(width) => patchFrameStyle({ strokeWidth: width })}
             />
           </div>
         </DeckRibbonGroup>
         <ShapeCornerRadiusControl
           id="td-table-corner-radius"
           value={cornerRadius}
-          onChange={(radius) => updateSelectedStyle({ borderRadius: radius })}
+          onChange={(radius) => patchFrameStyle({ borderRadius: radius })}
         />
       </div>
     );

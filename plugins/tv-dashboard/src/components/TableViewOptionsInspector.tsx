@@ -1,5 +1,4 @@
 import { FormSelectControl, NativeCheckboxControl, NativeTextControl, DECK_TABLE_DEFAULTS } from "@delpi/plugin-ui/index";
-import type { ReactNode } from "react";
 import {
   TABLE_ELEMENT_CATALOG,
   TABLE_TEXT_ALIGN_OPTIONS,
@@ -17,6 +16,7 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { TablePartInspector } from "./TablePartInspector";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -33,28 +33,26 @@ function updateTableOptions(
   return { ...mergeComunicadoTableOptions(current, preset), ...patch };
 }
 
-function TableElementPanel({
+function TableElementRow({
   elementId,
   enabled,
+  focused,
   onToggle,
-  children,
+  onSelect,
   label,
   hint,
 }: {
   elementId: TableElementId;
   enabled: boolean;
+  focused: boolean;
   onToggle: (next: boolean) => void;
-  children?: ReactNode;
+  onSelect: () => void;
   label: string;
   hint?: string;
 }) {
   return (
     <div
-      className={[
-        "td-chart-element",
-        "td-chart-element--row",
-        enabled && children ? "td-chart-element--expanded" : null,
-      ]
+      className={["td-chart-element", "td-chart-element--row", focused ? "td-chart-element--focused" : null]
         .filter(Boolean)
         .join(" ")}
     >
@@ -66,11 +64,16 @@ function TableElementPanel({
             onChange={onToggle}
           />
         </span>
-        <span className="td-chart-element__label" id={`td-table-element-${elementId}`} title={hint}>
+        <button
+          type="button"
+          className="td-chart-element__label"
+          id={`td-table-element-${elementId}`}
+          title={hint}
+          onClick={onSelect}
+        >
           {label}
-        </span>
+        </button>
       </div>
-      {enabled && children ? <div className="td-chart-element__body">{children}</div> : null}
     </div>
   );
 }
@@ -81,6 +84,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
 
   const block = selected as ComunicadoTableViewBlock;
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
+  const hasPartSelection = Boolean(selectedTablePart);
 
   const setOptions = (patch: Partial<ComunicadoTableOptions>) => {
     const nextOptions = updateTableOptions(block.tableOptions, block.tablePreset, patch);
@@ -90,157 +94,187 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
     } as Partial<ComunicadoBlock>);
   };
 
-  const toggleElement = (elementId: TableElementId, enabled: boolean) => {
-    setOptions(setTableElementEnabled(elementId, enabled));
-    if (enabled) {
-      const part = tableElementPrimaryPartRef(elementId);
-      if (part) selectTablePart(block.id, part);
-    }
+  const focusElement = (elementId: TableElementId) => {
+    const part = tableElementPrimaryPartRef(elementId);
+    if (part) selectTablePart(block.id, part);
   };
 
-  const partLabel =
-    selectedTablePart?.kind === "title"
-      ? "Título"
-      : selectedTablePart?.kind === "header"
-        ? "Cabeçalho"
-        : selectedTablePart?.kind === "headerCell"
-          ? `Coluna ${selectedTablePart.colIndex + 1}`
-          : selectedTablePart?.kind === "cell"
-            ? `Célula ${selectedTablePart.rowIndex + 1}:${selectedTablePart.colIndex + 1}`
-            : null;
+  const toggleElement = (elementId: TableElementId, enabled: boolean) => {
+    setOptions(setTableElementEnabled(elementId, enabled));
+    if (enabled) focusElement(elementId);
+  };
+
+  const elementFocused = (elementId: TableElementId): boolean => {
+    const primary = tableElementPrimaryPartRef(elementId);
+    if (!primary || !selectedTablePart) return false;
+    if (primary.kind === "header") {
+      return selectedTablePart.kind === "header" || selectedTablePart.kind === "headerCell";
+    }
+    return selectedTablePart.kind === primary.kind;
+  };
 
   return (
     <>
-      {partLabel ? (
-        <DeckPropertySection pane={pane} title="Parte selecionada">
-          <p className="td-subtitle">{partLabel} — duplo clique no palco seleciona título, cabeçalho ou célula.</p>
-        </DeckPropertySection>
-      ) : null}
+      <TablePartInspector pane={pane} block={block} />
 
-      <DeckPropertySection pane={pane} title="Elementos da tabela" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableElements}>
-        <div className="td-chart-elements" role="group" aria-label="Elementos da tabela">
-          {TABLE_ELEMENT_CATALOG.map((element) => {
-            const enabled = isTableElementEnabled(element.id, options);
-            return (
-              <TableElementPanel
-                key={element.id}
-                elementId={element.id}
-                label={element.label}
-                hint={element.hint}
-                enabled={enabled}
-                onToggle={(next) => toggleElement(element.id, next)}
+      {!hasPartSelection ? (
+        <>
+          <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
+            Duplo clique no palco para selecionar título, cabeçalho ou célula. Moldura: aba Forma ou
+            botão abaixo.
+          </p>
+
+          <DeckPropertySection
+            pane={pane}
+            title="Elementos da tabela"
+            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableElements}
+            defaultOpen
+          >
+            <div className="td-chart-elements" role="group" aria-label="Elementos da tabela">
+              <div
+                className={[
+                  "td-chart-element",
+                  "td-chart-element--row",
+                  selectedTablePart?.kind === "frame" ? "td-chart-element--focused" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
-                {element.id === "tableTitle" ? (
-                  <DeckField id="td-table-title" label="Texto do título" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableTitle}>
-                    <NativeTextControl
-                      id="td-table-title"
-                      value={options.title ?? ""}
-                      placeholder="Ex.: Top produtos"
-                      onChange={(value) => setOptions({ title: value, showTitle: true })}
-                    />
-                  </DeckField>
-                ) : null}
+                <div className="td-chart-element__summary">
+                  <button
+                    type="button"
+                    className="td-chart-element__label"
+                    title="Contorno e cantos do bloco (também na aba Forma)"
+                    onClick={() => selectTablePart(block.id, { kind: "frame" })}
+                  >
+                    Moldura (contorno do bloco)
+                  </button>
+                </div>
+              </div>
+              {TABLE_ELEMENT_CATALOG.map((element) => {
+                const enabled = isTableElementEnabled(element.id, options);
+                return (
+                  <TableElementRow
+                    key={element.id}
+                    elementId={element.id}
+                    label={element.label}
+                    hint={element.hint}
+                    enabled={enabled}
+                    focused={elementFocused(element.id)}
+                    onToggle={(next) => toggleElement(element.id, next)}
+                    onSelect={() => focusElement(element.id)}
+                  />
+                );
+              })}
+            </div>
+          </DeckPropertySection>
 
-                {element.id === "header" ? (
-                  <DeckField id="td-table-header-uppercase" label="Estilo do cabeçalho">
-                    <NativeCheckboxControl
-                      id="td-table-header-uppercase"
-                      checked={options.headerUppercase !== false}
-                      label="Texto em maiúsculas"
-                      onChange={(checked) => setOptions({ headerUppercase: checked })}
-                    />
-                  </DeckField>
-                ) : null}
-              </TableElementPanel>
-            );
-          })}
-        </div>
-      </DeckPropertySection>
+          <DeckPropertySection pane={pane} title="Células" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableCells}>
+            <DeckField id="td-table-value-format" label="Formato dos valores">
+              <FormSelectControl
+                id="td-table-value-format"
+                ariaLabel="Formato dos valores"
+                value={options.valueFormat ?? "auto"}
+                onChange={(value) =>
+                  setOptions({ valueFormat: value as ComunicadoTableOptions["valueFormat"] })
+                }
+                options={TABLE_VALUE_FORMAT_OPTIONS.map((entry) => ({
+                  value: entry.value,
+                  label: entry.label,
+                }))}
+              />
+            </DeckField>
+            <DeckField id="td-table-text-align" label="Alinhamento">
+              <FormSelectControl
+                id="td-table-text-align"
+                ariaLabel="Alinhamento"
+                value={options.textAlign ?? "left"}
+                onChange={(value) =>
+                  setOptions({ textAlign: value as ComunicadoTableOptions["textAlign"] })
+                }
+                options={TABLE_TEXT_ALIGN_OPTIONS.map((entry) => ({
+                  value: entry.value,
+                  label: entry.label,
+                }))}
+              />
+            </DeckField>
+            <DeckField id="td-table-font-size" label="Tamanho da fonte (px)">
+              <NativeTextControl
+                id="td-table-font-size"
+                type="number"
+                min={8}
+                max={24}
+                step={1}
+                value={options.fontSize ?? ""}
+                placeholder="Automático"
+                onChange={(value) => {
+                  const raw = value.trim();
+                  setOptions({ fontSize: raw ? Number(raw) : undefined });
+                }}
+              />
+            </DeckField>
+            <DeckField id="td-table-header-uppercase" label="Cabeçalho">
+              <NativeCheckboxControl
+                id="td-table-header-uppercase"
+                checked={options.headerUppercase !== false}
+                label="Texto em maiúsculas"
+                onChange={(checked) => setOptions({ headerUppercase: checked })}
+              />
+            </DeckField>
+          </DeckPropertySection>
 
-      <DeckPropertySection pane={pane} title="Células" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableCells}>
-        <DeckField id="td-table-value-format" label="Formato dos valores">
-          <FormSelectControl
-            id="td-table-value-format"
-            ariaLabel="Formato dos valores"
-            value={options.valueFormat ?? "auto"}
-            onChange={(value) => setOptions({ valueFormat: value as ComunicadoTableOptions["valueFormat"] })}
-            options={TABLE_VALUE_FORMAT_OPTIONS.map((entry) => ({
-              value: entry.value,
-              label: entry.label,
-            }))}
-          />
-        </DeckField>
-        <DeckField id="td-table-text-align" label="Alinhamento">
-          <FormSelectControl
-            id="td-table-text-align"
-            ariaLabel="Alinhamento"
-            value={options.textAlign ?? "left"}
-            onChange={(value) => setOptions({ textAlign: value as ComunicadoTableOptions["textAlign"] })}
-            options={TABLE_TEXT_ALIGN_OPTIONS.map((entry) => ({
-              value: entry.value,
-              label: entry.label,
-            }))}
-          />
-        </DeckField>
-        <DeckField id="td-table-font-size" label="Tamanho da fonte (px)">
-          <NativeTextControl
-            id="td-table-font-size"
-            type="number"
-            min={8}
-            max={24}
-            step={1}
-            value={options.fontSize ?? ""}
-            placeholder="Automático"
-            onChange={(value) => {
-              const raw = value.trim();
-              setOptions({ fontSize: raw ? Number(raw) : undefined });
-            }}
-          />
-        </DeckField>
-      </DeckPropertySection>
-
-      <DeckPropertySection pane={pane} title="Aparência" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableAppearance}>
-        <DeckField id="td-table-header-bg" label="Fundo do cabeçalho">
-          <TvRibbonColorPicker
-            inline
-            label="Fundo do cabeçalho"
-            value={options.headerBg ?? DECK_TABLE_DEFAULTS.headerBg}
-            onChange={(color) => setOptions({ headerBg: color })}
-          />
-        </DeckField>
-        <DeckField id="td-table-header-color" label="Texto do cabeçalho">
-          <TvRibbonColorPicker
-            inline
-            label="Texto do cabeçalho"
-            value={options.headerTextColor ?? DECK_TABLE_DEFAULTS.headerTextColor}
-            onChange={(color) => setOptions({ headerTextColor: color })}
-          />
-        </DeckField>
-        <DeckField id="td-table-cell-bg" label="Fundo das células">
-          <TvRibbonColorPicker
-            inline
-            label="Fundo das células"
-            value={options.cellBg ?? DECK_TABLE_DEFAULTS.cellBg}
-            onChange={(color) => setOptions({ cellBg: color })}
-          />
-        </DeckField>
-        <DeckField id="td-table-cell-color" label="Texto das células">
-          <TvRibbonColorPicker
-            inline
-            label="Texto das células"
-            value={options.cellTextColor ?? DECK_TABLE_DEFAULTS.cellTextColor}
-            onChange={(color) => setOptions({ cellTextColor: color })}
-          />
-        </DeckField>
-        <DeckField id="td-table-border-color" label="Cor das bordas">
-          <TvRibbonColorPicker
-            inline
-            label="Cor das bordas"
-            value={options.borderColor ?? DECK_TABLE_DEFAULTS.borderColor}
-            onChange={(color) => setOptions({ borderColor: color })}
-          />
-        </DeckField>
-      </DeckPropertySection>
+          <DeckPropertySection
+            pane={pane}
+            title="Aparência das células"
+            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableAppearance}
+          >
+            <p className="td-deck-inspector__hint">
+              Contorno do bloco (moldura) fica na aba Forma ou em «Moldura» acima. Aqui só cores
+              internas e bordas entre células.
+            </p>
+            <DeckField id="td-table-header-bg" label="Fundo do cabeçalho">
+              <TvRibbonColorPicker
+                inline
+                label="Fundo do cabeçalho"
+                value={options.headerBg ?? DECK_TABLE_DEFAULTS.headerBg}
+                onChange={(color) => setOptions({ headerBg: color })}
+              />
+            </DeckField>
+            <DeckField id="td-table-header-color" label="Texto do cabeçalho">
+              <TvRibbonColorPicker
+                inline
+                label="Texto do cabeçalho"
+                value={options.headerTextColor ?? DECK_TABLE_DEFAULTS.headerTextColor}
+                onChange={(color) => setOptions({ headerTextColor: color })}
+              />
+            </DeckField>
+            <DeckField id="td-table-cell-bg" label="Fundo das células">
+              <TvRibbonColorPicker
+                inline
+                label="Fundo das células"
+                value={options.cellBg ?? DECK_TABLE_DEFAULTS.cellBg}
+                onChange={(color) => setOptions({ cellBg: color })}
+              />
+            </DeckField>
+            <DeckField id="td-table-cell-color" label="Texto das células">
+              <TvRibbonColorPicker
+                inline
+                label="Texto das células"
+                value={options.cellTextColor ?? DECK_TABLE_DEFAULTS.cellTextColor}
+                onChange={(color) => setOptions({ cellTextColor: color })}
+              />
+            </DeckField>
+            <DeckField id="td-table-border-color" label="Bordas das células">
+              <TvRibbonColorPicker
+                inline
+                label="Bordas das células"
+                value={options.borderColor ?? DECK_TABLE_DEFAULTS.borderColor}
+                onChange={(color) => setOptions({ borderColor: color })}
+              />
+            </DeckField>
+          </DeckPropertySection>
+        </>
+      ) : null}
     </>
   );
 }

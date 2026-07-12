@@ -56,6 +56,40 @@ describe("ConfigurablePresentationTable", () => {
     render(<ConfigurablePresentationTable columns={columns} rows={[]} />);
     expect(screen.getByText("Sem linhas")).toBeTruthy();
   });
+
+  it("aplica estilo de parte no cabeçalho e na célula", () => {
+    render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+        options={{ showTitle: true, title: "Topo" }}
+        tableParts={{
+          title: { visible: true, content: "Topo", style: { color: "#112233" } },
+          header: { visible: true, style: { fill: "#abcdef" } },
+          "cell:0:0": { style: { fill: "#fedcba" } },
+        }}
+      />,
+    );
+    const title = screen.getByText("Topo");
+    expect(title.getAttribute("style") ?? "").toMatch(/color:\s*rgb\(17,\s*34,\s*51\)|#112233/i);
+    const header = screen.getByText("Produto");
+    expect(header.getAttribute("style") ?? "").toMatch(/background|#abcdef/i);
+  });
+
+  it("renderiza linha de totais quando habilitada", () => {
+    render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[
+          { name: "Item A", value: 100 },
+          { name: "Item B", value: 50 },
+        ]}
+        options={{ showTotalRow: true }}
+      />,
+    );
+    expect(screen.getByText("Total")).toBeTruthy();
+    expect(screen.getByText("150")).toBeTruthy();
+  });
 });
 
 describe("mergeConfigurableTableOptions", () => {

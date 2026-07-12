@@ -14,6 +14,14 @@ export type ConfigurableTableOptions = {
   title?: string;
   showTitle?: boolean;
   showHeader?: boolean;
+  /** Linha de totais (Excel Table Design → Total Row). */
+  showTotalRow?: boolean;
+  /** Destaque na 1ª coluna (Excel → First Column). */
+  emphasizeFirstColumn?: boolean;
+  /** Destaque na última coluna (Excel → Last Column). */
+  emphasizeLastColumn?: boolean;
+  /** Listras nas colunas (Excel → Banded Columns). */
+  bandedColumns?: boolean;
   headerBg?: string;
   headerTextColor?: string;
   cellBg?: string;
@@ -21,6 +29,7 @@ export type ConfigurableTableOptions = {
   borderColor?: string;
   fontSize?: number;
   textAlign?: ConfigurableTableTextAlign;
+  /** Listras nas linhas (Excel → Banded Rows). */
   zebraStripe?: boolean;
   showBorders?: boolean;
   valueFormat?: ConfigurableTableValueFormat;
@@ -31,6 +40,10 @@ export type ConfigurableTableOptions = {
 export const DEFAULT_CONFIGURABLE_TABLE_OPTIONS: ConfigurableTableOptions = {
   showTitle: false,
   showHeader: true,
+  showTotalRow: false,
+  emphasizeFirstColumn: false,
+  emphasizeLastColumn: false,
+  bandedColumns: false,
   textAlign: "left",
   zebraStripe: false,
   showBorders: true,
@@ -107,6 +120,29 @@ export function formatConfigurableTableCellValue(
   return formatNumber(value);
 }
 
+/** Soma colunas numéricas; primeira coluna não numérica recebe o rótulo «Total». */
+export function buildConfigurableTableTotalRow(
+  columns: PresentationTableColumn[],
+  rows: Array<Record<string, unknown>>,
+): Record<string, unknown> {
+  const total: Record<string, unknown> = {};
+  let labeled = false;
+  for (const column of columns) {
+    const nums = rows
+      .map((row) => row[column.key])
+      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+    if (nums.length > 0) {
+      total[column.key] = nums.reduce((sum, value) => sum + value, 0);
+    } else if (!labeled) {
+      total[column.key] = "Total";
+      labeled = true;
+    } else {
+      total[column.key] = "";
+    }
+  }
+  return total;
+}
+
 export function configurableTableOptionsCssVars(
   options: ConfigurableTableOptions,
   cssVarPrefix = "delpi-ui-config-table",
@@ -125,12 +161,22 @@ export function configurableTableOptionsModifierClasses(
   options: ConfigurableTableOptions,
   classNames?: Pick<
     ConfigurableTableClassNames,
-    "rootMinimal" | "rootBanded" | "rootAlignCenter" | "rootAlignRight" | "rootHeaderNormalCase"
+    | "rootMinimal"
+    | "rootBanded"
+    | "rootBandedCols"
+    | "rootFirstColumn"
+    | "rootLastColumn"
+    | "rootAlignCenter"
+    | "rootAlignRight"
+    | "rootHeaderNormalCase"
   >,
 ): string[] {
   const cn = classNames ?? {
     rootMinimal: "delpi-ui-config-table--minimal",
     rootBanded: "delpi-ui-config-table--banded",
+    rootBandedCols: "delpi-ui-config-table--banded-cols",
+    rootFirstColumn: "delpi-ui-config-table--first-column",
+    rootLastColumn: "delpi-ui-config-table--last-column",
     rootAlignCenter: "delpi-ui-config-table--align-center",
     rootAlignRight: "delpi-ui-config-table--align-right",
     rootHeaderNormalCase: "delpi-ui-config-table--header-normal-case",
@@ -138,6 +184,9 @@ export function configurableTableOptionsModifierClasses(
   const classes: string[] = [];
   if (options.showBorders === false) classes.push(cn.rootMinimal);
   if (options.zebraStripe) classes.push(cn.rootBanded);
+  if (options.bandedColumns) classes.push(cn.rootBandedCols);
+  if (options.emphasizeFirstColumn) classes.push(cn.rootFirstColumn);
+  if (options.emphasizeLastColumn) classes.push(cn.rootLastColumn);
   if (options.textAlign && options.textAlign !== "left") {
     classes.push(options.textAlign === "center" ? cn.rootAlignCenter : cn.rootAlignRight);
   }

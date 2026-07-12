@@ -11,8 +11,9 @@ describe("tableElementCatalog", () => {
   it("lista elementos configuráveis da tabela", () => {
     const labels = TABLE_ELEMENT_CATALOG.map((entry) => entry.label);
     expect(labels).toContain("Título da tabela");
-    expect(labels).toContain("Cabeçalho");
-    expect(labels).toContain("Listras alternadas");
+    expect(labels).toContain("Linha de cabeçalho");
+    expect(labels).toContain("Listras nas linhas");
+    expect(labels).toContain("Linha de totais");
   });
 
   it("ativa e desativa cabeçalho", () => {
@@ -22,7 +23,7 @@ describe("tableElementCatalog", () => {
     expect(isTableElementEnabled("header", disabled)).toBe(false);
   });
 
-  it("listras alternadas desligadas por padrão no preset grid", () => {
+  it("listras nas linhas desligadas por padrão no preset grid", () => {
     expect(isTableElementEnabled("zebraStripe", DEFAULT_COMUNICADO_TABLE_OPTIONS)).toBe(false);
     const on = mergeComunicadoTableOptions(setTableElementEnabled("zebraStripe", true));
     expect(isTableElementEnabled("zebraStripe", on)).toBe(true);

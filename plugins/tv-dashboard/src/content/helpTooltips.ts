@@ -88,6 +88,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertShape: "Formas geométricas com preenchimento e contorno configuráveis.",
     chartData: "Fonte e vínculo dos dados do gráfico.",
     chartType: "Altera o tipo de gráfico (linha, coluna…).",
+    tableData: "Fonte e vínculo dos dados da tabela.",
+    tableStyles: "Presets visuais da tabela (grade, minimalista, faixas).",
+    tableStyleOptions:
+      "Opções de estilo do Excel: cabeçalho, totais, listras, primeira/última coluna e bordas.",
+    tableFormat: "Abre Formatar para cores e células da tabela.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
     chartAxes: "Eixos e linhas de grade.",
     chartFormat: "Abre Formatar para a parte selecionada do gráfico.",
@@ -107,6 +112,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     format: "Formate o slide e o elemento selecionado: fundo, fonte, forma, camadas e mídia.",
     chart:
       "Ferramentas do gráfico selecionado (Excel Online): tipo, rótulos, eixos, grade e formato da parte.",
+    table:
+      "Ferramentas da tabela selecionada (Excel Table Design): estilos, opções de estilo (cabeçalho, totais, listras) e formato.",
     shape:
       "Ferramentas da forma selecionada (PowerPoint Online): alterar forma, estilos, preenchimento, contorno e tamanho.",
     view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
@@ -184,7 +191,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     chartDataLabels: "Mostra o valor numérico em cada ponto ou barra.",
     tableElements: "Ative ou configure cada parte da tabela, como título, cabeçalho e listras.",
     tableCells: "Formato numérico, alinhamento e tamanho da fonte das células.",
-    tableAppearance: "Cores de cabeçalho, células e bordas.",
+    tableAppearance:
+      "Cores internas (cabeçalho/células) e bordas entre células. Contorno do bloco = aba Forma / Moldura.",
     tableTitle: "Título acima da grade (ex.: Top produtos). Vazio usa o nome da fonte de dados.",
     sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
   },

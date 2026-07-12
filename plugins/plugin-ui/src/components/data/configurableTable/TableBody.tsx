@@ -1,13 +1,19 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { useConfigurableTableClasses } from "../configurableTableClasses";
-import { bindTablePartPointer, type TableInteraction } from "../configurableTableParts";
+import {
+  bindTablePartPointer,
+  resolveTablePartPaintStyle,
+  type TableInteraction,
+  type TablePartsMap,
+} from "../configurableTableParts";
 
 export type TableCellProps = {
   children: ReactNode;
   rowIndex?: number;
   colIndex?: number;
   interaction?: TableInteraction | null;
+  tableParts?: TablePartsMap | null;
 };
 
 export function TableCell({
@@ -15,6 +21,7 @@ export function TableCell({
   rowIndex = 0,
   colIndex = 0,
   interaction,
+  tableParts,
 }: TableCellProps) {
   const cn = useConfigurableTableClasses();
   const ref = { kind: "cell" as const, rowIndex, colIndex };
@@ -22,9 +29,20 @@ export function TableCell({
     ref,
     interaction,
   );
+  const paint = resolveTablePartPaintStyle(tableParts, ref);
+  const style: CSSProperties | undefined =
+    paint.backgroundColor || paint.color || paint.fontWeight != null
+      ? {
+          ...(paint.backgroundColor ? { backgroundColor: paint.backgroundColor } : {}),
+          ...(paint.color ? { color: paint.color } : {}),
+          ...(paint.fontWeight != null ? { fontWeight: paint.fontWeight } : {}),
+        }
+      : undefined;
+
   return (
     <td
       className={[cn.cell, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
+      style={style}
       {...dom}
       onPointerDown={onPointerDown}
       onDoubleClick={onDoubleClick}
@@ -37,12 +55,18 @@ export function TableCell({
 export type TableRowProps = {
   rowIndex: number;
   children: ReactNode;
+  /** Linha de totais (Excel Total Row). */
+  total?: boolean;
 };
 
-export function TableRow({ rowIndex, children }: TableRowProps) {
+export function TableRow({ rowIndex, children, total = false }: TableRowProps) {
   const cn = useConfigurableTableClasses();
   return (
-    <tr className={cn.row} data-row-index={rowIndex}>
+    <tr
+      className={[cn.row, total ? cn.rowTotal : ""].filter(Boolean).join(" ")}
+      data-row-index={rowIndex}
+      data-table-total={total ? "true" : undefined}
+    >
       {children}
     </tr>
   );

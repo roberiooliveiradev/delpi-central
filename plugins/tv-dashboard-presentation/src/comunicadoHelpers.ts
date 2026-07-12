@@ -52,7 +52,7 @@ import {
   type ComunicadoTableOptions,
 } from "./comunicadoTableOptions";
 import {
-  mergeTablePartsWithOptions,
+  normalizeTablePartsForLoad,
   tableOptionsToParts,
   type ComunicadoTablePartsMap,
 } from "./comunicadoTableParts";
@@ -195,7 +195,7 @@ export function createTableViewBlock(
     tableParts: tableOptionsToParts(presetDefaultTableOptions(preset)),
     maxRows: rows,
     frame: { x: 5, y: 55 - height / 2, w: width, h: height },
-    style: { zIndex: 2, color: DECK_COLOR_TEXT_STRONG },
+    style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
   };
 }
 
@@ -774,13 +774,13 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       block.tableParts && typeof block.tableParts === "object"
         ? (block.tableParts as ComunicadoTablePartsMap)
         : undefined;
-    const tableParts = mergeTablePartsWithOptions(rawParts, tableOptions);
+    const tableParts = normalizeTablePartsForLoad(rawParts, tableOptions, style);
     return attachBlockAnimations(
       {
         id,
         type: "table_view",
         frame,
-        style: { ...defaultStyle("table_view"), ...style },
+        style: { ...defaultStyle("table_view"), ...style, borderRadius: style.borderRadius ?? 0 },
         groupId,
         tablePreset,
         tableOptions,

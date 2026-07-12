@@ -4,12 +4,15 @@
 
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 
+import { OFFICE_CHART_AREA_FILL, OFFICE_CHART_AREA_STROKE } from "../../theme/deckColorCatalog";
 import type { ConfigurableTableOptions } from "./configurableTableOptions";
 import { mergeConfigurableTableOptions } from "./configurableTableOptions";
+import type { ConfigurableTableElementId } from "./configurableTableElementCatalog";
 
 export const TABLE_PART_DATA_ATTR = "data-table-part";
 
 export type TablePartRef =
+  | { kind: "frame" }
   | { kind: "title" }
   | { kind: "header" }
   | { kind: "headerCell"; colIndex: number }
@@ -19,6 +22,11 @@ export type TablePartStyle = {
   fill?: string;
   color?: string;
   fontWeight?: string | number;
+  /** Contorno da moldura (parte `frame`). */
+  stroke?: string;
+  strokeWidth?: number;
+  /** Cantos da moldura (px). */
+  borderRadius?: number;
 };
 
 export type TablePartState = {
@@ -46,6 +54,7 @@ export type TablePartCapabilities = {
 };
 
 const TABLE_PART_KIND_CAPABILITIES: Record<TablePartRef["kind"], TablePartCapabilities> = {
+  frame: { movable: false, editable: false, deletable: false, resizable: false },
   title: { movable: false, editable: true, deletable: true, resizable: false },
   header: { movable: false, editable: false, deletable: true, resizable: false },
   headerCell: { movable: false, editable: true, deletable: false, resizable: false },
@@ -54,6 +63,8 @@ const TABLE_PART_KIND_CAPABILITIES: Record<TablePartRef["kind"], TablePartCapabi
 
 export function serializeTablePartRef(ref: TablePartRef): string {
   switch (ref.kind) {
+    case "frame":
+      return "frame";
     case "title":
       return "title";
     case "header":
@@ -72,6 +83,7 @@ export function serializeTablePartRef(ref: TablePartRef): string {
 export function parseTablePartRef(raw: string | null | undefined): TablePartRef | null {
   const value = (raw ?? "").trim();
   if (!value) return null;
+  if (value === "frame") return { kind: "frame" };
   if (value === "title") return { kind: "title" };
   if (value === "header") return { kind: "header" };
   const headerCell = /^headerCell:(\d+)$/.exec(value);
@@ -169,12 +181,21 @@ export function findTablePartFromTarget(target: EventTarget | null): TablePartRe
   return parseTablePartRef(host.getAttribute(TABLE_PART_DATA_ATTR));
 }
 
-/** Projeta options flat → parts (título/cabeçalho). */
+/** Projeta options flat → parts (moldura + título/cabeçalho). */
 export function tableOptionsToParts(
   options?: ConfigurableTableOptions | null,
 ): TablePartsMap {
   const config = mergeConfigurableTableOptions(options);
   return {
+    frame: {
+      visible: true,
+      style: {
+        fill: OFFICE_CHART_AREA_FILL,
+        stroke: OFFICE_CHART_AREA_STROKE,
+        strokeWidth: 1,
+        borderRadius: 0,
+      },
+    },
     title: { visible: config.showTitle !== false, content: config.title },
     header: { visible: config.showHeader !== false },
   };
@@ -197,7 +218,76 @@ export function mergeTablePartsWithOptions(
   options?: ConfigurableTableOptions | null,
 ): TablePartsMap {
   const fromOptions = tableOptionsToParts(options);
-  return { ...fromOptions, ...(parts ?? {}) };
+  const merged: TablePartsMap = { ...fromOptions };
+  for (const [key, state] of Object.entries(parts ?? {})) {
+    merged[key] = {
+      ...fromOptions[key],
+      ...state,
+      style: { ...fromOptions[key]?.style, ...state.style },
+    };
+  }
+  return merged;
+}
+
+/** Format Table Area (Excel) — preenchimento + contorno + cantos da moldura. */
+export function resolveTableFrameStyle(
+  parts?: TablePartsMap | null,
+): { fill: string; stroke: string; strokeWidth: number; borderRadius: number } {
+  const merged = mergeTablePartsWithOptions(parts);
+  const frame = getTablePartState(merged, { kind: "frame" });
+  return {
+    fill: frame?.style?.fill ?? OFFICE_CHART_AREA_FILL,
+    stroke: frame?.style?.stroke ?? OFFICE_CHART_AREA_STROKE,
+    strokeWidth: frame?.style?.strokeWidth ?? 1,
+    borderRadius: frame?.style?.borderRadius ?? 0,
+  };
+}
+
+type LegacyTableChromeStyle = {
+  fill?: string;
+  backgroundColor?: string;
+  stroke?: string;
+  borderColor?: string;
+  strokeWidth?: number;
+  borderWidth?: number;
+  borderRadius?: number;
+} | null | undefined;
+
+/**
+ * Migra chrome legado em `block.style` para `tableParts.frame` (Onda 4O.A).
+ * Só preenche campos ainda ausentes na parte `frame` explícita do payload.
+ */
+export function migrateLegacyTableChromeToFrame(
+  parts: TablePartsMap | null | undefined,
+  style?: LegacyTableChromeStyle,
+): TablePartsMap {
+  const rawFrameStyle = parts?.frame?.style;
+  const merged = mergeTablePartsWithOptions(parts);
+  if (!style) return merged;
+  const legacyFill = style.backgroundColor ?? style.fill;
+  const legacyStroke = style.borderColor ?? style.stroke;
+  const legacyWidth = style.borderWidth ?? style.strokeWidth;
+  const legacyRadius = style.borderRadius;
+  const hasLegacy =
+    legacyFill != null || legacyStroke != null || legacyWidth != null || legacyRadius != null;
+  if (!hasLegacy) return merged;
+  return upsertTablePartState(merged, { kind: "frame" }, {
+    style: {
+      fill: rawFrameStyle?.fill ?? legacyFill ?? merged.frame?.style?.fill,
+      stroke: rawFrameStyle?.stroke ?? legacyStroke ?? merged.frame?.style?.stroke,
+      strokeWidth: rawFrameStyle?.strokeWidth ?? legacyWidth ?? merged.frame?.style?.strokeWidth,
+      borderRadius:
+        rawFrameStyle?.borderRadius ?? legacyRadius ?? merged.frame?.style?.borderRadius ?? 0,
+    },
+  });
+}
+
+export function normalizeTablePartsForLoad(
+  parts: TablePartsMap | null | undefined,
+  options?: ConfigurableTableOptions | null,
+  style?: LegacyTableChromeStyle,
+): TablePartsMap {
+  return migrateLegacyTableChromeToFrame(mergeTablePartsWithOptions(parts, options), style);
 }
 
 /** Delete Excel: oculta título/cabeçalho; células só deselecionam no caller. */
@@ -206,6 +296,12 @@ export function deleteTablePart(
   ref: TablePartRef,
   options?: ConfigurableTableOptions | null,
 ): { parts: TablePartsMap; options: ConfigurableTableOptions } {
+  if (ref.kind === "frame") {
+    return {
+      parts: mergeTablePartsWithOptions(parts, options),
+      options: mergeConfigurableTableOptions(options),
+    };
+  }
   const nextParts = upsertTablePartState(parts, ref, { visible: false });
   const nextOptions = mergeConfigurableTableOptions({
     ...options,
@@ -215,9 +311,39 @@ export function deleteTablePart(
 }
 
 export function tableElementPrimaryPartRef(
-  elementId: "tableTitle" | "header" | "borders" | "zebraStripe",
+  elementId: ConfigurableTableElementId,
 ): TablePartRef | null {
   if (elementId === "tableTitle") return { kind: "title" };
   if (elementId === "header") return { kind: "header" };
   return null;
+}
+
+/** Estilo de pintura (fundo/texto) de uma parte — usado no render. */
+export function resolveTablePartPaintStyle(
+  parts: TablePartsMap | null | undefined,
+  ref: TablePartRef,
+): { backgroundColor?: string; color?: string; fontWeight?: string | number } {
+  const style = getTablePartState(parts, ref)?.style;
+  if (!style) return {};
+  return {
+    ...(style.fill != null ? { backgroundColor: style.fill } : {}),
+    ...(style.color != null ? { color: style.color } : {}),
+    ...(style.fontWeight != null ? { fontWeight: style.fontWeight } : {}),
+  };
+}
+
+/**
+ * Pintura de célula de cabeçalho: `headerCell` sobrescreve `header`.
+ */
+export function resolveTableHeaderCellPaintStyle(
+  parts: TablePartsMap | null | undefined,
+  colIndex: number,
+): { backgroundColor?: string; color?: string; fontWeight?: string | number } {
+  const header = resolveTablePartPaintStyle(parts, { kind: "header" });
+  const cell = resolveTablePartPaintStyle(parts, { kind: "headerCell", colIndex });
+  return {
+    backgroundColor: cell.backgroundColor ?? header.backgroundColor,
+    color: cell.color ?? header.color,
+    fontWeight: cell.fontWeight ?? header.fontWeight,
+  };
 }

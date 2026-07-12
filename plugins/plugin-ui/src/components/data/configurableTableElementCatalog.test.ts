@@ -8,11 +8,20 @@ import {
 } from "./configurableTableElementCatalog";
 
 describe("configurableTableElementCatalog", () => {
-  it("lista elementos configuráveis da tabela", () => {
-    const labels = CONFIGURABLE_TABLE_ELEMENT_CATALOG.map((entry) => entry.label);
-    expect(labels).toContain("Título da tabela");
-    expect(labels).toContain("Cabeçalho");
-    expect(labels).toContain("Listras alternadas");
+  it("lista opções de estilo alinhadas ao Excel Table Design", () => {
+    const ids = CONFIGURABLE_TABLE_ELEMENT_CATALOG.map((entry) => entry.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "tableTitle",
+        "header",
+        "totalRow",
+        "zebraStripe",
+        "firstColumn",
+        "lastColumn",
+        "bandedColumns",
+        "borders",
+      ]),
+    );
   });
 
   it("ativa e desativa cabeçalho", () => {
@@ -22,9 +31,22 @@ describe("configurableTableElementCatalog", () => {
     expect(isConfigurableTableElementEnabled("header", disabled)).toBe(false);
   });
 
-  it("listras alternadas desligadas por padrão no preset grid", () => {
+  it("listras nas linhas desligadas por padrão no preset grid", () => {
     expect(isConfigurableTableElementEnabled("zebraStripe", DEFAULT_CONFIGURABLE_TABLE_OPTIONS)).toBe(false);
     const on = mergeConfigurableTableOptions(setConfigurableTableElementEnabled("zebraStripe", true));
     expect(isConfigurableTableElementEnabled("zebraStripe", on)).toBe(true);
+  });
+
+  it("liga total, primeira/última coluna e listras de coluna", () => {
+    const patched = mergeConfigurableTableOptions({
+      ...setConfigurableTableElementEnabled("totalRow", true),
+      ...setConfigurableTableElementEnabled("firstColumn", true),
+      ...setConfigurableTableElementEnabled("lastColumn", true),
+      ...setConfigurableTableElementEnabled("bandedColumns", true),
+    });
+    expect(isConfigurableTableElementEnabled("totalRow", patched)).toBe(true);
+    expect(isConfigurableTableElementEnabled("firstColumn", patched)).toBe(true);
+    expect(isConfigurableTableElementEnabled("lastColumn", patched)).toBe(true);
+    expect(isConfigurableTableElementEnabled("bandedColumns", patched)).toBe(true);
   });
 });

@@ -1,4 +1,5 @@
 import {
+  buildConfigurableTableTotalRow,
   formatConfigurableTableCellValue,
   mergeConfigurableTableOptions,
   type ConfigurableTableOptions,
@@ -45,12 +46,20 @@ export function ConfigurablePresentationTable({
   const valueFormat = config.valueFormat ?? "auto";
   const title = config.title?.trim();
   const showHeader = config.showHeader !== false;
+  const showTotalRow = Boolean(config.showTotalRow) && rows.length > 0;
   const ariaLabel = title || "Tabela de dados";
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
+  const totalRow = showTotalRow ? buildConfigurableTableTotalRow(columns, rows) : null;
 
   if (rows.length === 0) {
     return (
-      <TableContainer options={config} className={className} empty emptyMessage={emptyMessage} />
+      <TableContainer
+        options={config}
+        className={className}
+        empty
+        emptyMessage={emptyMessage}
+        tableParts={tableParts}
+      />
     );
   }
 
@@ -58,6 +67,7 @@ export function ConfigurablePresentationTable({
     <TableContainer
       options={config}
       className={[className, interactive ? `${cn.root}--interactive` : null].filter(Boolean).join(" ")}
+      tableParts={tableParts}
     >
       <TableTitle
         title={title}
@@ -68,7 +78,12 @@ export function ConfigurablePresentationTable({
       <TableFrame ariaLabel={ariaLabel}>
         <TableHeader visible={showHeader} interaction={interaction} tableParts={tableParts}>
           {columns.map((column, colIndex) => (
-            <TableHeaderCell key={column.key} colIndex={colIndex} interaction={interaction}>
+            <TableHeaderCell
+              key={column.key}
+              colIndex={colIndex}
+              interaction={interaction}
+              tableParts={tableParts}
+            >
               {column.label}
             </TableHeaderCell>
           ))}
@@ -82,12 +97,28 @@ export function ConfigurablePresentationTable({
                   rowIndex={rowIndex}
                   colIndex={colIndex}
                   interaction={interaction}
+                  tableParts={tableParts}
                 >
                   {formatConfigurableTableCellValue(row[column.key], valueFormat)}
                 </TableCell>
               ))}
             </TableRow>
           ))}
+          {totalRow ? (
+            <TableRow key="row-total" rowIndex={rows.length} total>
+              {columns.map((column, colIndex) => (
+                <TableCell
+                  key={`${column.key}-total`}
+                  rowIndex={rows.length}
+                  colIndex={colIndex}
+                  interaction={interaction}
+                  tableParts={tableParts}
+                >
+                  {formatConfigurableTableCellValue(totalRow[column.key], valueFormat)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ) : null}
         </TableBody>
       </TableFrame>
     </TableContainer>

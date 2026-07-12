@@ -5,6 +5,7 @@ import {
   configurableTableOptionsModifierClasses,
   type ConfigurableTableOptions,
 } from "../configurableTableOptions";
+import { resolveTableFrameStyle, type TablePartsMap } from "../configurableTableParts";
 import { useConfigurableTableClasses } from "../configurableTableClasses";
 
 export type TableContainerProps = {
@@ -13,6 +14,8 @@ export type TableContainerProps = {
   empty?: boolean;
   emptyMessage?: string;
   children?: ReactNode;
+  /** Moldura Office (`tableParts.frame`) — fill/stroke/radius. */
+  tableParts?: TablePartsMap | null;
 };
 
 export function TableContainer({
@@ -21,8 +24,10 @@ export function TableContainer({
   empty,
   emptyMessage = "Sem linhas",
   children,
+  tableParts,
 }: TableContainerProps) {
   const cn = useConfigurableTableClasses();
+  const frame = resolveTableFrameStyle(tableParts);
   const classes = [
     cn.root,
     ...configurableTableOptionsModifierClasses(options, cn),
@@ -32,7 +37,13 @@ export function TableContainer({
     .filter(Boolean)
     .join(" ");
 
-  const style = configurableTableOptionsCssVars(options, cn.cssVarPrefix) as CSSProperties;
+  const style = {
+    ...configurableTableOptionsCssVars(options, cn.cssVarPrefix),
+    [`--${cn.cssVarPrefix}-bg`]: frame.fill,
+    [`--${cn.cssVarPrefix}-frame-border-color`]: frame.stroke,
+    [`--${cn.cssVarPrefix}-frame-border-width`]: `${Math.max(0, frame.strokeWidth)}px`,
+    [`--${cn.cssVarPrefix}-frame-radius`]: `${Math.max(0, frame.borderRadius)}px`,
+  } as CSSProperties;
 
   if (empty) {
     return (

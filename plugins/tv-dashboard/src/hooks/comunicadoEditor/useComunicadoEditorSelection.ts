@@ -153,6 +153,8 @@ export function useComunicadoEditorSelection({
       clearPartSelections();
       if (selectedBlockType === "chart_view") {
         setRibbonTabRequest("chart");
+      } else if (selectedBlockType === "table_view") {
+        setRibbonTabRequest("table");
       } else if (selectedBlockType === "shape") {
         setRibbonTabRequest("shape");
       }
@@ -208,7 +210,7 @@ export function useComunicadoEditorSelection({
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
       setSelectedTablePart(part);
-      setRibbonTabRequest("format");
+      setRibbonTabRequest("table");
     },
     [flushActiveTextEdit],
   );
