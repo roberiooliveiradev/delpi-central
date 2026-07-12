@@ -261,6 +261,7 @@ export function DelpiKpiCard({
   const valueHostRef = useRef<HTMLElement>(null);
   const hintHostRef = useRef<HTMLParagraphElement>(null);
   const iconHostRef = useRef<HTMLDivElement>(null);
+  const cardHostRef = useRef<HTMLElement>(null);
 
   const parts = mergeKpiPartsWithOptions(kpiParts, {
     title: label,
@@ -356,6 +357,8 @@ export function DelpiKpiCard({
   const iconShowResize =
     iconPtr.selected && !iconPtr.editing && kpiPartAllowsResize({ kind: "icon" }) &&
     Boolean(interaction?.onPartResizePointerDown);
+  const cardShowChrome =
+    cardPtr.selected && Boolean(interaction?.onPartResizePointerDown);
 
   const partCornerStyle = (host: HTMLElement | null, radiusPx: number) => {
     const shortSide = Math.min(
@@ -369,6 +372,7 @@ export function DelpiKpiCard({
   const valueCornerRadius = parts.value?.style?.borderRadius ?? 0;
   const hintCornerRadius = parts.hint?.style?.borderRadius ?? 0;
   const iconCornerRadius = parts.icon?.style?.borderRadius ?? KPI_ICON_DEFAULT_RADIUS_PX;
+  const cardCornerRadius = parts.card?.style?.borderRadius ?? cardRadius ?? 12;
 
   useMaterializeKpiPartFrame(
     { kind: "title" },
@@ -447,6 +451,7 @@ export function DelpiKpiCard({
       style={Object.keys(shellStyle).length ? shellStyle : undefined}
     >
       <article
+        ref={cardHostRef}
         className={articleClass}
         {...{ [KPI_PART_DATA_ATTR]: cardPtr[KPI_PART_DATA_ATTR], "aria-selected": cardPtr["aria-selected"] }}
         onPointerDown={cardPtr.onPointerDown}
@@ -636,6 +641,17 @@ export function DelpiKpiCard({
             </div>
           ) : null}
         </div>
+        <KpiPartResizeHandles
+          visible={cardShowChrome}
+          onResizePointerDown={(handle, event) =>
+            interaction?.onPartResizePointerDown?.({ kind: "card" }, event, handle)
+          }
+          showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+          cornerAdjustStyle={partCornerStyle(cardHostRef.current, cardCornerRadius)}
+          onCornerAdjustPointerDown={(event) =>
+            interaction?.onPartCornerAdjustPointerDown?.({ kind: "card" }, event)
+          }
+        />
       </article>
     </div>
   );

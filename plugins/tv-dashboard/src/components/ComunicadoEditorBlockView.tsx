@@ -576,6 +576,11 @@ function EditorKpiViewBlock({
       event: ReactPointerEvent,
       handle: ComunicadoKpiPartResizeHandle,
     ) => {
+      /* Fundo = moldura do widget: handles redimensionam o bloco (paridade visual com partes). */
+      if (ref.kind === "card") {
+        startDrag(event, block, `resize-${handle}`);
+        return;
+      }
       if (!kpiPartAllowsResize(ref)) return;
       const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement);
       const host = (event.currentTarget as HTMLElement).closest("[data-kpi-part]");
@@ -609,7 +614,7 @@ function EditorKpiViewBlock({
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.id, block.kpiParts, updateBlock],
+    [block, block.id, block.kpiParts, startDrag, updateBlock],
   );
 
   const onPartFrameChange = useCallback(
@@ -623,7 +628,7 @@ function EditorKpiViewBlock({
 
   const onPartCornerAdjustPointerDown = useCallback(
     (ref: ComunicadoKpiPartRef, event: ReactPointerEvent) => {
-      if (!kpiPartAllowsFrame(ref)) return;
+      if (ref.kind !== "card" && !kpiPartAllowsFrame(ref)) return;
       const host = (event.currentTarget as HTMLElement).closest("[data-kpi-part]");
       if (!host) return;
       event.preventDefault();
