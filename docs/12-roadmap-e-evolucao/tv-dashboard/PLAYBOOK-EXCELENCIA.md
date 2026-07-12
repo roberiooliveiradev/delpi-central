@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.5 (jul/2026):** 4E.3–4E.5 ✅ (master slide, build order, export PNG); tipos avançados SVG ✅ (stacked/histogram/scatter/bubble/radar/waterfall/funnel). **Onda 4G/4H** ✅. **Backlog v2:** Recharts em telas nativas OEE/OTD.
+> **Status:** … **v1.5+ (jul/2026):** 4E.3–4E.5 ✅; tipos avançados SVG ✅; **Onda 4G–4O** ✅; **§19.19** dois escopos global/parte (KPI card, chartArea, moldura tabela) + chrome part-aware + padding da seleção global. **Backlog v2:** Recharts em telas nativas OEE/OTD; «aplicar a todos» de estilo entre partes.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -997,14 +997,12 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 ### 17.7 Priorização recomendada
 
 ```text
-  Impacto UX × esforço (jul/2026, pós v1.4)
+  Impacto UX × esforço (jul/2026, pós v1.5+)
 
-  Concluído v1.3 / v1.4           → 4A–4D, 4C, 4E.1–4E.2, 4F parcial (§18)
-  Próximo (edição de gráfico)     → 4G composição + subseleção no palco (§19)
-  Próximo (PPT)                   → 4E.3 master slide playlist
-  Diferencial PowerPoint          → 4E.3–4E.5 master / build order / export
-  Diferencial DELPI (dados live)  → 4F tipos avançados + Recharts nativas
-  Longo prazo                     → export PPTX; 4G.8 partes em table_view
+  Concluído                          → 4A–4O, 4E.1–4E.5, 4F (§18), 4G–4O (§19)
+  Concluído (escopos no palco)       → §19.19 dois escopos global/parte
+  Backlog v2                         → Recharts em telas nativas; «aplicar estilo a todas as partes»
+  Longo prazo                        → export PPTX
 ```
 
 ### 17.8 Gates de teste — editor
@@ -1435,7 +1433,7 @@ Estilo: prefixo `tdp-*` e `tdp-series-chart*`; respeitar viewport-fit; **proibid
 | §6.1 viewport-fit | Tabelas/gráficos no compositor obedecem overflow hidden |
 | §9 PresentationEngine | Refresh + WebSocket recarregam payload enriquecido |
 | `NativeScreenDataService` | Padrão atual de agregação server-side — evoluir para gateway genérico |
-| **§19** | Gráfico como composição de primitivos + subseleção no palco (Onda 4G) |
+| **§19** | Gráfico/KPI/tabela como composição de primitivos + subseleção no palco (Onda 4G–4O); **§19.19** dois escopos global/parte |
 
 ---
 
@@ -1847,6 +1845,63 @@ Ribbon Gráfico = atalhos de visibilidade/tipo; FormatPane = detalhe da parte.
 - Reaplicar card TV (`border-radius: 10px` / borda fixa) em `.tdp-data-block--table`.
 - Duplicar toggles de estilo só no ribbon sem modelo em `ConfigurableTableOptions` / `tableParts`.
 - Fork de tabela só no MFE — primitivos em `@delpi/plugin-ui`.
+
+### 19.19 Dois escopos de seleção + chrome de partes (jul/2026)
+
+> **Problema:** Preench./Contorno, opacidade e resize do «fundo» gravavam no bloco global; handles globais colavam no conteúdo e se confundiam com a seleção de partes; opacidade com `min=10` parecia incompleta em 100%.
+
+#### Modelo canônico
+
+```text
+1º clique no widget     → seleção GLOBAL (selected*Part = null)
+                           handles + outline com --td-global-selection-pad (12px)
+                           Posição/tamanho/rotação/camadas do bloco
+                           ribbon Forma: sem Preench. do fundo (mensagem de escopo)
+
+2º clique no fundo      → parte card | chartArea | table frame
+                           outline + handles na borda da PARTE
+                           fill/stroke/sombra/raio/opacidade/frame % da parte
+                           resize/move alteram frame da parte — NÃO startDrag do bloco
+
+Clique em valor/título/… → parte interna (mesmo contrato de frame + chrome)
+```
+
+| Peça | Contrato | Resolver chrome Forma |
+|------|----------|------------------------|
+| KPI | `kpiParts` (`card`/`title`/`value`/`hint`/`icon`) | `resolveKpiShapeChromePartRef` — **null** sem parte (≠ card) |
+| Gráfico | `chartParts` | parte selecionada ou `chartArea` só se selecionada |
+| Tabela | `tableParts` | `resolveTableShapeChromePartRef` — parte explícita |
+
+#### Entregas
+
+| # | Entrega | Pacotes |
+|---|---------|---------|
+| 19.19.1 | Preench./Contorno KPI/tabela/chart miram a parte (não sempre `card`/`frame`/`chartArea`) | `ComunicadoShapeRibbon`, `*Parts` |
+| 19.19.2 | `ChartTitle` / `ChartLegend` aplicam fill/stroke/raio/opacidade da parte | `plugin-ui` seriesChart |
+| 19.19.3 | Opacidade Organizar part-aware; escala visual **0–100%** (sem piso 10%) | `FormatRibbonOrganizeSection` |
+| 19.19.4 | Inspetor Posição/tamanho part-aware (KPI/chart) | `ComunicadoElementInspector`, `FormatRibbonFrameSection` |
+| 19.19.5 | Separar seleção global × parte (handles globais ocultos com parte; outline wrap some com `--part-chrome`) | `ComunicadoComposer` |
+| 19.19.6 | Padding da seleção global (`--td-global-selection-pad`) em todos os blocos | `tv-dashboard/index.css` |
+| 19.19.7 | Fundo KPI: handles + diamante de raio; **frame % do card** relativo ao bloco | `DelpiKpiCard`, `kpiCardParts` |
+| 19.19.8 | Dois escopos de geometria: card/chartArea/moldura sem `startDrag(resize)` do bloco | `ComunicadoEditorBlockView` |
+| 19.19.9 | chartArea móvel/redimensionável com frame; 1º clique global / 2º fundo | `seriesChartParts`, `SeriesChartPrimitive` |
+
+#### Propriedades intrínsecas
+
+O escopo **global** **não** unifica cor/fonte/fill das partes. Cada parte mantém o próprio estilo; o global só transforma o widget no slide. «Aplicar a todos» continua sendo ação **explícita** (ex.: marcadores), não efeito colateral da seleção global.
+
+#### Anti-padrões
+
+- `resolveKpiShapeChromePartRef(null) → { kind: "card" }` (volta a misturar global e fundo).
+- `startDrag(block, resize-*)` a partir dos handles da parte fundo.
+- Outline do wrap + outline da parte ao mesmo tempo sem `--part-chrome`.
+- Diamante amarelo de raio do KPI só no chrome global do bloco (deve ser da parte `card` / parte com frame).
+- `re.compile` / textos PT de ribbon fora de conteúdo — N/A aqui; tipografia de ajuda em `helpTooltips.ts`.
+
+#### Testes
+
+- `plugin-ui`: `kpiCardParts.test.ts`, `seriesChartParts.test.ts`, `configurableTableParts.test.ts`
+- Aceite manual: 1º clique → handles afastados; 2º no fundo → resize encolhe só o card; valor/título independentes.
 
 ---
 

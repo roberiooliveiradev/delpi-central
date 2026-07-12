@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
-> **Status:** v1.4 em produção (jul/2026) — editor deck + Onda 4A/4B/4D + **4F parcial** (dados live, gráficos configuráveis)  
-> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18 · **Gráfico composto / subseleção:** §19 (Onda 4G)
+> **Status:** v1.5+ em produção (jul/2026) — editor deck + Onda 4A–4O + **dois escopos** global/parte no palco (§19.19)
+> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18 · **Gráfico/KPI/tabela compostos:** §19 (Onda 4G+) · **Escopos de seleção:** §19.19
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -130,13 +130,15 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 | Catálogo de rotas | `GET /data/routes` — **206** operações GET sincronizadas com OpenAPI (`scripts/generate_tv_data_routes_from_openapi.py`) |
 | Painel **Dados** | `DataRoutesSidePanel` + `DataRouteCatalogPanel` (`@delpi/plugin-ui`) |
 | Enrichment | `ComunicadoDataEnrichmentService` — resolve `data_source`; vincula `chart_view` / `table_view` |
-| Gráfico configurável | `ConfigurableSeriesChart` + `chartOptions` (título, legenda, eixos, grade, tabela de dados, marcadores) |
+| Gráfico configurável | `ConfigurableSeriesChart` + `chartParts` / `chartOptions` (título, legenda, eixos, grade, tabela, marcadores) |
+| KPI composto | `DelpiKpiCard` + `kpiParts` (card/title/value/hint/icon) — subseleção no palco |
+| Tabela composta | `ConfigurableTable` + `tableParts` (frame/header/células) |
 | Filmstrip | `CenteredScaledPreview` (miniatura centralizada) + menu contexto (copiar/colar, duplicar, ocultar) |
 
-Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados)
+Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados) · [§19.19 escopos](./PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
-- **Backlog 4F:** tipos de gráfico avançados (pizza, área, combo), Recharts em telas nativas fixas
-- **Onda 4G (§19):** gráfico como agregação de primitivos `point`→`line`→`area` + tipografia; clique no palco edita a parte (não só o bloco)
+- **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
+- **Backlog:** Recharts em telas nativas fixas; «aplicar estilo a todas as partes» explícito
 
 ---
 
@@ -210,9 +212,9 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 | **4B** | Templates, temas, visual | ✅ |
 | **4C** | Rich text, bullets, estilos nomeados | ✅ (ver playbook §17) |
 | **4D** | Layout avançado | ✅ |
-| **4E** | Animações, master slide, export PNG | ⚠ 4E.1–4E.2 ✅; 4E.3–4E.5 backlog |
-| **4F** | **Indicadores live api-delpi** — fonte + gráfico/tabela, catálogo OpenAPI, `chartOptions` | ⚠ parcial (§18 — **v1.4**) |
-| **4G** | **Gráfico composto por primitivos** — subseleção título/série/marcadores no palco | ❌ planejado (§19) |
+| **4E** | Animações, master slide, export PNG | ✅ 4E.1–4E.5 |
+| **4F** | **Indicadores live api-delpi** — fonte + gráfico/tabela/KPI | ✅ (§18) |
+| **4G–4O** | **Partes compostas** + chrome Office + **dois escopos** global/parte | ✅ (§19 / §19.19) |
 
 ---
 
