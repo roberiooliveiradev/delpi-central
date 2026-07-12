@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyBlockShapeChromeAdjustment,
+  applyBlockShapeChromeStyle,
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
   resolveBlockSelectionBorderRadiusPx,
   resolveBlockShapeChromeCornerPx,
+  resolveBlockShapeChromeStyle,
 } from "./comunicadoBlockShapeChrome";
 import {
   createChartViewBlock,
@@ -52,6 +54,23 @@ describe("comunicadoBlockShapeChrome", () => {
     const kpi = { ...base, ...patch } as ComunicadoKpiViewBlock;
     expect(resolveBlockSelectionBorderRadiusPx(kpi)).toBe(14);
     expect(resolveBlockSelectionBorderRadiusPx(createShapeBlock("point"))).toBeUndefined();
+  });
+
+  it("applyBlockShapeChromeStyle grava raio/borda no card do KPI (não só em style)", () => {
+    const block = createKpiViewBlock() as ComunicadoKpiViewBlock;
+    const patch = applyBlockShapeChromeStyle(block, {
+      borderRadius: 37,
+      borderWidth: 2,
+      borderColor: "#089bdb",
+    });
+    expect(patch).toBeTruthy();
+    const next = { ...block, ...patch } as ComunicadoKpiViewBlock;
+    const card = getKpiPartState(next.kpiParts, { kind: "card" });
+    expect(card?.style?.borderRadius).toBe(37);
+    expect(card?.style?.strokeWidth).toBe(2);
+    expect(card?.style?.stroke).toBe("#089bdb");
+    expect(resolveBlockShapeChromeCornerPx(next)).toBe(37);
+    expect(resolveBlockShapeChromeStyle(next)?.borderRadius).toBe(37);
   });
 
   it("createTableViewBlock não grava maxRows a partir do picker", () => {

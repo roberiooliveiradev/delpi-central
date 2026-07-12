@@ -1,4 +1,8 @@
 import { FieldLabel, HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
+import {
+  resolveBlockShapeChromeStyle,
+  blockUsesInnerShapeChrome,
+} from "@delpi/tv-dashboard-presentation";
 import { ArrowDown, ArrowUp, Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -34,6 +38,18 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
 
   const isMediaBlock = selected.type === "image" || selected.type === "video";
   const isImageBlock = selected.type === "image";
+  const innerChrome = blockUsesInnerShapeChrome(selected)
+    ? resolveBlockShapeChromeStyle(selected)
+    : null;
+  const borderWidth = innerChrome?.strokeWidth ?? selected.style?.borderWidth ?? 0;
+  const borderColor = innerChrome
+    ? !innerChrome.stroke || innerChrome.stroke === "transparent"
+      ? undefined
+      : innerChrome.stroke
+    : !selected.style?.borderColor || selected.style.borderColor === "transparent"
+      ? undefined
+      : selected.style.borderColor;
+  const borderRadius = innerChrome?.borderRadius ?? selected.style?.borderRadius ?? 0;
 
   return (
     <DeckRibbonGroup label="Organizar" hint={H.organize}>
@@ -135,14 +151,11 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             className="td-deck-ribbon__number td-deck-ribbon__number--compact"
             min={0}
             max={12}
-            value={selected.style?.borderWidth ?? 0}
+            value={borderWidth}
             onChange={(value) =>
               updateSelectedStyle({
                 borderWidth: Number(value) || 0,
-                borderColor:
-                  selected.style?.borderColor && selected.style.borderColor !== "transparent"
-                    ? selected.style.borderColor
-                    : "#000000",
+                borderColor: borderColor ?? "#000000",
               })
             }
           />
@@ -152,15 +165,11 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             hint={H.borderColor}
             inline
             variant="outline"
-            value={
-              !selected.style?.borderColor || selected.style.borderColor === "transparent"
-                ? undefined
-                : selected.style.borderColor
-            }
+            value={borderColor}
             onChange={(color) =>
               updateSelectedStyle({
                 borderColor: color,
-                borderWidth: Math.max(1, selected.style?.borderWidth ?? 1),
+                borderWidth: Math.max(1, borderWidth || 1),
               })
             }
             onNoFill={() =>
@@ -179,7 +188,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             className="td-deck-ribbon__number td-deck-ribbon__number--compact"
             min={0}
             max={64}
-            value={selected.style?.borderRadius ?? 0}
+            value={borderRadius}
             onChange={(value) => updateSelectedStyle({ borderRadius: Number(value) || 0 })}
           />
           <FieldLabel

@@ -129,11 +129,17 @@ export {
 } from "./comunicadoShapeAdjustments";
 export {
   applyBlockShapeChromeAdjustment,
+  applyBlockShapeChromeStyle,
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
+  blockUsesInnerShapeChrome,
+  isInnerShapeChromeStyleKey,
   resolveBlockSelectionBorderRadiusPx,
   resolveBlockShapeChromeAdjustmentValues,
   resolveBlockShapeChromeCornerPx,
+  resolveBlockShapeChromeStyle,
+  type BlockShapeChromeStyle,
+  type BlockShapeChromeStylePatch,
 } from "./comunicadoBlockShapeChrome";
 export {
   COMUNICADO_GOOGLE_FONT_CATALOG,

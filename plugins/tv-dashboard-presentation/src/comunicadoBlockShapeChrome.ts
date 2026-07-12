@@ -152,3 +152,166 @@ export function resolveBlockSelectionBorderRadiusPx(block: ComunicadoBlock): num
   }
   return resolveBlockShapeChromeCornerPx(block);
 }
+
+/** Tipos cuja moldura visual (fill/stroke/radius) vive em parts, não no wrapper. */
+export function blockUsesInnerShapeChrome(block: ComunicadoBlock): boolean {
+  return block.type === "kpi_view" || block.type === "table_view" || block.type === "chart_view";
+}
+
+export type BlockShapeChromeStyle = {
+  borderRadius: number;
+  strokeWidth: number;
+  stroke: string;
+  fill?: string;
+};
+
+/** Contorno/raio efetivos da moldura (KPI card / table frame / chartArea). */
+export function resolveBlockShapeChromeStyle(block: ComunicadoBlock): BlockShapeChromeStyle | null {
+  if (block.type === "kpi_view") {
+    const card = getKpiPartState(block.kpiParts, { kind: "card" });
+    return {
+      borderRadius: card?.style?.borderRadius ?? block.style?.borderRadius ?? 0,
+      strokeWidth: card?.style?.strokeWidth ?? block.style?.borderWidth ?? block.style?.strokeWidth ?? 0,
+      stroke: card?.style?.stroke ?? block.style?.borderColor ?? block.style?.stroke ?? "transparent",
+      fill: card?.style?.fill ?? block.kpiOptions?.backgroundColor ?? block.style?.backgroundColor,
+    };
+  }
+  if (block.type === "table_view") {
+    const frame = getTablePartState(block.tableParts, { kind: "frame" });
+    const area = {
+      borderRadius: frame?.style?.borderRadius ?? block.style?.borderRadius ?? 0,
+      strokeWidth: frame?.style?.strokeWidth ?? block.style?.borderWidth ?? 1,
+      stroke: frame?.style?.stroke ?? block.style?.borderColor ?? "#b4b4b4",
+      fill: frame?.style?.fill ?? block.style?.backgroundColor,
+    };
+    return area;
+  }
+  if (block.type === "chart_view") {
+    const area = resolveChartAreaStyle(block.chartOptions ?? {}, block.chartParts);
+    const part = getChartPartState(block.chartParts, { kind: "chartArea" });
+    return {
+      borderRadius: part?.style?.borderRadius ?? area.borderRadius ?? 0,
+      strokeWidth: part?.style?.strokeWidth ?? area.strokeWidth ?? 0,
+      stroke: part?.style?.stroke ?? area.stroke,
+      fill: part?.style?.fill ?? area.fill,
+    };
+  }
+  return null;
+}
+
+export type BlockShapeChromeStylePatch = {
+  borderRadius?: number;
+  /** Espessura — aceita nome da ribbon Organizar (`borderWidth`) ou stroke. */
+  borderWidth?: number;
+  strokeWidth?: number;
+  borderColor?: string;
+  stroke?: string;
+  fill?: string;
+  backgroundColor?: string;
+};
+
+/**
+ * Aplica fill/stroke/radius na moldura interna (parts).
+ * Usado pela ribbon Organizar e por `updateSelectedStyle` para não gravar só em `block.style`
+ * (que `stripOuterChromeStyle` descarta no KPI/chart/tabela).
+ */
+export function applyBlockShapeChromeStyle(
+  block: ComunicadoBlock,
+  patch: BlockShapeChromeStylePatch,
+): Partial<ComunicadoBlock> | null {
+  if (!blockUsesInnerShapeChrome(block)) return null;
+
+  const strokeWidth =
+    patch.strokeWidth ?? patch.borderWidth;
+  const stroke = patch.stroke ?? patch.borderColor;
+  const fill = patch.fill ?? patch.backgroundColor;
+  const partStyle: {
+    borderRadius?: number;
+    strokeWidth?: number;
+    stroke?: string;
+    fill?: string;
+  } = {};
+  if (typeof patch.borderRadius === "number") {
+    partStyle.borderRadius = Math.max(0, patch.borderRadius);
+  }
+  if (typeof strokeWidth === "number") {
+    partStyle.strokeWidth = Math.max(0, strokeWidth);
+  }
+  if (typeof stroke === "string") {
+    partStyle.stroke = stroke;
+  }
+  if (typeof fill === "string") {
+    partStyle.fill = fill;
+  }
+  if (Object.keys(partStyle).length === 0) return null;
+
+  if (block.type === "kpi_view") {
+    const nextParts = upsertKpiPartState(block.kpiParts, { kind: "card" }, { style: partStyle });
+    const fromParts = partsToKpiOptions(nextParts);
+    const nextOptions = mergeComunicadoKpiOptions({
+      ...block.kpiOptions,
+      ...fromParts,
+      ...(typeof fill === "string" ? { backgroundColor: fill } : {}),
+    });
+    return {
+      kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
+      kpiOptions: nextOptions,
+      style: {
+        ...block.style,
+        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
+        ...(typeof partStyle.strokeWidth === "number"
+          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
+          : {}),
+        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
+        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
+      },
+    };
+  }
+
+  if (block.type === "table_view") {
+    const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, { style: partStyle });
+    return {
+      tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
+      style: {
+        ...block.style,
+        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
+        ...(typeof partStyle.strokeWidth === "number"
+          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
+          : {}),
+        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
+        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
+      },
+    };
+  }
+
+  if (block.type === "chart_view") {
+    return {
+      chartParts: upsertChartPartState(block.chartParts, { kind: "chartArea" }, { style: partStyle }),
+      style: {
+        ...block.style,
+        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
+        ...(typeof partStyle.strokeWidth === "number"
+          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
+          : {}),
+        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
+        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
+      },
+    };
+  }
+
+  return null;
+}
+
+/** Chaves de estilo que, em KPI/chart/tabela, pertencem à moldura interna. */
+export function isInnerShapeChromeStyleKey(key: string): boolean {
+  return (
+    key === "borderRadius" ||
+    key === "borderWidth" ||
+    key === "borderColor" ||
+    key === "strokeWidth" ||
+    key === "stroke" ||
+    key === "fill" ||
+    key === "backgroundColor"
+  );
+}
+
