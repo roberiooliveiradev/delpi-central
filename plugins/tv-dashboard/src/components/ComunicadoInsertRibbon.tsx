@@ -67,7 +67,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
       }
       if (
         (target as HTMLElement).closest?.(
-          ".td-shape-library--portal, .delpi-ui-lucide-icon-grid, .delpi-ui-chart-catalog, .delpi-ui-table-insert-catalog",
+          ".td-shape-library--portal, .td-icon-library-portal, .td-chart-catalog-portal, .td-table-catalog-portal, .delpi-ui-lucide-icon-grid, .delpi-ui-chart-catalog, .delpi-ui-table-insert-catalog",
         )
       ) {
         return;
