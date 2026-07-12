@@ -60,7 +60,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     shapeAdjustment:
       "Ajuste de geometria da forma (igual aos losangos amarelos do PowerPoint). Cantos usam pixels; demais valores são relativos (0–1).",
     boxShadow:
-      "Sombra projetada: presets (Nenhuma, Suave, Média, Forte) ou ajuste fino de X, Y, desfoque, expansão, opacidade e cor.",
+      "Sombra: presets, externa/interna, até 2 camadas, e ajuste de X, Y, desfoque, expansão, opacidade e cor.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
     frameX: "Posição horizontal do canto esquerdo, em % da largura do palco (0–100).",
     frameY: "Posição vertical do topo, em % da altura do palco (0–100).",

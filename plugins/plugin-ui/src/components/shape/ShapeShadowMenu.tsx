@@ -1,12 +1,15 @@
 import { Cloud } from "lucide-react";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import {
+  MAX_BOX_SHADOW_LAYERS,
+  addBoxShadowLayer,
   boxShadowsEqual,
-  formatBoxShadow,
+  formatBoxShadowStack,
   patchBoxShadow,
-  resolveBoxShadowModel,
+  removeBoxShadowLayer,
+  resolveBoxShadowStack,
   type BoxShadowModel,
 } from "./boxShadowModel";
 import { ColorPickerPopover } from "./ColorPickerPopover";
@@ -39,7 +42,7 @@ function clampField(key: ShadowFieldKey, value: number): number {
   return Math.min(100, Math.max(0, value));
 }
 
-/** Menu de sombra: presets + X/Y/blur/spread/cor/opacidade (padrão Figma/CSS). */
+/** Menu de sombra: presets + inset + até 2 camadas + X/Y/blur/spread/cor/opacidade. */
 export function ShapeShadowMenu({
   value,
   presets,
@@ -50,6 +53,7 @@ export function ShapeShadowMenu({
   const L = mergeShapeColorLabels(labels);
   const [open, setOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
+  const [layerIndex, setLayerIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   useClickOutside([rootRef, panelRef], open, () => {
@@ -58,18 +62,28 @@ export function ShapeShadowMenu({
   });
 
   const hasShadow = Boolean(value?.trim());
-  const model = resolveBoxShadowModel(value);
+  const stack = resolveBoxShadowStack(value);
+  const layerCount = stack.layers.length;
+  const safeLayerIndex = Math.min(layerIndex, Math.max(0, layerCount - 1));
+  const model = stack.layers[safeLayerIndex] ?? stack.layers[0]!;
+
+  useEffect(() => {
+    if (layerIndex > layerCount - 1) {
+      setLayerIndex(Math.max(0, layerCount - 1));
+    }
+  }, [layerCount, layerIndex]);
+
   const activePresetId = presets.find((preset) =>
     boxShadowsEqual(preset.value, value),
   )?.id;
   const isCustom = hasShadow && !activePresetId;
 
-  const applyModel = (next: BoxShadowModel) => {
-    onChange(formatBoxShadow(next));
+  const applyStack = (nextCss: string) => {
+    onChange(nextCss);
   };
 
   const applyPatch = (patch: Partial<BoxShadowModel>) => {
-    onChange(patchBoxShadow(value, patch));
+    applyStack(patchBoxShadow(value, patch, safeLayerIndex));
   };
 
   const handleNumberChange = (key: ShadowFieldKey, raw: string) => {
@@ -85,7 +99,6 @@ export function ShapeShadowMenu({
 
   const handleColorChange = (color: string) => {
     const parsed = cssToColorValue(color, model.colorHex);
-    // Swatches sólidos do tema: preserva opacidade atual da sombra.
     if (parsed.alpha >= 1 && !color.trim().toLowerCase().startsWith("rgba")) {
       applyPatch({ colorHex: parsed.hex });
       return;
@@ -151,6 +164,7 @@ export function ShapeShadowMenu({
                     onClick={() => {
                       onChange(preset.value);
                       setColorOpen(false);
+                      setLayerIndex(0);
                     }}
                   >
                     {preset.label}
@@ -166,12 +180,99 @@ export function ShapeShadowMenu({
 
           <div
             className={[
+              "delpi-ui-shape-shadow__mode",
+              !hasShadow ? "delpi-ui-shape-shadow__fields--inactive" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            role="group"
+            aria-label={L.shadow}
+          >
+            <button
+              type="button"
+              className={[
+                "delpi-ui-shape-shadow__mode-btn",
+                !model.inset ? "delpi-ui-shape-shadow__mode-btn--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={!model.inset}
+              onClick={() => applyPatch({ inset: false })}
+            >
+              {L.shadowOuter}
+            </button>
+            <button
+              type="button"
+              className={[
+                "delpi-ui-shape-shadow__mode-btn",
+                model.inset ? "delpi-ui-shape-shadow__mode-btn--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={model.inset}
+              onClick={() => applyPatch({ inset: true })}
+            >
+              {L.shadowInner}
+            </button>
+          </div>
+
+          <div className="delpi-ui-shape-shadow__layers" role="tablist" aria-label={L.shadowLayer}>
+            {stack.layers.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                role="tab"
+                aria-selected={index === safeLayerIndex}
+                className={[
+                  "delpi-ui-shape-shadow__layer-btn",
+                  index === safeLayerIndex ? "delpi-ui-shape-shadow__layer-btn--active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => {
+                  setLayerIndex(index);
+                  setColorOpen(false);
+                }}
+              >
+                {L.shadowLayer} {index + 1}
+              </button>
+            ))}
+            {hasShadow && layerCount < MAX_BOX_SHADOW_LAYERS ? (
+              <button
+                type="button"
+                className="delpi-ui-shape-shadow__layer-btn delpi-ui-shape-shadow__layer-btn--add"
+                onClick={() => {
+                  applyStack(addBoxShadowLayer(value));
+                  setLayerIndex(1);
+                  setColorOpen(false);
+                }}
+              >
+                + {L.shadowAddLayer}
+              </button>
+            ) : null}
+            {hasShadow && layerCount > 1 ? (
+              <button
+                type="button"
+                className="delpi-ui-shape-shadow__layer-btn delpi-ui-shape-shadow__layer-btn--remove"
+                onClick={() => {
+                  applyStack(removeBoxShadowLayer(value, safeLayerIndex));
+                  setLayerIndex(0);
+                  setColorOpen(false);
+                }}
+              >
+                {L.shadowRemoveLayer}
+              </button>
+            ) : null}
+          </div>
+
+          <div
+            className={[
               "delpi-ui-shape-shadow__fields",
               !hasShadow ? "delpi-ui-shape-shadow__fields--inactive" : "",
             ]
               .filter(Boolean)
               .join(" ")}
-            aria-label={L.shadow}
+            aria-label={`${L.shadowLayer} ${safeLayerIndex + 1}`}
           >
             {fields.map((field) => (
               <label key={field.key} className="delpi-ui-shape-shadow__field">
@@ -196,7 +297,9 @@ export function ShapeShadowMenu({
               className="delpi-ui-shape-menu__submenu-toggle"
               aria-expanded={colorOpen}
               onClick={() => {
-                if (!hasShadow) applyModel(resolveBoxShadowModel(undefined));
+                if (!hasShadow) {
+                  applyStack(formatBoxShadowStack(resolveBoxShadowStack(undefined)));
+                }
                 setColorOpen((prev) => !prev);
               }}
             >

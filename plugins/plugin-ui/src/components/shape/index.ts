@@ -16,15 +16,22 @@ export type { ShapeEffectsMenuProps, ShapeEffectItem } from "./ShapeEffectsMenu"
 export { ShapeShadowMenu } from "./ShapeShadowMenu";
 export type { ShapeShadowMenuProps, ShapeShadowPreset } from "./ShapeShadowMenu";
 export {
+  DEFAULT_AMBIENT_SHADOW_LAYER,
   DEFAULT_BOX_SHADOW_MODEL,
+  MAX_BOX_SHADOW_LAYERS,
+  addBoxShadowLayer,
   boxShadowsEqual,
   clampBoxShadowModel,
   formatBoxShadow,
+  formatBoxShadowStack,
   parseBoxShadow,
+  parseBoxShadowStack,
   patchBoxShadow,
+  removeBoxShadowLayer,
   resolveBoxShadowModel,
+  resolveBoxShadowStack,
 } from "./boxShadowModel";
-export type { BoxShadowModel } from "./boxShadowModel";
+export type { BoxShadowModel, BoxShadowStack } from "./boxShadowModel";
 export { ShapeStyleGallery, ShapeStyleMenu } from "./ShapeStyleGallery";
 export type { ShapeStyleGalleryProps, ShapeStyleMenuProps } from "./ShapeStyleGallery";
 export {

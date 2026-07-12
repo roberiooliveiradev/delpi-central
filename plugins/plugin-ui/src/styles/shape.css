@@ -340,8 +340,8 @@
 }
 
 .delpi-ui-shape-menu__panel--shadow {
-  min-width: 260px;
-  max-width: 300px;
+  min-width: 280px;
+  max-width: 320px;
 }
 
 .delpi-ui-shape-shadow__presets {
@@ -356,12 +356,51 @@
   color: var(--delpi-ui-accent, #089bdb);
 }
 
+.delpi-ui-shape-shadow__mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 8px 8px 0;
+}
+
+.delpi-ui-shape-shadow__mode-btn,
+.delpi-ui-shape-shadow__layer-btn {
+  padding: 5px 6px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.delpi-ui-shape-shadow__mode-btn--active,
+.delpi-ui-shape-shadow__layer-btn--active {
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 14%, var(--delpi-ui-surface, #fff));
+  font-weight: 600;
+}
+
+.delpi-ui-shape-shadow__layers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 8px 0;
+}
+
+.delpi-ui-shape-shadow__layer-btn--add,
+.delpi-ui-shape-shadow__layer-btn--remove {
+  color: var(--delpi-ui-muted, #64748b);
+}
+
 .delpi-ui-shape-shadow__fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px 8px;
   padding: 8px;
   border-top: 1px solid var(--delpi-ui-border, #e5e7eb);
+  margin-top: 8px;
 }
 
 .delpi-ui-shape-shadow__fields--inactive {

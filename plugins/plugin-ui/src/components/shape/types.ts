@@ -53,6 +53,11 @@ export type ShapeColorLabels = {
   shadowOpacity?: string;
   shadowColor?: string;
   shadowCustom?: string;
+  shadowOuter?: string;
+  shadowInner?: string;
+  shadowLayer?: string;
+  shadowAddLayer?: string;
+  shadowRemoveLayer?: string;
   reflection?: string;
   glow?: string;
   softEdges?: string;
