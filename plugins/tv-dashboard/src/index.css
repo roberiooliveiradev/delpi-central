@@ -588,7 +588,8 @@
   gap: 12px;
   padding: 0 14px 14px;
   min-height: 0;
-  overflow: auto;
+  /* Scroll único no FormatPane __body — overflow aqui escondia o rodapé. */
+  overflow: visible;
 }
 
 .dashboard-tv-dashboard .td-data-routes-panel__search {
@@ -2712,6 +2713,11 @@
 .dashboard-tv-dashboard .td-deck-side-panel--stage {
   align-self: stretch;
   flex-shrink: 0;
+  /* Altura do palco (não do conteúdo) — senão o body do FormatPane cresce
+     sem overflow e o stage clipa o rodapé sem scrollbar. */
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--open {
@@ -2726,12 +2732,22 @@
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel__pane {
+  flex: 1 1 auto;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel__pane-body {
   padding: 0;
+  /* bodyClassName no FormatPaneShell — reforça o scroll do corpo. */
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel__collapsed-rail {
@@ -3663,6 +3679,8 @@
   flex: 1;
   min-height: 0;
   align-items: stretch;
+  /* Garante que o painel lateral herde a altura do palco, não a do conteúdo. */
+  overflow: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-stage__main {

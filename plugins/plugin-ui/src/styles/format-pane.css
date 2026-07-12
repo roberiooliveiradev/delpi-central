@@ -4,6 +4,9 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
+  /* Trava o scroll no __body: sem isso o painel cresce com o conteúdo e o
+     host (overflow:hidden) corta sem scrollbar. */
+  overflow: hidden;
   background: var(--delpi-ui-surface, var(--td-surface, #fff));
   color: var(--delpi-ui-text, var(--td-text, #111));
 }
@@ -82,11 +85,13 @@
 }
 
 .delpi-ui-format-pane__body {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 4px 0 12px;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
 
