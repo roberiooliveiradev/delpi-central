@@ -3348,13 +3348,13 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "seriesField": "points"
+      "fixedQueryParams": {
+        "granularity": "day"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -3681,13 +3681,13 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "seriesField": "points"
+      "fixedQueryParams": {
+        "granularity": "day"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -4192,13 +4192,13 @@
       },
       "paramStrategy": "direct",
       "tableFields": "items",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
+      },
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
       }
     },
     {
@@ -7055,13 +7055,13 @@
         "ppm",
         "ppmValue"
       ],
-      "description": "Indicador numérico para «Qualidade — PPM externo».",
-      "defaultParams": {
-        "periodDays": 30
-      },
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
+      },
+      "description": "Indicador numérico para «Qualidade — PPM externo».",
+      "defaultParams": {
+        "periodDays": 30
       }
     },
     {
@@ -7211,13 +7211,13 @@
         "ppm",
         "ppmValue"
       ],
-      "description": "Indicador numérico para «Qualidade — PPM interno».",
-      "defaultParams": {
-        "periodDays": 30
-      },
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
+      },
+      "description": "Indicador numérico para «Qualidade — PPM interno».",
+      "defaultParams": {
+        "periodDays": 30
       }
     },
     {

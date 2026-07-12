@@ -17,9 +17,8 @@ describe("resolveParamSelectOptions", () => {
     ]);
   });
 
-  it("oferece presets de periodDays sem enum no schema", () => {
-    const options = resolveParamSelectOptions("periodDays", { type: "integer" });
-    expect(options?.map((item) => item.value)).toEqual(["7", "14", "30", "60", "90", "180", "365"]);
+  it("mantém periodDays como input numérico (sem select)", () => {
+    expect(resolveParamSelectOptions("periodDays", { type: "integer" })).toBeNull();
   });
 
   it("retorna null para texto livre", () => {

@@ -38,8 +38,6 @@ const DATE_PARAM_KEYS = new Set([
   "to",
 ]);
 
-const PERIOD_DAYS_OPTIONS = [7, 14, 30, 60, 90, 180, 365];
-
 const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
   granularity: { day: "Dia", week: "Semana", month: "Mês", year: "Ano" },
   customer_segment: { weg: "WEG", new_business: "Novos negócios" },
@@ -68,7 +66,6 @@ const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
 
 /** Enums de UI quando o OpenAPI não declara `enum` (valores estáveis entre rotas). */
 const UI_FALLBACK_ENUMS: Record<string, Array<string | number>> = {
-  periodDays: PERIOD_DAYS_OPTIONS,
   sort_dir: ["asc", "desc"],
   direction: ["asc", "desc"],
   orderDir: ["asc", "desc"],
@@ -96,6 +93,9 @@ export function resolveParamSelectOptions(
   key: string,
   field: DataParamSchemaField,
 ): Array<{ value: string; label: string }> | null {
+  // Período em dias: sempre input numérico (qualquer valor positivo).
+  if (key === "periodDays") return null;
+
   const rawEnum = Array.isArray(field.enum)
     ? field.enum.filter((item) => item !== null && item !== undefined)
     : [];

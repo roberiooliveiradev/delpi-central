@@ -134,7 +134,6 @@ KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {
     "orderDir": ["asc", "desc"],
     "linked_sort_dir": ["asc", "desc"],
     "stock_method": ["auto", "hybrid", "estimated", "official_closure"],
-    "periodDays": [7, 14, 30, 60, 90, 180, 365],
 }
 
 KNOWN_PARAM_DEFAULTS: dict[str, Any] = {
