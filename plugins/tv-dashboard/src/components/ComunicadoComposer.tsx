@@ -304,6 +304,9 @@ export function ComunicadoComposerCanvas() {
                   .join(" ")}
                 style={{
                   ...resolveBlockPlacementStyle(block),
+                  ...(block.style?.rotation
+                    ? { transform: `rotate(${block.style.rotation}deg)` }
+                    : {}),
                   ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}

@@ -123,6 +123,7 @@ export function ComunicadoEditorProvider({
   configRef.current = config;
   const lastEmittedFingerprintRef = useRef<string | null>(null);
   const syncIdentityRef = useRef(`${playlistId}:${slideId ?? ""}`);
+  const lastHistoryEpochRef = useRef(deckHistory?.historyEpoch ?? 0);
 
   const removeSelectedRef = useRef<() => void>(() => {});
   const updateBlockTextFieldsRef = useRef<
@@ -226,6 +227,12 @@ export function ComunicadoEditorProvider({
     const identityChanged = syncIdentityRef.current !== identity;
     syncIdentityRef.current = identity;
 
+    const historyEpoch = deckHistory?.historyEpoch ?? 0;
+    const forceAcceptFromHistory = historyEpoch !== lastHistoryEpochRef.current;
+    if (forceAcceptFromHistory) {
+      lastHistoryEpochRef.current = historyEpoch;
+    }
+
     const enriched = enrichComunicadoConfigForEditor(value, playlistId);
     const incomingFp = fingerprintComunicadoValue(serializeComunicadoConfig(enriched));
     const currentFp = fingerprintComunicadoValue(serializeComunicadoConfig(configRef.current));
@@ -236,6 +243,7 @@ export function ComunicadoEditorProvider({
         incomingFingerprint: incomingFp,
         lastEmittedFingerprint: lastEmittedFingerprintRef.current,
         currentFingerprint: currentFp,
+        forceAccept: forceAcceptFromHistory,
       })
     ) {
       return;
@@ -247,7 +255,7 @@ export function ComunicadoEditorProvider({
       clearDragSnapshot();
       resetLocalHistory();
     }
-  }, [value, playlistId, slideId, resetLocalHistory, clearDragSnapshot]);
+  }, [value, playlistId, slideId, resetLocalHistory, clearDragSnapshot, deckHistory?.historyEpoch]);
 
   const blockActions = useComunicadoEditorBlocks({
     configRef,

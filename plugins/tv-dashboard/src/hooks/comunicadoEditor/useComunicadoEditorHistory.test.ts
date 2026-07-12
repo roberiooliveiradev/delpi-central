@@ -60,6 +60,7 @@ describe("useComunicadoEditorHistory", () => {
       redo: vi.fn(),
       canUndo: true,
       canRedo: false,
+      historyEpoch: 0,
       setLiveComunicadoConfig: vi.fn(),
     };
     const configRef = { current: emptyConfig() };

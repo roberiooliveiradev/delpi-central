@@ -44,4 +44,19 @@ describe("deckEditorHistory", () => {
     expect(past).toHaveLength(1);
     expect(cloneDeckEditorSnapshot(past[0]!).playlist.slides).toHaveLength(1);
   });
+
+  it("isola nativeConfig aninhado entre snapshots (rotação/borda)", () => {
+    const live = {
+      blocks: [{ id: "b1", style: { rotation: 0, borderRadius: 0 } }],
+    };
+    const snap = buildDeckEditorSnapshot(playlist([slide("a", 0)]), "a", live, "a");
+    const past = pushDeckHistory([], snap);
+    const stored = past[0]!.playlist.slides![0]!.nativeConfig as {
+      blocks: Array<{ style: { rotation: number; borderRadius: number } }>;
+    };
+    live.blocks[0]!.style.rotation = 25;
+    live.blocks[0]!.style.borderRadius = 40;
+    expect(stored.blocks[0]!.style.rotation).toBe(0);
+    expect(stored.blocks[0]!.style.borderRadius).toBe(0);
+  });
 });

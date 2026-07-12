@@ -70,6 +70,8 @@ export function ComunicadoEditorTextBlock({
     top: undefined,
     width: "100%",
     height: "100%",
+    // Rotação fica no wrap de seleção (handles/outline alinhados ao bloco).
+    transform: undefined,
   };
   const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
   const linkStyle = hrefLineStyle();

@@ -39,6 +39,18 @@ describe("shouldAcceptExternalComunicadoValue", () => {
     ).toBe(false);
   });
 
+  it("aceita restore de undo/redo mesmo quando parece eco stale", () => {
+    expect(
+      shouldAcceptExternalComunicadoValue({
+        identityChanged: false,
+        incomingFingerprint: "pos-antiga",
+        lastEmittedFingerprint: "pos-nova",
+        currentFingerprint: "pos-nova",
+        forceAccept: true,
+      }),
+    ).toBe(true);
+  });
+
   it("aceita valor externo quando ainda não houve emit local e conteúdo mudou", () => {
     expect(
       shouldAcceptExternalComunicadoValue({

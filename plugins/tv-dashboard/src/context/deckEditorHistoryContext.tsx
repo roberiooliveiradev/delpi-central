@@ -6,6 +6,12 @@ export type DeckEditorHistoryContextValue = {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  /**
+   * Incrementado em cada undo/redo do deck.
+   * O editor de comunicado aceita o `value` externo correspondente (senão o gate
+   * anti-eco stale rejeitaria o nativeConfig restaurado).
+   */
+  historyEpoch: number;
   setLiveComunicadoConfig: (config: Record<string, unknown> | null) => void;
 };
 

@@ -31,10 +31,15 @@ export function useDeckEditorHistory({
   const syncingRef = useRef(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [historyEpoch, setHistoryEpoch] = useState(0);
 
   const refreshAvailability = useCallback(() => {
     setCanUndo(pastRef.current.length > 0);
     setCanRedo(futureRef.current.length > 0);
+  }, []);
+
+  const bumpHistoryEpoch = useCallback(() => {
+    setHistoryEpoch((epoch) => epoch + 1);
   }, []);
 
   const captureCurrent = useCallback((): DeckEditorSnapshot | null => {
@@ -74,11 +79,13 @@ export function useDeckEditorHistory({
           playlist: result.playlist,
           selectedSlideId: result.selectedSlideId,
         });
+        // Epoch depois do snapshot: o editor aceita o value restaurado no mesmo ciclo.
+        bumpHistoryEpoch();
       } finally {
         syncingRef.current = false;
       }
     },
-    [applySnapshot, getPlaylist, playlistId],
+    [applySnapshot, bumpHistoryEpoch, getPlaylist, playlistId],
   );
 
   const undo = useCallback(() => {
@@ -115,6 +122,7 @@ export function useDeckEditorHistory({
     redo,
     canUndo,
     canRedo,
+    historyEpoch,
     reset,
   };
 }

@@ -151,6 +151,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       redo: deckHistory.redo,
       canUndo: deckHistory.canUndo,
       canRedo: deckHistory.canRedo,
+      historyEpoch: deckHistory.historyEpoch,
       setLiveComunicadoConfig: (config) => {
         liveComunicadoConfigRef.current = config;
       },
@@ -158,6 +159,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     [
       deckHistory.canRedo,
       deckHistory.canUndo,
+      deckHistory.historyEpoch,
       deckHistory.recordBeforeChange,
       deckHistory.redo,
       deckHistory.undo,

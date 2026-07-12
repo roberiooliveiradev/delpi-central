@@ -42,6 +42,8 @@ export function ComunicadoEditorShapeBlock({
     top: undefined,
     width: "100%",
     height: "100%",
+    // Rotação fica no wrap de seleção (handles/outline alinhados ao bloco).
+    transform: undefined,
   };
 
   const blockClass = [
