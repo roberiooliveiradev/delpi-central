@@ -1,5 +1,9 @@
 import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, LucideIconPicker, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
+  KPI_ICON_DEFAULT_FRAME,
+  KPI_ICON_DEFAULT_RADIUS_PX,
+  KPI_ICON_DEFAULT_SIZE_PX,
+  clampKpiPartFrame,
   deleteKpiPart,
   getKpiPartState,
   kpiPartAllowsDelete,
@@ -8,6 +12,7 @@ import {
   partsToKpiOptions,
   serializeKpiPartRef,
   upsertKpiPartState,
+  type ComunicadoKpiPartFrame,
   type ComunicadoKpiPartRef,
   type ComunicadoKpiViewBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -46,6 +51,7 @@ type PartStylePatch = {
   stroke?: string;
   strokeWidth?: number;
   borderRadius?: number;
+  iconSize?: number;
 };
 
 /** Inspetor da parte selecionada do KPI — espelho de ChartPartInspector. */
@@ -66,11 +72,13 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   const partState = getKpiPartState(block.kpiParts, selectedKpiPart);
   const canDelete = kpiPartAllowsDelete(selectedKpiPart);
   const canEditOnStage = selectedKpiPart.kind === "title" || selectedKpiPart.kind === "hint";
+  const iconFrame = clampKpiPartFrame(partState?.frame ?? KPI_ICON_DEFAULT_FRAME);
 
   const persistPart = (patch: {
     content?: string;
     style?: PartStylePatch;
     visible?: boolean;
+    frame?: ComunicadoKpiPartFrame | null;
   }) => {
     const nextParts = upsertKpiPartState(block.kpiParts, selectedKpiPart, patch);
     const nextOptions = mergeComunicadoKpiOptions({
@@ -98,6 +106,10 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
       style: nextStyle,
     } as Partial<typeof block>);
+  };
+
+  const persistIconFrame = (patch: Partial<ComunicadoKpiPartFrame>) => {
+    persistPart({ frame: clampKpiPartFrame({ ...iconFrame, ...patch }) });
   };
 
   const removePart = () => {
@@ -214,28 +226,154 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       ) : null}
 
       {selectedKpiPart.kind === "icon" ? (
-        <DeckField id="td-kpi-part-icon" label="Ícone Lucide">
-          <LucideIconPicker
-            embedded
-            curatedOnly={false}
-            nameFormat="pascal"
-            value={options.iconName ?? "Gauge"}
-            onChange={(name) => {
-              const nextOptions = mergeComunicadoKpiOptions({
-                ...options,
-                iconName: name?.trim() || "Gauge",
-                showIcon: true,
-              });
-              updateSelected({
-                kpiOptions: nextOptions,
-                kpiParts: mergeKpiPartsWithOptions(block.kpiParts, nextOptions),
-              } as Partial<typeof block>);
-            }}
-            labels={{
-              clear: "Usar ícone padrão",
-            }}
-          />
-        </DeckField>
+        <>
+          <DeckField id="td-kpi-part-icon" label="Ícone Lucide">
+            <LucideIconPicker
+              embedded
+              curatedOnly={false}
+              nameFormat="pascal"
+              value={options.iconName ?? "Gauge"}
+              onChange={(name) => {
+                const nextOptions = mergeComunicadoKpiOptions({
+                  ...options,
+                  iconName: name?.trim() || "Gauge",
+                  showIcon: true,
+                });
+                updateSelected({
+                  kpiOptions: nextOptions,
+                  kpiParts: mergeKpiPartsWithOptions(block.kpiParts, nextOptions),
+                } as Partial<typeof block>);
+              }}
+              labels={{
+                clear: "Usar ícone padrão",
+              }}
+            />
+          </DeckField>
+
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id="td-kpi-part-icon-x" label="Posição X (%)">
+              <NativeTextControl
+                id="td-kpi-part-icon-x"
+                type="number"
+                min={0}
+                max={100}
+                step={0.5}
+                value={Number(iconFrame.x.toFixed(1))}
+                onChange={(value) => persistIconFrame({ x: Number(value) || 0 })}
+              />
+            </DeckField>
+            <DeckField id="td-kpi-part-icon-y" label="Posição Y (%)">
+              <NativeTextControl
+                id="td-kpi-part-icon-y"
+                type="number"
+                min={0}
+                max={100}
+                step={0.5}
+                value={Number(iconFrame.y.toFixed(1))}
+                onChange={(value) => persistIconFrame({ y: Number(value) || 0 })}
+              />
+            </DeckField>
+          </div>
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id="td-kpi-part-icon-w" label="Largura (%)">
+              <NativeTextControl
+                id="td-kpi-part-icon-w"
+                type="number"
+                min={4}
+                max={80}
+                step={0.5}
+                value={Number((iconFrame.w ?? KPI_ICON_DEFAULT_FRAME.w!).toFixed(1))}
+                onChange={(value) => persistIconFrame({ w: Number(value) || 4 })}
+              />
+            </DeckField>
+            <DeckField id="td-kpi-part-icon-h" label="Altura (%)">
+              <NativeTextControl
+                id="td-kpi-part-icon-h"
+                type="number"
+                min={4}
+                max={80}
+                step={0.5}
+                value={Number((iconFrame.h ?? KPI_ICON_DEFAULT_FRAME.h!).toFixed(1))}
+                onChange={(value) => persistIconFrame({ h: Number(value) || 4 })}
+              />
+            </DeckField>
+          </div>
+          <DeckField id="td-kpi-part-icon-size" label="Tamanho fixo (px)">
+            <NativeTextControl
+              id="td-kpi-part-icon-size"
+              type="number"
+              min={16}
+              max={160}
+              value={partState?.style?.iconSize ?? KPI_ICON_DEFAULT_SIZE_PX}
+              onChange={(value) => {
+                const size = Math.max(16, Math.min(160, Number(value) || KPI_ICON_DEFAULT_SIZE_PX));
+                persistPart({ style: { iconSize: size }, frame: null });
+              }}
+            />
+          </DeckField>
+
+          <DeckField id="td-kpi-part-icon-fill" label="Fundo do ícone">
+            <TvRibbonColorPicker
+              inline
+              variant="fill"
+              label="Fundo"
+              value={partState?.style?.fill ?? "transparent"}
+              onChange={(color) => persistPart({ style: { fill: color } })}
+              onNoFill={() => persistPart({ style: { fill: "transparent" } })}
+            />
+          </DeckField>
+          <DeckField id="td-kpi-part-icon-color" label="Cor do ícone">
+            <TvRibbonColorPicker
+              inline
+              variant="text"
+              contrastBackground={
+                partState?.style?.fill && partState.style.fill !== "transparent"
+                  ? partState.style.fill
+                  : (options.backgroundColor ??
+                    getKpiPartState(block.kpiParts, { kind: "card" })?.style?.fill ??
+                    DECK_KPI_DEFAULTS.backgroundColor)
+              }
+              label="Cor do ícone"
+              value={partState?.style?.color ?? DECK_KPI_DEFAULTS.valueColor}
+              onChange={(color) => persistPart({ style: { color } })}
+            />
+          </DeckField>
+          <DeckField id="td-kpi-part-icon-stroke" label="Contorno">
+            <TvRibbonColorPicker
+              inline
+              variant="outline"
+              label="Contorno"
+              value={partState?.style?.stroke ?? DECK_COLOR_BORDER}
+              onChange={(color) => persistPart({ style: { stroke: color } })}
+              onNoFill={() => persistPart({ style: { stroke: "transparent", strokeWidth: 0 } })}
+            />
+          </DeckField>
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id="td-kpi-part-icon-stroke-width" label="Espessura">
+              <NativeTextControl
+                id="td-kpi-part-icon-stroke-width"
+                type="number"
+                min={0}
+                max={12}
+                step={0.5}
+                value={partState?.style?.strokeWidth ?? 0}
+                onChange={(value) => persistPart({ style: { strokeWidth: Number(value) || 0 } })}
+              />
+            </DeckField>
+            <DeckField id="td-kpi-part-icon-radius" label="Cantos (px)">
+              <NativeTextControl
+                id="td-kpi-part-icon-radius"
+                type="number"
+                min={0}
+                max={64}
+                value={partState?.style?.borderRadius ?? KPI_ICON_DEFAULT_RADIUS_PX}
+                onChange={(value) =>
+                  persistPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
+                }
+              />
+            </DeckField>
+          </div>
+        </>
       ) : null}
     </DeckPropertySection>
   );

@@ -9,6 +9,7 @@
 }
 
 .delpi-kpi-card {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -90,13 +91,24 @@
   justify-content: center;
   flex-shrink: 0;
   align-self: flex-start;
+  box-sizing: border-box;
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
   color: var(--delpi-ui-accent, #089bdb);
+  border: 0 solid transparent;
+}
+
+.delpi-kpi-icon--framed {
+  /* Fora do fluxo do header — posição absoluta relativa ao card. */
+  margin: 0;
 }
 
 .delpi-kpi-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 50%;
+  height: 50%;
+  max-width: 28px;
+  max-height: 28px;
+  min-width: 12px;
+  min-height: 12px;
 }
 
 .delpi-kpi-card--positive .delpi-kpi-card__value {

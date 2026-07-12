@@ -93,4 +93,34 @@ describe("DelpiKpiCard chrome", () => {
     expect(selectedValue.style.fontSize).toBe("64px");
     expect(deselectedValue.style.fontSize).toBe("64px");
   });
+
+  it("ícone respeita frame e chrome (cores/cantos)", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="10"
+        icon={<span data-testid="kpi-icon">i</span>}
+        kpiParts={{
+          icon: {
+            visible: true,
+            frame: { x: 70, y: 8, w: 18, h: 30 },
+            style: {
+              fill: "#102a43",
+              color: "#7dd3fc",
+              borderRadius: 20,
+              stroke: "#38bdf8",
+              strokeWidth: 2,
+            },
+          },
+        }}
+      />,
+    );
+    const icon = container.querySelector(".delpi-kpi-icon") as HTMLElement;
+    expect(icon.className).toContain("delpi-kpi-icon--framed");
+    expect(icon.style.left).toBe("70%");
+    expect(icon.style.borderRadius).toBe("20px");
+    expect(icon.style.background).toBe("rgb(16, 42, 67)");
+    expect(icon.style.color).toBe("rgb(125, 211, 252)");
+  });
+
 });

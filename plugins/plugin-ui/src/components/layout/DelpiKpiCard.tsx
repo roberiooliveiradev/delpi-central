@@ -13,8 +13,11 @@ import { metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard
 import {
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
+  getKpiPartState,
   isKpiPartVisible,
   mergeKpiPartsWithOptions,
+  resolveKpiIconBoxStyle,
+  resolveKpiIconFrame,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
   type KpiPartsMap,
@@ -37,14 +40,19 @@ export type { MetricKpiCardTone as DelpiKpiCardTone };
 export type {
   KpiCardFlatOptions,
   KpiCardInteraction,
+  KpiPartFrame,
   KpiPartRef,
   KpiPartsMap,
   KpiPartState,
   KpiPartStyle,
 } from "./kpiCardParts";
 export {
+  KPI_ICON_DEFAULT_FRAME,
+  KPI_ICON_DEFAULT_RADIUS_PX,
+  KPI_ICON_DEFAULT_SIZE_PX,
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
+  clampKpiPartFrame,
   deleteKpiPart,
   findKpiPartFromTarget,
   getKpiPartState,
@@ -58,6 +66,8 @@ export {
   normalizeKpiPartsForLoad,
   parseKpiPartRef,
   partsToKpiOptions,
+  resolveKpiIconBoxStyle,
+  resolveKpiIconFrame,
   serializeKpiPartRef,
   upsertKpiPartState,
 } from "./kpiCardParts";
@@ -419,10 +429,12 @@ export function DelpiKpiCard({
             <div
               className={[
                 DELPI_KPI_CLASS_NAMES.icon,
+                resolveKpiIconFrame(parts.icon) ? "delpi-kpi-icon--framed" : "",
                 iconPtr.selected ? "delpi-kpi-part--selected" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
+              style={resolveKpiIconBoxStyle(getKpiPartState(parts, { kind: "icon" }) ?? parts.icon)}
               aria-hidden="true"
               {...{
                 [KPI_PART_DATA_ATTR]: iconPtr[KPI_PART_DATA_ATTR],

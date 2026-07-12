@@ -1,6 +1,7 @@
 export type {
   KpiCardFlatOptions as ComunicadoKpiFlatOptions,
   KpiCardInteraction as ComunicadoKpiInteraction,
+  KpiPartFrame as ComunicadoKpiPartFrame,
   KpiPartRef as ComunicadoKpiPartRef,
   KpiPartsMap as ComunicadoKpiPartsMap,
   KpiPartState as ComunicadoKpiPartState,
@@ -10,10 +11,14 @@ export type {
 } from "@delpi/plugin-ui/index";
 
 export {
+  KPI_ICON_DEFAULT_FRAME,
+  KPI_ICON_DEFAULT_RADIUS_PX,
+  KPI_ICON_DEFAULT_SIZE_PX,
   KPI_PART_DATA_ATTR,
   KPI_ELEMENT_CATALOG,
   applyKpiElementVisibility,
   bindKpiPartPointer,
+  clampKpiPartFrame,
   deleteKpiPart,
   findKpiPartFromTarget,
   getKpiPartState,
@@ -31,6 +36,8 @@ export {
   normalizeKpiPartsForLoad,
   parseKpiPartRef,
   partsToKpiOptions,
+  resolveKpiIconBoxStyle,
+  resolveKpiIconFrame,
   serializeKpiPartRef,
   setKpiElementEnabled,
   upsertKpiPartState,

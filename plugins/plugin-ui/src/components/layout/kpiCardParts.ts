@@ -2,7 +2,11 @@
  * Partes endereçáveis do card KPI — mesmo padrão de ChartPartRef / TablePartRef.
  */
 
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 
 import type { MetricKpiCardTone } from "../layout/MetricKpiCard";
 
@@ -24,17 +28,32 @@ export type KpiPartStyle = {
   fontStyle?: string;
   textDecoration?: string;
   opacity?: number;
-  /** Contorno do card (herda chrome de forma). */
+  /** Contorno do card/ícone (herda chrome de forma). */
   stroke?: string;
   strokeWidth?: number;
-  /** Cantos arredondados do card (px). */
+  /** Cantos arredondados (px). */
   borderRadius?: number;
+  /**
+   * Tamanho do box do ícone em px quando sem `frame`.
+   * Com `frame`, largura/altura vêm de `frame.w`/`frame.h` (% do card).
+   */
+  iconSize?: number;
+};
+
+/** Frame relativo ao card (0–100%), como chartParts title/legend. */
+export type KpiPartFrame = {
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
 };
 
 export type KpiPartState = {
   visible?: boolean;
   style?: KpiPartStyle;
   content?: string;
+  /** Posição/tamanho do ícone (% do card). */
+  frame?: KpiPartFrame;
 };
 
 export type KpiPartsMap = Record<string, KpiPartState>;
@@ -60,7 +79,7 @@ const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities
   title: { movable: false, editable: true, deletable: true, resizable: false },
   value: { movable: false, editable: false, deletable: false, resizable: false },
   hint: { movable: false, editable: true, deletable: true, resizable: false },
-  icon: { movable: false, editable: false, deletable: true, resizable: false },
+  icon: { movable: true, editable: false, deletable: true, resizable: true },
 };
 
 /** Options flat do card (legado / inspetor) — espelho de SeriesChartOptions. */
@@ -77,6 +96,70 @@ export type KpiCardFlatOptions = {
   backgroundColor?: string;
   valueFormat?: "number" | "percent" | "compact" | "raw";
 };
+
+/** Frame padrão do ícone (canto superior direito). */
+export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 8, w: 14, h: 28 };
+
+export const KPI_ICON_DEFAULT_SIZE_PX = 44;
+export const KPI_ICON_DEFAULT_RADIUS_PX = 14;
+
+export function clampKpiPartFrame(frame: KpiPartFrame): KpiPartFrame {
+  const w = Math.max(4, Math.min(80, frame.w ?? KPI_ICON_DEFAULT_FRAME.w ?? 14));
+  const h = Math.max(4, Math.min(80, frame.h ?? KPI_ICON_DEFAULT_FRAME.h ?? 28));
+  return {
+    x: Math.max(0, Math.min(100 - w, frame.x)),
+    y: Math.max(0, Math.min(100 - h, frame.y)),
+    w,
+    h,
+  };
+}
+
+export function resolveKpiIconFrame(
+  state: KpiPartState | null | undefined,
+): KpiPartFrame | null {
+  if (!state?.frame) return null;
+  return clampKpiPartFrame(state.frame);
+}
+
+/** Estilo do box do ícone a partir de `kpiParts.icon` (cores, raio, frame/% ou size px). */
+export function resolveKpiIconBoxStyle(
+  state: KpiPartState | null | undefined,
+): CSSProperties {
+  const style = state?.style;
+  const frame = resolveKpiIconFrame(state);
+  const css: CSSProperties = {};
+
+  if (style?.fill != null && style.fill !== "") css.background = style.fill;
+  if (style?.color) css.color = style.color;
+  if (style?.stroke != null && style.stroke !== "") {
+    css.borderColor = style.stroke;
+    css.borderStyle = "solid";
+  }
+  if (style?.strokeWidth != null) {
+    css.borderWidth = `${Math.max(0, style.strokeWidth)}px`;
+    if (style.strokeWidth > 0 && !css.borderStyle) css.borderStyle = "solid";
+  }
+  if (style?.borderRadius != null) {
+    css.borderRadius = `${Math.max(0, style.borderRadius)}px`;
+  }
+  if (style?.opacity != null) css.opacity = style.opacity;
+
+  if (frame) {
+    css.position = "absolute";
+    css.left = `${frame.x}%`;
+    css.top = `${frame.y}%`;
+    css.width = `${frame.w}%`;
+    css.height = `${frame.h}%`;
+    css.alignSelf = "auto";
+    css.zIndex = 2;
+  } else if (style?.iconSize != null && Number.isFinite(style.iconSize) && style.iconSize > 0) {
+    const size = Math.max(16, Math.min(160, Math.round(style.iconSize)));
+    css.width = `${size}px`;
+    css.height = `${size}px`;
+  }
+
+  return css;
+}
 
 export function serializeKpiPartRef(ref: KpiPartRef): string {
   return ref.kind;
@@ -114,19 +197,33 @@ export function getKpiPartState(
   return parts?.[serializeKpiPartRef(ref)];
 }
 
+export type KpiPartStatePatch = Omit<KpiPartState, "frame" | "style"> & {
+  style?: Partial<KpiPartStyle>;
+  /** `null` remove o frame (ex.: voltar ao tamanho em px). */
+  frame?: KpiPartFrame | null;
+};
+
 export function upsertKpiPartState(
   parts: KpiPartsMap | null | undefined,
   ref: KpiPartRef,
-  patch: KpiPartState,
+  patch: KpiPartStatePatch,
 ): KpiPartsMap {
   const key = serializeKpiPartRef(ref);
   const prev = parts?.[key] ?? {};
+  const nextFrame =
+    patch.frame === null
+      ? undefined
+      : patch.frame !== undefined
+        ? clampKpiPartFrame({ ...(prev.frame ?? {}), ...patch.frame })
+        : prev.frame;
+  const { frame: _ignored, ...restPatch } = patch;
   return {
     ...(parts ?? {}),
     [key]: {
       ...prev,
-      ...patch,
+      ...restPatch,
       style: patch.style ? { ...prev.style, ...patch.style } : prev.style,
+      frame: nextFrame,
     },
   };
 }
@@ -233,6 +330,7 @@ export function mergeKpiPartsWithOptions(
       ...fromOptions[key],
       ...state,
       style: { ...fromOptions[key]?.style, ...state.style },
+      frame: state.frame ?? fromOptions[key]?.frame,
     };
   }
   return merged;
