@@ -19,10 +19,18 @@ const HANDLE_LABELS: Record<KpiPartResizeHandle, string> = {
 export type KpiPartResizeHandlesProps = {
   visible: boolean;
   onResizePointerDown: (handle: KpiPartResizeHandle, event: ReactPointerEvent) => void;
+  /** Handle amarelo de raio (paridade com chrome do bloco). */
+  showCornerAdjust?: boolean;
+  onCornerAdjustPointerDown?: (event: ReactPointerEvent) => void;
 };
 
-/** Handles de resize no bbox da parte KPI (paridade com chart_view). */
-export function KpiPartResizeHandles({ visible, onResizePointerDown }: KpiPartResizeHandlesProps) {
+/** Handles de resize (+ raio) no bbox da parte KPI (paridade com chart_view / bloco). */
+export function KpiPartResizeHandles({
+  visible,
+  onResizePointerDown,
+  showCornerAdjust = false,
+  onCornerAdjustPointerDown,
+}: KpiPartResizeHandlesProps) {
   if (!visible) return null;
 
   return (
@@ -40,6 +48,19 @@ export function KpiPartResizeHandles({ visible, onResizePointerDown }: KpiPartRe
           }}
         />
       ))}
+      {showCornerAdjust && onCornerAdjustPointerDown ? (
+        <button
+          type="button"
+          className="delpi-kpi-part-adjust"
+          aria-label="Ajustar raio dos cantos"
+          title="Raio"
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            onCornerAdjustPointerDown(event);
+          }}
+        />
+      ) : null}
     </>
   );
 }

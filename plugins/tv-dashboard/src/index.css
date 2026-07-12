@@ -1229,6 +1229,26 @@
   /* Um único contorno; border-radius no wrap (JS) alinha ao chrome interno — evita “borda fantasma”. */
   outline: 1px dashed color-mix(in srgb, var(--td-accent) 70%, #fff);
   outline-offset: 0;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.dashboard-tv-dashboard .td-composer__block-wrap--selected > .tdp-comunicado__block,
+.dashboard-tv-dashboard .td-composer__block-wrap--selected > .td-composer__block,
+.dashboard-tv-dashboard .td-composer__block-wrap--selected > [class*="tdp-comunicado__block"] {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-tv-dashboard .td-composer__block-handles {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.dashboard-tv-dashboard .td-composer__block-handles > * {
+  pointer-events: auto;
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap--multi {
@@ -1525,7 +1545,7 @@
   border-radius: 2px;
   background: var(--td-accent, #089bdb);
   pointer-events: auto;
-  z-index: 5;
+  z-index: 21;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--nw {
@@ -1592,7 +1612,7 @@
   border-radius: 50%;
   background: var(--td-accent, #089bdb);
   pointer-events: auto;
-  z-index: 3;
+  z-index: 22;
   cursor: grab;
 }
 
@@ -1608,7 +1628,7 @@
   background: #f5c518;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
   pointer-events: auto;
-  z-index: 4;
+  z-index: 23;
   cursor: grab;
   transform: translate(-50%, -50%) rotate(45deg);
 }

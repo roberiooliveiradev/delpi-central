@@ -482,6 +482,10 @@ export function DelpiKpiCard({
                   onResizePointerDown={(handle, event) =>
                     interaction?.onPartResizePointerDown?.({ kind: "title" }, event, handle)
                   }
+                  showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                  onCornerAdjustPointerDown={(event) =>
+                    interaction?.onPartCornerAdjustPointerDown?.({ kind: "title" }, event)
+                  }
                 />
               </p>
             ) : null}
@@ -509,6 +513,10 @@ export function DelpiKpiCard({
                   visible={valueShowResize}
                   onResizePointerDown={(handle, event) =>
                     interaction?.onPartResizePointerDown?.({ kind: "value" }, event, handle)
+                  }
+                  showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                  onCornerAdjustPointerDown={(event) =>
+                    interaction?.onPartCornerAdjustPointerDown?.({ kind: "value" }, event)
                   }
                 />
               </strong>
@@ -557,6 +565,10 @@ export function DelpiKpiCard({
                   onResizePointerDown={(handle, event) =>
                     interaction?.onPartResizePointerDown?.({ kind: "hint" }, event, handle)
                   }
+                  showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                  onCornerAdjustPointerDown={(event) =>
+                    interaction?.onPartCornerAdjustPointerDown?.({ kind: "hint" }, event)
+                  }
                 />
               </p>
             ) : null}
@@ -586,6 +598,10 @@ export function DelpiKpiCard({
                 visible={iconShowResize}
                 onResizePointerDown={(handle, event) =>
                   interaction?.onPartResizePointerDown?.({ kind: "icon" }, event, handle)
+                }
+                showCornerAdjust={Boolean(interaction?.onPartCornerAdjustPointerDown)}
+                onCornerAdjustPointerDown={(event) =>
+                  interaction?.onPartCornerAdjustPointerDown?.({ kind: "icon" }, event)
                 }
               />
             </div>

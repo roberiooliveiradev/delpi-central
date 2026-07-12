@@ -88,6 +88,7 @@ export function ComunicadoComposerCanvas() {
     selectedId,
     selectedIds,
     selectedChartPart,
+    selectedKpiPart,
     isBlockSelected,
     selectBlock,
     selectBlocksByIds,
@@ -234,8 +235,15 @@ export function ComunicadoComposerCanvas() {
       return false;
     }
     const block = blocks.find((item) => item.id === blockId);
-    // Grupo chart_view: handles só no nível do bloco (sem parte selecionada).
+    // Handles do bloco só no nível global — com parte interna selecionada, chrome da parte manda.
     if (block?.type === "chart_view" && selectedChartPart) {
+      return false;
+    }
+    if (
+      block?.type === "kpi_view" &&
+      selectedKpiPart &&
+      selectedKpiPart.kind !== "card"
+    ) {
       return false;
     }
     return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
@@ -346,7 +354,7 @@ export function ComunicadoComposerCanvas() {
                   }
                 />
                 {showResizeHandles(block.id) ? (
-                  <>
+                  <div className="td-composer__block-handles">
                     <button
                       type="button"
                       className="td-composer__rotate"
@@ -388,7 +396,7 @@ export function ComunicadoComposerCanvas() {
                           );
                         })
                       : null}
-                  </>
+                  </div>
                 ) : null}
               </div>
             );

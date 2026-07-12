@@ -19,6 +19,7 @@ import {
   resolveChartPartFrameRoot,
   upsertChartPartState,
   KpiViewBlockView,
+  KPI_ICON_DEFAULT_RADIUS_PX,
   clampKpiPartFrame,
   getKpiPartState,
   kpiPartAllowsEdit,
@@ -605,6 +606,36 @@ function EditorKpiViewBlock({
     [block.id, block.kpiParts, updateBlock],
   );
 
+  const onPartCornerAdjustPointerDown = useCallback(
+    (ref: ComunicadoKpiPartRef, event: ReactPointerEvent) => {
+      if (!kpiPartAllowsFrame(ref)) return;
+      event.preventDefault();
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
+      const origin =
+        getKpiPartState(block.kpiParts, ref)?.style?.borderRadius ??
+        (ref.kind === "icon" ? KPI_ICON_DEFAULT_RADIUS_PX : 0);
+      let lastParts = block.kpiParts;
+
+      const onMove = (ev: PointerEvent) => {
+        const delta = ((ev.clientX - startClientX) + (ev.clientY - startClientY)) / 2;
+        const nextRadius = Math.max(0, Math.min(64, Math.round(origin + delta * 0.35)));
+        lastParts = upsertKpiPartState(lastParts, ref, {
+          style: { borderRadius: nextRadius },
+        });
+        updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [block.id, block.kpiParts, updateBlock],
+  );
+
   const interaction =
     selectedId === block.id
       ? {
@@ -617,6 +648,7 @@ function EditorKpiViewBlock({
           onPartMovePointerDown,
           onPartResizePointerDown,
           onPartFrameChange,
+          onPartCornerAdjustPointerDown,
         }
       : null;
 

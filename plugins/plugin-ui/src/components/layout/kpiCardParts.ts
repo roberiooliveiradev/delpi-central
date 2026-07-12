@@ -77,6 +77,8 @@ export type KpiCardInteraction = {
   ) => void;
   /** Materializa frame % medido no DOM (seleção sem frame prévio). */
   onPartFrameChange?: (ref: KpiPartRef, frame: KpiPartFrame) => void;
+  /** Handle amarelo — raio dos cantos da parte (px). */
+  onPartCornerAdjustPointerDown?: (ref: KpiPartRef, event: ReactPointerEvent) => void;
 };
 
 export type KpiPartResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
