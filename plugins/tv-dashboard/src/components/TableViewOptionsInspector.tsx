@@ -1,4 +1,4 @@
-import { NativeSelectControl } from "@delpi/plugin-ui/index";
+import { NativeCheckboxControl, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 import {
   TABLE_ELEMENT_CATALOG,
@@ -46,23 +46,29 @@ function TableElementPanel({
   hint?: string;
 }) {
   return (
-    <details className="td-chart-element" open={enabled}>
-      <summary className="td-chart-element__summary">
-        <label className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
-          <input
-            type="checkbox"
+    <div
+      className={[
+        "td-chart-element",
+        "td-chart-element--row",
+        enabled && children ? "td-chart-element--expanded" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <div className="td-chart-element__summary">
+        <span className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
+          <NativeCheckboxControl
             checked={enabled}
             aria-label={`Exibir ${label}`}
-            onChange={(event) => onToggle(event.target.checked)}
+            onChange={onToggle}
           />
-        </label>
-        <span className="td-chart-element__label" id={`td-table-element-${elementId}`}>
+        </span>
+        <span className="td-chart-element__label" id={`td-table-element-${elementId}`} title={hint}>
           {label}
         </span>
-        {hint ? <span className="td-chart-element__hint">{hint}</span> : null}
-      </summary>
+      </div>
       {enabled && children ? <div className="td-chart-element__body">{children}</div> : null}
-    </details>
+    </div>
   );
 }
 
@@ -100,27 +106,23 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
               >
                 {element.id === "tableTitle" ? (
                   <DeckField id="td-table-title" label="Texto do título" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableTitle}>
-                    <input
+                    <NativeTextControl
                       id="td-table-title"
-                      type="text"
                       value={options.title ?? ""}
                       placeholder="Ex.: Top produtos"
-                      onChange={(event) => setOptions({ title: event.target.value, showTitle: true })}
+                      onChange={(value) => setOptions({ title: value, showTitle: true })}
                     />
                   </DeckField>
                 ) : null}
 
                 {element.id === "header" ? (
                   <DeckField id="td-table-header-uppercase" label="Estilo do cabeçalho">
-                    <label className="td-deck-inspector__checkbox">
-                      <input
-                        id="td-table-header-uppercase"
-                        type="checkbox"
-                        checked={options.headerUppercase !== false}
-                        onChange={(event) => setOptions({ headerUppercase: event.target.checked })}
-                      />
-                      <span>Texto em maiúsculas</span>
-                    </label>
+                    <NativeCheckboxControl
+                      id="td-table-header-uppercase"
+                      checked={options.headerUppercase !== false}
+                      label="Texto em maiúsculas"
+                      onChange={(checked) => setOptions({ headerUppercase: checked })}
+                    />
                   </DeckField>
                 ) : null}
               </TableElementPanel>
@@ -153,7 +155,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
           />
         </DeckField>
         <DeckField id="td-table-font-size" label="Tamanho da fonte (px)">
-          <input
+          <NativeTextControl
             id="td-table-font-size"
             type="number"
             min={8}
@@ -161,8 +163,8 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             step={1}
             value={options.fontSize ?? ""}
             placeholder="Automático"
-            onChange={(event) => {
-              const raw = event.target.value.trim();
+            onChange={(value) => {
+              const raw = value.trim();
               setOptions({ fontSize: raw ? Number(raw) : undefined });
             }}
           />

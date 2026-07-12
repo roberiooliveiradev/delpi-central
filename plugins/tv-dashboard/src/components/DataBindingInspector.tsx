@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Copy, RefreshCw } from "lucide-react";
-import { NativeSelectControl } from "@delpi/plugin-ui/index";
+import { NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   blockTypeForDisplayMode,
   DATA_REFRESH_SEC_MAX,
@@ -63,12 +63,12 @@ function ParamFields({
             id={`td-data-param-${key}`}
             label={`${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`}
           >
-            <input
+            <NativeTextControl
               id={`td-data-param-${key}`}
               type={field.type === "integer" ? "number" : "text"}
               placeholder={inherited ? "Herdado do slide" : field.optional ? "Opcional" : ""}
               value={current === undefined || current === null ? "" : String(current)}
-              onChange={(event) => onChange(key, event.target.value)}
+              onChange={(value) => onChange(key, value)}
             />
           </DeckField>
         );
@@ -159,12 +159,12 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
           </DeckField>
         ) : null}
         <DeckField id="td-data-label" label="Rótulo (opcional)">
-          <input
+          <NativeTextControl
             id="td-data-label"
             value={binding.label ?? ""}
-            onChange={(event) =>
+            onChange={(value) =>
               updateSelected({
-                dataBinding: { ...binding, label: event.target.value || undefined },
+                dataBinding: { ...binding, label: value || undefined },
               } as Partial<typeof selected>)
             }
           />
@@ -192,15 +192,15 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
         ) : null}
         {showTableOptions ? (
           <DeckField id="td-data-max-rows" label="Máximo de linhas">
-            <input
+            <NativeTextControl
               id="td-data-max-rows"
               type="number"
               min={1}
               max={maxRowsLimit}
               placeholder={`Padrão (até ${Math.min(maxRowsLimit, 5)})`}
               value={binding.maxRows ?? ""}
-              onChange={(event) => {
-                const raw = event.target.value.trim();
+              onChange={(value) => {
+                const raw = value.trim();
                 const nextBinding: ComunicadoDataBinding = { ...binding };
                 if (!raw) {
                   delete nextBinding.maxRows;
@@ -220,15 +220,15 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
           label="Atualizar a cada (s)"
           hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.dataBlockRefreshInterval}
         >
-          <input
+          <NativeTextControl
             id="td-data-refresh"
             type="number"
             min={DATA_REFRESH_SEC_MIN}
             max={DATA_REFRESH_SEC_MAX}
             placeholder={`Padrão (${inheritedRefreshSec}s)`}
             value={binding.refreshSec ?? ""}
-            onChange={(event) => {
-              const raw = event.target.value.trim();
+            onChange={(value) => {
+              const raw = value.trim();
               const nextBinding: ComunicadoDataBinding = { ...binding };
               if (!raw) {
                 delete nextBinding.refreshSec;

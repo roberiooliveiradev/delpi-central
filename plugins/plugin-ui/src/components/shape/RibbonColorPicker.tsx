@@ -4,11 +4,13 @@ import { ColorPickerPopoverTrigger, type ColorPickerPopoverTriggerProps } from "
 
 export type RibbonColorPickerProps = Omit<
   ColorPickerPopoverTriggerProps,
-  "triggerLabel" | "triggerAriaLabel"
+  "triggerLabel" | "triggerAriaLabel" | "triggerClassName" | "className"
 > & {
   label: string;
   ariaLabel?: string;
   hint?: ReactNode;
+  /** Classes extras no gatilho (ex.: `--inline`). */
+  className?: string;
 };
 
 /**
@@ -24,7 +26,7 @@ export function RibbonColorPicker({
   return (
     <ColorPickerPopoverTrigger
       {...props}
-      className={["delpi-ui-color-picker-trigger--ribbon", className].filter(Boolean).join(" ")}
+      triggerClassName={["delpi-ui-color-picker-trigger--ribbon", className].filter(Boolean).join(" ")}
       triggerLabel={label}
       triggerAriaLabel={ariaLabel ?? label}
       showNoFill={props.showNoFill ?? false}

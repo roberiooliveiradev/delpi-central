@@ -1,4 +1,4 @@
-import { NativeSelectControl } from "@delpi/plugin-ui/index";
+import { NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   chartTypeLabel,
   dataSourceOptionsForInspector,
@@ -63,14 +63,14 @@ export function VisualDataViewInspector({ pane = false, onOpenDataSources }: Pro
       </DeckField>
       {selected.type === "table_view" ? (
         <DeckField id="td-view-max-rows" label="Máximo de linhas">
-          <input
+          <NativeTextControl
             id="td-view-max-rows"
             type="number"
             min={1}
             max={50}
             value={selected.maxRows ?? ""}
-            onChange={(event) => {
-              const raw = event.target.value.trim();
+            onChange={(value) => {
+              const raw = value.trim();
               updateSelected({
                 maxRows: raw ? Number(raw) : undefined,
               } as Partial<typeof selected>);

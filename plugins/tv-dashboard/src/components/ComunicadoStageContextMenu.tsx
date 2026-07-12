@@ -11,7 +11,6 @@ import {
   ContextMenuDivider,
   ContextMenuItem,
   ContextMenuToolbar,
-  RibbonColorPicker,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
 import {
@@ -92,12 +91,12 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
         <>
           <ContextMenuToolbar aria-label={C.quickFormat}>
             {showShapeFill ? (
-              <RibbonColorPicker
+              <TvRibbonColorPicker
                 label={C.fill}
                 ariaLabel={C.fill}
                 value={fillValue}
                 onChange={(color) => updateSelectedStyle({ fill: color })}
-                className="delpi-ui-color-picker-trigger--inline"
+                inline
               />
             ) : selected.type === "heading" || selected.type === "text" ? (
               <TvRibbonColorPicker

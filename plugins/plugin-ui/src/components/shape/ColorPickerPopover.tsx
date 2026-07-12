@@ -102,6 +102,8 @@ export type ColorPickerPopoverTriggerProps = ColorPickerPopoverProps & {
   triggerLabel: string;
   triggerAriaLabel?: string;
   previewClassName?: string;
+  /** Classes no root do gatilho (ex.: `--ribbon`, `--inline`) — não confundir com `className` do popover. */
+  triggerClassName?: string;
   onClose?: () => void;
 };
 
@@ -110,9 +112,11 @@ export function ColorPickerPopoverTrigger({
   triggerLabel,
   triggerAriaLabel,
   previewClassName,
+  triggerClassName,
   value,
   onChange,
   onClose,
+  className,
   ...popoverProps
 }: ColorPickerPopoverTriggerProps) {
   const [open, setOpen] = useState(false);
@@ -126,7 +130,10 @@ export function ColorPickerPopoverTrigger({
   const previewColor = value && cssToColorValue(value).alpha > 0 ? value : "transparent";
 
   return (
-    <div className="delpi-ui-color-picker-trigger" ref={rootRef}>
+    <div
+      className={["delpi-ui-color-picker-trigger", triggerClassName].filter(Boolean).join(" ")}
+      ref={rootRef}
+    >
       <button
         type="button"
         className="delpi-ui-color-picker-trigger__button"
@@ -153,6 +160,7 @@ export function ColorPickerPopoverTrigger({
         >
           <ColorPickerPopover
             {...popoverProps}
+            className={className}
             value={value}
             onChange={(color) => {
               onChange(color);

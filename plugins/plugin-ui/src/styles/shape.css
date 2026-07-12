@@ -62,7 +62,9 @@
 .delpi-ui-color-picker {
   display: grid;
   gap: 10px;
-  min-width: 220px;
+  /* 10 swatches × 18px + 9 gaps × 2px — evita faixa vazia à direita do popup */
+  width: max-content;
+  min-width: calc(10 * 18px + 9 * 2px);
 }
 
 .delpi-ui-color-picker__heading {

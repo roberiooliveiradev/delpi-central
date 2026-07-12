@@ -125,3 +125,19 @@
   gap: 10px;
   padding: 0 14px 14px;
 }
+
+/* Controles nativos compactos (FormatPane / inspetores) */
+.delpi-ui-native-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-text, var(--td-text, #111));
+  cursor: pointer;
+}
+
+.delpi-ui-native-checkbox input {
+  margin: 0;
+  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}

@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, FolderOpen, Trash2, Upload } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui/index";
+import { HintAction, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   BLOCK_ENTRANCE_DELAY_MAX_MS,
   BLOCK_ENTRANCE_DELAY_MIN_MS,
@@ -127,21 +127,21 @@ export function ComunicadoElementInspector({
         {!multiSelect && isShapeBlock ? (
           <>
             <DeckField id="td-shape-content" label="Texto na forma" hint={E.shapeText}>
-              <input
+              <NativeTextControl
                 id="td-shape-content"
                 type="text"
                 value={selected.content ?? ""}
-                onChange={(e) => updateSelected({ content: e.target.value } as Partial<typeof selected>)}
+                onChange={(value) => updateSelected({ content: value } as Partial<typeof selected>)}
               />
             </DeckField>
             <DeckField id="td-shape-stroke-width" label="Espessura do contorno" hint={E.strokeWidth}>
-              <input
+              <NativeTextControl
                 id="td-shape-stroke-width"
                 type="number"
                 min={0}
                 max={20}
                 value={selected.style?.strokeWidth ?? 2}
-                onChange={(e) => updateSelectedStyle({ strokeWidth: Number(e.target.value) })}
+                onChange={(value) => updateSelectedStyle({ strokeWidth: Number(value) })}
               />
             </DeckField>
           </>
@@ -149,15 +149,15 @@ export function ComunicadoElementInspector({
 
         {!multiSelect && isSidebarLinkBlock ? (
           <DeckField id="td-block-link" label="Link" hint={E.link}>
-            <input
+            <NativeTextControl
               id="td-block-link"
               type="url"
               placeholder="https://…"
               value={selected.href ?? ""}
-              onChange={(e) =>
+              onChange={(value) =>
                 updateBlockLink(
                   selected.id,
-                  normalizeHrefInput(e.target.value) || undefined,
+                  normalizeHrefInput(value) || undefined,
                 )
               }
             />
@@ -217,42 +217,40 @@ export function ComunicadoElementInspector({
           defaultOpen={false}
         >
           <DeckField id="td-entrance-kind" label="Efeito" hint={E.entranceAnimation}>
-            <select
+            <NativeSelectControl
               id="td-entrance-kind"
               value={entrancePresetValue(resolveEntranceAnimation(selected.animations))}
-              onChange={(e) => {
+              onChange={(value) => {
                 const entrance = resolveEntranceAnimation(selected.animations);
                 updateSelected({
-                  animations: entranceAnimationFromPreset(e.target.value, {
+                  animations: entranceAnimationFromPreset(value, {
                     delayMs: entrance?.delayMs ?? 0,
                     durationMs: entrance?.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
                   }),
                 } as Partial<typeof selected>);
               }}
-            >
-              {BLOCK_ENTRANCE_PRESET_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              options={BLOCK_ENTRANCE_PRESET_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
           </DeckField>
           {resolveEntranceAnimation(selected.animations) ? (
             <>
               <DeckField id="td-entrance-delay" label="Atraso (ms)" hint={E.entranceDelay}>
-                <input
+                <NativeTextControl
                   id="td-entrance-delay"
                   type="number"
                   min={BLOCK_ENTRANCE_DELAY_MIN_MS}
                   max={BLOCK_ENTRANCE_DELAY_MAX_MS}
                   step={BLOCK_ENTRANCE_DELAY_STEP_MS}
                   value={resolveEntranceAnimation(selected.animations)?.delayMs ?? 0}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     const entrance = resolveEntranceAnimation(selected.animations);
                     if (!entrance) return;
                     updateSelected({
                       animations: entranceAnimationFromPreset(entrancePresetValue(entrance), {
-                        delayMs: Number(e.target.value),
+                        delayMs: Number(value),
                         durationMs: entrance.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
                       }),
                     } as Partial<typeof selected>);
@@ -260,7 +258,7 @@ export function ComunicadoElementInspector({
                 />
               </DeckField>
               <DeckField id="td-entrance-duration" label="Duração (ms)" hint={E.entranceDuration}>
-                <input
+                <NativeTextControl
                   id="td-entrance-duration"
                   type="number"
                   min={BLOCK_ENTRANCE_DURATION_MIN_MS}
@@ -270,13 +268,13 @@ export function ComunicadoElementInspector({
                     resolveEntranceAnimation(selected.animations)?.durationMs ??
                     BLOCK_ENTRANCE_DURATION_DEFAULT_MS
                   }
-                  onChange={(e) => {
+                  onChange={(value) => {
                     const entrance = resolveEntranceAnimation(selected.animations);
                     if (!entrance) return;
                     updateSelected({
                       animations: entranceAnimationFromPreset(entrancePresetValue(entrance), {
                         delayMs: entrance.delayMs ?? 0,
-                        durationMs: Number(e.target.value),
+                        durationMs: Number(value),
                       }),
                     } as Partial<typeof selected>);
                   }}
@@ -301,16 +299,16 @@ export function ComunicadoElementInspector({
                 hint={E.position}
                 className="td-field--compact"
               >
-                <input
+                <NativeTextControl
                   id={`td-frame-${key}`}
                   type="number"
                   min={0}
                   max={100}
                   step={0.1}
                   value={formatFrameValue(selected.frame[key])}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     updateSelected({
-                      frame: { ...selected.frame, [key]: Number(e.target.value) },
+                      frame: { ...selected.frame, [key]: Number(value) },
                     } as Partial<typeof selected>)
                   }
                 />
@@ -318,14 +316,14 @@ export function ComunicadoElementInspector({
             ))}
           </div>
           <DeckField id="td-rotation" label="Rotação (°)" hint={E.rotation}>
-            <input
+            <NativeTextControl
               id="td-rotation"
               type="number"
               min={-180}
               max={180}
               step={1}
               value={selected.style?.rotation ?? 0}
-              onChange={(e) => updateSelectedStyle({ rotation: Number(e.target.value) })}
+              onChange={(value) => updateSelectedStyle({ rotation: Number(value) })}
             />
           </DeckField>
         </DeckPropertySection>

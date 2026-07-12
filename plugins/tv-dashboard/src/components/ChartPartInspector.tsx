@@ -1,3 +1,4 @@
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   applyMarkerStyleToAll,
   chartPartAllowsDelete,
@@ -210,7 +211,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
             />
           </DeckField>
           <DeckField id="td-chart-part-area-stroke-width" label="Espessura da borda">
-            <input
+            <NativeTextControl
               id="td-chart-part-area-stroke-width"
               type="number"
               min={0}
@@ -221,22 +222,20 @@ export function ChartPartInspector({ pane = false, block }: Props) {
                   ? chartAreaStyle.strokeWidth
                   : plotAreaStyle.strokeWidth
               }
-              onChange={(event) =>
-                patchPart({ style: { strokeWidth: Number(event.target.value) || 0 } })
-              }
+              onChange={(value) => patchPart({ style: { strokeWidth: Number(value) || 0 } })}
             />
           </DeckField>
           {selectedChartPart.kind === "chartArea" ? (
             <DeckField id="td-chart-part-area-radius" label="Cantos (px)">
-              <input
+              <NativeTextControl
                 id="td-chart-part-area-radius"
                 type="number"
                 min={0}
                 max={32}
                 step={1}
                 value={chartAreaStyle.borderRadius}
-                onChange={(event) =>
-                  patchPart({ style: { borderRadius: Math.max(0, Number(event.target.value) || 0) } })
+                onChange={(value) =>
+                  patchPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
                 }
               />
             </DeckField>
@@ -246,15 +245,14 @@ export function ChartPartInspector({ pane = false, block }: Props) {
 
       {selectedChartPart.kind === "title" ? (
         <DeckField id="td-chart-part-title" label="Texto do título">
-          <input
+          <NativeTextControl
             id="td-chart-part-title"
-            type="text"
             value={options.title ?? ""}
             placeholder="Ex.: ROL"
-            onChange={(event) => {
+            onChange={(value) => {
               persistOptions({
                 ...options,
-                title: event.target.value,
+                title: value,
                 showTitle: true,
               });
             }}
@@ -265,11 +263,10 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       {selectedChartPart.kind === "legend" ? (
         <>
           <DeckField id="td-chart-part-legend-name" label="Nome da série">
-            <input
+            <NativeTextControl
               id="td-chart-part-legend-name"
-              type="text"
               value={options.seriesName ?? ""}
-              onChange={(event) => persistOptions({ ...options, seriesName: event.target.value })}
+              onChange={(value) => persistOptions({ ...options, seriesName: value })}
             />
           </DeckField>
           <DeckField id="td-chart-part-legend-color" label="Cor da série">
@@ -300,16 +297,14 @@ export function ChartPartInspector({ pane = false, block }: Props) {
             />
           </DeckField>
           <DeckField id="td-chart-part-series-width" label="Espessura">
-            <input
+            <NativeTextControl
               id="td-chart-part-series-width"
               type="number"
               min={1}
               max={8}
               step={0.5}
               value={block.chartParts?.["series:0"]?.style?.strokeWidth ?? 2}
-              onChange={(event) =>
-                patchPart({ style: { strokeWidth: Number(event.target.value) || 2 } })
-              }
+              onChange={(value) => patchPart({ style: { strokeWidth: Number(value) || 2 } })}
             />
           </DeckField>
         </>
@@ -334,16 +329,14 @@ export function ChartPartInspector({ pane = false, block }: Props) {
             />
           </DeckField>
           <DeckField id="td-chart-part-marker-radius" label="Tamanho (raio)">
-            <input
+            <NativeTextControl
               id="td-chart-part-marker-radius"
               type="number"
               min={1}
               max={12}
               step={0.5}
               value={block.chartParts?.[partKey]?.style?.markerRadius ?? 2.5}
-              onChange={(event) =>
-                patchPart({ style: { markerRadius: Number(event.target.value) || 2.5 } })
-              }
+              onChange={(value) => patchPart({ style: { markerRadius: Number(value) || 2.5 } })}
             />
           </DeckField>
           <button type="button" className="td-deck-btn" onClick={applyStyleToAllMarkers}>

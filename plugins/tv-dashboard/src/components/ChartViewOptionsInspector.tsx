@@ -1,4 +1,4 @@
-import { NativeSelectControl } from "@delpi/plugin-ui/index";
+import { NativeCheckboxControl, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 import {
   CHART_ELEMENT_CATALOG,
@@ -72,14 +72,13 @@ function ChartElementRow({
         .join(" ")}
     >
       <div className="td-chart-element__summary">
-        <label className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
-          <input
-            type="checkbox"
+        <span className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
+          <NativeCheckboxControl
             checked={enabled}
             aria-label={`Exibir ${label}`}
-            onChange={(event) => onToggle(event.target.checked)}
+            onChange={onToggle}
           />
-        </label>
+        </span>
         <button
           type="button"
           className="td-chart-element__label-btn"
@@ -180,12 +179,11 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
               >
                 {element.id === "chartTitle" ? (
                   <DeckField id="td-chart-title" label="Texto do título" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartTitle}>
-                    <input
+                    <NativeTextControl
                       id="td-chart-title"
-                      type="text"
                       value={options.title ?? ""}
                       placeholder="Ex.: ROL"
-                      onChange={(event) => setOptions({ title: event.target.value })}
+                      onChange={(value) => setOptions({ title: value })}
                     />
                   </DeckField>
                 ) : null}
@@ -193,12 +191,11 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
                 {element.id === "legend" ? (
                   <>
                     <DeckField id="td-chart-series-name" label="Nome da série" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartLegend}>
-                      <input
+                      <NativeTextControl
                         id="td-chart-series-name"
-                        type="text"
                         value={options.seriesName ?? ""}
                         placeholder="Ex.: Receita"
-                        onChange={(event) => setOptions({ seriesName: event.target.value })}
+                        onChange={(value) => setOptions({ seriesName: value })}
                       />
                     </DeckField>
                     <DeckField id="td-chart-legend-position" label="Posição">
@@ -219,21 +216,19 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
                 {element.id === "axisTitles" ? (
                   <>
                     <DeckField id="td-chart-x-title" label="Título eixo X">
-                      <input
+                      <NativeTextControl
                         id="td-chart-x-title"
-                        type="text"
                         value={options.xAxisTitle ?? ""}
                         placeholder="Ex.: Mês"
-                        onChange={(event) => setOptions({ xAxisTitle: event.target.value, showXAxisTitle: true })}
+                        onChange={(value) => setOptions({ xAxisTitle: value, showXAxisTitle: true })}
                       />
                     </DeckField>
                     <DeckField id="td-chart-y-title" label="Título eixo Y">
-                      <input
+                      <NativeTextControl
                         id="td-chart-y-title"
-                        type="text"
                         value={options.yAxisTitle ?? ""}
                         placeholder="Ex.: Valor (R$)"
-                        onChange={(event) => setOptions({ yAxisTitle: event.target.value, showYAxisTitle: true })}
+                        onChange={(value) => setOptions({ yAxisTitle: value, showYAxisTitle: true })}
                       />
                     </DeckField>
                   </>
@@ -242,26 +237,20 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
                 {element.id === "axes" ? (
                   <>
                     <DeckField id="td-chart-show-x-labels" label="Rótulos eixo X">
-                      <label className="td-deck-inspector__checkbox">
-                        <input
-                          id="td-chart-show-x-labels"
-                          type="checkbox"
-                          checked={options.showXAxisLabels !== false}
-                          onChange={(event) => setOptions({ showXAxisLabels: event.target.checked })}
-                        />
-                        <span>Períodos e categorias</span>
-                      </label>
+                      <NativeCheckboxControl
+                        id="td-chart-show-x-labels"
+                        checked={options.showXAxisLabels !== false}
+                        label="Períodos e categorias"
+                        onChange={(checked) => setOptions({ showXAxisLabels: checked })}
+                      />
                     </DeckField>
                     <DeckField id="td-chart-show-y-labels" label="Rótulos eixo Y">
-                      <label className="td-deck-inspector__checkbox">
-                        <input
-                          id="td-chart-show-y-labels"
-                          type="checkbox"
-                          checked={options.showYAxisLabels !== false}
-                          onChange={(event) => setOptions({ showYAxisLabels: event.target.checked })}
-                        />
-                        <span>Escala de valores</span>
-                      </label>
+                      <NativeCheckboxControl
+                        id="td-chart-show-y-labels"
+                        checked={options.showYAxisLabels !== false}
+                        label="Escala de valores"
+                        onChange={(checked) => setOptions({ showYAxisLabels: checked })}
+                      />
                     </DeckField>
                   </>
                 ) : null}
@@ -269,26 +258,20 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
                 {element.id === "gridlines" ? (
                   <>
                     <DeckField id="td-chart-show-grid-h" label="Grade horizontal">
-                      <label className="td-deck-inspector__checkbox">
-                        <input
-                          id="td-chart-show-grid-h"
-                          type="checkbox"
-                          checked={options.showGrid !== false}
-                          onChange={(event) => setOptions({ showGrid: event.target.checked })}
-                        />
-                        <span>Linhas horizontais</span>
-                      </label>
+                      <NativeCheckboxControl
+                        id="td-chart-show-grid-h"
+                        checked={options.showGrid !== false}
+                        label="Linhas horizontais"
+                        onChange={(checked) => setOptions({ showGrid: checked })}
+                      />
                     </DeckField>
                     <DeckField id="td-chart-show-grid-v" label="Grade vertical">
-                      <label className="td-deck-inspector__checkbox">
-                        <input
-                          id="td-chart-show-grid-v"
-                          type="checkbox"
-                          checked={Boolean(options.showVerticalGrid)}
-                          onChange={(event) => setOptions({ showVerticalGrid: event.target.checked })}
-                        />
-                        <span>Linhas verticais</span>
-                      </label>
+                      <NativeCheckboxControl
+                        id="td-chart-show-grid-v"
+                        checked={Boolean(options.showVerticalGrid)}
+                        label="Linhas verticais"
+                        onChange={(checked) => setOptions({ showVerticalGrid: checked })}
+                      />
                     </DeckField>
                   </>
                 ) : null}

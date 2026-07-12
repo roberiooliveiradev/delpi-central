@@ -1762,6 +1762,27 @@ Animação / Posição / Ações   fechados
 - `open={enabled}` forçando todos os cards ligados abertos.
 - Hints em inglês voltados ao gestor (manter jargão Office só no playbook técnico).
 
+### 19.17 Controles básicos canônicos — plugin-ui (Onda 4N)
+
+> **Problema:** gatilho «Cor da série» sem modifiers `--ribbon`/`--inline` (className caía no popover); `<select>` nativo na animação; inputs/checkboxes crus misturados com `NativeSelectControl`.  
+> **North star:** selects, inputs, checkboxes e color picker do FormatPane/ribbon vêm de `@delpi/plugin-ui`; TV só encapsula (`TvRibbonColorPicker`, `TdNative*`, `DeckField`).
+
+| # | Entrega | Status |
+|---|---|---|
+| 4N.1 | Plano (§19.17) | ✅ |
+| 4N.2 | `triggerClassName` em `ColorPickerPopoverTrigger` + `RibbonColorPicker` | ✅ |
+| 4N.3 | Popup densificado (`min-width` = grade) + «Cores Padrão» sem overlap branco/preto | ✅ |
+| 4N.4 | Animação de entrada → `NativeSelectControl` | ✅ |
+| 4N.5 | `NativeCheckboxControl` + `NativeTextControl` no plugin-ui; uso nos inspetores chart/table/elemento | ✅ |
+| 4N.6 | Context menu só `TvRibbonColorPicker` | ✅ |
+| 4N.7 | Estender gate CI a checkbox/input cru (residual) | ⬜ |
+
+#### Anti-padrões 4N
+
+- Passar modifiers do gatilho (`--ribbon`, `--inline`) via `className` do **popover**.
+- `<select>` / `<textarea>` nativos no TV (gate `audit_plugin_ui_native_form_controls`).
+- Misturar `RibbonColorPicker` e `TvRibbonColorPicker` na mesma superfície sem motivo.
+
 ---
 
 ## 20. Histórico — kickoff v1
