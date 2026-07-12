@@ -1210,7 +1210,7 @@
     {
       "operationId": "get_product_drawing_pdf",
       "httpMethod": "GET",
-      "label": "Download do desenho PDF do produto",
+      "label": "Do desenho PDF do produto",
       "category": "products",
       "path": "/products/{code}/drawing/pdf",
       "allowedDisplayModes": [
@@ -1218,7 +1218,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Download do desenho PDF do produto»."
+      "description": "Indicador numérico para «Do desenho PDF do produto»."
     },
     {
       "operationId": "get_product_factory_status",
@@ -1561,7 +1561,7 @@
     {
       "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
       "httpMethod": "GET",
-      "label": "Export Proposta Comercial Pdf Route",
+      "label": "Proposta comercial — exportar PDF",
       "category": "commercial",
       "path": "/propostas-comerciais/{proposta_interna}/pdf",
       "allowedDisplayModes": [
@@ -1569,7 +1569,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Export Proposta Comercial Pdf Route»."
+      "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
     },
     {
       "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
@@ -1626,7 +1626,7 @@
     {
       "operationId": "get_quality_action_plans_dashboard",
       "httpMethod": "GET",
-      "label": "Indicador — Quality action plan dashboard",
+      "label": "PAC Qualidade — painel",
       "category": "quality",
       "path": "/quality/action-plans/dashboard",
       "allowedDisplayModes": [
@@ -1634,7 +1634,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Quality action plan dashboard»."
+      "description": "Indicador numérico para «PAC Qualidade — painel»."
     },
     {
       "operationId": "list_quality_action_plan_pending_effectiveness_reviews",
@@ -2003,7 +2003,7 @@
     {
       "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
       "httpMethod": "GET",
-      "label": "Download Nc Attachment",
+      "label": "Auditoria 5S — download de anexo da NC",
       "category": "quality",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
       "allowedDisplayModes": [
@@ -2011,7 +2011,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Download Nc Attachment»."
+      "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
     },
     {
       "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
@@ -2029,7 +2029,7 @@
     {
       "operationId": "list_quality_branches_quality_branches_get",
       "httpMethod": "GET",
-      "label": "Listar Quality Branches",
+      "label": "Quality Branches",
       "category": "quality",
       "path": "/quality/branches",
       "allowedDisplayModes": [
@@ -2037,7 +2037,7 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Quality Branches» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Quality Branches» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_kaizen_records",
@@ -2055,7 +2055,7 @@
     {
       "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
       "httpMethod": "GET",
-      "label": "Export Kaizen Records",
+      "label": "Kaizen Records",
       "category": "quality",
       "path": "/quality/kaizens/records/export",
       "allowedDisplayModes": [
@@ -2063,7 +2063,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Export Kaizen Records»."
+      "description": "Indicador numérico para «Kaizen Records»."
     },
     {
       "operationId": "get_kaizen_record",
@@ -2081,7 +2081,7 @@
     {
       "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
       "httpMethod": "GET",
-      "label": "Consultar Kaizen At Date",
+      "label": "Kaizen At Date",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/at",
       "allowedDisplayModes": [
@@ -2089,12 +2089,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Kaizen At Date»."
+      "description": "Indicador numérico para «Kaizen At Date»."
     },
     {
       "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
       "httpMethod": "GET",
-      "label": "Listar Kaizen Audit Log",
+      "label": "Kaizen Audit Log",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/audit-log",
       "allowedDisplayModes": [
@@ -2102,12 +2102,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Kaizen Audit Log» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Kaizen Audit Log» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
       "httpMethod": "GET",
-      "label": "Listar Kaizen Evidences",
+      "label": "Kaizen evidências",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/evidences",
       "allowedDisplayModes": [
@@ -2115,12 +2115,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Kaizen Evidences» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Kaizen evidências» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
       "httpMethod": "GET",
-      "label": "Download Kaizen Evidence",
+      "label": "Kaizen — download de evidência",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
       "allowedDisplayModes": [
@@ -2128,12 +2128,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Download Kaizen Evidence»."
+      "description": "Indicador numérico para «Kaizen — download de evidência»."
     },
     {
       "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
       "httpMethod": "GET",
-      "label": "Listar Kaizen History",
+      "label": "Kaizen History",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/history",
       "allowedDisplayModes": [
@@ -2141,12 +2141,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Kaizen History» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Kaizen History» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
       "httpMethod": "GET",
-      "label": "Listar Kaizen Revisions",
+      "label": "Kaizen Revisions",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/revisions",
       "allowedDisplayModes": [
@@ -2154,12 +2154,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Kaizen Revisions» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Kaizen Revisions» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
       "httpMethod": "GET",
-      "label": "Consultar Kaizen Revision",
+      "label": "Kaizen Revision",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/revisions/{revision_number}",
       "allowedDisplayModes": [
@@ -2167,12 +2167,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Kaizen Revision»."
+      "description": "Indicador numérico para «Kaizen Revision»."
     },
     {
       "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
       "httpMethod": "GET",
-      "label": "Consultar Kaizen Savings Timeline",
+      "label": "Kaizen Savings Timeline",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/savings-timeline",
       "allowedDisplayModes": [
@@ -2180,7 +2180,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Kaizen Savings Timeline»."
+      "description": "Indicador numérico para «Kaizen Savings Timeline»."
     },
     {
       "operationId": "get_kaizen_summary",
@@ -2211,7 +2211,7 @@
     {
       "operationId": "list_labels_quality_labels_get",
       "httpMethod": "GET",
-      "label": "Listar Labels",
+      "label": "Etiquetas de qualidade — listagem",
       "category": "quality",
       "path": "/quality/labels",
       "allowedDisplayModes": [
@@ -2219,12 +2219,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Labels» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Etiquetas de qualidade — listagem» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_audit_events_quality_labels_audit_events_get",
       "httpMethod": "GET",
-      "label": "Listar Audit Events",
+      "label": "Etiquetas — eventos de auditoria",
       "category": "quality",
       "path": "/quality/labels/audit-events",
       "allowedDisplayModes": [
@@ -2232,12 +2232,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Audit Events» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Etiquetas — eventos de auditoria» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_checklist_template_quality_labels_checklist_template_get",
       "httpMethod": "GET",
-      "label": "Listar Checklist Template",
+      "label": "Etiquetas — modelo de checklist",
       "category": "quality",
       "path": "/quality/labels/checklist-template",
       "allowedDisplayModes": [
@@ -2245,12 +2245,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Checklist Template» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Etiquetas — modelo de checklist» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
       "httpMethod": "GET",
-      "label": "Consultar My Inspector",
+      "label": "Meu perfil de inspetor",
       "category": "quality",
       "path": "/quality/labels/inspectors/me",
       "allowedDisplayModes": [
@@ -2258,12 +2258,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar My Inspector»."
+      "description": "Indicador numérico para «Meu perfil de inspetor»."
     },
     {
       "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
       "httpMethod": "GET",
-      "label": "Consultar My Signature",
+      "label": "Minha assinatura de inspetor",
       "category": "quality",
       "path": "/quality/labels/inspectors/me/signature",
       "allowedDisplayModes": [
@@ -2271,7 +2271,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar My Signature»."
+      "description": "Indicador numérico para «Minha assinatura de inspetor»."
     },
     {
       "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
@@ -2302,7 +2302,7 @@
     {
       "operationId": "get_label_quality_labels__label_id__get",
       "httpMethod": "GET",
-      "label": "Consultar Label",
+      "label": "Etiqueta de qualidade — detalhe",
       "category": "quality",
       "path": "/quality/labels/{label_id}",
       "allowedDisplayModes": [
@@ -2310,12 +2310,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Label»."
+      "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
     },
     {
       "operationId": "get_certificate_quality_labels__label_id__certificate_get",
       "httpMethod": "GET",
-      "label": "Consultar Certificate",
+      "label": "Etiqueta — certificado",
       "category": "quality",
       "path": "/quality/labels/{label_id}/certificate",
       "allowedDisplayModes": [
@@ -2323,12 +2323,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Certificate»."
+      "description": "Indicador numérico para «Etiqueta — certificado»."
     },
     {
       "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
       "httpMethod": "GET",
-      "label": "Consultar Certificate Pdf",
+      "label": "Certificate PDF",
       "category": "quality",
       "path": "/quality/labels/{label_id}/certificate/pdf",
       "allowedDisplayModes": [
@@ -2336,12 +2336,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Certificate Pdf»."
+      "description": "Indicador numérico para «Certificate PDF»."
     },
     {
       "operationId": "get_label_qr_quality_labels__label_id__qr_get",
       "httpMethod": "GET",
-      "label": "Consultar Label Qr",
+      "label": "Etiqueta — QR Code",
       "category": "quality",
       "path": "/quality/labels/{label_id}/qr",
       "allowedDisplayModes": [
@@ -2349,12 +2349,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Label Qr»."
+      "description": "Indicador numérico para «Etiqueta — QR Code»."
     },
     {
       "operationId": "list_nonconformity_route_quality_nonconformities_get",
       "httpMethod": "GET",
-      "label": "Listar Nonconformity Route",
+      "label": "Não conformidades — listagem",
       "category": "quality",
       "path": "/quality/nonconformities",
       "allowedDisplayModes": [
@@ -2362,12 +2362,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Nonconformity Route» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Não conformidades — listagem» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
       "httpMethod": "GET",
-      "label": "Consultar Nonconformity Series",
+      "label": "Não conformidades — série temporal",
       "category": "quality",
       "path": "/quality/nonconformities/series",
       "allowedDisplayModes": [
@@ -2375,12 +2375,12 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Nonconformity Series»."
+      "description": "Indicador numérico para «Não conformidades — série temporal»."
     },
     {
       "operationId": "list_ppm_external",
       "httpMethod": "GET",
-      "label": "Listar External Ppm",
+      "label": "PPM externo — listagem",
       "category": "quality",
       "path": "/quality/ppm/external",
       "allowedDisplayModes": [
@@ -2388,12 +2388,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar External Ppm» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «PPM externo — listagem» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_ppm_external_series",
       "httpMethod": "GET",
-      "label": "Consultar External Ppm Series",
+      "label": "PPM externo — série temporal",
       "category": "quality",
       "path": "/quality/ppm/external/series",
       "allowedDisplayModes": [
@@ -2401,7 +2401,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar External Ppm Series»."
+      "description": "Indicador numérico para «PPM externo — série temporal»."
     },
     {
       "operationId": "get_ppm_external_summary",
@@ -2444,7 +2444,7 @@
     {
       "operationId": "list_ppm_internal",
       "httpMethod": "GET",
-      "label": "Listar Internal Ppm",
+      "label": "PPM interno — listagem",
       "category": "quality",
       "path": "/quality/ppm/internal",
       "allowedDisplayModes": [
@@ -2452,12 +2452,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Internal Ppm» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «PPM interno — listagem» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_ppm_internal_series",
       "httpMethod": "GET",
-      "label": "Consultar Internal Ppm Series",
+      "label": "PPM interno — série temporal",
       "category": "quality",
       "path": "/quality/ppm/internal/series",
       "allowedDisplayModes": [
@@ -2465,7 +2465,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Internal Ppm Series»."
+      "description": "Indicador numérico para «PPM interno — série temporal»."
     },
     {
       "operationId": "get_ppm_internal_summary",
@@ -2508,7 +2508,7 @@
     {
       "operationId": "get_produced_quantity",
       "httpMethod": "GET",
-      "label": "Consultar Produced Quantity",
+      "label": "Quantidade produzida",
       "category": "quality",
       "path": "/quality/produced-quantity",
       "allowedDisplayModes": [
@@ -2516,7 +2516,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consultar Produced Quantity»."
+      "description": "Indicador numérico para «Quantidade produzida»."
     },
     {
       "operationId": "list_quality_solution_patterns",
@@ -2547,7 +2547,7 @@
     {
       "operationId": "list_bookings_scheduling_bookings_get",
       "httpMethod": "GET",
-      "label": "Listar Bookings",
+      "label": "Agendamentos — reservas",
       "category": "scheduling",
       "path": "/scheduling/bookings",
       "allowedDisplayModes": [
@@ -2555,12 +2555,12 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Bookings» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Agendamentos — reservas» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_resources_scheduling_resources_get",
       "httpMethod": "GET",
-      "label": "Listar Resources",
+      "label": "Agendamentos — recursos",
       "category": "scheduling",
       "path": "/scheduling/resources",
       "allowedDisplayModes": [
@@ -2568,7 +2568,7 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar Resources» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Agendamentos — recursos» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_supplies_cpv",

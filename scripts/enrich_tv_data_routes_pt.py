@@ -33,17 +33,62 @@ LABEL_OVERRIDES: dict[str, str] = {
     "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get": "Auditoria 5S — anexos da NC",
     "get_audit_5s_summary_quality_audit_5s_summary_get": "Auditoria 5S — resumo",
     "root_health_get": "Saúde da API (root)",
+    "get_ppm_external_series": "PPM externo — série temporal",
+    "get_ppm_internal_series": "PPM interno — série temporal",
+    "get_nonconformity_series_quality_nonconformities_series_get": "Não conformidades — série temporal",
+    "list_ppm_external": "PPM externo — listagem",
+    "list_ppm_internal": "PPM interno — listagem",
+    "list_nonconformity_route_quality_nonconformities_get": "Não conformidades — listagem",
+    "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get": "Auditoria 5S — download de anexo da NC",
+    "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get": "Kaizen — download de evidência",
+    "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get": "Proposta comercial — exportar PDF",
+    "get_quality_action_plans_dashboard": "PAC Qualidade — painel",
+    "list_labels_quality_labels_get": "Etiquetas de qualidade — listagem",
+    "list_audit_events_quality_labels_audit_events_get": "Etiquetas — eventos de auditoria",
+    "list_checklist_template_quality_labels_checklist_template_get": "Etiquetas — modelo de checklist",
+    "get_my_inspector_quality_labels_inspectors_me_get": "Meu perfil de inspetor",
+    "get_my_signature_quality_labels_inspectors_me_signature_get": "Minha assinatura de inspetor",
+    "get_label_quality_labels__label_id__get": "Etiqueta de qualidade — detalhe",
+    "get_certificate_quality_labels__label_id__certificate_get": "Etiqueta — certificado",
+    "get_label_qr_quality_labels__label_id__qr_get": "Etiqueta — QR Code",
+    "get_produced_quantity": "Quantidade produzida",
+    "list_bookings_scheduling_bookings_get": "Agendamentos — reservas",
+    "list_resources_scheduling_resources_get": "Agendamentos — recursos",
 }
 
 # Prefixos EN genéricos → PT
 _EN_PREFIXES = (
-    (re.compile(r"^Get\s+", re.I), "Consultar "),
-    (re.compile(r"^List\s+", re.I), "Listar "),
-    (re.compile(r"^Search\s+", re.I), "Buscar "),
-    (re.compile(r"^Create\s+", re.I), "Criar "),
-    (re.compile(r"^Update\s+", re.I), "Atualizar "),
-    (re.compile(r"^Delete\s+", re.I), "Excluir "),
-    (re.compile(r"^Post\s+", re.I), "Enviar "),
+    (re.compile(r"^Get\s+", re.I), ""),
+    (re.compile(r"^List\s+", re.I), ""),
+    (re.compile(r"^Search\s+", re.I), ""),
+    (re.compile(r"^Create\s+", re.I), ""),
+    (re.compile(r"^Update\s+", re.I), ""),
+    (re.compile(r"^Delete\s+", re.I), ""),
+    (re.compile(r"^Post\s+", re.I), ""),
+    (re.compile(r"^Download\s+", re.I), ""),
+    (re.compile(r"^Export\s+", re.I), ""),
+    (re.compile(r"^Consultar\s+", re.I), ""),
+    (re.compile(r"^Listar\s+", re.I), ""),
+)
+
+# Tokens EN remanescentes no rótulo (após prefixo)
+_EN_TOKEN_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bNonconformity\b", re.I), "não conformidades"),
+    (re.compile(r"\bExternal\s+Ppm\b", re.I), "PPM externo"),
+    (re.compile(r"\bInternal\s+Ppm\b", re.I), "PPM interno"),
+    (re.compile(r"\bPpm\b", re.I), "PPM"),
+    (re.compile(r"\bSeries\b", re.I), "série temporal"),
+    (re.compile(r"\bAttachment\b", re.I), "anexo"),
+    (re.compile(r"\bAttachments\b", re.I), "anexos"),
+    (re.compile(r"\bEvidence\b", re.I), "evidência"),
+    (re.compile(r"\bEvidences\b", re.I), "evidências"),
+    (re.compile(r"\bRoute\b", re.I), ""),
+    (re.compile(r"\bQuality\s+action\s+plan\s+dashboard\b", re.I), "PAC Qualidade — painel"),
+    (re.compile(r"\bKaizen\b", re.I), "Kaizen"),
+    (re.compile(r"\bNc\b"), "NC"),
+    (re.compile(r"\b5s\b", re.I), "5S"),
+    (re.compile(r"\bId\b"), "ID"),
+    (re.compile(r"\bPdf\b", re.I), "PDF"),
 )
 
 _SHAPE_LEAD = {
@@ -56,20 +101,44 @@ _SHAPE_LEAD = {
 
 
 def _looks_english(label: str) -> bool:
-    return bool(re.match(r"^(Get|List|Search|Create|Update|Delete|Post)\b", label.strip(), re.I))
+    """Detecta rótulos ainda em inglês ou híbridos (ex.: Consultar External Ppm Series)."""
+    text = label.strip()
+    if re.match(r"^(Get|List|Search|Create|Update|Delete|Post|Download|Export)\b", text, re.I):
+        return True
+    # Híbridos do enrich anterior: prefixo PT + resto EN
+    if re.match(r"^(Consultar|Listar|Buscar|Criar|Atualizar|Excluir|Enviar)\s+", text, re.I):
+        return bool(
+            re.search(
+                r"\b(External|Internal|Nonconformity|Attachment|Evidence|Route|Series|Ppm|"
+                r"Customers|Inspection|Kaizen|Quality|Action|Plan|Dashboard|Pdf)\b",
+                text,
+                re.I,
+            )
+        )
+    return False
+
+
+def _title_case_pt(text: str) -> str:
+    text = re.sub(r"\s+", " ", text).strip(" —–-")
+    if not text:
+        return text
+    # Capitaliza só a primeira letra (resto já vem do glossário)
+    return text[0].upper() + text[1:] if text else text
 
 
 def _humanize_en_label(label: str) -> str:
     text = label.strip()
-    for pattern, repl in _EN_PREFIXES:
+    for pattern, _repl in _EN_PREFIXES:
         if pattern.match(text):
-            rest = pattern.sub("", text).strip()
-            # Nc → NC, 5s → 5S
-            rest = re.sub(r"\bNc\b", "NC", rest)
-            rest = re.sub(r"\b5s\b", "5S", rest, flags=re.I)
-            rest = re.sub(r"\bId\b", "ID", rest)
-            return f"{repl}{rest}".strip()
-    return text
+            text = pattern.sub("", text).strip()
+            break
+    for pattern, repl in _EN_TOKEN_REPLACEMENTS:
+        text = pattern.sub(repl, text)
+    text = re.sub(r"\s+", " ", text).strip(" —–-")
+    # "PPM externo série temporal" → "PPM externo — série temporal"
+    text = re.sub(r"\b(PPM (?:externo|interno))\s+(série temporal)\b", r"\1 — \2", text, flags=re.I)
+    text = re.sub(r"\b(não conformidades)\s+(série temporal)\b", r"\1 — \2", text, flags=re.I)
+    return _title_case_pt(text)
 
 
 def _description_for(route: dict) -> str:
