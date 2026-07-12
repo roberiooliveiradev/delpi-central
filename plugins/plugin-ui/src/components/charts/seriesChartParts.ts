@@ -276,7 +276,7 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   axis: { movable: false, editable: false, deletable: true, resizable: false },
   axisTitle: { movable: false, editable: true, deletable: true, resizable: false },
   grid: { movable: false, editable: false, deletable: true, resizable: false },
-  dataTable: { movable: true, editable: false, deletable: true, resizable: true },
+  dataTable: { movable: false, editable: false, deletable: true, resizable: false },
 };
 
 export function chartPartCapabilities(ref: ChartPartRef): ChartPartCapabilities {
@@ -490,12 +490,13 @@ export function mergeChartPartsWithOptions(
         },
       };
     } else if (prevState.style || prevState.frame || prevState.content !== undefined) {
+      const preserveFrame = !key.startsWith("dataTable");
       merged[key] = {
         ...projectedState,
         ...prevState,
         visible: projectedState?.visible ?? prevState.visible,
         style: { ...projectedState?.style, ...prevState.style },
-        frame: prevState.frame ?? projectedState?.frame,
+        frame: preserveFrame ? (prevState.frame ?? projectedState?.frame) : undefined,
       };
     }
   }

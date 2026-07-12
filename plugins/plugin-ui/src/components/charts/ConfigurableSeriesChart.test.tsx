@@ -52,6 +52,36 @@ describe("ConfigurableSeriesChart", () => {
     expect(screen.getAllByText("ROL").length).toBeGreaterThan(0);
   });
 
+  it("tabela de dados permanece no fluxo (sem position absolute por frame legado)", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="line"
+        points={[
+          { label: "11/06/26", value: 66.7 },
+          { label: "16/06/26", value: 86.2 },
+        ]}
+        options={{
+          showDataTable: true,
+          seriesName: "OTD — série temporal",
+          showLegend: false,
+          legendPosition: "hidden",
+          valueFormat: "percent",
+        }}
+        chartParts={{
+          dataTable: {
+            visible: true,
+            frame: { x: 0, y: 20, w: 35, h: 60 },
+          },
+        }}
+      />,
+    );
+    const tableHost = container.querySelector(".delpi-ui-series-chart__data-table") as HTMLElement;
+    expect(tableHost).toBeTruthy();
+    expect(tableHost.style.position).not.toBe("absolute");
+    expect(tableHost.querySelector("td")?.textContent).toBe("11/06/26");
+    expect(tableHost.textContent).toContain("66,7%");
+  });
+
   it("aplica classes modulares nos elementos do gráfico", () => {
     const { container } = render(
       <ConfigurableSeriesChart

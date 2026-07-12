@@ -139,14 +139,22 @@
 }
 
 .delpi-ui-series-chart__data-table {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
   width: 100%;
-  border-collapse: collapse;
+  max-height: min(40%, 12rem);
+  overflow: auto;
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--delpi-ui-series-chart-bg, #ffffff);
   font-size: clamp(8px, 0.9vw, 10px);
 }
 
 .delpi-ui-series-chart__data-table__inner {
   width: 100%;
   border-collapse: collapse;
+  background: var(--delpi-ui-series-chart-bg, #ffffff);
 }
 
 .delpi-ui-series-chart__data-table th,
@@ -154,11 +162,16 @@
   border: 1px solid color-mix(in srgb, var(--delpi-ui-series-chart-muted, #64748b) 25%, transparent);
   padding: 0.15rem 0.35rem;
   text-align: center;
+  background: var(--delpi-ui-series-chart-bg, #ffffff);
+  color: var(--delpi-ui-series-chart-text, #1e293b);
 }
 
 .delpi-ui-series-chart__data-table th {
   background: color-mix(in srgb, var(--delpi-ui-series-chart-muted, #64748b) 12%, var(--delpi-ui-series-chart-bg, #fff));
   font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 /* Onda 4G — subseleção de partes no editor */
@@ -179,8 +192,7 @@
 }
 
 .delpi-ui-series-chart__title.delpi-ui-series-chart__part--selected,
-.delpi-ui-series-chart__legend.delpi-ui-series-chart__part--selected,
-.delpi-ui-series-chart__data-table.delpi-ui-series-chart__part--selected {
+.delpi-ui-series-chart__legend.delpi-ui-series-chart__part--selected {
   cursor: move;
 }
 

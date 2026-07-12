@@ -1195,10 +1195,22 @@
 }
 
 .tdp-series-chart__data-table {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 100%;
+  max-height: min(40%, 12rem);
+  overflow: auto;
+  margin-top: 0.25rem;
+  box-sizing: border-box;
+  background: var(--tdp-series-chart-bg, #fff);
+  font-size: clamp(8px, 0.95vw, 11px);
+}
+
+.tdp-series-chart__data-table__inner {
   width: 100%;
   border-collapse: collapse;
-  font-size: clamp(8px, 0.95vw, 11px);
-  margin-top: 0.25rem;
+  background: var(--tdp-series-chart-bg, #fff);
 }
 
 .tdp-series-chart__data-table th,
@@ -1206,12 +1218,17 @@
   border: 1px solid color-mix(in srgb, var(--tdp-series-chart-muted, #64748b) 28%, transparent);
   padding: 0.2em 0.35em;
   text-align: center;
+  background: var(--tdp-series-chart-bg, #fff);
+  color: var(--tdp-series-chart-text, #1e293b);
 }
 
 .tdp-series-chart__data-table th {
   font-weight: 600;
   color: var(--tdp-series-chart-text-strong, #0f172a);
   background: color-mix(in srgb, var(--tdp-series-chart-muted, #64748b) 12%, var(--tdp-series-chart-bg, #fff));
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 /* Onda 4G — subseleção (editor); TV ignora interactive */
@@ -1232,8 +1249,7 @@
 }
 
 .tdp-series-chart__title.tdp-series-chart__part--selected,
-.tdp-series-chart__legend.tdp-series-chart__part--selected,
-.tdp-series-chart__data-table.tdp-series-chart__part--selected {
+.tdp-series-chart__legend.tdp-series-chart__part--selected {
   cursor: move;
 }
 
@@ -1316,6 +1332,6 @@
 }
 
 .tdp-series-chart__data-table td {
-  color: var(--tdp-data-text, #e2e8f0);
+  color: var(--tdp-series-chart-text, var(--tdp-data-text, #1e293b));
 }
 
