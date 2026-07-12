@@ -33,9 +33,6 @@ import {
   getChartPartState,
   getKpiPartState,
   mergeKpiPartsWithOptions,
-  applyBlockShapeChromeStyle,
-  blockUsesInnerShapeChrome,
-  isInnerShapeChromeStyleKey,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -58,6 +55,7 @@ import type {
   DataPanelIntent,
 } from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
+import { applyComunicadoBlockStylePatch } from "../../utils/applyComunicadoBlockStylePatch";
 import {
   bringForward,
   bringToFront,
@@ -444,35 +442,9 @@ export function useComunicadoEditorBlocks({
       const targets = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
       if (targets.length === 0) return;
       const idSet = new Set(targets.map((block) => block.id));
-      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
-        if (!idSet.has(block.id)) return block;
-
-        const chromePatch: Record<string, unknown> = {};
-        const restPatch: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(patch)) {
-          if (value === undefined) continue;
-          if (blockUsesInnerShapeChrome(block) && isInnerShapeChromeStyleKey(key)) {
-            chromePatch[key] = value;
-          } else {
-            restPatch[key] = value;
-          }
-        }
-
-        let next: ComunicadoBlock = block;
-        if (Object.keys(chromePatch).length > 0) {
-          const applied = applyBlockShapeChromeStyle(block, chromePatch);
-          if (applied) {
-            next = { ...block, ...applied } as ComunicadoBlock;
-          }
-        }
-        if (Object.keys(restPatch).length > 0) {
-          next = {
-            ...next,
-            style: { ...next.style, ...restPatch },
-          } as ComunicadoBlock;
-        }
-        return next;
-      });
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        idSet.has(block.id) ? applyComunicadoBlockStylePatch(block, patch) : block,
+      );
       updateBlocks(nextBlocks);
     },
     [configRef, selected, selectedBlocks, updateBlocks],
