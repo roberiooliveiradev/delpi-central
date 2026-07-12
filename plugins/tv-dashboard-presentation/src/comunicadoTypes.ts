@@ -256,6 +256,8 @@ export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
   type: "kpi_view";
   dataSourceId?: string;
   kpiOptions?: import("./comunicadoKpiOptions").ComunicadoKpiOptions;
+  /** Partes primitivas (card/title/value/hint/icon) — padrão chartParts. */
+  kpiParts?: import("./comunicadoKpiParts").ComunicadoKpiPartsMap;
   resolved?: ComunicadoDataResolved;
 };
 

@@ -264,6 +264,27 @@ export {
   resolveKpiViewPresentation,
   type KpiViewPresentation,
 } from "./resolveKpiPresentation";
+export {
+  KPI_ELEMENT_CATALOG,
+  KPI_PART_DATA_ATTR,
+  applyKpiElementVisibility,
+  deleteKpiPart,
+  getKpiPartState,
+  isKpiElementEnabled,
+  isKpiElementOpenForPart,
+  kpiElementPrimaryPartRef,
+  kpiPartAllowsDelete,
+  kpiPartAllowsEdit,
+  mergeKpiPartsWithOptions,
+  normalizeKpiPartsForLoad,
+  partsToKpiOptions,
+  serializeKpiPartRef,
+  upsertKpiPartState,
+  type ComunicadoKpiInteraction,
+  type ComunicadoKpiPartRef,
+  type ComunicadoKpiPartsMap,
+  type KpiElementId,
+} from "./comunicadoKpiParts";
 export { TableViewBlockView } from "./tableViewBlockView";
 export { DataSourceBlockView } from "./dataSourceBlockView";
 export {

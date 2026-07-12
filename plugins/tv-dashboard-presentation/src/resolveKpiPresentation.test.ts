@@ -16,6 +16,8 @@ describe("kpi_view", () => {
     if (kpi?.type === "kpi_view") {
       expect(kpi.kpiOptions?.title).toBe("OEE");
       expect(kpi.kpiOptions?.iconName).toBe("Gauge");
+      expect(kpi.kpiParts?.title?.content).toBe("OEE");
+      expect(kpi.kpiParts?.icon?.visible).not.toBe(false);
     }
   });
 

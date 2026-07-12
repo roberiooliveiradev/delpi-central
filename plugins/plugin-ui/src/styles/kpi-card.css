@@ -105,3 +105,19 @@
 .delpi-kpi-card-shell[data-custom-value="true"] .delpi-kpi-card__value {
   color: var(--delpi-kpi-value-color) !important;
 }
+
+.delpi-kpi-part--selected,
+.delpi-kpi-card--part-selected {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.delpi-kpi-card__edit {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+  border: 1px solid var(--delpi-ui-accent, #089bdb);
+  border-radius: 4px;
+  padding: 2px 4px;
+}

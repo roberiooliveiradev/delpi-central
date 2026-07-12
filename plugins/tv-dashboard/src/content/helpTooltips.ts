@@ -159,6 +159,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     connectOnStage:
       "Com um gráfico, tabela ou KPI selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
     kpiCard: "Título, subtítulo, unidade, ícone e tom de cor do card KPI (padrão visual Delpi).",
+    kpiElements:
+      "Ligue ou desligue partes do card. O detalhe abre ao selecionar a parte no palco (duplo clique).",
     kpiColorRules:
       "Regras por limiar: a primeira condição verdadeira aplica o tom (positivo/negativo/atenção) ao valor.",
     chartOptions: "Título, legenda, eixos, rótulos de dados e formato dos valores exibidos no gráfico.",

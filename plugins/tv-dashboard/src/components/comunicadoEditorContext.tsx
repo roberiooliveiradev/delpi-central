@@ -49,16 +49,22 @@ import {
   type ComunicadoListType,
   type ComunicadoChartType,
   type ComunicadoChartPartRef,
+  type ComunicadoKpiPartRef,
   type ComunicadoTablePartRef,
   type ComunicadoTablePreset,
   chartOptionsToParts,
   mergeComunicadoChartOptions,
+  mergeComunicadoKpiOptions,
   partsToChartOptions,
+  partsToKpiOptions,
   upsertChartPartState,
+  upsertKpiPartState,
   chartPartAllowsDelete,
   chartPartAllowsMove,
   deleteChartPart,
+  deleteKpiPart,
   deleteTablePart,
+  kpiPartAllowsDelete,
   tablePartAllowsDelete,
   nudgeChartPartFrame,
 } from "@delpi/tv-dashboard-presentation";
@@ -177,6 +183,8 @@ export function ComunicadoEditorProvider({
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [editingChartPart, setEditingChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [selectedTablePart, setSelectedTablePart] = useState<ComunicadoTablePartRef | null>(null);
+  const [selectedKpiPart, setSelectedKpiPart] = useState<ComunicadoKpiPartRef | null>(null);
+  const [editingKpiPart, setEditingKpiPart] = useState<ComunicadoKpiPartRef | null>(null);
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
@@ -205,6 +213,8 @@ export function ComunicadoEditorProvider({
     setSelectedChartPart(null);
     setEditingChartPart(null);
     setSelectedTablePart(null);
+    setSelectedKpiPart(null);
+    setEditingKpiPart(null);
   }
 
   const pastRef = useRef<ComunicadoConfig[]>([]);
@@ -234,6 +244,8 @@ export function ComunicadoEditorProvider({
     setSelectedChartPart(null);
     setEditingChartPart(null);
     setSelectedTablePart(null);
+    setSelectedKpiPart(null);
+    setEditingKpiPart(null);
     if (!id) {
       setTextEditSelection(null);
       setTextEditSelectionStyle(null);
@@ -250,6 +262,8 @@ export function ComunicadoEditorProvider({
     setSelectedChartPart(null);
     setEditingChartPart(null);
     setSelectedTablePart(null);
+    setSelectedKpiPart(null);
+    setEditingKpiPart(null);
   }, [flushActiveTextEdit]);
 
   const selectBlock = useCallback(
@@ -279,6 +293,9 @@ export function ComunicadoEditorProvider({
       setEditingTextId(null);
       setSelectedChartPart(null);
       setEditingChartPart(null);
+      setSelectedTablePart(null);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
       if (selectedBlockType === "chart_view") {
         setRibbonTabRequest("chart");
       } else if (selectedBlockType === "shape") {
@@ -295,6 +312,8 @@ export function ComunicadoEditorProvider({
     setSelectedChartPart(null);
     setEditingChartPart(null);
     setSelectedTablePart(null);
+    setSelectedKpiPart(null);
+    setEditingKpiPart(null);
   }, [flushActiveTextEdit]);
 
   const selectChartPart = useCallback(
@@ -303,6 +322,8 @@ export function ComunicadoEditorProvider({
       setSelectedIds([blockId]);
       setEditingTextId(null);
       setSelectedTablePart(null);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
       const primitiveKinds = new Set([
@@ -322,6 +343,8 @@ export function ComunicadoEditorProvider({
     setSelectedChartPart(null);
     setEditingChartPart(null);
     setSelectedTablePart(null);
+    setSelectedKpiPart(null);
+    setEditingKpiPart(null);
   }, []);
 
   const selectTablePart = useCallback(
@@ -331,6 +354,8 @@ export function ComunicadoEditorProvider({
       setEditingTextId(null);
       setSelectedChartPart(null);
       setEditingChartPart(null);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
       setSelectedTablePart(part);
       setRibbonTabRequest("format");
     },
@@ -341,6 +366,26 @@ export function ComunicadoEditorProvider({
     setSelectedTablePart(null);
   }, []);
 
+  const selectKpiPart = useCallback(
+    (blockId: string, part: ComunicadoKpiPartRef) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      setSelectedTablePart(null);
+      setSelectedKpiPart(part);
+      setEditingKpiPart(null);
+      setRibbonTabRequest("format");
+    },
+    [flushActiveTextEdit],
+  );
+
+  const clearKpiPartSelection = useCallback(() => {
+    setSelectedKpiPart(null);
+    setEditingKpiPart(null);
+  }, []);
+
   const beginEditChartPart = useCallback(
     (blockId: string, part: ComunicadoChartPartRef) => {
       flushActiveTextEdit();
@@ -348,12 +393,32 @@ export function ComunicadoEditorProvider({
       setEditingTextId(null);
       setSelectedChartPart(part);
       setEditingChartPart(part);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
     },
     [flushActiveTextEdit],
   );
 
   const cancelEditChartPart = useCallback(() => {
     setEditingChartPart(null);
+  }, []);
+
+  const beginEditKpiPart = useCallback(
+    (blockId: string, part: ComunicadoKpiPartRef) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      setSelectedTablePart(null);
+      setSelectedKpiPart(part);
+      setEditingKpiPart(part);
+    },
+    [flushActiveTextEdit],
+  );
+
+  const cancelEditKpiPart = useCallback(() => {
+    setEditingKpiPart(null);
   }, []);
 
   const isBlockSelected = useCallback(
@@ -799,6 +864,36 @@ export function ComunicadoEditorProvider({
     [editingChartPart, selectedIds],
   );
 
+  const commitKpiPartContent = useCallback(
+    (content: string) => {
+      const part = editingKpiPart;
+      const blockId = selectedIds[selectedIds.length - 1] ?? null;
+      setEditingKpiPart(null);
+      if (!part || !blockId) return;
+      const block = configRef.current.blocks?.find((item) => item.id === blockId);
+      if (!block || block.type !== "kpi_view") return;
+
+      const nextParts = upsertKpiPartState(block.kpiParts, part, {
+        content,
+        visible: true,
+      });
+      const nextOptions = mergeComunicadoKpiOptions({
+        ...block.kpiOptions,
+        ...partsToKpiOptions(nextParts),
+      });
+      if (part.kind === "title") {
+        nextOptions.title = content.trim() || undefined;
+      } else if (part.kind === "hint") {
+        nextOptions.subtitle = content.trim() || undefined;
+      }
+      updateBlock(blockId, {
+        kpiParts: nextParts,
+        kpiOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+    },
+    [editingKpiPart, selectedIds],
+  );
+
   function updateBlockContent(blockId: string, content: string) {
     updateBlockTextFields(blockId, syncTextBlockFields(content, undefined));
   }
@@ -1077,6 +1172,25 @@ export function ComunicadoEditorProvider({
       return;
     }
 
+    const kpiBlock =
+      selected?.type === "kpi_view" ? selected : selectedBlocks.find((b) => b.type === "kpi_view");
+    if (
+      selectedKpiPart &&
+      kpiBlock &&
+      kpiBlock.type === "kpi_view" &&
+      selectedIds.includes(kpiBlock.id) &&
+      kpiPartAllowsDelete(selectedKpiPart)
+    ) {
+      const result = deleteKpiPart(kpiBlock.kpiParts, selectedKpiPart, kpiBlock.kpiOptions);
+      updateBlock(kpiBlock.id, {
+        kpiParts: result.parts,
+        kpiOptions: mergeComunicadoKpiOptions(result.options),
+      } as Partial<ComunicadoBlock>);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
+      return;
+    }
+
     if (selectedIds.length === 0) return;
     const removeSet = new Set(selectedIds);
     const nextBlocks = (configRef.current.blocks ?? []).filter((block) => !removeSet.has(block.id));
@@ -1316,6 +1430,13 @@ export function ComunicadoEditorProvider({
     selectedTablePart,
     selectTablePart,
     clearTablePartSelection,
+    selectedKpiPart,
+    selectKpiPart,
+    clearKpiPartSelection,
+    editingKpiPart,
+    beginEditKpiPart,
+    commitKpiPartContent,
+    cancelEditKpiPart,
     editingTextId,
     setEditingTextId: setEditingTextIdWithSelection,
     textEditSelection,

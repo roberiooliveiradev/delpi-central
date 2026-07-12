@@ -30,6 +30,11 @@ import {
   type ComunicadoKpiOptions,
 } from "./comunicadoKpiOptions";
 import {
+  kpiOptionsToParts,
+  normalizeKpiPartsForLoad,
+  type ComunicadoKpiPartsMap,
+} from "./comunicadoKpiParts";
+import {
   chartOptionsToParts,
   normalizeChartPartsForLoad,
   type ComunicadoChartPartsMap,
@@ -196,6 +201,7 @@ export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): Com
     id: newBlockId(),
     type: "kpi_view",
     kpiOptions,
+    kpiParts: kpiOptionsToParts(kpiOptions),
     frame: { x: 8, y: 28, w: 32, h: 24 },
     style: { zIndex: 2, borderRadius: 0, color: "#0f172a" },
   };
@@ -539,6 +545,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "kpi_view") {
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
     if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
+    if (block.kpiParts) base.kpiParts = { ...block.kpiParts };
   }
   return base;
 }
@@ -784,6 +791,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       block.kpiOptions && typeof block.kpiOptions === "object"
         ? mergeComunicadoKpiOptions(block.kpiOptions as ComunicadoKpiOptions)
         : mergeComunicadoKpiOptions(DEFAULT_COMUNICADO_KPI_OPTIONS);
+    const rawParts =
+      block.kpiParts && typeof block.kpiParts === "object"
+        ? (block.kpiParts as ComunicadoKpiPartsMap)
+        : undefined;
+    const kpiParts = normalizeKpiPartsForLoad(rawParts, kpiOptions);
     return attachBlockAnimations(
       {
         id,
@@ -793,6 +805,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         groupId,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
         kpiOptions,
+        kpiParts,
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)

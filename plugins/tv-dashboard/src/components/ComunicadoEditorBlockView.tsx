@@ -18,11 +18,17 @@ import {
   resizeChartPartFrame,
   resolveChartPartFrameRoot,
   upsertChartPartState,
+  KpiViewBlockView,
+  kpiPartAllowsEdit,
+  partsToKpiOptions,
+  upsertKpiPartState,
   type ComunicadoBlock,
   type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
   type ComunicadoChartViewBlock,
+  type ComunicadoKpiPartRef,
+  type ComunicadoKpiViewBlock,
   type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -357,6 +363,107 @@ function EditorTableViewBlock({
   );
 }
 
+function EditorKpiViewBlock({
+  block,
+  style,
+  className,
+  dataLoading = false,
+}: {
+  block: ComunicadoKpiViewBlock;
+  style: CSSProperties;
+  className?: string;
+  dataLoading?: boolean;
+}) {
+  const {
+    selectedId,
+    selectedKpiPart,
+    editingKpiPart,
+    selectBlock,
+    selectKpiPart,
+    beginEditKpiPart,
+    commitKpiPartContent,
+    cancelEditKpiPart,
+    requestRibbonTab,
+    updateBlock,
+  } = useComunicadoEditor();
+
+  const onPartPointerDown = useCallback(
+    (_part: ComunicadoKpiPartRef) => {
+      selectBlock(block.id);
+    },
+    [block.id, selectBlock],
+  );
+
+  const onPartDoubleClick = useCallback(
+    (part: ComunicadoKpiPartRef) => {
+      const same =
+        selectedId === block.id &&
+        selectedKpiPart &&
+        selectedKpiPart.kind === part.kind;
+      selectKpiPart(block.id, part);
+      requestRibbonTab("format");
+      if (same && kpiPartAllowsEdit(part)) {
+        beginEditKpiPart(block.id, part);
+      }
+    },
+    [
+      beginEditKpiPart,
+      block.id,
+      requestRibbonTab,
+      selectKpiPart,
+      selectedId,
+      selectedKpiPart,
+    ],
+  );
+
+  const onPartContentCommit = useCallback(
+    (part: ComunicadoKpiPartRef, content: string) => {
+      if (editingKpiPart && editingKpiPart.kind === part.kind) {
+        commitKpiPartContent(content);
+        return;
+      }
+      const nextParts = upsertKpiPartState(block.kpiParts, part, {
+        content,
+        visible: true,
+      });
+      const nextOptions = {
+        ...block.kpiOptions,
+        ...partsToKpiOptions(nextParts),
+      };
+      if (part.kind === "title") nextOptions.title = content.trim() || undefined;
+      if (part.kind === "hint") nextOptions.subtitle = content.trim() || undefined;
+      updateBlock(block.id, {
+        kpiParts: nextParts,
+        kpiOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+    },
+    [block, commitKpiPartContent, editingKpiPart, updateBlock],
+  );
+
+  const interaction =
+    selectedId === block.id
+      ? {
+          selectedPart: selectedKpiPart,
+          editingPart: editingKpiPart,
+          onPartPointerDown,
+          onPartDoubleClick,
+          onPartContentCommit,
+          onPartEditCancel: cancelEditKpiPart,
+        }
+      : null;
+
+  return (
+    <div
+      className={["tdp-comunicado__block", "tdp-comunicado__block--kpi-view", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={style}
+    >
+      <KpiViewBlockView block={block} interactive loading={dataLoading} interaction={interaction} />
+    </div>
+  );
+}
+
 /** Renderização de blocos no editor — mídia autenticada e controles de vídeo. */
 export function ComunicadoEditorBlockView({
   block,
@@ -423,17 +530,12 @@ export function ComunicadoEditorBlockView({
 
   if (block.type === "kpi_view") {
     return (
-      <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <ComunicadoBlockView
-          block={block}
-          fontScale={fontScale}
-          style={style}
-          className={className}
-          interactive
-          embedded
-          dataLoading={dataLoading}
-        />
-      </div>
+      <EditorKpiViewBlock
+        block={block}
+        style={style}
+        className={className}
+        dataLoading={dataLoading}
+      />
     );
   }
 

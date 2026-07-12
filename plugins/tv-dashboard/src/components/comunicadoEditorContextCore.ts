@@ -12,6 +12,7 @@ import type {
   ComunicadoDataDisplayMode,
   ComunicadoChartType,
   ComunicadoChartPartRef,
+  ComunicadoKpiPartRef,
   ComunicadoTablePartRef,
   ComunicadoTablePreset,
   ContentRunListSelectionState,
@@ -70,6 +71,14 @@ export type ComunicadoEditorContextValue = {
   selectedTablePart: ComunicadoTablePartRef | null;
   selectTablePart: (blockId: string, part: ComunicadoTablePartRef) => void;
   clearTablePartSelection: () => void;
+  /** KPI — subseleção de parte do card (título, valor, ícone…). */
+  selectedKpiPart: ComunicadoKpiPartRef | null;
+  selectKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;
+  clearKpiPartSelection: () => void;
+  editingKpiPart: ComunicadoKpiPartRef | null;
+  beginEditKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;
+  commitKpiPartContent: (content: string) => void;
+  cancelEditKpiPart: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
   textEditSelection: TextEditSelection | null;

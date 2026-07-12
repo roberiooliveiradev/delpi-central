@@ -1,6 +1,7 @@
 import { DelpiKpiCard } from "@delpi/plugin-ui/index";
 
 import { resolveComunicadoLucideIcon } from "./comunicadoIconView";
+import type { ComunicadoKpiInteraction } from "./comunicadoKpiParts";
 import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 
@@ -8,9 +9,15 @@ type Props = {
   block: ComunicadoKpiViewBlock;
   interactive?: boolean;
   loading?: boolean;
+  interaction?: ComunicadoKpiInteraction | null;
 };
 
-export function KpiViewBlockView({ block, interactive = false, loading = false }: Props) {
+export function KpiViewBlockView({
+  block,
+  interactive = false,
+  loading = false,
+  interaction = null,
+}: Props) {
   const resolved = block.resolved;
 
   if (resolved?.error) {
@@ -37,6 +44,7 @@ export function KpiViewBlockView({ block, interactive = false, loading = false }
   const presentation = resolveKpiViewPresentation(resolved, block.kpiOptions);
   const Icon = presentation.iconName ? resolveComunicadoLucideIcon(presentation.iconName) : null;
   const showIcon = presentation.showIcon && Icon;
+  const kpiInteraction = interactive ? interaction : null;
 
   return (
     <div className="tdp-kpi-view">
@@ -48,6 +56,9 @@ export function KpiViewBlockView({ block, interactive = false, loading = false }
         valueColor={presentation.valueColor}
         backgroundColor={presentation.backgroundColor}
         icon={showIcon && Icon ? <Icon aria-hidden size={22} strokeWidth={2} /> : undefined}
+        kpiOptions={block.kpiOptions}
+        kpiParts={block.kpiParts}
+        interaction={kpiInteraction}
       />
     </div>
   );
