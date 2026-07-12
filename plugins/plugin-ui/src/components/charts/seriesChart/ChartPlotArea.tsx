@@ -24,9 +24,7 @@ export function ChartPlotArea({
   const { margin, plotW, plotH } = layout;
   const ref = { kind: "plotArea" as const };
   const style = resolvePlotAreaStyle(chartParts);
-  const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction, {
-    moveWhenSelected: false,
-  });
+  const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction);
 
   return (
     <rect

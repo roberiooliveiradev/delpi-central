@@ -97,11 +97,17 @@ export type ChartPartState = {
   style?: ChartPartStyle;
   /** Título, axisTitle, seriesName, etc. */
   content?: string;
-  /** Posição % relativa ao bloco chart (title / legend / dataTable) — Onda 4H. */
+  /**
+   * Posição % relativa ao bloco chart (title / legend / dataTable)
+   * ou ao host do SVG (`plotArea`, 4H.6).
+   */
   frame?: ChartPartFrame;
 };
 
-/** Frame relativo ao bloco `chart_view` (0–100%). */
+/**
+ * Frame relativo (0–100%).
+ * title/legend/dataTable → raiz do gráfico; plotArea → `__plot-host` (viewBox).
+ */
 export type ChartPartFrame = {
   x: number;
   y: number;
@@ -241,12 +247,13 @@ export type ChartPartCapabilities = {
 
 const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabilities> = {
   chartArea: { movable: false, editable: false, deletable: false, resizable: false },
-  plotArea: { movable: false, editable: false, deletable: false, resizable: false },
+  plotArea: { movable: true, editable: false, deletable: false, resizable: true },
   title: { movable: true, editable: true, deletable: true, resizable: true },
   legend: { movable: true, editable: true, deletable: true, resizable: true },
   series: { movable: false, editable: false, deletable: true, resizable: false },
   marker: { movable: false, editable: false, deletable: true, resizable: false },
   dataLabel: { movable: false, editable: true, deletable: true, resizable: false },
+  /** Eixos ganham/perdem espaço via `plotArea.frame` (4H.6) — sem frame próprio. */
   axis: { movable: false, editable: false, deletable: true, resizable: false },
   axisTitle: { movable: false, editable: true, deletable: true, resizable: false },
   grid: { movable: false, editable: false, deletable: true, resizable: false },
@@ -628,6 +635,20 @@ export function chartPartAllowsEdit(ref: ChartPartRef): boolean {
 
 export function chartPartAllowsResize(ref: ChartPartRef): boolean {
   return chartPartCapabilities(ref).resizable;
+}
+
+/**
+ * Raiz de geometria para move/resize de `frame`.
+ * `plotArea` usa o host do SVG (viewBox); demais partes usam a raiz do gráfico.
+ */
+export function resolveChartPartFrameRoot(
+  ref: ChartPartRef,
+  from: Element,
+): Element | null {
+  if (ref.kind === "plotArea") {
+    return from.closest(".delpi-ui-series-chart__plot-host, .tdp-series-chart__plot-host");
+  }
+  return from.closest(".delpi-ui-series-chart, .tdp-series-chart");
 }
 
 /** Aplica delta % de resize no frame da parte (igual handles do bloco). */

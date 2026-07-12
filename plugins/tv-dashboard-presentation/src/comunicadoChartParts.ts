@@ -26,6 +26,7 @@ export {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartAreaStyle,
+  resolveChartPartFrameRoot,
   resolveMarkerStyle,
   resolvePlotAreaStyle,
   resolveSeriesStrokeColor,

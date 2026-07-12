@@ -15,6 +15,7 @@ import {
   mergeComunicadoChartOptions,
   partsToChartOptions,
   resizeChartPartFrame,
+  resolveChartPartFrameRoot,
   upsertChartPartState,
   type ComunicadoBlock,
   type ComunicadoChartPartFrame,
@@ -187,9 +188,7 @@ function EditorChartViewBlock({
   const onPartMovePointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event: ReactPointerEvent) => {
       if (!chartPartAllowsMove(ref)) return;
-      const chartRoot = (event.currentTarget as HTMLElement).closest(
-        ".delpi-ui-series-chart, .tdp-series-chart",
-      );
+      const chartRoot = resolveChartPartFrameRoot(ref, event.currentTarget as HTMLElement);
       if (!chartRoot) return;
       event.preventDefault();
       const rect = chartRoot.getBoundingClientRect();
@@ -233,9 +232,7 @@ function EditorChartViewBlock({
   const onPartResizePointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event: ReactPointerEvent, handle: ComunicadoChartPartResizeHandle) => {
       if (!chartPartAllowsResize(ref)) return;
-      const chartRoot = (event.currentTarget as HTMLElement).closest(
-        ".delpi-ui-series-chart, .tdp-series-chart",
-      );
+      const chartRoot = resolveChartPartFrameRoot(ref, event.currentTarget as HTMLElement);
       const host = (event.currentTarget as HTMLElement).closest("[data-chart-part]");
       if (!chartRoot || !host) return;
       event.preventDefault();

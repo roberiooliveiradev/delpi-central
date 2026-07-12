@@ -6,6 +6,7 @@ import {
   chartOptionsToParts,
   chartPartAllowsEdit,
   chartPartAllowsMove,
+  chartPartAllowsResize,
   chartPartCapabilities,
   deleteChartPart,
   filterVisibleSeriesPoints,
@@ -152,7 +153,7 @@ describe("seriesChartParts", () => {
     expect(merged.chartArea?.style?.fill).toBe("#ffffff");
   });
 
-  it("capabilities declarativas: title móvel/editável/redimensionável; plotArea não", () => {
+  it("capabilities declarativas: title e plotArea móveis/redimensionáveis; plotArea não deletável", () => {
     expect(chartPartCapabilities({ kind: "title" })).toEqual({
       movable: true,
       editable: true,
@@ -161,8 +162,10 @@ describe("seriesChartParts", () => {
     });
     expect(chartPartAllowsMove({ kind: "title" })).toBe(true);
     expect(chartPartAllowsEdit({ kind: "dataLabel", seriesIndex: 0, pointIndex: 0 })).toBe(true);
-    expect(chartPartAllowsMove({ kind: "plotArea" })).toBe(false);
+    expect(chartPartAllowsMove({ kind: "plotArea" })).toBe(true);
+    expect(chartPartAllowsResize({ kind: "plotArea" })).toBe(true);
     expect(chartPartCapabilities({ kind: "plotArea" }).deletable).toBe(false);
+    expect(chartPartCapabilities({ kind: "axis", axis: "x" }).resizable).toBe(false);
     expect(chartPartCapabilities({ kind: "legend" }).resizable).toBe(true);
   });
 

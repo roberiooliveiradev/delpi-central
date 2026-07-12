@@ -291,6 +291,7 @@ export {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartAreaStyle,
+  resolveChartPartFrameRoot,
   resolvePlotAreaStyle,
   serializeChartPartRef,
   upsertChartPartState,

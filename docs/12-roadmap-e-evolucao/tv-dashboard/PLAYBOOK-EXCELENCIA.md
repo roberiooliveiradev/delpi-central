@@ -1607,6 +1607,7 @@ Pointer down no palco
 |---|---|
 | Clique no título / legenda / série / ponto | `selectedChartPart` |
 | Arrastar título ou legenda | `chartParts[…].frame` % relativo ao bloco |
+| Redimensionar área de plotagem | `chartParts.plotArea.frame` % relativo ao `__plot-host` (viewBox) |
 | Format Data Series | estilo do primitivo `line` / `area` na parte `series` |
 | Format Data Point | estilo do primitivo `point` em `marker:i:j` |
 | Format Data Point → Apply to all | `applyMarkerStyleToAll` |
@@ -1614,18 +1615,18 @@ Pointer down no palco
 | Format Chart Area | `style` / fundo do bloco `chart_view` |
 | Não vira shape solta na slide | Partes **permanecem internas** ao grupo (sem `ComunicadoBlock` por ponto) |
 
-**Regra de posição:** marcadores e série **não** têm frame livre — posição vem dos dados + layout. Título, legenda e tabela **podem** ter `frame` relativo. Excluir marcador oculta o ponto (série continua; valor some do traço se `visible: false` filtrar no render).
+**Regra de posição:** marcadores e série **não** têm frame livre — posição vem dos dados + layout. Título, legenda e tabela **podem** ter `frame` relativo ao bloco. `plotArea` tem `frame` relativo ao host do SVG; eixos **não** têm frame próprio — ganham/perdem espaço ao redimensionar a plotagem. Excluir marcador oculta o ponto (série continua; valor some do traço se `visible: false` filtrar no render).
 
 #### Contrato extra
 
 ```ts
-type ChartPartFrame = { x: number; y: number; w?: number; h?: number }; // % do bloco chart
+type ChartPartFrame = { x: number; y: number; w?: number; h?: number }; // % (bloco ou plot-host)
 
 type ChartPartState = {
   visible?: boolean;
   style?: ChartPartStyle;
   content?: string;
-  frame?: ChartPartFrame; // title | legend | dataTable
+  frame?: ChartPartFrame; // title | legend | dataTable | plotArea
 };
 ```
 
@@ -1638,7 +1639,7 @@ type ChartPartState = {
 | 4H.3 | Arrastar título/legenda (`frame` relativo) + setas quando parte selecionada | ✅ |
 | 4H.4 | Painel Formatar (Excel): preenchimento, contorno, tamanho do marcador, espessura da série | ✅ parcial (inspetor) |
 | 4H.5 | Filtrar pontos ocultos no path da série / labels | ✅ (série + marcadores) |
-| 4H.6 | Plot area / eixos com resize relativo | backlog |
+| 4H.6 | Plot area / eixos com resize relativo | ✅ (`plotArea.frame` → margens; eixos via inset) |
 | 4H.7 | Tipos pizza/área/combo com as mesmas partes | backlog (§18 4F) |
 
 ### 19.11 Visual Office — área do gráfico como formas (Onda 4I)

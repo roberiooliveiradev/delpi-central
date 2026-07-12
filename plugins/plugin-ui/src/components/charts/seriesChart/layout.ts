@@ -5,6 +5,7 @@ import {
   type SeriesChartValueFormat,
   type SeriesChartPoint,
 } from "../seriesChartOptions";
+import type { ChartPartFrame } from "../seriesChartParts";
 
 export const SERIES_CHART_VIEW_W = 400;
 export const SERIES_CHART_VIEW_H = 220;
@@ -51,7 +52,49 @@ export type BuildSeriesChartLayoutInput = {
    * Default: usa SERIES_CHART_PLOT_INSET como piso em px se omitido.
    */
   categoryPaddingPercent?: number;
+  /**
+   * Frame % do plotArea relativo ao viewBox (4H.6).
+   * Quando `w`/`h` presentes, substitui as margens automáticas.
+   */
+  plotFrame?: ChartPartFrame | null;
 };
+
+/** Converte margens atuais do layout em frame % (materializar ao selecionar). */
+export function chartPartFrameFromPlotLayout(layout: {
+  viewW: number;
+  viewH: number;
+  margin: SeriesChartMargin;
+  plotW: number;
+  plotH: number;
+}): ChartPartFrame {
+  const viewW = Math.max(layout.viewW, 1);
+  const viewH = Math.max(layout.viewH, 1);
+  return {
+    x: (layout.margin.left / viewW) * 100,
+    y: (layout.margin.top / viewH) * 100,
+    w: (layout.plotW / viewW) * 100,
+    h: (layout.plotH / viewH) * 100,
+  };
+}
+
+/** Margens a partir do frame % do plotArea; null se incompleto. */
+export function marginsFromPlotFrame(
+  frame: ChartPartFrame | null | undefined,
+  viewW: number,
+  viewH: number,
+): SeriesChartMargin | null {
+  if (frame == null || frame.w == null || frame.h == null) return null;
+  const left = (frame.x / 100) * viewW;
+  const top = (frame.y / 100) * viewH;
+  const plotW = (frame.w / 100) * viewW;
+  const plotH = (frame.h / 100) * viewH;
+  return {
+    top,
+    left,
+    right: Math.max(0, viewW - left - plotW),
+    bottom: Math.max(0, viewH - top - plotH),
+  };
+}
 
 const BASE_MARGIN: SeriesChartMargin = {
   top: 16,
@@ -172,7 +215,13 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const viewH = Math.max(80, input.viewH ?? SERIES_CHART_VIEW_H);
 
   const labels = input.points.map((point, index) => String(point.label ?? index + 1));
-  const plotWProbe = Math.max(40, viewW - BASE_MARGIN.left - BASE_MARGIN.right);
+  const framedEarly = marginsFromPlotFrame(input.plotFrame, viewW, viewH);
+  const plotWProbe = Math.max(
+    40,
+    framedEarly
+      ? viewW - framedEarly.left - framedEarly.right
+      : viewW - BASE_MARGIN.left - BASE_MARGIN.right,
+  );
   const xLabelStep = input.showXAxisLabels
     ? resolveXLabelStep(input.points.length, plotWProbe, labels)
     : 1;
@@ -184,12 +233,13 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     : [];
 
   const sides = resolveSideMargins(input.showXAxisLabels, labels, visibleXLabelIndices);
-  const margin: SeriesChartMargin = {
+  const autoMargin: SeriesChartMargin = {
     top: BASE_MARGIN.top,
     left: sides.left,
     right: sides.right,
     bottom: resolveBottomMargin(input.showXAxisLabels, input.showXAxisTitle, xLabelsRotated),
   };
+  const margin: SeriesChartMargin = framedEarly ?? autoMargin;
 
   const plotW = Math.max(1, viewW - margin.left - margin.right);
   const plotH = Math.max(1, viewH - margin.top - margin.bottom);

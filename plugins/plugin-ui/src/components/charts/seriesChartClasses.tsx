@@ -5,9 +5,11 @@ export type SeriesChartClassNames = {
   rootEmpty: string;
   title: string;
   body: string;
+  plotHost: string;
   svg: string;
   plotArea: string;
   plotAreaAxes: string;
+  plotAreaChrome: string;
   axisLine: string;
   gridLine: string;
   gridLineVertical: string;
@@ -37,9 +39,11 @@ export function seriesChartBemClasses(prefix = "delpi-ui-series-chart"): SeriesC
     rootEmpty: `${prefix} ${prefix}--empty`,
     title: `${prefix}__title`,
     body: `${prefix}__body`,
+    plotHost: `${prefix}__plot-host`,
     svg: `${prefix}__svg`,
     plotArea: `${prefix}__plot-area`,
     plotAreaAxes: `${prefix}__plot-area--axes`,
+    plotAreaChrome: `${prefix}__plot-area-chrome`,
     axisLine: `${prefix}__axis-line`,
     gridLine: `${prefix}__grid-line`,
     gridLineVertical: `${prefix}__grid-line--vertical`,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSeriesChartLayout,
+  chartPartFrameFromPlotLayout,
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
   resolveXLabelTextAnchor,
@@ -102,6 +103,56 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     });
     expect(loose.plotInset).toBeGreaterThan(tight.plotInset);
     expect(loose.toX(0, 3)).toBeGreaterThan(tight.toX(0, 3));
+  });
+
+  it("plotFrame (4H.6) substitui margens automáticas", () => {
+    const points = [
+      { value: 10, label: "A" },
+      { value: 20, label: "B" },
+    ];
+    const layout = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 200,
+      plotFrame: { x: 10, y: 15, w: 70, h: 60 },
+    });
+    expect(layout.margin.left).toBeCloseTo(40, 5);
+    expect(layout.margin.top).toBeCloseTo(30, 5);
+    expect(layout.plotW).toBeCloseTo(280, 5);
+    expect(layout.plotH).toBeCloseTo(120, 5);
+    expect(layout.margin.right).toBeCloseTo(80, 5);
+    expect(layout.margin.bottom).toBeCloseTo(50, 5);
+  });
+
+  it("chartPartFrameFromPlotLayout e marginsFromPlotFrame são inversos", () => {
+    const auto = buildSeriesChartLayout({
+      points: [
+        { value: 1, label: "a" },
+        { value: 2, label: "b" },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 500,
+      viewH: 250,
+    });
+    const frame = chartPartFrameFromPlotLayout(auto);
+    const roundTrip = buildSeriesChartLayout({
+      points: [
+        { value: 1, label: "a" },
+        { value: 2, label: "b" },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 500,
+      viewH: 250,
+      plotFrame: frame,
+    });
+    expect(roundTrip.margin.left).toBeCloseTo(auto.margin.left, 4);
+    expect(roundTrip.margin.top).toBeCloseTo(auto.margin.top, 4);
+    expect(roundTrip.plotW).toBeCloseTo(auto.plotW, 4);
+    expect(roundTrip.plotH).toBeCloseTo(auto.plotH, 4);
   });
 
   it("step maior em plot estreito", () => {

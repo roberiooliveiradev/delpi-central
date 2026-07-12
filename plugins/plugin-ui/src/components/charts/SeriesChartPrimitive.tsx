@@ -18,6 +18,7 @@ import {
 import { useSeriesChartClasses } from "./seriesChartClasses";
 import {
   chartPartDomProps,
+  getChartPartState,
   isChartPartRefEqual,
   mergeSeriesChartOptionsWithParts,
   resolveChartAreaStyle,
@@ -32,6 +33,7 @@ import {
   ChartDataTable,
   ChartFrame,
   ChartLegend,
+  ChartPlotAreaChrome,
   ChartTitle,
   resolveSeriesName,
   SERIES_CHART_VIEW_H,
@@ -82,11 +84,11 @@ export function SeriesChartPrimitive({
   const config = mergeSeriesChartOptionsWithParts(options, chartParts);
   const usable = usableSeriesChartPoints(points);
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const bodyRef = useRef<HTMLDivElement>(null);
+  const plotHostRef = useRef<HTMLDivElement>(null);
   const [viewSize, setViewSize] = useState({ w: SERIES_CHART_VIEW_W, h: SERIES_CHART_VIEW_H });
 
   useLayoutEffect(() => {
-    const node = bodyRef.current;
+    const node = plotHostRef.current;
     if (!node) return;
 
     const update = () => {
@@ -118,6 +120,7 @@ export function SeriesChartPrimitive({
   }
 
   const valueFormat = config.valueFormat ?? "auto";
+  const plotFrame = getChartPartState(chartParts, { kind: "plotArea" })?.frame;
   const layout = buildSeriesChartLayout({
     points: usable,
     showXAxisLabels: config.showAxes !== false && config.showXAxisLabels !== false,
@@ -125,6 +128,7 @@ export function SeriesChartPrimitive({
     viewW: viewSize.w,
     viewH: viewSize.h,
     categoryPaddingPercent: config.categoryPaddingPercent,
+    plotFrame,
   });
 
   const seriesColor = resolveSeriesStrokeColor(config, chartParts);
@@ -219,10 +223,13 @@ export function SeriesChartPrimitive({
       />
       {config.legendPosition === "top" ? legend : null}
 
-      <div className={cn.body} ref={bodyRef}>
-        <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
-          {renderPlotArea(plotProps)}
-        </ChartFrame>
+      <div className={cn.body}>
+        <div className={cn.plotHost} ref={plotHostRef}>
+          <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
+            {renderPlotArea(plotProps)}
+          </ChartFrame>
+          <ChartPlotAreaChrome layout={layout} interaction={interaction} chartParts={chartParts} />
+        </div>
         {config.legendPosition === "right" ? legend : null}
       </div>
 

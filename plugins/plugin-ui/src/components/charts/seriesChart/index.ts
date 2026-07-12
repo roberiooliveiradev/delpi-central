@@ -9,6 +9,7 @@ export { ChartGrid } from "./ChartGrid";
 export { ChartLegend } from "./ChartLegend";
 export { ChartPartResizeHandles } from "./ChartPartResizeHandles";
 export { ChartPlotArea } from "./ChartPlotArea";
+export { ChartPlotAreaChrome } from "./ChartPlotAreaChrome";
 export { ChartPlotAreaGroup } from "./ChartPlotAreaGroup";
 export { ChartSeriesBar } from "./ChartSeriesBar";
 export { ChartSeriesLine } from "./ChartSeriesLine";
@@ -16,6 +17,8 @@ export { ChartTitle } from "./ChartTitle";
 export { ChartValueLabels } from "./ChartValueLabels";
 export {
   buildSeriesChartLayout,
+  chartPartFrameFromPlotLayout,
+  marginsFromPlotFrame,
   resolveSeriesName,
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
