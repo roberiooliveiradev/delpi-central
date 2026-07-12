@@ -1,4 +1,4 @@
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 
 type Rnc8dQuantityUnitFieldProps = {
   quantityId: string;
@@ -33,27 +33,27 @@ export function Rnc8dQuantityUnitField({
         <label className="pac-field__label" htmlFor={quantityId}>
           <FieldLabel label={quantityLabel} hint={quantityHint} />
         </label>
-        <input
+        <NativeTextControl
           id={quantityId}
           type="number"
           min={0}
           step="any"
           className="pac-field__control"
           value={quantityValue}
-          onChange={(event) => onQuantityChange(event.target.value)}
+          onChange={onQuantityChange}
         />
       </div>
       <div className="pac-field">
         <label className="pac-field__label" htmlFor={unitId}>
           <FieldLabel label={unitLabel} hint={unitHint} />
         </label>
-        <input
+        <NativeTextControl
           id={unitId}
           type="text"
           className="pac-field__control"
           value={unitValue}
           placeholder={unitPlaceholder}
-          onChange={(event) => onUnitChange(event.target.value)}
+          onChange={onUnitChange}
         />
       </div>
     </div>

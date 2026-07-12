@@ -370,7 +370,7 @@
   background: color-mix(in srgb, var(--ca-accent) 8%, var(--ca-surface));
 }
 
-.dashboard-central-agendamento label.ca-resource-item:has(.ca-resource-item__checkbox:checked) {
+.dashboard-central-agendamento label.ca-resource-item:has(input[type="checkbox"]:checked) {
   border-color: color-mix(in srgb, var(--ca-accent) 55%, var(--ca-border));
   background: color-mix(in srgb, var(--ca-accent) 12%, var(--ca-surface));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ca-accent) 20%, transparent);
@@ -384,7 +384,7 @@
   flex-shrink: 0;
 }
 
-.ca-resource-item__checkbox {
+.dashboard-central-agendamento label.ca-resource-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
   margin: 0;

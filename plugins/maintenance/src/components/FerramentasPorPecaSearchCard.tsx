@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   fetchPecasReposicao,
@@ -181,17 +182,17 @@ export function FerramentasPorPecaSearchCard({
           <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
             <label className="dm-field">
               <span>Código da peça</span>
-              <input
+              <NativeTextControl
                 value={codigoDraft}
-                onChange={(event) => setCodigoDraft(event.target.value)}
+                onChange={setCodigoDraft}
                 placeholder="Ex.: 3019 ou 30190036"
               />
             </label>
             <label className="dm-field">
               <span>Descrição da peça</span>
-              <input
+              <NativeTextControl
                 value={descricaoDraft}
-                onChange={(event) => setDescricaoDraft(event.target.value)}
+                onChange={setDescricaoDraft}
                 placeholder="Ex.: GRAMPEADOR"
               />
             </label>

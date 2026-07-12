@@ -19,6 +19,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import type { AuditArea, AuditListItem } from "../api/audit5sApi";
 import { getAccessToken } from "../api/httpClient";
@@ -288,11 +289,11 @@ export function AuditListView({
       <section className="a5s-filters-card">
         <div className="a5s-filters-card__search">
           <Search size={16} aria-hidden />
-          <input
+          <NativeTextControl
             type="search"
             placeholder="Buscar auditoria..."
             value={filters.search}
-            onChange={(e) => updateFilters({ search: e.target.value })}
+            onChange={(search) => updateFilters({ search })}
           />
         </div>
         <ListFilterSelectField
@@ -313,16 +314,16 @@ export function AuditListView({
         <label className="a5s-filters-card__field a5s-filters-card__field--period">
           <span>Período</span>
           <div className="a5s-filters-card__period">
-            <input
+            <NativeTextControl
               type="date"
               value={filters.periodStart}
-              onChange={(e) => updateFilters({ periodStart: e.target.value })}
+              onChange={(periodStart) => updateFilters({ periodStart })}
               aria-label="Data inicial"
             />
-            <input
+            <NativeTextControl
               type="date"
               value={filters.periodEnd}
-              onChange={(e) => updateFilters({ periodEnd: e.target.value })}
+              onChange={(periodEnd) => updateFilters({ periodEnd })}
               aria-label="Data final"
             />
           </div>

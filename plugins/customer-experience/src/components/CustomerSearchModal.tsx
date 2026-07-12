@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Building2, Loader2, X } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { searchCustomers } from "../api/customersApi";
 import type { Customer } from "../types";
 
@@ -24,12 +25,7 @@ export function CustomerSearchModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
-  const nameRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    nameRef.current?.focus();
-  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -122,29 +118,29 @@ export function CustomerSearchModal({
         <form className="cx-modal__filters" onSubmit={handleSubmit}>
           <label className="cx-field">
             <span>Nome da empresa</span>
-            <input
-              ref={nameRef}
+            <NativeTextControl
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={setName}
               placeholder="Ex.: WEG, Bosch..."
+              autoFocus
             />
           </label>
           <label className="cx-field cx-field--narrow">
             <span>Código</span>
-            <input
+            <NativeTextControl
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={setCode}
               placeholder="A1_COD"
             />
           </label>
           <label className="cx-field cx-field--narrow">
             <span>Loja</span>
-            <input
+            <NativeTextControl
               type="text"
               value={store}
-              onChange={(e) => setStore(e.target.value)}
+              onChange={setStore}
               placeholder="A1_LOJA"
             />
           </label>

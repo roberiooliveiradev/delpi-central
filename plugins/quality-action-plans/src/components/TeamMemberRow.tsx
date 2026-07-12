@@ -5,7 +5,7 @@ import type { DirectoryUser } from "../api/directoryApi";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { TeamMember } from "../types/rnc8d";
 import { formatPersonName } from "../utils/formatPersonName";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { DragHandle, type DragHandleProps, RemoveRowButton } from "./ui/RowActions";
 import { TextField } from "./ui/TextField";
 import { DelpiUserSearchModal } from "./ui/DelpiUserSearchModal";
@@ -84,13 +84,13 @@ export function TeamMemberRow({
             <label className="pac-field__label" htmlFor={`rnc-team-name-${index}`}>
               <FieldLabel label="Nome" hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberUserLink} />
             </label>
-            <input
+            <NativeTextControl
               id={`rnc-team-name-${index}`}
               className="pac-field__control"
               type="text"
               value={member.member_name}
               placeholder="Nome do membro ou pesquise na Delpi…"
-              onChange={(event) => patch({ member_name: event.target.value })}
+              onChange={(member_name) => patch({ member_name })}
             />
           </div>
 
@@ -113,14 +113,14 @@ export function TeamMemberRow({
               <Search size={16} aria-hidden="true" />
               <span>Delpi</span>
             </button>
-            <label className="pac-checkbox pac-team-card__leader">
-              <input
-                type="checkbox"
+            <div className="pac-checkbox pac-team-card__leader">
+              <NativeCheckboxControl
                 checked={Boolean(member.is_leader)}
-                onChange={(event) => onLeaderToggle(event.target.checked)}
+                onChange={onLeaderToggle}
+                aria-label="Líder da equipe"
               />
               <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
-            </label>
+            </div>
             <RemoveRowButton
               className="pac-team-card__remove"
               onRemove={onRemove}

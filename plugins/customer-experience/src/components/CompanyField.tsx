@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Search } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { searchCustomers } from "../api/customersApi";
 import { CustomerSearchModal } from "./CustomerSearchModal";
 import type { Customer } from "../types";
@@ -99,12 +100,12 @@ export function CompanyField({
     <div className="cx-field" ref={wrapperRef}>
       <span>Empresa</span>
       <div className="cx-company-input">
-        <input
+        <NativeTextControl
           type="text"
           required
           value={value}
           autoComplete="off"
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder="Digite ou pesquise o cliente"

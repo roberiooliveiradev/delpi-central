@@ -1,5 +1,6 @@
 import { Columns3, RotateCcw } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import type { TableColumnKey } from "../utils/tableColumns";
 import { TABLE_COLUMNS } from "../utils/tableColumns";
@@ -61,15 +62,15 @@ export function TableColumnSettings({
 
               return (
                 <li key={column.key}>
-                  <label className="pva-check-option" title={column.label}>
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      disabled={isLastVisible}
-                      onChange={(event) => onToggleColumn(column.key, event.target.checked)}
-                    />
+                  <NativeCheckboxControl
+                    className="pva-check-option"
+                    checked={checked}
+                    disabled={isLastVisible}
+                    onChange={(visible) => onToggleColumn(column.key, visible)}
+                    aria-label={`Exibir coluna ${column.label}`}
+                  >
                     <span className="pva-check-option__label">{column.label}</span>
-                  </label>
+                  </NativeCheckboxControl>
                 </li>
               );
             })}

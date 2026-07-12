@@ -22,6 +22,7 @@ import {
   Tag,
   Trash2,
 } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { HttpRequestError } from "../api/httpClient";
 import {
@@ -378,10 +379,10 @@ export function QualityLabelsAdminPage() {
                   <span className="ql-label-text">Ordem de produção (OP)</span>
                   <div className="ql-op-row">
                     <div className="ql-op-search" ref={opFieldRef}>
-                      <input
+                      <NativeTextControl
                         className="ql-input"
                         value={op}
-                        onChange={(e) => setOp(e.target.value)}
+                        onChange={setOp}
                         onFocus={() => {
                           if (suggestions.length > 0) setShowSuggestions(true);
                         }}
@@ -582,10 +583,10 @@ export function QualityLabelsAdminPage() {
                   placeholder="Todas as unidades"
                 />
                 <div className="ql-op-row">
-                  <input
+                  <NativeTextControl
                     className="ql-input"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={setSearch}
                     placeholder="Buscar por OP, produto ou inspetor"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") void refreshList(search, filterBranches);

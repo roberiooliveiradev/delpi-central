@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { parseBrDatetimeDisplay, toBrDatetimeDisplay } from "../../utils/datetimeLocal";
 
@@ -47,7 +48,7 @@ export function BrDatetimeInput({
 
   return (
     <>
-      <input
+      <NativeTextControl
         type="text"
         inputMode="numeric"
         autoComplete="off"
@@ -58,8 +59,8 @@ export function BrDatetimeInput({
         disabled={disabled}
         readOnly={readOnly}
         aria-invalid={Boolean(error)}
-        onChange={(event) => handleChange(event.target.value)}
-        onBlur={(event) => commit(event.target.value)}
+        onChange={handleChange}
+        onBlur={() => commit(display)}
       />
       {error ? <span className="dm-field__error">{error}</span> : null}
     </>

@@ -18,6 +18,7 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
+import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   activateForm,
   createForm,
@@ -553,15 +554,14 @@ function PageVisualFields({
   const titleLabel = mode === "step" ? "Título da etapa (opcional)" : "Título da página (opcional)";
   return (
     <>
-      <label className="cx-field">
-        <span>{titleLabel}</span>
-        <input
-          type="text"
-          value={page.title ?? ""}
-          onChange={(e) => onUpdatePage(pageIndex, { title: e.target.value || null })}
-          placeholder="Ex.: Percepção"
-        />
-      </label>
+      <CxNativeTextField
+        id={`cx-page-title-${pageIndex}`}
+        label={titleLabel}
+        span={false}
+        value={page.title ?? ""}
+        onChange={(title) => onUpdatePage(pageIndex, { title: title || null })}
+        placeholder="Ex.: Percepção"
+      />
       <PointIllustrationEditor
         label="Ilustrativa da etapa"
         pointImageUrl={page.pointImageUrl}
@@ -897,20 +897,17 @@ function FormEditor({
           value={description}
           onChange={setDescription}
         />
-        <label className="cx-check">
-          <input
-            type="checkbox"
-            checked={oneQuestionPerPage}
-            onChange={(e) => {
-              const enabled = e.target.checked;
-              setOneQuestionPerPage(enabled);
-              if (enabled) {
-                setPages((prev) => ensurePageCount(prev, questions.length));
-              }
-            }}
-          />
-          <span>Uma pergunta por página (modo passo a passo com barra de progresso)</span>
-        </label>
+        <NativeCheckboxControl
+          className="cx-check"
+          label="Uma pergunta por página (modo passo a passo com barra de progresso)"
+          checked={oneQuestionPerPage}
+          onChange={(enabled) => {
+            setOneQuestionPerPage(enabled);
+            if (enabled) {
+              setPages((prev) => ensurePageCount(prev, questions.length));
+            }
+          }}
+        />
         <div className="cx-field">
           <span className="cx-field__label">Imagem de fundo do formulário</span>
           <PhotoDropzone
@@ -1097,25 +1094,23 @@ function FormEditor({
               />
             )}
 
-            <label className="cx-field">
-              <span>Enunciado</span>
-              <input
-                type="text"
-                value={q.label}
-                onChange={(e) => update(index, { label: e.target.value })}
-                placeholder="Ex.: Qual sua nota para a visita?"
-              />
-            </label>
+            <CxNativeTextField
+              id={`cx-question-label-${index}`}
+              label="Enunciado"
+              span={false}
+              value={q.label}
+              onChange={(label) => update(index, { label })}
+              placeholder="Ex.: Qual sua nota para a visita?"
+            />
 
-            <label className="cx-field">
-              <span>Texto de ajuda (opcional)</span>
-              <input
-                type="text"
-                value={q.helpText ?? ""}
-                onChange={(e) => update(index, { helpText: e.target.value || null })}
-                placeholder="Instrução curta exibida abaixo do enunciado."
-              />
-            </label>
+            <CxNativeTextField
+              id={`cx-question-help-${index}`}
+              label="Texto de ajuda (opcional)"
+              span={false}
+              value={q.helpText ?? ""}
+              onChange={(helpText) => update(index, { helpText: helpText || null })}
+              placeholder="Instrução curta exibida abaixo do enunciado."
+            />
 
             {!oneQuestionPerPage && (
               <PointIllustrationEditor
@@ -1137,10 +1132,10 @@ function FormEditor({
                 <div className="cx-options-edit">
                   {q.options.map((opt, oi) => (
                     <div className="cx-option-row" key={oi}>
-                      <input
+                      <NativeTextControl
                         type="text"
                         value={opt}
-                        onChange={(e) => setOption(index, oi, e.target.value)}
+                        onChange={(value) => setOption(index, oi, value)}
                         placeholder={`Opção ${oi + 1}`}
                       />
                       <button
@@ -1160,14 +1155,12 @@ function FormEditor({
               </div>
             )}
 
-            <label className="cx-check">
-              <input
-                type="checkbox"
-                checked={q.required}
-                onChange={(e) => update(index, { required: e.target.checked })}
-              />
-              <span>Resposta obrigatória</span>
-            </label>
+            <NativeCheckboxControl
+              className="cx-check"
+              label="Resposta obrigatória"
+              checked={q.required}
+              onChange={(required) => update(index, { required })}
+            />
           </section>
           );
         })}

@@ -25,7 +25,12 @@ import { EditableSectionCard } from "../ui/EditableSectionCard";
 import { TeamMemberRow } from "../TeamMemberRow";
 import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
-import { FieldLabel, HelpTooltip, NativeSelectControl } from "@delpi/plugin-ui/index";
+import {
+  FieldLabel,
+  HelpTooltip,
+  NativeSelectControl,
+  NativeTextControl,
+} from "@delpi/plugin-ui/index";
 import { SelectField } from "../ui/SelectField";
 import { TableHeaderCell } from "../ui/TableHeaderCell";
 import { DragHandle, RemoveRowButton } from "../ui/RowActions";
@@ -626,23 +631,19 @@ export function Rnc8dContainmentSection({
                   />
                 </td>
                 <td>
-                  <input
+                  <NativeTextControl
                     className="pac-field__control"
                     value={row.quantity ?? ""}
                     aria-label="Quantidade"
-                    onChange={(event) =>
-                      updateContainmentRow(index, { quantity: event.target.value })
-                    }
+                    onChange={(quantity) => updateContainmentRow(index, { quantity })}
                   />
                 </td>
                 <td>
-                  <input
+                  <NativeTextControl
                     className="pac-field__control"
                     value={row.action_plan ?? ""}
                     aria-label="Plano de ação"
-                    onChange={(event) =>
-                      updateContainmentRow(index, { action_plan: event.target.value })
-                    }
+                    onChange={(action_plan) => updateContainmentRow(index, { action_plan })}
                   />
                 </td>
                 <td>
@@ -654,12 +655,12 @@ export function Rnc8dContainmentSection({
                   />
                 </td>
                 <td>
-                  <input
+                  <NativeTextControl
                     className="pac-field__control"
                     type="date"
                     value={row.date ?? ""}
                     aria-label="Data"
-                    onChange={(event) => updateContainmentRow(index, { date: event.target.value })}
+                    onChange={(date) => updateContainmentRow(index, { date })}
                   />
                 </td>
                 <td className="pac-table__actions-cell">
@@ -936,13 +937,13 @@ export function Rnc8dPreventiveSection({
                   ) : null}
                 </td>
                 <td>
-                  <input
+                  <NativeTextControl
                     className="pac-field__control"
                     value={doc.document ?? ""}
                     aria-label="Documento afetado"
-                    onChange={(event) => {
+                    onChange={(document) => {
                       const next = [...documentation];
-                      next[index] = { ...doc, document: event.target.value };
+                      next[index] = { ...doc, document };
                       onChange(updatePayload(value, { documentation_updates: next }));
                     }}
                   />
@@ -960,14 +961,14 @@ export function Rnc8dPreventiveSection({
                   />
                 </td>
                 <td>
-                  <input
+                  <NativeTextControl
                     className="pac-field__control"
                     type="date"
                     value={doc.date ?? ""}
                     aria-label="Data do documento"
-                    onChange={(event) => {
+                    onChange={(date) => {
                       const next = [...documentation];
-                      next[index] = { ...doc, date: event.target.value };
+                      next[index] = { ...doc, date };
                       onChange(updatePayload(value, { documentation_updates: next }));
                     }}
                   />

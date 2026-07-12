@@ -1,7 +1,7 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
 import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { MultiSelectOption } from "./MultiSelectField";
-import { FieldLabel, createFilterBarShell } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl, createFilterBarShell } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "./MultiSelectField";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -60,21 +60,21 @@ export function FilterBar({
     <FilterBarShell ariaLabel="Filtros do dashboard">
         <label className="ef-field">
           <FieldLabel label="Data início" hint={EF_HELP_TOOLTIPS.filters.dateStart}  className="ef-field__label" />
-          <input
+          <NativeTextControl
             type="date"
             value={dateStart}
             disabled={disabled}
-            onChange={(event) => onDateStartChange(event.target.value)}
+            onChange={onDateStartChange}
           />
         </label>
 
         <label className="ef-field">
           <FieldLabel label="Data fim" hint={EF_HELP_TOOLTIPS.filters.dateEnd}  className="ef-field__label" />
-          <input
+          <NativeTextControl
             type="date"
             value={dateEnd}
             disabled={disabled}
-            onChange={(event) => onDateEndChange(event.target.value)}
+            onChange={onDateEndChange}
           />
         </label>
 

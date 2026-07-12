@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { listAuditEvents } from "../api/qualityLabelsApi";
 import { formatOperationalUnit } from "../utils/operationalUnits";
@@ -148,10 +149,10 @@ export function QualityLabelsAuditPage() {
           </h2>
           <div className="ql-list__filters">
             <div className="ql-op-row">
-              <input
+              <NativeTextControl
                 className="ql-input"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={setSearch}
                 placeholder="Buscar por OP, produto ou usuário"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void refresh(search, typeFilters);

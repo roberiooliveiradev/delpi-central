@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, Check, ChevronDown, X } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 export function CompanyMultiSelect({
   options,
@@ -79,11 +80,11 @@ export function CompanyMultiSelect({
 
       {open && (
         <div className="cx-multiselect__panel">
-          <input
+          <NativeTextControl
             type="text"
             className="cx-multiselect__search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={setQuery}
             placeholder="Filtrar empresas..."
             autoFocus
           />

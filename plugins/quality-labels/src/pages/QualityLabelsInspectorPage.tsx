@@ -15,6 +15,7 @@ import {
   saveMyInspector,
   uploadMySignature,
 } from "../api/qualityLabelsApi";
+import { QlNativeTextField } from "../components/qlFormFields";
 
 const CANVAS_WIDTH = 640;
 const CANVAS_HEIGHT = 220;
@@ -229,24 +230,22 @@ export function QualityLabelsInspectorPage() {
         ) : (
           <>
             <div className="ql-field-row">
-              <label className="ql-field">
-                <span className="ql-label-text">Nome do inspetor</span>
-                <input
-                  className="ql-input"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Nome completo"
-                />
-              </label>
-              <label className="ql-field">
-                <span className="ql-label-text">Cargo (opcional)</span>
-                <input
-                  className="ql-input"
-                  value={roleTitle}
-                  onChange={(e) => setRoleTitle(e.target.value)}
-                  placeholder="Ex.: Inspetor da Qualidade"
-                />
-              </label>
+              <QlNativeTextField
+                id="ql-inspector-display-name"
+                label="Nome do inspetor"
+                value={displayName}
+                onChange={setDisplayName}
+                placeholder="Nome completo"
+                controlClassName="ql-input"
+              />
+              <QlNativeTextField
+                id="ql-inspector-role-title"
+                label="Cargo (opcional)"
+                value={roleTitle}
+                onChange={setRoleTitle}
+                placeholder="Ex.: Inspetor da Qualidade"
+                controlClassName="ql-input"
+              />
             </div>
             <div className="ql-form__actions">
               <button

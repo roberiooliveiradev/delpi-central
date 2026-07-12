@@ -17,6 +17,7 @@ import type {
 } from "../types/qualityLabels";
 import { SAMPLE_OPTIONS } from "../utils/certificateFormUtils";
 import { QlNativeTextAreaField, QlNativeTextField } from "./qlFormFields";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 const STATUS_OPTIONS: {
   value: CertificateItemStatus;
@@ -192,10 +193,10 @@ export function CertificateFormFields({
           <label className="ql-field ql-field--wide">
             <span className="ql-label-text">Nome do cliente</span>
             <div className="ql-op-search" ref={customerFieldRef}>
-              <input
+              <NativeTextControl
                 className="ql-input"
                 value={form.customerName}
-                onChange={(e) => patch({ customerName: e.target.value })}
+                onChange={(customerName) => patch({ customerName })}
                 onFocus={() => {
                   if (customerHits.length > 0) setShowCustomerHits(true);
                 }}
@@ -307,10 +308,10 @@ export function CertificateFormFields({
             <li key={index} className="ql-checklist__row">
               <span className="ql-checklist__num">{index + 1}</span>
               {item.isCustom ? (
-                <input
+                <NativeTextControl
                   className="ql-input ql-checklist__input"
                   value={item.description}
-                  onChange={(e) => setItemDescription(index, e.target.value)}
+                  onChange={(description) => setItemDescription(index, description)}
                   placeholder="Descreva o item de inspeção"
                   disabled={disabled}
                 />

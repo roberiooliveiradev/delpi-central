@@ -1,4 +1,5 @@
 import { Building2, Car, LayoutGrid, Presentation } from "lucide-react";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import type { SchedulingResource } from "../api/schedulingApi";
 import {
@@ -92,14 +93,13 @@ export function ResourceSidebar({
               const color = RESOURCE_TYPE_COLORS[resource.resource_type];
               return (
                 <li key={resource.id} className="ca-resource-list__item">
-                  <label className="ca-resource-item">
+                  <NativeCheckboxControl
+                    className="ca-resource-item"
+                    checked={checked}
+                    onChange={() => onToggleResource(resource.id)}
+                    aria-label={`Selecionar recurso ${resource.name}`}
+                  >
                     <span className="ca-resource-item__leading">
-                      <input
-                        type="checkbox"
-                        className="ca-resource-item__checkbox"
-                        checked={checked}
-                        onChange={() => onToggleResource(resource.id)}
-                      />
                       <span
                         className="ca-resource-item__dot"
                         style={{ background: color }}
@@ -114,7 +114,7 @@ export function ResourceSidebar({
                         </span>
                       ) : null}
                     </span>
-                  </label>
+                  </NativeCheckboxControl>
                 </li>
               );
             })}

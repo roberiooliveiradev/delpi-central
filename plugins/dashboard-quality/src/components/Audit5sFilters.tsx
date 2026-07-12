@@ -5,7 +5,7 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -48,31 +48,31 @@ export function Audit5sFilters({
     <section className="dq-filters-row" aria-label="Filtros de auditoria 5S">
       <label className="dq-filter-box dq-field">
         <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label" />
-        <input
+        <NativeTextControl
           id="a5s-competence"
           type="month"
           value={competence}
-          onChange={(e) => onCompetenceChange(e.target.value)}
+          onChange={onCompetenceChange}
         />
       </label>
 
       <label className="dq-filter-box dq-field">
         <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label" />
-        <input
+        <NativeTextControl
           id="a5s-date-start"
           type="date"
           value={dateStart}
-          onChange={(e) => onDateStartChange(e.target.value)}
+          onChange={onDateStartChange}
         />
       </label>
 
       <label className="dq-filter-box dq-field">
         <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label" />
-        <input
+        <NativeTextControl
           id="a5s-date-end"
           type="date"
           value={dateEnd}
-          onChange={(e) => onDateEndChange(e.target.value)}
+          onChange={onDateEndChange}
         />
       </label>
 

@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import type { PreviewForm, PreviewFormPage, PreviewFormQuestion } from "./utils/formPreviewModel";
-import { LucideIconByName } from "@delpi/plugin-ui/index";
+import {
+  LucideIconByName,
+  NativeCheckboxControl,
+  NativeTextControl,
+} from "@delpi/plugin-ui/index";
 import {
   CxFormPreviewTextAreaField,
   CxFormPreviewTextField,
@@ -259,22 +263,22 @@ export default function FormPreviewView({ form }: FormPreviewViewProps) {
         <span className="cxform-label">
           Seu nome <em className="cxform-req">*</em>
         </span>
-        <input
+        <NativeTextControl
           className="cxform-input"
           value={name}
           maxLength={200}
           placeholder="Como podemos te chamar?"
-          onChange={(e) => setName(e.target.value)}
+          onChange={setName}
         />
       </label>
       <label className="cxform-field">
         <span className="cxform-label">Empresa</span>
-        <input
+        <NativeTextControl
           className="cxform-input"
           value={company}
           maxLength={200}
           placeholder="Onde você trabalha? (opcional)"
-          onChange={(e) => setCompany(e.target.value)}
+          onChange={setCompany}
         />
       </label>
     </>
@@ -522,10 +526,13 @@ function QuestionField({
       {question.helpText && <span className="cxform-help">{question.helpText}</span>}
       <div className="cxform-options">
         {question.options.map((opt) => (
-          <label key={opt} className={`cxform-option${selected.includes(opt) ? " is-on" : ""}`}>
-            <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} />
-            {opt}
-          </label>
+          <NativeCheckboxControl
+            key={opt}
+            className={`cxform-option${selected.includes(opt) ? " is-on" : ""}`}
+            checked={selected.includes(opt)}
+            onChange={() => toggle(opt)}
+            label={opt}
+          />
         ))}
       </div>
     </fieldset>

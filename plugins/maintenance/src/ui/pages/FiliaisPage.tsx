@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Building2, RefreshCw } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   type DataTableColumn,
@@ -307,9 +308,9 @@ export function FiliaisPage({
           <FilterBar embedded onSubmit={handleCreate}>
             <label className="dm-field">
               <span>Código</span>
-              <input
+              <NativeTextControl
                 value={novoCodigo}
-                onChange={(event) => setNovoCodigo(event.target.value.replace(/\D/g, "").slice(0, 2))}
+                onChange={(value) => setNovoCodigo(value.replace(/\D/g, "").slice(0, 2))}
                 placeholder="01"
                 inputMode="numeric"
                 maxLength={2}
@@ -317,9 +318,9 @@ export function FiliaisPage({
             </label>
             <label className="dm-field">
               <span>Nome</span>
-              <input
+              <NativeTextControl
                 value={novoNome}
-                onChange={(event) => setNovoNome(event.target.value)}
+                onChange={setNovoNome}
                 placeholder="Matriz"
               />
             </label>

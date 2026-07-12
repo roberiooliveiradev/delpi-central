@@ -1,4 +1,5 @@
 import type { AuditArea } from "../api/audit5sApi";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { SHIFTS } from "../constants/audit5s";
 import type { AuditAuditorSelection } from "../types/auditAuditor";
 import { AuditAuditorPicker } from "./AuditAuditorPicker";
@@ -62,11 +63,11 @@ export function AuditHeaderForm({
         options={areas.map((area) => ({ value: area.id, label: area.name }))}
       />
       <div className="a5s-inline a5s-form__full">
-        <input
+        <NativeTextControl
           type="text"
           placeholder="Cadastrar nova área"
           value={newAreaName}
-          onChange={(e) => onNewAreaNameChange(e.target.value)}
+          onChange={onNewAreaNameChange}
         />
         <button type="button" className="a5s-btn a5s-btn--ghost" onClick={() => void onCreateArea()}>
           Adicionar área

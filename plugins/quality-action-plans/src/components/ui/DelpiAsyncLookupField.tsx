@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 
 export type DelpiLookupOption<TMeta = Record<string, string>> = {
   value: string;
@@ -114,15 +114,14 @@ export function DelpiAsyncLookupField<TMeta = Record<string, string>>({
         <FieldLabel label={label} hint={hint} />
       </label>
       <div className={`pac-lookup${open ? " pac-lookup--open" : ""}`}>
-        <input
+        <NativeTextControl
           id={fieldId}
           type="search"
           className="pac-field__control"
           value={query}
           placeholder={placeholder}
           disabled={disabled}
-          onChange={(event) => {
-            const next = event.target.value;
+          onChange={(next) => {
             setQuery(next);
             onChange(next);
             setOpen(true);

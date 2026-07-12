@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Settings } from "lucide-react";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   type DataTableColumn,
@@ -352,24 +353,23 @@ export function ConfiguracaoPage({
             return draft.excluir_preventiva ? "Sim" : "Não";
           }
           return (
-            <label className="dm-checkbox-field">
-              <input
-                type="checkbox"
-                checked={draft.excluir_preventiva}
-                onChange={(event) =>
-                  setMotivoEdits((prev) => ({
-                    ...prev,
-                    [item.motivo_id]: {
-                      ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
-                      excluir_preventiva: event.target.checked,
-                    },
-                  }))
-                }
-              />
+            <NativeCheckboxControl
+              className="dm-checkbox-field"
+              checked={draft.excluir_preventiva}
+              onChange={(checked) =>
+                setMotivoEdits((prev) => ({
+                  ...prev,
+                  [item.motivo_id]: {
+                    ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
+                    excluir_preventiva: checked,
+                  },
+                }))
+              }
+            >
               <HelpTooltip content={CONFIG_TOOLTIPS.excluirPreventiva} wrap ariaLabel="Ajuda: ignora preventiva">
                 <span>Não conta</span>
               </HelpTooltip>
-            </label>
+            </NativeCheckboxControl>
           );
         },
       },
@@ -553,16 +553,15 @@ export function ConfiguracaoPage({
                 onChange={setNovoMotivo}
                 placeholder="Ex.: DESGASTE"
               />
-              <label className="dm-checkbox-field">
-                <input
-                  type="checkbox"
-                  checked={novoMotivoExcluirPreventiva}
-                  onChange={(event) => setNovoMotivoExcluirPreventiva(event.target.checked)}
-                />
+              <NativeCheckboxControl
+                className="dm-checkbox-field"
+                checked={novoMotivoExcluirPreventiva}
+                onChange={setNovoMotivoExcluirPreventiva}
+              >
                 <HelpTooltip content={CONFIG_TOOLTIPS.excluirPreventiva} wrap ariaLabel="Ajuda: não conta no preventivo">
                   <span>Não conta no preventivo</span>
                 </HelpTooltip>
-              </label>
+              </NativeCheckboxControl>
               <button type="submit" className="dm-primary-btn">
                 Adicionar
               </button>

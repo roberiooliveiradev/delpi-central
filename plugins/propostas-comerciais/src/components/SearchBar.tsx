@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 type SearchBarProps = {
   value: string;
@@ -11,10 +12,10 @@ export function SearchBar({ value, onChange, resultCount }: SearchBarProps) {
     <div className="pc-search-bar">
       <label className="pc-search-bar__field">
         <Search size={18} aria-hidden="true" />
-        <input
+        <NativeTextControl
           type="search"
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={onChange}
           placeholder="Buscar por OV, oportunidade, proposta ou cliente"
           aria-label="Buscar propostas comerciais"
         />

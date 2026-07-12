@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
+import { NativeTextControl, useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import {
   Bar,
   BarChart,
@@ -239,12 +239,12 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
       <section className="ds-filters-row">
         <div className="ds-filter-box">
           <label htmlFor="de-transforma-status">Status do processo</label>
-          <input
+          <NativeTextControl
             id="de-transforma-status"
             type="text"
             value={statusFilter}
             placeholder="Todos"
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={setStatusFilter}
           />
         </div>
       </section>

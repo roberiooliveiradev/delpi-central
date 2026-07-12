@@ -4,7 +4,7 @@ export type NativeTextControlProps = {
   id?: string;
   value: string | number;
   onChange: (value: string) => void;
-  type?: "text" | "number" | "url" | "date" | "datetime-local";
+  type?: "text" | "number" | "url" | "date" | "datetime-local" | "search" | "password" | "month";
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
@@ -15,6 +15,9 @@ export type NativeTextControlProps = {
   maxLength?: number;
   className?: string;
   "aria-label"?: string;
+  "aria-invalid"?: boolean;
+  autoComplete?: InputHTMLAttributes<HTMLInputElement>["autoComplete"];
+  spellCheck?: boolean;
   inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
   onBlur?: () => void;
 };
@@ -37,6 +40,9 @@ export function NativeTextControl({
   maxLength,
   className,
   "aria-label": ariaLabel,
+  "aria-invalid": ariaInvalid,
+  autoComplete,
+  spellCheck,
   inputMode,
   onBlur,
 }: NativeTextControlProps) {
@@ -55,7 +61,10 @@ export function NativeTextControl({
       step={step}
       maxLength={maxLength}
       inputMode={inputMode}
+      autoComplete={autoComplete}
+      spellCheck={spellCheck}
       aria-label={ariaLabel}
+      aria-invalid={ariaInvalid}
       onBlur={onBlur}
       onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
     />

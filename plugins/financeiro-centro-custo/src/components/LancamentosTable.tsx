@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import type {
   DespesasLancamentoItem,
@@ -117,11 +118,11 @@ export function LancamentosTable({
             onSearchSubmit();
           }}
         >
-          <input
+          <NativeTextControl
             type="search"
             value={draftSearch}
             placeholder="Buscar documento, fornecedor, produto…"
-            onChange={(event) => setDraftSearch(event.target.value)}
+            onChange={setDraftSearch}
             aria-label="Buscar lançamentos"
           />
           <button type="submit" className="fcc-btn fcc-btn--secondary">

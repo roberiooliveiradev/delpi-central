@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { HelpTooltip, NativeTextControl } from "@delpi/plugin-ui/index";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   useLoadingProgress,
@@ -183,12 +183,12 @@ export function DataTableSection<T>({
             <div className="lmps-table-toolbar">
               <div className="lmps-table-search" role="search">
                 <Search size={16} aria-hidden="true" className="lmps-table-search__icon" />
-                <input
+                <NativeTextControl
                   type="search"
                   className="lmps-table-search__input"
                   value={search}
                   placeholder={searchPlaceholder}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={setSearch}
                   aria-label="Filtrar registros da tabela"
                 />
               </div>

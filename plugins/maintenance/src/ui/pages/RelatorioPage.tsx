@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, LineChart, RefreshCw, Search, X } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   PreventivaDetailPanel,
@@ -667,14 +668,14 @@ export function RelatorioPage({
         interactive: true,
         render: (item) => (
           <div className="dm-revisao-feito-actions">
-            <input
+            <NativeTextControl
               type="date"
               aria-label={`Data da revisão feita para ${item.codigo_ferramenta}`}
               value={resolveFeitoDate(item)}
-              onChange={(event) =>
+              onChange={(value) =>
                 setFeitoDrafts((prev) => ({
                   ...prev,
-                  [item.revisao_id]: event.target.value,
+                  [item.revisao_id]: value,
                 }))
               }
             />
@@ -866,17 +867,17 @@ export function RelatorioPage({
       <FilterBar className="dm-filter-bar--relatorio">
         <label className="dm-field">
           <span>Ferramenta</span>
-          <input
+          <NativeTextControl
             value={ferramentaFiltro}
-            onChange={(event) => setFerramentaFiltro(event.target.value)}
+            onChange={setFerramentaFiltro}
             placeholder="Código ou descrição…"
           />
         </label>
         <label className="dm-field">
           <span>Peça</span>
-          <input
+          <NativeTextControl
             value={pecaFiltro}
-            onChange={(event) => setPecaFiltro(event.target.value)}
+            onChange={setPecaFiltro}
             placeholder="Código ou descrição…"
             disabled={listTab === "revisoes"}
           />

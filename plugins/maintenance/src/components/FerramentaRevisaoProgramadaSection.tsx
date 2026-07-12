@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarClock, ChevronDown } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { CONFIG_TOOLTIPS } from "../content/configTooltips";
 import {
@@ -442,12 +443,12 @@ export function FerramentaRevisaoProgramadaSection({
                       <tr key={item.realizacao_id}>
                         <td>
                           {isEditing ? (
-                            <input
+                            <NativeTextControl
                               type="date"
                               value={realizacaoDraft.data_revisao}
-                              onChange={(event) =>
+                              onChange={(value) =>
                                 setRealizacaoDraft((prev) =>
-                                  prev ? { ...prev, data_revisao: event.target.value } : prev,
+                                  prev ? { ...prev, data_revisao: value } : prev,
                                 )
                               }
                             />
@@ -459,11 +460,11 @@ export function FerramentaRevisaoProgramadaSection({
                         <td>{formatDateTime(item.data_registro)}</td>
                         <td>
                           {isEditing ? (
-                            <input
+                            <NativeTextControl
                               value={realizacaoDraft.observacao}
-                              onChange={(event) =>
+                              onChange={(value) =>
                                 setRealizacaoDraft((prev) =>
-                                  prev ? { ...prev, observacao: event.target.value } : prev,
+                                  prev ? { ...prev, observacao: value } : prev,
                                 )
                               }
                               placeholder="Opcional"
@@ -549,15 +550,15 @@ export function FerramentaRevisaoProgramadaSection({
             <form className="dm-form-grid dm-revisao-ferramenta__form" onSubmit={handleCreate}>
               <label className="dm-field dm-field--span-3">
                 <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo}  className="dm-field__label" />
-                <input
+                <NativeTextControl
                   type="number"
                   min={1}
                   max={120}
                   value={createDraft.intervalo_meses}
-                  onChange={(event) =>
+                  onChange={(value) =>
                     setCreateDraft((prev) => ({
                       ...prev,
-                      intervalo_meses: Number(event.target.value),
+                      intervalo_meses: Number(value),
                     }))
                   }
                 />
@@ -595,13 +596,13 @@ export function FerramentaRevisaoProgramadaSection({
               <label className="dm-field dm-field--span-3">
                 <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo}  className="dm-field__label" />
                 <div className="dm-editable-cell">
-                  <input
+                  <NativeTextControl
                     type="number"
                     min={1}
                     max={120}
                     value={draft.intervalo_meses}
-                    onChange={(event) =>
-                      setDraft((prev) => ({ ...prev, intervalo_meses: Number(event.target.value) }))
+                    onChange={(value) =>
+                      setDraft((prev) => ({ ...prev, intervalo_meses: Number(value) }))
                     }
                   />
                   <PendingChangeBadge visible={isDirty(schedule, draft)} />

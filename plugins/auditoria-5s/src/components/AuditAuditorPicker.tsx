@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { searchDirectoryUsers, type DirectoryUser } from "../api/directoryApi";
 import type { AuditAuditorSelection } from "../types/auditAuditor";
@@ -101,13 +102,13 @@ export function AuditAuditorPicker({ value, onChange, disabled = false }: Props)
 
       <div className="a5s-auditor-picker__search">
         <Search size={16} aria-hidden />
-        <input
+        <NativeTextControl
           type="search"
           value={query}
           disabled={disabled}
           placeholder="Buscar por nome ou e-mail…"
           aria-label="Buscar auditor por nome ou e-mail"
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={setQuery}
         />
       </div>
 

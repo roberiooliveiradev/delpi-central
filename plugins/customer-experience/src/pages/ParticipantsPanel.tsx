@@ -15,6 +15,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   activateParticipant,
   createParticipant,
@@ -27,7 +28,7 @@ import {
 import { CompanyField } from "../components/CompanyField";
 import { CompanyMultiSelect } from "../components/CompanyMultiSelect";
 import { PhotoDropzone } from "../components/PhotoDropzone";
-import { CxNativeTextAreaField } from "../components/cxFormFields";
+import { CxNativeTextAreaField, CxNativeTextField } from "../components/cxFormFields";
 import { printQrLabel } from "../utils/qrLabelPrint";
 import { useCxPermissions } from "../context/CxPermissionsContext";
 import type { Participant } from "../types";
@@ -339,41 +340,36 @@ export function ParticipantsPanel() {
             </button>
           </div>
           <form className="cx-form" onSubmit={handleSubmit}>
-            <label className="cx-field">
-              <span>Nome completo</span>
-              <input
-                type="text"
-                required
-                value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                placeholder="Nome do visitante"
-              />
-            </label>
+            <CxNativeTextField
+              id="cx-participant-full-name"
+              label="Nome completo"
+              required
+              value={form.fullName}
+              onChange={(fullName) => setForm({ ...form, fullName })}
+              placeholder="Nome do visitante"
+            />
 
             <CompanyField
               value={form.companyName}
               onChange={(companyName) => setForm({ ...form, companyName })}
             />
 
-            <label className="cx-field">
-              <span>Data da visita</span>
-              <input
-                type="date"
-                required
-                value={form.visitDate}
-                onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
-              />
-            </label>
+            <CxNativeTextField
+              id="cx-participant-visit-date"
+              label="Data da visita"
+              type="date"
+              required
+              value={form.visitDate}
+              onChange={(visitDate) => setForm({ ...form, visitDate })}
+            />
 
-            <label className="cx-field">
-              <span>Informações do participante</span>
-              <input
-                type="text"
-                value={form.participantInfo}
-                onChange={(e) => setForm({ ...form, participantInfo: e.target.value })}
-                placeholder="Cargo, área ou observação (opcional)"
-              />
-            </label>
+            <CxNativeTextField
+              id="cx-participant-info"
+              label="Informações do participante"
+              value={form.participantInfo}
+              onChange={(participantInfo) => setForm({ ...form, participantInfo })}
+              placeholder="Cargo, área ou observação (opcional)"
+            />
 
             <CxNativeTextAreaField
               id="cx-participant-thank-you"
@@ -445,10 +441,10 @@ export function ParticipantsPanel() {
           <div className="cx-filters">
             <div className="cx-search">
               <Search size={16} />
-              <input
+              <NativeTextControl
                 type="text"
                 value={nameFilter}
-                onChange={(e) => setNameFilter(e.target.value)}
+                onChange={setNameFilter}
                 placeholder="Buscar por nome"
               />
             </div>
@@ -460,21 +456,21 @@ export function ParticipantsPanel() {
             <label className="cx-date-filter">
               <CalendarDays size={15} />
               <span>De</span>
-              <input
+              <NativeTextControl
                 type="date"
                 value={dateFrom}
                 max={dateTo || undefined}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={setDateFrom}
               />
             </label>
             <label className="cx-date-filter">
               <CalendarDays size={15} />
               <span>Até</span>
-              <input
+              <NativeTextControl
                 type="date"
                 value={dateTo}
                 min={dateFrom || undefined}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={setDateTo}
               />
             </label>
             {hasActiveFilters && (

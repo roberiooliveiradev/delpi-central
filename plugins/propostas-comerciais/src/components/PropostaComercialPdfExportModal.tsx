@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, FileDown, Loader2 } from "lucide-react";
+import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   DEFAULT_ITEM_COLUMN_LABELS,
@@ -211,7 +212,7 @@ function Field({
       {multiline ? (
         <PcNativeTextAreaControl rows={4} value={value} onChange={onChange} />
       ) : (
-        <input type="text" value={value} onChange={(event) => onChange(event.target.value)} />
+        <NativeTextControl type="text" value={value} onChange={onChange} />
       )}
     </label>
   );
@@ -227,12 +228,12 @@ function SummaryLabelInput({
   "aria-label": string;
 }) {
   return (
-    <input
+    <NativeTextControl
       type="text"
       className="pc-summary-label-input"
       value={value}
       aria-label={ariaLabel}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
     />
   );
 }
@@ -399,17 +400,16 @@ export function PropostaComercialPdfExportModal({
 
       <section className="pc-export-section">
         <h3>Itens ({detail.itens.length})</h3>
-        <label className="pc-export-option">
-          <input
-            type="checkbox"
-            checked={draft.exibirColunaValorLiquido}
-            onChange={(event) => {
-              updateDraft({ exibirColunaValorLiquido: event.target.checked });
-              onClearPreview();
-            }}
-          />
+        <NativeCheckboxControl
+          className="pc-export-option"
+          checked={draft.exibirColunaValorLiquido}
+          onChange={(checked) => {
+            updateDraft({ exibirColunaValorLiquido: checked });
+            onClearPreview();
+          }}
+        >
           <span>Exibir coluna Líquido R$/mil no PDF</span>
-        </label>
+        </NativeCheckboxControl>
         <ItensTable
           items={detail.itens}
           editable

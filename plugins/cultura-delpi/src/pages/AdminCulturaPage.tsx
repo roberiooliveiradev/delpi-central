@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { HttpRequestError } from "../api/httpClient";
 import {
@@ -249,12 +250,12 @@ export function AdminCulturaPage() {
             <div className="cultura-delpi-admin__values">
               {form.valores.map((valor, index) => (
                 <div key={`valor-${index}`} className="cultura-delpi-admin__value-row">
-                  <input
+                  <NativeTextControl
                     type="text"
                     className="cultura-delpi-admin__input"
                     value={valor}
                     placeholder={`Valor ${index + 1}`}
-                    onChange={(event) => updateValor(index, event.target.value)}
+                    onChange={(value) => updateValor(index, value)}
                     disabled={saving}
                     aria-label={`Valor ${index + 1}`}
                   />

@@ -2,6 +2,7 @@ import type {
   PropostaComercialItem,
   PropostaComercialItemTextDraft,
 } from "../types/propostasComerciais";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   DEFAULT_ITEM_COLUMN_LABELS,
   ITEM_COLUMN_KEYS,
@@ -77,12 +78,12 @@ function TableCellInput({
   }
 
   return (
-    <input
+    <NativeTextControl
       type="text"
       className={className}
       value={value}
       aria-label={ariaLabel}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
     />
   );
 }

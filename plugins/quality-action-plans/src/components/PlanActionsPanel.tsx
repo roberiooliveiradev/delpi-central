@@ -16,7 +16,7 @@ import { ActionResponsiblesField } from "./ActionResponsiblesField";
 import { ActionResponsiblesChips } from "./ActionResponsiblesChips";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
@@ -390,13 +390,13 @@ export function PlanActionsPanel({
           fullWidth
         />
 
-        <label className="pac-checkbox-field">
-          <input
-            type="checkbox"
+        <div className="pac-checkbox-field">
+          <NativeCheckboxControl
             checked={form.evidenceRequired}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, evidenceRequired: event.target.checked }))
+            onChange={(evidenceRequired) =>
+              setForm((current) => ({ ...current, evidenceRequired }))
             }
+            aria-label="Exigir evidência anexada para concluir esta ação"
           />
           <span className="pac-field__label-row">
             <FieldLabel
@@ -404,7 +404,7 @@ export function PlanActionsPanel({
               hint={PAC_HELP_TOOLTIPS.form.actionEvidence}
             />
           </span>
-        </label>
+        </div>
 
         <FormActions>
           <button

@@ -9,7 +9,7 @@ import {
 } from "../../constants/actionPlans";
 import { EMPTY_PLANS_FILTERS, type PlansFilterState } from "../../utils/planFilters";
 import { FilterBar } from "../ui/FilterBar";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../ui/MultiSelectField";
 import { TextField } from "../ui/TextField";
 
@@ -150,15 +150,15 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
         <span className="pac-field__label pac-field__label-row">
           <FieldLabel label="Somente com ações atrasadas" hint={PAC_HELP_TOOLTIPS.filters.overdueOnly} />
         </span>
-        <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-filter-overdue">
-          <input
+        <div className="pac-checkbox pac-filter-checkbox">
+          <NativeCheckboxControl
             id="pac-filter-overdue"
-            type="checkbox"
             checked={filters.overdueOnly}
-            onChange={(event) => patch({ overdueOnly: event.target.checked })}
+            onChange={(overdueOnly) => patch({ overdueOnly })}
+            aria-label="Somente com ações atrasadas"
           />
           <span>Ativar filtro</span>
-        </label>
+        </div>
       </div>
     </FilterBar>
   );

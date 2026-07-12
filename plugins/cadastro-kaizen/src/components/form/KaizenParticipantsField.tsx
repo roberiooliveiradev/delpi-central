@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
-import { NativeSelectControl } from "@delpi/plugin-ui/index";
+import { NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { PARTICIPANT_ROLES } from "../../constants/kaizen";
 import type { KaizenParticipant, ParticipantRole } from "../../types/kaizen";
@@ -33,13 +33,13 @@ export function KaizenParticipantsField({ participants, onChange }: KaizenPartic
 
       {participants.map((participant, index) => (
         <div className="kz-participant-row" key={index}>
-          <input
+          <NativeTextControl
             className="kz-participant-row__name"
             placeholder="Nome"
             aria-label={`Nome do participante ${index + 1}`}
             value={participant.name}
             maxLength={200}
-            onChange={(event) => update(index, { name: event.target.value })}
+            onChange={(name) => update(index, { name })}
           />
           <NativeSelectControl
             className="kz-participant-row__role"

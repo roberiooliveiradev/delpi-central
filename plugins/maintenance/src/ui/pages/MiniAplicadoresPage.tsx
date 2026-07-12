@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hammer, Loader2, Lock, PlusCircle, RefreshCw } from "lucide-react";
+import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FilterBar, MultiSelectField, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
@@ -948,32 +949,30 @@ export function MiniAplicadoresPage({
           <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
             <label className="dm-field">
               <span>Buscar por código</span>
-              <input
+              <NativeTextControl
                 value={codigo}
-                onChange={(event) => setCodigo(event.target.value)}
+                onChange={setCodigo}
                 placeholder="Ex.: 23 ou 23-026"
               />
             </label>
             <label className="dm-field">
               <span>Buscar por descrição</span>
-              <input
+              <NativeTextControl
                 value={descricao}
-                onChange={(event) => setDescricao(event.target.value)}
+                onChange={setDescricao}
                 placeholder="Ex.: 23-"
               />
             </label>
             <div className="dm-filter-bar__actions">
-              <label className="dm-checkbox-field">
-                <input
-                  type="checkbox"
-                  checked={incluirBloqueados}
-                  onChange={(event) => {
-                    setIncluirBloqueados(event.target.checked);
-                    ferramentasTable.resetPage();
-                  }}
-                />
-                <span>Mostrar bloqueadas</span>
-              </label>
+              <NativeCheckboxControl
+                className="dm-checkbox-field"
+                checked={incluirBloqueados}
+                onChange={(checked) => {
+                  setIncluirBloqueados(checked);
+                  ferramentasTable.resetPage();
+                }}
+                label="Mostrar bloqueadas"
+              />
               <button type="submit" className="dm-primary-btn">
                 Buscar
               </button>
@@ -1106,16 +1105,16 @@ export function MiniAplicadoresPage({
                 >
                   <span>{golpesLoading ? "Calculando golpes…" : "Golpes"}</span>
                   <div className="dm-golpes-field__control">
-                    <input
+                    <NativeTextControl
                       type="number"
                       min={1}
                       value={golpes}
                       disabled={golpesLoading}
                       readOnly={golpesLoading}
                       aria-invalid={Boolean(reposicaoFormErrors.golpes)}
-                      onChange={(event) => {
+                      onChange={(value) => {
                         clearReposicaoFieldError("golpes");
-                        setGolpes(Number(event.target.value));
+                        setGolpes(Number(value));
                       }}
                       aria-live="polite"
                     />
