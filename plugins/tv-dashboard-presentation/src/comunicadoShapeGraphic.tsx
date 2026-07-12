@@ -41,7 +41,8 @@ export type ShapeGraphicColors = {
 
 const PREVIEW_COLORS: ShapeGraphicColors = {
   fill: "transparent",
-  stroke: "#1f2937",
+  /** Herda cor do tema (claro/escuro) via CSS `color` no preview. */
+  stroke: "currentColor",
   strokeWidth: 1.75,
 };
 

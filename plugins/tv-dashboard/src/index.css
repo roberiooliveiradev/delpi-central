@@ -720,7 +720,7 @@
   border: 1px solid transparent;
   border-radius: 2px;
   background: transparent;
-  color: inherit;
+  color: var(--delpi-ui-text, var(--td-text, #0f172a));
   font: inherit;
   cursor: pointer;
 }
@@ -733,12 +733,14 @@
 .dashboard-tv-dashboard .td-shape-library__preview {
   width: 28px;
   height: 28px;
+  color: var(--delpi-ui-text, var(--td-text, #0f172a));
 }
 
 .dashboard-tv-dashboard .tdp-comunicado__shape-preview {
   display: block;
   width: 100%;
   height: 100%;
+  color: inherit;
 }
 
 .dashboard-tv-dashboard .td-shape-library__icon-wrap {

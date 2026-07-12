@@ -1,6 +1,8 @@
 import { useLayoutEffect, useState, type CSSProperties, type RefObject } from "react";
 
-const PANEL_Z_INDEX = 10200;
+import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
+
+const PANEL_Z_INDEX = DELPI_UI_OVERLAY_Z_INDEX.anchoredPanel;
 
 export type FixedPanelPoint = {
   x: number;

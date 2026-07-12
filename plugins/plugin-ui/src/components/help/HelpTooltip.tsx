@@ -14,6 +14,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
+
 export type HelpTooltipPlacement = "top" | "bottom";
 
 export type HelpTooltipProps = {
@@ -104,7 +106,7 @@ function computeBubblePosition(
 function bubbleLayoutStyle(position: BubblePosition | null, positioned: boolean): CSSProperties {
   const base: CSSProperties = {
     position: "fixed",
-    zIndex: 10000,
+    zIndex: DELPI_UI_OVERLAY_Z_INDEX.helpTooltip,
     maxWidth: BUBBLE_MAX_WIDTH,
     minWidth: 200,
     boxSizing: "border-box",

@@ -19,3 +19,4 @@ export * from "./utils";
 export * from "./hooks";
 export * from "./types/chartGranularity";
 export * from "./export";
+export * from "./overlayLayers";

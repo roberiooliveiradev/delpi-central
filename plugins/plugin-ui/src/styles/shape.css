@@ -736,6 +736,10 @@
   color-scheme: light dark;
 }
 
+.delpi-ui-shape-theme-host .tdp-comunicado__shape-preview {
+  color: inherit;
+}
+
 .delpi-ui-shape-theme-host[data-theme="dark"],
 :root[data-theme="dark"] .delpi-ui-shape-theme-host {
   color-scheme: dark;
