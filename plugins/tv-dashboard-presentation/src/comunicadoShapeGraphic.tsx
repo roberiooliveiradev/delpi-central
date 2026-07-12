@@ -2,7 +2,36 @@ import type { CSSProperties, ReactNode } from "react";
 
 import type { ComunicadoShapeGeometry } from "./comunicadoShapeGeometry";
 import { COMUNICADO_MARKER_RADIUS_DEFAULT, geometryBoundingFrame } from "./comunicadoShapeGeometry";
-import type { ComunicadoShapeKind } from "./comunicadoTypes";
+import { resolveShapeAdjustments } from "./comunicadoShapeAdjustments";
+import type { ComunicadoBlockStyle, ComunicadoShapeKind } from "./comunicadoTypes";
+import {
+  arrowDownPath,
+  arrowLeftPath,
+  arrowLeftRightPath,
+  arrowRightPath,
+  arrowUpDownPath,
+  arrowUpPath,
+  bannerPath,
+  calloutBubble,
+  chevronLeftPath,
+  chevronRightPath,
+  cornerRx,
+  crossPath,
+  cylinderParts,
+  documentPath,
+  hexagonPoints,
+  moonPath,
+  notchedArrowPath,
+  octagonPoints,
+  parallelogramPoints,
+  polygonPoints,
+  roundSameSidePath,
+  snipRectPoints,
+  starPoints,
+  trapezoidPoints,
+  trianglePoints,
+  wavePath,
+} from "./comunicadoShapePaths";
 
 export type ShapeGraphicColors = {
   fill: string;
@@ -15,24 +44,6 @@ const PREVIEW_COLORS: ShapeGraphicColors = {
   stroke: "#1f2937",
   strokeWidth: 1.75,
 };
-
-function polygonPoints(coords: number[]): string {
-  const pairs: string[] = [];
-  for (let index = 0; index < coords.length; index += 2) {
-    pairs.push(`${coords[index]},${coords[index + 1]}`);
-  }
-  return pairs.join(" ");
-}
-
-function starPoints(points: number, outer = 46, inner = 20, cx = 50, cy = 50): string {
-  const coords: number[] = [];
-  for (let i = 0; i < points * 2; i += 1) {
-    const radius = i % 2 === 0 ? outer : inner;
-    const angle = (Math.PI / points) * i - Math.PI / 2;
-    coords.push(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
-  }
-  return polygonPoints(coords);
-}
 
 function renderLineGeometry(
   geometry: Extract<ComunicadoShapeGeometry, { primitive: "line" }>,
@@ -104,22 +115,17 @@ function renderPointMarker(
 function renderSvgShape(
   kind: ComunicadoShapeKind,
   colors: ShapeGraphicColors,
-  borderRadius?: number,
+  adjustments: number[] = [],
+  borderRadiusPx?: number,
 ): ReactNode {
   const { fill, stroke, strokeWidth } = colors;
   const sw = strokeWidth;
+  const adj = adjustments;
 
   switch (kind) {
     case "point":
       return (
-        <circle
-          cx="50"
-          cy="50"
-          r="10"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw > 0 ? sw : 0}
-        />
+        <circle cx="50" cy="50" r="10" fill={fill} stroke={stroke} strokeWidth={sw > 0 ? sw : 0} />
       );
     case "line":
       return <line x1="4" y1="50" x2="96" y2="50" stroke={stroke} strokeWidth={Math.max(3, sw * 2)} />;
@@ -147,27 +153,17 @@ function renderSvgShape(
       );
     case "triangle":
       return (
-        <polygon
-          points={polygonPoints([50, 8, 92, 92, 8, 92])}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
+        <polygon points={polygonPoints(trianglePoints(adj))} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
     case "right-triangle":
       return (
-        <polygon
-          points={polygonPoints([8, 8, 8, 92, 92, 92])}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
+        <polygon points={polygonPoints([8, 8, 8, 92, 92, 92])} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
     case "parallelogram":
     case "flowchart-data":
       return (
         <polygon
-          points={polygonPoints([22, 12, 94, 12, 78, 88, 6, 88])}
+          points={polygonPoints(parallelogramPoints(adj))}
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
@@ -176,12 +172,7 @@ function renderSvgShape(
     case "trapezoid":
     case "flowchart-preparation":
       return (
-        <polygon
-          points={polygonPoints([22, 12, 78, 12, 94, 88, 6, 88])}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
+        <polygon points={polygonPoints(trapezoidPoints(adj))} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
     case "diamond":
     case "flowchart-decision":
@@ -193,50 +184,50 @@ function renderSvgShape(
           strokeWidth={sw}
         />
       );
-    case "pentagon":
+    case "pentagon": {
+      const tip = (adj[0] ?? 0.5) * 100;
       return (
         <polygon
-          points={polygonPoints([50, 6, 94, 38, 78, 92, 22, 92, 6, 38])}
+          points={polygonPoints([tip, 6, 94, 38, 78, 92, 22, 92, 6, 38])}
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
         />
       );
+    }
     case "hexagon":
       return (
-        <polygon
-          points={polygonPoints([50, 4, 90, 27, 90, 73, 50, 96, 10, 73, 10, 27])}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
+        <polygon points={polygonPoints(hexagonPoints(adj))} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
     case "octagon":
       return (
-        <polygon
-          points={polygonPoints([30, 6, 70, 6, 94, 30, 94, 70, 70, 94, 30, 94, 6, 70, 6, 30])}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
+        <polygon points={polygonPoints(octagonPoints(adj))} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
     case "cross":
-      return (
-        <path
-          d="M38 8 H62 V38 H92 V62 H62 V92 H38 V62 H8 V38 H38 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
-    case "cylinder":
+      return <path d={crossPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "cylinder": {
+      const { ry, bodyBottom } = cylinderParts(adj);
       return (
         <>
-          <ellipse cx="50" cy="22" rx="34" ry="12" fill={fill} stroke={stroke} strokeWidth={sw} />
-          <path d="M16 22 V72 C16 84 84 84 84 72 V22" fill={fill} stroke={stroke} strokeWidth={sw} />
-          <ellipse cx="50" cy="72" rx="34" ry="12" fill={fill} stroke={stroke} strokeWidth={sw} />
+          <ellipse cx="50" cy={12 + ry} rx="34" ry={ry} fill={fill} stroke={stroke} strokeWidth={sw} />
+          <path
+            d={`M16 ${12 + ry} V${bodyBottom} C16 ${bodyBottom + ry} 84 ${bodyBottom + ry} 84 ${bodyBottom} V${12 + ry}`}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={sw}
+          />
+          <ellipse
+            cx="50"
+            cy={bodyBottom}
+            rx="34"
+            ry={ry}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={sw}
+          />
         </>
       );
+    }
     case "heart":
       return (
         <path
@@ -256,7 +247,21 @@ function renderSvgShape(
         />
       );
     case "cloud":
-    case "callout-cloud":
+    case "callout-cloud": {
+      if (kind === "callout-cloud") {
+        const bubble = calloutBubble(adj, 10);
+        return (
+          <>
+            <path
+              d="M28 58 C12 58 10 38 24 32 C18 16 40 6 52 16 C60 4 84 10 82 28 C96 30 96 54 80 56 Z"
+              fill={fill}
+              stroke={stroke}
+              strokeWidth={sw}
+            />
+            <polygon points={bubble.tip} fill={fill} stroke={stroke} strokeWidth={sw} />
+          </>
+        );
+      }
       return (
         <path
           d="M28 70 C12 70 10 50 24 44 C18 28 40 18 52 28 C60 16 84 22 82 40 C96 42 96 66 80 68 Z"
@@ -265,23 +270,18 @@ function renderSvgShape(
           strokeWidth={sw}
         />
       );
+    }
     case "moon":
-      return (
-        <path
-          d="M62 12 C38 16 22 40 28 66 C34 88 58 98 78 88 C54 92 36 72 40 48 C44 28 54 16 62 12 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
-    case "sun":
+      return <path d={moonPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "sun": {
+      const core = (adj[0] ?? 0.35) * 40;
       return (
         <>
-          <circle cx="50" cy="50" r="18" fill={fill} stroke={stroke} strokeWidth={sw} />
+          <circle cx="50" cy="50" r={core} fill={fill} stroke={stroke} strokeWidth={sw} />
           {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
             const rad = (deg * Math.PI) / 180;
-            const x1 = 50 + Math.cos(rad) * 24;
-            const y1 = 50 + Math.sin(rad) * 24;
+            const x1 = 50 + Math.cos(rad) * (core + 6);
+            const y1 = 50 + Math.sin(rad) * (core + 6);
             const x2 = 50 + Math.cos(rad) * 42;
             const y2 = 50 + Math.sin(rad) * 42;
             return (
@@ -298,64 +298,23 @@ function renderSvgShape(
           })}
         </>
       );
+    }
     case "arrow-right":
-      return (
-        <path
-          d="M4 50 H58 L44 34 L54 24 L96 50 L54 76 L44 66 L58 50 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={arrowRightPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "arrow-left":
-      return (
-        <path
-          d="M96 50 H42 L56 34 L46 24 L4 50 L46 76 L56 66 L42 50 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={arrowLeftPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "arrow-up":
-      return (
-        <path
-          d="M50 4 L76 46 L62 46 L62 96 L38 96 L38 46 L24 46 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={arrowUpPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "arrow-down":
-      return (
-        <path
-          d="M50 96 L24 54 L38 54 L38 4 L62 4 L62 54 L76 54 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={arrowDownPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "arrow-left-right":
-      return (
-        <path
-          d="M4 50 L24 30 L24 42 H76 L76 30 L96 50 L76 70 L76 58 H24 L24 70 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={arrowLeftRightPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "arrow-up-down":
-      return (
-        <path
-          d="M50 4 L70 24 L58 24 V76 L70 76 L50 96 L30 76 L42 76 V24 L30 24 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={arrowUpDownPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "chevron-right":
       return (
         <path
-          d="M28 12 L72 50 L28 88 Z"
+          d={chevronRightPath(adj)}
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
@@ -365,7 +324,7 @@ function renderSvgShape(
     case "chevron-left":
       return (
         <path
-          d="M72 12 L28 50 L72 88 Z"
+          d={chevronLeftPath(adj)}
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
@@ -373,94 +332,105 @@ function renderSvgShape(
         />
       );
     case "notched-arrow-right":
+      return <path d={notchedArrowPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "star":
       return (
-        <path
-          d="M8 30 H62 L50 18 L70 18 L96 50 L70 82 L50 82 L62 70 H8 L20 50 Z"
+        <polygon
+          points={starPoints(5, 46, 18 + (adj[0] ?? 0.4) * 28)}
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
+          strokeLinejoin="round"
         />
-      );
-    case "star":
-      return (
-        <polygon points={starPoints(5)} fill={fill} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
       );
     case "star-4":
       return (
-        <polygon points={starPoints(4)} fill={fill} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+        <polygon
+          points={starPoints(4, 46, 18 + (adj[0] ?? 0.4) * 28)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
       );
     case "star-6":
       return (
-        <polygon points={starPoints(6)} fill={fill} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+        <polygon
+          points={starPoints(6, 46, 18 + (adj[0] ?? 0.4) * 28)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
       );
     case "star-8":
       return (
-        <polygon points={starPoints(8, 46, 22)} fill={fill} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+        <polygon
+          points={starPoints(8, 46, 16 + (adj[0] ?? 0.4) * 24)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
       );
     case "banner":
-      return (
-        <path
-          d="M8 28 H92 L84 50 L92 72 H8 L16 50 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={bannerPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "wave":
-      return (
-        <path
-          d="M8 40 C24 20 40 60 56 40 C72 20 88 60 92 40 V72 C76 92 60 52 44 72 C28 92 12 52 8 72 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
-    case "callout-rect":
+      return <path d={wavePath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "callout-rect": {
+      const bubble = calloutBubble(adj, 10);
       return (
         <>
-          <rect x="8" y="8" width="84" height="58" rx="10" fill={fill} stroke={stroke} strokeWidth={sw} />
-          <polygon points="42,66 50,84 58,66" fill={fill} stroke={stroke} strokeWidth={sw} />
+          <rect
+            x={bubble.rect.x}
+            y={bubble.rect.y}
+            width={bubble.rect.w}
+            height={bubble.rect.h}
+            rx={10}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={sw}
+          />
+          <polygon points={bubble.tip} fill={fill} stroke={stroke} strokeWidth={sw} />
         </>
       );
-    case "callout-rounded":
+    }
+    case "callout-rounded": {
+      const bubble = calloutBubble(adj, 20);
       return (
         <>
-          <rect x="10" y="10" width="80" height="54" rx="20" fill={fill} stroke={stroke} strokeWidth={sw} />
-          <polygon points="40,64 50,88 60,64" fill={fill} stroke={stroke} strokeWidth={sw} />
+          <rect
+            x={bubble.rect.x}
+            y={bubble.rect.y}
+            width={bubble.rect.w}
+            height={bubble.rect.h}
+            rx={bubble.rect.rx}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={sw}
+          />
+          <polygon points={bubble.tip} fill={fill} stroke={stroke} strokeWidth={sw} />
         </>
       );
+    }
     case "flowchart-document":
-      return (
-        <path
-          d="M12 10 H88 V70 C70 82 50 58 12 70 Z"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={documentPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "flowchart-terminator":
       return <rect x="8" y="28" width="84" height="44" rx="22" fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "snip-rect":
       return (
-        <polygon
-          points={polygonPoints([8, 12, 78, 12, 92, 26, 92, 88, 8, 88])}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
+        <polygon points={polygonPoints(snipRectPoints(adj))} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
     case "round-same-side-rect":
+      return <path d={roundSameSidePath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "equation-plus":
       return (
         <path
-          d="M18 12 H82 Q92 12 92 22 V88 H8 V22 Q8 12 18 12 Z"
+          d="M42 18 H58 V42 H82 V58 H58 V82 H42 V58 H18 V42 H42 Z"
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
         />
-      );
-    case "equation-plus":
-      return (
-        <path d="M42 18 H58 V42 H82 V58 H58 V82 H42 V58 H18 V42 H42 Z" fill={fill} stroke={stroke} strokeWidth={sw} />
       );
     case "equation-minus":
       return <rect x="18" y="42" width="64" height="16" fill={fill} stroke={stroke} strokeWidth={sw} />;
@@ -493,19 +463,16 @@ function renderSvgShape(
     case "rounded-rect":
     case "flowchart-process":
     case "rectangle":
-    default:
+    default: {
+      const fallback = kind === "rectangle" ? 0 : kind === "flowchart-process" ? 4 : 14;
+      const rx =
+        borderRadiusPx != null && borderRadiusPx > 0
+          ? Math.min(38, borderRadiusPx)
+          : cornerRx(adj, fallback);
       return (
-        <rect
-          x="8"
-          y="12"
-          width="84"
-          height="76"
-          rx={borderRadius ?? (kind === "rectangle" ? 0 : 14)}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
+        <rect x="8" y="12" width="84" height="76" rx={rx} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
+    }
   }
 }
 
@@ -516,9 +483,10 @@ export function ComunicadoShapePreview({
   kind: ComunicadoShapeKind;
   className?: string;
 }) {
+  const adjustments = resolveShapeAdjustments(kind, null);
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      {renderSvgShape(kind, PREVIEW_COLORS)}
+      {renderSvgShape(kind, PREVIEW_COLORS, adjustments)}
     </svg>
   );
 }
@@ -529,6 +497,8 @@ export function ComunicadoShapeGraphic({
   stroke,
   strokeWidth,
   borderRadius,
+  adjustments,
+  style,
   geometry,
   markerRadius = COMUNICADO_MARKER_RADIUS_DEFAULT,
 }: {
@@ -537,9 +507,14 @@ export function ComunicadoShapeGraphic({
   stroke: string;
   strokeWidth: number;
   borderRadius?: number;
+  adjustments?: number[];
+  style?: ComunicadoBlockStyle | null;
   geometry?: ComunicadoShapeGeometry;
   markerRadius?: number;
 }) {
+  const resolvedAdj =
+    adjustments ?? resolveShapeAdjustments(kind, style ?? { borderRadius, adjustments });
+
   if (geometry?.primitive === "point") {
     return renderPointMarker(fill, stroke, strokeWidth, markerRadius);
   }
@@ -555,7 +530,7 @@ export function ComunicadoShapeGraphic({
   if (kind === "line" || kind === "line-arrow-right" || kind === "line-arrow-left" || kind === "line-arrow-both") {
     return (
       <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
-        {renderSvgShape(kind, { fill, stroke, strokeWidth })}
+        {renderSvgShape(kind, { fill, stroke, strokeWidth }, resolvedAdj)}
       </svg>
     );
   }
@@ -566,6 +541,7 @@ export function ComunicadoShapeGraphic({
 
   const cssKinds: ComunicadoShapeKind[] = ["rectangle", "rounded-rect", "ellipse", "flowchart-process"];
   if (cssKinds.includes(kind)) {
+    const cornerAdj = resolvedAdj[0] ?? (kind === "rectangle" ? 0 : kind === "flowchart-process" ? 0.05 : 0.16);
     const shapeStyle: CSSProperties = {
       width: "100%",
       height: "100%",
@@ -574,9 +550,9 @@ export function ComunicadoShapeGraphic({
       borderRadius:
         kind === "ellipse"
           ? "50%"
-          : kind === "rectangle" || kind === "rounded-rect" || kind === "flowchart-process"
-            ? borderRadius ?? (kind === "rectangle" ? 0 : 16)
-            : 0,
+          : borderRadius != null && borderRadius > 0
+            ? borderRadius
+            : `${cornerAdj * 50}%`,
     };
     return <div className="tdp-comunicado__shape-fill" style={shapeStyle} />;
   }
@@ -594,7 +570,7 @@ export function ComunicadoShapeGraphic({
 
   return (
     <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" preserveAspectRatio="none" aria-hidden="true">
-      {renderSvgShape(kind, { fill, stroke, strokeWidth }, borderRadius)}
+      {renderSvgShape(kind, { fill, stroke, strokeWidth }, resolvedAdj, borderRadius)}
     </svg>
   );
 }

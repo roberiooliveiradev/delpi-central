@@ -1,9 +1,12 @@
 import {
   COMUNICADO_EDITOR_FONT_SCALE,
+  adjustmentHandleCssPosition,
   comunicadoBackgroundCssProperties,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
+  resolveShapeAdjustments,
+  shapeAdjustmentSpecs,
   shouldHideDataSourceOnStage,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
@@ -22,7 +25,7 @@ import type { BlockDragMode } from "./useCanvasBlockInteraction";
 const MARQUEE_THRESHOLD_PX = 4;
 
 const BLOCK_RESIZE_HANDLES: Array<{
-  mode: Exclude<BlockDragMode, "move">;
+  mode: Exclude<BlockDragMode, "move" | `adjust-${number}`>;
   position: string;
   label: string;
 }> = [
@@ -319,6 +322,25 @@ export function ComunicadoComposerCanvas() {
                         onPointerDown={(event) => startDrag(event, block, mode)}
                       />
                     ))}
+                    {block.type === "shape"
+                      ? shapeAdjustmentSpecs(block.shape).map((spec) => {
+                          const values = resolveShapeAdjustments(block.shape, block.style);
+                          const pos = adjustmentHandleCssPosition(spec, values);
+                          return (
+                            <button
+                              key={`adj-${spec.index}`}
+                              type="button"
+                              className="td-composer__adjust"
+                              style={{ left: pos.left, top: pos.top }}
+                              aria-label={`Ajustar ${spec.label}`}
+                              title={spec.label}
+                              onPointerDown={(event) =>
+                                startDrag(event, block, `adjust-${spec.index}`)
+                              }
+                            />
+                          );
+                        })
+                      : null}
                   </>
                 ) : null}
               </div>

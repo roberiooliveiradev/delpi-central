@@ -18,6 +18,7 @@ import {
   normalizeHrefInput,
   resolveEntranceAnimation,
   isPointShapeKind,
+  shapeHasAdjustments,
   visualBoxSupportsShapeFormatting,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
@@ -28,6 +29,7 @@ import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { KpiViewOptionsInspector } from "../KpiViewOptionsInspector";
+import { ShapeAdjustmentsControl } from "../ShapeAdjustmentsControl";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -335,6 +337,15 @@ export function ComunicadoElementInspector({
               onChange={(value) => updateSelectedStyle({ rotation: Number(value) })}
             />
           </DeckField>
+          {!multiSelect && selected.type === "shape" && shapeHasAdjustments(selected.shape) ? (
+            <ShapeAdjustmentsControl
+              kind={selected.shape}
+              style={selected.style}
+              onChange={(patch) => updateSelectedStyle(patch)}
+              variant="inspector"
+              idPrefix="td-frame-shape-adj"
+            />
+          ) : null}
         </DeckPropertySection>
       ) : null}
 

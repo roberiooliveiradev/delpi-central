@@ -621,7 +621,7 @@ export function ComunicadoEditorProvider({
   }, [selectedId, selectedIds]);
 
   const handleInteractionEnd = useCallback(
-    (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize" | "rotate") => {
+    (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize" | "rotate" | "adjust") => {
       const before = dragSnapshotRef.current;
       dragSnapshotRef.current = null;
       const multi = multiDragRef.current;

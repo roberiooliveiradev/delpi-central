@@ -3,13 +3,15 @@ import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent 
 import {
   clampFrame,
   clampFrameForBlock,
-  isLineShapeKind,
   isPointShapeKind,
+  patchShapeAdjustment,
+  resolveShapeAdjustments,
   resolveShapeGeometry,
-  syncLineVerticesFromFrame,
+  shapeAdjustmentSpecs,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
   type ComunicadoFrame,
+  type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
 export type BlockDragMode =
@@ -22,7 +24,8 @@ export type BlockDragMode =
   | "resize-se"
   | "resize-s"
   | "resize-sw"
-  | "resize-w";
+  | "resize-w"
+  | `adjust-${number}`;
 
 type DragState = {
   mode: BlockDragMode;
@@ -35,6 +38,11 @@ type DragState = {
   startPointerAngle?: number;
   centerX?: number;
   centerY?: number;
+  /** Ajuste de geometria (handle amarelo). */
+  shapeKind?: ComunicadoShapeKind;
+  adjIndex?: number;
+  startAdjustments?: number[];
+  shortSidePx?: number;
 };
 
 type PendingDragState = DragState & {
@@ -45,11 +53,25 @@ type Options = {
   onUpdateFrame: (blockId: string, frame: ComunicadoFrame) => void;
   onUpdateStyle?: (blockId: string, patch: Partial<ComunicadoBlockStyle>) => void;
   onInteractionStart?: () => void;
-  onInteractionEnd?: (blockId: string, frame: ComunicadoFrame, mode: "move" | "resize" | "rotate") => void;
+  onInteractionEnd?: (
+    blockId: string,
+    frame: ComunicadoFrame,
+    mode: "move" | "resize" | "rotate" | "adjust",
+  ) => void;
   resolveBlock?: (blockId: string) => ComunicadoBlock | undefined;
 };
 
 const DRAG_THRESHOLD_PX = 5;
+
+function isAdjustMode(mode: BlockDragMode): mode is `adjust-${number}` {
+  return mode.startsWith("adjust-");
+}
+
+function parseAdjustIndex(mode: BlockDragMode): number | null {
+  if (!isAdjustMode(mode)) return null;
+  const index = Number(mode.slice("adjust-".length));
+  return Number.isFinite(index) ? index : null;
+}
 
 function resizeFrame(
   frame: ComunicadoFrame,
@@ -155,7 +177,7 @@ export function useCanvasBlockInteraction({
     const dx = current.x - start.x;
     const dy = current.y - start.y;
     const frame = drag.startFrame;
-    const lockAspect = event.shiftKey && drag.mode !== "move";
+    const lockAspect = event.shiftKey && drag.mode !== "move" && !isAdjustMode(drag.mode);
 
     if (drag.mode === "rotate") {
       if (drag.centerX == null || drag.centerY == null || drag.startPointerAngle == null) return;
@@ -164,6 +186,26 @@ export function useCanvasBlockInteraction({
       onUpdateStyleRef.current?.(drag.blockId, {
         rotation: normalizeRotation((drag.startRotation ?? 0) + deltaDeg),
       });
+      return;
+    }
+
+    if (isAdjustMode(drag.mode) && drag.shapeKind != null && drag.adjIndex != null) {
+      const localX = frame.w > 0 ? ((current.x - frame.x) / frame.w) * 100 : 50;
+      const localY = frame.h > 0 ? ((current.y - frame.y) / frame.h) * 100 : 50;
+      const specs = shapeAdjustmentSpecs(drag.shapeKind);
+      const spec = specs.find((item) => item.index === drag.adjIndex) ?? specs[drag.adjIndex];
+      if (!spec) return;
+      const startValues = drag.startAdjustments ?? resolveShapeAdjustments(drag.shapeKind, undefined);
+      const value = spec.valueFromPointer(localX, localY, startValues);
+      const block = resolveBlockRef.current?.(drag.blockId);
+      const patch = patchShapeAdjustment(
+        drag.shapeKind,
+        block?.style,
+        spec.index,
+        value,
+        drag.shortSidePx,
+      );
+      onUpdateStyleRef.current?.(drag.blockId, patch);
       return;
     }
 
@@ -188,7 +230,6 @@ export function useCanvasBlockInteraction({
     );
   };
 
-  /** Refs evitam TDZ entre finishInteraction ↔ onPointerUp ↔ onPendingMove. */
   const pointerListenersRef = useRef({
     onPointerMove: (_event: PointerEvent) => {},
     onPointerUp: () => {},
@@ -207,8 +248,14 @@ export function useCanvasBlockInteraction({
   const finishInteraction = useCallback(() => {
     const drag = dragRef.current;
     if (drag && onInteractionEndRef.current) {
-      const mode: "move" | "resize" | "rotate" =
-        drag.mode === "move" ? "move" : drag.mode === "rotate" ? "rotate" : "resize";
+      const mode: "move" | "resize" | "rotate" | "adjust" =
+        drag.mode === "move"
+          ? "move"
+          : drag.mode === "rotate"
+            ? "rotate"
+            : isAdjustMode(drag.mode)
+              ? "adjust"
+              : "resize";
       onInteractionEndRef.current(drag.blockId, drag.startFrame, mode);
     }
     pendingRef.current = null;
@@ -271,6 +318,24 @@ export function useCanvasBlockInteraction({
       };
 
       const listeners = pointerListenersRef.current;
+      const adjIndex = parseAdjustIndex(mode);
+
+      if (adjIndex != null && block.type === "shape") {
+        const wrap = (event.currentTarget as HTMLElement).closest(".td-composer__block-wrap");
+        const rect = wrap?.getBoundingClientRect();
+        const shortSidePx = rect ? Math.min(rect.width, rect.height) : 64;
+        onInteractionStartRef.current?.();
+        dragRef.current = {
+          ...dragState,
+          shapeKind: block.shape,
+          adjIndex,
+          startAdjustments: resolveShapeAdjustments(block.shape, block.style),
+          shortSidePx,
+        };
+        window.addEventListener("pointermove", listeners.onPointerMove);
+        window.addEventListener("pointerup", listeners.onPointerUp);
+        return;
+      }
 
       if (mode === "rotate") {
         let centerX = block.frame.x + block.frame.w / 2;

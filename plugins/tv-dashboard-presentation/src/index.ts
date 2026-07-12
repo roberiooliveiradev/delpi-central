@@ -30,12 +30,14 @@ export type {
   ComunicadoBlockAnimationDirection,
   ComunicadoBlockAnimationEasing,
   ComunicadoBlockAnimationKind,
+  ComunicadoBlockStyle,
   ComunicadoConfig,
   ComunicadoContentRun,
   ComunicadoContentRunStyle,
   ComunicadoDataBinding,
   ComunicadoDataBlock,
   ComunicadoDataFilters,
+  ComunicadoFrame,
   ComunicadoIconBlock,
   ComunicadoListType,
   ComunicadoNamedTextStyle,
@@ -93,6 +95,17 @@ export {
   type ComunicadoShapeGeometry,
 } from "./comunicadoShapeGeometry";
 export { ComunicadoShapeGraphic, ComunicadoShapePreview } from "./comunicadoShapeGraphic";
+export {
+  adjustmentHandleCssPosition,
+  borderRadiusPxToCornerAdjustment,
+  cornerAdjustmentToBorderRadiusPx,
+  defaultShapeAdjustments,
+  patchShapeAdjustment,
+  resolveShapeAdjustments,
+  shapeAdjustmentSpecs,
+  shapeHasAdjustments,
+  type ShapeAdjustmentSpec,
+} from "./comunicadoShapeAdjustments";
 export {
   COMUNICADO_GOOGLE_FONT_CATALOG,
   buildGoogleFontsStylesheetUrl,

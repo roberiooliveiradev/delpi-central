@@ -104,6 +104,7 @@ export function ComunicadoVisualBoxView({
           stroke={chrome.stroke}
           strokeWidth={chrome.strokeWidth}
           borderRadius={chrome.borderRadius}
+          style={block.style}
           geometry={block.type === "shape" ? resolveShapeGeometry(block) : undefined}
           markerRadius={block.style?.markerRadius}
         />

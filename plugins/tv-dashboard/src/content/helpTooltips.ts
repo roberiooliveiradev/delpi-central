@@ -57,6 +57,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     borderWidth: "Espessura da borda em pixels.",
     borderColor: "Cor da borda do elemento.",
     borderRadius: "Arredondamento dos cantos em pixels.",
+    shapeAdjustment:
+      "Ajuste de geometria da forma (igual aos losangos amarelos do PowerPoint). Cantos usam pixels; demais valores são relativos (0–1).",
     boxShadow: "Sombra projetada do elemento.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
     alignSelectionLeft: "Alinhar borda esquerda dos elementos selecionados.",
@@ -149,6 +151,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Tela livre: monte o layout no palco com as abas Inserir (texto, imagem, dados), Formatar e Exibir. O título acima é só o nome no filmstrip.",
     publicUrl:
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
+    borderRadius: "Arredondamento dos cantos em pixels.",
+    shapeAdjustment:
+      "Ajuste de geometria da forma (igual aos losangos amarelos do PowerPoint). Cantos usam pixels; demais valores são relativos (0–1).",
   },
   data: {
     catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",

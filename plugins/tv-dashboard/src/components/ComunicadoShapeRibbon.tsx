@@ -22,6 +22,7 @@ import {
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
   resolveShapePrimitive,
+  shapeHasAdjustments,
   shapeSupportsFill,
   shapeSupportsStroke,
   upsertChartPartState,
@@ -49,6 +50,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
+import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
 import { ShapeCornerRadiusControl } from "./ShapeCornerRadiusControl";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -394,6 +396,7 @@ export function ComunicadoShapeRibbon() {
   const showStroke = shapeSupportsStroke(primitive);
   const defaultStrokeWidth = block.style?.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive);
   const showCorners = primitive === "area";
+  const showShapeAdjustments = shapeHasAdjustments(block.shape);
 
   const applyShapeKind = (kind: ComunicadoShapeKind) => {
     const prevPrimitive = resolveShapePrimitive(block.shape);
@@ -509,7 +512,14 @@ export function ComunicadoShapeRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      {showCorners ? (
+      {showShapeAdjustments ? (
+        <ShapeAdjustmentsControl
+          kind={block.shape}
+          style={block.style}
+          onChange={(patch) => updateSelectedStyle(patch)}
+          variant="ribbon"
+        />
+      ) : showCorners ? (
         <ShapeCornerRadiusControl
           id="td-shape-corner-radius"
           value={block.style?.borderRadius ?? 0}

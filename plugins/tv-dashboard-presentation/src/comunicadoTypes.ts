@@ -128,6 +128,11 @@ export type ComunicadoBlockStyle = {
   strokeWidth?: number;
   /** Raio visual do marcador (px) — só primitivo ponto. */
   markerRadius?: number;
+  /**
+   * Ajustes de geometria (modelo PowerPoint Adjustments).
+   * Valores tipicamente 0–1; cada índice corresponde a um handle amarelo.
+   */
+  adjustments?: number[];
 };
 
 export type ComunicadoBlockAnimationKind = "fade" | "slide-in";
