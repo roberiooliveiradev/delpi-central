@@ -185,6 +185,7 @@ export {
   type MetricKpiCardProps,
   type MetricKpiCardTone,
 } from "./MetricKpiCard";
+export { FitText } from "./FitText";
 export {
   PageHeader,
   createDashboardPageHeader,

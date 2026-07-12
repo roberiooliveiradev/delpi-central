@@ -66,6 +66,8 @@ export type KpiCardFlatOptions = {
   unit?: string;
   iconName?: string;
   showIcon?: boolean;
+  /** Quando false, oculta o rótulo (persistido como `title.visible`). */
+  showTitle?: boolean;
   tone?: MetricKpiCardTone;
   valueColor?: string;
   backgroundColor?: string;
@@ -181,7 +183,7 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
       },
     },
     title: {
-      visible: true,
+      visible: options?.showTitle !== false,
       content: options?.title,
     },
     value: {
@@ -207,9 +209,7 @@ export function partsToKpiOptions(parts?: KpiPartsMap | null): Partial<KpiCardFl
   const card = parts.card;
   const value = parts.value;
   if (title?.content != null) patch.title = title.content;
-  if (title?.visible === false) {
-    /* título oculto: limpa override e usa label da fonte */
-  }
+  if (title?.visible != null) patch.showTitle = title.visible !== false;
   if (hint?.content != null) patch.subtitle = hint.content;
   if (hint?.visible === false) patch.subtitle = undefined;
   if (icon?.visible != null) patch.showIcon = icon.visible !== false;
@@ -252,6 +252,7 @@ export function deleteKpiPart(
     ...partsToKpiOptions(nextParts),
   };
   if (ref.kind === "icon") nextOptions.showIcon = false;
+  if (ref.kind === "title") nextOptions.showTitle = false;
   if (ref.kind === "hint") nextOptions.subtitle = undefined;
   return { parts: nextParts, options: nextOptions };
 }

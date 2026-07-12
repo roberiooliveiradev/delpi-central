@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { FitText } from "./FitText";
 
 export type MetricKpiCardTone = "default" | "positive" | "negative" | "warning";
 
@@ -16,7 +17,7 @@ export type MetricKpiCardClassNames = {
 };
 
 export type MetricKpiCardProps = {
-  label: string;
+  label?: string;
   titleHint?: string;
   value: string;
   hint?: string;
@@ -24,6 +25,8 @@ export type MetricKpiCardProps = {
   tone?: MetricKpiCardTone;
   classNames: MetricKpiCardClassNames;
   className?: string;
+  /** Valor com font-size adaptativo ao card (TV / blocos redimensionáveis). */
+  fitValue?: boolean;
 };
 
 export function metricKpiCardBemClasses(prefix: string, block = "kpi-card"): MetricKpiCardClassNames {
@@ -50,24 +53,36 @@ export function MetricKpiCard({
   tone = "default",
   classNames,
   className,
+  fitValue = false,
 }: MetricKpiCardProps) {
-  const articleClass = [classNames.articleTone(tone), className].filter(Boolean).join(" ");
+  const showLabel = Boolean(label?.trim());
+  const articleClass = [
+    classNames.articleTone(tone),
+    className,
+    !showLabel && !hint ? `${classNames.article}--value-dominant` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <article className={articleClass}>
       <div className={classNames.header}>
-        <div>
-          <p className={classNames.label}>
-            {label}
-            {titleHint && classNames.labelHelp ? (
-              <HelpTooltip
-                content={titleHint}
-                ariaLabel={`Ajuda: ${label}`}
-                className={classNames.labelHelp}
-              />
-            ) : null}
-          </p>
-          <strong className={classNames.value}>{value}</strong>
+        <div className={`${classNames.article}__body`}>
+          {showLabel ? (
+            <p className={classNames.label}>
+              {label}
+              {titleHint && classNames.labelHelp ? (
+                <HelpTooltip
+                  content={titleHint}
+                  ariaLabel={`Ajuda: ${label}`}
+                  className={classNames.labelHelp}
+                />
+              ) : null}
+            </p>
+          ) : null}
+          <strong className={classNames.value}>
+            {fitValue ? <FitText>{value}</FitText> : value}
+          </strong>
           {hint && classNames.hint ? <p className={classNames.hint}>{hint}</p> : null}
         </div>
         {icon && classNames.icon ? (

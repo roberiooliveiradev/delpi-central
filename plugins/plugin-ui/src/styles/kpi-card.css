@@ -27,8 +27,19 @@
 .delpi-kpi-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 12px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.delpi-kpi-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -41,10 +52,14 @@
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .delpi-kpi-card__value {
-  display: block;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
   margin: 0;
   font-size: clamp(1.35rem, 2.8vw, 2.1rem);
   font-weight: 700;
@@ -53,10 +68,16 @@
   color: var(--delpi-ui-text, #0f172a);
 }
 
+.delpi-kpi-card--value-dominant .delpi-kpi-card__value {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
 .delpi-kpi-card__hint {
   margin: 8px 0 0;
   font-size: 0.78rem;
   color: var(--delpi-ui-muted, #64748b);
+  flex-shrink: 0;
 }
 
 .delpi-kpi-icon {
@@ -67,6 +88,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  align-self: flex-start;
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
   color: var(--delpi-ui-accent, #089bdb);
 }
@@ -121,4 +143,8 @@
   border: 1px solid var(--delpi-ui-accent, #089bdb);
   border-radius: 4px;
   padding: 2px 4px;
+}
+
+.delpi-ui-fit-text {
+  max-width: 100%;
 }

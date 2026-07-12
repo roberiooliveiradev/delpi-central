@@ -11,6 +11,7 @@ export type ComunicadoKpiOptions = {
   unit?: string;
   iconName?: string;
   showIcon?: boolean;
+  showTitle?: boolean;
   tone?: DelpiKpiCardTone;
   valueColor?: string;
   backgroundColor?: string;

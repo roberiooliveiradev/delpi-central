@@ -52,4 +52,19 @@ describe("DelpiKpiCard chrome", () => {
     expect(shell.style.getPropertyValue("--delpi-kpi-card-border-color")).toBe("#ef4444");
     expect(card.getAttribute("style") ?? "").not.toMatch(/border:/);
   });
+
+  it("não reexibe título oculto no modo sem interação (MetricKpiCard)", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Indicador — Taxa de fechamento comercial"
+        value="166,7%"
+        kpiParts={{ title: { visible: false, content: "Indicador — Taxa de fechamento comercial" } }}
+        kpiOptions={{ showTitle: false }}
+      />,
+    );
+    expect(container.querySelector(".delpi-kpi-card__label")).toBeNull();
+    expect(container.textContent).toContain("166,7%");
+    expect(container.textContent).not.toContain("Taxa de fechamento");
+    expect(container.querySelector(".delpi-kpi-card--value-dominant")).toBeTruthy();
+  });
 });

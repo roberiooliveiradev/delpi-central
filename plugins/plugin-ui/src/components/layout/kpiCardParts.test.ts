@@ -72,6 +72,21 @@ describe("kpiElementCatalog", () => {
     expect(iconOff.options.showIcon).toBe(false);
   });
 
+  it("persiste título oculto em showTitle e parts (não volta ao render)", () => {
+    const off = applyKpiElementVisibility(
+      "kpiTitle",
+      false,
+      { title: "Taxa", showTitle: true },
+      { title: { visible: true, content: "Taxa" } },
+    );
+    expect(off.options.showTitle).toBe(false);
+    expect(off.parts.title?.visible).toBe(false);
+    expect(isKpiElementEnabled("kpiTitle", off.options, off.parts)).toBe(false);
+
+    const rematch = mergeKpiPartsWithOptions(off.parts, off.options);
+    expect(rematch.title?.visible).toBe(false);
+  });
+
   it("mapeia element ↔ part e foco", () => {
     expect(kpiElementPrimaryPartRef("kpiTitle")).toEqual({ kind: "title" });
     expect(isKpiElementOpenForPart("kpiTitle", { kind: "title" })).toBe(true);

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { FitText } from "./FitText";
 import { MetricKpiCard, metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard";
 import {
   KPI_PART_DATA_ATTR,
@@ -226,11 +227,12 @@ export function DelpiKpiCard({
     DELPI_KPI_CLASS_NAMES.articleTone(tone),
     className,
     cardPtr.selected ? "delpi-kpi-card--part-selected" : "",
+    !showTitle && !showHint ? "delpi-kpi-card--value-dominant" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
-  /* Modo sem interação: MetricKpiCard monolítico (dashboards). */
+  /* Modo sem interação: MetricKpiCard monolítico (dashboards) — respeita showTitle. */
   if (!interaction) {
     return (
       <div
@@ -239,14 +241,15 @@ export function DelpiKpiCard({
         style={Object.keys(shellStyle).length ? shellStyle : undefined}
       >
         <MetricKpiCard
-          label={titleContent}
+          label={showTitle ? titleContent : undefined}
           value={value}
           hint={showHint ? hintContent : undefined}
-          titleHint={titleHint}
+          titleHint={showTitle ? titleHint : undefined}
           icon={showIcon ? icon : undefined}
           tone={tone}
           classNames={DELPI_KPI_CLASS_NAMES}
           className={className}
+          fitValue
         />
       </div>
     );
@@ -265,7 +268,7 @@ export function DelpiKpiCard({
         onDoubleClick={cardPtr.onDoubleClick}
       >
         <div className={DELPI_KPI_CLASS_NAMES.header}>
-          <div>
+          <div className="delpi-kpi-card__body">
             {showTitle ? (
               <p
                 className={[
@@ -327,7 +330,7 @@ export function DelpiKpiCard({
                 onPointerDown={valuePtr.onPointerDown}
                 onDoubleClick={valuePtr.onDoubleClick}
               >
-                {value}
+                <FitText>{value}</FitText>
               </strong>
             ) : null}
             {showHint && hintContent && DELPI_KPI_CLASS_NAMES.hint ? (

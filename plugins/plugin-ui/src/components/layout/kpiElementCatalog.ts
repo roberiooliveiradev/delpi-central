@@ -76,6 +76,10 @@ export function isKpiElementEnabled(
     if (options?.showIcon === false) return false;
     return state?.visible !== false;
   }
+  if (elementId === "kpiTitle") {
+    if (options?.showTitle === false) return false;
+    return state?.visible !== false;
+  }
   if (elementId === "kpiHint") {
     if (state?.visible === false) return false;
     return Boolean(options?.subtitle?.trim() || state?.content?.trim() || state?.visible === true);
@@ -97,6 +101,7 @@ export function applyKpiElementVisibility(
     ...partsToKpiOptions(nextParts),
   };
   if (elementId === "kpiIcon") nextOptions.showIcon = enabled;
+  if (elementId === "kpiTitle") nextOptions.showTitle = enabled;
   if (elementId === "kpiHint" && !enabled) nextOptions.subtitle = undefined;
   if (elementId === "kpiHint" && enabled && !nextOptions.subtitle) {
     nextOptions.subtitle = " ";
