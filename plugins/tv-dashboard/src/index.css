@@ -3865,7 +3865,16 @@
 
 .dashboard-tv-dashboard .td-chart-element__toggle {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
   margin: 0;
+}
+
+.dashboard-tv-dashboard .td-chart-element__toggle-spacer {
+  display: block;
+  width: 1rem;
+  height: 1rem;
 }
 
 .dashboard-tv-dashboard .td-chart-element__label {
@@ -3880,12 +3889,16 @@
   background: transparent;
   padding: 0;
   margin: 0;
+  width: auto;
+  max-width: 100%;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   color: var(--td-text);
   text-align: left;
   cursor: pointer;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .dashboard-tv-dashboard .td-chart-element__label-btn:hover {

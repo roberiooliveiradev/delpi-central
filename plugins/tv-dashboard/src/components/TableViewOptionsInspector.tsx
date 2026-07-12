@@ -16,6 +16,7 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { InspectorElementRow } from "./InspectorElementRow";
 import { TablePartInspector } from "./TablePartInspector";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
@@ -31,51 +32,6 @@ function updateTableOptions(
   patch: Partial<ComunicadoTableOptions>,
 ): ComunicadoTableOptions {
   return { ...mergeComunicadoTableOptions(current, preset), ...patch };
-}
-
-function TableElementRow({
-  elementId,
-  enabled,
-  focused,
-  onToggle,
-  onSelect,
-  label,
-  hint,
-}: {
-  elementId: TableElementId;
-  enabled: boolean;
-  focused: boolean;
-  onToggle: (next: boolean) => void;
-  onSelect: () => void;
-  label: string;
-  hint?: string;
-}) {
-  return (
-    <div
-      className={["td-chart-element", "td-chart-element--row", focused ? "td-chart-element--focused" : null]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div className="td-chart-element__summary">
-        <span className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
-          <NativeCheckboxControl
-            checked={enabled}
-            aria-label={`Exibir ${label}`}
-            onChange={onToggle}
-          />
-        </span>
-        <button
-          type="button"
-          className="td-chart-element__label"
-          id={`td-table-element-${elementId}`}
-          title={hint}
-          onClick={onSelect}
-        >
-          {label}
-        </button>
-      </div>
-    </div>
-  );
 }
 
 export function TableViewOptionsInspector({ pane = false }: Props) {
@@ -121,7 +77,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
         <>
           <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
             Duplo clique no palco para selecionar título, cabeçalho ou célula. Moldura: aba Forma ou
-            botão abaixo.
+            item abaixo.
           </p>
 
           <DeckPropertySection
@@ -131,32 +87,19 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             defaultOpen
           >
             <div className="td-chart-elements" role="group" aria-label="Elementos da tabela">
-              <div
-                className={[
-                  "td-chart-element",
-                  "td-chart-element--row",
-                  selectedTablePart?.kind === "frame" ? "td-chart-element--focused" : null,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <div className="td-chart-element__summary">
-                  <button
-                    type="button"
-                    className="td-chart-element__label"
-                    title="Contorno e cantos do bloco (também na aba Forma)"
-                    onClick={() => selectTablePart(block.id, { kind: "frame" })}
-                  >
-                    Moldura (contorno do bloco)
-                  </button>
-                </div>
-              </div>
+              <InspectorElementRow
+                id="td-table-element-frame"
+                label="Moldura (contorno do bloco)"
+                hint="Contorno e cantos do bloco (também na aba Forma)"
+                focused={selectedTablePart?.kind === "frame"}
+                onSelect={() => selectTablePart(block.id, { kind: "frame" })}
+              />
               {TABLE_ELEMENT_CATALOG.map((element) => {
                 const enabled = isTableElementEnabled(element.id, options);
                 return (
-                  <TableElementRow
+                  <InspectorElementRow
                     key={element.id}
-                    elementId={element.id}
+                    id={`td-table-element-${element.id}`}
                     label={element.label}
                     hint={element.hint}
                     enabled={enabled}

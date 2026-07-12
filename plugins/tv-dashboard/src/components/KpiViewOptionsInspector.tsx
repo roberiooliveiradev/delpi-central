@@ -24,6 +24,7 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { InspectorElementRow } from "./InspectorElementRow";
 import { KpiPartInspector } from "./KpiPartInspector";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -45,54 +46,6 @@ const OP_OPTIONS: Array<{ value: DelpiKpiColorRuleOp; label: string }> = [
   { value: "eq", label: "=" },
   { value: "between", label: "entre" },
 ];
-
-function KpiElementRow({
-  elementId,
-  enabled,
-  focused,
-  onToggle,
-  onSelect,
-  label,
-  hint,
-}: {
-  elementId: KpiElementId;
-  enabled: boolean;
-  focused: boolean;
-  onToggle: (next: boolean) => void;
-  onSelect: () => void;
-  label: string;
-  hint?: string;
-}) {
-  return (
-    <div
-      className={["td-chart-element", "td-chart-element--row", focused ? "td-chart-element--focused" : null]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div className="td-chart-element__summary">
-        <span className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
-          <NativeCheckboxControl
-            checked={enabled}
-            aria-label={`Exibir ${label}`}
-            onChange={onToggle}
-          />
-        </span>
-        <button
-          type="button"
-          className="td-chart-element__label-btn"
-          id={`td-kpi-element-${elementId}`}
-          title={hint}
-          onClick={(event) => {
-            event.preventDefault();
-            onSelect();
-          }}
-        >
-          {label}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function KpiViewOptionsInspector({ pane = false }: Props) {
   const { selected, updateSelected, selectKpiPart, selectedKpiPart } = useComunicadoEditor();
@@ -157,9 +110,9 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
                 const enabled = isKpiElementEnabled(element.id, options, block.kpiParts);
                 const focused = isKpiElementOpenForPart(element.id, selectedKpiPart);
                 return (
-                  <KpiElementRow
+                  <InspectorElementRow
                     key={element.id}
-                    elementId={element.id}
+                    id={`td-kpi-element-${element.id}`}
                     label={element.label}
                     hint={element.description}
                     enabled={enabled}

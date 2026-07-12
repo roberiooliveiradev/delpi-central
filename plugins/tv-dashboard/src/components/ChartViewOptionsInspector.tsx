@@ -1,4 +1,4 @@
-import { FormSelectControl, NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   CHART_ELEMENT_CATALOG,
   CHART_VALUE_FORMAT_OPTIONS,
@@ -20,6 +20,7 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { ChartPartInspector } from "./ChartPartInspector";
+import { InspectorElementRow } from "./InspectorElementRow";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
@@ -34,55 +35,6 @@ function updateChartOptions(
   patch: Partial<ComunicadoChartOptions>,
 ): ComunicadoChartOptions {
   return { ...mergeComunicadoChartOptions(current), ...patch };
-}
-
-/** Linha de visibilidade — detalhe de formato fica só no ChartPartInspector (4M.7). */
-function ChartElementRow({
-  elementId,
-  enabled,
-  focused,
-  onToggle,
-  onSelect,
-  label,
-  hint,
-}: {
-  elementId: ChartElementId;
-  enabled: boolean;
-  focused: boolean;
-  onToggle: (next: boolean) => void;
-  onSelect: () => void;
-  label: string;
-  hint?: string;
-}) {
-  return (
-    <div
-      className={["td-chart-element", "td-chart-element--row", focused ? "td-chart-element--focused" : null]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div className="td-chart-element__summary">
-        <span className="td-chart-element__toggle" onClick={(event) => event.stopPropagation()}>
-          <NativeCheckboxControl
-            checked={enabled}
-            aria-label={`Exibir ${label}`}
-            onChange={onToggle}
-          />
-        </span>
-        <button
-          type="button"
-          className="td-chart-element__label-btn"
-          id={`td-chart-element-${elementId}`}
-          title={hint}
-          onClick={(event) => {
-            event.preventDefault();
-            onSelect();
-          }}
-        >
-          {label}
-        </button>
-      </div>
-    </div>
-  );
 }
 
 export function ChartViewOptionsInspector({ pane = false }: Props) {
@@ -156,9 +108,9 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
                 const enabled = isChartElementEnabled(element.id, options);
                 const focused = isChartElementOpenForPart(element.id, selectedChartPart);
                 return (
-                  <ChartElementRow
+                  <InspectorElementRow
                     key={element.id}
-                    elementId={element.id}
+                    id={`td-chart-element-${element.id}`}
                     label={element.label}
                     hint={element.hint}
                     enabled={enabled}
