@@ -74,11 +74,16 @@ export function ShapeOutlineMenu({
       {open ? (
         <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
           <ColorPickerPopover
+            variant="outline"
             value={color}
             onChange={onColorChange}
-            onNoFill={onNoOutline}
+            onNoFill={
+              onNoOutline ??
+              (() => {
+                onColorChange("transparent");
+              })
+            }
             noFillLabel={L.noOutline}
-            showNoFill={Boolean(onNoOutline)}
             labels={labels}
           />
           <ul className="delpi-ui-shape-menu__submenus">

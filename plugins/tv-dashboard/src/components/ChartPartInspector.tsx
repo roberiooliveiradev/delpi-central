@@ -189,6 +189,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
           <DeckField id="td-chart-part-area-fill" label="Preenchimento">
             <TvRibbonColorPicker
               inline
+              variant="fill"
               label="Preenchimento"
               value={
                 selectedChartPart.kind === "chartArea" ? chartAreaStyle.fill : plotAreaStyle.fill
@@ -199,6 +200,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
           <DeckField id="td-chart-part-area-stroke" label="Cor da borda">
             <TvRibbonColorPicker
               inline
+              variant="outline"
               label="Contorno"
               value={
                 selectedChartPart.kind === "chartArea" ? chartAreaStyle.stroke : plotAreaStyle.stroke
@@ -399,6 +401,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
           <DeckField id="td-chart-part-marker-fill" label="Preenchimento (ponto)">
             <TvRibbonColorPicker
               inline
+              variant="fill"
               label="Cor do marcador"
               value={block.chartParts?.[partKey]?.style?.fill ?? seriesColor}
               onChange={(color) => patchPart({ style: { fill: color } })}
@@ -407,6 +410,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
           <DeckField id="td-chart-part-marker-stroke" label="Contorno">
             <TvRibbonColorPicker
               inline
+              variant="outline"
               label="Contorno do marcador"
               value={block.chartParts?.[partKey]?.style?.stroke ?? ""}
               onChange={(color) => patchPart({ style: { stroke: color, strokeWidth: 1 } })}

@@ -369,8 +369,10 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     label="Realce"
                     ariaLabel="Realce do texto"
                     inline
+                    variant="fill"
                     value={textBlock.style?.textHighlight ?? "#fef08a"}
                     onChange={(color) => updateSelectedTextFormatStyle({ textHighlight: color })}
+                    onNoFill={() => updateSelectedTextFormatStyle({ textHighlight: "transparent" })}
                   />
                 ) : null}
                 <TvRibbonColorPicker
@@ -378,6 +380,17 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   label="Cor texto"
                   ariaLabel="Cor do texto"
                   inline
+                  variant="text"
+                  contrastBackground={
+                    (selected?.style?.fill && selected.style.fill !== "transparent"
+                      ? selected.style.fill
+                      : undefined) ??
+                    (selected?.style?.backgroundColor &&
+                    selected.style.backgroundColor !== "transparent"
+                      ? selected.style.backgroundColor
+                      : undefined) ??
+                    (background?.type === "color" ? background.value : "#ffffff")
+                  }
                   value={formatStyle?.color ?? "#0f172a"}
                   onChange={(color) => updateSelectedTextFormatStyle({ color })}
                 />
@@ -689,6 +702,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
               label="Borda"
               ariaLabel="Cor da borda"
               inline
+              variant="outline"
               value={selected.style?.borderColor ?? "#ffffff"}
               onChange={(color) => updateSelectedStyle({ borderColor: color })}
             />

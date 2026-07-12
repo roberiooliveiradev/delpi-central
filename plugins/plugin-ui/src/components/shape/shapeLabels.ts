@@ -3,8 +3,9 @@ import type { ShapeColorLabels } from "./types";
 export const DEFAULT_SHAPE_COLOR_LABELS: Required<ShapeColorLabels> = {
   themeColors: "Cores do Tema",
   standardColors: "Cores Padrão",
-  noFill: "Sem preenchimento",
+  noFill: "Sem fundo",
   noOutline: "Sem contorno",
+  automatic: "Automático",
   moreColors: "Mais cores…",
   eyedropper: "Conta-gotas",
   image: "Imagem…",

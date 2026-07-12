@@ -101,6 +101,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
                 value={fillValue}
                 onChange={(color) => updateSelectedStyle({ fill: color })}
                 inline
+                variant="fill"
               />
             ) : selected.type === "heading" || selected.type === "text" ? (
               <TvRibbonColorPicker
@@ -108,8 +109,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
                 value={fillValue}
                 onChange={(color) => updateSelectedStyle({ backgroundColor: color })}
                 inline
-                showNoFill
-                onNoFill={() => updateSelectedStyle({ backgroundColor: "transparent" })}
+                variant="fill"
               />
             ) : null}
             {showShapeStroke ? (
@@ -118,8 +118,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
                 value={outlineValue}
                 onChange={(color) => updateSelectedStyle({ stroke: color })}
                 inline
-                showNoFill
-                onNoFill={() => updateSelectedStyle({ stroke: "transparent" })}
+                variant="outline"
               />
             ) : selected.type === "heading" ||
               selected.type === "text" ||
@@ -129,8 +128,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
                 value={outlineValue}
                 onChange={(color) => updateSelectedStyle({ borderColor: color })}
                 inline
-                showNoFill
-                onNoFill={() => updateSelectedStyle({ borderColor: "transparent" })}
+                variant="outline"
               />
             ) : null}
           </ContextMenuToolbar>

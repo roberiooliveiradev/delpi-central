@@ -1,14 +1,17 @@
-import { Droplet, Image, Palette, Pipette } from "lucide-react";
+import { ALargeSmall, Droplet, Image, Palette, Pipette } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorDialog } from "./ColorDialog";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
-import { cssToColorValue } from "./colorUtils";
+import { cssToColorValue, resolveAutomaticTextColor } from "./colorUtils";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
 import { useClickOutside } from "./useClickOutside";
+
+/** Perfil do seletor: fill/outline sempre oferecem «sem…»; text oferece «Automático». */
+export type ColorPickerVariant = "default" | "fill" | "outline" | "text";
 
 export type ColorPickerPopoverProps = {
   value?: string;
@@ -16,6 +19,18 @@ export type ColorPickerPopoverProps = {
   onNoFill?: () => void;
   noFillLabel?: string;
   showNoFill?: boolean;
+  /** Cor de texto Automático — contraste com o fundo informado. */
+  showAutomatic?: boolean;
+  contrastBackground?: string | null;
+  onAutomatic?: (color: "#000000" | "#ffffff") => void;
+  automaticLabel?: string;
+  /**
+   * Atalho de comportamento:
+   * - fill → Sem fundo (transparent)
+   * - outline → Sem contorno
+   * - text → Automático
+   */
+  variant?: ColorPickerVariant;
   onEyedropper?: () => void;
   labels?: ShapeColorLabels;
   themeRows?: readonly (readonly string[])[];
@@ -23,12 +38,33 @@ export type ColorPickerPopoverProps = {
   className?: string;
 };
 
+function resolveNoFillEnabled(
+  variant: ColorPickerVariant | undefined,
+  showNoFill: boolean | undefined,
+): boolean {
+  if (showNoFill != null) return showNoFill;
+  return variant === "fill" || variant === "outline";
+}
+
+function resolveAutomaticEnabled(
+  variant: ColorPickerVariant | undefined,
+  showAutomatic: boolean | undefined,
+): boolean {
+  if (showAutomatic != null) return showAutomatic;
+  return variant === "text";
+}
+
 export function ColorPickerPopover({
   value,
   onChange,
   onNoFill,
   noFillLabel,
-  showNoFill = true,
+  showNoFill,
+  showAutomatic,
+  contrastBackground,
+  onAutomatic,
+  automaticLabel,
+  variant = "default",
   onEyedropper,
   labels,
   themeRows = DELPI_THEME_COLOR_GRID,
@@ -38,12 +74,68 @@ export function ColorPickerPopover({
   const L = mergeShapeColorLabels(labels);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const noFillEnabled = resolveNoFillEnabled(variant, showNoFill);
+  const automaticEnabled = resolveAutomaticEnabled(variant, showAutomatic);
+
+  const handleNoFill = () => {
+    if (onNoFill) {
+      onNoFill();
+      return;
+    }
+    onChange("transparent");
+  };
+
+  const handleAutomatic = () => {
+    const color = resolveAutomaticTextColor(contrastBackground);
+    if (onAutomatic) {
+      onAutomatic(color);
+      return;
+    }
+    onChange(color);
+  };
+
+  const defaultNoFillLabel =
+    variant === "outline" ? L.noOutline : L.noFill;
+
   const handleSelect = (color: string) => {
     onChange(color);
   };
 
   return (
     <div className={["delpi-ui-color-picker", className].filter(Boolean).join(" ")}>
+      {automaticEnabled || noFillEnabled ? (
+        <ul className="delpi-ui-color-picker__actions delpi-ui-color-picker__actions--leading">
+          {automaticEnabled ? (
+            <li>
+              <button
+                type="button"
+                className="delpi-ui-color-picker__action"
+                onClick={handleAutomatic}
+              >
+                <span
+                  className="delpi-ui-color-picker__action-icon delpi-ui-color-picker__action-icon--auto"
+                  aria-hidden="true"
+                >
+                  <ALargeSmall size={12} />
+                </span>
+                {automaticLabel ?? L.automatic}
+              </button>
+            </li>
+          ) : null}
+          {noFillEnabled ? (
+            <li>
+              <button type="button" className="delpi-ui-color-picker__action" onClick={handleNoFill}>
+                <span
+                  className="delpi-ui-color-picker__action-icon delpi-ui-color-picker__action-icon--none"
+                  aria-hidden="true"
+                />
+                {noFillLabel ?? defaultNoFillLabel}
+              </button>
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
+
       <section className="delpi-ui-color-picker__section">
         <h4 className="delpi-ui-color-picker__heading">{L.themeColors}</h4>
         <ColorThemeGrid rows={themeRows} value={value} onSelect={handleSelect} ariaLabel={L.themeColors} />
@@ -60,17 +152,6 @@ export function ColorPickerPopover({
       </section>
 
       <ul className="delpi-ui-color-picker__actions">
-        {showNoFill && onNoFill ? (
-          <li>
-            <button type="button" className="delpi-ui-color-picker__action" onClick={onNoFill}>
-              <span
-                className="delpi-ui-color-picker__action-icon delpi-ui-color-picker__action-icon--none"
-                aria-hidden="true"
-              />
-              {noFillLabel ?? L.noFill}
-            </button>
-          </li>
-        ) : null}
         <li>
           <button type="button" className="delpi-ui-color-picker__action" onClick={() => setDialogOpen(true)}>
             <Palette size={16} aria-hidden="true" />
@@ -225,11 +306,17 @@ export function ShapeFillMenu({
       {open ? (
         <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
           <ColorPickerPopover
+            variant="fill"
             value={value}
             onChange={(color) => {
               onChange(color);
             }}
-            onNoFill={onNoFill}
+            onNoFill={
+              onNoFill ??
+              (() => {
+                onChange("transparent");
+              })
+            }
             onEyedropper={onEyedropper}
             labels={labels}
           />

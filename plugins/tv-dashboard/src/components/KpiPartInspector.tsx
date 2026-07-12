@@ -153,6 +153,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
           <DeckField id="td-kpi-part-card-fill" label="Fundo">
             <TvRibbonColorPicker
               inline
+              variant="fill"
               label="Fundo"
               value={partState?.style?.fill ?? options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor}
               onChange={(color) => persistPart({ style: { fill: color } })}
@@ -161,6 +162,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
           <DeckField id="td-kpi-part-card-stroke" label="Contorno">
             <TvRibbonColorPicker
               inline
+              variant="outline"
               label="Contorno"
               value={partState?.style?.stroke ?? DECK_COLOR_BORDER}
               onChange={(color) => persistPart({ style: { stroke: color } })}
@@ -198,6 +200,12 @@ export function KpiPartInspector({ pane = false, block }: Props) {
         <DeckField id="td-kpi-part-value-color" label="Cor do valor">
           <TvRibbonColorPicker
             inline
+            variant="text"
+            contrastBackground={
+              options.backgroundColor ??
+              getKpiPartState(block.kpiParts, { kind: "card" })?.style?.fill ??
+              DECK_KPI_DEFAULTS.backgroundColor
+            }
             label="Cor do valor"
             value={partState?.style?.color ?? options.valueColor ?? DECK_KPI_DEFAULTS.valueColor}
             onChange={(color) => persistPart({ style: { color } })}

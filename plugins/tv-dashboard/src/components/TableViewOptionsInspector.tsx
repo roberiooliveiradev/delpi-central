@@ -178,6 +178,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             <DeckField id="td-table-header-bg" label="Fundo do cabeçalho">
               <TvRibbonColorPicker
                 inline
+                variant="fill"
                 label="Fundo do cabeçalho"
                 value={options.headerBg ?? DECK_TABLE_DEFAULTS.headerBg}
                 onChange={(color) => setOptions({ headerBg: color })}
@@ -186,6 +187,8 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             <DeckField id="td-table-header-color" label="Texto do cabeçalho">
               <TvRibbonColorPicker
                 inline
+                variant="text"
+                contrastBackground={options.headerBg ?? DECK_TABLE_DEFAULTS.headerBg}
                 label="Texto do cabeçalho"
                 value={options.headerTextColor ?? DECK_TABLE_DEFAULTS.headerTextColor}
                 onChange={(color) => setOptions({ headerTextColor: color })}
@@ -194,6 +197,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             <DeckField id="td-table-cell-bg" label="Fundo das células">
               <TvRibbonColorPicker
                 inline
+                variant="fill"
                 label="Fundo das células"
                 value={options.cellBg ?? DECK_TABLE_DEFAULTS.cellBg}
                 onChange={(color) => setOptions({ cellBg: color })}
@@ -202,6 +206,8 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             <DeckField id="td-table-cell-color" label="Texto das células">
               <TvRibbonColorPicker
                 inline
+                variant="text"
+                contrastBackground={options.cellBg ?? DECK_TABLE_DEFAULTS.cellBg}
                 label="Texto das células"
                 value={options.cellTextColor ?? DECK_TABLE_DEFAULTS.cellTextColor}
                 onChange={(color) => setOptions({ cellTextColor: color })}
@@ -210,6 +216,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             <DeckField id="td-table-border-color" label="Bordas das células">
               <TvRibbonColorPicker
                 inline
+                variant="outline"
                 label="Bordas das células"
                 value={options.borderColor ?? DECK_TABLE_DEFAULTS.borderColor}
                 onChange={(color) => setOptions({ borderColor: color })}

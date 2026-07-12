@@ -30,6 +30,8 @@ export type ShapeColorLabels = {
   standardColors?: string;
   noFill?: string;
   noOutline?: string;
+  /** Cor de texto automática (contraste com o fundo). */
+  automatic?: string;
   moreColors?: string;
   eyedropper?: string;
   image?: string;

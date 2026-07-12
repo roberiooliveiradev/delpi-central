@@ -151,6 +151,7 @@ export function TablePartInspector({ pane = false, block }: Props) {
           <DeckField id="td-table-part-frame-fill" label="Fundo da moldura">
             <TvRibbonColorPicker
               inline
+              variant="fill"
               label="Fundo da moldura"
               value={partState?.style?.fill ?? frame.fill ?? DECK_COLOR_SURFACE}
               onChange={(color) => persistPart({ style: { fill: color } })}
@@ -159,6 +160,7 @@ export function TablePartInspector({ pane = false, block }: Props) {
           <DeckField id="td-table-part-frame-stroke" label="Contorno do bloco">
             <TvRibbonColorPicker
               inline
+              variant="outline"
               label="Contorno do bloco"
               value={partState?.style?.stroke ?? frame.stroke ?? DECK_COLOR_BORDER}
               onChange={(color) => persistPart({ style: { stroke: color } })}
@@ -197,6 +199,7 @@ export function TablePartInspector({ pane = false, block }: Props) {
           <DeckField id="td-table-part-fill" label="Fundo">
             <TvRibbonColorPicker
               inline
+              variant="fill"
               label="Fundo"
               value={partState?.style?.fill ?? defaultFill}
               onChange={(color) => persistPart({ style: { fill: color } })}
@@ -205,6 +208,8 @@ export function TablePartInspector({ pane = false, block }: Props) {
           <DeckField id="td-table-part-color" label="Texto">
             <TvRibbonColorPicker
               inline
+              variant="text"
+              contrastBackground={partState?.style?.fill ?? defaultFill}
               label="Texto"
               value={partState?.style?.color ?? defaultColor}
               onChange={(color) => persistPart({ style: { color } })}

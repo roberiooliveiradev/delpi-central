@@ -4,7 +4,7 @@ export { resolveDelpiUiPortalTheme, DELPI_UI_SHAPE_THEME_HOST_CLASS } from "./de
 export { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 export { ColorThemeGrid, ColorStandardRow, ColorSwatch } from "./ColorThemeGrid";
 export { ColorPickerPopover, ColorPickerPopoverTrigger, ShapeFillMenu } from "./ColorPickerPopover";
-export type { ColorPickerPopoverProps, ColorPickerPopoverTriggerProps, ShapeFillMenuProps } from "./ColorPickerPopover";
+export type { ColorPickerPopoverProps, ColorPickerPopoverTriggerProps, ColorPickerVariant, ShapeFillMenuProps } from "./ColorPickerPopover";
 export { RibbonColorPicker } from "./RibbonColorPicker";
 export type { RibbonColorPickerProps } from "./RibbonColorPicker";
 export { ColorDialog } from "./ColorDialog";
@@ -33,6 +33,8 @@ export {
   mixWithWhite,
   normalizeHex,
   parseHexColor,
+  relativeLuminance,
+  resolveAutomaticTextColor,
   rgbToHex,
 } from "./colorUtils";
 export { DEFAULT_SHAPE_COLOR_LABELS, mergeShapeColorLabels } from "./shapeLabels";

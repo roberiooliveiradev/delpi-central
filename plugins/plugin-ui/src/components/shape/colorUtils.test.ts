@@ -8,6 +8,8 @@ import {
   colorValueToHsv,
   normalizeHex,
   parseHexColor,
+  relativeLuminance,
+  resolveAutomaticTextColor,
   rgbToHex,
 } from "./colorUtils";
 import { DELPI_THEME_BASE_COLORS } from "./colorPalettes";
@@ -59,5 +61,18 @@ describe("shape colorUtils", () => {
     const original = { hex: "#156082", alpha: 1 };
     const roundtrip = hsvToColorValue(colorValueToHsv(original), original.alpha);
     expect(roundtrip.hex).toBe(original.hex);
+  });
+
+  it("calcula luminância relativa WCAG", () => {
+    expect(relativeLuminance("#ffffff")).toBeGreaterThan(0.9);
+    expect(relativeLuminance("#000000")).toBeLessThan(0.1);
+  });
+
+  it("resolve Automático: preto em fundo claro e branco em fundo escuro", () => {
+    expect(resolveAutomaticTextColor("#ffffff")).toBe("#000000");
+    expect(resolveAutomaticTextColor("#f8fafc")).toBe("#000000");
+    expect(resolveAutomaticTextColor("#0f172a")).toBe("#ffffff");
+    expect(resolveAutomaticTextColor("#003866")).toBe("#ffffff");
+    expect(resolveAutomaticTextColor("transparent")).toBe("#000000");
   });
 });

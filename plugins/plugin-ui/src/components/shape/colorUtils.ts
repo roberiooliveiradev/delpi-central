@@ -225,3 +225,25 @@ export function hueToHex(h: number): string {
   const { r, g, b } = hsvToRgb(h, 1, 1);
   return rgbToHex(r, g, b);
 }
+
+/** Luminância relativa WCAG (0–1) a partir de hex. */
+export function relativeLuminance(hex: string): number {
+  const { r, g, b } = hexToRgb(hex);
+  const channel = (value: number) => {
+    const s = value / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+/**
+ * Cor de texto «Automático»: preto em fundo claro, branco em fundo escuro.
+ * Fundo transparente / quase transparente assume claro (preto).
+ */
+export function resolveAutomaticTextColor(background?: string | null): "#000000" | "#ffffff" {
+  const bg = cssToColorValue(background ?? "#ffffff", "#ffffff");
+  if (bg.alpha < 0.45) {
+    return "#000000";
+  }
+  return relativeLuminance(bg.hex) >= 0.45 ? "#000000" : "#ffffff";
+}

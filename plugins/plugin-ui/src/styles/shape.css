@@ -81,6 +81,12 @@
   border-top: 1px solid var(--delpi-ui-border, #e5e7eb);
 }
 
+.delpi-ui-color-picker__actions--leading {
+  border-top: none;
+  border-bottom: 1px solid var(--delpi-ui-border, #e5e7eb);
+  margin-bottom: 4px;
+}
+
 .delpi-ui-color-picker__action {
   display: flex;
   align-items: center;
@@ -107,11 +113,20 @@
   height: 16px;
   border: 1px solid var(--delpi-ui-border, #cbd5e1);
   border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .delpi-ui-color-picker__action-icon--none {
   background:
     linear-gradient(135deg, transparent 46%, #ef4444 48%, #ef4444 52%, transparent 54%);
+}
+
+.delpi-ui-color-picker__action-icon--auto {
+  background: linear-gradient(90deg, #ffffff 50%, #111827 50%);
+  color: #111827;
 }
 
 .delpi-ui-color-picker-trigger {
