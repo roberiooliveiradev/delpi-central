@@ -1,4 +1,4 @@
-import { DECK_KPI_DEFAULTS, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   deleteKpiPart,
   getKpiPartState,
@@ -13,6 +13,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -39,6 +40,14 @@ function kpiPartLabel(part: ComunicadoKpiPartRef): string {
   }
 }
 
+type PartStylePatch = {
+  fill?: string;
+  color?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  borderRadius?: number;
+};
+
 /** Inspetor da parte selecionada do KPI — espelho de ChartPartInspector. */
 export function KpiPartInspector({ pane = false, block }: Props) {
   const {
@@ -56,10 +65,11 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   });
   const partState = getKpiPartState(block.kpiParts, selectedKpiPart);
   const canDelete = kpiPartAllowsDelete(selectedKpiPart);
+  const canEditOnStage = selectedKpiPart.kind === "title" || selectedKpiPart.kind === "hint";
 
   const persistPart = (patch: {
     content?: string;
-    style?: { fill?: string; color?: string };
+    style?: PartStylePatch;
     visible?: boolean;
   }) => {
     const nextParts = upsertKpiPartState(block.kpiParts, selectedKpiPart, patch);
@@ -67,6 +77,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       ...options,
       ...partsToKpiOptions(nextParts),
     });
+    const nextStyle = { ...block.style };
     if (selectedKpiPart.kind === "title" && patch.content !== undefined) {
       nextOptions.title = patch.content.trim() || undefined;
     }
@@ -76,12 +87,16 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     if (selectedKpiPart.kind === "card" && patch.style?.fill) {
       nextOptions.backgroundColor = patch.style.fill;
     }
+    if (selectedKpiPart.kind === "card" && patch.style?.borderRadius != null) {
+      nextStyle.borderRadius = patch.style.borderRadius;
+    }
     if (selectedKpiPart.kind === "value" && patch.style?.color) {
       nextOptions.valueColor = patch.style.color;
     }
     updateSelected({
       kpiOptions: nextOptions,
       kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
+      style: nextStyle,
     } as Partial<typeof block>);
   };
 
@@ -98,31 +113,18 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     <DeckPropertySection
       pane={pane}
       title={`Parte: ${kpiPartLabel(selectedKpiPart)}`}
+      hint="Ajuste o conteúdo desta parte. Ocultar remove só a parte, não o KPI."
       defaultOpen
     >
-      <div className="td-deck-inspector__row">
-        <button
-          type="button"
-          className="td-btn td-btn--sm td-btn--ghost"
-          onClick={() => clearKpiPartSelection()}
-        >
-          Voltar aos elementos
-        </button>
-        {selectedKpiPart.kind === "title" || selectedKpiPart.kind === "hint" ? (
-          <button
-            type="button"
-            className="td-btn td-btn--sm td-btn--ghost"
-            onClick={() => beginEditKpiPart(block.id, selectedKpiPart)}
-          >
-            Editar no palco
-          </button>
-        ) : null}
-        {canDelete ? (
-          <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={removePart}>
-            Ocultar parte
-          </button>
-        ) : null}
-      </div>
+      <PartInspectorToolbar
+        onBack={clearKpiPartSelection}
+        backLabel="Voltar aos elementos"
+        onEditOnStage={
+          canEditOnStage ? () => beginEditKpiPart(block.id, selectedKpiPart) : undefined
+        }
+        onHide={canDelete ? removePart : undefined}
+        hideLabel="Ocultar parte"
+      />
 
       {selectedKpiPart.kind === "title" ? (
         <DeckField id="td-kpi-part-title" label="Texto do título">
@@ -140,6 +142,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
           <NativeTextControl
             id="td-kpi-part-hint"
             value={partState?.content ?? options.subtitle ?? ""}
+            placeholder="Opcional"
             onChange={(value) => persistPart({ content: value, visible: true })}
           />
         </DeckField>
@@ -147,7 +150,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
 
       {selectedKpiPart.kind === "card" ? (
         <>
-          <DeckField id="td-kpi-part-card-fill" label="Fundo do card">
+          <DeckField id="td-kpi-part-card-fill" label="Fundo">
             <TvRibbonColorPicker
               inline
               label="Fundo"
@@ -159,33 +162,35 @@ export function KpiPartInspector({ pane = false, block }: Props) {
             <TvRibbonColorPicker
               inline
               label="Contorno"
-              value={partState?.style?.stroke ?? "#b4b4b4"}
+              value={partState?.style?.stroke ?? DECK_COLOR_BORDER}
               onChange={(color) => persistPart({ style: { stroke: color } })}
             />
           </DeckField>
-          <DeckField id="td-kpi-part-card-stroke-width" label="Espessura">
-            <NativeTextControl
-              id="td-kpi-part-card-stroke-width"
-              type="number"
-              min={0}
-              max={12}
-              step={0.5}
-              value={partState?.style?.strokeWidth ?? 1}
-              onChange={(value) => persistPart({ style: { strokeWidth: Number(value) || 0 } })}
-            />
-          </DeckField>
-          <DeckField id="td-kpi-part-card-radius" label="Cantos (px)">
-            <NativeTextControl
-              id="td-kpi-part-card-radius"
-              type="number"
-              min={0}
-              max={64}
-              value={partState?.style?.borderRadius ?? 0}
-              onChange={(value) =>
-                persistPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
-              }
-            />
-          </DeckField>
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id="td-kpi-part-card-stroke-width" label="Espessura">
+              <NativeTextControl
+                id="td-kpi-part-card-stroke-width"
+                type="number"
+                min={0}
+                max={12}
+                step={0.5}
+                value={partState?.style?.strokeWidth ?? 1}
+                onChange={(value) => persistPart({ style: { strokeWidth: Number(value) || 0 } })}
+              />
+            </DeckField>
+            <DeckField id="td-kpi-part-card-radius" label="Cantos (px)">
+              <NativeTextControl
+                id="td-kpi-part-card-radius"
+                type="number"
+                min={0}
+                max={64}
+                value={partState?.style?.borderRadius ?? 0}
+                onChange={(value) =>
+                  persistPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
+                }
+              />
+            </DeckField>
+          </div>
         </>
       ) : null}
 
@@ -202,7 +207,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
 
       {selectedKpiPart.kind === "icon" ? (
         <p className="td-deck-inspector__hint">
-          Escolha o ícone e o tom nas seções gerais ao voltar aos elementos, ou oculte esta parte.
+          Ícone e tom ficam nas opções gerais do KPI. Use «Voltar aos elementos» ou oculte esta parte.
         </p>
       ) : null}
     </DeckPropertySection>

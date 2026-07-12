@@ -1179,6 +1179,68 @@
   margin-bottom: 0.5rem;
 }
 
+.td-part-inspector-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.td-part-inspector-toolbar__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.td-part-inspector-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--td-border, color-mix(in srgb, #94a3b8 35%, transparent));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--td-surface, #0f172a) 88%, #fff 4%);
+  color: var(--td-text, #e2e8f0);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  text-align: left;
+}
+
+.td-part-inspector-toolbar__btn:hover {
+  background: color-mix(in srgb, var(--td-accent, #089bdb) 12%, var(--td-surface, #0f172a));
+  border-color: color-mix(in srgb, var(--td-accent, #089bdb) 40%, var(--td-border, transparent));
+}
+
+.td-part-inspector-toolbar__btn:focus-visible {
+  outline: 2px solid var(--td-accent, #089bdb);
+  outline-offset: 1px;
+}
+
+.td-part-inspector-toolbar__btn--danger {
+  color: #fca5a5;
+  border-color: color-mix(in srgb, #dc2626 40%, var(--td-border, transparent));
+}
+
+.td-part-inspector-toolbar__btn--danger:hover {
+  background: color-mix(in srgb, #dc2626 14%, var(--td-surface, #0f172a));
+}
+
+.td-part-inspector-toolbar__hint {
+  margin: 0;
+}
+
+.td-part-inspector-toolbar__fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  align-items: start;
+}
+
 .td-composer__inline-text--shape {
   width: 100%;
   min-height: 1em;

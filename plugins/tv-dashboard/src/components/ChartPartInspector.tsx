@@ -21,6 +21,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -169,25 +170,19 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       hint="Ajuste estilo e conteúdo desta parte. Del oculta a parte (não remove o gráfico)."
       defaultOpen
     >
-      <div className="td-chart-part-inspector__actions">
-        <button type="button" className="td-deck-btn td-deck-btn--ghost" onClick={clearChartPartSelection}>
-          Limpar subseleção
-        </button>
-        {selectedChartPart.kind === "title" ? (
-          <button
-            type="button"
-            className="td-deck-btn td-deck-btn--ghost"
-            onClick={() => beginEditChartPart(block.id, selectedChartPart)}
-          >
-            Editar no palco
-          </button>
-        ) : null}
-        {canDelete ? (
-          <button type="button" className="td-btn td-btn--danger td-btn--sm" onClick={hideSelectedPart}>
-            Excluir parte
-          </button>
-        ) : null}
-      </div>
+      <PartInspectorToolbar
+        onBack={clearChartPartSelection}
+        backLabel="Voltar aos elementos"
+        onEditOnStage={
+          selectedChartPart.kind === "title"
+            ? () => beginEditChartPart(block.id, selectedChartPart)
+            : undefined
+        }
+        onHide={canDelete ? hideSelectedPart : undefined}
+        hideLabel="Ocultar parte"
+        hideDanger
+        hint="Del também oculta a parte (não remove o gráfico)."
+      />
 
       {selectedChartPart.kind === "chartArea" || selectedChartPart.kind === "plotArea" ? (
         <>
@@ -211,22 +206,22 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               onChange={(color) => patchPart({ style: { stroke: color } })}
             />
           </DeckField>
-          <DeckField id="td-chart-part-area-stroke-width" label="Espessura da borda">
-            <NativeTextControl
-              id="td-chart-part-area-stroke-width"
-              type="number"
-              min={0}
-              max={12}
-              step={0.5}
-              value={
-                selectedChartPart.kind === "chartArea"
-                  ? chartAreaStyle.strokeWidth
-                  : plotAreaStyle.strokeWidth
-              }
-              onChange={(value) => patchPart({ style: { strokeWidth: Number(value) || 0 } })}
-            />
-          </DeckField>
-          {selectedChartPart.kind === "chartArea" || selectedChartPart.kind === "plotArea" ? (
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id="td-chart-part-area-stroke-width" label="Espessura">
+              <NativeTextControl
+                id="td-chart-part-area-stroke-width"
+                type="number"
+                min={0}
+                max={12}
+                step={0.5}
+                value={
+                  selectedChartPart.kind === "chartArea"
+                    ? chartAreaStyle.strokeWidth
+                    : plotAreaStyle.strokeWidth
+                }
+                onChange={(value) => patchPart({ style: { strokeWidth: Number(value) || 0 } })}
+              />
+            </DeckField>
             <DeckField id="td-chart-part-area-radius" label="Cantos (px)">
               <NativeTextControl
                 id="td-chart-part-area-radius"
@@ -244,7 +239,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
                 }
               />
             </DeckField>
-          ) : null}
+          </div>
         </>
       ) : null}
 
