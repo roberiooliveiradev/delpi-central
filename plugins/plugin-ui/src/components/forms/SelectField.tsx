@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
@@ -7,6 +7,8 @@ import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 export type SelectOption = {
   value: string;
   label: string;
+  /** Estilo da opção (ex.: preview de `fontFamily` no seletor de fonte). */
+  style?: CSSProperties;
 };
 
 export type SelectControlClassNames = {
@@ -114,9 +116,9 @@ export function SelectControl({
     }
   }, [disabled]);
 
+  const selectedOption = options.find((option) => option.value === value);
   const selectedLabel =
-    options.find((option) => option.value === value)?.label ??
-    (allowEmpty && !value ? emptyLabel : placeholder);
+    selectedOption?.label ?? (allowEmpty && !value ? emptyLabel : placeholder);
 
   const rootClass = [open ? classNames.rootOpen : classNames.root, className]
     .filter(Boolean)
@@ -147,7 +149,9 @@ export function SelectControl({
           });
         }}
       >
-        <span className={classNames.triggerLabel}>{selectedLabel}</span>
+        <span className={classNames.triggerLabel} style={selectedOption?.style}>
+          {selectedLabel}
+        </span>
         <ChevronDown size={16} aria-hidden={true} />
       </button>
 
@@ -197,6 +201,7 @@ export function SelectControl({
                   className={
                     option.value === value ? classNames.optionActive : classNames.option
                   }
+                  style={option.style}
                   onClick={() => {
                     onChange(option.value);
                     closePanel();

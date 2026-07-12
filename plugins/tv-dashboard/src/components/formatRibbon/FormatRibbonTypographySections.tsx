@@ -37,6 +37,7 @@ import {
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { HintAction, NativeTextControl, isAutomaticTextColor } from "@delpi/plugin-ui/index";
+import { useEffect } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { resolveSelectedTextFormatTarget } from "../../utils/selectedTextFormatTarget";
@@ -47,6 +48,12 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const PART_FONT_SIZE_DEFAULT = 16;
+
+const FONT_FAMILY_SELECT_OPTIONS = comunicadoFontFamilyOptions().map((font) => ({
+  value: font.value,
+  label: font.source === "google" ? `${font.label} · Google` : font.label,
+  style: { fontFamily: font.value },
+}));
 
 /**
  * Fonte + Parágrafo — só renderiza se o objeto selecionado admite tipografia
@@ -70,6 +77,10 @@ export function FormatRibbonTypographySections() {
     textEditNamedStyleSelection,
     applySelectedNamedTextStyle,
   } = useComunicadoEditor();
+
+  useEffect(() => {
+    ensureComunicadoGoogleFontsLoaded(FONT_FAMILY_SELECT_OPTIONS.map((option) => option.value));
+  }, []);
 
   const textFormatTarget = resolveSelectedTextFormatTarget({
     selected,
@@ -162,54 +173,54 @@ export function FormatRibbonTypographySections() {
             <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
               <TdRibbonSelect
                 aria-label="Família da fonte"
+                className="td-deck-ribbon__select--font-family"
                 value={currentFontFamily}
                 onChange={(value) => {
                   ensureComunicadoGoogleFontsLoaded([value]);
                   updateSelectedTextFormatStyle({ fontFamily: value });
                 }}
-                options={comunicadoFontFamilyOptions().map((font) => ({
-                  value: font.value,
-                  label: font.source === "google" ? `${font.label} · Google` : font.label,
-                }))}
+                options={FONT_FAMILY_SELECT_OPTIONS}
               />
             </HintAction>
-            <TdRibbonIconButton
-              hint={H.fontSizeDown}
-              ariaLabel="Diminuir fonte"
-              disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
-              onClick={() =>
-                updateSelectedTextFormatStyle({
-                  fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
-                })
-              }
-            >
-              <Minus size={14} aria-hidden="true" />
-            </TdRibbonIconButton>
-            <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
-              <NativeTextControl
-                type="number"
-                className="td-deck-ribbon__number"
-                aria-label="Tamanho da fonte"
-                min={COMUNICADO_FONT_SIZE_MIN}
-                max={COMUNICADO_FONT_SIZE_MAX}
-                value={currentFontSize}
-                onChange={(value) =>
-                  updateSelectedTextFormatStyle({ fontSize: clampFontSize(Number(value)) })
+            <div className="td-deck-ribbon__font-size" role="group" aria-label="Tamanho da fonte">
+              <TdRibbonIconButton
+                hint={H.fontSizeDown}
+                ariaLabel="Diminuir fonte"
+                disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
+                onClick={() =>
+                  updateSelectedTextFormatStyle({
+                    fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
+                  })
                 }
-              />
-            </HintAction>
-            <TdRibbonIconButton
-              hint={H.fontSizeUp}
-              ariaLabel="Aumentar fonte"
-              disabled={currentFontSize >= COMUNICADO_FONT_SIZE_MAX}
-              onClick={() =>
-                updateSelectedTextFormatStyle({
-                  fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
-                })
-              }
-            >
-              <Plus size={14} aria-hidden="true" />
-            </TdRibbonIconButton>
+              >
+                <Minus size={16} aria-hidden="true" />
+              </TdRibbonIconButton>
+              <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
+                <NativeTextControl
+                  type="number"
+                  className="td-deck-ribbon__number td-deck-ribbon__number--font-size"
+                  aria-label="Tamanho da fonte"
+                  min={COMUNICADO_FONT_SIZE_MIN}
+                  max={COMUNICADO_FONT_SIZE_MAX}
+                  value={currentFontSize}
+                  onChange={(value) =>
+                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(Number(value)) })
+                  }
+                />
+              </HintAction>
+              <TdRibbonIconButton
+                hint={H.fontSizeUp}
+                ariaLabel="Aumentar fonte"
+                disabled={currentFontSize >= COMUNICADO_FONT_SIZE_MAX}
+                onClick={() =>
+                  updateSelectedTextFormatStyle({
+                    fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
+                  })
+                }
+              >
+                <Plus size={16} aria-hidden="true" />
+              </TdRibbonIconButton>
+            </div>
           </div>
           <div className="td-deck-ribbon__toolbar-row">
             <TdRibbonIconButton

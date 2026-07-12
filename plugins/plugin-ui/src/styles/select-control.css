@@ -1,6 +1,9 @@
 /**
  * SelectControl canônico (trigger + painel) — mesmo padrão visual dos dashboards (SI/PAC).
  * Prefixo BEM: delpi-ui-select. Tokens --delpi-ui-* com fallback portal/--td-*.
+ *
+ * Painel pode ir ao `body` via AnchoredPanelPortal — variáveis e cores precisam
+ * resolver sem ancestral `.delpi-ui-select` (fallbacks nos próprios elementos).
  */
 
 .delpi-ui-select {
@@ -81,6 +84,17 @@
 }
 
 .delpi-ui-select__panel {
+  --delpi-ui-select-bg: var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)));
+  --delpi-ui-select-text: var(--delpi-ui-text, var(--td-text, var(--text, #111111)));
+  --delpi-ui-select-border: var(--delpi-ui-border, var(--td-border, var(--border, #d0d7de)));
+  --delpi-ui-select-muted: var(
+    --delpi-ui-text-muted,
+    var(--td-muted, color-mix(in srgb, var(--delpi-ui-select-text) 55%, transparent))
+  );
+  --delpi-ui-select-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
+  --delpi-ui-select-radius: 10px;
+  --delpi-ui-select-font-size: 13px;
+
   position: absolute;
   z-index: 40;
   top: calc(100% + 4px);
@@ -89,10 +103,12 @@
   display: grid;
   gap: 6px;
   padding: 8px;
+  box-sizing: border-box;
   border: 1px solid var(--delpi-ui-select-border);
   border-radius: var(--delpi-ui-select-radius);
   background: var(--delpi-ui-select-bg);
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--delpi-ui-select-text) 14%, transparent);
+  color: var(--delpi-ui-select-text);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--delpi-ui-select-text) 18%, transparent);
 }
 
 /* Portal no body: posição vem do AnchoredPanelPortal (fixed); evita stretch por `right: 0`. */
@@ -100,12 +116,13 @@
   right: auto;
   top: auto;
   left: auto;
+  min-width: 12rem;
   width: max-content;
   max-width: min(360px, calc(100vw - 16px));
 }
 
 .delpi-ui-select__search {
-  min-height: var(--delpi-ui-select-min-height);
+  min-height: var(--delpi-ui-select-min-height, 36px);
   box-sizing: border-box;
   padding: 8px 12px;
   border: 1px solid var(--delpi-ui-select-border);
@@ -141,9 +158,9 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--delpi-ui-select-text);
+  color: var(--delpi-ui-select-text, var(--delpi-ui-text, var(--td-text, inherit)));
   font: inherit;
-  font-size: var(--delpi-ui-select-font-size);
+  font-size: var(--delpi-ui-select-font-size, 13px);
   text-align: left;
   padding: 7px 8px;
   cursor: pointer;
@@ -151,13 +168,17 @@
 
 .delpi-ui-select__option:hover,
 .delpi-ui-select__option--active {
-  background: color-mix(in srgb, var(--delpi-ui-select-accent) 14%, transparent);
-  color: var(--delpi-ui-select-accent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-select-accent, var(--delpi-ui-accent, #089bdb)) 14%,
+    transparent
+  );
+  color: var(--delpi-ui-select-accent, var(--delpi-ui-accent, #089bdb));
 }
 
 .delpi-ui-select__empty {
   padding: 8px;
-  color: var(--delpi-ui-select-muted);
+  color: var(--delpi-ui-select-muted, var(--delpi-ui-text-muted, #888));
   font-size: 12px;
 }
 
@@ -170,6 +191,12 @@
 
 .delpi-ui-select--compact .delpi-ui-select__trigger {
   padding: 4px 8px;
+}
+
+.delpi-ui-select--compact .delpi-ui-select__panel {
+  --delpi-ui-select-radius: 8px;
+  --delpi-ui-select-font-size: 12px;
+  --delpi-ui-select-min-height: 30px;
 }
 
 .delpi-ui-select--compact .delpi-ui-select__option {

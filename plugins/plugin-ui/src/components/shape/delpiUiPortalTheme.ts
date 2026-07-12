@@ -94,6 +94,13 @@ export function resolveDelpiUiPortalTheme(anchor?: HTMLElement | null): DelpiUiP
   if (border) style["--delpi-ui-border"] = border;
   if (muted) style["--delpi-ui-muted"] = muted;
 
+  /* Tokens do select portado (painel no body sem ancestral `.delpi-ui-select`). */
+  if (surface) style["--delpi-ui-select-bg"] = surface;
+  if (text) style["--delpi-ui-select-text"] = text;
+  if (border) style["--delpi-ui-select-border"] = border;
+  if (muted) style["--delpi-ui-select-muted"] = muted;
+  if (accent) style["--delpi-ui-select-accent"] = accent;
+
   return {
     dataTheme: resolveThemeAttribute(anchor),
     style,

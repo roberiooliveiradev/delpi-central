@@ -2,7 +2,7 @@ import {
   FormSelectControl,
   HintAction,
   mergeClassNames,
-  type NativeSelectOption,
+  type SelectOption,
 } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 
@@ -10,7 +10,7 @@ type TdRibbonSelectProps = {
   id?: string;
   value: string;
   onChange: (value: string) => void;
-  options: readonly NativeSelectOption[];
+  options: readonly SelectOption[];
   disabled?: boolean;
   className?: string;
   "aria-label"?: string;
@@ -35,6 +35,7 @@ export function TdRibbonSelect({
       disabled={disabled}
       className={mergeClassNames("td-deck-ribbon__select", "delpi-ui-select--compact", className)}
       ariaLabel={ariaLabel}
+      portalScopeClassName="dashboard-tv-dashboard delpi-ui-select--compact"
     />
   );
 }
