@@ -9,6 +9,7 @@ import {
   kpiPartAllowsFrame,
   kpiPartAllowsResize,
   kpiPartCornerAdjustCssPosition,
+  resolveKpiShapeChromePartRef,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
   resizeKpiPartFrame,
@@ -134,6 +135,13 @@ describe("kpi icon layout", () => {
     expect(css.height).toBe("30%");
     expect(css.borderRadius).toBe("8px");
     expect(css.background).toBe("#111");
+  });
+
+  it("resolveKpiShapeChromePartRef mira a parte selecionada, não o card", () => {
+    expect(resolveKpiShapeChromePartRef(null)).toEqual({ kind: "card" });
+    expect(resolveKpiShapeChromePartRef({ kind: "value" })).toEqual({ kind: "value" });
+    expect(resolveKpiShapeChromePartRef({ kind: "icon" })).toEqual({ kind: "icon" });
+    expect(resolveKpiShapeChromePartRef({ kind: "card" })).toEqual({ kind: "card" });
   });
 
   it("kpiPartAllowsFrame cobre title/value/hint/icon", () => {

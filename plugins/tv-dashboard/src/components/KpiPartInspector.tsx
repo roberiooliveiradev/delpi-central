@@ -215,20 +215,44 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       ) : null}
 
       {selectedKpiPart.kind === "value" ? (
-        <DeckField id="td-kpi-part-value-color" label="Cor do valor">
-          <TvRibbonColorPicker
-            inline
-            variant="text"
-            contrastBackground={
-              options.backgroundColor ??
-              getKpiPartState(block.kpiParts, { kind: "card" })?.style?.fill ??
-              DECK_KPI_DEFAULTS.backgroundColor
-            }
-            label="Cor do valor"
-            value={partState?.style?.color ?? options.valueColor ?? DECK_KPI_DEFAULTS.valueColor}
-            onChange={(color) => persistPart({ style: { color } })}
-          />
-        </DeckField>
+        <>
+          <DeckField id="td-kpi-part-value-color" label="Cor do valor">
+            <TvRibbonColorPicker
+              inline
+              variant="text"
+              contrastBackground={
+                partState?.style?.fill && partState.style.fill !== "transparent"
+                  ? partState.style.fill
+                  : (options.backgroundColor ??
+                    getKpiPartState(block.kpiParts, { kind: "card" })?.style?.fill ??
+                    DECK_KPI_DEFAULTS.backgroundColor)
+              }
+              label="Cor do valor"
+              value={partState?.style?.color ?? options.valueColor ?? DECK_KPI_DEFAULTS.valueColor}
+              onChange={(color) => persistPart({ style: { color } })}
+            />
+          </DeckField>
+          <DeckField id="td-kpi-part-value-fill" label="Preenchimento">
+            <TvRibbonColorPicker
+              inline
+              variant="fill"
+              label="Preenchimento"
+              value={partState?.style?.fill ?? "transparent"}
+              onChange={(color) => persistPart({ style: { fill: color } })}
+              onNoFill={() => persistPart({ style: { fill: "transparent" } })}
+            />
+          </DeckField>
+          <DeckField id="td-kpi-part-value-stroke" label="Contorno">
+            <TvRibbonColorPicker
+              inline
+              variant="outline"
+              label="Contorno"
+              value={partState?.style?.stroke ?? "transparent"}
+              onChange={(color) => persistPart({ style: { stroke: color, strokeWidth: partState?.style?.strokeWidth ?? 1 } })}
+              onNoFill={() => persistPart({ style: { stroke: "transparent", strokeWidth: 0 } })}
+            />
+          </DeckField>
+        </>
       ) : null}
 
       {selectedKpiPart.kind === "icon" ? (

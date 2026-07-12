@@ -65,6 +65,7 @@ export {
   kpiPartCapabilities,
   kpiPartCornerAdjFromLocalX,
   kpiPartCornerAdjustCssPosition,
+  resolveKpiShapeChromePartRef,
   mergeKpiPartsWithOptions,
   normalizeKpiPartsForLoad,
   parseKpiPartRef,

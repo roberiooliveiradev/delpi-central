@@ -338,6 +338,7 @@ export {
   kpiPartAllowsResize,
   kpiPartCornerAdjFromLocalX,
   kpiPartCornerAdjustCssPosition,
+  resolveKpiShapeChromePartRef,
   mergeKpiPartsWithOptions,
   normalizeKpiPartsForLoad,
   partsToKpiOptions,

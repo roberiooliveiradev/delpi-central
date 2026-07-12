@@ -210,6 +210,20 @@ export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
   return ref.kind === "title" || ref.kind === "value" || ref.kind === "hint" || ref.kind === "icon";
 }
 
+/**
+ * Alvo do chrome Preench./Contorno na ribbon Forma.
+ * Sem parte (ou parte sem chrome próprio) → card; senão a parte selecionada.
+ */
+export function resolveKpiShapeChromePartRef(
+  selectedPart: KpiPartRef | null | undefined,
+): KpiPartRef {
+  if (!selectedPart) return { kind: "card" };
+  if (selectedPart.kind === "card" || kpiPartAllowsFrame(selectedPart)) {
+    return selectedPart;
+  }
+  return { kind: "card" };
+}
+
 export function defaultKpiPartFrame(kind: KpiFramePartKind): KpiPartFrame {
   return { ...KPI_PART_DEFAULT_FRAMES[kind] };
 }

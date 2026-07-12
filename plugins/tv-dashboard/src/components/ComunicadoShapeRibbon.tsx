@@ -16,6 +16,7 @@ import {
   partsToChartOptions,
   partsToKpiOptions,
   resolveChartAreaStyle,
+  resolveKpiShapeChromePartRef,
   resolvePlotAreaStyle,
   resolveShapePrimitive,
   resolveTableFrameStyle,
@@ -121,7 +122,7 @@ export function ComunicadoShapeRibbon() {
   const isTextBox = selected?.type === "heading" || selected?.type === "text";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isChartPartPrimitive = Boolean(chartPartPrimitive);
-  /** Chrome do cartão KPI mesmo com parte de texto (título/valor) selecionada. */
+  /** Chrome KPI: card global ou parte selecionada (title/value/hint/icon). */
   const isKpiChrome = selected?.type === "kpi_view";
   const isTableChrome = selected?.type === "table_view";
   const isDataViewBlock =
@@ -317,20 +318,31 @@ export function ComunicadoShapeRibbon() {
 
   if (isKpiChrome && selected?.type === "kpi_view") {
     const block = selected as ComunicadoKpiViewBlock;
+    const chromePart = resolveKpiShapeChromePartRef(selectedKpiPart);
+    const partState = getKpiPartState(block.kpiParts, chromePart);
+    const isCardChrome = chromePart.kind === "card";
     const cardState = getKpiPartState(block.kpiParts, { kind: "card" });
-    const fillValue = cardState?.style?.fill ?? block.kpiOptions?.backgroundColor ?? DECK_COLOR_SURFACE;
-    const strokeValue = cardState?.style?.stroke ?? DECK_COLOR_BORDER;
-    const strokeWidth = cardState?.style?.strokeWidth ?? 1;
+    const fillValue = isCardChrome
+      ? (cardState?.style?.fill ?? block.kpiOptions?.backgroundColor ?? DECK_COLOR_SURFACE)
+      : (partState?.style?.fill ?? "transparent");
+    const strokeValue = isCardChrome
+      ? (cardState?.style?.stroke ?? DECK_COLOR_BORDER)
+      : (partState?.style?.stroke ?? "transparent");
+    const strokeWidth = isCardChrome
+      ? (cardState?.style?.strokeWidth ?? 1)
+      : (partState?.style?.strokeWidth ?? 0);
 
-    const patchCardStyle = (style: Record<string, unknown>) => {
-      const nextParts = upsertKpiPartState(block.kpiParts, { kind: "card" }, {
+    const patchChromeStyle = (style: Record<string, unknown>) => {
+      const nextParts = upsertKpiPartState(block.kpiParts, chromePart, {
         style: style as never,
       });
       const fromParts = partsToKpiOptions(nextParts);
       const nextOptions = mergeComunicadoKpiOptions({
         ...block.kpiOptions,
         ...fromParts,
-        ...(typeof style.fill === "string" ? { backgroundColor: style.fill } : {}),
+        ...(isCardChrome && typeof style.fill === "string"
+          ? { backgroundColor: style.fill }
+          : {}),
       });
       updateSelected({
         kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
@@ -344,7 +356,7 @@ export function ComunicadoShapeRibbon() {
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
               onSelect={(preset) =>
-                patchCardStyle({
+                patchChromeStyle({
                   fill: preset.fill,
                   stroke: preset.stroke,
                   strokeWidth: preset.strokeWidth,
@@ -354,8 +366,8 @@ export function ComunicadoShapeRibbon() {
             <ShapeFillMenu
               value={fillValue}
               fillLabel="Preench."
-              onChange={(color) => patchCardStyle({ fill: color })}
-              onNoFill={() => patchCardStyle({ fill: "transparent" })}
+              onChange={(color) => patchChromeStyle({ fill: color })}
+              onNoFill={() => patchChromeStyle({ fill: "transparent" })}
             />
             <ShapeOutlineMenu
               color={strokeValue}
@@ -363,9 +375,9 @@ export function ComunicadoShapeRibbon() {
               minWidth={0}
               maxWidth={20}
               outlineLabel="Contorno"
-              onColorChange={(color) => patchCardStyle({ stroke: color })}
-              onNoOutline={() => patchCardStyle({ stroke: "transparent", strokeWidth: 0 })}
-              onStrokeWidthChange={(width) => patchCardStyle({ strokeWidth: width })}
+              onColorChange={(color) => patchChromeStyle({ stroke: color })}
+              onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+              onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
             />
             <ShapeShadowMenu
               value={block.style?.boxShadow}
