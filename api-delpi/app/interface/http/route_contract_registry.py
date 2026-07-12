@@ -517,6 +517,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "reopen_audit_5s_evaluation": RouteContract("audit_5s_audit", "scalar"),
     "list_audit_5s_nc_candidates": RouteContract("audit_5s_nc_candidate", "paged_list"),
     "list_audit_5s_nonconformities": RouteContract("audit_5s_nonconformity", "paged_list"),
+    "list_audit_5s_nonconformities_board": RouteContract(
+        "audit_5s_nonconformity", "paged_list"
+    ),
     "create_audit_5s_nonconformity": RouteContract("audit_5s_nonconformity", "scalar"),
     "update_audit_5s_nonconformity": RouteContract("audit_5s_nonconformity", "scalar"),
     "list_audit_5s_nc_actions": RouteContract("audit_5s_nc_action", "paged_list"),

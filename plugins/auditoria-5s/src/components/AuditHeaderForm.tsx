@@ -3,6 +3,7 @@ import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { SHIFTS } from "../constants/audit5s";
 import type { AuditAuditorSelection } from "../types/auditAuditor";
 import { AuditAuditorPicker } from "./AuditAuditorPicker";
+import { AuditResponsiblePicker } from "./AuditResponsiblePicker";
 import { AuditNativeSelectField, AuditNativeTextField } from "./auditFormFields";
 
 export type AuditHeaderFormValues = {
@@ -73,10 +74,12 @@ export function AuditHeaderForm({
           Adicionar área
         </button>
       </div>
-      <AuditNativeTextField
-        id="a5s-audit-responsible"
-        label="Responsável pela área"
+      <AuditResponsiblePicker
         value={form.area_responsible}
+        disabled={loading}
+        label="Responsável pela área"
+        hint="Busque e selecione o responsável pela área auditada no Minha Delpi."
+        searchAriaLabel="Buscar responsável da área por nome ou e-mail"
         onChange={(area_responsible) => onFormChange({ area_responsible })}
       />
       <AuditNativeSelectField

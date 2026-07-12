@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from app.application.dto.audit_5s.get_audit_5s_dashboard_request import (
     GetAudit5sDashboardRequest,
+)
+from app.application.dto.audit_5s.list_audit_5s_nc_board_request import (
+    ListAudit5sNcBoardRequest,
+)
+from app.domain.services.audit_5s.audit_5s_nc_sla_service import (
+    is_nc_plan_complete,
+    resolve_nc_due_sla,
+    resolve_nc_workflow,
 )
 from app.application.services.audit_5s.scoring_service import (
     CriterionScoreInput,
@@ -2363,6 +2372,402 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "page_size": request.page_size,
                 "total": total,
             },
+        }
+
+    def list_nonconformities_board(
+        self,
+        request: ListAudit5sNcBoardRequest,
+    ) -> dict[str, Any]:
+        registered_rows = self._fetch_nc_board_registered_rows(request)
+        candidate_rows = (
+            self._fetch_nc_board_candidate_rows(request)
+            if self._nc_board_includes_candidates(request)
+            else []
+        )
+
+        items = [
+            self._serialize_nc_board_item(row, is_registered=True)
+            for row in registered_rows
+        ] + [
+            self._serialize_nc_board_candidate_item(row)
+            for row in candidate_rows
+        ]
+        items = self._sort_nc_board_items(items, request.sort)
+
+        pending_count = len(candidate_rows)
+        registered_open = sum(1 for row in registered_rows if row.get("status") == "open")
+        registered_in_progress = sum(
+            1 for row in registered_rows if row.get("status") == "in_progress"
+        )
+        registered_closed = sum(1 for row in registered_rows if row.get("status") == "closed")
+        registered_overdue = sum(
+            1
+            for row in registered_rows
+            if row.get("status") not in ("closed", "cancelled")
+            and row.get("due_date") is not None
+            and str(row.get("due_date"))[:10] < date.today().isoformat()
+        )
+
+        total = len(items)
+        offset = (request.page - 1) * request.page_size
+        page_items = items[offset : offset + request.page_size]
+
+        return {
+            "summary": {
+                "nc_total": total,
+                "nc_open": registered_open + pending_count,
+                "nc_in_progress": registered_in_progress,
+                "nc_closed": registered_closed,
+                "nc_overdue": registered_overdue,
+                "nc_pending": pending_count,
+            },
+            "items": page_items,
+            "pagination": {
+                "page": request.page,
+                "page_size": request.page_size,
+                "total": total,
+                "total_pages": max((total + request.page_size - 1) // request.page_size, 1),
+            },
+        }
+
+    def _fetch_nc_board_registered_rows(
+        self,
+        request: ListAudit5sNcBoardRequest,
+    ) -> list[dict[str, Any]]:
+        where_sql, params = self._nc_board_filter_clause(request)
+        return self.fetch_all(
+            f"""
+            SELECT nc.id,
+                   nc.audit_id,
+                   nc.response_id,
+                   nc.description,
+                   nc.root_cause,
+                   nc.corrective_action,
+                   nc.responsible_name,
+                   nc.due_date,
+                   nc.priority,
+                   nc.status,
+                   nc.created_at,
+                   nc.updated_at,
+                   a.audit_code,
+                   a.audit_date,
+                   a.branch_code,
+                   a.shift,
+                   ar.name AS area_name,
+                   c.code AS criterion_code,
+                   c.description AS criterion_description,
+                   s.sort_order AS senso_order,
+                   s.name AS senso_name,
+                   EXISTS (
+                       SELECT 1
+                         FROM quality.audit_5s_nc_attachments att
+                        WHERE att.nonconformity_id = nc.id
+                          AND att.attachment_type = 'before'
+                   ) AS has_before_evidence,
+                   EXISTS (
+                       SELECT 1
+                         FROM quality.audit_5s_nc_attachments att
+                        WHERE att.nonconformity_id = nc.id
+                          AND att.attachment_type = 'after'
+                   ) AS has_after_evidence,
+                   (
+                       SELECT MAX(act.created_at)
+                         FROM quality.audit_5s_nc_actions act
+                        WHERE act.nonconformity_id = nc.id
+                   ) AS last_action_at
+              FROM quality.audit_5s_nonconformities nc
+              JOIN quality.audit_5s_audits a ON a.id = nc.audit_id
+              JOIN quality.audit_5s_areas ar ON ar.id = a.area_id
+              JOIN quality.audit_5s_responses r ON r.id = nc.response_id
+              JOIN quality.audit_5s_criteria c ON c.id = r.criterion_id
+              JOIN quality.audit_5s_sensos s ON s.id = c.senso_id
+             WHERE {where_sql}
+            """,
+            tuple(params),
+        )
+
+    def _fetch_nc_board_candidate_rows(
+        self,
+        request: ListAudit5sNcBoardRequest,
+    ) -> list[dict[str, Any]]:
+        where_sql, params = self._nc_board_candidate_filter_clause(request)
+        return self.fetch_all(
+            f"""
+            SELECT r.id AS response_id,
+                   a.id AS audit_id,
+                   r.observation,
+                   r.score,
+                   a.audit_code,
+                   a.audit_date,
+                   a.branch_code,
+                   a.shift,
+                   ar.name AS area_name,
+                   c.code AS criterion_code,
+                   c.description AS criterion_description,
+                   s.sort_order AS senso_order,
+                   s.name AS senso_name
+              FROM quality.audit_5s_responses r
+              JOIN quality.audit_5s_audits a ON a.id = r.audit_id
+              JOIN quality.audit_5s_areas ar ON ar.id = a.area_id
+              JOIN quality.audit_5s_criteria c ON c.id = r.criterion_id
+              JOIN quality.audit_5s_sensos s ON s.id = c.senso_id
+             WHERE {where_sql}
+               AND a.status IN ('evaluation_complete', 'nc_in_progress')
+               AND COALESCE(r.is_not_applicable, FALSE) = FALSE
+               AND r.score IN (1, 3)
+               AND NOT EXISTS (
+                    SELECT 1
+                      FROM quality.audit_5s_nonconformities nc
+                     WHERE nc.response_id = r.id
+               )
+            """,
+            tuple(params),
+        )
+
+    @staticmethod
+    def _nc_board_includes_candidates(request: ListAudit5sNcBoardRequest) -> bool:
+        if request.overdue_only:
+            return False
+        if request.priority or request.responsible:
+            return False
+        if request.status in ("in_progress", "closed", "cancelled"):
+            return False
+        return True
+
+    def _nc_board_candidate_filter_clause(
+        self,
+        request: ListAudit5sNcBoardRequest,
+    ) -> tuple[str, list[Any]]:
+        conditions = [
+            "a.branch_code = %s",
+            "a.audit_date BETWEEN %s AND %s",
+        ]
+        params: list[Any] = [
+            request.branch_code,
+            request.date_start.isoformat(),
+            request.date_end.isoformat(),
+        ]
+        if request.area_id:
+            conditions.append("a.area_id = %s")
+            params.append(request.area_id)
+        if request.shift:
+            conditions.append("a.shift = %s")
+            params.append(request.shift)
+        if request.senso_order:
+            conditions.append("s.sort_order = %s")
+            params.append(request.senso_order)
+        if request.search:
+            term = f"%{request.search.strip()}%"
+            conditions.append(
+                "("
+                "a.audit_code ILIKE %s OR "
+                "ar.name ILIKE %s OR "
+                "c.code ILIKE %s OR "
+                "c.description ILIKE %s OR "
+                "r.observation ILIKE %s"
+                ")"
+            )
+            params.extend([term, term, term, term, term])
+        return " AND ".join(conditions), params
+
+    @staticmethod
+    def _sort_nc_board_items(
+        items: list[dict[str, Any]],
+        sort: str,
+    ) -> list[dict[str, Any]]:
+        normalized = str(sort or "").strip().lower()
+
+        def due_key(item: dict[str, Any]) -> tuple[int, str]:
+            due = item.get("due_date")
+            if not due:
+                return (1, "9999-99-99")
+            return (0, str(due))
+
+        def created_key(item: dict[str, Any]) -> str:
+            return str(item.get("created_at") or "")
+
+        def priority_key(item: dict[str, Any]) -> int:
+            order = {"high": 1, "medium": 2, "low": 3}
+            return order.get(str(item.get("priority") or "").lower(), 4)
+
+        if normalized == "due_date_desc":
+            return sorted(
+                items,
+                key=lambda item: (due_key(item)[0], due_key(item)[1]),
+                reverse=True,
+            )
+        if normalized == "created_desc":
+            return sorted(items, key=created_key, reverse=True)
+        if normalized == "priority_desc":
+            return sorted(
+                items,
+                key=lambda item: (priority_key(item), due_key(item)[1]),
+            )
+        return sorted(items, key=lambda item: (due_key(item)[0], due_key(item)[1]))
+
+    def _serialize_nc_board_candidate_item(self, row: dict[str, Any]) -> dict[str, Any]:
+        observation = str(row.get("observation") or "").strip()
+        description = observation or None
+        response_id = str(row["response_id"])
+        return {
+            "id": f"candidate:{response_id}",
+            "audit_id": str(row["audit_id"]),
+            "response_id": response_id,
+            "description": description,
+            "root_cause": None,
+            "corrective_action": None,
+            "responsible_name": None,
+            "due_date": None,
+            "priority": None,
+            "status": "pending",
+            "created_at": None,
+            "updated_at": None,
+            "audit_code": row.get("audit_code"),
+            "audit_date": str(row.get("audit_date"))[:10] if row.get("audit_date") else None,
+            "area_name": row.get("area_name"),
+            "branch_code": row.get("branch_code"),
+            "shift": row.get("shift"),
+            "criterion_code": row.get("criterion_code"),
+            "criterion_description": row.get("criterion_description"),
+            "senso_order": int(row.get("senso_order") or 0),
+            "senso_name": row.get("senso_name"),
+            "plan_started": False,
+            "workflow_step": 1,
+            "due_sla_level": "none",
+            "days_until_due": None,
+            "has_before_evidence": False,
+            "has_after_evidence": False,
+            "last_action_at": None,
+            "is_registered": False,
+            "score": row.get("score"),
+        }
+
+    def _nc_board_filter_clause(
+        self,
+        request: ListAudit5sNcBoardRequest,
+    ) -> tuple[str, list[Any]]:
+        conditions = [
+            "a.branch_code = %s",
+            "a.audit_date BETWEEN %s AND %s",
+        ]
+        params: list[Any] = [
+            request.branch_code,
+            request.date_start.isoformat(),
+            request.date_end.isoformat(),
+        ]
+        if request.area_id:
+            conditions.append("a.area_id = %s")
+            params.append(request.area_id)
+        if request.shift:
+            conditions.append("a.shift = %s")
+            params.append(request.shift)
+        if request.status:
+            conditions.append("nc.status = %s")
+            params.append(request.status)
+        if request.priority:
+            conditions.append("nc.priority = %s")
+            params.append(request.priority)
+        if request.responsible:
+            conditions.append("nc.responsible_name ILIKE %s")
+            params.append(f"%{request.responsible.strip()}%")
+        if request.overdue_only:
+            conditions.append("nc.status NOT IN ('closed', 'cancelled')")
+            conditions.append("nc.due_date IS NOT NULL")
+            conditions.append("nc.due_date < CURRENT_DATE")
+        if request.senso_order:
+            conditions.append("s.sort_order = %s")
+            params.append(request.senso_order)
+        if request.search:
+            term = f"%{request.search.strip()}%"
+            conditions.append(
+                "("
+                "a.audit_code ILIKE %s OR "
+                "ar.name ILIKE %s OR "
+                "c.code ILIKE %s OR "
+                "c.description ILIKE %s OR "
+                "nc.description ILIKE %s OR "
+                "nc.corrective_action ILIKE %s"
+                ")"
+            )
+            params.extend([term, term, term, term, term, term])
+        return " AND ".join(conditions), params
+
+    @staticmethod
+    def _nc_board_order_clause(sort: str) -> str:
+        mapping = {
+            "due_date_asc": "nc.due_date ASC NULLS LAST, nc.created_at DESC",
+            "due_date_desc": "nc.due_date DESC NULLS LAST, nc.created_at DESC",
+            "created_desc": "nc.created_at DESC",
+            "priority_desc": """
+                CASE nc.priority
+                    WHEN 'high' THEN 1
+                    WHEN 'medium' THEN 2
+                    WHEN 'low' THEN 3
+                    ELSE 4
+                END,
+                nc.due_date ASC NULLS LAST
+            """,
+        }
+        normalized = str(sort or "").strip().lower()
+        return mapping.get(normalized, mapping["due_date_asc"])
+
+    def _serialize_nc_board_item(
+        self,
+        row: dict[str, Any],
+        *,
+        is_registered: bool = True,
+    ) -> dict[str, Any]:
+        plan_complete = is_nc_plan_complete(row)
+        has_before = bool(row.get("has_before_evidence"))
+        has_after = bool(row.get("has_after_evidence"))
+        workflow = resolve_nc_workflow(
+            status=str(row.get("status") or ""),
+            plan_complete=plan_complete,
+            has_before_evidence=has_before,
+            has_after_evidence=has_after,
+        )
+        due_sla = resolve_nc_due_sla(
+            status=str(row.get("status") or ""),
+            due_date=row.get("due_date"),
+        )
+        due_date = row.get("due_date")
+        last_action_at = row.get("last_action_at")
+        created_at = row.get("created_at")
+        updated_at = row.get("updated_at")
+        return {
+            "id": str(row["id"]),
+            "audit_id": str(row["audit_id"]),
+            "response_id": str(row["response_id"]),
+            "description": row.get("description"),
+            "root_cause": row.get("root_cause"),
+            "corrective_action": row.get("corrective_action"),
+            "responsible_name": row.get("responsible_name"),
+            "due_date": str(due_date)[:10] if due_date else None,
+            "priority": row.get("priority"),
+            "status": row.get("status"),
+            "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else created_at,
+            "updated_at": updated_at.isoformat() if hasattr(updated_at, "isoformat") else updated_at,
+            "audit_code": row.get("audit_code"),
+            "audit_date": str(row.get("audit_date"))[:10] if row.get("audit_date") else None,
+            "area_name": row.get("area_name"),
+            "branch_code": row.get("branch_code"),
+            "shift": row.get("shift"),
+            "criterion_code": row.get("criterion_code"),
+            "criterion_description": row.get("criterion_description"),
+            "senso_order": int(row.get("senso_order") or 0),
+            "senso_name": row.get("senso_name"),
+            "plan_started": workflow["plan_started"],
+            "workflow_step": workflow["workflow_step"],
+            "due_sla_level": due_sla["due_sla_level"],
+            "days_until_due": due_sla["days_until_due"],
+            "has_before_evidence": has_before,
+            "has_after_evidence": has_after,
+            "last_action_at": (
+                last_action_at.isoformat()
+                if hasattr(last_action_at, "isoformat")
+                else last_action_at
+            ),
+            "is_registered": is_registered,
         }
 
     def _dashboard_filter_clause(

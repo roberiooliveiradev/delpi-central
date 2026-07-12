@@ -1,4 +1,12 @@
-import { CalendarDays, MapPin, Percent, UserRound, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  ClipboardCheck,
+  MapPin,
+  Percent,
+  UserRound,
+  Users,
+} from "lucide-react";
 
 import type { AuditDetail } from "../api/audit5sApi";
 import { auditStatusLabel, auditStatusVariant, shiftLabel } from "../constants/audit5s";
@@ -6,6 +14,8 @@ import { formatPersonName } from "../utils/formatPersonName";
 
 type Props = {
   audit: AuditDetail;
+  showBack?: boolean;
+  onBack?: () => void;
 };
 
 function formatAuditDate(value: string): string {
@@ -14,7 +24,7 @@ function formatAuditDate(value: string): string {
   return `${day}/${month}/${year}`;
 }
 
-export function AuditDetailHero({ audit }: Props) {
+export function AuditDetailHero({ audit, showBack, onBack }: Props) {
   const progressPct =
     audit.progress.total > 0
       ? Math.round((audit.progress.scored / audit.progress.total) * 100)
@@ -24,25 +34,49 @@ export function AuditDetailHero({ audit }: Props) {
   const auditorNames = audit.auditors
     .map((item) => formatPersonName(item.display_name))
     .filter(Boolean);
+  const responsibleName =
+    formatPersonName(audit.area_responsible) || audit.area_responsible;
 
   return (
-    <section className="a5s-audit-hero" aria-label="Resumo da auditoria">
-      <div className="a5s-audit-hero__glow" aria-hidden />
-      <div className="a5s-audit-hero__top">
-        <div>
-          <p className="a5s-audit-hero__code">{audit.audit_code}</p>
-          <h2 className="a5s-audit-hero__area">{audit.area_name}</h2>
-          <p className="a5s-audit-hero__responsible">
-            <UserRound size={15} aria-hidden />
-            Responsável: {formatPersonName(audit.area_responsible) || audit.area_responsible}
-          </p>
+    <header className="a5s-hero a5s-hero--audit-detail" aria-label="Resumo da auditoria">
+      <div className="a5s-hero__glow a5s-hero__glow--primary" aria-hidden />
+      <div className="a5s-hero__glow a5s-hero__glow--secondary" aria-hidden />
+
+      <div className="a5s-hero__inner">
+        <div className="a5s-hero__brand">
+          <div className="a5s-hero__icon" aria-hidden>
+            <ClipboardCheck size={28} strokeWidth={1.75} />
+          </div>
+          <div className="a5s-hero__copy">
+            <p className="a5s-hero__eyebrow">
+              {audit.audit_code} · Filial {audit.branch_code} · Qualidade
+            </p>
+            <h1 className="a5s-hero__title">{audit.area_name}</h1>
+            <p className="a5s-hero__subtitle">
+              <UserRound size={15} aria-hidden />
+              Responsável: {responsibleName}
+            </p>
+          </div>
         </div>
-        <span className={`a5s-status-badge a5s-status-badge--${statusVariant}`}>
-          {auditStatusLabel(audit.status)}
-        </span>
+
+        <div className="a5s-hero__actions">
+          <span className={`a5s-status-badge a5s-status-badge--${statusVariant}`}>
+            {auditStatusLabel(audit.status)}
+          </span>
+          {showBack && onBack ? (
+            <button
+              type="button"
+              className="a5s-btn a5s-btn--ghost a5s-btn--header"
+              onClick={onBack}
+            >
+              <ArrowLeft size={16} aria-hidden />
+              Voltar
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="a5s-audit-hero__meta">
+      <div className="a5s-hero-audit__meta">
         <span className="a5s-meta-chip">
           <CalendarDays size={15} aria-hidden />
           {formatAuditDate(audit.audit_date)}
@@ -60,7 +94,7 @@ export function AuditDetailHero({ audit }: Props) {
         ) : null}
       </div>
 
-      <div className="a5s-audit-hero__kpis">
+      <div className="a5s-hero-audit__kpis">
         <article className="a5s-kpi-card">
           <span className="a5s-kpi-card__label">Progresso</span>
           <strong className="a5s-kpi-card__value">{progressPct}%</strong>
@@ -76,7 +110,7 @@ export function AuditDetailHero({ audit }: Props) {
         <article className="a5s-kpi-card a5s-kpi-card--accent">
           <span className="a5s-kpi-card__label">
             <Percent size={14} aria-hidden />
-            % Geral
+            Geral
           </span>
           <strong className="a5s-kpi-card__value">
             {overallScore != null ? `${overallScore}%` : "—"}
@@ -85,7 +119,7 @@ export function AuditDetailHero({ audit }: Props) {
         </article>
       </div>
 
-      <div className="a5s-progress">
+      <div className="a5s-progress a5s-hero-audit__progress">
         <div className="a5s-progress__track">
           <div
             className="a5s-progress__fill"
@@ -101,6 +135,6 @@ export function AuditDetailHero({ audit }: Props) {
           {audit.progress.scored}/{audit.progress.total} critérios avaliados
         </span>
       </div>
-    </section>
+    </header>
   );
 }

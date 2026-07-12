@@ -1,4 +1,5 @@
 import type { AuditArea, AuditListItem } from "../api/audit5sApi";
+import { auditNeedsNcAttention } from "../constants/audit5s";
 
 export function formatAuditDate(value: string): string {
   const [year, month, day] = value.split("-");
@@ -6,7 +7,13 @@ export function formatAuditDate(value: string): string {
   return `${day}/${month}/${year}`;
 }
 
-export function scorePercentClass(value: number | null | undefined): string {
+export function scorePercentClass(
+  value: number | null | undefined,
+  status?: string,
+): string {
+  if (status && auditNeedsNcAttention(status)) {
+    return "a5s-score-pill--attention";
+  }
   if (value == null) return "a5s-score-pill--empty";
   if (value >= 80) return "a5s-score-pill--high";
   if (value >= 60) return "a5s-score-pill--mid";

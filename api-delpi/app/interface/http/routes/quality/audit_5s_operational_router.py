@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Body, File, Form, Query, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -12,6 +14,9 @@ from app.application.security.api_delpi_permissions import (
     AUDIT_5S_WRITE_PERMISSIONS,
 )
 
+from app.application.dto.audit_5s.list_audit_5s_nc_board_request import (
+    ListAudit5sNcBoardRequest,
+)
 from app.application.services.audit_5s.nc_attachment_storage import (
     Audit5sNcAttachmentStorage,
     Audit5sNcAttachmentStorageError,
@@ -971,6 +976,64 @@ async def complete_nc_action(nc_id: str):
     except Exception as exc:
         log_error(f"Erro ao finalizar ação NC 5S: {exc}")
         return error_response("Erro interno ao finalizar ação.", status_code=500)
+
+
+@router.get("/nonconformities")
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
+def list_audit_5s_nonconformities_board(
+    branch: str = Query(..., pattern="^(01|02)$"),
+    date_start: str = Query(..., alias="date_start"),
+    date_end: str = Query(..., alias="date_end"),
+    area_id: str | None = Query(None),
+    shift: str | None = Query(None, pattern="^(TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO)$"),
+    status: str | None = Query(None, pattern="^(open|in_progress|closed|cancelled)$"),
+    priority: str | None = Query(None, pattern="^(high|medium|low)$"),
+    responsible: str | None = Query(None),
+    overdue_only: bool = Query(False),
+    senso_order: int | None = Query(None, ge=1, le=5),
+    search: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    sort: str = Query(
+        "due_date_asc",
+        pattern="^(due_date_asc|due_date_desc|created_desc|priority_desc)$",
+    ),
+):
+    denied = branch_access_error(branch)
+    if denied is not None:
+        return denied
+    try:
+        parsed_start = date.fromisoformat(date_start)
+        parsed_end = date.fromisoformat(date_end)
+    except ValueError:
+        return error_response("Período inválido.", status_code=400)
+    if parsed_start > parsed_end:
+        return error_response("Data inicial não pode ser maior que a final.", status_code=400)
+    try:
+        repo = build_audit_5s_repository()
+        request = ListAudit5sNcBoardRequest(
+            branch_code=branch,
+            date_start=parsed_start,
+            date_end=parsed_end,
+            area_id=area_id,
+            shift=shift,
+            status=status,
+            priority=priority,
+            responsible=responsible,
+            overdue_only=overdue_only,
+            senso_order=senso_order,
+            search=search,
+            page=page,
+            page_size=page_size,
+            sort=sort,
+        )
+        data = repo.list_nonconformities_board(request)
+        return api_delpi_success(data, operation_id="list_audit_5s_nonconformities_board")
+    except PluginsRepositoryError as exc:
+        return error_response(str(exc), status_code=422)
+    except Exception as exc:
+        log_error(f"Erro ao listar board de NCs 5S: {exc}")
+        return error_response("Erro interno ao listar não conformidades.", status_code=500)
 
 
 @router.get("/analytics/dashboard")
