@@ -164,6 +164,13 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     [slides, selectedSlideId],
   );
 
+  const editorComunicadoValue = useMemo(() => {
+    if (!selectedSlide || selectedSlide.nativeScreenKey !== "custom_message") {
+      return null;
+    }
+    return serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}));
+  }, [selectedSlide]);
+
   const slidesPreviewKey = useMemo(
     () =>
       slides
@@ -199,7 +206,23 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   const reloadPlaylistFromServer = useCallback(async () => {
     try {
       const pl = await getPlaylist(playlistId);
-      setPlaylist((current) => (current ? { ...pl, slides: pl.slides ?? current.slides } : pl));
+      setPlaylist((current) => {
+        const remoteSlides = pl.slides ?? current?.slides ?? [];
+        const live = liveComunicadoConfigRef.current;
+        const activeId = selectedSlideIdRef.current;
+        const slides = remoteSlides.map((slide) => {
+          if (
+            live &&
+            activeId &&
+            slide.id === activeId &&
+            slide.nativeScreenKey === "custom_message"
+          ) {
+            return { ...slide, nativeConfig: live };
+          }
+          return slide;
+        });
+        return current ? { ...pl, slides } : { ...pl, slides };
+      });
       await refreshPreviewThumbnails();
     } catch {
       // mantém estado local se a sincronização falhar
@@ -401,6 +424,18 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   }
 
   function scheduleCustomSlideSave(slide: Slide, nativeConfig: Record<string, unknown>) {
+    liveComunicadoConfigRef.current = nativeConfig;
+    // Otimista: atualiza nativeConfig no estado já — o save API continua debounced.
+    // Sem isso, re-renders (WS/thumbnails) reaplicam o config antigo no editor mid-drag.
+    setPlaylist((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        slides: (current.slides ?? []).map((item) =>
+          item.id === slide.id ? { ...item, nativeConfig } : item,
+        ),
+      };
+    });
     if (saveComunicadoTimerRef.current) window.clearTimeout(saveComunicadoTimerRef.current);
     saveComunicadoTimerRef.current = window.setTimeout(() => {
       void handleSaveSlide(slide, {
@@ -570,13 +605,13 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   return (
     <DeckEditorHistoryProvider value={deckHistoryValue}>
       <div className="td-deck td-deck--editor">
-      {isCustomSlide && selectedSlide ? (
+      {isCustomSlide && selectedSlide && editorComunicadoValue ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}
           globalRefreshSec={playlist.globalRefreshSec}
           slideId={selectedSlide.id}
           masterConfig={playlist.masterConfig}
-          value={serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}))}
+          value={editorComunicadoValue}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
           <CustomSlideEditorLayout

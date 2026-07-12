@@ -27,6 +27,10 @@ import { useComunicadoEditorDrag } from "../hooks/comunicadoEditor/useComunicado
 import {
   useComunicadoEditorHistory,
 } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
+import {
+  fingerprintComunicadoValue,
+  shouldAcceptExternalComunicadoValue,
+} from "../hooks/comunicadoEditor/comunicadoEditorValueSync";
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
 import { useComunicadoEditorSelection } from "../hooks/comunicadoEditor/useComunicadoEditorSelection";
 import { useComunicadoEditorStage } from "../hooks/comunicadoEditor/useComunicadoEditorStage";
@@ -113,6 +117,8 @@ export function ComunicadoEditorProvider({
 
   const configRef = useRef(config);
   configRef.current = config;
+  const lastEmittedFingerprintRef = useRef<string | null>(null);
+  const syncIdentityRef = useRef(`${playlistId}:${slideId ?? ""}`);
 
   const removeSelectedRef = useRef<() => void>(() => {});
   const updateBlockTextFieldsRef = useRef<
@@ -162,6 +168,10 @@ export function ComunicadoEditorProvider({
     setAppliedSlideId(slideId);
     const enriched = enrichComunicadoConfigForEditor(value, playlistId);
     setConfig(enriched);
+    lastEmittedFingerprintRef.current = fingerprintComunicadoValue(
+      serializeComunicadoConfig(enriched),
+    );
+    syncIdentityRef.current = `${playlistId}:${slideId ?? ""}`;
     selection.resetSelectionForSlide(enriched.blocks?.[0]?.id);
   }
 
@@ -171,6 +181,7 @@ export function ComunicadoEditorProvider({
     (next: ComunicadoConfig) => {
       setConfig(next);
       const serialized = serializeComunicadoConfig(next);
+      lastEmittedFingerprintRef.current = fingerprintComunicadoValue(serialized);
       deckHistory?.setLiveComunicadoConfig(serialized);
       onChange(serialized);
     },
@@ -207,10 +218,31 @@ export function ComunicadoEditorProvider({
   stage.bindCanvasRef(canvasRef);
 
   useEffect(() => {
+    const identity = `${playlistId}:${slideId ?? ""}`;
+    const identityChanged = syncIdentityRef.current !== identity;
+    syncIdentityRef.current = identity;
+
     const enriched = enrichComunicadoConfigForEditor(value, playlistId);
+    const incomingFp = fingerprintComunicadoValue(serializeComunicadoConfig(enriched));
+    const currentFp = fingerprintComunicadoValue(serializeComunicadoConfig(configRef.current));
+
+    if (
+      !shouldAcceptExternalComunicadoValue({
+        identityChanged,
+        incomingFingerprint: incomingFp,
+        lastEmittedFingerprint: lastEmittedFingerprintRef.current,
+        currentFingerprint: currentFp,
+      })
+    ) {
+      return;
+    }
+
     setConfig(enriched);
-    clearDragSnapshot();
-    resetLocalHistory();
+    lastEmittedFingerprintRef.current = incomingFp;
+    if (identityChanged) {
+      clearDragSnapshot();
+      resetLocalHistory();
+    }
   }, [value, playlistId, slideId, resetLocalHistory, clearDragSnapshot]);
 
   const blockActions = useComunicadoEditorBlocks({
