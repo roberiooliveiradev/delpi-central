@@ -10,7 +10,7 @@ import {
  * Chaves opcionais que o patch pode remover com `undefined` / `null` / string vazia.
  * (Demais `undefined` no patch são ignorados para permitir patches parciais.)
  */
-const CLEARABLE_STYLE_KEYS = new Set<string>(["boxShadow"]);
+const CLEARABLE_STYLE_KEYS = new Set<string>(["boxShadow", "textShadow", "textStrokeColor", "textStrokeWidth"]);
 
 function shouldClearStyleValue(key: string, value: unknown): boolean {
   if (!CLEARABLE_STYLE_KEYS.has(key)) return false;

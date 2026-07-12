@@ -116,6 +116,17 @@ export type ChartPartStyle = {
   markerRadius?: number;
   /** Cantos (Format Shape) — padrão Office do gráfico = 0. */
   borderRadius?: number;
+  /** Sombra tipográfica (título/legenda). */
+  textShadow?: string;
+  textStrokeColor?: string;
+  textStrokeWidth?: number;
+};
+
+export type ChartPartFrame = {
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
 };
 
 export type ChartPartState = {
@@ -130,15 +141,10 @@ export type ChartPartState = {
   frame?: ChartPartFrame;
 };
 
-/**
- * Frame relativo (0–100%).
- * title/legend/dataTable → raiz do gráfico; plotArea → `__plot-host` (viewBox).
- */
-export type ChartPartFrame = {
-  x: number;
-  y: number;
-  w?: number;
-  h?: number;
+export type ChartPartStatePatch = Omit<ChartPartState, "frame" | "style"> & {
+  style?: Partial<ChartPartStyle>;
+  /** `null` remove o frame. */
+  frame?: ChartPartFrame | null;
 };
 
 export type ChartPartsMap = Record<string, ChartPartState>;
@@ -430,16 +436,24 @@ export function chartPartTypographyStyle(
 export function upsertChartPartState(
   parts: ChartPartsMap | null | undefined,
   ref: ChartPartRef,
-  patch: ChartPartState,
+  patch: ChartPartStatePatch,
 ): ChartPartsMap {
   const key = serializeChartPartRef(ref);
   const prev = parts?.[key] ?? {};
+  const nextFrame =
+    patch.frame === null
+      ? undefined
+      : patch.frame !== undefined
+        ? clampChartPartFrame({ ...(prev.frame ?? {}), ...patch.frame })
+        : prev.frame;
+  const { frame: _ignored, ...restPatch } = patch;
   return {
     ...(parts ?? {}),
     [key]: {
       ...prev,
-      ...patch,
+      ...restPatch,
       style: patch.style ? { ...prev.style, ...patch.style } : prev.style,
+      frame: nextFrame,
     },
   };
 }

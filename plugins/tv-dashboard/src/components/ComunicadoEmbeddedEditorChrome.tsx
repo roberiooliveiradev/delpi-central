@@ -80,7 +80,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       setLayersModalOpen(true);
       return;
     }
-    if (isSelectionPanelTab(editor.selectionPanelTab) && editor.selectionPanelTab !== "layers") {
+    if (isSelectionPanelTab(editor.selectionPanelTab)) {
       setLayersModalOpen(false);
       setActiveTab(editor.selectionPanelTab);
     }

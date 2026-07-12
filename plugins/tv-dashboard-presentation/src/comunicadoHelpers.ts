@@ -26,6 +26,7 @@ import {
   shouldPersistContentRuns,
   syncTextBlockFields,
 } from "./comunicadoContentRuns";
+import { applyComunicadoTextEffectsToCss } from "./comunicadoTextEffects";
 import { normalizeComunicadoImageCrop } from "./comunicadoImageCrop";
 import {
   normalizeBlockAnimations,
@@ -1042,9 +1043,10 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       else if (style.color && style.color !== "auto") css.color = style.color;
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.fontWeight) css.fontWeight = style.fontWeight;
-      if (style.fontStyle) css.fontStyle = style.fontStyle;
-      if (style.lineHeight != null) css.lineHeight = style.lineHeight;
-      return css;
+  if (style.fontStyle) css.fontStyle = style.fontStyle;
+  if (style.lineHeight != null) css.lineHeight = style.lineHeight;
+  applyComunicadoTextEffectsToCss(style, css);
+  return css;
     }
 
     /* Forma: fill/stroke/radius só no ComunicadoShapeGraphic — evita borda dupla no wrapper. */
@@ -1058,6 +1060,7 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       if (style.fontWeight) css.fontWeight = style.fontWeight;
       if (style.fontStyle) css.fontStyle = style.fontStyle;
       if (style.textDecoration) css.textDecoration = style.textDecoration;
+      applyComunicadoTextEffectsToCss(style, css);
     }
     return css;
   }

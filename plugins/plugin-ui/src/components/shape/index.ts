@@ -60,6 +60,8 @@ export {
   hasIllegibleTextContrast,
   rgbToHex,
 } from "./colorUtils";
+export { applyTextEffectStyleToCss } from "./textEffectStyle";
+export type { TextEffectStyleFields } from "./textEffectStyle";
 export { DEFAULT_SHAPE_COLOR_LABELS, mergeShapeColorLabels } from "./shapeLabels";
 export type {
   ColorValue,

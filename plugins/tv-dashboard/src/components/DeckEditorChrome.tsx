@@ -32,6 +32,7 @@ type SlideDeckProps = {
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
   onExportPng?: () => void;
+  onExportPdf?: () => void;
   exportBusy?: boolean;
 };
 

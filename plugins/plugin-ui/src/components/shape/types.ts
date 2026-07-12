@@ -27,6 +27,7 @@ export type ShapeStylePreset = {
 
 export type ShapeColorLabels = {
   themeColors?: string;
+  recentColors?: string;
   standardColors?: string;
   noFill?: string;
   noOutline?: string;

@@ -25,6 +25,8 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
 - **Dois escopos no palco:** seleção **global** do widget (frame no slide) vs **subcomponente** (fundo, valor, título, chartArea, etc.) — ver [§19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 - **Aplicar estilo a irmãos:** botão no inspetor KPI (título/valor/subtítulo), tabela (células/cabeçalhos) e marcadores do gráfico
+- **Efeitos tipográficos:** sombra e contorno do texto (aba Formatar → Efeitos)
+- **Cores recentes** no seletor de cor; **export PNG/PDF** na faixa Início
 - **Telas nativas OEE/OTD/PPM:** dual-KPI + série temporal SVG (`ConfigurableSeriesChart`)
 - Filmstrip: prévia centralizada (`CenteredScaledPreview`), menu de contexto nas telas
 

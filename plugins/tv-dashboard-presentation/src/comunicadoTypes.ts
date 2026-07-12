@@ -95,6 +95,12 @@ export type ComunicadoContentRunStyle = {
   listType?: ComunicadoListType;
   /** Estilo nomeado (4C.4) — Título 1, Subtítulo ou Corpo por linha. */
   namedStyle?: ComunicadoNamedTextStyle;
+  /** Sombra tipográfica (CSS text-shadow). */
+  textShadow?: string;
+  /** Contorno do glifo (cor). */
+  textStrokeColor?: string;
+  /** Contorno do glifo (px). */
+  textStrokeWidth?: number;
 };
 
 export type ComunicadoContentRun = {
@@ -120,6 +126,10 @@ export type ComunicadoBlockStyle = {
   borderWidth?: number;
   borderRadius?: number;
   boxShadow?: string;
+  /** Sombra tipográfica (CSS text-shadow) — distinta de boxShadow do bloco. */
+  textShadow?: string;
+  textStrokeColor?: string;
+  textStrokeWidth?: number;
   opacity?: number;
   rotation?: number;
   zIndex?: number;

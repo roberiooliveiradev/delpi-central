@@ -466,6 +466,9 @@ export function useComunicadoEditorBlocks({
             fontStyle: patch.fontStyle ?? prev?.fontStyle,
             color: patch.color ?? prev?.color,
             textDecoration: patch.textDecoration ?? prev?.textDecoration,
+            textShadow: patch.textShadow ?? prev?.textShadow,
+            textStrokeColor: patch.textStrokeColor ?? prev?.textStrokeColor,
+            textStrokeWidth: patch.textStrokeWidth ?? prev?.textStrokeWidth,
             textAlign:
               patch.textAlign === "left" ||
               patch.textAlign === "center" ||
@@ -515,6 +518,9 @@ export function useComunicadoEditorBlocks({
                 ? patch.fontStyle
                 : prev?.fontStyle,
             color: patch.color ?? prev?.color,
+            textShadow: patch.textShadow ?? prev?.textShadow,
+            textStrokeColor: patch.textStrokeColor ?? prev?.textStrokeColor,
+            textStrokeWidth: patch.textStrokeWidth ?? prev?.textStrokeWidth,
             textAlign:
               patch.textAlign === "left" ||
               patch.textAlign === "center" ||

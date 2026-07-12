@@ -15,6 +15,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     background:
       "Define a cor ou imagem de fundo do slide personalizado. A imagem cobre toda a área do palco.",
     font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
+    textEffects: "Sombra tipográfica e contorno do glifo (como efeitos de texto no PowerPoint).",
+    textStroke: "Cor e espessura do contorno ao redor das letras.",
     paragraph:
       "Alinhamento horizontal e vertical, justificação, entrelinhas e espaçamento entre caracteres.",
     shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",

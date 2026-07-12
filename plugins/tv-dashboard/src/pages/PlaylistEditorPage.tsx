@@ -52,7 +52,7 @@ import {
   slidePayloadForClipboard,
   type SlideClipboardPayload,
 } from "../utils/slideDeckClipboard";
-import { exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
+import { exportSlideElementToPdf, exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
 import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -356,6 +356,24 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     }
   }
 
+  async function handleExportPdf() {
+    if (!selectedSlide) return;
+    const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
+    if (!target) {
+      tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+      return;
+    }
+    setExportBusy(true);
+    try {
+      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
+      await exportSlideElementToPdf(target, { fileName: `${safeTitle}.pdf` });
+    } catch (err) {
+      tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PDF.");
+    } finally {
+      setExportBusy(false);
+    }
+  }
+
   async function handleAddCustomSlide() {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
@@ -583,6 +601,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
     onRemove: (slide: Slide) => void handleRemoveSlide(slide),
     onExportPng: () => void handleExportPng(),
+    onExportPdf: () => void handleExportPdf(),
     exportBusy,
   };
 

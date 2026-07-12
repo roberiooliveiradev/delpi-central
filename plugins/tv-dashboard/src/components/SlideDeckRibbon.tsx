@@ -25,6 +25,7 @@ type Props = {
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
   onExportPng?: () => void;
+  onExportPdf?: () => void;
   exportBusy?: boolean;
 };
 
@@ -39,6 +40,7 @@ export function SlideDeckRibbon({
   onToggleActive,
   onRemove,
   onExportPng,
+  onExportPdf,
   exportBusy = false,
 }: Props) {
   const selectedIndex = selectedSlide
@@ -115,6 +117,15 @@ export function SlideDeckRibbon({
                 hint="Exportar a tela atual como PNG (4E.5)."
                 disabled={exportBusy}
                 onClick={onExportPng}
+              />
+            ) : null}
+            {onExportPdf ? (
+              <DeckRibbonTile
+                icon={Download}
+                label={exportBusy ? "…" : "PDF"}
+                hint="Exportar a tela atual como PDF (captura PNG em página A4)."
+                disabled={exportBusy}
+                onClick={onExportPdf}
               />
             ) : null}
             <DeckRibbonTile

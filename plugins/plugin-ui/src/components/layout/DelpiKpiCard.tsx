@@ -101,6 +101,9 @@ export {
   resolveKpiPartTypographyStyle,
   serializeKpiPartRef,
   upsertKpiPartState,
+  applyKpiPartStyleToSiblingParts,
+  isKpiTextPartKind,
+  KPI_TEXT_PART_KINDS,
 } from "./kpiCardParts";
 export {
   KPI_ELEMENT_CATALOG,

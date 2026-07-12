@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.5+ (jul/2026):** 4E.3–4E.5 ✅; tipos avançados SVG ✅; **Onda 4G–4O** ✅; **§19.19** dois escopos; **§19.20** aplicar estilo a irmãos (KPI/tabela/marcadores); **séries OEE/OTD/PPM** nas telas nativas via `ConfigurableSeriesChart` (SVG — não Recharts); **rate limit** `tv_present_zone` em `/public/present/`. **Backlog restante:** paridade PPT (sombra texto, conectores, paleta recente, PDF/PPTX, colaboração).
+> **Status:** … **v1.5+ (jul/2026):** … **§19.21** sombra/contorno tipográfico + cores recentes + export PDF. **Backlog restante:** conectores, upload de fonte, tabelas canvas, PPTX, modo apresentador, colaboração.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente (paridade PPT / longo prazo):** sombra/contorno/reflexo de texto; upload de fonte; conectores; paleta de cores recentes; tabelas canvas simples; modo apresentador; export PDF; import/export PPTX; colaboração. Séries nas nativas OEE/OTD/PPM e rate limit `public/present` concluídos (jul/2026).
+**Ainda pendente (paridade PPT / longo prazo):** upload de fonte; conectores; tabelas canvas simples; modo apresentador; import/export PPTX; colaboração. Sombra/contorno tipográfico, cores recentes e export PDF concluídos (§19.21).
 
 ---
 
@@ -675,9 +675,9 @@ sequenceDiagram
 
 ### Telas nativas / editor — backlog restante
 
-1. Paridade tipografia avançada (sombra/contorno/reflexo de texto; upload de fonte).
-2. Conectores entre formas; paleta / cores recentes.
-3. Export PDF; import/export PPTX; modo apresentador; colaboração (longo prazo).
+1. Upload de fonte; reflexo tipográfico.
+2. Conectores entre formas; tabelas canvas simples.
+3. Import/export PPTX; modo apresentador; colaboração (longo prazo).
 
 ### Concluído v2 (jul/2026)
 
@@ -767,8 +767,8 @@ Apresentação TV / preview
 | Rich text (runs, negrito parcial) | ✓ | ✅ v1.3.2–4C.2 | `contentRuns` + editor inline |
 | Bullets / listas numeradas | ✓ | ✅ v1.3.4 (4C.3) | `style.listType` + ribbon Marcadores/Numerada |
 | Estilos nomeados (Título 1, Corpo) | ✓ | ✅ v1.3.5 (4C.4) | `style.namedStyle` + ribbon Estilo |
+| Sombra / contorno / reflexo texto | ✓ | ⚠ | Sombra + contorno ✅ (§19.21); reflexo ❌ |
 | Google Fonts / upload de fonte | ✓ | ✅ v1.3.6 (4C.5) | Catálogo curado + lazy load (`comunicadoGoogleFonts.ts`); upload ❌ |
-| Sombra / contorno / reflexo texto | ✓ | ❌ | |
 | Hiperlink em imagem/forma | ✓ | ✅ v1.3 | Também vídeo e ícone |
 
 #### Visual, mídia e assets (prioridade média)
@@ -784,7 +784,7 @@ Apresentação TV / preview
 | Ícones / stickers | ✓ | ✅ v1.3 | Bloco `icon` (Lucide) |
 | Tabelas simples | ✓ | ❌ | |
 | Mais formas / conectores | ✓ | ⚠ | 8 formas + ícones; conectores ❌ |
-| Paleta / cores recentes / tema marca | ✓ | ⚠ | Temas de slide (4B.2); paleta recente ❌ |
+| Paleta / cores recentes / tema marca | ✓ | ⚠ | Temas de slide ✅; **cores recentes** ✅ (§19.21) |
 
 #### Dados operacionais live (prioridade alta — ver §18)
 
@@ -812,7 +812,7 @@ Apresentação TV / preview
 
 | Recurso | Canva/PPT | Status |
 |---|---|---|
-| Export PNG/PDF do slide | ✓ | ⚠ PNG ✅ v1.5 (4E.5); PDF ❌ |
+| Export PNG/PDF do slide | ✓ | ✅ | PNG 4E.5 + PDF §19.21 (`jspdf` + captura) |
 | Import/export PPTX | ✓ | ❌ |
 | Colaboração tempo real | ✓ | ❌ |
 | Comentários / histórico de versões | ✓ | ❌ |
@@ -999,8 +999,9 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 
   Concluído                          → 4A–4O, 4E.1–4E.5, 4F (§18), 4G–4O (§19)
   Concluído (escopos / apply-all)    → §19.19–§19.20; séries nativas SVG; tv_present_zone
-  Backlog restante                   → sombra texto, conectores, paleta recente, PDF/PPTX
-  Longo prazo                        → colaboração; import PPTX
+  Concluído (tipografia / export)    → §19.21 sombra/contorno texto; cores recentes; PDF
+  Backlog restante                   → conectores, upload fonte, PPTX, apresentador
+  Longo prazo                        → colaboração
 ```
 
 ### 17.8 Gates de teste — editor
@@ -1920,6 +1921,16 @@ O escopo **global** **não** unifica cor/fonte/fill das partes. Cada parte mant�
 - Introduzir Recharts só nas nativas — reutilizar `ConfigurableSeriesChart`.
 - Apply-all implícito na seleção global (§19.19).
 - Falhar o KPI dual se a série der erro — série é best-effort.
+
+### 19.21 Tipografia avançada + cores recentes + PDF (jul/2026)
+
+| # | Entrega | Onde |
+|---|---------|------|
+| 19.21.1 | `textShadow` / `textStroke*` em bloco, runs, KPI/chart parts + ribbon **Efeitos** | presentation + MFE |
+| 19.21.2 | Cores recentes (`sessionStorage`) no `ColorPickerPopover` via `TvRibbonColorPicker` | plugin-ui + MFE |
+| 19.21.3 | Export PDF reusando `captureSlideElementToPngDataUrl` + `jspdf` | `exportSlidePng.ts` |
+
+**Anti-padrões:** reutilizar `boxShadow` como sombra tipográfica; PDF tabular de dashboard para slide TV.
 
 ---
 

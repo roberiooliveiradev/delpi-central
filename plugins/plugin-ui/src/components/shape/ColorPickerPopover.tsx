@@ -35,6 +35,8 @@ export type ColorPickerPopoverProps = {
   labels?: ShapeColorLabels;
   themeRows?: readonly (readonly string[])[];
   standardColors?: readonly string[];
+  /** Cores usadas recentemente (histórico de sessão do host). */
+  recentColors?: readonly string[];
   className?: string;
 };
 
@@ -69,6 +71,7 @@ export function ColorPickerPopover({
   labels,
   themeRows = DELPI_THEME_COLOR_GRID,
   standardColors = DELPI_STANDARD_COLORS,
+  recentColors,
   className,
 }: ColorPickerPopoverProps) {
   const L = mergeShapeColorLabels(labels);
@@ -76,6 +79,10 @@ export function ColorPickerPopover({
 
   const noFillEnabled = resolveNoFillEnabled(variant, showNoFill);
   const automaticEnabled = resolveAutomaticEnabled(variant, showAutomatic);
+  const recent =
+    recentColors?.filter(
+      (color) => typeof color === "string" && color.trim() && color !== "transparent" && color !== "auto",
+    ) ?? [];
 
   const handleNoFill = () => {
     if (onNoFill) {
@@ -133,6 +140,18 @@ export function ColorPickerPopover({
             </li>
           ) : null}
         </ul>
+      ) : null}
+
+      {recent.length > 0 ? (
+        <section className="delpi-ui-color-picker__section">
+          <h4 className="delpi-ui-color-picker__heading">{L.recentColors}</h4>
+          <ColorStandardRow
+            colors={recent}
+            value={value}
+            onSelect={handleSelect}
+            ariaLabel={L.recentColors}
+          />
+        </section>
       ) : null}
 
       <section className="delpi-ui-color-picker__section">

@@ -9,6 +9,7 @@ import type {
 } from "react";
 
 import type { MetricKpiCardTone } from "../layout/MetricKpiCard";
+import { applyTextEffectStyleToCss } from "../shape/textEffectStyle";
 
 export const KPI_PART_DATA_ATTR = "data-kpi-part";
 
@@ -35,6 +36,10 @@ export type KpiPartStyle = {
   strokeWidth?: number;
   /** Cantos arredondados (px). */
   borderRadius?: number;
+  /** Sombra tipográfica (CSS text-shadow). */
+  textShadow?: string;
+  textStrokeColor?: string;
+  textStrokeWidth?: number;
   /**
    * Tamanho do box do ícone em px quando sem `frame`.
    * Com `frame`, largura/altura vêm de `frame.w`/`frame.h` (% do card).
@@ -515,6 +520,7 @@ export function resolveKpiPartTypographyStyle(
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.color) css.color = style.color;
   if (style.textAlign) css.textAlign = style.textAlign;
+  applyTextEffectStyleToCss(style, css);
 
   const flexPart = options?.flexPart ?? false;
   if (flexPart) {

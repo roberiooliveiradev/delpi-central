@@ -36,6 +36,8 @@ import {
   resolveNamedStyleSelectionForBlock,
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
+  COMUNICADO_TEXT_SHADOW_PRESETS,
+  resolveTextShadowPresetId,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import {
@@ -380,6 +382,75 @@ export function FormatRibbonTypographySections() {
                 <RemoveFormatting size={15} aria-hidden="true" />
               </TdRibbonIconButton>
             ) : null}
+          </div>
+        </div>
+      </DeckRibbonGroup>
+
+      <DeckRibbonGroup label="Efeitos" hint={H.textEffects}>
+        <div className="td-deck-ribbon__toolbar">
+          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
+            <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-text-shadow">
+              Sombra
+            </label>
+            <TdRibbonSelect
+              id="td-ribbon-text-shadow"
+              value={resolveTextShadowPresetId(formatStyle?.textShadow)}
+              options={[
+                ...COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
+                  value: preset.id,
+                  label: preset.label,
+                })),
+                ...(resolveTextShadowPresetId(formatStyle?.textShadow) === "custom"
+                  ? [{ value: "custom", label: "Personalizada" }]
+                  : []),
+              ]}
+              onChange={(value) => {
+                const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === value);
+                updateSelectedTextFormatStyle({
+                  textShadow: value === "none" ? "" : (preset?.value ?? formatStyle?.textShadow),
+                });
+              }}
+            />
+            <TvRibbonColorPicker
+              hint={H.textStroke}
+              label="Contorno"
+              ariaLabel="Cor do contorno do texto"
+              inline
+              variant="outline"
+              value={formatStyle?.textStrokeColor ?? ""}
+              onChange={(color) =>
+                updateSelectedTextFormatStyle({
+                  textStrokeColor: color,
+                  textStrokeWidth: formatStyle?.textStrokeWidth ?? 1,
+                })
+              }
+              onNoFill={() =>
+                updateSelectedTextFormatStyle({
+                  textStrokeColor: undefined,
+                  textStrokeWidth: 0,
+                })
+              }
+            />
+            <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-text-stroke-w">
+              px
+            </label>
+            <NativeTextControl
+              id="td-ribbon-text-stroke-w"
+              type="number"
+              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+              min={0}
+              max={8}
+              step={0.5}
+              value={formatStyle?.textStrokeWidth ?? 0}
+              onChange={(value) =>
+                updateSelectedTextFormatStyle({
+                  textStrokeWidth: Math.max(0, Number(value) || 0),
+                  textStrokeColor:
+                    formatStyle?.textStrokeColor ||
+                    (Number(value) > 0 ? formatStyle?.color ?? "#0f172a" : undefined),
+                })
+              }
+            />
           </div>
         </div>
       </DeckRibbonGroup>

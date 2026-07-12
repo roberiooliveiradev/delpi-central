@@ -9,6 +9,7 @@ import {
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import { applyTextEffectStyleToCss } from "../../shape/textEffectStyle";
 import { resolvePaintTextColor } from "../../shape/colorUtils";
 import { DECK_COLOR_TEXT_STRONG, DECK_COLOR_SURFACE } from "../../../theme/deckColorCatalog";
 import { ChartPartResizeHandles } from "./ChartPartResizeHandles";
@@ -72,6 +73,7 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
       : {}),
     ...(partStyle?.opacity != null ? { opacity: partStyle.opacity } : {}),
   };
+  applyTextEffectStyleToCss(partStyle, textStyle);
 
   const hostRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);

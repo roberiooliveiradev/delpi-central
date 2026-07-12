@@ -201,9 +201,9 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 
 ### Editor / paridade PPT (restante)
 
-- Sombra / contorno / reflexo de texto; upload de fonte
-- Conectores entre formas; paleta / cores recentes
-- Export PDF; import/export PPTX; modo apresentador; colaboração
+- Upload de fonte; reflexo tipográfico
+- Conectores entre formas; tabelas canvas simples
+- Import/export PPTX; modo apresentador; colaboração
 
 ### Editor personalizado — Onda 4 (ver playbook §17)
 
@@ -219,6 +219,7 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 | **4F** | **Indicadores live api-delpi** — fonte + gráfico/tabela/KPI | ✅ (§18) |
 | **4G–4O** | **Partes compostas** + chrome Office + **dois escopos** global/parte | ✅ (§19 / §19.19) |
 | **§19.20** | Apply-all irmãos + séries nativas SVG + rate limit present | ✅ |
+| **§19.21** | Sombra/contorno tipográfico + cores recentes + export PDF | ✅ |
 
 ---
 

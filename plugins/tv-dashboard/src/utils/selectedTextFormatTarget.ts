@@ -19,6 +19,9 @@ export type TextFormatStyleSnapshot = {
   textHighlight?: string;
   textAlign?: string;
   verticalAlign?: string;
+  textShadow?: string;
+  textStrokeColor?: string;
+  textStrokeWidth?: number;
 };
 
 export type SelectedTextFormatTarget =
@@ -119,6 +122,9 @@ export function resolveSelectedTextFormatTarget(params: {
         textHighlight: selected.style?.textHighlight,
         textAlign: selected.style?.textAlign,
         verticalAlign: selected.style?.verticalAlign,
+        textShadow: selected.style?.textShadow,
+        textStrokeColor: selected.style?.textStrokeColor,
+        textStrokeWidth: selected.style?.textStrokeWidth,
       },
       textAlign: selected.style?.textAlign,
       verticalAlign: selected.style?.verticalAlign,
@@ -139,6 +145,9 @@ export function resolveSelectedTextFormatTarget(params: {
         textDecoration: selected.style?.textDecoration,
         textAlign: selected.style?.textAlign,
         verticalAlign: selected.style?.verticalAlign,
+        textShadow: selected.style?.textShadow,
+        textStrokeColor: selected.style?.textStrokeColor,
+        textStrokeWidth: selected.style?.textStrokeWidth,
       },
       textAlign: selected.style?.textAlign,
       verticalAlign: selected.style?.verticalAlign,
@@ -163,6 +172,9 @@ export function resolveSelectedTextFormatTarget(params: {
         textDecoration: partStyle?.textDecoration,
         textAlign: partStyle?.textAlign,
         verticalAlign: partStyle?.verticalAlign,
+        textShadow: partStyle?.textShadow,
+        textStrokeColor: partStyle?.textStrokeColor,
+        textStrokeWidth: partStyle?.textStrokeWidth,
       },
       textAlign: partStyle?.textAlign,
       verticalAlign: partStyle?.verticalAlign,
@@ -184,6 +196,9 @@ export function resolveSelectedTextFormatTarget(params: {
         color: partStyle?.color,
         textAlign: partStyle?.textAlign,
         verticalAlign: partStyle?.verticalAlign,
+        textShadow: partStyle?.textShadow,
+        textStrokeColor: partStyle?.textStrokeColor,
+        textStrokeWidth: partStyle?.textStrokeWidth,
       },
       textAlign: partStyle?.textAlign,
       verticalAlign: partStyle?.verticalAlign,

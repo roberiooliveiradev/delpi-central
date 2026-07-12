@@ -5,6 +5,7 @@ import type {
   ComunicadoContentRunStyle,
   ComunicadoTextBlock,
 } from "./comunicadoTypes";
+import { applyComunicadoTextEffectsToCss } from "./comunicadoTextEffects";
 
 const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
   "fontSize",
@@ -16,6 +17,9 @@ const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
   "textDecoration",
   "listType",
   "namedStyle",
+  "textShadow",
+  "textStrokeColor",
+  "textStrokeWidth",
 ];
 
 function hasRunStyle(run: ComunicadoContentRun): boolean {
@@ -61,6 +65,15 @@ function normalizeRunStyle(value: unknown): ComunicadoContentRunStyle | undefine
   }
   if (raw.namedStyle === "title1" || raw.namedStyle === "subtitle" || raw.namedStyle === "body") {
     style.namedStyle = raw.namedStyle;
+  }
+  if (typeof raw.textShadow === "string" && raw.textShadow.trim()) {
+    style.textShadow = raw.textShadow.trim();
+  }
+  if (typeof raw.textStrokeColor === "string" && raw.textStrokeColor.trim()) {
+    style.textStrokeColor = raw.textStrokeColor.trim();
+  }
+  if (typeof raw.textStrokeWidth === "number" && Number.isFinite(raw.textStrokeWidth)) {
+    style.textStrokeWidth = Math.max(0, raw.textStrokeWidth);
   }
   return Object.keys(style).length > 0 ? style : undefined;
 }
@@ -135,6 +148,7 @@ export function contentRunStyleToCss(
   if (style.fontStyle) css.fontStyle = style.fontStyle;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.lineHeight != null) css.lineHeight = style.lineHeight;
+  applyComunicadoTextEffectsToCss(style, css);
   return css;
 }
 

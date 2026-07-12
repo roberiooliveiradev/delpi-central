@@ -2,6 +2,7 @@ import type { ShapeColorLabels } from "./types";
 
 export const DEFAULT_SHAPE_COLOR_LABELS: Required<ShapeColorLabels> = {
   themeColors: "Cores do Tema",
+  recentColors: "Cores recentes",
   standardColors: "Cores Padrão",
   noFill: "Sem fundo",
   noOutline: "Sem contorno",

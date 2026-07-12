@@ -238,6 +238,13 @@ export {
   syncTextBlockFields,
 } from "./comunicadoContentRuns";
 export {
+  COMUNICADO_TEXT_SHADOW_PRESETS,
+  applyComunicadoTextEffectsToCss,
+  resolveTextShadowPresetId,
+  type ComunicadoTextEffectFields,
+  type ComunicadoTextShadowPreset,
+} from "./comunicadoTextEffects";
+export {
   compactContentRuns,
   contentRunInlineStyleProperties,
   contentRunsFromEditableRoot,

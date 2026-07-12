@@ -161,6 +161,9 @@ export type ComunicadoEditorContextValue = {
     textHighlight?: string;
     textAlign?: string;
     verticalAlign?: string;
+    textShadow?: string;
+    textStrokeColor?: string;
+    textStrokeWidth?: number;
   }) => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
