@@ -138,7 +138,8 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados) · [§19.19 escopos](./PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
 - **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
-- **Backlog:** Recharts em telas nativas fixas; «aplicar estilo a todas as partes» explícito
+- **§19.20:** aplicar estilo a irmãos; séries OEE/OTD/PPM nas nativas (SVG); rate limit `public/present`
+- **Backlog:** sombra texto, conectores, paleta recente, PDF/PPTX, colaboração
 
 ---
 
@@ -198,13 +199,15 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 
 ## Backlog
 
-### Telas nativas (v2)
+### Editor / paridade PPT (restante)
 
-- Gráficos Recharts em telas OEE/OTD/PPM
+- Sombra / contorno / reflexo de texto; upload de fonte
+- Conectores entre formas; paleta / cores recentes
+- Export PDF; import/export PPTX; modo apresentador; colaboração
 
 ### Editor personalizado — Onda 4 (ver playbook §17)
 
-**Concluído v1.3:** undo/redo, duplicar, atalhos, snap, alinhar, biblioteca de mídia, templates, temas, gradientes, sombras, crop, ícones, multi-seleção, agrupar, camadas, rotação, zoom, links em mídia/forma.
+**Concluído v1.3+:** undo/redo, duplicar, atalhos, snap, alinhar, biblioteca de mídia, templates, temas, gradientes, sombras, crop, ícones, multi-seleção, agrupar, camadas, rotação, zoom, links em mídia/forma.
 
 | Fase | Foco | Status |
 |------|------|--------|
@@ -215,6 +218,7 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 | **4E** | Animações, master slide, export PNG | ✅ 4E.1–4E.5 |
 | **4F** | **Indicadores live api-delpi** — fonte + gráfico/tabela/KPI | ✅ (§18) |
 | **4G–4O** | **Partes compostas** + chrome Office + **dois escopos** global/parte | ✅ (§19 / §19.19) |
+| **§19.20** | Apply-all irmãos + séries nativas SVG + rate limit present | ✅ |
 
 ---
 

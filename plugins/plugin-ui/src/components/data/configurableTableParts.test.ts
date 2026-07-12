@@ -16,9 +16,32 @@ import {
   tablePartAllowsEdit,
   tablePartAllowsStroke,
   upsertTablePartState,
+  applyTablePartStyleToSiblingParts,
 } from "./configurableTableParts";
 
 describe("configurableTableParts", () => {
+  it("applyTablePartStyleToSiblingParts replica estilo em todas as células", () => {
+    const next = applyTablePartStyleToSiblingParts(
+      {},
+      { kind: "cell", rowIndex: 0, colIndex: 0 },
+      { fill: "#112233", color: "#fff" },
+      { rowCount: 2, colCount: 2 },
+    );
+    expect(next["cell:0:0"]?.style?.fill).toBe("#112233");
+    expect(next["cell:1:1"]?.style?.color).toBe("#fff");
+    expect(next["headerCell:0"]).toBeUndefined();
+  });
+
+  it("applyTablePartStyleToSiblingParts replica em headerCells", () => {
+    const next = applyTablePartStyleToSiblingParts(
+      {},
+      { kind: "headerCell", colIndex: 0 },
+      { fill: "#0a0" },
+      { rowCount: 1, colCount: 3 },
+    );
+    expect(next["headerCell:0"]?.style?.fill).toBe("#0a0");
+    expect(next["headerCell:2"]?.style?.fill).toBe("#0a0");
+  });
   it("serializa e parseia refs de célula/cabeçalho", () => {
     expect(serializeTablePartRef({ kind: "title" })).toBe("title");
     expect(serializeTablePartRef({ kind: "headerCell", colIndex: 2 })).toBe("headerCell:2");

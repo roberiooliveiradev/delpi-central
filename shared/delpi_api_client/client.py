@@ -156,8 +156,14 @@ class DelpiApiClient:
     def get_overall_equipment_effectiveness(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/production/overall_equipment_effectiveness_pct", params=params, authorization=authorization)
 
+    def get_production_oee_series(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
+        return self._get("/production/oee/series", params=params, authorization=authorization)
+
     def get_on_time_delivery(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/production/on_time_delivery_pct", params=params, authorization=authorization)
+
+    def get_production_otd_series(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
+        return self._get("/production/otd/series", params=params, authorization=authorization)
 
     def get_direct_labor_cost_pct(
         self,
@@ -211,6 +217,9 @@ class DelpiApiClient:
     # -- Quality --
     def get_ppm_summary(self, ppm_type: str, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get(f"/quality/ppm/{ppm_type}/summary", params=params, authorization=authorization)
+
+    def get_ppm_series(self, ppm_type: str, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
+        return self._get(f"/quality/ppm/{ppm_type}/series", params=params, authorization=authorization)
 
     def list_ppm(self, ppm_type: str, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get(f"/quality/ppm/{ppm_type}", params=params, authorization=authorization)

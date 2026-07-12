@@ -6,6 +6,11 @@ from typing import Any
 from delpi_api_client import DelpiApiClient
 from delpi_auth.service_token import internal_service_authorization
 
+from tv_app.application.services.series_points_extractor import (
+    envelope_data,
+    extract_series_points,
+)
+
 
 def _extract_summary(envelope: dict[str, Any] | Any) -> dict[str, Any]:
     if not isinstance(envelope, dict):
@@ -25,12 +30,41 @@ def _date_range(period_days: int) -> tuple[str, str]:
     return start.isoformat(), end.isoformat()
 
 
+def _series_query_params(*, start: str, end: str, branch: str | None) -> dict[str, str]:
+    params: dict[str, str] = {
+        "start_date": start,
+        "end_date": end,
+        "granularity": "day",
+    }
+    if branch:
+        params["branch"] = branch
+    return params
+
+
 class DelpiProductionGateway:
     def __init__(self, client: DelpiApiClient | None = None) -> None:
         self._client = client or DelpiApiClient()
 
     def _auth(self, authorization: str | None) -> str | None:
         return authorization or internal_service_authorization()
+
+    def _fetch_series_points(
+        self,
+        *,
+        fetch,
+        branch: str | None,
+        start: str,
+        end: str,
+        authorization: str | None,
+    ) -> list[dict[str, Any]]:
+        try:
+            envelope = fetch(
+                params=_series_query_params(start=start, end=end, branch=branch),
+                authorization=self._auth(authorization),
+            )
+            return extract_series_points(envelope_data(envelope), "points", branch=branch)
+        except Exception:  # noqa: BLE001 — KPI dual permanece mesmo se a série falhar
+            return []
 
     def fetch_oee_overview(
         self,
@@ -46,6 +80,13 @@ class DelpiProductionGateway:
             authorization=self._auth(authorization),
         )
         summary = _extract_summary(envelope)
+        points = self._fetch_series_points(
+            fetch=self._client.get_production_oee_series,
+            branch=branch,
+            start=start,
+            end=end,
+            authorization=authorization,
+        )
         return {
             "branch": branch,
             "periodDays": period_days,
@@ -55,6 +96,7 @@ class DelpiProductionGateway:
             "targetPct": summary.get("target") or summary.get("targetPct") or summary.get("target_pct"),
             "status": summary.get("status"),
             "label": summary.get("label") or "OEE",
+            "seriesPoints": points,
         }
 
     def fetch_otd_summary(
@@ -71,6 +113,13 @@ class DelpiProductionGateway:
             authorization=self._auth(authorization),
         )
         summary = _extract_summary(envelope)
+        points = self._fetch_series_points(
+            fetch=self._client.get_production_otd_series,
+            branch=branch,
+            start=start,
+            end=end,
+            authorization=authorization,
+        )
         return {
             "branch": branch,
             "periodDays": period_days,
@@ -79,6 +128,7 @@ class DelpiProductionGateway:
             "otdPct": summary.get("value") or summary.get("otdPct") or summary.get("otd_pct"),
             "targetPct": summary.get("target") or summary.get("targetPct"),
             "label": summary.get("label") or "OTD Produção",
+            "seriesPoints": points,
         }
 
     def fetch_ppm_summary(
@@ -100,6 +150,13 @@ class DelpiProductionGateway:
             authorization=self._auth(authorization),
         )
         summary = _extract_summary(envelope)
+        points = self._fetch_series_points(
+            fetch=lambda **kwargs: self._client.get_ppm_series(ppm, **kwargs),
+            branch=branch,
+            start=start,
+            end=end,
+            authorization=authorization,
+        )
         return {
             "branch": branch,
             "periodDays": period_days,
@@ -109,6 +166,7 @@ class DelpiProductionGateway:
             "ppmValue": summary.get("value") or summary.get("ppm") or summary.get("ppmValue"),
             "targetPct": summary.get("target") or summary.get("targetPct"),
             "label": summary.get("label") or f"PPM {ppm}",
+            "seriesPoints": points,
         }
 
     def fetch_stock_value_summary(

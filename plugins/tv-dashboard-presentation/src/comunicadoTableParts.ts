@@ -23,6 +23,8 @@ export {
   tablePartDomProps,
   resolveTableShapeChromePartRef,
   upsertTablePartState,
+  applyTablePartStyleToSiblingParts,
+  type TableGridDimensions,
   type TableInteraction as ComunicadoTableInteraction,
   type TablePartCapabilities as ComunicadoTablePartCapabilities,
   type TablePartRef as ComunicadoTablePartRef,

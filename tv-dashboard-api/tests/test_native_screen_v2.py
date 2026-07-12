@@ -49,6 +49,20 @@ def test_strategic_indicators_hero_resolves():
     strategic.fetch_hero.assert_called_once()
 
 
+def test_oee_overview_includes_series_points():
+    gateway = MagicMock()
+    gateway.fetch_oee_overview.return_value = {
+        "oeePct": 75,
+        "targetPct": 80,
+        "seriesPoints": [{"label": "d1", "value": 70}, {"label": "d2", "value": 75}],
+        "label": "OEE",
+    }
+    service = NativeScreenDataService(gateway=gateway)
+    data = service.resolve(screen_key="production_oee_overview", config={"periodDays": 7})
+    assert len(data["seriesPoints"]) == 2
+    gateway.fetch_oee_overview.assert_called_once()
+
+
 def test_trend_direction_label_from_content():
     assert trend_direction_label("up") == "Alta"
     assert trend_direction_label("down") == "Queda"

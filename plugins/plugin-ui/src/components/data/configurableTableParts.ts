@@ -149,6 +149,43 @@ export function upsertTablePartState(
   };
 }
 
+export type TableGridDimensions = {
+  rowCount: number;
+  colCount: number;
+};
+
+/**
+ * Replica estilo em células irmãs (Excel: Apply to All).
+ * `cell` → todas as células; `headerCell` → todos os cabeçalhos de coluna.
+ * Demais kinds: sem irmãos de grade — retorna o mapa inalterado.
+ */
+export function applyTablePartStyleToSiblingParts(
+  parts: TablePartsMap | null | undefined,
+  from: TablePartRef,
+  style: TablePartStyle,
+  dims: TableGridDimensions,
+): TablePartsMap {
+  const rows = Math.max(0, Math.floor(dims.rowCount));
+  const cols = Math.max(0, Math.floor(dims.colCount));
+  if (from.kind === "cell") {
+    let next = parts ?? {};
+    for (let rowIndex = 0; rowIndex < rows; rowIndex += 1) {
+      for (let colIndex = 0; colIndex < cols; colIndex += 1) {
+        next = upsertTablePartState(next, { kind: "cell", rowIndex, colIndex }, { style });
+      }
+    }
+    return next;
+  }
+  if (from.kind === "headerCell") {
+    let next = parts ?? {};
+    for (let colIndex = 0; colIndex < cols; colIndex += 1) {
+      next = upsertTablePartState(next, { kind: "headerCell", colIndex }, { style });
+    }
+    return next;
+  }
+  return parts ?? {};
+}
+
 export function tablePartDomProps(ref: TablePartRef, selectedPart?: TablePartRef | null) {
   const selected = isTablePartRefEqual(ref, selectedPart);
   return {

@@ -105,6 +105,29 @@ describe("NativeScreens public payload", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
+  it("renders OEE with series chart when seriesPoints exist", () => {
+    const { container } = render(
+      <NativeSlideView
+        native={{
+          screenKey: "production_oee_overview",
+          config: { periodDays: 7 },
+          data: {
+            label: "OEE",
+            oeePct: 75,
+            targetPct: 80,
+            seriesPoints: [
+              { label: "01/07", value: 70 },
+              { label: "02/07", value: 75 },
+            ],
+          },
+        }}
+      />,
+    );
+    expect(container.querySelector(".tdp-oee--with-series")).toBeTruthy();
+    expect(container.querySelector(".tdp-oee__series-chart")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-series-chart")).toBeTruthy();
+  });
+
   it("renders public stage with active slide", () => {
     render(<PublicStagePreview payload={publicPayload} />);
     expect(document.querySelector(".tdp-slide--active")).toBeTruthy();

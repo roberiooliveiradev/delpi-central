@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 
 import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 import { ComunicadoBlockView } from "./comunicadoBlockView";
+import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 import { useComunicadoGoogleFonts } from "./comunicadoGoogleFonts";
 import { hasRichComunicado, sortBlocksByZIndex, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
 import type { ComunicadoBackground } from "./comunicadoTypes";
@@ -15,6 +16,7 @@ export type KpiScreenData = {
   branch?: string | null;
   error?: boolean;
   message?: string;
+  seriesPoints?: Array<{ label?: unknown; value?: unknown }>;
 };
 
 export type NativeSlidePayload = {
@@ -31,6 +33,32 @@ function ErrorScreen({ message }: { message?: string }) {
   );
 }
 
+function normalizeSeriesPoints(
+  raw: KpiScreenData["seriesPoints"],
+): Array<{ label: string; value: number }> {
+  if (!Array.isArray(raw)) return [];
+  const points: Array<{ label: string; value: number }> = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object") continue;
+    const value = Number(row.value);
+    if (!Number.isFinite(value)) continue;
+    points.push({
+      label: row.label != null ? String(row.label) : "",
+      value,
+    });
+  }
+  return points;
+}
+
+const NATIVE_SERIES_CHART_PARTS = {
+  chartArea: { style: { fill: "transparent", stroke: "transparent", borderRadius: 0 } },
+  plotArea: { style: { fill: "transparent", stroke: "color-mix(in srgb, #089bdb 28%, transparent)" } },
+  "series:0": { style: { stroke: "#089bdb", strokeWidth: 2.5 } },
+  title: { visible: false },
+  legend: { visible: false },
+  dataTable: { visible: false },
+};
+
 function KpiDualScreen({
   data,
   eyebrow,
@@ -38,6 +66,7 @@ function KpiDualScreen({
   primaryValue,
   secondaryLabel,
   secondaryValue,
+  chartTitle,
 }: {
   data: KpiScreenData;
   eyebrow: string;
@@ -45,10 +74,12 @@ function KpiDualScreen({
   primaryValue: string;
   secondaryLabel: string;
   secondaryValue: string;
+  chartTitle?: string;
 }) {
   if (data.error) return <ErrorScreen message={data.message} />;
+  const seriesPoints = normalizeSeriesPoints(data.seriesPoints);
   return (
-    <div className="tdp-native-screen tdp-oee">
+    <div className={`tdp-native-screen tdp-oee${seriesPoints.length ? " tdp-oee--with-series" : ""}`}>
       <header className="tdp-oee__header">
         <p className="tdp-oee__eyebrow">{eyebrow}</p>
         <h1 className="tdp-oee__title">{data.label ?? primaryLabel}</h1>
@@ -67,6 +98,24 @@ function KpiDualScreen({
           <strong className="tdp-oee__kpi-value">{secondaryValue}</strong>
         </article>
       </div>
+      {seriesPoints.length > 0 ? (
+        <div className="tdp-oee__series" aria-label={chartTitle ?? "Evolução"}>
+          <ConfigurableSeriesChart
+            chartType="line"
+            points={seriesPoints}
+            options={{
+              showTitle: false,
+              showLegend: false,
+              showMarkers: true,
+              showDataTable: false,
+              title: chartTitle,
+            }}
+            chartParts={NATIVE_SERIES_CHART_PARTS}
+            className="tdp-oee__series-chart"
+            emptyMessage="Sem série no período."
+          />
+        </div>
+      ) : null}
       <footer className="tdp-oee__footer">
         <span>Minha DELPI · Painéis TV</span>
       </footer>
@@ -87,6 +136,7 @@ export function ProductionOeeOverviewScreen({
       primaryValue={formatPct(data.oeePct as number | string | null | undefined)}
       secondaryLabel="Meta"
       secondaryValue={formatPct(data.targetPct as number | string | null | undefined)}
+      chartTitle="Evolução OEE"
     />
   );
 }
@@ -104,6 +154,7 @@ export function ProductionOtdSummaryScreen({
       primaryValue={formatPct(data.otdPct as number | string | null | undefined)}
       secondaryLabel="Meta"
       secondaryValue={formatPct(data.targetPct as number | string | null | undefined)}
+      chartTitle="Evolução OTD"
     />
   );
 }
@@ -121,6 +172,7 @@ export function QualityPpmSummaryScreen({
       primaryValue={formatNumber(data.ppmValue as number | string | null | undefined)}
       secondaryLabel="Meta"
       secondaryValue={formatPct(data.targetPct as number | string | null | undefined)}
+      chartTitle="Evolução PPM"
     />
   );
 }

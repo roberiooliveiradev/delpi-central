@@ -13,6 +13,8 @@ import {
   partsToKpiOptions,
   serializeKpiPartRef,
   upsertKpiPartState,
+  applyKpiPartStyleToSiblingParts,
+  isKpiTextPartKind,
   type ComunicadoKpiPartFrame,
   type ComunicadoKpiPartRef,
   type ComunicadoKpiViewBlock,
@@ -413,6 +415,26 @@ export function KpiPartInspector({ pane = false, block }: Props) {
             />
           </DeckField>
         </>
+      ) : null}
+
+      {isKpiTextPartKind(selectedKpiPart.kind) ? (
+        <button
+          type="button"
+          className="td-deck-btn"
+          onClick={() => {
+            const style = partState?.style ?? {};
+            const nextParts = applyKpiPartStyleToSiblingParts(block.kpiParts, selectedKpiPart, style);
+            updateSelected({
+              kpiParts: nextParts,
+              kpiOptions: mergeComunicadoKpiOptions({
+                ...options,
+                ...partsToKpiOptions(nextParts),
+              }),
+            } as Partial<typeof block>);
+          }}
+        >
+          Aplicar estilo a título, valor e subtítulo
+        </button>
       ) : null}
     </DeckPropertySection>
   );

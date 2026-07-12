@@ -14,6 +14,7 @@ import {
   serializeTablePartRef,
   tablePartAllowsDelete,
   upsertTablePartState,
+  applyTablePartStyleToSiblingParts,
   type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -216,6 +217,33 @@ export function TablePartInspector({ pane = false, block }: Props) {
             />
           </DeckField>
         </>
+      ) : null}
+
+      {selectedTablePart.kind === "cell" || selectedTablePart.kind === "headerCell" ? (
+        <button
+          type="button"
+          className="td-deck-btn"
+          onClick={() => {
+            const rows = block.resolved?.table?.rows?.length ?? 0;
+            const cols = block.resolved?.table?.columns?.length ?? 0;
+            const style = partState?.style ?? {};
+            const nextParts = applyTablePartStyleToSiblingParts(block.tableParts, selectedTablePart, style, {
+              rowCount: rows,
+              colCount: cols,
+            });
+            updateSelected({
+              tableParts: nextParts,
+              tableOptions: mergeComunicadoTableOptions({
+                ...options,
+                ...partsToTableOptions(nextParts),
+              }, block.tablePreset),
+            } as Partial<typeof block>);
+          }}
+        >
+          {selectedTablePart.kind === "cell"
+            ? "Aplicar estilo a todas as células"
+            : "Aplicar estilo a todos os cabeçalhos"}
+        </button>
       ) : null}
     </DeckPropertySection>
   );

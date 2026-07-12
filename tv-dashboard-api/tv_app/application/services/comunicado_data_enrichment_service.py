@@ -17,6 +17,7 @@ from tv_app.application.services.tv_data_route_catalog_service import (
 )
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
 from tv_app.infrastructure.gateways.delpi_operational_gateway import DelpiOperationalGateway
+from tv_app.application.services.series_points_extractor import extract_series_points
 
 _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
 
@@ -124,38 +125,7 @@ def _extract_series(
     *,
     branch: str | None = None,
 ) -> list[dict[str, Any]]:
-    if not isinstance(data, dict):
-        return []
-    key = series_field or "points"
-    raw = data.get(key)
-    if not isinstance(raw, list):
-        raw = data.get("series")
-    if not isinstance(raw, list):
-        return []
-    branch_code = str(branch).strip() if branch else ""
-    points: list[dict[str, Any]] = []
-    for row in raw:
-        if not isinstance(row, dict):
-            continue
-        label = row.get("label") or row.get("bucket") or row.get("periodo") or row.get("date")
-        value = row.get("value")
-        if value is None and branch_code:
-            branch_key = branch_code.zfill(2)
-            value = (
-                row.get(f"oee_filial_{branch_key}")
-                or row.get(f"otd_filial_{branch_key}")
-                or row.get(f"oee_pct_filial_{branch_key}")
-            )
-        if value is None:
-            for field_key, field_value in row.items():
-                if not isinstance(field_key, str) or field_value is None:
-                    continue
-                if field_key.startswith(("oee_", "otd_")) and field_key not in {"oee_pct", "otd_pct"}:
-                    value = field_value
-                    break
-        points.append({"label": label, "value": value})
-    return points
-
+    return extract_series_points(data, series_field, branch=branch)
 
 def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
     if not isinstance(data, dict):

@@ -17,6 +17,7 @@ import {
   resolveKpiPartFontSize,
   resolveKpiPartLayoutStyle,
   upsertKpiPartState,
+  applyKpiPartStyleToSiblingParts,
 } from "./kpiCardParts";
 import {
   applyKpiElementVisibility,
@@ -26,6 +27,18 @@ import {
 } from "./kpiElementCatalog";
 
 describe("kpiCardParts adapters", () => {
+  it("applyKpiPartStyleToSiblingParts replica tipografia em title/value/hint", () => {
+    const next = applyKpiPartStyleToSiblingParts({}, { kind: "value" }, { color: "#abc", fontSize: 42 });
+    expect(next.title?.style?.color).toBe("#abc");
+    expect(next.value?.style?.fontSize).toBe(42);
+    expect(next.hint?.style?.color).toBe("#abc");
+    expect(next.card).toBeUndefined();
+  });
+
+  it("applyKpiPartStyleToSiblingParts ignora card/ícone", () => {
+    const next = applyKpiPartStyleToSiblingParts({}, { kind: "card" }, { fill: "#fff" });
+    expect(next).toEqual({});
+  });
   it("projeta options ↔ parts", () => {
     const parts = kpiOptionsToParts({
       title: "OEE",

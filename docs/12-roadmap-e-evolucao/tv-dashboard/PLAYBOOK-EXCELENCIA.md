@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.5+ (jul/2026):** 4E.3–4E.5 ✅; tipos avançados SVG ✅; **Onda 4G–4O** ✅; **§19.19** dois escopos global/parte (KPI card, chartArea, moldura tabela) + chrome part-aware + padding da seleção global. **Backlog v2:** Recharts em telas nativas OEE/OTD; «aplicar a todos» de estilo entre partes.
+> **Status:** … **v1.5+ (jul/2026):** 4E.3–4E.5 ✅; tipos avançados SVG ✅; **Onda 4G–4O** ✅; **§19.19** dois escopos; **§19.20** aplicar estilo a irmãos (KPI/tabela/marcadores); **séries OEE/OTD/PPM** nas telas nativas via `ConfigurableSeriesChart` (SVG — não Recharts); **rate limit** `tv_present_zone` em `/public/present/`. **Backlog restante:** paridade PPT (sombra texto, conectores, paleta recente, PDF/PPTX, colaboração).
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente:** Recharts em telas nativas OEE/OTD (v2). 4E.3–4E.5 e tipos avançados SVG concluídos (v1.5).
+**Ainda pendente (paridade PPT / longo prazo):** sombra/contorno/reflexo de texto; upload de fonte; conectores; paleta de cores recentes; tabelas canvas simples; modo apresentador; export PDF; import/export PPTX; colaboração. Séries nas nativas OEE/OTD/PPM e rate limit `public/present` concluídos (jul/2026).
 
 ---
 
@@ -667,20 +667,17 @@ sequenceDiagram
 
 ## 16. Próximo passo imediato
 
-### Telas nativas (v2 restante)
+### Concluído (jul/2026) — backlog v2 anterior
 
-1. **Gráficos Recharts** — séries OEE/OTD/PPM no pacote `@delpi/tv-dashboard-presentation`.
-2. **Rate limit dedicado** em dev nginx para `GET /public/present/*`.
+1. **Séries OEE/OTD/PPM** nas telas nativas — `seriesPoints` no gateway + `ConfigurableSeriesChart` (SVG) no presentation (§19.20 / §6).
+2. **«Aplicar estilo a todas as partes»** — KPI text siblings, células/cabeçalhos de tabela, marcadores (já 4H.2).
+3. **Rate limit dedicado** `tv_present_zone` em `gateway/nginx.conf` + `nginx.dev.conf` para `/apps/tv-dashboard-api/public/present/`.
 
-### Editor personalizado (Onda 4 — ver §17)
+### Telas nativas / editor — backlog restante
 
-**Concluído v1.3:** 4A.1–4A.8 (exc. 4A.9), 4B.1–4B.6, 4D.1–4D.6 — ver § «Entregue em v1.3».
-
-**Próximo backlog editor:**
-
-1. **Rich text** (4C) — runs ou markdown controlado.
-2. **Animações / master slide** (4E).
-3. **Indicadores live api-delpi** (4F) — composição mista texto + KPI/gráfico (§18; parcial).
+1. Paridade tipografia avançada (sombra/contorno/reflexo de texto; upload de fonte).
+2. Conectores entre formas; paleta / cores recentes.
+3. Export PDF; import/export PPTX; modo apresentador; colaboração (longo prazo).
 
 ### Concluído v2 (jul/2026)
 
@@ -793,12 +790,13 @@ Apresentação TV / preview
 
 | Recurso | Canva/PPT | Status | Notas |
 |---|---|---|---|
-| KPI / número vinculado a fonte de dados | ✓ (Power BI) | ⚠ v1.3 | Bloco `data_kpi` + catálogo `/data/routes` |
-| Gráfico live no slide misto | ✓ | ⚠ v1.3 | Bloco `data_chart` + preview admin |
-| Tabela resumida no compositor | ✓ | ⚠ v1.3 | Bloco `data_table` |
-| Parâmetros filial/período por bloco | ✓ | ⚠ | `dataFilters` + `dataDefaults` playlist |
-| Refresh automático por indicador | ✓ | ⚠ | `globalRefreshSec` + `dataBinding.refreshSec` |
-| Catálogo de rotas permitidas (RBAC) | — | ✅ v1.3 | `tv_data_routes.json` + gate CI |
+| KPI / número vinculado a fonte de dados | ✓ (Power BI) | ✅ | `kpi_view` / `data_source` + catálogo |
+| Gráfico live no slide misto | ✓ | ✅ | `chart_view` + SVG `ConfigurableSeriesChart` |
+| Tabela resumida no compositor | ✓ | ✅ | `table_view` + `ConfigurableTable` |
+| Parâmetros filial/período por bloco | ✓ | ✅ | `dataFilters` + `dataDefaults` playlist |
+| Refresh automático por indicador | ✓ | ✅ | `globalRefreshSec` + binding |
+| Catálogo de rotas permitidas (RBAC) | — | ✅ | `tv_data_routes.json` + gate CI |
+| Série temporal nas telas nativas OEE/OTD/PPM | — | ✅ | `seriesPoints` + SVG (não Recharts) |
 
 #### Apresentação e animação (prioridade média-baixa)
 
@@ -806,15 +804,15 @@ Apresentação TV / preview
 |---|---|---|---|
 | Transição **por slide** | ✓ | ✅ v1.3.7 (4E.1) | `slides.transition_style` + painel Tela |
 | Animação por objeto | ✓ | ✅ v1.3.8 (4E.2) | `animations[]` fade/slide-in no inspector + TV |
-| Build sequencial (aparecer um a um) | ✓ | ❌ | |
-| Master slide / layout mestre | ✓ | ❌ | Logo/fundo fixos em todos os custom |
+| Build sequencial (aparecer um a um) | ✓ | ✅ v1.5 (4E.4) | Build order no inspector |
+| Master slide / layout mestre | ✓ | ✅ v1.5 (4E.3) | Logo/fundo fixos na playlist |
 | Modo apresentador / notas | ✓ | ❌ | |
 
 #### Colaboração e export (prioridade baixa)
 
 | Recurso | Canva/PPT | Status |
 |---|---|---|
-| Export PNG/PDF do slide | ✓ | ❌ |
+| Export PNG/PDF do slide | ✓ | ⚠ PNG ✅ v1.5 (4E.5); PDF ❌ |
 | Import/export PPTX | ✓ | ❌ |
 | Colaboração tempo real | ✓ | ❌ |
 | Comentários / histórico de versões | ✓ | ❌ |
@@ -1000,9 +998,9 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
   Impacto UX × esforço (jul/2026, pós v1.5+)
 
   Concluído                          → 4A–4O, 4E.1–4E.5, 4F (§18), 4G–4O (§19)
-  Concluído (escopos no palco)       → §19.19 dois escopos global/parte
-  Backlog v2                         → Recharts em telas nativas; «aplicar estilo a todas as partes»
-  Longo prazo                        → export PPTX
+  Concluído (escopos / apply-all)    → §19.19–§19.20; séries nativas SVG; tv_present_zone
+  Backlog restante                   → sombra texto, conectores, paleta recente, PDF/PPTX
+  Longo prazo                        → colaboração; import PPTX
 ```
 
 ### 17.8 Gates de teste — editor
@@ -1344,7 +1342,7 @@ Exemplo no `native_config` (v4):
 - [x] Séries temporais renderizam tabela derivada de `points` quando não há `items`.
 - [x] Filmstrip com prévia centralizada (`CenteredScaledPreview`) e menu de contexto nas telas.
 - [x] Tipos de gráfico avançados (pizza, área, combo, empilhado, histograma, dispersão, bolhas, radar, cascata, funil) — paint SVG nativo com `chartParts` (4H.7 + v1.5).
-- [ ] Recharts em telas nativas fixas (OEE/OTD dashboard) — backlog v2.
+- [x] Séries temporais nas telas nativas OEE/OTD/PPM — `seriesPoints` + `ConfigurableSeriesChart` (SVG; playbook antigo citava Recharts).
 - [x] `native_config` sanitizado no save — sem `resolved` nem URLs de mídia runtime.
 - [x] Limite de blocos `data_*` por slide (settings `comunicadoDataBlocks.maxPerSlide`).
 
@@ -1902,6 +1900,26 @@ O escopo **global** **não** unifica cor/fonte/fill das partes. Cada parte mant�
 
 - `plugin-ui`: `kpiCardParts.test.ts`, `seriesChartParts.test.ts`, `configurableTableParts.test.ts`
 - Aceite manual: 1º clique → handles afastados; 2º no fundo → resize encolhe só o card; valor/título independentes.
+
+### 19.20 Aplicar estilo a partes irmãs + séries nativas (jul/2026)
+
+> **Problema:** «Aplicar a todos» existia só para marcadores (4H.2). Telas nativas OEE/OTD/PPM eram dual-KPI sem evolução temporal. Playbook citava Recharts, mas o stack TV já usa SVG.
+
+#### Entregas
+
+| # | Entrega | Onde |
+|---|---------|------|
+| 19.20.1 | `applyKpiPartStyleToSiblingParts` (title/value/hint) + botão no inspetor | `plugin-ui` + `KpiPartInspector` |
+| 19.20.2 | `applyTablePartStyleToSiblingParts` (células / headerCells) + botão | `plugin-ui` + `TablePartInspector` |
+| 19.20.3 | `seriesPoints` no payload nativo (OEE/OTD/PPM) via rotas `*-series` | `DelpiProductionGateway` + `series_points_extractor` |
+| 19.20.4 | Layout nativo KPI + `ConfigurableSeriesChart` (SVG, tema TV) | `NativeScreens` + CSS |
+| 19.20.5 | Rate limit `tv_present_zone` (8 r/s, burst 20) em `/public/present/` | `gateway/nginx.conf` + `nginx.dev.conf` |
+
+#### Anti-padrões
+
+- Introduzir Recharts só nas nativas — reutilizar `ConfigurableSeriesChart`.
+- Apply-all implícito na seleção global (§19.19).
+- Falhar o KPI dual se a série der erro — série é best-effort.
 
 ---
 

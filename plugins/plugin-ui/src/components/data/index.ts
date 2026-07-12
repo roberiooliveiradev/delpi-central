@@ -47,6 +47,8 @@ export {
   tablePartCapabilities,
   tablePartDomProps,
   upsertTablePartState,
+  applyTablePartStyleToSiblingParts,
+  type TableGridDimensions,
   type TableInteraction,
   type TablePartCapabilities,
   type TablePartRef,

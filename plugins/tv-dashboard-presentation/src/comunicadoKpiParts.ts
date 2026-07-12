@@ -61,4 +61,7 @@ export {
   serializeKpiPartRef,
   setKpiElementEnabled,
   upsertKpiPartState,
+  applyKpiPartStyleToSiblingParts,
+  isKpiTextPartKind,
+  KPI_TEXT_PART_KINDS,
 } from "@delpi/plugin-ui/index";

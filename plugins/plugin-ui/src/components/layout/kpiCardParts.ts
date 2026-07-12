@@ -465,6 +465,32 @@ export function upsertKpiPartState(
   };
 }
 
+/** Partes tipográficas irmãs (Excel: Apply to All em texto do KPI). */
+export const KPI_TEXT_PART_KINDS = ["title", "value", "hint"] as const;
+
+export function isKpiTextPartKind(kind: KpiPartRef["kind"]): kind is KpiTextPartKind {
+  return (KPI_TEXT_PART_KINDS as readonly string[]).includes(kind);
+}
+
+/**
+ * Replica o estilo da parte tipográfica selecionada em title/value/hint.
+ * Card/ícone não têm irmãos tipográficos — retorna o mapa inalterado.
+ */
+export function applyKpiPartStyleToSiblingParts(
+  parts: KpiPartsMap | null | undefined,
+  from: KpiPartRef,
+  style: KpiPartStyle,
+): KpiPartsMap {
+  if (!isKpiTextPartKind(from.kind)) {
+    return parts ?? {};
+  }
+  let next = parts ?? {};
+  for (const kind of KPI_TEXT_PART_KINDS) {
+    next = upsertKpiPartState(next, { kind }, { style });
+  }
+  return next;
+}
+
 export function kpiPartDomProps(ref: KpiPartRef, selectedPart?: KpiPartRef | null) {
   const selected = isKpiPartRefEqual(ref, selectedPart);
   return {
