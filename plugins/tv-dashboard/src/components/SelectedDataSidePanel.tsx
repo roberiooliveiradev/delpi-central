@@ -39,6 +39,7 @@ export function SelectedDataSidePanel({
     selectedIds,
     dataPanelIntent,
     openDataCatalog,
+    setDataPanelIntent,
   } = useComunicadoEditor();
   const context = useMemo(
     () => resolveSelectedDataContext(blocks, selectedIds),
@@ -67,6 +68,17 @@ export function SelectedDataSidePanel({
   if (showCatalog) {
     return (
       <div className={isRibbon ? "td-deck-ribbon__panel td-deck-ribbon__panel--ribbon" : undefined}>
+        {context.kind !== "none" ? (
+          <div className="td-data-routes-panel__toolbar">
+            <button
+              type="button"
+              className="td-btn td-btn--sm td-btn--ghost"
+              onClick={() => setDataPanelIntent("binding")}
+            >
+              Voltar à fonte atual
+            </button>
+          </div>
+        ) : null}
         <DataRoutesSidePanel
           layout={layout}
           branchScope={branchScope}
