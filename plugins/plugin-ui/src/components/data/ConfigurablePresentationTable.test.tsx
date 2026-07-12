@@ -76,6 +76,18 @@ describe("ConfigurablePresentationTable", () => {
     expect(header.getAttribute("style") ?? "").toMatch(/background|#abcdef/i);
   });
 
+  it("envolve a grade em área com scroll (frame)", () => {
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+      />,
+    );
+    const frame = container.querySelector(".delpi-ui-config-table__frame");
+    expect(frame).toBeTruthy();
+    expect(frame?.querySelector("table")).toBeTruthy();
+  });
+
   it("renderiza linha de totais quando habilitada", () => {
     render(
       <ConfigurablePresentationTable

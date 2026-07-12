@@ -17,17 +17,29 @@
 }
 
 .delpi-ui-config-table__title {
+  flex-shrink: 0;
   text-align: center;
   font-weight: 600;
   font-size: clamp(10px, 1.2vw, 14px);
   color: var(--delpi-ui-config-table-text-strong, #0f172a);
 }
 
-.delpi-ui-config-table__data-table {
+/* Scroll interno — linhas/colunas além do bloco. */
+.delpi-ui-config-table__frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.delpi-ui-config-table__data-table {
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: var(--delpi-ui-config-table-font-size, clamp(9px, 1vw, 12px));
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .delpi-ui-config-table__header-cell,
@@ -36,12 +48,13 @@
   /* Grade interna — DECK_TABLE_DEFAULTS.borderColor (#e2e8f0), não o contorno do bloco. */
   border-bottom: 1px solid var(--delpi-ui-config-table-border-color, #e2e8f0);
   text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .delpi-ui-config-table__header-cell {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: var(--delpi-ui-config-table-header-bg, #f1f5f9);
   color: var(--delpi-ui-config-table-header-color, #0f172a);
   font-weight: 600;

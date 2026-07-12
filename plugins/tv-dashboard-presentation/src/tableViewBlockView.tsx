@@ -1,5 +1,3 @@
-import { CenteredScaledPreview } from "@delpi/plugin-ui/index";
-
 import { ConfigurableTable } from "./ConfigurableTable";
 import { tablePresetLabel } from "./comunicadoChartView";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
@@ -49,23 +47,16 @@ export function TableViewBlockView({
 
   return (
     <div className="tdp-data-block tdp-data-block--table">
-      <CenteredScaledPreview
-        referenceWidth={420}
-        referenceHeight={220}
-        className="tdp-centered-scaled-preview"
-        contentClassName="tdp-centered-scaled-preview__content"
-      >
-        <div className="tdp-data-table-wrap">
-          <ConfigurableTable
-            columns={columns}
-            rows={rows}
-            options={tableOptions}
-            preset={block.tablePreset}
-            tableParts={block.tableParts}
-            interaction={tableInteraction}
-          />
-        </div>
-      </CenteredScaledPreview>
+      <div className="tdp-data-table-wrap">
+        <ConfigurableTable
+          columns={columns}
+          rows={rows}
+          options={tableOptions}
+          preset={block.tablePreset}
+          tableParts={block.tableParts}
+          interaction={tableInteraction}
+        />
+      </div>
     </div>
   );
 }
