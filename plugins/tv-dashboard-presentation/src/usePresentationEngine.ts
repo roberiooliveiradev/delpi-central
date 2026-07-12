@@ -7,7 +7,10 @@ import { resolveSlideTransitionStyle } from "./presentationTransition";
 export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
   initialPayload: T;
   onRefresh?: () => Promise<T | null>;
+  /** @deprecated Use `enableKeyboardControls` (Space + setas). */
   enableKeyboardPause?: boolean;
+  /** Space = pausa; ←/→ = slide anterior/próximo. */
+  enableKeyboardControls?: boolean;
   enableHiddenPause?: boolean;
   refreshNativeSlidesOnly?: boolean;
   realtimeWsUrl?: string | null;
@@ -17,10 +20,12 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   initialPayload,
   onRefresh,
   enableKeyboardPause = false,
+  enableKeyboardControls,
   enableHiddenPause = true,
   refreshNativeSlidesOnly = false,
   realtimeWsUrl = null,
 }: UsePresentationEngineOptions<T>) {
+  const keyboardEnabled = enableKeyboardControls ?? enableKeyboardPause;
   const [payload, setPayload] = useState(initialPayload);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -44,6 +49,22 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     current?.slideType === "native" &&
     current.native?.data &&
     current.native.data.error === true;
+
+  const goPrevious = useCallback(() => {
+    setIndex((prev) => {
+      const len = slides.length;
+      if (len <= 1) return prev;
+      return (prev - 1 + len) % len;
+    });
+  }, [slides.length]);
+
+  const goNext = useCallback(() => {
+    setIndex((prev) => {
+      const len = slides.length;
+      if (len <= 1) return prev;
+      return (prev + 1) % len;
+    });
+  }, [slides.length]);
 
   const reloadPayload = useCallback(async () => {
     if (!onRefresh) return;
@@ -106,16 +127,29 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   });
 
   useEffect(() => {
-    if (!enableKeyboardPause) return;
+    if (!keyboardEnabled) return;
     const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+
       if (event.code === "Space") {
         event.preventDefault();
         setPaused((value: boolean) => !value);
+        return;
+      }
+      if (event.code === "ArrowLeft") {
+        event.preventDefault();
+        goPrevious();
+        return;
+      }
+      if (event.code === "ArrowRight") {
+        event.preventDefault();
+        goNext();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [enableKeyboardPause]);
+  }, [keyboardEnabled, goNext, goPrevious]);
 
   return {
     payload,
@@ -132,5 +166,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     refreshSec,
     nativeErrorAdvanceSec,
     nativeError,
+    goPrevious,
+    goNext,
   };
 }

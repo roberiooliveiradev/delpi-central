@@ -2,6 +2,11 @@ import "./native-screens.css";
 
 export { usePresentationEngine } from "./usePresentationEngine";
 export {
+  PRESENTATION_CHROME_HIDE_MS,
+  usePresentationChromeVisibility,
+} from "./usePresentationChromeVisibility";
+export { PresentationStageControls } from "./PresentationStageControls";
+export {
   buildAdminPresentationWsUrl,
   buildPresentationWsUrl,
   buildPublicPresentationWsUrl,

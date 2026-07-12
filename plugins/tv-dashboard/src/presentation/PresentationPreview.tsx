@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   usePresentationEngine,
   useFullscreenStage,
+  usePresentationChromeVisibility,
+  PresentationStageControls,
   NativeSlideView,
   buildAdminPresentationWsUrl,
   resolveSlideTransitionStyle,
@@ -10,7 +12,6 @@ import {
 import type { PresentationPayload } from "../api/tvDashboardApi";
 import { getAccessToken } from "../api/httpClient";
 import { ExternalSlidePreview } from "./ExternalSlidePreview";
-import { PreviewControls } from "./PreviewControls";
 import "./presentation.css";
 
 type Props = {
@@ -23,6 +24,7 @@ type Props = {
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {
   const { ref, toggleFullscreen } = useFullscreenStage();
   const [booting, setBooting] = useState(true);
+  const { visible: chromeVisible } = usePresentationChromeVisibility();
   const wsUrl = useMemo(() => {
     if (!playlistId) return null;
     const token = getAccessToken();
@@ -36,12 +38,13 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     payload,
     paused,
     setPaused,
-    setIndex,
+    goPrevious,
+    goNext,
   } = usePresentationEngine({
     initialPayload: initial,
     onRefresh,
     enableHiddenPause: false,
-    enableKeyboardPause: true,
+    enableKeyboardControls: true,
     refreshNativeSlidesOnly: true,
     realtimeWsUrl: wsUrl,
   });
@@ -80,7 +83,16 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       data-viewport={viewport}
       onDoubleClick={() => void toggleFullscreen()}
     >
-      <div className="tdp-preview-badge">Pré-visualização · duplo-clique = tela cheia · Espaço = pausar</div>
+      <div
+        className={[
+          "tdp-preview-badge",
+          chromeVisible ? null : "tdp-preview-badge--hidden",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        Pré-visualização · ← → slides · Espaço pausa · duplo-clique = tela cheia
+      </div>
       {slides.map((slide, slideIndex) => {
         const active = slideIndex === index;
         const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
@@ -103,13 +115,14 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
           </div>
         );
       })}
-      <PreviewControls
+      <PresentationStageControls
         index={index}
         total={slides.length}
         paused={paused}
+        visible={chromeVisible}
         onPauseToggle={() => setPaused(!paused)}
-        onPrevious={() => setIndex((index - 1 + slides.length) % slides.length)}
-        onNext={() => setIndex((index + 1) % slides.length)}
+        onPrevious={goPrevious}
+        onNext={goNext}
       />
     </div>
   );

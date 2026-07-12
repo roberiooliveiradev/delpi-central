@@ -140,7 +140,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   header: {
     back: "Voltar à lista de programações.",
-    preview: "Abrir pré-visualização em tela cheia.",
+    preview: "Abrir pré-visualização em tela cheia (← → slides, Espaço pausa; controles somem após inatividade).",
     share: "Abrir página de compartilhamento e link público.",
     copyLink: "Copiar link público da apresentação.",
     qr: "Gerar QR code do link público.",

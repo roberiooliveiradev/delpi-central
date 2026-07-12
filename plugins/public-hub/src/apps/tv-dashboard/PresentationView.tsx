@@ -2,6 +2,8 @@ import { useCallback, useEffect } from "react";
 
 import {
   NativeSlideView,
+  PresentationStageControls,
+  usePresentationChromeVisibility,
   usePresentationEngine,
   buildPublicPresentationWsUrl,
   resolveSlideTransitionStyle,
@@ -30,15 +32,21 @@ export function PresentationView({
     return refreshPublicPresentation(token);
   }, [onRefresh, token]);
 
+  const { visible: chromeVisible } = usePresentationChromeVisibility();
+
   const {
     payload,
     index,
     slides,
     viewport,
+    paused,
+    setPaused,
+    goPrevious,
+    goNext,
   } = usePresentationEngine<PublicPresentationPayload>({
     initialPayload,
     onRefresh: onRefresh || token ? reloadPayload : undefined,
-    enableKeyboardPause: true,
+    enableKeyboardControls: true,
     enableHiddenPause: true,
     refreshNativeSlidesOnly: true,
     realtimeWsUrl:
@@ -73,7 +81,16 @@ export function PresentationView({
   return (
     <div className={stageClass} data-viewport={viewport}>
       {mode === "preview" ? (
-        <div className="tdp-preview-badge">Pré-visualização</div>
+        <div
+          className={[
+            "tdp-preview-badge",
+            chromeVisible ? null : "tdp-preview-badge--hidden",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          Pré-visualização · ← → slides · Espaço pausa
+        </div>
       ) : null}
       {(slides as PublicSlide[]).map((slide: PublicSlide, slideIndex: number) => {
         const active = slideIndex === index;
@@ -92,6 +109,15 @@ export function PresentationView({
           </div>
         );
       })}
+      <PresentationStageControls
+        index={index}
+        total={slides.length}
+        paused={paused}
+        visible={chromeVisible}
+        onPauseToggle={() => setPaused(!paused)}
+        onPrevious={goPrevious}
+        onNext={goNext}
+      />
     </div>
   );
 }

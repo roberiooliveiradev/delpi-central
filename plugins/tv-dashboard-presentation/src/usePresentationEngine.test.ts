@@ -103,4 +103,28 @@ describe("usePresentationEngine", () => {
     });
     expect(onRefresh).not.toHaveBeenCalled();
   });
+
+  it("navega com setas e pausa com Space", () => {
+    const { result } = renderHook(() =>
+      usePresentationEngine({
+        initialPayload: payload,
+        enableHiddenPause: false,
+        enableKeyboardControls: true,
+      }),
+    );
+    expect(result.current.index).toBe(0);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowRight" }));
+    });
+    expect(result.current.index).toBe(1);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowLeft" }));
+    });
+    expect(result.current.index).toBe(0);
+    expect(result.current.paused).toBe(false);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+    });
+    expect(result.current.paused).toBe(true);
+  });
 });

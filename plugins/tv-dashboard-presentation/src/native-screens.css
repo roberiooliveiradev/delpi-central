@@ -560,6 +560,13 @@
   border: 1px solid #089bdb;
   font-size: 12px;
   letter-spacing: 0.04em;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+  pointer-events: none;
+}
+
+.tdp-preview-badge--hidden {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .tdp-preview-controls {
@@ -575,6 +582,41 @@
   border-radius: 999px;
   background: color-mix(in srgb, #05070a 85%, transparent);
   border: 1px solid color-mix(in srgb, #089bdb 35%, transparent);
+  transition: opacity 0.35s ease, visibility 0.35s ease, transform 0.35s ease;
+}
+
+.tdp-preview-controls--visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.tdp-preview-controls--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(8px);
+}
+
+.tdp-preview-controls__btn {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, #089bdb 40%, transparent);
+  background: color-mix(in srgb, #089bdb 18%, transparent);
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tdp-preview-controls__btn:hover:not(:disabled) {
+  background: color-mix(in srgb, #089bdb 32%, transparent);
+}
+
+.tdp-preview-controls__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .tdp-preview-controls__status {
