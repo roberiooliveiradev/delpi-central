@@ -3692,7 +3692,7 @@
   max-height: 100%;
   overflow: hidden;
   padding: 12px;
-  border-radius: 16px;
+  border-radius: 0;
   border: 1px solid var(--td-border);
   background: color-mix(in srgb, var(--td-text) 4%, var(--td-surface));
 }
