@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
-"""Gera catálogo TV (tv_data_routes.json) a partir do OpenAPI baseline api-delpi."""
+"""Gera catálogo TV (tv_data_routes.json) a partir do OpenAPI baseline api-delpi.
+
+Fonte de verdade (como o registry operacional do chat):
+  api-delpi openapi → openapi_baseline.json (v2: parameters + xDelpi)
+  → generate --write → tv_data_routes.json
+  → overlays em tv_data_route_overlays.json (TV-only)
+
+Campos do OpenAPI (sempre regenerados / mergeados):
+  operationId, path, httpMethod, paramSchema, paramStrategy (inferido),
+  metaShape (x-delpi.shape quando houver)
+
+Overlays TV (preservados / arquivo overlays):
+  valueFields, seriesField, tableFields, tvConstraints, fixedQueryParams,
+  defaultParams, label, description, category, allowedDisplayModes,
+  paramStrategy (se explícito), ajustes pontuais de paramSchema
+"""
 
 from __future__ import annotations
 
@@ -13,16 +28,15 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 OPENAPI_BASELINE_PATH = ROOT / "api-delpi" / "app" / "content" / "openapi_baseline.json"
 TV_ROUTES_PATH = ROOT / "tv-dashboard-api" / "tv_app" / "content" / "tv_data_routes.json"
+TV_OVERLAYS_PATH = ROOT / "tv-dashboard-api" / "tv_app" / "content" / "tv_data_route_overlays.json"
 
-# Enriquecimentos manuais preservados quando operationId coincide.
-PRESERVE_KEYS = frozenset(
+# Overlay / preservação manual (não vêm do OpenAPI puro).
+OVERLAY_KEYS = frozenset(
     {
         "valueFields",
         "seriesField",
         "defaultParams",
-        "paramSchema",
         "tvConstraints",
-        "metaShape",
         "allowedDisplayModes",
         "paramStrategy",
         "fixedQueryParams",
@@ -30,6 +44,7 @@ PRESERVE_KEYS = frozenset(
         "description",
         "label",
         "category",
+        "paramSchema",  # merge profundo com schema OpenAPI
     }
 )
 
@@ -81,6 +96,21 @@ PATH_SEGMENT_TO_CATEGORY: dict[str, str] = {
     "dashboard": "system",
 }
 
+PARAM_LABELS_PT: dict[str, str] = {
+    "branch": "Filial",
+    "periodDays": "Período (dias)",
+    "start_date": "Data início",
+    "end_date": "Data fim",
+    "customer_segment": "Segmento (weg | new_business)",
+    "granularity": "Granularidade",
+    "limit": "Limite",
+    "offset": "Offset",
+    "page": "Página",
+    "page_size": "Tamanho da página",
+    "code": "Código",
+    "product_code": "Código do produto",
+}
+
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -90,6 +120,15 @@ def format_operation_id_label(operation_id: str) -> str:
     text = re.sub(r"^(get|list|search)_", "", operation_id, flags=re.IGNORECASE)
     text = text.replace("_", " ").strip()
     return text[:1].upper() + text[1:] if text else operation_id
+
+
+def humanize_param_label(name: str, description: str | None = None) -> str:
+    if name in PARAM_LABELS_PT:
+        return PARAM_LABELS_PT[name]
+    desc = (description or "").strip()
+    if desc and len(desc) <= 48:
+        return desc
+    return name.replace("_", " ").strip().capitalize() or name
 
 
 def resolve_category(operation: dict[str, Any]) -> str:
@@ -117,6 +156,10 @@ def infer_allowed_display_modes(operation: dict[str, Any]) -> list[str]:
 
 
 def infer_meta_shape(operation: dict[str, Any]) -> str:
+    x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    shape = str(x_delpi.get("shape") or "").strip()
+    if shape:
+        return shape
     path = str(operation.get("path") or "").lower()
     operation_id = str(operation.get("operationId") or "").lower()
     haystack = f"{path} {operation_id}"
@@ -124,15 +167,86 @@ def infer_meta_shape(operation: dict[str, Any]) -> str:
         return "paged_list"
     if "hierarchy" in haystack or "structure" in haystack:
         return "hierarchy"
-    if "series" in haystack:
-        return "scalar"
     return "scalar"
+
+
+def map_openapi_type(param: dict[str, Any]) -> str:
+    type_name = str(param.get("type") or "").strip().lower()
+    if type_name in {"integer", "int", "number"}:
+        return "integer" if type_name != "number" else "number"
+    if type_name == "boolean":
+        return "boolean"
+    return "string"
+
+
+def build_param_schema_from_openapi(
+    parameters: list[dict[str, Any]] | None,
+) -> tuple[dict[str, Any], str]:
+    """Converte parameters do baseline → paramSchema TV + paramStrategy."""
+    params = [p for p in (parameters or []) if isinstance(p, dict) and p.get("name")]
+    names = {str(p["name"]) for p in params}
+    has_date_range = "start_date" in names and "end_date" in names
+    strategy = "date_range" if has_date_range else "direct"
+    schema: dict[str, Any] = {}
+
+    if has_date_range:
+        schema["periodDays"] = {
+            "type": "integer",
+            "default": 30,
+            "label": PARAM_LABELS_PT["periodDays"],
+            "optional": True,
+        }
+
+    for param in params:
+        name = str(param["name"])
+        if has_date_range and name in {"start_date", "end_date"}:
+            continue
+        entry: dict[str, Any] = {
+            "type": map_openapi_type(param),
+            "optional": not bool(param.get("required")),
+            "label": humanize_param_label(name, param.get("description")),
+        }
+        if param.get("default") is not None:
+            entry["default"] = param["default"]
+        if isinstance(param.get("enum"), list) and param["enum"]:
+            entry["enum"] = list(param["enum"])
+        schema[name] = entry
+
+    return schema, strategy
+
+
+def infer_value_fields(operation_id: str) -> list[str]:
+    """Heurística leve: operationId com _pct → campo homônimo + value."""
+    oid = operation_id.strip()
+    if "_pct" not in oid.lower():
+        return []
+    field = re.sub(r"^(get|list|search)_", "", oid, flags=re.IGNORECASE)
+    if not field:
+        return []
+    return [field, "value"]
+
+
+def merge_param_schema(
+    openapi_schema: dict[str, Any],
+    *overlays: dict[str, Any] | None,
+) -> dict[str, Any]:
+    merged = {key: dict(value) if isinstance(value, dict) else value for key, value in openapi_schema.items()}
+    for overlay in overlays:
+        if not overlay:
+            continue
+        for key, value in overlay.items():
+            if isinstance(value, dict) and isinstance(merged.get(key), dict):
+                merged[key] = {**merged[key], **value}
+            else:
+                merged[key] = value
+    return merged
 
 
 def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     operation_id = str(operation.get("operationId") or "").strip()
     summary = str(operation.get("summary") or "").strip()
     description = str(operation.get("description") or "").strip()
+    param_schema, param_strategy = build_param_schema_from_openapi(operation.get("parameters"))
     route: dict[str, Any] = {
         "operationId": operation_id,
         "httpMethod": "GET",
@@ -144,16 +258,50 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     }
     if description:
         route["description"] = description
+    if param_schema:
+        route["paramSchema"] = param_schema
+        route["paramStrategy"] = param_strategy
+        if param_strategy == "date_range":
+            route["defaultParams"] = {"periodDays": 30}
+    value_fields = infer_value_fields(operation_id)
+    if value_fields:
+        route["valueFields"] = value_fields
     return route
 
 
+def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[str, Any]:
+    if not overlay:
+        return base
+    merged = dict(base)
+    for key, value in overlay.items():
+        if key not in OVERLAY_KEYS or value in (None, "", [], {}):
+            continue
+        if key == "paramSchema" and isinstance(value, dict):
+            merged["paramSchema"] = merge_param_schema(merged.get("paramSchema") or {}, value)
+        elif key == "defaultParams" and isinstance(value, dict):
+            merged["defaultParams"] = {**(merged.get("defaultParams") or {}), **value}
+        else:
+            merged[key] = value
+    return merged
+
+
 def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -> dict[str, Any]:
+    """Preserva curadoria do catálogo atual (labels PT, valueFields manuais, etc.)."""
     if not existing:
         return base
     merged = dict(base)
-    for key, value in existing.items():
-        if key in PRESERVE_KEYS and value not in (None, "", [], {}):
-            merged[key] = value
+    for key in OVERLAY_KEYS:
+        if key == "paramSchema":
+            continue
+        value = existing.get(key)
+        if value not in (None, "", [], {}):
+            if key == "defaultParams" and isinstance(value, dict):
+                merged["defaultParams"] = {**(merged.get("defaultParams") or {}), **value}
+            else:
+                merged[key] = value
+    existing_schema = existing.get("paramSchema")
+    if isinstance(existing_schema, dict) and existing_schema:
+        merged["paramSchema"] = merge_param_schema(merged.get("paramSchema") or {}, existing_schema)
     return merged
 
 
@@ -193,13 +341,98 @@ def load_existing_routes(routes_path: Path) -> dict[str, dict[str, Any]]:
     return indexed
 
 
-def generate_routes(*, baseline_path: Path, routes_path: Path) -> list[dict[str, Any]]:
+def load_overlays(overlays_path: Path) -> dict[str, dict[str, Any]]:
+    if not overlays_path.is_file():
+        return {}
+    payload = load_json(overlays_path)
+    raw = payload.get("overlays") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(key): dict(value)
+        for key, value in raw.items()
+        if isinstance(value, dict) and str(key).strip()
+    }
+
+
+def extract_overlay_from_route(route: dict[str, Any], base: dict[str, Any]) -> dict[str, Any]:
+    """Extrai só o que difere do base OpenAPI (para seed de overlays)."""
+    overlay: dict[str, Any] = {}
+    for key in OVERLAY_KEYS:
+        if key == "paramSchema":
+            continue
+        value = route.get(key)
+        if value in (None, "", [], {}):
+            continue
+        if value != base.get(key):
+            overlay[key] = value
+    route_schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
+    base_schema = base.get("paramSchema") if isinstance(base.get("paramSchema"), dict) else {}
+    schema_diff: dict[str, Any] = {}
+    for key, value in route_schema.items():
+        if key not in base_schema or base_schema.get(key) != value:
+            schema_diff[key] = value
+    if schema_diff:
+        overlay["paramSchema"] = schema_diff
+    return overlay
+
+
+def seed_overlays_from_catalog(
+    *,
+    baseline_path: Path,
+    routes_path: Path,
+    overlays_path: Path,
+) -> dict[str, dict[str, Any]]:
     existing = load_existing_routes(routes_path)
+    overlays: dict[str, dict[str, Any]] = {}
+    for operation in load_openapi_get_operations(baseline_path):
+        operation_id = str(operation.get("operationId") or "").strip()
+        base = build_base_route(operation)
+        route = existing.get(operation_id)
+        if not route:
+            continue
+        overlay = extract_overlay_from_route(route, base)
+        # Só persiste overlays com conteúdo TV-relevante (não só label/description genéricos).
+        tv_keys = {
+            "valueFields",
+            "seriesField",
+            "tableFields",
+            "tvConstraints",
+            "fixedQueryParams",
+            "paramStrategy",
+            "defaultParams",
+            "paramSchema",
+        }
+        if any(key in overlay for key in tv_keys):
+            # Mantém label/description/category se já curados junto.
+            overlays[operation_id] = overlay
+    payload = {
+        "version": 1,
+        "description": (
+            "Overlays TV por operationId — valueFields, tvConstraints, paramStrategy, "
+            "labels curados. Mergeados sobre o schema gerado do OpenAPI."
+        ),
+        "overlays": dict(sorted(overlays.items())),
+    }
+    overlays_path.parent.mkdir(parents=True, exist_ok=True)
+    overlays_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return overlays
+
+
+def generate_routes(
+    *,
+    baseline_path: Path,
+    routes_path: Path,
+    overlays_path: Path | None = None,
+) -> list[dict[str, Any]]:
+    existing = load_existing_routes(routes_path)
+    overlays = load_overlays(overlays_path or TV_OVERLAYS_PATH)
     generated: list[dict[str, Any]] = []
     for operation in load_openapi_get_operations(baseline_path):
         operation_id = str(operation.get("operationId") or "").strip()
         base = build_base_route(operation)
-        generated.append(merge_with_existing(base, existing.get(operation_id)))
+        with_existing = merge_with_existing(base, existing.get(operation_id))
+        generated.append(apply_overlay(with_existing, overlays.get(operation_id)))
     return generated
 
 
@@ -212,19 +445,44 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", type=Path, default=OPENAPI_BASELINE_PATH)
     parser.add_argument("--routes", type=Path, default=TV_ROUTES_PATH)
+    parser.add_argument("--overlays", type=Path, default=TV_OVERLAYS_PATH)
     parser.add_argument("--write", action="store_true", help="Grava tv_data_routes.json")
     parser.add_argument("--check", action="store_true", help="Falha se o catálogo divergir do gerador")
+    parser.add_argument(
+        "--seed-overlays",
+        action="store_true",
+        help="Extrai overlays TV do catálogo atual para tv_data_route_overlays.json",
+    )
     args = parser.parse_args()
 
     if not args.baseline.is_file():
         print(f"OpenAPI baseline ausente: {args.baseline}", file=sys.stderr)
         return 1
 
-    generated = generate_routes(baseline_path=args.baseline, routes_path=args.routes)
+    if args.seed_overlays:
+        overlays = seed_overlays_from_catalog(
+            baseline_path=args.baseline,
+            routes_path=args.routes,
+            overlays_path=args.overlays,
+        )
+        print(f"Gravados {len(overlays)} overlays em {args.overlays}")
+        if not args.write and not args.check:
+            return 0
+
+    generated = generate_routes(
+        baseline_path=args.baseline,
+        routes_path=args.routes,
+        overlays_path=args.overlays,
+    )
 
     if args.write:
         write_routes(args.routes, generated)
-        print(f"Gravado {len(generated)} rotas em {args.routes}")
+        with_schema = sum(1 for item in generated if item.get("paramSchema"))
+        with_values = sum(1 for item in generated if item.get("valueFields"))
+        print(
+            f"Gravado {len(generated)} rotas em {args.routes} "
+            f"(paramSchema={with_schema}, valueFields={with_values})"
+        )
         return 0
 
     if args.check:

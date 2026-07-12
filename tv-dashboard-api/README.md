@@ -45,18 +45,41 @@ Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}
 Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
 
 ```bash
-python3 scripts/generate_tv_data_routes_from_openapi.py --check   # catálogo ⊆ OpenAPI
-python3 scripts/check_tv_data_routes.py --check                  # allowlist válida
+python3 scripts/generate_tv_data_routes_from_openapi.py --check   # catálogo = gerador (OpenAPI + overlays)
+python3 scripts/check_tv_data_routes.py --check                  # allowlist ⊆ OpenAPI
 ```
 
-Regenerar catálogo após alterações no OpenAPI api-delpi:
+### Catálogo a partir do OpenAPI (como o registry do chat)
+
+Fonte de verdade: **api-delpi OpenAPI completo** → `openapi_baseline.json` (v2: `parameters` + `xDelpi`) → gerador TV.
+
+| Artefato | Papel |
+|---|---|
+| `api-delpi/app/content/openapi_baseline.json` | Inventário GET + query params + `x-delpi.shape` |
+| `tv-dashboard-api/.../tv_data_routes.json` | Catálogo servido ao editor (`GET /data/routes`) |
+| `tv_data_route_overlays.json` | Curadoria TV (`valueFields`, `tvConstraints`, labels, `paramStrategy`) |
+
+Esteira pós-deploy / após mudança de rota na api-delpi:
 
 ```bash
+# 1) Baseline rico (local ou via container)
+docker exec delpi-api-delpi python -c \
+  "from app.main import app; import json; open('/tmp/o.json','w').write(json.dumps(app.openapi()))"
+docker cp delpi-api-delpi:/tmp/o.json /tmp/openapi_full.json
+cd api-delpi && .venv/bin/python scripts/sync_openapi_baseline.py --from-json /tmp/openapi_full.json
+
+# 2) Catálogo TV
+cd ..
 python3 scripts/generate_tv_data_routes_from_openapi.py --write
-python3 scripts/enrich_tv_data_routes_pt.py --write   # labels/descriptions PT (preservados no generate)
+python3 scripts/enrich_tv_data_routes_pt.py --write   # labels PT (preservados no generate)
+python3 scripts/generate_tv_data_routes_from_openapi.py --check
+python3 scripts/check_tv_data_routes.py --check
+
+# 3) (chat) registry operacional — mesmo baseline
+cd minha-delpi-ai-api && .venv/bin/python scripts/generate_operational_route_registry.py --write --check
 ```
 
-O catálogo atual inclui **todas** as operações GET do baseline OpenAPI (~206 rotas), preservando enriquecimentos manuais (`label`, `description`, `category`, `seriesField`, `paramSchema`, `valueFields`) por `operationId`.
+O gerador monta `paramSchema` / `paramStrategy` (`date_range` quando há `start_date`+`end_date`) e `metaShape` a partir do OpenAPI; overlays sobrescrevem só o que é específico do TV. Seed inicial de overlays: `--seed-overlays`.
 
 
 ---

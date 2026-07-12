@@ -1,0 +1,212 @@
+{
+  "version": 1,
+  "description": "Overlays TV por operationId — valueFields, tvConstraints, paramStrategy, labels curados. Mergeados sobre o schema gerado do OpenAPI.",
+  "overlays": {
+    "get_on_time_delivery_pct": {
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "on_time_delivery_pct",
+        "value",
+        "otdPct"
+      ],
+      "label": "OTD — produção",
+      "description": "Indicador numérico para «OTD — produção».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
+      }
+    },
+    "get_overall_equipment_effectiveness_pct": {
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "overall_equipment_effectiveness_pct",
+        "value",
+        "oeePct"
+      ],
+      "label": "OEE — visão geral",
+      "description": "Indicador numérico para «OEE — visão geral».",
+      "defaultParams": {
+        "periodDays": 7
+      },
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 7,
+          "label": "Período (dias)"
+        }
+      }
+    },
+    "get_ppm_external_summary": {
+      "paramStrategy": "date_range",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "label": "Qualidade — PPM externo",
+      "description": "Indicador numérico para «Qualidade — PPM externo».",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
+      }
+    },
+    "get_ppm_internal_summary": {
+      "paramStrategy": "date_range",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "label": "Qualidade — PPM interno",
+      "description": "Indicador numérico para «Qualidade — PPM interno».",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
+      }
+    },
+    "get_production_oee_series": {
+      "seriesField": "points",
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "label": "OEE — série temporal",
+      "description": "Indicador numérico para «OEE — série temporal».",
+      "defaultParams": {
+        "periodDays": 7
+      },
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 7,
+          "label": "Período (dias)"
+        }
+      }
+    },
+    "get_production_otd_series": {
+      "seriesField": "points",
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "label": "OTD — série temporal",
+      "description": "Indicador numérico para «OTD — série temporal».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
+      }
+    },
+    "get_sales_conversion_rate": {
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ],
+      "description": "Indicador numérico para «Taxa de fechamento comercial».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        }
+      }
+    },
+    "get_supplies_stock_value": {
+      "tableFields": "top_products",
+      "allowedDisplayModes": [
+        "kpi",
+        "table",
+        "auto"
+      ],
+      "paramStrategy": "direct",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "stockValue",
+        "total"
+      ],
+      "label": "Suprimentos — valor de estoque",
+      "description": "Indicador numérico para «Suprimentos — valor de estoque».",
+      "paramSchema": {
+        "top_limit": {
+          "type": "integer",
+          "default": 5,
+          "label": "TOP N itens",
+          "optional": true
+        }
+      }
+    },
+    "search_products": {
+      "tableFields": "items",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": false
+      },
+      "label": "Produtos — busca",
+      "description": "Listagem paginada de «Produtos — busca» para uso em tabela ou gráfico no TV.",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      },
+      "paramSchema": {
+        "description": {
+          "type": "string",
+          "optional": true,
+          "label": "Descrição contém"
+        },
+        "group_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupo"
+        },
+        "page_size": {
+          "type": "integer",
+          "default": 5,
+          "label": "Linhas (TOP N)"
+        }
+      }
+    }
+  }
+}

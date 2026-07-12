@@ -1,6 +1,35 @@
 {
   "routes": [
     {
+      "operationId": "get_branch_new_business_rol_target_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Commercial rol new business target",
+      "category": "commercial",
+      "path": "/commercial/branch_new_business_rol_target_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Commercial rol new business target».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "branch_new_business_rol_target_pct",
+        "value"
+      ]
+    },
+    {
       "operationId": "get_branch_rol_target_pct",
       "httpMethod": "GET",
       "label": "Indicador — Meta percentual rol comercial",
@@ -11,7 +40,57 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Meta percentual rol comercial»."
+      "description": "Indicador numérico para «Meta percentual rol comercial».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "branch_rol_target_pct",
+        "value"
+      ]
+    },
+    {
+      "operationId": "get_branch_weg_rol_target_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Commercial rol weg target",
+      "category": "commercial",
+      "path": "/commercial/branch_weg_rol_target_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Commercial rol weg target».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "branch_weg_rol_target_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_sales_conversion_rate",
@@ -24,19 +103,18 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "description": "Indicador numérico para «Taxa de fechamento comercial».",
       "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
-        },
-        "periodDays": {
-          "type": "integer",
-          "default": 30,
-          "label": "Período (dias)"
         },
         "customer_segment": {
           "type": "string",
@@ -45,15 +123,46 @@
         }
       },
       "paramStrategy": "date_range",
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
-      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "description": "Indicador numérico para «Taxa de fechamento comercial»."
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ]
+    },
+    {
+      "operationId": "get_head_office_new_business_rol_target_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Commercial rol new business target",
+      "category": "commercial",
+      "path": "/commercial/head_office_new_business_rol_target_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Commercial rol new business target».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "head_office_new_business_rol_target_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_head_office_rol_target_pct",
@@ -66,7 +175,57 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Meta percentual rol comercial»."
+      "description": "Indicador numérico para «Meta percentual rol comercial».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "head_office_rol_target_pct",
+        "value"
+      ]
+    },
+    {
+      "operationId": "get_head_office_weg_rol_target_pct",
+      "httpMethod": "GET",
+      "label": "Indicador — Commercial rol weg target",
+      "category": "commercial",
+      "path": "/commercial/head_office_weg_rol_target_pct",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Commercial rol weg target».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "head_office_weg_rol_target_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_new_business_rol_pct",
@@ -79,7 +238,33 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Percentual rol de novos negócios»."
+      "description": "Indicador numérico para «Percentual rol de novos negócios».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "new_business_rol_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_new_clients_average",
@@ -92,7 +277,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Média de novos clientes»."
+      "description": "Indicador numérico para «Média de novos clientes».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_new_clients_rol_pct",
@@ -105,7 +307,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Percentual rol de clientes novos»."
+      "description": "Indicador numérico para «Percentual rol de clientes novos».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "new_clients_rol_pct",
+        "value"
+      ]
     },
     {
       "operationId": "list_commercial_proposals",
@@ -118,7 +341,62 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Propostas comerciais (carteira Totvs)» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Propostas comerciais (carteira Totvs)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort by"
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort dir",
+          "default": "asc"
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Search"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_commercial_proposal",
@@ -130,8 +408,21 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Detalhe da proposta comercial (OV)» para uso em tabela ou gráfico no TV."
+      "metaShape": "product_snapshot",
+      "description": "Consulta operacional: «Detalhe da proposta comercial (OV)».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "revision": {
+          "type": "string",
+          "optional": true,
+          "label": "Revision"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_commercial_proposal_history_events",
@@ -144,7 +435,30 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Histórico de estágios da proposta comercial» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Histórico de estágios da proposta comercial» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "revision": {
+          "type": "string",
+          "optional": true,
+          "label": "Revision"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_commercial_rol_series",
@@ -157,7 +471,29 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Série temporal de rol comercial»."
+      "description": "Indicador numérico para «Série temporal de rol comercial».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_sales_order_otd",
@@ -170,7 +506,162 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Otd de pedidos de venda»."
+      "description": "Indicador numérico para «Otd de pedidos de venda».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_line_detail",
+      "httpMethod": "GET",
+      "label": "Relatório operacional — Detalhe de linha otd de pedido de venda",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Relatório operacional — Detalhe de linha otd de pedido de venda».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_panel",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Painel otd de pedidos de venda",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/panel",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Painel otd de pedidos de venda» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro de status: on_time ou late."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort by"
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort dir",
+          "default": "asc"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_series",
+      "httpMethod": "GET",
+      "label": "Indicador — Série temporal otd de pedidos de venda",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Série temporal otd de pedidos de venda».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
@@ -195,8 +686,38 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Busca de clientes» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código"
+        },
+        "name": {
+          "type": "string",
+          "optional": true,
+          "label": "Nome ou parte do nome."
+        },
+        "store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do cliente."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Busca de clientes»."
     },
     {
       "operationId": "get_dashboard_department_idd_dashboard_department_idd_get",
@@ -209,6 +730,33 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "department_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Department id"
+        },
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competence"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
       "description": "Indicador numérico para «Dashboard departamental (IDD)»."
     },
     {
@@ -222,7 +770,45 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar LMPs (ordens especiais / amostras)» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Listar LMPs (ordens especiais / amostras)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "listing_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        },
+        "include_qtd_pi": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Include qtd pi"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_lmps_dashboard",
@@ -234,8 +820,49 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Dashboard de LMPs» para uso em tabela ou gráfico no TV."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Dashboard de LMPs».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "default": "Todos"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "listing_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmps_dashboard_charts",
@@ -248,7 +875,36 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Gráficos do painel de LMPs»."
+      "description": "Indicador numérico para «Gráficos do painel de LMPs».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "default": "Todos"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "listing_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Listing type"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_lmps_dashboard_items",
@@ -261,7 +917,48 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Itens paginados do painel de LMPs» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Itens paginados do painel de LMPs» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "default": "Todos"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "listing_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Listing type"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmps_dashboard_summary",
@@ -274,7 +971,36 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «KPIs resumidos do painel de LMPs»."
+      "description": "Indicador numérico para «KPIs resumidos do painel de LMPs».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "default": "Todos"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "listing_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Listing type"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -286,8 +1012,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Detalhe da LMP por ordem de venda»."
+      "metaShape": "product_snapshot",
+      "description": "Consulta operacional: «Detalhe da LMP por ordem de venda».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmp_history_events",
@@ -299,8 +1043,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Histórico de eventos da OV (AIJ010)»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Histórico de eventos da OV (AIJ010)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "revision": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtra eventos de uma revisão específica da OV."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmp_history_flow",
@@ -312,8 +1079,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Transições de fluxo da engenharia na OV»."
+      "metaShape": "list",
+      "description": "Consulta operacional: «Transições de fluxo da engenharia na OV».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "revision": {
+          "type": "string",
+          "optional": true,
+          "label": "Revision"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_mini_applicators_ferramentas",
@@ -326,7 +1116,64 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar ferramentas mini-aplicadores» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Listar ferramentas mini-aplicadores» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": true,
+          "label": "Codigo"
+        },
+        "descricao": {
+          "type": "string",
+          "optional": true,
+          "label": "Descricao"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort by"
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort dir",
+          "default": "asc"
+        },
+        "incluir_bloqueados": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir bloqueados",
+          "default": false
+        },
+        "codigo_peca": {
+          "type": "string",
+          "optional": true,
+          "label": "Codigo peca"
+        },
+        "descricao_peca": {
+          "type": "string",
+          "optional": true,
+          "label": "Descricao peca"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_mini_applicators_ferramenta",
@@ -351,8 +1198,16 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Componentes do mini-aplicador» para uso em tabela ou gráfico no TV."
+      "metaShape": "list",
+      "description": "Consulta operacional: «Componentes do mini-aplicador».",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_mini_applicators_golpes",
@@ -365,7 +1220,25 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Golpes do mini-aplicador no período»."
+      "description": "Indicador numérico para «Golpes do mini-aplicador no período».",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "data_inicial": {
+          "type": "string",
+          "optional": false,
+          "label": "Data inicial"
+        },
+        "data_final": {
+          "type": "string",
+          "optional": false,
+          "label": "Data final"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_mini_applicators_pecas",
@@ -377,8 +1250,57 @@
         "table",
         "auto"
       ],
+      "metaShape": "list",
+      "description": "Consulta operacional: «Listar peças do mini-aplicador»."
+    },
+    {
+      "operationId": "list_mini_applicators_pecas_reposicao",
+      "httpMethod": "GET",
+      "label": "Listar peças de reposição amarradas",
+      "category": "engineering",
+      "path": "/engineering/mini-applicators/pecas-reposicao",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar peças do mini-aplicador» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Listar peças de reposição amarradas» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": true,
+          "label": "Codigo"
+        },
+        "descricao": {
+          "type": "string",
+          "optional": true,
+          "label": "Descricao"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort by"
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort dir",
+          "default": "asc"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_transforma_mais_processes",
@@ -391,7 +1313,44 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar processos Transforma Mais» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Listar processos Transforma Mais» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "id": {
+          "type": "string",
+          "optional": true,
+          "label": "Id"
+        },
+        "name_process": {
+          "type": "string",
+          "optional": true,
+          "label": "Name process"
+        },
+        "filial_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial id"
+        },
+        "sector_name": {
+          "type": "string",
+          "optional": true,
+          "label": "Sector name"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_transforma_mais_summary",
@@ -404,7 +1363,310 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Resumo Transforma Mais»."
+      "description": "Indicador numérico para «Resumo Transforma Mais».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "filial_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial id"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_filtros",
+      "httpMethod": "GET",
+      "label": "Indicador — Financeiro despesas centro custo filtros",
+      "category": "financial",
+      "path": "/financeiro/despesas-centro-custo/filtros",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Financeiro despesas centro custo filtros».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo."
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_lancamentos",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Financeiro despesas centro custo lancamento",
+      "category": "financial",
+      "path": "/financeiro/despesas-centro-custo/lancamentos",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Financeiro despesas centro custo lancamento» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo."
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do fornecedor."
+        },
+        "supplier_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do fornecedor."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Search"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Campo de ordenação permitido.",
+          "default": "data_emissao"
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção da ordenação: asc ou desc.",
+          "default": "desc"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_ranking_centros",
+      "httpMethod": "GET",
+      "label": "Lista — Financeiro despesas centro custo ranking centros",
+      "category": "financial",
+      "path": "/financeiro/despesas-centro-custo/ranking-centros",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Financeiro despesas centro custo ranking centros».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do fornecedor."
+        },
+        "supplier_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do fornecedor."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_ranking_fornecedores",
+      "httpMethod": "GET",
+      "label": "Lista — Financeiro despesas centro custo ranking fornecedores",
+      "category": "financial",
+      "path": "/financeiro/despesas-centro-custo/ranking-fornecedores",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Financeiro despesas centro custo ranking fornecedores».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_resumo",
+      "httpMethod": "GET",
+      "label": "Indicador — Financeiro despesas centro custo resumo",
+      "category": "financial",
+      "path": "/financeiro/despesas-centro-custo/resumo",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Financeiro despesas centro custo resumo».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo."
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do fornecedor."
+        },
+        "supplier_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do fornecedor."
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_serie",
+      "httpMethod": "GET",
+      "label": "Lista — Financeiro despesas centro custo serie",
+      "category": "financial",
+      "path": "/financeiro/despesas-centro-custo/serie",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Financeiro despesas centro custo serie».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo."
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do fornecedor."
+        },
+        "supplier_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do fornecedor."
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_financial_ebitda_pct",
@@ -417,7 +1679,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «EBITDA percentual (financeiro)»."
+      "description": "Indicador numérico para «EBITDA percentual (financeiro)».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "financial_ebitda_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_financial_fixed_cost_pct",
@@ -430,7 +1713,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Custo fixo percentual (financeiro)»."
+      "description": "Indicador numérico para «Custo fixo percentual (financeiro)».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "financial_fixed_cost_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_financial_pmr",
@@ -443,7 +1747,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «PMR — prazo médio de recebimento»."
+      "description": "Indicador numérico para «PMR — prazo médio de recebimento».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_financial_rol",
@@ -456,7 +1777,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «ROL financeiro (receita operacional líquida)»."
+      "description": "Indicador numérico para «ROL financeiro (receita operacional líquida)».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "root_health_get",
@@ -482,7 +1820,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Pdis ativos»."
+      "description": "Indicador numérico para «Pdis ativos».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_hr_branches",
@@ -494,8 +1849,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Filiais de rh» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Filiais de rh»."
     },
     {
       "operationId": "get_hr_performance_reviews_completion",
@@ -508,7 +1863,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Conclusão de avaliações de desempenho»."
+      "description": "Indicador numérico para «Conclusão de avaliações de desempenho».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_hr_snapshot",
@@ -520,8 +1892,25 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise consolidada — Snapshot de rh»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Snapshot de rh».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_inspecoes_entrada_historico",
@@ -533,8 +1922,68 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Lista paginada — Inspecoes entrada historico»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Inspecoes entrada historico» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "result": {
+          "type": "string",
+          "optional": true,
+          "label": "Result"
+        },
+        "date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Date from"
+        },
+        "date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Date to"
+        },
+        "supplier": {
+          "type": "string",
+          "optional": true,
+          "label": "Supplier"
+        },
+        "product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto"
+        },
+        "inspector": {
+          "type": "string",
+          "optional": true,
+          "label": "Inspector"
+        },
+        "invoice_number": {
+          "type": "string",
+          "optional": true,
+          "label": "Invoice number"
+        },
+        "lot": {
+          "type": "string",
+          "optional": true,
+          "label": "Lot"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_inspecoes_entrada_historico_detalhe",
@@ -546,8 +1995,21 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Consulta — Inspecoes entrada historico detalhe»."
+      "metaShape": "object",
+      "description": "Consulta operacional: «Consulta — Inspecoes entrada historico detalhe».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "inspection_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Inspection id"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_inspecoes_entrada_pendentes",
@@ -559,8 +2021,28 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Lista paginada — Inspecoes entrada pendentes»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Inspecoes entrada pendentes» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_inspecoes_entrada_pendentes_fornecedor",
@@ -572,8 +2054,16 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Lista — Inspecoes entrada pendentes fornecedor»."
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Inspecoes entrada pendentes fornecedor».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_inspecoes_entrada_rejeitadas_ensaiador",
@@ -585,8 +2075,16 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Lista — Inspecoes entrada rejeitadas ensaiador»."
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Inspecoes entrada rejeitadas ensaiador».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_inspecoes_entrada_rejeitadas_produto",
@@ -598,8 +2096,22 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Lista — Inspecoes entrada rejeitadas produto»."
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Inspecoes entrada rejeitadas produto».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_inspecoes_entrada_resumo",
@@ -612,7 +2124,15 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Inspecoes entrada resumo»."
+      "description": "Indicador numérico para «Inspecoes entrada resumo».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_pedidos_venda_abertos",
@@ -624,8 +2144,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Análise consolidada — Pedidos de venda em aberto» para uso em tabela ou gráfico no TV."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Pedidos de venda em aberto»."
     },
     {
       "operationId": "list_ops_abertas_pedidos_venda",
@@ -637,8 +2157,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Análise consolidada — Ops abertas (pedidos de venda)» para uso em tabela ou gráfico no TV."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Ops abertas (pedidos de venda)»."
     },
     {
       "operationId": "get_production_allocation_gaps",
@@ -650,8 +2170,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Componentes sem empenho (travamento)»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Componentes sem empenho (travamento)».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -663,8 +2206,36 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Consumo real de item por produto»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Consumo real de item por produto».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "product_group": {
+          "type": "string",
+          "optional": true,
+          "label": "Product group"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_top_items",
@@ -676,8 +2247,37 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Itens mais consumidos na produção»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Itens mais consumidos na produção».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        },
+        "group_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Group by",
+          "default": "general"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_top_items_by_work_center",
@@ -689,8 +2289,36 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Consumo por centro de trabalho»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Consumo por centro de trabalho».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_top_items_validated",
@@ -702,8 +2330,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Consumo validado por apontamento real»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Consumo validado por apontamento real».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_depreciation_pct",
@@ -716,7 +2367,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Depreciação percentual»."
+      "description": "Indicador numérico para «Depreciação percentual».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "depreciation_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_direct_labor_cost_pct",
@@ -729,7 +2401,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Custo direto de mão de obra»."
+      "description": "Indicador numérico para «Custo direto de mão de obra».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "direct_labor_cost_pct",
+        "value"
+      ]
     },
     {
       "operationId": "list_eficiencia_fabril_appointments",
@@ -742,7 +2435,46 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Eficiência fabril — apontamentos (carga bulk)» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Eficiência fabril — apontamentos (carga bulk)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Op"
+        },
+        "employee": {
+          "type": "string",
+          "optional": true,
+          "label": "Employee"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "status_ok_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Status ok only",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -754,8 +2486,58 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Eficiência fabril — dashboard MOD e gráficos»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Eficiência fabril — dashboard MOD e gráficos».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Op"
+        },
+        "employee": {
+          "type": "string",
+          "optional": true,
+          "label": "Employee"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "status_ok_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Status ok only",
+          "default": true
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_losses_records",
@@ -767,8 +2549,42 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Registros detalhados de refugo/scrap»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Registros detalhados de refugo/scrap».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        },
+        "loss_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Loss type",
+          "default": "both",
+          "enum": [
+            "refugo",
+            "scrap",
+            "both"
+          ]
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_losses_top_materials",
@@ -780,8 +2596,42 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Matérias-primas com mais refugo/scrap no período»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Matérias-primas com mais refugo/scrap no período».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        },
+        "loss_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Loss type",
+          "default": "both",
+          "enum": [
+            "refugo",
+            "scrap",
+            "both"
+          ]
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_oee",
@@ -793,8 +2643,78 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «OEE produção — resumo e apontamentos (view fabril)»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «OEE produção — resumo e apontamentos (view fabril)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "efficiency_bands": {
+          "type": "string",
+          "optional": true,
+          "label": "Faixas de eficiência (csv): ok, low, verify"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro(s) de trabalho (csv)"
+        },
+        "production_order": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem(ns) de produção (csv)"
+        },
+        "operator_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código(s) do operador (csv)"
+        },
+        "product_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Product type"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort by"
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort dir",
+          "default": "asc"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_production_oee_appointment_by_id",
@@ -806,8 +2726,16 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Detalhe do apontamento OEE (roteiro, estrutura e tempos)»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Detalhe do apontamento OEE (roteiro, estrutura e tempos)».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_oee_series",
@@ -820,30 +2748,36 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "defaultParams": {
-        "periodDays": 7
-      },
+      "description": "Indicador numérico para «OEE — série temporal».",
       "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 7,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade"
+        },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
-        },
-        "periodDays": {
-          "type": "integer",
-          "default": 7,
-          "label": "Período (dias)"
         }
       },
       "paramStrategy": "date_range",
-      "fixedQueryParams": {
-        "granularity": "day"
+      "defaultParams": {
+        "periodDays": 7
       },
-      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "description": "Indicador numérico para «OEE — série temporal»."
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "seriesField": "points"
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -856,22 +2790,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "description": "Indicador numérico para «OTD — produção».",
       "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
-        },
-        "periodDays": {
-          "type": "integer",
-          "default": 30,
-          "label": "Período (dias)"
         }
       },
       "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "on_time_delivery_pct",
         "value",
@@ -880,8 +2816,7 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      },
-      "description": "Indicador numérico para «OTD — produção»."
+      }
     },
     {
       "operationId": "get_production_order_by_op",
@@ -893,8 +2828,36 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Detalhe da OP por C2_OP»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Detalhe da OP por C2_OP».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "product_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Product type",
+          "enum": [
+            "PA",
+            "PI"
+          ]
+        },
+        "linked_sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Linked sort by"
+        },
+        "linked_sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Linked sort dir",
+          "default": "asc"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_orders_finished",
@@ -906,8 +2869,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «OPs finalizadas na data»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «OPs finalizadas na data».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_orders_finished_without_consumption",
@@ -919,8 +2905,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «OPs finalizadas sem consumo de componentes»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «OPs finalizadas sem consumo de componentes».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_orders_open",
@@ -932,8 +2941,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «OPs em aberto na data»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «OPs em aberto na data».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_otd",
@@ -945,8 +2977,53 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «OTD produção — resumo e ordens (SC2010)»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «OTD produção — resumo e ordens (SC2010)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort by"
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort dir",
+          "default": "asc"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_production_otd_series",
@@ -959,30 +3036,36 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "description": "Indicador numérico para «OTD — série temporal».",
       "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade"
+        },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
-        },
-        "periodDays": {
-          "type": "integer",
-          "default": 30,
-          "label": "Período (dias)"
         }
       },
       "paramStrategy": "date_range",
-      "fixedQueryParams": {
-        "granularity": "day"
+      "defaultParams": {
+        "periodDays": 30
       },
-      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "description": "Indicador numérico para «OTD — série temporal»."
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "seriesField": "points"
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -995,22 +3078,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "defaultParams": {
-        "periodDays": 7
-      },
+      "description": "Indicador numérico para «OEE — visão geral».",
       "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 7,
+          "label": "Período (dias)",
+          "optional": true
+        },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
-        },
-        "periodDays": {
-          "type": "integer",
-          "default": 7,
-          "label": "Período (dias)"
         }
       },
       "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 7
+      },
       "valueFields": [
         "overall_equipment_effectiveness_pct",
         "value",
@@ -1019,8 +3104,7 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      },
-      "description": "Indicador numérico para «OEE — visão geral»."
+      }
     },
     {
       "operationId": "get_production_planned_vs_real_time",
@@ -1032,8 +3116,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Tempo planejado × tempo real por OP»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Tempo planejado × tempo real por OP».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Work center"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_cost_pct",
@@ -1046,7 +3153,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Custo de produção percentual»."
+      "description": "Indicador numérico para «Custo de produção percentual».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "production_cost_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_production_schedule_today",
@@ -1058,8 +3186,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Produtos programados para produzir na data»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Produtos programados para produzir na data».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_work_center_average_planned_time",
@@ -1071,8 +3217,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Tempo médio planejado por centro de trabalho»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Tempo médio planejado por centro de trabalho».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_work_center_order_summary",
@@ -1084,8 +3248,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Resumo de OPs por centro de trabalho»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Resumo de OPs por centro de trabalho».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_directives",
@@ -1097,8 +3279,21 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Diretivas do produto (referência cliente ou código DELPI)»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Diretivas do produto (referência cliente ou código DELPI)».",
+      "paramSchema": {
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_product_drawings",
@@ -1111,7 +3306,90 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Catálogo de desenhos PDF da biblioteca» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Catálogo de desenhos PDF da biblioteca» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código"
+        },
+        "code_exact": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Code exact",
+          "default": false
+        },
+        "filename": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro parcial pelo nome do arquivo PDF."
+        },
+        "revision": {
+          "type": "string",
+          "optional": true,
+          "label": "Revision"
+        },
+        "file_kind": {
+          "type": "string",
+          "optional": true,
+          "label": "File kind"
+        },
+        "has_variant": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Filtra arquivos com sufixo variante (-N)."
+        },
+        "has_revision": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Filtra arquivos com sufixo de revisão (_RNN)."
+        },
+        "modified_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Data/hora ISO mínima de modificação do arquivo."
+        },
+        "modified_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Data/hora ISO máxima de modificação do arquivo."
+        },
+        "min_size_bytes": {
+          "type": "integer",
+          "optional": true,
+          "label": "Min size bytes"
+        },
+        "max_size_bytes": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max size bytes"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "sort": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort",
+          "default": "product_code"
+        },
+        "direction": {
+          "type": "string",
+          "optional": true,
+          "label": "asc ou desc.",
+          "default": "asc"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_exclusive_raw_materials_catalog",
@@ -1123,8 +3401,59 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Catálogo global de matérias-primas exclusivas» para uso em tabela ou gráfico no TV."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Catálogo global de matérias-primas exclusivas».",
+      "paramSchema": {
+        "view": {
+          "type": "string",
+          "optional": true,
+          "label": "View",
+          "default": "by_material"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        },
+        "offset": {
+          "type": "integer",
+          "optional": true,
+          "label": "Offset"
+        },
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "finished_product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Finished product code"
+        },
+        "raw_material_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Raw material code"
+        },
+        "group_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Group code"
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Include test products",
+          "default": false
+        },
+        "legacy": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Reservado para normalização futura",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "search_products",
@@ -1137,39 +3466,61 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
+      "description": "Listagem paginada de «Produtos — busca» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
-        "description": {
+        "code": {
           "type": "string",
           "optional": true,
-          "label": "Descrição contém"
+          "label": "Código"
         },
         "group_code": {
           "type": "string",
           "optional": true,
           "label": "Grupo"
         },
-        "code": {
+        "description": {
           "type": "string",
           "optional": true,
-          "label": "Código"
+          "label": "Descrição contém"
+        },
+        "customer_reference": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer reference"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
         },
         "page_size": {
           "type": "integer",
-          "default": 5,
-          "label": "Linhas (TOP N)"
+          "optional": true,
+          "label": "Linhas (TOP N)",
+          "default": 5
+        },
+        "sort": {
+          "type": "string",
+          "optional": true,
+          "label": "Sort"
+        },
+        "direction": {
+          "type": "string",
+          "optional": true,
+          "label": "Direction"
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       },
-      "description": "Listagem paginada de «Produtos — busca» para uso em tabela ou gráfico no TV."
+      "tableFields": "items",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -1181,8 +3532,23 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Dados cadastrais do produto»."
+      "metaShape": "product_snapshot",
+      "description": "Consulta operacional: «Dados cadastrais do produto».",
+      "paramSchema": {
+        "view": {
+          "type": "string",
+          "optional": true,
+          "label": "View",
+          "default": "full"
+        },
+        "legacy": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Legacy",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_analyser",
@@ -1194,8 +3560,17 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Analisador completo do produto»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Analisador completo do produto».",
+      "paramSchema": {
+        "view": {
+          "type": "string",
+          "optional": true,
+          "label": "View",
+          "default": "full"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_cost_impact_simulation",
@@ -1207,8 +3582,33 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Simulador de impacto de custos do PA»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Simulador de impacto de custos do PA».",
+      "paramSchema": {
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "price_source": {
+          "type": "string",
+          "optional": true,
+          "label": "Price source",
+          "default": "standard_cost"
+        },
+        "adjustment_percent": {
+          "type": "number",
+          "optional": true,
+          "label": "Adjustment percent",
+          "default": 0.0
+        },
+        "top_n": {
+          "type": "integer",
+          "optional": true,
+          "label": "Top n"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_customers",
@@ -1220,8 +3620,23 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Clientes do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Clientes do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_drawing",
@@ -1246,8 +3661,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Do desenho PDF do produto»."
+      "metaShape": "document_export",
+      "description": "Consulta operacional: «Do desenho PDF do produto»."
     },
     {
       "operationId": "get_product_factory_status",
@@ -1259,8 +3674,42 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Status fabril completo do produto»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Status fabril completo do produto».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "legacy": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Devolve SIM/NAO em vez de booleanos",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_guide",
@@ -1272,8 +3721,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Roteiro de produção do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Roteiro de produção do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        },
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_inbound_invoice_items",
@@ -1285,8 +3757,43 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Itens de nota fiscal de entrada do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Itens de nota fiscal de entrada do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "issue_date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Issue date start"
+        },
+        "issue_date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Issue date end"
+        },
+        "supplier": {
+          "type": "string",
+          "optional": true,
+          "label": "Supplier"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_inspection",
@@ -1298,8 +3805,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Inspeção de qualidade do produto (QP6/QP7/QP8)»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Inspeção de qualidade do produto (QP6/QP7/QP8)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        },
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_internal_movements",
@@ -1311,8 +3836,53 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Movimentações internas do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Movimentações internas do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "location": {
+          "type": "string",
+          "optional": true,
+          "label": "Location"
+        },
+        "tm": {
+          "type": "string",
+          "optional": true,
+          "label": "Tm"
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Op"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_last_purchase",
@@ -1324,8 +3894,16 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Última compra válida da matéria-prima»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Última compra válida da matéria-prima».",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_outbound_invoice_items",
@@ -1337,8 +3915,43 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Itens de nota fiscal de saída do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Itens de nota fiscal de saída do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "issue_date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Issue date start"
+        },
+        "issue_date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Issue date end"
+        },
+        "customer": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_parents",
@@ -1350,8 +3963,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Onde o produto é usado (produtos pai / BOM reversa)»."
+      "metaShape": "hierarchy",
+      "description": "Visão hierárquica de «Onde o produto é usado (produtos pai / BOM reversa)».",
+      "paramSchema": {
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_pricing",
@@ -1376,8 +4007,32 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Situação produtiva do produto (PA, PI, OP e apontamentos)»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Situação produtiva do produto (PA, PI, OP e apontamentos)».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "legacy": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Devolve SIM/NAO em vez de booleanos",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_purchase_budget_history",
@@ -1389,8 +4044,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Histórico de orçamento de compra (SC + PC)»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Histórico de orçamento de compra (SC + PC)».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_purchase_price_history",
@@ -1402,8 +4075,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Histórico de preço de compra da matéria-prima»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Histórico de preço de compra da matéria-prima».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "history_limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "History limit"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_purchases",
@@ -1415,8 +4111,23 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Histórico de compras do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Histórico de compras do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
@@ -1428,8 +4139,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise inteligente de preço de matéria-prima»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise inteligente de preço de matéria-prima».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "history_limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "History limit"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_sales_summary",
@@ -1467,8 +4201,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Carteira de pedidos de venda em aberto do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Carteira de pedidos de venda em aberto do produto» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_product_shipping_status",
@@ -1480,8 +4214,37 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Expedição do PA via inspeção final»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Expedição do PA via inspeção final».",
+      "paramSchema": {
+        "reference_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Reference date"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "legacy": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Omite datas ISO normalizadas",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_stock",
@@ -1493,8 +4256,44 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Estoque do produto por filial e local»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Estoque do produto por filial e local» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "warehouse": {
+          "type": "string",
+          "optional": true,
+          "label": "Warehouse"
+        },
+        "location": {
+          "type": "string",
+          "optional": true,
+          "label": "Alias legado de warehouse — preferir warehouse"
+        },
+        "legacy": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Omite alias location nos itens de estoque",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_structure",
@@ -1507,7 +4306,25 @@
         "auto"
       ],
       "metaShape": "hierarchy",
-      "description": "Visão hierárquica de «Estrutura (BOM) do produto»."
+      "description": "Visão hierárquica de «Estrutura (BOM) do produto».",
+      "paramSchema": {
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "structure_excel_public_products__code__structure_excel_get",
@@ -1519,8 +4336,17 @@
         "table",
         "auto"
       ],
-      "metaShape": "hierarchy",
-      "description": "Visão hierárquica de «Structure Excel Public»."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "format": {
+          "type": "string",
+          "optional": true,
+          "label": "Format",
+          "default": "json"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Structure Excel Public»."
     },
     {
       "operationId": "get_product_structure_exclusivity",
@@ -1532,8 +4358,22 @@
         "table",
         "auto"
       ],
-      "metaShape": "hierarchy",
-      "description": "Visão hierárquica de «Estrutura do produto com exclusividade de matérias-primas»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Estrutura do produto com exclusividade de matérias-primas».",
+      "paramSchema": {
+        "max_depth": {
+          "type": "integer",
+          "optional": true,
+          "label": "Max depth"
+        },
+        "legacy": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Devolve SIM/NAO em vez de booleanos",
+          "default": false
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_summary",
@@ -1545,8 +4385,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Resumo do produto (cadastro + estoque + preços)»."
+      "metaShape": "product_snapshot",
+      "description": "Consulta operacional: «Resumo do produto (cadastro + estoque + preços)»."
     },
     {
       "operationId": "get_product_suppliers",
@@ -1558,8 +4398,23 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Fornecedores do produto»."
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Fornecedores do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_propostas_comerciais",
@@ -1572,7 +4427,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Proposta comercial interna (pdf/totvs)» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Proposta comercial interna (pdf/totvs)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 100
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_proposta_comercial",
@@ -1584,8 +4448,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise consolidada — Proposta comercial interna (pdf/totvs)»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Proposta comercial interna (pdf/totvs)»."
     },
     {
       "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
@@ -1623,8 +4487,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Produtos mais comprados no período»."
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional: «Produtos mais comprados no período».",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plans",
@@ -1637,7 +4524,83 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "severity": {
+          "type": "string",
+          "optional": true,
+          "label": "Severity"
+        },
+        "product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto"
+        },
+        "customer_name": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer name"
+        },
+        "owner_user_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Owner user id"
+        },
+        "branch_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Branch code"
+        },
+        "nonconformity_scope": {
+          "type": "string",
+          "optional": true,
+          "label": "Nonconformity scope"
+        },
+        "code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código"
+        },
+        "department": {
+          "type": "string",
+          "optional": true,
+          "label": "Department"
+        },
+        "root_cause_category": {
+          "type": "string",
+          "optional": true,
+          "label": "Root cause category"
+        },
+        "failure_mode": {
+          "type": "string",
+          "optional": true,
+          "label": "Failure mode"
+        },
+        "overdue_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Overdue only",
+          "default": false
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plan_assignable_users",
@@ -1650,7 +4613,21 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Directory user» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Directory user» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Q"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 20
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_action_plans_dashboard",
@@ -1663,7 +4640,41 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «PAC Qualidade — painel»."
+      "description": "Indicador numérico para «PAC Qualidade — painel».",
+      "paramSchema": {
+        "branch_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Branch code"
+        },
+        "nonconformity_scope": {
+          "type": "string",
+          "optional": true,
+          "label": "Nonconformity scope"
+        },
+        "product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto"
+        },
+        "customer_name": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer name"
+        },
+        "failure_mode": {
+          "type": "string",
+          "optional": true,
+          "label": "Failure mode"
+        },
+        "months": {
+          "type": "integer",
+          "optional": true,
+          "label": "Months",
+          "default": 12
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plan_pending_effectiveness_reviews",
@@ -1676,7 +4687,22 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "search_quality_action_plan_evidences",
@@ -1689,7 +4715,47 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan evidence» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan evidence» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "q": {
+          "type": "string",
+          "optional": false,
+          "label": "Q"
+        },
+        "plan_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan id"
+        },
+        "branch_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Branch code"
+        },
+        "section": {
+          "type": "string",
+          "optional": true,
+          "label": "Section"
+        },
+        "evidence_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Evidence type"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plan_export_templates",
@@ -1714,8 +4780,26 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise consolidada — Quality action plan knowledge graph»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Quality action plan knowledge graph».",
+      "paramSchema": {
+        "branch_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Branch code"
+        },
+        "product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plan_my_queue",
@@ -1728,7 +4812,39 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan action» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan action» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Branch code"
+        },
+        "overdue_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Overdue only",
+          "default": false
+        },
+        "include_completed": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Include completed",
+          "default": false
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plans_overdue",
@@ -1741,7 +4857,32 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Branch code"
+        },
+        "nonconformity_scope": {
+          "type": "string",
+          "optional": true,
+          "label": "Nonconformity scope"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plans_recurrence",
@@ -1754,7 +4895,38 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan recurrence» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan recurrence» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Branch code"
+        },
+        "nonconformity_scope": {
+          "type": "string",
+          "optional": true,
+          "label": "Nonconformity scope"
+        },
+        "min_plans": {
+          "type": "integer",
+          "optional": true,
+          "label": "Min plans",
+          "default": 2
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_action_plan_detail",
@@ -1766,8 +4938,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise consolidada — Quality action plan»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Quality action plan»."
     },
     {
       "operationId": "list_quality_action_plan_audit_log",
@@ -1780,7 +4952,22 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan audit log» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan audit log» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plan_evidences",
@@ -1793,7 +4980,15 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan evidence» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan evidence» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Q"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_action_plan_evidence_content",
@@ -1805,8 +5000,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise consolidada — Quality action plan evidence»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Quality action plan evidence»."
     },
     {
       "operationId": "download_quality_action_plan_evidence",
@@ -1818,8 +5013,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Consulta — Quality action plan evidence»."
+      "metaShape": "document_export",
+      "description": "Consulta operacional: «Consulta — Quality action plan evidence»."
     },
     {
       "operationId": "export_quality_action_plan_pdf",
@@ -1831,8 +5026,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Consulta — Quality action plan export»."
+      "metaShape": "document_export",
+      "description": "Consulta operacional: «Consulta — Quality action plan export»."
     },
     {
       "operationId": "export_quality_action_plan_rnc_8d",
@@ -1845,7 +5040,15 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Quality action plan export»."
+      "description": "Indicador numérico para «Quality action plan export».",
+      "paramSchema": {
+        "template_key": {
+          "type": "string",
+          "optional": true,
+          "label": "Template key"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "export_quality_action_plan_rnc_8d_pdf",
@@ -1857,8 +5060,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Consulta — Quality action plan export»."
+      "metaShape": "document_export",
+      "description": "Consulta operacional: «Consulta — Quality action plan export»."
     },
     {
       "operationId": "list_quality_action_plan_revisions",
@@ -1871,7 +5074,22 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality action plan revision» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality action plan revision» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_action_plan_revision",
@@ -1883,8 +5101,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise consolidada — Quality action plan revision»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Quality action plan revision»."
     },
     {
       "operationId": "get_quality_action_plan_similar_cases",
@@ -1896,8 +5114,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Análise consolidada — Quality action plan similar cases»."
+      "metaShape": "composite_analysis",
+      "description": "Análise composta: «Análise consolidada — Quality action plan similar cases»."
     },
     {
       "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
@@ -1910,6 +5128,62 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": false,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": false,
+          "label": "Date end"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Area id"
+        },
+        "shift": {
+          "type": "string",
+          "optional": true,
+          "label": "Shift"
+        },
+        "audit_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Audit status"
+        },
+        "senso_order": {
+          "type": "integer",
+          "optional": true,
+          "label": "Senso order"
+        },
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "month"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Auditoria 5S — painel analítico»."
     },
     {
@@ -1922,8 +5196,22 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — áreas» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "active": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Active",
+          "default": true
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Auditoria 5S — áreas»."
     },
     {
       "operationId": "list_audits_quality_audit_5s_audits_get",
@@ -1935,8 +5223,21 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — listagem» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Auditoria 5S — listagem»."
     },
     {
       "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
@@ -1961,8 +5262,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — anexos de NC da auditoria» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
     },
     {
       "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
@@ -1974,8 +5275,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — candidatos a NC» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
     },
     {
       "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
@@ -1987,8 +5288,76 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — não conformidades» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
+    },
+    {
+      "operationId": "list_response_attachments_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_get",
+      "httpMethod": "GET",
+      "label": "Response anexos",
+      "category": "quality",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Response anexos»."
+    },
+    {
+      "operationId": "download_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__file_get",
+      "httpMethod": "GET",
+      "label": "Response anexo",
+      "category": "quality",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}/file",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Response anexo»."
+    },
+    {
+      "operationId": "get_catalog_quality_audit_5s_catalog_get",
+      "httpMethod": "GET",
+      "label": "Catalog",
+      "category": "quality",
+      "path": "/quality/audit-5s/catalog",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Catalog»."
+    },
+    {
+      "operationId": "list_catalog_publications_quality_audit_5s_catalog_publications_get",
+      "httpMethod": "GET",
+      "label": "Catalog Publications",
+      "category": "quality",
+      "path": "/quality/audit-5s/catalog/publications",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Catalog Publications»."
     },
     {
       "operationId": "list_criteria_quality_audit_5s_criteria_get",
@@ -2000,8 +5369,21 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — critérios» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "catalog_version": {
+          "type": "integer",
+          "optional": true,
+          "label": "Catalog version"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Auditoria 5S — critérios»."
     },
     {
       "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
@@ -2013,8 +5395,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — ações da NC» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
     },
     {
       "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
@@ -2026,8 +5408,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Auditoria 5S — anexos da NC» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
     },
     {
       "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
@@ -2053,6 +5435,23 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      },
       "description": "Indicador numérico para «Auditoria 5S — resumo»."
     },
     {
@@ -2065,8 +5464,21 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Quality Branches» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Quality Branches»."
     },
     {
       "operationId": "list_kaizen_records",
@@ -2079,7 +5491,52 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Cadastro operacional de kaizens (PostgreSQL)» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Cadastro operacional de kaizens (PostgreSQL)» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "savings_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Savings type"
+        },
+        "title": {
+          "type": "string",
+          "optional": true,
+          "label": "Title"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
@@ -2093,6 +5550,37 @@
       ],
       "metaShape": "scalar",
       "description": "Indicador numérico para «Kaizen Records»."
+    },
+    {
+      "operationId": "get_kaizen_records_summary_quality_kaizens_records_summary_get",
+      "httpMethod": "GET",
+      "label": "Kaizen Records Summary",
+      "category": "quality",
+      "path": "/quality/kaizens/records/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Kaizen Records Summary»."
     },
     {
       "operationId": "get_kaizen_record",
@@ -2118,6 +5606,14 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "date": {
+          "type": "string",
+          "optional": false,
+          "label": "Data YYYY-MM-DD"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Kaizen At Date»."
     },
     {
@@ -2130,8 +5626,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Kaizen Audit Log» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Kaizen Audit Log»."
     },
     {
       "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
@@ -2143,8 +5639,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Kaizen evidências» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Kaizen evidências»."
     },
     {
       "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
@@ -2169,8 +5665,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Kaizen History» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Kaizen History»."
     },
     {
       "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
@@ -2182,8 +5678,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Kaizen Revisions» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Kaizen Revisions»."
     },
     {
       "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
@@ -2209,6 +5705,19 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Kaizen Savings Timeline»."
     },
     {
@@ -2222,7 +5731,35 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Kaizens — resumo e listagem (Google Sheets)»."
+      "description": "Indicador numérico para «Kaizens — resumo e listagem (Google Sheets)».",
+      "paramSchema": {
+        "title": {
+          "type": "string",
+          "optional": true,
+          "label": "Title"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_kaizen_by_id",
@@ -2247,8 +5784,33 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Etiquetas de qualidade — listagem» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Search"
+        },
+        "branches": {
+          "type": "string",
+          "optional": true,
+          "label": "Branches"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 50
+        },
+        "offset": {
+          "type": "integer",
+          "optional": true,
+          "label": "Offset",
+          "default": 0
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Etiquetas de qualidade — listagem»."
     },
     {
       "operationId": "list_audit_events_quality_labels_audit_events_get",
@@ -2260,8 +5822,33 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Etiquetas — eventos de auditoria» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Search"
+        },
+        "eventTypes": {
+          "type": "string",
+          "optional": true,
+          "label": "Eventtypes"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 100
+        },
+        "offset": {
+          "type": "integer",
+          "optional": true,
+          "label": "Offset",
+          "default": 0
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Etiquetas — eventos de auditoria»."
     },
     {
       "operationId": "list_checklist_template_quality_labels_checklist_template_get",
@@ -2273,8 +5860,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Etiquetas — modelo de checklist» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
     },
     {
       "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
@@ -2313,6 +5900,14 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Lookup Op»."
     },
     {
@@ -2325,8 +5920,27 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Buscar Ops» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "q": {
+          "type": "string",
+          "optional": false,
+          "label": "Q"
+        },
+        "branches": {
+          "type": "string",
+          "optional": true,
+          "label": "Branches"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 8
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Buscar Ops»."
     },
     {
       "operationId": "get_label_quality_labels__label_id__get",
@@ -2390,8 +6004,57 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Não conformidades — listagem» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "type": {
+          "type": "string",
+          "optional": true,
+          "label": "Type",
+          "default": "all"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "item_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Item code"
+        },
+        "description": {
+          "type": "string",
+          "optional": true,
+          "label": "Description"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Não conformidades — listagem»."
     },
     {
       "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
@@ -2404,6 +6067,51 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "type": {
+          "type": "string",
+          "optional": true,
+          "label": "Type",
+          "default": "all"
+        },
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "month"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status"
+        },
+        "item_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Item code"
+        },
+        "description": {
+          "type": "string",
+          "optional": true,
+          "label": "Description"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Não conformidades — série temporal»."
     },
     {
@@ -2417,6 +6125,39 @@
         "auto"
       ],
       "metaShape": "paged_list",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        },
+        "product_prefix": {
+          "type": "string",
+          "optional": true,
+          "label": "Product prefix"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Listagem paginada de «PPM externo — listagem» para uso em tabela ou gráfico no TV."
     },
     {
@@ -2430,6 +6171,35 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "month"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "product_prefix": {
+          "type": "string",
+          "optional": true,
+          "label": "Product prefix"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «PPM externo — série temporal»."
     },
     {
@@ -2443,14 +6213,26 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "defaultParams": {
-        "periodDays": 30
-      },
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "product_prefix": {
+          "type": "string",
+          "optional": true,
+          "label": "Product prefix"
         },
         "periodDays": {
           "type": "integer",
@@ -2459,16 +6241,19 @@
         }
       },
       "paramStrategy": "date_range",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "description": "Indicador numérico para «Qualidade — PPM externo»."
+      "description": "Indicador numérico para «Qualidade — PPM externo».",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_ppm_internal",
@@ -2481,6 +6266,39 @@
         "auto"
       ],
       "metaShape": "paged_list",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        },
+        "product_prefix": {
+          "type": "string",
+          "optional": true,
+          "label": "Product prefix"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Listagem paginada de «PPM interno — listagem» para uso em tabela ou gráfico no TV."
     },
     {
@@ -2494,6 +6312,35 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "month"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "product_prefix": {
+          "type": "string",
+          "optional": true,
+          "label": "Product prefix"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «PPM interno — série temporal»."
     },
     {
@@ -2507,14 +6354,26 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "defaultParams": {
-        "periodDays": 30
-      },
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "product_prefix": {
+          "type": "string",
+          "optional": true,
+          "label": "Product prefix"
         },
         "periodDays": {
           "type": "integer",
@@ -2523,16 +6382,19 @@
         }
       },
       "paramStrategy": "date_range",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "description": "Indicador numérico para «Qualidade — PPM interno»."
+      "description": "Indicador numérico para «Qualidade — PPM interno».",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_produced_quantity",
@@ -2544,8 +6406,31 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Quantidade produzida»."
+      "metaShape": "playbook_report",
+      "paramSchema": {
+        "product": {
+          "type": "string",
+          "optional": false,
+          "label": "Product"
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Relatório operacional: «Quantidade produzida»."
     },
     {
       "operationId": "list_quality_solution_patterns",
@@ -2558,7 +6443,359 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Quality solution pattern» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Lista paginada — Quality solution pattern» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "problem_category": {
+          "type": "string",
+          "optional": true,
+          "label": "Problem category"
+        },
+        "failure_mode": {
+          "type": "string",
+          "optional": true,
+          "label": "Failure mode"
+        },
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca em título, categoria e modo de falha"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_retrabalhos_colaboradores",
+      "httpMethod": "GET",
+      "label": "Lista — Retrabalho horas improdutivas colaboradores",
+      "category": "other",
+      "path": "/retrabalhos/colaboradores",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Retrabalho horas improdutivas colaboradores».",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial Protheus (\"01\" ou \"02\")."
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Datainicio"
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+        },
+        "recurso": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por recurso."
+        },
+        "centroCusto": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por centro de custo."
+        },
+        "codigoOperador": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por código do operador."
+        },
+        "orderBy": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenação do ranking: horas ou custo.",
+          "default": "horas"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_retrabalhos_detalhes",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Retrabalho horas improdutivas detalhe",
+      "category": "other",
+      "path": "/retrabalhos/detalhes",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Retrabalho horas improdutivas detalhe» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial Protheus (\"01\" ou \"02\")."
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Datainicio"
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+        },
+        "recurso": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por recurso."
+        },
+        "centroCusto": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por centro de custo."
+        },
+        "codigoOperador": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por código do operador."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "optional": true,
+          "label": "Registros por página (máximo 100).",
+          "default": 50
+        },
+        "orderBy": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenação dos detalhes: data, horas ou custo.",
+          "default": "data"
+        },
+        "orderDir": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção da ordenação: asc ou desc.",
+          "default": "desc"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_retrabalhos_filtros",
+      "httpMethod": "GET",
+      "label": "Indicador — Retrabalho horas improdutivas filtros",
+      "category": "other",
+      "path": "/retrabalhos/filtros",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Retrabalho horas improdutivas filtros».",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial Protheus (\"01\" ou \"02\")."
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Datainicio"
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_retrabalhos_health",
+      "httpMethod": "GET",
+      "label": "Indicador — Retrabalho horas improdutivas health",
+      "category": "other",
+      "path": "/retrabalhos/health",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Retrabalho horas improdutivas health»."
+    },
+    {
+      "operationId": "get_retrabalhos_mensal",
+      "httpMethod": "GET",
+      "label": "Lista — Retrabalho horas improdutivas mensal",
+      "category": "other",
+      "path": "/retrabalhos/mensal",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Retrabalho horas improdutivas mensal».",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial Protheus (\"01\" ou \"02\")."
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Datainicio"
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+        },
+        "recurso": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por recurso."
+        },
+        "centroCusto": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por centro de custo."
+        },
+        "codigoOperador": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por código do operador."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_retrabalhos_recursos",
+      "httpMethod": "GET",
+      "label": "Lista — Retrabalho horas improdutivas recursos",
+      "category": "other",
+      "path": "/retrabalhos/recursos",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Consulta operacional: «Lista — Retrabalho horas improdutivas recursos».",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial Protheus (\"01\" ou \"02\")."
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Datainicio"
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+        },
+        "recurso": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por recurso."
+        },
+        "centroCusto": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por centro de custo."
+        },
+        "codigoOperador": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por código do operador."
+        },
+        "orderBy": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenação do ranking: horas ou custo.",
+          "default": "horas"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_retrabalhos_resumo",
+      "httpMethod": "GET",
+      "label": "Indicador — Retrabalho horas improdutivas resumo",
+      "category": "other",
+      "path": "/retrabalhos/resumo",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Retrabalho horas improdutivas resumo».",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial Protheus (\"01\" ou \"02\")."
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Datainicio"
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data final (YYYY-MM-DD). Padrão: hoje."
+        },
+        "recurso": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por recurso."
+        },
+        "centroCusto": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por centro de custo."
+        },
+        "codigoOperador": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro por código do operador."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_sale_orders",
@@ -2571,7 +6808,30 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Listar ordens de venda» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Listar ordens de venda» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Date start"
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Date end"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_bookings_scheduling_bookings_get",
@@ -2583,8 +6843,31 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Agendamentos — reservas» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "from": {
+          "type": "string",
+          "optional": false,
+          "label": "From"
+        },
+        "to": {
+          "type": "string",
+          "optional": false,
+          "label": "To"
+        },
+        "resource_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Resource id"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Agendamentos — reservas»."
     },
     {
       "operationId": "list_resources_scheduling_resources_get",
@@ -2596,8 +6879,22 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Agendamentos — recursos» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial"
+        },
+        "active": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Active",
+          "default": true
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Agendamentos — recursos»."
     },
     {
       "operationId": "get_supplies_cpv",
@@ -2610,7 +6907,30 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «CPV — custo de produto vendido (Kardex / suprimentos)»."
+      "description": "Indicador numérico para «CPV — custo de produto vendido (Kardex / suprimentos)».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "top_limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Top limit",
+          "default": 5
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_supplies_inventory_turnover",
@@ -2623,7 +6943,35 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Giro de estoque / IDD (suprimentos)»."
+      "description": "Indicador numérico para «Giro de estoque / IDD (suprimentos)».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "location": {
+          "type": "string",
+          "optional": true,
+          "label": "Location"
+        },
+        "strict_idd_period": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Strict idd period",
+          "default": false
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_supplies_negotiation_savings_summary",
@@ -2636,7 +6984,24 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Economia em negociações de compras (planilha IDD Suprimentos)»."
+      "description": "Indicador numérico para «Economia em negociações de compras (planilha IDD Suprimentos)».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_supplies_otd",
@@ -2649,7 +7014,36 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «OTD — entrega no prazo (suprimentos)»."
+      "description": "Indicador numérico para «OTD — entrega no prazo (suprimentos)».",
+      "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "top_limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Top limit",
+          "default": 5
+        },
+        "details_limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Details limit",
+          "default": 20
+        }
+      },
+      "paramStrategy": "date_range",
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_supplies_stock_value",
@@ -2663,31 +7057,57 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "description": "Indicador numérico para «Suprimentos — valor de estoque».",
       "paramSchema": {
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)",
+          "optional": true
+        },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial"
         },
+        "location": {
+          "type": "string",
+          "optional": true,
+          "label": "Location"
+        },
         "top_limit": {
           "type": "integer",
-          "default": 5,
+          "optional": true,
           "label": "TOP N itens",
-          "optional": true
+          "default": 5
+        },
+        "summary_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Summary only",
+          "default": false
+        },
+        "stock_method": {
+          "type": "string",
+          "optional": true,
+          "label": "Stock method",
+          "default": "auto"
         }
       },
       "paramStrategy": "direct",
-      "valueFields": [
-        "value",
-        "stockValue",
-        "total"
-      ],
-      "tableFields": "top_products",
+      "defaultParams": {
+        "periodDays": 30
+      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
       },
-      "description": "Indicador numérico para «Suprimentos — valor de estoque»."
+      "tableFields": "top_products",
+      "valueFields": [
+        "value",
+        "stockValue",
+        "total"
+      ]
     },
     {
       "operationId": "get_caller_stats_system_caller_stats_get",
@@ -2700,6 +7120,15 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 25
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Breakdown de requests por X-Delpi-Caller-App»."
     },
     {
@@ -2712,8 +7141,28 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Busca colunas por descrição (SX3010 + ranking semântico)» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "description": {
+          "type": "string",
+          "optional": false,
+          "label": "Description"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 20
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Busca colunas por descrição (SX3010 + ranking semântico)»."
     },
     {
       "operationId": "get_console_alerts_system_console_alerts_get",
@@ -2726,6 +7175,15 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 25
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Histórico recente de alertas do console»."
     },
     {
@@ -2765,6 +7223,15 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 25
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Snapshot unificado para comparador de deploy»."
     },
     {
@@ -2817,6 +7284,20 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 25
+        },
+        "operation_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Operation id"
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Telemetria SQL recente (ring buffer memória ou Redis)»."
     },
     {
@@ -2829,8 +7310,28 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Busca tabelas por descrição (SX2)» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "description": {
+          "type": "string",
+          "optional": false,
+          "label": "Descrição parcial ou completa da tabela"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 20
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Busca tabelas por descrição (SX2)»."
     },
     {
       "operationId": "table_system_tables__tableName__get",
@@ -2856,6 +7357,21 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 50
+        }
+      },
+      "paramStrategy": "direct",
       "description": "Indicador numérico para «Consulta colunas de tabela com paginação»."
     },
     {
@@ -2868,8 +7384,16 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list",
-      "description": "Listagem paginada de «Buscar colunas por texto» para uso em tabela ou gráfico no TV."
+      "metaShape": "scalar",
+      "paramSchema": {
+        "q": {
+          "type": "string",
+          "optional": false,
+          "label": "Q"
+        }
+      },
+      "paramStrategy": "direct",
+      "description": "Indicador numérico para «Buscar colunas por texto»."
     },
     {
       "operationId": "table_indexes_system_tables__tableName__indexes_get",

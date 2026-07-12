@@ -22,7 +22,16 @@ import { DataRoutePickerModal } from "./DataRoutePickerModal";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
-type ParamSchema = Record<string, { type?: string; label?: string; default?: string | number; optional?: boolean }>;
+type ParamSchema = Record<
+  string,
+  {
+    type?: string;
+    label?: string;
+    default?: string | number;
+    optional?: boolean;
+    enum?: string[];
+  }
+>;
 
 function routeSuggestedModes(route: TvDataRouteCatalogItem | null): string[] | undefined {
   if (!route) return undefined;
@@ -57,19 +66,33 @@ function ParamFields({
       {entries.map(([key, field]) => {
         const inherited = inheritedKeys.has(key);
         const current = values?.[key];
+        const enumOptions = Array.isArray(field.enum) ? field.enum.filter(Boolean) : [];
         return (
           <DeckField
             key={key}
             id={`td-data-param-${key}`}
             label={`${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`}
           >
-            <NativeTextControl
-              id={`td-data-param-${key}`}
-              type={field.type === "integer" ? "number" : "text"}
-              placeholder={inherited ? "Herdado do slide" : field.optional ? "Opcional" : ""}
-              value={current === undefined || current === null ? "" : String(current)}
-              onChange={(value) => onChange(key, value)}
-            />
+            {enumOptions.length > 0 ? (
+              <FormSelectControl
+                id={`td-data-param-${key}`}
+                ariaLabel={field.label ?? key}
+                value={current === undefined || current === null ? "" : String(current)}
+                onChange={(value) => onChange(key, value)}
+                options={[
+                  { value: "", label: inherited ? "Herdado do slide" : field.optional ? "Opcional" : "Selecione" },
+                  ...enumOptions.map((item) => ({ value: String(item), label: String(item) })),
+                ]}
+              />
+            ) : (
+              <NativeTextControl
+                id={`td-data-param-${key}`}
+                type={field.type === "integer" || field.type === "number" ? "number" : "text"}
+                placeholder={inherited ? "Herdado do slide" : field.optional ? "Opcional" : ""}
+                value={current === undefined || current === null ? "" : String(current)}
+                onChange={(value) => onChange(key, value)}
+              />
+            )}
           </DeckField>
         );
       })}
