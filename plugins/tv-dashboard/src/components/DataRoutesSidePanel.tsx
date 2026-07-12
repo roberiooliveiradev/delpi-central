@@ -55,9 +55,14 @@ type Props = {
   /** Chamado após inserir fonte no palco (ex.: voltar aba Elemento). */
   onInserted?: () => void;
   branchScope?: BranchScope | null;
+  layout?: "ribbon" | "pane";
 };
 
-export function DataRoutesSidePanel({ onInserted, branchScope = null }: Props) {
+export function DataRoutesSidePanel({
+  onInserted,
+  branchScope = null,
+  layout = "pane",
+}: Props) {
   const { config, addDataSourceBlock, globalRefreshSec } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -158,6 +163,7 @@ export function DataRoutesSidePanel({ onInserted, branchScope = null }: Props) {
             inheritedKeys={inheritedKeys}
             branchScope={branchScope}
             idPrefix="td-data-source-param"
+            layout={layout}
             onChange={(key, raw) => {
               setParams((previous) => {
                 const next = { ...(previous ?? {}) };

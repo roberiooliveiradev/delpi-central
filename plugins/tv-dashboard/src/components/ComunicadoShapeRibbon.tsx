@@ -335,7 +335,7 @@ export function ComunicadoShapeRibbon() {
 
     return shell(
       <>
-        <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
+        <DeckRibbonGroup label="Aparência" hint={H.shape}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
               onSelect={(preset) =>
@@ -346,20 +346,12 @@ export function ComunicadoShapeRibbon() {
                 })
               }
             />
-          </div>
-        </DeckRibbonGroup>
-        <DeckRibbonGroup label="Preenchimento" hint={H.shape}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeFillMenu
               value={fillValue}
               fillLabel="Preench."
               onChange={(color) => patchCardStyle({ fill: color })}
               onNoFill={() => patchCardStyle({ fill: "transparent" })}
             />
-          </div>
-        </DeckRibbonGroup>
-        <DeckRibbonGroup label="Contorno" hint={H.strokeWidth}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeOutlineMenu
               color={strokeValue}
               strokeWidth={strokeWidth}
@@ -371,12 +363,13 @@ export function ComunicadoShapeRibbon() {
               onStrokeWidthChange={(width) => patchCardStyle({ strokeWidth: width })}
             />
           </div>
+          <ShapeCornerRadiusControl
+            id="td-kpi-card-corner-radius"
+            value={cornerRadius}
+            onChange={(radius) => patchCardStyle({ borderRadius: radius })}
+            embedded
+          />
         </DeckRibbonGroup>
-        <ShapeCornerRadiusControl
-          id="td-kpi-card-corner-radius"
-          value={cornerRadius}
-          onChange={(radius) => patchCardStyle({ borderRadius: radius })}
-        />
       </>,
     );
   }
@@ -403,7 +396,7 @@ export function ComunicadoShapeRibbon() {
 
     return shell(
       <>
-        <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
+        <DeckRibbonGroup label="Aparência" hint={H.shape}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
               onSelect={(preset) =>
@@ -414,20 +407,12 @@ export function ComunicadoShapeRibbon() {
                 })
               }
             />
-          </div>
-        </DeckRibbonGroup>
-        <DeckRibbonGroup label="Preenchimento" hint={H.shape}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeFillMenu
               value={fillValue}
               fillLabel="Preench."
               onChange={(color) => patchFrameStyle({ fill: color })}
               onNoFill={() => patchFrameStyle({ fill: "transparent" })}
             />
-          </div>
-        </DeckRibbonGroup>
-        <DeckRibbonGroup label="Contorno" hint={H.strokeWidth}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeOutlineMenu
               color={strokeValue}
               strokeWidth={strokeWidth}
@@ -439,12 +424,13 @@ export function ComunicadoShapeRibbon() {
               onStrokeWidthChange={(width) => patchFrameStyle({ strokeWidth: width })}
             />
           </div>
+          <ShapeCornerRadiusControl
+            id="td-table-corner-radius"
+            value={cornerRadius}
+            onChange={(radius) => patchFrameStyle({ borderRadius: radius })}
+            embedded
+          />
         </DeckRibbonGroup>
-        <ShapeCornerRadiusControl
-          id="td-table-corner-radius"
-          value={cornerRadius}
-          onChange={(radius) => patchFrameStyle({ borderRadius: radius })}
-        />
       </>,
     );
   }

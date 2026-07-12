@@ -17,7 +17,13 @@ import { DeckPropertySection } from "./DeckPropertySection";
 
 const L = TV_DASHBOARD_HELP_TOOLTIPS.layers;
 
-export function ComunicadoLayersPanel({ pane = true }: { pane?: boolean }) {
+type Props = {
+  pane?: boolean;
+  /** ribbon = grade full-width na top bar; pane = painel lateral. */
+  layout?: "ribbon" | "pane";
+};
+
+export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
   const {
     blocks,
     selectedIds,
@@ -27,6 +33,7 @@ export function ComunicadoLayersPanel({ pane = true }: { pane?: boolean }) {
     updateBlock,
   } = useComunicadoEditor();
   const [dragId, setDragId] = useState<string | null>(null);
+  const isRibbon = layout === "ribbon";
 
   const layers = useMemo(() => [...sortBlocksByZIndex(blocks)].reverse(), [blocks]);
 
@@ -58,97 +65,124 @@ export function ComunicadoLayersPanel({ pane = true }: { pane?: boolean }) {
     }
   }
 
+  const buildOrderSection = (
+    <>
+      {buildOrder.length === 0 ? (
+        <p className="td-subtitle">Nenhum elemento no slide.</p>
+      ) : (
+        <ol className="td-build-order">
+          {buildOrder.map((item, index) => (
+            <li key={item.id} className="td-build-order__item">
+              <span className="td-build-order__index">{index + 1}</span>
+              <span className="td-build-order__meta">
+                <span className="td-build-order__type">{item.type}</span>
+                <span className="td-build-order__summary">{item.label}</span>
+              </span>
+              <span className="td-build-order__delay">{item.hasAnim ? `${item.delayMs} ms` : "—"}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <div className="td-build-order__actions">
+        <HintAction hint={L.buildSequenciar} ariaLabel="Ajuda: Sequenciar">
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={() =>
+              applyBuildMap(
+                assignStaggeredEntranceDelays(sortBlocksByZIndex(blocks), {
+                  stepMs: 300,
+                  preset: "fade",
+                }),
+              )
+            }
+          >
+            Sequenciar
+          </button>
+        </HintAction>
+        <HintAction hint={L.buildSameInstant} ariaLabel="Ajuda: Mesmo instante">
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={() => applyBuildMap(syncEntranceDelaysSameInstant(sortBlocksByZIndex(blocks), 0))}
+          >
+            Mesmo instante
+          </button>
+        </HintAction>
+        <HintAction hint={L.buildClear} ariaLabel="Ajuda: Limpar">
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={() => applyBuildMap(clearEntranceAnimations(blocks))}
+          >
+            Limpar
+          </button>
+        </HintAction>
+      </div>
+    </>
+  );
+
+  const layersSection = (
+    <>
+      {layers.length === 0 ? (
+        <p className="td-subtitle">Nenhum elemento no slide.</p>
+      ) : (
+        <ul className="td-layers-list">
+          {layers.map((block) => {
+            const active = selectedIds.includes(block.id);
+            return (
+              <li key={block.id}>
+                <button
+                  type="button"
+                  className={`td-layers-list__item${active ? " td-layers-list__item--active" : ""}`}
+                  draggable
+                  onDragStart={() => setDragId(block.id)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => onDrop(block.id)}
+                  onClick={(event) => selectBlock(block.id, { additive: event.shiftKey })}
+                >
+                  <GripVertical size={14} className="td-layers-list__handle" aria-hidden="true" />
+                  <span className="td-layers-list__meta">
+                    <span className="td-layers-list__type">{comunicadoBlockTypeLabel(block.type)}</span>
+                    <span className="td-layers-list__summary">{comunicadoBlockSummary(block)}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {selectedIds.length > 1 ? (
+        <button type="button" className="td-btn td-btn--sm" onClick={() => selectBlocksByIds([selectedIds[0]!])}>
+          Focar primeiro selecionado
+        </button>
+      ) : null}
+    </>
+  );
+
+  if (isRibbon) {
+    return (
+      <div className="td-deck-ribbon__panel td-deck-ribbon__panel--layers">
+        <div className="td-deck-ribbon__panel-zone">
+          <h4 className="td-deck-ribbon__panel-zone-title">Ordem de construção</h4>
+          {buildOrderSection}
+        </div>
+        <div className="td-deck-ribbon__panel-zone">
+          <h4 className="td-deck-ribbon__panel-zone-title">Lista de camadas</h4>
+          {layersSection}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <DeckPropertySection pane={pane} title="Ordem de construção" hint={L.buildOrder} defaultOpen>
-        {buildOrder.length === 0 ? (
-          <p className="td-subtitle">Nenhum elemento no slide.</p>
-        ) : (
-          <ol className="td-build-order">
-            {buildOrder.map((item, index) => (
-              <li key={item.id} className="td-build-order__item">
-                <span className="td-build-order__index">{index + 1}</span>
-                <span className="td-build-order__meta">
-                  <span className="td-build-order__type">{item.type}</span>
-                  <span className="td-build-order__summary">{item.label}</span>
-                </span>
-                <span className="td-build-order__delay">{item.hasAnim ? `${item.delayMs} ms` : "—"}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-        <div className="td-build-order__actions">
-          <HintAction hint={L.buildSequenciar} ariaLabel="Ajuda: Sequenciar">
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
-              onClick={() =>
-                applyBuildMap(
-                  assignStaggeredEntranceDelays(sortBlocksByZIndex(blocks), {
-                    stepMs: 300,
-                    preset: "fade",
-                  }),
-                )
-              }
-            >
-              Sequenciar
-            </button>
-          </HintAction>
-          <HintAction hint={L.buildSameInstant} ariaLabel="Ajuda: Mesmo instante">
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
-              onClick={() => applyBuildMap(syncEntranceDelaysSameInstant(sortBlocksByZIndex(blocks), 0))}
-            >
-              Mesmo instante
-            </button>
-          </HintAction>
-          <HintAction hint={L.buildClear} ariaLabel="Ajuda: Limpar">
-            <button
-              type="button"
-              className="td-btn td-btn--sm"
-              onClick={() => applyBuildMap(clearEntranceAnimations(blocks))}
-            >
-              Limpar
-            </button>
-          </HintAction>
-        </div>
+        {buildOrderSection}
       </DeckPropertySection>
 
       <DeckPropertySection pane={pane} title="Lista de camadas" hint={L.list} defaultOpen>
-        {layers.length === 0 ? (
-          <p className="td-subtitle">Nenhum elemento no slide.</p>
-        ) : (
-          <ul className="td-layers-list">
-            {layers.map((block) => {
-              const active = selectedIds.includes(block.id);
-              return (
-                <li key={block.id}>
-                  <button
-                    type="button"
-                    className={`td-layers-list__item${active ? " td-layers-list__item--active" : ""}`}
-                    draggable
-                    onDragStart={() => setDragId(block.id)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => onDrop(block.id)}
-                    onClick={(event) => selectBlock(block.id, { additive: event.shiftKey })}
-                  >
-                    <GripVertical size={14} className="td-layers-list__handle" aria-hidden="true" />
-                    <span className="td-layers-list__meta">
-                      <span className="td-layers-list__type">{comunicadoBlockTypeLabel(block.type)}</span>
-                      <span className="td-layers-list__summary">{comunicadoBlockSummary(block)}</span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {selectedIds.length > 1 ? (
-          <button type="button" className="td-btn td-btn--sm" onClick={() => selectBlocksByIds([selectedIds[0]!])}>
-            Focar primeiro selecionado
-          </button>
-        ) : null}
+        {layersSection}
       </DeckPropertySection>
     </>
   );

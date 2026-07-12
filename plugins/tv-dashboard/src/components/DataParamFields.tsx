@@ -107,6 +107,8 @@ type Props = {
   inheritedKeys?: Set<string>;
   branchScope?: BranchScope | null;
   idPrefix?: string;
+  /** ribbon = grade multi-coluna; pane = empilhado. */
+  layout?: "ribbon" | "pane";
   onChange: (key: string, value: string) => void;
 };
 
@@ -116,14 +118,13 @@ export function DataParamFields({
   inheritedKeys = new Set(),
   branchScope = null,
   idPrefix = "td-data-param",
+  layout = "pane",
   onChange,
 }: Props) {
   const entries = Object.entries(schema);
   if (entries.length === 0) return null;
 
-  return (
-    <>
-      {entries.map(([key, field]) => {
+  const fields = entries.map(([key, field]) => {
         const inherited = inheritedKeys.has(key);
         const current = values?.[key];
         const label = `${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`;
@@ -200,9 +201,13 @@ export function DataParamFields({
             />
           </DeckField>
         );
-      })}
-    </>
-  );
+      });
+
+  if (layout === "ribbon") {
+    return <div className="td-deck-ribbon__field-grid">{fields}</div>;
+  }
+
+  return <>{fields}</>;
 }
 
 export function visibleParamSchema(

@@ -1947,7 +1947,9 @@
 .dashboard-tv-dashboard .td-deck-ribbon__body {
   display: flex;
   flex: 1;
+  flex-direction: column;
   align-items: flex-start;
+  gap: 4px;
   min-height: 0;
 }
 
@@ -2040,26 +2042,109 @@
 .dashboard-tv-dashboard .td-deck-ribbon__groups--inspector {
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__inspector {
+.dashboard-tv-dashboard .td-deck-ribbon__panel {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 112px;
+  max-height: 168px;
+  padding: 4px 6px;
+  gap: 8px 12px;
+  align-items: stretch;
+  overflow: auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel--ribbon {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel--layers {
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel--dados {
+  grid-template-columns: minmax(200px, 0.9fr) minmax(280px, 1.4fr) minmax(160px, 0.7fr);
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel-zone {
   display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  gap: 8px;
-  width: max-content;
-  min-width: 100%;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 0;
+  padding-right: 8px;
+  border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
+  overflow: auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel-zone:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__panel-zone-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--td-muted);
+  letter-spacing: 0.02em;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px 10px;
+  align-items: end;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__field-grid .td-field,
+.dashboard-tv-dashboard .td-deck-ribbon__field-grid .td-deck-icon-field {
+  margin: 0;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__frame-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 4px 8px;
+  width: 100%;
+  align-items: end;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__organize {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__organize-props {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 4px 8px;
+  align-items: center;
+}
+
+/* legado — preferir .td-deck-ribbon__panel */
+.dashboard-tv-dashboard .td-deck-ribbon__inspector {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 8px 12px;
   padding: 2px 4px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__inspector .td-deck-inspector__section {
-  flex: 0 0 auto;
-  max-width: 280px;
-  min-width: 160px;
-  border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
-  padding-right: 8px;
+  min-width: 0;
+  max-width: none;
+  border-right: none;
+  padding-right: 0;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__tiles--shape-menus,
@@ -2160,16 +2245,23 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__frame-field {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__frame-field .td-deck-ribbon__number,
+.dashboard-tv-dashboard .td-deck-ribbon__frame-field .delpi-ui-native-control {
+  width: 100%;
+  min-width: 56px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__organize {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 8px;
+  flex-direction: column;
+  gap: 6px;
   width: 100%;
 }
 
@@ -2184,6 +2276,7 @@
   scrollbar-width: thin;
   align-items: stretch;
   width: 100%;
+  flex: 1 1 auto;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group {
@@ -2193,7 +2286,8 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group--wide {
-  min-width: min(320px, max-content);
+  flex: 1 1 auto;
+  min-width: min(240px, max-content);
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__caption {
@@ -3030,16 +3124,20 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  min-height: 0;
+  overflow: auto;
 }
 
 .dashboard-tv-dashboard .td-build-order {
   list-style: none;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  min-height: 0;
+  overflow: auto;
 }
 
 .dashboard-tv-dashboard .td-build-order__item {
@@ -3047,7 +3145,8 @@
   grid-template-columns: 28px 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 8px 10px;
+  min-height: 40px;
   border: 1px solid var(--td-border);
   border-radius: 8px;
   background: var(--td-surface);
@@ -3249,6 +3348,7 @@
   gap: 8px;
   width: 100%;
   padding: 8px 10px;
+  min-height: 40px;
   border: 1px solid var(--td-border);
   border-radius: 8px;
   background: var(--td-surface);

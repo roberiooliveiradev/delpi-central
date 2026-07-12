@@ -3,19 +3,18 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 /**
  * Aba Dados na top bar — mesmos controles do painel lateral Dados
- * (vínculo / catálogo), em layout compacto horizontal.
+ * em layout full-width com grade de campos.
  */
 export function ComunicadoDataRibbon() {
   const { setSelectionPanelTab } = useComunicadoEditor();
 
   return (
     <div className="td-deck-ribbon__groups td-deck-ribbon__groups--inspector">
-      <div className="td-deck-ribbon__inspector">
-        <SelectedDataSidePanel
-          onInserted={() => setSelectionPanelTab("element")}
-          onOpenCatalog={() => setSelectionPanelTab("data")}
-        />
-      </div>
+      <SelectedDataSidePanel
+        layout="ribbon"
+        onInserted={() => setSelectionPanelTab("element")}
+        onOpenCatalog={() => setSelectionPanelTab("data")}
+      />
     </div>
   );
 }

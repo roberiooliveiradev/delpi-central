@@ -18,25 +18,33 @@ export function ShapeCornerRadiusControl({
   onChange,
   max = 64,
   label = "Cantos",
-}: Props) {
+  /** Sem grupo próprio — para embutir em «Aparência». */
+  embedded = false,
+}: Props & { embedded?: boolean }) {
+  const control = (
+    <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
+      <label className="td-deck-ribbon__field-label" htmlFor={id}>
+        Raio (px)
+      </label>
+      <NativeTextControl
+        id={id}
+        type="number"
+        className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+        min={0}
+        max={max}
+        step={1}
+        aria-label="Cantos arredondados em pixels"
+        value={value}
+        onChange={(raw) => onChange(Math.max(0, Math.min(max, Number(raw) || 0)))}
+      />
+    </div>
+  );
+
+  if (embedded) return control;
+
   return (
     <DeckRibbonGroup label={label} hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.borderRadius}>
-      <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-        <label className="td-deck-ribbon__field-label" htmlFor={id}>
-          Raio (px)
-        </label>
-        <NativeTextControl
-          id={id}
-          type="number"
-          className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-          min={0}
-          max={max}
-          step={1}
-          aria-label="Cantos arredondados em pixels"
-          value={value}
-          onChange={(raw) => onChange(Math.max(0, Math.min(max, Number(raw) || 0)))}
-        />
-      </div>
+      {control}
     </DeckRibbonGroup>
   );
 }

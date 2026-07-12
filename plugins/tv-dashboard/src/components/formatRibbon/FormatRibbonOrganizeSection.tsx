@@ -79,7 +79,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
           />
           <DeckRibbonTile icon={Trash2} label="Remover" hint={E.remove} onClick={removeSelected} />
         </div>
-        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
+        <div className="td-deck-ribbon__organize-props">
           <label className="td-deck-ribbon__field-label" htmlFor="td-block-opacity">
             Opacidade
           </label>

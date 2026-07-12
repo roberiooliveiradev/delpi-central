@@ -12,14 +12,18 @@ import { VisualDataViewInspector } from "./VisualDataViewInspector";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { resolveSelectedDataContext } from "../utils/selectedDataContext";
 
+export type PanelLayout = "ribbon" | "pane";
+
 type Props = {
   branchScope?: BranchScope | null;
   onInserted?: () => void;
   onOpenCatalog?: () => void;
+  /** ribbon = top bar full-width; pane = painel lateral. */
+  layout?: PanelLayout;
 };
 
 /**
- * Conteúdo da aba lateral Dados:
+ * Conteúdo da aba Dados (side bar e ribbon):
  * - com elemento de dados selecionado → configuração da fonte / vínculo
  * - sem seleção de dados ou intent catálogo → listagem para inserir
  */
@@ -27,6 +31,7 @@ export function SelectedDataSidePanel({
   branchScope = null,
   onInserted,
   onOpenCatalog,
+  layout = "pane",
 }: Props) {
   const {
     blocks,
@@ -41,6 +46,7 @@ export function SelectedDataSidePanel({
   );
   const showCatalog =
     dataPanelIntent === "catalog" || context.kind === "none";
+  const isRibbon = layout === "ribbon";
 
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const bindingTarget = context.bindingTarget;
@@ -58,28 +64,38 @@ export function SelectedDataSidePanel({
   }, [bindingTarget, routes]);
 
   if (showCatalog) {
-    return <DataRoutesSidePanel branchScope={branchScope} onInserted={onInserted} />;
+    return (
+      <div className={isRibbon ? "td-deck-ribbon__panel td-deck-ribbon__panel--ribbon" : undefined}>
+        <DataRoutesSidePanel
+          layout={layout}
+          branchScope={branchScope}
+          onInserted={onInserted}
+        />
+      </div>
+    );
   }
 
   if (context.kind === "mixed") {
     return (
-      <DeckPropertySection pane title="Dados" defaultOpen>
-        <p className="td-deck-inspector__hint">{context.message}</p>
-        <button
-          type="button"
-          className="td-btn td-btn--sm td-btn--ghost"
-          onClick={() => (onOpenCatalog ?? openDataCatalog)()}
-        >
-          Inserir nova fonte
-        </button>
-      </DeckPropertySection>
+      <div className={isRibbon ? "td-deck-ribbon__panel td-deck-ribbon__panel--ribbon" : undefined}>
+        <DeckPropertySection pane={!isRibbon} title="Dados" defaultOpen>
+          <p className="td-deck-inspector__hint">{context.message}</p>
+          <button
+            type="button"
+            className="td-btn td-btn--sm td-btn--ghost"
+            onClick={() => (onOpenCatalog ?? openDataCatalog)()}
+          >
+            Inserir nova fonte
+          </button>
+        </DeckPropertySection>
+      </div>
     );
   }
 
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
 
-  return (
+  const body = (
     <>
       {context.kind === "homogeneous" && context.dataBlocks.length > 1 ? (
         <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
@@ -90,7 +106,8 @@ export function SelectedDataSidePanel({
 
       {isView ? (
         <VisualDataViewInspector
-          pane
+          pane={!isRibbon}
+          layout={layout}
           onOpenDataSources={() => (onOpenCatalog ?? openDataCatalog)()}
         />
       ) : null}
@@ -98,12 +115,13 @@ export function SelectedDataSidePanel({
       {bindingTarget && "dataBinding" in bindingTarget ? (
         <DataBindingInspector
           route={selectedRoute}
-          pane
+          pane={!isRibbon}
+          layout={layout}
           branchScope={branchScope}
           block={selected?.id !== bindingTarget.id ? bindingTarget : null}
         />
       ) : isView ? (
-        <DeckPropertySection pane title="Parâmetros da fonte" defaultOpen>
+        <DeckPropertySection pane={!isRibbon} title="Parâmetros da fonte" defaultOpen>
           <p className="td-deck-inspector__hint">
             Conecte uma fonte acima para editar parâmetros da rota api-delpi.
           </p>
@@ -118,12 +136,12 @@ export function SelectedDataSidePanel({
       ) : null}
 
       {!isView && !bindingTarget ? (
-        <DeckPropertySection pane title="Dados" defaultOpen>
+        <DeckPropertySection pane={!isRibbon} title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">Nenhuma configuração de dados disponível.</p>
         </DeckPropertySection>
       ) : null}
 
-      <div className="td-deck-inspector__actions" style={{ padding: "8px 12px" }}>
+      <div className="td-deck-inspector__actions" style={isRibbon ? undefined : { padding: "8px 12px" }}>
         <button
           type="button"
           className="td-btn td-btn--sm td-btn--ghost"
@@ -134,6 +152,10 @@ export function SelectedDataSidePanel({
       </div>
     </>
   );
+
+  if (!isRibbon) return body;
+
+  return <div className="td-deck-ribbon__panel td-deck-ribbon__panel--ribbon">{body}</div>;
 }
 
 export type { ComunicadoBlock };
