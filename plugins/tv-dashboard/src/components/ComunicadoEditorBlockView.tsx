@@ -22,6 +22,7 @@ import {
   KPI_ICON_DEFAULT_RADIUS_PX,
   borderRadiusPxToKpiCornerAdj,
   clampKpiPartFrame,
+  defaultKpiPartFrame,
   getKpiPartState,
   kpiCornerAdjToBorderRadiusPx,
   kpiPartAllowsEdit,
@@ -132,15 +133,22 @@ function EditorChartViewBlock({
   } = useComunicadoEditor();
 
   /**
-   * Clique: seleciona a parte (paridade com KPI). chartArea move o bloco.
-   * Parte já selecionada + movable: move trata o drag (não re-seleciona).
-   * Com o gráfico não selecionado, `interaction` fica null para o clique subir ao compositor.
+   * Clique: 1º no gráfico (chartArea) = seleção global; 2º = parte chartArea
+   * com frame próprio. Demais partes selecionam direto.
    */
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event?: ReactPointerEvent) => {
       if (ref.kind === "chartArea" && event) {
-        selectBlock(block.id);
-        startDrag(event, block, "move");
+        if (selectedId !== block.id) {
+          selectBlock(block.id);
+          startDrag(event, block, "move");
+          return;
+        }
+        if (!selectedChartPart || selectedChartPart.kind !== "chartArea") {
+          selectChartPart(block.id, { kind: "chartArea" });
+          requestRibbonTab("shape");
+          return;
+        }
         return;
       }
       if (
@@ -370,17 +378,46 @@ function EditorTableViewBlock({
   className?: string;
   dataLoading?: boolean;
 }) {
-  const { selectedId, selectedTablePart, selectBlock, selectTablePart, requestRibbonTab, startDrag } =
-    useComunicadoEditor();
+  const {
+    selectedId,
+    selectedTablePart,
+    selectBlock,
+    selectTablePart,
+    requestRibbonTab,
+    startDrag,
+  } = useComunicadoEditor();
 
   const onPartPointerDown = useCallback(
     (ref: ComunicadoTablePartRef, event?: ReactPointerEvent) => {
-      selectBlock(block.id);
+      /*
+       * Moldura: 1º clique = global; 2º = parte `frame` (sem startDrag do bloco).
+       */
       if (ref.kind === "frame" && event) {
-        startDrag(event, block, "move");
+        if (selectedId !== block.id) {
+          selectBlock(block.id);
+          startDrag(event, block, "move");
+          return;
+        }
+        if (!selectedTablePart || selectedTablePart.kind !== "frame") {
+          selectTablePart(block.id, { kind: "frame" });
+          requestRibbonTab("shape");
+          return;
+        }
+        return;
       }
+      selectBlock(block.id);
+      selectTablePart(block.id, ref);
+      requestRibbonTab("table");
     },
-    [block, selectBlock, startDrag],
+    [
+      block,
+      requestRibbonTab,
+      selectBlock,
+      selectTablePart,
+      selectedId,
+      selectedTablePart,
+      startDrag,
+    ],
   );
 
   const onPartDoubleClick = useCallback(
@@ -445,9 +482,8 @@ function EditorKpiViewBlock({
   const onPartPointerDown = useCallback(
     (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
       /*
-       * Fundo (card): 1º clique no KPI = seleção global (handles do widget);
-       * clique seguinte no fundo = parte `card` (aparência individual).
-       * Arrastar sempre move o bloco.
+       * Fundo (card): 1º clique = seleção global do widget; 2º = parte `card`
+       * (frame próprio). Arrastar handles/move da parte não chama startDrag do bloco.
        */
       if (part.kind === "card" && event) {
         if (selectedId !== block.id) {
@@ -458,8 +494,9 @@ function EditorKpiViewBlock({
         if (!selectedKpiPart || selectedKpiPart.kind !== "card") {
           selectKpiPart(block.id, { kind: "card" });
           requestRibbonTab("shape");
+          return;
         }
-        startDrag(event, block, "move");
+        /* Já no card: bindKpiPartPointer dispara onPartMovePointerDown. */
         return;
       }
       /* Parte já selecionada: move trata o drag (não re-seleciona). */
@@ -529,17 +566,25 @@ function EditorKpiViewBlock({
   const onPartMovePointerDown = useCallback(
     (ref: ComunicadoKpiPartRef, event: ReactPointerEvent) => {
       if (!kpiPartAllowsMove(ref)) return;
-      const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement);
+      const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement, ref);
       if (!cardRoot) return;
       event.preventDefault();
       const rect = cardRoot.getBoundingClientRect();
       const elRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
       const existing = getKpiPartState(block.kpiParts, ref)?.frame;
+      const defaults =
+        ref.kind === "card" ||
+        ref.kind === "title" ||
+        ref.kind === "value" ||
+        ref.kind === "hint" ||
+        ref.kind === "icon"
+          ? defaultKpiPartFrame(ref.kind)
+          : { x: 0, y: 0, w: 40, h: 20 };
       const origin = clampKpiPartFrame({
         x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
         y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
-        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
-        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? defaults.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? defaults.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
       });
       const startClientX = event.clientX;
       const startClientY = event.clientY;
@@ -576,24 +621,27 @@ function EditorKpiViewBlock({
       event: ReactPointerEvent,
       handle: ComunicadoKpiPartResizeHandle,
     ) => {
-      /* Fundo = moldura do widget: handles redimensionam o bloco (paridade visual com partes). */
-      if (ref.kind === "card") {
-        startDrag(event, block, `resize-${handle}`);
-        return;
-      }
       if (!kpiPartAllowsResize(ref)) return;
-      const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement);
+      const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement, ref);
       const host = (event.currentTarget as HTMLElement).closest("[data-kpi-part]");
       if (!cardRoot || !host) return;
       event.preventDefault();
       const rect = cardRoot.getBoundingClientRect();
       const elRect = host.getBoundingClientRect();
       const existing = getKpiPartState(block.kpiParts, ref)?.frame;
+      const defaults =
+        ref.kind === "card" ||
+        ref.kind === "title" ||
+        ref.kind === "value" ||
+        ref.kind === "hint" ||
+        ref.kind === "icon"
+          ? defaultKpiPartFrame(ref.kind)
+          : { x: 0, y: 0, w: 40, h: 20 };
       const origin = clampKpiPartFrame({
         x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
         y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
-        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
-        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? defaults.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? defaults.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
       });
       const startClientX = event.clientX;
       const startClientY = event.clientY;
@@ -614,7 +662,7 @@ function EditorKpiViewBlock({
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block, block.id, block.kpiParts, startDrag, updateBlock],
+    [block.id, block.kpiParts, updateBlock],
   );
 
   const onPartFrameChange = useCallback(

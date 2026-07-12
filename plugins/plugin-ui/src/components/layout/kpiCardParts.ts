@@ -102,7 +102,8 @@ export type KpiPartCapabilities = {
 };
 
 const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities> = {
-  card: { movable: false, editable: false, deletable: false, resizable: false },
+  /** Fundo: geometria % do bloco (escopo de parte — não confunde com resize global do widget). */
+  card: { movable: true, editable: false, deletable: false, resizable: true },
   title: { movable: true, editable: true, deletable: true, resizable: true },
   value: { movable: true, editable: false, deletable: false, resizable: true },
   hint: { movable: true, editable: true, deletable: true, resizable: true },
@@ -127,8 +128,12 @@ export type KpiCardFlatOptions = {
 /** Frame padrão do ícone (canto superior direito). */
 export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 8, w: 14, h: 28 };
 
-/** Frames iniciais ao ativar posição/tamanho em cada parte ( % do card ). */
-export const KPI_PART_DEFAULT_FRAMES: Record<"title" | "value" | "hint" | "icon", KpiPartFrame> = {
+/** Frames iniciais (%). Card = fundo relativo ao bloco; demais = relativos ao card. */
+export const KPI_PART_DEFAULT_FRAMES: Record<
+  "card" | "title" | "value" | "hint" | "icon",
+  KpiPartFrame
+> = {
+  card: { x: 0, y: 0, w: 100, h: 100 },
   title: { x: 4, y: 6, w: 72, h: 16 },
   value: { x: 4, y: 24, w: 72, h: 48 },
   hint: { x: 4, y: 78, w: 60, h: 14 },
@@ -207,7 +212,13 @@ export function resolveKpiPartFontSize(
 }
 
 export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
-  return ref.kind === "title" || ref.kind === "value" || ref.kind === "hint" || ref.kind === "icon";
+  return (
+    ref.kind === "card" ||
+    ref.kind === "title" ||
+    ref.kind === "value" ||
+    ref.kind === "hint" ||
+    ref.kind === "icon"
+  );
 }
 
 /**
@@ -230,8 +241,8 @@ export function defaultKpiPartFrame(kind: KpiFramePartKind): KpiPartFrame {
 }
 
 export function clampKpiPartFrame(frame: KpiPartFrame): KpiPartFrame {
-  const w = Math.max(4, Math.min(96, frame.w ?? KPI_ICON_DEFAULT_FRAME.w ?? 14));
-  const h = Math.max(4, Math.min(96, frame.h ?? KPI_ICON_DEFAULT_FRAME.h ?? 28));
+  const w = Math.max(4, Math.min(100, frame.w ?? KPI_ICON_DEFAULT_FRAME.w ?? 14));
+  const h = Math.max(4, Math.min(100, frame.h ?? KPI_ICON_DEFAULT_FRAME.h ?? 28));
   return {
     x: Math.max(0, Math.min(100 - w, frame.x)),
     y: Math.max(0, Math.min(100 - h, frame.y)),
@@ -292,9 +303,19 @@ export function resizeKpiPartFrame(
   return clampKpiPartFrame({ x, y, w, h });
 }
 
-/** Raiz de coordenadas % das partes — o article do card. */
-export function resolveKpiPartFrameRoot(fromEl: HTMLElement | null): HTMLElement | null {
-  return fromEl?.closest(".delpi-kpi-card") ?? null;
+/**
+ * Raiz de coordenadas % das partes.
+ * Fundo (`card`) = shell do bloco; demais = article do card.
+ */
+export function resolveKpiPartFrameRoot(
+  fromEl: HTMLElement | null,
+  ref?: KpiPartRef | null,
+): HTMLElement | null {
+  if (!fromEl) return null;
+  if (ref?.kind === "card") {
+    return fromEl.closest(".delpi-kpi-card-shell");
+  }
+  return fromEl.closest(".delpi-kpi-card");
 }
 
 export function resolveKpiPartFrame(

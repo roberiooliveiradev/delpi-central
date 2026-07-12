@@ -17,7 +17,10 @@ import {
 } from "./seriesChartOptions";
 import { useSeriesChartClasses } from "./seriesChartClasses";
 import {
+  chartPartAllowsMove,
+  chartPartAllowsResize,
   chartPartDomProps,
+  clampChartPartFrame,
   getChartPartState,
   isChartPartRefEqual,
   mergeSeriesChartOptionsWithParts,
@@ -33,6 +36,7 @@ import {
   ChartDataTable,
   ChartFrame,
   ChartLegend,
+  ChartPartResizeHandles,
   ChartPlotAreaChrome,
   ChartTitle,
   resolveSeriesName,
@@ -145,15 +149,30 @@ export function SeriesChartPrimitive({
   const ariaLabel = title || seriesName;
   const chartAreaRef = { kind: "chartArea" as const };
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
+  const chartAreaFrame = getChartPartState(chartParts, chartAreaRef)?.frame;
+  const chartAreaFrameCss: CSSProperties | undefined = chartAreaFrame
+    ? (() => {
+        const f = clampChartPartFrame(chartAreaFrame);
+        return {
+          position: "absolute",
+          left: `${f.x}%`,
+          top: `${f.y}%`,
+          width: f.w != null ? `${f.w}%` : "100%",
+          height: f.h != null ? `${f.h}%` : "100%",
+          boxSizing: "border-box",
+        };
+      })()
+    : undefined;
   const themeStyle: CSSProperties = {
     ...seriesChartThemeStyle({ ...config, backgroundColor: chartArea.fill }),
     background: chartArea.fill,
     border: `${Math.max(0, chartArea.strokeWidth)}px solid ${chartArea.stroke}`,
     borderRadius: chartArea.borderRadius,
     boxSizing: "border-box",
-    // Clip ao radius da chartArea — evita cantos brancos “quebrando” a moldura.
-    overflow: "hidden",
+    // Clip ao radius; com seleção do fundo libera overflow p/ handles.
+    overflow: chartAreaSelected ? "visible" : "hidden",
     backgroundClip: "padding-box",
+    ...chartAreaFrameCss,
   };
 
   const plotProps: SeriesPlotRenderProps = {
@@ -198,9 +217,14 @@ export function SeriesChartPrimitive({
         const host = (event.target as HTMLElement).closest("[data-chart-part]");
         const partId = host?.getAttribute("data-chart-part");
         if (partId && partId !== "chartArea") return;
-        /* chartArea: propaga só a seleção/move via interaction (editor inicia startDrag). */
         event.stopPropagation();
         interaction?.onPartPointerDown?.(chartAreaRef, event);
+        if (
+          isChartPartRefEqual(chartAreaRef, interaction?.selectedPart) &&
+          chartPartAllowsMove(chartAreaRef)
+        ) {
+          interaction?.onPartMovePointerDown?.(chartAreaRef, event);
+        }
       }
     : undefined;
 
@@ -249,6 +273,16 @@ export function SeriesChartPrimitive({
         visible={Boolean(config.showDataTable)}
         interaction={interaction}
         chartParts={chartParts}
+      />
+      <ChartPartResizeHandles
+        visible={
+          chartAreaSelected &&
+          chartPartAllowsResize(chartAreaRef) &&
+          Boolean(interaction?.onPartResizePointerDown)
+        }
+        onResizePointerDown={(handle, event) =>
+          interaction?.onPartResizePointerDown?.(chartAreaRef, event, handle)
+        }
       />
     </ChartContainer>
   );

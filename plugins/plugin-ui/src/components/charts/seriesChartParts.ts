@@ -272,7 +272,7 @@ export type ChartPartCapabilities = {
 };
 
 const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabilities> = {
-  chartArea: { movable: false, editable: false, deletable: false, resizable: false },
+  chartArea: { movable: true, editable: false, deletable: false, resizable: true },
   plotArea: { movable: true, editable: false, deletable: false, resizable: true },
   title: { movable: true, editable: true, deletable: true, resizable: true },
   legend: { movable: true, editable: true, deletable: true, resizable: true },
@@ -724,6 +724,8 @@ export function defaultChartPartFrame(ref: ChartPartRef): ChartPartFrame {
       return { x: 10, y: 85, w: 80, h: 10 };
     case "plotArea":
       return { x: 8, y: 8, w: 84, h: 84 };
+    case "chartArea":
+      return { x: 0, y: 0, w: 100, h: 100 };
     default:
       return { x: 10, y: 10, w: 40, h: 20 };
   }
@@ -731,12 +733,18 @@ export function defaultChartPartFrame(ref: ChartPartRef): ChartPartFrame {
 
 /**
  * Raiz de geometria para move/resize de `frame`.
- * `plotArea` usa o host do SVG (viewBox); demais partes usam a raiz do gráfico.
+ * `chartArea` = bloco do gráfico; `plotArea` = host do SVG; demais = raiz do gráfico.
  */
 export function resolveChartPartFrameRoot(
   ref: ChartPartRef,
   from: Element,
 ): Element | null {
+  if (ref.kind === "chartArea") {
+    return (
+      from.closest(".tdp-comunicado__block--chart-view, .td-composer__chart-view") ??
+      from.parentElement
+    );
+  }
   if (ref.kind === "plotArea") {
     return from.closest(".delpi-ui-series-chart__plot-host, .tdp-series-chart__plot-host");
   }

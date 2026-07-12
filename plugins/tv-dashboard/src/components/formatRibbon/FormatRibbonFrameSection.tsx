@@ -140,7 +140,7 @@ export function FormatRibbonFrameSection() {
                 type="number"
                 className="td-deck-ribbon__number td-deck-ribbon__number--compact"
                 min={key === "w" || key === "h" ? 4 : 0}
-                max={key === "w" || key === "h" ? 96 : 100}
+                max={key === "w" || key === "h" ? 100 : 100}
                 step={0.5}
                 aria-label={FRAME_LABELS[key]}
                 value={formatFrameValue(partFrame[key] ?? 0)}

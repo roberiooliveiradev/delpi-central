@@ -222,9 +222,9 @@ function useMaterializeKpiPartFrame(
     if (!showResize || framed || !onPartFrameChange) return;
     const host = hostRef.current;
     if (!host) return;
-    const card = resolveKpiPartFrameRoot(host);
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
+    const root = resolveKpiPartFrameRoot(host, partRef);
+    if (!root) return;
+    const rect = root.getBoundingClientRect();
     const el = host.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) return;
     onPartFrameChange(
@@ -297,13 +297,16 @@ export function DelpiKpiCard({
   const valueState = getKpiPartState(parts, { kind: "value" }) ?? parts.value;
   const hintState = getKpiPartState(parts, { kind: "hint" }) ?? parts.hint;
   const iconState = getKpiPartState(parts, { kind: "icon" }) ?? parts.icon;
+  const cardState = getKpiPartState(parts, { kind: "card" }) ?? parts.card;
   const titleFramed = Boolean(resolveKpiPartFrame(titleState));
   const valueFramed = Boolean(resolveKpiPartFrame(valueState));
   const hintFramed = Boolean(resolveKpiPartFrame(hintState));
   const iconFramed = Boolean(resolveKpiPartFrame(iconState));
+  const cardFramed = Boolean(resolveKpiPartFrame(cardState));
   const titleLayoutStyle = resolveKpiPartLayoutStyle(titleState);
   const valueLayoutStyle = resolveKpiPartLayoutStyle(valueState);
   const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState);
+  const cardLayoutStyle = resolveKpiPartLayoutStyle(cardState);
 
   const titleTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
@@ -358,7 +361,9 @@ export function DelpiKpiCard({
     iconPtr.selected && !iconPtr.editing && kpiPartAllowsResize({ kind: "icon" }) &&
     Boolean(interaction?.onPartResizePointerDown);
   const cardShowChrome =
-    cardPtr.selected && Boolean(interaction?.onPartResizePointerDown);
+    cardPtr.selected &&
+    kpiPartAllowsResize({ kind: "card" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
 
   const partCornerStyle = (host: HTMLElement | null, radiusPx: number) => {
     const shortSide = Math.min(
@@ -402,8 +407,16 @@ export function DelpiKpiCard({
     iconFramed,
     interaction?.onPartFrameChange,
   );
+  useMaterializeKpiPartFrame(
+    { kind: "card" },
+    cardHostRef,
+    cardShowChrome,
+    cardFramed,
+    interaction?.onPartFrameChange,
+  );
 
   const shellStyle: CSSProperties = {
+    position: "relative",
     ["--delpi-kpi-fg" as string]: autoFg,
     ["--delpi-kpi-label-color" as string]: resolvedTitleColor,
     ["--delpi-kpi-hint-color" as string]: resolvedHintColor,
@@ -453,6 +466,7 @@ export function DelpiKpiCard({
       <article
         ref={cardHostRef}
         className={articleClass}
+        style={cardLayoutStyle}
         {...{ [KPI_PART_DATA_ATTR]: cardPtr[KPI_PART_DATA_ATTR], "aria-selected": cardPtr["aria-selected"] }}
         onPointerDown={cardPtr.onPointerDown}
         onDoubleClick={cardPtr.onDoubleClick}

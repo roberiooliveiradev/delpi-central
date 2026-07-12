@@ -172,11 +172,11 @@ describe("seriesChartParts", () => {
     expect(chartPartCapabilities({ kind: "legend" }).resizable).toBe(true);
   });
 
-  it("chartPartAllowsFrame cobre title/legend/plotArea", () => {
+  it("chartPartAllowsFrame cobre title/legend/plotArea/chartArea", () => {
     expect(chartPartAllowsFrame({ kind: "title" })).toBe(true);
     expect(chartPartAllowsFrame({ kind: "legend" })).toBe(true);
     expect(chartPartAllowsFrame({ kind: "plotArea" })).toBe(true);
-    expect(chartPartAllowsFrame({ kind: "chartArea" })).toBe(false);
+    expect(chartPartAllowsFrame({ kind: "chartArea" })).toBe(true);
     expect(chartPartAllowsFrame({ kind: "series", seriesIndex: 0 })).toBe(false);
   });
 

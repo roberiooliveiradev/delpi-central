@@ -144,12 +144,12 @@ describe("kpi icon layout", () => {
     expect(resolveKpiShapeChromePartRef({ kind: "card" })).toEqual({ kind: "card" });
   });
 
-  it("kpiPartAllowsFrame cobre title/value/hint/icon", () => {
+  it("kpiPartAllowsFrame cobre card e partes internas", () => {
     expect(kpiPartAllowsFrame({ kind: "title" })).toBe(true);
     expect(kpiPartAllowsFrame({ kind: "value" })).toBe(true);
     expect(kpiPartAllowsFrame({ kind: "hint" })).toBe(true);
     expect(kpiPartAllowsFrame({ kind: "icon" })).toBe(true);
-    expect(kpiPartAllowsFrame({ kind: "card" })).toBe(false);
+    expect(kpiPartAllowsFrame({ kind: "card" })).toBe(true);
   });
 
   it("resizeKpiPartFrame aplica delta pelos handles", () => {
@@ -173,9 +173,9 @@ describe("kpi icon layout", () => {
     expect(borderRadiusPxToKpiCornerAdj(40, 80)).toBe(0.5);
   });
 
-  it("kpiPartAllowsResize cobre partes internas e não o card", () => {
+  it("kpiPartAllowsResize cobre fundo e partes internas", () => {
     expect(kpiPartAllowsResize({ kind: "value" })).toBe(true);
-    expect(kpiPartAllowsResize({ kind: "card" })).toBe(false);
+    expect(kpiPartAllowsResize({ kind: "card" })).toBe(true);
   });
 
   it("resolveKpiPartFontSize usa defaults canônicos quando sem fontSize", () => {
