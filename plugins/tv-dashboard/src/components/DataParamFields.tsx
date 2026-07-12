@@ -1,7 +1,11 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { BranchScope } from "../api/tvDashboardApi";
-import { ENUM_OPTION_LABELS, UI_FALLBACK_ENUMS } from "../content/dataParamCatalog";
-import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  ENUM_OPTION_LABELS,
+  UI_FALLBACK_ENUMS,
+  resolveParamFieldHint,
+  resolveParamFieldLabel,
+} from "../content/dataParamCatalog";
 import { BranchField } from "./BranchField";
 import { DeckField } from "./deck/DeckField";
 
@@ -43,13 +47,7 @@ const DATE_PARAM_KEYS = new Set([
 export const RIBBON_INLINE_PARAM_LIMIT = 4;
 
 function hintForParam(key: string, field: DataParamSchemaField): string | undefined {
-  const fromSchema = field.description?.trim();
-  if (fromSchema) return fromSchema;
-  if (key === "granularity") return TV_DASHBOARD_HELP_TOOLTIPS.data.paramGranularity;
-  if (key === "periodDays") return TV_DASHBOARD_HELP_TOOLTIPS.data.paramPeriodDays;
-  if (BRANCH_PARAM_KEYS.has(key)) return TV_DASHBOARD_HELP_TOOLTIPS.data.paramBranch;
-  if (key === "customer_segment") return TV_DASHBOARD_HELP_TOOLTIPS.data.paramCustomerSegment;
-  return undefined;
+  return resolveParamFieldHint(key, field.description);
 }
 
 export function enumOptionLabel(paramKey: string, value: string): string {
@@ -134,7 +132,8 @@ export function DataParamFields({
   const fields = entries.map(([key, field]) => {
     const inherited = inheritedKeys.has(key);
     const current = values?.[key];
-    const label = `${field.label ?? key}${inherited ? " (herdado do slide)" : ""}`;
+    const labelBase = resolveParamFieldLabel(key, field.label);
+    const label = `${labelBase}${inherited ? " (herdado do slide)" : ""}`;
     const hint = hintForParam(key, field);
     const fieldId = `${idPrefix}-${key}`;
     const selectOptions = resolveParamSelectOptions(key, field);
@@ -172,7 +171,7 @@ export function DataParamFields({
           <FormSelectControl
             id={fieldId}
             className={selectClass}
-            ariaLabel={field.label ?? key}
+            ariaLabel={labelBase}
             value={displayValue}
             onChange={(value: string) => onChange(key, value)}
             options={[

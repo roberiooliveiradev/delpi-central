@@ -1,6 +1,26 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  resolveParamFieldHint,
+  resolveParamFieldLabel,
+} from "../content/dataParamCatalog";
 import { enumOptionLabel, resolveParamSelectOptions, visibleParamSchema } from "./DataParamFields";
+
+describe("resolveParamFieldLabel", () => {
+  it("traduz date_start / work_center mesmo com label EN do schema", () => {
+    expect(resolveParamFieldLabel("date_start", "Date start")).toBe("Data início");
+    expect(resolveParamFieldLabel("date_end", "Date end")).toBe("Data fim");
+    expect(resolveParamFieldLabel("work_center", "Work center")).toBe("Centro de trabalho");
+  });
+});
+
+describe("resolveParamFieldHint", () => {
+  it("explica date_start e work_center", () => {
+    expect(resolveParamFieldHint("date_start")).toMatch(/AAAA-MM-DD/);
+    expect(resolveParamFieldHint("work_center")).toMatch(/centro de trabalho/i);
+    expect(resolveParamFieldHint("limit")).toMatch(/Máximo/i);
+  });
+});
 
 describe("resolveParamSelectOptions", () => {
   it("usa enum do schema com labels PT", () => {

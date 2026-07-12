@@ -53,8 +53,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -129,8 +129,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -203,8 +203,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -279,8 +279,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -399,8 +399,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -423,14 +423,15 @@
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Sort by",
-          "description": "Coluna de ordenação: branch, proposal_number, revision, description, proposal_date, end_date, status_code, customer_code, customer_store."
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Sort dir",
+          "label": "Direção da ordenação",
           "default": "asc",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -502,12 +503,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct"
@@ -548,8 +551,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -590,8 +593,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -626,8 +629,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -668,8 +671,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -698,13 +701,15 @@
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Sort by"
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Sort dir",
+          "label": "Direção da ordenação",
           "default": "asc",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -758,8 +763,8 @@
         "customer_segment": {
           "type": "string",
           "optional": true,
-          "label": "Segmento (weg | new_business)",
-          "description": "Filtra clientes: weg ou new_business. Vazio = todos os segmentos.",
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
           "enum": [
             "weg",
             "new_business"
@@ -854,8 +859,8 @@
         "department_id": {
           "type": "string",
           "optional": false,
-          "label": "Department id",
-          "description": "Departamento no SI (commercial, hr, production, financial, supplies, engineering, quality)."
+          "label": "Departamento",
+          "description": "Identificador do departamento no painel IDD."
         },
         "competence": {
           "type": "string",
@@ -891,12 +896,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -907,8 +914,8 @@
         "listing_type": {
           "type": "string",
           "optional": true,
-          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro.",
-          "description": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
+          "label": "Tipo de listagem",
+          "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         },
         "page": {
           "type": "integer",
@@ -925,8 +932,8 @@
         "include_qtd_pi": {
           "type": "boolean",
           "optional": true,
-          "label": "Include qtd pi",
-          "description": "Incluir contagem de PI via BOM (mais lento). Padrão: false."
+          "label": "Incluir quantidade PI",
+          "description": "Inclui quantidade de produto intermediário (PI) no resultado."
         }
       },
       "paramStrategy": "direct"
@@ -947,12 +954,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -969,8 +978,8 @@
         "listing_type": {
           "type": "string",
           "optional": true,
-          "label": "Filtro de tipo: Todos, LMP, Amostra ou Outro.",
-          "description": "Filtro de tipo: Todos, LMP, Amostra ou Outro."
+          "label": "Tipo de listagem",
+          "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         },
         "page": {
           "type": "integer",
@@ -1005,12 +1014,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -1027,7 +1038,8 @@
         "listing_type": {
           "type": "string",
           "optional": true,
-          "label": "Listing type"
+          "label": "Tipo de listagem",
+          "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         }
       },
       "paramStrategy": "direct"
@@ -1048,12 +1060,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -1070,7 +1084,8 @@
         "listing_type": {
           "type": "string",
           "optional": true,
-          "label": "Listing type"
+          "label": "Tipo de listagem",
+          "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         },
         "page": {
           "type": "integer",
@@ -1105,12 +1120,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -1127,7 +1144,8 @@
         "listing_type": {
           "type": "string",
           "optional": true,
-          "label": "Listing type"
+          "label": "Tipo de listagem",
+          "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         }
       },
       "paramStrategy": "direct"
@@ -1148,14 +1166,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start",
-          "description": "Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end",
-          "description": "Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1182,14 +1200,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start",
-          "description": "Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end",
-          "description": "Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1222,14 +1240,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start",
-          "description": "Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end",
-          "description": "Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard."
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1291,13 +1309,15 @@
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Sort by"
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Sort dir",
+          "label": "Direção da ordenação",
           "default": "asc",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -1312,12 +1332,12 @@
         "codigo_peca": {
           "type": "string",
           "optional": true,
-          "label": "Codigo peca"
+          "label": "Código da peça"
         },
         "descricao_peca": {
           "type": "string",
           "optional": true,
-          "label": "Descricao peca"
+          "label": "Descrição da peça"
         }
       },
       "paramStrategy": "direct"
@@ -1377,12 +1397,14 @@
         "data_inicial": {
           "type": "string",
           "optional": false,
-          "label": "Data inicial"
+          "label": "Data inicial",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "data_final": {
           "type": "string",
           "optional": false,
-          "label": "Data final"
+          "label": "Data final",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct"
@@ -1440,13 +1462,15 @@
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Sort by"
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Sort dir",
+          "label": "Direção da ordenação",
           "default": "asc",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -1483,17 +1507,18 @@
         "name_process": {
           "type": "string",
           "optional": true,
-          "label": "Name process"
+          "label": "Nome do processo"
         },
         "filial_id": {
           "type": "string",
           "optional": true,
-          "label": "Filial id"
+          "label": "ID da filial",
+          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
         },
         "sector_name": {
           "type": "string",
           "optional": true,
-          "label": "Sector name"
+          "label": "Setor"
         },
         "status": {
           "type": "string",
@@ -1529,7 +1554,8 @@
         "filial_id": {
           "type": "string",
           "optional": true,
-          "label": "Filial id"
+          "label": "ID da filial",
+          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
         }
       },
       "paramStrategy": "date_range",
@@ -1642,16 +1668,16 @@
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Campo de ordenação permitido.",
+          "label": "Ordenar por",
           "default": "data_emissao",
-          "description": "Campo de ordenação permitido."
+          "description": "Campo usado para ordenar a listagem."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Direção da ordenação: asc ou desc.",
+          "label": "Direção da ordenação",
           "default": "desc",
-          "description": "Direção da ordenação: asc ou desc.",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -1706,7 +1732,7 @@
           "optional": true,
           "label": "Limite",
           "default": 10,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "date_range",
@@ -1751,7 +1777,7 @@
           "optional": true,
           "label": "Limite",
           "default": 10,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "date_range",
@@ -2158,12 +2184,14 @@
         "date_from": {
           "type": "string",
           "optional": true,
-          "label": "Date from"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_to": {
           "type": "string",
           "optional": true,
-          "label": "Date to"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "supplier": {
           "type": "string",
@@ -2173,7 +2201,8 @@
         "product_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do produto"
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
         },
         "inspector": {
           "type": "string",
@@ -2183,7 +2212,7 @@
         "invoice_number": {
           "type": "string",
           "optional": true,
-          "label": "Invoice number"
+          "label": "Número da nota"
         },
         "lot": {
           "type": "string",
@@ -2215,7 +2244,7 @@
         "inspection_id": {
           "type": "string",
           "optional": false,
-          "label": "Inspection id"
+          "label": "Inspeção"
         }
       },
       "paramStrategy": "direct"
@@ -2324,7 +2353,7 @@
           "optional": true,
           "label": "Limite",
           "default": 50,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -2393,7 +2422,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2404,13 +2434,14 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -2431,12 +2462,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2447,13 +2480,13 @@
         "product_group": {
           "type": "string",
           "optional": true,
-          "label": "Product group"
+          "label": "Grupo de produto"
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -2474,12 +2507,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2491,13 +2526,14 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         },
         "group_by": {
           "type": "string",
           "optional": true,
-          "label": "Group by",
-          "default": "general"
+          "label": "Agrupar por",
+          "default": "general",
+          "description": "Como agregar o resultado (geral, filial, produto etc.)."
         }
       },
       "paramStrategy": "direct"
@@ -2518,12 +2554,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2534,13 +2572,14 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -2561,12 +2600,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2578,7 +2619,7 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -2671,12 +2712,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2697,12 +2740,13 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "status_ok_only": {
           "type": "boolean",
           "optional": true,
-          "label": "Status ok only",
+          "label": "Somente status OK",
           "default": false
         }
       },
@@ -2724,12 +2768,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2750,12 +2796,13 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "status_ok_only": {
           "type": "boolean",
           "optional": true,
-          "label": "Status ok only",
+          "label": "Somente status OK",
           "default": true
         },
         "page": {
@@ -2790,12 +2837,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2807,18 +2856,19 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         },
         "loss_type": {
           "type": "string",
           "optional": true,
-          "label": "Loss type",
+          "label": "Tipo de perda",
           "default": "both",
           "enum": [
             "refugo",
             "scrap",
             "both"
-          ]
+          ],
+          "description": "Tipo de perda a considerar: refugo, scrap ou ambos."
         }
       },
       "paramStrategy": "direct"
@@ -2839,12 +2889,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2856,18 +2908,19 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         },
         "loss_type": {
           "type": "string",
           "optional": true,
-          "label": "Loss type",
+          "label": "Tipo de perda",
           "default": "both",
           "enum": [
             "refugo",
             "scrap",
             "both"
-          ]
+          ],
+          "description": "Tipo de perda a considerar: refugo, scrap ou ambos."
         }
       },
       "paramStrategy": "direct"
@@ -2912,8 +2965,8 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Centro(s) de trabalho (csv)",
-          "description": "Centro(s) de trabalho (csv)"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "production_order": {
           "type": "string",
@@ -2930,7 +2983,8 @@
         "product_type": {
           "type": "string",
           "optional": true,
-          "label": "Product type",
+          "label": "Tipo de produto",
+          "description": "Filtra por tipo: PA (acabado) ou PI (intermediário).",
           "enum": [
             "PA",
             "PI"
@@ -2953,13 +3007,15 @@
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Sort by"
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Sort dir",
+          "label": "Direção da ordenação",
           "default": "asc",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -3024,10 +3080,10 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
       }
@@ -3095,21 +3151,22 @@
         "product_type": {
           "type": "string",
           "optional": true,
-          "label": "Product type",
+          "label": "Tipo de produto",
           "enum": [
             "PA",
             "PI"
-          ]
+          ],
+          "description": "Filtra por tipo: PA (acabado) ou PI (intermediário)."
         },
         "linked_sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Linked sort by"
+          "label": "Ordenar vínculos por"
         },
         "linked_sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Linked sort dir",
+          "label": "Direção da ordenação dos vínculos",
           "default": "asc",
           "enum": [
             "asc",
@@ -3135,7 +3192,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3146,13 +3204,14 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -3173,7 +3232,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3184,13 +3244,14 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -3211,7 +3272,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3222,13 +3284,14 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -3281,13 +3344,15 @@
         "sort_by": {
           "type": "string",
           "optional": true,
-          "label": "Sort by"
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
         },
         "sort_dir": {
           "type": "string",
           "optional": true,
-          "label": "Sort dir",
+          "label": "Direção da ordenação",
           "default": "asc",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
           "enum": [
             "asc",
             "desc"
@@ -3330,10 +3395,10 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
       }
@@ -3395,7 +3460,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3406,13 +3472,14 @@
         "work_center": {
           "type": "string",
           "optional": true,
-          "label": "Work center"
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -3469,7 +3536,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3481,7 +3549,7 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -3502,7 +3570,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3514,7 +3583,7 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -3535,7 +3604,8 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3547,7 +3617,7 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -3568,7 +3638,7 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "branch": {
           "type": "string",
@@ -3601,7 +3671,7 @@
         "code_exact": {
           "type": "boolean",
           "optional": true,
-          "label": "Code exact",
+          "label": "Código exato",
           "default": false,
           "description": "Quando true, exige match exato do código informado."
         },
@@ -3620,7 +3690,7 @@
         "file_kind": {
           "type": "string",
           "optional": true,
-          "label": "File kind",
+          "label": "Tipo de arquivo",
           "description": "Tipo do arquivo: exact, revision, variant ou other."
         },
         "has_variant": {
@@ -3650,12 +3720,12 @@
         "min_size_bytes": {
           "type": "integer",
           "optional": true,
-          "label": "Min size bytes"
+          "label": "Tamanho mínimo (bytes)"
         },
         "max_size_bytes": {
           "type": "integer",
           "optional": true,
-          "label": "Max size bytes"
+          "label": "Tamanho máximo (bytes)"
         },
         "page": {
           "type": "integer",
@@ -3708,7 +3778,7 @@
         "view": {
           "type": "string",
           "optional": true,
-          "label": "View",
+          "label": "Visão",
           "default": "by_material",
           "description": "by_material=lista MPs exclusivas; by_finished_product=lista PAs com MP exclusiva"
         },
@@ -3716,43 +3786,44 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         },
         "offset": {
           "type": "integer",
           "optional": true,
-          "label": "Offset"
+          "label": "Deslocamento",
+          "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento)."
         },
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "finished_product_code": {
           "type": "string",
           "optional": true,
-          "label": "Finished product code"
+          "label": "Código do produto acabado"
         },
         "raw_material_code": {
           "type": "string",
           "optional": true,
-          "label": "Raw material code"
+          "label": "Código da matéria-prima"
         },
         "group_code": {
           "type": "string",
           "optional": true,
-          "label": "Group code"
+          "label": "Código do grupo"
         },
         "include_test_products": {
           "type": "boolean",
           "optional": true,
-          "label": "Include test products",
+          "label": "Incluir produtos de teste",
           "default": false
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
-          "label": "Reservado para normalização futura",
+          "label": "Modo legado",
           "default": false,
           "description": "Reservado para normalização futura"
         }
@@ -3780,7 +3851,7 @@
         "group_code": {
           "type": "string",
           "optional": true,
-          "label": "Grupo"
+          "label": "Código do grupo"
         },
         "description": {
           "type": "string",
@@ -3790,7 +3861,7 @@
         "customer_reference": {
           "type": "string",
           "optional": true,
-          "label": "Customer reference"
+          "label": "Referência do cliente"
         },
         "page": {
           "type": "integer",
@@ -3826,11 +3897,11 @@
         "page": 1,
         "page_size": 5
       },
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -3848,14 +3919,14 @@
         "view": {
           "type": "string",
           "optional": true,
-          "label": "View",
+          "label": "Visão",
           "default": "full",
           "description": "full=cadastro completo; summary=subconjunto (~15 campos)"
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
-          "label": "Legacy",
+          "label": "Modo legado",
           "default": false,
           "description": "Reservado para campos normalizados futuros no cadastro"
         }
@@ -3878,7 +3949,7 @@
         "view": {
           "type": "string",
           "optional": true,
-          "label": "View",
+          "label": "Visão",
           "default": "full",
           "description": "full=dimensões completas; summary=amostra leve (opt-in)"
         }
@@ -3901,27 +3972,27 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "price_source": {
           "type": "string",
           "optional": true,
-          "label": "Price source",
+          "label": "Fonte de preço",
           "default": "standard_cost",
           "description": "Fonte de custo unitário: standard_cost (B1_CUSTD) ou last_purchase (B1_UPRC)"
         },
         "adjustment_percent": {
           "type": "number",
           "optional": true,
-          "label": "Adjustment percent",
+          "label": "Ajuste (%)",
           "default": 0.0,
           "description": "Reajuste percentual simulado aplicado a todas as MPs"
         },
         "top_n": {
           "type": "integer",
           "optional": true,
-          "label": "Top n",
-          "description": "Limita o ranking retornado às N MPs de maior impacto"
+          "label": "Top N",
+          "description": "Quantidade de itens no Top N."
         }
       },
       "paramStrategy": "direct"
@@ -3998,22 +4069,25 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "branch": {
           "type": "string",
@@ -4024,7 +4098,7 @@
         "legacy": {
           "type": "boolean",
           "optional": true,
-          "label": "Devolve SIM/NAO em vez de booleanos",
+          "label": "Modo legado",
           "default": false,
           "description": "Devolve SIM/NAO em vez de booleanos"
         }
@@ -4065,7 +4139,7 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         }
       },
       "paramStrategy": "direct"
@@ -4100,12 +4174,14 @@
         "issue_date_start": {
           "type": "string",
           "optional": true,
-          "label": "Issue date start"
+          "label": "Data de emissão (início)",
+          "description": "Início do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "issue_date_end": {
           "type": "string",
           "optional": true,
-          "label": "Issue date end"
+          "label": "Data de emissão (fim)",
+          "description": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "supplier": {
           "type": "string",
@@ -4149,7 +4225,7 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         }
       },
       "paramStrategy": "direct"
@@ -4184,12 +4260,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4267,12 +4345,14 @@
         "issue_date_start": {
           "type": "string",
           "optional": true,
-          "label": "Issue date start"
+          "label": "Data de emissão (início)",
+          "description": "Início do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "issue_date_end": {
           "type": "string",
           "optional": true,
-          "label": "Issue date end"
+          "label": "Data de emissão (fim)",
+          "description": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "customer": {
           "type": "string",
@@ -4304,7 +4384,7 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "page": {
           "type": "integer",
@@ -4350,12 +4430,13 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "branch": {
           "type": "string",
@@ -4366,7 +4447,7 @@
         "legacy": {
           "type": "boolean",
           "optional": true,
-          "label": "Devolve SIM/NAO em vez de booleanos",
+          "label": "Modo legado",
           "default": false,
           "description": "Devolve SIM/NAO em vez de booleanos"
         }
@@ -4389,12 +4470,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4421,12 +4504,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4437,7 +4522,7 @@
         "history_limit": {
           "type": "integer",
           "optional": true,
-          "label": "History limit"
+          "label": "Limite do histórico"
         }
       },
       "paramStrategy": "direct"
@@ -4488,12 +4573,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4504,7 +4591,7 @@
         "history_limit": {
           "type": "integer",
           "optional": true,
-          "label": "History limit"
+          "label": "Limite do histórico"
         }
       },
       "paramStrategy": "direct"
@@ -4564,17 +4651,20 @@
         "reference_date": {
           "type": "string",
           "optional": true,
-          "label": "Reference date"
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4585,7 +4675,7 @@
         "legacy": {
           "type": "boolean",
           "optional": true,
-          "label": "Omite datas ISO normalizadas",
+          "label": "Modo legado",
           "default": false,
           "description": "Omite datas ISO normalizadas"
         }
@@ -4640,7 +4730,7 @@
         "legacy": {
           "type": "boolean",
           "optional": true,
-          "label": "Omite alias location nos itens de estoque",
+          "label": "Modo legado",
           "default": false,
           "description": "Omite alias location nos itens de estoque"
         }
@@ -4663,7 +4753,7 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "page": {
           "type": "integer",
@@ -4718,12 +4808,12 @@
         "max_depth": {
           "type": "integer",
           "optional": true,
-          "label": "Max depth"
+          "label": "Profundidade máxima"
         },
         "legacy": {
           "type": "boolean",
           "optional": true,
-          "label": "Devolve SIM/NAO em vez de booleanos",
+          "label": "Modo legado",
           "default": false,
           "description": "Devolve SIM/NAO em vez de booleanos"
         }
@@ -4791,7 +4881,7 @@
           "optional": true,
           "label": "Limite",
           "default": 100,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -4851,12 +4941,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4868,7 +4960,7 @@
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -4899,27 +4991,29 @@
         "product_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do produto"
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
         },
         "customer_name": {
           "type": "string",
           "optional": true,
-          "label": "Customer name"
+          "label": "Nome do cliente"
         },
         "owner_user_id": {
           "type": "string",
           "optional": true,
-          "label": "Owner user id"
+          "label": "Responsável"
         },
         "branch_code": {
           "type": "string",
           "optional": true,
-          "label": "Branch code"
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Nonconformity scope"
+          "label": "Escopo de NC"
         },
         "code": {
           "type": "string",
@@ -4934,17 +5028,17 @@
         "root_cause_category": {
           "type": "string",
           "optional": true,
-          "label": "Root cause category"
+          "label": "Categoria da causa raiz"
         },
         "failure_mode": {
           "type": "string",
           "optional": true,
-          "label": "Failure mode"
+          "label": "Modo de falha"
         },
         "overdue_only": {
           "type": "boolean",
           "optional": true,
-          "label": "Overdue only",
+          "label": "Somente atrasados",
           "default": false
         },
         "page": {
@@ -4987,7 +5081,7 @@
           "optional": true,
           "label": "Limite",
           "default": 20,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -5008,27 +5102,29 @@
         "branch_code": {
           "type": "string",
           "optional": true,
-          "label": "Branch code"
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Nonconformity scope"
+          "label": "Escopo de NC"
         },
         "product_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do produto"
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
         },
         "customer_name": {
           "type": "string",
           "optional": true,
-          "label": "Customer name"
+          "label": "Nome do cliente"
         },
         "failure_mode": {
           "type": "string",
           "optional": true,
-          "label": "Failure mode"
+          "label": "Modo de falha"
         },
         "months": {
           "type": "integer",
@@ -5090,12 +5186,13 @@
         "plan_id": {
           "type": "string",
           "optional": true,
-          "label": "Plan id"
+          "label": "Plano"
         },
         "branch_code": {
           "type": "string",
           "optional": true,
-          "label": "Branch code"
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "section": {
           "type": "string",
@@ -5105,7 +5202,7 @@
         "evidence_type": {
           "type": "string",
           "optional": true,
-          "label": "Evidence type"
+          "label": "Tipo de evidência"
         },
         "page": {
           "type": "integer",
@@ -5153,18 +5250,20 @@
         "branch_code": {
           "type": "string",
           "optional": true,
-          "label": "Branch code"
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "product_code": {
           "type": "string",
           "optional": true,
-          "label": "Código do produto"
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
         },
         "limit": {
           "type": "integer",
           "optional": true,
           "label": "Limite",
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -5185,18 +5284,19 @@
         "branch_code": {
           "type": "string",
           "optional": true,
-          "label": "Branch code"
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "overdue_only": {
           "type": "boolean",
           "optional": true,
-          "label": "Overdue only",
+          "label": "Somente atrasados",
           "default": false
         },
         "include_completed": {
           "type": "boolean",
           "optional": true,
-          "label": "Include completed",
+          "label": "Incluir concluídos",
           "default": false
         },
         "page": {
@@ -5232,12 +5332,13 @@
         "branch_code": {
           "type": "string",
           "optional": true,
-          "label": "Branch code"
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Nonconformity scope"
+          "label": "Escopo de NC"
         },
         "page": {
           "type": "integer",
@@ -5272,17 +5373,18 @@
         "branch_code": {
           "type": "string",
           "optional": true,
-          "label": "Branch code"
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
           "optional": true,
-          "label": "Nonconformity scope"
+          "label": "Escopo de NC"
         },
         "min_plans": {
           "type": "integer",
           "optional": true,
-          "label": "Min plans",
+          "label": "Mínimo de planos",
           "default": 2
         },
         "page": {
@@ -5421,7 +5523,7 @@
         "template_key": {
           "type": "string",
           "optional": true,
-          "label": "Template key"
+          "label": "Chave do template"
         }
       },
       "paramStrategy": "direct"
@@ -5516,17 +5618,19 @@
         "date_start": {
           "type": "string",
           "optional": false,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": false,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "area_id": {
           "type": "string",
           "optional": true,
-          "label": "Area id"
+          "label": "Área"
         },
         "shift": {
           "type": "string",
@@ -5536,12 +5640,12 @@
         "audit_status": {
           "type": "string",
           "optional": true,
-          "label": "Audit status"
+          "label": "Status da auditoria"
         },
         "senso_order": {
           "type": "integer",
           "optional": true,
-          "label": "Senso order"
+          "label": "Ordem do senso"
         },
         "granularity": {
           "type": "string",
@@ -5766,7 +5870,7 @@
         "catalog_version": {
           "type": "integer",
           "optional": true,
-          "label": "Catalog version"
+          "label": "Versão do catálogo"
         },
         "branch": {
           "type": "string",
@@ -5864,12 +5968,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct",
@@ -5902,7 +6008,7 @@
         "savings_type": {
           "type": "string",
           "optional": true,
-          "label": "Savings type"
+          "label": "Tipo de economia"
         },
         "title": {
           "type": "string",
@@ -5912,12 +6018,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -5970,12 +6078,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct",
@@ -6109,12 +6219,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct",
@@ -6152,12 +6264,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct"
@@ -6202,13 +6316,14 @@
           "optional": true,
           "label": "Limite",
           "default": 50,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         },
         "offset": {
           "type": "integer",
           "optional": true,
-          "label": "Offset",
-          "default": 0
+          "label": "Deslocamento",
+          "default": 0,
+          "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento)."
         }
       },
       "paramStrategy": "direct",
@@ -6241,13 +6356,14 @@
           "optional": true,
           "label": "Limite",
           "default": 100,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         },
         "offset": {
           "type": "integer",
           "optional": true,
-          "label": "Offset",
-          "default": 0
+          "label": "Deslocamento",
+          "default": 0,
+          "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento)."
         }
       },
       "paramStrategy": "direct",
@@ -6341,7 +6457,7 @@
           "optional": true,
           "label": "Limite",
           "default": 8,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct",
@@ -6426,12 +6542,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -6441,7 +6559,8 @@
         "item_code": {
           "type": "string",
           "optional": true,
-          "label": "Item code"
+          "label": "Código do item",
+          "description": "Código do item/material no Protheus."
         },
         "description": {
           "type": "string",
@@ -6504,12 +6623,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -6519,7 +6640,8 @@
         "item_code": {
           "type": "string",
           "optional": true,
-          "label": "Item code"
+          "label": "Código do item",
+          "description": "Código do item/material no Protheus."
         },
         "description": {
           "type": "string",
@@ -6551,12 +6673,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -6573,7 +6697,7 @@
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix",
+          "label": "Prefixo do produto",
           "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
@@ -6614,17 +6738,19 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix",
+          "label": "Prefixo do produto",
           "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
@@ -6652,17 +6778,19 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix",
+          "label": "Prefixo do produto",
           "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         },
         "periodDays": {
@@ -6676,6 +6804,7 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "description": "Indicador numérico para «Qualidade — PPM externo».",
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -6684,8 +6813,7 @@
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "description": "Indicador numérico para «Qualidade — PPM externo»."
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -6708,12 +6836,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -6730,7 +6860,7 @@
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix",
+          "label": "Prefixo do produto",
           "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
@@ -6771,17 +6901,19 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix",
+          "label": "Prefixo do produto",
           "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         }
       },
@@ -6809,17 +6941,19 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
           "optional": true,
-          "label": "Product prefix",
+          "label": "Prefixo do produto",
           "description": "Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral"
         },
         "periodDays": {
@@ -6833,6 +6967,7 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "description": "Indicador numérico para «Qualidade — PPM interno».",
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -6841,8 +6976,7 @@
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "description": "Indicador numérico para «Qualidade — PPM interno»."
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -6871,12 +7005,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "direct",
@@ -6898,12 +7034,12 @@
         "problem_category": {
           "type": "string",
           "optional": true,
-          "label": "Problem category"
+          "label": "Categoria do problema"
         },
         "failure_mode": {
           "type": "string",
           "optional": true,
-          "label": "Failure mode"
+          "label": "Modo de falha"
         },
         "q": {
           "type": "string",
@@ -6989,7 +7125,7 @@
           "optional": true,
           "label": "Limite",
           "default": 10,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -7238,7 +7374,7 @@
           "optional": true,
           "label": "Limite",
           "default": 10,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct"
@@ -7311,12 +7447,14 @@
         "date_start": {
           "type": "string",
           "optional": true,
-          "label": "Date start"
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
-          "label": "Date end"
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -7364,7 +7502,7 @@
         "resource_id": {
           "type": "string",
           "optional": true,
-          "label": "Resource id"
+          "label": "Recurso"
         }
       },
       "paramStrategy": "direct",
@@ -7427,8 +7565,9 @@
         "top_limit": {
           "type": "integer",
           "optional": true,
-          "label": "Top limit",
-          "default": 5
+          "label": "Limite do ranking",
+          "default": 5,
+          "description": "Quantidade máxima de itens no ranking."
         }
       },
       "paramStrategy": "date_range",
@@ -7470,7 +7609,7 @@
         "strict_idd_period": {
           "type": "boolean",
           "optional": true,
-          "label": "Strict idd period",
+          "label": "Período IDD estrito",
           "default": false
         }
       },
@@ -7540,13 +7679,14 @@
         "top_limit": {
           "type": "integer",
           "optional": true,
-          "label": "Top limit",
-          "default": 5
+          "label": "Limite do ranking",
+          "default": 5,
+          "description": "Quantidade máxima de itens no ranking."
         },
         "details_limit": {
           "type": "integer",
           "optional": true,
-          "label": "Details limit",
+          "label": "Limite de detalhes",
           "default": 20
         }
       },
@@ -7590,22 +7730,23 @@
         "top_limit": {
           "type": "integer",
           "optional": true,
-          "label": "TOP N itens",
-          "default": 5
+          "label": "Limite do ranking",
+          "default": 5,
+          "description": "Quantidade máxima de itens no ranking."
         },
         "summary_only": {
           "type": "boolean",
           "optional": true,
-          "label": "Summary only",
+          "label": "Somente resumo",
           "default": false,
-          "description": "Quando true, retorna apenas o resumo consolidado (sem breakdown por filial/local/produto)."
+          "description": "Quando ativo, retorna só o resumo sem a lista detalhada."
         },
         "stock_method": {
           "type": "string",
           "optional": true,
-          "label": "Stock method",
+          "label": "Método de estoque",
           "default": "auto",
-          "description": "Método do estoque histórico: auto, hybrid, estimated ou official_closure.",
+          "description": "Método de valorização/consulta de estoque.",
           "enum": [
             "auto",
             "hybrid",
@@ -7618,11 +7759,11 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
       },
-      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
@@ -7646,7 +7787,7 @@
           "optional": true,
           "label": "Limite",
           "default": 25,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct",
@@ -7682,7 +7823,7 @@
           "optional": true,
           "label": "Limite",
           "default": 20,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct",
@@ -7705,7 +7846,7 @@
           "optional": true,
           "label": "Limite",
           "default": 25,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct",
@@ -7754,7 +7895,7 @@
           "optional": true,
           "label": "Limite",
           "default": 25,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct",
@@ -7816,12 +7957,12 @@
           "optional": true,
           "label": "Limite",
           "default": 25,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         },
         "operation_id": {
           "type": "string",
           "optional": true,
-          "label": "Operation id",
+          "label": "Operação",
           "description": "Filtra drill-down por operation id; use __none__ para amostras sem id."
         }
       },
@@ -7858,7 +7999,7 @@
           "optional": true,
           "label": "Limite",
           "default": 20,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct",
@@ -7901,7 +8042,7 @@
           "optional": true,
           "label": "Limite",
           "default": 50,
-          "description": "Máximo de registros retornados pela API."
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
       "paramStrategy": "direct",
