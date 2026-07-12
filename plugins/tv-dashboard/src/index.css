@@ -3303,8 +3303,10 @@
 
 .td-deck-filmstrip .td-slide-thumb {
   width: 100%;
-  height: auto;
+  /* height explícita (não só aspect-ratio) — CenteredScaledPreview precisa clientHeight > 0 */
   aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 72px;
   position: relative;
   overflow: hidden;
 }

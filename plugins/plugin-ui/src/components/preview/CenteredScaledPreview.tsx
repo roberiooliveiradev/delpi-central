@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 export type CenteredScaledPreviewProps = {
-  /** Largura de referência do conteúdo (ex.: palco 16:9 em 320px). */
+  /** Largura de referência do conteúdo (ex.: palco 16:9 canônico). */
   referenceWidth: number;
   /** Altura de referência do conteúdo. */
   referenceHeight: number;
@@ -12,7 +12,12 @@ export type CenteredScaledPreviewProps = {
 
 /**
  * Encaixa conteúdo em um retângulo fixo com escala uniforme e centralização —
- * mesmo padrão visual de `object-fit: contain` usado em `FilePreviewView` para imagens.
+ * mesmo padrão visual de `object-fit: contain`.
+ *
+ * Importante: o box de layout permanece no tamanho de referência; a escala é só
+ * visual. Centraliza com left/top 50% + margem negativa (não depende de flex no
+ * filho gigante), e só revela após medir o container — evita flash `scale(1)`
+ * que mostra só um canto branco do slide 1080p no filmstrip.
  */
 export function CenteredScaledPreview({
   referenceWidth,
@@ -22,7 +27,7 @@ export function CenteredScaledPreview({
   contentClassName,
 }: CenteredScaledPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const node = containerRef.current;
@@ -31,7 +36,7 @@ export function CenteredScaledPreview({
     const updateScale = () => {
       const width = node.clientWidth;
       const height = node.clientHeight;
-      if (width > 0 && height > 0) {
+      if (width > 0 && height > 0 && referenceWidth > 0 && referenceHeight > 0) {
         setScale(Math.min(width / referenceWidth, height / referenceHeight));
       }
     };
@@ -41,6 +46,8 @@ export function CenteredScaledPreview({
     observer.observe(node);
     return () => observer.disconnect();
   }, [referenceHeight, referenceWidth]);
+
+  const ready = scale != null && scale > 0;
 
   return (
     <div
@@ -54,7 +61,14 @@ export function CenteredScaledPreview({
         style={{
           width: referenceWidth,
           height: referenceHeight,
-          transform: `scale(${scale})`,
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          marginLeft: -referenceWidth / 2,
+          marginTop: -referenceHeight / 2,
+          transform: ready ? `scale(${scale})` : "scale(0)",
+          transformOrigin: "center center",
+          visibility: ready ? "visible" : "hidden",
         }}
       >
         {children}
