@@ -20,6 +20,7 @@ import {
   COMUNICADO_FONT_FAMILIES,
   COMUNICADO_FONT_SIZE_MAX,
   COMUNICADO_FONT_SIZE_MIN,
+  COMUNICADO_FONT_SIZE_PRESETS,
   COMUNICADO_FONT_SIZE_STEP,
   COMUNICADO_LINE_HEIGHT_OPTIONS,
   COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
@@ -36,7 +37,12 @@ import {
   selectionListTypeState,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { HintAction, NativeTextControl, isAutomaticTextColor } from "@delpi/plugin-ui/index";
+import {
+  ComboboxNumberControl,
+  HintAction,
+  NativeTextControl,
+  isAutomaticTextColor,
+} from "@delpi/plugin-ui/index";
 import { useEffect } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -196,15 +202,19 @@ export function FormatRibbonTypographySections() {
                 <Minus size={16} aria-hidden="true" />
               </TdRibbonIconButton>
               <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
-                <NativeTextControl
-                  type="number"
-                  className="td-deck-ribbon__number td-deck-ribbon__number--font-size"
+                <ComboboxNumberControl
+                  className="td-deck-ribbon__font-size-combobox"
+                  compact
+                  square
                   aria-label="Tamanho da fonte"
+                  value={currentFontSize}
+                  options={COMUNICADO_FONT_SIZE_PRESETS}
                   min={COMUNICADO_FONT_SIZE_MIN}
                   max={COMUNICADO_FONT_SIZE_MAX}
-                  value={currentFontSize}
-                  onChange={(value) =>
-                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(Number(value)) })
+                  clamp={clampFontSize}
+                  portalScopeClassName="dashboard-tv-dashboard"
+                  onChange={(next) =>
+                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(next) })
                   }
                 />
               </HintAction>

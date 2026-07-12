@@ -48,7 +48,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     fontFamily: "Família tipográfica do bloco de texto.",
     fontSizeDown: "Diminuir tamanho da fonte.",
     fontSizeUp: "Aumentar tamanho da fonte.",
-    fontSize: "Tamanho da fonte em pixels.",
+    fontSize: "Escolha um tamanho da lista ou digite o valor em pixels (12–120).",
     mediaLibrary: "Escolher arquivo já enviado à playlist.",
     duplicateBlock: "Duplicar elemento selecionado (Ctrl+D).",
     cropImage: "Abrir painel de recorte da imagem no inspetor lateral.",

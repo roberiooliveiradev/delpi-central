@@ -2259,6 +2259,14 @@
   min-width: 32px;
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon__font-size-combobox {
+  width: auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__font-size-combobox .delpi-ui-combobox-number__input {
+  width: 2.75rem;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__number--font-size,
 .dashboard-tv-dashboard .td-deck-ribbon__number--font-size {
   width: 72px;
@@ -2269,6 +2277,7 @@
   text-align: center;
   padding: 0 6px;
   line-height: 1.2;
+  border-radius: 0;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__select {

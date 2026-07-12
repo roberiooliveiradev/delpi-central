@@ -1,0 +1,173 @@
+/**
+ * Combobox numérico (input + lista) — tokens --delpi-ui-* com fallback portal.
+ * Preferir `--square` em ribbons densas (sem cantos arredondados).
+ */
+
+.delpi-ui-combobox-number {
+  --delpi-ui-combobox-bg: var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)));
+  --delpi-ui-combobox-text: var(--delpi-ui-text, var(--td-text, var(--text, #111111)));
+  --delpi-ui-combobox-border: var(--delpi-ui-border, var(--td-border, var(--border, #d0d7de)));
+  --delpi-ui-combobox-muted: var(
+    --delpi-ui-text-muted,
+    var(--td-muted, color-mix(in srgb, var(--delpi-ui-combobox-text) 55%, transparent))
+  );
+  --delpi-ui-combobox-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
+  --delpi-ui-combobox-radius: 10px;
+  --delpi-ui-combobox-min-height: 36px;
+  --delpi-ui-combobox-font-size: 13px;
+
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.delpi-ui-combobox-number--square {
+  --delpi-ui-combobox-radius: 0;
+}
+
+.delpi-ui-combobox-number--compact {
+  --delpi-ui-combobox-min-height: 32px;
+  --delpi-ui-combobox-font-size: 14px;
+}
+
+.delpi-ui-combobox-number__field {
+  display: inline-flex;
+  align-items: stretch;
+  min-width: 0;
+  min-height: var(--delpi-ui-combobox-min-height);
+  border: 1px solid var(--delpi-ui-combobox-border);
+  border-radius: var(--delpi-ui-combobox-radius);
+  background: var(--delpi-ui-combobox-bg);
+  color: var(--delpi-ui-combobox-text);
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.delpi-ui-combobox-number:hover:not(:has(:disabled)) .delpi-ui-combobox-number__field {
+  border-color: color-mix(in srgb, var(--delpi-ui-combobox-accent) 45%, var(--delpi-ui-combobox-border));
+}
+
+.delpi-ui-combobox-number--open .delpi-ui-combobox-number__field,
+.delpi-ui-combobox-number:focus-within .delpi-ui-combobox-number__field {
+  border-color: var(--delpi-ui-combobox-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--delpi-ui-combobox-accent) 22%, transparent);
+}
+
+.delpi-ui-combobox-number__input {
+  box-sizing: border-box;
+  width: 3.25rem;
+  min-width: 0;
+  min-height: var(--delpi-ui-combobox-min-height);
+  margin: 0;
+  padding: 0 4px 0 8px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--delpi-ui-combobox-font-size);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.delpi-ui-combobox-number__input:focus {
+  outline: none;
+}
+
+.delpi-ui-combobox-number__input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-combobox-number__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--delpi-ui-combobox-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--delpi-ui-combobox-muted);
+  cursor: pointer;
+}
+
+.delpi-ui-combobox-number__toggle:hover:not(:disabled) {
+  color: var(--delpi-ui-combobox-text);
+  background: color-mix(in srgb, var(--delpi-ui-combobox-text) 6%, transparent);
+}
+
+.delpi-ui-combobox-number__toggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-combobox-number__panel {
+  --delpi-ui-combobox-bg: var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)));
+  --delpi-ui-combobox-text: var(--delpi-ui-text, var(--td-text, var(--text, #111111)));
+  --delpi-ui-combobox-border: var(--delpi-ui-border, var(--td-border, var(--border, #d0d7de)));
+  --delpi-ui-combobox-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
+  --delpi-ui-combobox-radius: 10px;
+
+  box-sizing: border-box;
+  padding: 4px;
+  border: 1px solid var(--delpi-ui-combobox-border);
+  border-radius: var(--delpi-ui-combobox-radius);
+  background: var(--delpi-ui-combobox-bg);
+  color: var(--delpi-ui-combobox-text);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--delpi-ui-combobox-text) 18%, transparent);
+}
+
+.delpi-ui-combobox-number__panel--square {
+  --delpi-ui-combobox-radius: 0;
+}
+
+.delpi-ui-combobox-number__panel--portal {
+  z-index: 40;
+}
+
+.delpi-ui-combobox-number__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow: auto;
+  display: grid;
+  gap: 1px;
+}
+
+.delpi-ui-combobox-number__list li {
+  margin: 0;
+  list-style: none;
+}
+
+.delpi-ui-combobox-number__option {
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.delpi-ui-combobox-number__option:hover {
+  background: color-mix(in srgb, var(--delpi-ui-combobox-accent) 12%, transparent);
+}
+
+.delpi-ui-combobox-number__option--active {
+  background: color-mix(in srgb, var(--delpi-ui-combobox-accent) 18%, transparent);
+  color: var(--delpi-ui-combobox-accent);
+}

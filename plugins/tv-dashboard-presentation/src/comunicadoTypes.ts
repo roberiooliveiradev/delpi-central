@@ -348,6 +348,11 @@ export const COMUNICADO_FONT_SIZE_MIN = 12;
 export const COMUNICADO_FONT_SIZE_MAX = 120;
 export const COMUNICADO_FONT_SIZE_STEP = 2;
 
+/** Presets da lista do controle de tamanho (usuário ainda pode digitar valores intermediários). */
+export const COMUNICADO_FONT_SIZE_PRESETS = [
+  12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 44, 48, 54, 60, 72, 80, 96, 120,
+] as const;
+
 export const COMUNICADO_LINE_HEIGHT_OPTIONS = [1, 1.15, 1.5, 2] as const;
 
 export const COMUNICADO_ICON_OPTIONS: Array<{ name: string; label: string }> = [

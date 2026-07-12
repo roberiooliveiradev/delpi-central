@@ -189,6 +189,15 @@ describe("comunicadoHelpers", () => {
     expect(clampFontSize(200)).toBe(120);
   });
 
+  it("presets de fonte cobrem min/max em ordem crescente", async () => {
+    const { COMUNICADO_FONT_SIZE_PRESETS } = await import("./comunicadoTypes");
+    expect(COMUNICADO_FONT_SIZE_PRESETS[0]).toBe(12);
+    expect(COMUNICADO_FONT_SIZE_PRESETS.at(-1)).toBe(120);
+    for (let i = 1; i < COMUNICADO_FONT_SIZE_PRESETS.length; i += 1) {
+      expect(COMUNICADO_FONT_SIZE_PRESETS[i]).toBeGreaterThan(COMUNICADO_FONT_SIZE_PRESETS[i - 1]!);
+    }
+  });
+
   it("serializa blocos data_* e dataFilters (v4)", () => {
     const parsed = parseComunicadoConfig({
       version: 4,

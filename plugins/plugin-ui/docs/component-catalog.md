@@ -420,6 +420,21 @@ Dropdown single-select com busca opcional. `SelectControl` é o trigger/painel r
 
 Helpers: `selectControlBemClasses`, `selectFieldPacClasses`, `selectFieldTransformometroClasses`, `createDashboardSelectField`, `createDashboardSelectControl`.
 
+### `ComboboxNumberControl`
+
+Input + lista de presets (escolher ou digitar). Confirma no blur/Enter; seleção na lista aplica na hora. CSS: `styles/combobox-number.css` (`.delpi-ui-combobox-number*`). Use `square` / `compact` na ribbon.
+
+```tsx
+<ComboboxNumberControl
+  value={fontSize}
+  options={[12, 14, 16, 18, 24]}
+  clamp={(n) => Math.min(120, Math.max(12, Math.round(n)))}
+  aria-label="Tamanho da fonte"
+  portalScopeClassName="dashboard-tv-dashboard"
+  onChange={setFontSize}
+/>
+```
+
 ---
 
 ## Estilos base (`styles.css`)

@@ -166,6 +166,11 @@ export {
 } from "./NativeTextControl";
 
 export {
+  ComboboxNumberControl,
+  type ComboboxNumberControlProps,
+} from "./ComboboxNumberControl";
+
+export {
   NativeTextAreaControl,
   type NativeTextAreaControlProps,
 } from "./NativeTextAreaControl";
