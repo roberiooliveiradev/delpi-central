@@ -66,8 +66,40 @@ export function SelectedDataSidePanel({
   }, [bindingTarget, routes]);
 
   if (showCatalog) {
+    // Ribbon: só aviso — o catálogo denso quebra o layout da faixa (grid + overflow-y hidden).
+    if (isRibbon) {
+      return (
+        <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados">
+          <p className="td-deck-inspector__hint">
+            Escolha a fonte no painel lateral «Fontes de dados».
+          </p>
+          <div className="td-deck-ribbon__field-grid">
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              onClick={() => {
+                setDataPanelIntent("catalog");
+                openCatalog();
+              }}
+            >
+              Abrir catálogo no painel
+            </button>
+            {context.kind !== "none" ? (
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                onClick={() => setDataPanelIntent("binding")}
+              >
+                Voltar à fonte atual
+              </button>
+            ) : null}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className={isRibbon ? "td-deck-ribbon__panel td-deck-ribbon__panel--ribbon" : undefined}>
+      <div>
         {context.kind !== "none" ? (
           <div className="td-data-routes-panel__toolbar">
             <button

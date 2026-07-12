@@ -6,7 +6,11 @@ import { SelectedDataSidePanel } from "./SelectedDataSidePanel";
  * em layout full-width com grade de campos.
  */
 export function ComunicadoDataRibbon() {
-  const { setSelectionPanelTab, setDataPanelIntent } = useComunicadoEditor();
+  const {
+    setSelectionPanelTab,
+    setDataPanelIntent,
+    setDataPanelOpen,
+  } = useComunicadoEditor();
 
   return (
     <div className="td-deck-ribbon__groups td-deck-ribbon__groups--inspector">
@@ -16,7 +20,12 @@ export function ComunicadoDataRibbon() {
           setDataPanelIntent("binding");
           setSelectionPanelTab("element");
         }}
-        onOpenCatalog={() => setDataPanelIntent("catalog")}
+        onOpenCatalog={() => {
+          // Catálogo completo não cabe na ribbon (max ~120px) — abre no painel lateral.
+          setDataPanelIntent("catalog");
+          setDataPanelOpen(true);
+          setSelectionPanelTab("data");
+        }}
       />
     </div>
   );

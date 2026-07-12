@@ -250,7 +250,7 @@ export function useComunicadoEditorBlocks({
   const openDataCatalog = useCallback(() => {
     setDataPanelIntent("catalog");
     setDataPanelOpen(true);
-    setRibbonTabRequest("insert");
+    setRibbonTabRequest("data");
   }, [setDataPanelIntent, setDataPanelOpen, setRibbonTabRequest]);
 
   const setDataFilters = useCallback(
