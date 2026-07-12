@@ -3,21 +3,30 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 type Props = {
   children: ReactNode;
   className?: string;
-  /** Tamanho mínimo em px. */
+  /** Tamanho mínimo em px (modo auto-fit). */
   minPx?: number;
   /** Teto em px (o limite real é o container). */
   maxPx?: number;
+  /**
+   * Tamanho explícito configurado pelo usuário.
+   * Quando definido, não faz auto-fit — o tamanho persiste com ou sem seleção.
+   */
+  fixedPx?: number | null;
 };
 
 /**
- * Ajusta `font-size` para o texto preencher o container pai (largura e altura).
- * Usado no valor do KPI no palco TV / cards redimensionáveis.
+ * Ajusta `font-size` para o texto preencher o container pai (largura e altura),
+ * ou aplica `fixedPx` quando a tipografia foi configurada explicitamente.
  */
-export function FitText({ children, className, minPx = 14, maxPx = 240 }: Props) {
+export function FitText({ children, className, minPx = 14, maxPx = 240, fixedPx }: Props) {
   const measureRef = useRef<HTMLSpanElement>(null);
   const [fontSize, setFontSize] = useState(minPx);
+  const useFixed =
+    fixedPx != null && Number.isFinite(fixedPx) && fixedPx > 0 ? Math.round(fixedPx) : null;
 
   useLayoutEffect(() => {
+    if (useFixed != null) return;
+
     const el = measureRef.current;
     const parent = el?.parentElement;
     if (!el || !parent) return;
@@ -50,13 +59,19 @@ export function FitText({ children, className, minPx = 14, maxPx = 240 }: Props)
     const observer = new ResizeObserver(fit);
     observer.observe(parent);
     return () => observer.disconnect();
-  }, [children, maxPx, minPx]);
+  }, [children, maxPx, minPx, useFixed]);
 
   return (
     <span
       ref={measureRef}
       className={["delpi-ui-fit-text", className].filter(Boolean).join(" ")}
-      style={{ fontSize, lineHeight: 1.05, whiteSpace: "nowrap", display: "inline-block", maxWidth: "100%" }}
+      style={{
+        fontSize: useFixed ?? fontSize,
+        lineHeight: 1.05,
+        whiteSpace: "nowrap",
+        display: "inline-block",
+        maxWidth: "100%",
+      }}
     >
       {children}
     </span>

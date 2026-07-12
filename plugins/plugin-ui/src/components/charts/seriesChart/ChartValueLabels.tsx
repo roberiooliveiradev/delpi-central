@@ -1,6 +1,7 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
+  chartPartTypographyStyle,
   filterVisibleSeriesPoints,
   isChartPartRefEqual,
   type ChartPartsMap,
@@ -52,6 +53,7 @@ export function ChartValueLabels({
             pointIndex: point.sourceIndex,
           };
           const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+          const pointStyle = chartPartTypographyStyle(chartParts, ref);
 
           return (
             <text
@@ -62,6 +64,7 @@ export function ChartValueLabels({
                 .filter(Boolean)
                 .join(" ")}
               textAnchor="middle"
+              style={pointStyle}
               {...chartPartDomProps(ref, interaction?.selectedPart)}
               onPointerDown={
                 interactive
@@ -98,6 +101,7 @@ export function ChartValueLabels({
           pointIndex: point.sourceIndex,
         };
         const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+        const pointStyle = chartPartTypographyStyle(chartParts, ref);
         return (
           <text
             key={`line-label-${point.sourceIndex}`}
@@ -107,6 +111,7 @@ export function ChartValueLabels({
               .filter(Boolean)
               .join(" ")}
             textAnchor="middle"
+            style={pointStyle}
             {...chartPartDomProps(ref, interaction?.selectedPart)}
             onPointerDown={
               interactive

@@ -1,7 +1,9 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
+  chartPartTypographyStyle,
   isChartPartRefEqual,
+  type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 import { resolveXLabelTextAnchor, type SeriesChartLayout } from "./layout";
@@ -14,6 +16,7 @@ export type ChartAxisXProps = {
   showTitle?: boolean;
   title?: string;
   interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
 };
 
 export function ChartAxisX({
@@ -23,6 +26,7 @@ export function ChartAxisX({
   showTitle = false,
   title,
   interaction,
+  chartParts,
 }: ChartAxisXProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotH, viewH, xLabelsRotated, toX, plotW, visibleXLabelIndices } = layout;
@@ -34,6 +38,8 @@ export function ChartAxisX({
   const axisSelected = isChartPartRefEqual(axisRef, interaction?.selectedPart);
   const titleSelected = isChartPartRefEqual(titleRef, interaction?.selectedPart);
   const visibleSet = new Set(visibleXLabelIndices);
+  const axisTypography = chartPartTypographyStyle(chartParts, axisRef);
+  const titleTypography = chartPartTypographyStyle(chartParts, titleRef);
 
   return (
     <g
@@ -57,7 +63,6 @@ export function ChartAxisX({
           : undefined
       }
     >
-      {/* Área de hit sob os rótulos do eixo X */}
       {interactive ? (
         <rect
           x={margin.left}
@@ -85,6 +90,7 @@ export function ChartAxisX({
                 className={className}
                 textAnchor={resolveXLabelTextAnchor(index, points.length, xLabelsRotated)}
                 transform={xLabelsRotated ? `rotate(-38 ${x} ${labelY})` : undefined}
+                style={axisTypography}
               >
                 {label}
               </text>
@@ -99,6 +105,7 @@ export function ChartAxisX({
             .filter(Boolean)
             .join(" ")}
           textAnchor="middle"
+          style={titleTypography}
           {...chartPartDomProps(titleRef, interaction?.selectedPart)}
           onPointerDown={
             interactive

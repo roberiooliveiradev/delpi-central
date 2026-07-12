@@ -1,7 +1,9 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
+  chartPartTypographyStyle,
   isChartPartRefEqual,
+  type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 import { formatChartTick, type SeriesChartLayout } from "./layout";
@@ -14,6 +16,7 @@ export type ChartAxisYProps = {
   title?: string;
   valueFormat: SeriesChartValueFormat;
   interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
 };
 
 export function ChartAxisY({
@@ -23,6 +26,7 @@ export function ChartAxisY({
   title,
   valueFormat,
   interaction,
+  chartParts,
 }: ChartAxisYProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotH, ticks, toY } = layout;
@@ -32,6 +36,8 @@ export function ChartAxisY({
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const axisSelected = isChartPartRefEqual(axisRef, interaction?.selectedPart);
   const titleSelected = isChartPartRefEqual(titleRef, interaction?.selectedPart);
+  const axisTypography = chartPartTypographyStyle(chartParts, axisRef);
+  const titleTypography = chartPartTypographyStyle(chartParts, titleRef);
 
   return (
     <g
@@ -73,6 +79,7 @@ export function ChartAxisY({
             .filter(Boolean)
             .join(" ")}
           transform={`rotate(-90 10 ${axisCenterY})`}
+          style={titleTypography}
           {...chartPartDomProps(titleRef, interaction?.selectedPart)}
           onPointerDown={
             interactive
@@ -98,7 +105,6 @@ export function ChartAxisY({
       {showLabels
         ? ticks.map((tick, tickIndex) => {
             const y = toY(tick);
-            // Extremos: baseline evita corte do tick no topo/base do plot.
             const baseline =
               tickIndex === ticks.length - 1
                 ? "hanging"
@@ -113,6 +119,7 @@ export function ChartAxisY({
                 className={`${cn.tick} ${cn.tickY}`}
                 textAnchor="end"
                 dominantBaseline={baseline}
+                style={axisTypography}
               >
                 {formatChartTick(tick, valueFormat)}
               </text>

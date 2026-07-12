@@ -53,7 +53,7 @@ describe("DelpiKpiCard chrome", () => {
     expect(card.getAttribute("style") ?? "").not.toMatch(/border:/);
   });
 
-  it("não reexibe título oculto no modo sem interação (MetricKpiCard)", () => {
+  it("não reexibe título oculto sem interação", () => {
     const { container } = render(
       <DelpiKpiCard
         label="Indicador — Taxa de fechamento comercial"
@@ -66,5 +66,31 @@ describe("DelpiKpiCard chrome", () => {
     expect(container.textContent).toContain("166,7%");
     expect(container.textContent).not.toContain("Taxa de fechamento");
     expect(container.querySelector(".delpi-kpi-card--value-dominant")).toBeTruthy();
+  });
+
+  it("mantém tipografia de parts com e sem interaction (deselect)", () => {
+    const kpiParts = {
+      title: { style: { fontSize: 18, color: "#94a3b8" } },
+      value: { style: { fontSize: 64, color: "#ffffff" } },
+    };
+
+    const selected = render(
+      <DelpiKpiCard label="Consumo" value="10" kpiParts={kpiParts} interaction={{}} />,
+    );
+    const deselected = render(
+      <DelpiKpiCard label="Consumo" value="10" kpiParts={kpiParts} interaction={null} />,
+    );
+
+    const selectedTitle = selected.container.querySelector(".delpi-kpi-card__label") as HTMLElement;
+    const deselectedTitle = deselected.container.querySelector(
+      ".delpi-kpi-card__label",
+    ) as HTMLElement;
+    expect(selectedTitle.style.fontSize).toBe("18px");
+    expect(deselectedTitle.style.fontSize).toBe("18px");
+
+    const selectedValue = selected.container.querySelector(".delpi-ui-fit-text") as HTMLElement;
+    const deselectedValue = deselected.container.querySelector(".delpi-ui-fit-text") as HTMLElement;
+    expect(selectedValue.style.fontSize).toBe("64px");
+    expect(deselectedValue.style.fontSize).toBe("64px");
   });
 });

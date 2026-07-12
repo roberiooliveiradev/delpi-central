@@ -9,7 +9,7 @@ import {
 } from "../shape/colorUtils";
 import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import { FitText } from "./FitText";
-import { MetricKpiCard, metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard";
+import { metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard";
 import {
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
@@ -292,29 +292,10 @@ export function DelpiKpiCard({
     .filter(Boolean)
     .join(" ");
 
-  /* Modo sem interação: MetricKpiCard monolítico (dashboards) — respeita showTitle. */
-  if (!interaction) {
-    return (
-      <div
-        className="delpi-kpi-card-shell"
-        data-custom-value={resolvedValueColor ? "true" : undefined}
-        style={Object.keys(shellStyle).length ? shellStyle : undefined}
-      >
-        <MetricKpiCard
-          label={showTitle ? titleContent : undefined}
-          value={value}
-          hint={showHint ? hintContent : undefined}
-          titleHint={showTitle ? titleHint : undefined}
-          icon={showIcon ? icon : undefined}
-          tone={tone}
-          classNames={DELPI_KPI_CLASS_NAMES}
-          className={className}
-          fitValue
-        />
-      </div>
-    );
-  }
+  const valueFontSizePx = parts.value?.style?.fontSize;
 
+  /* Uma única árvore de render: tipografia de kpiParts vale com ou sem interaction
+   * (TV / deselect no editor). Handlers só existem quando interaction está setada. */
   return (
     <div
       className="delpi-kpi-card-shell"
@@ -392,7 +373,7 @@ export function DelpiKpiCard({
                 onPointerDown={valuePtr.onPointerDown}
                 onDoubleClick={valuePtr.onDoubleClick}
               >
-                <FitText>{value}</FitText>
+                <FitText fixedPx={valueFontSizePx}>{value}</FitText>
               </strong>
             ) : null}
             {showHint && hintContent && DELPI_KPI_CLASS_NAMES.hint ? (

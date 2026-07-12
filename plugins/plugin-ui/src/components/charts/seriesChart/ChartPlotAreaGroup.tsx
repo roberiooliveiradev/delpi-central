@@ -240,6 +240,7 @@ export function ChartPlotAreaGroup({
           title={config.yAxisTitle}
           valueFormat={valueFormat}
           interaction={interaction}
+          chartParts={chartParts}
         />
       ) : null}
 
@@ -299,6 +300,7 @@ export function ChartPlotAreaGroup({
           showTitle={config.showXAxisTitle === true}
           title={config.xAxisTitle}
           interaction={interaction}
+          chartParts={chartParts}
         />
       ) : null}
     </>

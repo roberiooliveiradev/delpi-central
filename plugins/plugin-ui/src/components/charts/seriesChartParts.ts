@@ -3,7 +3,11 @@
  * Uma fonte de verdade: identidade + adapter com `SeriesChartOptions` flat (legado v1.4).
  */
 
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 
 import type { SeriesChartOptions } from "./seriesChartOptions";
 import {
@@ -397,6 +401,24 @@ export function findChartPartFromTarget(target: EventTarget | null): ChartPartRe
 export function getChartPartState(parts: ChartPartsMap | null | undefined, ref: ChartPartRef): ChartPartState | undefined {
   if (!parts) return undefined;
   return parts[serializeChartPartRef(ref)];
+}
+
+/** Tipografia declarada em chartParts — mesma árvore selected/deselected. */
+export function chartPartTypographyStyle(
+  parts: ChartPartsMap | null | undefined,
+  ref: ChartPartRef,
+): CSSProperties | undefined {
+  const style = getChartPartState(parts, ref)?.style;
+  if (!style) return undefined;
+  const css: CSSProperties = {};
+  if (style.fontFamily) css.fontFamily = style.fontFamily;
+  if (style.fontSize != null && Number.isFinite(style.fontSize)) {
+    css.fontSize = `${style.fontSize}px`;
+  }
+  if (style.fontWeight) css.fontWeight = style.fontWeight;
+  if (style.fontStyle) css.fontStyle = style.fontStyle;
+  if (style.color) css.color = style.color;
+  return Object.keys(css).length > 0 ? css : undefined;
 }
 
 export function upsertChartPartState(

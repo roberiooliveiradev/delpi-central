@@ -117,6 +117,7 @@ export {
   filterVisibleSeriesPoints,
   findChartPartFromTarget,
   getChartPartState,
+  chartPartTypographyStyle,
   isChartPartRefEqual,
   mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,

@@ -5,6 +5,7 @@ import type { SeriesChartLegendPosition } from "../seriesChartOptions";
 import {
   bindChartPartPointer,
   chartPartAllowsResize,
+  chartPartTypographyStyle,
   clampChartPartFrame,
   getChartPartState,
   type ChartPartsMap,
@@ -56,8 +57,10 @@ export function ChartLegend({
 
   const ref = { kind: "legend" as const };
   const frame = getChartPartState(chartParts, ref)?.frame;
+  const typographyStyle = chartPartTypographyStyle(chartParts, ref);
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction);
   const frameStyle = partFrameStyle(frame, selected);
+  const hostStyle = frameStyle || typographyStyle ? { ...frameStyle, ...typographyStyle } : undefined;
   const showResize = selected && chartPartAllowsResize(ref);
   const hostRef = useRef<HTMLUListElement>(null);
 
@@ -91,7 +94,7 @@ export function ChartLegend({
       ]
         .filter(Boolean)
         .join(" ")}
-      style={frameStyle}
+      style={hostStyle}
       aria-label="Legenda"
       {...dom}
       onPointerDown={onPointerDown}

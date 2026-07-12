@@ -8,6 +8,7 @@ import {
   chartPartAllowsMove,
   chartPartAllowsResize,
   chartPartCapabilities,
+  chartPartTypographyStyle,
   deleteChartPart,
   filterVisibleSeriesPoints,
   findChartPartFromTarget,
@@ -206,5 +207,16 @@ describe("seriesChartParts", () => {
     const normalized = normalizeChartPartsForLoad(withFrames, mergeSeriesChartOptions({ showDataTable: true }));
     expect(normalized.dataTable?.frame).toBeUndefined();
     expect(normalized.plotArea?.frame).toBeUndefined();
+  });
+
+  it("chartPartTypographyStyle mapeia fontSize e família", () => {
+    const parts = upsertChartPartState({}, { kind: "legend" }, {
+      style: { fontSize: 22, fontFamily: "Georgia, serif", color: "#fff" },
+    });
+    expect(chartPartTypographyStyle(parts, { kind: "legend" })).toEqual({
+      fontSize: "22px",
+      fontFamily: "Georgia, serif",
+      color: "#fff",
+    });
   });
 });
