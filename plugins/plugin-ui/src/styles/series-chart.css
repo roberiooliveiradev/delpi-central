@@ -7,12 +7,18 @@
   flex-direction: column;
   gap: 0.35rem;
   box-sizing: border-box;
-  /* radius via estilo inline (chartArea); clip obrigatório — senão filhos/fundo vazam nos cantos. */
+  /* radius via estilo inline (chartArea); clip padrão — abre com parte selecionada p/ handles. */
   border-radius: 0;
   overflow: hidden;
   padding: 0.35rem 0.45rem;
   background: var(--delpi-ui-series-chart-bg, #ffffff);
   color: var(--delpi-ui-series-chart-text, #1e293b);
+}
+
+.delpi-ui-series-chart:has(.delpi-ui-series-chart__part--selected),
+.delpi-ui-series-chart:has(.delpi-ui-series-chart__part--resizable),
+.delpi-ui-series-chart:has([data-chart-part][aria-selected="true"]) {
+  overflow: visible;
 }
 
 .delpi-ui-series-chart__title {
@@ -220,6 +226,7 @@
 
 .delpi-ui-series-chart__part--resizable {
   position: relative;
+  overflow: visible;
 }
 
 .delpi-ui-series-chart__part-resize {

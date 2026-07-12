@@ -128,13 +128,17 @@ function EditorChartViewBlock({
   } = useComunicadoEditor();
 
   /**
-   * Clique simples no gráfico já selecionado: mantém o grupo `chart_view`
-   * (limpa subseleção). Arraste de parte móvel só se a mesma parte já estiver ativa.
+   * Clique: seleciona a parte (paridade com KPI). chartArea move o bloco.
+   * Parte já selecionada + movable: move trata o drag (não re-seleciona).
    * Com o gráfico não selecionado, `interaction` fica null para o clique subir ao compositor.
-   * chartArea: inicia move do bloco (senão stopPropagation nas partes impede arrastar).
    */
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event?: ReactPointerEvent) => {
+      if (ref.kind === "chartArea" && event) {
+        selectBlock(block.id);
+        startDrag(event, block, "move");
+        return;
+      }
       if (
         selectedId === block.id &&
         selectedChartPart &&
@@ -143,15 +147,33 @@ function EditorChartViewBlock({
       ) {
         return;
       }
-      selectBlock(block.id);
-      if (ref.kind === "chartArea" && event) {
-        startDrag(event, block, "move");
+      selectChartPart(block.id, ref);
+      const primitiveKinds = new Set([
+        "marker",
+        "series",
+        "chartArea",
+        "plotArea",
+        "axis",
+        "grid",
+      ]);
+      if (primitiveKinds.has(ref.kind)) {
+        requestRibbonTab("shape");
+      } else {
+        requestRibbonTab("chart");
       }
     },
-    [block, selectBlock, selectedChartPart, selectedId, startDrag],
+    [
+      block,
+      requestRibbonTab,
+      selectBlock,
+      selectChartPart,
+      selectedChartPart,
+      selectedId,
+      startDrag,
+    ],
   );
 
-  /** Duplo clique: acessa a parte; texto já selecionado abre edição inline. */
+  /** Duplo clique na parte já selecionada: abre edição inline quando editável. */
   const onPartDoubleClick = useCallback(
     (ref: ComunicadoChartPartRef) => {
       const same =
@@ -300,7 +322,7 @@ function EditorChartViewBlock({
     [block.chartParts, block.id, updateBlock],
   );
 
-  /** Partes só interceptam ponteiro com o grupo já selecionado (1º clique = grupo). */
+  /** Partes interceptam ponteiro com o grupo já selecionado. */
   const interaction =
     selectedId === block.id
       ? {

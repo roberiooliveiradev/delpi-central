@@ -710,6 +710,25 @@ export function chartPartAllowsResize(ref: ChartPartRef): boolean {
   return chartPartCapabilities(ref).resizable;
 }
 
+/** Partes com geometria % editável (title / legend / plotArea). */
+export function chartPartAllowsFrame(ref: ChartPartRef): boolean {
+  return chartPartAllowsMove(ref) || chartPartAllowsResize(ref);
+}
+
+/** Frame % padrão ao abrir inspetor/ribbon antes da materialização no DOM. */
+export function defaultChartPartFrame(ref: ChartPartRef): ChartPartFrame {
+  switch (ref.kind) {
+    case "title":
+      return { x: 10, y: 2, w: 80, h: 10 };
+    case "legend":
+      return { x: 10, y: 85, w: 80, h: 10 };
+    case "plotArea":
+      return { x: 8, y: 8, w: 84, h: 84 };
+    default:
+      return { x: 10, y: 10, w: 40, h: 20 };
+  }
+}
+
 /**
  * Raiz de geometria para move/resize de `frame`.
  * `plotArea` usa o host do SVG (viewBox); demais partes usam a raiz do gráfico.

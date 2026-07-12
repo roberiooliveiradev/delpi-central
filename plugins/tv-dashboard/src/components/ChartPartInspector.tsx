@@ -2,10 +2,13 @@ import { FormSelectControl, NativeCheckboxControl, NativeTextControl } from "@de
 import {
   applyMarkerStyleToAll,
   chartPartAllowsDelete,
+  chartPartAllowsFrame,
   chartPartVisualPrimitive,
   chartPrimitiveSupportsFill,
   chartPrimitiveSupportsStroke,
   CHART_LEGEND_POSITION_OPTIONS,
+  clampChartPartFrame,
+  defaultChartPartFrame,
   deleteChartPart,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
@@ -16,6 +19,7 @@ import {
   serializeChartPartRef,
   upsertChartPartState,
   type ComunicadoChartOptions,
+  type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
   type ComunicadoChartViewBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -89,6 +93,9 @@ export function ChartPartInspector({ pane = false, block }: Props) {
   const partKey = serializeChartPartRef(selectedChartPart);
   const partState = block.chartParts?.[partKey];
   const canDelete = chartPartAllowsDelete(selectedChartPart);
+  const frameable = chartPartAllowsFrame(selectedChartPart);
+  const defaults = defaultChartPartFrame(selectedChartPart);
+  const partFrame = clampChartPartFrame(partState?.frame ?? defaults);
   const chartAreaStyle = resolveChartAreaStyle(options, block.chartParts);
   const plotAreaStyle = resolvePlotAreaStyle(block.chartParts);
 
@@ -102,6 +109,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
   const patchPart = (patch: {
     content?: string;
     visible?: boolean;
+    frame?: ComunicadoChartPartFrame | null;
     style?: {
       fill?: string;
       stroke?: string;
@@ -134,6 +142,17 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       chartParts: nextParts,
       chartOptions: nextOptions,
     } as Partial<typeof block>);
+  };
+
+  const persistPartFrame = (patch: Partial<ComunicadoChartPartFrame>) => {
+    patchPart({
+      frame: clampChartPartFrame({
+        ...partFrame,
+        w: partFrame.w ?? defaults.w,
+        h: partFrame.h ?? defaults.h,
+        ...patch,
+      }),
+    });
   };
 
   const hideSelectedPart = () => {
@@ -183,6 +202,59 @@ export function ChartPartInspector({ pane = false, block }: Props) {
         hideDanger
         hint="Del também oculta a parte (não remove o gráfico)."
       />
+
+      {frameable ? (
+        <>
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id="td-chart-part-frame-x" label="Posição X (%)">
+              <NativeTextControl
+                id="td-chart-part-frame-x"
+                type="number"
+                min={0}
+                max={100}
+                step={0.5}
+                value={Number(partFrame.x.toFixed(1))}
+                onChange={(value) => persistPartFrame({ x: Number(value) || 0 })}
+              />
+            </DeckField>
+            <DeckField id="td-chart-part-frame-y" label="Posição Y (%)">
+              <NativeTextControl
+                id="td-chart-part-frame-y"
+                type="number"
+                min={0}
+                max={100}
+                step={0.5}
+                value={Number(partFrame.y.toFixed(1))}
+                onChange={(value) => persistPartFrame({ y: Number(value) || 0 })}
+              />
+            </DeckField>
+          </div>
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id="td-chart-part-frame-w" label="Largura (%)">
+              <NativeTextControl
+                id="td-chart-part-frame-w"
+                type="number"
+                min={5}
+                max={100}
+                step={0.5}
+                value={Number((partFrame.w ?? defaults.w ?? 20).toFixed(1))}
+                onChange={(value) => persistPartFrame({ w: Number(value) || 5 })}
+              />
+            </DeckField>
+            <DeckField id="td-chart-part-frame-h" label="Altura (%)">
+              <NativeTextControl
+                id="td-chart-part-frame-h"
+                type="number"
+                min={5}
+                max={100}
+                step={0.5}
+                value={Number((partFrame.h ?? defaults.h ?? 20).toFixed(1))}
+                onChange={(value) => persistPartFrame({ h: Number(value) || 5 })}
+              />
+            </DeckField>
+          </div>
+        </>
+      ) : null}
 
       {selectedChartPart.kind === "chartArea" || selectedChartPart.kind === "plotArea" ? (
         <>

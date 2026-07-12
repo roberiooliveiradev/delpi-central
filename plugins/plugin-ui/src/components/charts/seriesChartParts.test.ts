@@ -5,10 +5,12 @@ import {
   applyMarkerStyleToAll,
   chartOptionsToParts,
   chartPartAllowsEdit,
+  chartPartAllowsFrame,
   chartPartAllowsMove,
   chartPartAllowsResize,
   chartPartCapabilities,
   chartPartTypographyStyle,
+  defaultChartPartFrame,
   deleteChartPart,
   filterVisibleSeriesPoints,
   findChartPartFromTarget,
@@ -168,6 +170,20 @@ describe("seriesChartParts", () => {
     expect(chartPartCapabilities({ kind: "plotArea" }).deletable).toBe(false);
     expect(chartPartCapabilities({ kind: "axis", axis: "x" }).resizable).toBe(false);
     expect(chartPartCapabilities({ kind: "legend" }).resizable).toBe(true);
+  });
+
+  it("chartPartAllowsFrame cobre title/legend/plotArea", () => {
+    expect(chartPartAllowsFrame({ kind: "title" })).toBe(true);
+    expect(chartPartAllowsFrame({ kind: "legend" })).toBe(true);
+    expect(chartPartAllowsFrame({ kind: "plotArea" })).toBe(true);
+    expect(chartPartAllowsFrame({ kind: "chartArea" })).toBe(false);
+    expect(chartPartAllowsFrame({ kind: "series", seriesIndex: 0 })).toBe(false);
+  });
+
+  it("defaultChartPartFrame entrega % estáveis", () => {
+    expect(defaultChartPartFrame({ kind: "title" }).w).toBe(80);
+    expect(defaultChartPartFrame({ kind: "plotArea" }).h).toBe(84);
+    expect(defaultChartPartFrame({ kind: "legend" }).y).toBe(85);
   });
 
   it("resizeChartPartFrame ajusta se e nw com clamp", () => {

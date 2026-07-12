@@ -1,16 +1,24 @@
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   blockUsesInnerShapeChrome,
+  chartPartAllowsFrame,
+  clampChartPartFrame,
   clampKpiPartFrame,
+  defaultChartPartFrame,
   defaultKpiPartFrame,
+  getChartPartState,
   getKpiPartState,
   isPointShapeKind,
   kpiPartAllowsFrame,
+  mergeChartPartsWithOptions,
   mergeKpiPartsWithOptions,
+  partsToChartOptions,
   partsToKpiOptions,
   resolveBlockShapeChromeStyle,
+  upsertChartPartState,
   upsertKpiPartState,
   type ComunicadoBlock,
+  type ComunicadoChartViewBlock,
   type ComunicadoFrame,
   type ComunicadoKpiViewBlock,
   type KpiFramePartKind,
@@ -66,14 +74,15 @@ export function patchComunicadoFrame(
 }
 
 /**
- * Posição / tamanho / rotação / raio — bloco no palco ou parte do KPI
- * (title/value/hint/icon), espelhando o inspetor.
+ * Posição / tamanho / rotação / raio — bloco no palco ou parte do KPI/gráfico
+ * (title/value/hint/icon ou title/legend/plotArea), espelhando o inspetor.
  */
 export function FormatRibbonFrameSection() {
   const {
     selected,
     selectedIds,
     selectedKpiPart,
+    selectedChartPart,
     updateSelected,
     updateSelectedStyle,
   } = useComunicadoEditor();
@@ -158,6 +167,62 @@ export function FormatRibbonFrameSection() {
               onChange={(value) => setPartRadius(Number(value))}
             />
           </span>
+        </div>
+      </DeckRibbonGroup>
+    );
+  }
+
+  const chartPartTarget =
+    selected.type === "chart_view" && selectedChartPart && chartPartAllowsFrame(selectedChartPart)
+      ? selectedChartPart
+      : null;
+
+  if (chartPartTarget && selected.type === "chart_view") {
+    const block = selected as ComunicadoChartViewBlock;
+    const partState = getChartPartState(block.chartParts, chartPartTarget);
+    const defaults = defaultChartPartFrame(chartPartTarget);
+    const partFrame = clampChartPartFrame(partState?.frame ?? defaults);
+    const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
+
+    const setPartFrameKey = (key: "x" | "y" | "w" | "h", raw: number) => {
+      const nextFrame = clampChartPartFrame({
+        ...partFrame,
+        w: partFrame.w ?? defaults.w,
+        h: partFrame.h ?? defaults.h,
+        [key]: Number.isFinite(raw) ? raw : (partFrame[key] ?? defaults[key] ?? 0),
+      });
+      const nextParts = upsertChartPartState(block.chartParts, chartPartTarget, {
+        frame: nextFrame,
+      });
+      updateSelected({
+        chartParts: mergeChartPartsWithOptions(nextParts, partsToChartOptions(nextParts)),
+      } as Partial<ComunicadoBlock>);
+    };
+
+    return (
+      <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
+        <div className="td-deck-ribbon__frame-grid">
+          {frameKeys.map((key) => (
+            <span key={key} className="td-deck-ribbon__frame-field">
+              <FieldLabel
+                htmlFor={`td-ribbon-chart-part-frame-${key}`}
+                label={FRAME_LABELS[key]}
+                hint={FRAME_HINTS[key]}
+                className="td-deck-ribbon__field-label"
+              />
+              <NativeTextControl
+                id={`td-ribbon-chart-part-frame-${key}`}
+                type="number"
+                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                min={key === "w" || key === "h" ? 5 : 0}
+                max={100}
+                step={0.5}
+                aria-label={FRAME_LABELS[key]}
+                value={formatFrameValue(partFrame[key] ?? defaults[key] ?? 0)}
+                onChange={(value) => setPartFrameKey(key, Number(value))}
+              />
+            </span>
+          ))}
         </div>
       </DeckRibbonGroup>
     );
