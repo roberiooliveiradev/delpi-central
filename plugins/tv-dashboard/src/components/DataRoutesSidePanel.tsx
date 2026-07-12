@@ -56,12 +56,15 @@ type Props = {
   onInserted?: () => void;
   branchScope?: BranchScope | null;
   layout?: "ribbon" | "pane";
+  /** Modal já tem título — omite o FieldLabel duplicado. */
+  hideHeading?: boolean;
 };
 
 export function DataRoutesSidePanel({
   onInserted,
   branchScope = null,
   layout = "pane",
+  hideHeading = false,
 }: Props) {
   const { config, addDataSourceBlock, globalRefreshSec } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
@@ -196,8 +199,17 @@ export function DataRoutesSidePanel({
   }
 
   return (
-    <div className="td-data-routes-panel">
-      <FieldLabel label="Fontes de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.catalogSearch} />
+    <div
+      className={[
+        "td-data-routes-panel",
+        hideHeading ? "td-data-routes-panel--compact" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {hideHeading ? null : (
+        <FieldLabel label="Fontes de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.catalogSearch} />
+      )}
       <DataRouteCatalogPanel
         items={routes.map((route) => ({
           id: route.operationId,

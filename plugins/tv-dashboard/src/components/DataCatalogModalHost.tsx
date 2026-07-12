@@ -24,6 +24,7 @@ export function DataCatalogModalHost({ branchScope = null }: Props) {
     >
       <DataRoutesSidePanel
         layout="pane"
+        hideHeading
         branchScope={branchScope}
         onInserted={() => {
           setDataCatalogModalOpen(false);
