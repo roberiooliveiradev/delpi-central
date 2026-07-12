@@ -79,7 +79,9 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     ? selected.style?.fill ?? shapeChrome?.fill ?? DECK_SHAPE_DEFAULTS.fill
     : selected?.style?.backgroundColor ?? DECK_COLOR_SURFACE;
   const outlineValue = isShapeBlock
-    ? selected.style?.stroke ?? shapeChrome?.stroke ?? DECK_SHAPE_DEFAULTS.stroke
+    ? selected.style?.stroke ??
+      shapeChrome?.stroke ??
+      (shapePrimitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke)
     : selected?.style?.borderColor ?? "#cbd5e1";
 
   function run(action: () => void) {

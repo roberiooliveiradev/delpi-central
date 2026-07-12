@@ -320,7 +320,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     const base = {
       zIndex: 1,
       fill: DECK_SHAPE_DEFAULTS.fill,
-      stroke: DECK_SHAPE_DEFAULTS.stroke,
+      stroke: primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke,
       strokeWidth: defaultStrokeWidthForPrimitive(primitive),
       opacity: primitive === "area" ? 0.9 : 1,
     };

@@ -46,6 +46,57 @@ const PREVIEW_COLORS: ShapeGraphicColors = {
   strokeWidth: 1.75,
 };
 
+/** Proporção canônica do palco — setas isótropas com SVG `preserveAspectRatio="none"`. */
+const COMUNICADO_STAGE_ASPECT = 16 / 9;
+/** Tamanho da ponta em unidades de tela relativas à altura do box (viewBox Y). */
+const LINE_ARROW_HEAD_LEN = 36;
+const LINE_ARROW_HEAD_HALF = 22;
+
+/**
+ * Polígono da ponta da seta compensando aspect ratio do box (W/H × palco).
+ * Sem compensação, linha horizontal com h≪w esmaga a seta no eixo Y.
+ */
+export function lineArrowHeadPolygonPoints(
+  tip: { x: number; y: number },
+  from: { x: number; y: number },
+  boxAspect: number,
+): string {
+  const aspect = Math.max(boxAspect, 0.001);
+  const dx = tip.x - from.x;
+  const dy = tip.y - from.y;
+  const sx = dx * aspect;
+  const sy = dy;
+  const len = Math.max(Math.hypot(sx, sy), 1e-6);
+  const ux = sx / len;
+  const uy = sy / len;
+  const px = -uy;
+  const py = ux;
+  const baseX = tip.x - (ux * LINE_ARROW_HEAD_LEN) / aspect;
+  const baseY = tip.y - uy * LINE_ARROW_HEAD_LEN;
+  const wingX = (px * LINE_ARROW_HEAD_HALF) / aspect;
+  const wingY = py * LINE_ARROW_HEAD_HALF;
+  return `${tip.x},${tip.y} ${baseX + wingX},${baseY + wingY} ${baseX - wingX},${baseY - wingY}`;
+}
+
+function insetLineEnd(
+  tip: { x: number; y: number },
+  from: { x: number; y: number },
+  boxAspect: number,
+): { x: number; y: number } {
+  const aspect = Math.max(boxAspect, 0.001);
+  const dx = tip.x - from.x;
+  const dy = tip.y - from.y;
+  const sx = dx * aspect;
+  const sy = dy;
+  const len = Math.max(Math.hypot(sx, sy), 1e-6);
+  const ux = sx / len;
+  const uy = sy / len;
+  return {
+    x: tip.x - (ux * LINE_ARROW_HEAD_LEN) / aspect,
+    y: tip.y - uy * LINE_ARROW_HEAD_LEN,
+  };
+}
+
 function renderLineGeometry(
   geometry: Extract<ComunicadoShapeGeometry, { primitive: "line" }>,
   kind: ComunicadoShapeKind,
@@ -54,34 +105,38 @@ function renderLineGeometry(
   const bbox = geometryBoundingFrame(geometry);
   const { stroke, strokeWidth } = colors;
   const sw = Math.max(3, strokeWidth * 2);
+  const xSpan = Math.max(...geometry.points.map((p) => p.x)) - Math.min(...geometry.points.map((p) => p.x));
+  const ySpan = Math.max(...geometry.points.map((p) => p.y)) - Math.min(...geometry.points.map((p) => p.y));
   const normalized = geometry.points.map((point) => ({
-    x: bbox.w > 0 ? ((point.x - bbox.x) / bbox.w) * 100 : 50,
-    y: bbox.h > 0 ? ((point.y - bbox.y) / bbox.h) * 100 : 50,
+    // Eixo degenerado (horizontal/vertical) fica centrado — evita seta colada em y=0.
+    x: xSpan > 1e-6 ? ((point.x - bbox.x) / bbox.w) * 100 : 50,
+    y: ySpan > 1e-6 ? ((point.y - bbox.y) / bbox.h) * 100 : 50,
   }));
   const [start, end] = normalized;
   if (!start || !end) return null;
 
-  const head = (tip: { x: number; y: number }, from: { x: number; y: number }) => {
-    const dx = tip.x - from.x;
-    const dy = tip.y - from.y;
-    const len = Math.max(Math.hypot(dx, dy), 1);
-    const ux = dx / len;
-    const uy = dy / len;
-    const px = -uy;
-    const py = ux;
-    const baseX = tip.x - ux * 16;
-    const baseY = tip.y - uy * 16;
-    return `${tip.x},${tip.y} ${baseX + px * 10},${baseY + py * 10} ${baseX - px * 10},${baseY - py * 10}`;
-  };
+  const boxAspect = (bbox.w / Math.max(bbox.h, 0.001)) * COMUNICADO_STAGE_ASPECT;
+  const arrowRight = kind === "line-arrow-right" || kind === "line-arrow-both";
+  const arrowLeft = kind === "line-arrow-left" || kind === "line-arrow-both";
+  const lineStart = arrowLeft ? insetLineEnd(start, end, boxAspect) : start;
+  const lineEnd = arrowRight ? insetLineEnd(end, start, boxAspect) : end;
 
   return (
     <>
-      <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke={stroke} strokeWidth={sw} />
-      {kind === "line-arrow-right" || kind === "line-arrow-both" ? (
-        <polygon points={head(end, start)} fill={stroke} />
+      <line
+        x1={lineStart.x}
+        y1={lineStart.y}
+        x2={lineEnd.x}
+        y2={lineEnd.y}
+        stroke={stroke}
+        strokeWidth={sw}
+        strokeLinecap="round"
+      />
+      {arrowRight ? (
+        <polygon points={lineArrowHeadPolygonPoints(end, start, boxAspect)} fill={stroke} />
       ) : null}
-      {kind === "line-arrow-left" || kind === "line-arrow-both" ? (
-        <polygon points={head(start, end)} fill={stroke} />
+      {arrowLeft ? (
+        <polygon points={lineArrowHeadPolygonPoints(start, end, boxAspect)} fill={stroke} />
       ) : null}
     </>
   );
@@ -522,7 +577,13 @@ export function ComunicadoShapeGraphic({
 
   if (geometry?.primitive === "line") {
     return (
-      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true" preserveAspectRatio="none">
+      <svg
+        viewBox="0 0 100 100"
+        className="tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line"
+        aria-hidden="true"
+        preserveAspectRatio="none"
+        style={{ overflow: "visible" }}
+      >
         {renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth })}
       </svg>
     );
@@ -530,7 +591,13 @@ export function ComunicadoShapeGraphic({
 
   if (kind === "line" || kind === "line-arrow-right" || kind === "line-arrow-left" || kind === "line-arrow-both") {
     return (
-      <svg viewBox="0 0 100 100" className="tdp-comunicado__shape-svg" aria-hidden="true">
+      <svg
+        viewBox="0 0 100 100"
+        className="tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line"
+        aria-hidden="true"
+        preserveAspectRatio="none"
+        style={{ overflow: "visible" }}
+      >
         {renderSvgShape(kind, { fill, stroke, strokeWidth }, resolvedAdj)}
       </svg>
     );

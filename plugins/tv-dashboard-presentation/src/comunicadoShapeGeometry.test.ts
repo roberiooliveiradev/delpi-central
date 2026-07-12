@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createShapeBlock } from "./comunicadoHelpers";
 import {
+  COMUNICADO_LINE_VISUAL_PAD_PCT,
   COMUNICADO_POINT_HIT_SIZE_PCT,
   geometryBoundingFrame,
   geometryToPersistedFrame,
@@ -9,6 +10,7 @@ import {
   resolveShapeGeometry,
   shapeBlockAllowsResize,
 } from "./comunicadoShapeGeometry";
+import { lineArrowHeadPolygonPoints } from "./comunicadoShapeGraphic";
 
 describe("comunicadoShapeGeometry", () => {
   it("exige contagem mínima de vértices por primitivo", () => {
@@ -34,6 +36,16 @@ describe("comunicadoShapeGeometry", () => {
     if (geometry.primitive !== "line") return;
     expect(geometry.points.length).toBeGreaterThanOrEqual(2);
     expect(geometry.points[0].y).toBe(geometry.points[1].y);
+  });
+
+  it("bbox de linha horizontal inclui padding para seta/espessura", () => {
+    const block = createShapeBlock("line-arrow-right");
+    const geometry = resolveShapeGeometry(block);
+    if (geometry.primitive !== "line") return;
+    const bbox = geometryBoundingFrame(geometry);
+    expect(bbox.h).toBeGreaterThanOrEqual(2 * COMUNICADO_LINE_VISUAL_PAD_PCT);
+    expect(bbox.w).toBeGreaterThan(bbox.h);
+    expect(geometryToPersistedFrame(block).h).toBe(bbox.h);
   });
 
   it("forma fechada usa polígono com pelo menos três vértices", () => {
@@ -63,5 +75,22 @@ describe("comunicadoShapeGeometry", () => {
     const geometry = resolveShapeGeometry(block);
     if (geometry.primitive !== "point") return;
     expect(geometry.position).toEqual({ x: 45, y: 45 });
+  });
+});
+
+describe("lineArrowHeadPolygonPoints", () => {
+  it("seta horizontal tem abertura vertical visível após compensar aspect achatado", () => {
+    const boxAspect = (84 / 4) * (16 / 9);
+    const points = lineArrowHeadPolygonPoints({ x: 96, y: 50 }, { x: 4, y: 50 }, boxAspect);
+    const coords = points.split(/\s+/).map((pair) => {
+      const [x, y] = pair.split(",").map(Number);
+      return { x, y };
+    });
+    expect(coords).toHaveLength(3);
+    const ys = coords.map((c) => c.y);
+    const spanY = Math.max(...ys) - Math.min(...ys);
+    expect(spanY).toBeGreaterThan(30);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(100);
   });
 });

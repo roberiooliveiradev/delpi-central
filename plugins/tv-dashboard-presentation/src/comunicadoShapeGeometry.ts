@@ -29,6 +29,11 @@ export type ComunicadoShapeGeometry =
 export const COMUNICADO_MARKER_RADIUS_DEFAULT = 6;
 /** Alvo mínimo de seleção no editor (% do palco). */
 export const COMUNICADO_POINT_HIT_SIZE_PCT = 2;
+/**
+ * Padding da bbox de linha (% do palco) — espaço para espessura + ponta da seta.
+ * Sem isso, linha horizontal colapsa em h≈0,5% e a seta some com `preserveAspectRatio="none"`.
+ */
+export const COMUNICADO_LINE_VISUAL_PAD_PCT = 2;
 
 export function minimumVertexCount(primitive: ComunicadoVisualPrimitive): number {
   if (primitive === "point") return 1;
@@ -101,11 +106,24 @@ export function geometryBoundingFrame(geometry: ComunicadoShapeGeometry): Comuni
   const minY = Math.min(...ys);
   const maxX = Math.max(...xs);
   const maxY = Math.max(...ys);
+  const rawW = Math.max(0, maxX - minX);
+  const rawH = Math.max(0, maxY - minY);
+
+  if (geometry.primitive === "line") {
+    const pad = COMUNICADO_LINE_VISUAL_PAD_PCT;
+    return {
+      x: minX - pad,
+      y: minY - pad,
+      w: Math.max(0.5, rawW) + 2 * pad,
+      h: Math.max(0.5, rawH) + 2 * pad,
+    };
+  }
+
   return {
     x: minX,
     y: minY,
-    w: Math.max(0.5, maxX - minX),
-    h: Math.max(0.5, maxY - minY),
+    w: Math.max(0.5, rawW),
+    h: Math.max(0.5, rawH),
   };
 }
 
@@ -195,6 +213,7 @@ export function resolveBlockPlacementStyle(block: ComunicadoBlock): CSSPropertie
     top: `${bbox.y}%`,
     width: `${bbox.w}%`,
     height: `${bbox.h}%`,
+    ...(geometry.primitive === "line" ? { overflow: "visible" as const } : {}),
   };
 }
 

@@ -83,7 +83,9 @@ export function resolveVisualBoxChrome(block: ComunicadoVisualBoxBlock): Comunic
   return {
     showShapeGraphic: true,
     fill: style.fill ?? DECK_SHAPE_DEFAULTS.fill,
-    stroke: style.stroke ?? DECK_SHAPE_DEFAULTS.stroke,
+    stroke:
+      style.stroke ??
+      (primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke),
     strokeWidth: style.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive),
     borderRadius: style.borderRadius,
     shapeKind: shape,

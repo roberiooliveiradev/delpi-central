@@ -85,6 +85,7 @@ export {
   type ComunicadoVisualPrimitive,
 } from "./comunicadoVisualPrimitive";
 export {
+  COMUNICADO_LINE_VISUAL_PAD_PCT,
   COMUNICADO_MARKER_RADIUS_DEFAULT,
   COMUNICADO_POINT_HIT_SIZE_PCT,
   clampFrameForBlock,
@@ -99,7 +100,11 @@ export {
   syncLineVerticesFromFrame,
   type ComunicadoShapeGeometry,
 } from "./comunicadoShapeGeometry";
-export { ComunicadoShapeGraphic, ComunicadoShapePreview } from "./comunicadoShapeGraphic";
+export {
+  ComunicadoShapeGraphic,
+  ComunicadoShapePreview,
+  lineArrowHeadPolygonPoints,
+} from "./comunicadoShapeGraphic";
 export {
   adjustmentHandleCssPosition,
   borderRadiusPxToCornerAdjustment,

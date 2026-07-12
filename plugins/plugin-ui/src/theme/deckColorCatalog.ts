@@ -77,6 +77,8 @@ export type DeckColorTheme = typeof DECK_THEME_LIGHT;
 export const DECK_SHAPE_DEFAULTS = {
   fill: DECK_COLOR_ACCENT,
   stroke: DECK_COLOR_SHAPE_STROKE,
+  /** Traço de linha/seta — mesmo azul do preenchimento das formas. */
+  lineStroke: DECK_COLOR_ACCENT,
 } as const;
 
 /** Defaults de gráfico (série + área). */

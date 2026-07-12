@@ -515,7 +515,12 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             ) : null}
             {showShapeStroke ? (
               <ShapeOutlineMenu
-                color={selected.style?.stroke ?? DECK_SHAPE_DEFAULTS.stroke}
+                color={
+                  selected.style?.stroke ??
+                  (shapePrimitive === "line"
+                    ? DECK_SHAPE_DEFAULTS.lineStroke
+                    : DECK_SHAPE_DEFAULTS.stroke)
+                }
                 strokeWidth={selected.style?.strokeWidth ?? defaultShapeStrokeWidth}
                 minWidth={shapePrimitive === "point" ? 0 : 0}
                 maxWidth={shapePrimitive === "point" ? 8 : 20}

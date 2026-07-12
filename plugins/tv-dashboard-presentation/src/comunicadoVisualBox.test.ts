@@ -86,10 +86,12 @@ describe("comunicadoVisualBox", () => {
     expect(visualBoxSupportsInlineTextEditing(createShapeBlock("rectangle"))).toBe(true);
   });
 
-  it("linhas usam contorno mais espesso por padrão", () => {
+  it("linhas usam contorno mais espesso e azul das formas por padrão", () => {
     const line = createShapeBlock("line");
     expect(resolveVisualBoxProfile(line).primitive).toBe("line");
     expect(resolveVisualBoxChrome(line).strokeWidth).toBe(4);
+    expect(resolveVisualBoxChrome(line).stroke).toBe("#089bdb");
+    expect(line.style?.stroke).toBe("#089bdb");
     expect(visualBoxBlockModifierClasses(line)).toContain(
       "tdp-comunicado__visual-box--primitive-line",
     );

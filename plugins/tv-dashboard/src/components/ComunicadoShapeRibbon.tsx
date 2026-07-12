@@ -493,7 +493,10 @@ export function ComunicadoShapeRibbon() {
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showStroke ? (
             <ShapeOutlineMenu
-              color={block.style?.stroke ?? DECK_SHAPE_DEFAULTS.stroke}
+              color={
+                block.style?.stroke ??
+                (primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke)
+              }
               strokeWidth={defaultStrokeWidth}
               minWidth={0}
               maxWidth={primitive === "point" ? 8 : 20}
