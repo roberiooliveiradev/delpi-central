@@ -2,15 +2,11 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { SelectedDataSidePanel } from "./SelectedDataSidePanel";
 
 /**
- * Aba Dados na top bar — mesmos controles do painel lateral Dados
- * em layout full-width com grade de campos.
+ * Aba Dados na top bar — configuração da fonte selecionada;
+ * catálogo abre em modal (não na faixa nem no painel lateral).
  */
 export function ComunicadoDataRibbon() {
-  const {
-    setSelectionPanelTab,
-    setDataPanelIntent,
-    setDataPanelOpen,
-  } = useComunicadoEditor();
+  const { setSelectionPanelTab, setDataPanelIntent, openDataCatalog } = useComunicadoEditor();
 
   return (
     <div className="td-deck-ribbon__groups td-deck-ribbon__groups--inspector">
@@ -20,12 +16,7 @@ export function ComunicadoDataRibbon() {
           setDataPanelIntent("binding");
           setSelectionPanelTab("element");
         }}
-        onOpenCatalog={() => {
-          // Catálogo completo não cabe na ribbon (max ~120px) — abre no painel lateral.
-          setDataPanelIntent("catalog");
-          setDataPanelOpen(true);
-          setSelectionPanelTab("data");
-        }}
+        onOpenCatalog={() => openDataCatalog()}
       />
     </div>
   );

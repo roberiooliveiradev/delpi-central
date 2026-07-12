@@ -117,6 +117,7 @@ export function ComunicadoEditorProvider({
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
   const [dataPanelIntent, setDataPanelIntent] = useState<"binding" | "catalog">("binding");
+  const [dataCatalogModalOpen, setDataCatalogModalOpen] = useState(false);
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
 
   const configRef = useRef(config);
@@ -279,6 +280,7 @@ export function ComunicadoEditorProvider({
     setLastDataDisplayMode,
     setDataPanelOpen,
     setDataPanelIntent,
+    setDataCatalogModalOpen,
     setShapeMenuOpen,
     setRibbonTabRequest: selection.setRibbonTabRequest,
     removeSelectedRef,
@@ -398,6 +400,8 @@ export function ComunicadoEditorProvider({
     addKpiViewBlock: blockActions.addKpiViewBlock,
     openDataPanel: blockActions.openDataPanel,
     openDataCatalog: blockActions.openDataCatalog,
+    dataCatalogModalOpen,
+    setDataCatalogModalOpen,
     dataPanelOpen,
     setDataPanelOpen,
     dataPanelIntent,

@@ -546,6 +546,24 @@
   overflow: auto;
 }
 
+.dashboard-tv-dashboard .td-modal--data-catalog {
+  width: min(720px, 100%);
+}
+
+.dashboard-tv-dashboard .td-modal--data-catalog .td-modal__body {
+  max-height: min(78vh, 720px);
+  overflow: auto;
+  padding: 0;
+}
+
+.dashboard-tv-dashboard .td-modal--data-catalog .td-data-routes-panel {
+  padding-top: 8px;
+}
+
+.dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog__groups {
+  max-height: min(52vh, 480px);
+}
+
 .dashboard-tv-dashboard .td-data-route-list {
   list-style: none;
   margin: 12px 0 0;

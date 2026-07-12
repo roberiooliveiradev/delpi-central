@@ -125,8 +125,10 @@ export type ComunicadoEditorContextValue = {
   addTableViewBlock: (rows: number, cols: number, preset: ComunicadoTablePreset) => void;
   addKpiViewBlock: () => void;
   openDataPanel: () => void;
-  /** Abre aba Dados do painel com o catálogo de inserção. */
+  /** Abre o catálogo de inserção em modal (entrada pela top bar). */
   openDataCatalog: () => void;
+  dataCatalogModalOpen: boolean;
+  setDataCatalogModalOpen: (open: boolean) => void;
   dataPanelOpen: boolean;
   setDataPanelOpen: (open: boolean) => void;
   dataPanelIntent: DataPanelIntent;

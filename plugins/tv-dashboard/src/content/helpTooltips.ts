@@ -83,7 +83,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",
     insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados — estilo PowerPoint/Excel.",
-    insertDataSource: "Abre o catálogo de rotas api-delpi para inserir uma fonte de dados no palco.",
+    insertDataSource: "Abre o catálogo de rotas api-delpi em um modal para inserir uma fonte de dados no palco.",
     insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",
     insertKpi: "Insere um card KPI. Conecte a uma fonte de dados e configure ícone, textos e cores.",
     insertTable: "Escolha o tamanho ou estilo da tabela e conecte-a a uma fonte de dados.",

@@ -91,6 +91,7 @@ type Options = {
   setLastDataDisplayMode: Dispatch<SetStateAction<ComunicadoDataDisplayMode>>;
   setDataPanelOpen: Dispatch<SetStateAction<boolean>>;
   setDataPanelIntent: Dispatch<SetStateAction<DataPanelIntent>>;
+  setDataCatalogModalOpen: Dispatch<SetStateAction<boolean>>;
   setShapeMenuOpen: Dispatch<SetStateAction<boolean>>;
   setRibbonTabRequest: Dispatch<SetStateAction<ComunicadoRibbonTabRequest | null>>;
   /** Preenchido pelo Provider para o clipboard. */
@@ -126,6 +127,7 @@ export function useComunicadoEditorBlocks({
   setLastDataDisplayMode,
   setDataPanelOpen,
   setDataPanelIntent,
+  setDataCatalogModalOpen,
   setShapeMenuOpen,
   setRibbonTabRequest,
   removeSelectedRef,
@@ -248,10 +250,8 @@ export function useComunicadoEditorBlocks({
   }, [setDataPanelIntent, setDataPanelOpen, setRibbonTabRequest]);
 
   const openDataCatalog = useCallback(() => {
-    setDataPanelIntent("catalog");
-    setDataPanelOpen(true);
-    setRibbonTabRequest("data");
-  }, [setDataPanelIntent, setDataPanelOpen, setRibbonTabRequest]);
+    setDataCatalogModalOpen(true);
+  }, [setDataCatalogModalOpen]);
 
   const setDataFilters = useCallback(
     (filters: ComunicadoDataFilters | undefined) => {

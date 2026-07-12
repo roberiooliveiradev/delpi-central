@@ -4,6 +4,7 @@ import { useMemo, useRef } from "react";
 import type { Slide } from "../api/tvDashboardApi";
 import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DataCatalogModalHost } from "./DataCatalogModalHost";
 import { DeckEditorChrome } from "./DeckEditorChrome";
 import { DeckWorkspace } from "./DeckWorkspace";
 import { ComunicadoSlideTemplatesPanel } from "./deck/ComunicadoSlideTemplatesPanel";
@@ -69,6 +70,7 @@ export function CustomSlideEditorLayout({
         </p>
       ) : null}
       <DeckEditorChrome {...chromeWithSlideExtras} />
+      <DataCatalogModalHost branchScope={chromeProps.branchScope} />
       <DeckWorkspace
         {...workspaceProps}
         slides={slidesForFilmstrip}

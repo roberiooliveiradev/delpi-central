@@ -66,23 +66,20 @@ export function SelectedDataSidePanel({
   }, [bindingTarget, routes]);
 
   if (showCatalog) {
-    // Ribbon: só aviso — o catálogo denso quebra o layout da faixa (grid + overflow-y hidden).
+    // Ribbon: catálogo denso abre em modal — a faixa não comporta a listagem.
     if (isRibbon) {
       return (
         <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados">
           <p className="td-deck-inspector__hint">
-            Escolha a fonte no painel lateral «Fontes de dados».
+            Escolha uma fonte no catálogo para inserir no palco.
           </p>
           <div className="td-deck-ribbon__field-grid">
             <button
               type="button"
               className="td-btn td-btn--sm"
-              onClick={() => {
-                setDataPanelIntent("catalog");
-                openCatalog();
-              }}
+              onClick={() => openCatalog()}
             >
-              Abrir catálogo no painel
+              Abrir catálogo de fontes
             </button>
             {context.kind !== "none" ? (
               <button

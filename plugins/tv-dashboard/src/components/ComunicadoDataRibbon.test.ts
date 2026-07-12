@@ -1,15 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 /**
- * Contratos da aba Dados na ribbon: «Inserir nova fonte» deve abrir o catálogo
- * (intent=catalog), não só reforçar a aba atual.
+ * Contratos da aba Dados na ribbon: «Inserir nova fonte» abre o catálogo em modal.
  */
 describe("ComunicadoDataRibbon catalog open contract", () => {
-  it("onOpenCatalog define intent catalog (não é no-op de aba)", () => {
-    const setDataPanelIntent = vi.fn();
-    const onOpenCatalog = () => setDataPanelIntent("catalog");
+  it("onOpenCatalog abre o modal do catálogo (não a sidebar)", () => {
+    const openDataCatalog = vi.fn();
+    const onOpenCatalog = () => openDataCatalog();
     onOpenCatalog();
-    expect(setDataPanelIntent).toHaveBeenCalledWith("catalog");
+    expect(openDataCatalog).toHaveBeenCalledTimes(1);
   });
 
   it("onInserted restaura intent binding antes de ir ao Elemento", () => {
