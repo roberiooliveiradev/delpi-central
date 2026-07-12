@@ -5,10 +5,10 @@ import {
   Heading,
   LayoutGrid,
   ListOrdered,
-  Paintbrush,
   PanelLeft,
   PanelRight,
   Rows3,
+  Shapes,
   Sigma,
   Table2,
 } from "lucide-react";
@@ -28,6 +28,7 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { FormatRibbonTypographySections } from "./formatRibbon";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
@@ -90,24 +91,18 @@ const STYLE_OPTION_TILES: Array<{
 ];
 
 /**
- * Faixa contextual «Tabela» — espelha Excel Table Design:
- * Dados · Estilos · Opções de estilo · Formato.
- * A aba Forma permanece para moldura (preenchimento/contorno/cantos).
+ * Faixa contextual «Tabela» — estilos, opções e tipografia.
+ * Aba Forma permanece para moldura (preenchimento/contorno/cantos).
  */
 export function ComunicadoTableRibbon() {
-  const {
-    selected,
-    updateSelected,
-    selectTablePart,
-    openDataPanel,
-    requestRibbonTab,
-  } = useComunicadoEditor();
+  const { selected, updateSelected, selectTablePart, openDataPanel, requestRibbonTab } =
+    useComunicadoEditor();
 
   if (!selected || selected.type !== "table_view") {
     return (
       <div className="td-deck-ribbon__groups">
         <p className="td-subtitle td-deck-ribbon__hint">
-          Selecione uma tabela no palco para editar estilos e opções (como no Excel Table Design).
+          Selecione uma tabela no palco para editar estilos, opções e tipografia.
         </p>
       </div>
     );
@@ -146,12 +141,10 @@ export function ComunicadoTableRibbon() {
     }
   };
 
-  const openFormatSelection = () => {
-    requestRibbonTab("format");
-  };
-
   return (
     <div className="td-deck-ribbon__groups">
+      <FormatRibbonTypographySections />
+
       <DeckRibbonGroup label="Dados" hint={H.tableData ?? H.chartData}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
@@ -207,13 +200,13 @@ export function ComunicadoTableRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Formato" hint={H.tableFormat ?? H.chartFormat}>
+      <DeckRibbonGroup label="Moldura" hint={H.tableFormat ?? H.chartFormat}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
-            icon={Paintbrush}
-            label="Formato"
-            hint="Abre Formatar (cores, células e painel do elemento)."
-            onClick={openFormatSelection}
+            icon={Shapes}
+            label="Forma"
+            hint="Abre a aba Forma para preenchimento e contorno da moldura."
+            onClick={() => requestRibbonTab("shape")}
           />
         </div>
       </DeckRibbonGroup>

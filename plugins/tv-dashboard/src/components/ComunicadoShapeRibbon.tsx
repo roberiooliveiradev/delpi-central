@@ -1,12 +1,5 @@
-import { useRef, useState } from "react";
-import {
-  ArrowDown,
-  ArrowUp,
-  Copy,
-  Replace,
-  Trash2,
-  Type,
-} from "lucide-react";
+import { useRef, useState, type ReactNode } from "react";
+import { Copy, Replace } from "lucide-react";
 import {
   applyMarkerStyleToAll,
   chartPartVisualPrimitive,
@@ -52,33 +45,53 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
+import { selectedHasGroup } from "../utils/comunicadoGrouping";
+import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
+import { FormatRibbonAlignSection } from "./FormatRibbonAlignSection";
+import {
+  FormatRibbonOrganizeSection,
+  FormatRibbonTextBoxChrome,
+  FormatRibbonTypographySections,
+} from "./formatRibbon";
 import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
 import { ShapeCornerRadiusControl } from "./ShapeCornerRadiusControl";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
-const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 /**
- * Faixa contextual «Forma» — shape, chartArea/plotArea, card KPI e moldura de tabela.
+ * Faixa contextual «Forma» — chrome + tipografia por capacidade do objeto
+ * (forma, caixa de texto, mídia, KPI/tabela/gráfico).
  */
 export function ComunicadoShapeRibbon() {
   const {
     selected,
+    selectedIds,
     selectedChartPart,
     selectedKpiPart,
+    blocks,
     updateSelected,
     updateSelectedStyle,
-    removeSelected,
-    duplicateSelected,
-    moveLayer,
-    requestRibbonTab,
+    alignSelected,
+    groupSelected,
+    ungroupSelected,
   } = useComunicadoEditor();
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
+
+  const multiSelected = selectedIds.length >= 2;
+  const canDistribute = selectedIds.length >= 3;
+  const canGroup = selectedIds.length >= 2;
+  const canUngroup = selectedHasGroup(blocks, selectedIds);
+
+  const textFormatTarget = resolveSelectedTextFormatTarget({
+    selected,
+    selectedKpiPart,
+    selectedChartPart,
+  });
 
   const chartPartPrimitive =
     selected?.type === "chart_view" && selectedChartPart
@@ -92,22 +105,53 @@ export function ComunicadoShapeRibbon() {
       : null;
 
   const isShapeBlock = selected?.type === "shape";
+  const isTextBox = selected?.type === "heading" || selected?.type === "text";
+  const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isChartPartPrimitive = Boolean(chartPartPrimitive);
   const isKpiChrome =
     selected?.type === "kpi_view" &&
     (!selectedKpiPart || selectedKpiPart.kind === "card");
   const isTableChrome = selected?.type === "table_view";
+  const hasCapabilityChrome =
+    isShapeBlock ||
+    isChartPartPrimitive ||
+    isKpiChrome ||
+    isTableChrome ||
+    isTextBox ||
+    isMediaBlock ||
+    textFormatTarget != null ||
+    multiSelected;
 
-  if (!isShapeBlock && !isChartPartPrimitive && !isKpiChrome && !isTableChrome) {
+  if (!hasCapabilityChrome) {
     return (
       <div className="td-deck-ribbon__groups">
         <p className="td-subtitle td-deck-ribbon__hint">
-          Selecione uma forma, gráfico, KPI ou tabela — ou dê duplo clique numa parte do gráfico —
-          para formatar preenchimento, contorno e cantos.
+          Selecione um elemento no palco para formatar texto, preenchimento, contorno e organização.
         </p>
       </div>
     );
   }
+
+  const shell = (chrome: ReactNode, opts?: { organize?: boolean }) => (
+    <div className="td-deck-ribbon__groups">
+      {multiSelected ? (
+        <FormatRibbonAlignSection
+          canDistribute={canDistribute}
+          canGroup={canGroup}
+          canUngroup={canUngroup}
+          alignSelected={alignSelected}
+          groupSelected={groupSelected}
+          ungroupSelected={ungroupSelected}
+        />
+      ) : null}
+      <FormatRibbonTypographySections />
+      {isTextBox ? <FormatRibbonTextBoxChrome /> : null}
+      {chrome}
+      {opts?.organize !== false && (isShapeBlock || isTextBox || isMediaBlock) ? (
+        <FormatRibbonOrganizeSection />
+      ) : null}
+    </div>
+  );
 
   if (isChartPartPrimitive && selected?.type === "chart_view" && effectiveChartPart && chartPartPrimitive) {
     const block = selected as ComunicadoChartViewBlock;
@@ -155,8 +199,8 @@ export function ComunicadoShapeRibbon() {
       } as Partial<ComunicadoBlock>);
     };
 
-    return (
-      <div className="td-deck-ribbon__groups">
+    return shell(
+      <>
         <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
@@ -249,7 +293,8 @@ export function ComunicadoShapeRibbon() {
             </div>
           </DeckRibbonGroup>
         ) : null}
-      </div>
+      </>,
+      { organize: false },
     );
   }
 
@@ -277,8 +322,8 @@ export function ComunicadoShapeRibbon() {
       } as Partial<ComunicadoBlock>);
     };
 
-    return (
-      <div className="td-deck-ribbon__groups">
+    return shell(
+      <>
         <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
@@ -321,7 +366,8 @@ export function ComunicadoShapeRibbon() {
           value={cornerRadius}
           onChange={(radius) => patchCardStyle({ borderRadius: radius })}
         />
-      </div>
+      </>,
+      { organize: false },
     );
   }
 
@@ -345,8 +391,8 @@ export function ComunicadoShapeRibbon() {
       } as Partial<ComunicadoBlock>);
     };
 
-    return (
-      <div className="td-deck-ribbon__groups">
+    return shell(
+      <>
         <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
@@ -389,12 +435,16 @@ export function ComunicadoShapeRibbon() {
           value={cornerRadius}
           onChange={(radius) => patchFrameStyle({ borderRadius: radius })}
         />
-      </div>
+      </>,
+      { organize: false },
     );
   }
 
-  const block = selected!;
-  if (block.type !== "shape") return null;
+  if (!isShapeBlock) {
+    return shell(null);
+  }
+
+  const block = selected;
 
   const primitive = resolveShapePrimitive(block.shape);
   const showFill = shapeSupportsFill(primitive);
@@ -438,8 +488,8 @@ export function ComunicadoShapeRibbon() {
     updateSelected({ frame: next } as Partial<ComunicadoBlock>);
   };
 
-  return (
-    <div className="td-deck-ribbon__groups">
+  return shell(
+    <>
       <DeckRibbonGroup label="Formas" hint={H.shapeChange}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <div ref={changeShapeAnchorRef} className="td-composer__dropdown">
@@ -535,26 +585,6 @@ export function ComunicadoShapeRibbon() {
         />
       ) : null}
 
-      <DeckRibbonGroup label="Texto" hint={H.font}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={Type}
-            label="Formatar"
-            hint="Abre Formatar com tipografia e alinhamento do texto na forma."
-            onClick={() => requestRibbonTab("format")}
-          />
-        </div>
-      </DeckRibbonGroup>
-
-      <DeckRibbonGroup label="Organizar" hint={H.organize}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile icon={Copy} label="Duplicar" hint={H.duplicateBlock} onClick={duplicateSelected} />
-          <DeckRibbonTile icon={ArrowUp} label="Frente" hint={E.layerUp} onClick={() => moveLayer("up")} />
-          <DeckRibbonTile icon={ArrowDown} label="Fundo" hint={E.layerDown} onClick={() => moveLayer("down")} />
-          <DeckRibbonTile icon={Trash2} label="Remover" hint={E.remove} onClick={removeSelected} />
-        </div>
-      </DeckRibbonGroup>
-
       <DeckRibbonGroup label="Tamanho" hint={H.shapeSize}>
         <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
           {primitive === "point" ? (
@@ -610,6 +640,6 @@ export function ComunicadoShapeRibbon() {
           )}
         </div>
       </DeckRibbonGroup>
-    </div>
+    </>,
   );
 }

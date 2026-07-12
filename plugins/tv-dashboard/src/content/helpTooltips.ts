@@ -92,10 +92,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableStyles: "Presets visuais da tabela (grade, minimalista, faixas).",
     tableStyleOptions:
       "Opções de estilo do Excel: cabeçalho, totais, listras, primeira/última coluna e bordas.",
-    tableFormat: "Abre Formatar para cores e células da tabela.",
+    tableFormat: "Abre a aba Forma para moldura (preenchimento e contorno) da tabela.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
     chartAxes: "Eixos e linhas de grade.",
-    chartFormat: "Abre Formatar para a parte selecionada do gráfico.",
+    chartFormat: "Abre a aba Forma para área, série ou marcador do gráfico.",
   },
   tabs: {
     element:
@@ -120,7 +120,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   ribbonTabs: {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
     insert: "Insira elementos no slide personalizado: títulos, textos, imagens, vídeos e formas.",
-    format: "Formate o slide e o elemento selecionado: fundo, fonte, forma, camadas e mídia.",
+    format: "Formate o elemento nas abas contextuais (Forma, Gráfico, Tabela): tipografia, preenchimento e contorno conforme a capacidade do objeto.",
     chart:
       "Ferramentas do gráfico selecionado (Excel Online): tipo, rótulos, eixos, grade e formato da parte.",
     table:
@@ -167,7 +167,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     dataBlockRefreshInterval:
       "Intervalo deste bloco para atualizar o preview de dados. Vazio = usa o padrão da programação.",
     customSlideType:
-      "Tela livre: monte o layout no palco com as abas Inserir (texto, imagem, dados), Formatar e Exibir. O título acima é só o nome no filmstrip.",
+      "Tela livre: monte o layout no palco com as abas Inserir, Exibir e as ferramentas contextuais do objeto (Forma, Gráfico, Tabela, Dados). O título acima é só o nome no filmstrip.",
     publicUrl:
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
     borderRadius: "Arredondamento dos cantos em pixels.",

@@ -1,11 +1,10 @@
-import { BarChart3, Database, Home, Eye, LayoutTemplate, Paintbrush, Plus, Settings2, Shapes, Table2 } from "lucide-react";
+import { BarChart3, Database, Home, Eye, LayoutTemplate, Plus, Settings2, Shapes, Table2 } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 export type DeckRibbonTabId =
   | "home"
   | "insert"
-  | "format"
   | "chart"
   | "table"
   | "shape"
@@ -24,7 +23,10 @@ export type DeckRibbonTabMeta = {
   chartOnly?: boolean;
   /** Só aparece com tabela selecionada (aba contextual Excel Table Design). */
   tableOnly?: boolean;
-  /** Só aparece com forma selecionada (aba contextual PowerPoint). */
+  /**
+   * Forma / caixa de texto / mídia / chrome de KPI·gráfico·tabela —
+   * tipografia e contorno por capacidade do objeto.
+   */
   shapeOnly?: boolean;
   /** Só aparece com bloco de dados / visual ligado a fonte. */
   dataOnly?: boolean;
@@ -35,12 +37,12 @@ const T = TV_DASHBOARD_HELP_TOOLTIPS.ribbonTabs;
 
 /**
  * Ordem canônica: abas permanentes primeiro; contextuais no final —
- * só aparecem com o elemento selecionado.
+ * só aparecem com o elemento selecionado. Sem aba Formatar (controles
+ * vivem nas contextuais por capacidade).
  */
 export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   { id: "home", label: "Página Inicial", hint: T.home, icon: Home },
   { id: "insert", label: "Inserir", hint: T.insert, icon: Plus, customOnly: true },
-  { id: "format", label: "Formatar", hint: T.format, icon: Paintbrush, customOnly: true },
   { id: "view", label: "Exibir", hint: T.view, icon: Eye, customOnly: true },
   {
     id: "slide",
@@ -58,7 +60,9 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   {
     id: "chart",
     label: "Gráfico",
-    hint: T.chart ?? "Ferramentas do gráfico: tipo, rótulos, eixos e formato (como no Excel Online).",
+    hint:
+      T.chart ??
+      "Ferramentas do gráfico: tipo, rótulos, eixos e tipografia da parte selecionada.",
     icon: BarChart3,
     customOnly: true,
     chartOnly: true,
@@ -68,7 +72,7 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
     label: "Tabela",
     hint:
       T.table ??
-      "Ferramentas da tabela (Excel Table Design): estilos, opções de estilo e formato.",
+      "Ferramentas da tabela (Excel Table Design): estilos, opções e tipografia.",
     icon: Table2,
     customOnly: true,
     tableOnly: true,
@@ -76,7 +80,9 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   {
     id: "shape",
     label: "Forma",
-    hint: T.shape ?? "Ferramentas da forma: estilos, preenchimento, contorno e tamanho (como no PowerPoint).",
+    hint:
+      T.shape ??
+      "Ferramentas do objeto: tipografia, preenchimento, contorno, tamanho e organização.",
     icon: Shapes,
     customOnly: true,
     shapeOnly: true,
@@ -109,6 +115,8 @@ export function resolveDeckRibbonTabs(
     chartPartPrimitiveSelected?: boolean;
     /** KPI / tabela / gráfico usam chrome de forma (preenchimento, contorno, cantos). */
     shapeChromeSelected?: boolean;
+    /** Caixa de texto / título / mídia — aba Forma com tipografia e organizar. */
+    textOrMediaSelected?: boolean;
   },
 ): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
@@ -117,7 +125,8 @@ export function resolveDeckRibbonTabs(
   const shapeSelected =
     Boolean(options?.shapeSelected) ||
     Boolean(options?.chartPartPrimitiveSelected) ||
-    Boolean(options?.shapeChromeSelected);
+    Boolean(options?.shapeChromeSelected) ||
+    Boolean(options?.textOrMediaSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (tab.customOnly && !isCustomSlide) return false;
     if (tab.chartOnly && !chartSelected) return false;
@@ -128,7 +137,7 @@ export function resolveDeckRibbonTabs(
   });
 }
 
-/** Faixas Inserir + Formatar (+ contextuais) — modal embutido. */
+/** Faixas Inserir + Exibir (+ contextuais) — modal embutido. */
 export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   chartSelected?: boolean;
   tableSelected?: boolean;
@@ -136,6 +145,7 @@ export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   dataSelected?: boolean;
   chartPartPrimitiveSelected?: boolean;
   shapeChromeSelected?: boolean;
+  textOrMediaSelected?: boolean;
 }): DeckRibbonTabMeta[] {
   const chartSelected = Boolean(options?.chartSelected);
   const tableSelected = Boolean(options?.tableSelected);
@@ -143,7 +153,8 @@ export function resolveEmbeddedComunicadoRibbonTabs(options?: {
   const shapeSelected =
     Boolean(options?.shapeSelected) ||
     Boolean(options?.chartPartPrimitiveSelected) ||
-    Boolean(options?.shapeChromeSelected);
+    Boolean(options?.shapeChromeSelected) ||
+    Boolean(options?.textOrMediaSelected);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (!tab.customOnly) return false;
     if (tab.chartOnly && !chartSelected) return false;

@@ -151,7 +151,7 @@ export function ComunicadoEditorShapeBlock({
         event.stopPropagation();
         selectBlock(block.id);
         setEditingTextId(block.id);
-        requestRibbonTab("format");
+        requestRibbonTab("shape");
       }}
     >
       <ComunicadoBlockView block={block} fontScale={fontScale} embedded interactive />

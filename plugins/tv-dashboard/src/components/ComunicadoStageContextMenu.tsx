@@ -214,7 +214,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
           <ContextMenuItem
             label={C.format}
             icon={Layers}
-            onSelect={() => run(() => requestRibbonTab("format"))}
+            onSelect={() => run(() => requestRibbonTab("shape"))}
           />
         </>
       ) : null}

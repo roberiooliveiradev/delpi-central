@@ -1,6 +1,5 @@
 import { ComunicadoChartRibbon } from "./ComunicadoChartRibbon";
 import { ComunicadoDataRibbon } from "./ComunicadoDataRibbon";
-import { ComunicadoFormatRibbon } from "./ComunicadoFormatRibbon";
 import { ComunicadoInsertRibbon } from "./ComunicadoInsertRibbon";
 import { ComunicadoShapeRibbon } from "./ComunicadoShapeRibbon";
 import { ComunicadoTableRibbon } from "./ComunicadoTableRibbon";
@@ -9,11 +8,11 @@ import { ComunicadoViewRibbon } from "./ComunicadoViewRibbon";
 type Labels = Record<string, string>;
 
 type Props = {
-  activeTab: "insert" | "format" | "chart" | "table" | "shape" | "data" | "view";
+  activeTab: "insert" | "chart" | "table" | "shape" | "data" | "view";
   labels?: Labels;
 };
 
-/** Conteúdo compartilhado das faixas Inserir / Formatar / contextuais / Exibir. */
+/** Conteúdo das faixas Inserir / contextuais / Exibir (sem aba Formatar). */
 export function ComunicadoRibbonContent({ activeTab, labels = {} }: Props) {
   if (activeTab === "insert") {
     return <ComunicadoInsertRibbon labels={labels} />;
@@ -33,5 +32,5 @@ export function ComunicadoRibbonContent({ activeTab, labels = {} }: Props) {
   if (activeTab === "data") {
     return <ComunicadoDataRibbon />;
   }
-  return <ComunicadoFormatRibbon labels={labels} />;
+  return null;
 }

@@ -6,10 +6,16 @@ import {
   resolveEmbeddedComunicadoRibbonTabs,
 } from "./deckRibbonTabMeta";
 
-describe("deckRibbonTabMeta (Onda 4K/4L/Tabela/Dados)", () => {
+describe("deckRibbonTabMeta (contextuais sem Formatar)", () => {
   it("mostra aba Forma para KPI/tabela/gráfico (chrome de forma)", () => {
     const tabs = resolveDeckRibbonTabs(true, { shapeChromeSelected: true });
     expect(tabs.some((tab) => tab.id === "shape")).toBe(true);
+  });
+
+  it("mostra aba Forma para caixa de texto / mídia", () => {
+    const tabs = resolveDeckRibbonTabs(true, { textOrMediaSelected: true });
+    expect(tabs.some((tab) => tab.id === "shape")).toBe(true);
+    expect(tabs.some((tab) => tab.id === "format")).toBe(false);
   });
 
   it("mostra aba Tabela e Forma com table_view selecionado", () => {
@@ -51,7 +57,7 @@ describe("deckRibbonTabMeta (Onda 4K/4L/Tabela/Dados)", () => {
     expect(tabs.some((tab) => tab.id === "chart")).toBe(true);
   });
 
-  it("mantém contextuais no final do chrome embutido", () => {
+  it("mantém contextuais no final do chrome embutido sem Formatar", () => {
     const both = resolveEmbeddedComunicadoRibbonTabs({
       chartSelected: true,
       tableSelected: true,
@@ -60,7 +66,6 @@ describe("deckRibbonTabMeta (Onda 4K/4L/Tabela/Dados)", () => {
     });
     expect(both.map((tab) => tab.id)).toEqual([
       "insert",
-      "format",
       "view",
       "chart",
       "table",
@@ -69,12 +74,13 @@ describe("deckRibbonTabMeta (Onda 4K/4L/Tabela/Dados)", () => {
     ]);
   });
 
-  it("sempre inclui Programação e Página Inicial", () => {
+  it("sempre inclui Programação e Página Inicial e nunca Formatar", () => {
     const tabs = resolveDeckRibbonTabs(true);
     expect(tabs.map((tab) => tab.id)).toEqual(
       expect.arrayContaining(["home", "playlist", "slide", "insert"]),
     );
     expect(tabs.find((tab) => tab.id === "playlist")?.label).toBe("Programação");
     expect(tabs.some((tab) => tab.id === "data")).toBe(false);
+    expect(tabs.some((tab) => tab.id === "format")).toBe(false);
   });
 });

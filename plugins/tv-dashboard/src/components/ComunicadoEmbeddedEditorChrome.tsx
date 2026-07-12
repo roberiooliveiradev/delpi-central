@@ -14,7 +14,7 @@ import {
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "format" | "chart" | "table" | "shape" | "data" | "view";
+type EmbeddedTab = "insert" | "chart" | "table" | "shape" | "data" | "view";
 
 type Props = {
   labels?: Labels;
@@ -26,6 +26,13 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const chartSelected = selected?.type === "chart_view";
   const tableSelected = selected?.type === "table_view";
   const shapeSelected = selected?.type === "shape";
+  const textOrMediaSelected = Boolean(
+    selected &&
+      (selected.type === "heading" ||
+        selected.type === "text" ||
+        selected.type === "image" ||
+        selected.type === "video"),
+  );
   const dataSelected = Boolean(selected && isDataBoundEditorBlockType(selected.type));
   const shapeChromeSelected =
     selected?.type === "kpi_view" || tableSelected || chartSelected;
@@ -41,13 +48,19 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     dataSelected,
     chartPartPrimitiveSelected,
     shapeChromeSelected,
+    textOrMediaSelected,
   });
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");
 
   useComunicadoRibbonTabSync((tab) => {
+    if (tab === "format") {
+      setActiveTab(
+        chartSelected && !chartPartPrimitiveSelected ? "chart" : tableSelected ? "table" : "shape",
+      );
+      return;
+    }
     if (
       tab === "insert" ||
-      tab === "format" ||
       tab === "chart" ||
       tab === "table" ||
       tab === "shape" ||

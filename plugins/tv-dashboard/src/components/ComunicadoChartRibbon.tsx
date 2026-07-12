@@ -15,7 +15,6 @@ import {
   Grid3x3,
   Heading,
   ListOrdered,
-  Paintbrush,
   Table2,
   Tags,
   Type,
@@ -34,14 +33,14 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { FormatRibbonTypographySections } from "./formatRibbon";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 /**
- * Faixa contextual «Gráfico» — espelha a aba Gráfico do Excel Online:
- * Dados · Tipo · Rótulos · Eixos · Formato.
+ * Faixa contextual «Gráfico» — tipo, rótulos, eixos e tipografia da parte textual.
  */
 export function ComunicadoChartRibbon() {
   const {
@@ -57,7 +56,7 @@ export function ComunicadoChartRibbon() {
     return (
       <div className="td-deck-ribbon__groups">
         <p className="td-subtitle td-deck-ribbon__hint">
-          Selecione um gráfico no palco para editar tipo, rótulos, eixos e formato (como no Excel).
+          Selecione um gráfico no palco para editar tipo, rótulos, eixos e tipografia.
         </p>
       </div>
     );
@@ -85,18 +84,11 @@ export function ComunicadoChartRibbon() {
     updateSelected({ chartType } as Partial<ComunicadoBlock>);
   };
 
-  const openFormatSelection = () => {
-    if (selectedChartPart) {
-      selectChartPart(block.id, selectedChartPart);
-    } else {
-      selectChartPart(block.id, { kind: "chartArea" });
-    }
-    requestRibbonTab("format");
-  };
-
   return (
     <div className="td-deck-ribbon__groups">
-          <DeckRibbonGroup label="Dados" hint={H.chartData}>
+      <FormatRibbonTypographySections />
+
+      <DeckRibbonGroup label="Dados" hint={H.chartData}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={Database}
@@ -265,13 +257,20 @@ export function ComunicadoChartRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Formato" hint={H.chartFormat}>
+      <DeckRibbonGroup label="Área do gráfico" hint={H.chartFormat}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
-            icon={Paintbrush}
-            label="Formato"
-            hint="Abre Formatar com a parte selecionada (área, série, marcador…)."
-            onClick={openFormatSelection}
+            icon={ChartArea}
+            label="Forma"
+            hint="Abre a aba Forma para preenchimento e contorno da área/série selecionada."
+            onClick={() => {
+              if (selectedChartPart) {
+                selectChartPart(block.id, selectedChartPart);
+              } else {
+                selectChartPart(block.id, { kind: "chartArea" });
+              }
+              requestRibbonTab("shape");
+            }}
           />
         </div>
       </DeckRibbonGroup>

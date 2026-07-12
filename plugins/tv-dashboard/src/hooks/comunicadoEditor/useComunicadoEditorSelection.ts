@@ -155,8 +155,20 @@ export function useComunicadoEditorSelection({
         setRibbonTabRequest("chart");
       } else if (selectedBlockType === "table_view") {
         setRibbonTabRequest("table");
-      } else if (selectedBlockType === "shape") {
+      } else if (
+        selectedBlockType === "shape" ||
+        selectedBlockType === "heading" ||
+        selectedBlockType === "text" ||
+        selectedBlockType === "image" ||
+        selectedBlockType === "video" ||
+        selectedBlockType === "kpi_view"
+      ) {
         setRibbonTabRequest("shape");
+      } else if (
+        selectedBlockType === "data_source" ||
+        selectedBlockType?.startsWith("data_")
+      ) {
+        setRibbonTabRequest("data");
       }
     },
     [clearPartSelections, configRef, flushActiveTextEdit],
@@ -194,7 +206,7 @@ export function useComunicadoEditorSelection({
         part.kind === "axisTitle" ||
         part.kind === "dataLabel"
       ) {
-        setRibbonTabRequest("format");
+        setRibbonTabRequest("chart");
       } else {
         setRibbonTabRequest(primitiveKinds.has(part.kind) ? "shape" : "chart");
       }
@@ -239,7 +251,7 @@ export function useComunicadoEditorSelection({
       setSelectedTablePart(null);
       setSelectedKpiPart(part);
       setEditingKpiPart(null);
-      setRibbonTabRequest("format");
+      setRibbonTabRequest("shape");
     },
     [flushActiveTextEdit],
   );

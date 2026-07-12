@@ -55,11 +55,10 @@ type Props = {
 
 function isRibbonTab(
   tab: DeckRibbonTabId,
-): tab is "home" | "insert" | "format" | "chart" | "table" | "shape" | "data" | "view" {
+): tab is "home" | "insert" | "chart" | "table" | "shape" | "data" | "view" {
   return (
     tab === "home" ||
     tab === "insert" ||
-    tab === "format" ||
     tab === "chart" ||
     tab === "table" ||
     tab === "shape" ||
@@ -90,6 +89,13 @@ export function DeckEditorChrome({
   const chartSelected = editor?.selected?.type === "chart_view";
   const tableSelected = editor?.selected?.type === "table_view";
   const shapeSelected = editor?.selected?.type === "shape";
+  const textOrMediaSelected = Boolean(
+    editor?.selected &&
+      (editor.selected.type === "heading" ||
+        editor.selected.type === "text" ||
+        editor.selected.type === "image" ||
+        editor.selected.type === "video"),
+  );
   const dataSelected = Boolean(
     editor?.selected &&
       (editor.selected.type === "chart_view" ||
@@ -114,14 +120,23 @@ export function DeckEditorChrome({
     selectedKpiPart: editor?.selectedKpiPart,
     selectedChartPart: editor?.selectedChartPart,
   });
-  // Eixo permanece primitivo de Forma; tipografia de título/legenda/KPI abre Formatar.
-  const textPartFormatSelected =
-    textFormatTarget?.mode === "part" && editor?.selectedChartPart?.kind !== "axis";
-  /** Duplo clique em forma: manter Formatar (tipografia) em vez de forçar aba Forma. */
+  /** Tipografia de part KPI/gráfico (exceto eixo geométrico) — fica na aba do objeto. */
+  const textPartOnChart =
+    textFormatTarget?.mode === "part" &&
+    chartSelected &&
+    editor?.selectedChartPart?.kind !== "axis";
+  const textPartOnShape =
+    textFormatTarget?.mode === "part" &&
+    editor?.selected?.type === "kpi_view";
   const shapeTextEditing =
     Boolean(editor?.editingTextId) &&
-    editor?.selected?.type === "shape" &&
-    editor.editingTextId === editor.selected.id;
+    Boolean(
+      editor?.selected &&
+        (editor.selected.type === "shape" ||
+          editor.selected.type === "heading" ||
+          editor.selected.type === "text") &&
+        editor.editingTextId === editor.selected.id,
+    );
   const tabs = resolveDeckRibbonTabs(isCustomSlide, {
     chartSelected,
     tableSelected,
@@ -129,13 +144,19 @@ export function DeckEditorChrome({
     dataSelected,
     chartPartPrimitiveSelected,
     shapeChromeSelected,
+    textOrMediaSelected,
   });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
 
   useComunicadoRibbonTabSync((tab) => {
+    if (tab === "format") {
+      setActiveTab(
+        chartSelected && !chartPartPrimitiveSelected ? "chart" : tableSelected ? "table" : "shape",
+      );
+      return;
+    }
     if (
       tab === "insert" ||
-      tab === "format" ||
       tab === "chart" ||
       tab === "table" ||
       tab === "shape" ||
@@ -149,19 +170,17 @@ export function DeckEditorChrome({
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
       setActiveTab(
-        textPartFormatSelected || shapeTextEditing
-          ? "format"
-          : chartPartPrimitiveSelected
-            ? "shape"
-            : chartSelected
-              ? "chart"
-              : tableSelected
-                ? "table"
-                : shapeSelected
-                  ? "shape"
-                  : dataSelected
-                    ? "data"
-                    : "home",
+        chartPartPrimitiveSelected || shapeTextEditing || textPartOnShape || textOrMediaSelected
+          ? "shape"
+          : textPartOnChart || chartSelected
+            ? "chart"
+            : tableSelected
+              ? "table"
+              : shapeSelected || shapeChromeSelected
+                ? "shape"
+                : dataSelected
+                  ? "data"
+                  : "home",
       );
     }
   }, [
@@ -172,28 +191,27 @@ export function DeckEditorChrome({
     shapeSelected,
     dataSelected,
     chartPartPrimitiveSelected,
-    textPartFormatSelected,
+    textPartOnChart,
+    textPartOnShape,
     shapeTextEditing,
+    textOrMediaSelected,
+    shapeChromeSelected,
   ]);
 
   useEffect(() => {
-    if ((textPartFormatSelected || shapeTextEditing) && isCustomSlide) {
-      setActiveTab("format");
+    if ((shapeTextEditing || textPartOnShape || textOrMediaSelected) && isCustomSlide) {
+      setActiveTab("shape");
     } else if (chartPartPrimitiveSelected && isCustomSlide) {
       setActiveTab("shape");
+    } else if (textPartOnChart && isCustomSlide) {
+      setActiveTab("chart");
     } else if (shapeSelected && isCustomSlide) {
       setActiveTab("shape");
     } else if (tableSelected && isCustomSlide) {
       setActiveTab("table");
-    } else if (
-      shapeChromeSelected &&
-      isCustomSlide &&
-      !chartSelected &&
-      !tableSelected &&
-      !textPartFormatSelected
-    ) {
+    } else if (shapeChromeSelected && isCustomSlide && !chartSelected && !tableSelected) {
       setActiveTab("shape");
-    } else if (chartSelected && isCustomSlide && !textPartFormatSelected) {
+    } else if (chartSelected && isCustomSlide) {
       setActiveTab("chart");
     } else if (dataSelected && isCustomSlide && !chartSelected && !tableSelected && !shapeSelected) {
       setActiveTab("data");
@@ -204,8 +222,10 @@ export function DeckEditorChrome({
     shapeSelected,
     shapeChromeSelected,
     chartPartPrimitiveSelected,
-    textPartFormatSelected,
+    textPartOnChart,
+    textPartOnShape,
     shapeTextEditing,
+    textOrMediaSelected,
     dataSelected,
     isCustomSlide,
     editor?.selectedId,
@@ -270,7 +290,6 @@ export function DeckEditorChrome({
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
             {isCustomSlide &&
             (activeTab === "insert" ||
-              activeTab === "format" ||
               activeTab === "chart" ||
               activeTab === "table" ||
               activeTab === "shape" ||

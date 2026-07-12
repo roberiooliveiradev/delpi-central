@@ -338,7 +338,7 @@ function EditorTableViewBlock({
   const onPartDoubleClick = useCallback(
     (ref: ComunicadoTablePartRef) => {
       selectTablePart(block.id, ref);
-      requestRibbonTab("format");
+      requestRibbonTab("table");
     },
     [block.id, requestRibbonTab, selectTablePart],
   );
@@ -402,7 +402,7 @@ function EditorKpiViewBlock({
         selectedKpiPart &&
         selectedKpiPart.kind === part.kind;
       selectKpiPart(block.id, part);
-      requestRibbonTab("format");
+      requestRibbonTab("shape");
       if (same && kpiPartAllowsEdit(part)) {
         beginEditKpiPart(block.id, part);
       }
