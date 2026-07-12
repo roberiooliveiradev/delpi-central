@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope } from "../../api/tvDashboardApi";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectedDataSidePanel } from "../SelectedDataSidePanel";
 import { resolveSelectedDataContext } from "../../utils/selectedDataContext";
@@ -13,10 +14,12 @@ import { ComunicadoLayersPanel } from "./ComunicadoLayersPanel";
 type Labels = Record<string, string>;
 type SideTab = "element" | "layers" | "data";
 
+const T = TV_DASHBOARD_HELP_TOOLTIPS.tabs;
+
 const PANEL_TABS = [
-  { id: "element" as const, label: "Elemento" },
-  { id: "data" as const, label: "Dados" },
-  { id: "layers" as const, label: "Camadas" },
+  { id: "element" as const, label: "Elemento", hint: T.element },
+  { id: "data" as const, label: "Dados", hint: T.data },
+  { id: "layers" as const, label: "Camadas", hint: T.layers },
 ];
 
 type Props = {

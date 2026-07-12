@@ -24,7 +24,7 @@ export function DeckPropertySection({
 }: Props) {
   if (pane) {
     return (
-      <FormatPaneSection title={title} defaultOpen={defaultOpen}>
+      <FormatPaneSection title={title} hint={hint} defaultOpen={defaultOpen}>
         <div className="td-deck-inspector__section-body">{children}</div>
       </FormatPaneSection>
     );

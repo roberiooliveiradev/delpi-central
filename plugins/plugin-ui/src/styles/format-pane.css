@@ -104,6 +104,18 @@
   user-select: none;
 }
 
+.delpi-ui-format-pane__section-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: calc(100% - 1.1em);
+  vertical-align: middle;
+}
+
+.delpi-ui-format-pane__section-title-text {
+  min-width: 0;
+}
+
 .delpi-ui-format-pane__section-summary::-webkit-details-marker {
   display: none;
 }

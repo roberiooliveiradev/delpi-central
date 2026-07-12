@@ -32,4 +32,22 @@ describe("FormatPaneShell", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fechar painel" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("envolve abas com help tooltip quando há hint", () => {
+    const { container } = render(
+      <FormatPaneShell
+        title="Camadas"
+        tabs={[
+          { id: "element", label: "Elemento", hint: "Propriedades do elemento." },
+          { id: "layers", label: "Camadas", hint: "Ordem e pilha visual." },
+        ]}
+        activeTabId="layers"
+      >
+        <p>Corpo</p>
+      </FormatPaneShell>,
+    );
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Elemento", "Camadas"]);
+    expect(container.querySelectorAll(".delpi-ui-help-tooltip").length).toBe(2);
+  });
 });

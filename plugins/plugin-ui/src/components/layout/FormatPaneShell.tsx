@@ -1,9 +1,13 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { HintAction } from "../help/HintAction";
+
 export type FormatPaneTab = {
   id: string;
   label: string;
+  /** Balão explicativo da aba (hover). */
+  hint?: string;
 };
 
 export type FormatPaneShellProps = {
@@ -51,22 +55,47 @@ export function FormatPaneShell({
         <div className="delpi-ui-format-pane__tabs" role="tablist">
           {tabs.map((tab) => {
             const active = tab.id === activeTabId;
+            if (!tab.hint) {
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={[
+                    "delpi-ui-format-pane__tab",
+                    active ? "delpi-ui-format-pane__tab--active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => onTabChange?.(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              );
+            }
             return (
-              <button
+              <HintAction
                 key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                className={[
-                  "delpi-ui-format-pane__tab",
-                  active ? "delpi-ui-format-pane__tab--active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={() => onTabChange?.(tab.id)}
+                hint={tab.hint}
+                ariaLabel={`Ajuda: ${tab.label}`}
+                placement="bottom"
               >
-                {tab.label}
-              </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={[
+                    "delpi-ui-format-pane__tab",
+                    active ? "delpi-ui-format-pane__tab--active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => onTabChange?.(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              </HintAction>
             );
           })}
         </div>

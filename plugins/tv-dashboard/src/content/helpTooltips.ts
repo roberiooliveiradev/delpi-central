@@ -105,6 +105,17 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     playlist:
       "Parâmetros globais da apresentação: resolução da TV, transição entre telas, duração padrão e link público.",
     data: "Catálogo de rotas api-delpi e configuração de fontes de dados para gráficos e tabelas.",
+    layers:
+      "Ordem de aparição na TV e pilha visual (frente/fundo) dos elementos do slide.",
+  },
+  layers: {
+    buildOrder:
+      "Ordem em que os elementos aparecem na TV (atraso da animação de entrada). Use Sequenciar para um a um, Mesmo instante para todos juntos, ou Limpar para remover animações.",
+    buildSequenciar:
+      "Aplica animação em cascata: cada elemento entra com atraso crescente (aparecer um a um).",
+    buildSameInstant: "Todos os elementos entram juntos, sem atraso entre eles.",
+    buildClear: "Remove as animações de entrada de todos os elementos do slide.",
+    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar; clique para selecionar; Shift+clique para multi-seleção.",
   },
   ribbonTabs: {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",

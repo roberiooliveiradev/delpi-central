@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { GripVertical } from "lucide-react";
+import { HintAction } from "@delpi/plugin-ui/index";
 import {
   assignStaggeredEntranceDelays,
   clearEntranceAnimations,
@@ -9,9 +10,12 @@ import {
   type ComunicadoBlockAnimation,
 } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { comunicadoBlockSummary, comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DeckPropertySection } from "./DeckPropertySection";
+
+const L = TV_DASHBOARD_HELP_TOOLTIPS.layers;
 
 export function ComunicadoLayersPanel({ pane = true }: { pane?: boolean }) {
   const {
@@ -56,12 +60,7 @@ export function ComunicadoLayersPanel({ pane = true }: { pane?: boolean }) {
 
   return (
     <>
-      <DeckPropertySection
-        pane={pane}
-        title="Ordem de construção"
-        hint="Aparecer um a um no TV (atraso da animação de entrada). Onda 4E.4."
-        defaultOpen
-      >
+      <DeckPropertySection pane={pane} title="Ordem de construção" hint={L.buildOrder} defaultOpen>
         {buildOrder.length === 0 ? (
           <p className="td-subtitle">Nenhum elemento no slide.</p>
         ) : (
@@ -79,34 +78,44 @@ export function ComunicadoLayersPanel({ pane = true }: { pane?: boolean }) {
           </ol>
         )}
         <div className="td-build-order__actions">
-          <button
-            type="button"
-            className="td-btn td-btn--sm"
-            onClick={() =>
-              applyBuildMap(assignStaggeredEntranceDelays(sortBlocksByZIndex(blocks), { stepMs: 300, preset: "fade" }))
-            }
-          >
-            Sequenciar
-          </button>
-          <button
-            type="button"
-            className="td-btn td-btn--sm"
-            onClick={() => applyBuildMap(syncEntranceDelaysSameInstant(sortBlocksByZIndex(blocks), 0))}
-          >
-            Mesmo instante
-          </button>
-          <button type="button" className="td-btn td-btn--sm" onClick={() => applyBuildMap(clearEntranceAnimations(blocks))}>
-            Limpar
-          </button>
+          <HintAction hint={L.buildSequenciar} ariaLabel="Ajuda: Sequenciar">
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              onClick={() =>
+                applyBuildMap(
+                  assignStaggeredEntranceDelays(sortBlocksByZIndex(blocks), {
+                    stepMs: 300,
+                    preset: "fade",
+                  }),
+                )
+              }
+            >
+              Sequenciar
+            </button>
+          </HintAction>
+          <HintAction hint={L.buildSameInstant} ariaLabel="Ajuda: Mesmo instante">
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              onClick={() => applyBuildMap(syncEntranceDelaysSameInstant(sortBlocksByZIndex(blocks), 0))}
+            >
+              Mesmo instante
+            </button>
+          </HintAction>
+          <HintAction hint={L.buildClear} ariaLabel="Ajuda: Limpar">
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              onClick={() => applyBuildMap(clearEntranceAnimations(blocks))}
+            >
+              Limpar
+            </button>
+          </HintAction>
         </div>
       </DeckPropertySection>
 
-      <DeckPropertySection
-        pane={pane}
-        title="Lista de camadas"
-        hint="Selecione ou reordene elementos. Shift+clique para multi-seleção no palco."
-        defaultOpen
-      >
+      <DeckPropertySection pane={pane} title="Lista de camadas" hint={L.list} defaultOpen>
         {layers.length === 0 ? (
           <p className="td-subtitle">Nenhum elemento no slide.</p>
         ) : (
