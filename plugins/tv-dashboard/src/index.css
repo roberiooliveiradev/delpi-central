@@ -3675,6 +3675,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
   min-width: 0;
   padding: 0;
   border-radius: 0;
