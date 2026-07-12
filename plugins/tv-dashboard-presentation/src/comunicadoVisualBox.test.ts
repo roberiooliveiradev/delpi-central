@@ -76,9 +76,23 @@ describe("comunicadoVisualBox", () => {
     const shapeLayout = resolveVisualBoxContentLayoutStyle(shape);
     expect(shapeLayout.position).toBe("absolute");
     expect(shapeLayout.textAlign).toBe("center");
+    expect(shapeLayout.justifyContent).toBe("center");
     expect(shapeLayout.pointerEvents).toBe("none");
     const shapeEditorLayout = resolveVisualBoxContentLayoutStyle(shape, { editorInteractive: true });
     expect(shapeEditorLayout.pointerEvents).toBe("auto");
+  });
+
+  it("forma respeita textAlign e verticalAlign no layout do texto", () => {
+    const base = createShapeBlock("point");
+    const shape = {
+      ...base,
+      content: "A",
+      style: { ...base.style, textAlign: "left" as const, verticalAlign: "top" as const },
+    };
+    const layout = resolveVisualBoxContentLayoutStyle(shape);
+    expect(layout.textAlign).toBe("left");
+    expect(layout.alignItems).toBe("flex-start");
+    expect(layout.justifyContent).toBe("flex-start");
   });
 
   it("caixas visuais suportam edição inline no palco", () => {

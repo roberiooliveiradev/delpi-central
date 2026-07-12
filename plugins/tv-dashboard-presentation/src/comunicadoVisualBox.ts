@@ -86,7 +86,8 @@ export function resolveVisualBoxChrome(block: ComunicadoVisualBoxBlock): Comunic
     stroke:
       style.stroke ??
       (primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke),
-    strokeWidth: style.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive),
+    strokeWidth:
+      primitive === "point" ? 0 : (style.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive)),
     borderRadius: style.borderRadius,
     shapeKind: shape,
   };
@@ -157,12 +158,15 @@ export function resolveVisualBoxContentLayoutStyle(
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     if (style.textAlign) css.textAlign = style.textAlign;
   } else {
-    css.alignItems = "center";
-    css.justifyContent = "center";
+    const textAlign = style.textAlign ?? "center";
+    const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForVisualBox(block);
+    css.alignItems =
+      textAlign === "left" ? "flex-start" : textAlign === "right" ? "flex-end" : "center";
+    css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     css.position = "absolute";
     css.inset = 0;
     css.padding = "0.4em";
-    css.textAlign = style.textAlign ?? "center";
+    css.textAlign = textAlign;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   }
 

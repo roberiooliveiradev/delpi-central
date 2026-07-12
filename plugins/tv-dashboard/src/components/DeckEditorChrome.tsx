@@ -117,6 +117,11 @@ export function DeckEditorChrome({
   // Eixo permanece primitivo de Forma; tipografia de título/legenda/KPI abre Formatar.
   const textPartFormatSelected =
     textFormatTarget?.mode === "part" && editor?.selectedChartPart?.kind !== "axis";
+  /** Duplo clique em forma: manter Formatar (tipografia) em vez de forçar aba Forma. */
+  const shapeTextEditing =
+    Boolean(editor?.editingTextId) &&
+    editor?.selected?.type === "shape" &&
+    editor.editingTextId === editor.selected.id;
   const tabs = resolveDeckRibbonTabs(isCustomSlide, {
     chartSelected,
     tableSelected,
@@ -144,7 +149,7 @@ export function DeckEditorChrome({
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
       setActiveTab(
-        textPartFormatSelected
+        textPartFormatSelected || shapeTextEditing
           ? "format"
           : chartPartPrimitiveSelected
             ? "shape"
@@ -168,10 +173,11 @@ export function DeckEditorChrome({
     dataSelected,
     chartPartPrimitiveSelected,
     textPartFormatSelected,
+    shapeTextEditing,
   ]);
 
   useEffect(() => {
-    if (textPartFormatSelected && isCustomSlide) {
+    if ((textPartFormatSelected || shapeTextEditing) && isCustomSlide) {
       setActiveTab("format");
     } else if (chartPartPrimitiveSelected && isCustomSlide) {
       setActiveTab("shape");
@@ -199,11 +205,13 @@ export function DeckEditorChrome({
     shapeChromeSelected,
     chartPartPrimitiveSelected,
     textPartFormatSelected,
+    shapeTextEditing,
     dataSelected,
     isCustomSlide,
     editor?.selectedId,
     editor?.selectedChartPart,
     editor?.selectedKpiPart,
+    editor?.editingTextId,
   ]);
 
   useEffect(() => {

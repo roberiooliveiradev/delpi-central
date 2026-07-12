@@ -7,6 +7,7 @@ import {
   geometryBoundingFrame,
   geometryToPersistedFrame,
   minimumVertexCount,
+  resolveBlockPlacementStyle,
   resolveShapeGeometry,
   shapeBlockAllowsResize,
 } from "./comunicadoShapeGeometry";
@@ -65,6 +66,14 @@ describe("comunicadoShapeGeometry", () => {
     const bbox = geometryBoundingFrame(geometry);
     expect(bbox.w).toBe(COMUNICADO_POINT_HIT_SIZE_PCT);
     expect(bbox.h).toBe(COMUNICADO_POINT_HIT_SIZE_PCT);
+  });
+
+  it("placement do ponto usa hit-box (não 0×0) para clique/seleção", () => {
+    const block = createShapeBlock("point");
+    const style = resolveBlockPlacementStyle(block);
+    expect(style.width).toBe(`${COMUNICADO_POINT_HIT_SIZE_PCT}%`);
+    expect(style.height).toBe(`${COMUNICADO_POINT_HIT_SIZE_PCT}%`);
+    expect(style.transform).toBeUndefined();
   });
 
   it("migra frame legado com dimensão para posição central do ponto", () => {

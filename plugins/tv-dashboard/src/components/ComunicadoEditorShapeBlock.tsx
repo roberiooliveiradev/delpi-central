@@ -30,6 +30,7 @@ export function ComunicadoEditorShapeBlock({
     setEditingTextId,
     selectBlock,
     registerTextEditorBridge,
+    requestRibbonTab,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
   const draftRef = useRef(block.content ?? "");
@@ -150,6 +151,7 @@ export function ComunicadoEditorShapeBlock({
         event.stopPropagation();
         selectBlock(block.id);
         setEditingTextId(block.id);
+        requestRibbonTab("format");
       }}
     >
       <ComunicadoBlockView block={block} fontScale={fontScale} embedded interactive />

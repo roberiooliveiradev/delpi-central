@@ -428,6 +428,19 @@
   overflow: visible;
 }
 
+/* Ponto: marcador em px pode ser maior que o hit-box % — não cortar. */
+.tdp-comunicado__block.tdp-comunicado__visual-box--primitive-point {
+  overflow: visible;
+}
+
+.tdp-comunicado__shape-svg--point {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  flex-shrink: 0;
+}
+
 .tdp-comunicado__shape-svg,
 .tdp-comunicado__shape-fill,
 .tdp-comunicado__shape-line {

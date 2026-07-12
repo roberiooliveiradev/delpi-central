@@ -40,7 +40,7 @@ describe("comunicadoVisualPrimitive", () => {
     expect(shapeSupportsFill("line")).toBe(false);
     expect(shapeSupportsFill("area")).toBe(true);
 
-    expect(shapeSupportsStroke("point")).toBe(true);
+    expect(shapeSupportsStroke("point")).toBe(false);
     expect(shapeSupportsStroke("line")).toBe(true);
     expect(shapeSupportsStroke("area")).toBe(true);
   });

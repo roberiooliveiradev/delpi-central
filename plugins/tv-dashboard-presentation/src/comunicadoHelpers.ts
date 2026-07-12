@@ -970,16 +970,14 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
   const fontScale = options?.fontScale ?? 1;
   const style = block.style ?? {};
   const placement = resolveBlockPlacementStyle(block);
-  const isPointShape = block.type === "shape" && isPointShapeKind(block.shape);
   const css: CSSProperties = {
     ...placement,
     zIndex: style.zIndex ?? 1,
     opacity: style.opacity ?? 1,
   };
   if (style.rotation) {
-    css.transform = isPointShape
-      ? `translate(-50%, -50%) rotate(${style.rotation}deg)`
-      : `rotate(${style.rotation}deg)`;
+    // Ponto: placement já é bbox (não centro com translate); só rotaciona no próprio box.
+    css.transform = `rotate(${style.rotation}deg)`;
   }
   applySharedBlockVisualStyle(style, css);
 

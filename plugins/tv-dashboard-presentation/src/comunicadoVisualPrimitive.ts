@@ -43,7 +43,7 @@ export function shapeSupportsFill(primitive: ComunicadoVisualPrimitive): boolean
   return primitive !== "line";
 }
 
-/** Linha e área sempre; ponto aceita contorno opcional do marcador. */
+/** Linha e área têm contorno; ponto usa só fill (cor do marcador). */
 export function shapeSupportsStroke(primitive: ComunicadoVisualPrimitive): boolean {
-  return primitive === "line" || primitive === "area" || primitive === "point";
+  return primitive === "line" || primitive === "area";
 }

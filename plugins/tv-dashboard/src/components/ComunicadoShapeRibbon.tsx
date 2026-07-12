@@ -5,6 +5,7 @@ import {
   Copy,
   Replace,
   Trash2,
+  Type,
 } from "lucide-react";
 import {
   applyMarkerStyleToAll,
@@ -74,6 +75,7 @@ export function ComunicadoShapeRibbon() {
     removeSelected,
     duplicateSelected,
     moveLayer,
+    requestRibbonTab,
   } = useComunicadoEditor();
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
@@ -533,6 +535,17 @@ export function ComunicadoShapeRibbon() {
         />
       ) : null}
 
+      <DeckRibbonGroup label="Texto" hint={H.font}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile
+            icon={Type}
+            label="Formatar"
+            hint="Abre Formatar com tipografia e alinhamento do texto na forma."
+            onClick={() => requestRibbonTab("format")}
+          />
+        </div>
+      </DeckRibbonGroup>
+
       <DeckRibbonGroup label="Organizar" hint={H.organize}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile icon={Copy} label="Duplicar" hint={H.duplicateBlock} onClick={duplicateSelected} />
@@ -544,34 +557,57 @@ export function ComunicadoShapeRibbon() {
 
       <DeckRibbonGroup label="Tamanho" hint={H.shapeSize}>
         <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-          <label className="td-deck-ribbon__field-label" htmlFor="td-shape-width">
-            Largura %
-          </label>
-          <NativeTextControl
-            id="td-shape-width"
-            type="number"
-            className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-            min={0.5}
-            max={100}
-            step={0.5}
-            aria-label="Largura da forma em percentual do slide"
-            value={Number(block.frame.w.toFixed(1))}
-            onChange={(value) => setFrameSize("w", Number(value))}
-          />
-          <label className="td-deck-ribbon__field-label" htmlFor="td-shape-height">
-            Altura %
-          </label>
-          <NativeTextControl
-            id="td-shape-height"
-            type="number"
-            className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-            min={0.5}
-            max={100}
-            step={0.5}
-            aria-label="Altura da forma em percentual do slide"
-            value={Number(block.frame.h.toFixed(1))}
-            onChange={(value) => setFrameSize("h", Number(value))}
-          />
+          {primitive === "point" ? (
+            <>
+              <label className="td-deck-ribbon__field-label" htmlFor="td-shape-marker-radius">
+                Raio px
+              </label>
+              <NativeTextControl
+                id="td-shape-marker-radius"
+                type="number"
+                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                min={2}
+                max={48}
+                step={1}
+                aria-label="Raio do ponto em pixels"
+                value={block.style?.markerRadius ?? 8}
+                onChange={(value) =>
+                  updateSelectedStyle({ markerRadius: Math.max(2, Math.min(48, Number(value) || 8)) })
+                }
+              />
+            </>
+          ) : (
+            <>
+              <label className="td-deck-ribbon__field-label" htmlFor="td-shape-width">
+                Largura %
+              </label>
+              <NativeTextControl
+                id="td-shape-width"
+                type="number"
+                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                min={0.5}
+                max={100}
+                step={0.5}
+                aria-label="Largura da forma em percentual do slide"
+                value={Number(block.frame.w.toFixed(1))}
+                onChange={(value) => setFrameSize("w", Number(value))}
+              />
+              <label className="td-deck-ribbon__field-label" htmlFor="td-shape-height">
+                Altura %
+              </label>
+              <NativeTextControl
+                id="td-shape-height"
+                type="number"
+                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                min={0.5}
+                max={100}
+                step={0.5}
+                aria-label="Altura da forma em percentual do slide"
+                value={Number(block.frame.h.toFixed(1))}
+                onChange={(value) => setFrameSize("h", Number(value))}
+              />
+            </>
+          )}
         </div>
       </DeckRibbonGroup>
     </div>

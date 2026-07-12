@@ -877,9 +877,21 @@
   overflow: visible;
 }
 
+.dashboard-tv-dashboard .td-composer__block-wrap:has(.tdp-comunicado__visual-box--primitive-point) {
+  overflow: visible;
+  /* Hit-box do ponto precisa receber clique/arraste (filho tem pointer-events: none no SVG). */
+  pointer-events: auto;
+}
+
 .dashboard-tv-dashboard .td-composer__block:has(.tdp-comunicado__visual-box--primitive-line),
 .dashboard-tv-dashboard .td-composer__block.tdp-comunicado__visual-box--primitive-line {
   overflow: visible;
+}
+
+.dashboard-tv-dashboard .td-composer__block.tdp-comunicado__visual-box--primitive-point,
+.dashboard-tv-dashboard .td-composer__shape-block.tdp-comunicado__visual-box--primitive-point {
+  overflow: visible;
+  pointer-events: auto;
 }
 
 .dashboard-tv-dashboard .td-composer__canvas-wrap--zoom {

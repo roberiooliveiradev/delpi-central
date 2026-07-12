@@ -60,10 +60,11 @@ function areaPolygonFromFrame(frame: ComunicadoFrame): ComunicadoGeometryVertex[
 }
 
 function resolvePointPosition(block: ComunicadoShapeBlock): ComunicadoGeometryVertex {
-  if (block.vertices?.[0]) return block.vertices[0];
+  // Frame canônico do ponto (w=h=0): posição = frame.x/y (drag atualiza o frame).
   if (block.frame.w === 0 && block.frame.h === 0) {
     return { x: block.frame.x, y: block.frame.y };
   }
+  if (block.vertices?.[0]) return block.vertices[0];
   return {
     x: block.frame.x + block.frame.w / 2,
     y: block.frame.y + block.frame.h / 2,
@@ -197,12 +198,14 @@ export function resolveBlockPlacementStyle(block: ComunicadoBlock): CSSPropertie
 
   const geometry = resolveShapeGeometry(block);
   if (geometry.primitive === "point") {
+    // Hit-box no DOM (= geometryBoundingFrame) para clique, arraste e outline de seleção.
+    // Persistência continua w=h=0 na posição do centro.
+    const bbox = geometryBoundingFrame(geometry);
     return {
-      left: `${geometry.position.x}%`,
-      top: `${geometry.position.y}%`,
-      width: 0,
-      height: 0,
-      transform: "translate(-50%, -50%)",
+      left: `${bbox.x}%`,
+      top: `${bbox.y}%`,
+      width: `${bbox.w}%`,
+      height: `${bbox.h}%`,
       overflow: "visible",
     };
   }

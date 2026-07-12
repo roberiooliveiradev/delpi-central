@@ -117,11 +117,22 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
       ? selected
       : null;
   const isTextBlock = textBlock != null;
+  const isShapeTextTarget =
+    textFormatTarget?.mode === "block" && textFormatTarget.blockType === "shape";
   const showFontControls = textFormatTarget != null;
+  const showParagraphAlign = isTextBlock || isShapeTextTarget;
   const formatStyle = textFormatTarget?.style;
-  const fontSizeDefault = isTextBlock ? 32 : PART_FONT_SIZE_DEFAULT;
+  const fontSizeDefault = isTextBlock ? 32 : isShapeTextTarget ? 14 : PART_FONT_SIZE_DEFAULT;
   const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
   const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
+  const textAlignActive =
+    (textFormatTarget?.mode === "block" ? textFormatTarget.textAlign : undefined) ??
+    textBlock?.style?.textAlign;
+  const textVerticalAlign =
+    (textFormatTarget?.mode === "block" ? textFormatTarget.verticalAlign : undefined) ??
+    (textBlock
+      ? textBlock.style?.verticalAlign ?? defaultVerticalAlignForBlock(textBlock.type)
+      : "middle");
   const partialTextSelectionActive = Boolean(
     textBlock &&
       editingTextId === textBlock.id &&
@@ -177,9 +188,6 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
     namedStyleSelection && namedStyleSelection !== "mixed"
       ? namedStyleSelection
       : defaultNamedStyleForBlockType(textBlock?.type === "heading" ? "heading" : "text");
-  const textVerticalAlign = textBlock
-    ? textBlock.style?.verticalAlign ?? defaultVerticalAlignForBlock(textBlock.type)
-    : "top";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isImageBlock = selected?.type === "image";
   const isShapeBlock =
@@ -421,7 +429,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
           </DeckRibbonGroup>
       ) : null}
 
-      {isTextBlock && textBlock ? (
+      {showParagraphAlign ? (
           <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} wide>
             <div className="td-deck-ribbon__toolbar">
               <div className="td-deck-ribbon__toolbar-row">
@@ -430,19 +438,30 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                     { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
                     { align: "center" as const, icon: AlignCenter, label: "Centralizar", hint: H.alignCenter },
                     { align: "right" as const, icon: AlignRight, label: "Alinhar à direita", hint: H.alignRight },
-                    { align: "justify" as const, icon: AlignJustify, label: "Justificar", hint: H.alignJustify },
+                    ...(isTextBlock
+                      ? ([
+                          {
+                            align: "justify" as const,
+                            icon: AlignJustify,
+                            label: "Justificar",
+                            hint: H.alignJustify,
+                          },
+                        ] as const)
+                      : []),
                   ] as const
                 ).map(({ align, icon: Icon, label, hint }) => (
                   <TdRibbonIconButton
                     key={align}
                     hint={hint}
                     ariaLabel={label}
-                    active={textBlock.style?.textAlign === align}
+                    active={textAlignActive === align}
                     onClick={() => updateSelectedStyle({ textAlign: align })}
                   >
                     <Icon size={15} aria-hidden="true" />
                   </TdRibbonIconButton>
                 ))}
+                {isTextBlock ? (
+                  <>
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
                 <TdRibbonIconButton
                   hint={H.bulletList}
@@ -460,6 +479,8 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                 >
                   <ListOrdered size={15} aria-hidden="true" />
                 </TdRibbonIconButton>
+                  </>
+                ) : null}
                 <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
                 {(
                   [
@@ -494,6 +515,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   </TdRibbonIconButton>
                 ))}
               </div>
+              {isTextBlock && textBlock ? (
               <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
                 <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-named-style">
                   Estilo
@@ -542,6 +564,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
                   }
                 />
               </div>
+              ) : null}
             </div>
           </DeckRibbonGroup>
       ) : null}

@@ -85,4 +85,21 @@ describe("selectedTextFormatTarget", () => {
       }),
     ).toBeNull();
   });
+
+  it("resolve tipografia de forma (ponto/área com texto)", () => {
+    const shapeBlock = {
+      id: "s1",
+      type: "shape",
+      shape: "point",
+      content: "A",
+      frame: { x: 45, y: 45, w: 0, h: 0 },
+      style: { fontSize: 12, color: "#fff", fill: "#f59e0b" },
+    } as ComunicadoBlock;
+    const target = resolveSelectedTextFormatTarget({ selected: shapeBlock });
+    expect(target?.mode).toBe("block");
+    if (target?.mode === "block") {
+      expect(target.blockType).toBe("shape");
+      expect(target.style.fontSize).toBe(12);
+    }
+  });
 });

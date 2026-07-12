@@ -22,8 +22,10 @@ export type SelectedTextFormatTarget =
   | {
       mode: "block";
       blockId: string;
-      blockType: "heading" | "text";
+      blockType: "heading" | "text" | "shape";
       style: TextFormatStyleSnapshot;
+      textAlign?: string;
+      verticalAlign?: string;
     }
   | {
       mode: "part";
@@ -80,7 +82,7 @@ function chartPartLabel(part: ComunicadoChartPartRef): string {
 
 /**
  * Resolve onde a ribbon Formatar / tipografia deve gravar o estilo.
- * Bloco text/heading OU parte textual de kpi_view / chart_view.
+ * Bloco text/heading/shape OU parte textual de kpi_view / chart_view.
  */
 export function resolveSelectedTextFormatTarget(params: {
   selected: ComunicadoBlock | null;
@@ -104,6 +106,26 @@ export function resolveSelectedTextFormatTarget(params: {
         textDecoration: selected.style?.textDecoration,
         textHighlight: selected.style?.textHighlight,
       },
+      textAlign: selected.style?.textAlign,
+      verticalAlign: selected.style?.verticalAlign,
+    };
+  }
+
+  if (selected.type === "shape") {
+    return {
+      mode: "block",
+      blockId: selected.id,
+      blockType: "shape",
+      style: {
+        fontFamily: selected.style?.fontFamily,
+        fontSize: selected.style?.fontSize,
+        fontWeight: selected.style?.fontWeight,
+        fontStyle: selected.style?.fontStyle,
+        color: selected.style?.color,
+        textDecoration: selected.style?.textDecoration,
+      },
+      textAlign: selected.style?.textAlign,
+      verticalAlign: selected.style?.verticalAlign,
     };
   }
 
