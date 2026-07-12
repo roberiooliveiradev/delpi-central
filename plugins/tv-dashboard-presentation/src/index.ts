@@ -112,6 +112,14 @@ export {
   type ShapeAdjustmentSpec,
 } from "./comunicadoShapeAdjustments";
 export {
+  applyBlockShapeChromeAdjustment,
+  blockShapeChromeAdjustmentSpecs,
+  blockSupportsShapeChromeHandles,
+  resolveBlockSelectionBorderRadiusPx,
+  resolveBlockShapeChromeAdjustmentValues,
+  resolveBlockShapeChromeCornerPx,
+} from "./comunicadoBlockShapeChrome";
+export {
   COMUNICADO_GOOGLE_FONT_CATALOG,
   buildGoogleFontsStylesheetUrl,
   collectFontFamiliesFromComunicadoConfig,

@@ -59,6 +59,21 @@ export function useComunicadoEditorDrag({
     [configRef, updateBlocksSilent],
   );
 
+  const handleUpdateBlock = useCallback(
+    (blockId: string, patch: Partial<ComunicadoBlock>) => {
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        if (block.id !== blockId) return block;
+        const next = { ...block, ...patch } as ComunicadoBlock;
+        if (patch.style) {
+          next.style = { ...block.style, ...patch.style };
+        }
+        return next;
+      });
+      updateBlocksSilent(nextBlocks);
+    },
+    [configRef, updateBlocksSilent],
+  );
+
   const handleUpdateFrame = useCallback(
     (blockId: string, frame: ComunicadoBlock["frame"]) => {
       const multi = multiDragRef.current;
@@ -120,11 +135,23 @@ export function useComunicadoEditorDrag({
       multiDragRef.current = null;
       if (!before) return;
 
-      if (mode === "rotate") {
+      if (mode === "rotate" || mode === "adjust") {
         const beforeBlock = before.blocks?.find((block) => block.id === blockId);
         const afterBlock = configRef.current.blocks?.find((block) => block.id === blockId);
         const unchanged =
-          (beforeBlock?.style?.rotation ?? 0) === (afterBlock?.style?.rotation ?? 0);
+          mode === "rotate"
+            ? (beforeBlock?.style?.rotation ?? 0) === (afterBlock?.style?.rotation ?? 0)
+            : JSON.stringify({
+                style: beforeBlock?.style,
+                kpiParts: beforeBlock && "kpiParts" in beforeBlock ? beforeBlock.kpiParts : null,
+                chartParts:
+                  beforeBlock && "chartParts" in beforeBlock ? beforeBlock.chartParts : null,
+              }) ===
+              JSON.stringify({
+                style: afterBlock?.style,
+                kpiParts: afterBlock && "kpiParts" in afterBlock ? afterBlock.kpiParts : null,
+                chartParts: afterBlock && "chartParts" in afterBlock ? afterBlock.chartParts : null,
+              });
         if (unchanged) {
           applyConfig(configRef.current);
           return;
@@ -201,6 +228,7 @@ export function useComunicadoEditorDrag({
   const { canvasRef, startDrag } = useCanvasBlockInteraction({
     onUpdateFrame: handleUpdateFrame,
     onUpdateStyle: handleUpdateStyle,
+    onUpdateBlock: handleUpdateBlock,
     onInteractionStart: handleInteractionStart,
     onInteractionEnd: handleInteractionEnd,
     resolveBlock: (blockId) => configRef.current.blocks?.find((block) => block.id === blockId),

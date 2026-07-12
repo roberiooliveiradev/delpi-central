@@ -110,7 +110,7 @@
 .delpi-kpi-part--selected,
 .delpi-kpi-card--part-selected {
   outline: 2px solid var(--delpi-ui-accent, #089bdb);
-  outline-offset: 2px;
+  outline-offset: 0;
 }
 
 .delpi-kpi-card__edit {

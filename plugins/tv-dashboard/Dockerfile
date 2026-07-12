@@ -5,8 +5,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY tv-dashboard-presentation/package*.json ./tv-dashboard-presentation/
+COPY tv-dashboard-presentation/.npmrc ./tv-dashboard-presentation/
 RUN --mount=type=cache,target=/root/.npm \
-    cd tv-dashboard-presentation && npm install
+    cd tv-dashboard-presentation && npm install --omit=peer
 
 COPY tv-dashboard-presentation ./tv-dashboard-presentation
 

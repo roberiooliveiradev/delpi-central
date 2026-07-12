@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 
 import {
+  applyBlockShapeChromeAdjustment,
+  blockShapeChromeAdjustmentSpecs,
+  blockSupportsShapeChromeHandles,
   clampFrame,
   clampFrameForBlock,
   isPointShapeKind,
-  patchShapeAdjustment,
-  resolveShapeAdjustments,
+  resolveBlockShapeChromeAdjustmentValues,
   resolveShapeGeometry,
-  shapeAdjustmentSpecs,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
   type ComunicadoFrame,
-  type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
 export type BlockDragMode =
@@ -38,8 +38,7 @@ type DragState = {
   startPointerAngle?: number;
   centerX?: number;
   centerY?: number;
-  /** Ajuste de geometria (handle amarelo). */
-  shapeKind?: ComunicadoShapeKind;
+  /** Ajuste de geometria / chrome herdado (handle amarelo). */
   adjIndex?: number;
   startAdjustments?: number[];
   shortSidePx?: number;
@@ -52,6 +51,8 @@ type PendingDragState = DragState & {
 type Options = {
   onUpdateFrame: (blockId: string, frame: ComunicadoFrame) => void;
   onUpdateStyle?: (blockId: string, patch: Partial<ComunicadoBlockStyle>) => void;
+  /** Patch arbitrário de bloco (KPI/chart chrome via `applyBlockShapeChromeAdjustment`). */
+  onUpdateBlock?: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
   onInteractionStart?: () => void;
   onInteractionEnd?: (
     blockId: string,
@@ -134,6 +135,7 @@ function normalizeRotation(value: number): number {
 export function useCanvasBlockInteraction({
   onUpdateFrame,
   onUpdateStyle,
+  onUpdateBlock,
   onInteractionStart,
   onInteractionEnd,
   resolveBlock,
@@ -143,10 +145,12 @@ export function useCanvasBlockInteraction({
   const pendingRef = useRef<PendingDragState | null>(null);
   const onUpdateFrameRef = useRef(onUpdateFrame);
   const onUpdateStyleRef = useRef(onUpdateStyle);
+  const onUpdateBlockRef = useRef(onUpdateBlock);
   const onInteractionStartRef = useRef(onInteractionStart);
   const onInteractionEndRef = useRef(onInteractionEnd);
   onUpdateFrameRef.current = onUpdateFrame;
   onUpdateStyleRef.current = onUpdateStyle;
+  onUpdateBlockRef.current = onUpdateBlock;
   onInteractionStartRef.current = onInteractionStart;
   onInteractionEndRef.current = onInteractionEnd;
 
@@ -189,23 +193,23 @@ export function useCanvasBlockInteraction({
       return;
     }
 
-    if (isAdjustMode(drag.mode) && drag.shapeKind != null && drag.adjIndex != null) {
+    if (isAdjustMode(drag.mode) && drag.adjIndex != null) {
+      const block = resolveBlockRef.current?.(drag.blockId);
+      if (!block || !blockSupportsShapeChromeHandles(block)) return;
       const localX = frame.w > 0 ? ((current.x - frame.x) / frame.w) * 100 : 50;
       const localY = frame.h > 0 ? ((current.y - frame.y) / frame.h) * 100 : 50;
-      const specs = shapeAdjustmentSpecs(drag.shapeKind);
+      const specs = blockShapeChromeAdjustmentSpecs(block);
       const spec = specs.find((item) => item.index === drag.adjIndex) ?? specs[drag.adjIndex];
       if (!spec) return;
-      const startValues = drag.startAdjustments ?? resolveShapeAdjustments(drag.shapeKind, undefined);
+      const startValues = drag.startAdjustments ?? resolveBlockShapeChromeAdjustmentValues(block);
       const value = spec.valueFromPointer(localX, localY, startValues);
-      const block = resolveBlockRef.current?.(drag.blockId);
-      const patch = patchShapeAdjustment(
-        drag.shapeKind,
-        block?.style,
-        spec.index,
-        value,
-        drag.shortSidePx,
-      );
-      onUpdateStyleRef.current?.(drag.blockId, patch);
+      const patch = applyBlockShapeChromeAdjustment(block, spec.index, value, drag.shortSidePx ?? 64);
+      if (!patch) return;
+      if (onUpdateBlockRef.current) {
+        onUpdateBlockRef.current(drag.blockId, patch);
+      } else if (patch.style) {
+        onUpdateStyleRef.current?.(drag.blockId, patch.style);
+      }
       return;
     }
 
@@ -320,16 +324,15 @@ export function useCanvasBlockInteraction({
       const listeners = pointerListenersRef.current;
       const adjIndex = parseAdjustIndex(mode);
 
-      if (adjIndex != null && block.type === "shape") {
+      if (adjIndex != null && blockSupportsShapeChromeHandles(block)) {
         const wrap = (event.currentTarget as HTMLElement).closest(".td-composer__block-wrap");
         const rect = wrap?.getBoundingClientRect();
         const shortSidePx = rect ? Math.min(rect.width, rect.height) : 64;
         onInteractionStartRef.current?.();
         dragRef.current = {
           ...dragState,
-          shapeKind: block.shape,
           adjIndex,
-          startAdjustments: resolveShapeAdjustments(block.shape, block.style),
+          startAdjustments: resolveBlockShapeChromeAdjustmentValues(block),
           shortSidePx,
         };
         window.addEventListener("pointermove", listeners.onPointerMove);

@@ -7,7 +7,8 @@ Contexto de build no Compose: `context: ../plugins` (não `../plugins/meu-plugin
 ```dockerfile
 # --- bibliotecas compartilhadas (manifesto: plugins/shared-libraries.manifest.json) ---
 COPY tv-dashboard-presentation/package*.json ./tv-dashboard-presentation/
-RUN cd tv-dashboard-presentation && npm install
+COPY tv-dashboard-presentation/.npmrc ./tv-dashboard-presentation/
+RUN cd tv-dashboard-presentation && npm install --omit=peer
 
 COPY plugin-ui/package*.json ./plugin-ui/
 RUN cd plugin-ui && npm install

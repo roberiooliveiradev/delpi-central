@@ -1,12 +1,14 @@
 import {
   COMUNICADO_EDITOR_FONT_SCALE,
   adjustmentHandleCssPosition,
+  blockShapeChromeAdjustmentSpecs,
+  blockSupportsShapeChromeHandles,
   comunicadoBackgroundCssProperties,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
-  resolveShapeAdjustments,
-  shapeAdjustmentSpecs,
+  resolveBlockSelectionBorderRadiusPx,
+  resolveBlockShapeChromeAdjustmentValues,
   shouldHideDataSourceOnStage,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
@@ -261,6 +263,9 @@ export function ComunicadoComposerCanvas() {
             }
             const isSelected = isBlockSelected(block.id);
             const isPrimary = block.id === primarySelected;
+            const selectionRadius = isSelected
+              ? resolveBlockSelectionBorderRadiusPx(block)
+              : undefined;
             return (
               <div
                 key={block.id}
@@ -271,7 +276,10 @@ export function ComunicadoComposerCanvas() {
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                style={resolveBlockPlacementStyle(block)}
+                style={{
+                  ...resolveBlockPlacementStyle(block),
+                  ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
+                }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
                   event.stopPropagation();
@@ -325,9 +333,9 @@ export function ComunicadoComposerCanvas() {
                         onPointerDown={(event) => startDrag(event, block, mode)}
                       />
                     ))}
-                    {block.type === "shape"
-                      ? shapeAdjustmentSpecs(block.shape).map((spec) => {
-                          const values = resolveShapeAdjustments(block.shape, block.style);
+                    {blockSupportsShapeChromeHandles(block)
+                      ? blockShapeChromeAdjustmentSpecs(block).map((spec) => {
+                          const values = resolveBlockShapeChromeAdjustmentValues(block);
                           const pos = adjustmentHandleCssPosition(spec, values);
                           return (
                             <button

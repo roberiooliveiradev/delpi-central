@@ -1072,8 +1072,9 @@
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap--selected {
+  /* Um único contorno; border-radius no wrap (JS) alinha ao chrome interno — evita “borda fantasma”. */
   outline: 1px dashed color-mix(in srgb, var(--td-accent) 70%, #fff);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--td-accent) 35%, transparent);
+  outline-offset: 0;
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap--multi {
