@@ -42,6 +42,8 @@ export {
   tableOptionsToParts,
   tablePartAllowsDelete,
   tablePartAllowsEdit,
+  tablePartAllowsStroke,
+  resolveTableShapeChromePartRef,
   tablePartCapabilities,
   tablePartDomProps,
   upsertTablePartState,

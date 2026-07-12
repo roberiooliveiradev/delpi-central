@@ -473,6 +473,8 @@ export {
   tableOptionsToParts,
   tablePartAllowsDelete,
   tablePartAllowsEdit,
+  tablePartAllowsStroke,
+  resolveTableShapeChromePartRef,
   upsertTablePartState,
   type ComunicadoTableInteraction,
   type ComunicadoTablePartRef,

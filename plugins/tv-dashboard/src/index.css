@@ -2708,6 +2708,57 @@
   margin: 0;
 }
 
+/*
+ * Range de opacidade: escala visual 0–100 (em 100% o preenchimento chega ao fim).
+ * O piso de 10% é enforced no onChange — min={10} no input deixava um vão à direita em 100%.
+ */
+.dashboard-tv-dashboard .td-deck-ribbon__opacity-range {
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  accent-color: var(--td-accent);
+  background: linear-gradient(
+    to right,
+    var(--td-accent) 0%,
+    var(--td-accent) var(--td-range-progress, 100%),
+    color-mix(in srgb, var(--td-border) 75%, transparent) var(--td-range-progress, 100%)
+  );
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--td-accent);
+  border: 1px solid color-mix(in srgb, var(--td-accent) 40%, #fff);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--td-surface) 50%, transparent);
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--td-accent);
+  border: 1px solid color-mix(in srgb, var(--td-accent) 40%, #fff);
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__opacity-value {
+  min-width: 2.5em;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--td-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__zoom-label {
   min-width: 40px;
   font-size: 11px;

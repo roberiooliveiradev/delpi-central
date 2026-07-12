@@ -57,10 +57,28 @@ export function ChartLegend({
 
   const ref = { kind: "legend" as const };
   const frame = getChartPartState(chartParts, ref)?.frame;
+  const partStyle = getChartPartState(chartParts, ref)?.style;
   const typographyStyle = chartPartTypographyStyle(chartParts, ref);
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction);
   const frameStyle = partFrameStyle(frame, selected);
-  const hostStyle = frameStyle || typographyStyle ? { ...frameStyle, ...typographyStyle } : undefined;
+  const paintStyle: CSSProperties = {
+    ...(partStyle?.fill && partStyle.fill !== "transparent" ? { background: partStyle.fill } : {}),
+    ...(partStyle?.stroke && partStyle.stroke !== "transparent"
+      ? {
+          borderColor: partStyle.stroke,
+          borderStyle: "solid",
+          borderWidth: `${Math.max(0, partStyle.strokeWidth ?? 1)}px`,
+        }
+      : {}),
+    ...(partStyle?.borderRadius != null
+      ? { borderRadius: `${Math.max(0, partStyle.borderRadius)}px` }
+      : {}),
+    ...(partStyle?.opacity != null ? { opacity: partStyle.opacity } : {}),
+  };
+  const hostStyle =
+    frameStyle || typographyStyle || Object.keys(paintStyle).length > 0
+      ? { ...frameStyle, ...typographyStyle, ...paintStyle }
+      : undefined;
   const showResize = selected && chartPartAllowsResize(ref);
   const hostRef = useRef<HTMLUListElement>(null);
 

@@ -9,18 +9,35 @@ import {
   BLOCK_ENTRANCE_DURATION_MIN_MS,
   BLOCK_ENTRANCE_DURATION_STEP_MS,
   BLOCK_ENTRANCE_PRESET_OPTIONS,
+  chartPartAllowsFrame,
+  clampChartPartFrame,
+  clampKpiPartFrame,
+  defaultChartPartFrame,
+  defaultKpiPartFrame,
   entranceAnimationFromPreset,
   entrancePresetValue,
+  getChartPartState,
+  getKpiPartState,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isComunicadoVisualBoxBlock,
-  normalizeHrefInput,
-  resolveEntranceAnimation,
   isPointShapeKind,
+  kpiPartAllowsFrame,
+  mergeChartPartsWithOptions,
+  mergeKpiPartsWithOptions,
+  normalizeHrefInput,
+  partsToChartOptions,
+  partsToKpiOptions,
+  resolveEntranceAnimation,
   shapeHasAdjustments,
+  upsertChartPartState,
+  upsertKpiPartState,
   visualBoxSupportsShapeFormatting,
   type ComunicadoBlock,
+  type ComunicadoChartViewBlock,
+  type ComunicadoKpiViewBlock,
+  type KpiFramePartKind,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -70,6 +87,8 @@ export function ComunicadoElementInspector({
   const {
     selected,
     selectedIds,
+    selectedKpiPart,
+    selectedChartPart,
     uploading,
     updateSelected,
     updateSelectedStyle,
@@ -299,54 +318,164 @@ export function ComunicadoElementInspector({
 
       {!multiSelect ? (
         <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position} defaultOpen={false}>
-          <div className="td-deck-frame-grid">
-            {(selected.type === "shape" && isPointShapeKind(selected.shape)
-              ? (["x", "y"] as const)
-              : FRAME_KEYS
-            ).map((key) => (
-              <DeckField
-                key={key}
-                id={`td-frame-${key}`}
-                label={FRAME_LABELS[key]}
-                hint={E.position}
-                className="td-field--compact"
-              >
-                <NativeTextControl
-                  id={`td-frame-${key}`}
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={formatFrameValue(selected.frame[key])}
-                  onChange={(value) =>
-                    updateSelected({
-                      frame: { ...selected.frame, [key]: Number(value) },
-                    } as Partial<ComunicadoBlock>)
-                  }
-                />
-              </DeckField>
-            ))}
-          </div>
-          <DeckField id="td-rotation" label="Rotação (°)" hint={E.rotation}>
-            <NativeTextControl
-              id="td-rotation"
-              type="number"
-              min={-180}
-              max={180}
-              step={1}
-              value={selected.style?.rotation ?? 0}
-              onChange={(value) => updateSelectedStyle({ rotation: Number(value) })}
-            />
-          </DeckField>
-          {!multiSelect && selected.type === "shape" && shapeHasAdjustments(selected.shape) ? (
-            <ShapeAdjustmentsControl
-              kind={selected.shape}
-              style={selected.style}
-              onChange={(patch) => updateSelectedStyle(patch)}
-              variant="inspector"
-              idPrefix="td-frame-shape-adj"
-            />
-          ) : null}
+          {(() => {
+            const kpiPartTarget =
+              selected.type === "kpi_view" &&
+              selectedKpiPart &&
+              kpiPartAllowsFrame(selectedKpiPart)
+                ? selectedKpiPart
+                : null;
+            const chartPartTarget =
+              selected.type === "chart_view" &&
+              selectedChartPart &&
+              chartPartAllowsFrame(selectedChartPart)
+                ? selectedChartPart
+                : null;
+
+            if (kpiPartTarget && selected.type === "kpi_view") {
+              const block = selected as ComunicadoKpiViewBlock;
+              const partState = getKpiPartState(block.kpiParts, kpiPartTarget);
+              const frameKind = kpiPartTarget.kind as KpiFramePartKind;
+              const partFrame = clampKpiPartFrame(
+                partState?.frame ?? defaultKpiPartFrame(frameKind),
+              );
+              return (
+                <div className="td-deck-frame-grid">
+                  {FRAME_KEYS.map((key) => (
+                    <DeckField
+                      key={key}
+                      id={`td-kpi-part-frame-${key}`}
+                      label={FRAME_LABELS[key]}
+                      hint={E.position}
+                      className="td-field--compact"
+                    >
+                      <NativeTextControl
+                        id={`td-kpi-part-frame-${key}`}
+                        type="number"
+                        min={key === "w" || key === "h" ? 4 : 0}
+                        max={key === "w" || key === "h" ? 96 : 100}
+                        step={0.1}
+                        value={formatFrameValue(partFrame[key] ?? 0)}
+                        onChange={(value) => {
+                          const nextFrame = clampKpiPartFrame({
+                            ...partFrame,
+                            [key]: Number(value),
+                          });
+                          const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, {
+                            frame: nextFrame,
+                          });
+                          updateSelected({
+                            kpiParts: mergeKpiPartsWithOptions(
+                              nextParts,
+                              partsToKpiOptions(nextParts),
+                            ),
+                          } as Partial<ComunicadoBlock>);
+                        }}
+                      />
+                    </DeckField>
+                  ))}
+                </div>
+              );
+            }
+
+            if (chartPartTarget && selected.type === "chart_view") {
+              const block = selected as ComunicadoChartViewBlock;
+              const partState = getChartPartState(block.chartParts, chartPartTarget);
+              const defaults = defaultChartPartFrame(chartPartTarget);
+              const partFrame = clampChartPartFrame(partState?.frame ?? defaults);
+              return (
+                <div className="td-deck-frame-grid">
+                  {FRAME_KEYS.map((key) => (
+                    <DeckField
+                      key={key}
+                      id={`td-chart-part-frame-${key}`}
+                      label={FRAME_LABELS[key]}
+                      hint={E.position}
+                      className="td-field--compact"
+                    >
+                      <NativeTextControl
+                        id={`td-chart-part-frame-${key}`}
+                        type="number"
+                        min={key === "w" || key === "h" ? 5 : 0}
+                        max={100}
+                        step={0.1}
+                        value={formatFrameValue(partFrame[key] ?? defaults[key] ?? 0)}
+                        onChange={(value) => {
+                          const nextFrame = clampChartPartFrame({
+                            ...partFrame,
+                            w: partFrame.w ?? defaults.w,
+                            h: partFrame.h ?? defaults.h,
+                            [key]: Number(value),
+                          });
+                          const nextParts = upsertChartPartState(block.chartParts, chartPartTarget, {
+                            frame: nextFrame,
+                          });
+                          updateSelected({
+                            chartParts: mergeChartPartsWithOptions(
+                              nextParts,
+                              partsToChartOptions(nextParts),
+                            ),
+                          } as Partial<ComunicadoBlock>);
+                        }}
+                      />
+                    </DeckField>
+                  ))}
+                </div>
+              );
+            }
+
+            const pointOnly =
+              selected.type === "shape" && isPointShapeKind(selected.shape);
+            return (
+              <>
+                <div className="td-deck-frame-grid">
+                  {(pointOnly ? (["x", "y"] as const) : FRAME_KEYS).map((key) => (
+                    <DeckField
+                      key={key}
+                      id={`td-frame-${key}`}
+                      label={FRAME_LABELS[key]}
+                      hint={E.position}
+                      className="td-field--compact"
+                    >
+                      <NativeTextControl
+                        id={`td-frame-${key}`}
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.1}
+                        value={formatFrameValue(selected.frame[key])}
+                        onChange={(value) =>
+                          updateSelected({
+                            frame: { ...selected.frame, [key]: Number(value) },
+                          } as Partial<ComunicadoBlock>)
+                        }
+                      />
+                    </DeckField>
+                  ))}
+                </div>
+                <DeckField id="td-rotation" label="Rotação (°)" hint={E.rotation}>
+                  <NativeTextControl
+                    id="td-rotation"
+                    type="number"
+                    min={-180}
+                    max={180}
+                    step={1}
+                    value={selected.style?.rotation ?? 0}
+                    onChange={(value) => updateSelectedStyle({ rotation: Number(value) })}
+                  />
+                </DeckField>
+                {selected.type === "shape" && shapeHasAdjustments(selected.shape) ? (
+                  <ShapeAdjustmentsControl
+                    kind={selected.shape}
+                    style={selected.style}
+                    onChange={(patch) => updateSelectedStyle(patch)}
+                    variant="inspector"
+                    idPrefix="td-frame-shape-adj"
+                  />
+                ) : null}
+              </>
+            );
+          })()}
         </DeckPropertySection>
       ) : null}
 

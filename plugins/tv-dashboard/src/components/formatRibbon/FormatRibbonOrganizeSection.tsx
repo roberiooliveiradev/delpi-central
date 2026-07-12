@@ -1,4 +1,20 @@
 import { FieldLabel, HintAction } from "@delpi/plugin-ui/index";
+import {
+  getChartPartState,
+  getKpiPartState,
+  kpiPartAllowsFrame,
+  mergeComunicadoChartOptions,
+  mergeComunicadoKpiOptions,
+  mergeKpiPartsWithOptions,
+  partsToChartOptions,
+  partsToKpiOptions,
+  resolveKpiShapeChromePartRef,
+  upsertChartPartState,
+  upsertKpiPartState,
+  type ComunicadoBlock,
+  type ComunicadoChartViewBlock,
+  type ComunicadoKpiViewBlock,
+} from "@delpi/tv-dashboard-presentation";
 import { ArrowDown, ArrowUp, Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -12,11 +28,22 @@ type Labels = Record<string, string>;
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
+/** Piso de opacidade (help: 10%–100%). O range visual usa 0–100 para o thumb chegar ao fim em 100%. */
+const OPACITY_MIN = 0.1;
+
+function clampOpacity(value: number): number {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(1, Math.max(OPACITY_MIN, value));
+}
+
 /** Organizar / opacidade — borda/contorno, sombra e raio ficam em Aparência e Posição e tamanho. */
 export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }) {
   const {
     selected,
+    selectedKpiPart,
+    selectedChartPart,
     uploading,
+    updateSelected,
     updateSelectedStyle,
     removeSelected,
     duplicateSelected,
@@ -29,6 +56,66 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
 
   const isMediaBlock = selected.type === "image" || selected.type === "video";
   const isImageBlock = selected.type === "image";
+
+  const kpiChromePart =
+    selected.type === "kpi_view" ? resolveKpiShapeChromePartRef(selectedKpiPart) : null;
+  const kpiPartOpacity =
+    selected.type === "kpi_view" && kpiChromePart && kpiChromePart.kind !== "card"
+      ? (getKpiPartState((selected as ComunicadoKpiViewBlock).kpiParts, kpiChromePart)?.style
+          ?.opacity ?? 1)
+      : null;
+  const chartPartOpacity =
+    selected.type === "chart_view" && selectedChartPart
+      ? (getChartPartState((selected as ComunicadoChartViewBlock).chartParts, selectedChartPart)
+          ?.style?.opacity ?? 1)
+      : null;
+
+  const opacityValue = clampOpacity(
+    kpiPartOpacity != null
+      ? kpiPartOpacity
+      : chartPartOpacity != null
+        ? chartPartOpacity
+        : (selected.style?.opacity ?? 1),
+  );
+  const opacityPercent = Math.round(opacityValue * 100);
+
+  const setOpacity = (raw: number) => {
+    const opacity = clampOpacity(raw);
+    if (
+      selected.type === "kpi_view" &&
+      kpiChromePart &&
+      kpiPartAllowsFrame(kpiChromePart)
+    ) {
+      const block = selected as ComunicadoKpiViewBlock;
+      const nextParts = upsertKpiPartState(block.kpiParts, kpiChromePart, {
+        style: { opacity },
+      });
+      const nextOptions = mergeComunicadoKpiOptions({
+        ...block.kpiOptions,
+        ...partsToKpiOptions(nextParts),
+      });
+      updateSelected({
+        kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
+        kpiOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+      return;
+    }
+    if (selected.type === "chart_view" && selectedChartPart) {
+      const block = selected as ComunicadoChartViewBlock;
+      const nextParts = upsertChartPartState(block.chartParts, selectedChartPart, {
+        style: { opacity },
+      });
+      updateSelected({
+        chartParts: nextParts,
+        chartOptions: mergeComunicadoChartOptions({
+          ...block.chartOptions,
+          ...partsToChartOptions(nextParts),
+        }),
+      } as Partial<ComunicadoBlock>);
+      return;
+    }
+    updateSelectedStyle({ opacity });
+  };
 
   return (
     <DeckRibbonGroup label="Organizar" hint={H.organize}>
@@ -85,14 +172,22 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             <input
               id="td-block-opacity"
               type="range"
-              min={10}
+              className="td-deck-ribbon__opacity-range"
+              min={0}
               max={100}
               step={5}
               aria-label="Opacidade"
-              value={Math.round((selected.style?.opacity ?? 1) * 100)}
-              onChange={(e) => updateSelectedStyle({ opacity: Number(e.target.value) / 100 })}
+              aria-valuemin={10}
+              aria-valuemax={100}
+              aria-valuenow={opacityPercent}
+              value={opacityPercent}
+              style={{ ["--td-range-progress" as string]: `${opacityPercent}%` }}
+              onChange={(e) => setOpacity(Number(e.target.value) / 100)}
             />
           </HintAction>
+          <span className="td-deck-ribbon__opacity-value" aria-hidden>
+            {opacityPercent}%
+          </span>
           {isMediaBlock ? (
             <>
               <FieldLabel

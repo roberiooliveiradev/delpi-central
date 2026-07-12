@@ -9,10 +9,12 @@ import {
   resolveTableFrameStyle,
   resolveTableHeaderCellPaintStyle,
   resolveTablePartPaintStyle,
+  resolveTableShapeChromePartRef,
   serializeTablePartRef,
   tableOptionsToParts,
   tablePartAllowsDelete,
   tablePartAllowsEdit,
+  tablePartAllowsStroke,
   upsertTablePartState,
 } from "./configurableTableParts";
 
@@ -79,6 +81,18 @@ describe("configurableTableParts", () => {
     expect(tablePartAllowsDelete({ kind: "header" })).toBe(true);
     expect(tablePartAllowsDelete({ kind: "cell", rowIndex: 0, colIndex: 0 })).toBe(false);
     expect(isTablePartRefEqual({ kind: "title" }, { kind: "title" })).toBe(true);
+  });
+
+  it("resolveTableShapeChromePartRef mira a parte selecionada", () => {
+    expect(resolveTableShapeChromePartRef(null)).toEqual({ kind: "frame" });
+    expect(resolveTableShapeChromePartRef({ kind: "header" })).toEqual({ kind: "header" });
+    expect(resolveTableShapeChromePartRef({ kind: "cell", rowIndex: 0, colIndex: 1 })).toEqual({
+      kind: "cell",
+      rowIndex: 0,
+      colIndex: 1,
+    });
+    expect(tablePartAllowsStroke({ kind: "frame" })).toBe(true);
+    expect(tablePartAllowsStroke({ kind: "title" })).toBe(false);
   });
 
   it("deleteTablePart oculta título e projeta options", () => {

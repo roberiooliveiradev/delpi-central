@@ -20,9 +20,12 @@ import {
   resolvePlotAreaStyle,
   resolveShapePrimitive,
   resolveTableFrameStyle,
+  resolveTablePartPaintStyle,
+  resolveTableShapeChromePartRef,
   shapeHasAdjustments,
   shapeSupportsFill,
   shapeSupportsStroke,
+  tablePartAllowsStroke,
   upsertChartPartState,
   upsertKpiPartState,
   upsertTablePartState,
@@ -80,6 +83,7 @@ export function ComunicadoShapeRibbon() {
     selectedIds,
     selectedChartPart,
     selectedKpiPart,
+    selectedTablePart,
     blocks,
     updateSelected,
     updateSelectedStyle,
@@ -101,19 +105,28 @@ export function ComunicadoShapeRibbon() {
     selectedChartPart,
   });
 
-  // Parte textual (título/legenda) não tem primitivo visual — chrome cai no chartArea
-  // para a faixa Forma não ficar só com Fonte/Parágrafo e espaço vazio.
+  // Chrome Forma: parte selecionada (primitivo visual ou title/legend com fill próprio).
+  // Sem seleção → chartArea.
   const selectedChartVisual =
     selected?.type === "chart_view" && selectedChartPart
       ? chartPartVisualPrimitive(selectedChartPart)
       : null;
+  const chartTextChromeKinds = new Set(["title", "legend", "axisTitle", "dataLabel", "dataTable"]);
+  const chartPartHasOwnChrome =
+    Boolean(selectedChartVisual) ||
+    Boolean(selectedChartPart && chartTextChromeKinds.has(selectedChartPart.kind));
   const chartPartPrimitive =
     selected?.type === "chart_view"
-      ? (selectedChartVisual ?? ("area" as const))
+      ? (selectedChartVisual ??
+        (selectedChartPart && chartTextChromeKinds.has(selectedChartPart.kind)
+          ? ("area" as const)
+          : selectedChartPart
+            ? null
+            : ("area" as const)))
       : null;
   const effectiveChartPart =
     selected?.type === "chart_view"
-      ? selectedChartVisual && selectedChartPart
+      ? selectedChartPart && chartPartHasOwnChrome
         ? selectedChartPart
         : { kind: "chartArea" as const }
       : null;
@@ -393,18 +406,24 @@ export function ComunicadoShapeRibbon() {
 
   if (isTableChrome && selected?.type === "table_view") {
     const block = selected as ComunicadoTableViewBlock;
+    const chromePart = resolveTableShapeChromePartRef(selectedTablePart);
+    const isFrameChrome = chromePart.kind === "frame";
     const frame = resolveTableFrameStyle(block.tableParts);
-    const fillValue = frame.fill;
+    const partPaint = resolveTablePartPaintStyle(block.tableParts, chromePart);
+    const fillValue = isFrameChrome
+      ? frame.fill
+      : (partPaint.backgroundColor ?? "transparent");
     const strokeValue = frame.stroke;
     const strokeWidth = frame.strokeWidth;
+    const showStroke = tablePartAllowsStroke(chromePart);
 
-    const patchFrameStyle = (style: Record<string, unknown>) => {
-      const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, {
+    const patchChromeStyle = (style: Record<string, unknown>) => {
+      const nextParts = upsertTablePartState(block.tableParts, chromePart, {
         style: style as never,
       });
       updateSelected({
         tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
-        ...(typeof style.borderRadius === "number"
+        ...(isFrameChrome && typeof style.borderRadius === "number"
           ? { style: { ...block.style, borderRadius: style.borderRadius } }
           : {}),
       } as Partial<ComunicadoBlock>);
@@ -416,29 +435,39 @@ export function ComunicadoShapeRibbon() {
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
               onSelect={(preset) =>
-                patchFrameStyle({
-                  fill: preset.fill,
-                  stroke: preset.stroke,
-                  strokeWidth: preset.strokeWidth,
-                })
+                patchChromeStyle(
+                  showStroke
+                    ? {
+                        fill: preset.fill,
+                        stroke: preset.stroke,
+                        strokeWidth: preset.strokeWidth,
+                      }
+                    : { fill: preset.fill },
+                )
               }
             />
             <ShapeFillMenu
               value={fillValue}
               fillLabel="Preench."
-              onChange={(color) => patchFrameStyle({ fill: color })}
-              onNoFill={() => patchFrameStyle({ fill: "transparent" })}
+              onChange={(color) => patchChromeStyle({ fill: color })}
+              onNoFill={() => patchChromeStyle({ fill: "transparent" })}
             />
-            <ShapeOutlineMenu
-              color={strokeValue}
-              strokeWidth={strokeWidth}
-              minWidth={0}
-              maxWidth={20}
-              outlineLabel="Contorno"
-              onColorChange={(color) => patchFrameStyle({ stroke: color })}
-              onNoOutline={() => patchFrameStyle({ stroke: "transparent", strokeWidth: 0 })}
-              onStrokeWidthChange={(width) => patchFrameStyle({ strokeWidth: width })}
-            />
+            {showStroke ? (
+              <ShapeOutlineMenu
+                color={strokeValue}
+                strokeWidth={strokeWidth}
+                minWidth={0}
+                maxWidth={20}
+                outlineLabel="Contorno"
+                onColorChange={(color) => patchChromeStyle({ stroke: color })}
+                onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+                onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
+              />
+            ) : (
+              <p className="td-subtitle td-deck-ribbon__hint">
+                Contorno só na moldura da tabela.
+              </p>
+            )}
             <ShapeShadowMenu
               value={block.style?.boxShadow}
               presets={SHADOW_MENU_PRESETS}

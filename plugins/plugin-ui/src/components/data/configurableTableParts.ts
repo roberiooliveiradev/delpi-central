@@ -110,6 +110,21 @@ export function tablePartAllowsEdit(ref: TablePartRef): boolean {
   return tablePartCapabilities(ref).editable;
 }
 
+/**
+ * Alvo do chrome Preench./Contorno na ribbon Forma (paridade com KPI).
+ * Sem parte → moldura; senão a parte selecionada (fill em title/header/célula; stroke só em frame).
+ */
+export function resolveTableShapeChromePartRef(
+  selectedPart: TablePartRef | null | undefined,
+): TablePartRef {
+  return selectedPart ?? { kind: "frame" };
+}
+
+/** Contorno da tabela só na moldura. */
+export function tablePartAllowsStroke(ref: TablePartRef): boolean {
+  return ref.kind === "frame";
+}
+
 export function getTablePartState(
   parts: TablePartsMap | null | undefined,
   ref: TablePartRef,

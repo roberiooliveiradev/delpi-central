@@ -57,6 +57,20 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
     fontWeight: partStyle?.fontWeight,
     fontStyle: partStyle?.fontStyle,
     color: resolvePaintTextColor(partStyle?.color, chartAreaFill) ?? DECK_COLOR_TEXT_STRONG,
+    ...(partStyle?.fill && partStyle.fill !== "transparent"
+      ? { background: partStyle.fill }
+      : {}),
+    ...(partStyle?.stroke && partStyle.stroke !== "transparent"
+      ? {
+          borderColor: partStyle.stroke,
+          borderStyle: "solid",
+          borderWidth: `${Math.max(0, partStyle.strokeWidth ?? 1)}px`,
+        }
+      : {}),
+    ...(partStyle?.borderRadius != null
+      ? { borderRadius: `${Math.max(0, partStyle.borderRadius)}px` }
+      : {}),
+    ...(partStyle?.opacity != null ? { opacity: partStyle.opacity } : {}),
   };
 
   const hostRef = useRef<HTMLDivElement>(null);
