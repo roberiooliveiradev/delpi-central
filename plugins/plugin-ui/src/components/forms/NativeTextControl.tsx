@@ -1,5 +1,7 @@
 import { forwardRef, type ChangeEvent, type InputHTMLAttributes, type KeyboardEvent } from "react";
 
+import { mergeClassNames, NATIVE_CONTROL_CLASS } from "./nativeControlClasses";
+
 export type NativeTextControlProps = {
   id?: string;
   value: string | number;
@@ -28,7 +30,7 @@ export type NativeTextControlProps = {
 };
 
 /**
- * `<input>` nativo compacto (sem FormFieldShell) — células / FormatPane com label externo.
+ * `<input>` nativo compacto (sem FormFieldShell) — visual canônico `.delpi-ui-native-control`.
  */
 export const NativeTextControl = forwardRef<HTMLInputElement, NativeTextControlProps>(
   function NativeTextControl(
@@ -64,7 +66,7 @@ export const NativeTextControl = forwardRef<HTMLInputElement, NativeTextControlP
       <input
         ref={ref}
         id={id}
-        className={className}
+        className={mergeClassNames(NATIVE_CONTROL_CLASS, className)}
         type={type}
         value={value}
         placeholder={placeholder}

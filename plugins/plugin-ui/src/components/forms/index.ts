@@ -132,6 +132,14 @@ export {
 } from "./NativeFormFields";
 
 export {
+  mergeClassNames,
+  NATIVE_CONTROL_CLASS,
+  NATIVE_CONTROL_COMPACT_CLASS,
+  NATIVE_CONTROL_SELECT_CLASS,
+  NATIVE_CONTROL_TEXTAREA_CLASS,
+} from "./nativeControlClasses";
+
+export {
   NativeSelectControl,
   type NativeSelectControlProps,
 } from "./NativeSelectControl";

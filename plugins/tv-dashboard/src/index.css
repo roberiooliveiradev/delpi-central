@@ -202,12 +202,18 @@
   gap: 6px;
 }
 
+/* Layout do campo — visual do controle vem de `.delpi-ui-native-control` (plugin-ui). */
 .td-field input,
 .td-field select,
 .td-field textarea {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+.td-field input:not(.delpi-ui-native-control),
+.td-field select:not(.delpi-ui-native-control),
+.td-field textarea:not(.delpi-ui-native-control) {
   border: 1px solid var(--td-border);
   border-radius: 12px;
   padding: 10px 12px;
@@ -2264,8 +2270,18 @@
   margin: 0;
 }
 
-.td-deck-chrome__panel--compact .td-deck-inspector__section--compact .td-field input,
-.td-deck-chrome__panel--compact .td-deck-inspector__section--compact .td-field select {
+/* Densidade compacta — só tokens; visual/borda/chevron vêm do plugin-ui. */
+.td-deck-chrome__panel--compact .td-field .delpi-ui-native-control,
+.td-deck-chrome__panel--compact .delpi-ui-native-control {
+  --delpi-ui-control-min-height: 28px;
+  --delpi-ui-control-pad-y: 4px;
+  --delpi-ui-control-pad-x: 8px;
+  --delpi-ui-control-font-size: 12px;
+  --delpi-ui-control-radius: 8px;
+}
+
+.td-deck-chrome__panel--compact .td-deck-inspector__section--compact .td-field input:not(.delpi-ui-native-control),
+.td-deck-chrome__panel--compact .td-deck-inspector__section--compact .td-field select:not(.delpi-ui-native-control) {
   height: 28px;
   min-height: 28px;
   font-size: 12px;
@@ -2345,8 +2361,8 @@
   margin-bottom: 0;
 }
 
-.td-deck-chrome__panel--compact .td-field input,
-.td-deck-chrome__panel--compact .td-field select {
+.td-deck-chrome__panel--compact .td-field input:not(.delpi-ui-native-control),
+.td-deck-chrome__panel--compact .td-field select:not(.delpi-ui-native-control) {
   height: 28px;
   min-height: 28px;
   font-size: 12px;
@@ -2401,6 +2417,13 @@
 
 .td-deck-ribbon__select,
 .td-deck-ribbon__number {
+  width: auto;
+  height: auto;
+  min-height: 34px;
+}
+
+.td-deck-ribbon__select:not(.delpi-ui-native-control),
+.td-deck-ribbon__number:not(.delpi-ui-native-control) {
   height: 34px;
   border: 1px solid var(--td-border);
   border-radius: 8px;
@@ -3620,7 +3643,7 @@
   font-size: 11px;
 }
 
-.td-field--compact input {
+.td-field--compact input:not(.delpi-ui-native-control) {
   padding: 6px 8px;
   font-size: 13px;
   width: 100%;

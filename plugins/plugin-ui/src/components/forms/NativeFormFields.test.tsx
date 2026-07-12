@@ -22,7 +22,9 @@ describe("NativeTextField", () => {
     );
 
     expect(container.querySelector(".kz-field")).toBeTruthy();
-    expect(screen.getByLabelText("Título")).toBeTruthy();
+    const input = screen.getByLabelText("Título");
+    expect(input).toBeTruthy();
+    expect(input.className).toContain("delpi-ui-native-control");
     expect(screen.getByDisplayValue("Teste")).toBeTruthy();
   });
 

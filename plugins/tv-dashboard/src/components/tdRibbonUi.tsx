@@ -1,4 +1,10 @@
-import { HintAction, NativeSelectControl, type NativeSelectOption } from "@delpi/plugin-ui/index";
+import {
+  HintAction,
+  mergeClassNames,
+  NativeSelectControl,
+  NATIVE_CONTROL_COMPACT_CLASS,
+  type NativeSelectOption,
+} from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 
 type TdRibbonSelectProps = {
@@ -18,7 +24,7 @@ export function TdRibbonSelect({
   onChange,
   options,
   disabled,
-  className = "td-deck-ribbon__select",
+  className,
   "aria-label": ariaLabel,
 }: TdRibbonSelectProps) {
   return (
@@ -28,7 +34,7 @@ export function TdRibbonSelect({
       onChange={onChange}
       options={options}
       disabled={disabled}
-      className={className}
+      className={mergeClassNames("td-deck-ribbon__select", NATIVE_CONTROL_COMPACT_CLASS, className)}
       aria-label={ariaLabel}
     />
   );

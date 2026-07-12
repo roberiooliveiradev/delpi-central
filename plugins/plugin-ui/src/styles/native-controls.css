@@ -1,0 +1,228 @@
+/**
+ * Controles nativos canônicos (@delpi/plugin-ui).
+ * Tokens: --delpi-ui-* com fallback às vars do portal (--surface, --text, --border, --primary).
+ * Escopo por classe — sem :root/body globais (MFE federado).
+ *
+ * Seletores `input|select|textarea.delpi-ui-native-control` (0,1,1) empatam ou vencem
+ * regras locais comuns (`.td-field select`, `.xxx-field input`) para o visual ficar
+ * centralizado no pacote — MFEs só ajustam densidade via `--delpi-ui-control-*` ou
+ * `.delpi-ui-native-control--compact`.
+ */
+
+input.delpi-ui-native-control,
+select.delpi-ui-native-control,
+textarea.delpi-ui-native-control {
+  --delpi-ui-control-bg: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --delpi-ui-control-text: var(--delpi-ui-text, var(--text, #111111));
+  --delpi-ui-control-border: var(--delpi-ui-border, var(--border, #d0d7de));
+  --delpi-ui-control-muted: var(
+    --delpi-ui-text-muted,
+    color-mix(in srgb, var(--delpi-ui-control-text) 55%, transparent)
+  );
+  --delpi-ui-control-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+  --delpi-ui-control-radius: 10px;
+  --delpi-ui-control-pad-y: 8px;
+  --delpi-ui-control-pad-x: 12px;
+  --delpi-ui-control-font-size: 13px;
+  --delpi-ui-control-line-height: 1.35;
+  --delpi-ui-control-min-height: 36px;
+
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--delpi-ui-control-min-height);
+  margin: 0;
+  padding: var(--delpi-ui-control-pad-y) var(--delpi-ui-control-pad-x);
+  border: 1px solid var(--delpi-ui-control-border);
+  border-radius: var(--delpi-ui-control-radius);
+  background-color: var(--delpi-ui-control-bg);
+  color: var(--delpi-ui-control-text);
+  font: inherit;
+  font-size: var(--delpi-ui-control-font-size);
+  line-height: var(--delpi-ui-control-line-height);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+input.delpi-ui-native-control::placeholder,
+textarea.delpi-ui-native-control::placeholder {
+  color: var(--delpi-ui-control-muted);
+}
+
+input.delpi-ui-native-control:hover:not(:disabled):not([readonly]),
+select.delpi-ui-native-control:hover:not(:disabled),
+textarea.delpi-ui-native-control:hover:not(:disabled):not([readonly]) {
+  border-color: color-mix(in srgb, var(--delpi-ui-control-accent) 45%, var(--delpi-ui-control-border));
+}
+
+input.delpi-ui-native-control:focus,
+input.delpi-ui-native-control:focus-visible,
+select.delpi-ui-native-control:focus,
+select.delpi-ui-native-control:focus-visible,
+textarea.delpi-ui-native-control:focus,
+textarea.delpi-ui-native-control:focus-visible {
+  outline: none;
+  border-color: var(--delpi-ui-control-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--delpi-ui-control-accent) 22%, transparent);
+}
+
+input.delpi-ui-native-control:disabled,
+select.delpi-ui-native-control:disabled,
+textarea.delpi-ui-native-control:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background-color: color-mix(in srgb, var(--delpi-ui-control-bg) 88%, var(--delpi-ui-control-border));
+}
+
+input.delpi-ui-native-control[readonly],
+textarea.delpi-ui-native-control[readonly] {
+  background-color: color-mix(in srgb, var(--delpi-ui-control-bg) 92%, var(--delpi-ui-control-border));
+}
+
+input.delpi-ui-native-control[aria-invalid="true"],
+select.delpi-ui-native-control[aria-invalid="true"],
+textarea.delpi-ui-native-control[aria-invalid="true"] {
+  border-color: var(--delpi-ui-danger, #dc2626);
+}
+
+input.delpi-ui-native-control[aria-invalid="true"]:focus,
+input.delpi-ui-native-control[aria-invalid="true"]:focus-visible,
+select.delpi-ui-native-control[aria-invalid="true"]:focus,
+select.delpi-ui-native-control[aria-invalid="true"]:focus-visible,
+textarea.delpi-ui-native-control[aria-invalid="true"]:focus,
+textarea.delpi-ui-native-control[aria-invalid="true"]:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--delpi-ui-danger, #dc2626) 22%, transparent);
+}
+
+/* Select — chevron próprio (lista aberta continua nativa do SO) */
+select.delpi-ui-native-control.delpi-ui-native-control--select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 14px 14px;
+}
+
+select.delpi-ui-native-control.delpi-ui-native-control--select:disabled {
+  cursor: not-allowed;
+}
+
+textarea.delpi-ui-native-control.delpi-ui-native-control--textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+input.delpi-ui-native-control--compact,
+select.delpi-ui-native-control--compact,
+textarea.delpi-ui-native-control--compact {
+  --delpi-ui-control-min-height: 30px;
+  --delpi-ui-control-pad-y: 4px;
+  --delpi-ui-control-pad-x: 8px;
+  --delpi-ui-control-font-size: 12px;
+  --delpi-ui-control-radius: 8px;
+}
+
+/* Checkbox */
+.delpi-ui-native-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-text, var(--text, #111));
+  cursor: pointer;
+}
+
+.delpi-ui-native-checkbox input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0.15em 0 0;
+  flex-shrink: 0;
+  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  cursor: pointer;
+}
+
+.delpi-ui-native-checkbox__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.delpi-ui-native-checkbox__label {
+  line-height: 1.35;
+}
+
+.delpi-ui-native-checkbox__hint {
+  font-size: 12px;
+  color: var(--delpi-ui-text-muted, var(--td-text-muted, #64748b));
+}
+
+/* Switch */
+.delpi-ui-native-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.delpi-ui-native-switch[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-native-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.delpi-ui-native-switch__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--delpi-ui-border, #cbd5e1);
+  transition: background 0.15s ease;
+}
+
+.delpi-ui-native-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  transition: transform 0.15s ease;
+}
+
+.delpi-ui-native-switch[data-checked="true"] .delpi-ui-native-switch__track {
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-native-switch[data-checked="true"] .delpi-ui-native-switch__track::after {
+  transform: translateX(16px);
+}
+
+.delpi-ui-native-switch__label {
+  font-size: 13px;
+  color: var(--delpi-ui-text, #111);
+}
+
+:root[data-theme="dark"] select.delpi-ui-native-control.delpi-ui-native-control--select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%94a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}

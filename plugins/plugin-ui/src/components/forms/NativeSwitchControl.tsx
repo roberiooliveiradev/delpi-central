@@ -13,8 +13,8 @@ export type NativeSwitchControlProps = {
 };
 
 /**
- * Switch acessível baseado em checkbox (`role="switch"`) — ActiveToggle / agent builder.
- * O consumidor aplica CSS do track via `className` / `trackClassName`.
+ * Switch acessível baseado em checkbox (`role="switch"`).
+ * Visual canônico em `native-controls.css`; `className` / `trackClassName` só para override.
  */
 export function NativeSwitchControl({
   id,

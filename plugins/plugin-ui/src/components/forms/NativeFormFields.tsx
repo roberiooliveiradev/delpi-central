@@ -5,6 +5,12 @@ import {
   FormFieldShell,
   type FormFieldShellClassNames,
 } from "./FormFieldShell";
+import {
+  mergeClassNames,
+  NATIVE_CONTROL_CLASS,
+  NATIVE_CONTROL_SELECT_CLASS,
+  NATIVE_CONTROL_TEXTAREA_CLASS,
+} from "./nativeControlClasses";
 
 type BaseNativeFieldProps = {
   id: string;
@@ -74,7 +80,7 @@ export function NativeTextField({
     >
       <input
         id={id}
-        className={controlClassName}
+        className={mergeClassNames(NATIVE_CONTROL_CLASS, controlClassName)}
         type={type}
         required={required}
         disabled={disabled}
@@ -138,7 +144,11 @@ export function NativeSelectField({
     >
       <select
         id={id}
-        className={controlClassName}
+        className={mergeClassNames(
+          NATIVE_CONTROL_CLASS,
+          NATIVE_CONTROL_SELECT_CLASS,
+          controlClassName,
+        )}
         required={required}
         disabled={disabled}
         value={value}
@@ -201,7 +211,11 @@ export function NativeTextAreaField({
     >
       <textarea
         id={id}
-        className={controlClassName}
+        className={mergeClassNames(
+          NATIVE_CONTROL_CLASS,
+          NATIVE_CONTROL_TEXTAREA_CLASS,
+          controlClassName,
+        )}
         rows={rows}
         required={required}
         disabled={disabled}

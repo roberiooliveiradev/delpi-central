@@ -1,5 +1,11 @@
 import type { ChangeEvent } from "react";
 
+import {
+  mergeClassNames,
+  NATIVE_CONTROL_CLASS,
+  NATIVE_CONTROL_SELECT_CLASS,
+} from "./nativeControlClasses";
+
 export type NativeSelectOption = {
   value: string;
   label: string;
@@ -18,7 +24,7 @@ export type NativeSelectControlProps = {
 };
 
 /**
- * `<select>` nativo compacto (sem FormFieldShell) — células de tabela / PAC.
+ * `<select>` nativo compacto (sem FormFieldShell) — visual canônico `.delpi-ui-native-control`.
  */
 export function NativeSelectControl({
   id,
@@ -34,7 +40,7 @@ export function NativeSelectControl({
   return (
     <select
       id={id}
-      className={className}
+      className={mergeClassNames(NATIVE_CONTROL_CLASS, NATIVE_CONTROL_SELECT_CLASS, className)}
       value={value}
       disabled={disabled}
       required={required}
