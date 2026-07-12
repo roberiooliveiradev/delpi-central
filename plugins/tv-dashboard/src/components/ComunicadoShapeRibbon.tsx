@@ -23,7 +23,7 @@ import {
   type ComunicadoChartViewBlock,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
-import { NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
+import { DECK_COLOR_ACCENT, DECK_SHAPE_DEFAULTS, NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
@@ -74,8 +74,8 @@ export function ComunicadoShapeRibbon() {
     const partState = getChartPartState(block.chartParts, selectedChartPart);
     const showFill = chartPrimitiveSupportsFill(chartPartPrimitive);
     const showStroke = chartPrimitiveSupportsStroke(chartPartPrimitive);
-    const fillValue = partState?.style?.fill ?? "#089bdb";
-    const strokeValue = partState?.style?.stroke ?? "#089bdb";
+    const fillValue = partState?.style?.fill ?? DECK_COLOR_ACCENT;
+    const strokeValue = partState?.style?.stroke ?? DECK_COLOR_ACCENT;
     const strokeWidth =
       partState?.style?.strokeWidth ?? defaultStrokeWidthForPrimitive(chartPartPrimitive);
 
@@ -294,7 +294,7 @@ export function ComunicadoShapeRibbon() {
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showFill ? (
             <ShapeFillMenu
-              value={block.style?.fill ?? "#089bdb"}
+              value={block.style?.fill ?? DECK_SHAPE_DEFAULTS.fill}
               fillLabel={primitive === "point" ? "Cor" : "Preench."}
               onChange={(color) => updateSelectedStyle({ fill: color })}
               onNoFill={() => updateSelectedStyle({ fill: "transparent" })}
@@ -309,7 +309,7 @@ export function ComunicadoShapeRibbon() {
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showStroke ? (
             <ShapeOutlineMenu
-              color={block.style?.stroke ?? "#ffffff"}
+              color={block.style?.stroke ?? DECK_SHAPE_DEFAULTS.stroke}
               strokeWidth={defaultStrokeWidth}
               minWidth={0}
               maxWidth={primitive === "point" ? 8 : 20}

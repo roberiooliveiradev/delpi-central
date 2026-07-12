@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+import { DECK_SHAPE_DEFAULTS } from "@delpi/plugin-ui/index";
+
 import type {
   ComunicadoBlock,
   ComunicadoShapeBlock,
@@ -78,8 +80,8 @@ export function resolveVisualBoxChrome(block: ComunicadoVisualBoxBlock): Comunic
   const primitive = resolveShapePrimitive(shape);
   return {
     showShapeGraphic: true,
-    fill: style.fill ?? "#089bdb",
-    stroke: style.stroke ?? "#ffffff",
+    fill: style.fill ?? DECK_SHAPE_DEFAULTS.fill,
+    stroke: style.stroke ?? DECK_SHAPE_DEFAULTS.stroke,
     strokeWidth: style.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive),
     borderRadius: style.borderRadius,
     shapeKind: shape,

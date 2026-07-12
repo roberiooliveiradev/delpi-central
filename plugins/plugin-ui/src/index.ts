@@ -14,6 +14,7 @@ export * from "./components/charts";
 export * from "./components/diagram";
 export * from "./components/shape";
 export * from "./components/menu";
+export * from "./theme";
 export * from "./utils";
 export * from "./hooks";
 export * from "./types/chartGranularity";

@@ -1,4 +1,5 @@
 import { formatNumber, formatPct } from "../../utils/localeFormat";
+import { DECK_TABLE_DEFAULTS } from "../../theme/deckColorCatalog";
 import type { ConfigurableTableClassNames } from "./configurableTableClasses";
 
 export type PresentationTableColumn = { key: string; label: string };
@@ -26,6 +27,7 @@ export type ConfigurableTableOptions = {
   headerUppercase?: boolean;
 };
 
+/** Cores herdadas do catálogo DECK_* (tema claro do gráfico). */
 export const DEFAULT_CONFIGURABLE_TABLE_OPTIONS: ConfigurableTableOptions = {
   showTitle: false,
   showHeader: true,
@@ -34,6 +36,11 @@ export const DEFAULT_CONFIGURABLE_TABLE_OPTIONS: ConfigurableTableOptions = {
   showBorders: true,
   valueFormat: "auto",
   headerUppercase: true,
+  headerBg: DECK_TABLE_DEFAULTS.headerBg,
+  headerTextColor: DECK_TABLE_DEFAULTS.headerTextColor,
+  cellBg: DECK_TABLE_DEFAULTS.cellBg,
+  cellTextColor: DECK_TABLE_DEFAULTS.cellTextColor,
+  borderColor: DECK_TABLE_DEFAULTS.borderColor,
 };
 
 export const CONFIGURABLE_TABLE_VALUE_FORMAT_OPTIONS = [

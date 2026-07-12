@@ -1,3 +1,4 @@
+import { DECK_CATEGORY_PALETTE } from "../../../theme/deckColorCatalog";
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   bindChartPartPointer,
@@ -16,7 +17,7 @@ export type ChartSeriesPieProps = Pick<SeriesChartSharedProps, "layout" | "point
   innerRadiusRatio?: number;
 };
 
-const SLICE_PALETTE = ["#089bdb", "#0d9488", "#f59e0b", "#6366f1", "#ef4444", "#84cc16", "#a855f7", "#64748b"];
+const SLICE_PALETTE = DECK_CATEGORY_PALETTE;
 
 function polar(cx: number, cy: number, r: number, angleRad: number) {
   return { x: cx + r * Math.cos(angleRad), y: cy + r * Math.sin(angleRad) };

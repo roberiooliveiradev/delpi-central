@@ -1,5 +1,13 @@
 import type { CSSProperties } from "react";
 
+import {
+  DECK_COLOR_ACCENT,
+  DECK_COLOR_MUTED,
+  DECK_COLOR_SURFACE,
+  DECK_COLOR_TEXT_STRONG,
+  DECK_SHAPE_DEFAULTS,
+} from "@delpi/plugin-ui/index";
+
 import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
   COMUNICADO_MARKER_RADIUS_DEFAULT,
@@ -148,7 +156,7 @@ export function createDataSourceBlock(
     id: newBlockId(),
     type: "data_source",
     frame: { x: 8, y: 30, w: 18, h: 18 },
-    style: { zIndex: 1, color: "#089bdb" },
+    style: { zIndex: 1, color: DECK_COLOR_ACCENT },
     dataBinding: {
       operationId,
       params: { ...(options.defaultParams ?? {}) },
@@ -168,7 +176,7 @@ export function createChartViewBlock(chartType: ComunicadoChartType): Comunicado
     chartOptions,
     chartParts: chartOptionsToParts(chartOptions),
     frame: { x: 10, y: 28, w: 80, h: 45 },
-    style: { zIndex: 2, borderRadius: 0, color: "#0f172a" },
+    style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
   };
 }
 
@@ -187,7 +195,7 @@ export function createTableViewBlock(
     tableParts: tableOptionsToParts(presetDefaultTableOptions(preset)),
     maxRows: rows,
     frame: { x: 5, y: 55 - height / 2, w: width, h: height },
-    style: { zIndex: 2, color: "#ffffff" },
+    style: { zIndex: 2, color: DECK_COLOR_TEXT_STRONG },
   };
 }
 
@@ -204,7 +212,7 @@ export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): Com
     kpiOptions,
     kpiParts: kpiOptionsToParts(kpiOptions),
     frame: { x: 8, y: 28, w: 32, h: 24 },
-    style: { zIndex: 2, borderRadius: 0, color: "#0f172a" },
+    style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
   };
 }
 
@@ -283,7 +291,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "heading") {
     return {
       fontSize: 56,
-      color: "#111827",
+      color: DECK_COLOR_TEXT_STRONG,
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
       verticalAlign: "middle" as const,
@@ -295,7 +303,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "text") {
     return {
       fontSize: 28,
-      color: "#475569",
+      color: DECK_COLOR_MUTED,
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "center" as const,
       verticalAlign: "top" as const,
@@ -311,8 +319,8 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     const primitive = shape ? resolveShapePrimitive(shape) : "area";
     const base = {
       zIndex: 1,
-      fill: "#089bdb",
-      stroke: "#ffffff",
+      fill: DECK_SHAPE_DEFAULTS.fill,
+      stroke: DECK_SHAPE_DEFAULTS.stroke,
       strokeWidth: defaultStrokeWidthForPrimitive(primitive),
       opacity: primitive === "area" ? 0.9 : 1,
     };
@@ -328,13 +336,13 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     return base;
   }
   if (type === "icon") {
-    return { zIndex: 2, color: "#ffffff", strokeWidth: 2 };
+    return { zIndex: 2, color: DECK_COLOR_SURFACE, strokeWidth: 2 };
   }
   if (isDataBlockType(type) || isDataSourceBlockType(type)) {
-    return { zIndex: 2, color: "#ffffff" };
+    return { zIndex: 2, color: DECK_COLOR_TEXT_STRONG };
   }
   if (isDataViewBlockType(type)) {
-    return { zIndex: 2, color: "#ffffff" };
+    return { zIndex: 2, color: DECK_COLOR_TEXT_STRONG };
   }
   return {};
 }

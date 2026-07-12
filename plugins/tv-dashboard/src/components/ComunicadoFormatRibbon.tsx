@@ -54,7 +54,7 @@ import {
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
 } from "@delpi/tv-dashboard-presentation";
-import { HintAction, NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
+import { DECK_SHAPE_DEFAULTS, HintAction, NativeTextControl, ShapeEffectsMenu, ShapeFillMenu, ShapeOutlineMenu, ShapeStyleMenu } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
@@ -561,7 +561,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             {showShapeFill ? (
               <ShapeFillMenu
-                value={selected.style?.fill ?? "#089bdb"}
+                value={selected.style?.fill ?? DECK_SHAPE_DEFAULTS.fill}
                 fillLabel={shapePrimitive === "point" ? "Cor" : "Preench."}
                 onChange={(color) => updateSelectedStyle({ fill: color })}
                 onNoFill={() => updateSelectedStyle({ fill: "transparent" })}
@@ -569,7 +569,7 @@ export function ComunicadoFormatRibbon({ labels = {} }: { labels?: Labels }) {
             ) : null}
             {showShapeStroke ? (
               <ShapeOutlineMenu
-                color={selected.style?.stroke ?? "#ffffff"}
+                color={selected.style?.stroke ?? DECK_SHAPE_DEFAULTS.stroke}
                 strokeWidth={selected.style?.strokeWidth ?? defaultShapeStrokeWidth}
                 minWidth={shapePrimitive === "point" ? 0 : 0}
                 maxWidth={shapePrimitive === "point" ? 8 : 20}

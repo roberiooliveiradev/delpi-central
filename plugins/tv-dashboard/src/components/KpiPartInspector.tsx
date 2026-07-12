@@ -1,4 +1,4 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { DECK_KPI_DEFAULTS, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   deleteKpiPart,
   getKpiPartState,
@@ -150,7 +150,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
           <TvRibbonColorPicker
             inline
             label="Fundo"
-            value={partState?.style?.fill ?? options.backgroundColor ?? "#ffffff"}
+            value={partState?.style?.fill ?? options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor}
             onChange={(color) => persistPart({ style: { fill: color } })}
           />
         </DeckField>
@@ -161,7 +161,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
           <TvRibbonColorPicker
             inline
             label="Cor do valor"
-            value={partState?.style?.color ?? options.valueColor ?? "#111827"}
+            value={partState?.style?.color ?? options.valueColor ?? DECK_KPI_DEFAULTS.valueColor}
             onChange={(color) => persistPart({ style: { color } })}
           />
         </DeckField>

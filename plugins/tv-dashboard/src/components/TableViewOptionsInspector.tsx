@@ -1,4 +1,4 @@
-import { FormSelectControl, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeCheckboxControl, NativeTextControl, DECK_TABLE_DEFAULTS } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 import {
   TABLE_ELEMENT_CATALOG,
@@ -203,7 +203,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
           <TvRibbonColorPicker
             inline
             label="Fundo do cabeçalho"
-            value={options.headerBg ?? "#1e293b"}
+            value={options.headerBg ?? DECK_TABLE_DEFAULTS.headerBg}
             onChange={(color) => setOptions({ headerBg: color })}
           />
         </DeckField>
@@ -211,7 +211,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
           <TvRibbonColorPicker
             inline
             label="Texto do cabeçalho"
-            value={options.headerTextColor ?? "#94a3b8"}
+            value={options.headerTextColor ?? DECK_TABLE_DEFAULTS.headerTextColor}
             onChange={(color) => setOptions({ headerTextColor: color })}
           />
         </DeckField>
@@ -219,7 +219,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
           <TvRibbonColorPicker
             inline
             label="Fundo das células"
-            value={options.cellBg ?? "#0f172a"}
+            value={options.cellBg ?? DECK_TABLE_DEFAULTS.cellBg}
             onChange={(color) => setOptions({ cellBg: color })}
           />
         </DeckField>
@@ -227,7 +227,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
           <TvRibbonColorPicker
             inline
             label="Texto das células"
-            value={options.cellTextColor ?? "#e2e8f0"}
+            value={options.cellTextColor ?? DECK_TABLE_DEFAULTS.cellTextColor}
             onChange={(color) => setOptions({ cellTextColor: color })}
           />
         </DeckField>
@@ -235,7 +235,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
           <TvRibbonColorPicker
             inline
             label="Cor das bordas"
-            value={options.borderColor ?? "#334155"}
+            value={options.borderColor ?? DECK_TABLE_DEFAULTS.borderColor}
             onChange={(color) => setOptions({ borderColor: color })}
           />
         </DeckField>

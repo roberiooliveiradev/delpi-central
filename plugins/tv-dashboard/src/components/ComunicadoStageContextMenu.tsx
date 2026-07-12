@@ -11,6 +11,8 @@ import {
   ContextMenuDivider,
   ContextMenuItem,
   ContextMenuToolbar,
+  DECK_COLOR_SURFACE,
+  DECK_SHAPE_DEFAULTS,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
 import {
@@ -74,10 +76,10 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
   const showShapeStroke = shapePrimitive ? shapeSupportsStroke(shapePrimitive) : false;
 
   const fillValue = isShapeBlock
-    ? selected.style?.fill ?? shapeChrome?.fill ?? "#4a90d9"
-    : selected?.style?.backgroundColor ?? "#ffffff";
+    ? selected.style?.fill ?? shapeChrome?.fill ?? DECK_SHAPE_DEFAULTS.fill
+    : selected?.style?.backgroundColor ?? DECK_COLOR_SURFACE;
   const outlineValue = isShapeBlock
-    ? selected.style?.stroke ?? shapeChrome?.stroke ?? "#1e3a5f"
+    ? selected.style?.stroke ?? shapeChrome?.stroke ?? DECK_SHAPE_DEFAULTS.stroke
     : selected?.style?.borderColor ?? "#cbd5e1";
 
   function run(action: () => void) {

@@ -751,14 +751,11 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: var(
-    --tdp-data-surface,
-    color-mix(in srgb, var(--tdp-data-accent, #089bdb) 10%, var(--tdp-data-bg, #0b1520))
-  );
-  border: 1px solid
-    color-mix(in srgb, var(--tdp-data-accent, #089bdb) 28%, var(--tdp-data-border, transparent));
+  /* Fallbacks = catálogo DECK_* (tema claro do gráfico). */
+  background: var(--tdp-data-surface, #ffffff);
+  border: 1px solid var(--tdp-data-border, #b4b4b4);
   border-radius: 10px;
-  color: var(--tdp-data-text, #e2e8f0);
+  color: var(--tdp-data-text, #1e293b);
 }
 
 .tdp-data-block--error {
@@ -769,7 +766,7 @@
 
 .tdp-data-block--placeholder {
   gap: 0.35em;
-  color: var(--tdp-data-muted, #94a3b8);
+  color: var(--tdp-data-muted, #64748b);
   font-size: clamp(10px, 1.2vw, 14px);
   text-align: center;
 }
@@ -806,6 +803,19 @@
   border-radius: 0;
 }
 
+.tdp-data-block--kpi {
+  /* Mesmo chrome claro do gráfico — o card KPI preenche o bloco. */
+  padding: 0;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: stretch;
+  text-align: left;
+  background: var(--tdp-data-surface, #ffffff);
+  color: var(--tdp-data-text, #1e293b);
+  border: 1px solid var(--tdp-data-border, #b4b4b4);
+  border-radius: 0;
+}
+
 .tdp-data-block--chart > .tdp-series-chart,
 .tdp-data-block--chart > .delpi-ui-series-chart {
   width: 100%;
@@ -839,7 +849,7 @@
 
 .tdp-data-block__title {
   font-weight: 600;
-  color: var(--tdp-data-text, #e2e8f0);
+  color: var(--tdp-data-text, #1e293b);
 }
 
 .tdp-data-kpi {
@@ -853,13 +863,13 @@
   font-size: 0.65em;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--tdp-data-muted, #9fb0c5);
+  color: var(--tdp-data-muted, #64748b);
 }
 
 .tdp-data-kpi__value {
   font-size: clamp(1.4rem, 4vw, 3rem);
   line-height: 1.05;
-  color: var(--tdp-data-text-strong, #f8fafc);
+  color: var(--tdp-data-text-strong, #0f172a);
 }
 
 .tdp-kpi-view {
@@ -867,10 +877,14 @@
   height: 100%;
   min-height: 0;
   display: flex;
-  padding: 0.35em 0.45em;
+  padding: 0;
   align-items: stretch;
   justify-content: stretch;
   text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-sizing: border-box;
 }
 
 .tdp-kpi-view .delpi-kpi-card-shell,
@@ -879,29 +893,29 @@
   width: 100%;
 }
 
-/* KPI no palco TV: mesmo surface escuro do gráfico (não card branco de dashboard). */
+/* KPI herda DelpiKpiCard claro (catálogo) — sem override escuro. */
 .tdp-kpi-view .delpi-kpi-card {
-  background: transparent;
+  background: var(--delpi-ui-surface, #ffffff);
   border: none;
   border-radius: 0;
-  padding: 0.35em 0.25em;
-  color: var(--tdp-data-text, #e2e8f0);
+  padding: 0.55em 0.75em;
+  color: var(--delpi-ui-text, #0f172a);
 }
 
 .tdp-kpi-view .delpi-kpi-card__label {
-  color: var(--tdp-data-muted, #94a3b8);
+  color: var(--delpi-ui-muted, #64748b);
 }
 
 .tdp-kpi-view .delpi-kpi-card__value {
-  color: var(--tdp-data-text-strong, #f8fafc);
+  color: var(--delpi-kpi-value-color, var(--delpi-ui-text, #0f172a));
 }
 
 .tdp-kpi-view .delpi-kpi-card__hint {
-  color: var(--tdp-data-muted, #94a3b8);
+  color: var(--delpi-ui-muted, #64748b);
 }
 
 .tdp-kpi-view .delpi-kpi-icon {
-  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 18%, transparent);
+  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 12%, transparent);
   color: var(--tdp-data-accent, #089bdb);
 }
 
@@ -913,9 +927,9 @@
   width: 100%;
   height: 100%;
   padding: 12px;
-  border-radius: 12px;
-  border: 1px dashed color-mix(in srgb, var(--tdp-data-muted, #9fb0c5) 55%, transparent);
-  background: color-mix(in srgb, var(--tdp-data-surface, #0f172a) 40%, transparent);
+  border-radius: 0;
+  border: 1px dashed color-mix(in srgb, var(--tdp-data-muted, #64748b) 55%, transparent);
+  background: var(--tdp-data-surface, #ffffff);
 }
 
 .tdp-kpi-placeholder__title {
@@ -923,12 +937,12 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--tdp-data-muted, #9fb0c5);
+  color: var(--tdp-data-muted, #64748b);
 }
 
 .tdp-kpi-placeholder__hint {
   font-size: 0.8rem;
-  color: var(--tdp-data-text, #e2e8f0);
+  color: var(--tdp-data-text, #1e293b);
 }
 
 .tdp-data-chart {
@@ -965,7 +979,7 @@
   font-weight: 600;
   font-size: 1.05em;
   margin-bottom: 0.35em;
-  color: var(--tdp-data-text-strong, #f8fafc);
+  color: var(--tdp-data-text-strong, #0f172a);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -982,23 +996,20 @@
 .tdp-data-table th,
 .tdp-data-table td {
   padding: 0.25em 0.35em;
-  border-bottom: 1px solid var(
-    --tdp-table-border-color,
-    color-mix(in srgb, var(--tdp-data-accent, #089bdb) 18%, transparent)
-  );
+  border-bottom: 1px solid var(--tdp-table-border-color, #e2e8f0);
   text-align: var(--tdp-table-text-align, left);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 8em;
-  color: var(--tdp-table-cell-color, var(--tdp-data-text, #e2e8f0));
-  background: var(--tdp-table-cell-bg, transparent);
+  color: var(--tdp-table-cell-color, var(--tdp-data-text, #334155));
+  background: var(--tdp-table-cell-bg, #ffffff);
 }
 
 .tdp-table-header-cell,
 .tdp-data-table th {
-  color: var(--tdp-table-header-color, var(--tdp-data-muted, #9fb0c5));
-  background: var(--tdp-table-header-bg, transparent);
+  color: var(--tdp-table-header-color, var(--tdp-data-muted, #64748b));
+  background: var(--tdp-table-header-bg, #f1f5f9);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;

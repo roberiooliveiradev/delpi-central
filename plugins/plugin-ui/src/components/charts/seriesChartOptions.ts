@@ -1,15 +1,25 @@
+import {
+  DECK_CATEGORY_PALETTE,
+  DECK_THEME_DARK,
+  DECK_THEME_LIGHT,
+  OFFICE_CHART_AREA_FILL,
+  OFFICE_CHART_SERIES_COLOR,
+} from "../../theme/deckColorCatalog";
+
 export type SeriesChartValueFormat = "auto" | "number" | "currency" | "percent";
 
 export type SeriesChartLegendPosition = "top" | "bottom" | "right" | "hidden";
 
 export type SeriesChartTheme = "light" | "dark";
 
-/** Azul padrão das formas do deck (`#089bdb`) — alinhado ao Office/Excel. */
-export const OFFICE_CHART_SERIES_COLOR = "#089bdb";
-export const OFFICE_CHART_AREA_FILL = "#ffffff";
-export const OFFICE_CHART_AREA_STROKE = "#b4b4b4";
-export const OFFICE_CHART_PLOT_FILL = "#ffffff";
-export const OFFICE_CHART_PLOT_STROKE = "#b4b4b4";
+/** @deprecated Preferir import de `@delpi/plugin-ui` theme / DECK_COLOR_*. */
+export {
+  OFFICE_CHART_AREA_FILL,
+  OFFICE_CHART_AREA_STROKE,
+  OFFICE_CHART_PLOT_FILL,
+  OFFICE_CHART_PLOT_STROKE,
+  OFFICE_CHART_SERIES_COLOR,
+} from "../../theme/deckColorCatalog";
 
 export type SeriesChartOptions = {
   title?: string;
@@ -63,16 +73,7 @@ export type SeriesChartKind =
   | "funnel";
 
 /** Paleta cíclica para fatias / segmentos / categorias (Office-like). */
-export const SERIES_CHART_CATEGORY_PALETTE = [
-  OFFICE_CHART_SERIES_COLOR,
-  "#0d9488",
-  "#f59e0b",
-  "#6366f1",
-  "#ef4444",
-  "#84cc16",
-  "#a855f7",
-  "#64748b",
-] as const;
+export const SERIES_CHART_CATEGORY_PALETTE = DECK_CATEGORY_PALETTE;
 
 /** Padding padrão de categoria (~3% de cada lado do plot). */
 export const DEFAULT_CATEGORY_PADDING_PERCENT = 3;
@@ -167,21 +168,8 @@ export function formatSeriesChartValue(value: number, format: SeriesChartValueFo
   return value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 }
 
-const LIGHT_CHART_THEME = {
-  bg: "#ffffff",
-  text: "#1e293b",
-  textStrong: "#0f172a",
-  muted: "#64748b",
-  grid: "color-mix(in srgb, #94a3b8 35%, transparent)",
-} as const;
-
-const DARK_CHART_THEME = {
-  bg: "#0b1520",
-  text: "#e2e8f0",
-  textStrong: "#f8fafc",
-  muted: "#94a3b8",
-  grid: "color-mix(in srgb, #94a3b8 25%, transparent)",
-} as const;
+const LIGHT_CHART_THEME = DECK_THEME_LIGHT;
+const DARK_CHART_THEME = DECK_THEME_DARK;
 
 export function seriesChartThemeStyle(options: SeriesChartOptions): Record<string, string> {
   const theme = options.theme ?? "light";
