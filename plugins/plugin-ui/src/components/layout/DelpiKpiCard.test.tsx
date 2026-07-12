@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { render } from "@testing-library/react";
 
 import {
+  DelpiKpiCard,
   parseKpiNumericValue,
   resolveDelpiKpiTone,
   type DelpiKpiColorRule,
@@ -27,5 +29,27 @@ describe("resolveDelpiKpiTone", () => {
   it("parseia valores percentuais e com milhar", () => {
     expect(parseKpiNumericValue("86,2%")).toBeCloseTo(86.2);
     expect(parseKpiNumericValue(42)).toBe(42);
+  });
+});
+
+describe("DelpiKpiCard chrome", () => {
+  it("aplica borda só via CSS vars no shell (sem border inline duplicado)", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Taxa"
+        value="10%"
+        backgroundColor="#334155"
+        kpiParts={{
+          card: { style: { fill: "#334155", stroke: "#ef4444", strokeWidth: 6, borderRadius: 20 } },
+        }}
+        interaction={{}}
+      />,
+    );
+    const shell = container.querySelector(".delpi-kpi-card-shell") as HTMLElement;
+    const card = container.querySelector(".delpi-kpi-card") as HTMLElement;
+    expect(shell.style.border).toBe("");
+    expect(shell.style.getPropertyValue("--delpi-kpi-card-border-width")).toBe("6px");
+    expect(shell.style.getPropertyValue("--delpi-kpi-card-border-color")).toBe("#ef4444");
+    expect(card.getAttribute("style") ?? "").not.toMatch(/border:/);
   });
 });

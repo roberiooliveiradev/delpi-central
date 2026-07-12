@@ -266,14 +266,9 @@ export function ComunicadoShapeRibbon() {
         ...fromParts,
         ...(typeof style.fill === "string" ? { backgroundColor: style.fill } : {}),
       });
-      const nextBlockStyle = { ...block.style };
-      if (typeof style.borderRadius === "number") {
-        nextBlockStyle.borderRadius = style.borderRadius;
-      }
       updateSelected({
         kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
         kpiOptions: nextOptions,
-        style: nextBlockStyle,
       } as Partial<typeof selected>);
     };
 

@@ -198,13 +198,11 @@ export function DelpiKpiCard({
   const shellStyle: CSSProperties = {
     ...(resolvedBg
       ? ({
-          backgroundColor: resolvedBg,
           ["--delpi-kpi-card-bg" as string]: resolvedBg,
         } as CSSProperties)
       : {}),
     ...(cardStroke && cardStrokeWidth != null && cardStrokeWidth > 0
       ? ({
-          border: `${cardStrokeWidth}px solid ${cardStroke}`,
           ["--delpi-kpi-card-border-width" as string]: `${cardStrokeWidth}px`,
           ["--delpi-kpi-card-border-color" as string]: cardStroke,
         } as CSSProperties)
@@ -216,8 +214,6 @@ export function DelpiKpiCard({
         : {}),
     ...(cardRadius != null
       ? ({
-          borderRadius: cardRadius,
-          overflow: "hidden",
           ["--delpi-kpi-card-radius" as string]: `${cardRadius}px`,
         } as CSSProperties)
       : {}),
@@ -264,7 +260,6 @@ export function DelpiKpiCard({
     >
       <article
         className={articleClass}
-        style={Object.keys(shellStyle).length ? shellStyle : undefined}
         {...{ [KPI_PART_DATA_ATTR]: cardPtr[KPI_PART_DATA_ATTR], "aria-selected": cardPtr["aria-selected"] }}
         onPointerDown={cardPtr.onPointerDown}
         onDoubleClick={cardPtr.onDoubleClick}

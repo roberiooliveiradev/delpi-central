@@ -10,6 +10,7 @@ import {
   buildTextDecoration,
   clampFontSize,
   comunicadoTextInnerStyle,
+  createKpiViewBlock,
   createShapeBlock,
   parseComunicadoConfig,
   parseTextDecorationFlags,
@@ -127,6 +128,38 @@ describe("comunicadoHelpers", () => {
     };
     expect(blockCssStyle(block).justifyContent).toBe("flex-end");
     expect(blockCssStyle(block).textAlign).toBe("right");
+  });
+
+  it("não aplica borda/fill no wrapper de forma (chrome só no gráfico)", () => {
+    const shape = createShapeBlock("rectangle");
+    shape.style = {
+      ...shape.style,
+      fill: "#089bdb",
+      stroke: "#ffffff",
+      strokeWidth: 8,
+      borderRadius: 16,
+      borderWidth: 8,
+      borderColor: "#ffffff",
+    };
+    const css = blockCssStyle(shape);
+    expect(css.border).toBeUndefined();
+    expect(css.borderWidth).toBeUndefined();
+    expect(css.backgroundColor).toBeUndefined();
+    expect(css.borderRadius).toBeUndefined();
+  });
+
+  it("não aplica chrome no wrapper de kpi_view", () => {
+    const kpi = createKpiViewBlock();
+    kpi.style = {
+      backgroundColor: "#111",
+      stroke: "#f00",
+      strokeWidth: 4,
+      borderRadius: 12,
+    };
+    const css = blockCssStyle(kpi);
+    expect(css.border).toBeUndefined();
+    expect(css.backgroundColor).toBeUndefined();
+    expect(css.borderRadius).toBeUndefined();
   });
 
   it("aplica estilo interno de texto com realce e tachado", () => {

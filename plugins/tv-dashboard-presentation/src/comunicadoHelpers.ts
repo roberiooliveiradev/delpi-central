@@ -942,6 +942,16 @@ function applySharedBlockVisualStyle(style: NonNullable<ComunicadoBlock["style"]
   if (style.boxShadow) css.boxShadow = style.boxShadow;
 }
 
+/** Remove chrome de moldura do wrapper quando o gráfico/card interno já desenha borda/fill. */
+function stripOuterChromeStyle(css: CSSProperties) {
+  delete css.backgroundColor;
+  delete css.border;
+  delete css.borderColor;
+  delete css.borderWidth;
+  delete css.borderStyle;
+  delete css.borderRadius;
+}
+
 export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
   const fontScale = options?.fontScale ?? 1;
   const style = block.style ?? {};
@@ -977,6 +987,8 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       return css;
     }
 
+    /* Forma: fill/stroke/radius só no ComunicadoShapeGraphic — evita borda dupla no wrapper. */
+    stripOuterChromeStyle(css);
     if (block.content) {
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
       if (style.color) css.color = style.color;
@@ -986,10 +998,6 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       if (style.fontStyle) css.fontStyle = style.fontStyle;
       if (style.textDecoration) css.textDecoration = style.textDecoration;
     }
-    if (style.backgroundColor) css.backgroundColor = style.backgroundColor;
-    if (style.borderColor) css.borderColor = style.borderColor;
-    if (style.borderWidth != null) css.borderWidth = style.borderWidth;
-    if (style.borderRadius != null) css.borderRadius = style.borderRadius;
     return css;
   }
 
@@ -998,6 +1006,11 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     css.alignItems = "center";
     css.justifyContent = "center";
     if (style.color) css.color = style.color;
+  }
+
+  /* KPI/chart/tabela: moldura no componente interno (DelpiKpiCard / chart / table). */
+  if (block.type === "kpi_view" || block.type === "chart_view" || block.type === "table_view") {
+    stripOuterChromeStyle(css);
   }
 
   return css;
