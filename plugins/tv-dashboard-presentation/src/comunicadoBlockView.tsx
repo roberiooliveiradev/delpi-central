@@ -80,6 +80,76 @@ function wrapWithLink(node: ReactNode, block: ComunicadoBlock) {
   );
 }
 
+/**
+ * Sombra no slot externo: o bloco tem overflow:hidden (conteúdo),
+ * então box-shadow no mesmo nó era cortado. No editor o wrap faz esse papel.
+ */
+function mountBlockRoot(
+  className: string,
+  style: CSSProperties,
+  children: ReactNode,
+  embedded: boolean,
+) {
+  const shadow = typeof style.boxShadow === "string" ? style.boxShadow.trim() : "";
+  if (embedded || !shadow) {
+    const nextStyle = embedded ? { ...style, boxShadow: undefined } : style;
+    return (
+      <div className={className} style={nextStyle}>
+        {children}
+      </div>
+    );
+  }
+
+  const {
+    left,
+    top,
+    right,
+    bottom,
+    width,
+    height,
+    position,
+    zIndex,
+    transform,
+    boxShadow,
+    opacity,
+    ...inner
+  } = style;
+
+  return (
+    <div
+      className="tdp-comunicado__block-slot"
+      style={{
+        left,
+        top,
+        right,
+        bottom,
+        width,
+        height,
+        position: position ?? "absolute",
+        zIndex,
+        transform,
+        boxShadow,
+        opacity,
+      }}
+    >
+      <div
+        className={className}
+        style={{
+          ...inner,
+          position: "relative",
+          left: undefined,
+          top: undefined,
+          width: "100%",
+          height: "100%",
+          boxShadow: undefined,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function ComunicadoBlockView({
   block,
   fontScale = 1,
@@ -100,15 +170,14 @@ export function ComunicadoBlockView({
         top: undefined,
         width: "100%",
         height: "100%",
+        boxShadow: undefined,
       }
     : blockCssStyle(block, { fontScale });
   const animClass = blockEntranceAnimationClass(block.animations);
   const style: CSSProperties = { ...baseStyle, ...blockEntranceAnimationStyle(block.animations) };
-  const withShadow = Boolean(block.style?.boxShadow?.trim());
   const blockClass = (extra = "") =>
     [
       `tdp-comunicado__block tdp-comunicado__block--${block.type}`,
-      withShadow ? "tdp-comunicado__block--with-shadow" : "",
       animClass,
       className,
       extra,
@@ -128,10 +197,11 @@ export function ComunicadoBlockView({
         editorInteractive={visualBoxEditorInteractive}
       />
     );
-    return (
-      <div className={blockClass([...modifiers, "tdp-comunicado__visual-box"].join(" "))} style={style}>
-        {wrapWithLink(content, block)}
-      </div>
+    return mountBlockRoot(
+      blockClass([...modifiers, "tdp-comunicado__visual-box"].join(" ")),
+      style,
+      wrapWithLink(content, block),
+      embedded,
     );
   }
 
@@ -146,10 +216,11 @@ export function ComunicadoBlockView({
     ) : (
       <ComunicadoMediaPlaceholder kind="image" />
     );
-    return (
-      <div className={blockClass("tdp-comunicado__block--media")} style={style}>
-        {wrapWithLink(media, block)}
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--media"),
+      style,
+      wrapWithLink(media, block),
+      embedded,
     );
   }
 
@@ -166,69 +237,76 @@ export function ComunicadoBlockView({
     ) : (
       <ComunicadoMediaPlaceholder kind="video" />
     );
-    return (
-      <div className={blockClass("tdp-comunicado__block--media")} style={style}>
-        {wrapWithLink(media, block)}
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--media"),
+      style,
+      wrapWithLink(media, block),
+      embedded,
     );
   }
 
   if (block.type === "icon") {
     const iconNode = <ComunicadoIconGraphic block={block} />;
-    return (
-      <div className={blockClass("tdp-comunicado__block--icon")} style={style}>
-        {wrapWithLink(iconNode, block)}
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--icon"),
+      style,
+      wrapWithLink(iconNode, block),
+      embedded,
     );
   }
 
   if (isDataBlockType(block.type)) {
-    return (
-      <div className={blockClass("tdp-comunicado__block--data")} style={style}>
-        <TvDataBlockView
-          block={block as ComunicadoDataBlock}
-          interactive={interactive}
-          loading={dataLoading}
-        />
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--data"),
+      style,
+      <TvDataBlockView
+        block={block as ComunicadoDataBlock}
+        interactive={interactive}
+        loading={dataLoading}
+      />,
+      embedded,
     );
   }
 
   if (isDataSourceBlockType(block.type)) {
     if (!interactive) return null;
-    return (
-      <div className={blockClass("tdp-comunicado__block--data-source")} style={style}>
-        <DataSourceBlockView
-          block={block as import("./comunicadoTypes").ComunicadoDataSourceBlock}
-          interactive={interactive}
-          loading={dataLoading}
-          editorMode={interactive}
-        />
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--data-source"),
+      style,
+      <DataSourceBlockView
+        block={block as import("./comunicadoTypes").ComunicadoDataSourceBlock}
+        interactive={interactive}
+        loading={dataLoading}
+        editorMode={interactive}
+      />,
+      embedded,
     );
   }
 
   if (block.type === "chart_view") {
-    return (
-      <div className={blockClass("tdp-comunicado__block--chart-view")} style={style}>
-        <ChartViewBlockView block={block} interactive={interactive} loading={dataLoading} />
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--chart-view"),
+      style,
+      <ChartViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
+      embedded,
     );
   }
 
   if (block.type === "table_view") {
-    return (
-      <div className={blockClass("tdp-comunicado__block--table-view")} style={style}>
-        <TableViewBlockView block={block} interactive={interactive} loading={dataLoading} />
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--table-view"),
+      style,
+      <TableViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
+      embedded,
     );
   }
 
   if (block.type === "kpi_view") {
-    return (
-      <div className={blockClass("tdp-comunicado__block--kpi-view")} style={style}>
-        <KpiViewBlockView block={block} interactive={interactive} loading={dataLoading} />
-      </div>
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--kpi-view"),
+      style,
+      <KpiViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
+      embedded,
     );
   }
 

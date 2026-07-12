@@ -474,12 +474,6 @@ export function ComunicadoEditorBlockView({
   isEditingText = false,
   dataLoading = false,
 }: Props) {
-  const resolvedClassName = [
-    className,
-    block.style?.boxShadow?.trim() ? "tdp-comunicado__block--with-shadow" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
     position: "relative",
@@ -489,6 +483,8 @@ export function ComunicadoEditorBlockView({
     height: "100%",
     // Rotação fica no wrap de seleção (handles/outline alinhados ao bloco).
     transform: undefined,
+    // Sombra no wrap do editor — overflow:hidden do bloco cortaria o box-shadow.
+    boxShadow: undefined,
   };
 
   if (isComunicadoVisualBoxBlock(block)) {
@@ -496,7 +492,7 @@ export function ComunicadoEditorBlockView({
       <ComunicadoEditorVisualBoxBlock
         block={block}
         fontScale={fontScale}
-        className={resolvedClassName}
+        className={className}
         isSelected={isSelected}
         isEditingText={isEditingText}
       />
@@ -504,13 +500,13 @@ export function ComunicadoEditorBlockView({
   }
 
   if (block.type === "image") {
-    return <EditorImageBlock block={block} style={style} className={resolvedClassName} isSelected={isSelected} />;
+    return <EditorImageBlock block={block} style={style} className={className} isSelected={isSelected} />;
   }
 
   if (block.type === "video") {
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <ComunicadoEditorVideoPreview block={block} style={style} className={resolvedClassName} />
+        <ComunicadoEditorVideoPreview block={block} style={style} className={className} />
       </div>
     );
   }
@@ -520,7 +516,7 @@ export function ComunicadoEditorBlockView({
       <EditorChartViewBlock
         block={block}
         style={style}
-        className={resolvedClassName}
+        className={className}
         dataLoading={dataLoading}
       />
     );
@@ -531,7 +527,7 @@ export function ComunicadoEditorBlockView({
       <EditorTableViewBlock
         block={block}
         style={style}
-        className={resolvedClassName}
+        className={className}
         dataLoading={dataLoading}
       />
     );
@@ -542,7 +538,7 @@ export function ComunicadoEditorBlockView({
       <EditorKpiViewBlock
         block={block}
         style={style}
-        className={resolvedClassName}
+        className={className}
         dataLoading={dataLoading}
       />
     );
@@ -556,7 +552,7 @@ export function ComunicadoEditorBlockView({
           fontScale={fontScale}
           interactive
           embedded
-          className={resolvedClassName}
+          className={className}
           dataLoading={dataLoading}
         />
       </div>
@@ -569,7 +565,7 @@ export function ComunicadoEditorBlockView({
       fontScale={fontScale}
       interactive
       embedded
-      className={resolvedClassName}
+      className={className}
       dataLoading={dataLoading}
     />
   );

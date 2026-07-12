@@ -882,9 +882,12 @@
   flex-shrink: 0;
 }
 
-.dashboard-tv-dashboard .td-composer__block-wrap .tdp-comunicado__block.tdp-comunicado__block--with-shadow,
-.dashboard-tv-dashboard .tdp-comunicado__block.tdp-comunicado__block--with-shadow {
-  overflow: visible;
+.dashboard-tv-dashboard .td-composer__block-wrap {
+  position: absolute;
+  box-sizing: border-box;
+  cursor: move;
+  touch-action: none;
+  /* Sombra no wrap (overflow visível) — no bloco overflow:hidden cortava o box-shadow. */
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap:has(.tdp-comunicado__visual-box--primitive-line) {
