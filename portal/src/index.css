@@ -500,7 +500,20 @@ body:has(.app-shell) {
   min-width: 0;
   min-height: 0;
   height: 100% !important;
+  max-height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Raiz do MFE e wrappers do federation — preencher o mount, sem 100vh. */
+.app-host-federated__mount:has(.dashboard-tv-dashboard.dashboard-page--deck-edit) > *,
+.app-host-federated__mount:has(.dashboard-tv-dashboard.dashboard-page--deck-edit)
+  .dashboard-tv-dashboard.dashboard-page--deck-edit {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  height: 100%;
+  max-height: 100%;
 }
 
 /*

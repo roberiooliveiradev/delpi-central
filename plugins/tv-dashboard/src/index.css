@@ -62,11 +62,16 @@
 .dashboard-tv-dashboard.dashboard-page--deck-edit {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
   height: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  max-height: 100%;
+  /* Preenche o .content do host — NÃO 100vh/100dvh (somaria o chrome do portal
+     e cortaria o rodapé com overflow:hidden). */
+  min-height: 0;
   overflow: hidden;
   background-image: none;
+  box-sizing: border-box;
 }
 
 .dashboard-tv-dashboard .td-app-shell {
@@ -367,6 +372,17 @@
   gap: 12px;
   background: #05070a;
   z-index: 31;
+}
+
+/* Host do editor: propaga a altura do mount federado até o deck. */
+.dashboard-tv-dashboard .td-deck-editor-host {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 /* Editor permanece montado sob a prévia — sem remount/loading ao Voltar. */
@@ -1749,16 +1765,22 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: calc(100vh - 220px);
+  min-height: 0;
+}
+
+.dashboard-tv-dashboard .td-deck:not(.td-deck--editor) {
+  min-height: min(720px, calc(100dvh - 220px));
 }
 
 .dashboard-tv-dashboard .td-deck--editor {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   height: 100%;
+  max-height: 100%;
   gap: 6px;
   padding: 8px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck__compact-bar {
