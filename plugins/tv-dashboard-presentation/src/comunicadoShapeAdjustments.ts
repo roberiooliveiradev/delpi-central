@@ -32,7 +32,9 @@ function linearFromY(localY: number, min: number, max: number): number {
   return clamp(min + (localY / 100) * (max - min), min, max);
 }
 
-/** Cantos arredondados (retângulo / processo) — equivalente ao adj do Rounded Rectangle. */
+/** Cantos arredondados (retângulo / processo) — equivalente ao adj do Rounded Rectangle.
+ * handleAt e valueFromPointer são inversos: adj 0→0% (canto), adj 0.5→50% (meio da aresta).
+ */
 function cornerSpec(index = 0): ShapeAdjustmentSpec {
   return {
     index,
@@ -42,8 +44,11 @@ function cornerSpec(index = 0): ShapeAdjustmentSpec {
     min: 0,
     max: 0.5,
     axis: "x",
-    handleAt: (values) => ({ x: 8 + (values[index] ?? 0.16) * 70, y: 0 }),
-    valueFromPointer: (localX) => linearFromX(localX, 0, 0.5),
+    handleAt: (values) => ({
+      x: clamp((values[index] ?? 0.16) * 100, 0, 50),
+      y: 0,
+    }),
+    valueFromPointer: (localX) => clamp(localX / 100, 0, 0.5),
   };
 }
 

@@ -364,7 +364,14 @@ export function ComunicadoComposerCanvas() {
                     ))}
                     {blockSupportsShapeChromeHandles(block)
                       ? blockShapeChromeAdjustmentSpecs(block).map((spec) => {
-                          const values = resolveBlockShapeChromeAdjustmentValues(block);
+                          const shortSidePx = Math.min(
+                            (block.frame.w / 100) * designSize.width,
+                            (block.frame.h / 100) * designSize.height,
+                          );
+                          const values = resolveBlockShapeChromeAdjustmentValues(
+                            block,
+                            shortSidePx,
+                          );
                           const pos = adjustmentHandleCssPosition(spec, values);
                           return (
                             <button

@@ -6,6 +6,7 @@ import {
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
   resolveBlockSelectionBorderRadiusPx,
+  resolveBlockShapeChromeAdjustmentValues,
   resolveBlockShapeChromeCornerPx,
   resolveBlockShapeChromeStyle,
 } from "./comunicadoBlockShapeChrome";
@@ -54,6 +55,20 @@ describe("comunicadoBlockShapeChrome", () => {
     const kpi = { ...base, ...patch } as ComunicadoKpiViewBlock;
     expect(resolveBlockSelectionBorderRadiusPx(kpi)).toBe(14);
     expect(resolveBlockSelectionBorderRadiusPx(createShapeBlock("point"))).toBeUndefined();
+  });
+
+  it("adj do handle usa o mesmo shortSidePx da conversão px↔adj", () => {
+    const block = createKpiViewBlock() as ComunicadoKpiViewBlock;
+    const shortSide = 200;
+    const withRadius = {
+      ...block,
+      ...applyBlockShapeChromeStyle(block, { borderRadius: 40 }),
+    } as ComunicadoKpiViewBlock;
+    const values = resolveBlockShapeChromeAdjustmentValues(withRadius, shortSide);
+    expect(values[0]).toBeCloseTo(40 / shortSide, 5);
+    const roundTrip = applyBlockShapeChromeAdjustment(withRadius, 0, values[0]!, shortSide);
+    const next = { ...withRadius, ...roundTrip } as ComunicadoKpiViewBlock;
+    expect(resolveBlockShapeChromeCornerPx(next)).toBe(40);
   });
 
   it("applyBlockShapeChromeStyle grava raio/borda no card do KPI (não só em style)", () => {

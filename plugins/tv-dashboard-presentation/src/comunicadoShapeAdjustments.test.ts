@@ -50,6 +50,15 @@ describe("comunicadoShapeAdjustments", () => {
     }
   });
 
+  it("handle amarelo de cantos: posição e ponteiro são inversos (distância estável)", () => {
+    const spec = shapeAdjustmentSpecs("rounded-rect")[0]!;
+    for (const adj of [0, 0.1, 0.16, 0.25, 0.5]) {
+      const pos = spec.handleAt([adj]);
+      expect(pos.x).toBeCloseTo(adj * 100, 5);
+      expect(spec.valueFromPointer(pos.x, pos.y, [adj])).toBeCloseTo(adj, 5);
+    }
+  });
+
   it("paths parametrizados respondem ao ajuste", () => {
     const flat = parallelogramPoints([0.1]);
     const steep = parallelogramPoints([0.4]);

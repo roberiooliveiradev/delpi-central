@@ -1,4 +1,5 @@
 import {
+  borderRadiusPxToCornerAdjustment,
   cornerAdjustmentToBorderRadiusPx,
   patchShapeAdjustment,
   resolveShapeAdjustments,
@@ -73,13 +74,16 @@ export function resolveBlockShapeChromeCornerPx(block: ComunicadoBlock): number 
   return 0;
 }
 
-export function resolveBlockShapeChromeAdjustmentValues(block: ComunicadoBlock): number[] {
+export function resolveBlockShapeChromeAdjustmentValues(
+  block: ComunicadoBlock,
+  shortSidePx = 64,
+): number[] {
   if (block.type === "shape") {
     return resolveShapeAdjustments(block.shape, block.style);
   }
   const px = resolveBlockShapeChromeCornerPx(block);
   const specs = shapeAdjustmentSpecs(CHROME_CORNER_KIND);
-  const adj = Math.min(0.5, Math.max(0, px / 64));
+  const adj = borderRadiusPxToCornerAdjustment(px, shortSidePx > 0 ? shortSidePx : 64);
   return specs.map((spec, index) => (index === 0 ? adj : spec.defaultValue));
 }
 
