@@ -867,11 +867,42 @@
   height: 100%;
   min-height: 0;
   display: flex;
+  padding: 0.35em 0.45em;
+  align-items: stretch;
+  justify-content: stretch;
+  text-align: left;
 }
 
 .tdp-kpi-view .delpi-kpi-card-shell,
 .tdp-kpi-view .delpi-kpi-card {
   height: 100%;
+  width: 100%;
+}
+
+/* KPI no palco TV: mesmo surface escuro do gráfico (não card branco de dashboard). */
+.tdp-kpi-view .delpi-kpi-card {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.35em 0.25em;
+  color: var(--tdp-data-text, #e2e8f0);
+}
+
+.tdp-kpi-view .delpi-kpi-card__label {
+  color: var(--tdp-data-muted, #94a3b8);
+}
+
+.tdp-kpi-view .delpi-kpi-card__value {
+  color: var(--tdp-data-text-strong, #f8fafc);
+}
+
+.tdp-kpi-view .delpi-kpi-card__hint {
+  color: var(--tdp-data-muted, #94a3b8);
+}
+
+.tdp-kpi-view .delpi-kpi-icon {
+  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 18%, transparent);
+  color: var(--tdp-data-accent, #089bdb);
 }
 
 .tdp-kpi-placeholder {

@@ -150,6 +150,7 @@ export {
   listDataSourceBlocks,
   dataSourceOptionsForInspector,
   resolveDataSourceLabel,
+  resolvePreferredDataSourceId,
   mergeDataFilters,
   nextZIndex,
   parseComunicadoConfig,

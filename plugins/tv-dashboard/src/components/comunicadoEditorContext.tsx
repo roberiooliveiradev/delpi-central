@@ -17,6 +17,7 @@ import {
   isDataBlockType,
   isFetchableDataBlockType,
   isDataViewBlockType,
+  resolvePreferredDataSourceId,
   newBlockId,
   nextZIndex,
   parseComunicadoConfig,
@@ -744,13 +745,12 @@ export function ComunicadoEditorProvider({
     updateBlocks([...(configRef.current.blocks ?? []), withZ]);
   }
 
-  function addDataSourceBlock(block: ComunicadoBlock) {
-    addDataBlock(block);
-    setDataPanelOpen(false);
-  }
-
   function addChartViewBlock(chartType: ComunicadoChartType) {
     const block = createChartViewBlock(chartType);
+    const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+    if (sourceId) {
+      (block as { dataSourceId?: string }).dataSourceId = sourceId;
+    }
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     setSelectedId(block.id);
     updateBlocks([...(configRef.current.blocks ?? []), block]);
@@ -758,6 +758,10 @@ export function ComunicadoEditorProvider({
 
   function addTableViewBlock(rows: number, cols: number, preset: ComunicadoTablePreset) {
     const block = createTableViewBlock(rows, cols, preset);
+    const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+    if (sourceId) {
+      (block as { dataSourceId?: string }).dataSourceId = sourceId;
+    }
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     setSelectedId(block.id);
     updateBlocks([...(configRef.current.blocks ?? []), block]);
@@ -765,9 +769,43 @@ export function ComunicadoEditorProvider({
 
   function addKpiViewBlock() {
     const block = createKpiViewBlock();
+    const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+    if (sourceId) {
+      (block as { dataSourceId?: string }).dataSourceId = sourceId;
+    }
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     setSelectedId(block.id);
     updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }
+
+  function addDataSourceBlock(block: ComunicadoBlock) {
+    const selected = configRef.current.blocks?.find((item) => item.id === selectedId);
+    let nextBlocks = [...(configRef.current.blocks ?? [])];
+    const withZ = {
+      ...block,
+      style: { ...block.style, zIndex: nextZIndex(nextBlocks) },
+    };
+    nextBlocks = [...nextBlocks, withZ];
+    if (
+      selected &&
+      isDataViewBlockType(selected.type) &&
+      !("dataSourceId" in selected && selected.dataSourceId?.trim())
+    ) {
+      nextBlocks = nextBlocks.map((item) =>
+        item.id === selected.id
+          ? ({ ...item, dataSourceId: withZ.id } as ComunicadoBlock)
+          : item,
+      );
+    }
+    if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
+      const mode = withZ.dataBinding.displayMode;
+      if (mode && mode !== "auto") {
+        setLastDataDisplayMode(mode);
+      }
+    }
+    setDataPanelOpen(false);
+    setSelectedId(withZ.id);
+    updateBlocks(nextBlocks);
   }
 
   function openDataPanel() {

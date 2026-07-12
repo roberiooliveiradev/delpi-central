@@ -24,6 +24,35 @@
         "auto"
       ],
       "metaShape": "scalar",
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial"
+        },
+        "periodDays": {
+          "type": "integer",
+          "default": 30,
+          "label": "Período (dias)"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento (weg | new_business)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "description": "Indicador numérico para «Taxa de fechamento comercial»."
     },
     {

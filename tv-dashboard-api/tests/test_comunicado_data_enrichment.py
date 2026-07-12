@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from tv_app.application.services.comunicado_data_enrichment_service import (
     ComunicadoDataEnrichmentService,
+    _extract_scalar_value,
     _extract_series,
     reset_comunicado_data_block_cache,
 )
@@ -371,3 +372,53 @@ def test_enrich_honors_value_field_override():
     ]
     enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
     assert enriched[0]["resolved"]["kpi"]["value"] == 88.2
+
+
+def test_extract_scalar_value_fallback_pct_without_value_fields():
+    data = {"sales_conversion_rate_pct": 13.9, "qtd_proposals": 41, "qtd_won": 5}
+    assert _extract_scalar_value(data, []) == 13.9
+    assert _extract_scalar_value(data, ["sales_conversion_rate_pct"]) == 13.9
+
+
+def test_enrich_sales_conversion_rate_resolves_kpi_and_chart_point():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_sales_conversion_rate", "shape": "scalar"},
+        "data": {"sales_conversion_rate_pct": 13.9, "qtd_proposals": 41, "qtd_won": 5},
+        "route": {
+            "label": "Taxa de fechamento",
+            "valueFields": ["sales_conversion_rate_pct", "value"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_sales_conversion_rate",
+                "params": {"periodDays": 30},
+                "displayMode": "kpi",
+            },
+        },
+        {
+            "id": "kpi-1",
+            "type": "kpi_view",
+            "dataSourceId": "src-1",
+        },
+        {
+            "id": "chart-1",
+            "type": "chart_view",
+            "dataSourceId": "src-1",
+            "chartType": "line",
+        },
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    assert enriched[0]["resolved"]["kpi"]["value"] == 13.9
+    assert enriched[0]["resolved"]["chart"]["points"]
+    assert enriched[1]["resolved"]["kpi"]["value"] == 13.9
+    assert enriched[2]["resolved"]["chart"]["points"][0]["value"] == 13.9

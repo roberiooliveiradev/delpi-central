@@ -43,19 +43,65 @@ def _value_fields_for_binding(route_info: dict[str, Any], binding: dict[str, Any
     return [str(field).strip() for field in raw if str(field).strip()]
 
 
+def _iter_scalar_candidate_keys(value_fields: list[Any]) -> list[str]:
+    keys: list[str] = []
+    seen: set[str] = set()
+    for field in value_fields:
+        key = str(field).strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        keys.append(key)
+    for fallback in ("value", "total", "pct", "percentage"):
+        if fallback not in seen:
+            seen.add(fallback)
+            keys.append(fallback)
+    return keys
+
+
+def _first_numeric_like_field(payload: dict[str, Any]) -> Any:
+    """Fallback quando o catálogo não declara valueFields (ex.: campos *_pct no payload)."""
+    preferred: list[tuple[int, str, Any]] = []
+    for key, value in payload.items():
+        if value is None or isinstance(value, (dict, list, bool)):
+            continue
+        if not isinstance(key, str):
+            continue
+        key_l = key.lower()
+        rank = 3
+        if key_l.endswith("_pct") or key_l.endswith("_percentage") or key_l.endswith("pct"):
+            rank = 0
+        elif key_l in {"value", "total"}:
+            rank = 1
+        elif isinstance(value, (int, float)) and not isinstance(value, bool):
+            rank = 2
+        else:
+            continue
+        preferred.append((rank, key, value))
+    if not preferred:
+        return None
+    preferred.sort(key=lambda item: (item[0], item[1]))
+    return preferred[0][2]
+
+
 def _extract_scalar_value(data: Any, value_fields: list[Any]) -> Any:
     if not isinstance(data, dict):
         return None
+    keys = _iter_scalar_candidate_keys(value_fields)
     summary = data.get("summary")
     if isinstance(summary, dict):
-        for field in value_fields:
-            key = str(field)
+        for key in keys:
             if key in summary and summary[key] is not None:
                 return summary[key]
-    for field in value_fields:
-        key = str(field)
+        if not value_fields:
+            fallback = _first_numeric_like_field(summary)
+            if fallback is not None:
+                return fallback
+    for key in keys:
         if key in data and data[key] is not None:
             return data[key]
+    if not value_fields:
+        return _first_numeric_like_field(data)
     return None
 
 

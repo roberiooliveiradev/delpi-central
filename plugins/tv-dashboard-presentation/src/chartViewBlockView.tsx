@@ -19,18 +19,25 @@ function ChartTypePlaceholder({
   label,
   loading,
   interactive,
+  bound,
 }: {
   chartType: string;
   label: string;
   loading?: boolean;
   interactive?: boolean;
+  bound?: boolean;
 }) {
+  const hint = loading
+    ? "Carregando dados…"
+    : bound
+      ? "Fonte sem série ou valor"
+      : interactive
+        ? "Conecte uma fonte de dados"
+        : label;
   return (
     <div className="tdp-data-chart tdp-data-chart--typed">
       <span className="tdp-data-chart__type">{chartTypeLabel(chartType as ComunicadoChartViewBlock["chartType"])}</span>
-      <span className="tdp-data-chart__hint">
-        {loading ? "Carregando dados…" : interactive ? "Conecte uma fonte de dados" : label}
-      </span>
+      <span className="tdp-data-chart__hint">{hint}</span>
     </div>
   );
 }
@@ -44,6 +51,7 @@ export function ChartViewBlockView({
   const resolved = block.resolved;
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
   const chartInteraction = interactive ? interaction : null;
+  const bound = Boolean(block.dataSourceId?.trim());
 
   if (resolved?.error) {
     return (
@@ -61,6 +69,7 @@ export function ChartViewBlockView({
           label={label}
           loading={loading}
           interactive={interactive}
+          bound={bound}
         />
       </div>
     );
@@ -71,7 +80,13 @@ export function ChartViewBlockView({
   if (points.length === 0 && !resolved.kpi?.value) {
     return (
       <div className="tdp-data-block tdp-data-block--chart">
-        <ChartTypePlaceholder chartType={block.chartType} label={label} loading={loading} interactive={interactive} />
+        <ChartTypePlaceholder
+          chartType={block.chartType}
+          label={label}
+          loading={loading}
+          interactive={interactive}
+          bound
+        />
       </div>
     );
   }

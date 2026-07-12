@@ -217,6 +217,12 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
             />
           </DeckField>
         ) : null}
+        <ParamFields
+          schema={(route?.paramSchema as ParamSchema) ?? {}}
+          values={blockParams}
+          inheritedKeys={inheritedKeys}
+          onChange={updateParam}
+        />
         <DeckField
           id="td-data-refresh"
           label="Atualizar a cada (s)"
@@ -244,12 +250,6 @@ export function DataBindingInspector({ route, pane = false }: { route: TvDataRou
             }}
           />
         </DeckField>
-        <ParamFields
-          schema={(route?.paramSchema as ParamSchema) ?? {}}
-          values={blockParams}
-          inheritedKeys={inheritedKeys}
-          onChange={updateParam}
-        />
       </DeckPropertySection>
       <DataRoutePickerModal
         open={routePickerOpen}

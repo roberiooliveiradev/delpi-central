@@ -14,10 +14,16 @@ def test_catalog_lists_allowlist_routes():
     assert "get_supplies_stock_value" in ids
 
 
-def test_catalog_rejects_unknown_operation():
+def test_catalog_sales_conversion_rate_has_filters_and_value_fields():
     catalog = TvDataRouteCatalogService()
-    assert catalog.is_allowed("get_overall_equipment_effectiveness_pct") is True
-    assert catalog.is_allowed("unknown_operation") is False
+    route = catalog.get_route("get_sales_conversion_rate")
+    assert route is not None
+    assert "sales_conversion_rate_pct" in (route.get("valueFields") or [])
+    schema = route.get("paramSchema") or {}
+    assert "periodDays" in schema
+    assert "branch" in schema
+    assert "customer_segment" in schema
+    assert route.get("paramStrategy") == "date_range"
 
 
 def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():

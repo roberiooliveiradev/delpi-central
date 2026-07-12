@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getLinkedDataSourceIds,
+  resolvePreferredDataSourceId,
   shouldHideDataSourceOnStage,
 } from "./comunicadoDataArchitecture";
 import type { ComunicadoBlock } from "./comunicadoTypes";
@@ -29,5 +30,19 @@ describe("comunicadoDataArchitecture", () => {
   it("oculta fonte no palco quando vinculada", () => {
     expect(shouldHideDataSourceOnStage("src-1", [sourceBlock, chartBlock])).toBe(true);
     expect(shouldHideDataSourceOnStage("src-1", [sourceBlock])).toBe(false);
+  });
+
+  it("resolve fonte preferida ao inserir visual", () => {
+    expect(resolvePreferredDataSourceId([sourceBlock], "src-1")).toBe("src-1");
+    expect(resolvePreferredDataSourceId([sourceBlock], null)).toBe("src-1");
+    expect(
+      resolvePreferredDataSourceId(
+        [
+          sourceBlock,
+          { ...sourceBlock, id: "src-2" },
+        ],
+        null,
+      ),
+    ).toBeUndefined();
   });
 });

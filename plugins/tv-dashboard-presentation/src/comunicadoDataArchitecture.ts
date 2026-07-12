@@ -40,6 +40,24 @@ export function resolveDataSourceLabel(block: ComunicadoDataSourceBlock): string
   return block.dataBinding.label ?? block.dataBinding.operationId ?? "Fonte de dados";
 }
 
+/**
+ * Fonte preferida ao inserir um visual: a fonte selecionada, ou a única do slide.
+ */
+export function resolvePreferredDataSourceId(
+  blocks: ComunicadoBlock[],
+  selectedId?: string | null,
+): string | undefined {
+  if (selectedId) {
+    const selected = blocks.find((block) => block.id === selectedId);
+    if (selected && isDataSourceBlockType(selected.type)) {
+      return selected.id;
+    }
+  }
+  const sources = listDataSourceBlocks(blocks);
+  if (sources.length === 1) return sources[0]?.id;
+  return undefined;
+}
+
 export function dataSourceOptionsForInspector(
   blocks: ComunicadoBlock[],
   excludeViewBlockId?: string,

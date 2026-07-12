@@ -38,6 +38,13 @@ def _build_query_params(
         branch = merged.get("branch")
         if branch:
             query["branch"] = str(branch).strip()
+        # Repassa filtros extras da rota (ex.: customer_segment) além do período/filial.
+        for key, value in merged.items():
+            if key in {"periodDays", "start_date", "end_date", "branch"}:
+                continue
+            if value is None or value == "":
+                continue
+            query[str(key)] = str(value)
         return query
 
     for key, value in merged.items():

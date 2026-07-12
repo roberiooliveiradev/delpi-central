@@ -88,6 +88,7 @@ export {
   shouldHideDataSourceOnStage,
   listDataSourceBlocks,
   resolveDataSourceLabel,
+  resolvePreferredDataSourceId,
   dataSourceOptionsForInspector,
 } from "./comunicadoDataArchitecture";
 
