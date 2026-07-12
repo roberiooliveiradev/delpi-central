@@ -49,8 +49,13 @@ export type ComunicadoRibbonTabRequest =
   | "chart"
   | "table"
   | "shape"
+  | "element"
   | "data"
+  | "layers"
   | "view";
+
+/** Abas espelhadas entre top bar contextual e painel lateral. */
+export type SelectionPanelTab = "element" | "data" | "layers";
 
 /** Intenção ao abrir a aba Dados do painel lateral. */
 export type DataPanelIntent = "binding" | "catalog";
@@ -126,6 +131,9 @@ export type ComunicadoEditorContextValue = {
   setDataPanelOpen: (open: boolean) => void;
   dataPanelIntent: DataPanelIntent;
   setDataPanelIntent: (intent: DataPanelIntent) => void;
+  /** Aba Elemento/Dados/Camadas compartilhada entre ribbon e painel lateral. */
+  selectionPanelTab: SelectionPanelTab;
+  setSelectionPanelTab: (tab: SelectionPanelTab) => void;
   addShape: (shape: ComunicadoShapeKind) => void;
   addIconBlock: (iconName: string) => void;
   groupSelected: () => void;

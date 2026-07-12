@@ -269,7 +269,7 @@ export function useComunicadoEditorBlocks({
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       setSelectedId(block.id);
       setShapeMenuOpen(false);
-      setRibbonTabRequest("shape");
+      setRibbonTabRequest("element");
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
     [configRef, setRibbonTabRequest, setSelectedId, setShapeMenuOpen, updateBlocks],

@@ -120,14 +120,17 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   ribbonTabs: {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
     insert: "Insira elementos no slide personalizado: títulos, textos, imagens, vídeos e formas.",
-    format: "Formate o elemento nas abas contextuais (Forma, Gráfico, Tabela): tipografia, preenchimento e contorno conforme a capacidade do objeto.",
+    format: "Formate o elemento nas abas contextuais Elemento, Dados e Camadas.",
+    element:
+      "Mesmos controles do painel lateral Elemento: tipografia, preenchimento, contorno, posição e organização.",
     chart:
       "Ferramentas do gráfico selecionado (Excel Online): tipo, rótulos, eixos, grade e formato da parte.",
     table:
       "Ferramentas da tabela selecionada (Excel Table Design): estilos, opções de estilo (cabeçalho, totais, listras) e formato.",
     shape:
       "Ferramentas da forma selecionada (PowerPoint Online): alterar forma, estilos, preenchimento, contorno e tamanho.",
-    data: "Fonte de dados e parâmetros do elemento selecionado (gráfico, tabela, KPI ou fonte).",
+    data: "Mesmos controles do painel lateral Dados: fonte, parâmetros e catálogo.",
+    layers: "Mesmos controles do painel lateral Camadas: ordem de construção e pilha visual.",
     view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
   },
   view: {

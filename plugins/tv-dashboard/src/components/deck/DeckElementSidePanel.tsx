@@ -5,6 +5,7 @@ import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import type { SelectionPanelTab } from "../comunicadoEditorContextCore";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectedDataSidePanel } from "../SelectedDataSidePanel";
 import { resolveSelectedDataContext } from "../../utils/selectedDataContext";
@@ -12,7 +13,6 @@ import { ComunicadoElementInspector } from "./ComunicadoElementInspector";
 import { ComunicadoLayersPanel } from "./ComunicadoLayersPanel";
 
 type Labels = Record<string, string>;
-type SideTab = "element" | "layers" | "data";
 
 const T = TV_DASHBOARD_HELP_TOOLTIPS.tabs;
 
@@ -29,7 +29,7 @@ type Props = {
   branchScope?: BranchScope | null;
 };
 
-/** Painel lateral estilo PowerPoint — propriedades, dados e camadas. */
+/** Painel lateral — Elemento / Dados / Camadas (espelhados na top bar). */
 export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope = null }: Props) {
   const {
     selected,
@@ -40,9 +40,11 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     dataPanelIntent,
     setDataPanelIntent,
     openDataCatalog,
+    selectionPanelTab,
+    setSelectionPanelTab,
+    requestRibbonTab,
   } = useComunicadoEditor();
   const [open, setOpen] = useState(true);
-  const [tab, setTab] = useState<SideTab>("element");
 
   const dataContext = useMemo(
     () => resolveSelectedDataContext(blocks, selectedIds),
@@ -56,9 +58,11 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   useEffect(() => {
     if (dataPanelOpen) {
       setOpen(true);
-      setTab("data");
+      setSelectionPanelTab("data");
     }
-  }, [dataPanelOpen]);
+  }, [dataPanelOpen, setSelectionPanelTab]);
+
+  const tab = selectionPanelTab;
 
   const panelTitle = useMemo(() => {
     if (tab !== "data") {
@@ -70,8 +74,9 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     return "Dados do elemento";
   }, [tab, dataPanelIntent, dataContext.kind]);
 
-  function handleTabChange(next: SideTab) {
-    setTab(next);
+  function handleTabChange(next: SelectionPanelTab) {
+    setSelectionPanelTab(next);
+    requestRibbonTab(next);
     if (next === "data") {
       const preferCatalog =
         !selected || !isDataBoundEditorBlockType(selected.type);
@@ -101,7 +106,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
           onClose={() => setOpen(false)}
           tabs={PANEL_TABS}
           activeTabId={tab}
-          onTabChange={(id) => handleTabChange(id as SideTab)}
+          onTabChange={(id) => handleTabChange(id as SelectionPanelTab)}
           bodyClassName="td-deck-side-panel__pane-body"
         >
           {tab === "element" ? (

@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
-import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
+import {
+  isSelectionPanelTab,
+  normalizeSelectionRibbonTab,
+} from "../utils/normalizeSelectionRibbonTab";
 
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -14,7 +17,7 @@ import {
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "chart" | "table" | "shape" | "data" | "view";
+type EmbeddedTab = "insert" | "element" | "data" | "layers" | "view";
 
 type Props = {
   labels?: Labels;
@@ -22,54 +25,44 @@ type Props = {
 
 /** Chrome compacto do compositor embutido — mesmas faixas do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
-  const { selected, selectedChartPart } = useComunicadoEditor();
-  const chartSelected = selected?.type === "chart_view";
-  const tableSelected = selected?.type === "table_view";
-  const shapeSelected = selected?.type === "shape";
-  const textOrMediaSelected = Boolean(
-    selected &&
-      (selected.type === "heading" ||
-        selected.type === "text" ||
-        selected.type === "image" ||
-        selected.type === "video"),
-  );
-  const dataSelected = Boolean(selected && isDataBoundEditorBlockType(selected.type));
-  const shapeChromeSelected =
-    selected?.type === "kpi_view" || tableSelected || chartSelected;
-  const chartPartPrimitiveSelected = Boolean(
-    chartSelected &&
-      selectedChartPart &&
-      ["marker", "series", "chartArea", "plotArea", "axis", "grid"].includes(selectedChartPart.kind),
-  );
-  const tabs = resolveEmbeddedComunicadoRibbonTabs({
-    chartSelected,
-    tableSelected,
-    shapeSelected,
-    dataSelected,
-    chartPartPrimitiveSelected,
-    shapeChromeSelected,
-    textOrMediaSelected,
-  });
+  const editor = useComunicadoEditor();
+  const hasSelection = editor.selectedIds.length > 0;
+  const tabs = resolveEmbeddedComunicadoRibbonTabs({ hasSelection });
   const [activeTab, setActiveTab] = useState<EmbeddedTab>("insert");
 
   useComunicadoRibbonTabSync((tab) => {
-    if (tab === "format") {
-      setActiveTab(
-        chartSelected && !chartPartPrimitiveSelected ? "chart" : tableSelected ? "table" : "shape",
-      );
-      return;
-    }
+    const normalized = normalizeSelectionRibbonTab(tab);
     if (
-      tab === "insert" ||
-      tab === "chart" ||
-      tab === "table" ||
-      tab === "shape" ||
-      tab === "data" ||
-      tab === "view"
+      normalized === "insert" ||
+      normalized === "element" ||
+      normalized === "data" ||
+      normalized === "layers" ||
+      normalized === "view"
     ) {
-      setActiveTab(tab);
+      setActiveTab(normalized);
     }
   });
+
+  useEffect(() => {
+    if (!tabs.some((tab) => tab.id === activeTab)) {
+      setActiveTab(hasSelection ? editor.selectionPanelTab : "insert");
+    }
+  }, [activeTab, tabs, hasSelection, editor.selectionPanelTab]);
+
+  useEffect(() => {
+    if (!hasSelection) return;
+    if (isSelectionPanelTab(editor.selectionPanelTab)) {
+      setActiveTab(editor.selectionPanelTab);
+    }
+  }, [editor.selectionPanelTab, hasSelection]);
+
+  function selectTab(tab: EmbeddedTab) {
+    setActiveTab(tab);
+    if (isSelectionPanelTab(tab)) {
+      editor.setSelectionPanelTab(tab);
+      editor.setDataPanelOpen(tab === "data");
+    }
+  }
 
   return (
     <section className="td-deck-chrome td-deck-chrome--embedded" aria-label="Editor do comunicado">
@@ -84,8 +77,9 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
                 key={tab.id}
                 label={tab.label}
                 hint={tab.hint}
+                icon={tab.icon}
                 active={activeTab === tab.id}
-                onSelect={() => setActiveTab(tab.id as EmbeddedTab)}
+                onSelect={() => selectTab(tab.id as EmbeddedTab)}
                 cellClassName={[
                   "td-deck-chrome__tab-cell",
                   contextual ? "td-deck-chrome__tab-cell--contextual" : "",

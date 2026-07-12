@@ -402,6 +402,8 @@ export function ComunicadoEditorProvider({
     setDataPanelOpen,
     dataPanelIntent,
     setDataPanelIntent,
+    selectionPanelTab: selection.selectionPanelTab,
+    setSelectionPanelTab: selection.setSelectionPanelTab,
     addShape: blockActions.addShape,
     addIconBlock: blockActions.addIconBlock,
     groupSelected: blockActions.groupSelected,

@@ -1,18 +1,18 @@
 import { ComunicadoChartRibbon } from "./ComunicadoChartRibbon";
 import { ComunicadoDataRibbon } from "./ComunicadoDataRibbon";
+import { ComunicadoElementRibbon } from "./ComunicadoElementRibbon";
 import { ComunicadoInsertRibbon } from "./ComunicadoInsertRibbon";
-import { ComunicadoShapeRibbon } from "./ComunicadoShapeRibbon";
-import { ComunicadoTableRibbon } from "./ComunicadoTableRibbon";
+import { ComunicadoLayersRibbon } from "./ComunicadoLayersRibbon";
 import { ComunicadoViewRibbon } from "./ComunicadoViewRibbon";
 
 type Labels = Record<string, string>;
 
 type Props = {
-  activeTab: "insert" | "chart" | "table" | "shape" | "data" | "view";
+  activeTab: "insert" | "element" | "data" | "layers" | "view";
   labels?: Labels;
 };
 
-/** Conteúdo das faixas Inserir / contextuais / Exibir (sem aba Formatar). */
+/** Conteúdo das faixas Inserir / Elemento·Dados·Camadas / Exibir. */
 export function ComunicadoRibbonContent({ activeTab, labels = {} }: Props) {
   if (activeTab === "insert") {
     return <ComunicadoInsertRibbon labels={labels} />;
@@ -20,17 +20,17 @@ export function ComunicadoRibbonContent({ activeTab, labels = {} }: Props) {
   if (activeTab === "view") {
     return <ComunicadoViewRibbon />;
   }
-  if (activeTab === "chart") {
-    return <ComunicadoChartRibbon />;
-  }
-  if (activeTab === "table") {
-    return <ComunicadoTableRibbon />;
-  }
-  if (activeTab === "shape") {
-    return <ComunicadoShapeRibbon />;
+  if (activeTab === "element") {
+    return <ComunicadoElementRibbon />;
   }
   if (activeTab === "data") {
     return <ComunicadoDataRibbon />;
   }
+  if (activeTab === "layers") {
+    return <ComunicadoLayersRibbon />;
+  }
   return null;
 }
+
+/** @deprecated — reexport para imports legados de testes. */
+export { ComunicadoChartRibbon };

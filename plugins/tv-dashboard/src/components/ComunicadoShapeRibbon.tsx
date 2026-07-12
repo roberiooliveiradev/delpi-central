@@ -54,6 +54,7 @@ import {
   FormatRibbonOrganizeSection,
   FormatRibbonTextBoxChrome,
   FormatRibbonTypographySections,
+  FormatRibbonFrameSection,
 } from "./formatRibbon";
 import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
 import { ShapeCornerRadiusControl } from "./ShapeCornerRadiusControl";
@@ -93,25 +94,34 @@ export function ComunicadoShapeRibbon() {
     selectedChartPart,
   });
 
-  const chartPartPrimitive =
+  // Parte textual (título/legenda) não tem primitivo visual — chrome cai no chartArea
+  // para a faixa Forma não ficar só com Fonte/Parágrafo e espaço vazio.
+  const selectedChartVisual =
     selected?.type === "chart_view" && selectedChartPart
       ? chartPartVisualPrimitive(selectedChartPart)
-      : selected?.type === "chart_view" && !selectedChartPart
-        ? ("area" as const)
-        : null;
+      : null;
+  const chartPartPrimitive =
+    selected?.type === "chart_view"
+      ? (selectedChartVisual ?? ("area" as const))
+      : null;
   const effectiveChartPart =
     selected?.type === "chart_view"
-      ? selectedChartPart ?? { kind: "chartArea" as const }
+      ? selectedChartVisual && selectedChartPart
+        ? selectedChartPart
+        : { kind: "chartArea" as const }
       : null;
 
   const isShapeBlock = selected?.type === "shape";
   const isTextBox = selected?.type === "heading" || selected?.type === "text";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
   const isChartPartPrimitive = Boolean(chartPartPrimitive);
-  const isKpiChrome =
-    selected?.type === "kpi_view" &&
-    (!selectedKpiPart || selectedKpiPart.kind === "card");
+  /** Chrome do cartão KPI mesmo com parte de texto (título/valor) selecionada. */
+  const isKpiChrome = selected?.type === "kpi_view";
   const isTableChrome = selected?.type === "table_view";
+  const isDataViewBlock =
+    selected?.type === "kpi_view" ||
+    selected?.type === "table_view" ||
+    selected?.type === "chart_view";
   const hasCapabilityChrome =
     isShapeBlock ||
     isChartPartPrimitive ||
@@ -147,7 +157,9 @@ export function ComunicadoShapeRibbon() {
       <FormatRibbonTypographySections />
       {isTextBox ? <FormatRibbonTextBoxChrome /> : null}
       {chrome}
-      {opts?.organize !== false && (isShapeBlock || isTextBox || isMediaBlock) ? (
+      <FormatRibbonFrameSection />
+      {opts?.organize !== false &&
+      (isShapeBlock || isTextBox || isMediaBlock || isDataViewBlock) ? (
         <FormatRibbonOrganizeSection />
       ) : null}
     </div>
@@ -294,7 +306,6 @@ export function ComunicadoShapeRibbon() {
           </DeckRibbonGroup>
         ) : null}
       </>,
-      { organize: false },
     );
   }
 
@@ -367,7 +378,6 @@ export function ComunicadoShapeRibbon() {
           onChange={(radius) => patchCardStyle({ borderRadius: radius })}
         />
       </>,
-      { organize: false },
     );
   }
 
@@ -436,7 +446,6 @@ export function ComunicadoShapeRibbon() {
           onChange={(radius) => patchFrameStyle({ borderRadius: radius })}
         />
       </>,
-      { organize: false },
     );
   }
 
@@ -475,17 +484,6 @@ export function ComunicadoShapeRibbon() {
     updateSelected(patch as Partial<ComunicadoBlock>);
     rememberComunicadoShape(kind);
     setChangeShapeOpen(false);
-  };
-
-  const setFrameSize = (axis: "w" | "h", raw: number) => {
-    const value = Math.max(0.5, Math.min(100, Number.isFinite(raw) ? raw : block.frame[axis]));
-    const next = { ...block.frame, [axis]: value };
-    if (axis === "w") {
-      next.x = Math.max(0, Math.min(100 - value, block.frame.x));
-    } else {
-      next.y = Math.max(0, Math.min(100 - value, block.frame.y));
-    }
-    updateSelected({ frame: next } as Partial<ComunicadoBlock>);
   };
 
   return shell(
@@ -585,61 +583,28 @@ export function ComunicadoShapeRibbon() {
         />
       ) : null}
 
-      <DeckRibbonGroup label="Tamanho" hint={H.shapeSize}>
-        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-          {primitive === "point" ? (
-            <>
-              <label className="td-deck-ribbon__field-label" htmlFor="td-shape-marker-radius">
-                Raio px
-              </label>
-              <NativeTextControl
-                id="td-shape-marker-radius"
-                type="number"
-                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={2}
-                max={48}
-                step={1}
-                aria-label="Raio do ponto em pixels"
-                value={block.style?.markerRadius ?? 8}
-                onChange={(value) =>
-                  updateSelectedStyle({ markerRadius: Math.max(2, Math.min(48, Number(value) || 8)) })
-                }
-              />
-            </>
-          ) : (
-            <>
-              <label className="td-deck-ribbon__field-label" htmlFor="td-shape-width">
-                Largura %
-              </label>
-              <NativeTextControl
-                id="td-shape-width"
-                type="number"
-                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={0.5}
-                max={100}
-                step={0.5}
-                aria-label="Largura da forma em percentual do slide"
-                value={Number(block.frame.w.toFixed(1))}
-                onChange={(value) => setFrameSize("w", Number(value))}
-              />
-              <label className="td-deck-ribbon__field-label" htmlFor="td-shape-height">
-                Altura %
-              </label>
-              <NativeTextControl
-                id="td-shape-height"
-                type="number"
-                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={0.5}
-                max={100}
-                step={0.5}
-                aria-label="Altura da forma em percentual do slide"
-                value={Number(block.frame.h.toFixed(1))}
-                onChange={(value) => setFrameSize("h", Number(value))}
-              />
-            </>
-          )}
-        </div>
-      </DeckRibbonGroup>
+      {primitive === "point" ? (
+        <DeckRibbonGroup label="Marcador" hint={H.shapeSize}>
+          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
+            <label className="td-deck-ribbon__field-label" htmlFor="td-shape-marker-radius">
+              Raio px
+            </label>
+            <NativeTextControl
+              id="td-shape-marker-radius"
+              type="number"
+              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+              min={2}
+              max={48}
+              step={1}
+              aria-label="Raio do ponto em pixels"
+              value={block.style?.markerRadius ?? 8}
+              onChange={(value) =>
+                updateSelectedStyle({ markerRadius: Math.max(2, Math.min(48, Number(value) || 8)) })
+              }
+            />
+          </div>
+        </DeckRibbonGroup>
+      ) : null}
     </>,
   );
 }

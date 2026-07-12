@@ -1,14 +1,22 @@
-import { BarChart3, Database, Home, Eye, LayoutTemplate, Plus, Settings2, Shapes, Table2 } from "lucide-react";
+import {
+  Database,
+  Home,
+  Eye,
+  LayoutTemplate,
+  Layers,
+  MousePointer2,
+  Plus,
+  Settings2,
+} from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 export type DeckRibbonTabId =
   | "home"
   | "insert"
-  | "chart"
-  | "table"
-  | "shape"
+  | "element"
   | "data"
+  | "layers"
   | "view"
   | "slide"
   | "playlist";
@@ -19,26 +27,17 @@ export type DeckRibbonTabMeta = {
   hint: string;
   icon: typeof Home;
   customOnly?: boolean;
-  /** Só aparece com gráfico selecionado (aba contextual Excel). */
-  chartOnly?: boolean;
-  /** Só aparece com tabela selecionada (aba contextual Excel Table Design). */
-  tableOnly?: boolean;
-  /**
-   * Forma / caixa de texto / mídia / chrome de KPI·gráfico·tabela —
-   * tipografia e contorno por capacidade do objeto.
-   */
-  shapeOnly?: boolean;
-  /** Só aparece com bloco de dados / visual ligado a fonte. */
-  dataOnly?: boolean;
+  /** Elemento / Dados / Camadas — só com seleção no palco. */
+  selectionOnly?: boolean;
   disabledWhenNoSlide?: boolean;
 };
 
 const T = TV_DASHBOARD_HELP_TOOLTIPS.ribbonTabs;
+const PANEL = TV_DASHBOARD_HELP_TOOLTIPS.tabs;
 
 /**
- * Ordem canônica: abas permanentes primeiro; contextuais no final —
- * só aparecem com o elemento selecionado. Sem aba Formatar (controles
- * vivem nas contextuais por capacidade).
+ * Ordem canônica: permanentes primeiro; contextuais Elemento/Dados/Camadas
+ * espelham o painel lateral (mesmas abas, mesmos controles).
  */
 export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   { id: "home", label: "Página Inicial", hint: T.home, icon: Home },
@@ -47,120 +46,72 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   {
     id: "slide",
     label: "Tela",
-    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.slide,
+    hint: PANEL.slide,
     icon: LayoutTemplate,
     disabledWhenNoSlide: true,
   },
   {
     id: "playlist",
     label: "Programação",
-    hint: TV_DASHBOARD_HELP_TOOLTIPS.tabs.playlist,
+    hint: PANEL.playlist,
     icon: Settings2,
   },
   {
-    id: "chart",
-    label: "Gráfico",
-    hint:
-      T.chart ??
-      "Ferramentas do gráfico: tipo, rótulos, eixos e tipografia da parte selecionada.",
-    icon: BarChart3,
+    id: "element",
+    label: "Elemento",
+    hint: PANEL.element ?? T.shape ?? "Propriedades e aparência do elemento selecionado.",
+    icon: MousePointer2,
     customOnly: true,
-    chartOnly: true,
-  },
-  {
-    id: "table",
-    label: "Tabela",
-    hint:
-      T.table ??
-      "Ferramentas da tabela (Excel Table Design): estilos, opções e tipografia.",
-    icon: Table2,
-    customOnly: true,
-    tableOnly: true,
-  },
-  {
-    id: "shape",
-    label: "Forma",
-    hint:
-      T.shape ??
-      "Ferramentas do objeto: tipografia, preenchimento, contorno, tamanho e organização.",
-    icon: Shapes,
-    customOnly: true,
-    shapeOnly: true,
+    selectionOnly: true,
   },
   {
     id: "data",
     label: "Dados",
-    hint: T.data ?? "Fonte e parâmetros do elemento de dados selecionado.",
+    hint: PANEL.data ?? T.data ?? "Fonte e parâmetros do elemento selecionado.",
     icon: Database,
     customOnly: true,
-    dataOnly: true,
+    selectionOnly: true,
+  },
+  {
+    id: "layers",
+    label: "Camadas",
+    hint: PANEL.layers ?? "Ordem e construção das camadas do slide.",
+    icon: Layers,
+    customOnly: true,
+    selectionOnly: true,
   },
 ];
 
-/** Aba contextual (só com elemento selecionado) — destaque visual distinto das permanentes. */
+/** Aba contextual (só com elemento selecionado). */
 export function isContextualDeckRibbonTab(
-  tab: Pick<DeckRibbonTabMeta, "chartOnly" | "tableOnly" | "shapeOnly" | "dataOnly">,
+  tab: Pick<DeckRibbonTabMeta, "selectionOnly">,
 ): boolean {
-  return Boolean(tab.chartOnly || tab.tableOnly || tab.shapeOnly || tab.dataOnly);
+  return Boolean(tab.selectionOnly);
 }
 
 export function resolveDeckRibbonTabs(
   isCustomSlide: boolean,
   options?: {
-    chartSelected?: boolean;
-    tableSelected?: boolean;
-    shapeSelected?: boolean;
-    dataSelected?: boolean;
-    /** Parte de gráfico com primitivo point/line/area (duplo clique). */
-    chartPartPrimitiveSelected?: boolean;
-    /** KPI / tabela / gráfico usam chrome de forma (preenchimento, contorno, cantos). */
-    shapeChromeSelected?: boolean;
-    /** Caixa de texto / título / mídia — aba Forma com tipografia e organizar. */
-    textOrMediaSelected?: boolean;
+    /** Qualquer bloco selecionado no palco. */
+    hasSelection?: boolean;
   },
 ): DeckRibbonTabMeta[] {
-  const chartSelected = Boolean(options?.chartSelected);
-  const tableSelected = Boolean(options?.tableSelected);
-  const dataSelected = Boolean(options?.dataSelected);
-  const shapeSelected =
-    Boolean(options?.shapeSelected) ||
-    Boolean(options?.chartPartPrimitiveSelected) ||
-    Boolean(options?.shapeChromeSelected) ||
-    Boolean(options?.textOrMediaSelected);
+  const hasSelection = Boolean(options?.hasSelection);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (tab.customOnly && !isCustomSlide) return false;
-    if (tab.chartOnly && !chartSelected) return false;
-    if (tab.tableOnly && !tableSelected) return false;
-    if (tab.shapeOnly && !shapeSelected) return false;
-    if (tab.dataOnly && !dataSelected) return false;
+    if (tab.selectionOnly && !hasSelection) return false;
     return true;
   });
 }
 
 /** Faixas Inserir + Exibir (+ contextuais) — modal embutido. */
 export function resolveEmbeddedComunicadoRibbonTabs(options?: {
-  chartSelected?: boolean;
-  tableSelected?: boolean;
-  shapeSelected?: boolean;
-  dataSelected?: boolean;
-  chartPartPrimitiveSelected?: boolean;
-  shapeChromeSelected?: boolean;
-  textOrMediaSelected?: boolean;
+  hasSelection?: boolean;
 }): DeckRibbonTabMeta[] {
-  const chartSelected = Boolean(options?.chartSelected);
-  const tableSelected = Boolean(options?.tableSelected);
-  const dataSelected = Boolean(options?.dataSelected);
-  const shapeSelected =
-    Boolean(options?.shapeSelected) ||
-    Boolean(options?.chartPartPrimitiveSelected) ||
-    Boolean(options?.shapeChromeSelected) ||
-    Boolean(options?.textOrMediaSelected);
+  const hasSelection = Boolean(options?.hasSelection);
   return DECK_RIBBON_TABS.filter((tab) => {
     if (!tab.customOnly) return false;
-    if (tab.chartOnly && !chartSelected) return false;
-    if (tab.tableOnly && !tableSelected) return false;
-    if (tab.shapeOnly && !shapeSelected) return false;
-    if (tab.dataOnly && !dataSelected) return false;
+    if (tab.selectionOnly && !hasSelection) return false;
     return true;
   });
 }

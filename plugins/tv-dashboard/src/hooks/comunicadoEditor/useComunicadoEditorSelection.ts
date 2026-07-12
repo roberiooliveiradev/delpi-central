@@ -31,9 +31,14 @@ import {
 import type {
   ComunicadoEditorContextValue,
   ComunicadoRibbonTabRequest,
+  SelectionPanelTab,
   TextEditorBridge,
   TextEditSelection,
 } from "../../components/comunicadoEditorContextCore";
+import {
+  isSelectionPanelTab,
+  normalizeSelectionRibbonTab,
+} from "../../utils/normalizeSelectionRibbonTab";
 
 type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
@@ -73,6 +78,23 @@ export function useComunicadoEditorSelection({
     ComunicadoEditorContextValue["textEditNamedStyleSelection"]
   >(null);
   const [ribbonTabRequest, setRibbonTabRequest] = useState<ComunicadoRibbonTabRequest | null>(null);
+  const [selectionPanelTab, setSelectionPanelTabState] = useState<SelectionPanelTab>("element");
+
+  const setSelectionPanelTab = useCallback((tab: SelectionPanelTab) => {
+    setSelectionPanelTabState(tab);
+  }, []);
+
+  const requestRibbonTab = useCallback((tab: ComunicadoRibbonTabRequest) => {
+    const normalized = normalizeSelectionRibbonTab(tab);
+    setRibbonTabRequest(normalized);
+    if (isSelectionPanelTab(normalized)) {
+      setSelectionPanelTabState(normalized);
+    }
+  }, []);
+
+  const clearRibbonTabRequest = useCallback(() => {
+    setRibbonTabRequest(null);
+  }, []);
 
   const textEditorBridgesRef = useRef<Map<string, TextEditorBridge>>(new Map());
   const editingTextIdRef = useRef<string | null>(editingTextId);
@@ -152,9 +174,9 @@ export function useComunicadoEditorSelection({
       setEditingTextId(null);
       clearPartSelections();
       if (selectedBlockType === "chart_view") {
-        setRibbonTabRequest("chart");
+        requestRibbonTab("element");
       } else if (selectedBlockType === "table_view") {
-        setRibbonTabRequest("table");
+        requestRibbonTab("element");
       } else if (
         selectedBlockType === "shape" ||
         selectedBlockType === "heading" ||
@@ -163,15 +185,15 @@ export function useComunicadoEditorSelection({
         selectedBlockType === "video" ||
         selectedBlockType === "kpi_view"
       ) {
-        setRibbonTabRequest("shape");
+        requestRibbonTab("element");
       } else if (
         selectedBlockType === "data_source" ||
         selectedBlockType?.startsWith("data_")
       ) {
-        setRibbonTabRequest("data");
+        requestRibbonTab("data");
       }
     },
-    [clearPartSelections, configRef, flushActiveTextEdit],
+    [clearPartSelections, configRef, flushActiveTextEdit, requestRibbonTab],
   );
 
   const clearSelection = useCallback(() => {
@@ -191,27 +213,9 @@ export function useComunicadoEditorSelection({
       setEditingKpiPart(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
-      const primitiveKinds = new Set([
-        "marker",
-        "series",
-        "chartArea",
-        "plotArea",
-        "axis",
-        "grid",
-      ]);
-      // Partes textuais → Formatar (tipografia); primitivos de desenho → Forma; resto → Gráfico.
-      if (
-        part.kind === "title" ||
-        part.kind === "legend" ||
-        part.kind === "axisTitle" ||
-        part.kind === "dataLabel"
-      ) {
-        setRibbonTabRequest("chart");
-      } else {
-        setRibbonTabRequest(primitiveKinds.has(part.kind) ? "shape" : "chart");
-      }
+      requestRibbonTab("element");
     },
-    [flushActiveTextEdit],
+    [flushActiveTextEdit, requestRibbonTab],
   );
 
   const clearChartPartSelection = useCallback(() => {
@@ -232,9 +236,9 @@ export function useComunicadoEditorSelection({
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
       setSelectedTablePart(part);
-      setRibbonTabRequest("table");
+      requestRibbonTab("element");
     },
-    [flushActiveTextEdit],
+    [flushActiveTextEdit, requestRibbonTab],
   );
 
   const clearTablePartSelection = useCallback(() => {
@@ -251,9 +255,9 @@ export function useComunicadoEditorSelection({
       setSelectedTablePart(null);
       setSelectedKpiPart(part);
       setEditingKpiPart(null);
-      setRibbonTabRequest("shape");
+      requestRibbonTab("element");
     },
-    [flushActiveTextEdit],
+    [flushActiveTextEdit, requestRibbonTab],
   );
 
   const clearKpiPartSelection = useCallback(() => {
@@ -300,14 +304,6 @@ export function useComunicadoEditorSelection({
     (blockId: string) => selectedIds.includes(blockId),
     [selectedIds],
   );
-
-  const requestRibbonTab = useCallback((tab: ComunicadoRibbonTabRequest) => {
-    setRibbonTabRequest(tab);
-  }, []);
-
-  const clearRibbonTabRequest = useCallback(() => {
-    setRibbonTabRequest(null);
-  }, []);
 
   const selected = useMemo(
     () => (selectedId ? blocks.find((block) => block.id === selectedId) ?? null : null),
@@ -486,6 +482,8 @@ export function useComunicadoEditorSelection({
     setRibbonTabRequest,
     requestRibbonTab,
     clearRibbonTabRequest,
+    selectionPanelTab,
+    setSelectionPanelTab,
     resetSelectionForSlide,
     flushActiveTextEdit,
   };

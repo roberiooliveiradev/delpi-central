@@ -2,7 +2,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import { TabHintCell } from "@delpi/plugin-ui/index";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
-import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
+import {
+  isSelectionPanelTab,
+  normalizeSelectionRibbonTab,
+} from "../utils/normalizeSelectionRibbonTab";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
@@ -55,14 +58,13 @@ type Props = {
 
 function isRibbonTab(
   tab: DeckRibbonTabId,
-): tab is "home" | "insert" | "chart" | "table" | "shape" | "data" | "view" {
+): tab is "home" | "insert" | "element" | "data" | "layers" | "view" {
   return (
     tab === "home" ||
     tab === "insert" ||
-    tab === "chart" ||
-    tab === "table" ||
-    tab === "shape" ||
+    tab === "element" ||
     tab === "data" ||
+    tab === "layers" ||
     tab === "view"
   );
 }
@@ -86,159 +88,48 @@ export function DeckEditorChrome({
   onSaveSlide,
 }: Props) {
   const editor = useOptionalComunicadoEditor();
-  const chartSelected = editor?.selected?.type === "chart_view";
-  const tableSelected = editor?.selected?.type === "table_view";
-  const shapeSelected = editor?.selected?.type === "shape";
-  const textOrMediaSelected = Boolean(
-    editor?.selected &&
-      (editor.selected.type === "heading" ||
-        editor.selected.type === "text" ||
-        editor.selected.type === "image" ||
-        editor.selected.type === "video"),
-  );
-  const dataSelected = Boolean(
-    editor?.selected &&
-      (editor.selected.type === "chart_view" ||
-        editor.selected.type === "table_view" ||
-        editor.selected.type === "kpi_view" ||
-        editor.selected.type === "data_source" ||
-        editor.selected.type.startsWith("data_")),
-  );
-  const shapeChromeSelected =
-    editor?.selected?.type === "kpi_view" ||
-    tableSelected ||
-    chartSelected;
-  const chartPartPrimitiveSelected = Boolean(
-    chartSelected &&
-      editor?.selectedChartPart &&
-      ["marker", "series", "chartArea", "plotArea", "axis", "grid"].includes(
-        editor.selectedChartPart.kind,
-      ),
-  );
-  const textFormatTarget = resolveSelectedTextFormatTarget({
-    selected: editor?.selected ?? null,
-    selectedKpiPart: editor?.selectedKpiPart,
-    selectedChartPart: editor?.selectedChartPart,
-  });
-  /** Tipografia de part KPI/gráfico (exceto eixo geométrico) — fica na aba do objeto. */
-  const textPartOnChart =
-    textFormatTarget?.mode === "part" &&
-    chartSelected &&
-    editor?.selectedChartPart?.kind !== "axis";
-  const textPartOnShape =
-    textFormatTarget?.mode === "part" &&
-    editor?.selected?.type === "kpi_view";
-  const shapeTextEditing =
-    Boolean(editor?.editingTextId) &&
-    Boolean(
-      editor?.selected &&
-        (editor.selected.type === "shape" ||
-          editor.selected.type === "heading" ||
-          editor.selected.type === "text") &&
-        editor.editingTextId === editor.selected.id,
-    );
-  const tabs = resolveDeckRibbonTabs(isCustomSlide, {
-    chartSelected,
-    tableSelected,
-    shapeSelected,
-    dataSelected,
-    chartPartPrimitiveSelected,
-    shapeChromeSelected,
-    textOrMediaSelected,
-  });
+  const hasSelection = Boolean(editor && editor.selectedIds.length > 0);
+  const tabs = resolveDeckRibbonTabs(isCustomSlide, { hasSelection });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
 
   useComunicadoRibbonTabSync((tab) => {
-    if (tab === "format") {
-      setActiveTab(
-        chartSelected && !chartPartPrimitiveSelected ? "chart" : tableSelected ? "table" : "shape",
-      );
-      return;
-    }
+    const normalized = normalizeSelectionRibbonTab(tab);
     if (
-      tab === "insert" ||
-      tab === "chart" ||
-      tab === "table" ||
-      tab === "shape" ||
-      tab === "data" ||
-      tab === "view"
+      normalized === "insert" ||
+      normalized === "element" ||
+      normalized === "data" ||
+      normalized === "layers" ||
+      normalized === "view"
     ) {
-      setActiveTab(tab);
+      setActiveTab(normalized);
     }
   });
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(
-        chartPartPrimitiveSelected || shapeTextEditing || textPartOnShape || textOrMediaSelected
-          ? "shape"
-          : textPartOnChart || chartSelected
-            ? "chart"
-            : tableSelected
-              ? "table"
-              : shapeSelected || shapeChromeSelected
-                ? "shape"
-                : dataSelected
-                  ? "data"
-                  : "home",
-      );
+      setActiveTab(hasSelection ? (editor?.selectionPanelTab ?? "element") : "home");
     }
-  }, [
-    activeTab,
-    tabs,
-    chartSelected,
-    tableSelected,
-    shapeSelected,
-    dataSelected,
-    chartPartPrimitiveSelected,
-    textPartOnChart,
-    textPartOnShape,
-    shapeTextEditing,
-    textOrMediaSelected,
-    shapeChromeSelected,
-  ]);
+  }, [activeTab, tabs, hasSelection, editor?.selectionPanelTab]);
 
   useEffect(() => {
-    if ((shapeTextEditing || textPartOnShape || textOrMediaSelected) && isCustomSlide) {
-      setActiveTab("shape");
-    } else if (chartPartPrimitiveSelected && isCustomSlide) {
-      setActiveTab("shape");
-    } else if (textPartOnChart && isCustomSlide) {
-      setActiveTab("chart");
-    } else if (shapeSelected && isCustomSlide) {
-      setActiveTab("shape");
-    } else if (tableSelected && isCustomSlide) {
-      setActiveTab("table");
-    } else if (shapeChromeSelected && isCustomSlide && !chartSelected && !tableSelected) {
-      setActiveTab("shape");
-    } else if (chartSelected && isCustomSlide) {
-      setActiveTab("chart");
-    } else if (dataSelected && isCustomSlide && !chartSelected && !tableSelected && !shapeSelected) {
-      setActiveTab("data");
-    }
-  }, [
-    chartSelected,
-    tableSelected,
-    shapeSelected,
-    shapeChromeSelected,
-    chartPartPrimitiveSelected,
-    textPartOnChart,
-    textPartOnShape,
-    shapeTextEditing,
-    textOrMediaSelected,
-    dataSelected,
-    isCustomSlide,
-    editor?.selectedId,
-    editor?.selectedChartPart,
-    editor?.selectedKpiPart,
-    editor?.editingTextId,
-  ]);
+    const panelTab = editor?.selectionPanelTab;
+    if (!hasSelection || !isCustomSlide || !panelTab) return;
+    setActiveTab(panelTab);
+  }, [editor?.selectionPanelTab, hasSelection, isCustomSlide]);
 
   useEffect(() => {
     if (activeTab === "slide" && !slide) {
       setActiveTab("home");
     }
   }, [activeTab, slide]);
+
+  function selectTab(tab: DeckRibbonTabId) {
+    setActiveTab(tab);
+    if (isSelectionPanelTab(tab)) {
+      editor?.setSelectionPanelTab(tab);
+      editor?.setDataPanelOpen(tab === "data");
+    }
+  }
 
   return (
     <section className="td-deck-chrome" aria-label="Editor da programação">
@@ -257,7 +148,7 @@ export function DeckEditorChrome({
                 icon={tab.icon}
                 active={activeTab === tab.id}
                 disabled={tab.disabledWhenNoSlide ? !slide : false}
-                onSelect={() => setActiveTab(tab.id)}
+                onSelect={() => selectTab(tab.id)}
                 cellClassName={[
                   "td-deck-chrome__tab-cell",
                   contextual ? "td-deck-chrome__tab-cell--contextual" : "",
@@ -290,10 +181,9 @@ export function DeckEditorChrome({
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
             {isCustomSlide &&
             (activeTab === "insert" ||
-              activeTab === "chart" ||
-              activeTab === "table" ||
-              activeTab === "shape" ||
+              activeTab === "element" ||
               activeTab === "data" ||
+              activeTab === "layers" ||
               activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}
