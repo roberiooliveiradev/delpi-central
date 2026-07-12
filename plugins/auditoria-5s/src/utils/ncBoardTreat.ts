@@ -12,6 +12,7 @@ export function formFromNcBoardItem(item: NcBoardItem): NcFormState {
     root_cause: item.root_cause?.trim() ?? "",
     corrective_action: item.corrective_action?.trim() ?? "",
     responsible_name: item.responsible_name?.trim() ?? "",
+    responsible_user_id: item.responsible_user_id ?? null,
     due_date: item.due_date ?? defaultDueDate(),
     priority: (item.priority as NcFormState["priority"]) ?? "",
   };
@@ -28,6 +29,7 @@ export function nonconformityFromBoardItem(item: NcBoardItem): Nonconformity | n
     root_cause: item.root_cause,
     corrective_action: item.corrective_action,
     responsible_name: item.responsible_name ?? "",
+    responsible_user_id: item.responsible_user_id ?? null,
     due_date: item.due_date ?? "",
     priority: item.priority as Nonconformity["priority"],
     status: item.status === "pending" ? "open" : item.status,

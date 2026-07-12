@@ -23,11 +23,16 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
     pending: 0,
     progressPct: 0,
   });
+  const [statsReady, setStatsReady] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [closeSignal, setCloseSignal] = useState(0);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
 
-  const canFinish = audit.status !== "closed" && stats.total > 0 && stats.finalized === stats.total;
+  // Sem candidatos a NC (ex.: 100%), ou todas as ações finalizadas.
+  const canFinish =
+    audit.status !== "closed" &&
+    statsReady &&
+    (stats.total === 0 || stats.finalized === stats.total);
 
   const handleFinish = () => {
     if (onRequestClose) {
@@ -35,6 +40,11 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
       return;
     }
     setCloseSignal((value) => value + 1);
+  };
+
+  const handleStatsChange = (next: NcTreatmentStats) => {
+    setStats(next);
+    setStatsReady(true);
   };
 
   return (
@@ -74,7 +84,7 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
           audit={audit}
           onAuditUpdated={onAuditUpdated}
           onClosed={onClosed}
-          onStatsChange={setStats}
+          onStatsChange={handleStatsChange}
           onLastSavedChange={setLastSavedAt}
           closeSignal={closeSignal}
         />

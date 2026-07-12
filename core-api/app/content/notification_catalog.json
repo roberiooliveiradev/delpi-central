@@ -66,6 +66,14 @@
       "kind": "app",
       "sourceApps": ["quality-action-plans"],
       "pluginId": "quality-action-plans"
+    },
+    "auditoria_5s": {
+      "label": "Auditoria 5S",
+      "icon": "clipboard-check",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["auditoria-5s"],
+      "pluginId": "auditoria-5s"
     }
   },
   "legacyCategoryAliases": {

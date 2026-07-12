@@ -88,6 +88,17 @@ Na lista de auditorias, menu **Mais ações** (⋯) por linha:
 
 Na tela de tratamento, a **foto tirada na avaliação** aparece imediatamente no card «Foto do antes» (badge «Da avaliação»), sem precisar preencher o plano de ação. Ao salvar o plano, a API copia a foto para a evidência oficial da NC (`seed_nc_before_from_response_attachment`).
 
+### Notificação ao designar responsável
+
+Ao criar ou atualizar o plano de NC com um responsável selecionado no directory (`responsible_user_id` + `responsible_name`), a api-delpi emite notificação no sino do portal (`POST /integrations/notifications`) para esse usuário — categoria `auditoria_5s` / `sourceApp: auditoria-5s`.
+
+- Dispara só quando o UUID do responsável **muda** (e não quando o responsável atribui a si mesmo).
+- Destinatário precisa ter acesso ao app `auditoria-5s` no portal (filtro RBAC do catálogo).
+- Flag: `AUDIT_5S_NOTIFICATIONS_ENABLED` (default `true`); requer `CORE_API_BASE_URL` + `CORE_API_INTEGRATIONS_SERVICE_TOKEN`.
+- CTA: `/apps/auditoria-5s/filial-01/nc-board` ou `filial-02` (abre a Gestão de não conformidades).
+
+Migration: `V040__audit_5s_nc_responsible_user_id.sql`.
+
 ## Homologação
 
 ```bash
@@ -105,7 +116,7 @@ bash ../../scripts/homologacao/check-audit-5s-api.sh
 
 As migrations do 5S ficam em `api-delpi/migrations/plugins/quality/` (plugin slug **`quality`**).
 
-Inclui `V037__audit_5s_response_attachment_unique.sql` (índice único: 1 foto por resposta/critério).
+Inclui `V037__audit_5s_response_attachment_unique.sql` (índice único: 1 foto por resposta/critério) e `V040__audit_5s_nc_responsible_user_id.sql` (UUID do responsável no plano de NC).
 
 **Pré-requisito:** `delpi-postgres-plugins` em execução (`Up`, não `Restarting`). Se o log mostrar `exec format error`, repuxar a imagem AMD64:
 

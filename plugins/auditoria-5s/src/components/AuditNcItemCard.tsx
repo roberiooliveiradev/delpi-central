@@ -24,7 +24,7 @@ type Props = {
   uploadingType: NcAttachmentType | null;
   onToggle: () => void;
   onChange: (patch: Partial<NcFormState>) => void;
-  onBlurSave: () => void;
+  onBlurSave: (patch?: Partial<NcFormState>) => void;
   onUpload: (type: NcAttachmentType, file: File) => Promise<void>;
   onFinalize: () => void;
 };

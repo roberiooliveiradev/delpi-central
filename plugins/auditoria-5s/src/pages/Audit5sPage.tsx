@@ -5,6 +5,7 @@ import {
   completeEvaluation,
   createArea,
   createAudit,
+  closeAudit,
   deleteAudit,
   forceDeleteAudit,
   deleteResponseAttachment,
@@ -42,9 +43,11 @@ import {
 } from "../components/CriterionScorePicker";
 import {
   auditListSubtitle,
+  auditViewFromPathname,
   branchFromPathname,
   canAccessNc,
-  ncActionLabel,
+  isPerfectAuditScore,
+  listPrimaryActionLabel,
   sensoName,
 } from "../constants/audit5s";
 import { useAudit5sRealtime } from "../hooks/useAudit5sRealtime";
@@ -62,7 +65,7 @@ type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard" | "catalog" |
 
 export function Audit5sPage({ pathname }: Props) {
   const branch = branchFromPathname(pathname);
-  const [view, setView] = useState<View>("list");
+  const [view, setView] = useState<View>(() => auditViewFromPathname(pathname) ?? "list");
   const [audits, setAudits] = useState<AuditListItem[]>([]);
   const [areas, setAreas] = useState<AuditArea[]>([]);
   const [selectedAudit, setSelectedAudit] = useState<AuditDetail | null>(null);
@@ -107,6 +110,13 @@ export function Audit5sPage({ pathname }: Props) {
   useEffect(() => {
     void loadList();
   }, [loadList]);
+
+  useEffect(() => {
+    const deepView = auditViewFromPathname(pathname);
+    if (deepView) {
+      setView(deepView);
+    }
+  }, [pathname]);
 
   const handleDeleteAudit = async (auditId: string, status: string) => {
     setError(null);
@@ -158,6 +168,22 @@ export function Audit5sPage({ pathname }: Props) {
       await openAudit(auditId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao reabrir auditoria.");
+      throw err;
+    }
+  };
+
+  const handleFinalizeAudit = async (auditId: string) => {
+    setError(null);
+    setSuccess(null);
+    try {
+      const closed = await closeAudit(auditId);
+      if (selectedAudit?.id === auditId) {
+        setSelectedAudit(null);
+      }
+      await loadList();
+      setSuccess(`Auditoria ${closed.audit_code} finalizada.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao finalizar auditoria.");
       throw err;
     }
   };
@@ -441,8 +467,11 @@ export function Audit5sPage({ pathname }: Props) {
       await loadList();
       setSelectedAudit(null);
       setView("list");
+      const actionLabel = listPrimaryActionLabel(audit.status, audit.overall_score_pct);
       setSuccess(
-        `Avaliação ${audit.audit_code} concluída. Use o botão "${ncActionLabel(audit.status)}" na lista para tratar as não conformidades.`,
+        isPerfectAuditScore(audit.overall_score_pct)
+          ? `Avaliação ${audit.audit_code} concluída com 100%. Use "${actionLabel}" na lista para encerrar a auditoria.`
+          : `Avaliação ${audit.audit_code} concluída. Use o botão "${actionLabel}" na lista para tratar as não conformidades.`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao concluir avaliação.");
@@ -571,6 +600,7 @@ export function Audit5sPage({ pathname }: Props) {
           onOpenAudit={(auditId) => void openAudit(auditId)}
           onOpenNc={(auditId) => void openNc(auditId)}
           onEditAudit={(auditId) => void openEditAudit(auditId)}
+          onFinalizeAudit={handleFinalizeAudit}
           onReopenAudit={handleReopenAudit}
           onDeleteAudit={handleDeleteAudit}
         />
@@ -763,7 +793,30 @@ export function Audit5sPage({ pathname }: Props) {
 
           {selectedAudit.status !== "draft" && (
             <div className="a5s-audit-complete-hint">
-              <p>Avaliação concluída. Volte à lista e acesse <strong>Tratar NC</strong> para registrar não conformidades.</p>
+              <p>
+                {isPerfectAuditScore(
+                  selectedAudit.scores.overall_percentual ?? selectedAudit.overall_score_pct,
+                )
+                  ? (
+                    <>
+                      Avaliação concluída com 100%. Volte à lista e acesse{" "}
+                      <strong>Finalizar</strong> para encerrar a auditoria.
+                    </>
+                  )
+                  : (
+                    <>
+                      Avaliação concluída. Volte à lista e acesse{" "}
+                      <strong>
+                        {listPrimaryActionLabel(
+                          selectedAudit.status,
+                          selectedAudit.scores.overall_percentual ??
+                            selectedAudit.overall_score_pct,
+                        )}
+                      </strong>{" "}
+                      para registrar não conformidades.
+                    </>
+                  )}
+              </p>
             </div>
           )}
 

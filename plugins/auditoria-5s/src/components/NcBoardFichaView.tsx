@@ -16,6 +16,7 @@ import { formatDisplayDate } from "../utils/dates";
 import { resolveNcBoardRowStatus } from "../utils/ncDueSla";
 import { formatPersonName } from "../utils/formatPersonName";
 import { NcAttachmentPreview } from "./NcAttachmentPreview";
+import { NcNoteMentionText } from "./NcNoteMentionText";
 import { NcWorkflowPill } from "./NcWorkflowPill";
 import { ResponseAttachmentPreview } from "./ResponseAttachmentPreview";
 
@@ -169,7 +170,7 @@ export function NcBoardFichaView({ item, treatmentItem, attachmentsByNcId, actio
                   <strong>{formatPersonName(action.actor_display_name) || action.actor_display_name}</strong>
                   <time dateTime={action.created_at}>{formatActionTimestamp(action.created_at)}</time>
                 </div>
-                <p>{action.description}</p>
+                <NcNoteMentionText text={action.description} />
               </li>
             ))}
           </ol>

@@ -7,6 +7,7 @@ export type NcFormState = {
   root_cause: string;
   corrective_action: string;
   responsible_name: string;
+  responsible_user_id: string | null;
   due_date: string;
   priority: "" | "high" | "medium" | "low";
 };
@@ -43,6 +44,7 @@ export function emptyNcForm(): NcFormState {
     root_cause: "",
     corrective_action: "",
     responsible_name: "",
+    responsible_user_id: null,
     due_date: defaultDueDate(),
     priority: "",
   };
@@ -54,6 +56,7 @@ export function formFromNonconformity(nc: Nonconformity): NcFormState {
     root_cause: nc.root_cause ?? "",
     corrective_action: nc.corrective_action ?? "",
     responsible_name: nc.responsible_name ?? "",
+    responsible_user_id: nc.responsible_user_id ?? null,
     due_date: nc.due_date ?? defaultDueDate(),
     priority: nc.priority ?? "",
   };
@@ -93,6 +96,7 @@ export function canCreateNc(form: NcFormState): boolean {
   return (
     form.description.trim().length >= 3 &&
     form.responsible_name.trim().length >= 2 &&
+    Boolean(form.responsible_user_id?.trim()) &&
     Boolean(form.due_date)
   );
 }
@@ -164,6 +168,7 @@ export function formsEqual(a: NcFormState, b: NcFormState): boolean {
     a.root_cause === b.root_cause &&
     a.corrective_action === b.corrective_action &&
     a.responsible_name === b.responsible_name &&
+    a.responsible_user_id === b.responsible_user_id &&
     a.due_date === b.due_date &&
     a.priority === b.priority
   );

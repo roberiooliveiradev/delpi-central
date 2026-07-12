@@ -30,7 +30,7 @@ export function AuditDetailHero({ audit, showBack, onBack }: Props) {
       ? Math.round((audit.progress.scored / audit.progress.total) * 100)
       : 0;
   const overallScore = audit.scores.overall_percentual ?? audit.overall_score_pct;
-  const statusVariant = auditStatusVariant(audit.status);
+  const statusVariant = auditStatusVariant(audit.status, overallScore);
   const auditorNames = audit.auditors
     .map((item) => formatPersonName(item.display_name))
     .filter(Boolean);
@@ -61,7 +61,7 @@ export function AuditDetailHero({ audit, showBack, onBack }: Props) {
 
         <div className="a5s-hero__actions">
           <span className={`a5s-status-badge a5s-status-badge--${statusVariant}`}>
-            {auditStatusLabel(audit.status)}
+            {auditStatusLabel(audit.status, overallScore)}
           </span>
           {showBack && onBack ? (
             <button

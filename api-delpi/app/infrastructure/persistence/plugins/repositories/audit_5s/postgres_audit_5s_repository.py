@@ -1132,6 +1132,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                    nc.root_cause,
                    nc.corrective_action,
                    nc.responsible_name,
+                   nc.responsible_user_id,
                    nc.due_date,
                    nc.priority,
                    nc.status,
@@ -1177,8 +1178,16 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             "root_cause": None,
             "corrective_action": None,
             "priority": None,
+            "responsible_user_id": row.get("responsible_user_id"),
             "updated_at": row.get("created_at"),
         }
+
+    @staticmethod
+    def _normalize_responsible_user_id(value: str | None) -> str | None:
+        normalized = str(value or "").strip()
+        if not normalized or normalized == "unknown":
+            return None
+        return normalized
 
     def list_nonconformities(self, audit_id: str) -> list[dict[str, Any]]:
         try:
@@ -1198,6 +1207,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         root_cause: str | None = None,
         corrective_action: str | None = None,
         priority: str | None = None,
+        responsible_user_id: str | None = None,
         created_by_user_id: str,
     ) -> dict[str, Any]:
         audit = self.fetch_one(
@@ -1234,6 +1244,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             response_id=response_id,
             description=description.strip(),
             responsible_name=responsible_name.strip(),
+            responsible_user_id=self._normalize_responsible_user_id(responsible_user_id),
             due_date=due_date,
             root_cause=self._normalize_text(root_cause),
             corrective_action=self._normalize_text(corrective_action),
@@ -1282,6 +1293,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         response_id: str,
         description: str,
         responsible_name: str,
+        responsible_user_id: str | None,
         due_date: str,
         root_cause: str | None,
         corrective_action: str | None,
@@ -1295,6 +1307,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             root_cause,
             corrective_action,
             responsible_name,
+            responsible_user_id,
             due_date,
             priority,
             created_by_user_id,
@@ -1309,10 +1322,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                     root_cause,
                     corrective_action,
                     responsible_name,
+                    responsible_user_id,
                     due_date,
                     priority,
                     created_by_user_id
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id,
                           audit_id,
                           response_id,
@@ -1320,6 +1334,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                           root_cause,
                           corrective_action,
                           responsible_name,
+                          responsible_user_id,
                           due_date,
                           priority,
                           status,
@@ -1373,6 +1388,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                           root_cause,
                           corrective_action,
                           responsible_name,
+                          responsible_user_id,
                           due_date,
                           priority,
                           status,
@@ -1387,7 +1403,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 (clause, param)
                 for clause, param in zip(updates, params)
                 if not clause.startswith(
-                    ("root_cause =", "corrective_action =", "priority ="),
+                    (
+                        "root_cause =",
+                        "corrective_action =",
+                        "priority =",
+                        "responsible_user_id =",
+                    ),
                 )
             ]
             if not legacy_pairs:
@@ -1425,6 +1446,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         nonconformity_id: str,
         description: str | None = None,
         responsible_name: str | None = None,
+        responsible_user_id: str | None = None,
+        update_responsible_user_id: bool = False,
         due_date: str | None = None,
         root_cause: str | None = None,
         corrective_action: str | None = None,
@@ -1433,7 +1456,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
     ) -> dict[str, Any]:
         nc = self.fetch_one(
             """
-            SELECT id, audit_id, status
+            SELECT id, audit_id, status, responsible_user_id
               FROM quality.audit_5s_nonconformities
              WHERE id = %s
             """,
@@ -1456,6 +1479,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         updates: list[str] = []
         params: list[Any] = []
         payload: dict[str, Any] = {}
+        previous_responsible_user_id = self._normalize_responsible_user_id(
+            nc.get("responsible_user_id"),
+        )
 
         if description is not None:
             updates.append("description = %s")
@@ -1465,6 +1491,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             updates.append("responsible_name = %s")
             params.append(responsible_name.strip())
             payload["responsible_name"] = responsible_name.strip()
+        if update_responsible_user_id:
+            normalized_user_id = self._normalize_responsible_user_id(responsible_user_id)
+            updates.append("responsible_user_id = %s")
+            params.append(normalized_user_id)
+            payload["responsible_user_id"] = normalized_user_id
+            payload["previous_responsible_user_id"] = previous_responsible_user_id
         if due_date is not None:
             updates.append("due_date = %s")
             params.append(due_date)
@@ -1494,6 +1526,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                        root_cause,
                        corrective_action,
                        responsible_name,
+                       responsible_user_id,
                        due_date,
                        priority,
                        status,
@@ -1540,6 +1573,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         row = self._maybe_promote_nc_to_in_progress(nonconformity_id, row)
         self.commit()
+        if "previous_responsible_user_id" in payload:
+            row = {
+                **row,
+                "previous_responsible_user_id": payload.get("previous_responsible_user_id"),
+            }
         return row
 
     def add_nc_action(
@@ -2055,6 +2093,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                    nc.root_cause,
                    nc.corrective_action,
                    nc.responsible_name,
+                   nc.responsible_user_id,
                    nc.due_date,
                    nc.priority,
                    nc.status,
@@ -2444,6 +2483,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                    nc.root_cause,
                    nc.corrective_action,
                    nc.responsible_name,
+                   nc.responsible_user_id,
                    nc.due_date,
                    nc.priority,
                    nc.status,
@@ -2617,6 +2657,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             "root_cause": None,
             "corrective_action": None,
             "responsible_name": None,
+            "responsible_user_id": None,
             "due_date": None,
             "priority": None,
             "status": "pending",
@@ -2742,6 +2783,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             "root_cause": row.get("root_cause"),
             "corrective_action": row.get("corrective_action"),
             "responsible_name": row.get("responsible_name"),
+            "responsible_user_id": row.get("responsible_user_id"),
             "due_date": str(due_date)[:10] if due_date else None,
             "priority": row.get("priority"),
             "status": row.get("status"),

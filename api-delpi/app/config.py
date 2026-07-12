@@ -230,6 +230,12 @@ class Settings:
     )
     PAC_QUALITY_COORDINATOR_USER_IDS: str | None = _get_env("PAC_QUALITY_COORDINATOR_USER_IDS")
 
+    # ==========================
+    # Auditoria 5S — notificações in-app (responsável NC)
+    # ==========================
+    AUDIT_5S_NOTIFICATIONS_ENABLED: bool = (
+        _get_env("AUDIT_5S_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
+    )
     OLLAMA_BASE_URL: str | None = _get_env("OLLAMA_BASE_URL", default="http://ollama:11434")
     EMBEDDING_MODEL: str = _get_env("EMBEDDING_MODEL", default="bge-m3")
     EMBEDDING_DIMENSIONS: int = int(_get_env("EMBEDDING_DIMENSIONS", default="1024") or "1024")

@@ -53,6 +53,21 @@ export function branchFromPathname(pathname?: string): "01" | "02" | null {
   return null;
 }
 
+/** Deep link interno do MFE a partir da URL do portal. */
+export function auditViewFromPathname(
+  pathname?: string,
+): "nc-board" | null {
+  if (!pathname) return null;
+  const normalized = pathname.replace(/\/+$/, "");
+  if (
+    normalized.endsWith("/nc-board") ||
+    normalized.includes("/nc-board/")
+  ) {
+    return "nc-board";
+  }
+  return null;
+}
+
 export function shiftLabel(value: string): string {
   return SHIFTS.find((item) => item.value === value)?.label ?? value;
 }
@@ -71,7 +86,23 @@ const NC_STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelada",
 };
 
-export function auditStatusLabel(value: string): string {
+/** 100% = todos os critérios aplicáveis na nota máxima → sem candidatos a NC. */
+export function isPerfectAuditScore(scorePct: number | null | undefined): boolean {
+  return scorePct != null && Number(scorePct) >= 100;
+}
+
+/** Avaliação concluída com 100%: pode encerrar sem tratar NC. */
+export function canFinalizeWithoutNc(
+  status: string,
+  scorePct?: number | null,
+): boolean {
+  return status === "evaluation_complete" && isPerfectAuditScore(scorePct);
+}
+
+export function auditStatusLabel(value: string, scorePct?: number | null): string {
+  if (canFinalizeWithoutNc(value, scorePct)) {
+    return "Pronto para finalizar";
+  }
   return AUDIT_STATUS_LABELS[value] ?? value;
 }
 
@@ -79,9 +110,23 @@ export function auditNeedsNcAttention(status: string): boolean {
   return status === "evaluation_complete" || status === "nc_in_progress";
 }
 
+/** Há NC real a tratar (status de fluxo + score abaixo de 100%). */
+export function auditRequiresNcTreatment(
+  status: string,
+  scorePct?: number | null,
+): boolean {
+  if (!auditNeedsNcAttention(status)) return false;
+  if (canFinalizeWithoutNc(status, scorePct)) return false;
+  return true;
+}
+
 export function auditStatusVariant(
   value: string,
-): "draft" | "pending-nc" | "nc" | "closed" | "default" {
+  scorePct?: number | null,
+): "draft" | "complete" | "pending-nc" | "nc" | "closed" | "default" {
+  if (canFinalizeWithoutNc(value, scorePct)) {
+    return "complete";
+  }
   switch (value) {
     case "draft":
       return "draft";
@@ -125,7 +170,10 @@ export function canReopenEvaluation(status: string): boolean {
   return status === "evaluation_complete" || status === "nc_in_progress";
 }
 
-export function ncActionLabel(status: string): string {
+export function ncActionLabel(status: string, scorePct?: number | null): string {
+  if (canFinalizeWithoutNc(status, scorePct)) {
+    return "Finalizar";
+  }
   switch (status) {
     case "evaluation_complete":
       return "Tratar NC";
@@ -136,6 +184,16 @@ export function ncActionLabel(status: string): string {
     default:
       return "NC";
   }
+}
+
+export function listPrimaryActionLabel(
+  status: string,
+  scorePct?: number | null,
+): string {
+  if (status === "draft") return "Continuar";
+  if (canFinalizeWithoutNc(status, scorePct)) return "Finalizar";
+  if (canAccessNc(status)) return ncActionLabel(status, scorePct);
+  return "Ver avaliação";
 }
 
 export const NC_PRIORITY_OPTIONS = [

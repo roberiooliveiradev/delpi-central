@@ -82,9 +82,9 @@ export function AuditDashboardTable({
                   </td>
                   <td data-label="Status">
                     <span
-                      className={`a5s-status-badge a5s-status-badge--${auditStatusVariant(item.status)} a5s-status-badge--table`}
+                      className={`a5s-status-badge a5s-status-badge--${auditStatusVariant(item.status, item.overall_score_pct)} a5s-status-badge--table`}
                     >
-                      {auditStatusLabel(item.status)}
+                      {auditStatusLabel(item.status, item.overall_score_pct)}
                     </span>
                   </td>
                   <td data-label="NCs">

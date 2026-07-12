@@ -119,11 +119,16 @@ export function NcBoardTreatModal({ item, open, onClose, onSaved }: Props) {
     persistedFormRef.current = nextForm;
   };
 
-  const handleSave = async () => {
+  const handleSave = async (override?: Partial<NcFormState>) => {
     if (!item || !treatmentItem || !form || readOnly) return;
 
+    const currentForm: NcFormState = { ...form, ...override };
+    if (override) {
+      setForm(currentForm);
+    }
+
     const persisted = persistedFormRef.current;
-    if (!persisted || formsEqual(form, persisted)) return;
+    if (!persisted || formsEqual(currentForm, persisted)) return;
     if (treatmentItem.nc?.status === "closed") return;
 
     setSaving(true);
@@ -131,16 +136,17 @@ export function NcBoardTreatModal({ item, open, onClose, onSaved }: Props) {
 
     try {
       if (!treatmentItem.nc) {
-        if (!canCreateNc(form)) return;
+        if (!canCreateNc(currentForm)) return;
 
         const created = await createNonconformity(item.audit_id, {
           response_id: treatmentItem.responseId,
-          description: form.description.trim(),
-          responsible_name: form.responsible_name.trim(),
-          due_date: form.due_date,
-          root_cause: normalizeOptionalText(form.root_cause),
-          corrective_action: normalizeOptionalText(form.corrective_action),
-          priority: form.priority || null,
+          description: currentForm.description.trim(),
+          responsible_name: currentForm.responsible_name.trim(),
+          responsible_user_id: currentForm.responsible_user_id,
+          due_date: currentForm.due_date,
+          root_cause: normalizeOptionalText(currentForm.root_cause),
+          corrective_action: normalizeOptionalText(currentForm.corrective_action),
+          priority: currentForm.priority || null,
         });
 
         upsertNc(created);
@@ -151,13 +157,20 @@ export function NcBoardTreatModal({ item, open, onClose, onSaved }: Props) {
           // Plano salvo; anexos podem ser recarregados depois.
         }
       } else {
+        if (!currentForm.responsible_name.trim() || !currentForm.responsible_user_id?.trim()) {
+          // Evita PATCH inválido ao limpar responsável; só persiste seleção completa.
+          setForm(currentForm);
+          return;
+        }
+
         const updated = await updateNonconformity(treatmentItem.nc.id, {
-          description: form.description.trim(),
-          root_cause: normalizeOptionalText(form.root_cause),
-          corrective_action: normalizeOptionalText(form.corrective_action),
-          responsible_name: form.responsible_name.trim(),
-          due_date: form.due_date,
-          priority: form.priority || null,
+          description: currentForm.description.trim(),
+          root_cause: normalizeOptionalText(currentForm.root_cause),
+          corrective_action: normalizeOptionalText(currentForm.corrective_action),
+          responsible_name: currentForm.responsible_name.trim(),
+          responsible_user_id: currentForm.responsible_user_id,
+          due_date: currentForm.due_date,
+          priority: currentForm.priority || null,
         });
         upsertNc({ ...treatmentItem.nc, ...updated });
       }
@@ -264,8 +277,8 @@ export function NcBoardTreatModal({ item, open, onClose, onSaved }: Props) {
               finalizing={finalizing}
               uploadingType={uploadingType}
               onChange={(patch) => setForm((prev) => (prev ? { ...prev, ...patch } : prev))}
-              onBlurSave={() => {
-                void handleSave();
+              onBlurSave={(patch) => {
+                void handleSave(patch);
               }}
               onUpload={handleUpload}
               onFinalize={() => {

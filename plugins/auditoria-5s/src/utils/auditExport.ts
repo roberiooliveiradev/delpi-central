@@ -57,7 +57,7 @@ export function buildAuditExportDocument(data: AuditExportData): ExportDocument 
     ["Responsável", formatPersonName(detail.area_responsible) || detail.area_responsible || "—"],
     ["Filial", detail.branch_code],
     ["Turno", shiftLabel(detail.shift)],
-    ["Status", auditStatusLabel(detail.status)],
+    ["Status", auditStatusLabel(detail.status, overallScore)],
     ["Auditores", auditorNames || "—"],
     ["% Geral", overallScore != null ? `${overallScore}%` : "—"],
     [

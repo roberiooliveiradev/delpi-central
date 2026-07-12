@@ -3,6 +3,7 @@ import {
   Bell,
   Cake,
   Calendar,
+  ClipboardCheck,
   ClipboardList,
   KeyRound,
   Megaphone,
@@ -65,6 +66,15 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       sourceApps: ["quality-action-plans"],
       pluginId: "quality-action-plans",
     },
+    {
+      id: "auditoria_5s",
+      label: "Auditoria 5S",
+      icon: "clipboard-check",
+      mutable: true,
+      kind: "app",
+      sourceApps: ["auditoria-5s"],
+      pluginId: "auditoria-5s",
+    },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",
@@ -81,6 +91,7 @@ const ICON_BY_NAME: Record<string, LucideIcon> = {
   "message-circle": MessageCircle,
   activity: Activity,
   "clipboard-list": ClipboardList,
+  "clipboard-check": ClipboardCheck,
 };
 
 export function resolveNotificationCategoryId(
