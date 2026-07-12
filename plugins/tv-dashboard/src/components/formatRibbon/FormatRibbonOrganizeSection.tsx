@@ -1,14 +1,9 @@
-import { FieldLabel, HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
-import {
-  resolveBlockShapeChromeStyle,
-  blockUsesInnerShapeChrome,
-} from "@delpi/tv-dashboard-presentation";
+import { FieldLabel, HintAction } from "@delpi/plugin-ui/index";
 import { ArrowDown, ArrowUp, Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
-import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonSelect } from "../tdRibbonUi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 
@@ -17,7 +12,7 @@ type Labels = Record<string, string>;
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
-/** Organizar / opacidade / borda — sombra e raio ficam em Aparência e Posição e tamanho. */
+/** Organizar / opacidade — borda/contorno, sombra e raio ficam em Aparência e Posição e tamanho. */
 export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }) {
   const {
     selected,
@@ -34,17 +29,6 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
 
   const isMediaBlock = selected.type === "image" || selected.type === "video";
   const isImageBlock = selected.type === "image";
-  const innerChrome = blockUsesInnerShapeChrome(selected)
-    ? resolveBlockShapeChromeStyle(selected)
-    : null;
-  const borderWidth = innerChrome?.strokeWidth ?? selected.style?.borderWidth ?? 0;
-  const borderColor = innerChrome
-    ? !innerChrome.stroke || innerChrome.stroke === "transparent"
-      ? undefined
-      : innerChrome.stroke
-    : !selected.style?.borderColor || selected.style.borderColor === "transparent"
-      ? undefined
-      : selected.style.borderColor;
 
   return (
     <DeckRibbonGroup label="Organizar" hint={H.organize}>
@@ -134,43 +118,6 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
               />
             </>
           ) : null}
-          <FieldLabel
-            htmlFor="td-block-border-width"
-            label="Borda"
-            hint={H.borderWidth}
-            className="td-deck-ribbon__field-label"
-          />
-          <NativeTextControl
-            id="td-block-border-width"
-            type="number"
-            className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-            min={0}
-            max={12}
-            value={borderWidth}
-            onChange={(value) =>
-              updateSelectedStyle({
-                borderWidth: Number(value) || 0,
-                borderColor: borderColor ?? "#000000",
-              })
-            }
-          />
-          <TvRibbonColorPicker
-            label="Borda"
-            ariaLabel="Cor da borda"
-            hint={H.borderColor}
-            inline
-            variant="outline"
-            value={borderColor}
-            onChange={(color) =>
-              updateSelectedStyle({
-                borderColor: color,
-                borderWidth: Math.max(1, borderWidth || 1),
-              })
-            }
-            onNoFill={() =>
-              updateSelectedStyle({ borderColor: "transparent", borderWidth: 0 })
-            }
-          />
         </div>
       </div>
     </DeckRibbonGroup>
