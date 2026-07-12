@@ -1,5 +1,6 @@
 import { API_BASE } from "../constants/audit5s";
 import type { AuditDashboardData, AuditDashboardFilterParams } from "../types/auditDashboard";
+import type { NcBoardData, NcBoardFilterParams } from "../types/ncManagement";
 import {
   type ApiEnvelope,
   httpDelete,
@@ -447,6 +448,33 @@ export async function fetchAudit5sDashboard(params: AuditDashboardFilterParams) 
   const query = buildDashboardQuery(params);
   const res = await httpGet<ApiEnvelope<AuditDashboardData>>(
     `${API_BASE}/analytics/dashboard?${query}`,
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+function buildNcBoardQuery(params: NcBoardFilterParams): string {
+  const search = new URLSearchParams();
+  search.set("branch", params.branch);
+  search.set("date_start", params.date_start);
+  search.set("date_end", params.date_end);
+  search.set("page", String(params.page));
+  search.set("page_size", String(params.page_size));
+  if (params.area_id) search.set("area_id", params.area_id);
+  if (params.shift) search.set("shift", params.shift);
+  if (params.status) search.set("status", params.status);
+  if (params.priority) search.set("priority", params.priority);
+  if (params.responsible) search.set("responsible", params.responsible);
+  if (params.overdue_only) search.set("overdue_only", "true");
+  if (params.senso_order != null) search.set("senso_order", String(params.senso_order));
+  if (params.search) search.set("search", params.search);
+  if (params.sort) search.set("sort", params.sort);
+  return search.toString();
+}
+
+export async function fetchNcBoard(params: NcBoardFilterParams) {
+  const query = buildNcBoardQuery(params);
+  const res = await httpGet<ApiEnvelope<NcBoardData>>(
+    `${API_BASE}/nonconformities?${query}`,
   );
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }

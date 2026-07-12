@@ -28,6 +28,7 @@ import { AuditNativeTextAreaField } from "../components/auditFormFields";
 import { AuditListView } from "../components/AuditListView";
 import { AuditDashboardPage } from "./AuditDashboardPage";
 import { AuditCatalogPage } from "./AuditCatalogPage";
+import { NcManagementPage } from "./NcManagementPage";
 import { AuditDetailHero } from "../components/AuditDetailHero";
 import { AuditNcView } from "../components/AuditNcView";
 import { CriterionPhotoSection } from "../components/CriterionPhotoSection";
@@ -57,7 +58,7 @@ type Props = {
   pathname?: string;
 };
 
-type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard" | "catalog";
+type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard" | "catalog" | "nc-board";
 
 export function Audit5sPage({ pathname }: Props) {
   const branch = branchFromPathname(pathname);
@@ -83,6 +84,7 @@ export function Audit5sPage({ pathname }: Props) {
     buildDefaultAuditors,
   );
   const [editingAuditId, setEditingAuditId] = useState<string | null>(null);
+  const [returnView, setReturnView] = useState<View>("list");
 
   const loadList = useCallback(async () => {
     if (!branch) return;
@@ -160,7 +162,7 @@ export function Audit5sPage({ pathname }: Props) {
     }
   };
 
-  const openNc = async (auditId: string) => {
+  const openNc = async (auditId: string, fromView: View = "list") => {
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -170,6 +172,7 @@ export function Audit5sPage({ pathname }: Props) {
         setError("Conclua a avaliação dos critérios antes de tratar as não conformidades.");
         return;
       }
+      setReturnView(fromView);
       setSelectedAudit(detail);
       setView("nc");
     } catch (err) {
@@ -183,7 +186,8 @@ export function Audit5sPage({ pathname }: Props) {
     setSelectedAudit(null);
     setEditingAuditId(null);
     setError(null);
-    setView("list");
+    setView(returnView);
+    setReturnView("list");
   };
 
   const openNewAudit = () => {
@@ -503,7 +507,7 @@ export function Audit5sPage({ pathname }: Props) {
 
   const handleDashboardItem = (item: AuditDashboardItem) => {
     if (canAccessNc(item.status)) {
-      void openNc(item.id);
+      void openNc(item.id, "dashboard");
       return;
     }
     void openAudit(item.id);
@@ -520,16 +524,18 @@ export function Audit5sPage({ pathname }: Props) {
           ? "Registre ações corretivas para os critérios com nota baixa desta auditoria."
           : view === "dashboard"
             ? "Acompanhe a evolução das auditorias com filtros e gráficos gerenciais."
+            : view === "nc-board"
+              ? "Acompanhe planos de ação, responsáveis, prazos e progresso das não conformidades."
             : view === "catalog"
               ? "Edite e publique o catálogo de critérios desta filial."
             : auditListSubtitle(branch);
 
   return (
     <div
-      className={`dashboard-auditoria-5s dashboard-page a5s-app ${view === "list" ? "a5s-app--dashboard" : ""} ${view === "nc" ? "a5s-app--nc" : ""} ${view === "dashboard" ? "a5s-app--analytics" : ""}`}
+      className={`dashboard-auditoria-5s dashboard-page a5s-app ${view === "list" ? "a5s-app--dashboard" : ""} ${view === "nc" ? "a5s-app--nc" : ""} ${view === "dashboard" ? "a5s-app--analytics" : ""} ${view === "nc-board" ? "a5s-app--nc-board" : ""}`}
     >
       <div className="a5s-app-shell">
-      {view !== "list" ? (
+      {view !== "list" && view !== "audit" ? (
         <AuditPageHeader
           branch={branch}
           title={
@@ -537,6 +543,8 @@ export function Audit5sPage({ pathname }: Props) {
               ? "Tratar não conformidades"
               : view === "dashboard"
                 ? "Dashboard gerencial"
+                : view === "nc-board"
+                  ? "Gestão de não conformidades"
                 : view === "catalog"
                   ? "Critérios da auditoria"
                 : undefined
@@ -558,6 +566,7 @@ export function Audit5sPage({ pathname }: Props) {
           loading={loading}
           onNew={openNewAudit}
           onOpenDashboard={() => setView("dashboard")}
+          onOpenNcBoard={() => setView("nc-board")}
           onOpenCatalog={() => setView("catalog")}
           onOpenAudit={(auditId) => void openAudit(auditId)}
           onOpenNc={(auditId) => void openNc(auditId)}
@@ -574,6 +583,10 @@ export function Audit5sPage({ pathname }: Props) {
           audits={audits}
           onOpenItem={handleDashboardItem}
         />
+      )}
+
+      {view === "nc-board" && (
+        <NcManagementPage branch={branch} areas={areas} audits={audits} />
       )}
 
       {view === "catalog" && <AuditCatalogPage branch={branch} />}
@@ -613,17 +626,18 @@ export function Audit5sPage({ pathname }: Props) {
       )}
 
       {view === "audit" && selectedAudit && (
-        <section className="a5s-panel">
-          <AuditRealtimeBar
-            connected={connected}
-            connectionError={connectionError}
-            presence={presence}
-            notice={notice}
-            onDismissNotice={dismissNotice}
-          />
-          <AuditDetailHero audit={selectedAudit} />
+        <>
+          <AuditDetailHero audit={selectedAudit} showBack onBack={handleBack} />
+          <section className="a5s-panel">
+            <AuditRealtimeBar
+              connected={connected}
+              connectionError={connectionError}
+              presence={presence}
+              notice={notice}
+              onDismissNotice={dismissNotice}
+            />
 
-          <AuditSensoScoreCards
+            <AuditSensoScoreCards
             audit={selectedAudit}
             sensoNamesByOrder={sensoNamesByOrder}
             activeSenso={activeSenso}
@@ -768,7 +782,8 @@ export function Audit5sPage({ pathname }: Props) {
               Voltar aos sensos
             </button>
           </footer>
-        </section>
+          </section>
+        </>
       )}
 
       {view === "nc" && selectedAudit && (

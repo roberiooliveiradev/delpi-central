@@ -75,12 +75,18 @@ export function auditStatusLabel(value: string): string {
   return AUDIT_STATUS_LABELS[value] ?? value;
 }
 
-export function auditStatusVariant(value: string): "draft" | "complete" | "nc" | "closed" | "default" {
+export function auditNeedsNcAttention(status: string): boolean {
+  return status === "evaluation_complete" || status === "nc_in_progress";
+}
+
+export function auditStatusVariant(
+  value: string,
+): "draft" | "pending-nc" | "nc" | "closed" | "default" {
   switch (value) {
     case "draft":
       return "draft";
     case "evaluation_complete":
-      return "complete";
+      return "pending-nc";
     case "nc_in_progress":
       return "nc";
     case "closed":
@@ -90,8 +96,25 @@ export function auditStatusVariant(value: string): "draft" | "complete" | "nc" |
   }
 }
 
+export function ncBoardStatusLabel(status: string, isRegistered = true): string {
+  if (!isRegistered || status === "pending") {
+    return "Aguardando registro";
+  }
+  return ncStatusLabel(status);
+}
+
 export function ncStatusLabel(value: string): string {
   return NC_STATUS_LABELS[value] ?? value;
+}
+
+export function ncBoardStatusVariant(
+  status: string,
+  isRegistered = true,
+): "draft" | "pending-nc" | "nc" | "closed" | "default" {
+  if (!isRegistered || status === "pending") {
+    return "pending-nc";
+  }
+  return ncStatusVariant(status);
 }
 
 export function canAccessNc(status: string): boolean {

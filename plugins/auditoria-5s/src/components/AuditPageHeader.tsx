@@ -13,7 +13,8 @@ type Props = {
 export function AuditPageHeader({ branch, subtitle, title, showBack, onBack, actions }: Props) {
   return (
     <header className="a5s-hero">
-      <div className="a5s-hero__glow" aria-hidden />
+      <div className="a5s-hero__glow a5s-hero__glow--primary" aria-hidden />
+      <div className="a5s-hero__glow a5s-hero__glow--secondary" aria-hidden />
       <div className="a5s-hero__inner">
         <div className="a5s-hero__brand">
           <div className="a5s-hero__icon" aria-hidden>

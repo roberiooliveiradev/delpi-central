@@ -115,25 +115,14 @@ export function CriterionPhotoSection({
     }
   };
 
+  const hint = attachment
+    ? "Toque na miniatura para ampliar."
+    : reusesForNcBefore
+      ? "Opcional. Em Ruim ou Médio, pode virar evidência do antes na NC."
+      : "Opcional para documentar o critério.";
+
   return (
     <div className="a5s-criterion-photo">
-      <div className="a5s-criterion-photo__head">
-        <label>Foto (opcional)</label>
-        {attachment ? (
-          <span className="a5s-criterion-photo__badge">
-            <CheckCircle2 size={14} aria-hidden />
-            Anexada
-          </span>
-        ) : null}
-      </div>
-      <p className="a5s-criterion-photo__hint">
-        {attachment
-          ? "Toque na foto para ampliar. Use o botão abaixo para substituir pela câmera."
-          : reusesForNcBefore
-            ? "Registre uma foto opcional deste critério. Em notas Ruim ou Médio, ela também pode ser reutilizada como evidência do antes na NC."
-            : "Registre uma foto opcional para documentar este critério durante a avaliação."}
-      </p>
-
       <input
         ref={inputRef}
         type="file"
@@ -148,51 +137,61 @@ export function CriterionPhotoSection({
         }}
       />
 
-      {attachment && previewUrl ? (
-        <button
-          type="button"
-          className="a5s-criterion-photo__media a5s-criterion-photo__media--preview"
-          onClick={() => setLightboxOpen(true)}
-          aria-label="Ampliar foto do critério"
-        >
-          <img src={previewUrl} alt="Foto do critério" className="a5s-criterion-photo__preview" />
-        </button>
-      ) : attachment && !error ? (
-        <p className="a5s-criterion-photo__loading">Carregando foto...</p>
-      ) : (
-        <button
-          type="button"
-          className="a5s-criterion-photo__media a5s-criterion-photo__media--empty"
-          disabled={busy}
-          onClick={openCameraPicker}
-          aria-label="Abrir câmera para fotografar o critério"
-        >
-          <Camera size={28} aria-hidden />
-          <span>{uploading ? "Enviando..." : "Toque para fotografar"}</span>
-        </button>
-      )}
-
-      <div className="a5s-criterion-photo__actions">
-        <button
-          type="button"
-          className="a5s-btn a5s-btn--ghost a5s-btn--small"
-          disabled={busy}
-          onClick={openCameraPicker}
-        >
-          <ImagePlus size={15} aria-hidden />
-          {uploading ? "Enviando..." : attachment ? "Substituir foto" : "Tirar / anexar foto"}
-        </button>
-        {attachment ? (
+      <div className="a5s-criterion-photo__row">
+        {attachment && previewUrl ? (
           <button
             type="button"
-            className="a5s-btn a5s-btn--ghost a5s-btn--small a5s-criterion-photo__remove"
-            disabled={busy}
-            onClick={() => void handleRemove()}
+            className="a5s-criterion-photo__thumb"
+            onClick={() => setLightboxOpen(true)}
+            aria-label="Ampliar foto do critério"
           >
-            <Trash2 size={15} aria-hidden />
-            {removing ? "Removendo..." : "Remover"}
+            <img src={previewUrl} alt="Foto do critério" />
           </button>
-        ) : null}
+        ) : attachment && !error ? (
+          <span className="a5s-criterion-photo__thumb a5s-criterion-photo__thumb--loading" aria-hidden>
+            <Camera size={18} />
+          </span>
+        ) : (
+          <span className="a5s-criterion-photo__thumb a5s-criterion-photo__thumb--empty" aria-hidden>
+            <Camera size={18} />
+          </span>
+        )}
+
+        <div className="a5s-criterion-photo__copy">
+          <div className="a5s-criterion-photo__title-row">
+            <span className="a5s-criterion-photo__label">Foto (opcional)</span>
+            {attachment ? (
+              <span className="a5s-criterion-photo__badge">
+                <CheckCircle2 size={13} aria-hidden />
+                Anexada
+              </span>
+            ) : null}
+          </div>
+          <p className="a5s-criterion-photo__hint">{hint}</p>
+        </div>
+
+        <div className="a5s-criterion-photo__actions">
+          <button
+            type="button"
+            className="a5s-btn a5s-btn--ghost a5s-btn--small"
+            disabled={busy}
+            onClick={openCameraPicker}
+          >
+            <ImagePlus size={15} aria-hidden />
+            {uploading ? "Enviando..." : attachment ? "Substituir" : "Anexar"}
+          </button>
+          {attachment ? (
+            <button
+              type="button"
+              className="a5s-btn a5s-btn--ghost a5s-btn--small a5s-criterion-photo__remove"
+              disabled={busy}
+              onClick={() => void handleRemove()}
+            >
+              <Trash2 size={15} aria-hidden />
+              {removing ? "Removendo..." : "Remover"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {error ? <p className="a5s-criterion-photo__error">{error}</p> : null}

@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import {
+  AlertCircle,
+  AlertTriangle,
   BarChart3,
   CheckCircle2,
   ChevronLeft,
@@ -24,6 +26,7 @@ import { NativeTextControl } from "@delpi/plugin-ui/index";
 import type { AuditArea, AuditListItem } from "../api/audit5sApi";
 import { getAccessToken } from "../api/httpClient";
 import {
+  auditNeedsNcAttention,
   auditStatusLabel,
   auditStatusVariant,
   canAccessNc,
@@ -63,6 +66,7 @@ type Props = {
   loading: boolean;
   onNew: () => void;
   onOpenDashboard: () => void;
+  onOpenNcBoard: () => void;
   onOpenCatalog: () => void;
   onOpenAudit: (auditId: string) => void;
   onOpenNc: (auditId: string) => void;
@@ -73,8 +77,13 @@ type Props = {
 
 function StatusBadge({ status }: { status: string }) {
   const variant = auditStatusVariant(status);
-  const Icon =
-    status === "closed" ? Lock : status === "draft" ? Clock3 : CheckCircle2;
+  const Icon = status === "closed"
+    ? Lock
+    : status === "draft"
+      ? Clock3
+      : auditNeedsNcAttention(status)
+        ? AlertCircle
+        : CheckCircle2;
 
   return (
     <span className={`a5s-status-badge a5s-status-badge--${variant} a5s-status-badge--table`}>
@@ -105,6 +114,7 @@ export function AuditListView({
   loading,
   onNew,
   onOpenDashboard,
+  onOpenNcBoard,
   onOpenCatalog,
   onOpenAudit,
   onOpenNc,
@@ -232,6 +242,10 @@ export function AuditListView({
           <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenCatalog}>
             <ListChecks size={16} aria-hidden />
             Critérios
+          </button>
+          <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenNcBoard}>
+            <AlertTriangle size={16} aria-hidden />
+            Não conformidades
           </button>
           <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenDashboard}>
             <BarChart3 size={16} aria-hidden />
@@ -377,7 +391,7 @@ export function AuditListView({
                       </td>
                       <td data-label="% Geral">
                         <span
-                          className={`a5s-score-pill ${scorePercentClass(item.overall_score_pct)}`}
+                          className={`a5s-score-pill ${scorePercentClass(item.overall_score_pct, item.status)}`}
                         >
                           {item.overall_score_pct != null ? `${item.overall_score_pct}%` : "—"}
                         </span>
