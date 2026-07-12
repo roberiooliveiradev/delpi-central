@@ -12,6 +12,8 @@ import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../a
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideDeckRibbon } from "./SlideDeckRibbon";
+import { ComunicadoLayersPanel } from "./deck/ComunicadoLayersPanel";
+import { Modal } from "./ui/Modal";
 import {
   ComunicadoSlideBackgroundRibbon,
   DeckHistoryTabActions,
@@ -58,19 +60,22 @@ type Props = {
 
 function isRibbonTab(
   tab: DeckRibbonTabId,
-): tab is "home" | "insert" | "element" | "data" | "layers" | "view" {
+): tab is "home" | "insert" | "element" | "data" | "view" {
   return (
     tab === "home" ||
     tab === "insert" ||
     tab === "element" ||
     tab === "data" ||
-    tab === "layers" ||
     tab === "view"
   );
 }
 
 function isSettingsTab(tab: DeckRibbonTabId): tab is "slide" | "playlist" {
   return tab === "slide" || tab === "playlist";
+}
+
+function ribbonDensityFor(tab: DeckRibbonTabId): "band" | "fit" {
+  return tab === "element" || tab === "data" ? "fit" : "band";
 }
 
 /** Chrome do editor: abas estilo PowerPoint + ribbon contextual + painel de configuração. */
@@ -91,29 +96,56 @@ export function DeckEditorChrome({
   const hasSelection = Boolean(editor && editor.selectedIds.length > 0);
   const tabs = resolveDeckRibbonTabs(isCustomSlide, { hasSelection });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
+  const [layersModalOpen, setLayersModalOpen] = useState(false);
+
+  function openLayersModal() {
+    setLayersModalOpen(true);
+    editor?.setSelectionPanelTab("layers");
+  }
+
+  function closeLayersModal() {
+    setLayersModalOpen(false);
+    if (editor?.selectionPanelTab === "layers") {
+      editor.setSelectionPanelTab("element");
+      if (hasSelection) setActiveTab("element");
+    }
+  }
 
   useComunicadoRibbonTabSync((tab) => {
     const normalized = normalizeSelectionRibbonTab(tab);
+    if (normalized === "layers") {
+      openLayersModal();
+      return;
+    }
     if (
       normalized === "insert" ||
       normalized === "element" ||
       normalized === "data" ||
-      normalized === "layers" ||
       normalized === "view"
     ) {
+      setLayersModalOpen(false);
       setActiveTab(normalized);
     }
   });
 
   useEffect(() => {
+    if (activeTab === "layers") {
+      setActiveTab(hasSelection ? "element" : "home");
+      return;
+    }
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(hasSelection ? (editor?.selectionPanelTab ?? "element") : "home");
+      setActiveTab(hasSelection ? (editor?.selectionPanelTab === "layers" ? "element" : (editor?.selectionPanelTab ?? "element")) : "home");
     }
   }, [activeTab, tabs, hasSelection, editor?.selectionPanelTab]);
 
   useEffect(() => {
     const panelTab = editor?.selectionPanelTab;
     if (!hasSelection || !isCustomSlide || !panelTab) return;
+    if (panelTab === "layers") {
+      setLayersModalOpen(true);
+      return;
+    }
+    setLayersModalOpen(false);
     setActiveTab(panelTab);
   }, [editor?.selectionPanelTab, hasSelection, isCustomSlide]);
 
@@ -124,12 +156,19 @@ export function DeckEditorChrome({
   }, [activeTab, slide]);
 
   function selectTab(tab: DeckRibbonTabId) {
+    if (tab === "layers") {
+      openLayersModal();
+      return;
+    }
+    setLayersModalOpen(false);
     setActiveTab(tab);
     if (isSelectionPanelTab(tab)) {
       editor?.setSelectionPanelTab(tab);
       editor?.setDataPanelOpen(tab === "data");
     }
   }
+
+  const showRibbon = isRibbonTab(activeTab);
 
   return (
     <section className="td-deck-chrome" aria-label="Editor da programação">
@@ -140,13 +179,15 @@ export function DeckEditorChrome({
             const contextual = isContextualDeckRibbonTab(tab);
             const firstContextual =
               contextual && tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
+            const tabActive =
+              activeTab === tab.id || (tab.id === "layers" && layersModalOpen);
             return (
               <TabHintCell
                 key={tab.id}
                 label={tab.label}
                 hint={tab.hint}
                 icon={tab.icon}
-                active={activeTab === tab.id}
+                active={tabActive}
                 disabled={tab.disabledWhenNoSlide ? !slide : false}
                 onSelect={() => selectTab(tab.id)}
                 cellClassName={[
@@ -175,15 +216,14 @@ export function DeckEditorChrome({
         {headerActions}
       </div>
 
-      {isRibbonTab(activeTab) ? (
+      {showRibbon ? (
         <div className="td-deck-chrome__ribbon">
-          <DeckRibbonShell>
+          <DeckRibbonShell density={ribbonDensityFor(activeTab)}>
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
             {isCustomSlide &&
             (activeTab === "insert" ||
               activeTab === "element" ||
               activeTab === "data" ||
-              activeTab === "layers" ||
               activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}
@@ -204,7 +244,7 @@ export function DeckEditorChrome({
         >
           {activeTab === "slide" && isCustomSlide ? (
             <>
-              <DeckRibbonShell label="Fundo da tela" embedded>
+              <DeckRibbonShell label="Fundo da tela" embedded density="fit">
                 <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
               </DeckRibbonShell>
               <div className="td-deck-chrome__slide-strip-sep" aria-hidden="true" />
@@ -222,6 +262,15 @@ export function DeckEditorChrome({
           />
         </div>
       ) : null}
+
+      <Modal
+        open={layersModalOpen}
+        title="Camadas"
+        onClose={closeLayersModal}
+        className="td-modal--wide td-modal--layers"
+      >
+        <ComunicadoLayersPanel layout="pane" pane />
+      </Modal>
     </section>
   );
 }

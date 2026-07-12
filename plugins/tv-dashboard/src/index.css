@@ -537,6 +537,15 @@
   width: min(980px, 100%);
 }
 
+.dashboard-tv-dashboard .td-modal--layers {
+  width: min(720px, 100%);
+}
+
+.dashboard-tv-dashboard .td-modal--layers .td-modal__body {
+  max-height: min(70vh, 640px);
+  overflow: auto;
+}
+
 .dashboard-tv-dashboard .td-data-route-list {
   list-style: none;
   margin: 12px 0 0;
@@ -2299,17 +2308,31 @@
 .dashboard-tv-dashboard .td-deck-ribbon__frame-field .td-deck-ribbon__number,
 .dashboard-tv-dashboard .td-deck-ribbon__frame-field .delpi-ui-native-control {
   width: 100%;
-  min-width: 56px;
+  min-width: 76px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact {
-  --td-ribbon-height: 88px;
   box-sizing: border-box;
+  padding: 2px 6px 0;
+  align-items: stretch;
+}
+
+/* Inserir / Home / Exibir: faixa baixa fixa. */
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band {
+  --td-ribbon-height: 80px;
   height: var(--td-ribbon-height);
   max-height: var(--td-ribbon-height);
-  padding: 2px 6px 0;
   overflow: hidden;
-  align-items: stretch;
+}
+
+/* Elemento / Dados / Tela embutida: altura pelo conteúdo (sem cortar selects). */
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit {
+  --td-ribbon-height: auto;
+  height: auto;
+  min-height: 72px;
+  max-height: 120px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups {
@@ -2324,16 +2347,27 @@
   min-height: 0;
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit .td-deck-ribbon__groups {
+  height: auto;
+  align-items: flex-start;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group {
   box-sizing: border-box;
-  height: 100%;
+  height: auto;
   max-height: 100%;
   min-height: 0;
   flex: 0 0 auto;
   flex-shrink: 0;
   padding: 2px 8px 0;
-  justify-content: space-between;
+  /* Sem space-between — evita ícones no topo e caption no fundo com vazio. */
+  justify-content: flex-start;
+  gap: 2px;
   overflow: hidden;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band .td-deck-ribbon__group {
+  height: 100%;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group--wide {
@@ -2342,7 +2376,7 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__body {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
@@ -2409,9 +2443,35 @@
   align-items: stretch;
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit .td-deck-ribbon__groups--inspector {
+  height: auto;
+  align-items: flex-start;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit .td-deck-ribbon__panel {
+  height: auto;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit .td-deck-ribbon__panel-zone {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: none;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid {
-  grid-template-columns: repeat(5, minmax(56px, 68px));
+  grid-template-columns: repeat(5, minmax(76px, 92px));
   width: max-content;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props {
+  flex-wrap: nowrap;
+  max-height: none;
+  max-width: none;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props .td-deck-ribbon__field-label {
@@ -2421,8 +2481,8 @@
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props .td-deck-ribbon__number,
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props .td-deck-ribbon__select {
-  width: 56px;
-  min-width: 56px;
+  width: 64px;
+  min-width: 64px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar {
@@ -2541,11 +2601,12 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__number {
-  width: 52px;
+  width: 72px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__number--compact {
-  width: 48px;
+  width: 72px;
+  min-width: 72px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__color {
@@ -2578,9 +2639,9 @@
 
 .dashboard-tv-dashboard .td-deck-chrome__panel--compact {
   padding: 6px 10px 8px;
-  max-height: none;
+  max-height: min(140px, 22vh);
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   border-bottom: 1px solid var(--td-border);
   scrollbar-width: thin;
 }
@@ -2588,8 +2649,10 @@
 .dashboard-tv-dashboard .td-deck-chrome__panel--slide-unified {
   display: flex;
   flex-wrap: nowrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 4px 8px;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__panel--slide-unified > .td-deck-ribbon {
@@ -2599,6 +2662,11 @@
   padding: 0;
   flex: 0 0 auto;
   background: transparent;
+  /* Fit embutido: sem altura fixa herdada cortando Fundo/Presets. */
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  overflow: visible;
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__panel--slide-unified .td-deck-ribbon__groups {
@@ -3314,6 +3382,8 @@
 
 .dashboard-tv-dashboard .td-deck-chrome__panel--compact:has(.td-deck-settings-strip--playlist) {
   padding: 4px 8px 6px;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .dashboard-tv-dashboard .td-deck-playlist-groups {

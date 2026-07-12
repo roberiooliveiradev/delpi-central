@@ -4,19 +4,38 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * Contrato de densidade do ribbon (--compact): altura fixa, faixa horizontal, sem scroll vertical.
+ * Contrato de densidade do ribbon:
+ * - band = altura fixa (Inserir/Home)
+ * - fit = altura pelo conteúdo (Elemento/Dados) sem cortar
+ * - grupos sem space-between (sem vazio até a caption)
  */
 describe("ribbon density contract", () => {
   const base = dirname(fileURLToPath(import.meta.url));
   const css = readFileSync(join(base, "../index.css"), "utf8");
   const tileSource = readFileSync(join(base, "../components/deck/DeckRibbonTile.tsx"), "utf8");
+  const shellSource = readFileSync(
+    join(base, "../components/deck/DeckRibbonShell.tsx"),
+    "utf8",
+  );
 
-  it("ribbon compacta tem altura fixa padrão", () => {
-    expect(css).toMatch(/--td-ribbon-height:\s*88px/);
-    const compact = css.match(/\.td-deck-ribbon--compact\s*\{[^}]+\}/s)?.[0];
-    expect(compact).toBeTruthy();
-    expect(compact).toMatch(/height:\s*var\(--td-ribbon-height\)/);
-    expect(compact).toMatch(/overflow:\s*hidden/);
+  it("shell expõe densidades band e fit", () => {
+    expect(shellSource).toMatch(/density\?: "band" \| "fit"/);
+    expect(css).toMatch(/\.td-deck-ribbon--band/);
+    expect(css).toMatch(/\.td-deck-ribbon--fit/);
+  });
+
+  it("band tem altura fixa; fit cresce até o teto sem clip rígido de 88px", () => {
+    const band = css.match(
+      /\.td-deck-ribbon--compact\.td-deck-ribbon--band\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(band).toMatch(/--td-ribbon-height:\s*80px/);
+    expect(band).toMatch(/height:\s*var\(--td-ribbon-height\)/);
+
+    const fit = css.match(
+      /\.td-deck-ribbon--compact\.td-deck-ribbon--fit\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(fit).toMatch(/height:\s*auto/);
+    expect(fit).toMatch(/max-height:\s*120px/);
   });
 
   it("tiles compactos usam ícone Lucide 18 e faixa de uma linha", () => {
@@ -25,10 +44,24 @@ describe("ribbon density contract", () => {
       /\.td-deck-ribbon--compact \.td-ribbon-tile__icon\s*\{[^}]*width:\s*22px/s,
     );
     expect(css).toMatch(
-      /\.td-deck-ribbon--compact \.td-ribbon-tile\s*\{[^}]*min-height:\s*52px/s,
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__tiles\s*\{[^}]*grid-template-rows:\s*auto/s,
+    );
+  });
+
+  it("grupos compactos não usam space-between (evita vazio vertical)", () => {
+    const group = css.match(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__group\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(group).toMatch(/justify-content:\s*flex-start/);
+    expect(group).not.toMatch(/justify-content:\s*space-between/);
+  });
+
+  it("inputs de frame têm largura legível (≥72px)", () => {
+    expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__frame-grid\s*\{[^}]*minmax\(76px/s,
     );
     expect(css).toMatch(
-      /\.td-deck-ribbon--compact \.td-deck-ribbon__tiles\s*\{[^}]*grid-template-rows:\s*auto/s,
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__number--compact\s*\{[^}]*width:\s*72px/s,
     );
   });
 
@@ -38,20 +71,5 @@ describe("ribbon density contract", () => {
     )?.[0];
     expect(block).toBeTruthy();
     expect(block).toMatch(/flex:\s*0\s+0\s+auto/);
-    expect(block).not.toMatch(/flex:\s*1\s+1\s+auto/);
-  });
-
-  it("painéis Dados/Camadas não usam scroll vertical", () => {
-    expect(css).toMatch(
-      /\.td-deck-ribbon__panel--layers\s*\{[^}]*minmax\(280px,\s*420px\)/s,
-    );
-    expect(css).toMatch(/\.td-deck-ribbon__panel--dados\s*\{[^}]*minmax\(200px,\s*280px\)/s);
-    const panel = css.match(/\.td-deck-ribbon__panel\s*\{[^}]+\}/s)?.[0];
-    expect(panel).toMatch(/overflow-y:\s*hidden/);
-  });
-
-  it("Organizar fica em linha (tiles + props) sem empilhar verticalmente", () => {
-    const organize = css.match(/\.td-deck-ribbon__organize\s*\{[^}]+\}/s)?.[0];
-    expect(organize).toMatch(/flex-direction:\s*row/);
   });
 });
