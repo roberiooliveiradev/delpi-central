@@ -69,33 +69,86 @@ export function nativeConfigNeedsResolvedData(config: Record<string, unknown> | 
 }
 
 /**
+ * Fingerprint estrutural (ids/tipos + background) — não inclui `resolved` nem frames.
+ * Usado para impedir que print de outro slide seja preservado como «preview carregando».
+ */
+export function nativeConfigStructureFingerprint(
+  config: Record<string, unknown> | null | undefined,
+): string {
+  if (!config || typeof config !== "object") return "";
+  const background = config.background;
+  const bgKey =
+    background && typeof background === "object"
+      ? JSON.stringify(background)
+      : String(background ?? "");
+  const blocks = Array.isArray(config.blocks) ? config.blocks : [];
+  const blockKeys = blocks
+    .map((block) => {
+      if (block == null || typeof block !== "object") return "";
+      const row = block as { id?: unknown; type?: unknown };
+      return `${String(row.id ?? "")}:${String(row.type ?? "")}`;
+    })
+    .join("|");
+  return `${bgKey}#${blockKeys}`;
+}
+
+/**
  * Monta a lista do filmstrip: slide ativo usa snapshot ao vivo (com resolved);
  * demais slides reutilizam cache para não “sumir” o gráfico ao trocar de tela.
  *
- * Mantém print anterior só enquanto o live ainda tem blocos de dados sem `resolved`
- * (preview carregando). Slide vazio/branco sempre grava o live — evita gráfico
- * fantasma nas duas prévias após contaminar o cache na troca de slide.
+ * Só associa `liveThumbnailConfig` a `selectedSlideId` quando `liveSlideId` bate —
+ * evita gravar o print do slide anterior no slot novo (1 frame de dessinc do React).
+ *
+ * Mantém print anterior só enquanto o live tem a **mesma estrutura** e ainda falta
+ * `resolved` (preview carregando).
  */
 export function buildFilmstripSlidesWithThumbnailCache(params: {
   slides: Slide[];
   selectedSlideId: string;
   liveThumbnailConfig: Record<string, unknown>;
+  /**
+   * Id do slide cujo config o editor já aplicou.
+   * Se omitido, assume que live = selected (compat).
+   * Se diferente de selectedSlideId, não grava o live no cache do selecionado.
+   */
+  liveSlideId?: string | null;
   cache: Record<string, Record<string, unknown>>;
 }): Slide[] {
   const { slides, selectedSlideId, liveThumbnailConfig, cache } = params;
-  const previous = cache[selectedSlideId];
-  const liveHasResolved = nativeConfigHasResolvedData(liveThumbnailConfig);
-  const previousHasResolved = nativeConfigHasResolvedData(previous);
-  const liveNeedsResolved = nativeConfigNeedsResolvedData(liveThumbnailConfig);
-  const keepPreviousPrint = !liveHasResolved && liveNeedsResolved && previousHasResolved;
-
-  if (!keepPreviousPrint) {
-    cache[selectedSlideId] = liveThumbnailConfig;
-  }
+  const liveMatchesSelection =
+    params.liveSlideId == null || params.liveSlideId === selectedSlideId;
 
   const liveIds = new Set(slides.map((slide) => slide.id));
   for (const id of Object.keys(cache)) {
     if (!liveIds.has(id)) delete cache[id];
+  }
+
+  if (!liveMatchesSelection) {
+    return slides.map((slide) => {
+      if (slide.slideType !== "native" || slide.nativeScreenKey !== "custom_message") {
+        return slide;
+      }
+      const cached = cache[slide.id];
+      if (cached) {
+        return { ...slide, nativeConfig: cached };
+      }
+      return slide;
+    });
+  }
+
+  const previous = cache[selectedSlideId];
+  const liveHasResolved = nativeConfigHasResolvedData(liveThumbnailConfig);
+  const previousHasResolved = nativeConfigHasResolvedData(previous);
+  const liveNeedsResolved = nativeConfigNeedsResolvedData(liveThumbnailConfig);
+  const structureMatches =
+    previous == null ||
+    nativeConfigStructureFingerprint(previous) ===
+      nativeConfigStructureFingerprint(liveThumbnailConfig);
+  const keepPreviousPrint =
+    structureMatches && !liveHasResolved && liveNeedsResolved && previousHasResolved;
+
+  if (!keepPreviousPrint) {
+    cache[selectedSlideId] = liveThumbnailConfig;
   }
 
   const selectedNativeConfig = keepPreviousPrint

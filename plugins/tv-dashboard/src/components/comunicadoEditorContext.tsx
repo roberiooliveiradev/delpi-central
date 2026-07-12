@@ -331,6 +331,7 @@ export function ComunicadoEditorProvider({
 
   const ctxValue: ComunicadoEditorContextValue = {
     config,
+    appliedSlideId,
     blocks,
     selectedIds: selection.selectedIds,
     selectedId: selection.selectedId,

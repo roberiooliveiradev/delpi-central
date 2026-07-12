@@ -100,6 +100,18 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   playlistRef.current = playlist;
   selectedSlideIdRef.current = selectedSlideId;
 
+  /** Troca de slide: alinha o ref live ao nativeConfig do alvo (evita merge WS/thumb do slide anterior). */
+  const selectSlide = useCallback((slideId: string, slideHint?: Slide | null) => {
+    setSelectedSlideId(slideId);
+    const slide =
+      slideHint ?? playlistRef.current?.slides?.find((item) => item.id === slideId) ?? null;
+    if (slide?.nativeScreenKey === "custom_message") {
+      liveComunicadoConfigRef.current = slide.nativeConfig ?? {};
+    } else {
+      liveComunicadoConfigRef.current = null;
+    }
+  }, []);
+
   const applyDeckSnapshot = useCallback((snapshot: DeckEditorSnapshot) => {
     setPlaylist(snapshot.playlist);
     setSelectedSlideId(snapshot.selectedSlideId);
@@ -344,7 +356,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       durationSec: customCatalogItem?.defaultDurationSec ?? 30,
     });
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    setSelectedSlideId(slide.id);
+    selectSlide(slide.id, slide);
   }
 
   async function handleRemoveSlide(slide: Slide) {
@@ -361,7 +373,12 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
     setPlaylist({ ...playlist, slides: remaining });
     if (selectedSlideId === slide.id) {
-      setSelectedSlideId(remaining[0]?.id ?? null);
+      const nextId = remaining[0]?.id ?? null;
+      if (nextId) selectSlide(nextId);
+      else {
+        setSelectedSlideId(null);
+        liveComunicadoConfigRef.current = null;
+      }
     }
   }
 
@@ -451,7 +468,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     deckHistory.recordBeforeChange();
     const copy = await duplicateSlide(playlist.id, slide.id);
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
-    setSelectedSlideId(copy.id);
+    selectSlide(copy.id, copy);
   }
 
   function handleCopySlide(slide: Slide) {
@@ -471,7 +488,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       externalUrl: payload.externalUrl ?? undefined,
     });
     setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    setSelectedSlideId(slide.id);
+    selectSlide(slide.id, slide);
   }
 
   const canPasteSlide = slideClipboardRef.current != null;
@@ -542,7 +559,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     slides,
     selectedSlide,
     onAdd: () => void handleAddCustomSlide(),
-    onSelect: setSelectedSlideId,
+    onSelect: selectSlide,
     onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
     onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
     onRemove: (slide: Slide) => void handleRemoveSlide(slide),
@@ -590,7 +607,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     canPasteSlide,
     viewportProfile: playlist.viewportProfile,
     masterConfig: playlist.masterConfig,
-    onSelect: setSelectedSlideId,
+    onSelect: selectSlide,
     onDragStart: setDragIndex,
     onDrop: (index: number) => void handleDropSlide(index),
     onDragEnd: () => setDragIndex(null),

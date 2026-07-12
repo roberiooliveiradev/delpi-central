@@ -329,22 +329,27 @@ describe("slideCardPreview", () => {
     buildFilmstripSlidesWithThumbnailCache({
       slides,
       selectedSlideId: "s1",
+      liveSlideId: "s1",
       liveThumbnailConfig: chartConfig,
       cache,
     });
 
-    // Frame da troca: selected já é s2, mas live ainda é o gráfico de s1 (contamina o slot).
-    buildFilmstripSlidesWithThumbnailCache({
+    // Frame da troca: selected já é s2, live ainda é print de s1 — não grava no slot de s2.
+    const midSwitch = buildFilmstripSlidesWithThumbnailCache({
       slides,
       selectedSlideId: "s2",
+      liveSlideId: "s1",
       liveThumbnailConfig: chartConfig,
       cache,
     });
+    expect(midSwitch[1]?.nativeConfig?.blocks ?? []).toEqual([]);
+    expect(cache.s2).toBeUndefined();
 
-    // Catch-up: live em branco deve sobrescrever o fantasma (não manter print anterior).
+    // Catch-up: provider aplicou s2; live em branco preenche o slot sem fantasma.
     const afterCatchUp = buildFilmstripSlidesWithThumbnailCache({
       slides,
       selectedSlideId: "s2",
+      liveSlideId: "s2",
       liveThumbnailConfig: blankConfig,
       cache,
     });

@@ -31,7 +31,8 @@ export function CustomSlideEditorLayout({
   chromeProps,
   adminLabels,
 }: Props) {
-  const { config, blocks, dataPreviewLoading, dataPreviewError } = useComunicadoEditor();
+  const { config, blocks, appliedSlideId, dataPreviewLoading, dataPreviewError } =
+    useComunicadoEditor();
   /** Cache de print do filmstrip (com `resolved`) — sobrevive à troca de slide. */
   const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
 
@@ -45,10 +46,11 @@ export function CustomSlideEditorLayout({
       buildFilmstripSlidesWithThumbnailCache({
         slides: workspaceProps.slides,
         selectedSlideId: selectedSlide.id,
+        liveSlideId: appliedSlideId ?? selectedSlide.id,
         liveThumbnailConfig,
         cache: thumbnailCacheRef.current,
       }),
-    [workspaceProps.slides, selectedSlide.id, liveThumbnailConfig],
+    [workspaceProps.slides, selectedSlide.id, appliedSlideId, liveThumbnailConfig],
   );
 
   const slideTabExtra = (

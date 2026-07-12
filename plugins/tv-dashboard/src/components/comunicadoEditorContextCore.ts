@@ -48,6 +48,8 @@ export type ComunicadoRibbonTabRequest = "insert" | "format" | "chart" | "shape"
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
+  /** Slide cujo config já foi aplicado no provider (pode atrasar 1 frame vs selectedSlideId). */
+  appliedSlideId?: string;
   blocks: ComunicadoBlock[];
   selectedIds: string[];
   selectedId: string | null;
