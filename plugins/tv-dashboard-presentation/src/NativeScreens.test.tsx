@@ -110,4 +110,46 @@ describe("NativeScreens public payload", () => {
     expect(document.querySelector(".tdp-slide--active")).toBeTruthy();
     expect(screen.getAllByText("OEE").length).toBeGreaterThan(0);
   });
+
+  it("comunicado stage preenche o slide (prévia/filmstrip) sem position relative inline", () => {
+    const { container } = render(
+      <NativeSlideView
+        native={{
+          screenKey: "custom_message",
+          config: {},
+          data: {
+            version: 4,
+            background: { type: "color", value: "#ffffff" },
+            blocks: [
+              {
+                id: "chart-1",
+                type: "chart_view",
+                chartType: "line",
+                frame: { x: 5, y: 5, w: 90, h: 80 },
+                style: {},
+                chartOptions: { title: "OTD — série temporal", showDataTable: true },
+                resolved: {
+                  label: "OTD — série temporal",
+                  chart: {
+                    points: [
+                      { label: "11/06/26", value: 66.7 },
+                      { label: "10/07/26", value: 100 },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        }}
+      />,
+    );
+    const root = container.querySelector(".tdp-native-screen.tdp-comunicado");
+    const stage = container.querySelector(".tdp-comunicado__stage") as HTMLElement | null;
+    expect(root).toBeTruthy();
+    expect(stage).toBeTruthy();
+    expect(stage?.style.position).toBe("");
+    expect(screen.getAllByText("OTD — série temporal").length).toBeGreaterThan(0);
+    expect(container.querySelector(".tdp-series-chart")).toBeTruthy();
+    expect(container.querySelector(".tdp-series-chart__series-line")).toBeTruthy();
+  });
 });

@@ -20,4 +20,9 @@ describe("native-screens chart part resize CSS", () => {
       expect(css).toContain(`.tdp-series-chart__part-resize--${handle}`);
     }
   });
+
+  it("comunicado não herda grid KPI (prévia/filmstrip em branco)", () => {
+    expect(css).toMatch(/\.tdp-native-screen\.tdp-comunicado\s*\{[^}]*display:\s*block/);
+    expect(css).toMatch(/\.tdp-comunicado__stage\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0/s);
+  });
 });

@@ -291,6 +291,13 @@
   color: #b8c5d6;
 }
 
+/* Comunicado é full-bleed com frames em % — não herda o grid auto/1fr/auto das telas KPI
+   (senão o stage colapsa e a prévia/filmstrip ficam só no fundo branco). */
+.tdp-native-screen.tdp-comunicado {
+  display: block;
+  padding: 0;
+}
+
 .tdp-comunicado {
   position: relative;
   overflow: hidden;
@@ -300,6 +307,7 @@
 .tdp-comunicado__stage {
   position: absolute;
   inset: 0;
+  z-index: 1;
 }
 
 .tdp-comunicado__block {

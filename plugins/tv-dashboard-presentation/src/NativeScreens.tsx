@@ -333,7 +333,7 @@ function RichComunicadoScreen({
           }}
         />
       ) : null}
-      <div className="tdp-comunicado__stage" style={{ position: "relative", zIndex: 1 }}>
+      <div className="tdp-comunicado__stage">
         {blocks.map((block) => (
           <ComunicadoBlockView key={block.id} block={block} fontScale={fontScale} />
         ))}
