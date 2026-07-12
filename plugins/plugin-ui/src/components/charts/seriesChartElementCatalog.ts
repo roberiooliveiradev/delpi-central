@@ -146,8 +146,9 @@ export function chartElementPartRefs(elementId: SeriesChartElementId): ChartPart
     case "dataTable":
       return [{ kind: "dataTable" }];
     case "markers":
+      return [{ kind: "marker", seriesIndex: 0, pointIndex: 0 }];
     case "dataLabels":
-      return [];
+      return [{ kind: "dataLabel", seriesIndex: 0, pointIndex: 0 }];
     default:
       return [];
   }

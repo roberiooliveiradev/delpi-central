@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import {
   applyChartElementVisibility,
+  chartElementPrimaryPartRef,
   isChartElementEnabled,
   mergeComunicadoChartOptions,
   partsToChartOptions,
@@ -65,20 +66,7 @@ export function ComunicadoChartRibbon() {
       chartParts: result.parts,
     } as Partial<typeof selected>);
     if (enabled) {
-      // foco na parte correspondente quando existir
-      const focusMap: Partial<Record<ChartElementId, Parameters<typeof selectChartPart>[1]>> = {
-        chartTitle: { kind: "title" },
-        legend: { kind: "legend" },
-        axisTitles: { kind: "axisTitle", axis: "y" },
-        axes: { kind: "axis", axis: "y" },
-        gridlines: { kind: "grid" },
-        dataTable: { kind: "dataTable" },
-        dataLabels: { kind: "dataLabel", seriesIndex: 0, pointIndex: 0 },
-        chartArea: { kind: "chartArea" },
-        plotArea: { kind: "plotArea" },
-        series: { kind: "series", seriesIndex: 0 },
-      };
-      const part = focusMap[elementId];
+      const part = chartElementPrimaryPartRef(elementId);
       if (part) selectChartPart(block.id, part);
     }
   };

@@ -1,8 +1,6 @@
-import { NativeCheckboxControl, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
-import type { ReactNode } from "react";
+import { NativeCheckboxControl, NativeSelectControl } from "@delpi/plugin-ui/index";
 import {
   CHART_ELEMENT_CATALOG,
-  CHART_LEGEND_POSITION_OPTIONS,
   CHART_VALUE_FORMAT_OPTIONS,
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
@@ -37,37 +35,27 @@ function updateChartOptions(
   return { ...mergeComunicadoChartOptions(current), ...patch };
 }
 
-/** Linha compacta de visibilidade — detalhes só quando a parte está focada (4M.5). */
+/** Linha de visibilidade — detalhe de formato fica só no ChartPartInspector (4M.7). */
 function ChartElementRow({
   elementId,
   enabled,
-  expanded,
+  focused,
   onToggle,
   onSelect,
-  children,
   label,
   hint,
 }: {
   elementId: ChartElementId;
   enabled: boolean;
-  expanded: boolean;
+  focused: boolean;
   onToggle: (next: boolean) => void;
   onSelect: () => void;
-  children?: ReactNode;
   label: string;
   hint?: string;
 }) {
-  const hasDetails = Boolean(children);
-  const showBody = expanded && enabled && hasDetails;
-
   return (
     <div
-      className={[
-        "td-chart-element",
-        "td-chart-element--row",
-        showBody ? "td-chart-element--expanded" : null,
-        expanded ? "td-chart-element--focused" : null,
-      ]
+      className={["td-chart-element", "td-chart-element--row", focused ? "td-chart-element--focused" : null]
         .filter(Boolean)
         .join(" ")}
     >
@@ -92,7 +80,6 @@ function ChartElementRow({
           {label}
         </button>
       </div>
-      {showBody ? <div className="td-chart-element__body">{children}</div> : null}
     </div>
   );
 }
@@ -151,162 +138,68 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
       <ChartPartInspector pane={pane} block={block} />
 
       {!hasPartSelection ? (
-        <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
-          Clique no título, série, legenda ou área no palco para formatar a parte.
-        </p>
+        <>
+          <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
+            Clique no palco ou use a faixa Gráfico para ligar partes. Detalhes abrem ao selecionar a
+            parte.
+          </p>
+
+          <DeckPropertySection
+            pane={pane}
+            title="Elementos do gráfico"
+            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartElements}
+            defaultOpen
+          >
+            <div className="td-chart-elements" role="group" aria-label="Elementos do gráfico">
+              {elements.map((element) => {
+                const enabled = isChartElementEnabled(element.id, options);
+                const focused = isChartElementOpenForPart(element.id, selectedChartPart);
+                return (
+                  <ChartElementRow
+                    key={element.id}
+                    elementId={element.id}
+                    label={element.label}
+                    hint={element.hint}
+                    enabled={enabled}
+                    focused={focused}
+                    onToggle={(next) => toggleElement(element.id, next)}
+                    onSelect={() => focusElement(element.id)}
+                  />
+                );
+              })}
+            </div>
+          </DeckPropertySection>
+
+          <DeckPropertySection
+            pane={pane}
+            title="Aparência"
+            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
+            defaultOpen
+          >
+            <DeckField id="td-chart-value-format" label="Formato dos valores">
+              <NativeSelectControl
+                id="td-chart-value-format"
+                value={options.valueFormat ?? "auto"}
+                onChange={(value) =>
+                  setOptions({ valueFormat: value as ComunicadoChartOptions["valueFormat"] })
+                }
+                options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
+                  value: entry.value,
+                  label: entry.label,
+                }))}
+              />
+            </DeckField>
+            <DeckField id="td-chart-series-color" label="Cor da série">
+              <TvRibbonColorPicker
+                inline
+                label="Cor da série"
+                value={options.seriesColor ?? OFFICE_CHART_SERIES_COLOR}
+                onChange={(color) => setOptions({ seriesColor: color })}
+              />
+            </DeckField>
+          </DeckPropertySection>
+        </>
       ) : null}
-
-      <DeckPropertySection
-        pane={pane}
-        title="Elementos do gráfico"
-        hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartElements}
-        defaultOpen={!hasPartSelection}
-      >
-        <div className="td-chart-elements" role="group" aria-label="Elementos do gráfico">
-          {elements.map((element) => {
-            const enabled = isChartElementEnabled(element.id, options);
-            const expanded = isChartElementOpenForPart(element.id, selectedChartPart);
-            return (
-              <ChartElementRow
-                key={element.id}
-                elementId={element.id}
-                label={element.label}
-                hint={element.hint}
-                enabled={enabled}
-                expanded={expanded}
-                onToggle={(next) => toggleElement(element.id, next)}
-                onSelect={() => focusElement(element.id)}
-              >
-                {element.id === "chartTitle" ? (
-                  <DeckField id="td-chart-title" label="Texto do título" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartTitle}>
-                    <NativeTextControl
-                      id="td-chart-title"
-                      value={options.title ?? ""}
-                      placeholder="Ex.: ROL"
-                      onChange={(value) => setOptions({ title: value })}
-                    />
-                  </DeckField>
-                ) : null}
-
-                {element.id === "legend" ? (
-                  <>
-                    <DeckField id="td-chart-series-name" label="Nome da série" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartLegend}>
-                      <NativeTextControl
-                        id="td-chart-series-name"
-                        value={options.seriesName ?? ""}
-                        placeholder="Ex.: Receita"
-                        onChange={(value) => setOptions({ seriesName: value })}
-                      />
-                    </DeckField>
-                    <DeckField id="td-chart-legend-position" label="Posição">
-                      <NativeSelectControl
-                        id="td-chart-legend-position"
-                        value={options.legendPosition ?? "bottom"}
-                        onChange={(value) =>
-                          setOptions({ legendPosition: value as ComunicadoChartOptions["legendPosition"] })
-                        }
-                        options={CHART_LEGEND_POSITION_OPTIONS.filter((entry) => entry.value !== "hidden").map(
-                          (entry) => ({ value: entry.value, label: entry.label }),
-                        )}
-                      />
-                    </DeckField>
-                  </>
-                ) : null}
-
-                {element.id === "axisTitles" ? (
-                  <>
-                    <DeckField id="td-chart-x-title" label="Título eixo X">
-                      <NativeTextControl
-                        id="td-chart-x-title"
-                        value={options.xAxisTitle ?? ""}
-                        placeholder="Ex.: Mês"
-                        onChange={(value) => setOptions({ xAxisTitle: value, showXAxisTitle: true })}
-                      />
-                    </DeckField>
-                    <DeckField id="td-chart-y-title" label="Título eixo Y">
-                      <NativeTextControl
-                        id="td-chart-y-title"
-                        value={options.yAxisTitle ?? ""}
-                        placeholder="Ex.: Valor (R$)"
-                        onChange={(value) => setOptions({ yAxisTitle: value, showYAxisTitle: true })}
-                      />
-                    </DeckField>
-                  </>
-                ) : null}
-
-                {element.id === "axes" ? (
-                  <>
-                    <DeckField id="td-chart-show-x-labels" label="Rótulos eixo X">
-                      <NativeCheckboxControl
-                        id="td-chart-show-x-labels"
-                        checked={options.showXAxisLabels !== false}
-                        label="Períodos e categorias"
-                        onChange={(checked) => setOptions({ showXAxisLabels: checked })}
-                      />
-                    </DeckField>
-                    <DeckField id="td-chart-show-y-labels" label="Rótulos eixo Y">
-                      <NativeCheckboxControl
-                        id="td-chart-show-y-labels"
-                        checked={options.showYAxisLabels !== false}
-                        label="Escala de valores"
-                        onChange={(checked) => setOptions({ showYAxisLabels: checked })}
-                      />
-                    </DeckField>
-                  </>
-                ) : null}
-
-                {element.id === "gridlines" ? (
-                  <>
-                    <DeckField id="td-chart-show-grid-h" label="Grade horizontal">
-                      <NativeCheckboxControl
-                        id="td-chart-show-grid-h"
-                        checked={options.showGrid !== false}
-                        label="Linhas horizontais"
-                        onChange={(checked) => setOptions({ showGrid: checked })}
-                      />
-                    </DeckField>
-                    <DeckField id="td-chart-show-grid-v" label="Grade vertical">
-                      <NativeCheckboxControl
-                        id="td-chart-show-grid-v"
-                        checked={Boolean(options.showVerticalGrid)}
-                        label="Linhas verticais"
-                        onChange={(checked) => setOptions({ showVerticalGrid: checked })}
-                      />
-                    </DeckField>
-                  </>
-                ) : null}
-              </ChartElementRow>
-            );
-          })}
-        </div>
-      </DeckPropertySection>
-
-      <DeckPropertySection
-        pane={pane}
-        title="Aparência"
-        hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
-        defaultOpen={!hasPartSelection}
-      >
-        <DeckField id="td-chart-value-format" label="Formato dos valores">
-          <NativeSelectControl
-            id="td-chart-value-format"
-            value={options.valueFormat ?? "auto"}
-            onChange={(value) => setOptions({ valueFormat: value as ComunicadoChartOptions["valueFormat"] })}
-            options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
-              value: entry.value,
-              label: entry.label,
-            }))}
-          />
-        </DeckField>
-        <DeckField id="td-chart-series-color" label="Cor da série">
-          <TvRibbonColorPicker
-            inline
-            label="Cor da série"
-            value={options.seriesColor ?? OFFICE_CHART_SERIES_COLOR}
-            onChange={(color) => setOptions({ seriesColor: color })}
-          />
-        </DeckField>
-      </DeckPropertySection>
     </>
   );
 }

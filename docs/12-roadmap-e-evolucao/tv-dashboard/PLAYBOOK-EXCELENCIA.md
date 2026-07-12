@@ -1742,19 +1742,20 @@ type ChartPartState = {
 | 4M.4 | Seções Animação / Posição / Ações com `defaultOpen={false}` no pane | ✅ |
 | 4M.5 | Lista de elementos = linhas compactas; expandir detalhes só com parte focada (sem `open \|\| enabled`) | ✅ |
 | 4M.6 | Com `selectedChartPart`: Parte em destaque; Elementos/Aparência recolhidos | ✅ |
-| 4M.7 | Enxugar toggles duplicados ribbon↔inspector (residual) | ⬜ |
+| 4M.7 | Enxugar toggles duplicados ribbon↔inspector (residual) | ✅ |
 
 #### IA alvo (chart_view)
 
 ```text
 Cabeçalho (tipo PT)          defaultOpen
 Conexão de dados             open se sem fonte
-Parte: …                     open se subseleção  ← canônico
-Elementos do gráfico         lista fina; open se sem parte
-Aparência (valores / cor)    open se sem parte
+Parte: …                     open se subseleção  ← formato (único lugar)
+Elementos do gráfico         só se sem parte; lista de visibilidade (sem campos inline)
+Aparência (valores / cor)    só se sem parte
 Animação / Posição / Ações   fechados
 ```
 
+Ribbon Gráfico = atalhos de visibilidade/tipo; FormatPane = detalhe da parte.
 #### Anti-padrões 4M
 
 - `Tipo: {selected.type}` cru na UI (usar `comunicadoBlockTypeLabel`).

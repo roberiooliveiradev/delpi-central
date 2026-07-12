@@ -1,10 +1,11 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { NativeCheckboxControl, NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   applyMarkerStyleToAll,
   chartPartAllowsDelete,
   chartPartVisualPrimitive,
   chartPrimitiveSupportsFill,
   chartPrimitiveSupportsStroke,
+  CHART_LEGEND_POSITION_OPTIONS,
   deleteChartPart,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
@@ -269,6 +270,22 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               onChange={(value) => persistOptions({ ...options, seriesName: value })}
             />
           </DeckField>
+          <DeckField id="td-chart-part-legend-position" label="Posição">
+            <NativeSelectControl
+              id="td-chart-part-legend-position"
+              value={options.legendPosition ?? "bottom"}
+              onChange={(value) =>
+                persistOptions({
+                  ...options,
+                  legendPosition: value as ComunicadoChartOptions["legendPosition"],
+                  showLegend: true,
+                })
+              }
+              options={CHART_LEGEND_POSITION_OPTIONS.filter((entry) => entry.value !== "hidden").map(
+                (entry) => ({ value: entry.value, label: entry.label }),
+              )}
+            />
+          </DeckField>
           <DeckField id="td-chart-part-legend-color" label="Cor da série">
             <TvRibbonColorPicker
               inline
@@ -278,6 +295,73 @@ export function ChartPartInspector({ pane = false, block }: Props) {
                 persistOptions({ ...options, seriesColor: color });
                 patchPart({ style: { stroke: color, fill: color } });
               }}
+            />
+          </DeckField>
+        </>
+      ) : null}
+
+      {selectedChartPart.kind === "axisTitle" ? (
+        <DeckField
+          id={`td-chart-part-axis-title-${selectedChartPart.axis}`}
+          label={selectedChartPart.axis === "x" ? "Título eixo X" : "Título eixo Y"}
+        >
+          <NativeTextControl
+            id={`td-chart-part-axis-title-${selectedChartPart.axis}`}
+            value={
+              selectedChartPart.axis === "x" ? (options.xAxisTitle ?? "") : (options.yAxisTitle ?? "")
+            }
+            placeholder={selectedChartPart.axis === "x" ? "Ex.: Mês" : "Ex.: Valor (R$)"}
+            onChange={(value) =>
+              persistOptions(
+                selectedChartPart.axis === "x"
+                  ? { ...options, xAxisTitle: value, showXAxisTitle: true }
+                  : { ...options, yAxisTitle: value, showYAxisTitle: true },
+              )
+            }
+          />
+        </DeckField>
+      ) : null}
+
+      {selectedChartPart.kind === "axis" ? (
+        <DeckField
+          id={`td-chart-part-axis-labels-${selectedChartPart.axis}`}
+          label={selectedChartPart.axis === "x" ? "Rótulos eixo X" : "Rótulos eixo Y"}
+        >
+          <NativeCheckboxControl
+            id={`td-chart-part-axis-labels-${selectedChartPart.axis}`}
+            checked={
+              selectedChartPart.axis === "x"
+                ? options.showXAxisLabels !== false
+                : options.showYAxisLabels !== false
+            }
+            label={selectedChartPart.axis === "x" ? "Períodos e categorias" : "Escala de valores"}
+            onChange={(checked) =>
+              persistOptions(
+                selectedChartPart.axis === "x"
+                  ? { ...options, showXAxisLabels: checked, showAxes: true }
+                  : { ...options, showYAxisLabels: checked, showAxes: true },
+              )
+            }
+          />
+        </DeckField>
+      ) : null}
+
+      {selectedChartPart.kind === "grid" ? (
+        <>
+          <DeckField id="td-chart-part-grid-h" label="Grade horizontal">
+            <NativeCheckboxControl
+              id="td-chart-part-grid-h"
+              checked={options.showGrid !== false}
+              label="Linhas horizontais"
+              onChange={(checked) => persistOptions({ ...options, showGrid: checked })}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-grid-v" label="Grade vertical">
+            <NativeCheckboxControl
+              id="td-chart-part-grid-v"
+              checked={Boolean(options.showVerticalGrid)}
+              label="Linhas verticais"
+              onChange={(checked) => persistOptions({ ...options, showVerticalGrid: checked })}
             />
           </DeckField>
         </>

@@ -54,6 +54,16 @@ describe("seriesChartElementCatalog", () => {
       { kind: "axis", axis: "x" },
       { kind: "axis", axis: "y" },
     ]);
+    expect(chartElementPrimaryPartRef("dataLabels")).toEqual({
+      kind: "dataLabel",
+      seriesIndex: 0,
+      pointIndex: 0,
+    });
+    expect(chartElementPrimaryPartRef("markers")).toEqual({
+      kind: "marker",
+      seriesIndex: 0,
+      pointIndex: 0,
+    });
     expect(chartElementIdForPartRef({ kind: "series", seriesIndex: 0 })).toBe("series");
     expect(isChartElementOpenForPart("legend", { kind: "legend" })).toBe(true);
   });
