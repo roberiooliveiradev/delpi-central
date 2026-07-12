@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Factory, Package, ShieldCheck } from "lucide-react";
-import { DataRouteCatalogPanel, FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DataRouteCatalogPanel, FieldLabel, NativeTextControl, resolveDataRouteDisplayKinds } from "@delpi/plugin-ui/index";
 import {
   createDataSourceBlock,
   DATA_REFRESH_SEC_MAX,
@@ -125,6 +125,9 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
         </button>
         <DeckPropertySection pane title="Configurar fonte" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.sourceConfig}>
           <p className="td-deck-inspector__meta">{pickedRoute.label}</p>
+          {pickedRoute.description ? (
+            <p className="td-subtitle td-data-routes-panel__desc">{pickedRoute.description}</p>
+          ) : null}
           <DeckField id="td-data-source-label" label="Rótulo">
             <NativeTextControl id="td-data-source-label" value={label} onChange={setLabel} />
           </DeckField>
@@ -182,7 +185,7 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
 
   return (
     <div className="td-data-routes-panel">
-      <FieldLabel hint={TV_DASHBOARD_HELP_TOOLTIPS.data.catalogSearch}>Catálogo api-delpi</FieldLabel>
+      <FieldLabel label="Fontes de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.catalogSearch} />
       <DataRouteCatalogPanel
         items={routes.map((route) => ({
           id: route.operationId,
@@ -191,13 +194,18 @@ export function DataRoutesSidePanel({ onInserted }: Props) {
           description: route.description,
           path: route.path,
           httpMethod: "GET",
+          metaShape: route.metaShape,
+          displayKinds: resolveDataRouteDisplayKinds({
+            metaShape: route.metaShape,
+            allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+          }),
         }))}
         onSelect={(item) => {
           const route = routes.find((entry) => entry.operationId === item.id);
           if (route) pickRoute(route);
         }}
-        searchPlaceholder="Buscar por nome, path ou categoria…"
-        emptyMessage="Nenhuma rota encontrada."
+        searchPlaceholder="Buscar fonte, descrição ou path…"
+        emptyMessage="Nenhuma fonte com esses filtros."
         loading={loading}
         error={error}
         categoryLabels={CATEGORY_LABELS}

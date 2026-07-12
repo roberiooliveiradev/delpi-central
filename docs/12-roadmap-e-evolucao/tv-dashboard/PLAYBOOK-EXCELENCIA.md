@@ -1211,9 +1211,10 @@ Arquivo em `tv-dashboard-api/tv_app/content/tv_data_routes.json` — allowlist s
 python3 scripts/generate_tv_data_routes_from_openapi.py --write   # regenerar catálogo
 python3 scripts/generate_tv_data_routes_from_openapi.py --check   # gate CI
 python3 scripts/check_tv_data_routes.py --check                   # validação allowlist
+python3 scripts/enrich_tv_data_routes_pt.py --write               # label + description PT
 ```
 
-Enriquecimentos manuais por `operationId` são **preservados** na regeneração (`seriesField`, `paramSchema`, `valueFields`, `tvConstraints`).
+Enriquecimentos manuais por `operationId` são **preservados** na regeneração (`label`, `description`, `category`, `seriesField`, `paramSchema`, `valueFields`, `tvConstraints`). O picker do editor (`DataRouteCatalogPanel`) exibe **título PT + descrição + path** e filtros por categoria/forma (KPI/Série/Tabela).
 
 ```json
 {

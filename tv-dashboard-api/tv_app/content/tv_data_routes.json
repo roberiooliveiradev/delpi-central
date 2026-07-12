@@ -10,7 +10,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Meta percentual rol comercial»."
     },
     {
       "operationId": "get_sales_conversion_rate",
@@ -22,7 +23,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Taxa de fechamento comercial»."
     },
     {
       "operationId": "get_head_office_rol_target_pct",
@@ -34,7 +36,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Meta percentual rol comercial»."
     },
     {
       "operationId": "get_new_business_rol_pct",
@@ -46,7 +49,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Percentual rol de novos negócios»."
     },
     {
       "operationId": "get_new_clients_average",
@@ -58,7 +62,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Média de novos clientes»."
     },
     {
       "operationId": "get_new_clients_rol_pct",
@@ -70,7 +75,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Percentual rol de clientes novos»."
     },
     {
       "operationId": "list_commercial_proposals",
@@ -82,7 +88,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Propostas comerciais (carteira Totvs)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_commercial_proposal",
@@ -94,7 +101,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Detalhe da proposta comercial (OV)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_commercial_proposal_history_events",
@@ -106,7 +114,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Histórico de estágios da proposta comercial» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_commercial_rol_series",
@@ -118,7 +127,8 @@
         "line_chart",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Série temporal de rol comercial»."
     },
     {
       "operationId": "get_sales_order_otd",
@@ -130,43 +140,47 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Otd de pedidos de venda»."
     },
     {
       "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
       "httpMethod": "GET",
-      "label": "Get Cultura Delpi Content",
+      "label": "Conteúdo Cultura Delpi",
       "category": "strategic",
       "path": "/cultura-delpi/content",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
     },
     {
       "operationId": "search_customers_route_customers_search_get",
       "httpMethod": "GET",
-      "label": "Search Customers Route",
+      "label": "Busca de clientes",
       "category": "commercial",
       "path": "/customers/search",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Busca de clientes» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_dashboard_department_idd_dashboard_department_idd_get",
       "httpMethod": "GET",
-      "label": "Get Dashboard Department Idd",
+      "label": "Dashboard departamental (IDD)",
       "category": "system",
       "path": "/dashboard/department-idd",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Dashboard departamental (IDD)»."
     },
     {
       "operationId": "list_lmps",
@@ -178,7 +192,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar LMPs (ordens especiais / amostras)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_lmps_dashboard",
@@ -190,7 +205,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Dashboard de LMPs» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_lmps_dashboard_charts",
@@ -202,7 +218,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Gráficos do painel de LMPs»."
     },
     {
       "operationId": "list_lmps_dashboard_items",
@@ -214,7 +231,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Itens paginados do painel de LMPs» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_lmps_dashboard_summary",
@@ -226,7 +244,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «KPIs resumidos do painel de LMPs»."
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -238,7 +257,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Detalhe da LMP por ordem de venda»."
     },
     {
       "operationId": "get_lmp_history_events",
@@ -250,7 +270,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Histórico de eventos da OV (AIJ010)»."
     },
     {
       "operationId": "get_lmp_history_flow",
@@ -262,7 +283,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Transições de fluxo da engenharia na OV»."
     },
     {
       "operationId": "list_mini_applicators_ferramentas",
@@ -274,7 +296,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar ferramentas mini-aplicadores» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_mini_applicators_ferramenta",
@@ -286,7 +309,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Detalhe de ferramenta mini-aplicador»."
     },
     {
       "operationId": "list_mini_applicators_componentes",
@@ -298,7 +322,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Componentes do mini-aplicador» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_mini_applicators_golpes",
@@ -310,7 +335,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Golpes do mini-aplicador no período»."
     },
     {
       "operationId": "list_mini_applicators_pecas",
@@ -322,7 +348,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar peças do mini-aplicador» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_transforma_mais_processes",
@@ -334,7 +361,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar processos Transforma Mais» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_transforma_mais_summary",
@@ -346,7 +374,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Resumo Transforma Mais»."
     },
     {
       "operationId": "get_financial_ebitda_pct",
@@ -358,7 +387,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «EBITDA percentual (financeiro)»."
     },
     {
       "operationId": "get_financial_fixed_cost_pct",
@@ -370,7 +400,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Custo fixo percentual (financeiro)»."
     },
     {
       "operationId": "get_financial_pmr",
@@ -382,7 +413,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «PMR — prazo médio de recebimento»."
     },
     {
       "operationId": "get_financial_rol",
@@ -394,19 +426,21 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «ROL financeiro (receita operacional líquida)»."
     },
     {
       "operationId": "root_health_get",
       "httpMethod": "GET",
-      "label": "Root",
+      "label": "Saúde da API (root)",
       "category": "system",
       "path": "/health",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Saúde da API (root)»."
     },
     {
       "operationId": "get_hr_active_pdi_count",
@@ -418,7 +452,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Pdis ativos»."
     },
     {
       "operationId": "list_hr_branches",
@@ -430,7 +465,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Filiais de rh» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_hr_performance_reviews_completion",
@@ -442,7 +478,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Conclusão de avaliações de desempenho»."
     },
     {
       "operationId": "get_hr_snapshot",
@@ -454,7 +491,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise consolidada — Snapshot de rh»."
     },
     {
       "operationId": "get_inspecoes_entrada_historico",
@@ -466,7 +504,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Lista paginada — Inspecoes entrada historico»."
     },
     {
       "operationId": "get_inspecoes_entrada_historico_detalhe",
@@ -478,7 +517,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta — Inspecoes entrada historico detalhe»."
     },
     {
       "operationId": "get_inspecoes_entrada_pendentes",
@@ -490,7 +530,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Lista paginada — Inspecoes entrada pendentes»."
     },
     {
       "operationId": "get_inspecoes_entrada_pendentes_fornecedor",
@@ -502,7 +543,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Lista — Inspecoes entrada pendentes fornecedor»."
     },
     {
       "operationId": "get_inspecoes_entrada_rejeitadas_ensaiador",
@@ -514,7 +556,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Lista — Inspecoes entrada rejeitadas ensaiador»."
     },
     {
       "operationId": "get_inspecoes_entrada_rejeitadas_produto",
@@ -526,7 +569,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Lista — Inspecoes entrada rejeitadas produto»."
     },
     {
       "operationId": "get_inspecoes_entrada_resumo",
@@ -538,7 +582,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Inspecoes entrada resumo»."
     },
     {
       "operationId": "list_pedidos_venda_abertos",
@@ -550,7 +595,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Análise consolidada — Pedidos de venda em aberto» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_ops_abertas_pedidos_venda",
@@ -562,7 +608,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Análise consolidada — Ops abertas (pedidos de venda)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_production_allocation_gaps",
@@ -574,7 +621,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Componentes sem empenho (travamento)»."
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -586,7 +634,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consumo real de item por produto»."
     },
     {
       "operationId": "get_production_consumption_top_items",
@@ -598,7 +647,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Itens mais consumidos na produção»."
     },
     {
       "operationId": "get_production_consumption_top_items_by_work_center",
@@ -610,7 +660,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consumo por centro de trabalho»."
     },
     {
       "operationId": "get_production_consumption_top_items_validated",
@@ -622,7 +673,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consumo validado por apontamento real»."
     },
     {
       "operationId": "get_depreciation_pct",
@@ -634,7 +686,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Depreciação percentual»."
     },
     {
       "operationId": "get_direct_labor_cost_pct",
@@ -646,7 +699,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Custo direto de mão de obra»."
     },
     {
       "operationId": "list_eficiencia_fabril_appointments",
@@ -658,7 +712,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Eficiência fabril — apontamentos (carga bulk)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -670,7 +725,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Eficiência fabril — dashboard MOD e gráficos»."
     },
     {
       "operationId": "get_production_losses_records",
@@ -682,7 +738,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Registros detalhados de refugo/scrap»."
     },
     {
       "operationId": "get_production_losses_top_materials",
@@ -694,7 +751,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Matérias-primas com mais refugo/scrap no período»."
     },
     {
       "operationId": "get_production_oee",
@@ -706,7 +764,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «OEE produção — resumo e apontamentos (view fabril)»."
     },
     {
       "operationId": "get_production_oee_appointment_by_id",
@@ -718,7 +777,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Detalhe do apontamento OEE (roteiro, estrutura e tempos)»."
     },
     {
       "operationId": "get_production_oee_series",
@@ -753,7 +813,8 @@
       "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
-      }
+      },
+      "description": "Indicador numérico para «OEE — série temporal»."
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -790,7 +851,8 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "description": "Indicador numérico para «OTD — produção»."
     },
     {
       "operationId": "get_production_order_by_op",
@@ -802,7 +864,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Detalhe da OP por C2_OP»."
     },
     {
       "operationId": "get_production_orders_finished",
@@ -814,7 +877,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «OPs finalizadas na data»."
     },
     {
       "operationId": "get_production_orders_finished_without_consumption",
@@ -826,7 +890,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «OPs finalizadas sem consumo de componentes»."
     },
     {
       "operationId": "get_production_orders_open",
@@ -838,7 +903,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «OPs em aberto na data»."
     },
     {
       "operationId": "get_production_otd",
@@ -850,7 +916,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «OTD produção — resumo e ordens (SC2010)»."
     },
     {
       "operationId": "get_production_otd_series",
@@ -885,7 +952,8 @@
       "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
-      }
+      },
+      "description": "Indicador numérico para «OTD — série temporal»."
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -922,7 +990,8 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "description": "Indicador numérico para «OEE — visão geral»."
     },
     {
       "operationId": "get_production_planned_vs_real_time",
@@ -934,7 +1003,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Tempo planejado × tempo real por OP»."
     },
     {
       "operationId": "get_production_cost_pct",
@@ -946,7 +1016,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Custo de produção percentual»."
     },
     {
       "operationId": "get_production_schedule_today",
@@ -958,7 +1029,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Produtos programados para produzir na data»."
     },
     {
       "operationId": "get_production_work_center_average_planned_time",
@@ -970,7 +1042,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Tempo médio planejado por centro de trabalho»."
     },
     {
       "operationId": "get_production_work_center_order_summary",
@@ -982,7 +1055,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Resumo de OPs por centro de trabalho»."
     },
     {
       "operationId": "get_product_directives",
@@ -994,7 +1068,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Diretivas do produto (referência cliente ou código DELPI)»."
     },
     {
       "operationId": "list_product_drawings",
@@ -1006,7 +1081,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Catálogo de desenhos PDF da biblioteca» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_exclusive_raw_materials_catalog",
@@ -1018,7 +1094,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Catálogo global de matérias-primas exclusivas» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "search_products",
@@ -1062,7 +1139,8 @@
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
-      }
+      },
+      "description": "Listagem paginada de «Produtos — busca» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_product_detail",
@@ -1074,7 +1152,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Dados cadastrais do produto»."
     },
     {
       "operationId": "get_product_analyser",
@@ -1086,7 +1165,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Analisador completo do produto»."
     },
     {
       "operationId": "get_product_cost_impact_simulation",
@@ -1098,7 +1178,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Simulador de impacto de custos do PA»."
     },
     {
       "operationId": "get_product_customers",
@@ -1110,7 +1191,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Clientes do produto»."
     },
     {
       "operationId": "get_product_drawing",
@@ -1122,7 +1204,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Metadados do desenho PDF do produto»."
     },
     {
       "operationId": "get_product_drawing_pdf",
@@ -1134,7 +1217,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Download do desenho PDF do produto»."
     },
     {
       "operationId": "get_product_factory_status",
@@ -1146,7 +1230,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Status fabril completo do produto»."
     },
     {
       "operationId": "get_product_guide",
@@ -1158,7 +1243,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Roteiro de produção do produto»."
     },
     {
       "operationId": "get_product_inbound_invoice_items",
@@ -1170,7 +1256,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Itens de nota fiscal de entrada do produto»."
     },
     {
       "operationId": "get_product_inspection",
@@ -1182,7 +1269,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Inspeção de qualidade do produto (QP6/QP7/QP8)»."
     },
     {
       "operationId": "get_product_internal_movements",
@@ -1194,7 +1282,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Movimentações internas do produto»."
     },
     {
       "operationId": "get_product_last_purchase",
@@ -1206,7 +1295,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Última compra válida da matéria-prima»."
     },
     {
       "operationId": "get_product_outbound_invoice_items",
@@ -1218,7 +1308,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Itens de nota fiscal de saída do produto»."
     },
     {
       "operationId": "get_product_parents",
@@ -1230,7 +1321,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Onde o produto é usado (produtos pai / BOM reversa)»."
     },
     {
       "operationId": "get_product_pricing",
@@ -1242,7 +1334,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Preços e tabelas comerciais do produto»."
     },
     {
       "operationId": "get_product_production_status",
@@ -1254,7 +1347,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Situação produtiva do produto (PA, PI, OP e apontamentos)»."
     },
     {
       "operationId": "get_product_purchase_budget_history",
@@ -1266,7 +1360,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Histórico de orçamento de compra (SC + PC)»."
     },
     {
       "operationId": "get_product_purchase_price_history",
@@ -1278,7 +1373,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Histórico de preço de compra da matéria-prima»."
     },
     {
       "operationId": "get_product_purchases",
@@ -1290,7 +1386,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Histórico de compras do produto»."
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
@@ -1302,7 +1399,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise inteligente de preço de matéria-prima»."
     },
     {
       "operationId": "get_product_sales_summary",
@@ -1314,7 +1412,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Resumo de vendas do produto»."
     },
     {
       "operationId": "get_product_sales_billing",
@@ -1326,7 +1425,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Faturamento do produto»."
     },
     {
       "operationId": "get_product_sales_open_orders",
@@ -1338,7 +1438,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Carteira de pedidos de venda em aberto do produto»."
     },
     {
       "operationId": "get_product_shipping_status",
@@ -1350,7 +1451,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Expedição do PA via inspeção final»."
     },
     {
       "operationId": "get_product_stock",
@@ -1362,7 +1464,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Estoque do produto por filial e local»."
     },
     {
       "operationId": "get_product_structure",
@@ -1374,7 +1477,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "hierarchy"
+      "metaShape": "hierarchy",
+      "description": "Visão hierárquica de «Estrutura (BOM) do produto»."
     },
     {
       "operationId": "structure_excel_public_products__code__structure_excel_get",
@@ -1386,7 +1490,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "hierarchy"
+      "metaShape": "hierarchy",
+      "description": "Visão hierárquica de «Structure Excel Public»."
     },
     {
       "operationId": "get_product_structure_exclusivity",
@@ -1398,7 +1503,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "hierarchy"
+      "metaShape": "hierarchy",
+      "description": "Visão hierárquica de «Estrutura do produto com exclusividade de matérias-primas»."
     },
     {
       "operationId": "get_product_summary",
@@ -1410,7 +1516,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Resumo do produto (cadastro + estoque + preços)»."
     },
     {
       "operationId": "get_product_suppliers",
@@ -1422,7 +1529,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Fornecedores do produto»."
     },
     {
       "operationId": "list_propostas_comerciais",
@@ -1434,7 +1542,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Proposta comercial interna (pdf/totvs)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_proposta_comercial",
@@ -1446,7 +1555,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise consolidada — Proposta comercial interna (pdf/totvs)»."
     },
     {
       "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
@@ -1458,19 +1568,21 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Export Proposta Comercial Pdf Route»."
     },
     {
       "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
       "httpMethod": "GET",
-      "label": "Get Public Inspection",
+      "label": "Inspeção pública (etiqueta)",
       "category": "quality",
       "path": "/public/quality-labels/inspection/{token}",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Inspeção pública (etiqueta)»."
     },
     {
       "operationId": "get_purchases_top_products",
@@ -1482,7 +1594,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Produtos mais comprados no período»."
     },
     {
       "operationId": "list_quality_action_plans",
@@ -1494,7 +1607,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_quality_action_plan_assignable_users",
@@ -1506,7 +1620,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Directory user» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_quality_action_plans_dashboard",
@@ -1518,7 +1633,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Quality action plan dashboard»."
     },
     {
       "operationId": "list_quality_action_plan_pending_effectiveness_reviews",
@@ -1530,7 +1646,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "search_quality_action_plan_evidences",
@@ -1542,7 +1659,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan evidence» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_quality_action_plan_export_templates",
@@ -1554,7 +1672,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan export template» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_quality_action_plan_knowledge_graph",
@@ -1566,7 +1685,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise consolidada — Quality action plan knowledge graph»."
     },
     {
       "operationId": "list_quality_action_plan_my_queue",
@@ -1578,7 +1698,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan action» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_quality_action_plans_overdue",
@@ -1590,7 +1711,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_quality_action_plans_recurrence",
@@ -1602,7 +1724,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan recurrence» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_quality_action_plan_detail",
@@ -1614,7 +1737,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise consolidada — Quality action plan»."
     },
     {
       "operationId": "list_quality_action_plan_audit_log",
@@ -1626,7 +1750,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan audit log» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_quality_action_plan_evidences",
@@ -1638,7 +1763,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan evidence» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_quality_action_plan_evidence_content",
@@ -1650,7 +1776,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise consolidada — Quality action plan evidence»."
     },
     {
       "operationId": "download_quality_action_plan_evidence",
@@ -1662,7 +1789,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta — Quality action plan evidence»."
     },
     {
       "operationId": "export_quality_action_plan_pdf",
@@ -1674,7 +1802,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta — Quality action plan export»."
     },
     {
       "operationId": "export_quality_action_plan_rnc_8d",
@@ -1686,7 +1815,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Quality action plan export»."
     },
     {
       "operationId": "export_quality_action_plan_rnc_8d_pdf",
@@ -1698,7 +1828,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta — Quality action plan export»."
     },
     {
       "operationId": "list_quality_action_plan_revisions",
@@ -1710,7 +1841,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality action plan revision» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_quality_action_plan_revision",
@@ -1722,7 +1854,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise consolidada — Quality action plan revision»."
     },
     {
       "operationId": "get_quality_action_plan_similar_cases",
@@ -1734,127 +1867,138 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Análise consolidada — Quality action plan similar cases»."
     },
     {
       "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
       "httpMethod": "GET",
-      "label": "Get Audit 5S Dashboard",
+      "label": "Auditoria 5S — painel analítico",
       "category": "quality",
       "path": "/quality/audit-5s/analytics/dashboard",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — painel analítico»."
     },
     {
       "operationId": "list_areas_quality_audit_5s_areas_get",
       "httpMethod": "GET",
-      "label": "List Areas",
+      "label": "Auditoria 5S — áreas",
       "category": "quality",
       "path": "/quality/audit-5s/areas",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — áreas» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_audits_quality_audit_5s_audits_get",
       "httpMethod": "GET",
-      "label": "List Audits",
+      "label": "Auditoria 5S — listagem",
       "category": "quality",
       "path": "/quality/audit-5s/audits",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — listagem» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
       "httpMethod": "GET",
-      "label": "Get Audit",
+      "label": "Auditoria 5S — detalhe",
       "category": "quality",
       "path": "/quality/audit-5s/audits/{audit_id}",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — detalhe»."
     },
     {
       "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
       "httpMethod": "GET",
-      "label": "List Audit Nc Attachments",
+      "label": "Auditoria 5S — anexos de NC da auditoria",
       "category": "quality",
       "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — anexos de NC da auditoria» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
       "httpMethod": "GET",
-      "label": "List Nc Candidates",
+      "label": "Auditoria 5S — candidatos a NC",
       "category": "quality",
       "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — candidatos a NC» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
       "httpMethod": "GET",
-      "label": "List Audit Nonconformities",
+      "label": "Auditoria 5S — não conformidades",
       "category": "quality",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — não conformidades» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_criteria_quality_audit_5s_criteria_get",
       "httpMethod": "GET",
-      "label": "List Criteria",
+      "label": "Auditoria 5S — critérios",
       "category": "quality",
       "path": "/quality/audit-5s/criteria",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — critérios» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
       "httpMethod": "GET",
-      "label": "List Nc Actions",
+      "label": "Auditoria 5S — ações da NC",
       "category": "quality",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — ações da NC» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
       "httpMethod": "GET",
-      "label": "List Nc Attachments",
+      "label": "Auditoria 5S — anexos da NC",
       "category": "quality",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Auditoria 5S — anexos da NC» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
@@ -1866,31 +2010,34 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Download Nc Attachment»."
     },
     {
       "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
       "httpMethod": "GET",
-      "label": "Get Audit 5S Summary",
+      "label": "Auditoria 5S — resumo",
       "category": "quality",
       "path": "/quality/audit-5s/summary",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Auditoria 5S — resumo»."
     },
     {
       "operationId": "list_quality_branches_quality_branches_get",
       "httpMethod": "GET",
-      "label": "List Quality Branches",
+      "label": "Listar Quality Branches",
       "category": "quality",
       "path": "/quality/branches",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Quality Branches» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_kaizen_records",
@@ -1902,7 +2049,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Cadastro operacional de kaizens (PostgreSQL)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
@@ -1914,7 +2062,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Export Kaizen Records»."
     },
     {
       "operationId": "get_kaizen_record",
@@ -1926,43 +2075,47 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Detalhe do kaizen cadastrado (PostgreSQL)»."
     },
     {
       "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
       "httpMethod": "GET",
-      "label": "Get Kaizen At Date",
+      "label": "Consultar Kaizen At Date",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/at",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Kaizen At Date»."
     },
     {
       "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
       "httpMethod": "GET",
-      "label": "List Kaizen Audit Log",
+      "label": "Listar Kaizen Audit Log",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/audit-log",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Kaizen Audit Log» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
       "httpMethod": "GET",
-      "label": "List Kaizen Evidences",
+      "label": "Listar Kaizen Evidences",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/evidences",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Kaizen Evidences» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
@@ -1974,55 +2127,60 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Download Kaizen Evidence»."
     },
     {
       "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
       "httpMethod": "GET",
-      "label": "List Kaizen History",
+      "label": "Listar Kaizen History",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/history",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Kaizen History» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
       "httpMethod": "GET",
-      "label": "List Kaizen Revisions",
+      "label": "Listar Kaizen Revisions",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/revisions",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Kaizen Revisions» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
       "httpMethod": "GET",
-      "label": "Get Kaizen Revision",
+      "label": "Consultar Kaizen Revision",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/revisions/{revision_number}",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Kaizen Revision»."
     },
     {
       "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
       "httpMethod": "GET",
-      "label": "Get Kaizen Savings Timeline",
+      "label": "Consultar Kaizen Savings Timeline",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/savings-timeline",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Kaizen Savings Timeline»."
     },
     {
       "operationId": "get_kaizen_summary",
@@ -2034,7 +2192,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Kaizens — resumo e listagem (Google Sheets)»."
     },
     {
       "operationId": "get_kaizen_by_id",
@@ -2046,67 +2205,73 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Detalhe do kaizen (Google Sheets)»."
     },
     {
       "operationId": "list_labels_quality_labels_get",
       "httpMethod": "GET",
-      "label": "List Labels",
+      "label": "Listar Labels",
       "category": "quality",
       "path": "/quality/labels",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Labels» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_audit_events_quality_labels_audit_events_get",
       "httpMethod": "GET",
-      "label": "List Audit Events",
+      "label": "Listar Audit Events",
       "category": "quality",
       "path": "/quality/labels/audit-events",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Audit Events» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_checklist_template_quality_labels_checklist_template_get",
       "httpMethod": "GET",
-      "label": "List Checklist Template",
+      "label": "Listar Checklist Template",
       "category": "quality",
       "path": "/quality/labels/checklist-template",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Checklist Template» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
       "httpMethod": "GET",
-      "label": "Get My Inspector",
+      "label": "Consultar My Inspector",
       "category": "quality",
       "path": "/quality/labels/inspectors/me",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar My Inspector»."
     },
     {
       "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
       "httpMethod": "GET",
-      "label": "Get My Signature",
+      "label": "Consultar My Signature",
       "category": "quality",
       "path": "/quality/labels/inspectors/me/signature",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar My Signature»."
     },
     {
       "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
@@ -2118,115 +2283,125 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Lookup Op»."
     },
     {
       "operationId": "search_ops_quality_labels_search_ops_get",
       "httpMethod": "GET",
-      "label": "Search Ops",
+      "label": "Buscar Ops",
       "category": "quality",
       "path": "/quality/labels/search-ops",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Buscar Ops» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_label_quality_labels__label_id__get",
       "httpMethod": "GET",
-      "label": "Get Label",
+      "label": "Consultar Label",
       "category": "quality",
       "path": "/quality/labels/{label_id}",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Label»."
     },
     {
       "operationId": "get_certificate_quality_labels__label_id__certificate_get",
       "httpMethod": "GET",
-      "label": "Get Certificate",
+      "label": "Consultar Certificate",
       "category": "quality",
       "path": "/quality/labels/{label_id}/certificate",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Certificate»."
     },
     {
       "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
       "httpMethod": "GET",
-      "label": "Get Certificate Pdf",
+      "label": "Consultar Certificate Pdf",
       "category": "quality",
       "path": "/quality/labels/{label_id}/certificate/pdf",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Certificate Pdf»."
     },
     {
       "operationId": "get_label_qr_quality_labels__label_id__qr_get",
       "httpMethod": "GET",
-      "label": "Get Label Qr",
+      "label": "Consultar Label Qr",
       "category": "quality",
       "path": "/quality/labels/{label_id}/qr",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Label Qr»."
     },
     {
       "operationId": "list_nonconformity_route_quality_nonconformities_get",
       "httpMethod": "GET",
-      "label": "List Nonconformity Route",
+      "label": "Listar Nonconformity Route",
       "category": "quality",
       "path": "/quality/nonconformities",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Nonconformity Route» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
       "httpMethod": "GET",
-      "label": "Get Nonconformity Series",
+      "label": "Consultar Nonconformity Series",
       "category": "quality",
       "path": "/quality/nonconformities/series",
       "allowedDisplayModes": [
         "line_chart",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Nonconformity Series»."
     },
     {
       "operationId": "list_ppm_external",
       "httpMethod": "GET",
-      "label": "List External Ppm",
+      "label": "Listar External Ppm",
       "category": "quality",
       "path": "/quality/ppm/external",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar External Ppm» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_ppm_external_series",
       "httpMethod": "GET",
-      "label": "Get External Ppm Series",
+      "label": "Consultar External Ppm Series",
       "category": "quality",
       "path": "/quality/ppm/external/series",
       "allowedDisplayModes": [
         "line_chart",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar External Ppm Series»."
     },
     {
       "operationId": "get_ppm_external_summary",
@@ -2263,31 +2438,34 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "description": "Indicador numérico para «Qualidade — PPM externo»."
     },
     {
       "operationId": "list_ppm_internal",
       "httpMethod": "GET",
-      "label": "List Internal Ppm",
+      "label": "Listar Internal Ppm",
       "category": "quality",
       "path": "/quality/ppm/internal",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Internal Ppm» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_ppm_internal_series",
       "httpMethod": "GET",
-      "label": "Get Internal Ppm Series",
+      "label": "Consultar Internal Ppm Series",
       "category": "quality",
       "path": "/quality/ppm/internal/series",
       "allowedDisplayModes": [
         "line_chart",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Internal Ppm Series»."
     },
     {
       "operationId": "get_ppm_internal_summary",
@@ -2324,19 +2502,21 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "description": "Indicador numérico para «Qualidade — PPM interno»."
     },
     {
       "operationId": "get_produced_quantity",
       "httpMethod": "GET",
-      "label": "Get Produced Quantity",
+      "label": "Consultar Produced Quantity",
       "category": "quality",
       "path": "/quality/produced-quantity",
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consultar Produced Quantity»."
     },
     {
       "operationId": "list_quality_solution_patterns",
@@ -2348,7 +2528,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Lista paginada — Quality solution pattern» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_sale_orders",
@@ -2360,31 +2541,34 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar ordens de venda» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_bookings_scheduling_bookings_get",
       "httpMethod": "GET",
-      "label": "List Bookings",
+      "label": "Listar Bookings",
       "category": "scheduling",
       "path": "/scheduling/bookings",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Bookings» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "list_resources_scheduling_resources_get",
       "httpMethod": "GET",
-      "label": "List Resources",
+      "label": "Listar Resources",
       "category": "scheduling",
       "path": "/scheduling/resources",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Listar Resources» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_supplies_cpv",
@@ -2396,7 +2580,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «CPV — custo de produto vendido (Kardex / suprimentos)»."
     },
     {
       "operationId": "get_supplies_inventory_turnover",
@@ -2408,7 +2593,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Giro de estoque / IDD (suprimentos)»."
     },
     {
       "operationId": "get_supplies_negotiation_savings_summary",
@@ -2420,7 +2606,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Economia em negociações de compras (planilha IDD Suprimentos)»."
     },
     {
       "operationId": "get_supplies_otd",
@@ -2432,7 +2619,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «OTD — entrega no prazo (suprimentos)»."
     },
     {
       "operationId": "get_supplies_stock_value",
@@ -2469,7 +2657,8 @@
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
-      }
+      },
+      "description": "Indicador numérico para «Suprimentos — valor de estoque»."
     },
     {
       "operationId": "get_caller_stats_system_caller_stats_get",
@@ -2481,7 +2670,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Breakdown de requests por X-Delpi-Caller-App»."
     },
     {
       "operationId": "search_columns_global_system_columns_search_get",
@@ -2493,7 +2683,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Busca colunas por descrição (SX3010 + ranking semântico)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "get_console_alerts_system_console_alerts_get",
@@ -2505,7 +2696,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Histórico recente de alertas do console»."
     },
     {
       "operationId": "get_console_health_system_console_health_get",
@@ -2517,7 +2709,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
     },
     {
       "operationId": "get_envelope_contracts_system_envelope_contracts_get",
@@ -2529,7 +2722,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
     },
     {
       "operationId": "get_observability_snapshot_system_observability_snapshot_get",
@@ -2541,7 +2735,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Snapshot unificado para comparador de deploy»."
     },
     {
       "operationId": "get_openapi_diff_system_openapi_diff_get",
@@ -2553,7 +2748,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
     },
     {
       "operationId": "get_query_cache_stats_system_query_cache_stats_get",
@@ -2565,7 +2761,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
     },
     {
       "operationId": "get_smoke_definitions_system_smoke_definitions_get",
@@ -2577,7 +2774,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Definições das smoke suites do console»."
     },
     {
       "operationId": "get_sql_health_system_sql_health_get",
@@ -2589,7 +2787,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Telemetria SQL recente (ring buffer memória ou Redis)»."
     },
     {
       "operationId": "search_tables_system_tables_search_get",
@@ -2601,7 +2800,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Busca tabelas por descrição (SX2)» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "table_system_tables__tableName__get",
@@ -2613,7 +2813,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta informações de tabela»."
     },
     {
       "operationId": "table_columns_system_tables__tableName__columns_get",
@@ -2625,7 +2826,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta colunas de tabela com paginação»."
     },
     {
       "operationId": "search_columns_system_tables__tableName__columns_search_get",
@@ -2637,7 +2839,8 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de «Buscar colunas por texto» para uso em tabela ou gráfico no TV."
     },
     {
       "operationId": "table_indexes_system_tables__tableName__indexes_get",
@@ -2649,7 +2852,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta índices (SIX010)»."
     },
     {
       "operationId": "table_relations_system_tables__tableName__relations_get",
@@ -2661,7 +2865,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
     },
     {
       "operationId": "table_schema_system_tables__tableName__schema_get",
@@ -2673,7 +2878,8 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
     }
   ]
 }

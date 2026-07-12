@@ -139,8 +139,11 @@ export { useClientPagination } from "../../utils/useClientPagination";
 
 export {
   DataRouteCatalogPanel,
+  primaryDataRouteDisplayKind,
+  resolveDataRouteDisplayKinds,
   type DataRouteCatalogItem,
   type DataRouteCatalogPanelProps,
+  type DataRouteDisplayKind,
 } from "./DataRouteCatalogPanel";
 
 export {

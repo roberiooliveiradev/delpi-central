@@ -31,6 +31,9 @@ describe("DataRoutesSidePanel", () => {
         operationId: "get_oee",
         label: "OEE geral",
         category: "production",
+        description: "Indicador consolidado de eficiência.",
+        metaShape: "scalar",
+        allowedDisplayModes: ["kpi"],
         paramSchema: { periodDays: { type: "integer", label: "Dias", default: 7 } },
       },
     ]);
@@ -38,9 +41,12 @@ describe("DataRoutesSidePanel", () => {
 
   it("lista rotas e abre formulário de configuração", async () => {
     renderPanel();
-    await waitFor(() => expect(screen.getByText("OEE geral")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Fontes de dados")).toBeTruthy());
+    expect(screen.getByText("OEE geral")).toBeTruthy();
+    expect(screen.getByText(/Indicador consolidado/)).toBeTruthy();
     fireEvent.click(screen.getByText("OEE geral"));
     expect(screen.getByLabelText("Rótulo")).toBeTruthy();
+    expect(screen.getByText(/Indicador consolidado/)).toBeTruthy();
     expect(screen.getByText("Inserir fonte de dados")).toBeTruthy();
   });
 });

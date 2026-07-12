@@ -53,9 +53,10 @@ Regenerar catálogo após alterações no OpenAPI api-delpi:
 
 ```bash
 python3 scripts/generate_tv_data_routes_from_openapi.py --write
+python3 scripts/enrich_tv_data_routes_pt.py --write   # labels/descriptions PT (preservados no generate)
 ```
 
-O catálogo atual inclui **todas** as operações GET do baseline OpenAPI (~206 rotas), preservando enriquecimentos manuais (`seriesField`, `paramSchema`, `valueFields`) por `operationId`.
+O catálogo atual inclui **todas** as operações GET do baseline OpenAPI (~206 rotas), preservando enriquecimentos manuais (`label`, `description`, `category`, `seriesField`, `paramSchema`, `valueFields`) por `operationId`.
 
 
 ---

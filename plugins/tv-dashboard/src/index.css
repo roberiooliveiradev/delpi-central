@@ -553,6 +553,13 @@
   margin: 12px 14px 0;
 }
 
+.td-data-routes-panel__desc {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--td-text, #111) 62%, transparent);
+}
+
 .td-deck-preview-banner {
   margin: 0;
   padding: 8px 16px;
