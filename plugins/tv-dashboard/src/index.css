@@ -280,8 +280,8 @@
 .dashboard-tv-dashboard .td-slide-thumb__stage {
   position: relative;
   overflow: hidden;
-  /* Canvas do comunicado é branco — fundo escuro vazava thumb “tudo preto”. */
-  background: var(--td-surface);
+  /* Print do slide: fundo vem do native (ex. branco). Não usar --td-surface do tema UI. */
+  background: #ffffff;
 }
 
 .dashboard-tv-dashboard .td-slide-thumb__stage .tdp-native-screen,

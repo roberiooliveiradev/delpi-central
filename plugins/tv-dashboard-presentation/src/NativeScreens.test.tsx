@@ -152,4 +152,24 @@ describe("NativeScreens public payload", () => {
     expect(container.querySelector(".delpi-ui-series-chart")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
   });
+
+  it("tela vazia (blocks []) usa layout rico com fundo do slide — não o legado tdp-message", () => {
+    const { container } = render(
+      <NativeSlideView
+        native={{
+          screenKey: "custom_message",
+          config: {},
+          data: {
+            version: 4,
+            background: { type: "color", value: "#ffffff" },
+            blocks: [],
+          },
+        }}
+      />,
+    );
+    const rich = container.querySelector(".tdp-native-screen.tdp-comunicado") as HTMLElement | null;
+    expect(rich).toBeTruthy();
+    expect(rich?.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(container.querySelector(".tdp-message")).toBeNull();
+  });
 });

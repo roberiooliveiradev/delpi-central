@@ -1021,7 +1021,9 @@ export function sortBlocksByZIndex(blocks: ComunicadoBlock[]): ComunicadoBlock[]
 }
 
 export function hasRichComunicado(data: ComunicadoScreenDataLike): boolean {
-  return Array.isArray(data.blocks) && data.blocks.length > 0;
+  // Array presente (mesmo vazio) = layout de compositor WYSIWYG.
+  // Sem `blocks` = legado headline/subtitle (`tdp-message`).
+  return Array.isArray(data.blocks);
 }
 
 export type ComunicadoScreenDataLike = {
