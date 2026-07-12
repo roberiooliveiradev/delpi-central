@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { Copy, Replace } from "lucide-react";
 import {
   applyMarkerStyleToAll,
+  canConnectBlocks,
   chartPartVisualPrimitive,
   chartPrimitiveSupportsFill,
   chartPrimitiveSupportsStroke,
@@ -90,6 +91,7 @@ export function ComunicadoShapeRibbon() {
     alignSelected,
     groupSelected,
     ungroupSelected,
+    connectSelected,
   } = useComunicadoEditor();
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
@@ -98,6 +100,13 @@ export function ComunicadoShapeRibbon() {
   const canDistribute = selectedIds.length >= 3;
   const canGroup = selectedIds.length >= 2;
   const canUngroup = selectedHasGroup(blocks, selectedIds);
+  const canConnect = (() => {
+    if (selectedIds.length !== 2) return false;
+    const [idA, idB] = selectedIds;
+    const a = blocks.find((block) => block.id === idA);
+    const b = blocks.find((block) => block.id === idB);
+    return Boolean(a && b && canConnectBlocks(a, b));
+  })();
 
   const textFormatTarget = resolveSelectedTextFormatTarget({
     selected,
@@ -169,9 +178,11 @@ export function ComunicadoShapeRibbon() {
           canDistribute={canDistribute}
           canGroup={canGroup}
           canUngroup={canUngroup}
+          canConnect={canConnect}
           alignSelected={alignSelected}
           groupSelected={groupSelected}
           ungroupSelected={ungroupSelected}
+          connectSelected={connectSelected}
         />
       ) : null}
       <FormatRibbonTypographySections />

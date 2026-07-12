@@ -2,7 +2,9 @@ import { useCallback, useRef, type MutableRefObject } from "react";
 
 import {
   clampFrameForBlock,
+  isConnectorShapeBlock,
   isLineShapeKind,
+  reconcileConnectorsAfterDrag,
   serializeComunicadoConfig,
   syncLineVerticesFromFrame,
   type ComunicadoBlock,
@@ -77,14 +79,17 @@ export function useComunicadoEditorDrag({
   const handleUpdateFrame = useCallback(
     (blockId: string, frame: ComunicadoBlock["frame"]) => {
       const multi = multiDragRef.current;
+      let nextBlocks: ComunicadoBlock[];
+      const draggedIds = new Set<string>();
       if (multi && multi.startFrames.has(blockId)) {
         const origin = multi.startFrames.get(blockId);
         if (!origin) return;
         const dx = frame.x - origin.x;
         const dy = frame.y - origin.y;
         const isResize = frame.w !== origin.w || frame.h !== origin.h;
-        const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        nextBlocks = (configRef.current.blocks ?? []).map((block) => {
           if (!multi.startFrames.has(block.id)) return block;
+          draggedIds.add(block.id);
           const start = multi.startFrames.get(block.id)!;
           if (block.id === blockId && isResize) {
             return { ...block, frame };
@@ -100,13 +105,13 @@ export function useComunicadoEditorDrag({
             },
           };
         });
-        updateBlocksSilent(nextBlocks);
-        return;
+      } else {
+        draggedIds.add(blockId);
+        nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+          block.id === blockId ? { ...block, frame } : block,
+        );
       }
-      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
-        block.id === blockId ? { ...block, frame } : block,
-      );
-      updateBlocksSilent(nextBlocks);
+      updateBlocksSilent(reconcileConnectorsAfterDrag(nextBlocks, draggedIds));
     },
     [configRef, updateBlocksSilent],
   );
@@ -171,6 +176,7 @@ export function useComunicadoEditorDrag({
           : [blockId];
 
       let nextBlocks = [...(configRef.current.blocks ?? [])];
+      const draggedIds = new Set(idsToFinalize);
       for (const id of idsToFinalize) {
         const index = nextBlocks.findIndex((block) => block.id === id);
         if (index < 0) continue;
@@ -183,6 +189,7 @@ export function useComunicadoEditorDrag({
         if (
           updated.type === "shape" &&
           isLineShapeKind(updated.shape) &&
+          !isConnectorShapeBlock(updated) &&
           mode === "resize"
         ) {
           updated = {
@@ -192,6 +199,7 @@ export function useComunicadoEditorDrag({
         }
         nextBlocks[index] = updated;
       }
+      nextBlocks = reconcileConnectorsAfterDrag(nextBlocks, draggedIds);
 
       const nextConfig = { ...configRef.current, blocks: nextBlocks };
       const unchanged = idsToFinalize.every((id) => {

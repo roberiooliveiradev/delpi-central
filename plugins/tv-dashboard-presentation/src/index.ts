@@ -58,6 +58,7 @@ export type {
   ComunicadoScreenData,
   ComunicadoShapeBlock,
   ComunicadoShapeKind,
+  ComunicadoShapeConnector,
   ComunicadoGeometryVertex,
   ComunicadoTextBlock,
 } from "./comunicadoTypes";
@@ -116,6 +117,22 @@ export {
   ComunicadoShapePreview,
   lineArrowHeadPolygonPoints,
 } from "./comunicadoShapeGraphic";
+export {
+  applyConnectorGeometry,
+  canConnectBlocks,
+  connectorsReferencingBlock,
+  createConnectorBlock,
+  detachConnector,
+  isConnectorShapeBlock,
+  normalizeConnectorAnchor,
+  normalizeShapeConnector,
+  pruneOrphanConnectors,
+  reconcileConnectorsAfterDrag,
+  resolveBlockAnchorPoint,
+  resolveConnectorEndpoints,
+  syncAllConnectors,
+  type ComunicadoConnectorAnchor,
+} from "./comunicadoConnectors";
 export {
   adjustmentHandleCssPosition,
   borderRadiusPxToCornerAdjustment,

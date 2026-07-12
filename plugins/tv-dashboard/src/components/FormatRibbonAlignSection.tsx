@@ -6,6 +6,7 @@ import {
   AlignVerticalJustifyEnd,
   AlignVerticalJustifyStart,
   Group,
+  Spline,
   Ungroup,
 } from "lucide-react";
 
@@ -20,19 +21,23 @@ type Props = {
   canDistribute: boolean;
   canGroup: boolean;
   canUngroup: boolean;
+  canConnect: boolean;
   alignSelected: (command: LayoutAlignCommand) => void;
   groupSelected: () => void;
   ungroupSelected: () => void;
+  connectSelected: () => void;
 };
 
-/** Seção Alinhar / Dist. / Agrupar do ribbon de formato (seleção múltipla). */
+/** Seção Alinhar / Dist. / Agrupar / Conectar do ribbon de formato (seleção múltipla). */
 export function FormatRibbonAlignSection({
   canDistribute,
   canGroup,
   canUngroup,
+  canConnect,
   alignSelected,
   groupSelected,
   ungroupSelected,
+  connectSelected,
 }: Props) {
   return (
     <DeckRibbonGroup label="Alinhar" hint={H.alignSelection}>
@@ -82,6 +87,13 @@ export function FormatRibbonAlignSection({
           hint={H.ungroupSelection}
           disabled={!canUngroup}
           onClick={ungroupSelected}
+        />
+        <DeckRibbonTile
+          icon={Spline}
+          label="Conectar"
+          hint={H.connectSelection}
+          disabled={!canConnect}
+          onClick={connectSelected}
         />
       </div>
     </DeckRibbonGroup>

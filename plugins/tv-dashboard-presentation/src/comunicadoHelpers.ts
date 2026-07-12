@@ -21,6 +21,7 @@ import {
   isPointShapeKind,
   resolveShapePrimitive,
 } from "./comunicadoVisualPrimitive";
+import { normalizeShapeConnector } from "./comunicadoConnectors";
 import {
   serializeContentRuns,
   shouldPersistContentRuns,
@@ -80,6 +81,7 @@ import type {
   ComunicadoChartType,
   ComunicadoTablePreset,
   ComunicadoFrame,
+  ComunicadoGeometryVertex,
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
@@ -431,6 +433,23 @@ function readLinkFields(block: Record<string, unknown>) {
   };
 }
 
+function normalizeVertices(value: unknown): ComunicadoGeometryVertex[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined;
+  const points: ComunicadoGeometryVertex[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const raw = item as Record<string, unknown>;
+    const x = Number(raw.x);
+    const y = Number(raw.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    points.push({
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
+  }
+  return points.length > 0 ? points : undefined;
+}
+
 export function parseComunicadoConfig(raw: Record<string, unknown> | undefined | null): ComunicadoConfig {
   const cfg = raw ?? {};
 
@@ -546,6 +565,17 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.content) base.content = block.content;
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
+    if (block.vertices && block.vertices.length > 0) {
+      base.vertices = block.vertices.map((point) => ({ x: point.x, y: point.y }));
+    }
+    if (block.connector) {
+      base.connector = {
+        fromBlockId: block.connector.fromBlockId,
+        toBlockId: block.connector.toBlockId,
+        fromAnchor: block.connector.fromAnchor ?? "center",
+        toAnchor: block.connector.toAnchor ?? "center",
+      };
+    }
   } else if (block.type === "icon") {
     base.iconName = block.iconName;
     if (block.href) base.href = block.href;
@@ -672,6 +702,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   }
   if (type === "shape") {
     const kind = shape && isComunicadoShapeKind(shape) ? shape : "rectangle";
+    const vertices = normalizeVertices(block.vertices);
+    const connector = normalizeShapeConnector(block.connector);
     return attachBlockAnimations(
       {
         id,
@@ -683,6 +715,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         content: typeof block.content === "string" ? block.content : "",
         href: links.href,
         linkTarget: links.linkTarget,
+        ...(vertices ? { vertices } : {}),
+        ...(connector ? { connector } : {}),
       },
       block,
     );

@@ -27,6 +27,7 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - **Aplicar estilo a irmãos:** botão no inspetor KPI (título/valor/subtítulo), tabela (células/cabeçalhos) e marcadores do gráfico
 - **Efeitos tipográficos:** sombra e contorno do texto (aba Formatar → Efeitos)
 - **Cores recentes** no seletor de cor; **export PNG/PDF** na faixa Início
+- **Conectores MVP:** selecione 2 elementos → **Conectar** no ribbon Alinhar (seta entre centros); arrastar a seta solta a ligação — [§19.22](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1922-conectores-mvp-entre-blocos-jul2026)
 - **Telas nativas OEE/OTD/PPM:** dual-KPI + série temporal SVG (`ConfigurableSeriesChart`)
 - Filmstrip: prévia centralizada (`CenteredScaledPreview`), menu de contexto nas telas
 

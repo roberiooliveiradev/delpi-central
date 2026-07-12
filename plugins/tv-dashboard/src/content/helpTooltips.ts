@@ -79,6 +79,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     distributeV: "Distribuir espaçamento vertical entre 3 ou mais elementos.",
     groupSelection: "Agrupar elementos para mover e redimensionar juntos.",
     ungroupSelection: "Separar elementos de um grupo.",
+    connectSelection:
+      "Criar uma seta conectando os dois elementos selecionados (centros). Arrastar a seta solta a ligação.",
     insertIndicator: "Inserir bloco de indicador ou gráfico com dados da api-delpi.",
     insertIcon: "Ícones vetoriais prontos para o slide.",
     insertTextGroup: "Caixas de título e texto livre no slide.",

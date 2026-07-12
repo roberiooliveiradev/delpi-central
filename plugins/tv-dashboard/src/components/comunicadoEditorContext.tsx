@@ -412,6 +412,7 @@ export function ComunicadoEditorProvider({
     addIconBlock: blockActions.addIconBlock,
     groupSelected: blockActions.groupSelected,
     ungroupSelected: blockActions.ungroupSelected,
+    connectSelected: blockActions.connectSelected,
     setDataFilters: blockActions.setDataFilters,
     updateSelected: blockActions.updateSelected,
     updateBlock: blockActions.updateBlock,

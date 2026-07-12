@@ -140,6 +140,8 @@ export type ComunicadoEditorContextValue = {
   addIconBlock: (iconName: string) => void;
   groupSelected: () => void;
   ungroupSelected: () => void;
+  /** Liga os dois blocos selecionados com uma seta (MVP conector). */
+  connectSelected: () => void;
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;

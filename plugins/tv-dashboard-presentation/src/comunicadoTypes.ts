@@ -191,11 +191,24 @@ export type ComunicadoMediaBlock = ComunicadoBlockBase & {
 
 export type ComunicadoGeometryVertex = { x: number; y: number };
 
+/** Ligação entre blocos (MVP conector) — ver `comunicadoConnectors`. */
+export type ComunicadoShapeConnector = {
+  fromBlockId: string;
+  toBlockId: string;
+  fromAnchor?: "center" | "n" | "s" | "e" | "w";
+  toAnchor?: "center" | "n" | "s" | "e" | "w";
+};
+
 export type ComunicadoShapeBlock = ComunicadoBlockBase & {
   type: "shape";
   shape: ComunicadoShapeKind;
   /** Vértices explícitos (%): 1 ponto, ≥2 linha, ≥3 forma fechada. */
   vertices?: ComunicadoGeometryVertex[];
+  /**
+   * Ligação a outros blocos (MVP conector). Endpoints derivados → `vertices`/`frame`.
+   * Só faz sentido em kinds de linha (`line`, `line-arrow-*`).
+   */
+  connector?: ComunicadoShapeConnector;
   content?: string;
   href?: string;
   linkTarget?: "_blank" | "_self";

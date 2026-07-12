@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.5+ (jul/2026):** … **§19.21** sombra/contorno tipográfico + cores recentes + export PDF. **Backlog restante:** conectores, upload de fonte, tabelas canvas, PPTX, modo apresentador, colaboração.
+> **Status:** … **v1.5+ (jul/2026):** … **§19.21** sombra/contorno tipográfico + cores recentes + export PDF. **§19.22** conectores MVP entre blocos. **Backlog restante:** upload de fonte, reflexo tipográfico, tabelas canvas, PPTX, modo apresentador, colaboração.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente (paridade PPT / longo prazo):** upload de fonte; conectores; tabelas canvas simples; modo apresentador; import/export PPTX; colaboração. Sombra/contorno tipográfico, cores recentes e export PDF concluídos (§19.21).
+**Ainda pendente (paridade PPT / longo prazo):** upload de fonte; reflexo tipográfico; tabelas canvas simples; modo apresentador; import/export PPTX; colaboração. Conectores MVP, sombra/contorno tipográfico, cores recentes e export PDF concluídos (§19.21–§19.22).
 
 ---
 
@@ -676,7 +676,7 @@ sequenceDiagram
 ### Telas nativas / editor — backlog restante
 
 1. Upload de fonte; reflexo tipográfico.
-2. Conectores entre formas; tabelas canvas simples.
+2. Tabelas canvas simples; upload de fonte.
 3. Import/export PPTX; modo apresentador; colaboração (longo prazo).
 
 ### Concluído v2 (jul/2026)
@@ -768,6 +768,7 @@ Apresentação TV / preview
 | Bullets / listas numeradas | ✓ | ✅ v1.3.4 (4C.3) | `style.listType` + ribbon Marcadores/Numerada |
 | Estilos nomeados (Título 1, Corpo) | ✓ | ✅ v1.3.5 (4C.4) | `style.namedStyle` + ribbon Estilo |
 | Sombra / contorno / reflexo texto | ✓ | ⚠ | Sombra + contorno ✅ (§19.21); reflexo ❌ |
+| Mais formas / conectores | ✓ | ⚠ | Catálogo amplo + **conectores MVP** ✅ (§19.22) |
 | Google Fonts / upload de fonte | ✓ | ✅ v1.3.6 (4C.5) | Catálogo curado + lazy load (`comunicadoGoogleFonts.ts`); upload ❌ |
 | Hiperlink em imagem/forma | ✓ | ✅ v1.3 | Também vídeo e ícone |
 
@@ -783,7 +784,7 @@ Apresentação TV / preview
 | Biblioteca de mídia da playlist | ✓ | ✅ v1.3 | `GET …/media` + `MediaLibraryModal` |
 | Ícones / stickers | ✓ | ✅ v1.3 | Bloco `icon` (Lucide) |
 | Tabelas simples | ✓ | ❌ | |
-| Mais formas / conectores | ✓ | ⚠ | 8 formas + ícones; conectores ❌ |
+| Mais formas / conectores | ✓ | ⚠ | Catálogo amplo + conectores MVP ✅ (§19.22); âncoras avançadas ❌ |
 | Paleta / cores recentes / tema marca | ✓ | ⚠ | Temas de slide ✅; **cores recentes** ✅ (§19.21) |
 
 #### Dados operacionais live (prioridade alta — ver §18)
@@ -1000,7 +1001,8 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
   Concluído                          → 4A–4O, 4E.1–4E.5, 4F (§18), 4G–4O (§19)
   Concluído (escopos / apply-all)    → §19.19–§19.20; séries nativas SVG; tv_present_zone
   Concluído (tipografia / export)    → §19.21 sombra/contorno texto; cores recentes; PDF
-  Backlog restante                   → conectores, upload fonte, PPTX, apresentador
+  Concluído (conectores MVP)         → §19.22 linha/seta entre dois blocos
+  Backlog restante                   → upload fonte, PPTX, apresentador, tabelas canvas
   Longo prazo                        → colaboração
 ```
 
@@ -1931,6 +1933,16 @@ O escopo **global** **não** unifica cor/fonte/fill das partes. Cada parte mant�
 | 19.21.3 | Export PDF reusando `captureSlideElementToPngDataUrl` + `jspdf` | `exportSlidePng.ts` |
 
 **Anti-padrões:** reutilizar `boxShadow` como sombra tipográfica; PDF tabular de dashboard para slide TV.
+
+### 19.22 Conectores MVP entre blocos (jul/2026)
+
+| # | Entrega | Onde |
+|---|---------|------|
+| 19.22.1 | Contrato `shape.connector` + `vertices` persistidos; sync de endpoints | `comunicadoConnectors.ts` + parse/serialize |
+| 19.22.2 | Ação **Conectar** (2 blocos) → `line-arrow-right` entre centros | ribbon Alinhar + `connectSelected` |
+| 19.22.3 | Reattach ao mover/redimensionar alvos; detach se a linha for editada; prune órfãos | drag + `updateBlocks` |
+
+**Anti-padrões:** import circular helpers↔connectors; recriar geometria no MFE em vez de `reconcileConnectorsAfterDrag` / `syncAllConnectors`.
 
 ---
 

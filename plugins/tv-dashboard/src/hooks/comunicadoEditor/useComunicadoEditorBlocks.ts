@@ -6,10 +6,12 @@ import {
   chartPartAllowsMove,
   createBlock,
   createChartViewBlock,
+  createConnectorBlock,
   createIconBlock,
   createKpiViewBlock,
   createShapeBlock,
   createTableViewBlock,
+  canConnectBlocks,
   deleteChartPart,
   deleteKpiPart,
   deleteTablePart,
@@ -24,8 +26,11 @@ import {
   parseComunicadoConfig,
   partsToChartOptions,
   partsToKpiOptions,
+  pruneOrphanConnectors,
+  reconcileConnectorsAfterDrag,
   resolvePreferredDataSourceId,
   sortBlocksByZIndex,
+  syncAllConnectors,
   syncTextBlockFields,
   tablePartAllowsDelete,
   upsertChartPartState,
@@ -135,10 +140,23 @@ export function useComunicadoEditorBlocks({
 }: Options) {
   const updateBlocks = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
-      commitWithHistory({ ...configRef.current, blocks: nextBlocks });
+      const withConnectors = syncAllConnectors(pruneOrphanConnectors(nextBlocks));
+      commitWithHistory({ ...configRef.current, blocks: withConnectors });
     },
     [commitWithHistory, configRef],
   );
+
+  const connectSelected = useCallback(() => {
+    if (selectedIds.length !== 2) return;
+    const blocks = configRef.current.blocks ?? [];
+    const [idA, idB] = selectedIds;
+    const a = blocks.find((block) => block.id === idA);
+    const b = blocks.find((block) => block.id === idB);
+    if (!a || !b || !canConnectBlocks(a, b)) return;
+    const connector = createConnectorBlock(a, b, { zIndex: nextZIndex(blocks) });
+    updateBlocks([...blocks, connector]);
+    selectBlocksByIds([connector.id]);
+  }, [configRef, selectBlocksByIds, selectedIds, updateBlocks]);
 
   const addBlock = useCallback(
     (type: ComunicadoBlock["type"]) => {
@@ -657,7 +675,8 @@ export function useComunicadoEditorBlocks({
 
     if (selectedIds.length === 0) return;
     const removeSet = new Set(selectedIds);
-    const nextBlocks = (configRef.current.blocks ?? []).filter((block) => !removeSet.has(block.id));
+    const filtered = (configRef.current.blocks ?? []).filter((block) => !removeSet.has(block.id));
+    const nextBlocks = pruneOrphanConnectors(filtered);
     selectBlocksByIds(nextBlocks[0]?.id ? [nextBlocks[0].id] : []);
     updateBlocks(nextBlocks);
   }, [
@@ -749,7 +768,7 @@ export function useComunicadoEditorBlocks({
       const targets = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
       if (targets.length === 0) return;
       const idSet = new Set(targets.map((block) => block.id));
-      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+      const moved = (configRef.current.blocks ?? []).map((block) => {
         if (!idSet.has(block.id)) return block;
         return {
           ...block,
@@ -760,7 +779,7 @@ export function useComunicadoEditorBlocks({
           },
         };
       });
-      updateBlocks(nextBlocks);
+      updateBlocks(reconcileConnectorsAfterDrag(moved, idSet));
     },
     [configRef, selected, selectedBlocks, selectedChartPart, selectedIds, updateBlock, updateBlocks],
   );
@@ -794,8 +813,8 @@ export function useComunicadoEditorBlocks({
   const alignSelected = useCallback(
     (command: LayoutAlignCommand) => {
       if (selectedIds.length === 0) return;
-      const nextBlocks = alignComunicadoBlocks(configRef.current.blocks ?? [], selectedIds, command);
-      updateBlocks(nextBlocks);
+      const aligned = alignComunicadoBlocks(configRef.current.blocks ?? [], selectedIds, command);
+      updateBlocks(reconcileConnectorsAfterDrag(aligned, new Set(selectedIds)));
     },
     [configRef, selectedIds, updateBlocks],
   );
@@ -832,6 +851,7 @@ export function useComunicadoEditorBlocks({
     addIconBlock,
     groupSelected,
     ungroupSelected,
+    connectSelected,
     updateSelected,
     updateBlock,
     commitChartPartContent,
