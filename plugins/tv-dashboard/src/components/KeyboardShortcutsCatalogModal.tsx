@@ -15,8 +15,10 @@ export function KeyboardShortcutsCatalogModal() {
       className="td-modal--shortcuts"
     >
       <p className="td-shortcuts-catalog__lead">
-        Segure <kbd className="td-shortcuts-catalog__kbd">Alt</kbd> no editor para ver balões com
-        os atalhos nas ações. Combinações com Ctrl usam ⌘ no Mac.
+        Pressione <kbd className="td-shortcuts-catalog__kbd">F</kbd> para KeyTips das abas e da
+        ribbon (letra da aba, depois letra da ação; Esc volta). Segure{" "}
+        <kbd className="td-shortcuts-catalog__kbd">Alt</kbd> para balões dos atalhos Ctrl. No Mac,
+        Ctrl vira ⌘.
       </p>
       <div className="td-shortcuts-catalog">
         {groups.map((group) => (

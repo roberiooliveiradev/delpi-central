@@ -2,6 +2,8 @@ import { HintAction } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { DeckKeyTip } from "../DeckKeyTip";
+
 type Props = {
   icon: LucideIcon;
   label: string;
@@ -10,6 +12,8 @@ type Props = {
   disabled?: boolean;
   active?: boolean;
   children?: ReactNode;
+  /** KeyTip F → aba → esta letra. */
+  keyTip?: string;
 };
 
 /** Botão vertical do ribbon (ícone + rótulo), como Inserir no PowerPoint. */
@@ -21,6 +25,7 @@ export function DeckRibbonTile({
   disabled,
   active,
   children,
+  keyTip,
 }: Props) {
   const button = (
     <button
@@ -38,11 +43,19 @@ export function DeckRibbonTile({
     </button>
   );
 
-  if (!hint) return button;
-
-  return (
+  const withHint = hint ? (
     <HintAction hint={hint} ariaLabel={`Ajuda: ${label}`} placement="bottom">
       {button}
     </HintAction>
+  ) : (
+    button
+  );
+
+  if (!keyTip) return withHint;
+
+  return (
+    <DeckKeyTip letter={keyTip} scope="actions">
+      {withHint}
+    </DeckKeyTip>
   );
 }

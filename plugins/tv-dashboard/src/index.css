@@ -91,12 +91,11 @@
   animation: td-shortcut-tip-in 0.12s ease-out;
 }
 
-.dashboard-tv-dashboard .td-shortcut-tip__badge--portal {
-  position: fixed;
-  bottom: auto;
-  left: auto;
-  transform: none;
-  animation: td-shortcut-tip-in-portal 0.12s ease-out;
+.dashboard-tv-dashboard .td-shortcut-tip__badge--keytip {
+  min-width: 1.4em;
+  padding: 4px 7px;
+  text-align: center;
+  font-size: 13px;
 }
 
 .dashboard-tv-dashboard .td-shortcut-tip__badge--bottom {

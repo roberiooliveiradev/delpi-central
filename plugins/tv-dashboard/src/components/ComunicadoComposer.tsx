@@ -118,6 +118,7 @@ export function ComunicadoComposerCanvas() {
     fitStageToView,
     bootstrapStageViewPosition,
     persistStageViewPosition,
+    stageViewReady,
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
   useAuthenticatedComunicadoCustomFonts(config.customFonts);
@@ -161,8 +162,8 @@ export function ComunicadoComposerCanvas() {
       ) {
         return;
       }
-      // No ResizeObserver o client* já é o novo; o padding do gutter no DOM ainda é o anterior.
-      if (last && last.clientWidth > 0 && last.clientHeight > 0) {
+      // Durante bootstrap não compensar — senão sobrescreve o scroll restaurado do localStorage.
+      if (stageViewReady && last && last.clientWidth > 0 && last.clientHeight > 0) {
         pendingStageScrollRef.current = stageScrollPreserveContentUnderViewportCenter({
           scrollLeft: wrap.scrollLeft,
           scrollTop: wrap.scrollTop,
@@ -173,6 +174,8 @@ export function ComunicadoComposerCanvas() {
           nextClientHeight: nextH,
           nextGutter,
         });
+      } else {
+        pendingStageScrollRef.current = null;
       }
       stageViewportLayoutRef.current = {
         gutter: nextGutter,
@@ -196,10 +199,14 @@ export function ComunicadoComposerCanvas() {
     const observer = new ResizeObserver(updateGutter);
     observer.observe(wrap);
     return () => observer.disconnect();
-  }, [canvasWrapRef]);
+  }, [canvasWrapRef, stageViewReady]);
 
   // Só após paint do novo padding: aplica scroll preservando o ponto do slide (não recentra).
   useLayoutEffect(() => {
+    if (!stageViewReady) {
+      pendingStageScrollRef.current = null;
+      return;
+    }
     const wrap = canvasWrapRef.current;
     const pending = pendingStageScrollRef.current;
     if (!wrap || !pending) return;
@@ -207,7 +214,7 @@ export function ComunicadoComposerCanvas() {
     wrap.scrollLeft = pending.scrollLeft;
     wrap.scrollTop = pending.scrollTop;
     persistStageViewPosition({ immediate: true });
-  }, [panGutter.x, panGutter.y, persistStageViewPosition]);
+  }, [panGutter.x, panGutter.y, persistStageViewPosition, stageViewReady]);
 
   // Mount: restaura localStorage; se não houver posição, Ajustar e grava a 1ª.
   // Depois: fit só se o formato do slide mudar.

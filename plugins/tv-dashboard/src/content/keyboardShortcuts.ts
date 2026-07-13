@@ -115,9 +115,17 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
   {
     id: "show-tips",
     group: "palco",
-    label: "Mostrar atalhos na UI",
+    label: "Mostrar atalhos Ctrl na UI",
     keys: "Alt",
-    description: "Segure Alt para ver balões nas ações com atalho",
+    description: "Segure Alt para ver balões das combinações Ctrl/Del",
+    showAltTip: false,
+  },
+  {
+    id: "keytips",
+    group: "palco",
+    label: "KeyTips das abas e ribbon",
+    keys: "F",
+    description: "F mostra letras das abas; letra abre a aba; outra letra dispara a ação; Esc volta",
     showAltTip: false,
   },
   {

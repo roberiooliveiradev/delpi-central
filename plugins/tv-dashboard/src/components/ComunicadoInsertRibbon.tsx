@@ -20,6 +20,7 @@ import {
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
+import { DECK_INSERT_ACTION_KEYTIPS } from "../utils/deckKeyTips";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -28,6 +29,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 type Labels = Record<string, string>;
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+const K = DECK_INSERT_ACTION_KEYTIPS;
 
 export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   const {
@@ -108,12 +110,14 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             icon={Heading}
             label={labels.comunicadoAddHeading ?? "Título"}
             hint={H.insertHeading}
+            keyTip={K.heading}
             onClick={() => addBlock("heading")}
           />
           <DeckRibbonTile
             icon={Text}
             label={labels.comunicadoAddText ?? "Texto"}
             hint={H.insertText}
+            keyTip={K.text}
             onClick={() => addBlock("text")}
           />
         </div>
@@ -125,12 +129,14 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             icon={ImageIcon}
             label={labels.comunicadoAddImage ?? "Imagem"}
             hint={H.insertImage}
+            keyTip={K.image}
             onClick={() => openMediaLibrary("insert-image")}
           />
           <DeckRibbonTile
             icon={Video}
             label={labels.comunicadoAddVideo ?? "Vídeo"}
             hint={H.insertVideo}
+            keyTip={K.video}
             onClick={() => openMediaLibrary("insert-video")}
           />
         </div>
@@ -144,6 +150,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               label={labels.comunicadoAddShape ?? "Formas"}
               hint={H.insertShape}
               active={shapeMenuOpen}
+              keyTip={K.shape}
               onClick={() => {
                 setIconMenuOpen(false);
                 setChartMenuOpen(false);
@@ -165,6 +172,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               label={labels.comunicadoAddIcon ?? "Ícones"}
               hint={H.insertIcon}
               active={iconMenuOpen}
+              keyTip={K.icon}
               onClick={() => {
                 setShapeMenuOpen(false);
                 setChartMenuOpen(false);
@@ -202,6 +210,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             icon={Grid3X3}
             label="Grade"
             hint="Inserir Tabela (canvas), estática e editável."
+            keyTip={K.canvasTable}
             onClick={() => addCanvasTableBlock()}
           />
         </div>
@@ -213,12 +222,14 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             icon={Database}
             label={labels.comunicadoAddDataSource ?? "Dados"}
             hint={H.insertDataSource ?? H.insertIndicator}
+            keyTip={K.dataSource}
             onClick={() => openDataCatalog()}
           />
           <DeckRibbonTile
             icon={Gauge}
             label={labels.comunicadoAddKpi ?? "KPI"}
             hint={H.insertKpi ?? H.insertIndicator}
+            keyTip={K.kpi}
             onClick={() => addKpiViewBlock()}
           />
           <div ref={chartAnchorRef} className="td-composer__dropdown">
@@ -227,6 +238,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               label={labels.comunicadoAddChart ?? "Gráficos"}
               hint={H.insertChart ?? H.insertIndicator}
               active={chartMenuOpen}
+              keyTip={K.chart}
               onClick={() => {
                 setShapeMenuOpen(false);
                 setIconMenuOpen(false);
@@ -255,6 +267,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               label={labels.comunicadoAddTable ?? "Tabelas"}
               hint={H.insertTable ?? H.insertIndicator}
               active={tableMenuOpen}
+              keyTip={K.table}
               onClick={() => {
                 setShapeMenuOpen(false);
                 setIconMenuOpen(false);

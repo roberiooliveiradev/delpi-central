@@ -23,6 +23,9 @@ export type StageDisplayPreferences = {
    */
   stageViewAnchorX: number;
   stageViewAnchorY: number;
+  /** Scroll absoluto do wrap (mesma janela/zoom — restore prioritário). */
+  stageScrollLeft: number;
+  stageScrollTop: number;
   stageViewAnchorSaved: boolean;
 };
 
@@ -35,6 +38,8 @@ export const DEFAULT_STAGE_DISPLAY_PREFERENCES: StageDisplayPreferences = {
   snapEnabled: true,
   stageViewAnchorX: 0,
   stageViewAnchorY: 0,
+  stageScrollLeft: 0,
+  stageScrollTop: 0,
   stageViewAnchorSaved: false,
 };
 
@@ -89,6 +94,10 @@ export function normalizeStageDisplayPreferences(
         : DEFAULT_STAGE_DISPLAY_PREFERENCES.snapEnabled,
     stageViewAnchorX: anchorX ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageViewAnchorX,
     stageViewAnchorY: anchorY ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageViewAnchorY,
+    stageScrollLeft:
+      readFiniteNumber(raw.stageScrollLeft) ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageScrollLeft,
+    stageScrollTop:
+      readFiniteNumber(raw.stageScrollTop) ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageScrollTop,
     stageViewAnchorSaved,
   };
 }

@@ -16,6 +16,7 @@ describe("keyboardShortcuts catalog", () => {
   it("resolve entradas por id", () => {
     expect(getKeyboardShortcut("undo")?.keys).toBe("Ctrl+Z");
     expect(getKeyboardShortcut("zoom-wheel")?.showAltTip).toBe(true);
+    expect(getKeyboardShortcut("keytips")?.keys).toBe("F");
     expect(getKeyboardShortcut("missing")).toBeUndefined();
   });
 

@@ -12,6 +12,8 @@ import { HintAction } from "@delpi/plugin-ui/index";
 
 import type { Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DECK_HOME_ACTION_KEYTIPS } from "../utils/deckKeyTips";
+import { DeckKeyTip } from "./DeckKeyTip";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonLargeButton } from "./deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -31,6 +33,7 @@ type Props = {
 };
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+const K = DECK_HOME_ACTION_KEYTIPS;
 
 export function SlideDeckRibbon({
   slides,
@@ -65,34 +68,39 @@ export function SlideDeckRibbon({
             label="Nova tela"
             hint={H.newSlide}
             primary
+            keyTip={K.newSlide}
             onClick={onAdd}
           />
           <div className="td-deck-ribbon__slide-nav" role="group" aria-label="Trocar slide">
-            <HintAction hint={H.prevSlide} ariaLabel="Ajuda: Anterior">
-              <button
-                type="button"
-                className="td-btn td-btn--sm td-btn--icon td-deck-ribbon__slide-nav-btn"
-                disabled={slides.length < 2}
-                onClick={() => goTo(-1)}
-                aria-label="Slide anterior"
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-              </button>
-            </HintAction>
+            <DeckKeyTip letter={K.prevSlide} scope="actions">
+              <HintAction hint={H.prevSlide} ariaLabel="Ajuda: Anterior">
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm td-btn--icon td-deck-ribbon__slide-nav-btn"
+                  disabled={slides.length < 2}
+                  onClick={() => goTo(-1)}
+                  aria-label="Slide anterior"
+                >
+                  <ChevronLeft size={16} aria-hidden="true" />
+                </button>
+              </HintAction>
+            </DeckKeyTip>
             <span className="td-deck-ribbon__counter" aria-live="polite">
               {slides.length ? `${Math.max(selectedIndex, 0) + 1} / ${slides.length}` : "0 / 0"}
             </span>
-            <HintAction hint={H.nextSlide} ariaLabel="Ajuda: Próximo">
-              <button
-                type="button"
-                className="td-btn td-btn--sm td-btn--icon td-deck-ribbon__slide-nav-btn"
-                disabled={slides.length < 2}
-                onClick={() => goTo(1)}
-                aria-label="Próximo slide"
-              >
-                <ChevronRight size={16} aria-hidden="true" />
-              </button>
-            </HintAction>
+            <DeckKeyTip letter={K.nextSlide} scope="actions">
+              <HintAction hint={H.nextSlide} ariaLabel="Ajuda: Próximo">
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm td-btn--icon td-deck-ribbon__slide-nav-btn"
+                  disabled={slides.length < 2}
+                  onClick={() => goTo(1)}
+                  aria-label="Próximo slide"
+                >
+                  <ChevronRight size={16} aria-hidden="true" />
+                </button>
+              </HintAction>
+            </DeckKeyTip>
           </div>
         </div>
       </DeckRibbonGroup>
@@ -104,12 +112,14 @@ export function SlideDeckRibbon({
               icon={selectedSlide.isActive ? Eye : EyeOff}
               label={selectedSlide.isActive ? "Pausar" : "Ativar"}
               hint={selectedSlide.isActive ? H.pause : H.activate}
+              keyTip={K.toggleActive}
               onClick={() => onToggleActive(selectedSlide)}
             />
             <DeckRibbonTile
               icon={Copy}
               label="Duplicar"
               hint={H.duplicate}
+              keyTip={K.duplicate}
               onClick={() => onDuplicate(selectedSlide)}
             />
             {onExportPng ? (
@@ -118,6 +128,7 @@ export function SlideDeckRibbon({
                 label={exportBusy ? "…" : "PNG"}
                 hint="Exportar a tela atual como PNG (4E.5)."
                 disabled={exportBusy}
+                keyTip={K.exportPng}
                 onClick={onExportPng}
               />
             ) : null}
@@ -127,6 +138,7 @@ export function SlideDeckRibbon({
                 label={exportBusy ? "…" : "PDF"}
                 hint="Exportar a tela atual como PDF (captura PNG em página A4)."
                 disabled={exportBusy}
+                keyTip={K.exportPdf}
                 onClick={onExportPdf}
               />
             ) : null}
@@ -136,6 +148,7 @@ export function SlideDeckRibbon({
                 label={exportBusy ? "…" : "PPTX"}
                 hint="Exportar a tela atual como PowerPoint editável (MVP)."
                 disabled={exportBusy}
+                keyTip={K.exportPptx}
                 onClick={onExportPptx}
               />
             ) : null}
@@ -143,6 +156,7 @@ export function SlideDeckRibbon({
               icon={Trash2}
               label="Excluir"
               hint={H.delete}
+              keyTip={K.remove}
               onClick={() => onRemove(selectedSlide)}
             />
           </div>

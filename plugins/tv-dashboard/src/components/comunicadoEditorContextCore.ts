@@ -220,6 +220,8 @@ export type ComunicadoEditorContextValue = {
   restoreStageViewPosition: () => boolean;
   /** Load: restaura ou Ajustar + grava 1ª posição. */
   bootstrapStageViewPosition: () => void;
+  /** false enquanto bootstrap — não compensar gutter sobre o restore. */
+  stageViewReady: boolean;
   persistStageViewPosition: (options?: { immediate?: boolean }) => void;
   canvasWrapRef: RefObject<HTMLDivElement | null>;
   showStageRulers: boolean;

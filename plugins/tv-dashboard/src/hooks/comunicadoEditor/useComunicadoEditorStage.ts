@@ -13,7 +13,7 @@ import {
 } from "../../utils/stagePan";
 import { computeFitStageZoom, clampStageZoom } from "../../utils/stageViewport";
 
-const STAGE_VIEW_FIT_MAX_ATTEMPTS = 40;
+const STAGE_VIEW_FIT_MAX_ATTEMPTS = 60;
 
 /**
  * Estado de UI do palco (zoom, réguas, grade, guias, snap, posição) + fit à viewport.
@@ -21,11 +21,14 @@ const STAGE_VIEW_FIT_MAX_ATTEMPTS = 40;
  * O ref do canvas de interação é ligado depois via `bindCanvasRef`.
  *
  * Sem âncora salva: bootstrap = Ajustar (fit) e grava a primeira posição.
+ * Com âncora: restaura — nunca chama fit (evita apagar a vista do usuário).
  */
 export function useComunicadoEditorStage() {
   const [prefs, setPrefs] = useState<StageDisplayPreferences>(() => readStageDisplayPreferences());
   /** Ferramenta pan (mão) — sessão; não persiste em localStorage. */
   const [stagePanMode, setStagePanModeState] = useState(false);
+  /** false durante bootstrap — Composer não deve compensar gutter sobre o restore. */
+  const [stageViewReady, setStageViewReady] = useState(false);
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const snapEnabledRef = useRef(prefs.snapEnabled);
   const stageGridSizePxRef = useRef(prefs.stageGridSizePx);
@@ -71,6 +74,7 @@ export function useComunicadoEditorStage() {
   const markViewBootstrapped = useCallback(() => {
     viewBootstrappedRef.current = true;
     suppressViewPersistRef.current = false;
+    setStageViewReady(true);
   }, []);
 
   const persistStageViewPosition = useCallback(
@@ -88,13 +92,17 @@ export function useComunicadoEditorStage() {
         if (
           current.stageViewAnchorSaved &&
           current.stageViewAnchorX === anchor.x &&
-          current.stageViewAnchorY === anchor.y
+          current.stageViewAnchorY === anchor.y &&
+          current.stageScrollLeft === el.scrollLeft &&
+          current.stageScrollTop === el.scrollTop
         ) {
           return;
         }
         patchPrefs({
           stageViewAnchorX: anchor.x,
           stageViewAnchorY: anchor.y,
+          stageScrollLeft: el.scrollLeft,
+          stageScrollTop: el.scrollTop,
           stageViewAnchorSaved: true,
         });
       };
@@ -119,21 +127,42 @@ export function useComunicadoEditorStage() {
     [patchPrefs],
   );
 
-  const restoreStageViewPosition = useCallback(() => {
+  const applySavedViewToWrap = useCallback(() => {
     const wrap = canvasWrapRef.current;
     const current = prefsRef.current;
     if (!wrap || !current.stageViewAnchorSaved) return false;
     if (wrap.clientWidth <= 0 || wrap.clientHeight <= 0) return false;
+
     suppressViewPersistRef.current = true;
-    applyStageViewAnchor(wrap, {
-      x: current.stageViewAnchorX,
-      y: current.stageViewAnchorY,
-    });
+
+    // Prefer scroll absoluto (mesmo zoom/janela); âncora cobre resize do wrap.
+    const hasScroll =
+      Number.isFinite(current.stageScrollLeft) && Number.isFinite(current.stageScrollTop);
+    if (hasScroll) {
+      wrap.scrollLeft = current.stageScrollLeft;
+      wrap.scrollTop = current.stageScrollTop;
+    } else {
+      applyStageViewAnchor(wrap, {
+        x: current.stageViewAnchorX,
+        y: current.stageViewAnchorY,
+      });
+    }
+    return true;
+  }, []);
+
+  const restoreStageViewPosition = useCallback(() => {
+    if (!applySavedViewToWrap()) return false;
+    // Reaplica após paint (zoom/gutter) para não perder para o ResizeObserver.
     window.requestAnimationFrame(() => {
-      markViewBootstrapped();
+      applySavedViewToWrap();
+      window.requestAnimationFrame(() => {
+        applySavedViewToWrap();
+        markViewBootstrapped();
+        persistStageViewPosition({ immediate: true });
+      });
     });
     return true;
-  }, [markViewBootstrapped]);
+  }, [applySavedViewToWrap, markViewBootstrapped, persistStageViewPosition]);
 
   /** Ajustar: fit + grava âncora (primeira posição ou clique do usuário). */
   const fitStageToView = useCallback(() => {
@@ -164,6 +193,8 @@ export function useComunicadoEditorStage() {
         patchPrefs({
           stageViewAnchorX: anchor.x,
           stageViewAnchorY: anchor.y,
+          stageScrollLeft: wrap.scrollLeft,
+          stageScrollTop: wrap.scrollTop,
           stageViewAnchorSaved: true,
         });
         markViewBootstrapped();
@@ -174,26 +205,33 @@ export function useComunicadoEditorStage() {
   }, [markViewBootstrapped, patchPrefs]);
 
   /**
-   * No load: restaura âncora salva; se não houver, usa Ajustar e salva a 1ª posição.
+   * No load: restaura âncora/scroll salvos; se não houver, usa Ajustar.
+   * Nunca faz fit quando já existe posição salva (senão apaga a vista do usuário).
    */
   const bootstrapStageViewPosition = useCallback(() => {
     suppressViewPersistRef.current = true;
     viewBootstrappedRef.current = false;
+    setStageViewReady(false);
 
     const tryRestore = (attempt: number) => {
-      if (!stageViewNeedsInitialFit(prefsRef.current)) {
-        if (restoreStageViewPosition()) return;
-        if (attempt < STAGE_VIEW_FIT_MAX_ATTEMPTS) {
-          window.requestAnimationFrame(() => tryRestore(attempt + 1));
-          return;
-        }
+      if (stageViewNeedsInitialFit(prefsRef.current)) {
+        fitStageToView();
+        return;
       }
-      // Sem posição (ou restore impossível) → Ajustar e persistir a 1ª posição.
-      fitStageToView();
+      if (restoreStageViewPosition()) return;
+      if (attempt < STAGE_VIEW_FIT_MAX_ATTEMPTS) {
+        window.requestAnimationFrame(() => tryRestore(attempt + 1));
+        return;
+      }
+      // Ainda sem layout — libera persist e tenta restore uma última vez sem fit.
+      markViewBootstrapped();
+      window.requestAnimationFrame(() => {
+        applySavedViewToWrap();
+      });
     };
 
     tryRestore(0);
-  }, [fitStageToView, restoreStageViewPosition]);
+  }, [applySavedViewToWrap, fitStageToView, markViewBootstrapped, restoreStageViewPosition]);
 
   return {
     stageZoom: prefs.stageZoom,
@@ -229,6 +267,7 @@ export function useComunicadoEditorStage() {
     },
     snapEnabledRef,
     stageViewAnchorSaved: prefs.stageViewAnchorSaved,
+    stageViewReady,
     canvasWrapRef,
     fitStageToView,
     restoreStageViewPosition,

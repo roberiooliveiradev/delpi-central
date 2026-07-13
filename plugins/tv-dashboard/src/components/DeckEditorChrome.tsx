@@ -6,7 +6,9 @@ import {
   isSelectionPanelTab,
   normalizeSelectionRibbonTab,
 } from "../utils/normalizeSelectionRibbonTab";
+import { DECK_TAB_KEYTIPS } from "../utils/deckKeyTips";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
+import { DeckKeyTip } from "./DeckKeyTip";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
@@ -185,34 +187,35 @@ export function DeckEditorChrome({
             const tabActive =
               activeTab === tab.id || (tab.id === "layers" && layersModalOpen);
             return (
-              <TabHintCell
-                key={tab.id}
-                label={tab.label}
-                hint={tab.hint}
-                icon={tab.icon}
-                active={tabActive}
-                disabled={tab.disabledWhenNoSlide ? !slide : false}
-                onSelect={() => selectTab(tab.id)}
-                cellClassName={[
-                  "td-deck-chrome__tab-cell",
-                  contextual ? "td-deck-chrome__tab-cell--contextual" : "",
-                  firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                tabClassName={[
-                  "td-deck-chrome__tab",
-                  contextual ? "td-deck-chrome__tab--contextual" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                tabActiveClassName={[
-                  "td-deck-chrome__tab--active",
-                  contextual ? "td-deck-chrome__tab--contextual-active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              />
+              <DeckKeyTip key={tab.id} letter={DECK_TAB_KEYTIPS[tab.id]} scope="tabs" placement="bottom">
+                <TabHintCell
+                  label={tab.label}
+                  hint={tab.hint}
+                  icon={tab.icon}
+                  active={tabActive}
+                  disabled={tab.disabledWhenNoSlide ? !slide : false}
+                  onSelect={() => selectTab(tab.id)}
+                  cellClassName={[
+                    "td-deck-chrome__tab-cell",
+                    contextual ? "td-deck-chrome__tab-cell--contextual" : "",
+                    firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  tabClassName={[
+                    "td-deck-chrome__tab",
+                    contextual ? "td-deck-chrome__tab--contextual" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  tabActiveClassName={[
+                    "td-deck-chrome__tab--active",
+                    contextual ? "td-deck-chrome__tab--contextual-active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+              </DeckKeyTip>
             );
           })}
         </div>

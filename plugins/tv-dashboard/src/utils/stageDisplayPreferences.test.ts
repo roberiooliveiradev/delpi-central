@@ -45,6 +45,8 @@ describe("stageDisplayPreferences", () => {
       snapEnabled: false,
       stageViewAnchorX: 120.5,
       stageViewAnchorY: -40,
+      stageScrollLeft: 340,
+      stageScrollTop: 210,
       stageViewAnchorSaved: true,
     });
 
@@ -57,6 +59,8 @@ describe("stageDisplayPreferences", () => {
       snapEnabled: false,
       stageViewAnchorX: 120.5,
       stageViewAnchorY: -40,
+      stageScrollLeft: 340,
+      stageScrollTop: 210,
       stageViewAnchorSaved: true,
     });
   });

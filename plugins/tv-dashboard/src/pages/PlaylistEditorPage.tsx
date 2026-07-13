@@ -46,6 +46,7 @@ import {
   type DeckEditorHistoryContextValue,
 } from "../context/deckEditorHistoryContext";
 import { KeyboardShortcutsTipsProvider } from "../context/KeyboardShortcutsTipsProvider";
+import { DeckKeyTipsProvider } from "../context/DeckKeyTipsProvider";
 import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCatalogModal";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
@@ -710,6 +711,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   return (
     <DeckEditorHistoryProvider value={deckHistoryValue}>
       <KeyboardShortcutsTipsProvider>
+      <DeckKeyTipsProvider>
       <div className="td-deck td-deck--editor">
       {otherEditors.length > 0 ? (
         <div className="td-editor-presence" role="status" aria-live="polite">
@@ -761,6 +763,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
       </div>
       <KeyboardShortcutsCatalogModal />
+      </DeckKeyTipsProvider>
       </KeyboardShortcutsTipsProvider>
     </DeckEditorHistoryProvider>
   );
