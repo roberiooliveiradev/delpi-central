@@ -166,6 +166,20 @@ describe("seriesChartParts", () => {
     expect(resolveChartAreaStyle(options, parts).borderRadius).toBe(0);
   });
 
+  it("mergeChartPartsWithOptions aplica seriesColor novo sobre stroke da série", () => {
+    const base = chartOptionsToParts(mergeSeriesChartOptions({ seriesColor: "#089bdb" }));
+    const customized = upsertChartPartState(base, { kind: "series", seriesIndex: 0 }, {
+      style: { stroke: "#089bdb", fill: "#089bdb", strokeWidth: 3 },
+    });
+    const merged = mergeChartPartsWithOptions(
+      customized,
+      mergeSeriesChartOptions({ seriesColor: "#0f766e" }),
+    );
+    expect(merged["series:0"]?.style?.stroke).toBe("#0f766e");
+    expect(merged["series:0"]?.style?.fill).toBe("#0f766e");
+    expect(merged["series:0"]?.style?.strokeWidth).toBe(3);
+  });
+
   it("mergeChartPartsWithOptions preserva borda custom da chartArea", () => {
     const base = chartOptionsToParts(mergeSeriesChartOptions({}));
     const customized = upsertChartPartState(base, { kind: "chartArea" }, {

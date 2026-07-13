@@ -613,6 +613,26 @@ export function mergeChartPartsWithOptions(
             : {}),
         },
       };
+    } else if (key.startsWith("series:")) {
+      /* seriesColor flat (Alterar cores / inspetor) regrava stroke+fill; demais estilos custom ficam. */
+      merged[key] = {
+        ...projectedState,
+        ...prevState,
+        visible: projectedState?.visible ?? prevState.visible,
+        style: {
+          ...projectedState?.style,
+          ...prevState.style,
+          ...(projectedState?.style?.stroke
+            ? {
+                stroke: projectedState.style.stroke,
+                fill: projectedState.style.fill ?? projectedState.style.stroke,
+              }
+            : {}),
+        },
+        content:
+          projectedState?.content !== undefined ? projectedState.content : prevState.content,
+        frame: prevState.frame ?? projectedState?.frame,
+      };
     } else if (prevState.style || prevState.frame || prevState.content !== undefined) {
       const preserveFrame = !key.startsWith("dataTable");
       merged[key] = {
