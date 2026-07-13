@@ -1293,9 +1293,13 @@
   touch-action: none;
 }
 
-.dashboard-tv-dashboard .td-composer__canvas-wrap--pan > * {
-  /* Pan no wrap — bloqueia seleção/arraste de blocos enquanto a ferramenta está ativa. */
-  pointer-events: none;
+/*
+ * Descendentes com `pointer-events: auto` (handles, chart/KPI, hit-frame) reativam
+ * hit-test mesmo com o pai em `none` — o pan precisa anular a árvore inteira
+ * para o wrap receber o arraste sobre itens selecionáveis.
+ */
+.dashboard-tv-dashboard .td-composer__canvas-wrap--pan * {
+  pointer-events: none !important;
 }
 
 .dashboard-tv-dashboard .td-composer__canvas-wrap--pan.td-composer__canvas-wrap--panning {

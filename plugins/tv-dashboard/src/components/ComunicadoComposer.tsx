@@ -23,6 +23,7 @@ import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticated
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
 import {
   resolveStagePanGutterPx,
+  shouldDeferToStagePan,
   stageScrollPreserveContentUnderViewportCenter,
   type StageScrollPoint,
 } from "../utils/stagePan";
@@ -115,6 +116,7 @@ export function ComunicadoComposerCanvas() {
     updateBlock,
     viewportProfile,
     stageZoom,
+    stagePanMode,
     fitStageToView,
     bootstrapStageViewPosition,
     persistStageViewPosition,
@@ -285,8 +287,21 @@ export function ComunicadoComposerCanvas() {
     [blocks, clearSelection, selectBlocksByIds, selectedIds],
   );
 
+  const startDragRespectingPan = useCallback(
+    (
+      event: React.PointerEvent<HTMLElement>,
+      block: ComunicadoBlock,
+      mode: BlockDragMode,
+    ) => {
+      if (shouldDeferToStagePan(event, stagePanMode)) return;
+      startDrag(event, block, mode);
+    },
+    [stagePanMode, startDrag],
+  );
+
   const handleCanvasPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
+      if (shouldDeferToStagePan(event, stagePanMode)) return;
       if (event.target !== event.currentTarget) return;
       if (editingTextId) return;
 
@@ -325,7 +340,7 @@ export function ComunicadoComposerCanvas() {
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [clientToCanvasPercent, editingTextId, finishMarquee],
+    [clientToCanvasPercent, editingTextId, finishMarquee, stagePanMode],
   );
 
   const handleCanvasContextMenu = useCallback(
@@ -461,6 +476,8 @@ export function ComunicadoComposerCanvas() {
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
+                  // Pan (mão/Ctrl): não engolir o evento — o wrap do palco arrasta o scroll.
+                  if (shouldDeferToStagePan(event, stagePanMode)) return;
                   event.stopPropagation();
                   if (
                     isDataSourceBlockType(block.type) &&
@@ -498,12 +515,15 @@ export function ComunicadoComposerCanvas() {
                 {showResizeHandles(block.id) ? (
                   <div className="td-composer__block-handles">
                     {/* Outline CSS não é hit-target — anel de arraste na linha pontilhada. */}
-                    <SelectionMoveHitFrame block={block} onMovePointerDown={startDrag} />
+                    <SelectionMoveHitFrame
+                      block={block}
+                      onMovePointerDown={startDragRespectingPan}
+                    />
                     <button
                       type="button"
                       className="td-composer__rotate"
                       aria-label="Girar elemento"
-                      onPointerDown={(event) => startDrag(event, block, "rotate")}
+                      onPointerDown={(event) => startDragRespectingPan(event, block, "rotate")}
                     />
                     {BLOCK_RESIZE_HANDLES.map(({ mode, position, label }) => (
                       <button
@@ -511,7 +531,7 @@ export function ComunicadoComposerCanvas() {
                         type="button"
                         className={`td-composer__resize td-composer__resize--${position}`}
                         aria-label={label}
-                        onPointerDown={(event) => startDrag(event, block, mode)}
+                        onPointerDown={(event) => startDragRespectingPan(event, block, mode)}
                       />
                     ))}
                     {/* KPI: raio do fundo só com parte `card` (ribbon), não diamante global. */}
@@ -535,7 +555,7 @@ export function ComunicadoComposerCanvas() {
                               aria-label={`Ajustar ${spec.label}`}
                               title={spec.label}
                               onPointerDown={(event) =>
-                                startDrag(event, block, `adjust-${spec.index}`)
+                                startDragRespectingPan(event, block, `adjust-${spec.index}`)
                               }
                             />
                           );

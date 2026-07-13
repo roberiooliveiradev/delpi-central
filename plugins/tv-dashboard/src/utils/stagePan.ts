@@ -5,6 +5,17 @@
 export type StageScrollPoint = { scrollLeft: number; scrollTop: number };
 
 /**
+ * Pan tem prioridade sobre arraste/seleção do bloco (ferramenta mão ou Ctrl).
+ * O handler do bloco deve retornar sem `stopPropagation` para o wrap capturar.
+ */
+export function shouldDeferToStagePan(
+  event: Pick<PointerEvent | MouseEvent, "ctrlKey">,
+  stagePanMode: boolean,
+): boolean {
+  return stagePanMode || Boolean(event.ctrlKey);
+}
+
+/**
  * Delta de scroll do pan (arrastar o palco): movimento do ponteiro inverte no scroll.
  */
 export function applyStagePanScrollDelta(

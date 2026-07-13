@@ -36,6 +36,26 @@ describe("SelectionMoveHitFrame", () => {
     expect(onMove.mock.calls[0][2]).toBe("move");
   });
 
+  it("não inicia move com Ctrl (pan do palco)", () => {
+    const onMove = vi.fn();
+    const { container } = render(<SelectionMoveHitFrame block={block} onMovePointerDown={onMove} />);
+    const edge = container.querySelector(".td-composer__selection-move-edge--n");
+    fireEvent.pointerDown(edge!, { ctrlKey: true });
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it("não inicia move dentro do wrap em modo pan", () => {
+    const onMove = vi.fn();
+    const { container } = render(
+      <div className="td-composer__canvas-wrap--pan">
+        <SelectionMoveHitFrame block={block} onMovePointerDown={onMove} />
+      </div>,
+    );
+    const edge = container.querySelector(".td-composer__selection-move-edge--n");
+    fireEvent.pointerDown(edge!);
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
   it("não usa button (evita hover global do portal)", () => {
     const { container } = render(<SelectionMoveHitFrame block={block} onMovePointerDown={vi.fn()} />);
     expect(container.querySelector("button")).toBeNull();

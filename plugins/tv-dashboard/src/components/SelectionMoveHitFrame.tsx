@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
+import { shouldDeferToStagePan } from "../utils/stagePan";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const SELECTION_MOVE_EDGES = [
@@ -35,6 +36,10 @@ export function SelectionMoveHitFrame({ block, onMovePointerDown }: Props) {
           className={`td-composer__selection-move-edge td-composer__selection-move-edge--${position}`}
           aria-label={label}
           onPointerDown={(event) => {
+            const inPanWrap = Boolean(
+              (event.currentTarget as HTMLElement).closest(".td-composer__canvas-wrap--pan"),
+            );
+            if (shouldDeferToStagePan(event, inPanWrap)) return;
             event.preventDefault();
             event.stopPropagation();
             onMovePointerDown(event, block, "move");

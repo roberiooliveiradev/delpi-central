@@ -321,6 +321,8 @@ export function useCanvasBlockInteraction({
 
   const startDrag = useCallback(
     (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => {
+      // Ctrl+arraste = pan do palco; não iniciar move/resize do bloco.
+      if (event.ctrlKey) return;
       event.preventDefault();
       event.stopPropagation();
 

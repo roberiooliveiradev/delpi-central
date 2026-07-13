@@ -4,11 +4,20 @@ import {
   applyStagePanScrollDelta,
   centerStageScroll,
   resolveStagePanGutterPx,
+  shouldDeferToStagePan,
   stageScrollAfterZoomTowardPoint,
   stageScrollFromViewAnchor,
   stageScrollPreserveContentUnderViewportCenter,
   stageViewAnchorFromScroll,
 } from "./stagePan";
+
+describe("shouldDeferToStagePan", () => {
+  it("cede ao pan com ferramenta mão ou Ctrl", () => {
+    expect(shouldDeferToStagePan({ ctrlKey: false }, true)).toBe(true);
+    expect(shouldDeferToStagePan({ ctrlKey: true }, false)).toBe(true);
+    expect(shouldDeferToStagePan({ ctrlKey: false }, false)).toBe(false);
+  });
+});
 
 describe("applyStagePanScrollDelta", () => {
   it("arrastar para a direita revela conteúdo à esquerda (scrollLeft diminui)", () => {
