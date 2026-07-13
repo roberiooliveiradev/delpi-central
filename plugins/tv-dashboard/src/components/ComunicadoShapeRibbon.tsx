@@ -191,8 +191,10 @@ export function ComunicadoShapeRibbon() {
       ) : null}
       <FormatRibbonTypographySections />
       {isTextBox ? <FormatRibbonTextBoxChrome /> : null}
-      {chrome}
-      <FormatRibbonFrameSection />
+      <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--chrome-frame">
+        {chrome}
+        <FormatRibbonFrameSection />
+      </div>
       {opts?.organize !== false &&
       (isShapeBlock || isTextBox || isMediaBlock || isDataViewBlock) ? (
         <FormatRibbonOrganizeSection />

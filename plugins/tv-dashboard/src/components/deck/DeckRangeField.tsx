@@ -22,12 +22,24 @@ function formatShown(value: number, displayValue?: string): string {
 }
 
 /** Extrai número de rascunhos com vírgula, sufixo % etc. (ex.: "80%", "595,2"). */
-function parseAndClamp(raw: string, min: number, max: number, fallback: number): number {
+function parseNumberLoose(raw: string): number | null {
   const normalized = raw.trim().replace(/\s/g, "").replace(",", ".");
   const match = normalized.match(/-?\d+(?:\.\d+)?/);
-  const num = match ? Number(match[0]) : NaN;
-  if (!Number.isFinite(num)) return fallback;
+  if (!match) return null;
+  const num = Number(match[0]);
+  return Number.isFinite(num) ? num : null;
+}
+
+function parseAndClamp(raw: string, min: number, max: number, fallback: number): number {
+  const num = parseNumberLoose(raw);
+  if (num == null) return fallback;
   return Math.min(max, Math.max(min, num));
+}
+
+function isNegativeShown(raw: string, value: number): boolean {
+  const parsed = parseNumberLoose(raw);
+  if (parsed != null) return parsed < 0;
+  return value < 0;
 }
 
 /**
@@ -53,6 +65,7 @@ export function DeckRangeField({
   const shown = formatShown(value, displayValue);
   const [draft, setDraft] = useState(shown);
   const [editing, setEditing] = useState(false);
+  const negative = isNegativeShown(draft, value);
 
   useEffect(() => {
     if (!editing) setDraft(formatShown(value, displayValue));
@@ -99,7 +112,14 @@ export function DeckRangeField({
           id={`${id}-num`}
           type="text"
           inputMode="decimal"
-          className="td-deck-ribbon__number td-deck-ribbon__number--compact td-deck-ribbon__range-input"
+          className={[
+            "td-deck-ribbon__number",
+            "td-deck-ribbon__number--compact",
+            "td-deck-ribbon__range-input",
+            negative ? "td-deck-ribbon__range-input--negative" : null,
+          ]
+            .filter(Boolean)
+            .join(" ")}
           aria-label={`${ariaLabel ?? label} (digitar)`}
           value={draft}
           onFocus={() => setEditing(true)}

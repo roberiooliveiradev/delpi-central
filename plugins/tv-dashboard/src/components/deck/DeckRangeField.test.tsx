@@ -87,4 +87,19 @@ describe("DeckRangeField", () => {
     );
     expect((screen.getByLabelText("Opacidade (digitar)") as HTMLInputElement).value).toBe("55%");
   });
+
+  it("marca input em tom vermelho quando o valor é negativo", () => {
+    render(
+      <DeckRangeField
+        id="td-rot"
+        label="Rot. °"
+        value={-53}
+        min={-180}
+        max={180}
+        onChange={() => undefined}
+      />,
+    );
+    const input = screen.getByLabelText("Rot. ° (digitar)");
+    expect(input.className).toContain("td-deck-ribbon__range-input--negative");
+  });
 });

@@ -44,13 +44,15 @@ export function ComunicadoPartFormatRibbon({ chrome }: Props) {
     <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
       <PartSelectionNav chrome={chrome} onBack={onBack} />
       <FormatRibbonTypographySections />
-      {chrome.source === "chart" && selected?.type === "chart_view" ? (
-        <ChartRibbonShapeChrome block={selected as ComunicadoChartViewBlock} />
-      ) : null}
-      {chrome.source === "table" && selected?.type === "table_view" ? (
-        <TableRibbonShapeChrome block={selected as ComunicadoTableViewBlock} />
-      ) : null}
-      <FormatRibbonFrameSection />
+      <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--chrome-frame">
+        {chrome.source === "chart" && selected?.type === "chart_view" ? (
+          <ChartRibbonShapeChrome block={selected as ComunicadoChartViewBlock} />
+        ) : null}
+        {chrome.source === "table" && selected?.type === "table_view" ? (
+          <TableRibbonShapeChrome block={selected as ComunicadoTableViewBlock} />
+        ) : null}
+        <FormatRibbonFrameSection />
+      </div>
       <FormatRibbonOrganizeSection />
       {chrome.source === "kpi" ? (
         <p className="td-subtitle td-deck-ribbon__hint">

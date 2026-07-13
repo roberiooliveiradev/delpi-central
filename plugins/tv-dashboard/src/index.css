@@ -3516,6 +3516,25 @@
   min-height: 0;
 }
 
+/* Aparência + Posição e tamanho ficam no mesmo bloco (Posição sempre após Aparência). */
+.dashboard-tv-dashboard .td-deck-ribbon__group-cluster {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__group-cluster > .td-deck-ribbon__group {
+  flex: 0 0 auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__group-cluster > .td-deck-ribbon__group:last-child {
+  border-right: none;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band .td-deck-ribbon__groups {
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -3975,6 +3994,11 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__range-input--negative {
+  color: #f87171;
+  font-weight: 600;
 }
 
 .dashboard-tv-dashboard .td-deck-inspector__range-stack {
