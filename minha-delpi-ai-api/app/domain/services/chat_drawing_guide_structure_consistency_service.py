@@ -35,16 +35,23 @@ class ChatDrawingGuideStructureConsistencyService:
     ) -> GuideStructureConsistencyResult:
         expected = cls.collect_expected_guide_codes(root, product_code)
         guide_codes = cls.collect_guide_product_codes(root)
-        extra = sorted(guide_codes - expected)
-        missing = sorted(expected - guide_codes)
+        # MP/consumível no SG2010 não entram no cruzamento (não exigem roteiro).
+        guide_relevant = {
+            code for code in guide_codes if cls._code_participates_in_guide(code)
+        }
+        expected_relevant = {
+            code for code in expected if cls._code_participates_in_guide(code)
+        }
+        extra = sorted(guide_relevant - expected_relevant)
+        missing = sorted(expected_relevant - guide_relevant)
         level_mismatches = tuple(cls._collect_level_mismatches(root, product_code))
 
         return GuideStructureConsistencyResult(
             extra_in_guide=tuple(extra),
             missing_in_guide=tuple(missing),
             level_mismatches=level_mismatches,
-            expected_codes=tuple(sorted(expected)),
-            guide_codes=tuple(sorted(guide_codes)),
+            expected_codes=tuple(sorted(expected_relevant)),
+            guide_codes=tuple(sorted(guide_relevant)),
         )
 
     @classmethod
@@ -123,6 +130,29 @@ class ChatDrawingGuideStructureConsistencyService:
         return items
 
     @classmethod
+    def _code_participates_in_guide(cls, code: str) -> bool:
+        """PA/PI participam; MP e consumível no SG2010 não geram guide_structure_extra."""
+        from app.domain.services.chat_drawing_patterns_service import (
+            ChatDrawingPatternsService,
+        )
+        from app.domain.services.chat_drawing_product_family_classification_service import (
+            ChatDrawingProductFamilyClassificationService as Family,
+        )
+
+        if ChatDrawingPatternsService.is_intermediate_family(code):
+            return True
+
+        if ChatDrawingPatternsService.is_finished_product(code):
+            return True
+
+        family = Family.classify(code)
+
+        return family.kind not in {
+            Family.KIND_RAW_MATERIAL,
+            Family.KIND_CONSUMABLE,
+        }
+
+    @classmethod
     def collect_expected_guide_codes(cls, root: dict, product_code: str) -> set[str]:
         return ChatDrawingStructureIndexService.collect_guide_expected_codes(
             root,
@@ -153,7 +183,6 @@ class ChatDrawingGuideStructureConsistencyService:
         root: dict,
         product_code: str,
     ) -> list[tuple[str, int, int]]:
-        root_code = ChatProductQueryIntentService.normalize_product_code(product_code)
         guide = root.get("guide") if isinstance(root.get("guide"), dict) else {}
         mismatches: list[tuple[str, int, int]] = []
 
@@ -165,7 +194,7 @@ class ChatDrawingGuideStructureConsistencyService:
                 str(item.get("product_code") or item.get("product") or "")
             )
 
-            if not code:
+            if not code or not cls._code_participates_in_guide(code):
                 continue
 
             raw_level = item.get("bom_level")

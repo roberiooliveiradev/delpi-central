@@ -208,7 +208,20 @@ class ChatDrawingStructureIndexService:
 
     @classmethod
     def _item_requires_guide(cls, code: str, *, item_type: str) -> bool:
+        from app.domain.services.chat_drawing_product_family_classification_service import (
+            ChatDrawingProductFamilyClassificationService as Family,
+        )
+
+        # Prefixo 50xx na estrutura/API sempre participa do roteiro (mesmo sem descrição).
         if ChatDrawingPatternsService.is_intermediate_family(code):
+            return True
+
+        family = Family.classify(code)
+
+        if family.kind in {Family.KIND_RAW_MATERIAL, Family.KIND_CONSUMABLE}:
+            return False
+
+        if family.kind == Family.KIND_FINISHED:
             return True
 
         return str(item_type or "").strip().upper() in ChatDrawingPatternsService.guide_product_types()

@@ -62,6 +62,40 @@ def test_guide_structure_level_mismatch_for_pa_at_wrong_level():
     )
 
 
+def test_guide_structure_ignores_mp_and_consumable_in_sg2010():
+    """Matéria-prima/consumível no roteiro não gera guide_structure_extra."""
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50215425",
+                    "type": "PI",
+                    "description": "CT26VERM-00036/04/06-0000-0000",
+                    "components": [{"code": "10440133", "type": "MP"}],
+                }
+            ]
+        },
+        "guide": {
+            "items": [
+                {"product_code": "90264227", "bom_level": 0},
+                {"product_code": "50215425", "bom_level": 1},
+                {"product_code": "10080063", "bom_level": 2},
+                {"product_code": "10130091", "bom_level": 2},
+            ]
+        },
+    }
+
+    comparison = ChatDrawingGuideStructureConsistencyService.compare(
+        root=root,
+        product_code="90264227",
+    )
+
+    assert "10080063" not in comparison.extra_in_guide
+    assert "10130091" not in comparison.extra_in_guide
+    assert "50215425" not in comparison.extra_in_guide
+    assert "50215425" in comparison.expected_codes
+
+
 def test_orchestration_includes_guide_structure_checks_without_pdf():
     package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
         product_code="90260140",

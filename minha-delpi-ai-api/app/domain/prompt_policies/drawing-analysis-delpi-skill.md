@@ -20,6 +20,7 @@ O pipeline já trata estes padrões — **não** eleve Pendente a OK nem convert
 | **Refinamento OCR de coluna** (`refined_column`) | Confia na célula só após cruzar ruído de descrição e SG1010 — sem descrição no PDF usa cadastro |
 | **Intermediário 50xx** fantasma em `full_text` | Ignorado quando BOM estruturada já lista CB/CT — não reportar `intermediate_extra` |
 | **PI × MP na estrutura** | `50xx` = intermediário (assinatura CA–CV + cor 4 letras); `10xx` = MP/consumível. Cabo-filho sob PI presente e OCR 10↔50 com assinatura alinhada **não** viram `bom_extra` / `intermediate_extra` — confie no checklist |
+| **MP no roteiro SG2010** | Matéria-prima/consumível listados no roteiro **não** geram `guide_structure_extra` — só PA/PI cruzam com a estrutura |
 | **Revisão sem carimbo legível** | Não bloqueia por revisão Delpi — B1_REVATU não vem do PDF |
 | **REF. do cliente no PDF ≠ B1_REFEREN** | **Erro crítico** (`customer_reference_mismatch`) quando ambos existem e divergem; pendente se só um lado tiver valor |
 | **QTD 0 / coluna vazia** | **Pendente** ou ignorado na comparação — não crítico automático |
