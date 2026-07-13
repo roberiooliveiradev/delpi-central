@@ -10,11 +10,11 @@ import {
   titleWithHelpBemClasses,
 } from "../../components/help";
 import { PUC_PREFIX } from "../../app/bemPrefix";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 const titleClasses = titleWithHelpBemClasses(PUC_PREFIX);
 
-export const helpCatalogEntries: CatalogEntry[] = [
+export const helpCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "help.HelpTooltip",
     family: "help",

@@ -37,7 +37,7 @@ import {
   SimpleKpiCard,
   simpleKpiCardBemClasses,
 } from "../../components/layout";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 const pageHeaderCn = pageHeaderBrandBemClasses(PUC_PREFIX);
 const panelCn = panelCardBemClasses(PUC_PREFIX);
@@ -54,7 +54,7 @@ const formGridCn = formGridBemClasses(PUC_PREFIX);
 const formActionsCn = formActionsBemClasses(PUC_PREFIX);
 const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
 
-export const layoutCatalogEntries: CatalogEntry[] = [
+export const layoutCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "layout.PageHeader",
     family: "layout",

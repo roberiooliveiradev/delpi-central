@@ -6,6 +6,8 @@ Exports públicos de `@delpi/plugin-ui`. Import único.
 
 O app cobre **todos** os componentes React visuais listados em `src/catalog/visualComponents.ts` (teste de cobertura em `componentRegistry.test.ts`). Demos interativas vivem em `src/catalog/demos/`; o que ainda não tem fixture completa aparece como **stub** com nota.
 
+**Metadados:** cada entrada no inventário declara `addedAt` (e opcionalmente `updatedAt` / `changeNote`). O catálogo mostra badges Novo/Atualizado, filtros Recentes/Atualizados e datas no painel de detalhe. Regra de contribuição: [contributing.md](./contributing.md) § Metadados.
+
 | Família | Exemplos no catálogo |
 |---------|----------------------|
 | help | HelpTooltip, FieldLabel, TabHintCell… |

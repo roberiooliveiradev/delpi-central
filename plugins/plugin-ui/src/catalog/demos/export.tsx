@@ -1,11 +1,11 @@
 import { DocumentExportActions, ExcelExportButton, TabularExportButtons } from "../../export";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 function noopExport() {
   // Demo only — sem download real no catálogo.
 }
 
-export const exportCatalogEntries: CatalogEntry[] = [
+export const exportCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "export.TabularExportButtons",
     family: "export",

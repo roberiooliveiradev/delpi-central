@@ -1,8 +1,8 @@
 import { CatalogStub } from "../CatalogStub";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 /** Shape menus dependem de âncora/ribbon — stubs com nota até demos dedicadas. */
-export const shapeCatalogEntries: CatalogEntry[] = [
+export const shapeCatalogEntries: CatalogEntryDraft[] = [
   "ShapeFillMenu",
   "ShapeOutlineMenu",
   "ShapeEffectsMenu",

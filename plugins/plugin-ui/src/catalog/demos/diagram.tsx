@@ -1,7 +1,7 @@
 import { CatalogStub } from "../CatalogStub";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
-export const diagramCatalogEntries: CatalogEntry[] = [
+export const diagramCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "diagram.FlowchartEditor",
     family: "diagram",

@@ -10,7 +10,7 @@
 | [component-catalog.md](./component-catalog.md) | Inventário de exports, props e exemplos + mapa do app catálogo |
 | [contributing.md](./contributing.md) | Como adicionar componente, testes, checklist (+ cobertura visual) |
 | [../plugin-ui.manifest.json](../plugin-ui.manifest.json) | App portal «Catálogo UI» (`./App`, permissão `plugin-ui.view`) |
-| [`src/catalog/visualComponents.ts`](../src/catalog/visualComponents.ts) | Lista canônica de componentes no app (gate de cobertura) |
+| [`src/catalog/visualComponents.ts`](../src/catalog/visualComponents.ts) | Lista canônica + metadados `addedAt`/`updatedAt` (gate de cobertura) |
 | [migration-catalog.md](./migration-catalog.md) | Plugins com cópias locais a migrar |
 | [refactoring-roadmap.md](./refactoring-roadmap.md) | Roadmap completo (fases, matriz, **§ 7 status residual**) |
 | [export-catalog.md](./export-catalog.md) | Catálogo de exportação (CSV / Excel / PDF / PNG; E4 backlog) |

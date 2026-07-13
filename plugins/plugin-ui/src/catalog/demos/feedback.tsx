@@ -24,7 +24,7 @@ import {
   StatusBadge,
   statusBadgeBemClasses,
 } from "../../components/feedback";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 const emptyCn = emptyStatePanelBemClasses(PUC_PREFIX);
 const loadingCn = loadingStatePanelBemClasses(PUC_PREFIX);
@@ -37,7 +37,7 @@ const loadingActivityCn = loadingActivityBemClasses(PUC_PREFIX);
 const stateBoxCn = stateBoxBemClasses(PUC_PREFIX);
 const infoStateCn = infoStateBemClasses(PUC_PREFIX);
 
-export const feedbackCatalogEntries: CatalogEntry[] = [
+export const feedbackCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "feedback.EmptyState",
     family: "feedback",

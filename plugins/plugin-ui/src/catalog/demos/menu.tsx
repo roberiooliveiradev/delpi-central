@@ -7,9 +7,9 @@ import {
   ContextMenuToolbar,
   ContextMenuToolbarButton,
 } from "../../components/menu";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
-export const menuCatalogEntries: CatalogEntry[] = [
+export const menuCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "menu.ContextMenu",
     family: "menu",

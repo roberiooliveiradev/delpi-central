@@ -26,7 +26,7 @@ import {
   type DataTableColumn,
 } from "../../components/data";
 import { createDashboardLoadingActivityCard } from "../../components/feedback";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 type RequestProgress = { completed: number; total: number };
 
@@ -132,7 +132,7 @@ function useTrackedSingleFetchProgress(_active: boolean): RequestProgress {
   return { completed: 0, total: 1 };
 }
 
-export const dataCatalogEntries: CatalogEntry[] = [
+export const dataCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "data.DataTable",
     family: "data",

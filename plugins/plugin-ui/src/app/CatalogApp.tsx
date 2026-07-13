@@ -4,11 +4,13 @@ import { PUC_DASHBOARD_ROOT } from "./bemPrefix";
 import {
   CATALOG_ENTRIES,
   CATALOG_FAMILY_LABELS,
+  CATALOG_LIFECYCLE_LABELS,
   filterCatalogEntries,
+  formatCatalogDatePtBr,
   getCatalogEntryById,
   listCatalogFamilies,
 } from "../catalog/componentRegistry";
-import type { CatalogFamily } from "../catalog/types";
+import type { CatalogFamily, CatalogLifecycleFilter } from "../catalog/types";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -19,12 +21,13 @@ export default function CatalogApp(_props: AppProps = {}) {
   const families = useMemo(() => listCatalogFamilies(), []);
   const [query, setQuery] = useState("");
   const [familyFilter, setFamilyFilter] = useState<CatalogFamily | "all">("all");
+  const [lifecycleFilter, setLifecycleFilter] = useState<CatalogLifecycleFilter>("all");
   const [selectedId, setSelectedId] = useState(CATALOG_ENTRIES[0]?.id ?? "");
   const [demoId, setDemoId] = useState(CATALOG_ENTRIES[0]?.demos[0]?.id ?? "");
 
   const filtered = useMemo(
-    () => filterCatalogEntries(query, familyFilter),
-    [query, familyFilter],
+    () => filterCatalogEntries(query, familyFilter, lifecycleFilter),
+    [query, familyFilter, lifecycleFilter],
   );
 
   const selected = getCatalogEntryById(selectedId) ?? filtered[0] ?? CATALOG_ENTRIES[0];
@@ -77,9 +80,14 @@ export default function CatalogApp(_props: AppProps = {}) {
               <button
                 type="button"
                 className={
-                  familyFilter === "all" ? "puc-chip puc-chip--active" : "puc-chip"
+                  familyFilter === "all" && lifecycleFilter === "all"
+                    ? "puc-chip puc-chip--active"
+                    : "puc-chip"
                 }
-                onClick={() => setFamilyFilter("all")}
+                onClick={() => {
+                  setFamilyFilter("all");
+                  setLifecycleFilter("all");
+                }}
               >
                 Todas
               </button>
@@ -88,13 +96,45 @@ export default function CatalogApp(_props: AppProps = {}) {
                   key={family}
                   type="button"
                   className={
-                    familyFilter === family ? "puc-chip puc-chip--active" : "puc-chip"
+                    familyFilter === family && lifecycleFilter === "all"
+                      ? "puc-chip puc-chip--active"
+                      : "puc-chip"
                   }
-                  onClick={() => setFamilyFilter(family)}
+                  onClick={() => {
+                    setFamilyFilter(family);
+                    setLifecycleFilter("all");
+                  }}
                 >
                   {CATALOG_FAMILY_LABELS[family]}
                 </button>
               ))}
+            </div>
+
+            <div className="puc-lifecycle-filters" role="group" aria-label="Recência">
+              <button
+                type="button"
+                className={
+                  lifecycleFilter === "new" ? "puc-chip puc-chip--active" : "puc-chip"
+                }
+                onClick={() => {
+                  setLifecycleFilter("new");
+                  setFamilyFilter("all");
+                }}
+              >
+                Recentes
+              </button>
+              <button
+                type="button"
+                className={
+                  lifecycleFilter === "updated" ? "puc-chip puc-chip--active" : "puc-chip"
+                }
+                onClick={() => {
+                  setLifecycleFilter("updated");
+                  setFamilyFilter("all");
+                }}
+              >
+                Atualizados
+              </button>
             </div>
 
             <ul className="puc-entry-list">
@@ -112,7 +152,16 @@ export default function CatalogApp(_props: AppProps = {}) {
                       setDemoId(entry.demos[0]?.id ?? "");
                     }}
                   >
-                    <span className="puc-entry-btn__name">{entry.title}</span>
+                    <span className="puc-entry-btn__row">
+                      <span className="puc-entry-btn__name">{entry.title}</span>
+                      {entry.lifecycle !== "stable" ? (
+                        <span
+                          className={`puc-lifecycle-badge puc-lifecycle-badge--${entry.lifecycle}`}
+                        >
+                          {CATALOG_LIFECYCLE_LABELS[entry.lifecycle]}
+                        </span>
+                      ) : null}
+                    </span>
                     <span className="puc-entry-btn__family">
                       {CATALOG_FAMILY_LABELS[entry.family]}
                     </span>
@@ -132,6 +181,16 @@ export default function CatalogApp(_props: AppProps = {}) {
                   <div>
                     <p className="puc-meta__family">
                       {CATALOG_FAMILY_LABELS[selected.family]}
+                      {selected.lifecycle !== "stable" ? (
+                        <>
+                          {" · "}
+                          <span
+                            className={`puc-lifecycle-badge puc-lifecycle-badge--${selected.lifecycle}`}
+                          >
+                            {CATALOG_LIFECYCLE_LABELS[selected.lifecycle]}
+                          </span>
+                        </>
+                      ) : null}
                     </p>
                     <h2 className="puc-meta__title">{selected.title}</h2>
                     {selected.description ? (
@@ -157,6 +216,20 @@ export default function CatalogApp(_props: AppProps = {}) {
                         <dd>
                           <code>docs/component-catalog.md#{selected.docAnchor}</code>
                         </dd>
+                      </div>
+                    ) : null}
+                    <div>
+                      <dt>Adicionado</dt>
+                      <dd>{formatCatalogDatePtBr(selected.addedAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>Última alteração</dt>
+                      <dd>{formatCatalogDatePtBr(selected.updatedAt)}</dd>
+                    </div>
+                    {selected.changeNote ? (
+                      <div>
+                        <dt>Nota</dt>
+                        <dd>{selected.changeNote}</dd>
                       </div>
                     ) : null}
                   </dl>

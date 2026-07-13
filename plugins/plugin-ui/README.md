@@ -49,7 +49,7 @@ Antes do rollout MF (jul/2026), consumidores usavam alias Vite + `COPY plugin-ui
 
 ## App — Catálogo UI
 
-Além da biblioteca (`./index` + `./styles`), o remote expõe **`./App`**: listagem e prévia de **todos** os componentes React visuais (`src/catalog/visualComponents.ts`).
+Além da biblioteca (`./index` + `./styles`), o remote expõe **`./App`**: listagem e prévia de **todos** os componentes React visuais (`src/catalog/visualComponents.ts`), com metadados `addedAt`/`updatedAt`, badges Novo/Atualizado e filtros Recentes/Atualizados.
 
 | Item | Valor |
 |------|--------|

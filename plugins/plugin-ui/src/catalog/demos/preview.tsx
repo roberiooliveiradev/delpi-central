@@ -1,8 +1,8 @@
 import { CenteredScaledPreview } from "../../components/preview/CenteredScaledPreview";
 import { CatalogStub } from "../CatalogStub";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
-export const previewCatalogEntries: CatalogEntry[] = [
+export const previewCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "preview.FilePreviewModal",
     family: "preview",

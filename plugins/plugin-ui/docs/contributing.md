@@ -44,10 +44,22 @@ O mesmo pacote expõe `./App` — app federado de listagem/prévia:
 **Novo export público visual:**
 
 1. Documentar em `component-catalog.md`
-2. Incluir em `visualComponents.ts`
+2. Incluir em `visualComponents.ts` com metadados de ciclo de vida (obrigatório)
 3. Preferir demo interativa em `src/catalog/demos/{familia}.tsx` (senão o registry gera stub automático)
 
 Helpers BEM, factories `create*`, tipos e constantes **não** entram no catálogo visual.
+
+### Metadados no inventário (`visualComponents.ts`)
+
+Datas declarativas (ISO `YYYY-MM-DD`) — **não** derivar de `git log` em runtime.
+
+| Evento | Ação |
+|--------|------|
+| Novo export visual | `addedAt` = hoje; omitir `updatedAt` |
+| Mudança relevante de API/visual | `updatedAt` = hoje; `changeNote` opcional (1 linha) |
+| Só typo / docs / teste | **não** alterar `updatedAt` |
+
+O app deriva badges **Novo** (≤ 30 dias desde `addedAt`) e **Atualizado** (não novo, `updatedAt` ≠ `addedAt`, ≤ 14 dias). Chips **Recentes** / **Atualizados** na sidebar filtramos por esse lifecycle.
 
 ## Convenções de código
 

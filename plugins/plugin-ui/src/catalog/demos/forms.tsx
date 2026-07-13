@@ -14,7 +14,7 @@ import {
   selectControlBemClasses,
   selectFieldPacClasses,
 } from "../../components/forms";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 const dateCn = dateFieldBemClasses(PUC_PREFIX);
 const selectPac = selectFieldPacClasses(PUC_PREFIX);
@@ -27,7 +27,7 @@ const SELECT_OPTIONS = [
   { value: "es", label: "Filial ES" },
 ];
 
-export const formsCatalogEntries: CatalogEntry[] = [
+export const formsCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "forms.SelectField",
     family: "forms",

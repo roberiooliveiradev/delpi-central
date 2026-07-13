@@ -3,7 +3,7 @@ import { ChartTypeCatalogPanel } from "../../components/charts/ChartTypeCatalogP
 import { TableInsertCatalogPanel } from "../../components/charts/TableInsertCatalogPanel";
 import { BarSeriesChart } from "../../components/charts/BarSeriesChart";
 import { LineSeriesChart } from "../../components/charts/LineSeriesChart";
-import type { CatalogEntry } from "../types";
+import type { CatalogEntryDraft } from "../types";
 
 const SERIES_POINTS = [
   { label: "Jan", value: 12 },
@@ -19,7 +19,7 @@ const MATRIX_POINTS = [
   { id: "4", label: "Reavaliar", impacto: 25, esforco: 80, quadrante: "rethink" as const },
 ];
 
-export const chartsCatalogEntries: CatalogEntry[] = [
+export const chartsCatalogEntries: CatalogEntryDraft[] = [
   {
     id: "charts.ConfigurableSeriesChart",
     family: "charts",
