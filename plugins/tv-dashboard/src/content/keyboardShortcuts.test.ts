@@ -17,7 +17,14 @@ describe("keyboardShortcuts catalog", () => {
     expect(getKeyboardShortcut("undo")?.keys).toBe("Ctrl+Z");
     expect(getKeyboardShortcut("zoom-wheel")?.showAltTip).toBe(true);
     expect(getKeyboardShortcut("keytips")?.keys).toBe("F");
+    expect(getKeyboardShortcut("show-tips")?.description).toMatch(/ligar\/desligar/i);
     expect(getKeyboardShortcut("missing")).toBeUndefined();
+  });
+
+  it("reconhece tecla Alt para toggle de balões", async () => {
+    const { isAltKey } = await import("../context/KeyboardShortcutsTipsProvider");
+    expect(isAltKey({ key: "Alt", code: "AltLeft" })).toBe(true);
+    expect(isAltKey({ key: "a", code: "KeyA" })).toBe(false);
   });
 
   it("agrupa todas as entradas sem perder nenhuma", () => {

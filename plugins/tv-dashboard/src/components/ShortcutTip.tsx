@@ -26,7 +26,7 @@ type Props = {
 const TIP_Z_INDEX = 11100;
 
 /**
- * Envolve um controle e, com Alt segurado, mostra o atalho em balão (KeyTip)
+ * Envolve um controle e, com Alt ativo (toggle), mostra o atalho em balão (KeyTip)
  * via portal — evita clip por overflow da ribbon/chrome — com flip/clamp na viewport.
  */
 export function ShortcutTip({

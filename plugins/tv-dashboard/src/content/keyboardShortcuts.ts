@@ -18,7 +18,7 @@ export type KeyboardShortcutEntry = {
   keys: string;
   /** Descrição opcional para o catálogo. */
   description?: string;
-  /** Se true, aparece balão ao segurar Alt na UI anotada. */
+  /** Se true, aparece balão com Alt (toggle) na UI anotada. */
   showAltTip?: boolean;
 };
 
@@ -117,7 +117,7 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     group: "palco",
     label: "Mostrar atalhos Ctrl na UI",
     keys: "Alt",
-    description: "Segure Alt para ver balões das combinações Ctrl/Del",
+    description: "Toque Alt para ligar/desligar balões das combinações Ctrl/Del",
     showAltTip: false,
   },
   {

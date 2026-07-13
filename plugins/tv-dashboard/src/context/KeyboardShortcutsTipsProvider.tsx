@@ -32,13 +32,13 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
 }
 
-function isAltKey(event: KeyboardEvent): boolean {
+export function isAltKey(event: Pick<KeyboardEvent, "key" | "code">): boolean {
   return event.key === "Alt" || event.code === "AltLeft" || event.code === "AltRight";
 }
 
 /**
- * Detecta Alt segurado (sem outros modificadores) para exibir balões de atalho.
- * Evita acionar em campos editáveis e limpa no blur.
+ * Detecta toque em Alt (sem outros modificadores) para ligar/desligar balões de atalho.
+ * Esc, blur e troca de aba limpam o modo.
  */
 export function KeyboardShortcutsTipsProvider({ children }: { children: ReactNode }) {
   const [altTipsActive, setAltTipsActive] = useState(false);
@@ -48,8 +48,14 @@ export function KeyboardShortcutsTipsProvider({ children }: { children: ReactNod
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && altTipsActive) {
+        setAltTipsActive(false);
+        return;
+      }
+
       if (!isAltKey(event)) {
-        if (altTipsActive && (event.ctrlKey || event.metaKey || event.key.length === 1)) {
+        // Combinação Ctrl/⌘ em uso: esconde os balões.
+        if (altTipsActive && (event.ctrlKey || event.metaKey)) {
           setAltTipsActive(false);
         }
         return;
@@ -57,15 +63,9 @@ export function KeyboardShortcutsTipsProvider({ children }: { children: ReactNod
       if (event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (isEditableTarget(event.target)) return;
       if (event.repeat) return;
-      // Impede menu do navegador / foco na barra ao segurar Alt (KeyTips).
+      // Impede menu do navegador / foco na barra ao tocar Alt (KeyTips).
       event.preventDefault();
-      setAltTipsActive(true);
-    }
-
-    function onKeyUp(event: KeyboardEvent) {
-      if (isAltKey(event)) {
-        setAltTipsActive(false);
-      }
+      setAltTipsActive((prev) => !prev);
     }
 
     function onVisibility() {
@@ -73,13 +73,11 @@ export function KeyboardShortcutsTipsProvider({ children }: { children: ReactNod
     }
 
     window.addEventListener("keydown", onKeyDown, true);
-    window.addEventListener("keyup", onKeyUp, true);
     window.addEventListener("blur", clearTips);
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       window.removeEventListener("keydown", onKeyDown, true);
-      window.removeEventListener("keyup", onKeyUp, true);
       window.removeEventListener("blur", clearTips);
       document.removeEventListener("visibilitychange", onVisibility);
     };
