@@ -4,9 +4,9 @@ import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   bindChartPartPointer,
   chartPartAllowsResize,
+  chartPartTypographyStyle,
   clampChartPartFrame,
   getChartPartState,
-  resolveChartPartFontSize,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -52,13 +52,14 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
   const showResize = selected && !editing && chartPartAllowsResize(ref);
   const chartAreaFill =
     getChartPartState(chartParts, { kind: "chartArea" })?.style?.fill ?? DECK_COLOR_SURFACE;
+  const typography = chartPartTypographyStyle(chartParts, ref, { boxLayout: true });
   const textStyle: CSSProperties = {
     ...frameStyle,
-    fontFamily: partStyle?.fontFamily,
-    fontSize: `${resolveChartPartFontSize("title", partStyle)}px`,
-    fontWeight: partStyle?.fontWeight,
-    fontStyle: partStyle?.fontStyle,
-    color: resolvePaintTextColor(partStyle?.color, chartAreaFill) ?? DECK_COLOR_TEXT_STRONG,
+    ...typography,
+    color:
+      resolvePaintTextColor(partStyle?.color, chartAreaFill) ??
+      typography?.color ??
+      DECK_COLOR_TEXT_STRONG,
     ...(partStyle?.fill && partStyle.fill !== "transparent"
       ? { background: partStyle.fill }
       : {}),

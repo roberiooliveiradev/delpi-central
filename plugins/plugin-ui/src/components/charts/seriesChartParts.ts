@@ -20,6 +20,7 @@ import {
   type SeriesChartKind,
 } from "./seriesChartOptions";
 import { DECK_CHART_DEFAULTS } from "../../theme/deckColorCatalog";
+import { resolveTextPartColumnBoxLayout } from "../../utils/textPartBoxLayout";
 
 /** Atributo DOM para hit-test no editor (sem HTML livre). */
 export const CHART_PART_DATA_ATTR = "data-chart-part";
@@ -449,6 +450,7 @@ export function resolveChartPartFontSize(
 export function chartPartTypographyStyle(
   parts: ChartPartsMap | null | undefined,
   ref: ChartPartRef,
+  options?: { boxLayout?: boolean },
 ): CSSProperties | undefined {
   const style = getChartPartState(parts, ref)?.style;
   const css: CSSProperties = {};
@@ -466,10 +468,24 @@ export function chartPartTypographyStyle(
     /* SVG `<text>` usa `fill`; `color` sozinho não pinta o eixo. */
     css.fill = style.color;
   }
-  if (style.textAlign) css.textAlign = style.textAlign;
-  if (style.verticalAlign === "top") css.justifyContent = "flex-start";
-  else if (style.verticalAlign === "middle") css.justifyContent = "center";
-  else if (style.verticalAlign === "bottom") css.justifyContent = "flex-end";
+  const useBoxLayout =
+    options?.boxLayout === true ||
+    ref.kind === "title" ||
+    Boolean(style.verticalAlign) ||
+    Boolean(style.textAlign);
+  if (useBoxLayout && (ref.kind === "title" || options?.boxLayout)) {
+    Object.assign(
+      css,
+      resolveTextPartColumnBoxLayout({
+        textAlign: style.textAlign,
+        verticalAlign: style.verticalAlign,
+        defaultVerticalAlign: "top",
+        fillHost: true,
+      }),
+    );
+  } else if (style.textAlign) {
+    css.textAlign = style.textAlign;
+  }
   return Object.keys(css).length > 0 ? css : undefined;
 }
 

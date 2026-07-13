@@ -12,6 +12,7 @@ import type { MetricKpiCardTone } from "../layout/MetricKpiCard";
 import { AUTOMATIC_TEXT_COLOR } from "../shape/colorUtils";
 import { applyTextEffectStyleToCss } from "../shape/textEffectStyle";
 import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
+import { resolveTextPartColumnBoxLayout } from "../../utils/textPartBoxLayout";
 
 export const KPI_PART_DATA_ATTR = "data-kpi-part";
 
@@ -643,10 +644,13 @@ export function kpiPartDomProps(ref: KpiPartRef, selectedPart?: KpiPartRef | nul
   };
 }
 
-/** Tipografia + alinhamento de parte textual do KPI (title/value/hint). */
+/** Tipografia + alinhamento de parte textual do KPI (title/value/hint).
+ * Alinhamento usa caixa flex em coluna (mesmo contrato das caixas de texto do deck).
+ * `flexPart` é legado — valor default vertical = middle; título/hint = top.
+ */
 export function resolveKpiPartTypographyStyle(
   style: KpiPartStyle | null | undefined,
-  options?: { flexPart?: boolean },
+  options?: { flexPart?: boolean; fillHost?: boolean },
 ): CSSProperties | undefined {
   if (!style) return undefined;
   const css: CSSProperties = {};
@@ -658,31 +662,22 @@ export function resolveKpiPartTypographyStyle(
   if (style.fontStyle) css.fontStyle = style.fontStyle;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.color) css.color = style.color;
-  if (style.textAlign) css.textAlign = style.textAlign;
   applyTextEffectStyleToCss(style, css);
 
-  const flexPart = options?.flexPart ?? false;
-  if (flexPart) {
-    if (style.textAlign === "left") css.justifyContent = "flex-start";
-    else if (style.textAlign === "right") css.justifyContent = "flex-end";
-    else if (style.textAlign === "center" || style.textAlign === "justify") {
-      css.justifyContent = "center";
-    }
-    if (style.verticalAlign === "top") css.alignItems = "flex-start";
-    else if (style.verticalAlign === "middle") css.alignItems = "center";
-    else if (style.verticalAlign === "bottom") css.alignItems = "flex-end";
-  } else {
-    if (style.textAlign) {
-      css.width = "100%";
-      css.display = "flex";
-      css.flexWrap = "wrap";
-      css.justifyContent =
-        style.textAlign === "right"
-          ? "flex-end"
-          : style.textAlign === "center" || style.textAlign === "justify"
-            ? "center"
-            : "flex-start";
-    }
+  const applyBox =
+    Boolean(style.textAlign) ||
+    Boolean(style.verticalAlign) ||
+    options?.flexPart === true;
+  if (applyBox) {
+    Object.assign(
+      css,
+      resolveTextPartColumnBoxLayout({
+        textAlign: style.textAlign,
+        verticalAlign: style.verticalAlign,
+        defaultVerticalAlign: options?.flexPart ? "middle" : "top",
+        fillHost: options?.fillHost !== false,
+      }),
+    );
   }
 
   return Object.keys(css).length > 0 ? css : undefined;

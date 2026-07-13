@@ -242,15 +242,17 @@ describe("seriesChartParts", () => {
     expect(normalized.plotArea?.frame).toBeUndefined();
   });
 
-  it("chartPartTypographyStyle mapeia fontSize e família", () => {
-    const parts = upsertChartPartState({}, { kind: "legend" }, {
-      style: { fontSize: 22, fontFamily: "Georgia, serif", color: "#fff" },
+  it("chartPartTypographyStyle em título aplica caixa coluna (verticalAlign)", () => {
+    const parts = upsertChartPartState({}, { kind: "title" }, {
+      style: { fontSize: 18, textAlign: "center", verticalAlign: "bottom" },
     });
-    expect(chartPartTypographyStyle(parts, { kind: "legend" })).toEqual({
-      fontSize: "22px",
-      fontFamily: "Georgia, serif",
-      color: "#fff",
-      fill: "#fff",
+    expect(chartPartTypographyStyle(parts, { kind: "title" })).toMatchObject({
+      fontSize: "18px",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "flex-end",
+      alignItems: "center",
+      textAlign: "center",
     });
   });
 
