@@ -32,6 +32,17 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+/* Painel recolhido: só o trilho de ícones — notas não podem forçar largura. */
+.dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--collapsed) {
+  width: 36px;
+}
+
+.dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--collapsed) .td-deck-speaker-notes {
+  display: none;
 }
 
 .dashboard-tv-dashboard .td-deck-speaker-notes {
@@ -3596,7 +3607,9 @@
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--collapsed {
-  width: var(--td-side-panel-width, 36px);
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel__pane {
