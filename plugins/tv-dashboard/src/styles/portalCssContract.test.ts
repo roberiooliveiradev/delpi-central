@@ -15,6 +15,7 @@ const PORTAL_SCOPE_SOURCES = [
   "../components/ComunicadoShapeLibraryMenu.tsx",
   "../components/ComunicadoInsertRibbon.tsx",
   "../components/deck/DeckSettingsAccordion.tsx",
+  "../components/DataParamFields.tsx",
 ];
 
 describe("portal CSS contract", () => {

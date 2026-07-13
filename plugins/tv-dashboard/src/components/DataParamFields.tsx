@@ -8,6 +8,7 @@ import {
   resolveParamFieldLabel,
 } from "../content/dataParamCatalog";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import {
   DATE_RANGE_PRESET_OPTIONS,
   DATE_RANGE_PRESET_PARAM,
@@ -152,6 +153,13 @@ export function DataParamFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com onChange/values
   }, [datePair?.startKey, datePair?.endKey]);
 
+  function patchParam(key: string, value: string) {
+    if (datePair && isDateRangePairKey(key, datePair) && preset !== "custom") {
+      onChange(DATE_RANGE_PRESET_PARAM, "custom");
+    }
+    onChange(key, value);
+  }
+
   const rangeFields =
     datePair == null
       ? null
@@ -165,6 +173,7 @@ export function DataParamFields({
             <FormSelectControl
               id={`${idPrefix}-date-range-preset`}
               className={selectClass}
+              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
               ariaLabel="Período relativo"
               value={preset || "this_month"}
               onChange={(value: string) => onChange(DATE_RANGE_PRESET_PARAM, value)}
@@ -197,18 +206,18 @@ export function DataParamFields({
         ];
 
   const fields = entries.map(([key, field]) => {
-    if (isDateRangePairKey(key, datePair) && !isCustom) {
-      return null;
-    }
-
     const inherited = inheritedKeys.has(key);
     const current = values?.[key];
     const labelBase = resolveParamFieldLabel(key, field.label);
     const label = `${labelBase}${inherited ? " (herdado do slide)" : ""}`;
-    const hint = hintForParam(key, field);
+    const isRangeDate = isDateRangePairKey(key, datePair);
+    const hint = isRangeDate
+      ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangeFixed
+      : hintForParam(key, field);
     const fieldId = `${idPrefix}-${key}`;
     const selectOptions = resolveParamSelectOptions(key, field);
     const displayValue = displayParamValue(current, field);
+    const dateInputsLocked = isRangeDate && !isCustom;
 
     if (BRANCH_PARAM_KEYS.has(key)) {
       return (
@@ -219,7 +228,7 @@ export function DataParamFields({
           hint={hint}
           scope={branchScope}
           value={displayValue}
-          onChange={(value) => onChange(key, value)}
+          onChange={(value) => patchParam(key, value)}
           placeholder={inherited ? "Herdado do slide" : "Ex.: 01"}
         />
       );
@@ -242,9 +251,10 @@ export function DataParamFields({
           <FormSelectControl
             id={fieldId}
             className={selectClass}
+            portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
             ariaLabel={labelBase}
             value={displayValue}
-            onChange={(value: string) => onChange(key, value)}
+            onChange={(value: string) => patchParam(key, value)}
             options={[
               ...(showEmpty ? [{ value: "", label: emptyLabel }] : []),
               ...selectOptions,
@@ -266,17 +276,26 @@ export function DataParamFields({
           id={fieldId}
           type={inputType}
           className={nativeClass}
+          disabled={dateInputsLocked}
           placeholder={
-            inherited
-              ? "Herdado do slide"
-              : field.default !== undefined
-                ? `Padrão: ${field.default}`
-                : field.optional
-                  ? "Opcional"
-                  : ""
+            dateInputsLocked
+              ? "Definido pelo período relativo"
+              : inherited
+                ? "Herdado do slide"
+                : field.default !== undefined
+                  ? `Padrão: ${field.default}`
+                  : field.optional
+                    ? "Opcional"
+                    : ""
           }
-          value={current === undefined || current === null ? "" : String(current)}
-          onChange={(value: string) => onChange(key, value)}
+          value={
+            dateInputsLocked
+              ? ""
+              : current === undefined || current === null
+                ? ""
+                : String(current)
+          }
+          onChange={(value: string) => patchParam(key, value)}
         />
       </DeckField>
     );

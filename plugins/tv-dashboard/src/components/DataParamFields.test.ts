@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -63,5 +66,16 @@ describe("visibleParamSchema", () => {
         { granularity: "day" },
       ),
     ).toEqual({ periodDays: { type: "integer" } });
+  });
+});
+
+describe("DataParamFields date range UX contract", () => {
+  it("não oculta date_start/date_end do schema quando há preset", () => {
+    const base = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    expect(source).toMatch(/dateInputsLocked/);
+    expect(source).toMatch(/Definido pelo período relativo/);
+    expect(source).toMatch(/portalScopeClassName=\{TV_DASHBOARD_ROOT_CLASS\}/);
+    expect(source).not.toMatch(/isDateRangePairKey\(key, datePair\) && !isCustom/);
   });
 });
