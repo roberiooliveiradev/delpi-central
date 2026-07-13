@@ -28,6 +28,27 @@ def test_validate_params_applies_default_when_empty():
     assert validate_params_against_schema({"granularity": ""}, schema) == {"granularity": "day"}
 
 
+def test_validate_params_allows_internal_date_range_preset():
+    """UI grava dateRangePreset; expand acontece só no gateway HTTP."""
+    schema = {
+        "date_start": {"type": "string", "optional": True},
+        "date_end": {"type": "string", "optional": True},
+        "status": {"type": "string", "optional": True, "default": "Todos"},
+    }
+    assert validate_params_against_schema(
+        {"dateRangePreset": "this_month", "status": "Todos", "periodDays": 15},
+        schema,
+    ) == {"status": "Todos"}
+
+
+def test_validate_params_still_rejects_unknown_api_keys():
+    with pytest.raises(ValueError, match="não permitido"):
+        validate_params_against_schema(
+            {"hack": "1"},
+            {"status": {"type": "string", "optional": True}},
+        )
+
+
 def test_validate_params_skips_required_when_fixed_query_params():
     schema = {"granularity": {"type": "string", "optional": False}}
     assert (

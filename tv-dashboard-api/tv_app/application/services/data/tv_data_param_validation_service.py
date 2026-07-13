@@ -8,6 +8,10 @@ from tv_app.application.services.data.tv_data_presentation_modes_service import 
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.tv_dashboard_content_service import message
+from tv_app.application.services.tv_date_range_preset_service import (
+    INTERNAL_PARAM_KEYS,
+    PERIOD_DAYS_KEY,
+)
 
 
 def _coerce_param_value(field_type: str, raw: Any) -> Any:
@@ -67,6 +71,9 @@ def validate_params_against_schema(
         if key in normalized or value is None or value == "":
             continue
         if key in fixed:
+            continue
+        # dateRangePreset / periodDays (quando só auxilia preset) — não vão no OpenAPI.
+        if key in INTERNAL_PARAM_KEYS or key == PERIOD_DAYS_KEY:
             continue
         if key not in schema:
             raise ValueError(message("dataParamUnknown", f"Parâmetro não permitido: {key}"))
