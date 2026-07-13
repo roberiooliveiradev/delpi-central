@@ -4175,6 +4175,45 @@
   min-width: min-content;
 }
 
+/* Aba Tela → Propriedades: campos lado a lado (mais colunas). */
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-ribbon__prop-cols {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-ribbon__prop-cols > .td-deck-icon-field,
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-ribbon__prop-cols > .delpi-ui-range-field {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-ribbon__prop-cols > .td-deck-icon-field {
+  min-width: 132px;
+  max-width: 200px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-ribbon__prop-cols > .td-deck-icon-field--medium {
+  min-width: 148px;
+  max-width: 200px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-ribbon__prop-cols > .td-deck-icon-field--wide {
+  min-width: 200px;
+  max-width: 280px;
+  flex: 1 1 200px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-ribbon__prop-cols > .delpi-ui-range-field {
+  width: 132px;
+  min-width: 120px;
+}
+
 .dashboard-tv-dashboard .td-deck-chrome__panel--compact .td-deck-tabs__grid {
   flex: 0 0 auto;
 }
@@ -5454,6 +5493,15 @@
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px 16px;
   align-items: start;
+}
+
+/* Sobrescreve o grid genérico quando a faixa usa layout em linha. */
+.dashboard-tv-dashboard .td-deck-tabs__grid.td-deck-tabs__grid--icon-fields {
+  display: flex;
+  grid-template-columns: none;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 6px 10px;
 }
 
 .dashboard-tv-dashboard .td-deck-tabs__block {
