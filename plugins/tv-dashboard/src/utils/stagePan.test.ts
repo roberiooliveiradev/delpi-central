@@ -5,7 +5,9 @@ import {
   centerStageScroll,
   resolveStagePanGutterPx,
   stageScrollAfterZoomTowardPoint,
+  stageScrollFromViewAnchor,
   stageScrollPreserveContentUnderViewportCenter,
+  stageViewAnchorFromScroll,
 } from "./stagePan";
 
 describe("applyStagePanScrollDelta", () => {
@@ -106,5 +108,20 @@ describe("stageScrollPreserveContentUnderViewportCenter", () => {
         nextGutter: { x: 250, y: 200 },
       }),
     ).toEqual({ scrollLeft: 80, scrollTop: 40 });
+  });
+});
+
+describe("stageViewAnchor round-trip", () => {
+  it("reconstrói o mesmo scroll a partir da âncora", () => {
+    const scroll = { scrollLeft: 50, scrollTop: 20 };
+    const gutter = { x: 150, y: 100 };
+    const size = { clientWidth: 400, clientHeight: 300 };
+    const anchor = stageViewAnchorFromScroll({ ...scroll, ...size, gutter });
+    expect(stageScrollFromViewAnchor({
+      anchorX: anchor.x,
+      anchorY: anchor.y,
+      ...size,
+      gutter,
+    })).toEqual(scroll);
   });
 });

@@ -34,7 +34,7 @@ describe("stageDisplayPreferences", () => {
     );
   });
 
-  it("persiste e relê preferências de exibição", () => {
+  it("persiste e relê preferências de exibição inclusive âncora do palco", () => {
     writeStageDisplayPreferences({
       stageZoom: 0.7,
       showStageRulers: false,
@@ -42,6 +42,9 @@ describe("stageDisplayPreferences", () => {
       stageGridSizePx: 50,
       showStageGuides: false,
       snapEnabled: false,
+      stageViewAnchorX: 120.5,
+      stageViewAnchorY: -40,
+      stageViewAnchorSaved: true,
     });
 
     expect(readStageDisplayPreferences()).toEqual({
@@ -51,7 +54,22 @@ describe("stageDisplayPreferences", () => {
       stageGridSizePx: 50,
       showStageGuides: false,
       snapEnabled: false,
+      stageViewAnchorX: 120.5,
+      stageViewAnchorY: -40,
+      stageViewAnchorSaved: true,
     });
+  });
+
+  it("prefs antigas sem âncora ficam com stageViewAnchorSaved false", () => {
+    expect(
+      normalizeStageDisplayPreferences({
+        stageZoom: 0.8,
+        showStageRulers: true,
+        showStageGrid: false,
+        showStageGuides: true,
+        snapEnabled: true,
+      }).stageViewAnchorSaved,
+    ).toBe(false);
   });
 
   it("limita zoom e tamanho da grade ao intervalo válido", () => {

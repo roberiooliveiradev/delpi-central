@@ -5,11 +5,15 @@ import {
   writeStageDisplayPreferences,
   type StageDisplayPreferences,
 } from "../../utils/stageDisplayPreferences";
-import { applyCenteredStageScroll } from "../../utils/stagePan";
+import {
+  applyCenteredStageScroll,
+  applyStageViewAnchor,
+  captureStageViewAnchor,
+} from "../../utils/stagePan";
 import { computeFitStageZoom, clampStageZoom } from "../../utils/stageViewport";
 
 /**
- * Estado de UI do palco (zoom, réguas, grade, guias, snap) + fit à viewport.
+ * Estado de UI do palco (zoom, réguas, grade, guias, snap, posição) + fit à viewport.
  * Preferências persistem em localStorage (sobrevivem ao refresh).
  * O ref do canvas de interação é ligado depois via `bindCanvasRef`.
  */
@@ -23,6 +27,9 @@ export function useComunicadoEditorStage() {
   const interactionCanvasRefSlot = useRef<RefObject<HTMLElement | null> | null>(null);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
+  const persistViewTimerRef = useRef<number | null>(null);
+  /** Evita gravar âncora enquanto restauramos/ajustamos programaticamente. */
+  const suppressViewPersistRef = useRef(false);
 
   useEffect(() => {
     snapEnabledRef.current = prefs.snapEnabled;
@@ -36,6 +43,14 @@ export function useComunicadoEditorStage() {
     writeStageDisplayPreferences(prefs);
   }, [prefs]);
 
+  useEffect(() => {
+    return () => {
+      if (persistViewTimerRef.current != null) {
+        window.clearTimeout(persistViewTimerRef.current);
+      }
+    };
+  }, []);
+
   const patchPrefs = useCallback((patch: Partial<StageDisplayPreferences>) => {
     setPrefs((current) => ({ ...current, ...patch }));
   }, []);
@@ -44,13 +59,82 @@ export function useComunicadoEditorStage() {
     interactionCanvasRefSlot.current = ref;
   }, []);
 
+  const persistStageViewPosition = useCallback(
+    (options?: { immediate?: boolean }) => {
+      if (suppressViewPersistRef.current) return;
+      const wrap = canvasWrapRef.current;
+      if (!wrap) return;
+
+      const commit = () => {
+        if (suppressViewPersistRef.current) return;
+        const el = canvasWrapRef.current;
+        if (!el) return;
+        const anchor = captureStageViewAnchor(el);
+        const current = prefsRef.current;
+        if (
+          current.stageViewAnchorSaved &&
+          current.stageViewAnchorX === anchor.x &&
+          current.stageViewAnchorY === anchor.y
+        ) {
+          return;
+        }
+        patchPrefs({
+          stageViewAnchorX: anchor.x,
+          stageViewAnchorY: anchor.y,
+          stageViewAnchorSaved: true,
+        });
+      };
+
+      if (options?.immediate) {
+        if (persistViewTimerRef.current != null) {
+          window.clearTimeout(persistViewTimerRef.current);
+          persistViewTimerRef.current = null;
+        }
+        commit();
+        return;
+      }
+
+      if (persistViewTimerRef.current != null) {
+        window.clearTimeout(persistViewTimerRef.current);
+      }
+      persistViewTimerRef.current = window.setTimeout(() => {
+        persistViewTimerRef.current = null;
+        commit();
+      }, 120);
+    },
+    [patchPrefs],
+  );
+
+  const restoreStageViewPosition = useCallback(() => {
+    const wrap = canvasWrapRef.current;
+    const current = prefsRef.current;
+    if (!wrap || !current.stageViewAnchorSaved) return false;
+    suppressViewPersistRef.current = true;
+    applyStageViewAnchor(wrap, {
+      x: current.stageViewAnchorX,
+      y: current.stageViewAnchorY,
+    });
+    window.requestAnimationFrame(() => {
+      suppressViewPersistRef.current = false;
+    });
+    return true;
+  }, []);
+
   const fitStageToView = useCallback(() => {
     const wrap = canvasWrapRef.current;
     const canvas = interactionCanvasRefSlot.current?.current ?? null;
     if (!wrap || !canvas) return;
+    suppressViewPersistRef.current = true;
     patchPrefs({ stageZoom: computeFitStageZoom(wrap, canvas) });
     window.requestAnimationFrame(() => {
       applyCenteredStageScroll(wrap);
+      const anchor = captureStageViewAnchor(wrap);
+      patchPrefs({
+        stageViewAnchorX: anchor.x,
+        stageViewAnchorY: anchor.y,
+        stageViewAnchorSaved: true,
+      });
+      suppressViewPersistRef.current = false;
     });
   }, [patchPrefs]);
 
@@ -87,8 +171,11 @@ export function useComunicadoEditorStage() {
       patchPrefs({ snapEnabled: next });
     },
     snapEnabledRef,
+    stageViewAnchorSaved: prefs.stageViewAnchorSaved,
     canvasWrapRef,
     fitStageToView,
+    restoreStageViewPosition,
+    persistStageViewPosition,
     bindCanvasRef,
     stagePanMode,
     setStagePanMode: (enabled: boolean) => {

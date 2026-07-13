@@ -86,6 +86,67 @@ export function applyCenteredStageScroll(wrap: HTMLElement | null | undefined): 
  * Âncora = offset do centro da viewport relativo à borda esquerda/topo do slide
  * (scroll + client/2 − gutter). Após o layout: scroll' = âncora + gutter' − client'/2.
  */
+export function stageViewAnchorFromScroll(args: {
+  scrollLeft: number;
+  scrollTop: number;
+  clientWidth: number;
+  clientHeight: number;
+  gutter: { x: number; y: number };
+}): { x: number; y: number } {
+  return {
+    x: args.scrollLeft + args.clientWidth / 2 - args.gutter.x,
+    y: args.scrollTop + args.clientHeight / 2 - args.gutter.y,
+  };
+}
+
+export function stageScrollFromViewAnchor(args: {
+  anchorX: number;
+  anchorY: number;
+  clientWidth: number;
+  clientHeight: number;
+  gutter: { x: number; y: number };
+}): StageScrollPoint {
+  return {
+    scrollLeft: args.anchorX + args.gutter.x - args.clientWidth / 2,
+    scrollTop: args.anchorY + args.gutter.y - args.clientHeight / 2,
+  };
+}
+
+/** Lê âncora + gutter a partir do wrap (client size atual). */
+export function captureStageViewAnchor(wrap: {
+  scrollLeft: number;
+  scrollTop: number;
+  clientWidth: number;
+  clientHeight: number;
+}): { x: number; y: number } {
+  const gutter = resolveStagePanGutterPx(wrap.clientWidth, wrap.clientHeight);
+  return stageViewAnchorFromScroll({
+    scrollLeft: wrap.scrollLeft,
+    scrollTop: wrap.scrollTop,
+    clientWidth: wrap.clientWidth,
+    clientHeight: wrap.clientHeight,
+    gutter,
+  });
+}
+
+/** Aplica âncora persistida no wrap (após zoom/layout). */
+export function applyStageViewAnchor(
+  wrap: HTMLElement | null | undefined,
+  anchor: { x: number; y: number },
+): void {
+  if (!wrap) return;
+  const gutter = resolveStagePanGutterPx(wrap.clientWidth, wrap.clientHeight);
+  const next = stageScrollFromViewAnchor({
+    anchorX: anchor.x,
+    anchorY: anchor.y,
+    clientWidth: wrap.clientWidth,
+    clientHeight: wrap.clientHeight,
+    gutter,
+  });
+  wrap.scrollLeft = next.scrollLeft;
+  wrap.scrollTop = next.scrollTop;
+}
+
 export function stageScrollPreserveContentUnderViewportCenter(args: {
   scrollLeft: number;
   scrollTop: number;
@@ -96,12 +157,18 @@ export function stageScrollPreserveContentUnderViewportCenter(args: {
   nextClientHeight: number;
   nextGutter: { x: number; y: number };
 }): StageScrollPoint {
-  const anchorX =
-    args.scrollLeft + args.prevClientWidth / 2 - args.prevGutter.x;
-  const anchorY =
-    args.scrollTop + args.prevClientHeight / 2 - args.prevGutter.y;
-  return {
-    scrollLeft: anchorX + args.nextGutter.x - args.nextClientWidth / 2,
-    scrollTop: anchorY + args.nextGutter.y - args.nextClientHeight / 2,
-  };
+  const anchor = stageViewAnchorFromScroll({
+    scrollLeft: args.scrollLeft,
+    scrollTop: args.scrollTop,
+    clientWidth: args.prevClientWidth,
+    clientHeight: args.prevClientHeight,
+    gutter: args.prevGutter,
+  });
+  return stageScrollFromViewAnchor({
+    anchorX: anchor.x,
+    anchorY: anchor.y,
+    clientWidth: args.nextClientWidth,
+    clientHeight: args.nextClientHeight,
+    gutter: args.nextGutter,
+  });
 }

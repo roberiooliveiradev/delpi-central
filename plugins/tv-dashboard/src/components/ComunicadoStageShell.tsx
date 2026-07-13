@@ -276,6 +276,7 @@ export function ComunicadoStageShell({ children }: Props) {
     canvasRef,
     stagePanMode,
     setStagePanMode,
+    persistStageViewPosition,
   } = useComunicadoEditor();
   const [metrics, setMetrics] = useState<StageMetrics>(EMPTY_METRICS);
   const [ctrlPanHeld, setCtrlPanHeld] = useState(false);
@@ -318,7 +319,8 @@ export function ComunicadoStageShell({ children }: Props) {
     wrap.scrollLeft = scroll.scrollLeft;
     wrap.scrollTop = scroll.scrollTop;
     refreshMetrics();
-  }, [canvasWrapRef, refreshMetrics, stageZoom]);
+    persistStageViewPosition({ immediate: true });
+  }, [canvasWrapRef, persistStageViewPosition, refreshMetrics, stageZoom]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -379,7 +381,8 @@ export function ComunicadoStageShell({ children }: Props) {
 
   const handleScroll = useCallback(() => {
     refreshMetrics();
-  }, [refreshMetrics]);
+    persistStageViewPosition();
+  }, [persistStageViewPosition, refreshMetrics]);
 
   const handlePanPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -427,8 +430,9 @@ export function ComunicadoStageShell({ children }: Props) {
         wrap.releasePointerCapture(event.pointerId);
       }
       wrap.classList.remove("td-composer__canvas-wrap--panning");
+      persistStageViewPosition({ immediate: true });
     },
-    [canvasWrapRef],
+    [canvasWrapRef, persistStageViewPosition],
   );
 
   const shellStyle = {

@@ -217,6 +217,8 @@ export type ComunicadoEditorContextValue = {
   stageZoom: number;
   setStageZoom: (zoom: number) => void;
   fitStageToView: () => void;
+  restoreStageViewPosition: () => boolean;
+  persistStageViewPosition: (options?: { immediate?: boolean }) => void;
   canvasWrapRef: RefObject<HTMLDivElement | null>;
   showStageRulers: boolean;
   setShowStageRulers: (show: boolean) => void;

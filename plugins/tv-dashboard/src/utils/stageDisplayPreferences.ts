@@ -17,6 +17,13 @@ export type StageDisplayPreferences = {
   stageGridSizePx: number;
   showStageGuides: boolean;
   snapEnabled: boolean;
+  /**
+   * Ponto do slide sob o centro da viewport (coords de scroll − gutter).
+   * Só restaura no load quando `stageViewAnchorSaved` é true.
+   */
+  stageViewAnchorX: number;
+  stageViewAnchorY: number;
+  stageViewAnchorSaved: boolean;
 };
 
 export const DEFAULT_STAGE_DISPLAY_PREFERENCES: StageDisplayPreferences = {
@@ -26,16 +33,34 @@ export const DEFAULT_STAGE_DISPLAY_PREFERENCES: StageDisplayPreferences = {
   stageGridSizePx: STAGE_GRID_SIZE_DEFAULT_PX,
   showStageGuides: true,
   snapEnabled: true,
+  stageViewAnchorX: 0,
+  stageViewAnchorY: 0,
+  stageViewAnchorSaved: false,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value);
 }
 
+function readFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 export function normalizeStageDisplayPreferences(
   raw: unknown,
 ): StageDisplayPreferences {
   if (!isRecord(raw)) return { ...DEFAULT_STAGE_DISPLAY_PREFERENCES };
+
+  const anchorX = readFiniteNumber(raw.stageViewAnchorX);
+  const anchorY = readFiniteNumber(raw.stageViewAnchorY);
+  const anchorSavedFlag =
+    typeof raw.stageViewAnchorSaved === "boolean" ? raw.stageViewAnchorSaved : null;
+  const stageViewAnchorSaved =
+    anchorSavedFlag === true
+      ? true
+      : anchorSavedFlag === false
+        ? false
+        : anchorX != null && anchorY != null;
 
   return {
     stageZoom:
@@ -62,10 +87,13 @@ export function normalizeStageDisplayPreferences(
       typeof raw.snapEnabled === "boolean"
         ? raw.snapEnabled
         : DEFAULT_STAGE_DISPLAY_PREFERENCES.snapEnabled,
+    stageViewAnchorX: anchorX ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageViewAnchorX,
+    stageViewAnchorY: anchorY ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageViewAnchorY,
+    stageViewAnchorSaved,
   };
 }
 
-/** Preferências de Exibir (zoom, réguas, grade, guias, encaixe) — sobrevivem ao refresh. */
+/** Preferências de Exibir (zoom, réguas, grade, guias, encaixe, posição) — sobrevivem ao refresh. */
 export function readStageDisplayPreferences(): StageDisplayPreferences {
   if (typeof window === "undefined") return { ...DEFAULT_STAGE_DISPLAY_PREFERENCES };
 

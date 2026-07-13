@@ -116,6 +116,8 @@ export function ComunicadoComposerCanvas() {
     viewportProfile,
     stageZoom,
     fitStageToView,
+    restoreStageViewPosition,
+    persistStageViewPosition,
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
   useAuthenticatedComunicadoCustomFonts(config.customFonts);
@@ -204,13 +206,36 @@ export function ComunicadoComposerCanvas() {
     pendingStageScrollRef.current = null;
     wrap.scrollLeft = pending.scrollLeft;
     wrap.scrollTop = pending.scrollTop;
-  }, [panGutter.x, panGutter.y]);
+    persistStageViewPosition({ immediate: true });
+  }, [panGutter.x, panGutter.y, persistStageViewPosition]);
 
-  // Fit automático só quando o formato do slide muda — não em aba/seleção/inspetor.
+  // Mount: restaura posição do localStorage (ou fit na 1ª visita).
+  // Depois: fit só se o formato do slide mudar — não em aba/seleção/refresh.
+  const designKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    const timer = window.setTimeout(() => fitStageToView(), 0);
+    const key = `${viewportProfile}:${designSize.width}x${designSize.height}`;
+    const prev = designKeyRef.current;
+    designKeyRef.current = key;
+
+    const timer = window.setTimeout(() => {
+      if (prev === null) {
+        if (!restoreStageViewPosition()) {
+          fitStageToView();
+        }
+        return;
+      }
+      if (prev !== key) {
+        fitStageToView();
+      }
+    }, 0);
     return () => window.clearTimeout(timer);
-  }, [designSize.width, designSize.height, fitStageToView, viewportProfile]);
+  }, [
+    designSize.width,
+    designSize.height,
+    fitStageToView,
+    restoreStageViewPosition,
+    viewportProfile,
+  ]);
 
   const clientToCanvasPercent = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
