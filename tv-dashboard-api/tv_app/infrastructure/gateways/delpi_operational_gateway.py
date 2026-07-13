@@ -8,12 +8,10 @@ from delpi_auth.service_token import internal_service_authorization
 
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.tv_dashboard_content_service import message
-
-
-def _date_range(period_days: int) -> tuple[str, str]:
-    end = date.today()
-    start = end - timedelta(days=max(int(period_days or 1), 1))
-    return start.isoformat(), end.isoformat()
+from tv_app.application.services.tv_date_range_preset_service import (
+    PERIOD_DAYS_KEY,
+    apply_date_range_preset,
+)
 
 
 def _build_query_params(
@@ -21,7 +19,8 @@ def _build_query_params(
     params: Mapping[str, Any],
 ) -> dict[str, str]:
     strategy = str(route.get("paramStrategy") or "direct")
-    merged = dict(params)
+    schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
+    merged = apply_date_range_preset(dict(params), schema_keys=schema)
     query: dict[str, str] = {}
 
     fixed = route.get("fixedQueryParams")
@@ -31,16 +30,24 @@ def _build_query_params(
                 query[str(key)] = str(value)
 
     if strategy == "date_range":
-        period_days = int(merged.get("periodDays") or route.get("defaultParams", {}).get("periodDays") or 7)
-        start, end = _date_range(period_days)
-        query["start_date"] = start
-        query["end_date"] = end
+        start = merged.get("start_date")
+        end = merged.get("end_date")
+        if not start or not end:
+            period_days = int(
+                merged.get(PERIOD_DAYS_KEY)
+                or route.get("defaultParams", {}).get(PERIOD_DAYS_KEY)
+                or 7
+            )
+            end_d = date.today()
+            start_d = end_d - timedelta(days=max(period_days, 1) - 1)
+            start, end = start_d.isoformat(), end_d.isoformat()
+        query["start_date"] = str(start)
+        query["end_date"] = str(end)
         branch = merged.get("branch")
         if branch:
             query["branch"] = str(branch).strip()
-        # Repassa filtros extras da rota (ex.: customer_segment) além do período/filial.
         for key, value in merged.items():
-            if key in {"periodDays", "start_date", "end_date", "branch"}:
+            if key in {PERIOD_DAYS_KEY, "start_date", "end_date", "branch", "date_start", "date_end"}:
                 continue
             if value is None or value == "":
                 continue
@@ -48,7 +55,7 @@ def _build_query_params(
         return query
 
     for key, value in merged.items():
-        if key == "periodDays":
+        if key == PERIOD_DAYS_KEY and key not in schema:
             continue
         if value is None or value == "":
             continue

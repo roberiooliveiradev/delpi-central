@@ -1,4 +1,5 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { useEffect } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import {
   ENUM_OPTION_LABELS,
@@ -6,6 +7,15 @@ import {
   resolveParamFieldHint,
   resolveParamFieldLabel,
 } from "../content/dataParamCatalog";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  DATE_RANGE_PRESET_OPTIONS,
+  DATE_RANGE_PRESET_PARAM,
+  PERIOD_DAYS_PARAM,
+  findDateRangeKeys,
+  isDateRangePairKey,
+  type DateRangePresetId,
+} from "../utils/dateRangePresets";
 import { BranchField } from "./BranchField";
 import { DeckField } from "./deck/DeckField";
 
@@ -59,7 +69,7 @@ export function resolveParamSelectOptions(
   field: DataParamSchemaField,
 ): Array<{ value: string; label: string }> | null {
   // Período em dias: sempre input numérico (qualquer valor positivo).
-  if (key === "periodDays") return null;
+  if (key === PERIOD_DAYS_PARAM) return null;
 
   const rawEnum = Array.isArray(field.enum)
     ? field.enum.filter((item) => item !== null && item !== undefined)
@@ -128,8 +138,69 @@ export function DataParamFields({
   const compact = layout === "ribbon";
   const selectClass = compact ? "delpi-ui-select--compact" : undefined;
   const nativeClass = compact ? "delpi-ui-native-control--compact" : undefined;
+  const datePair = findDateRangeKeys(Object.keys(schema));
+  const presetRaw = String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim();
+  const preset = (presetRaw || (datePair ? "this_month" : "")) as DateRangePresetId | "";
+  const isCustom = !datePair || preset === "custom";
+  const showLastN = Boolean(datePair) && preset === "last_n_days";
+
+  useEffect(() => {
+    if (!datePair) return;
+    if (String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim()) return;
+    onChange(DATE_RANGE_PRESET_PARAM, "this_month");
+    // Hidrata preset padrão quando a rota tem intervalo de datas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com onChange/values
+  }, [datePair?.startKey, datePair?.endKey]);
+
+  const rangeFields =
+    datePair == null
+      ? null
+      : [
+          <DeckField
+            key={DATE_RANGE_PRESET_PARAM}
+            id={`${idPrefix}-date-range-preset`}
+            label="Período"
+            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePreset}
+          >
+            <FormSelectControl
+              id={`${idPrefix}-date-range-preset`}
+              className={selectClass}
+              ariaLabel="Período relativo"
+              value={preset || "this_month"}
+              onChange={(value: string) => onChange(DATE_RANGE_PRESET_PARAM, value)}
+              options={DATE_RANGE_PRESET_OPTIONS}
+            />
+          </DeckField>,
+          showLastN ? (
+            <DeckField
+              key={PERIOD_DAYS_PARAM}
+              id={`${idPrefix}-period-days`}
+              label="Últimos N dias"
+              hint={TV_DASHBOARD_HELP_TOOLTIPS.data.lastNDays}
+            >
+              <NativeTextControl
+                id={`${idPrefix}-period-days`}
+                type="number"
+                className={nativeClass}
+                min={1}
+                max={366}
+                placeholder="Ex.: 15"
+                value={
+                  values?.[PERIOD_DAYS_PARAM] === undefined || values?.[PERIOD_DAYS_PARAM] === null
+                    ? "7"
+                    : String(values[PERIOD_DAYS_PARAM])
+                }
+                onChange={(value: string) => onChange(PERIOD_DAYS_PARAM, value)}
+              />
+            </DeckField>
+          ) : null,
+        ];
 
   const fields = entries.map(([key, field]) => {
+    if (isDateRangePairKey(key, datePair) && !isCustom) {
+      return null;
+    }
+
     const inherited = inheritedKeys.has(key);
     const current = values?.[key];
     const labelBase = resolveParamFieldLabel(key, field.label);
@@ -211,11 +282,13 @@ export function DataParamFields({
     );
   });
 
+  const allFields = [...(rangeFields ?? []), ...fields].filter(Boolean);
+
   if (layout === "ribbon") {
-    return <div className="td-deck-ribbon__field-grid">{fields}</div>;
+    return <div className="td-deck-ribbon__field-grid">{allFields}</div>;
   }
 
-  return <>{fields}</>;
+  return <>{allFields}</>;
 }
 
 export function visibleParamSchema(

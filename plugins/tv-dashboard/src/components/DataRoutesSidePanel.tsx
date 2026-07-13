@@ -14,6 +14,11 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import {
+  DATE_RANGE_PRESET_PARAM,
+  defaultDateRangePreset,
+  findDateRangeKeys,
+} from "../utils/dateRangePresets";
 
 const CATEGORY_ORDER = [
   "production",
@@ -96,7 +101,12 @@ export function DataRoutesSidePanel({
           return def !== undefined ? [key, def] : null;
         })
         .filter(Boolean) as Array<[string, string | number]>,
-    );
+    ) as ComunicadoDataBinding["params"];
+    const pair = findDateRangeKeys(Object.keys(route.paramSchema ?? {}));
+    const preset = defaultDateRangePreset(pair);
+    if (preset) {
+      defaults[DATE_RANGE_PRESET_PARAM] = preset;
+    }
     setParams(defaults);
     setRefreshSec("");
   }

@@ -193,6 +193,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   data: {
     catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",
     sourceConfig: "Parâmetros da consulta e intervalo de atualização da fonte de dados.",
+    dateRangePreset:
+      "Período relativo recalculado a cada atualização da TV (este mês, esta semana, últimos N dias). Use Personalizado só para datas fixas.",
+    lastNDays: "Quantidade de dias corridos até hoje (inclusivo). Ex.: 15 = de 15 dias atrás até hoje.",
     paramGranularity:
       "Como agrupar os pontos da série no tempo: dia, semana, mês ou ano. Em algumas rotas o valor já vem fixo (ex.: dia).",
     paramPeriodDays:
