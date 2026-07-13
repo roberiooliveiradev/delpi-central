@@ -1,20 +1,13 @@
 import { useRef, useState } from "react";
 import {
   BarChart3,
-  ChevronRight,
   Database,
   Grid3x3,
-  Heading,
-  ListOrdered,
-  Plus,
+  LayoutTemplate,
   Replace,
-  Table2,
-  Tags,
-  Type,
 } from "lucide-react";
 import {
   AnchoredPanelPortal,
-  ChartTypeCatalogPanel,
   type DelpiChartType,
 } from "@delpi/plugin-ui/index";
 import {
@@ -29,8 +22,15 @@ import {
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
+import { CHART_ADD_ELEMENT_ITEMS } from "../content/chartAddElementItems";
+import {
+  CHART_QUICK_LAYOUTS,
+  applyChartQuickLayout,
+} from "../content/chartQuickLayouts";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import { ChartAddElementMenu } from "./ChartAddElementMenu";
+import { ChartChangeTypeDialog } from "./ChartChangeTypeDialog";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { FormatRibbonOrganizeSection, FormatRibbonFrameSection, FormatRibbonTypographySections } from "./formatRibbon";
 import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
@@ -40,22 +40,8 @@ import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
-const ADD_ELEMENT_ITEMS: Array<{
-  id: ChartElementId;
-  icon: typeof Heading;
-  label: string;
-}> = [
-  { id: "chartTitle", icon: Heading, label: "Título do gráfico" },
-  { id: "axisTitles", icon: Type, label: "Títulos dos eixos" },
-  { id: "legend", icon: ListOrdered, label: "Legenda" },
-  { id: "dataLabels", icon: Tags, label: "Rótulos de dados" },
-  { id: "dataTable", icon: Table2, label: "Tabela de dados" },
-  { id: "axes", icon: BarChart3, label: "Eixos" },
-  { id: "gridlines", icon: Grid3x3, label: "Linhas de grade" },
-];
-
 /**
- * Faixa Elemento para gráfico — Layout (adicionar elemento) + tipo + rótulos.
+ * Faixa Elemento para gráfico — Layout Rápido, Adicionar elemento, Alterar tipo.
  */
 export function ComunicadoChartRibbon() {
   const {
@@ -65,12 +51,13 @@ export function ComunicadoChartRibbon() {
     selectChartPart,
     openDataPanel,
   } = useComunicadoEditor();
-  const chartTypeAnchorRef = useRef<HTMLDivElement>(null);
-  const chartTypePanelRef = useRef<HTMLDivElement>(null);
   const addElementAnchorRef = useRef<HTMLDivElement>(null);
   const addElementPanelRef = useRef<HTMLDivElement>(null);
-  const [chartTypeMenuOpen, setChartTypeMenuOpen] = useState(false);
+  const layoutAnchorRef = useRef<HTMLDivElement>(null);
+  const layoutPanelRef = useRef<HTMLDivElement>(null);
   const [addElementOpen, setAddElementOpen] = useState(false);
+  const [layoutOpen, setLayoutOpen] = useState(false);
+  const [changeTypeOpen, setChangeTypeOpen] = useState(false);
 
   if (!selected || selected.type !== "chart_view") {
     return (
@@ -100,61 +87,97 @@ export function ComunicadoChartRibbon() {
     }
   };
 
+  const applyLayout = (layoutId: string) => {
+    const layout = CHART_QUICK_LAYOUTS.find((item) => item.id === layoutId);
+    if (!layout) return;
+    const result = applyChartQuickLayout(layout, options, block.chartParts);
+    updateSelected({
+      chartOptions: result.options,
+      chartParts: result.parts,
+    } as Partial<ComunicadoBlock>);
+    setLayoutOpen(false);
+  };
+
   const setChartType = (chartType: DelpiChartType) => {
     updateSelected({ chartType: chartType as ComunicadoChartType } as Partial<ComunicadoBlock>);
-    setChartTypeMenuOpen(false);
+    setChangeTypeOpen(false);
   };
 
   return (
     <div className="td-deck-ribbon__groups">
       <FormatRibbonTypographySections />
 
-      <DeckRibbonGroup label="Layout do gráfico" hint={H.chartLabels}>
-        <div ref={addElementAnchorRef} className="td-composer__dropdown">
-          <DeckRibbonLargeButton
-            icon={Plus}
-            label={"Adicionar\nelemento"}
-            hint="Inclui ou remove elementos do gráfico (título, legenda, eixos…)."
-            onClick={() => setAddElementOpen((open) => !open)}
-          />
-          {addElementOpen ? (
-            <AnchoredPanelPortal
-              open={addElementOpen}
-              anchorRef={addElementAnchorRef}
-              panelRef={addElementPanelRef}
-              variant="bare"
-              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-              className="td-chart-add-element-portal"
-              role="menu"
-              aria-label="Adicionar elemento de gráfico"
-            >
-              <div ref={addElementPanelRef}>
-                <ul className="td-deck-ribbon__cascade-menu">
-                  {ADD_ELEMENT_ITEMS.map((item) => {
-                    const enabled = isChartElementEnabled(item.id, options);
-                    const Icon = item.icon;
-                    return (
-                      <li key={item.id}>
-                        <button
-                          type="button"
-                          role="menuitemcheckbox"
-                          aria-checked={enabled}
-                          className="td-deck-ribbon__cascade-item"
-                          onClick={() => {
-                            toggleElement(item.id, !enabled);
-                          }}
-                        >
-                          <Icon size={16} aria-hidden="true" />
-                          <span>{item.label}</span>
-                          {enabled ? <ChevronRight size={14} aria-hidden="true" /> : null}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </AnchoredPanelPortal>
-          ) : null}
+      <DeckRibbonGroup label="Layout do gráfico" hint={H.chartLabels} wide>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <div ref={addElementAnchorRef} className="td-composer__dropdown">
+            <DeckRibbonLargeButton
+              icon={LayoutTemplate}
+              label={"Adicionar\nelemento"}
+              hint="Inclui ou remove elementos do gráfico (título, legenda, eixos…)."
+              onClick={() => {
+                setAddElementOpen((open) => !open);
+                setLayoutOpen(false);
+              }}
+            />
+            {addElementOpen ? (
+              <AnchoredPanelPortal
+                open={addElementOpen}
+                anchorRef={addElementAnchorRef}
+                panelRef={addElementPanelRef}
+                variant="bare"
+                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+                className="td-chart-add-element-portal"
+                role="menu"
+                aria-label="Adicionar elemento de gráfico"
+              >
+                <div ref={addElementPanelRef}>
+                  <ChartAddElementMenu options={options} onToggle={toggleElement} />
+                </div>
+              </AnchoredPanelPortal>
+            ) : null}
+          </div>
+
+          <div ref={layoutAnchorRef} className="td-composer__dropdown">
+            <DeckRibbonLargeButton
+              icon={Grid3x3}
+              label={"Layout\nrápido"}
+              hint="Aplica um conjunto de visibilidade de título, legenda, eixos e tabela."
+              onClick={() => {
+                setLayoutOpen((open) => !open);
+                setAddElementOpen(false);
+              }}
+            />
+            {layoutOpen ? (
+              <AnchoredPanelPortal
+                open={layoutOpen}
+                anchorRef={layoutAnchorRef}
+                panelRef={layoutPanelRef}
+                variant="bare"
+                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+                className="td-chart-quick-layout-portal"
+                role="menu"
+                aria-label="Layout rápido"
+              >
+                <div ref={layoutPanelRef} className="td-chart-quick-layout">
+                  {CHART_QUICK_LAYOUTS.map((layout) => (
+                    <button
+                      key={layout.id}
+                      type="button"
+                      className="td-chart-quick-layout__item"
+                      title={layout.hint}
+                      onClick={() => applyLayout(layout.id)}
+                    >
+                      <span
+                        className={`td-chart-quick-layout__wire td-chart-quick-layout__wire--${layout.id}`}
+                        aria-hidden="true"
+                      />
+                      <span className="td-chart-quick-layout__label">{layout.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </AnchoredPanelPortal>
+            ) : null}
+          </div>
         </div>
       </DeckRibbonGroup>
 
@@ -170,33 +193,17 @@ export function ComunicadoChartRibbon() {
       </DeckRibbonGroup>
 
       <DeckRibbonGroup label="Tipo" hint={H.chartType}>
-        <div ref={chartTypeAnchorRef} className="td-composer__dropdown">
-          <DeckRibbonLargeButton
-            icon={Replace}
-            label={"Alterar tipo\nde gráfico"}
-            hint="Abre o mesmo catálogo de tipos usado em Inserir → Gráficos."
-            onClick={() => setChartTypeMenuOpen((open) => !open)}
-          />
-          {chartTypeMenuOpen ? (
-            <AnchoredPanelPortal
-              open={chartTypeMenuOpen}
-              anchorRef={chartTypeAnchorRef}
-              panelRef={chartTypePanelRef}
-              variant="bare"
-              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-              className="td-chart-catalog-portal"
-              role="dialog"
-              aria-label="Alterar tipo de gráfico"
-            >
-              <ChartTypeCatalogPanel title="Alterar tipo de gráfico" onSelect={setChartType} />
-            </AnchoredPanelPortal>
-          ) : null}
-        </div>
+        <DeckRibbonLargeButton
+          icon={Replace}
+          label={"Alterar tipo\nde gráfico"}
+          hint="Abre o diálogo com o mesmo catálogo de tipos de Inserir → Gráficos."
+          onClick={() => setChangeTypeOpen(true)}
+        />
       </DeckRibbonGroup>
 
       <DeckRibbonGroup label="Rótulos" hint={H.chartLabels}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          {ADD_ELEMENT_ITEMS.filter((item) =>
+          {CHART_ADD_ELEMENT_ITEMS.filter((item) =>
             ["chartTitle", "axisTitles", "legend", "dataLabels", "dataTable"].includes(item.id),
           ).map((item) => (
             <DeckRibbonTile
@@ -244,6 +251,13 @@ export function ComunicadoChartRibbon() {
           parte.
         </p>
       ) : null}
+
+      <ChartChangeTypeDialog
+        open={changeTypeOpen}
+        currentType={block.chartType as DelpiChartType}
+        onClose={() => setChangeTypeOpen(false)}
+        onConfirm={setChartType}
+      />
     </div>
   );
 }

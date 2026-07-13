@@ -33,6 +33,7 @@ import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
+import { ChartSelectionFloatToolbar } from "./ChartSelectionFloatToolbar";
 import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
@@ -592,6 +593,11 @@ export function ComunicadoComposerCanvas() {
                         })
                       : null}
                   </div>
+                ) : null}
+                {isPrimary &&
+                block.type === "chart_view" &&
+                selectedIds.length === 1 ? (
+                  <ChartSelectionFloatToolbar block={block} />
                 ) : null}
               </div>
             );

@@ -1,5 +1,15 @@
-import { ArrowDown, ArrowUp, FolderOpen, Trash2, Upload } from "lucide-react";
-import { FormSelectControl, HintAction, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { ArrowDown, ArrowUp, FolderOpen, Move, PaintBucket, Pentagon, Trash2, Upload } from "lucide-react";
+import {
+  FormSelectControl,
+  HintAction,
+  NativeCheckboxControl,
+  NativeTextControl,
+  ShapeFillMenu,
+  ShapeOutlineMenu,
+  ShapeShadowMenu,
+  DECK_COLOR_BORDER,
+  DECK_COLOR_SURFACE,
+} from "@delpi/plugin-ui/index";
 import {
   BLOCK_ENTRANCE_DELAY_MAX_MS,
   BLOCK_ENTRANCE_DELAY_MIN_MS,
@@ -44,8 +54,21 @@ import { DeckActionRow } from "./DeckActionRow";
 import { DeckField } from "./DeckField";
 import { DeckInspectorLayout } from "./DeckInspectorLayout";
 import { DeckPropertySection } from "./DeckPropertySection";
+import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
+
+const SHAPE_PANE_ICONS = [
+  { id: "fill-line", label: "Preenchimento e linha", Icon: PaintBucket },
+  { id: "effects", label: "Efeitos", Icon: Pentagon },
+  { id: "size", label: "Tamanho e posição", Icon: Move },
+] as const;
+
+const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
+  id: preset.key,
+  label: preset.label,
+  value: preset.value,
+}));
 
 const FRAME_KEYS = ["x", "y", "w", "h"] as const;
 const FRAME_LABELS: Record<(typeof FRAME_KEYS)[number], string> = {
@@ -94,11 +117,18 @@ export function ComunicadoElementInspector({
   const isDataBlock = selected ? isDataBlockType(selected.type) || isDataSourceBlockType(selected.type) : false;
   const isViewBlock = selected ? isDataViewBlockType(selected.type) : false;
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
+  const [shapePaneIcon, setShapePaneIcon] = useState<(typeof SHAPE_PANE_ICONS)[number]["id"]>("fill-line");
 
   useEffect(() => {
     if (!isDataBlock) return;
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
   }, [isDataBlock]);
+
+  useEffect(() => {
+    if (!isShapeBlock) return;
+    const el = document.getElementById(`td-shape-pane-${shapePaneIcon}`);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [shapePaneIcon, isShapeBlock]);
 
   const selectedRoute = useMemo(() => {
     if (!isDataBlock || !selected || !("dataBinding" in selected)) return null;
@@ -121,6 +151,30 @@ export function ComunicadoElementInspector({
 
   return (
     <DeckInspectorLayout variant={placement}>
+      {!multiSelect && isShapeBlock ? (
+        <div className="td-format-pane-icons" role="tablist" aria-label="Opções de forma">
+          {SHAPE_PANE_ICONS.map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={shapePaneIcon === id}
+              aria-label={label}
+              title={label}
+              className={[
+                "td-format-pane-icons__btn",
+                shapePaneIcon === id ? "td-format-pane-icons__btn--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => setShapePaneIcon(id)}
+            >
+              <Icon size={16} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <DeckPropertySection
         pane={pane}
         title={labels.comunicadoBlocks ?? "Elemento selecionado"}
@@ -143,16 +197,6 @@ export function ComunicadoElementInspector({
                 type="text"
                 value={selected.content ?? ""}
                 onChange={(value) => updateSelected({ content: value } as Partial<ComunicadoBlock>)}
-              />
-            </DeckField>
-            <DeckField id="td-shape-stroke-width" label="Espessura do contorno" hint={E.strokeWidth}>
-              <NativeTextControl
-                id="td-shape-stroke-width"
-                type="number"
-                min={0}
-                max={20}
-                value={selected.style?.strokeWidth ?? 2}
-                onChange={(value) => updateSelectedStyle({ strokeWidth: Number(value) })}
               />
             </DeckField>
           </>
@@ -350,7 +394,43 @@ export function ComunicadoElementInspector({
         </DeckPropertySection>
       ) : null}
 
+      {!multiSelect && isShapeBlock ? (
+        <>
+          <div id="td-shape-pane-fill-line">
+            <DeckPropertySection pane={pane} title="Preenchimento e linha" defaultOpen>
+              <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+                <ShapeFillMenu
+                  value={selected.style?.fill ?? DECK_COLOR_SURFACE}
+                  onChange={(color) => updateSelectedStyle({ fill: color })}
+                  onNoFill={() => updateSelectedStyle({ fill: "transparent" })}
+                />
+                <ShapeOutlineMenu
+                  color={selected.style?.stroke ?? DECK_COLOR_BORDER}
+                  strokeWidth={selected.style?.strokeWidth ?? 2}
+                  minWidth={0}
+                  maxWidth={20}
+                  onColorChange={(color) => updateSelectedStyle({ stroke: color })}
+                  onNoOutline={() => updateSelectedStyle({ stroke: "transparent", strokeWidth: 0 })}
+                  onStrokeWidthChange={(width) => updateSelectedStyle({ strokeWidth: width })}
+                />
+              </div>
+            </DeckPropertySection>
+          </div>
+          <div id="td-shape-pane-effects">
+            <DeckPropertySection pane={pane} title="Efeitos" defaultOpen={false}>
+              <ShapeShadowMenu
+                value={selected.style?.boxShadow}
+                presets={SHADOW_MENU_PRESETS}
+                shadowLabel="Sombra"
+                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+              />
+            </DeckPropertySection>
+          </div>
+        </>
+      ) : null}
+
       {!multiSelect && !selectedKpiPart && !selectedChartPart ? (
+        <div id={isShapeBlock ? "td-shape-pane-size" : undefined}>
         <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position} defaultOpen={false}>
           {(() => {
             const pointOnly =
@@ -412,6 +492,7 @@ export function ComunicadoElementInspector({
             );
           })()}
         </DeckPropertySection>
+        </div>
       ) : null}
 
       <DeckPropertySection pane={pane} title="Ações" hint={E.layerUp} defaultOpen={false}>
