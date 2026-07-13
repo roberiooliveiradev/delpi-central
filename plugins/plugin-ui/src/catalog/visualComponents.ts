@@ -190,6 +190,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("shape", "ShapeEffectsMenu"),
   vc("shape", "ShapeShadowMenu"),
   vc("shape", "ShapeStyleMenu"),
+  vc("shape", "ShapeStyleRibbonStrip"),
   vc("shape", "ShapeStyleGallery"),
   vc("shape", "ColorDialog"),
   vc("shape", "ColorPickerPopover"),

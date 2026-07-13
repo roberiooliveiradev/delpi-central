@@ -23,6 +23,7 @@ const DEFAULT_THEME_PRESETS: ShapeStylePreset[] = [
   { id: "theme-4", fill: "#f2a100", stroke: "#44546a", strokeWidth: 2 },
   { id: "theme-5", fill: "#2e7d32", stroke: "#ffffff", strokeWidth: 1 },
   { id: "theme-6", fill: "transparent", stroke: "#089bdb", strokeWidth: 3 },
+  { id: "theme-7", fill: "#7e14ff", stroke: "#ffffff", strokeWidth: 1 },
 ];
 
 const DEFAULT_QUICK_PRESETS: ShapeStylePreset[] = [
@@ -36,7 +37,10 @@ const DEFAULT_QUICK_PRESETS: ShapeStylePreset[] = [
   { id: "quick-2", fill: "#089bdb", stroke: "transparent", strokeWidth: 0 },
   { id: "quick-3", fill: "transparent", stroke: "#7e14ff", strokeWidth: 2 },
   { id: "quick-4", fill: "#44546a", stroke: "#ffffff", strokeWidth: 1 },
+  { id: "quick-5", fill: "#0f766e", stroke: "#ffffff", strokeWidth: 1 },
 ];
+
+export { DEFAULT_THEME_PRESETS as SHAPE_THEME_STYLE_PRESETS, DEFAULT_QUICK_PRESETS as SHAPE_QUICK_STYLE_PRESETS };
 
 export function ShapeStyleGallery({
   themePresets = DEFAULT_THEME_PRESETS,
@@ -72,9 +76,80 @@ export function ShapeStyleGallery({
   );
 }
 
-export type ShapeStyleMenuProps = ShapeStyleGalleryProps;
+export type ShapeStyleMenuProps = ShapeStyleGalleryProps & {
+  /** Rótulo do botão (default: Estilo). Na faixa horizontal usa «Mais». */
+  triggerLabel?: string;
+};
 
-export function ShapeStyleMenu(props: ShapeStyleMenuProps) {
+/** Faixa horizontal na ribbon (thumbs Abc + Mais → galeria completa). */
+export function ShapeStyleRibbonStrip({
+  themePresets = DEFAULT_THEME_PRESETS,
+  quickPresets = DEFAULT_QUICK_PRESETS,
+  selectedId,
+  onSelect,
+  labels,
+  previewText = "Abc",
+  maxVisible = 7,
+}: ShapeStyleMenuProps & { maxVisible?: number }) {
+  const visible = themePresets.slice(0, Math.max(1, maxVisible));
+
+  return (
+    <div className="delpi-ui-shape-style-strip" role="list" aria-label="Estilos de forma">
+      {visible.map((preset) => {
+        const active = selectedId === preset.id;
+        return (
+          <button
+            key={preset.id}
+            type="button"
+            role="listitem"
+            className={[
+              "delpi-ui-shape-style-strip__thumb",
+              active ? "delpi-ui-shape-style-strip__thumb--active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-label={preset.label ?? preset.id}
+            aria-pressed={active}
+            title={preset.label ?? preset.id}
+            onClick={() => onSelect(preset)}
+          >
+            <span
+              className="delpi-ui-shape-style-strip__preview"
+              style={{
+                background: preset.fill && preset.fill !== "transparent" ? preset.fill : undefined,
+                borderColor:
+                  preset.stroke && preset.stroke !== "transparent" ? preset.stroke : undefined,
+                borderWidth: preset.strokeWidth ? `${Math.max(1, preset.strokeWidth)}px` : undefined,
+                borderStyle: preset.strokeWidth ? "solid" : undefined,
+                boxShadow: preset.boxShadow,
+                color:
+                  preset.fill &&
+                  preset.fill !== "transparent" &&
+                  preset.fill !== "#ffffff" &&
+                  preset.fill !== "#fff"
+                    ? "#ffffff"
+                    : "#0f172a",
+              }}
+            >
+              {previewText}
+            </span>
+          </button>
+        );
+      })}
+      <ShapeStyleMenu
+        themePresets={themePresets}
+        quickPresets={quickPresets}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        labels={labels}
+        previewText={previewText}
+        triggerLabel="Mais"
+      />
+    </div>
+  );
+}
+
+export function ShapeStyleMenu({ triggerLabel = "Estilo", ...props }: ShapeStyleMenuProps) {
   const L = mergeShapeColorLabels(props.labels);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -94,7 +169,7 @@ export function ShapeStyleMenu(props: ShapeStyleMenuProps) {
         <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
           <Shapes size={18} />
         </span>
-        <span className="delpi-ui-shape-menu__trigger-label">Estilo</span>
+        <span className="delpi-ui-shape-menu__trigger-label">{triggerLabel}</span>
       </button>
       {open ? (
         <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">

@@ -275,22 +275,69 @@
   height: 28px;
 }
 
+/* Underline de cor estilo faixa Office (prévia sob o ícone Fill/Outline). */
 .delpi-ui-shape-menu__trigger-swatch {
   position: absolute;
-  bottom: 0;
+  bottom: 1px;
   left: 50%;
-  width: 22px;
-  height: 5px;
+  width: 20px;
+  height: 4px;
   transform: translateX(-50%);
-  border: 1px solid var(--delpi-ui-border, #cbd5e1);
-  border-radius: 1px;
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--delpi-ui-border, #cbd5e1) 70%, transparent);
 }
 
 .delpi-ui-shape-menu__trigger-swatch--outline {
   background: transparent;
-  border-width: 2px;
+  border: 2px solid currentColor;
+  box-shadow: none;
   height: 0;
-  bottom: 4px;
+  width: 18px;
+  bottom: 3px;
+}
+
+.delpi-ui-shape-style-strip {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  max-width: 100%;
+  padding: 2px 0;
+}
+
+.delpi-ui-shape-style-strip__thumb {
+  flex: 0 0 auto;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.delpi-ui-shape-style-strip__thumb:hover,
+.delpi-ui-shape-style-strip__thumb--active {
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+}
+
+.delpi-ui-shape-style-strip__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 28px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--delpi-ui-surface, #fff);
+  border: 1px solid var(--delpi-ui-border, #cbd5e1);
+  box-sizing: border-box;
+}
+
+.delpi-ui-shape-style-strip .delpi-ui-shape-menu__trigger {
+  min-width: 44px;
+  padding: 4px 6px;
 }
 
 .delpi-ui-shape-menu__extras,

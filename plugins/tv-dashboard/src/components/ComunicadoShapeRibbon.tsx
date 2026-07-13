@@ -37,7 +37,7 @@ import {
   ShapeFillMenu,
   ShapeOutlineMenu,
   ShapeShadowMenu,
-  ShapeStyleMenu,
+  ShapeStyleRibbonStrip,
 } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -250,7 +250,8 @@ export function ComunicadoShapeRibbon() {
           }
         >
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-            <ShapeStyleMenu
+            <ShapeStyleRibbonStrip
+              maxVisible={5}
               onSelect={(preset) =>
                 patchChromeStyle({
                   fill: preset.fill,
@@ -318,7 +319,8 @@ export function ComunicadoShapeRibbon() {
       <>
         <DeckRibbonGroup label="Aparência" hint={H.shape}>
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-            <ShapeStyleMenu
+            <ShapeStyleRibbonStrip
+              maxVisible={5}
               onSelect={(preset) =>
                 patchChromeStyle(
                   showStroke
@@ -426,7 +428,7 @@ export function ComunicadoShapeRibbon() {
 
       <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-          <ShapeStyleMenu
+          <ShapeStyleRibbonStrip
             onSelect={(preset) =>
               updateSelectedStyle({
                 fill: preset.fill,

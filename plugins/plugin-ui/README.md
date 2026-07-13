@@ -75,7 +75,7 @@ Demos: `src/catalog/demos/`. Tabela estilo LMPS: entradas **DataTable** / **Data
 | `HintAction` | Botão/controle com balão ao hover |
 | `ShapeFillMenu` / `ShapeOutlineMenu` | Menus de cor estilo PowerPoint (ribbon) |
 | `ColorDialog` / `ColorPickerPopover` | Paleta tema + diálogo «Mais cores» |
-| `ShapeStyleMenu` / `ShapeEffectsMenu` | Estilos de tema e efeitos de forma |
+| `ShapeStyleMenu` / `ShapeStyleRibbonStrip` / `ShapeEffectsMenu` | Estilos de tema (galeria Abc ou faixa) e efeitos de forma |
 | `ChartCard` | Cartão de gráfico (layout headless + `classNames` BEM) |
 | `chartCardBemClasses` | Helper para mapa BEM `{prefix}-chart-card__*` |
 | `KpiCard` | Cartão KPI departamental (meta, badges IDD, ícone) |

@@ -32,7 +32,7 @@ export {
   resolveBoxShadowStack,
 } from "./boxShadowModel";
 export type { BoxShadowModel, BoxShadowStack } from "./boxShadowModel";
-export { ShapeStyleGallery, ShapeStyleMenu } from "./ShapeStyleGallery";
+export { ShapeStyleGallery, ShapeStyleMenu, ShapeStyleRibbonStrip, SHAPE_THEME_STYLE_PRESETS, SHAPE_QUICK_STYLE_PRESETS } from "./ShapeStyleGallery";
 export type { ShapeStyleGalleryProps, ShapeStyleMenuProps } from "./ShapeStyleGallery";
 export {
   DELPI_DIALOG_STANDARD_COLORS,
