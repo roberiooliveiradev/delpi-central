@@ -10,6 +10,9 @@ export type ConfigurableTableValueFormat = "auto" | "number" | "currency" | "per
 
 export type ConfigurableTablePreset = "grid" | "minimal" | "banded";
 
+/** Estilo de traço da grade (caneta PPT — Desenhar Bordas). */
+export type ConfigurableTableBorderStyle = "solid" | "dashed" | "dotted";
+
 export type ConfigurableTableOptions = {
   title?: string;
   showTitle?: boolean;
@@ -27,6 +30,10 @@ export type ConfigurableTableOptions = {
   cellBg?: string;
   cellTextColor?: string;
   borderColor?: string;
+  /** Peso da grade entre células (px). */
+  borderWidth?: number;
+  /** Estilo de traço da grade (sólido / tracejado / pontilhado). */
+  borderStyle?: ConfigurableTableBorderStyle;
   fontSize?: number;
   textAlign?: ConfigurableTableTextAlign;
   /** Listras nas linhas (Excel → Banded Rows). */
@@ -55,7 +62,20 @@ export const DEFAULT_CONFIGURABLE_TABLE_OPTIONS: ConfigurableTableOptions = {
   cellBg: DECK_TABLE_DEFAULTS.cellBg,
   cellTextColor: DECK_TABLE_DEFAULTS.cellTextColor,
   borderColor: DECK_TABLE_DEFAULTS.borderColor,
+  borderWidth: DECK_TABLE_DEFAULTS.borderWidth,
+  borderStyle: "solid",
 };
+
+export const CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS = [0.5, 1, 1.5, 2, 3, 4] as const;
+
+export const CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS: Array<{
+  value: ConfigurableTableBorderStyle;
+  label: string;
+}> = [
+  { value: "solid", label: "Contínuo" },
+  { value: "dashed", label: "Tracejado" },
+  { value: "dotted", label: "Pontilhado" },
+];
 
 export const CONFIGURABLE_TABLE_VALUE_FORMAT_OPTIONS = [
   { value: "auto", label: "Automático" },
@@ -154,6 +174,10 @@ export function configurableTableOptionsCssVars(
   if (options.cellBg) vars[`--${cssVarPrefix}-cell-bg`] = options.cellBg;
   if (options.cellTextColor) vars[`--${cssVarPrefix}-cell-color`] = options.cellTextColor;
   if (options.borderColor) vars[`--${cssVarPrefix}-border-color`] = options.borderColor;
+  if (options.borderWidth != null && options.borderWidth >= 0) {
+    vars[`--${cssVarPrefix}-border-width`] = `${options.borderWidth}px`;
+  }
+  if (options.borderStyle) vars[`--${cssVarPrefix}-border-style`] = options.borderStyle;
   if (options.fontSize != null && options.fontSize > 0) vars[`--${cssVarPrefix}-font-size`] = `${options.fontSize}px`;
   return vars;
 }

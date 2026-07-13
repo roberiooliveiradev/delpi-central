@@ -55,8 +55,10 @@
 .delpi-ui-config-table__header-cell,
 .delpi-ui-config-table__cell {
   padding: 0.25rem 0.4rem;
-  /* Grade interna — DECK_TABLE_DEFAULTS.borderColor (#e2e8f0), não o contorno do bloco. */
-  border-bottom: 1px solid var(--delpi-ui-config-table-border-color, #e2e8f0);
+  /* Grade interna — DECK_TABLE_DEFAULTS + caneta (peso/estilo). */
+  border-bottom: var(--delpi-ui-config-table-border-width, 1px)
+    var(--delpi-ui-config-table-border-style, solid)
+    var(--delpi-ui-config-table-border-color, #e2e8f0);
   text-align: left;
   white-space: nowrap;
 }
@@ -114,7 +116,9 @@
 
 .delpi-ui-config-table__row--total .delpi-ui-config-table__cell {
   font-weight: 700;
-  border-top: 2px solid var(--delpi-ui-config-table-border-color, #e2e8f0);
+  border-top: calc(var(--delpi-ui-config-table-border-width, 1px) * 2)
+    var(--delpi-ui-config-table-border-style, solid)
+    var(--delpi-ui-config-table-border-color, #e2e8f0);
   background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 55%, transparent);
 }
 

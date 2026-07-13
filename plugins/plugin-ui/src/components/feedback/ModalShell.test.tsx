@@ -30,6 +30,10 @@ describe("ModalShell", () => {
     expect(screen.getByText("Mensagem")).toBeTruthy();
   });
 
+  it("inclui footer no BEM padrão", () => {
+    expect(modalShellBemClasses("td").footer).toBe("td-modal__footer");
+  });
+
   it("renderiza description e footer quando informados", () => {
     render(
       <ModalShell
@@ -42,7 +46,6 @@ describe("ModalShell", () => {
           ...modalShellBemClasses("si"),
           headerText: "si-modal__header-text",
           description: "si-modal__description",
-          footer: "si-modal__footer",
         }}
       >
         <p>Corpo</p>

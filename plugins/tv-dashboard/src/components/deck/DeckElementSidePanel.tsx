@@ -10,6 +10,7 @@ import type { SelectionPanelTab } from "../comunicadoEditorContextCore";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectedDataSidePanel } from "../SelectedDataSidePanel";
 import { resolveSelectedDataContext } from "../../utils/selectedDataContext";
+import { resolveTableFormatPaneTitle } from "../../utils/resolveTableFormatPaneTitle";
 import { ComunicadoElementInspector } from "./ComunicadoElementInspector";
 import { ComunicadoLayersPanel } from "./ComunicadoLayersPanel";
 
@@ -44,6 +45,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     selectionPanelTab,
     setSelectionPanelTab,
     requestRibbonTab,
+    selectedTablePart,
   } = useComunicadoEditor();
   const { collapsed, setCollapsed, startResize, panelWidthPx, limits, width } =
     useDeckSidePanelLayout("inspector", { growDirection: "west" });
@@ -75,7 +77,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
       }
       return "Dados do elemento";
     }
-    if (selected?.type === "table_view") return "Formatar Tabela";
+    if (selected?.type === "table_view") return resolveTableFormatPaneTitle(selectedTablePart);
     if (selected?.type === "chart_view") return "Formatar Gráfico";
     if (
       selected?.type === "shape" ||
@@ -86,7 +88,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     }
     if (selected?.type === "kpi_view") return "Formatar KPI";
     return "Definir elemento";
-  }, [tab, dataPanelIntent, dataContext.kind, selected?.type]);
+  }, [tab, dataPanelIntent, dataContext.kind, selected?.type, selectedTablePart]);
 
   function handleTabChange(next: SelectionPanelTab) {
     setSelectionPanelTab(next);

@@ -80,6 +80,20 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
       title="Alterar tipo de gráfico"
       onClose={onClose}
       className="td-modal--wide td-modal--chart-type"
+      footer={
+        <div className="td-modal-actions td-modal-actions--end">
+          <button type="button" className="td-btn td-btn--ghost" onClick={onClose}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="td-btn td-btn--primary"
+            onClick={() => onConfirm(draftType)}
+          >
+            OK
+          </button>
+        </div>
+      }
     >
       <div className="td-chart-type-dialog">
         <aside className="td-chart-type-dialog__nav" aria-label="Categorias">
@@ -133,19 +147,6 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
             <p>{draftEntry?.label ?? draftType}</p>
           </div>
         </div>
-      </div>
-
-      <div className="td-chart-type-dialog__footer td-modal-actions--end">
-        <button type="button" className="td-btn td-btn--ghost" onClick={onClose}>
-          Cancelar
-        </button>
-        <button
-          type="button"
-          className="td-btn td-btn--primary"
-          onClick={() => onConfirm(draftType)}
-        >
-          OK
-        </button>
       </div>
     </Modal>
   );

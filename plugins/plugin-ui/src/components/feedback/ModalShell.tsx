@@ -49,6 +49,7 @@ export function modalShellBemClasses(prefix: string): ModalShellClassNames {
     title: `${prefix}-modal__title`,
     closeButton: `${prefix}-ghost-btn ${prefix}-ghost-btn--icon ${prefix}-modal__close`,
     body: `${prefix}-modal__body`,
+    footer: `${prefix}-modal__footer`,
   };
 }
 

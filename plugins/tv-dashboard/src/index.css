@@ -657,6 +657,15 @@
   gap: 12px;
 }
 
+.dashboard-tv-dashboard .td-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--td-border);
+}
+
 .dashboard-tv-dashboard .td-confirm-modal__message {
   margin: 0;
   font-size: 14px;
@@ -666,6 +675,7 @@
 
 .dashboard-tv-dashboard .td-modal-actions--end {
   justify-content: flex-end;
+  width: 100%;
 }
 
 .dashboard-tv-dashboard .td-ghost-btn,
@@ -2783,10 +2793,12 @@
   color: var(--td-text);
 }
 
-.dashboard-tv-dashboard .td-chart-type-dialog__footer {
+.dashboard-tv-dashboard .td-deck-ribbon__border-pen {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
+  margin-top: 6px;
+  align-items: flex-end;
 }
 
 .dashboard-tv-dashboard .td-format-pane-icons {

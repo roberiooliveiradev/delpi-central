@@ -58,6 +58,8 @@ export {
 } from "./configurableTableParts";
 
 export {
+  CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
+  CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
   CONFIGURABLE_TABLE_TEXT_ALIGN_OPTIONS,
   CONFIGURABLE_TABLE_VALUE_FORMAT_OPTIONS,
   DEFAULT_CONFIGURABLE_TABLE_OPTIONS,
@@ -68,6 +70,7 @@ export {
   resolveConfigurableTableDisplayOptions,
   configurableTableOptionsCssVars,
   configurableTableOptionsModifierClasses,
+  type ConfigurableTableBorderStyle,
   type ConfigurableTableOptions,
   type ConfigurableTablePreset,
   type ConfigurableTableTextAlign,

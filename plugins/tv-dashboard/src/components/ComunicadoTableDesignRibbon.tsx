@@ -1,13 +1,20 @@
 import { useRef, useState, type CSSProperties } from "react";
 import { Database, Grid3x3, Square, Shapes } from "lucide-react";
-import { ColorPickerPopoverTrigger } from "@delpi/plugin-ui/index";
+import {
+  ColorPickerPopoverTrigger,
+  CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
+  CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
+  ShapeShadowMenu,
+} from "@delpi/plugin-ui/index";
 import {
   isTableElementEnabled,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
   presetDefaultTableOptions,
+  resolveTableFrameStyle,
   setTableElementEnabled,
   tableElementPrimaryPartRef,
+  upsertTablePartState,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
@@ -16,11 +23,18 @@ import {
 
 import { TABLE_STYLE_RECIPES, type TableStyleRecipe } from "../content/tableStyleRecipes";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { COMUNICADO_BOX_SHADOW_PRESETS } from "../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+
+const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
+  id: preset.key,
+  label: preset.label,
+  value: preset.value,
+}));
 
 const STYLE_OPTION_CHECKS: Array<{
   id: TableElementId;
@@ -72,6 +86,9 @@ export function ComunicadoTableDesignRibbon() {
 
   const block = selected as ComunicadoTableViewBlock;
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
+  const frame = resolveTableFrameStyle(block.tableParts);
+  const borderWidth = options.borderWidth ?? 1;
+  const borderStyle = options.borderStyle ?? "solid";
 
   const applyOptions = (patch: Partial<ComunicadoTableOptions>, preset = block.tablePreset) => {
     const nextOptions = {
@@ -79,38 +96,26 @@ export function ComunicadoTableDesignRibbon() {
       ...patch,
     };
     updateSelected({
-      tablePreset: preset,
       tableOptions: nextOptions,
       tableParts: mergeTablePartsWithOptions(block.tableParts, nextOptions),
+      ...(preset !== block.tablePreset ? { tablePreset: preset } : {}),
     } as Partial<ComunicadoBlock>);
   };
 
   const applyRecipe = (recipe: TableStyleRecipe) => {
-    const nextOptions = {
-      ...presetDefaultTableOptions(recipe.preset),
-      ...recipe.options,
-    };
-    updateSelected({
-      tablePreset: recipe.preset,
-      tableOptions: nextOptions,
-      tableParts: mergeTablePartsWithOptions(block.tableParts, nextOptions),
-    } as Partial<ComunicadoBlock>);
+    applyOptions(recipe.options, recipe.preset);
     setGalleryOpen(false);
   };
 
   const clearTableStyle = () => {
-    const defaults = presetDefaultTableOptions("grid");
-    updateSelected({
-      tablePreset: "grid",
-      tableOptions: defaults,
-      tableParts: mergeTablePartsWithOptions(block.tableParts, defaults),
-    } as Partial<ComunicadoBlock>);
+    applyOptions(presetDefaultTableOptions("grid"), "grid");
+    setGalleryOpen(false);
   };
 
-  const toggleElement = (elementId: TableElementId, enabled: boolean) => {
-    applyOptions(setTableElementEnabled(elementId, enabled));
+  const toggleElement = (id: TableElementId, enabled: boolean) => {
+    applyOptions(setTableElementEnabled(id, enabled));
     if (enabled) {
-      const part = tableElementPrimaryPartRef(elementId);
+      const part = tableElementPrimaryPartRef(id);
       if (part) selectTablePart(block.id, part);
     }
   };
@@ -120,21 +125,26 @@ export function ComunicadoTableDesignRibbon() {
       ? "header"
       : "cell";
   const shadeValue = shadeTarget === "header" ? options.headerBg : options.cellBg;
+  const ribbonRecipes = TABLE_STYLE_RECIPES.slice(0, 7);
 
-  const ribbonRecipes = TABLE_STYLE_RECIPES.filter((r) =>
-    ["medium-banded", "medium-teal", "medium-navy", "light-grid", "dark-ink", "light-minimal"].includes(
-      r.id,
-    ),
-  );
+  const patchFrameShadow = (boxShadow: string | undefined) => {
+    const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, {
+      style: { boxShadow: boxShadow?.trim() ? boxShadow : "none" },
+    });
+    updateSelected({
+      tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
+      style: { ...block.style, boxShadow: boxShadow?.trim() ? boxShadow : undefined },
+    } as Partial<ComunicadoBlock>);
+  };
 
   return (
     <div className="td-deck-ribbon__groups">
       <DeckRibbonGroup label="Opções de estilo" hint={H.tableStyleOptions}>
-        <div className="td-deck-ribbon__style-checks" role="group" aria-label="Opções de estilo de tabela">
+        <div className="td-deck-ribbon__style-checks">
           {STYLE_OPTION_CHECKS.map((item) => {
             const checked = isTableElementEnabled(item.id, options);
             return (
-              <label key={item.id} className="td-deck-ribbon__style-check" title={item.hint}>
+              <label key={item.id} className="td-deck-ribbon__check" title={item.hint}>
                 <input
                   type="checkbox"
                   checked={checked}
@@ -215,7 +225,7 @@ export function ComunicadoTableDesignRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Bordas" hint="Visibilidade e cor das linhas da grade.">
+      <DeckRibbonGroup label="Bordas" hint="Visibilidade, cor, peso e estilo da grade (caneta).">
         <div className="td-deck-ribbon__border-controls">
           <DeckRibbonTile
             icon={Square}
@@ -235,6 +245,64 @@ export function ComunicadoTableDesignRibbon() {
             value={options.borderColor ?? "#e2e8f0"}
             triggerLabel="Cor"
             onChange={(color) => applyOptions({ borderColor: color, showBorders: true })}
+          />
+        </div>
+        <div className="td-deck-ribbon__border-pen td-deck-ribbon__toolbar-row--dense">
+          <label className="td-deck-ribbon__frame-field">
+            <span className="td-deck-ribbon__field-label">Peso</span>
+            <select
+              className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+              aria-label="Peso da borda"
+              value={String(borderWidth)}
+              onChange={(event) => {
+                const width = Number(event.target.value);
+                applyOptions({ borderWidth: width, showBorders: true });
+              }}
+            >
+              {CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS.map((width) => (
+                <option key={width} value={width}>
+                  {width} pt
+                </option>
+              ))}
+              {!CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS.includes(
+                borderWidth as (typeof CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS)[number],
+              ) ? (
+                <option value={borderWidth}>{borderWidth} pt</option>
+              ) : null}
+            </select>
+          </label>
+          <label className="td-deck-ribbon__frame-field">
+            <span className="td-deck-ribbon__field-label">Estilo</span>
+            <select
+              className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+              aria-label="Estilo da borda"
+              value={borderStyle}
+              onChange={(event) =>
+                applyOptions({
+                  borderStyle: event.target.value as NonNullable<
+                    ComunicadoTableOptions["borderStyle"]
+                  >,
+                  showBorders: true,
+                })
+              }
+            >
+              {CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS.map((entry) => (
+                <option key={entry.value} value={entry.value}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </DeckRibbonGroup>
+
+      <DeckRibbonGroup label="Efeitos" hint="Sombra da moldura da tabela.">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+          <ShapeShadowMenu
+            value={frame.boxShadow === "none" ? undefined : frame.boxShadow}
+            presets={SHADOW_MENU_PRESETS}
+            shadowLabel="Sombra"
+            onChange={patchFrameShadow}
           />
         </div>
       </DeckRibbonGroup>
