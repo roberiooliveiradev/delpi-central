@@ -1,3 +1,4 @@
+import { HintAction, ComboboxNumberControl } from "@delpi/plugin-ui/index";
 import {
   Crosshair,
   Focus,
@@ -6,19 +7,24 @@ import {
   Magnet,
   Maximize2,
   Ruler,
-  Settings2,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo } from "react";
+import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useKeyboardShortcutsTips } from "../context/KeyboardShortcutsTipsProvider";
+import {
+  STAGE_GRID_SIZE_MIN_PX,
+  clampStageGridSizePx,
+  stageGridSizeMaxPx,
+  stageGridSizePresetsForDesign,
+} from "../utils/stageGridSize";
 import { clampStageZoom, STAGE_ZOOM_MAX, STAGE_ZOOM_MIN } from "../utils/stageViewport";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { ShortcutTip } from "./ShortcutTip";
-import { StageGridSettingsModal } from "./StageGridSettingsModal";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -33,13 +39,23 @@ export function ComunicadoViewRibbon() {
     setShowStageRulers,
     showStageGrid,
     setShowStageGrid,
+    stageGridSizePx,
+    setStageGridSizePx,
     showStageGuides,
     setShowStageGuides,
     snapEnabled,
     setSnapEnabled,
+    viewportProfile,
   } = useComunicadoEditor();
   const { openCatalog } = useKeyboardShortcutsTips();
-  const [gridSettingsOpen, setGridSettingsOpen] = useState(false);
+
+  const design = useMemo(
+    () => resolveViewportPixelSize(viewportProfile || "1080p"),
+    [viewportProfile],
+  );
+  const gridPresets = useMemo(() => stageGridSizePresetsForDesign(design), [design]);
+  const gridSizeMax = stageGridSizeMaxPx(design);
+  const gridSizeValue = clampStageGridSizePx(stageGridSizePx, design);
 
   return (
     <div className="td-deck-ribbon__groups">
@@ -96,12 +112,27 @@ export function ComunicadoViewRibbon() {
             active={showStageGrid}
             onClick={() => setShowStageGrid(!showStageGrid)}
           />
-          <DeckRibbonTile
-            icon={Settings2}
-            label="Tamanho"
-            hint={V.gridSize}
-            onClick={() => setGridSettingsOpen(true)}
-          />
+          <div className="td-deck-ribbon__grid-size" role="group" aria-label="Tamanho da grade">
+            <span className="td-deck-ribbon__grid-size-label">Tamanho</span>
+            <HintAction hint={V.gridSize} ariaLabel="Ajuda: Tamanho da grade">
+              <ComboboxNumberControl
+                className="td-deck-ribbon__grid-size-combobox"
+                compact
+                square
+                aria-label="Tamanho da célula da grade"
+                value={gridSizeValue}
+                options={gridPresets}
+                min={STAGE_GRID_SIZE_MIN_PX}
+                max={gridSizeMax}
+                clamp={(raw) => clampStageGridSizePx(raw, design)}
+                portalScopeClassName="dashboard-tv-dashboard"
+                onChange={(next) => {
+                  setStageGridSizePx(clampStageGridSizePx(next, design));
+                  if (!showStageGrid) setShowStageGrid(true);
+                }}
+              />
+            </HintAction>
+          </div>
           <DeckRibbonTile
             icon={Crosshair}
             label="Guias"
@@ -124,8 +155,6 @@ export function ComunicadoViewRibbon() {
           />
         </div>
       </DeckRibbonGroup>
-
-      <StageGridSettingsModal open={gridSettingsOpen} onClose={() => setGridSettingsOpen(false)} />
     </div>
   );
 }

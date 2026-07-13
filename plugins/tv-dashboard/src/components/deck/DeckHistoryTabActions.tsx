@@ -23,7 +23,7 @@ export function DeckHistoryTabActions() {
 
   return (
     <div className="td-deck-chrome__history" role="group" aria-label="Histórico">
-      <ShortcutTip shortcutId="undo">
+      <ShortcutTip shortcutId="undo" placement="bottom">
         <span>
           <HintAction hint={hintWithShortcut(H.undo, "undo")} ariaLabel="Desfazer">
             <button
@@ -38,7 +38,7 @@ export function DeckHistoryTabActions() {
           </HintAction>
         </span>
       </ShortcutTip>
-      <ShortcutTip shortcutId="redo">
+      <ShortcutTip shortcutId="redo" placement="bottom">
         <span>
           <HintAction hint={hintWithShortcut(H.redo, "redo")} ariaLabel="Refazer">
             <button

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
 import {
   readStageDisplayPreferences,
+  stageViewNeedsInitialFit,
   writeStageDisplayPreferences,
   type StageDisplayPreferences,
 } from "../../utils/stageDisplayPreferences";
@@ -12,10 +13,14 @@ import {
 } from "../../utils/stagePan";
 import { computeFitStageZoom, clampStageZoom } from "../../utils/stageViewport";
 
+const STAGE_VIEW_FIT_MAX_ATTEMPTS = 40;
+
 /**
  * Estado de UI do palco (zoom, réguas, grade, guias, snap, posição) + fit à viewport.
  * Preferências persistem em localStorage (sobrevivem ao refresh).
  * O ref do canvas de interação é ligado depois via `bindCanvasRef`.
+ *
+ * Sem âncora salva: bootstrap = Ajustar (fit) e grava a primeira posição.
  */
 export function useComunicadoEditorStage() {
   const [prefs, setPrefs] = useState<StageDisplayPreferences>(() => readStageDisplayPreferences());
@@ -28,8 +33,12 @@ export function useComunicadoEditorStage() {
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
   const persistViewTimerRef = useRef<number | null>(null);
-  /** Evita gravar âncora enquanto restauramos/ajustamos programaticamente. */
-  const suppressViewPersistRef = useRef(false);
+  /**
+   * Bloqueia persist até restore/fit do bootstrap — evita gravar 0,0 no gutter
+   * antes do canvas existir.
+   */
+  const suppressViewPersistRef = useRef(true);
+  const viewBootstrappedRef = useRef(false);
 
   useEffect(() => {
     snapEnabledRef.current = prefs.snapEnabled;
@@ -59,14 +68,19 @@ export function useComunicadoEditorStage() {
     interactionCanvasRefSlot.current = ref;
   }, []);
 
+  const markViewBootstrapped = useCallback(() => {
+    viewBootstrappedRef.current = true;
+    suppressViewPersistRef.current = false;
+  }, []);
+
   const persistStageViewPosition = useCallback(
     (options?: { immediate?: boolean }) => {
-      if (suppressViewPersistRef.current) return;
+      if (suppressViewPersistRef.current || !viewBootstrappedRef.current) return;
       const wrap = canvasWrapRef.current;
       if (!wrap) return;
 
       const commit = () => {
-        if (suppressViewPersistRef.current) return;
+        if (suppressViewPersistRef.current || !viewBootstrappedRef.current) return;
         const el = canvasWrapRef.current;
         if (!el) return;
         const anchor = captureStageViewAnchor(el);
@@ -109,34 +123,77 @@ export function useComunicadoEditorStage() {
     const wrap = canvasWrapRef.current;
     const current = prefsRef.current;
     if (!wrap || !current.stageViewAnchorSaved) return false;
+    if (wrap.clientWidth <= 0 || wrap.clientHeight <= 0) return false;
     suppressViewPersistRef.current = true;
     applyStageViewAnchor(wrap, {
       x: current.stageViewAnchorX,
       y: current.stageViewAnchorY,
     });
     window.requestAnimationFrame(() => {
-      suppressViewPersistRef.current = false;
+      markViewBootstrapped();
     });
     return true;
-  }, []);
+  }, [markViewBootstrapped]);
 
+  /** Ajustar: fit + grava âncora (primeira posição ou clique do usuário). */
   const fitStageToView = useCallback(() => {
-    const wrap = canvasWrapRef.current;
-    const canvas = interactionCanvasRefSlot.current?.current ?? null;
-    if (!wrap || !canvas) return;
-    suppressViewPersistRef.current = true;
-    patchPrefs({ stageZoom: computeFitStageZoom(wrap, canvas) });
-    window.requestAnimationFrame(() => {
-      applyCenteredStageScroll(wrap);
-      const anchor = captureStageViewAnchor(wrap);
-      patchPrefs({
-        stageViewAnchorX: anchor.x,
-        stageViewAnchorY: anchor.y,
-        stageViewAnchorSaved: true,
+    const attemptFit = (attempt: number) => {
+      const wrap = canvasWrapRef.current;
+      const canvas = interactionCanvasRefSlot.current?.current ?? null;
+      if (
+        !wrap ||
+        !canvas ||
+        wrap.clientWidth <= 0 ||
+        wrap.clientHeight <= 0 ||
+        canvas.offsetWidth <= 0 ||
+        canvas.offsetHeight <= 0
+      ) {
+        if (attempt >= STAGE_VIEW_FIT_MAX_ATTEMPTS) {
+          markViewBootstrapped();
+          return;
+        }
+        window.requestAnimationFrame(() => attemptFit(attempt + 1));
+        return;
+      }
+
+      suppressViewPersistRef.current = true;
+      patchPrefs({ stageZoom: computeFitStageZoom(wrap, canvas) });
+      window.requestAnimationFrame(() => {
+        applyCenteredStageScroll(wrap);
+        const anchor = captureStageViewAnchor(wrap);
+        patchPrefs({
+          stageViewAnchorX: anchor.x,
+          stageViewAnchorY: anchor.y,
+          stageViewAnchorSaved: true,
+        });
+        markViewBootstrapped();
       });
-      suppressViewPersistRef.current = false;
-    });
-  }, [patchPrefs]);
+    };
+
+    attemptFit(0);
+  }, [markViewBootstrapped, patchPrefs]);
+
+  /**
+   * No load: restaura âncora salva; se não houver, usa Ajustar e salva a 1ª posição.
+   */
+  const bootstrapStageViewPosition = useCallback(() => {
+    suppressViewPersistRef.current = true;
+    viewBootstrappedRef.current = false;
+
+    const tryRestore = (attempt: number) => {
+      if (!stageViewNeedsInitialFit(prefsRef.current)) {
+        if (restoreStageViewPosition()) return;
+        if (attempt < STAGE_VIEW_FIT_MAX_ATTEMPTS) {
+          window.requestAnimationFrame(() => tryRestore(attempt + 1));
+          return;
+        }
+      }
+      // Sem posição (ou restore impossível) → Ajustar e persistir a 1ª posição.
+      fitStageToView();
+    };
+
+    tryRestore(0);
+  }, [fitStageToView, restoreStageViewPosition]);
 
   return {
     stageZoom: prefs.stageZoom,
@@ -175,6 +232,7 @@ export function useComunicadoEditorStage() {
     canvasWrapRef,
     fitStageToView,
     restoreStageViewPosition,
+    bootstrapStageViewPosition,
     persistStageViewPosition,
     bindCanvasRef,
     stagePanMode,

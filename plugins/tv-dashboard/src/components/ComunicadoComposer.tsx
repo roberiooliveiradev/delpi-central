@@ -116,7 +116,7 @@ export function ComunicadoComposerCanvas() {
     viewportProfile,
     stageZoom,
     fitStageToView,
-    restoreStageViewPosition,
+    bootstrapStageViewPosition,
     persistStageViewPosition,
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
@@ -209,8 +209,8 @@ export function ComunicadoComposerCanvas() {
     persistStageViewPosition({ immediate: true });
   }, [panGutter.x, panGutter.y, persistStageViewPosition]);
 
-  // Mount: restaura posição do localStorage (ou fit na 1ª visita).
-  // Depois: fit só se o formato do slide mudar — não em aba/seleção/refresh.
+  // Mount: restaura localStorage; se não houver posição, Ajustar e grava a 1ª.
+  // Depois: fit só se o formato do slide mudar.
   const designKeyRef = useRef<string | null>(null);
   useEffect(() => {
     const key = `${viewportProfile}:${designSize.width}x${designSize.height}`;
@@ -219,9 +219,7 @@ export function ComunicadoComposerCanvas() {
 
     const timer = window.setTimeout(() => {
       if (prev === null) {
-        if (!restoreStageViewPosition()) {
-          fitStageToView();
-        }
+        bootstrapStageViewPosition();
         return;
       }
       if (prev !== key) {
@@ -230,10 +228,10 @@ export function ComunicadoComposerCanvas() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, [
+    bootstrapStageViewPosition,
     designSize.width,
     designSize.height,
     fitStageToView,
-    restoreStageViewPosition,
     viewportProfile,
   ]);
 

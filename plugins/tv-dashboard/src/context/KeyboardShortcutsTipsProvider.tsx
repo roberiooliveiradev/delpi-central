@@ -32,6 +32,10 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
 }
 
+function isAltKey(event: KeyboardEvent): boolean {
+  return event.key === "Alt" || event.code === "AltLeft" || event.code === "AltRight";
+}
+
 /**
  * Detecta Alt segurado (sem outros modificadores) para exibir balões de atalho.
  * Evita acionar em campos editáveis e limpa no blur.
@@ -44,7 +48,7 @@ export function KeyboardShortcutsTipsProvider({ children }: { children: ReactNod
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Alt") {
+      if (!isAltKey(event)) {
         if (altTipsActive && (event.ctrlKey || event.metaKey || event.key.length === 1)) {
           setAltTipsActive(false);
         }
@@ -53,12 +57,13 @@ export function KeyboardShortcutsTipsProvider({ children }: { children: ReactNod
       if (event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (isEditableTarget(event.target)) return;
       if (event.repeat) return;
+      // Impede menu do navegador / foco na barra ao segurar Alt (KeyTips).
       event.preventDefault();
       setAltTipsActive(true);
     }
 
     function onKeyUp(event: KeyboardEvent) {
-      if (event.key === "Alt") {
+      if (isAltKey(event)) {
         setAltTipsActive(false);
       }
     }

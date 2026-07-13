@@ -63,29 +63,49 @@
   gap: 6px;
 }
 
+.dashboard-tv-dashboard .td-shortcut-tip-layer {
+  /* Portal no body — só escopo CSS; sem layout próprio. */
+  display: contents;
+}
+
 .dashboard-tv-dashboard .td-shortcut-tip__badge {
   position: absolute;
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 80;
-  padding: 3px 7px;
+  padding: 4px 9px;
   border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--td-accent) 55%, var(--td-border));
-  background: color-mix(in srgb, var(--td-surface) 92%, var(--td-accent));
-  color: var(--td-text);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  border: 2px solid #0f172a;
+  background: #fbbf24;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
   white-space: nowrap;
-  box-shadow: 0 6px 16px color-mix(in srgb, #000 28%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fbbf24 70%, #fff),
+    0 8px 20px color-mix(in srgb, #000 45%, transparent);
   pointer-events: none;
   animation: td-shortcut-tip-in 0.12s ease-out;
+}
+
+.dashboard-tv-dashboard .td-shortcut-tip__badge--portal {
+  position: fixed;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  animation: td-shortcut-tip-in-portal 0.12s ease-out;
 }
 
 .dashboard-tv-dashboard .td-shortcut-tip__badge--bottom {
   bottom: auto;
   top: calc(100% + 6px);
+}
+
+.dashboard-tv-dashboard .td-shortcut-tip__badge--portal.td-shortcut-tip__badge--bottom {
+  top: auto;
 }
 
 .dashboard-tv-dashboard .td-shortcut-tip__badge::after {
@@ -95,14 +115,18 @@
   left: 50%;
   margin-left: -5px;
   border: 5px solid transparent;
-  border-top-color: color-mix(in srgb, var(--td-surface) 92%, var(--td-accent));
+  border-top-color: #fbbf24;
 }
 
 .dashboard-tv-dashboard .td-shortcut-tip__badge--bottom::after {
   top: auto;
   bottom: 100%;
   border-top-color: transparent;
-  border-bottom-color: color-mix(in srgb, var(--td-surface) 92%, var(--td-accent));
+  border-bottom-color: #fbbf24;
+}
+
+.dashboard-tv-dashboard .td-shortcut-tip__badge--portal::after {
+  display: none;
 }
 
 @keyframes td-shortcut-tip-in {
@@ -113,6 +137,17 @@
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes td-shortcut-tip-in-portal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -193,27 +228,29 @@
   overflow-y: auto;
 }
 
-.dashboard-tv-dashboard .td-grid-settings__lead {
-  margin: 0 0 16px;
+.dashboard-tv-dashboard .td-deck-ribbon__grid-size {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  min-width: 52px;
+  padding: 2px 4px 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__grid-size-label {
+  font-size: 10px;
+  line-height: 1.1;
   color: var(--td-muted);
-  font-size: 13px;
-  line-height: 1.45;
+  letter-spacing: 0.01em;
 }
 
-.dashboard-tv-dashboard .td-grid-settings__field {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 20px;
-  max-width: 220px;
+.dashboard-tv-dashboard .td-deck-ribbon__grid-size-combobox {
+  width: 56px;
 }
 
-.dashboard-tv-dashboard .td-grid-settings__combobox {
-  width: 100%;
-}
-
-.dashboard-tv-dashboard .td-grid-settings__actions {
-  display: flex;
-  justify-content: flex-end;
+.dashboard-tv-dashboard .td-deck-ribbon__grid-size-combobox .delpi-ui-combobox-number__input {
+  text-align: center;
 }
 
 .dashboard-tv-dashboard .td-deck-speaker-notes {
@@ -1192,8 +1229,27 @@
   touch-action: none;
 }
 
-/* Texto / título: cursor de I-beam ao passar o mouse. */
+/* Texto / título de bloco: I-beam ao passar o mouse. */
 .dashboard-tv-dashboard .td-composer__block-wrap--text {
+  cursor: text;
+}
+
+/*
+ * Partes tipográficas editáveis (KPI/gráfico/tabela/forma) e contentEditable:
+ * não herdam `move` do bloco — sinalizam edição de texto.
+ * Handles de resize/ajuste mantêm o próprio cursor (regras mais específicas).
+ */
+.dashboard-tv-dashboard .td-composer__block-wrap .td-composer__inline-text,
+.dashboard-tv-dashboard .td-composer__block-wrap .td-composer__inline-text-wrap,
+.dashboard-tv-dashboard .td-composer__block-wrap [data-kpi-part="title"],
+.dashboard-tv-dashboard .td-composer__block-wrap [data-kpi-part="hint"],
+.dashboard-tv-dashboard .td-composer__block-wrap .delpi-kpi-card__edit,
+.dashboard-tv-dashboard .td-composer__block-wrap [data-chart-part="title"],
+.dashboard-tv-dashboard .td-composer__block-wrap [data-chart-part="legend"],
+.dashboard-tv-dashboard .td-composer__block-wrap [data-chart-part^="axisTitle:"],
+.dashboard-tv-dashboard .td-composer__block-wrap [data-chart-part^="dataLabel:"],
+.dashboard-tv-dashboard .td-composer__block-wrap [data-table-part="title"],
+.dashboard-tv-dashboard .td-composer__block-wrap [data-table-part^="headerCell:"] {
   cursor: text;
 }
 

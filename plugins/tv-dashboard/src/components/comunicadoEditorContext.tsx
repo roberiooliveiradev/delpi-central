@@ -492,6 +492,7 @@ export function ComunicadoEditorProvider({
     setStageZoom: stage.setStageZoom,
     fitStageToView: stage.fitStageToView,
     restoreStageViewPosition: stage.restoreStageViewPosition,
+    bootstrapStageViewPosition: stage.bootstrapStageViewPosition,
     persistStageViewPosition: stage.persistStageViewPosition,
     canvasWrapRef: stage.canvasWrapRef,
     showStageRulers: stage.showStageRulers,

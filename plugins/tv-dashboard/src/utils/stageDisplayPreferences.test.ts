@@ -4,6 +4,7 @@ import {
   DEFAULT_STAGE_DISPLAY_PREFERENCES,
   normalizeStageDisplayPreferences,
   readStageDisplayPreferences,
+  stageViewNeedsInitialFit,
   writeStageDisplayPreferences,
 } from "./stageDisplayPreferences";
 
@@ -70,6 +71,12 @@ describe("stageDisplayPreferences", () => {
         snapEnabled: true,
       }).stageViewAnchorSaved,
     ).toBe(false);
+  });
+
+  it("sem âncora salva indica bootstrap com Ajustar", () => {
+    expect(stageViewNeedsInitialFit({ stageViewAnchorSaved: false })).toBe(true);
+    expect(stageViewNeedsInitialFit({ stageViewAnchorSaved: true })).toBe(false);
+    expect(stageViewNeedsInitialFit(DEFAULT_STAGE_DISPLAY_PREFERENCES)).toBe(true);
   });
 
   it("limita zoom e tamanho da grade ao intervalo válido", () => {

@@ -106,6 +106,11 @@ export function readStageDisplayPreferences(): StageDisplayPreferences {
   }
 }
 
+/** Sem âncora gravada → bootstrap deve usar Ajustar e salvar a 1ª posição. */
+export function stageViewNeedsInitialFit(prefs: Pick<StageDisplayPreferences, "stageViewAnchorSaved">): boolean {
+  return !prefs.stageViewAnchorSaved;
+}
+
 export function writeStageDisplayPreferences(prefs: StageDisplayPreferences): void {
   if (typeof window === "undefined") return;
 
