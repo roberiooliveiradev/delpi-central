@@ -4,15 +4,18 @@ import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 import {
   applyChartElementVisibility,
   isChartElementEnabled,
+  mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
   partsToChartOptions,
   type ChartElementId,
   type ComunicadoBlock,
+  type ComunicadoChartOptions,
   type ComunicadoChartViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { ChartAddElementMenu } from "./ChartAddElementMenu";
+import { ChartColorsStylesMenu } from "./ChartColorsStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
@@ -23,10 +26,10 @@ type FloatPanel = "elements" | "style" | "data" | null;
 
 /**
  * Coluna flutuante à direita do bbox do gráfico (+ / pincel / funil).
- * `+` reutiliza o mesmo menu «Adicionar elemento» da ribbon.
+ * `+` e pincel reutilizam os mesmos menus da ribbon.
  */
 export function ChartSelectionFloatToolbar({ block }: Props) {
-  const { updateSelected, openDataPanel, requestRibbonTab } = useComunicadoEditor();
+  const { updateSelected, openDataPanel } = useComunicadoEditor();
   const [panel, setPanel] = useState<FloatPanel>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -48,6 +51,13 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [panel]);
+
+  const persistOptions = (nextOptions: ComunicadoChartOptions) => {
+    updateSelected({
+      chartOptions: nextOptions,
+      chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
+    } as Partial<ComunicadoBlock>);
+  };
 
   const toggleElement = (elementId: ChartElementId, enabled: boolean) => {
     const result = applyChartElementVisibility(
@@ -90,7 +100,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
         ]
           .filter(Boolean)
           .join(" ")}
-        aria-label="Estilo do gráfico"
+        aria-label="Cores e estilos do gráfico"
         aria-expanded={panel === "style"}
         onClick={() => setPanel((prev) => (prev === "style" ? null : "style"))}
       >
@@ -137,17 +147,14 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           className="td-chart-float__portal"
           role="menu"
         >
-          <div ref={popoverRef} className="td-chart-float__popover td-chart-float__popover--actions">
-            <button
-              type="button"
-              className="td-deck-ribbon__cascade-item"
-              onClick={() => {
-                requestRibbonTab("element");
+          <div ref={popoverRef} className="td-chart-float__popover">
+            <ChartColorsStylesMenu
+              options={options}
+              onApplyOptions={(next) => {
+                persistOptions(next);
                 setPanel(null);
               }}
-            >
-              Abrir estilos na faixa Elemento
-            </button>
+            />
             <button
               type="button"
               className="td-deck-ribbon__cascade-item"

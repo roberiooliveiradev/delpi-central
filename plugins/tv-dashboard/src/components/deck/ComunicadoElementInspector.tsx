@@ -118,6 +118,7 @@ export function ComunicadoElementInspector({
   const isViewBlock = selected ? isDataViewBlockType(selected.type) : false;
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [shapePaneIcon, setShapePaneIcon] = useState<(typeof SHAPE_PANE_ICONS)[number]["id"]>("fill-line");
+  const [shapeOptionsTab, setShapeOptionsTab] = useState<"shape" | "text">("shape");
 
   useEffect(() => {
     if (!isDataBlock) return;
@@ -125,10 +126,10 @@ export function ComunicadoElementInspector({
   }, [isDataBlock]);
 
   useEffect(() => {
-    if (!isShapeBlock) return;
+    if (!isShapeBlock || shapeOptionsTab !== "shape") return;
     const el = document.getElementById(`td-shape-pane-${shapePaneIcon}`);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [shapePaneIcon, isShapeBlock]);
+  }, [shapePaneIcon, isShapeBlock, shapeOptionsTab]);
 
   const selectedRoute = useMemo(() => {
     if (!isDataBlock || !selected || !("dataBinding" in selected)) return null;
@@ -152,27 +153,61 @@ export function ComunicadoElementInspector({
   return (
     <DeckInspectorLayout variant={placement}>
       {!multiSelect && isShapeBlock ? (
-        <div className="td-format-pane-icons" role="tablist" aria-label="Opções de forma">
-          {SHAPE_PANE_ICONS.map(({ id, label, Icon }) => (
+        <>
+          <div className="td-format-pane-subtabs" role="tablist" aria-label="Opções de forma ou texto">
             <button
-              key={id}
               type="button"
               role="tab"
-              aria-selected={shapePaneIcon === id}
-              aria-label={label}
-              title={label}
+              aria-selected={shapeOptionsTab === "shape"}
               className={[
-                "td-format-pane-icons__btn",
-                shapePaneIcon === id ? "td-format-pane-icons__btn--active" : "",
+                "td-format-pane-subtab",
+                shapeOptionsTab === "shape" ? "td-format-pane-subtab--active" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              onClick={() => setShapePaneIcon(id)}
+              onClick={() => setShapeOptionsTab("shape")}
             >
-              <Icon size={16} aria-hidden="true" />
+              Opções de Forma
             </button>
-          ))}
-        </div>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={shapeOptionsTab === "text"}
+              className={[
+                "td-format-pane-subtab",
+                shapeOptionsTab === "text" ? "td-format-pane-subtab--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => setShapeOptionsTab("text")}
+            >
+              Opções de Texto
+            </button>
+          </div>
+          {shapeOptionsTab === "shape" ? (
+            <div className="td-format-pane-icons" role="tablist" aria-label="Categorias de forma">
+              {SHAPE_PANE_ICONS.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={shapePaneIcon === id}
+                  aria-label={label}
+                  title={label}
+                  className={[
+                    "td-format-pane-icons__btn",
+                    shapePaneIcon === id ? "td-format-pane-icons__btn--active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => setShapePaneIcon(id)}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       <DeckPropertySection
@@ -189,17 +224,20 @@ export function ComunicadoElementInspector({
           <p className="td-deck-inspector__meta">{typeLabel}</p>
         )}
 
-        {!multiSelect && isShapeBlock ? (
-          <>
-            <DeckField id="td-shape-content" label="Texto na forma" hint={E.shapeText}>
-              <NativeTextControl
-                id="td-shape-content"
-                type="text"
-                value={selected.content ?? ""}
-                onChange={(value) => updateSelected({ content: value } as Partial<ComunicadoBlock>)}
-              />
-            </DeckField>
-          </>
+        {!multiSelect && isShapeBlock && shapeOptionsTab === "text" ? (
+          <DeckField id="td-shape-content" label="Texto na forma" hint={E.shapeText}>
+            <NativeTextControl
+              id="td-shape-content"
+              type="text"
+              value={selected.content ?? ""}
+              onChange={(value) => updateSelected({ content: value } as Partial<ComunicadoBlock>)}
+            />
+          </DeckField>
+        ) : null}
+        {!multiSelect && isShapeBlock && shapeOptionsTab === "text" ? (
+          <p className="td-deck-inspector__hint">
+            Fonte, tamanho e alinhamento ficam na faixa Página Inicial com o texto selecionado.
+          </p>
         ) : null}
 
         {!multiSelect && isSidebarLinkBlock ? (
@@ -394,7 +432,7 @@ export function ComunicadoElementInspector({
         </DeckPropertySection>
       ) : null}
 
-      {!multiSelect && isShapeBlock ? (
+      {!multiSelect && isShapeBlock && shapeOptionsTab === "shape" ? (
         <>
           <div id="td-shape-pane-fill-line">
             <DeckPropertySection pane={pane} title="Preenchimento e linha" defaultOpen>
@@ -429,7 +467,7 @@ export function ComunicadoElementInspector({
         </>
       ) : null}
 
-      {!multiSelect && !selectedKpiPart && !selectedChartPart ? (
+      {!multiSelect && !selectedKpiPart && !selectedChartPart && (!isShapeBlock || shapeOptionsTab === "shape") ? (
         <div id={isShapeBlock ? "td-shape-pane-size" : undefined}>
         <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position} defaultOpen={false}>
           {(() => {

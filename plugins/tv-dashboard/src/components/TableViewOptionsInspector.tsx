@@ -75,11 +75,32 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
 
       {!hasPartSelection ? (
         <>
+          <div className="td-format-pane-icons" role="tablist" aria-label="Categorias da tabela">
+            <button
+              type="button"
+              className="td-format-pane-icons__btn td-format-pane-icons__btn--active"
+              title="Estilo"
+              aria-label="Estilo da tabela"
+              onClick={() => document.getElementById("td-table-pane-style")?.scrollIntoView({ block: "nearest" })}
+            >
+              <span className="td-format-pane-icons__dot" style={{ background: options.headerBg }} />
+            </button>
+            <button
+              type="button"
+              className="td-format-pane-icons__btn"
+              title="Sombreamento"
+              aria-label="Sombreamento"
+              onClick={() => document.getElementById("td-table-pane-fill")?.scrollIntoView({ block: "nearest" })}
+            >
+              <span className="td-format-pane-icons__dot" style={{ background: options.cellBg }} />
+            </button>
+          </div>
           <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
             Duplo clique no palco para selecionar título, cabeçalho ou célula. Moldura: aba Forma ou
             item abaixo.
           </p>
 
+          <div id="td-table-pane-style">
           <DeckPropertySection
             pane={pane}
             title="Elementos da tabela"
@@ -111,6 +132,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
               })}
             </div>
           </DeckPropertySection>
+          </div>
 
           <DeckPropertySection pane={pane} title="Células" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableCells}>
             <DeckField id="td-table-value-format" label="Formato dos valores">
@@ -166,6 +188,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
             </DeckField>
           </DeckPropertySection>
 
+          <div id="td-table-pane-fill">
           <DeckPropertySection
             pane={pane}
             title="Aparência das células"
@@ -223,6 +246,7 @@ export function TableViewOptionsInspector({ pane = false }: Props) {
               />
             </DeckField>
           </DeckPropertySection>
+          </div>
         </>
       ) : null}
     </>

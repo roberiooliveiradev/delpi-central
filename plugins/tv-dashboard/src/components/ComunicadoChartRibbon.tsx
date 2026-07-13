@@ -4,6 +4,7 @@ import {
   Database,
   Grid3x3,
   LayoutTemplate,
+  Palette,
   Replace,
 } from "lucide-react";
 import {
@@ -14,12 +15,14 @@ import {
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
   isChartElementEnabled,
+  mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
   partsToChartOptions,
   type ComunicadoChartType,
   type ComunicadoChartViewBlock,
   type ChartElementId,
   type ComunicadoBlock,
+  type ComunicadoChartOptions,
 } from "@delpi/tv-dashboard-presentation";
 
 import { CHART_ADD_ELEMENT_ITEMS } from "../content/chartAddElementItems";
@@ -31,6 +34,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { ChartAddElementMenu } from "./ChartAddElementMenu";
 import { ChartChangeTypeDialog } from "./ChartChangeTypeDialog";
+import { ChartColorsStylesMenu } from "./ChartColorsStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { FormatRibbonOrganizeSection, FormatRibbonFrameSection, FormatRibbonTypographySections } from "./formatRibbon";
 import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
@@ -55,8 +59,11 @@ export function ComunicadoChartRibbon() {
   const addElementPanelRef = useRef<HTMLDivElement>(null);
   const layoutAnchorRef = useRef<HTMLDivElement>(null);
   const layoutPanelRef = useRef<HTMLDivElement>(null);
+  const colorsAnchorRef = useRef<HTMLDivElement>(null);
+  const colorsPanelRef = useRef<HTMLDivElement>(null);
   const [addElementOpen, setAddElementOpen] = useState(false);
   const [layoutOpen, setLayoutOpen] = useState(false);
+  const [colorsOpen, setColorsOpen] = useState(false);
   const [changeTypeOpen, setChangeTypeOpen] = useState(false);
 
   if (!selected || selected.type !== "chart_view") {
@@ -103,6 +110,13 @@ export function ComunicadoChartRibbon() {
     setChangeTypeOpen(false);
   };
 
+  const persistOptions = (nextOptions: ComunicadoChartOptions) => {
+    updateSelected({
+      chartOptions: nextOptions,
+      chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
+    } as Partial<ComunicadoBlock>);
+  };
+
   return (
     <div className="td-deck-ribbon__groups">
       <FormatRibbonTypographySections />
@@ -117,6 +131,7 @@ export function ComunicadoChartRibbon() {
               onClick={() => {
                 setAddElementOpen((open) => !open);
                 setLayoutOpen(false);
+                setColorsOpen(false);
               }}
             />
             {addElementOpen ? (
@@ -145,6 +160,7 @@ export function ComunicadoChartRibbon() {
               onClick={() => {
                 setLayoutOpen((open) => !open);
                 setAddElementOpen(false);
+                setColorsOpen(false);
               }}
             />
             {layoutOpen ? (
@@ -178,6 +194,43 @@ export function ComunicadoChartRibbon() {
               </AnchoredPanelPortal>
             ) : null}
           </div>
+        </div>
+      </DeckRibbonGroup>
+
+      <DeckRibbonGroup label="Estilos" hint="Cores da série e presets de tema/grade.">
+        <div ref={colorsAnchorRef} className="td-composer__dropdown">
+          <DeckRibbonLargeButton
+            icon={Palette}
+            label={"Alterar\ncores"}
+            hint="Paletas Delpi para a cor da série e estilos rápidos (tema, grade, marcadores)."
+            onClick={() => {
+              setColorsOpen((open) => !open);
+              setAddElementOpen(false);
+              setLayoutOpen(false);
+            }}
+          />
+          {colorsOpen ? (
+            <AnchoredPanelPortal
+              open={colorsOpen}
+              anchorRef={colorsAnchorRef}
+              panelRef={colorsPanelRef}
+              variant="bare"
+              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+              className="td-chart-colors-portal"
+              role="menu"
+              aria-label="Alterar cores e estilos"
+            >
+              <div ref={colorsPanelRef} className="td-chart-float__popover">
+                <ChartColorsStylesMenu
+                  options={options}
+                  onApplyOptions={(next) => {
+                    persistOptions(next);
+                    setColorsOpen(false);
+                  }}
+                />
+              </div>
+            </AnchoredPanelPortal>
+          ) : null}
         </div>
       </DeckRibbonGroup>
 

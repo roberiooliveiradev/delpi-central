@@ -2816,6 +2816,178 @@
   color: var(--td-accent);
 }
 
+.dashboard-tv-dashboard .td-format-pane-icons__dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid var(--td-border);
+}
+
+.dashboard-tv-dashboard .td-format-pane-subtabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--td-border);
+}
+
+.dashboard-tv-dashboard .td-format-pane-subtab {
+  flex: 1;
+  padding: 8px 6px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--td-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-format-pane-subtab--active {
+  color: var(--td-text);
+  border-bottom-color: var(--td-accent);
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__head {
+  min-height: var(--td-pane-header-height);
+  padding: 10px 12px 8px;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__title {
+  font-size: 13px;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tabs {
+  padding: 0 8px;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tab {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu {
+  min-width: 260px;
+  max-width: 320px;
+  padding: 10px 12px;
+  border: 1px solid var(--td-border);
+  border-radius: var(--td-chrome-radius);
+  background: var(--td-surface);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__section {
+  margin-bottom: 12px;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__section h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--td-muted);
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__palettes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__palette {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--td-ribbon-tile-radius);
+  background: transparent;
+  color: var(--td-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__palette--active,
+.dashboard-tv-dashboard .td-chart-style-menu__palette:hover {
+  border-color: var(--td-accent);
+  background: color-mix(in srgb, var(--td-accent) 8%, transparent);
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__swatches {
+  display: flex;
+  height: 14px;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid var(--td-border);
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__swatches span {
+  flex: 1;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__palette-label {
+  font-size: 10px;
+  color: var(--td-muted);
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__styles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__style {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--td-ribbon-tile-radius);
+  background: transparent;
+  color: var(--td-text);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__style:hover {
+  border-color: var(--td-accent);
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb {
+  height: 36px;
+  border-radius: 2px;
+  border: 1px solid var(--td-border);
+  background:
+    linear-gradient(#089bdb, #089bdb) 10px 10px / 8px 20px no-repeat,
+    linear-gradient(#47bfff, #47bfff) 22px 14px / 8px 16px no-repeat,
+    linear-gradient(#003866, #003866) 34px 8px / 8px 22px no-repeat,
+    #f8fafc;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--office-dark {
+  background:
+    linear-gradient(#47bfff, #47bfff) 10px 10px / 8px 20px no-repeat,
+    linear-gradient(#089bdb, #089bdb) 22px 14px / 8px 16px no-repeat,
+    #0f172a;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--clean {
+  background:
+    linear-gradient(#089bdb, #089bdb) 12px 12px / 40px 16px no-repeat,
+    #fff;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__style-thumb--markers-on {
+  background:
+    radial-gradient(circle at 14px 18px, #089bdb 3px, transparent 4px),
+    radial-gradient(circle at 28px 12px, #089bdb 3px, transparent 4px),
+    radial-gradient(circle at 42px 20px, #089bdb 3px, transparent 4px),
+    linear-gradient(#089bdb, #089bdb) 12px 17px / 32px 2px no-repeat,
+    #f8fafc;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon__split {
   display: flex;
   align-items: center;
