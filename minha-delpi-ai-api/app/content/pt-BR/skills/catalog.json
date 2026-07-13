@@ -45,12 +45,12 @@
     },
     {
       "key": "technical-description-delpi",
-      "label": "Descrição técnica de matérias-primas",
-      "description": "Cria, explica e analisa descrições de matérias-primas no padrão das Normas Técnicas DELPI (grupos 1001–1025): terminais, cabos, isoladores, tubos, termoencolhível, etc. Usa a base documental global; não substitui consulta cadastral de produto por código.",
+      "label": "Descrição técnica de MP e intermediários",
+      "description": "Cria, explica e analisa descrições de matérias-primas (Normas Técnicas DELPI, grupos 1001–1025) e códigos de produtos intermediários (família 50xx: isolação CA–CV, cor 4 letras, comprimento, decape, terminais). Não substitui consulta cadastral de produto por código.",
       "policyFile": "technical-description-delpi-skill.md",
       "metadataFlag": "enabled",
       "legacyMetadataFlag": "technicalDescription",
-      "executionPathHint": "Normas_Tecnicas_DELPI / company-knowledge",
+      "executionPathHint": "Normas_Tecnicas_DELPI + Intermediate Product Codes",
       "aliases": [
         "descricao tecnica",
         "descrição técnica",
@@ -60,14 +60,21 @@
         "matéria-prima",
         "como descrever terminal",
         "nomenclatura mp",
-        "cadastro descricao"
+        "cadastro descricao",
+        "codigo intermediario",
+        "código intermediário",
+        "produto intermediario",
+        "intermediario 50xx"
       ],
       "examplePrompts": [
         "como descrever um terminal pino?",
         "monte a descrição de um cabo PVC 0,75mm2 preto",
         "analise esta descrição: TERM. FASTON 6,30X0,80 ...",
         "o que significa VDAR na descrição?",
-        "normas técnicas DELPI para cabos PP"
+        "normas técnicas DELPI para cabos PP",
+        "explique o código intermediário 50232222 CB1,50VERD-00255/06/06–6314–0111",
+        "o que significa CB e PRET no intermediário?",
+        "como montar um código intermediário família 5023"
       ],
       "sortOrder": 20
     },

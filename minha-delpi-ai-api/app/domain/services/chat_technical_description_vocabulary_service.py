@@ -41,6 +41,35 @@ class ChatTechnicalDescriptionVocabularyService(ChatAssistantVocabularyService):
         return cls.terms("ragQuerySeeds")
 
     @classmethod
+    def intermediate_rag_query_seeds(cls) -> tuple[str, ...]:
+        return cls.terms("intermediateRagQuerySeeds")
+
+    @classmethod
+    def source_docs(cls) -> tuple[str, ...]:
+        return cls.terms("sourceDocs")
+
+    @classmethod
+    def insulation_codes(cls) -> dict[str, str]:
+        return {
+            str(key).strip().upper(): str(value).strip()
+            for key, value in cls.mapping("insulationCodes").items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
+    def resolve_insulation_code(cls, token: str | None) -> str | None:
+        compact = "".join(ch for ch in str(token or "").upper() if ch.isalnum())
+
+        if not compact:
+            return None
+
+        return cls.insulation_codes().get(compact)
+
+    @classmethod
+    def insulation_code_tokens(cls) -> tuple[str, ...]:
+        return tuple(cls.insulation_codes().keys())
+
+    @classmethod
     def material_groups(cls) -> tuple[dict[str, Any], ...]:
         raw = cls.node("materialGroups")
 

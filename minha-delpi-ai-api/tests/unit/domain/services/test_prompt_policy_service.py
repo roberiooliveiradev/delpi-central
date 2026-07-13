@@ -317,6 +317,9 @@ def test_technical_description_skill_policy_covers_create_and_analyze():
     assert "analisar" in content
     assert "normas" in content
     assert "vdar" in content
+    assert "50xx" in content
+    assert "intermedi" in content
+    assert "pret" in content or "4 letras" in content
     assert "drawing-analysis-delpi" in content
 
 

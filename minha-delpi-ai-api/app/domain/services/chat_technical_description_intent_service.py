@@ -1,4 +1,4 @@
-"""Perguntas sobre descrição técnica de matérias-primas (Normas_Tecnicas_DELPI.md)."""
+"""Perguntas sobre descrição técnica de MP e intermediários (Normas + códigos 50xx)."""
 
 from __future__ import annotations
 
@@ -16,6 +16,13 @@ from app.domain.services.chat_technical_description_vocabulary_service import (
 
 
 class ChatTechnicalDescriptionIntentService:
+    _INTERMEDIATE_FAMILY_RE = re.compile(r"\b(50\d{2})(?:\d{4,})?\b")
+    _INTERMEDIATE_INSULATION_TOKEN_RE = re.compile(
+        r"(?<![a-z0-9])c[abftv](?:\d|,\d)",
+        re.IGNORECASE,
+    )
+    _MP_GROUP_RE = re.compile(r"\bgrupo\s+(10\d{2})\b")
+
     @classmethod
     def requires_normas_knowledge(cls, message: str | None) -> bool:
         vocab = ChatTechnicalDescriptionVocabularyService
@@ -24,13 +31,19 @@ class ChatTechnicalDescriptionIntentService:
         if not normalized:
             return False
 
-        if ChatProductQueryIntentService.extract_product_code(message or ""):
-            return False
+        intermediate_query = cls._is_intermediate_nomenclature_query(normalized)
 
         if cls._contains_any(normalized, vocab.product_lookup_markers()):
             return False
 
+        if ChatProductQueryIntentService.extract_product_code(message or ""):
+            if not intermediate_query:
+                return False
+
         if cls._contains_any(normalized, vocab.normas_markers()):
+            return True
+
+        if intermediate_query:
             return True
 
         if cls._contains_any(normalized, vocab.guidance_verbs()):
@@ -46,6 +59,8 @@ class ChatTechnicalDescriptionIntentService:
                 return True
             if "grupo " in normalized and re.search(r"\b10\d{2}\b", normalized):
                 return True
+            if "grupo " in normalized and re.search(r"\b50\d{2}\b", normalized):
+                return True
 
         if cls._contains_any(normalized, vocab.field_meaning_markers()):
             if cls._contains_any(normalized, vocab.description_fields()):
@@ -54,9 +69,19 @@ class ChatTechnicalDescriptionIntentService:
                 return True
             if cls._mentions_color_abbreviation(normalized):
                 return True
+            if cls._mentions_insulation_code(normalized):
+                return True
 
         if re.search(r"\bgrupo\s+10\d{2}\b", normalized) and (
             "descricao" in normalized or "estrutura" in normalized or "campo" in normalized
+        ):
+            return True
+
+        if re.search(r"\bgrupo\s+50\d{2}\b", normalized) and (
+            "descricao" in normalized
+            or "estrutura" in normalized
+            or "codigo" in normalized
+            or "campo" in normalized
         ):
             return True
 
@@ -85,11 +110,17 @@ class ChatTechnicalDescriptionIntentService:
             if cls._contains_any(normalized, keywords):
                 return group_code, label, str(keywords[0])
 
-        group_match = re.search(r"\bgrupo\s+(10\d{2})\b", normalized)
+        group_match = cls._MP_GROUP_RE.search(normalized)
 
         if group_match:
             code = group_match.group(1)
             return code, f"grupo {code}", code
+
+        family_match = cls._INTERMEDIATE_FAMILY_RE.search(normalized)
+
+        if family_match:
+            code = family_match.group(1)
+            return code, "intermediários", code
 
         return None
 
@@ -108,12 +139,19 @@ class ChatTechnicalDescriptionIntentService:
         )
 
     @classmethod
+    def resolve_insulation_code(cls, token: str | None) -> str | None:
+        return ChatTechnicalDescriptionVocabularyService.resolve_insulation_code(token)
+
+    @classmethod
     def build_rag_query(cls, message: str | None) -> str:
         vocab = ChatTechnicalDescriptionVocabularyService
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         parts = list(vocab.rag_query_seeds())
-
+        intermediate = cls._is_intermediate_nomenclature_query(normalized)
         group = cls.resolve_material_group(normalized)
+
+        if intermediate or (group and str(group[0]).startswith("50")):
+            parts.extend(vocab.intermediate_rag_query_seeds())
 
         if group:
             group_code, label, _keyword = group
@@ -133,7 +171,22 @@ class ChatTechnicalDescriptionIntentService:
                 [
                     f"abreviação de cor {color}",
                     meaning or "",
-                    "COR abreviação 1ª e 4ª letra",
+                ]
+            )
+            if intermediate or (group and str(group[0]).startswith("50")):
+                parts.append("cor 4 letras intermediário")
+            else:
+                parts.append("COR abreviação 1ª e 4ª letra")
+
+        insulation = cls._first_insulation_code_in_text(normalized)
+
+        if insulation:
+            meaning = cls.resolve_insulation_code(insulation)
+            parts.extend(
+                [
+                    f"isolação {insulation}",
+                    meaning or "",
+                    "material de isolação bitola",
                 ]
             )
 
@@ -143,8 +196,72 @@ class ChatTechnicalDescriptionIntentService:
         return " ".join(dict.fromkeys(part for part in parts if part))
 
     @classmethod
+    def _is_intermediate_nomenclature_query(cls, normalized: str) -> bool:
+        vocab = ChatTechnicalDescriptionVocabularyService
+
+        if not normalized:
+            return False
+
+        if "intermedi" in normalized:
+            return True
+
+        if cls._contains_any(
+            normalized,
+            (
+                "familia 50",
+                "familia 50xx",
+                "50xx",
+                "codigo intermediario",
+                "nomenclatura intermediario",
+            ),
+        ):
+            return True
+
+        has_family = bool(cls._INTERMEDIATE_FAMILY_RE.search(normalized))
+        has_structure = cls._has_intermediate_structure_tokens(normalized)
+        has_guidance = cls._contains_any(normalized, vocab.guidance_verbs())
+
+        if has_family and (
+            has_structure
+            or has_guidance
+            or "estrutura" in normalized
+            or "decape" in normalized
+            or "nomenclatura" in normalized
+        ):
+            return True
+
+        if has_structure and (
+            has_guidance
+            or "estrutura" in normalized
+            or "decape" in normalized
+            or "nomenclatura" in normalized
+        ):
+            return True
+
+        return False
+
+    @classmethod
+    def _has_intermediate_structure_tokens(cls, normalized: str) -> bool:
+        if cls._INTERMEDIATE_INSULATION_TOKEN_RE.search(normalized or ""):
+            return True
+
+        if re.search(r"\b\d{2}/\d{2}\b", normalized or ""):
+            return True
+
+        # Cores de 4 letras típicas do intermediário (PRET, VERD, …).
+        for token in ("PRET", "BRAN", "VERD", "AZUL", "VERM", "AMAR", "CINZ", "MARR"):
+            if re.search(rf"(?<![a-z0-9]){token.lower()}(?![a-z0-9])", normalized or ""):
+                return True
+
+        return False
+
+    @classmethod
     def _mentions_color_abbreviation(cls, normalized: str) -> bool:
         return cls._first_color_abbreviation_in_text(normalized) is not None
+
+    @classmethod
+    def _mentions_insulation_code(cls, normalized: str) -> bool:
+        return cls._first_insulation_code_in_text(normalized) is not None
 
     @classmethod
     def _first_color_abbreviation_in_text(cls, normalized: str) -> str | None:
@@ -153,7 +270,7 @@ class ChatTechnicalDescriptionIntentService:
         if not upper.strip():
             return None
 
-        # Compostos primeiro (VDAR antes de VD/AR).
+        # Compostos / 4 letras primeiro (VDAR, PRET antes de VD/PT).
         tokens = sorted(
             ChatTechnicalDescriptionVocabularyService.color_abbreviation_tokens(),
             key=len,
@@ -161,6 +278,19 @@ class ChatTechnicalDescriptionIntentService:
         )
 
         for token in tokens:
+            if re.search(rf"(?<![A-Z0-9]){re.escape(token)}(?![A-Z0-9])", upper):
+                return token
+
+        return None
+
+    @classmethod
+    def _first_insulation_code_in_text(cls, normalized: str) -> str | None:
+        upper = str(normalized or "").upper()
+
+        if not upper.strip():
+            return None
+
+        for token in ChatTechnicalDescriptionVocabularyService.insulation_code_tokens():
             if re.search(rf"(?<![A-Z0-9]){re.escape(token)}(?![A-Z0-9])", upper):
                 return token
 

@@ -9,7 +9,7 @@ Skill **Conhecimento da empresa** — base documental global da plataforma.
    - **Arquivos desta conversa** (anexos da sessão)
 3. Se houver trechos relevantes no contexto documental, **cite a fonte** de forma natural (título ou tipo de documento). Não invente políticas ou números que não apareçam nas fontes.
 4. Se não houver trecho relevante na base, diga que não encontrou na documentação autorizada e sugira reformular a pergunta ou anexar material.
-5. Para **descrição técnica de matérias-primas** (criar/analisar nomenclatura TOTVS), priorize a skill **`technical-description-delpi`** e o documento `Normas_Tecnicas_DELPI.md` (grupos 1001–1025).
+5. Para **descrição técnica de matérias-primas** ou **códigos intermediários 50xx** (criar/analisar nomenclatura TOTVS), priorize a skill **`technical-description-delpi`**, o documento `Normas_Tecnicas_DELPI.md` (grupos 1001–1025) e, quando couber, `Understanding DELPI Intermediate Product Codes`.
 6. Não trate conhecimento de uma sessão ou de outro usuário como regra global da empresa.
 
 ## O que não fazer

@@ -1,5 +1,10 @@
 {
   "sourceDoc": "docs/knowledge/domains/global/normas-tecnicas-delpi.md",
+  "sourceDocs": [
+    "docs/knowledge/domains/global/normas-tecnicas-delpi.md",
+    "docs/knowledge/sources/gpt-instructions/Understanding DELPI Intermediate Product Codes.md",
+    "docs/knowledge/domains/gpt-instructions/gpt-understanding-delpi-intermediate-product-codes.md"
+  ],
   "guidanceVerbs": [
     "como descrever",
     "como descrevo",
@@ -34,7 +39,19 @@
     "monte a descricao",
     "montar a descricao",
     "crie a descricao",
-    "criar a descricao"
+    "criar a descricao",
+    "como criar codigo intermediario",
+    "como criar código intermediário",
+    "como montar codigo intermediario",
+    "como montar código intermediário",
+    "interprete o codigo intermediario",
+    "interprete o código intermediário",
+    "explique o codigo intermediario",
+    "explique o código intermediário",
+    "explique o codigo",
+    "explique o código",
+    "interprete o codigo",
+    "interprete o código"
   ],
   "normasMarkers": [
     "normas tecnicas",
@@ -43,7 +60,17 @@
     "normas_tecnicas",
     "normas-tecnicas",
     "normas técnicas",
-    "norma técnica"
+    "norma técnica",
+    "codigo intermediario",
+    "código intermediário",
+    "codigos intermediarios",
+    "códigos intermediários",
+    "produto intermediario",
+    "produto intermediário",
+    "produtos intermediarios",
+    "produtos intermediários",
+    "nomenclatura intermediario",
+    "nomenclatura intermediário"
   ],
   "descriptionGuidanceMarkers": [
     "descricao tecnica",
@@ -80,7 +107,15 @@
     "validacao de descricao",
     "validação de descrição",
     "analise de descricao",
-    "análise de descrição"
+    "análise de descrição",
+    "descricao intermediario",
+    "descrição intermediário",
+    "familia 50",
+    "família 50",
+    "familia 50xx",
+    "família 50xx",
+    "estrutura do codigo intermediario",
+    "estrutura do código intermediário"
   ],
   "fieldMeaningMarkers": [
     "o que significa",
@@ -130,7 +165,18 @@
     "trava",
     "fitado",
     "granel",
-    "blister"
+    "blister",
+    "decape",
+    "decape esquerdo",
+    "decape direito",
+    "terminal esquerdo",
+    "terminal direito",
+    "isolador esquerdo",
+    "isolador direito",
+    "familia",
+    "família",
+    "sequencia",
+    "sequência"
   ],
   "productLookupMarkers": [
     "descricao do produto",
@@ -155,7 +201,41 @@
     "estrutura da descrição campos exemplo",
     "cadastro TOTVS Protheus"
   ],
+  "intermediateRagQuerySeeds": [
+    "Understanding DELPI Intermediate Product Codes",
+    "código intermediário 50xx",
+    "produto intermediário família 50",
+    "CA CB CF CT CV isolação bitola",
+    "cor 4 letras PRET BRAN VERD",
+    "comprimento mm decape terminal isolador",
+    "gpt-understanding-delpi-intermediate-product-codes"
+  ],
   "materialGroups": [
+    {
+      "groupCode": "50xx",
+      "label": "intermediários",
+      "keywords": [
+        "intermediario",
+        "intermediário",
+        "intermediarios",
+        "intermediários",
+        "codigo intermediario",
+        "código intermediário",
+        "produto intermediario",
+        "produto intermediário",
+        "pi intermediario",
+        "pi intermediário",
+        "familia 50xx",
+        "família 50xx",
+        "familia 50",
+        "família 50",
+        "50xx",
+        "5021",
+        "5022",
+        "5023",
+        "5058"
+      ]
+    },
     {
       "groupCode": "1006",
       "label": "cabos PP com plug",
@@ -319,6 +399,25 @@
     "ALBN": "Azul-Branco",
     "ARBN": "Amarelo-Branco",
     "PTBN": "Preto-Branco",
-    "OURO": "Ouro"
+    "OURO": "Ouro",
+    "AZUL": "Azul",
+    "BRAN": "Branco",
+    "MARR": "Marrom",
+    "ROSA": "Rosa",
+    "VERD": "Verde",
+    "VIOL": "Violeta",
+    "AMAR": "Amarelo",
+    "CINZ": "Cinza",
+    "LILA": "Lilás",
+    "PRET": "Preto",
+    "ROXO": "Roxo",
+    "VERM": "Vermelho"
+  },
+  "insulationCodes": {
+    "CA": "PVC",
+    "CB": "EPR",
+    "CF": "Silicone",
+    "CT": "Teflon",
+    "CV": "Especial"
   }
 }

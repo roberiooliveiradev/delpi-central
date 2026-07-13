@@ -133,6 +133,59 @@ def test_vocabulary_material_groups_and_colors_loaded():
 
     assert groups
     assert any(group["groupCode"] == "1008" for group in groups)
+    assert any(group["groupCode"] == "50xx" for group in groups)
     assert "VDAR" in colors
     assert "PT" in colors
+    assert "PRET" in colors
+    assert "VERD" in colors
     assert ChatTechnicalDescriptionVocabularyService.rag_query_seeds()
+    assert ChatTechnicalDescriptionVocabularyService.intermediate_rag_query_seeds()
+    assert (
+        ChatTechnicalDescriptionVocabularyService.resolve_insulation_code("CB") == "EPR"
+    )
+
+
+def test_requires_normas_for_intermediate_code_explanation():
+    assert ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+        "explique o código intermediário 50232222 CB1,50VERD-00255/06/06–6314–0111"
+    )
+
+
+def test_requires_normas_for_intermediate_how_to_build():
+    assert ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+        "como montar um código intermediário família 5023"
+    )
+
+
+def test_does_not_require_normas_for_intermediate_product_lookup():
+    assert not ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+        "qual a descrição do produto 50232222"
+    )
+
+
+def test_resolve_material_group_intermediate():
+    group = ChatTechnicalDescriptionIntentService.resolve_material_group(
+        "codigo intermediario 5023"
+    )
+    assert group is not None
+    assert group[0] in {"50xx", "5023"}
+    assert "intermedi" in group[1].lower()
+
+
+def test_resolve_color_abbreviation_intermediate_four_letters():
+    assert (
+        ChatTechnicalDescriptionIntentService.resolve_color_abbreviation("PRET")
+        == "Preto"
+    )
+    assert (
+        ChatTechnicalDescriptionIntentService.resolve_color_abbreviation("VERD")
+        == "Verde"
+    )
+
+
+def test_build_rag_query_includes_intermediate_seeds():
+    query = ChatTechnicalDescriptionIntentService.build_rag_query(
+        "explique o código intermediário CB1,50VERD"
+    )
+    assert "50xx" in query or "intermediário" in query.lower() or "Intermediate" in query
+    assert "CB" in query.upper()

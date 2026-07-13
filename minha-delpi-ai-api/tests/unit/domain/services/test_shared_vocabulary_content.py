@@ -26,7 +26,10 @@ def test_technical_description_vocabulary_loaded():
 
     assert ChatTechnicalDescriptionVocabularyService.material_groups()
     assert "VDAR" in ChatTechnicalDescriptionVocabularyService.color_abbreviations()
+    assert "PRET" in ChatTechnicalDescriptionVocabularyService.color_abbreviations()
+    assert "CB" in ChatTechnicalDescriptionVocabularyService.insulation_codes()
     assert ChatTechnicalDescriptionVocabularyService.guidance_verbs()
+    assert ChatTechnicalDescriptionVocabularyService.intermediate_rag_query_seeds()
 
 
 def test_session_topic_change_markers_loaded():
