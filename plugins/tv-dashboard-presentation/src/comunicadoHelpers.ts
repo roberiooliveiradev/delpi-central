@@ -607,7 +607,7 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
     headline:
       headingBlock && "content" in headingBlock
         ? headingBlock.content
-        : config.headline ?? DEFAULT_HEADLINE,
+        : (config.headline ?? ""),
     subtitle: textBlock && "content" in textBlock ? textBlock.content : config.subtitle ?? "",
     background: serializedBackground,
     blocks,

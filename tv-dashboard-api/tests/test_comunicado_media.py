@@ -46,6 +46,29 @@ def test_comunicado_enrichment_legacy_headline():
     assert "blocks" not in data
 
 
+def test_comunicado_enrichment_blank_slide_keeps_rich_empty_blocks():
+    """Slide em branco (blocks []) não vira legado com Título / fundo escuro."""
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {"version": 4, "headline": "", "blocks": [], "background": {"type": "color", "value": "#ffffff"}},
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    assert data["blocks"] == []
+    assert data["headline"] == ""
+    assert data["background"] == {"type": "color", "value": "#ffffff"}
+
+
+def test_comunicado_enrichment_default_background_is_white():
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {"blocks": [{"id": "1", "type": "text", "content": "x", "frame": {"x": 0, "y": 0, "w": 10, "h": 10}}]},
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    assert data["background"] == {"type": "color", "value": "#ffffff"}
+
+
 def test_comunicado_enrichment_resolves_media_url():
     asset_id = str(uuid4())
     playlist_id = str(uuid4())

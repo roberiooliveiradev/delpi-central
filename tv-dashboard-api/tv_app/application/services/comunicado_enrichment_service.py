@@ -50,7 +50,9 @@ class ComunicadoEnrichmentService:
             public_token=public_token,
         )
         blocks_raw = cfg.get("blocks")
-        if not isinstance(blocks_raw, list) or not blocks_raw:
+        # Sem chave `blocks` = legado headline/subtitle (tdp-message).
+        # `blocks: []` = slide WYSIWYG em branco — manter layout rico (fundo branco).
+        if not isinstance(blocks_raw, list):
             legacy_payload: dict[str, Any] = {
                 "headline": str(cfg.get("headline") or message("comunicadoDefaultHeadline", "Comunicado")),
                 "subtitle": str(cfg.get("subtitle") or ""),
@@ -65,6 +67,21 @@ class ComunicadoEnrichmentService:
             playlist_id=playlist_id,
             public_token=public_token,
         )
+        if len(blocks_raw) == 0:
+            empty_payload: dict[str, Any] = {
+                "version": int(cfg.get("version") or 2),
+                "headline": str(cfg.get("headline") or ""),
+                "subtitle": str(cfg.get("subtitle") or ""),
+                "background": background,
+                "blocks": [],
+            }
+            data_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else None
+            if data_filters:
+                empty_payload["dataFilters"] = data_filters
+            if custom_fonts:
+                empty_payload["customFonts"] = custom_fonts
+            return empty_payload
+
         blocks = [
             self._enrich_block(
                 block,
@@ -75,7 +92,11 @@ class ComunicadoEnrichmentService:
             for block in blocks_raw
             if isinstance(block, dict)
         ]
-        headline = str(cfg.get("headline") or self._headline_from_blocks(blocks_raw) or message("comunicadoDefaultHeadline", "Título"))
+        headline = str(
+            cfg.get("headline")
+            or self._headline_from_blocks(blocks_raw)
+            or message("comunicadoDefaultHeadline", "Título")
+        )
         subtitle = str(cfg.get("subtitle") or "")
         version = int(cfg.get("version") or 0) or self._detect_version(blocks)
         data_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else None
@@ -163,7 +184,7 @@ class ComunicadoEnrichmentService:
         public_token: str | None,
     ) -> dict[str, Any]:
         if not isinstance(background, dict):
-            return {"type": "color", "value": "#0f172a"}
+            return {"type": "color", "value": "#ffffff"}
         bg_type = str(background.get("type") or "color")
         if bg_type == "image":
             asset_id = background.get("assetId")
@@ -179,7 +200,20 @@ class ComunicadoEnrichmentService:
         value = background.get("value")
         if bg_type == "color" and isinstance(value, str) and value.strip():
             return {"type": "color", "value": value.strip()}
-        return {"type": "color", "value": "#0f172a"}
+        if bg_type == "gradient":
+            from_color = background.get("from")
+            to_color = background.get("to")
+            if isinstance(from_color, str) and isinstance(to_color, str):
+                angle = background.get("angle")
+                payload: dict[str, Any] = {
+                    "type": "gradient",
+                    "from": from_color.strip() or "#ffffff",
+                    "to": to_color.strip() or "#ffffff",
+                }
+                if isinstance(angle, (int, float)):
+                    payload["angle"] = int(angle)
+                return payload
+        return {"type": "color", "value": "#ffffff"}
 
     def _enrich_block(
         self,
