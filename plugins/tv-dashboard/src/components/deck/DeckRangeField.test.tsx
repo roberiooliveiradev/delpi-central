@@ -8,6 +8,21 @@ afterEach(() => {
 });
 
 describe("DeckRangeField", () => {
+  it("mantém o input numérico depois do slider no DOM (layout base)", () => {
+    render(
+      <DeckRangeField id="td-layout" label="Larg. px" value={10} min={0} max={100} onChange={() => undefined} />,
+    );
+    const slider = screen.getByLabelText("Larg. px");
+    const input = screen.getByLabelText("Larg. px (digitar)");
+    const row = slider.closest(".td-deck-ribbon__range-row");
+    expect(row).toBeTruthy();
+    expect(row!.contains(slider)).toBe(true);
+    expect(row!.contains(input)).toBe(true);
+    expect(
+      Boolean(slider.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBe(true);
+  });
+
   it("permite digitar o valor no input numérico", () => {
     const onChange = vi.fn();
     render(

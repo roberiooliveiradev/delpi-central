@@ -3880,25 +3880,36 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 4px;
   flex: 0 0 auto;
   width: 148px;
   min-width: 148px;
   padding: 2px 0;
 }
 
+/* Label → slider → input (número sempre na base da célula). */
 .dashboard-tv-dashboard .td-deck-ribbon__range-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
   width: 100%;
   min-width: 0;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__range-input {
+.dashboard-tv-dashboard .td-deck-ribbon__range-row .td-deck-ribbon__range,
+.dashboard-tv-dashboard .td-deck-ribbon__range-row .td-deck-ribbon__opacity-range {
+  width: 100%;
+  min-width: 0;
   flex: 0 0 auto;
-  width: 64px;
-  min-width: 64px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__range-input,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__range-input.td-deck-ribbon__number--compact {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .dashboard-tv-dashboard .td-deck-inspector__range-stack {

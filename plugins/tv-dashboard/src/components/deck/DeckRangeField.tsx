@@ -28,7 +28,7 @@ function parseAndClamp(raw: string, min: number, max: number, fallback: number):
 }
 
 /**
- * Campo contínuo canônico — slider + input numérico editável (fallback de digitar).
+ * Campo contínuo canônico — rótulo, slider e input numérico abaixo (digitar).
  */
 export function DeckRangeField({
   id,
