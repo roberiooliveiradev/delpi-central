@@ -30,7 +30,7 @@ export function resolveObjectRibbonTab(params: {
   if (!selected) return "shape";
 
   if (selected.type === "chart_view") {
-    // Sempre aba Elemento «gráfico»: tipo/rótulos + chrome de forma na mesma faixa.
+    // Aba Elemento do gráfico: layout/tipo/dados — sem «Estilos de forma» (só bloco shape).
     return "chart";
   }
 

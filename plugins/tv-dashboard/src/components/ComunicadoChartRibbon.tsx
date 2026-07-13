@@ -37,7 +37,6 @@ import { ChartChangeTypeDialog } from "./ChartChangeTypeDialog";
 import { ChartColorsStylesMenu } from "./ChartColorsStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { FormatRibbonOrganizeSection, FormatRibbonFrameSection, FormatRibbonTypographySections } from "./formatRibbon";
-import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonLargeButton } from "./deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -50,7 +49,6 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 export function ComunicadoChartRibbon() {
   const {
     selected,
-    selectedChartPart,
     updateSelected,
     selectChartPart,
     openDataPanel,
@@ -294,16 +292,8 @@ export function ComunicadoChartRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <ChartRibbonShapeChrome block={block} />
       <FormatRibbonFrameSection />
       <FormatRibbonOrganizeSection />
-
-      {selectedChartPart == null ? (
-        <p className="td-subtitle td-deck-ribbon__hint">
-          Forma aplica-se à área do gráfico. Clique em título, legenda ou série para formatar a
-          parte.
-        </p>
-      ) : null}
 
       <ChartChangeTypeDialog
         open={changeTypeOpen}
