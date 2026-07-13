@@ -121,7 +121,14 @@ export function ComunicadoShapeRibbon() {
     selected?.type === "chart_view" && selectedChartPart
       ? chartPartVisualPrimitive(selectedChartPart)
       : null;
-  const chartTextChromeKinds = new Set(["title", "legend", "axisTitle", "dataLabel", "dataTable"]);
+  const chartTextChromeKinds = new Set([
+    "title",
+    "legend",
+    "axisTitle",
+    "dataLabel",
+    "dataLabels",
+    "dataTable",
+  ]);
   const chartPartHasOwnChrome =
     Boolean(selectedChartVisual) ||
     Boolean(selectedChartPart && chartTextChromeKinds.has(selectedChartPart.kind));

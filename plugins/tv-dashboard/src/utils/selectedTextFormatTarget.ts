@@ -53,7 +53,14 @@ export type SelectedTextFormatTarget =
     };
 
 const KPI_TEXT_FORMAT_KINDS = new Set(["title", "hint", "value"]);
-const CHART_TEXT_FORMAT_KINDS = new Set(["title", "legend", "axisTitle", "dataLabel", "axis"]);
+const CHART_TEXT_FORMAT_KINDS = new Set([
+  "title",
+  "legend",
+  "axisTitle",
+  "dataLabel",
+  "dataLabels",
+  "axis",
+]);
 
 export function isKpiTextFormatPart(part: ComunicadoKpiPartRef | null | undefined): boolean {
   return Boolean(part && KPI_TEXT_FORMAT_KINDS.has(part.kind));
@@ -62,8 +69,8 @@ export function isKpiTextFormatPart(part: ComunicadoKpiPartRef | null | undefine
 export function isChartTextFormatPart(part: ComunicadoChartPartRef | null | undefined): boolean {
   if (!part) return false;
   if (!CHART_TEXT_FORMAT_KINDS.has(part.kind)) return false;
-  // axis/dataLabel: tipografia mesmo quando editable=false em alguns kinds
-  if (part.kind === "axis" || part.kind === "dataLabel") return true;
+  // axis/dataLabel(s): tipografia mesmo quando editable=false em alguns kinds
+  if (part.kind === "axis" || part.kind === "dataLabel" || part.kind === "dataLabels") return true;
   return chartPartAllowsEdit(part);
 }
 

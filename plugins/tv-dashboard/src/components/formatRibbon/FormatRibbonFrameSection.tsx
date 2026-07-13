@@ -81,6 +81,15 @@ export function FormatRibbonFrameSection() {
 
   if (!selected || selectedIds.length > 1) return null;
 
+  /* Parte de gráfico sem geometria própria (rótulos, série, eixos…) — não editar o frame do bloco. */
+  if (
+    selected.type === "chart_view" &&
+    selectedChartPart &&
+    !chartPartAllowsFrame(selectedChartPart)
+  ) {
+    return null;
+  }
+
   const kpiPartTarget =
     selected.type === "kpi_view" && selectedKpiPart && kpiPartAllowsFrame(selectedKpiPart)
       ? selectedKpiPart

@@ -96,6 +96,8 @@ export type ChartPartRef =
   | { kind: "series"; seriesIndex: number }
   | { kind: "marker"; seriesIndex: number; pointIndex: number }
   | { kind: "dataLabel"; seriesIndex: number; pointIndex: number }
+  /** Seleção em lote — tipografia comum a todos os rótulos de dados. */
+  | { kind: "dataLabels" }
   | { kind: "axis"; axis: "x" | "y" }
   | { kind: "axisTitle"; axis: "x" | "y" }
   | { kind: "grid" }
@@ -207,6 +209,8 @@ export function serializeChartPartRef(ref: ChartPartRef): string {
       return `marker:${ref.seriesIndex}:${ref.pointIndex}`;
     case "dataLabel":
       return `dataLabel:${ref.seriesIndex}:${ref.pointIndex}`;
+    case "dataLabels":
+      return "dataLabels";
     case "axis":
       return `axis:${ref.axis}`;
     case "axisTitle":
@@ -227,6 +231,7 @@ export function parseChartPartRef(raw: string | null | undefined): ChartPartRef 
   if (value === "legend") return { kind: "legend" };
   if (value === "grid") return { kind: "grid" };
   if (value === "dataTable") return { kind: "dataTable" };
+  if (value === "dataLabels") return { kind: "dataLabels" };
 
   const series = /^series:(\d+)$/.exec(value);
   if (series) return { kind: "series", seriesIndex: Number(series[1]) };
@@ -263,13 +268,23 @@ export function isChartPartRefEqual(a: ChartPartRef | null | undefined, b: Chart
   return serializeChartPartRef(a) === serializeChartPartRef(b);
 }
 
+/** Seleção visual: grupo `dataLabels` destaca todos os rótulos individuais. */
+export function isChartPartInteractionSelected(
+  ref: ChartPartRef,
+  selectedPart?: ChartPartRef | null,
+): boolean {
+  if (!selectedPart) return false;
+  if (selectedPart.kind === "dataLabels" && ref.kind === "dataLabel") return true;
+  return isChartPartRefEqual(ref, selectedPart);
+}
+
 export function chartPartDomProps(
   ref: ChartPartRef,
   selectedPart?: ChartPartRef | null,
 ): { [CHART_PART_DATA_ATTR]: string; "aria-selected": boolean } {
   return {
     [CHART_PART_DATA_ATTR]: serializeChartPartRef(ref),
-    "aria-selected": isChartPartRefEqual(ref, selectedPart),
+    "aria-selected": isChartPartInteractionSelected(ref, selectedPart),
   };
 }
 
@@ -290,6 +305,7 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   series: { movable: false, editable: false, deletable: true, resizable: false },
   marker: { movable: false, editable: false, deletable: true, resizable: false },
   dataLabel: { movable: false, editable: true, deletable: true, resizable: false },
+  dataLabels: { movable: false, editable: true, deletable: true, resizable: false },
   /** Eixos ganham/perdem espaço via `plotArea.frame` (4H.6) — sem frame próprio. */
   axis: { movable: false, editable: false, deletable: true, resizable: false },
   axisTitle: { movable: false, editable: true, deletable: true, resizable: false },
@@ -321,7 +337,7 @@ export function bindChartPartPointer(
   opts?: BindChartPartPointerOptions,
 ) {
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+  const selected = isChartPartInteractionSelected(ref, interaction?.selectedPart);
   const editing = opts?.editing ?? isChartPartRefEqual(ref, interaction?.editingPart);
   const caps = chartPartCapabilities(ref);
   const moveWhenSelected = opts?.moveWhenSelected !== false && caps.movable;
@@ -423,6 +439,7 @@ export const CHART_PART_FONT_SIZE_DEFAULTS = {
   axis: 9,
   axisTitle: 9,
   dataLabel: 8,
+  dataLabels: 8,
 } as const;
 
 export type ChartTextPartKind = keyof typeof CHART_PART_FONT_SIZE_DEFAULTS;
@@ -452,10 +469,21 @@ export function chartPartTypographyStyle(
   ref: ChartPartRef,
   options?: { boxLayout?: boolean },
 ): CSSProperties | undefined {
-  const style = getChartPartState(parts, ref)?.style;
+  const pointStyle = getChartPartState(parts, ref)?.style;
+  const groupStyle =
+    ref.kind === "dataLabel"
+      ? getChartPartState(parts, { kind: "dataLabels" })?.style
+      : undefined;
+  const style = groupStyle || pointStyle ? { ...groupStyle, ...pointStyle } : undefined;
   const css: CSSProperties = {};
-  if (isChartTextPartKind(ref.kind)) {
-    css.fontSize = `${resolveChartPartFontSize(ref.kind, style)}px`;
+  const textKind =
+    ref.kind === "dataLabels"
+      ? "dataLabels"
+      : isChartTextPartKind(ref.kind)
+        ? ref.kind
+        : null;
+  if (textKind) {
+    css.fontSize = `${resolveChartPartFontSize(textKind, style)}px`;
   }
   if (!style) {
     return Object.keys(css).length > 0 ? css : undefined;
@@ -583,6 +611,9 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   parts[serializeChartPartRef({ kind: "dataTable" })] = {
     visible: Boolean(config.showDataTable),
   };
+  parts[serializeChartPartRef({ kind: "dataLabels" })] = {
+    visible: Boolean(config.showDataLabels),
+  };
 
   return parts;
 }
@@ -603,7 +634,7 @@ export function mergeChartPartsWithOptions(
     const prevState = prev[key];
     const projectedState = projected[key];
     if (!prevState) continue;
-    if (key === "chartArea" || key === "plotArea" || key.startsWith("dataLabel:")) {
+    if (key === "chartArea" || key === "plotArea" || key === "dataLabels" || key.startsWith("dataLabel:")) {
       merged[key] = {
         ...projectedState,
         ...prevState,

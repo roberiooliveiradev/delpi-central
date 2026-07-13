@@ -15,6 +15,7 @@ import {
   deleteChartPart,
   filterVisibleSeriesPoints,
   findChartPartFromTarget,
+  isChartPartInteractionSelected,
   isChartPartRefEqual,
   mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,
@@ -254,6 +255,8 @@ describe("seriesChartParts", () => {
     expect(chartPartAllowsFrame({ kind: "plotArea" })).toBe(true);
     expect(chartPartAllowsFrame({ kind: "chartArea" })).toBe(true);
     expect(chartPartAllowsFrame({ kind: "series", seriesIndex: 0 })).toBe(false);
+    expect(chartPartAllowsFrame({ kind: "dataLabels" })).toBe(false);
+    expect(chartPartAllowsFrame({ kind: "dataLabel", seriesIndex: 0, pointIndex: 0 })).toBe(false);
   });
 
   it("defaultChartPartFrame entrega % estáveis", () => {
@@ -301,7 +304,23 @@ describe("seriesChartParts", () => {
     expect(normalized.plotArea?.frame).toBeUndefined();
   });
 
-  it("chartPartTypographyStyle em título aplica caixa coluna (verticalAlign)", () => {
+  it("isChartPartInteractionSelected destaca todos os rótulos no grupo dataLabels", () => {
+    const { isChartPartInteractionSelected } = require("./seriesChartParts") as typeof import("./seriesChartParts");
+    expect(
+      isChartPartInteractionSelected(
+        { kind: "dataLabel", seriesIndex: 0, pointIndex: 2 },
+        { kind: "dataLabels" },
+      ),
+    ).toBe(true);
+    expect(
+      isChartPartInteractionSelected(
+        { kind: "dataLabel", seriesIndex: 0, pointIndex: 2 },
+        { kind: "dataLabel", seriesIndex: 0, pointIndex: 1 },
+      ),
+    ).toBe(false);
+  });
+});
+
     const parts = upsertChartPartState({}, { kind: "title" }, {
       style: { fontSize: 18, textAlign: "center", verticalAlign: "bottom" },
     });

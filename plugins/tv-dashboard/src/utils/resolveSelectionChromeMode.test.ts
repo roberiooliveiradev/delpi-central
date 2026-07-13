@@ -54,5 +54,6 @@ describe("resolveSelectionChromeMode", () => {
   it("chartPartSelectionLabel cobre grade e plot", () => {
     expect(chartPartSelectionLabel({ kind: "grid" })).toBe("Grade");
     expect(chartPartSelectionLabel({ kind: "plotArea" })).toBe("Área de plotagem");
+    expect(chartPartSelectionLabel({ kind: "dataLabels" })).toBe("Rótulos de dados");
   });
 });

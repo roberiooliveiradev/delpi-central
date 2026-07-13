@@ -44,6 +44,7 @@ const CHART_TEXT_CHROME_KINDS = new Set([
   "legend",
   "axisTitle",
   "dataLabel",
+  "dataLabels",
   "dataTable",
 ]);
 

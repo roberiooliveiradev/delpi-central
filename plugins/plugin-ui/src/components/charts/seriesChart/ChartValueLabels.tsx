@@ -3,7 +3,7 @@ import {
   chartPartDomProps,
   chartPartTypographyStyle,
   filterVisibleSeriesPoints,
-  isChartPartRefEqual,
+  isChartPartInteractionSelected,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -52,7 +52,7 @@ export function ChartValueLabels({
             seriesIndex,
             pointIndex: point.sourceIndex,
           };
-          const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+          const selected = isChartPartInteractionSelected(ref, interaction?.selectedPart);
           const pointStyle = chartPartTypographyStyle(chartParts, ref);
 
           return (
@@ -100,7 +100,7 @@ export function ChartValueLabels({
           seriesIndex,
           pointIndex: point.sourceIndex,
         };
-        const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+        const selected = isChartPartInteractionSelected(ref, interaction?.selectedPart);
         const pointStyle = chartPartTypographyStyle(chartParts, ref);
         return (
           <text

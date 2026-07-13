@@ -55,9 +55,7 @@ describe("seriesChartElementCatalog", () => {
       { kind: "axis", axis: "y" },
     ]);
     expect(chartElementPrimaryPartRef("dataLabels")).toEqual({
-      kind: "dataLabel",
-      seriesIndex: 0,
-      pointIndex: 0,
+      kind: "dataLabels",
     });
     expect(chartElementPrimaryPartRef("markers")).toEqual({
       kind: "marker",

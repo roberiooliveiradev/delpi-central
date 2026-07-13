@@ -19,6 +19,7 @@ export {
   findChartPartFromTarget,
   getChartPartState,
   isChartPartRefEqual,
+  isChartPartInteractionSelected,
   mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,
   normalizeChartPartsForLoad,

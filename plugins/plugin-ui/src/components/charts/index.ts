@@ -133,6 +133,7 @@ export {
   getChartPartState,
   chartPartTypographyStyle,
   isChartPartRefEqual,
+  isChartPartInteractionSelected,
   mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,
   normalizeChartPartsForLoad,

@@ -16,6 +16,7 @@ import {
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
   isChartElementEnabled,
+  isChartElementOpenForPart,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
   partsToChartOptions,
@@ -296,18 +297,35 @@ export function ComunicadoChartRibbon() {
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           {CHART_ADD_ELEMENT_ITEMS.filter((item) =>
             ["chartTitle", "axisTitles", "legend", "dataLabels", "dataTable"].includes(item.id),
-          ).map((item) => (
-            <DeckRibbonTile
-              key={item.id}
-              icon={item.icon}
-              label={item.label.split(" ")[0] ?? item.label}
-              hint={item.label}
-              active={isChartElementEnabled(item.id, options)}
-              onClick={() =>
-                toggleElement(item.id, !isChartElementEnabled(item.id, options))
-              }
-            />
-          ))}
+          ).map((item) => {
+            const enabled = isChartElementEnabled(item.id, options);
+            const focused = isChartElementOpenForPart(item.id, selectedChartPart);
+            return (
+              <DeckRibbonTile
+                key={item.id}
+                icon={item.icon}
+                label={item.label.split(" ")[0] ?? item.label}
+                hint={
+                  item.id === "dataLabels"
+                    ? "Liga os rótulos e edita tipografia de todos de uma vez."
+                    : item.label
+                }
+                active={enabled || focused}
+                onClick={() => {
+                  if (item.id === "dataLabels" && enabled) {
+                    if (focused) {
+                      toggleElement(item.id, false);
+                    } else {
+                      const part = chartElementPrimaryPartRef(item.id);
+                      if (part) selectChartPart(block.id, part);
+                    }
+                    return;
+                  }
+                  toggleElement(item.id, !enabled);
+                }}
+              />
+            );
+          })}
         </div>
       </DeckRibbonGroup>
 
