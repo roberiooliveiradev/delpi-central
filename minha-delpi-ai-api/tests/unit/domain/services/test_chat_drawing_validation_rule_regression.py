@@ -88,7 +88,7 @@ def test_revision_internal_table_capture():
     assert ChatDrawingPdfExtractionService._extract_internal_revision(stamp) == "04"
 
 
-def test_revision_cross_check_ok_when_internal_matches_api():
+def test_revision_cross_check_ok_when_client_differs_from_totvs():
     payload = {
         "product": {
             "code": _PRODUCT_CODE,
@@ -111,11 +111,13 @@ def test_revision_cross_check_ok_when_internal_matches_api():
     revision_items = [
         item
         for item in package["drawingAnalysis"]["items"]
-        if item.get("item") == "Revisão"
+        if str(item.get("templateKey") or "").startswith("revision_")
+        and item.get("templateKey") != "revision_api"
     ]
 
     assert revision_items
     assert revision_items[0]["status"] == "ok"
+    assert revision_items[0]["templateKey"] == "revision_client_not_comparable"
 
 
 def test_bom_stamp_nested_mp_not_extra():

@@ -994,7 +994,18 @@ class ChatDrawingValidationPresentationService:
                         "value": cls.format_code(pdf_code, markdown=False) if pdf_code else dash,
                     },
                     {
-                        "field": str(pdf_fields.get("revision", "Revisão (PDF)")),
+                        "field": str(
+                            pdf_fields.get(
+                                "customerReference",
+                                "Referência do cliente (PDF)",
+                            )
+                        ),
+                        "value": str(analysis.get("customerReferencePdf") or dash),
+                    },
+                    {
+                        "field": str(
+                            pdf_fields.get("revision", "Revisão do cliente (PDF)")
+                        ),
                         "value": str(analysis.get("revisionPdf") or dash),
                     },
                     {
@@ -1024,8 +1035,27 @@ class ChatDrawingValidationPresentationService:
                         "value": str(product.get("description") or dash),
                     },
                     {
-                        "field": str(api_fields.get("revision", "Revisão (API)")),
-                        "value": str(product.get("last_revision_date") or dash),
+                        "field": str(
+                            api_fields.get(
+                                "customerReference",
+                                "Referência do cliente (B1_REFEREN)",
+                            )
+                        ),
+                        "value": str(
+                            product.get("customer_reference")
+                            or analysis.get("customerReferenceApi")
+                            or dash
+                        ),
+                    },
+                    {
+                        "field": str(
+                            api_fields.get("revision", "Revisão Delpi (cadastro)")
+                        ),
+                        "value": str(
+                            product.get("current_revision")
+                            or product.get("last_revision_date")
+                            or dash
+                        ),
                     },
                 ],
             ),

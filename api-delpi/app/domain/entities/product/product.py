@@ -21,8 +21,8 @@ class Product:
     # =====================
     # COMMERCIAL
     # =====================
-    customer_reference: Optional[str] = None
-    customer_reference_old: Optional[str] = None
+    customer_reference: Optional[str] = None  # B1_REFEREN — REF./COD. CLIENTE no desenho
+    customer_reference_old: Optional[str] = None  # B1_REFCANT
     sale_price: Optional[float] = None
     contractual_product: Optional[str] = None
     sales_class: Optional[str] = None
@@ -38,8 +38,8 @@ class Product:
     material_type: Optional[str] = None
     production_line: Optional[str] = None
     operation_decimal_type: Optional[str] = None
-    current_revision: Optional[str] = None
-    last_revision_date: Optional[str] = None
+    current_revision: Optional[str] = None  # B1_REVATU — revisão Delpi só no TOTVS (≠ REV. do cliente no PDF)
+    last_revision_date: Optional[str] = None  # B1_UREV — data da última revisão cadastral Delpi
     net_weight: Optional[float] = None
 
     # =====================

@@ -20,6 +20,8 @@ def test_drawing_validation_structure_check_templates_exist():
         "total_length",
         "decapes_ed",
         "revision_cross_ok",
+        "customer_reference_ok",
+        "customer_reference_mismatch",
         "pdf_attached",
     ]
 

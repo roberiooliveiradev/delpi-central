@@ -115,17 +115,22 @@ class ChatDrawingValidationOrchestrationService:
             )
         )
 
-        revision = str(product.get("last_revision_date") or product.get("revision") or "").strip()
+        delpi_revision = str(
+            product.get("current_revision")
+            or product.get("last_revision_date")
+            or product.get("revision")
+            or ""
+        ).strip()
         items.append(
             cls._item_from_template(
                 "revision_api",
-                status=cls._STATUS_OK if revision else cls._STATUS_PENDING,
+                status=cls._STATUS_OK if delpi_revision else cls._STATUS_PENDING,
                 pdf_evidence=(
                     cls._evidence("pendingPdf")
                     if not has_pdf_attachment
                     else cls._evidence("dash")
                 ),
-                api_evidence=revision or cls._evidence("dash"),
+                api_evidence=delpi_revision or cls._evidence("dash"),
                 recommendation_field=(
                     "recommendationWithPdf"
                     if has_pdf_attachment
@@ -393,7 +398,8 @@ class ChatDrawingValidationOrchestrationService:
                 table_header,
                 table_separator,
                 f"| {pdf_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(pdf_code) if pdf_code else cls._evidence('dash')} |",
-                f"| {pdf_fields.get('revision', 'Revisão (PDF)')} | {analysis.get('revisionPdf') or cls._evidence('dash')} |",
+                f"| {pdf_fields.get('customerReference', 'Referência do cliente (PDF)')} | {analysis.get('customerReferencePdf') or cls._evidence('dash')} |",
+                f"| {pdf_fields.get('revision', 'Revisão do cliente (PDF)')} | {analysis.get('revisionPdf') or cls._evidence('dash')} |",
                 f"| {pdf_fields.get('attached', 'PDF anexado')} | {pdf_fields.get('attachedYes', 'Sim') if analysis.get('hasPdfAttachment') else pdf_fields.get('attachedNo', 'Não')} |",
                 "",
                 cls._content("report", "sections", "apiData"),
@@ -401,7 +407,8 @@ class ChatDrawingValidationOrchestrationService:
                 table_separator,
                 f"| {api_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(product.get('code') or analysis.get('productCode') or cls._evidence('dash'))} |",
                 f"| {api_fields.get('description', 'Descrição')} | {product.get('description') or cls._evidence('dash')} |",
-                f"| {api_fields.get('revision', 'Revisão (API)')} | {product.get('last_revision_date') or cls._evidence('dash')} |",
+                f"| {api_fields.get('customerReference', 'Referência do cliente (B1_REFEREN)')} | {product.get('customer_reference') or analysis.get('customerReferenceApi') or cls._evidence('dash')} |",
+                f"| {api_fields.get('revision', 'Revisão Delpi (cadastro)')} | {product.get('current_revision') or product.get('last_revision_date') or cls._evidence('dash')} |",
             ]
         )
 
@@ -652,6 +659,27 @@ class ChatDrawingValidationOrchestrationService:
                 )
 
         if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "customer_reference_cross_check",
+            api_code,
+            group_code=group_code,
+        ):
+            from app.domain.services.chat_drawing_customer_reference_cross_check_service import (
+                ChatDrawingCustomerReferenceCrossCheckService,
+            )
+
+            customer_ref_item = ChatDrawingCustomerReferenceCrossCheckService.build_check_item(
+                pdf_reference=ChatDrawingCustomerReferenceCrossCheckService.resolve_pdf_reference(
+                    pdf_extract
+                ),
+                api_reference=ChatDrawingCustomerReferenceCrossCheckService.resolve_api_reference(
+                    product
+                ),
+            )
+
+            if customer_ref_item:
+                items.append(customer_ref_item)
+
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
             "revision_cross_check",
             api_code,
             group_code=group_code,
@@ -703,82 +731,44 @@ class ChatDrawingValidationOrchestrationService:
         api_revision_date: str,
         pdf_extract: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
-        from app.domain.services.chat_drawing_revision_cross_check_service import (
-            ChatDrawingRevisionCrossCheckService,
-        )
+        """Exibe revisões sem cruzar PDF × B1_REVATU.
 
-        api_compare = cls._resolve_api_revision_for_compare(
-            api_current_revision,
-            api_revision_date,
-        )
-        pdf_compare = cls._normalize_revision_number(
-            pdf_internal_revision or pdf_revision
-        )
+        A REV. no desenho é sempre a do **cliente**. A revisão Delpi
+        (``current_revision`` / B1_REVATU) existe só no TOTVS — não aparece
+        no PDF. Divergência entre elas **nunca** é crítico nem pendente.
+        """
+        del pdf_internal_revision, pdf_extract  # OCR de “interna” no carimbo ≠ B1_REVATU
 
-        if not pdf_compare or not api_compare:
+        api_evidence = str(api_current_revision or api_revision_date or "").strip()
+        client_revision = cls._normalize_revision_number(pdf_revision)
+        content = ChatDrawingValidationContentService
+
+        if not client_revision and not api_evidence:
             return None
 
-        content = ChatDrawingValidationContentService
-        pdf_evidence = (
-            content.evidence_format("revisionInternalTable", revision=pdf_internal_revision)
-            if pdf_internal_revision
-            else content.evidence_format("revisionTitle", revision=pdf_revision)
-        )
-
-        if pdf_compare == api_compare:
+        if client_revision and api_evidence:
             return cls._item_from_template(
-                "revision_cross_ok",
-                status=cls._STATUS_OK,
-                pdf_evidence=pdf_evidence,
-                api_evidence=api_current_revision or api_revision_date,
-            )
-
-        client_revision = cls._normalize_revision_number(pdf_revision)
-
-        if (
-            pdf_internal_revision
-            and client_revision
-            and client_revision != pdf_compare
-            and pdf_compare == api_compare
-        ):
-            return cls._item_from_template(
-                "revision_client_ok",
+                "revision_client_not_comparable",
                 status=cls._STATUS_OK,
                 pdf_evidence=content.evidence_format(
-                    "revisionClientPair",
-                    internal=pdf_internal_revision,
-                    client=client_revision,
+                    "revisionClientOnly",
+                    revision=pdf_revision or client_revision,
                 ),
-                api_evidence=api_current_revision or api_revision_date,
+                api_evidence=api_evidence,
             )
 
-        if len(api_revision_date) > 4 and not pdf_internal_revision:
+        if client_revision:
             return cls._item_from_template(
-                "revision_manual_pending",
-                status=cls._STATUS_PENDING,
+                "revision_client_not_comparable",
+                status=cls._STATUS_OK,
                 pdf_evidence=content.evidence_format(
-                    "revisionTitle",
-                    revision=pdf_revision,
+                    "revisionClientOnly",
+                    revision=pdf_revision or client_revision,
                 ),
-                api_evidence=api_revision_date,
+                api_evidence=content.evidence("dash"),
             )
 
-        if ChatDrawingRevisionCrossCheckService.should_pending_instead_of_critical(
-            pdf_extract
-        ):
-            return cls._item_from_template(
-                "revision_manual_pending",
-                status=cls._STATUS_PENDING,
-                pdf_evidence=pdf_evidence,
-                api_evidence=api_current_revision or api_revision_date,
-            )
-
-        return cls._item_from_template(
-            "revision_critical",
-            status=cls._STATUS_CRITICAL,
-            pdf_evidence=pdf_evidence,
-            api_evidence=api_current_revision or api_revision_date,
-        )
+        return None
 
     @classmethod
     def _resolve_api_revision_for_compare(
@@ -873,7 +863,11 @@ class ChatDrawingValidationOrchestrationService:
                 "overallLabel": overall_label,
                 "productCode": product_code,
                 "revisionPdf": pdf_meta.get("revision"),
-                "revisionApi": product.get("last_revision_date"),
+                "revisionPdfInternal": pdf_meta.get("internalRevision"),
+                "customerReferencePdf": pdf_meta.get("customerReference"),
+                "customerReferenceApi": product.get("customer_reference"),
+                "revisionApi": product.get("current_revision")
+                or product.get("last_revision_date"),
                 "pdfProductCode": pdf_meta.get("productCode") or product_code,
                 "hasPdfAttachment": has_pdf_attachment,
                 "pdfLegible": pdf_meta.get("legible"),

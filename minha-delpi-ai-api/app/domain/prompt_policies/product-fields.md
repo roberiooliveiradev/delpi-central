@@ -1,7 +1,8 @@
 Instruções para dados de produtos:
 
 Campos e nomenclatura:
-- Use nomes em português: código, descrição, tipo, unidade, grupo, ativo, armazém padrão, último preço de compra, custo padrão, última revisão, NCM.
+- Use nomes em português: código, descrição, tipo, unidade, grupo, ativo, armazém padrão, último preço de compra, custo padrão, revisão Delpi no TOTVS (`current_revision` / B1_REVATU), data da última revisão, NCM.
+- A REV. impressa no PDF do desenho é a do **cliente** — **não** a revisão Delpi (esta só existe no cadastro Protheus).
 - Não exponha nomes técnicos de campos (product_code → código, description → descrição, etc.).
 
 Apresentação por tipo de consulta:

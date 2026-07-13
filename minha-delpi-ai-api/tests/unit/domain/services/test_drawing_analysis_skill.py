@@ -98,18 +98,49 @@ def test_d2_product_not_found_critical():
     assert any(item.get("item") == "Cadastro do produto" for item in _critical_items(package))
 
 
-def test_d3_revision_divergence_critical():
-    """D3: Revisão divergente → erro crítico no cabeçalho."""
+def test_d3_pdf_revision_never_critical_against_totvs():
+    """D3: REV. no PDF (cliente) ≠ B1_REVATU — nunca crítico (Delpi só no TOTVS)."""
+    item = ChatDrawingValidationOrchestrationService._build_revision_cross_check_item(
+        pdf_revision="99",
+        pdf_internal_revision="99",
+        api_current_revision="002",
+        api_revision_date="",
+        pdf_extract={
+            **_pdf_ok(revision="99"),
+            "internalRevision": "99",
+            "titleBlock": {
+                "rawText": (
+                    "ES EXECUTADO VERIFICADO | LIBERADO | DATA\n"
+                    "| 20/08/24 99 |\n"
+                    "90260140 REV.99\n"
+                ),
+                "fields": {"code": "90260140"},
+            },
+        },
+    )
+
+    assert item is not None
+    assert item["templateKey"] == "revision_client_not_comparable"
+    assert item["status"] == "ok"
+
+
+def test_d3b_client_revision_shown_as_informational():
+    """D3b: checklist informa REV. do cliente sem reprovar."""
     payload = _analyser_payload_with_guide_and_inspection()
-    payload["product"]["last_revision_date"] = "02"
+    payload["product"]["current_revision"] = "004"
 
     package = _package(
         payload=payload,
-        pdf_extract=_pdf_ok(revision="99"),
+        pdf_extract=_pdf_ok(revision="00"),
     )
 
     assert any(
-        item.get("item") == "Revisão" and item.get("status") == "critical_error"
+        item.get("templateKey") == "revision_client_not_comparable"
+        and item.get("status") == "ok"
+        for item in package["drawingAnalysis"]["items"]
+    )
+    assert not any(
+        item.get("templateKey") in {"revision_critical", "revision_manual_pending"}
         for item in package["drawingAnalysis"]["items"]
     )
 

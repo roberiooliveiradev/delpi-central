@@ -1,4 +1,8 @@
-"""Revisão PDF × cadastro — confiança do carimbo antes de crítico."""
+"""Revisão no PDF (cliente) vs cadastro TOTVS — sem cruzamento crítico.
+
+A revisão Delpi (B1_REVATU) não aparece no desenho; helpers de carimbo
+permanecem para confiança de OCR/outros usos.
+"""
 
 from __future__ import annotations
 

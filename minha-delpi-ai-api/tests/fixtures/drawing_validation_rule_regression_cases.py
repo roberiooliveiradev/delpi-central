@@ -176,17 +176,24 @@ def pdf_extract_stamp_bom_nested_mp() -> dict[str, Any]:
 
 DRAWING_VALIDATION_RULE_CASES: tuple[DrawingValidationRuleCase, ...] = (
     DrawingValidationRuleCase(
+        id="R-customer-reference",
+        rule_id="customer_reference_cross_check",
+        category="REF./COD. CLIENTE no PDF × B1_REFEREN",
+        notes="Campo REF: do carimbo (ex.: 10432385) × customer_reference da api-delpi.",
+        smoke_product_code="90261823",
+    ),
+    DrawingValidationRuleCase(
         id="R-revision-internal-table",
         rule_id="revision_cross_check",
-        category="Revisão interna tabela carimbo × current_revision",
-        notes="Captura 04 em linha data+interna; smoke 90262008.",
+        category="REV. do cliente no PDF (informativo) — revisão Delpi só no TOTVS",
+        notes="Nunca crítico PDF × B1_REVATU. Smoke 90262008.",
         smoke_product_code="90262008",
     ),
     DrawingValidationRuleCase(
         id="R-structure-bom-validity",
         rule_id="structure_bom_validity",
-        category="Vigência SG1010 e revisão PDF × cadastro",
-        notes="bom_validity.current + aviso quando revisão PDF < current_revision.",
+        category="Vigência SG1010 (G1_INI/G1_FIM) sem lag de revisão do PDF",
+        notes="bom_validity.current; sem aviso PDF × current_revision.",
         smoke_product_code="90262008",
     ),
     DrawingValidationRuleCase(

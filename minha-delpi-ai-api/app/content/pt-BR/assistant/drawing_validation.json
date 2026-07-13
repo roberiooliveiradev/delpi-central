@@ -58,9 +58,11 @@
     "right": "direito"
   },
   "evidenceFormats": {
-    "revisionInternalTable": "REV.{revision} (tabela)",
-    "revisionTitle": "REV.{revision}",
-    "revisionClientPair": "REV.{internal} (interna); REV.{client} (cliente)",
+    "revisionClientOnly": "REV.{revision} (cliente no PDF — revisão Delpi só no TOTVS)",
+    "revisionClientPair": "REV.{client} (cliente no PDF); Delpi no TOTVS: REV.{internal}",
+    "revisionInternalTable": "REV.{revision} (OCR carimbo — não é B1_REVATU)",
+    "revisionTitle": "REV.{revision} (cliente)",
+    "revisionApiCurrent": "REV.{revision} (TOTVS / B1_REVATU)",
     "codeCount": "{count} código(s)",
     "lengthFromDescription": "{length} mm (descrição)",
     "lengthFromStructure": "{length} {unit} (SG1010)",
@@ -83,7 +85,6 @@
     "guideComponentPair": "PI {product} × MP {component}",
     "structureItemCount": "{count} item(ns) na estrutura",
     "structureBomValidityFilter": "Vigente ({columns}) na data do servidor",
-    "revisionApiCurrent": "REV.{revision} (cadastro)",
     "checkIntermediate50xx": "Conferir intermediário 50xx",
     "missingDash": "—",
     "pdfScopePrefix": " [{scope}]",
@@ -116,9 +117,9 @@
     },
     "revision_api": {
       "section": "Cabeçalho",
-      "item": "Revisão (API)",
-      "rule": "Revisão deve bater com carimbo do PDF",
-      "recommendationWithPdf": "Conferir REV. no carimbo",
+      "item": "Revisão Delpi (cadastro TOTVS)",
+      "rule": "B1_REVATU / data de revisão no Protheus — não aparece no PDF do desenho",
+      "recommendationWithPdf": "A REV. do PDF é do cliente; a revisão Delpi só no cadastro TOTVS",
       "recommendationNoPdf": "Anexe o PDF"
     },
     "guide": {
@@ -204,6 +205,30 @@
       "rule": "Código PDF × API",
       "recommendation": "—"
     },
+    "customer_reference_ok": {
+      "section": "Cabeçalho",
+      "item": "Referência do cliente",
+      "rule": "REF./COD. CLIENTE no PDF × B1_REFEREN (api-delpi)",
+      "recommendation": "—"
+    },
+    "customer_reference_mismatch": {
+      "section": "Cabeçalho",
+      "item": "Referência do cliente",
+      "rule": "REF./COD. CLIENTE no PDF deve coincidir com B1_REFEREN",
+      "recommendation": "Corrigir REF. no desenho ou a referência do cliente no Protheus"
+    },
+    "customer_reference_pending_pdf": {
+      "section": "Cabeçalho",
+      "item": "Referência do cliente",
+      "rule": "Cadastro tem B1_REFEREN; REF. não lida no PDF",
+      "recommendation": "Conferir campo REF./COD. CLIENTE no carimbo do desenho"
+    },
+    "customer_reference_pending_api": {
+      "section": "Cabeçalho",
+      "item": "Referência do cliente",
+      "rule": "PDF tem REF.; B1_REFEREN vazio no cadastro",
+      "recommendation": "Preencher referência do cliente (B1_REFEREN) no Protheus"
+    },
     "extraction_confidence": {
       "section": "PDF",
       "item": "Confiança da leitura do PDF",
@@ -213,27 +238,33 @@
     },
     "revision_cross_ok": {
       "section": "Cabeçalho",
-      "item": "Revisão",
-      "rule": "Revisão interna DELPI × current_revision",
+      "item": "Revisão Delpi",
+      "rule": "Legado — revisão Delpi só no TOTVS; use revision_client_not_comparable",
       "recommendation": "—"
     },
     "revision_client_ok": {
       "section": "Cabeçalho",
-      "item": "Revisão",
-      "rule": "Revisão interna alinhada; revisão do cliente separada",
+      "item": "Revisão do cliente",
+      "rule": "Legado — revisão Delpi só no TOTVS; use revision_client_not_comparable",
+      "recommendation": "—"
+    },
+    "revision_client_not_comparable": {
+      "section": "Cabeçalho",
+      "item": "Revisão do cliente (PDF)",
+      "rule": "REV. no desenho é do cliente; revisão Delpi (B1_REVATU) existe só no TOTVS — não comparar",
       "recommendation": "—"
     },
     "revision_manual_pending": {
       "section": "Cabeçalho",
-      "item": "Revisão",
-      "rule": "Conferência manual (API em data, PDF em REV.)",
-      "recommendation": "Validar revisão no carimbo com SB1010"
+      "item": "Revisão Delpi",
+      "rule": "Legado — não usar; revisão Delpi não vem no PDF",
+      "recommendation": "—"
     },
     "revision_critical": {
       "section": "Cabeçalho",
-      "item": "Revisão",
-      "rule": "Revisão do carimbo × cadastro",
-      "recommendation": "Atualizar revisão do PDF ou cadastro Protheus"
+      "item": "Revisão Delpi",
+      "rule": "Legado — não usar; PDF × B1_REVATU nunca é crítico",
+      "recommendation": "—"
     },
     "structure_bom_validity_ok": {
       "section": "Estrutura",
@@ -243,9 +274,9 @@
     },
     "structure_bom_validity_revision_lag": {
       "section": "Estrutura",
-      "item": "Vigência BOM × revisão do PDF",
-      "rule": "Revisão do PDF anterior à revisão cadastral pode não refletir a estrutura vigente",
-      "recommendation": "Conferir se o desenho corresponde à revisão atual ou solicitar estrutura histórica"
+      "item": "Vigência BOM",
+      "rule": "Legado — revisão Delpi não vem no PDF; não emitir lag PDF × cadastro",
+      "recommendation": "—"
     },
     "bom_missing": {
       "section": "BOM",
@@ -559,7 +590,9 @@
       "balloon_missing_codes",
       "dimension_note_ambiguous",
       "revision_pdf",
-      "revision_critical"
+      "revision_critical",
+      "customer_reference_mismatch",
+      "customer_reference_pending_pdf"
     ],
     "pdfConflictTemplateKeys": [
       "bom_extra",
@@ -604,7 +637,8 @@
     "tableSeparator": "|---|---|",
     "pdf": {
       "code": "Código",
-      "revision": "Revisão (PDF)",
+      "customerReference": "Referência do cliente (PDF)",
+      "revision": "Revisão do cliente (PDF)",
       "attached": "PDF anexado",
       "attachedYes": "Sim",
       "attachedNo": "Não"
@@ -612,7 +646,8 @@
     "api": {
       "code": "Código",
       "description": "Descrição",
-      "revision": "Revisão (API)"
+      "customerReference": "Referência do cliente (B1_REFEREN)",
+      "revision": "Revisão Delpi (cadastro)"
     }
   },
   "export": {

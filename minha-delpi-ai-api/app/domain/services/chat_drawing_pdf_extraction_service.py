@@ -210,9 +210,21 @@ class ChatDrawingPdfExtractionService:
             "productCodeSource": stamp_source,
             "revision": revision,
             "internalRevision": cls._extract_internal_revision(scope_text or cad_text),
-            "customerReference": cls._extract_labeled_value(
-                scope_text,
-                labels=("COD. CLIENTE", "COD CLIENTE", "CÓD. CLIENTE", "REFERENCIA CLIENTE"),
+            "customerReference": (
+                str(stamp_extract.get("customerCode") or "").strip()
+                or cls._extract_labeled_value(
+                    scope_text,
+                    labels=(
+                        "COD. CLIENTE",
+                        "COD CLIENTE",
+                        "CÓD. CLIENTE",
+                        "REFERENCIA CLIENTE",
+                        "REFERÊNCIA CLIENTE",
+                        "REF:",
+                        "REF.",
+                        "REF ",
+                    ),
+                )
             ),
             "description": stamp_extract.get("description")
             or cls._extract_labeled_value(

@@ -43,7 +43,25 @@ Dados cadastrais do produto (leve, sem o payload completo do analyser).
 | `view` | `full` | `summary` retorna ~15 campos (`code`, `description`, `type`, `unit`, `group_code`, `active`, `blocked`, `default_warehouse`, preços, NCM, revisão, `make_or_buy`). |
 | `legacy` | `false` | Reservado para evoluções de cadastro; playbook usa em rotas fabris. |
 
-Campos típicos (`view=full`): `code`, `description`, `type`, `unit`, `group_code`, `active`, `default_warehouse`, `last_purchase_price`, `standard_cost`, `last_revision_date`, `ncm_ipi_position`.
+Campos típicos (`view=full`): `code`, `description`, `type`, `unit`, `group_code`, `active`, `default_warehouse`, `customer_reference`, `last_purchase_price`, `standard_cost`, `current_revision`, `last_revision_date`, `ncm_ipi_position`.
+
+**Referência do cliente:**
+
+| Campo API | Origem Protheus | Significado |
+|-----------|-----------------|-------------|
+| `customer_reference` | `SB1.B1_REFEREN` | Código/REF. do cliente no cadastro — no desenho aparece como `REF:` / `COD. CLIENTE` |
+| `customer_reference_old` | `SB1.B1_REFCANT` | Referência anterior (quando houver) |
+
+O chat de análise de desenhos cruza a REF. lida no PDF com `customer_reference` (regra `customer_reference_cross_check`).
+
+**Revisões (não confundir):**
+
+| Campo API | Origem Protheus | Significado |
+|-----------|-----------------|-------------|
+| `current_revision` | `SB1.B1_REVATU` | Revisão **Delpi** do cadastro — existe **somente no TOTVS**, não impressa no PDF do desenho |
+| `last_revision_date` | `SB1.B1_UREV` | Data da última revisão cadastral Delpi |
+
+A **REV. no carimbo/título do PDF** é a revisão do **desenho do cliente**. O chat de análise **não** cruza REV. do PDF com `current_revision` (nem como crítico nem como pendente).
 
 **Uso no chat:** perguntas de descrição, “o que é o produto X”, dados cadastrais — preferir esta rota antes do `/analyser` quando não precisar de todas as dimensões.
 

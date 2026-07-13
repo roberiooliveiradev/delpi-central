@@ -49,7 +49,8 @@
 | V1 | Roteiro com PI **legado** (fingerprint de cabo) | Heurística, não prova formal | Parcial — por desenho |
 | V2 | Família **7026** desliga `balloon_presence` | Regra não universal | Config JSON |
 | V3 | Tolerâncias fixas (±10% QTD, mm) | JSON `drawing_validation.json` | Declarativo |
-| V4 | Vigência BOM (`G1_FIM`) | Desenho antigo × estrutura vigente | **Implementado** — `structure.bom_validity` + checklist `structure_bom_validity` |
+| V4 | Vigência BOM (`G1_FIM`) | Estrutura vigente na data | **Implementado** — `structure.bom_validity` + checklist `structure_bom_validity_ok` (sem lag PDF × revisão) |
+| V9 | REF. do cliente (`REF:` / COD. CLIENTE) × `B1_REFEREN` | Cabeçalho crítico se divergir | **Implementado** — `customer_reference_cross_check` + extração `REF:` |
 | V5 | LLM **não** reclassifica checklist | Render-only | Intencional |
 | V6 | Código cabo **CA\*** (`00653`) confundido com comprimento do chicote | Falso crítico `653 MT` × PDF | **Implementado** — âncora `660MM` na descrição do PA + referência em mm (`90260027`) |
 | V7 | `total_length` crítico com OCR de cotas ruim | Reprovação indevida | **Implementado** — `total_length` em `pdfDependentTemplateKeys` (gate ≥ 95%) |

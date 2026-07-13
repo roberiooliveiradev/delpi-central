@@ -1,4 +1,8 @@
-"""Avisos de vigência BOM (G1_INI/G1_FIM) e desalinhamento revisão PDF × estrutura."""
+"""Avisos de vigência BOM (G1_INI/G1_FIM).
+
+A revisão Delpi (B1_REVATU) não aparece no PDF — só no TOTVS —, portanto
+não há aviso de «lag» revisão do desenho × cadastro.
+"""
 
 from __future__ import annotations
 
@@ -18,6 +22,7 @@ class ChatDrawingStructureValidityNoticeService:
         pdf_extract: dict,
         structure: dict,
     ) -> list[dict[str, Any]]:
+        del product, pdf_extract  # revisão Delpi não vem do PDF
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
         bom_validity = (
@@ -34,53 +39,11 @@ class ChatDrawingStructureValidityNoticeService:
                     pdf_evidence=content.evidence("dash"),
                     api_evidence=content.evidence_format(
                         "structureBomValidityFilter",
-                        columns=str(bom_validity.get("validityColumns") or "G1_INI,G1_FIM"),
-                    ),
-                )
-            )
-
-        pdf_revision = cls._normalize_revision_number(
-            str(pdf_extract.get("internalRevision") or pdf_extract.get("revision") or "")
-        )
-        api_revision = cls._normalize_revision_number(
-            str(product.get("current_revision") or "")
-        )
-
-        if (
-            pdf_revision
-            and api_revision
-            and int(pdf_revision) < int(api_revision)
-        ):
-            items.append(
-                content.item_from_template(
-                    "structure_bom_validity_revision_lag",
-                    status="pending",
-                    pdf_evidence=content.evidence_format(
-                        "revisionInternalTable",
-                        revision=pdf_revision,
-                    ),
-                    api_evidence=content.evidence_format(
-                        "revisionApiCurrent",
-                        revision=api_revision,
+                        columns=str(
+                            bom_validity.get("validityColumns") or "G1_INI,G1_FIM"
+                        ),
                     ),
                 )
             )
 
         return items
-
-    @classmethod
-    def _normalize_revision_number(cls, raw: str) -> str:
-        value = str(raw or "").strip()
-
-        if not value:
-            return ""
-
-        digits = "".join(char for char in value if char.isdigit())
-
-        if not digits:
-            return ""
-
-        try:
-            return str(int(digits)).zfill(2)
-        except ValueError:
-            return digits[-2:].zfill(2)

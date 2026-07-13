@@ -171,7 +171,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             SB1.B1_TPMAT     AS material_type,
             SB1.B1_LINHA     AS production_line,
             SB1.B1_TIPODEC   AS operation_decimal_type,
-            SB1.B1_REVATU    AS current_revision,
+            SB1.B1_REVATU    AS current_revision,  -- revisão Delpi (≠ REV. do desenho do cliente no PDF)
             SB1.B1_UREV      AS last_revision_date,
             SB1.B1_PESO      AS net_weight,
 

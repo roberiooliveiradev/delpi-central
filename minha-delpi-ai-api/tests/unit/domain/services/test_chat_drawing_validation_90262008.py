@@ -80,7 +80,8 @@ def test_90262008_integration_smoke_revision_ok_end_to_end():
     revision_items = [
         item
         for item in package["drawingAnalysis"]["items"]
-        if item.get("item") == "Revisão"
+        if str(item.get("templateKey") or "").startswith("revision_")
+        and item.get("templateKey") != "revision_api"
     ]
     false_bom_critical = [
         item

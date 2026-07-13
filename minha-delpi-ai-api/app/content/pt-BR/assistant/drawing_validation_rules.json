@@ -36,24 +36,31 @@
         "product_code_ok"
       ]
     },
-    "revision_cross_check": {
+    "customer_reference_cross_check": {
       "section": "Cabeçalho",
-      "description": "Revisão interna DELPI × current_revision",
+      "description": "REF./COD. CLIENTE no PDF × customer_reference (B1_REFEREN)",
       "defaultEnabled": true,
       "templateKeys": [
-        "revision_cross_ok",
-        "revision_client_ok",
-        "revision_manual_pending",
-        "revision_critical"
+        "customer_reference_ok",
+        "customer_reference_mismatch",
+        "customer_reference_pending_pdf",
+        "customer_reference_pending_api"
+      ]
+    },
+    "revision_cross_check": {
+      "section": "Cabeçalho",
+      "description": "REV. do cliente no PDF (informativo) × current_revision no TOTVS — nunca crítico; revisão Delpi não vem no desenho",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "revision_client_not_comparable"
       ]
     },
     "structure_bom_validity": {
       "section": "Estrutura",
-      "description": "Vigência SG1010 (G1_INI/G1_FIM) e alinhamento com revisão do PDF",
+      "description": "Vigência SG1010 (G1_INI/G1_FIM) na data do servidor — sem cruzar revisão do PDF",
       "defaultEnabled": true,
       "templateKeys": [
-        "structure_bom_validity_ok",
-        "structure_bom_validity_revision_lag"
+        "structure_bom_validity_ok"
       ]
     },
     "guide_structure": {

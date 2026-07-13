@@ -164,7 +164,8 @@ def test_90264227_revision_client_vs_internal_ok():
     revision_items = [
         item
         for item in package["drawingAnalysis"]["items"]
-        if item.get("item") == "Revisão"
+        if str(item.get("templateKey") or "").startswith("revision_")
+        and item.get("templateKey") != "revision_api"
     ]
 
     assert revision_items

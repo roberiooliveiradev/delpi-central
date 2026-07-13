@@ -42,7 +42,7 @@ def test_stamp_untrusted_without_title_block():
     )
 
 
-def test_revision_mismatch_pending_without_title_block():
+def test_client_revision_never_critical_against_totvs():
     payload = {
         "product": {
             "code": "90264226",
@@ -62,20 +62,27 @@ def test_revision_mismatch_pending_without_title_block():
             "revision": "00",
             "internalRevision": "00",
             "legible": True,
+            "titleBlock": {"rawText": _STAMP_TEXT, "fields": {"code": "90264226"}},
         },
     )
     revision_items = [
         item
         for item in package["drawingAnalysis"]["items"]
-        if item.get("item") == "Revisão"
+        if str(item.get("templateKey") or "").startswith("revision_")
+        and item.get("templateKey") != "revision_api"
     ]
 
     assert revision_items
-    assert revision_items[0]["status"] == "pending"
-    assert revision_items[0]["templateKey"] == "revision_manual_pending"
+    assert revision_items[0]["status"] == "ok"
+    assert revision_items[0]["templateKey"] == "revision_client_not_comparable"
+    assert not any(
+        item.get("templateKey") == "revision_critical"
+        for item in package["drawingAnalysis"]["items"]
+    )
 
 
-def test_revision_mismatch_critical_with_title_block():
+def test_ocr_stamp_number_ignored_for_totvs_cross_check():
+    """Números OCR no carimbo não são B1_REVATU — revisão Delpi só no TOTVS."""
     item = ChatDrawingValidationOrchestrationService._build_revision_cross_check_item(
         pdf_revision="00",
         pdf_internal_revision="00",
@@ -91,5 +98,5 @@ def test_revision_mismatch_critical_with_title_block():
     )
 
     assert item is not None
-    assert item["status"] == "critical_error"
-    assert item["templateKey"] == "revision_critical"
+    assert item["status"] == "ok"
+    assert item["templateKey"] == "revision_client_not_comparable"

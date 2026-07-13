@@ -53,7 +53,7 @@ Essa rota traz:
 | **Componente divergente (terminal, isolador, conector)** | Erro de substituição não refletido no desenho   | Validar `G1_COMP` (SG1010) × tabela de materiais PDF                            | Gerar alerta ❌ “Componente divergente entre PDF e SG1010”. |
 | **Cabo incorreto (cor, bitola ou isolamento)**           | Código ou descrição desatualizado no PDF        | Conferir cor (OCR) × descrição SB1010 (CA, CB, CF...)                           | Registrar ⚠️ “Bitola ou cor divergente da norma SB1010”.    |
 | **Cota total incoerente (somatório)**                    | Erro no cálculo de comprimento total do chicote | Somar comprimentos dos subconjuntos 50xx e comparar com cota principal          | ❌ “Soma de cabos difere do comprimento total do desenho”.  |
-| **PDF não atualizado**                                   | Revisão não salva no repositório                | Comparar REV. no carimbo × campo `B1_REVATU` (SB1010)                           | ⚠️ “Desenho desatualizado em relação ao cadastro Protheus”. |
+| **PDF / revisão** | REV. no desenho = cliente; Delpi só TOTVS (`B1_REVATU`) | Não cruzar PDF × cadastro | Exibir ambos; **nunca** crítico por divergência |
 | **Campo de aprovação incorreto**                         | Falta de atualização de assinatura ou liberação | Verificar campos “Executado / Liberado” no carimbo                              | ⚠️ “Carimbo técnico incompleto ou divergente”.              |
 | **Referência incorreta do cliente**                      | Código WEG/Embraer trocado                      | Comparar `B1_REFEREN` × campo “COD. Cliente” do PDF                             | ❌ “Referência do cliente incorreta no desenho”.            |
 | **Cotas de decape não conferem**                         | Valores trocados ou omitidos                    | Validar decape E/D no PDF × campos do intermediário (50xx)                      | ⚠️ “Decape divergente ou ausente”.                          |
@@ -173,7 +173,7 @@ Retorna de uma só vez:
 
 | Item de Verificação                      | Ação esperada                   | Fonte     |
 | ---------------------------------------- | ------------------------------- | --------- |
-| Código e revisão                         | Conferir com `/products/{code}` | PDF + API |
+| Código e revisão                         | Código × SB1010; REV. PDF = cliente; `current_revision` = Delpi só TOTVS (sem cruzar) | PDF + API |
 | Cliente e referência                     | Confirmar nome conforme PDF     | OCR       |
 | Campos Executado / Verificado / Liberado | Confirmar preenchimento         | OCR       |
 | Data e LMP                               | Verificar última modificação    | OCR + API |
@@ -323,7 +323,7 @@ Usada para cruzar dados de SB1010 e SG1010:
 | ---------------------- | ------------------------- | ------------- | ------------------------------------------------- | ---------------------- |
 | **Produto**            | Código 90264147           | ✅ OK         | Produto ativo e cadastrado                        | API DELPI – SB1010     |
 | **Produto**            | Grupo (1007 – Cabos)      | ✅ OK         | Grupo correto                                     | SB1010                 |
-| **Cabeçalho**          | Código e Revisão          | ✅ OK         | REV.00 conforme PDF e API                         | PDF + API              |
+| **Cabeçalho**          | Código e revisões         | ✅ OK         | REV. cliente no PDF; revisão Delpi só no TOTVS | PDF + API              |
 | **Cabeçalho**          | Cliente / Referência      | ✅ OK         | Cliente WANKE confirmado                          | OCR                    |
 | **Estrutura (BOM)**    | Componentes presentes     | ✅ OK         | Itens conferem com SG1010                         | SG1010                 |
 | **Estrutura (BOM)**    | Quantidades coerentes     | ✅ OK         | Conversão 1000 → 1 aplicada                       | SG1010                 |

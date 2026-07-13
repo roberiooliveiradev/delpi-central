@@ -20,6 +20,10 @@ def test_rule_case_ids_unique():
     assert len(ids) == len(set(ids))
 
 
+def test_customer_reference_cross_check_has_cases():
+    assert cases_for_rule("customer_reference_cross_check")
+
+
 def test_revision_cross_check_has_cases():
     assert cases_for_rule("revision_cross_check")
 

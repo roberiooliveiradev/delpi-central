@@ -12,23 +12,27 @@ configure_domain_infrastructure_ports()
 def test_structure_validity_ok_when_current_filter():
     items = ChatDrawingStructureValidityNoticeService.build_check_items(
         product={"current_revision": "08"},
-        pdf_extract={"internalRevision": "08"},
+        pdf_extract={"revision": "00", "internalRevision": "04"},
         structure={"bom_validity": {"filter": "current", "validityColumns": "G1_INI,G1_FIM"}},
     )
 
     assert any(item.get("templateKey") == "structure_bom_validity_ok" for item in items)
+    assert not any(
+        item.get("templateKey") == "structure_bom_validity_revision_lag"
+        for item in items
+    )
 
 
-def test_structure_validity_pending_when_pdf_revision_lags():
+def test_structure_validity_never_lags_on_pdf_revision():
+    """Revisão Delpi não vem no PDF — não emitir lag PDF × B1_REVATU."""
     items = ChatDrawingStructureValidityNoticeService.build_check_items(
         product={"current_revision": "08"},
-        pdf_extract={"internalRevision": "04"},
+        pdf_extract={"revision": "00", "internalRevision": "04"},
         structure={"bom_validity": {"filter": "current", "validityColumns": "G1_INI,G1_FIM"}},
     )
 
-    assert any(
+    assert not any(
         item.get("templateKey") == "structure_bom_validity_revision_lag"
-        and item.get("status") == "pending"
         for item in items
     )
 

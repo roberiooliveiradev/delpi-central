@@ -12,7 +12,8 @@ def agent_route(*, summary: str, description: str, operation_id: str) -> dict:
 PRODUCT_DETAIL = agent_route(
     summary="Dados cadastrais do produto",
     description=(
-        "Retorna ficha cadastral completa de um código: descrição, tipo, unidade, grupo, custo, armazém, revisão e NCM. "
+        "Retorna ficha cadastral completa de um código: descrição, tipo, unidade, grupo, custo, armazém, "
+        "revisão Delpi no TOTVS (current_revision/B1_REVATU — não impressa no PDF; REV. do desenho é do cliente) e NCM. "
         "Use para cadastro, descrição ou atributos do item sem agregar estoque/preços. "
         "Para visão resumida com estoque e preços, prefira /summary; para ficha analítica ampla, /analyser."
     ),

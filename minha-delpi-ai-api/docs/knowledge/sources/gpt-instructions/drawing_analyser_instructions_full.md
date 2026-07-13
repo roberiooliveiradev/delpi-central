@@ -288,7 +288,7 @@ Comparação PDF × SB1010:
 -   Descrição
 -   Data
 -   Assinaturas
--   Divergência de revisão → **ERRO CRÍTICO**
+-   REV. do PDF (cliente) × B1_REVATU → **não crítico** (revisão Delpi só no TOTVS)
 
 ## ⚙️ 2.8 Etapa 6 — Validação da Descrição Técnica
 
@@ -396,7 +396,8 @@ Falhas → **ERRO** ou **ERRO CRÍTICO**.
 | Código DELPI | OCR        | SB1010.B1_COD       | ✔           |
 | Cliente      | OCR        | SB1010.B1_XCLIENT   | ✔           |
 | Descrição    | OCR        | SB1010.B1_DESC      | ✔           |
-| Revisão      | OCR        | SB1010.B1_REVATU    | ✔           |
+| REV. do cliente (PDF) | OCR (título/carimbo) | — | Informativo |
+| Revisão Delpi | — (não no PDF) | SB1010.B1_REVATU | Só API — **não** cruzar com PDF |
 | Data         | OCR        | Comparação temporal | ✔           |
 | Execução     | OCR        | —                   | ✔           |
 | Verificação  | OCR        | —                   | ✔           |
@@ -438,14 +439,13 @@ Erros críticos:
 
 ## 🧩 3.5 Validação da Revisão
 
--   Formato correto
--   Comparar com SB1010.B1_REVATU
--   Validar data coerente
+| Campo | Onde existe | Comparar? |
+|-------|-------------|-----------|
+| **REV. no PDF** | Carimbo/título do desenho do **cliente** | Informativo apenas |
+| **Revisão Delpi** (`B1_REVATU` / `current_revision`) | **Somente TOTVS** — **não** aparece no desenho | Exibir no relatório API; **nunca** cruzar com a REV. do PDF |
 
-ERROS CRÍTICOS:
-
--   Revisão menor que API
--   Revisão maior que API
+-   Não reprovar por REV. do PDF ≠ `B1_REVATU`
+-   Não inventar «revisão interna Delpi» a partir do OCR do carimbo
 
 ---
 
@@ -494,7 +494,7 @@ Outro valor → **ERRO**
 
 ## 🧨 3.12 Erros Críticos (Resumo)
 
--   Revisão divergente
+-   Não reprovar por revisão PDF × B1_REVATU (Delpi só no TOTVS)
 -   Cliente divergente
 -   Código divergente
 -   Falta de carimbo
@@ -509,7 +509,7 @@ Outro valor → **ERRO**
 | Item      | Resultado  | Divergência          | PDF       | API    |
 | --------- | ---------- | -------------------- | --------- | ------ |
 | Código    | ❌ CRÍTICO | 90264147 vs 90264148 | Cabeçalho | SB1010 |
-| Revisão   | ❌ CRÍTICO | REV.00 vs REV.01     | Carimbo   | SB1010 |
+| REV. cliente  | — OK info  | REV. no PDF ≠ B1_REVATU | Título PDF | TOTVS separado |
 | Cliente   | ❌ ERRO    | WEG vs WEG LINHARES  | Carimbo   | SB1010 |
 | Descrição | ❌ ERRO    | Diferente            | OCR       | SB1010 |
 | Execução  | ❌ ERRO    | Campo vazio          | OCR       | —      |
