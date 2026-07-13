@@ -137,7 +137,7 @@ export type KpiCardFlatOptions = {
 };
 
 /** Frame padrão do ícone (canto superior direito). */
-export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 10, w: 16, h: 28 };
+export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 8, w: 18, h: 30 };
 
 /**
  * Frames iniciais (%). Card = fundo relativo ao bloco; demais = relativos ao card.
@@ -148,9 +148,9 @@ export const KPI_PART_DEFAULT_FRAMES: Record<
   KpiPartFrame
 > = {
   card: { x: 0, y: 0, w: 100, h: 100 },
-  title: { x: 6, y: 12, w: 68, h: 14 },
-  value: { x: 6, y: 28, w: 88, h: 44 },
-  hint: { x: 6, y: 78, w: 70, h: 12 },
+  title: { x: 5, y: 8, w: 70, h: 16 },
+  value: { x: 5, y: 26, w: 90, h: 48 },
+  hint: { x: 5, y: 78, w: 72, h: 14 },
   icon: KPI_ICON_DEFAULT_FRAME,
 };
 
@@ -159,8 +159,8 @@ export const KPI_FREE_LAYOUT_PART_KINDS = ["title", "value", "hint", "icon"] as 
 
 export type KpiFreeLayoutPartKind = (typeof KPI_FREE_LAYOUT_PART_KINDS)[number];
 
-export const KPI_ICON_DEFAULT_SIZE_PX = 44;
-export const KPI_ICON_DEFAULT_RADIUS_PX = 14;
+export const KPI_ICON_DEFAULT_SIZE_PX = 36;
+export const KPI_ICON_DEFAULT_RADIUS_PX = 12;
 
 /**
  * Track do handle amarelo de cantos — mesmo padrão do `cornerSpec` (bloco/forma).

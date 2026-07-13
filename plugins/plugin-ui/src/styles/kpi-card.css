@@ -17,7 +17,7 @@
   justify-content: center;
   width: 100%;
   min-height: 0;
-  padding: 20px 22px;
+  padding: 12px 14px;
   border-radius: var(--delpi-kpi-card-radius, 16px);
   border: var(--delpi-kpi-card-border-width, 1px) solid
     var(--delpi-kpi-card-border-color, var(--delpi-ui-border, #b4b4b4));
@@ -33,7 +33,7 @@
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  gap: 14px;
+  gap: 10px;
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -99,9 +99,9 @@
 }
 
 .delpi-kpi-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;

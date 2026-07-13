@@ -56,6 +56,7 @@ describe("deckColorCatalog", () => {
     expect(DECK_KPI_DEFAULTS.borderWidth).toBe(1);
     expect(DECK_KPI_DEFAULTS.boxShadow).toContain("rgba(15, 23, 42");
     expect(DECK_KPI_DEFAULTS.iconName).toBe("Gauge");
+    expect(DECK_KPI_DEFAULTS.frame).toEqual({ x: 8, y: 32, w: 20, h: 15 });
   });
 
   it("expõe CSS vars para herança no bloco de dados", () => {

@@ -5,6 +5,7 @@ import {
   DECK_COLOR_ACCENT,
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
+  DECK_KPI_DEFAULTS,
   DECK_SHAPE_DEFAULTS,
   DECK_TABLE_DEFAULTS,
   resolvePaintTextColor,
@@ -294,7 +295,7 @@ export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): Com
     type: "kpi_view",
     kpiOptions,
     kpiParts: kpiOptionsToParts(kpiOptions),
-    frame: { x: 8, y: 28, w: 32, h: 24 },
+    frame: { ...DECK_KPI_DEFAULTS.frame },
     style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
   };
 }
@@ -344,7 +345,7 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "chart_view") return { x: 10, y: 28, w: 80, h: 45 };
   if (type === "table_view") return { x: 5, y: 55, w: 90, h: 35 };
   if (type === "canvas_table") return { x: 20, y: 30, w: 60, h: 30 };
-  if (type === "kpi_view") return { x: 8, y: 28, w: 32, h: 24 };
+  if (type === "kpi_view") return { ...DECK_KPI_DEFAULTS.frame };
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
