@@ -105,7 +105,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       >
         Pré-visualização · ← → slides · Espaço pausa · duplo-clique = tela cheia
       </div>
-      <DesignViewportStage viewportProfile={viewport} className="tdp-stage__design">
+      <DesignViewportStage viewportProfile={viewport} className="tdp-stage__design" fit="cover">
         {slides.map((slide, slideIndex) => {
           const active = slideIndex === index;
           const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);

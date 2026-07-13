@@ -16,8 +16,10 @@ describe("computeDesignViewportScale", () => {
     expect(computeDesignViewportScale(1920, 1080, 1920, 1080, "contain")).toBe(1);
   });
 
-  it("cover escolhe a maior escala", () => {
-    expect(computeDesignViewportScale(1920, 800, 1920, 1080, "cover")).toBeCloseTo(1920 / 1920);
+  it("cover em viewport mais larga que 16:9 preenche a largura (sem pillarbox)", () => {
+    // 1920×900 (browser com chrome) × design 1920×1080 → cover usa sx=1
+    expect(computeDesignViewportScale(1920, 900, 1920, 1080, "cover")).toBeCloseTo(1);
+    expect(computeDesignViewportScale(1920, 900, 1920, 1080, "contain")).toBeCloseTo(900 / 1080);
   });
 
   it("retorna 0 para dimensões inválidas", () => {

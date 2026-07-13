@@ -93,7 +93,7 @@ export function PresentationView({
           Pré-visualização · ← → slides · Espaço pausa
         </div>
       ) : null}
-      <DesignViewportStage viewportProfile={viewport} className="tdp-stage__design">
+      <DesignViewportStage viewportProfile={viewport} className="tdp-stage__design" fit="cover">
         {(slides as PublicSlide[]).map((slide: PublicSlide, slideIndex: number) => {
           const active = slideIndex === index;
           const slideTransition = resolveSlideTransitionStyle(slide, payload.playlist);
