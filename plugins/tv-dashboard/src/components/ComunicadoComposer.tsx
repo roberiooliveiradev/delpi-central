@@ -16,16 +16,18 @@ import {
   useComunicadoGoogleFonts,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
 import {
-  applyCenteredStageScroll,
   resolveStagePanGutterPx,
+  stageScrollPreserveContentUnderViewportCenter,
+  type StageScrollPoint,
 } from "../utils/stagePan";
 import { shouldRenderStageGrid } from "../utils/stageViewport";
+import { clampStageGridSizePx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -109,6 +111,7 @@ export function ComunicadoComposerCanvas() {
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
+    stageGridSizePx,
     updateBlock,
     viewportProfile,
     stageZoom,
@@ -121,18 +124,71 @@ export function ComunicadoComposerCanvas() {
     () => resolveViewportPixelSize(viewportProfile),
     [viewportProfile],
   );
+  const gridSizePx = useMemo(
+    () => clampStageGridSizePx(stageGridSizePx, designSize),
+    [stageGridSizePx, designSize],
+  );
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [panGutter, setPanGutter] = useState({ x: 48, y: 48 });
   const marqueeActiveRef = useRef(false);
   const marqueeStartClientRef = useRef<{ x: number; y: number } | null>(null);
   const marqueeRectRef = useRef<MarqueeRect | null>(null);
+  /** Último tamanho/gutter aplicados — base para preservar o ponto sob o centro ao reflow. */
+  const stageViewportLayoutRef = useRef<{
+    gutter: { x: number; y: number };
+    clientWidth: number;
+    clientHeight: number;
+  } | null>(null);
+  const pendingStageScrollRef = useRef<StageScrollPoint | null>(null);
 
   useEffect(() => {
     const wrap = canvasWrapRef.current;
     if (!wrap) return;
     const updateGutter = () => {
-      setPanGutter(resolveStagePanGutterPx(wrap.clientWidth, wrap.clientHeight));
+      const nextGutter = resolveStagePanGutterPx(wrap.clientWidth, wrap.clientHeight);
+      const nextW = wrap.clientWidth;
+      const nextH = wrap.clientHeight;
+      const last = stageViewportLayoutRef.current;
+      if (
+        last &&
+        last.clientWidth === nextW &&
+        last.clientHeight === nextH &&
+        last.gutter.x === nextGutter.x &&
+        last.gutter.y === nextGutter.y
+      ) {
+        return;
+      }
+      // No ResizeObserver o client* já é o novo; o padding do gutter no DOM ainda é o anterior.
+      if (last && last.clientWidth > 0 && last.clientHeight > 0) {
+        pendingStageScrollRef.current = stageScrollPreserveContentUnderViewportCenter({
+          scrollLeft: wrap.scrollLeft,
+          scrollTop: wrap.scrollTop,
+          prevClientWidth: last.clientWidth,
+          prevClientHeight: last.clientHeight,
+          prevGutter: last.gutter,
+          nextClientWidth: nextW,
+          nextClientHeight: nextH,
+          nextGutter,
+        });
+      }
+      stageViewportLayoutRef.current = {
+        gutter: nextGutter,
+        clientWidth: nextW,
+        clientHeight: nextH,
+      };
+      const gutterChanged =
+        !last || last.gutter.x !== nextGutter.x || last.gutter.y !== nextGutter.y;
+      if (gutterChanged) {
+        setPanGutter(nextGutter);
+        return;
+      }
+      const pending = pendingStageScrollRef.current;
+      if (pending) {
+        pendingStageScrollRef.current = null;
+        wrap.scrollLeft = pending.scrollLeft;
+        wrap.scrollTop = pending.scrollTop;
+      }
     };
     updateGutter();
     const observer = new ResizeObserver(updateGutter);
@@ -140,18 +196,21 @@ export function ComunicadoComposerCanvas() {
     return () => observer.disconnect();
   }, [canvasWrapRef]);
 
+  // Só após paint do novo padding: aplica scroll preservando o ponto do slide (não recentra).
+  useLayoutEffect(() => {
+    const wrap = canvasWrapRef.current;
+    const pending = pendingStageScrollRef.current;
+    if (!wrap || !pending) return;
+    pendingStageScrollRef.current = null;
+    wrap.scrollLeft = pending.scrollLeft;
+    wrap.scrollTop = pending.scrollTop;
+  }, [panGutter.x, panGutter.y]);
+
+  // Fit automático só quando o formato do slide muda — não em aba/seleção/inspetor.
   useEffect(() => {
     const timer = window.setTimeout(() => fitStageToView(), 0);
     return () => window.clearTimeout(timer);
   }, [designSize.width, designSize.height, fitStageToView, viewportProfile]);
-
-  useEffect(() => {
-    // Padding do gutter altera scrollWidth — recentra sem resetar o zoom.
-    const timer = window.setTimeout(() => {
-      applyCenteredStageScroll(canvasWrapRef.current);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [canvasWrapRef, panGutter.x, panGutter.y]);
 
   const clientToCanvasPercent = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -317,7 +376,13 @@ export function ComunicadoComposerCanvas() {
         >
           <MasterLogoOverlay />
           {shouldRenderStageGrid(showStageGrid, stageZoom) ? (
-            <div className="td-composer__stage-grid" aria-hidden="true" />
+            <div
+              className="td-composer__stage-grid"
+              aria-hidden="true"
+              style={{
+                backgroundSize: `${gridSizePx}px ${gridSizePx}px`,
+              }}
+            />
           ) : null}
           {showStageGuides ? (
             <>

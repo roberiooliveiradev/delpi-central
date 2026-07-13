@@ -147,7 +147,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   view: {
     zoom: "Amplia ou reduz o palco no editor (10% a 200%). Ctrl + scroll do mouse também faz zoom. Não altera a exibição na TV.",
-    grid: "Mostra grade de 5% no palco para alinhar elementos. Some automaticamente abaixo de 50% de zoom.",
+    grid: "Mostra a grade no palco para alinhar elementos. Some automaticamente abaixo de 50% de zoom.",
+    gridSize:
+      "Configura o tamanho da célula da grade em pixels (lista de presets ou digitação). Mínimo 10 px; máximo metade do menor lado do slide.",
     guides: "Exibe guias horizontais e verticais no centro do palco.",
     rulers: "Mostra réguas horizontais e verticais ao redor do palco, como no PowerPoint.",
     snap: "Encaixa posição e tamanho na grade e nas guias ao soltar o elemento.",

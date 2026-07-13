@@ -15,6 +15,7 @@ import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHist
 import { useCanvasBlockInteraction } from "../../components/useCanvasBlockInteraction";
 import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import { snapComunicadoFrame } from "../../utils/comunicadoSnap";
+import { stageGridSizePxToPercent } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
 
 type Options = {
@@ -25,6 +26,9 @@ type Options = {
   pushPast: (snapshot: ComunicadoConfig) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
   snapEnabledRef: MutableRefObject<boolean>;
+  stageGridSizePxRef: MutableRefObject<number>;
+  /** Largura/altura de design do palco (px). */
+  designSizeRef: MutableRefObject<{ width: number; height: number }>;
 };
 
 /**
@@ -38,6 +42,8 @@ export function useComunicadoEditorDrag({
   pushPast,
   deckHistory,
   snapEnabledRef,
+  stageGridSizePxRef,
+  designSizeRef,
 }: Options) {
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const multiDragRef = useRef<{ startFrames: Map<string, ComunicadoBlock["frame"]> } | null>(null);
@@ -182,8 +188,13 @@ export function useComunicadoEditorDrag({
         if (index < 0) continue;
         const current = nextBlocks[index];
         const snapMode = mode === "resize" ? "resize" : "move";
+        const gridPx = stageGridSizePxRef.current;
+        const design = designSizeRef.current;
         const snappedFrame = snapEnabledRef.current
-          ? snapComunicadoFrame(current, current.frame, snapMode)
+          ? snapComunicadoFrame(current, current.frame, snapMode, {
+              xPercent: stageGridSizePxToPercent(gridPx, design.width),
+              yPercent: stageGridSizePxToPercent(gridPx, design.height),
+            })
           : clampFrameForBlock(current, current.frame);
         let updated: ComunicadoBlock = { ...current, frame: snappedFrame };
         if (
@@ -226,7 +237,7 @@ export function useComunicadoEditorDrag({
       }
       applyConfig(nextConfig);
     },
-    [applyConfig, configRef, deckHistory, pushPast, snapEnabledRef],
+    [applyConfig, configRef, deckHistory, designSizeRef, pushPast, snapEnabledRef, stageGridSizePxRef],
   );
 
   const clearDragSnapshot = useCallback(() => {

@@ -15,4 +15,15 @@ describe("comunicadoSnap", () => {
     const snapped = snapComunicadoFrame(block, frame, "move");
     expect(snapped.x).toBe(40);
   });
+
+  it("aceita passo de grade customizado por eixo", () => {
+    const block = createBlock("text", "A");
+    const frame = { x: 12, y: 12, w: 20, h: 20 };
+    const snapped = snapComunicadoFrame(block, frame, "move", {
+      xPercent: 10,
+      yPercent: 10,
+    });
+    expect(snapped.x).toBe(10);
+    expect(snapped.y).toBe(10);
+  });
 });

@@ -222,6 +222,8 @@ export type ComunicadoEditorContextValue = {
   setShowStageRulers: (show: boolean) => void;
   showStageGrid: boolean;
   setShowStageGrid: (show: boolean) => void;
+  stageGridSizePx: number;
+  setStageGridSizePx: (sizePx: number) => void;
   showStageGuides: boolean;
   setShowStageGuides: (show: boolean) => void;
   snapEnabled: boolean;

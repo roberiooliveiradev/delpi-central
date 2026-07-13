@@ -19,6 +19,7 @@ export function useComunicadoEditorStage() {
   const [stagePanMode, setStagePanModeState] = useState(false);
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const snapEnabledRef = useRef(prefs.snapEnabled);
+  const stageGridSizePxRef = useRef(prefs.stageGridSizePx);
   const interactionCanvasRefSlot = useRef<RefObject<HTMLElement | null> | null>(null);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
@@ -26,6 +27,10 @@ export function useComunicadoEditorStage() {
   useEffect(() => {
     snapEnabledRef.current = prefs.snapEnabled;
   }, [prefs.snapEnabled]);
+
+  useEffect(() => {
+    stageGridSizePxRef.current = prefs.stageGridSizePx;
+  }, [prefs.stageGridSizePx]);
 
   useEffect(() => {
     writeStageDisplayPreferences(prefs);
@@ -65,6 +70,12 @@ export function useComunicadoEditorStage() {
       const next = typeof value === "function" ? value(prefsRef.current.showStageGrid) : value;
       patchPrefs({ showStageGrid: next });
     },
+    stageGridSizePx: prefs.stageGridSizePx,
+    setStageGridSizePx: (value: number | ((prev: number) => number)) => {
+      const raw = typeof value === "function" ? value(prefsRef.current.stageGridSizePx) : value;
+      patchPrefs({ stageGridSizePx: raw });
+    },
+    stageGridSizePxRef,
     showStageGuides: prefs.showStageGuides,
     setShowStageGuides: (value: boolean | ((prev: boolean) => boolean)) => {
       const next = typeof value === "function" ? value(prefsRef.current.showStageGuides) : value;

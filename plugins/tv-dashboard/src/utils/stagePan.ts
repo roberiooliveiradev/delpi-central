@@ -58,7 +58,7 @@ export function resolveStagePanGutterPx(
   };
 }
 
-/** Centraliza o conteúdo scrollável no wrap (após fit / mudança de gutter). */
+/** Centraliza o conteúdo scrollável no wrap (só fit explícito / Ajustar). */
 export function centerStageScroll(wrap: {
   scrollWidth: number;
   scrollHeight: number;
@@ -77,4 +77,31 @@ export function applyCenteredStageScroll(wrap: HTMLElement | null | undefined): 
   const next = centerStageScroll(wrap);
   wrap.scrollLeft = next.scrollLeft;
   wrap.scrollTop = next.scrollTop;
+}
+
+/**
+ * Mantém o mesmo ponto do slide sob o centro da viewport após resize do wrap
+ * e/ou mudança do padding de gutter (abas, inspetor, etc.).
+ *
+ * Âncora = offset do centro da viewport relativo à borda esquerda/topo do slide
+ * (scroll + client/2 − gutter). Após o layout: scroll' = âncora + gutter' − client'/2.
+ */
+export function stageScrollPreserveContentUnderViewportCenter(args: {
+  scrollLeft: number;
+  scrollTop: number;
+  prevClientWidth: number;
+  prevClientHeight: number;
+  prevGutter: { x: number; y: number };
+  nextClientWidth: number;
+  nextClientHeight: number;
+  nextGutter: { x: number; y: number };
+}): StageScrollPoint {
+  const anchorX =
+    args.scrollLeft + args.prevClientWidth / 2 - args.prevGutter.x;
+  const anchorY =
+    args.scrollTop + args.prevClientHeight / 2 - args.prevGutter.y;
+  return {
+    scrollLeft: anchorX + args.nextGutter.x - args.nextClientWidth / 2,
+    scrollTop: anchorY + args.nextGutter.y - args.nextClientHeight / 2,
+  };
 }

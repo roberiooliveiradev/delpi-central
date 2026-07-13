@@ -36,6 +36,7 @@ import { useComunicadoEditorSelection } from "../hooks/comunicadoEditor/useComun
 import { useComunicadoEditorStage } from "../hooks/comunicadoEditor/useComunicadoEditorStage";
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
+import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
 import { enrichComunicadoConfigForEditor, resolveMasterForPreview } from "./slideCardPreview";
 import {
@@ -195,6 +196,8 @@ export function ComunicadoEditorProvider({
   }
 
   const stage = useComunicadoEditorStage();
+  const designSizeRef = useRef(resolveViewportPixelSize(viewportProfile));
+  designSizeRef.current = resolveViewportPixelSize(viewportProfile);
 
   const applyConfig = useCallback(
     (next: ComunicadoConfig) => {
@@ -233,6 +236,8 @@ export function ComunicadoEditorProvider({
     pushPast,
     deckHistory,
     snapEnabledRef: stage.snapEnabledRef,
+    stageGridSizePxRef: stage.stageGridSizePxRef,
+    designSizeRef,
   });
   stage.bindCanvasRef(canvasRef);
 
@@ -491,6 +496,8 @@ export function ComunicadoEditorProvider({
     setShowStageRulers: stage.setShowStageRulers,
     showStageGrid: stage.showStageGrid,
     setShowStageGrid: stage.setShowStageGrid,
+    stageGridSizePx: stage.stageGridSizePx,
+    setStageGridSizePx: stage.setStageGridSizePx,
     showStageGuides: stage.showStageGuides,
     setShowStageGuides: stage.setShowStageGuides,
     snapEnabled: stage.snapEnabled,

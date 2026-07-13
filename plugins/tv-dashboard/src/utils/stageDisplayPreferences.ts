@@ -1,11 +1,20 @@
 import { clampStageZoom } from "./stageViewport";
+import {
+  STAGE_GRID_SIZE_DEFAULT_PX,
+  clampStageGridSizePx,
+} from "./stageGridSize";
 
 const STORAGE_KEY = "td-stage-display-preferences";
+
+/** Design de referência para clamp persistido (Full HD). O modal reclampa no viewport real. */
+const PREFS_CLAMP_DESIGN = { width: 1920, height: 1080 };
 
 export type StageDisplayPreferences = {
   stageZoom: number;
   showStageRulers: boolean;
   showStageGrid: boolean;
+  /** Tamanho da célula da grade em px de design. */
+  stageGridSizePx: number;
   showStageGuides: boolean;
   snapEnabled: boolean;
 };
@@ -14,6 +23,7 @@ export const DEFAULT_STAGE_DISPLAY_PREFERENCES: StageDisplayPreferences = {
   stageZoom: 1,
   showStageRulers: true,
   showStageGrid: false,
+  stageGridSizePx: STAGE_GRID_SIZE_DEFAULT_PX,
   showStageGuides: true,
   snapEnabled: true,
 };
@@ -40,6 +50,10 @@ export function normalizeStageDisplayPreferences(
       typeof raw.showStageGrid === "boolean"
         ? raw.showStageGrid
         : DEFAULT_STAGE_DISPLAY_PREFERENCES.showStageGrid,
+    stageGridSizePx:
+      typeof raw.stageGridSizePx === "number" && Number.isFinite(raw.stageGridSizePx)
+        ? clampStageGridSizePx(raw.stageGridSizePx, PREFS_CLAMP_DESIGN)
+        : DEFAULT_STAGE_DISPLAY_PREFERENCES.stageGridSizePx,
     showStageGuides:
       typeof raw.showStageGuides === "boolean"
         ? raw.showStageGuides

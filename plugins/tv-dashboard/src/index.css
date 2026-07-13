@@ -193,6 +193,29 @@
   overflow-y: auto;
 }
 
+.dashboard-tv-dashboard .td-grid-settings__lead {
+  margin: 0 0 16px;
+  color: var(--td-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.dashboard-tv-dashboard .td-grid-settings__field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+  max-width: 220px;
+}
+
+.dashboard-tv-dashboard .td-grid-settings__combobox {
+  width: 100%;
+}
+
+.dashboard-tv-dashboard .td-grid-settings__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .dashboard-tv-dashboard .td-deck-speaker-notes {
   display: grid;
   gap: 6px;
@@ -1245,7 +1268,8 @@
       var(--td-stage-grid-line) 1px,
       transparent 1px
     );
-  background-size: 5% 5%;
+  /* Fallback; o tamanho real vem de style.backgroundSize (px de design). */
+  background-size: 96px 96px;
 }
 
 .dashboard-tv-dashboard .td-composer__stage-guide {

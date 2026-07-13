@@ -6,9 +6,11 @@ import {
   Magnet,
   Maximize2,
   Ruler,
+  Settings2,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { useState } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useKeyboardShortcutsTips } from "../context/KeyboardShortcutsTipsProvider";
@@ -16,6 +18,7 @@ import { clampStageZoom, STAGE_ZOOM_MAX, STAGE_ZOOM_MIN } from "../utils/stageVi
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { ShortcutTip } from "./ShortcutTip";
+import { StageGridSettingsModal } from "./StageGridSettingsModal";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -36,6 +39,7 @@ export function ComunicadoViewRibbon() {
     setSnapEnabled,
   } = useComunicadoEditor();
   const { openCatalog } = useKeyboardShortcutsTips();
+  const [gridSettingsOpen, setGridSettingsOpen] = useState(false);
 
   return (
     <div className="td-deck-ribbon__groups">
@@ -93,6 +97,12 @@ export function ComunicadoViewRibbon() {
             onClick={() => setShowStageGrid(!showStageGrid)}
           />
           <DeckRibbonTile
+            icon={Settings2}
+            label="Tamanho"
+            hint={V.gridSize}
+            onClick={() => setGridSettingsOpen(true)}
+          />
+          <DeckRibbonTile
             icon={Crosshair}
             label="Guias"
             hint={V.guides}
@@ -114,6 +124,8 @@ export function ComunicadoViewRibbon() {
           />
         </div>
       </DeckRibbonGroup>
+
+      <StageGridSettingsModal open={gridSettingsOpen} onClose={() => setGridSettingsOpen(false)} />
     </div>
   );
 }

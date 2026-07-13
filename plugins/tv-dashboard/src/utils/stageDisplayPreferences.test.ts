@@ -39,6 +39,7 @@ describe("stageDisplayPreferences", () => {
       stageZoom: 0.7,
       showStageRulers: false,
       showStageGrid: true,
+      stageGridSizePx: 50,
       showStageGuides: false,
       snapEnabled: false,
     });
@@ -47,13 +48,16 @@ describe("stageDisplayPreferences", () => {
       stageZoom: 0.7,
       showStageRulers: false,
       showStageGrid: true,
+      stageGridSizePx: 50,
       showStageGuides: false,
       snapEnabled: false,
     });
   });
 
-  it("limita zoom ao intervalo válido", () => {
+  it("limita zoom e tamanho da grade ao intervalo válido", () => {
     expect(normalizeStageDisplayPreferences({ stageZoom: 9 }).stageZoom).toBe(2);
     expect(normalizeStageDisplayPreferences({ stageZoom: 0.05 }).stageZoom).toBe(0.1);
+    expect(normalizeStageDisplayPreferences({ stageGridSizePx: 2 }).stageGridSizePx).toBe(10);
+    expect(normalizeStageDisplayPreferences({ stageGridSizePx: 9000 }).stageGridSizePx).toBe(540);
   });
 });

@@ -5,6 +5,7 @@ import {
   centerStageScroll,
   resolveStagePanGutterPx,
   stageScrollAfterZoomTowardPoint,
+  stageScrollPreserveContentUnderViewportCenter,
 } from "./stagePan";
 
 describe("applyStagePanScrollDelta", () => {
@@ -72,5 +73,38 @@ describe("centerStageScroll", () => {
         clientHeight: 300,
       }),
     ).toEqual({ scrollLeft: 0, scrollTop: 0 });
+  });
+});
+
+describe("stageScrollPreserveContentUnderViewportCenter", () => {
+  it("compensa abertura do inspetor (wrap estreita + gutter cai)", () => {
+    // Centro da viewport apontava para o slide em x=100 (scroll 50 + 400/2 − gutter 150).
+    expect(
+      stageScrollPreserveContentUnderViewportCenter({
+        scrollLeft: 50,
+        scrollTop: 20,
+        prevClientWidth: 400,
+        prevClientHeight: 300,
+        prevGutter: { x: 150, y: 100 },
+        nextClientWidth: 280,
+        nextClientHeight: 300,
+        nextGutter: { x: 140, y: 100 },
+      }),
+    ).toEqual({ scrollLeft: 100, scrollTop: 20 });
+  });
+
+  it("é identidade quando viewport e gutter não mudam", () => {
+    expect(
+      stageScrollPreserveContentUnderViewportCenter({
+        scrollLeft: 80,
+        scrollTop: 40,
+        prevClientWidth: 500,
+        prevClientHeight: 400,
+        prevGutter: { x: 250, y: 200 },
+        nextClientWidth: 500,
+        nextClientHeight: 400,
+        nextGutter: { x: 250, y: 200 },
+      }),
+    ).toEqual({ scrollLeft: 80, scrollTop: 40 });
   });
 });
