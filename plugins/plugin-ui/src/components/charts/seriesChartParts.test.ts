@@ -305,7 +305,6 @@ describe("seriesChartParts", () => {
   });
 
   it("isChartPartInteractionSelected destaca todos os rótulos no grupo dataLabels", () => {
-    const { isChartPartInteractionSelected } = require("./seriesChartParts") as typeof import("./seriesChartParts");
     expect(
       isChartPartInteractionSelected(
         { kind: "dataLabel", seriesIndex: 0, pointIndex: 2 },
@@ -319,8 +318,8 @@ describe("seriesChartParts", () => {
       ),
     ).toBe(false);
   });
-});
 
+  it("chartPartTypographyStyle em título aplica caixa coluna (verticalAlign)", () => {
     const parts = upsertChartPartState({}, { kind: "title" }, {
       style: { fontSize: 18, textAlign: "center", verticalAlign: "bottom" },
     });
