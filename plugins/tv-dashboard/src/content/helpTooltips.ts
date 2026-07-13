@@ -6,6 +6,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     prevSlide: "Volta para a tela anterior na ordem de exibição.",
     nextSlide: "Avança para a próxima tela na ordem de exibição.",
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",
+    playlistChrome:
+      "Controles da programação: voltar, pré-visualizar, atalhos, colaboradores e link da TV.",
     pause: "Desativa a tela na exibição da TV sem removê-la da playlist.",
     activate: "Reativa uma tela pausada para voltar a aparecer na rotação.",
     duplicate: "Cria uma cópia idêntica da tela atual, logo após ela na lista.",
@@ -66,10 +68,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     boxShadow:
       "Sombra: presets (inclui Elevada com 2 camadas e Interna), externa/interna, camadas e ajuste fino de X, Y, desfoque, expansão, opacidade e cor.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
-    frameX: "Posição horizontal do canto esquerdo, em pixels de design do palco (não muda com o zoom).",
-    frameY: "Posição vertical do topo, em pixels de design do palco (não muda com o zoom).",
+    frameX: "Posição horizontal do canto esquerdo, em pixels de design da página (origem inferior esquerda; não muda com o zoom).",
+    frameY: "Posição vertical do canto inferior do elemento, em pixels de design desde a base da página (não muda com o zoom).",
     frameW: "Largura do elemento em pixels de design do palco.",
-    frameH: "Altura do elemento em pixels de design do palco.",
+    frameH: "Altura do elemento em pixels de design do palco. Ao alterar, a base permanece fixa.",
     frameRotation: "Gira o elemento em graus (−180 a 180) em torno do centro do quadro.",
     alignSelectionLeft: "Alinhar borda esquerda dos elementos selecionados.",
     alignSelectionCenterH: "Centralizar horizontalmente a seleção.",
@@ -99,7 +101,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertVideo: "Vídeo em loop no slide; envie o arquivo após inserir.",
     insertShape: "Formas geométricas com preenchimento e contorno configuráveis.",
     chartData: "Fonte e vínculo dos dados do gráfico.",
-    chartType: "Altera o tipo de gráfico (linha, coluna…).",
+    chartType: "Abre o catálogo de tipos (mesmo de Inserir → Gráficos) para trocar o gráfico.",
     tableData: "Fonte e vínculo dos dados da tabela.",
     tableStyles: "Presets visuais da tabela (grade, minimalista, faixas).",
     tableStyleOptions:
@@ -107,7 +109,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableFormat: "Abre a aba Forma para moldura (preenchimento e contorno) da tabela.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
     chartAxes: "Eixos e linhas de grade.",
-    chartFormat: "Abre a aba Forma para área, série ou marcador do gráfico.",
+    chartFormat: "Estilo, preenchimento, contorno e raio da área do gráfico na aba Elemento.",
   },
   tabs: {
     element:
@@ -151,7 +153,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     gridSize:
       "Passo da grade em % do slide (1, 2, 4, 5, 10, 20, 25 ou 50). Só divisores de 100% — a malha fecha nas bordas.",
     guides: "Exibe guias horizontais e verticais no centro do palco.",
-    rulers: "Mostra réguas horizontais e verticais ao redor do palco, como no PowerPoint.",
+    rulers: "Mostra réguas horizontais e verticais ao redor do palco. O zero está no canto inferior esquerdo da página.",
     snap: "Encaixa posição e tamanho na grade e nas guias ao soltar o elemento.",
     pan: "Arrastar o palco (pan). Segure Ctrl e arraste, ou ative a ferramenta mão (Esc cancela).",
     showGroup: "Elementos visuais de apoio no palco do editor (não aparecem na TV).",
@@ -280,7 +282,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     shapeText: "Texto opcional renderizado dentro da forma.",
     strokeWidth: "Espessura da borda da forma, em pixels.",
     position:
-      "Posição e tamanho em pixels de design do palco. O zoom só altera a vista; os valores permanecem os mesmos.",
+      "Posição e tamanho em pixels de design da página, com origem no canto inferior esquerdo. Partes de KPI/gráfico usam a mesma origem absoluta.",
     rotation: "Gira o elemento em graus (−180 a 180) em torno do centro do quadro.",
     layerUp: "Move o elemento uma camada acima, sobrepondo os demais.",
     layerDown: "Envia o elemento uma camada abaixo, atrás dos demais.",

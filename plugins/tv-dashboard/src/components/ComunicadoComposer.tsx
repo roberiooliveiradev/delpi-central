@@ -243,6 +243,37 @@ export function ComunicadoComposerCanvas() {
     viewportProfile,
   ]);
 
+  // Durante o bootstrap, o gutter (metade da viewport) só estabiliza após o 1º layout.
+  // Refaz Ajustar para o scroll não ficar no zoom/scroll antigos do localStorage.
+  const gutterBootRef = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (stageViewReady) {
+      gutterBootRef.current = { x: panGutter.x, y: panGutter.y };
+      return;
+    }
+    const prev = gutterBootRef.current;
+    gutterBootRef.current = { x: panGutter.x, y: panGutter.y };
+    if (!prev || (prev.x === panGutter.x && prev.y === panGutter.y)) return;
+    const timer = window.setTimeout(() => fitStageToView(), 0);
+    return () => window.clearTimeout(timer);
+  }, [fitStageToView, panGutter.x, panGutter.y, stageViewReady]);
+
+  // Painel oculto/remoto (client 0) → visível: reexecuta Ajustar.
+  useEffect(() => {
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+    let hadSize = wrap.clientWidth > 0 && wrap.clientHeight > 0;
+    const observer = new ResizeObserver(() => {
+      const hasSize = wrap.clientWidth > 0 && wrap.clientHeight > 0;
+      if (!hadSize && hasSize) {
+        bootstrapStageViewPosition();
+      }
+      hadSize = hasSize;
+    });
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, [bootstrapStageViewPosition, canvasWrapRef]);
+
   const clientToCanvasPercent = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };

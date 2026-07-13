@@ -14,6 +14,10 @@ import type { Slide } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DECK_HOME_ACTION_KEYTIPS } from "../utils/deckKeyTips";
 import { DeckKeyTip } from "./DeckKeyTip";
+import {
+  DeckHomePlaylistChrome,
+  type DeckHomePlaylistChromeProps,
+} from "./deck/DeckEditorHeaderActions";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonLargeButton } from "./deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -30,6 +34,8 @@ type Props = {
   onExportPdf?: () => void;
   onExportPptx?: () => void;
   exportBusy?: boolean;
+  /** Controles da programação/TV (antes à direita das abas). */
+  playlistChrome?: DeckHomePlaylistChromeProps;
 };
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -47,6 +53,7 @@ export function SlideDeckRibbon({
   onExportPdf,
   onExportPptx,
   exportBusy = false,
+  playlistChrome,
 }: Props) {
   const selectedIndex = selectedSlide
     ? slides.findIndex((slide) => slide.id === selectedSlide.id)
@@ -61,6 +68,8 @@ export function SlideDeckRibbon({
 
   return (
     <div className="td-deck-ribbon__groups">
+      {playlistChrome ? <DeckHomePlaylistChrome {...playlistChrome} /> : null}
+
       <DeckRibbonGroup label="Slides" hint={H.slides}>
         <div className="td-deck-ribbon__split">
           <DeckRibbonLargeButton

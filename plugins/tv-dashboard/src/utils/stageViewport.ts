@@ -82,3 +82,53 @@ export function buildAxisRulerTicks(
 
   return ticks;
 }
+
+/**
+ * Régua vertical com origem no canto inferior esquerdo da página:
+ * rótulos em unidades desde a base; posição no DOM continua top→baixo.
+ */
+export function buildVerticalRulerTicksFromBottom(
+  spanPx: number,
+  pxPerUnit: number,
+  originPx: number,
+  scrollPx: number,
+  unitsTotal: number = STAGE_RULER_UNITS,
+): RulerTick[] {
+  if (pxPerUnit <= 0 || spanPx <= 0 || unitsTotal <= 0) return [];
+
+  const { step, labelEvery } = resolveRulerTickStep(unitsTotal);
+  const startTop = (scrollPx - originPx) / pxPerUnit;
+  const endTop = startTop + spanPx / pxPerUnit;
+  const ticks: RulerTick[] = [];
+  const first = Math.floor(startTop / step) * step;
+
+  const pushTick = (topUnit: number) => {
+    if (!Number.isFinite(topUnit) || topUnit < 0 || topUnit > unitsTotal) return;
+    const pos = originPx + topUnit * pxPerUnit - scrollPx;
+    if (pos < -4 || pos > spanPx + 4) return;
+    const bottomUnit = unitsTotal - topUnit;
+    const label =
+      topUnit % labelEvery === 0 || topUnit === 0 || topUnit === unitsTotal
+        ? String(Math.round(bottomUnit))
+        : undefined;
+    const existing = ticks.find((tick) => Math.abs(tick.pos - pos) < 0.5);
+    if (existing) {
+      if (label && !existing.label) existing.label = label;
+      return;
+    }
+    ticks.push({
+      pos,
+      major: topUnit % (step * 2) === 0 || topUnit === 0 || topUnit === unitsTotal,
+      label,
+    });
+  };
+
+  for (let topUnit = first; topUnit <= endTop + step; topUnit += step) {
+    pushTick(topUnit);
+  }
+  // Garante 0 na base e altura total no topo, mesmo quando unitsTotal não é múltiplo do step.
+  pushTick(0);
+  pushTick(unitsTotal);
+
+  return ticks;
+}

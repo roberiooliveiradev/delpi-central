@@ -149,7 +149,6 @@ describe("seriesChartParts", () => {
 
   it("defaults Delpi: série accent e chartArea com raio/sombra", () => {
     const parts = chartOptionsToParts(mergeSeriesChartOptions({}));
-    expect(parts.chartArea?.style?.fill).toBe("#ffffff");
     expect(parts.chartArea?.style?.borderRadius).toBe(DECK_CHART_DEFAULTS.borderRadius);
     expect(parts.chartArea?.style?.boxShadow).toBe(DECK_CHART_DEFAULTS.boxShadow);
     expect(parts.plotArea?.style?.stroke).toBeTruthy();
@@ -157,6 +156,14 @@ describe("seriesChartParts", () => {
     expect(options.seriesColor).toBe("#089bdb");
     expect(resolveChartAreaStyle(options, parts).borderRadius).toBe(DECK_CHART_DEFAULTS.borderRadius);
     expect(resolveChartAreaStyle(options, parts).boxShadow).toBe(DECK_CHART_DEFAULTS.boxShadow);
+  });
+
+  it("resolveChartAreaStyle respeita borderRadius 0 (cantos retos)", () => {
+    const options = mergeSeriesChartOptions({});
+    const parts = upsertChartPartState(chartOptionsToParts(options), { kind: "chartArea" }, {
+      style: { borderRadius: 0, boxShadow: "none" },
+    });
+    expect(resolveChartAreaStyle(options, parts).borderRadius).toBe(0);
   });
 
   it("mergeChartPartsWithOptions preserva borda custom da chartArea", () => {

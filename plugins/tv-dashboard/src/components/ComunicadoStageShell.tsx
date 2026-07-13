@@ -24,6 +24,7 @@ import { resolveViewportPixelSize } from "@delpi/tv-dashboard-presentation";
 
 import {
   buildAxisRulerTicks,
+  buildVerticalRulerTicksFromBottom,
   clampStageZoom,
   STAGE_RULER_SIZE_PX,
   STAGE_ZOOM_MAX,
@@ -71,8 +72,9 @@ function measureStageMetrics(
   return {
     wrapW: wrap.clientWidth,
     wrapH: wrap.clientHeight,
-    canvasW: canvas.offsetWidth,
-    canvasH: canvas.offsetHeight,
+    // Largura/altura visuais (pós-transform) — evita régua desalinhada com scale(zoom).
+    canvasW: Math.max(1, canvasRect.width),
+    canvasH: Math.max(1, canvasRect.height),
     originL: canvasRect.left - wrapRect.left + wrap.scrollLeft,
     originT: canvasRect.top - wrapRect.top + wrap.scrollTop,
     scrollL: wrap.scrollLeft,
@@ -82,15 +84,15 @@ function measureStageMetrics(
 
 function StageRulerHorizontal({
   metrics,
-  zoom,
   designWidth,
 }: {
   metrics: StageMetrics;
-  zoom: number;
+  zoom?: number;
   designWidth: number;
 }) {
   const unitsTotal = designWidth > 0 ? designWidth : metrics.canvasW;
-  const pxPerUnit = unitsTotal > 0 ? (metrics.canvasW * zoom) / unitsTotal : 0;
+  // canvasW já é a largura visual (pós-scale); não multiplicar de novo pelo zoom.
+  const pxPerUnit = unitsTotal > 0 ? metrics.canvasW / unitsTotal : 0;
   const ticks = useMemo(
     () =>
       buildAxisRulerTicks(metrics.wrapW, pxPerUnit, metrics.originL, metrics.scrollL, unitsTotal),
@@ -120,18 +122,24 @@ function StageRulerHorizontal({
 
 function StageRulerVertical({
   metrics,
-  zoom,
   designHeight,
 }: {
   metrics: StageMetrics;
-  zoom: number;
+  zoom?: number;
   designHeight: number;
 }) {
   const unitsTotal = designHeight > 0 ? designHeight : metrics.canvasH;
-  const pxPerUnit = unitsTotal > 0 ? (metrics.canvasH * zoom) / unitsTotal : 0;
+  // canvasH já é a altura visual (pós-scale); não multiplicar de novo pelo zoom.
+  const pxPerUnit = unitsTotal > 0 ? metrics.canvasH / unitsTotal : 0;
   const ticks = useMemo(
     () =>
-      buildAxisRulerTicks(metrics.wrapH, pxPerUnit, metrics.originT, metrics.scrollT, unitsTotal),
+      buildVerticalRulerTicksFromBottom(
+        metrics.wrapH,
+        pxPerUnit,
+        metrics.originT,
+        metrics.scrollT,
+        unitsTotal,
+      ),
     [metrics.originT, metrics.scrollT, metrics.wrapH, pxPerUnit, unitsTotal],
   );
 

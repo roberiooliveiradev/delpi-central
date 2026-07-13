@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildAxisRulerTicks,
+  buildVerticalRulerTicksFromBottom,
   clampStageZoom,
   computeFitStageZoom,
   shouldRenderStageGrid,
@@ -49,6 +50,16 @@ describe("stageViewport", () => {
     expect(labels).toContain("0");
     expect(labels).toContain("200");
     expect(labels).toContain("400");
+  });
+
+  it("régua vertical: zero na base da página", () => {
+    const ticks = buildVerticalRulerTicksFromBottom(400, 1, 0, 0, 1080);
+    expect(ticks.some((t) => t.label === "1080" && t.pos === 0)).toBe(true);
+    expect(ticks.some((t) => t.label === "880" && t.pos === 200)).toBe(true);
+    const atBottom = buildVerticalRulerTicksFromBottom(1200, 1, 0, 0, 1080);
+    const zero = atBottom.find((t) => t.label === "0");
+    expect(zero).toBeDefined();
+    expect(zero!.pos).toBeCloseTo(1080, 5);
   });
 
   it("oculta grade abaixo do zoom mínimo útil", () => {

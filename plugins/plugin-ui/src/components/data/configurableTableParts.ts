@@ -295,20 +295,24 @@ export function resolveTableFrameStyle(
   boxShadow: string;
 } {
   const frame = getTablePartState(parts, { kind: "frame" });
-  /* Seed legado: radius 0 sem sombra → aplica chrome Delpi (paridade resolveChartAreaStyle). */
-  const legacyOfficeChrome =
-    (frame?.style?.borderRadius == null || frame.style.borderRadius === 0) &&
-    !frame?.style?.boxShadow?.trim();
+  /* Seed legado: sem radius/sombra explícitos → chrome Delpi.
+   * `borderRadius: 0` é cantos retos válidos (não reaplica default). */
+  const style = frame?.style;
+  const hasExplicitRadius = typeof style?.borderRadius === "number";
+  const hasExplicitShadow = Boolean(style?.boxShadow?.trim());
+  const legacyOfficeChrome = !hasExplicitRadius && !hasExplicitShadow;
   return {
-    fill: frame?.style?.fill ?? DECK_TABLE_DEFAULTS.frameFill,
-    stroke: frame?.style?.stroke ?? DECK_TABLE_DEFAULTS.frameStroke,
-    strokeWidth: frame?.style?.strokeWidth ?? DECK_TABLE_DEFAULTS.borderWidth,
-    borderRadius: legacyOfficeChrome
-      ? DECK_TABLE_DEFAULTS.borderRadius
-      : (frame?.style?.borderRadius ?? DECK_TABLE_DEFAULTS.borderRadius),
-    boxShadow: legacyOfficeChrome
-      ? DECK_TABLE_DEFAULTS.boxShadow
-      : (frame?.style?.boxShadow ?? DECK_TABLE_DEFAULTS.boxShadow),
+    fill: style?.fill ?? DECK_TABLE_DEFAULTS.frameFill,
+    stroke: style?.stroke ?? DECK_TABLE_DEFAULTS.frameStroke,
+    strokeWidth: style?.strokeWidth ?? DECK_TABLE_DEFAULTS.borderWidth,
+    borderRadius: hasExplicitRadius
+      ? Math.max(0, style!.borderRadius!)
+      : DECK_TABLE_DEFAULTS.borderRadius,
+    boxShadow: hasExplicitShadow
+      ? style!.boxShadow!
+      : legacyOfficeChrome
+        ? DECK_TABLE_DEFAULTS.boxShadow
+        : (style?.boxShadow ?? DECK_TABLE_DEFAULTS.boxShadow),
   };
 }
 

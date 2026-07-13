@@ -10,18 +10,23 @@ import {
   clampChartPartFrame,
   defaultChartPartFrame,
   deleteChartPart,
+  formatDesignPx,
+  hostRelativeFrameToPageBottomLeftPx,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
   OFFICE_CHART_SERIES_COLOR,
   partsToChartOptions,
+  patchHostRelativeFramePageBottomLeftPx,
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
+  resolveViewportPixelSize,
   serializeChartPartRef,
   upsertChartPartState,
   type ComunicadoChartOptions,
   type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
   type ComunicadoChartViewBlock,
+  type ComunicadoFrame,
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -79,11 +84,17 @@ function resolveSeriesPointCount(block: ComunicadoChartViewBlock): number {
  * Estilo herda semântica point/line — stroke na série, fill no marcador.
  */
 export function ChartPartInspector({ pane = false, block }: Props) {
-  const { selectedChartPart, clearChartPartSelection, beginEditChartPart, updateSelected } =
-    useComunicadoEditor();
+  const {
+    selectedChartPart,
+    clearChartPartSelection,
+    beginEditChartPart,
+    updateSelected,
+    viewportProfile,
+  } = useComunicadoEditor();
 
   if (!selectedChartPart) return null;
 
+  const slideDesign = resolveViewportPixelSize(viewportProfile);
   const options = mergeComunicadoChartOptions({
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
@@ -96,6 +107,17 @@ export function ChartPartInspector({ pane = false, block }: Props) {
   const frameable = chartPartAllowsFrame(selectedChartPart);
   const defaults = defaultChartPartFrame(selectedChartPart);
   const partFrame = clampChartPartFrame(partState?.frame ?? defaults);
+  const partFrameForPx: ComunicadoFrame = {
+    x: partFrame.x,
+    y: partFrame.y,
+    w: partFrame.w ?? defaults.w ?? 20,
+    h: partFrame.h ?? defaults.h ?? 20,
+  };
+  const partFramePx = hostRelativeFrameToPageBottomLeftPx(
+    partFrameForPx,
+    block.frame,
+    slideDesign,
+  );
   const chartAreaStyle = resolveChartAreaStyle(options, block.chartParts);
   const plotAreaStyle = resolvePlotAreaStyle(block.chartParts);
 
@@ -155,6 +177,17 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     });
   };
 
+  const persistPartFramePx = (key: "x" | "y" | "w" | "h", rawPx: number) => {
+    const nextPct = patchHostRelativeFramePageBottomLeftPx(
+      partFrameForPx,
+      block.frame,
+      key,
+      rawPx,
+      slideDesign,
+    );
+    persistPartFrame(nextPct);
+  };
+
   const hideSelectedPart = () => {
     if (!canDelete) return;
     const result = deleteChartPart(block.chartParts, selectedChartPart, block.chartOptions);
@@ -206,50 +239,50 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       {frameable ? (
         <>
           <div className="td-part-inspector-toolbar__fields-row">
-            <DeckField id="td-chart-part-frame-x" label="Posição X (%)">
+            <DeckField id="td-chart-part-frame-x" label="Posição X (px)">
               <NativeTextControl
                 id="td-chart-part-frame-x"
                 type="number"
                 min={0}
-                max={100}
-                step={0.5}
-                value={Number(partFrame.x.toFixed(1))}
-                onChange={(value) => persistPartFrame({ x: Number(value) || 0 })}
+                max={slideDesign.width}
+                step={1}
+                value={formatDesignPx(partFramePx.x)}
+                onChange={(value) => persistPartFramePx("x", Number(value) || 0)}
               />
             </DeckField>
-            <DeckField id="td-chart-part-frame-y" label="Posição Y (%)">
+            <DeckField id="td-chart-part-frame-y" label="Posição Y (px)">
               <NativeTextControl
                 id="td-chart-part-frame-y"
                 type="number"
                 min={0}
-                max={100}
-                step={0.5}
-                value={Number(partFrame.y.toFixed(1))}
-                onChange={(value) => persistPartFrame({ y: Number(value) || 0 })}
+                max={slideDesign.height}
+                step={1}
+                value={formatDesignPx(partFramePx.y)}
+                onChange={(value) => persistPartFramePx("y", Number(value) || 0)}
               />
             </DeckField>
           </div>
           <div className="td-part-inspector-toolbar__fields-row">
-            <DeckField id="td-chart-part-frame-w" label="Largura (%)">
+            <DeckField id="td-chart-part-frame-w" label="Largura (px)">
               <NativeTextControl
                 id="td-chart-part-frame-w"
                 type="number"
-                min={5}
-                max={100}
-                step={0.5}
-                value={Number((partFrame.w ?? defaults.w ?? 20).toFixed(1))}
-                onChange={(value) => persistPartFrame({ w: Number(value) || 5 })}
+                min={1}
+                max={slideDesign.width}
+                step={1}
+                value={formatDesignPx(partFramePx.w)}
+                onChange={(value) => persistPartFramePx("w", Number(value) || 1)}
               />
             </DeckField>
-            <DeckField id="td-chart-part-frame-h" label="Altura (%)">
+            <DeckField id="td-chart-part-frame-h" label="Altura (px)">
               <NativeTextControl
                 id="td-chart-part-frame-h"
                 type="number"
-                min={5}
-                max={100}
-                step={0.5}
-                value={Number((partFrame.h ?? defaults.h ?? 20).toFixed(1))}
-                onChange={(value) => persistPartFrame({ h: Number(value) || 5 })}
+                min={1}
+                max={slideDesign.height}
+                step={1}
+                value={formatDesignPx(partFramePx.h)}
+                onChange={(value) => persistPartFramePx("h", Number(value) || 1)}
               />
             </DeckField>
           </div>

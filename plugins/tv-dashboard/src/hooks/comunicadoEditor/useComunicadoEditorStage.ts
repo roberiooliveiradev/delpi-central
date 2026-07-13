@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 
 import {
   readStageDisplayPreferences,
@@ -13,6 +13,8 @@ import {
 import { computeFitStageZoom, clampStageZoom } from "../../utils/stageViewport";
 
 const STAGE_VIEW_FIT_MAX_ATTEMPTS = 60;
+/** Passes de recentralização após o zoom pintar (scrollWidth precisa do layout novo). */
+const STAGE_VIEW_FIT_CENTER_PASSES = 3;
 
 /**
  * Estado de UI do palco (zoom, réguas, grade, guias, snap, posição) + fit à viewport.
@@ -41,6 +43,10 @@ export function useComunicadoEditorStage() {
    */
   const suppressViewPersistRef = useRef(true);
   const viewBootstrappedRef = useRef(false);
+  /** Geração do fit em curso — invalida centers atrasados de um fit anterior. */
+  const fitGenerationRef = useRef(0);
+  /** Após patch de zoom, centraliza no layout effect (DOM já com o novo scale). */
+  const pendingFitCenterRef = useRef(false);
 
   useEffect(() => {
     snapEnabledRef.current = prefs.snapEnabled;
@@ -163,9 +169,61 @@ export function useComunicadoEditorStage() {
     return true;
   }, [applySavedViewToWrap, markViewBootstrapped, persistStageViewPosition]);
 
+  const finishFitCenter = useCallback(
+    (generation: number, pass: number) => {
+      if (generation !== fitGenerationRef.current) return;
+      const wrap = canvasWrapRef.current;
+      if (!wrap || wrap.clientWidth <= 0 || wrap.clientHeight <= 0) {
+        if (pass >= STAGE_VIEW_FIT_MAX_ATTEMPTS) {
+          pendingFitCenterRef.current = false;
+          markViewBootstrapped();
+          return;
+        }
+        window.requestAnimationFrame(() => finishFitCenter(generation, pass + 1));
+        return;
+      }
+
+      applyCenteredStageScroll(wrap);
+
+      if (pass < STAGE_VIEW_FIT_CENTER_PASSES) {
+        window.requestAnimationFrame(() => finishFitCenter(generation, pass + 1));
+        return;
+      }
+
+      if (generation !== fitGenerationRef.current) return;
+      pendingFitCenterRef.current = false;
+      const anchor = captureStageViewAnchor(wrap);
+      patchPrefs({
+        stageViewAnchorX: anchor.x,
+        stageViewAnchorY: anchor.y,
+        stageScrollLeft: wrap.scrollLeft,
+        stageScrollTop: wrap.scrollTop,
+        stageViewAnchorSaved: true,
+      });
+      markViewBootstrapped();
+    },
+    [markViewBootstrapped, patchPrefs],
+  );
+
+  /**
+   * Centraliza depois que o React aplica o novo `stageZoom` no DOM.
+   * Sem isso, o scroll usava o zoom antigo do localStorage e a página
+   * voltava deslocada (réguas em ~1000/600 no canto aparente).
+   */
+  useLayoutEffect(() => {
+    if (!pendingFitCenterRef.current) return;
+    const generation = fitGenerationRef.current;
+    finishFitCenter(generation, 0);
+  }, [prefs.stageZoom, finishFitCenter]);
+
   /** Ajustar: fit + grava âncora (primeira posição ou clique do usuário). */
   const fitStageToView = useCallback(() => {
+    const generation = ++fitGenerationRef.current;
+    pendingFitCenterRef.current = false;
+    suppressViewPersistRef.current = true;
+
     const attemptFit = (attempt: number) => {
+      if (generation !== fitGenerationRef.current) return;
       const wrap = canvasWrapRef.current;
       const canvas = interactionCanvasRefSlot.current?.current ?? null;
       if (
@@ -184,24 +242,19 @@ export function useComunicadoEditorStage() {
         return;
       }
 
-      suppressViewPersistRef.current = true;
-      patchPrefs({ stageZoom: computeFitStageZoom(wrap, canvas) });
-      window.requestAnimationFrame(() => {
-        applyCenteredStageScroll(wrap);
-        const anchor = captureStageViewAnchor(wrap);
-        patchPrefs({
-          stageViewAnchorX: anchor.x,
-          stageViewAnchorY: anchor.y,
-          stageScrollLeft: wrap.scrollLeft,
-          stageScrollTop: wrap.scrollTop,
-          stageViewAnchorSaved: true,
-        });
-        markViewBootstrapped();
-      });
+      const nextZoom = computeFitStageZoom(wrap, canvas);
+      const zoomUnchanged = Math.abs(prefsRef.current.stageZoom - nextZoom) < 0.005;
+      pendingFitCenterRef.current = true;
+      if (zoomUnchanged) {
+        // Mesmo zoom: layout effect não reexecuta — centraliza na sequência de frames.
+        window.requestAnimationFrame(() => finishFitCenter(generation, 0));
+        return;
+      }
+      patchPrefs({ stageZoom: nextZoom });
     };
 
     attemptFit(0);
-  }, [markViewBootstrapped, patchPrefs]);
+  }, [finishFitCenter, markViewBootstrapped, patchPrefs]);
 
   /**
    * Ao abrir o editor: sempre Ajustar (fit).

@@ -1,25 +1,17 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Copy, Replace } from "lucide-react";
+import { Replace } from "lucide-react";
 import {
-  applyMarkerStyleToAll,
   canConnectBlocks,
   chartPartVisualPrimitive,
-  chartPrimitiveSupportsFill,
-  chartPrimitiveSupportsStroke,
   defaultFrame,
   defaultStrokeWidthForPrimitive,
-  getChartPartState,
   getKpiPartState,
   kpiPartBoxChromeLabels,
-  mergeComunicadoChartOptions,
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
   mergeTablePartsWithOptions,
-  partsToChartOptions,
   partsToKpiOptions,
-  resolveChartAreaStyle,
   resolveKpiShapeChromePartRef,
-  resolvePlotAreaStyle,
   resolveShapePrimitive,
   resolveTableFrameStyle,
   resolveTablePartPaintStyle,
@@ -28,7 +20,6 @@ import {
   shapeSupportsFill,
   shapeSupportsStroke,
   tablePartAllowsStroke,
-  upsertChartPartState,
   upsertKpiPartState,
   upsertTablePartState,
   type ComunicadoChartViewBlock,
@@ -38,7 +29,6 @@ import {
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import {
-  DECK_COLOR_ACCENT,
   DECK_COLOR_BORDER,
   DECK_COLOR_SURFACE,
   DECK_SHAPE_DEFAULTS,
@@ -64,6 +54,7 @@ import {
   FormatRibbonTypographySections,
   FormatRibbonFrameSection,
 } from "./formatRibbon";
+import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
 import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -200,147 +191,8 @@ export function ComunicadoShapeRibbon() {
 
   if (isChartPartPrimitive && selected?.type === "chart_view" && effectiveChartPart && chartPartPrimitive) {
     const block = selected as ComunicadoChartViewBlock;
-    const partState = getChartPartState(block.chartParts, effectiveChartPart);
-    const showFill = chartPrimitiveSupportsFill(chartPartPrimitive);
-    const showStroke = chartPrimitiveSupportsStroke(chartPartPrimitive);
-    const areaChrome =
-      effectiveChartPart.kind === "chartArea"
-        ? resolveChartAreaStyle(block.chartOptions ?? {}, block.chartParts)
-        : effectiveChartPart.kind === "plotArea"
-          ? {
-              ...resolvePlotAreaStyle(block.chartParts),
-              borderRadius: partState?.style?.borderRadius ?? 0,
-            }
-          : null;
-    const fillValue =
-      areaChrome?.fill ?? partState?.style?.fill ?? DECK_COLOR_ACCENT;
-    const strokeValue =
-      areaChrome?.stroke ?? partState?.style?.stroke ?? DECK_COLOR_ACCENT;
-    const strokeWidth =
-      areaChrome?.strokeWidth ??
-      partState?.style?.strokeWidth ??
-      defaultStrokeWidthForPrimitive(chartPartPrimitive);
-    const cornerRadius = areaChrome?.borderRadius ?? partState?.style?.borderRadius ?? 0;
-    const showCorners =
-      effectiveChartPart.kind === "chartArea" || effectiveChartPart.kind === "plotArea";
-
-    const patchPartStyle = (style: Record<string, unknown>) => {
-      let nextParts = upsertChartPartState(block.chartParts, effectiveChartPart, {
-        style: style as never,
-      });
-      const nextOptions = mergeComunicadoChartOptions({
-        ...block.chartOptions,
-        ...partsToChartOptions(nextParts),
-      });
-      if (effectiveChartPart.kind === "series" && typeof style.stroke === "string") {
-        nextOptions.seriesColor = style.stroke;
-      }
-      if (effectiveChartPart.kind === "chartArea" && typeof style.fill === "string") {
-        nextOptions.backgroundColor = style.fill;
-      }
-      updateSelected({
-        chartParts: nextParts,
-        chartOptions: nextOptions,
-      } as Partial<ComunicadoBlock>);
-    };
-
     return shell(
-      <>
-        <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-            <ShapeStyleMenu
-              onSelect={(preset) =>
-                patchPartStyle({
-                  fill: preset.fill,
-                  stroke: preset.stroke,
-                  strokeWidth: preset.strokeWidth,
-                  ...(showCorners ? { borderRadius: cornerRadius } : {}),
-                })
-              }
-            />
-          </div>
-        </DeckRibbonGroup>
-
-        <DeckRibbonGroup label="Preenchimento" hint={H.shape}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-            {showFill ? (
-              <ShapeFillMenu
-                value={fillValue}
-                fillLabel={chartPartPrimitive === "point" ? "Cor" : "Preench."}
-                onChange={(color) => patchPartStyle({ fill: color })}
-                onNoFill={() => patchPartStyle({ fill: "transparent" })}
-              />
-            ) : (
-              <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento neste primitivo.</p>
-            )}
-          </div>
-        </DeckRibbonGroup>
-
-        <DeckRibbonGroup label="Contorno" hint={H.strokeWidth}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-            {showStroke ? (
-              <ShapeOutlineMenu
-                color={strokeValue}
-                strokeWidth={strokeWidth}
-                minWidth={0}
-                maxWidth={chartPartPrimitive === "point" ? 8 : 20}
-                outlineLabel="Contorno"
-                onColorChange={(color) => patchPartStyle({ stroke: color })}
-                onNoOutline={() => patchPartStyle({ stroke: "transparent", strokeWidth: 0 })}
-                onStrokeWidthChange={(width) => patchPartStyle({ strokeWidth: width })}
-              />
-            ) : (
-              <p className="td-subtitle td-deck-ribbon__hint">Sem contorno neste primitivo.</p>
-            )}
-            {showCorners ? (
-              <ShapeShadowMenu
-                value={block.style?.boxShadow}
-                presets={SHADOW_MENU_PRESETS}
-                shadowLabel="Sombra"
-                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-              />
-            ) : null}
-          </div>
-        </DeckRibbonGroup>
-
-        {effectiveChartPart.kind === "marker" ? (
-          <DeckRibbonGroup label="Marcador" hint={H.shape}>
-            <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-              <FieldLabel
-                htmlFor="td-chart-marker-radius"
-                label="Raio"
-                className="td-deck-ribbon__field-label"
-              />
-              <NativeTextControl
-                id="td-chart-marker-radius"
-                type="number"
-                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={1}
-                max={12}
-                step={0.5}
-                value={partState?.style?.markerRadius ?? 2.5}
-                onChange={(value) =>
-                  patchPartStyle({ markerRadius: Number(value) || 2.5 })
-                }
-              />
-              <DeckRibbonTile
-                icon={Copy}
-                label="Aplicar a todos"
-                hint="Replica o estilo do marcador em todos os pontos da série."
-                onClick={() => {
-                  const nextParts = applyMarkerStyleToAll(
-                    block.chartParts,
-                    block.resolved?.chart?.points?.length ?? 0,
-                    effectiveChartPart.kind === "marker" ? effectiveChartPart.seriesIndex ?? 0 : 0,
-                    partState?.style ?? {},
-                  );
-                  updateSelected({ chartParts: nextParts } as Partial<ComunicadoBlock>);
-                }}
-              />
-            </div>
-          </DeckRibbonGroup>
-        ) : null}
-      </>,
+      <ChartRibbonShapeChrome block={block} />,
     );
   }
 
@@ -513,7 +365,7 @@ export function ComunicadoShapeRibbon() {
     );
   }
 
-  if (!isShapeBlock) {
+  if (!isShapeBlock || !selected || selected.type !== "shape") {
     return shell(null);
   }
 

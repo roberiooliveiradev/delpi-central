@@ -36,7 +36,6 @@ import {
 import { getAccessToken } from "../api/httpClient";
 import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
 import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
-import { DeckEditorHeaderActions } from "../components/deck";
 import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SlideStagePreview } from "../components/SlideStagePreview";
@@ -747,6 +746,20 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     onExportPdf: () => void handleExportPdf(),
     onExportPptx: isCustomSlide ? () => void handleExportPptx() : undefined,
     exportBusy,
+    playlistChrome: {
+      playlistName: playlist.name,
+      tvStatusLabel: tvStatusLabel(),
+      tvStatusClass: tvStatusClass(),
+      linkActive: playlist.isActive,
+      onBack,
+      onPreview,
+      onShare,
+      onCopyLink: copyLink,
+      onQr: openQr,
+      onRegenerateToken: () => void handleRegenerateToken(),
+      onToggleLink: () => void handleToggleActive(),
+      onDelete: () => void handleDelete(),
+    },
   };
 
   const chromeProps = {
@@ -757,22 +770,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     isCustomSlide,
     adminLabels: admin,
     slideDeck: slideDeckProps,
-    headerActions: (
-      <DeckEditorHeaderActions
-        playlistName={playlist.name}
-        tvStatusLabel={tvStatusLabel()}
-        tvStatusClass={tvStatusClass()}
-        linkActive={playlist.isActive}
-        onBack={onBack}
-        onPreview={onPreview}
-        onShare={onShare}
-        onCopyLink={copyLink}
-        onQr={openQr}
-        onRegenerateToken={() => void handleRegenerateToken()}
-        onToggleLink={() => void handleToggleActive()}
-        onDelete={() => void handleDelete()}
-      />
-    ),
     onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) =>
       void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>

@@ -6,9 +6,8 @@ import {
   defaultKpiPartFrame,
   deleteKpiPart,
   formatDesignPx,
-  framePercentToDesignPx,
   getKpiPartState,
-  hostDesignSizeFromFramePercent,
+  hostRelativeFrameToPageBottomLeftPx,
   kpiPartAllowsDelete,
   kpiPartAllowsFrame,
   kpiPartBoxChromeLabels,
@@ -16,7 +15,7 @@ import {
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
-  patchComunicadoFrameDesignPx,
+  patchHostRelativeFramePageBottomLeftPx,
   resolveKpiPartFrame,
   resolveViewportPixelSize,
   clearKpiPartsFreeLayoutFrames,
@@ -90,7 +89,6 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   if (!selectedKpiPart) return null;
 
   const slideDesign = resolveViewportPixelSize(viewportProfile);
-  const hostDesign = hostDesignSizeFromFramePercent(block.frame, slideDesign);
   const options = mergeComunicadoKpiOptions({
     ...block.kpiOptions,
     ...partsToKpiOptions(block.kpiParts),
@@ -102,7 +100,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   const frameKind = selectedKpiPart.kind as KpiFramePartKind;
   const explicitFrame = resolveKpiPartFrame(partState);
   const partFrame = clampKpiPartFrame(explicitFrame ?? defaultKpiPartFrame(frameKind));
-  const partFramePx = framePercentToDesignPx(partFrame, hostDesign);
+  const partFramePx = hostRelativeFrameToPageBottomLeftPx(partFrame, block.frame, slideDesign);
   const boxLabels = kpiPartBoxChromeLabels(selectedKpiPart.kind);
   const isTextPart = kpiPartSupportsTypography(selectedKpiPart);
   const cardFill =
@@ -149,7 +147,13 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   };
 
   const persistPartFramePx = (key: "x" | "y" | "w" | "h", rawPx: number) => {
-    const nextPct = patchComunicadoFrameDesignPx(partFrame, key, rawPx, hostDesign);
+    const nextPct = patchHostRelativeFramePageBottomLeftPx(
+      partFrame,
+      block.frame,
+      key,
+      rawPx,
+      slideDesign,
+    );
     persistPart({ frame: clampKpiPartFrame(nextPct) });
   };
 
@@ -397,7 +401,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       {frameable ? (
         <>
           <p className="td-deck-inspector__hint">
-            Posição da parte no card (px de design) — não é a posição do bloco no slide
+            Posição absoluta na página (px de design), origem no canto inferior esquerdo
           </p>
           {!explicitFrame ? (
             <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -411,7 +415,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
                     id={`td-kpi-part-${selectedKpiPart.kind}-x`}
                     type="number"
                     min={0}
-                    max={hostDesign.width}
+                    max={slideDesign.width}
                     step={1}
                     value={formatDesignPx(partFramePx.x)}
                     onChange={(value) => persistPartFramePx("x", Number(value) || 0)}
@@ -422,7 +426,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
                     id={`td-kpi-part-${selectedKpiPart.kind}-y`}
                     type="number"
                     min={0}
-                    max={hostDesign.height}
+                    max={slideDesign.height}
                     step={1}
                     value={formatDesignPx(partFramePx.y)}
                     onChange={(value) => persistPartFramePx("y", Number(value) || 0)}
@@ -435,7 +439,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
                     id={`td-kpi-part-${selectedKpiPart.kind}-w`}
                     type="number"
                     min={1}
-                    max={hostDesign.width}
+                    max={slideDesign.width}
                     step={1}
                     value={formatDesignPx(partFramePx.w)}
                     onChange={(value) => persistPartFramePx("w", Number(value) || 1)}
@@ -446,7 +450,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
                     id={`td-kpi-part-${selectedKpiPart.kind}-h`}
                     type="number"
                     min={1}
-                    max={hostDesign.height}
+                    max={slideDesign.height}
                     step={1}
                     value={formatDesignPx(partFramePx.h)}
                     onChange={(value) => persistPartFramePx("h", Number(value) || 1)}

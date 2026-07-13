@@ -1,24 +1,20 @@
+import { useRef, useState } from "react";
 import {
   BarChart3,
-  ChartArea,
-  ChartColumn,
-  ChartColumnStacked,
-  ChartLine,
-  ChartNetwork,
-  ChartNoAxesCombined,
-  ChartPie,
-  ChartScatter,
-  ChartSpline,
-  CircleDot,
   Database,
-  Filter,
   Grid3x3,
   Heading,
   ListOrdered,
+  Replace,
   Table2,
   Tags,
   Type,
 } from "lucide-react";
+import {
+  AnchoredPanelPortal,
+  ChartTypeCatalogPanel,
+  type DelpiChartType,
+} from "@delpi/plugin-ui/index";
 import {
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
@@ -32,15 +28,18 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { FormatRibbonTypographySections } from "./formatRibbon";
+import { FormatRibbonOrganizeSection, FormatRibbonFrameSection, FormatRibbonTypographySections } from "./formatRibbon";
+import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 /**
- * Faixa contextual «Gráfico» — tipo, rótulos, eixos e tipografia da parte textual.
+ * Faixa Elemento para gráfico — dados, tipo (mesmo catálogo de Inserir),
+ * rótulos/eixos e configurações de forma no mesmo lugar.
  */
 export function ComunicadoChartRibbon() {
   const {
@@ -49,8 +48,10 @@ export function ComunicadoChartRibbon() {
     updateSelected,
     selectChartPart,
     openDataPanel,
-    requestRibbonTab,
   } = useComunicadoEditor();
+  const chartTypeAnchorRef = useRef<HTMLDivElement>(null);
+  const chartTypePanelRef = useRef<HTMLDivElement>(null);
+  const [chartTypeMenuOpen, setChartTypeMenuOpen] = useState(false);
 
   if (!selected || selected.type !== "chart_view") {
     return (
@@ -80,8 +81,9 @@ export function ComunicadoChartRibbon() {
     }
   };
 
-  const setChartType = (chartType: ComunicadoChartType) => {
-    updateSelected({ chartType } as Partial<ComunicadoBlock>);
+  const setChartType = (chartType: DelpiChartType) => {
+    updateSelected({ chartType: chartType as ComunicadoChartType } as Partial<ComunicadoBlock>);
+    setChartTypeMenuOpen(false);
   };
 
   return (
@@ -100,91 +102,28 @@ export function ComunicadoChartRibbon() {
       </DeckRibbonGroup>
 
       <DeckRibbonGroup label="Alterar tipo" hint={H.chartType}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+        <div ref={chartTypeAnchorRef} className="td-composer__dropdown">
           <DeckRibbonTile
-            icon={ChartColumn}
-            label="Coluna"
-            hint="Gráfico de colunas/barras."
-            active={block.chartType === "bar"}
-            onClick={() => setChartType("bar")}
+            icon={Replace}
+            label="Trocar gráfico"
+            hint="Abre o mesmo catálogo de tipos usado em Inserir → Gráficos."
+            active={chartTypeMenuOpen}
+            onClick={() => setChartTypeMenuOpen((open) => !open)}
           />
-          <DeckRibbonTile
-            icon={ChartColumnStacked}
-            label="Empilhado"
-            hint="Colunas empilhadas."
-            active={block.chartType === "stacked_bar"}
-            onClick={() => setChartType("stacked_bar")}
-          />
-          <DeckRibbonTile
-            icon={BarChart3}
-            label="Histograma"
-            hint="Histograma (faixas)."
-            active={block.chartType === "histogram"}
-            onClick={() => setChartType("histogram")}
-          />
-          <DeckRibbonTile
-            icon={ChartLine}
-            label="Linha"
-            hint="Gráfico de linhas."
-            active={block.chartType === "line"}
-            onClick={() => setChartType("line")}
-          />
-          <DeckRibbonTile
-            icon={ChartArea}
-            label="Área"
-            hint="Gráfico de área (preenchimento sob a série)."
-            active={block.chartType === "area"}
-            onClick={() => setChartType("area")}
-          />
-          <DeckRibbonTile
-            icon={ChartPie}
-            label="Pizza"
-            hint="Gráfico de pizza (fatias selecionáveis)."
-            active={block.chartType === "pie" || block.chartType === "doughnut"}
-            onClick={() => setChartType("pie")}
-          />
-          <DeckRibbonTile
-            icon={ChartSpline}
-            label="Combo"
-            hint="Colunas + linha no mesmo gráfico."
-            active={block.chartType === "combo"}
-            onClick={() => setChartType("combo")}
-          />
-          <DeckRibbonTile
-            icon={ChartScatter}
-            label="Dispersão"
-            hint="Gráfico de dispersão (XY)."
-            active={block.chartType === "scatter"}
-            onClick={() => setChartType("scatter")}
-          />
-          <DeckRibbonTile
-            icon={CircleDot}
-            label="Bolhas"
-            hint="Gráfico de bolhas."
-            active={block.chartType === "bubble"}
-            onClick={() => setChartType("bubble")}
-          />
-          <DeckRibbonTile
-            icon={ChartNetwork}
-            label="Radar"
-            hint="Gráfico radar / teia."
-            active={block.chartType === "radar"}
-            onClick={() => setChartType("radar")}
-          />
-          <DeckRibbonTile
-            icon={ChartNoAxesCombined}
-            label="Cascata"
-            hint="Gráfico em cascata (waterfall)."
-            active={block.chartType === "waterfall"}
-            onClick={() => setChartType("waterfall")}
-          />
-          <DeckRibbonTile
-            icon={Filter}
-            label="Funil"
-            hint="Gráfico de funil."
-            active={block.chartType === "funnel"}
-            onClick={() => setChartType("funnel")}
-          />
+          {chartTypeMenuOpen ? (
+            <AnchoredPanelPortal
+              open={chartTypeMenuOpen}
+              anchorRef={chartTypeAnchorRef}
+              panelRef={chartTypePanelRef}
+              variant="bare"
+              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+              className="td-chart-catalog-portal"
+              role="menu"
+              aria-label="Alterar tipo de gráfico"
+            >
+              <ChartTypeCatalogPanel title="Alterar tipo de gráfico" onSelect={setChartType} />
+            </AnchoredPanelPortal>
+          ) : null}
         </div>
       </DeckRibbonGroup>
 
@@ -257,23 +196,16 @@ export function ComunicadoChartRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Área do gráfico" hint={H.chartFormat}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={ChartArea}
-            label="Forma"
-            hint="Abre a aba Forma para preenchimento e contorno da área/série selecionada."
-            onClick={() => {
-              if (selectedChartPart) {
-                selectChartPart(block.id, selectedChartPart);
-              } else {
-                selectChartPart(block.id, { kind: "chartArea" });
-              }
-              requestRibbonTab("shape");
-            }}
-          />
-        </div>
-      </DeckRibbonGroup>
+      <ChartRibbonShapeChrome block={block} />
+      <FormatRibbonFrameSection />
+      <FormatRibbonOrganizeSection />
+
+      {selectedChartPart == null ? (
+        <p className="td-subtitle td-deck-ribbon__hint">
+          Forma aplica-se à área do gráfico. Clique em título, legenda ou série para formatar a
+          parte.
+        </p>
+      ) : null}
     </div>
   );
 }

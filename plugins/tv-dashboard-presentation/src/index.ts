@@ -36,6 +36,15 @@ export {
   patchComunicadoFrameDesignPx,
   percentToDesignPx,
 } from "./frameDesignPixels";
+export {
+  designYBottomLeftToTopLeft,
+  designYTopLeftToBottomLeft,
+  framePercentToPageBottomLeftPx,
+  hostFramePageBottomLeftOrigin,
+  hostRelativeFrameToPageBottomLeftPx,
+  patchComunicadoFramePageBottomLeftPx,
+  patchHostRelativeFramePageBottomLeftPx,
+} from "./framePageCoordinates";
 export { formatPct, formatNumber } from "./nativeFormat";
 export type {
   PresentationMeta,

@@ -12,7 +12,7 @@ import {
   entranceAnimationFromPreset,
   entrancePresetValue,
   formatDesignPx,
-  framePercentToDesignPx,
+  framePercentToPageBottomLeftPx,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
@@ -20,7 +20,7 @@ import {
   isPointShapeKind,
   normalizeHrefInput,
   normalizeCanvasTableCells,
-  patchComunicadoFrameDesignPx,
+  patchComunicadoFramePageBottomLeftPx,
   resolveEntranceAnimation,
   resolveViewportPixelSize,
   shapeHasAdjustments,
@@ -355,7 +355,7 @@ export function ComunicadoElementInspector({
           {(() => {
             const pointOnly =
               selected.type === "shape" && isPointShapeKind(selected.shape);
-            const framePx = framePercentToDesignPx(selected.frame, slideDesign);
+            const framePx = framePercentToPageBottomLeftPx(selected.frame, slideDesign);
             return (
               <>
                 <div className="td-deck-frame-grid">
@@ -376,7 +376,7 @@ export function ComunicadoElementInspector({
                         value={String(formatDesignPx(framePx[key]))}
                         onChange={(value) =>
                           updateSelected({
-                            frame: patchComunicadoFrameDesignPx(
+                            frame: patchComunicadoFramePageBottomLeftPx(
                               selected.frame,
                               key,
                               Number(value),

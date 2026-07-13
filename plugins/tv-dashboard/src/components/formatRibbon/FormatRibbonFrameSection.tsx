@@ -7,10 +7,10 @@ import {
   defaultChartPartFrame,
   defaultKpiPartFrame,
   formatDesignPx,
-  framePercentToDesignPx,
+  framePercentToPageBottomLeftPx,
   getChartPartState,
   getKpiPartState,
-  hostDesignSizeFromFramePercent,
+  hostRelativeFrameToPageBottomLeftPx,
   resolveKpiPartFrame,
   isPointShapeKind,
   kpiPartAllowsFrame,
@@ -19,7 +19,8 @@ import {
   partsToChartOptions,
   partsToKpiOptions,
   patchComunicadoFrame,
-  patchComunicadoFrameDesignPx,
+  patchComunicadoFramePageBottomLeftPx,
+  patchHostRelativeFramePageBottomLeftPx,
   resolveBlockShapeChromeStyle,
   resolveViewportPixelSize,
   seedKpiPartsFreeLayoutFrames,
@@ -93,11 +94,26 @@ export function FormatRibbonFrameSection() {
     const partFrame = clampKpiPartFrame(explicitFrame ?? defaultKpiPartFrame(frameKind));
     const borderRadius = partState?.style?.borderRadius ?? 0;
     const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
-    const hostDesign = hostDesignSizeFromFramePercent(block.frame, slideDesign);
-    const partFramePx = framePercentToDesignPx(partFrame, hostDesign);
+    const partFrameFull: ComunicadoFrame = {
+      x: partFrame.x,
+      y: partFrame.y,
+      w: partFrame.w ?? 20,
+      h: partFrame.h ?? 20,
+    };
+    const partFramePx = hostRelativeFrameToPageBottomLeftPx(
+      partFrameFull,
+      block.frame,
+      slideDesign,
+    );
 
     const setPartFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
-      const nextPct = patchComunicadoFrameDesignPx(partFrame, key, rawPx, hostDesign);
+      const nextPct = patchHostRelativeFramePageBottomLeftPx(
+        partFrameFull,
+        block.frame,
+        key,
+        rawPx,
+        slideDesign,
+      );
       const nextFrame = clampKpiPartFrame(nextPct);
       const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, { frame: nextFrame });
       updateSelected({
@@ -124,7 +140,7 @@ export function FormatRibbonFrameSection() {
     return (
       <DeckRibbonGroup
         label="Posição e tamanho"
-        hint="Posição da parte no card (px de design) — não é o bloco no slide."
+        hint="Posição absoluta na página (px de design), origem no canto inferior esquerdo."
       >
         {!explicitFrame ? (
           <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -145,7 +161,7 @@ export function FormatRibbonFrameSection() {
                   type="number"
                   className="td-deck-ribbon__number td-deck-ribbon__number--compact"
                   min={key === "w" || key === "h" ? 1 : 0}
-                  max={key === "x" || key === "w" ? hostDesign.width : hostDesign.height}
+                  max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
                   step={1}
                   aria-label={FRAME_LABELS[key]}
                   value={formatDesignPx(partFramePx[key] ?? 0)}
@@ -189,22 +205,31 @@ export function FormatRibbonFrameSection() {
     const defaults = defaultChartPartFrame(chartPartTarget);
     const partFrame = clampChartPartFrame(partState?.frame ?? defaults);
     const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
-    const hostDesign = hostDesignSizeFromFramePercent(block.frame, slideDesign);
     const partFrameForPx: ComunicadoFrame = {
       x: partFrame.x,
       y: partFrame.y,
       w: partFrame.w ?? defaults.w ?? 20,
       h: partFrame.h ?? defaults.h ?? 20,
     };
-    const partFramePx = framePercentToDesignPx(partFrameForPx, hostDesign);
+    const partFramePx = hostRelativeFrameToPageBottomLeftPx(
+      partFrameForPx,
+      block.frame,
+      slideDesign,
+    );
 
     const setPartFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
-      const nextPct = patchComunicadoFrameDesignPx(partFrameForPx, key, rawPx, hostDesign);
+      const nextPct = patchHostRelativeFramePageBottomLeftPx(
+        partFrameForPx,
+        block.frame,
+        key,
+        rawPx,
+        slideDesign,
+      );
       const nextFrame = clampChartPartFrame({
         ...partFrame,
-        w: partFrame.w ?? defaults.w,
-        h: partFrame.h ?? defaults.h,
         ...nextPct,
+        w: nextPct.w ?? partFrame.w ?? defaults.w,
+        h: nextPct.h ?? partFrame.h ?? defaults.h,
       });
       const nextParts = upsertChartPartState(block.chartParts, chartPartTarget, {
         frame: nextFrame,
@@ -230,7 +255,7 @@ export function FormatRibbonFrameSection() {
                 type="number"
                 className="td-deck-ribbon__number td-deck-ribbon__number--compact"
                 min={key === "w" || key === "h" ? 1 : 0}
-                max={key === "x" || key === "w" ? hostDesign.width : hostDesign.height}
+                max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
                 step={1}
                 aria-label={FRAME_LABELS[key]}
                 value={formatDesignPx(partFramePx[key] ?? 0)}
@@ -255,13 +280,14 @@ export function FormatRibbonFrameSection() {
   const borderRadius = innerChrome?.borderRadius ?? selected.style?.borderRadius ?? 0;
   const showCornerRadius =
     !pointOnly &&
+    selected.type !== "chart_view" &&
     !(selected.type === "kpi_view" && selectedKpiPart == null);
 
-  const framePx = framePercentToDesignPx(selected.frame, slideDesign);
+  const framePx = framePercentToPageBottomLeftPx(selected.frame, slideDesign);
 
   const setFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
     updateSelected({
-      frame: patchComunicadoFrameDesignPx(selected.frame, key, rawPx, slideDesign),
+      frame: patchComunicadoFramePageBottomLeftPx(selected.frame, key, rawPx, slideDesign),
     } as Partial<ComunicadoBlock>);
   };
 

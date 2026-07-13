@@ -25,6 +25,8 @@ import {
   resolveDeckRibbonTabs,
 } from "./deck";
 
+import type { DeckHomePlaylistChromeProps } from "./deck";
+
 type SlideDeckProps = {
   slides: Slide[];
   selectedSlide: Slide | null;
@@ -37,6 +39,7 @@ type SlideDeckProps = {
   onExportPdf?: () => void;
   onExportPptx?: () => void;
   exportBusy?: boolean;
+  playlistChrome?: DeckHomePlaylistChromeProps;
 };
 
 type Props = {
@@ -47,7 +50,6 @@ type Props = {
   isCustomSlide: boolean;
   adminLabels?: Record<string, string>;
   slideTabExtra?: ReactNode;
-  headerActions?: ReactNode;
   slideDeck: SlideDeckProps;
   onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) => void;
   onSaveSlide: (
@@ -92,7 +94,6 @@ export function DeckEditorChrome({
   isCustomSlide,
   adminLabels = {},
   slideTabExtra,
-  headerActions,
   slideDeck,
   onSavePlaylistSettings,
   onSaveSlide,
@@ -219,7 +220,6 @@ export function DeckEditorChrome({
             );
           })}
         </div>
-        {headerActions}
       </div>
 
       {showRibbon ? (

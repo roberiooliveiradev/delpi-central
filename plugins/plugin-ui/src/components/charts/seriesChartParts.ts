@@ -987,19 +987,24 @@ export function resolveChartAreaStyle(
   boxShadow: string;
 } {
   const area = getChartPartState(parts, { kind: "chartArea" });
-  const legacyOfficeChrome =
-    (area?.style?.borderRadius == null || area.style.borderRadius === 0) &&
-    !area?.style?.boxShadow?.trim();
+  const style = area?.style;
+  /* Legado: sem `borderRadius`/`boxShadow` explícitos → chrome Delpi.
+   * `borderRadius: 0` é válido (cantos retos) e NÃO dispara o fallback. */
+  const hasExplicitRadius = typeof style?.borderRadius === "number";
+  const hasExplicitShadow = Boolean(style?.boxShadow?.trim());
+  const legacyOfficeChrome = !hasExplicitRadius && !hasExplicitShadow;
   return {
-    fill: area?.style?.fill ?? options.backgroundColor ?? DECK_CHART_DEFAULTS.areaFill,
-    stroke: area?.style?.stroke ?? DECK_CHART_DEFAULTS.areaStroke,
-    strokeWidth: area?.style?.strokeWidth ?? DECK_CHART_DEFAULTS.borderWidth,
-    borderRadius: legacyOfficeChrome
-      ? DECK_CHART_DEFAULTS.borderRadius
-      : (area?.style?.borderRadius ?? DECK_CHART_DEFAULTS.borderRadius),
-    boxShadow: legacyOfficeChrome
-      ? DECK_CHART_DEFAULTS.boxShadow
-      : (area?.style?.boxShadow ?? DECK_CHART_DEFAULTS.boxShadow),
+    fill: style?.fill ?? options.backgroundColor ?? DECK_CHART_DEFAULTS.areaFill,
+    stroke: style?.stroke ?? DECK_CHART_DEFAULTS.areaStroke,
+    strokeWidth: style?.strokeWidth ?? DECK_CHART_DEFAULTS.borderWidth,
+    borderRadius: hasExplicitRadius
+      ? Math.max(0, style!.borderRadius!)
+      : DECK_CHART_DEFAULTS.borderRadius,
+    boxShadow: hasExplicitShadow
+      ? style!.boxShadow!
+      : legacyOfficeChrome
+        ? DECK_CHART_DEFAULTS.boxShadow
+        : (style?.boxShadow ?? DECK_CHART_DEFAULTS.boxShadow),
   };
 }
 

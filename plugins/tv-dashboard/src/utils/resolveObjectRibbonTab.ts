@@ -1,12 +1,10 @@
 import { BarChart3, LayoutTemplate, Paintbrush, Shapes } from "lucide-react";
-import {
-  chartPartVisualPrimitive,
-  type ComunicadoBlock,
-  type ComunicadoChartPartRef,
-  type ComunicadoKpiPartRef,
+import type {
+  ComunicadoBlock,
+  ComunicadoChartPartRef,
+  ComunicadoKpiPartRef,
 } from "@delpi/tv-dashboard-presentation";
 
-import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
 import type { ComunicadoRibbonTabRequest } from "../components/comunicadoEditorContextCore";
 
 /**
@@ -19,7 +17,7 @@ export function resolveObjectRibbonTab(params: {
   selectedKpiPart?: ComunicadoKpiPartRef | null;
   preferred?: ComunicadoRibbonTabRequest | null;
 }): ComunicadoRibbonTabRequest {
-  const { selected, selectedChartPart = null, selectedKpiPart = null, preferred } = params;
+  const { selected, preferred } = params;
   if (
     preferred &&
     preferred !== "format" &&
@@ -32,17 +30,7 @@ export function resolveObjectRibbonTab(params: {
   if (!selected) return "shape";
 
   if (selected.type === "chart_view") {
-    const primitive = selectedChartPart
-      ? chartPartVisualPrimitive(selectedChartPart)
-      : null;
-    const textTarget = resolveSelectedTextFormatTarget({
-      selected,
-      selectedChartPart,
-      selectedKpiPart,
-    });
-    if (primitive && (!textTarget || textTarget.mode !== "part" || selectedChartPart?.kind === "axis")) {
-      return "shape";
-    }
+    // Sempre aba Elemento «gráfico»: tipo/rótulos + chrome de forma na mesma faixa.
     return "chart";
   }
 

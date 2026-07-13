@@ -3,22 +3,23 @@ import {
   Copy,
   Eye,
   Keyboard,
+  MonitorOff,
   QrCode,
   RefreshCw,
   Trash2,
   Tv,
-  MonitorOff,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
-import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useKeyboardShortcutsTips } from "../../context/KeyboardShortcutsTipsProvider";
+import { DeckRibbonGroup } from "./DeckRibbonGroup";
+import { DeckRibbonTile } from "./DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.header;
+const R = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
-type Props = {
+export type DeckHomePlaylistChromeProps = {
   playlistName: string;
   tvStatusLabel?: string | null;
   tvStatusClass?: string;
@@ -33,37 +34,10 @@ type Props = {
   onDelete: () => void;
 };
 
-function HeaderActionButton({
-  hint,
-  ariaLabel,
-  onClick,
-  danger,
-  children,
-}: {
-  hint: string;
-  ariaLabel: string;
-  onClick: () => void;
-  danger?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <HintAction hint={hint} ariaLabel={ariaLabel} placement="bottom">
-      <button
-        type="button"
-        className={["td-btn", "td-btn--compact", danger ? "td-btn--danger" : null]
-          .filter(Boolean)
-          .join(" ")}
-        aria-label={ariaLabel}
-        onClick={onClick}
-      >
-        {children}
-      </button>
-    </HintAction>
-  );
-}
-
-/** Ações da playlist integradas à faixa do chrome (sem barra extra no topo). */
-export function DeckEditorHeaderActions({
+/**
+ * Controles da programação/TV na aba Página Inicial (antes ficavam à direita das abas).
+ */
+export function DeckHomePlaylistChrome({
   playlistName,
   tvStatusLabel,
   tvStatusClass,
@@ -76,70 +50,51 @@ export function DeckEditorHeaderActions({
   onRegenerateToken,
   onToggleLink,
   onDelete,
-}: Props) {
+}: DeckHomePlaylistChromeProps) {
   const { openCatalog } = useKeyboardShortcutsTips();
 
   return (
-    <div className="td-deck-chrome__actions">
-      <HeaderActionButton hint={H.back} ariaLabel="Voltar" onClick={onBack}>
-        <ArrowLeft size={16} />
-      </HeaderActionButton>
-      <span className="td-deck-chrome__actions-title" title={playlistName}>
-        {playlistName}
-      </span>
-      {tvStatusLabel ? <span className={tvStatusClass}>{tvStatusLabel}</span> : null}
-      <div className="td-deck-chrome__actions-group">
-        <HeaderActionButton hint={H.preview} ariaLabel="Pré-visualizar" onClick={onPreview}>
-          <Eye size={16} />
-        </HeaderActionButton>
-
-        <HeaderActionButton
-          hint="Catálogo de atalhos. Alt revela balões (Ctrl e F1–F8 nas abas)."
-          ariaLabel="Atalhos do teclado"
-          onClick={openCatalog}
-        >
-          <Keyboard size={16} />
-        </HeaderActionButton>
-
-        <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
-
-        <HeaderActionButton
-          hint={H.share}
-          ariaLabel="Colaboradores e edição"
-          onClick={onShare}
-        >
-          <Users size={16} />
-        </HeaderActionButton>
-
-        <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
-
-        <HeaderActionButton hint={H.copyLink} ariaLabel="Copiar link da TV" onClick={onCopyLink}>
-          <Copy size={16} />
-        </HeaderActionButton>
-        <HeaderActionButton hint={H.qr} ariaLabel="QR code da TV" onClick={onQr}>
-          <QrCode size={16} />
-        </HeaderActionButton>
-        <HeaderActionButton
-          hint={H.regenerateToken}
-          ariaLabel="Novo link da TV"
-          onClick={onRegenerateToken}
-        >
-          <RefreshCw size={16} />
-        </HeaderActionButton>
-        <HeaderActionButton
-          hint={H.toggleLink}
-          ariaLabel={linkActive ? "Desativar link da TV" : "Ativar link da TV"}
-          onClick={onToggleLink}
-        >
-          {linkActive ? <Tv size={16} /> : <MonitorOff size={16} />}
-        </HeaderActionButton>
-
-        <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
-
-        <HeaderActionButton hint={H.delete} ariaLabel="Excluir" onClick={onDelete} danger>
-          <Trash2 size={16} />
-        </HeaderActionButton>
-      </div>
-    </div>
+    <>
+      <DeckRibbonGroup label="Programação" hint={R.playlistChrome}>
+        <div className="td-deck-ribbon__playlist-chrome">
+          <div className="td-deck-ribbon__playlist-meta">
+            <span className="td-deck-ribbon__playlist-name" title={playlistName}>
+              {playlistName}
+            </span>
+            {tvStatusLabel ? <span className={tvStatusClass}>{tvStatusLabel}</span> : null}
+          </div>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTile icon={ArrowLeft} label="Voltar" hint={H.back} onClick={onBack} />
+            <DeckRibbonTile icon={Eye} label="Prévia" hint={H.preview} onClick={onPreview} />
+            <DeckRibbonTile
+              icon={Keyboard}
+              label="Atalhos"
+              hint="Catálogo de atalhos. Alt revela balões (Ctrl e F1–F8 nas abas)."
+              onClick={openCatalog}
+            />
+            <DeckRibbonTile icon={Users} label="Editores" hint={H.share} onClick={onShare} />
+            <DeckRibbonTile icon={Copy} label="Link TV" hint={H.copyLink} onClick={onCopyLink} />
+            <DeckRibbonTile icon={QrCode} label="QR" hint={H.qr} onClick={onQr} />
+            <DeckRibbonTile
+              icon={RefreshCw}
+              label="Novo link"
+              hint={H.regenerateToken}
+              onClick={onRegenerateToken}
+            />
+            <DeckRibbonTile
+              icon={linkActive ? Tv : MonitorOff}
+              label={linkActive ? "TV on" : "TV off"}
+              hint={H.toggleLink}
+              active={linkActive}
+              onClick={onToggleLink}
+            />
+            <DeckRibbonTile icon={Trash2} label="Excluir" hint={H.delete} onClick={onDelete} />
+          </div>
+        </div>
+      </DeckRibbonGroup>
+    </>
   );
 }
+
+/** @deprecated Use DeckHomePlaylistChrome — mantido para imports legados. */
+export const DeckEditorHeaderActions = DeckHomePlaylistChrome;
