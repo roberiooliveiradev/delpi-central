@@ -226,85 +226,8 @@ export function FormatRibbonTypographySections() {
       <DeckRibbonGroup
         label={textFormatTarget.mode === "part" ? `Fonte · ${textFormatTarget.partLabel}` : "Fonte"}
         hint={H.font}
-        wide
       >
-        <div className="td-deck-ribbon__toolbar">
-          <div className="td-deck-ribbon__toolbar-row">
-            <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
-              <TdRibbonSelect
-                aria-label="Família da fonte"
-                className="td-deck-ribbon__select--font-family"
-                value={currentFontFamily}
-                onChange={(value) => {
-                  ensureComunicadoGoogleFontsLoaded([value]);
-                  updateSelectedTextFormatStyle({ fontFamily: value });
-                }}
-                options={fontFamilySelectOptions}
-              />
-            </HintAction>
-            <TdRibbonIconButton
-              hint={H.uploadFont}
-              ariaLabel="Enviar fonte personalizada"
-              disabled={uploading}
-              onClick={() => fontUploadInputRef.current?.click()}
-            >
-              <Upload size={15} aria-hidden="true" />
-            </TdRibbonIconButton>
-            <input
-              ref={fontUploadInputRef}
-              type="file"
-              hidden
-              accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void uploadCustomFont(file);
-              }}
-            />
-            <div className="td-deck-ribbon__font-size" role="group" aria-label="Tamanho da fonte">
-              <TdRibbonIconButton
-                hint={H.fontSizeDown}
-                ariaLabel="Diminuir fonte"
-                disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
-                onClick={() =>
-                  updateSelectedTextFormatStyle({
-                    fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
-                  })
-                }
-              >
-                <Minus size={16} aria-hidden="true" />
-              </TdRibbonIconButton>
-              <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
-                <ComboboxNumberControl
-                  className="td-deck-ribbon__font-size-combobox"
-                  compact
-                  square
-                  aria-label="Tamanho da fonte"
-                  value={currentFontSize}
-                  options={COMUNICADO_FONT_SIZE_PRESETS}
-                  min={COMUNICADO_FONT_SIZE_MIN}
-                  max={COMUNICADO_FONT_SIZE_MAX}
-                  clamp={clampFontSize}
-                  portalScopeClassName="dashboard-tv-dashboard"
-                  onChange={(next) =>
-                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(next) })
-                  }
-                />
-              </HintAction>
-              <TdRibbonIconButton
-                hint={H.fontSizeUp}
-                ariaLabel="Aumentar fonte"
-                disabled={currentFontSize >= COMUNICADO_FONT_SIZE_MAX}
-                onClick={() =>
-                  updateSelectedTextFormatStyle({
-                    fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
-                  })
-                }
-              >
-                <Plus size={16} aria-hidden="true" />
-              </TdRibbonIconButton>
-            </div>
-          </div>
+        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
           <div className="td-deck-ribbon__toolbar-row">
             <TdRibbonIconButton
               hint={H.bold}
@@ -431,37 +354,90 @@ export function FormatRibbonTypographySections() {
               </TdRibbonIconButton>
             ) : null}
           </div>
+          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
+            <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
+              <TdRibbonSelect
+                aria-label="Família da fonte"
+                className="td-deck-ribbon__select--font-family"
+                value={currentFontFamily}
+                onChange={(value) => {
+                  ensureComunicadoGoogleFontsLoaded([value]);
+                  updateSelectedTextFormatStyle({ fontFamily: value });
+                }}
+                options={fontFamilySelectOptions}
+              />
+            </HintAction>
+            <TdRibbonIconButton
+              hint={H.uploadFont}
+              ariaLabel="Enviar fonte personalizada"
+              disabled={uploading}
+              onClick={() => fontUploadInputRef.current?.click()}
+            >
+              <Upload size={15} aria-hidden="true" />
+            </TdRibbonIconButton>
+            <input
+              ref={fontUploadInputRef}
+              type="file"
+              hidden
+              accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void uploadCustomFont(file);
+              }}
+            />
+          </div>
+          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
+            <div className="td-deck-ribbon__font-size" role="group" aria-label="Tamanho da fonte">
+              <TdRibbonIconButton
+                hint={H.fontSizeDown}
+                ariaLabel="Diminuir fonte"
+                disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
+                onClick={() =>
+                  updateSelectedTextFormatStyle({
+                    fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
+                  })
+                }
+              >
+                <Minus size={16} aria-hidden="true" />
+              </TdRibbonIconButton>
+              <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
+                <ComboboxNumberControl
+                  className="td-deck-ribbon__font-size-combobox"
+                  compact
+                  square
+                  aria-label="Tamanho da fonte"
+                  value={currentFontSize}
+                  options={COMUNICADO_FONT_SIZE_PRESETS}
+                  min={COMUNICADO_FONT_SIZE_MIN}
+                  max={COMUNICADO_FONT_SIZE_MAX}
+                  clamp={clampFontSize}
+                  portalScopeClassName="dashboard-tv-dashboard"
+                  onChange={(next) =>
+                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(next) })
+                  }
+                />
+              </HintAction>
+              <TdRibbonIconButton
+                hint={H.fontSizeUp}
+                ariaLabel="Aumentar fonte"
+                disabled={currentFontSize >= COMUNICADO_FONT_SIZE_MAX}
+                onClick={() =>
+                  updateSelectedTextFormatStyle({
+                    fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
+                  })
+                }
+              >
+                <Plus size={16} aria-hidden="true" />
+              </TdRibbonIconButton>
+            </div>
+          </div>
         </div>
       </DeckRibbonGroup>
 
       <DeckRibbonGroup label="Efeitos" hint={H.textEffects}>
-        <div className="td-deck-ribbon__toolbar">
-          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
-            <FieldLabel
-              htmlFor="td-ribbon-text-shadow"
-              label="Sombra"
-              hint={H.textEffects}
-              className="td-deck-ribbon__field-label"
-            />
-            <TdRibbonSelect
-              id="td-ribbon-text-shadow"
-              value={resolveTextShadowPresetId(formatStyle?.textShadow)}
-              options={[
-                ...COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
-                  value: preset.id,
-                  label: preset.label,
-                })),
-                ...(resolveTextShadowPresetId(formatStyle?.textShadow) === "custom"
-                  ? [{ value: "custom", label: "Personalizada" }]
-                  : []),
-              ]}
-              onChange={(value) => {
-                const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === value);
-                updateSelectedTextFormatStyle({
-                  textShadow: value === "none" ? "" : (preset?.value ?? formatStyle?.textShadow),
-                });
-              }}
-            />
+        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
+          <div className="td-deck-ribbon__toolbar-row">
             <TvRibbonColorPicker
               hint={H.textStroke}
               label="Contorno"
@@ -482,6 +458,48 @@ export function FormatRibbonTypographySections() {
                 })
               }
             />
+            <TdRibbonIconButton
+              hint={H.textReflection}
+              ariaLabel="Reflexo tipográfico"
+              active={Boolean(formatStyle?.textReflection)}
+              onClick={() =>
+                updateSelectedTextFormatStyle({
+                  textReflection: !formatStyle?.textReflection,
+                })
+              }
+            >
+              <FlipVertical2 size={15} aria-hidden="true" />
+            </TdRibbonIconButton>
+          </div>
+          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
+            <FieldLabel
+              htmlFor="td-ribbon-text-shadow"
+              label="Sombra"
+              hint={H.textEffects}
+              className="td-deck-ribbon__field-label"
+            />
+            <TdRibbonSelect
+              id="td-ribbon-text-shadow"
+              className="td-deck-ribbon__select--shadow"
+              value={resolveTextShadowPresetId(formatStyle?.textShadow)}
+              options={[
+                ...COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
+                  value: preset.id,
+                  label: preset.label,
+                })),
+                ...(resolveTextShadowPresetId(formatStyle?.textShadow) === "custom"
+                  ? [{ value: "custom", label: "Personalizada" }]
+                  : []),
+              ]}
+              onChange={(value) => {
+                const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === value);
+                updateSelectedTextFormatStyle({
+                  textShadow: value === "none" ? "" : (preset?.value ?? formatStyle?.textShadow),
+                });
+              }}
+            />
+          </div>
+          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
             <FieldLabel
               htmlFor="td-ribbon-text-stroke-w"
               label="px"
@@ -505,26 +523,14 @@ export function FormatRibbonTypographySections() {
                 })
               }
             />
-            <TdRibbonIconButton
-              hint={H.textReflection}
-              ariaLabel="Reflexo tipográfico"
-              active={Boolean(formatStyle?.textReflection)}
-              onClick={() =>
-                updateSelectedTextFormatStyle({
-                  textReflection: !formatStyle?.textReflection,
-                })
-              }
-            >
-              <FlipVertical2 size={15} aria-hidden="true" />
-            </TdRibbonIconButton>
           </div>
         </div>
       </DeckRibbonGroup>
 
       {showParagraphAlign ? (
-        <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} wide>
-          <div className="td-deck-ribbon__toolbar">
-            <div className="td-deck-ribbon__toolbar-row">
+        <DeckRibbonGroup label="Parágrafo" hint={H.paragraph}>
+          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
+            <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento horizontal">
               {(
                 [
                   { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
@@ -552,28 +558,8 @@ export function FormatRibbonTypographySections() {
                   <Icon size={15} aria-hidden="true" />
                 </TdRibbonIconButton>
               ))}
-              {isTextBlock ? (
-                <>
-                  <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                  <TdRibbonIconButton
-                    hint={H.bulletList}
-                    ariaLabel="Marcadores"
-                    active={Boolean(bulletListActive)}
-                    onClick={() => toggleSelectedTextListType("bullet")}
-                  >
-                    <List size={15} aria-hidden="true" />
-                  </TdRibbonIconButton>
-                  <TdRibbonIconButton
-                    hint={H.orderedList}
-                    ariaLabel="Lista numerada"
-                    active={Boolean(orderedListActive)}
-                    onClick={() => toggleSelectedTextListType("ordered")}
-                  >
-                    <ListOrdered size={15} aria-hidden="true" />
-                  </TdRibbonIconButton>
-                </>
-              ) : null}
-              <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+            </div>
+            <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento vertical e listas">
               {(
                 [
                   {
@@ -606,61 +592,88 @@ export function FormatRibbonTypographySections() {
                   <Icon size={15} aria-hidden="true" />
                 </TdRibbonIconButton>
               ))}
+              {isTextBlock ? (
+                <>
+                  <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+                  <TdRibbonIconButton
+                    hint={H.bulletList}
+                    ariaLabel="Marcadores"
+                    active={Boolean(bulletListActive)}
+                    onClick={() => toggleSelectedTextListType("bullet")}
+                  >
+                    <List size={15} aria-hidden="true" />
+                  </TdRibbonIconButton>
+                  <TdRibbonIconButton
+                    hint={H.orderedList}
+                    ariaLabel="Lista numerada"
+                    active={Boolean(orderedListActive)}
+                    onClick={() => toggleSelectedTextListType("ordered")}
+                  >
+                    <ListOrdered size={15} aria-hidden="true" />
+                  </TdRibbonIconButton>
+                </>
+              ) : null}
             </div>
             {isTextBlock && textBlock ? (
-              <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
-                <FieldLabel
-                  htmlFor="td-ribbon-named-style"
-                  label="Estilo"
-                  className="td-deck-ribbon__field-label"
-                />
-                <TdRibbonSelect
-                  id="td-ribbon-named-style"
-                  className="td-deck-ribbon__select td-deck-ribbon__select--style"
-                  aria-label="Estilo de parágrafo"
-                  value={namedStyleValue}
-                  onChange={(value) =>
-                    applySelectedNamedTextStyle(value as typeof namedStyleValue)
-                  }
-                  options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
-                    value: option.key,
-                    label: option.label,
-                  }))}
-                />
-                <FieldLabel
-                  htmlFor="td-ribbon-line-height"
-                  label="Entrelinhas"
-                  className="td-deck-ribbon__field-label"
-                />
-                <TdRibbonSelect
-                  id="td-ribbon-line-height"
-                  className="td-deck-ribbon__select td-deck-ribbon__select--compact"
-                  aria-label="Entrelinhas"
-                  value={String(textBlock.style?.lineHeight ?? 1.15)}
-                  onChange={(value) => updateSelectedStyle({ lineHeight: Number(value) })}
-                  options={COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => ({
-                    value: String(value),
-                    label: value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value),
-                  }))}
-                />
-                <FieldLabel
-                  htmlFor="td-ribbon-letter-spacing"
-                  label="Espaçamento"
-                  className="td-deck-ribbon__field-label"
-                />
-                <NativeTextControl
-                  id="td-ribbon-letter-spacing"
-                  type="number"
-                  className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                  aria-label="Espaçamento entre caracteres (px)"
-                  min={-2}
-                  max={24}
-                  step={0.5}
-                  value={textBlock.style?.letterSpacing ?? 0}
-                  onChange={(value) =>
-                    updateSelectedStyle({ letterSpacing: Number(value) || 0 })
-                  }
-                />
+              <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs td-deck-ribbon__toolbar-row--stack-fields">
+                <span className="td-deck-ribbon__stack-field">
+                  <FieldLabel
+                    htmlFor="td-ribbon-named-style"
+                    label="Estilo"
+                    className="td-deck-ribbon__field-label"
+                  />
+                  <TdRibbonSelect
+                    id="td-ribbon-named-style"
+                    className="td-deck-ribbon__select td-deck-ribbon__select--style"
+                    aria-label="Estilo de parágrafo"
+                    value={namedStyleValue}
+                    onChange={(value) =>
+                      applySelectedNamedTextStyle(value as typeof namedStyleValue)
+                    }
+                    options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
+                      value: option.key,
+                      label: option.label,
+                    }))}
+                  />
+                </span>
+                <span className="td-deck-ribbon__stack-field">
+                  <FieldLabel
+                    htmlFor="td-ribbon-line-height"
+                    label="Entrelinhas"
+                    className="td-deck-ribbon__field-label"
+                  />
+                  <TdRibbonSelect
+                    id="td-ribbon-line-height"
+                    className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+                    aria-label="Entrelinhas"
+                    value={String(textBlock.style?.lineHeight ?? 1.15)}
+                    onChange={(value) => updateSelectedStyle({ lineHeight: Number(value) })}
+                    options={COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => ({
+                      value: String(value),
+                      label: value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value),
+                    }))}
+                  />
+                </span>
+                <span className="td-deck-ribbon__stack-field">
+                  <FieldLabel
+                    htmlFor="td-ribbon-letter-spacing"
+                    label="Espaçamento"
+                    className="td-deck-ribbon__field-label"
+                  />
+                  <NativeTextControl
+                    id="td-ribbon-letter-spacing"
+                    type="number"
+                    className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                    aria-label="Espaçamento entre caracteres (px)"
+                    min={-2}
+                    max={24}
+                    step={0.5}
+                    value={textBlock.style?.letterSpacing ?? 0}
+                    onChange={(value) =>
+                      updateSelectedStyle({ letterSpacing: Number(value) || 0 })
+                    }
+                  />
+                </span>
               </div>
             ) : null}
           </div>

@@ -3494,26 +3494,32 @@
   overflow: hidden;
 }
 
-/* Elemento / Dados / Design tabela: altura pelo conteúdo — não cortar posições. */
+/* Elemento / Dados / Design tabela: altura pelo conteúdo — sem scroll horizontal. */
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit {
   --td-ribbon-height: auto;
   height: auto;
   min-height: 72px;
-  max-height: min(168px, 28vh);
-  overflow-x: auto;
+  max-height: min(220px, 34vh);
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
+  flex-wrap: wrap;
+  overflow-x: hidden;
+  overflow-y: visible;
   scrollbar-width: thin;
   align-items: stretch;
   width: 100%;
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band .td-deck-ribbon__groups {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit .td-deck-ribbon__groups {
@@ -3673,6 +3679,63 @@
   overflow: hidden;
 }
 
+/* Tipografia: ícones em cima, selects/inputs embaixo — menos largura. */
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: min(220px, 100%);
+  max-width: 220px;
+  gap: 4px;
+  overflow: visible;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__toolbar-row {
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__toolbar-row--inputs {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__toolbar-row--stack-fields {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__stack-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__select--font-family,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__select--shadow,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__select--style,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__select--compact,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__select {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__number--compact {
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__font-size {
+  width: 100%;
+  justify-content: flex-start;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__split {
   gap: 4px;
 }
@@ -3729,7 +3792,9 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__select--font-family {
-  min-width: 148px;
+  min-width: 0;
+  width: 100%;
+  max-width: 180px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__font-size {
