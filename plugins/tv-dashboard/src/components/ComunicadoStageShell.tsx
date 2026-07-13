@@ -29,6 +29,7 @@ import {
   STAGE_ZOOM_MIN,
   stageZoomFromWheelDelta,
 } from "../utils/stageViewport";
+import { ShortcutTip } from "./ShortcutTip";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -184,53 +185,59 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
         >
           <Ruler size={14} aria-hidden="true" />
         </button>
-        <button
-          type="button"
-          className={[
-            "td-stage-statusbar__toggle",
-            panActive ? "td-stage-statusbar__toggle--active" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          title={V.pan}
-          aria-label="Pan"
-          aria-pressed={panActive}
-          onClick={() => setStagePanMode(!stagePanMode)}
-        >
-          <Hand size={14} aria-hidden="true" />
-        </button>
+        <ShortcutTip shortcutId="pan">
+          <button
+            type="button"
+            className={[
+              "td-stage-statusbar__toggle",
+              panActive ? "td-stage-statusbar__toggle--active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            title={V.pan}
+            aria-label="Pan"
+            aria-pressed={panActive}
+            onClick={() => setStagePanMode(!stagePanMode)}
+          >
+            <Hand size={14} aria-hidden="true" />
+          </button>
+        </ShortcutTip>
       </div>
 
       <div className="td-stage-statusbar__zoom">
-        <button
-          type="button"
-          className="td-stage-statusbar__btn"
-          title={H.zoomOut}
-          aria-label="Diminuir zoom"
-          disabled={stageZoom <= STAGE_ZOOM_MIN}
-          onClick={() => setStageZoom(clampStageZoom(stageZoom - 0.1))}
-        >
-          <ZoomOut size={14} aria-hidden="true" />
-        </button>
-        <NativeRangeControl
-          className="td-stage-statusbar__slider"
-          min={STAGE_ZOOM_MIN * 100}
-          max={STAGE_ZOOM_MAX * 100}
-          step={5}
-          value={zoomPercent}
-          aria-label="Zoom do palco"
-          onChange={(value) => setStageZoom(clampStageZoom(value / 100))}
-        />
-        <button
-          type="button"
-          className="td-stage-statusbar__btn"
-          title={H.zoomIn}
-          aria-label="Aumentar zoom"
-          disabled={stageZoom >= STAGE_ZOOM_MAX}
-          onClick={() => setStageZoom(clampStageZoom(stageZoom + 0.1))}
-        >
-          <ZoomIn size={14} aria-hidden="true" />
-        </button>
+        <ShortcutTip shortcutId="zoom-wheel" placement="bottom">
+          <span className="td-shortcut-tip__cluster td-shortcut-tip__cluster--zoom">
+            <button
+              type="button"
+              className="td-stage-statusbar__btn"
+              title={H.zoomOut}
+              aria-label="Diminuir zoom"
+              disabled={stageZoom <= STAGE_ZOOM_MIN}
+              onClick={() => setStageZoom(clampStageZoom(stageZoom - 0.1))}
+            >
+              <ZoomOut size={14} aria-hidden="true" />
+            </button>
+            <NativeRangeControl
+              className="td-stage-statusbar__slider"
+              min={STAGE_ZOOM_MIN * 100}
+              max={STAGE_ZOOM_MAX * 100}
+              step={5}
+              value={zoomPercent}
+              aria-label="Zoom do palco"
+              onChange={(value) => setStageZoom(clampStageZoom(value / 100))}
+            />
+            <button
+              type="button"
+              className="td-stage-statusbar__btn"
+              title={H.zoomIn}
+              aria-label="Aumentar zoom"
+              disabled={stageZoom >= STAGE_ZOOM_MAX}
+              onClick={() => setStageZoom(clampStageZoom(stageZoom + 0.1))}
+            >
+              <ZoomIn size={14} aria-hidden="true" />
+            </button>
+          </span>
+        </ShortcutTip>
         <span className="td-stage-statusbar__percent" aria-live="polite">
           {zoomPercent}%
         </span>

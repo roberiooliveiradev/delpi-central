@@ -20,6 +20,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { TdRibbonSelect } from "../tdRibbonUi";
+import { ShortcutTip } from "../ShortcutTip";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 
 type Labels = Record<string, string>;
@@ -113,7 +114,16 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
     <DeckRibbonGroup label="Organizar" hint={H.organize}>
       <div className="td-deck-ribbon__organize">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile icon={Copy} label="Duplicar" hint={H.duplicateBlock} onClick={duplicateSelected} />
+          <ShortcutTip shortcutId="duplicate">
+            <span>
+              <DeckRibbonTile
+                icon={Copy}
+                label="Duplicar"
+                hint={H.duplicateBlock}
+                onClick={duplicateSelected}
+              />
+            </span>
+          </ShortcutTip>
           {isImageBlock && selected.url ? (
             <DeckRibbonTile
               icon={Crop}
@@ -151,7 +161,11 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             hint={E.layerDown}
             onClick={() => moveLayer("down")}
           />
-          <DeckRibbonTile icon={Trash2} label="Remover" hint={E.remove} onClick={removeSelected} />
+          <ShortcutTip shortcutId="delete">
+            <span>
+              <DeckRibbonTile icon={Trash2} label="Remover" hint={E.remove} onClick={removeSelected} />
+            </span>
+          </ShortcutTip>
         </div>
         <div className="td-deck-ribbon__organize-props">
           <FieldLabel

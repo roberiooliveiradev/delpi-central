@@ -2,17 +2,19 @@ import {
   ArrowLeft,
   Copy,
   Eye,
+  Keyboard,
   QrCode,
   RefreshCw,
   Trash2,
   Tv,
-  TvOff,
+  MonitorOff,
   Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { useKeyboardShortcutsTips } from "../../context/KeyboardShortcutsTipsProvider";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.header;
 
@@ -75,6 +77,8 @@ export function DeckEditorHeaderActions({
   onToggleLink,
   onDelete,
 }: Props) {
+  const { openCatalog } = useKeyboardShortcutsTips();
+
   return (
     <div className="td-deck-chrome__actions">
       <HeaderActionButton hint={H.back} ariaLabel="Voltar" onClick={onBack}>
@@ -87,6 +91,14 @@ export function DeckEditorHeaderActions({
       <div className="td-deck-chrome__actions-group">
         <HeaderActionButton hint={H.preview} ariaLabel="Pré-visualizar" onClick={onPreview}>
           <Eye size={16} />
+        </HeaderActionButton>
+
+        <HeaderActionButton
+          hint="Catálogo de atalhos do teclado. Segure Alt no editor para ver balões nas ações."
+          ariaLabel="Atalhos do teclado"
+          onClick={openCatalog}
+        >
+          <Keyboard size={16} />
         </HeaderActionButton>
 
         <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
@@ -119,7 +131,7 @@ export function DeckEditorHeaderActions({
           ariaLabel={linkActive ? "Desativar link da TV" : "Ativar link da TV"}
           onClick={onToggleLink}
         >
-          {linkActive ? <Tv size={16} /> : <TvOff size={16} />}
+          {linkActive ? <Tv size={16} /> : <MonitorOff size={16} />}
         </HeaderActionButton>
 
         <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
