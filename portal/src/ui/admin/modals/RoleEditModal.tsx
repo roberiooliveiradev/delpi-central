@@ -108,7 +108,7 @@ export const RoleEditModal = ({
 
         {activeTab === "details" && (
           <>
-            <label>
+            <label className="portal-form-label">
               Nome
               <input
                 value={role.name}
@@ -119,7 +119,7 @@ export const RoleEditModal = ({
               />
             </label>
 
-            <label>
+            <label className="portal-form-label">
               Descrição
               <textarea
                 value={role.description || ""}

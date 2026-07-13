@@ -760,7 +760,7 @@ export const ManifestRegisterModal = ({
         <div className="modal-content-wrapper">
           <div className="row between">
             <div className="row">
-              <label style={{ margin: 0 }}>
+              <label className="portal-form-label portal-form-label--inline">
                 <span className="sr-only">Template</span>
                 <select value={template} onChange={(e) => setTemplateType(e.target.value as ManifestType)} disabled={loading}>
                   <option value="microfrontend">Template: microfrontend</option>

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import "./Modal.css";
+import "./FormField.css";
 import { X } from "lucide-react";
 
 type ModalSize = "sm" | "md" | "lg" | "xl";

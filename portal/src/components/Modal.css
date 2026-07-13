@@ -290,25 +290,12 @@ button.danger:hover {
 
 
 /* =========================
-   Inputs (escopo do modal — não vazar para MFEs federados)
+   Controls (somente dentro do modal — nunca elemento global)
 ========================= */
 
-.modal label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.modal label small {
-  font-weight: 400;
-  color: var(--text-muted);
-}
-
-input,
-select,
-textarea {
+.modal input,
+.modal select,
+.modal textarea {
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--control-text);
@@ -318,19 +305,19 @@ textarea {
   transition: all 0.15s ease;
 }
 
-input::placeholder,
-textarea::placeholder {
+.modal input::placeholder,
+.modal textarea::placeholder {
   color: var(--control-placeholder);
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+.modal input:focus,
+.modal select:focus,
+.modal textarea:focus {
   box-shadow: var(--focus-ring);
   border-color: var(--primary);
 }
 
-textarea {
+.modal textarea {
   resize: vertical;
 }
 

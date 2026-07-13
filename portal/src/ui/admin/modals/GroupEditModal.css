@@ -9,17 +9,14 @@
   gap: 16px;
 }
 
-/* Inputs seguem seu Modal.css global, aqui só refinamos comportamento */
-.group-edit-body label {
-  display: flex;
-  flex-direction: column;
+/* Inputs: classe portal-form-label (FormField.css) — não estilizar `label` nu */
+.group-edit-body .portal-form-label {
   gap: 8px;
   font-weight: 700;
-  color: var(--text);
 }
 
-.group-edit-body input,
-.group-edit-body textarea {
+.group-edit-body .portal-form-label input,
+.group-edit-body .portal-form-label textarea {
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--control-text);
@@ -95,12 +92,12 @@
 
 /* Mobile */
 @media (max-width: 720px) {
-  .group-edit-body label {
+  .group-edit-body .portal-form-label {
     font-weight: 700;
   }
 
-  .group-edit-body input,
-  .group-edit-body textarea {
+  .group-edit-body .portal-form-label input,
+  .group-edit-body .portal-form-label textarea {
     border-radius: 12px;
   }
 }

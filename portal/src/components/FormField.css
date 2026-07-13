@@ -14,6 +14,41 @@
   align-items: center;
   gap: 8px;
   font-weight: 600;
+  color: var(--text);
+}
+
+.form-field__label {
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: default;
+}
+
+/**
+ * Label que envolve o controle (texto + input empilhados).
+ * Usar esta classe — nunca estilizar o elemento `label` globalmente
+ * (vaza para checkboxes/MFEs federados).
+ */
+.portal-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.portal-form-label small {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.portal-form-label--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: inherit;
 }
 
 .form-required-badge {
@@ -48,9 +83,12 @@
 }
 
 /* Estado inválido acessível */
-input[aria-invalid="true"],
-select[aria-invalid="true"],
-textarea[aria-invalid="true"] {
+.form-field input[aria-invalid="true"],
+.form-field select[aria-invalid="true"],
+.form-field textarea[aria-invalid="true"],
+.portal-form-label input[aria-invalid="true"],
+.portal-form-label select[aria-invalid="true"],
+.portal-form-label textarea[aria-invalid="true"] {
   border-color: var(--danger);
   background: rgba(180, 35, 24, 0.06);
 }

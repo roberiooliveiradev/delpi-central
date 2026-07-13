@@ -100,7 +100,7 @@ export const GroupEditModal = ({
 
         {activeTab === "details" && (
           <>
-            <label>
+            <label className="portal-form-label">
               Nome
               <input
                 value={group.name}
@@ -111,7 +111,7 @@ export const GroupEditModal = ({
               />
             </label>
 
-            <label>
+            <label className="portal-form-label">
               Descrição
               <textarea
                 value={group.description || ""}

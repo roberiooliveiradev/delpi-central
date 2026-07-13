@@ -138,16 +138,13 @@
    INPUT FIELDS (inherits modal tokens)
 ========================= */
 
-.role-edit-body label {
-  display: flex;
-  flex-direction: column;
+.role-edit-body .portal-form-label {
   gap: 6px;
   font-weight: 600;
-  color: var(--text);
 }
 
-.role-edit-body input,
-.role-edit-body textarea {
+.role-edit-body .portal-form-label input,
+.role-edit-body .portal-form-label textarea {
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--control-text);
@@ -156,8 +153,8 @@
   transition: all 0.15s ease;
 }
 
-.role-edit-body input:focus,
-.role-edit-body textarea:focus {
+.role-edit-body .portal-form-label input:focus,
+.role-edit-body .portal-form-label textarea:focus {
   border-color: var(--primary);
   box-shadow: var(--focus-ring);
 }

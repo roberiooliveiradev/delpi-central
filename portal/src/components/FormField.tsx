@@ -38,7 +38,9 @@ export const FormField = ({
   return (
     <div className="form-field">
       <div className="form-label-row">
-        <label htmlFor={htmlFor}>{label}</label>
+        <label className="form-field__label" htmlFor={htmlFor}>
+          {label}
+        </label>
 
         {required && (
           <span
