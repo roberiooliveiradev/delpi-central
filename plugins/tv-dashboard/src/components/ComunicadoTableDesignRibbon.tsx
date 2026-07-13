@@ -1,10 +1,12 @@
-import { useRef, useState, type CSSProperties } from "react";
 import { Database, Grid3x3, Square, Shapes } from "lucide-react";
 import {
   ColorPickerPopoverTrigger,
   CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
   CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
   ShapeShadowMenu,
+  TableStyleRibbonStrip,
+  ToolbarSelectField,
+  type TableStylePreset,
 } from "@delpi/plugin-ui/index";
 import {
   isTableElementEnabled,
@@ -21,7 +23,12 @@ import {
   type TableElementId,
 } from "@delpi/tv-dashboard-presentation";
 
-import { TABLE_STYLE_RECIPES, type TableStyleRecipe } from "../content/tableStyleRecipes";
+import {
+  findTableStyleRecipe,
+  resolveActiveTableStyleRecipeId,
+  tableStyleRecipesAsPresets,
+  type TableStyleRecipe,
+} from "../content/tableStyleRecipes";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../content/comunicadoVisualPresets";
 import {
@@ -41,6 +48,8 @@ const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
   value: preset.value,
 }));
 
+const STYLE_GALLERY_PRESETS = tableStyleRecipesAsPresets();
+
 const STYLE_OPTION_CHECKS: Array<{
   id: TableElementId;
   label: string;
@@ -56,16 +65,18 @@ const STYLE_OPTION_CHECKS: Array<{
   { id: "borders", label: "Bordas", hint: "Linhas separadoras entre células." },
 ];
 
-function recipeThumbStyle(recipe: TableStyleRecipe): CSSProperties {
-  return {
-    ["--td-thumb-header" as string]: recipe.options.headerBg ?? "#e2e8f0",
-    ["--td-thumb-cell" as string]: recipe.options.cellBg ?? "#ffffff",
-    ["--td-thumb-border" as string]: recipe.options.borderColor ?? "#cbd5e1",
-  };
-}
+const BORDER_WIDTH_OPTIONS = CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS.map((width) => ({
+  value: String(width),
+  label: `${width} pt`,
+}));
+
+const BORDER_STYLE_OPTIONS = CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS.map((entry) => ({
+  value: entry.value,
+  label: entry.label,
+}));
 
 /**
- * Aba contextual «Design da Tabela» — opções de estilo, galeria, sombreamento e bordas.
+ * Aba contextual «Design da Tabela» — opções, galeria plugin-ui, sombreamento e bordas.
  */
 export function ComunicadoTableDesignRibbon() {
   const {
@@ -74,10 +85,7 @@ export function ComunicadoTableDesignRibbon() {
     updateSelected,
     selectTablePart,
     openDataPanel,
-    requestRibbonTab,
   } = useComunicadoEditor();
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const galleryAnchorRef = useRef<HTMLDivElement>(null);
 
   const selectionChrome = resolveSelectionChromeMode({
     selected,
@@ -102,6 +110,7 @@ export function ComunicadoTableDesignRibbon() {
   const frame = resolveTableFrameStyle(block.tableParts);
   const borderWidth = options.borderWidth ?? 1;
   const borderStyle = options.borderStyle ?? "solid";
+  const activeStyleId = resolveActiveTableStyleRecipeId(options, block.tablePreset ?? "grid");
 
   const applyOptions = (patch: Partial<ComunicadoTableOptions>, preset = block.tablePreset) => {
     const nextOptions = {
@@ -117,12 +126,15 @@ export function ComunicadoTableDesignRibbon() {
 
   const applyRecipe = (recipe: TableStyleRecipe) => {
     applyOptions(recipe.options, recipe.preset);
-    setGalleryOpen(false);
+  };
+
+  const applyGalleryPreset = (preset: TableStylePreset) => {
+    const recipe = findTableStyleRecipe(preset.id);
+    if (recipe) applyRecipe(recipe);
   };
 
   const clearTableStyle = () => {
     applyOptions(presetDefaultTableOptions("grid"), "grid");
-    setGalleryOpen(false);
   };
 
   const toggleElement = (id: TableElementId, enabled: boolean) => {
@@ -138,7 +150,6 @@ export function ComunicadoTableDesignRibbon() {
       ? "header"
       : "cell";
   const shadeValue = shadeTarget === "header" ? options.headerBg : options.cellBg;
-  const ribbonRecipes = TABLE_STYLE_RECIPES.slice(0, 7);
 
   const patchFrameShadow = (boxShadow: string | undefined) => {
     const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, {
@@ -149,6 +160,15 @@ export function ComunicadoTableDesignRibbon() {
       style: { ...block.style, boxShadow: boxShadow?.trim() ? boxShadow : undefined },
     } as Partial<ComunicadoBlock>);
   };
+
+  const openFrameShapeChrome = () => {
+    selectTablePart(block.id, { kind: "frame" });
+  };
+
+  const borderWidthOptions =
+    BORDER_WIDTH_OPTIONS.some((entry) => entry.value === String(borderWidth))
+      ? BORDER_WIDTH_OPTIONS
+      : [...BORDER_WIDTH_OPTIONS, { value: String(borderWidth), label: `${borderWidth} pt` }];
 
   return (
     <div className="td-deck-ribbon__groups">
@@ -171,57 +191,14 @@ export function ComunicadoTableDesignRibbon() {
       </DeckRibbonGroup>
 
       <DeckRibbonGroup label="Estilos de tabela" hint={H.tableStyles} wide>
-        <div className="td-deck-ribbon__table-gallery" ref={galleryAnchorRef}>
-          {ribbonRecipes.map((recipe) => (
-            <button
-              key={recipe.id}
-              type="button"
-              className="td-deck-ribbon__table-thumb"
-              title={recipe.label}
-              aria-label={recipe.label}
-              onClick={() => applyRecipe(recipe)}
-              style={recipeThumbStyle(recipe)}
-            >
-              <span className="td-deck-ribbon__table-thumb-grid" aria-hidden="true" />
-            </button>
-          ))}
-          <button
-            type="button"
-            className="td-deck-ribbon__table-gallery-more"
-            aria-expanded={galleryOpen}
-            onClick={() => setGalleryOpen((open) => !open)}
-          >
-            Mais
-          </button>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+          <TableStyleRibbonStrip
+            presets={STYLE_GALLERY_PRESETS}
+            selectedId={activeStyleId}
+            onSelect={applyGalleryPreset}
+            onClear={clearTableStyle}
+          />
         </div>
-        {galleryOpen ? (
-          <div className="td-deck-ribbon__table-gallery-panel" role="menu">
-            {(["light", "medium", "dark"] as const).map((category) => (
-              <section key={category} className="td-deck-ribbon__table-gallery-section">
-                <h4>
-                  {category === "light" ? "Claros" : category === "medium" ? "Médios" : "Escuros"}
-                </h4>
-                <div className="td-deck-ribbon__table-gallery-grid">
-                  {TABLE_STYLE_RECIPES.filter((r) => r.category === category).map((recipe) => (
-                    <button
-                      key={recipe.id}
-                      type="button"
-                      className="td-deck-ribbon__table-thumb"
-                      title={recipe.label}
-                      onClick={() => applyRecipe(recipe)}
-                      style={recipeThumbStyle(recipe)}
-                    >
-                      <span className="td-deck-ribbon__table-thumb-grid" aria-hidden="true" />
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ))}
-            <button type="button" className="td-btn td-btn--ghost td-btn--sm" onClick={clearTableStyle}>
-              Limpar tabela
-            </button>
-          </div>
-        ) : null}
       </DeckRibbonGroup>
 
       <DeckRibbonGroup label="Sombreamento" hint="Cor de fundo do cabeçalho ou das células.">
@@ -261,51 +238,29 @@ export function ComunicadoTableDesignRibbon() {
           />
         </div>
         <div className="td-deck-ribbon__border-pen td-deck-ribbon__toolbar-row--dense">
-          <label className="td-deck-ribbon__frame-field">
-            <span className="td-deck-ribbon__field-label">Peso</span>
-            <select
-              className="td-deck-ribbon__select td-deck-ribbon__select--compact"
-              aria-label="Peso da borda"
-              value={String(borderWidth)}
-              onChange={(event) => {
-                const width = Number(event.target.value);
-                applyOptions({ borderWidth: width, showBorders: true });
-              }}
-            >
-              {CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS.map((width) => (
-                <option key={width} value={width}>
-                  {width} pt
-                </option>
-              ))}
-              {!CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS.includes(
-                borderWidth as (typeof CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS)[number],
-              ) ? (
-                <option value={borderWidth}>{borderWidth} pt</option>
-              ) : null}
-            </select>
-          </label>
-          <label className="td-deck-ribbon__frame-field">
-            <span className="td-deck-ribbon__field-label">Estilo</span>
-            <select
-              className="td-deck-ribbon__select td-deck-ribbon__select--compact"
-              aria-label="Estilo da borda"
-              value={borderStyle}
-              onChange={(event) =>
-                applyOptions({
-                  borderStyle: event.target.value as NonNullable<
-                    ComunicadoTableOptions["borderStyle"]
-                  >,
-                  showBorders: true,
-                })
-              }
-            >
-              {CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS.map((entry) => (
-                <option key={entry.value} value={entry.value}>
-                  {entry.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ToolbarSelectField
+            label="Peso"
+            value={String(borderWidth)}
+            allowEmptyOption={false}
+            options={borderWidthOptions}
+            onChange={(value) => {
+              const width = Number(value);
+              if (!Number.isFinite(width)) return;
+              applyOptions({ borderWidth: width, showBorders: true });
+            }}
+          />
+          <ToolbarSelectField
+            label="Estilo"
+            value={borderStyle}
+            allowEmptyOption={false}
+            options={BORDER_STYLE_OPTIONS}
+            onChange={(value) =>
+              applyOptions({
+                borderStyle: value as NonNullable<ComunicadoTableOptions["borderStyle"]>,
+                showBorders: true,
+              })
+            }
+          />
         </div>
       </DeckRibbonGroup>
 
@@ -320,6 +275,17 @@ export function ComunicadoTableDesignRibbon() {
         </div>
       </DeckRibbonGroup>
 
+      <DeckRibbonGroup label="Forma" hint="Preenchimento e contorno da moldura da tabela.">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile
+            icon={Shapes}
+            label="Forma"
+            hint="Seleciona a moldura e abre preenchimento/contorno (como Formatar Forma)."
+            onClick={openFrameShapeChrome}
+          />
+        </div>
+      </DeckRibbonGroup>
+
       <DeckRibbonGroup label="Dados" hint={H.tableData ?? H.chartData}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
@@ -327,12 +293,6 @@ export function ComunicadoTableDesignRibbon() {
             label="Selecionar dados"
             hint="Abre o painel de fontes de dados."
             onClick={() => openDataPanel()}
-          />
-          <DeckRibbonTile
-            icon={Shapes}
-            label="Forma"
-            hint="Abre a aba Forma para preenchimento e contorno da moldura."
-            onClick={() => requestRibbonTab("shape")}
           />
         </div>
       </DeckRibbonGroup>

@@ -9,19 +9,13 @@ import {
   kpiPartBoxChromeLabels,
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
-  mergeTablePartsWithOptions,
   partsToKpiOptions,
   resolveKpiShapeChromePartRef,
   resolveShapePrimitive,
-  resolveTableFrameStyle,
-  resolveTablePartPaintStyle,
-  resolveTableShapeChromePartRef,
   shapeHasAdjustments,
   shapeSupportsFill,
   shapeSupportsStroke,
-  tablePartAllowsStroke,
   upsertKpiPartState,
-  upsertTablePartState,
   type ComunicadoChartViewBlock,
   type ComunicadoKpiViewBlock,
   type ComunicadoShapeKind,
@@ -59,6 +53,7 @@ import {
   FormatRibbonFrameSection,
 } from "./formatRibbon";
 import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
+import { TableRibbonShapeChrome } from "./formatRibbon/TableRibbonShapeChrome";
 import { PartSelectionNav } from "./ComunicadoPartFormatRibbon";
 import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
@@ -308,80 +303,7 @@ export function ComunicadoShapeRibbon() {
   }
 
   if (isTableChrome && selected?.type === "table_view") {
-    const block = selected as ComunicadoTableViewBlock;
-    const chromePart = resolveTableShapeChromePartRef(selectedTablePart);
-    const isFrameChrome = chromePart.kind === "frame";
-    const frame = resolveTableFrameStyle(block.tableParts);
-    const partPaint = resolveTablePartPaintStyle(block.tableParts, chromePart);
-    const fillValue = isFrameChrome
-      ? frame.fill
-      : (partPaint.backgroundColor ?? "transparent");
-    const strokeValue = frame.stroke;
-    const strokeWidth = frame.strokeWidth;
-    const showStroke = tablePartAllowsStroke(chromePart);
-
-    const patchChromeStyle = (style: Record<string, unknown>) => {
-      const nextParts = upsertTablePartState(block.tableParts, chromePart, {
-        style: style as never,
-      });
-      updateSelected({
-        tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
-        ...(isFrameChrome && typeof style.borderRadius === "number"
-          ? { style: { ...block.style, borderRadius: style.borderRadius } }
-          : {}),
-      } as Partial<ComunicadoBlock>);
-    };
-
-    return shell(
-      <>
-        <DeckRibbonGroup label="Aparência" hint={H.shape}>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-            <ShapeStyleRibbonStrip
-              maxVisible={5}
-              onSelect={(preset) =>
-                patchChromeStyle(
-                  showStroke
-                    ? {
-                        fill: preset.fill,
-                        stroke: preset.stroke,
-                        strokeWidth: preset.strokeWidth,
-                      }
-                    : { fill: preset.fill },
-                )
-              }
-            />
-            <ShapeFillMenu
-              value={fillValue}
-              fillLabel="Preench."
-              onChange={(color) => patchChromeStyle({ fill: color })}
-              onNoFill={() => patchChromeStyle({ fill: "transparent" })}
-            />
-            {showStroke ? (
-              <ShapeOutlineMenu
-                color={strokeValue}
-                strokeWidth={strokeWidth}
-                minWidth={0}
-                maxWidth={20}
-                outlineLabel="Contorno"
-                onColorChange={(color) => patchChromeStyle({ stroke: color })}
-                onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
-                onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
-              />
-            ) : (
-              <p className="td-subtitle td-deck-ribbon__hint">
-                Contorno só na moldura da tabela.
-              </p>
-            )}
-            <ShapeShadowMenu
-              value={block.style?.boxShadow}
-              presets={SHADOW_MENU_PRESETS}
-              shadowLabel="Sombra"
-              onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-            />
-          </div>
-        </DeckRibbonGroup>
-      </>,
-    );
+    return shell(<TableRibbonShapeChrome block={selected as ComunicadoTableViewBlock} />);
   }
 
   if (!isShapeBlock || !selected || selected.type !== "shape") {

@@ -107,6 +107,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("data", "TableHeaderContent"),
   vc("data", "ConfigurablePresentationTable"),
   vc("data", "ConfigurableTable"),
+  vc("data", "TableStyleRibbonStrip", {
+    addedAt: "2026-07-13",
+    changeNote: "Galeria Estilos de tabela na ribbon (thumbs + Mais em portal)",
+  }),
   vc("data", "DataRouteCatalogPanel"),
   vc("data", "TableColumnVisibilityMenu", {
     addedAt: CATALOG_EXPAND_DATE,

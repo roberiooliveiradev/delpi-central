@@ -1,4 +1,5 @@
 import type { ComunicadoTableOptions, ComunicadoTablePreset } from "@delpi/tv-dashboard-presentation";
+import type { TableStylePreset } from "@delpi/plugin-ui/index";
 
 /** Receita visual Delpi para galeria «Estilos de tabela» (não é matriz Office). */
 export type TableStyleRecipe = {
@@ -173,4 +174,36 @@ export function tableStyleRecipesByCategory(
   category: TableStyleRecipe["category"],
 ): TableStyleRecipe[] {
   return TABLE_STYLE_RECIPES.filter((recipe) => recipe.category === category);
+}
+
+/** Adapta receitas do deck para o strip/galeria canônicos do plugin-ui. */
+export function tableStyleRecipesAsPresets(
+  recipes: readonly TableStyleRecipe[] = TABLE_STYLE_RECIPES,
+): TableStylePreset[] {
+  return recipes.map((recipe) => ({
+    id: recipe.id,
+    label: recipe.label,
+    category: recipe.category,
+    headerBg: recipe.options.headerBg ?? "#e2e8f0",
+    cellBg: recipe.options.cellBg ?? "#ffffff",
+    borderColor: recipe.options.borderColor ?? "#cbd5e1",
+  }));
+}
+
+export function findTableStyleRecipe(id: string): TableStyleRecipe | undefined {
+  return TABLE_STYLE_RECIPES.find((recipe) => recipe.id === id);
+}
+
+/** Match aproximado do estilo ativo (header + preset). */
+export function resolveActiveTableStyleRecipeId(
+  options: ComunicadoTableOptions,
+  preset: ComunicadoTablePreset,
+): string | undefined {
+  const match = TABLE_STYLE_RECIPES.find(
+    (recipe) =>
+      recipe.preset === preset &&
+      (recipe.options.headerBg ?? null) === (options.headerBg ?? null) &&
+      (recipe.options.cellBg ?? null) === (options.cellBg ?? null),
+  );
+  return match?.id;
 }

@@ -147,3 +147,119 @@
   outline: 1px dashed color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff);
   outline-offset: 0;
 }
+
+/* Galeria Estilos de tabela (ribbon strip + Mais) */
+.delpi-ui-table-style-strip {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  max-width: 100%;
+  padding: 2px 0;
+}
+
+.delpi-ui-table-style-strip__thumb {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.delpi-ui-table-style-strip__thumb:hover,
+.delpi-ui-table-style-strip__thumb--active {
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+}
+
+.delpi-ui-table-style-strip__preview,
+.delpi-ui-table-style-gallery__preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  box-sizing: border-box;
+  background:
+    linear-gradient(
+        var(--delpi-ui-table-thumb-header, #e2e8f0),
+        var(--delpi-ui-table-thumb-header, #e2e8f0)
+      )
+      0 0 / 100% 28%,
+    repeating-linear-gradient(
+      180deg,
+      var(--delpi-ui-table-thumb-cell, #fff) 0 33%,
+      color-mix(
+          in srgb,
+          var(--delpi-ui-table-thumb-border, #cbd5e1) 35%,
+          var(--delpi-ui-table-thumb-cell, #fff)
+        )
+        33% 66%
+    );
+  box-shadow: inset 0 0 0 1px var(--delpi-ui-table-thumb-border, #cbd5e1);
+}
+
+.delpi-ui-table-style-strip .delpi-ui-shape-menu__trigger {
+  min-width: 44px;
+  padding: 4px 6px;
+}
+
+.delpi-ui-table-style-gallery {
+  min-width: 280px;
+  max-width: min(420px, 90vw);
+  max-height: 320px;
+  overflow: auto;
+  padding: 4px 2px;
+}
+
+.delpi-ui-table-style-gallery__section {
+  margin-bottom: 10px;
+}
+
+.delpi-ui-table-style-gallery__heading {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-table-style-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 40px);
+  gap: 4px;
+}
+
+.delpi-ui-table-style-gallery__item {
+  width: 40px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #cbd5e1) 80%, transparent);
+  border-radius: 4px;
+  background: var(--delpi-ui-surface, #fff);
+  cursor: pointer;
+}
+
+.delpi-ui-table-style-gallery__item:hover,
+.delpi-ui-table-style-gallery__item--active {
+  border-color: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-table-style-gallery__clear {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--delpi-ui-text, #0f172a);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-table-style-gallery__clear:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+}

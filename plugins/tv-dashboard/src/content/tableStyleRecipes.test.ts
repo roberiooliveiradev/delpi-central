@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { TABLE_STYLE_RECIPES, tableStyleRecipesByCategory } from "./tableStyleRecipes";
+import {
+  findTableStyleRecipe,
+  TABLE_STYLE_RECIPES,
+  tableStyleRecipesAsPresets,
+  tableStyleRecipesByCategory,
+} from "./tableStyleRecipes";
 
 describe("tableStyleRecipes", () => {
   it("expõe receitas Claros/Médios/Escuros com preset Delpi", () => {
@@ -12,5 +17,12 @@ describe("tableStyleRecipes", () => {
       expect(["grid", "minimal", "banded"]).toContain(recipe.preset);
       expect(recipe.options).toBeTruthy();
     }
+  });
+
+  it("adapta receitas para presets do plugin-ui", () => {
+    const presets = tableStyleRecipesAsPresets();
+    expect(presets).toHaveLength(TABLE_STYLE_RECIPES.length);
+    expect(findTableStyleRecipe(presets[0]!.id)?.id).toBe(presets[0]!.id);
+    expect(presets[0]!.headerBg).toBeTruthy();
   });
 });

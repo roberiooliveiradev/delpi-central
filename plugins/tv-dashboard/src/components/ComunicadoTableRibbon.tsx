@@ -95,8 +95,7 @@ const STYLE_OPTION_TILES: Array<{
  * Aba Forma permanece para moldura (preenchimento/contorno/cantos).
  */
 export function ComunicadoTableRibbon() {
-  const { selected, updateSelected, selectTablePart, openDataPanel, requestRibbonTab } =
-    useComunicadoEditor();
+  const { selected, updateSelected, selectTablePart, openDataPanel } = useComunicadoEditor();
 
   if (!selected || selected.type !== "table_view") {
     return (
@@ -205,8 +204,8 @@ export function ComunicadoTableRibbon() {
           <DeckRibbonTile
             icon={Shapes}
             label="Forma"
-            hint="Abre a aba Forma para preenchimento e contorno da moldura."
-            onClick={() => requestRibbonTab("shape")}
+            hint="Seleciona a moldura e abre preenchimento/contorno (como Formatar Forma)."
+            onClick={() => selectTablePart(block.id, { kind: "frame" })}
           />
         </div>
       </DeckRibbonGroup>

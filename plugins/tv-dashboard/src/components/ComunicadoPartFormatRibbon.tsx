@@ -1,5 +1,8 @@
 import { ArrowLeft } from "lucide-react";
-import type { ComunicadoChartViewBlock } from "@delpi/tv-dashboard-presentation";
+import type {
+  ComunicadoChartViewBlock,
+  ComunicadoTableViewBlock,
+} from "@delpi/tv-dashboard-presentation";
 
 import type { SelectionChromeMode } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -7,6 +10,7 @@ import {
   FormatRibbonFrameSection,
   FormatRibbonOrganizeSection,
   FormatRibbonTypographySections,
+  TableRibbonShapeChrome,
 } from "./formatRibbon";
 import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
@@ -43,9 +47,12 @@ export function ComunicadoPartFormatRibbon({ chrome }: Props) {
       {chrome.source === "chart" && selected?.type === "chart_view" ? (
         <ChartRibbonShapeChrome block={selected as ComunicadoChartViewBlock} />
       ) : null}
+      {chrome.source === "table" && selected?.type === "table_view" ? (
+        <TableRibbonShapeChrome block={selected as ComunicadoTableViewBlock} />
+      ) : null}
       <FormatRibbonFrameSection />
       <FormatRibbonOrganizeSection />
-      {chrome.source !== "chart" ? (
+      {chrome.source === "kpi" ? (
         <p className="td-subtitle td-deck-ribbon__hint">
           Preenchimento e tipografia finos também no painel Formatar → Parte: {chrome.partLabel}.
         </p>

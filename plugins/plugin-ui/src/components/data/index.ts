@@ -23,6 +23,18 @@ export {
 } from "./configurableTableElementCatalog";
 
 export {
+  TableStyleGallery,
+  TableStyleMenu,
+  TableStyleRibbonStrip,
+  type TableStyleGalleryLabels,
+  type TableStyleGalleryProps,
+  type TableStyleMenuProps,
+  type TableStylePreset,
+  type TableStylePresetCategory,
+  type TableStyleRibbonStripProps,
+} from "./TableStyleGallery";
+
+export {
   TABLE_PART_DATA_ATTR,
   bindTablePartPointer,
   deleteTablePart,
