@@ -18,8 +18,9 @@ Se alguma resposta for não, o componente pertence ao plugin específico — nã
 4. Reexportar em src/index.ts
 5. Documentar em docs/component-catalog.md
 6. Adicionar estilos em src/styles.css (ou src/styles/{familia}.css importado)
-7. Migrar um segundo consumidor ou remover duplicata local
-8. Atualizar migration-catalog.md
+7. Adicionar demo no catálogo visual (`src/catalog/demos/{familia}.tsx` + registry)
+8. Migrar um segundo consumidor ou remover duplicata local
+9. Atualizar migration-catalog.md
 
 ### Plugin com `Dockerfile` (consumidor MFE)
 
@@ -28,6 +29,17 @@ Se alguma resposta for não, o componente pertence ao plugin específico — nã
 3. Rodar `python3 scripts/ci/check_plugin_docker_shared_libraries.py --check`.
 4. Rodar `python3 scripts/ci/audit_plugin_ui_duplication.py --check` (duplicatas bloqueantes).
 ```
+
+## Catálogo visual (app do portal)
+
+O mesmo pacote expõe `./App` — app federado de listagem/prévia:
+
+- Código: `src/app/` (shell) + `src/catalog/` (registry + demos)
+- Manifesto: [`plugin-ui.manifest.json`](../plugin-ui.manifest.json) — permissão `plugin-ui.view`
+- Dev local: `npm run dev` (porta 5010) monta o catálogo em `#root`
+- Registro: `TOKEN=… ./scripts/register-manifest.sh`
+
+**Novo export público:** além do markdown, incluir entrada em `src/catalog/componentRegistry.ts` (via arquivo da família em `demos/`).
 
 ## Convenções de código
 
@@ -51,6 +63,7 @@ Mínimo para componente novo:
 
 - Render sem crash
 - Comportamento crítico (ex.: `wrap` vs trigger, `FieldLabel` com `htmlFor`)
+- Demo no catálogo visual quando o export for público
 
 ## Integrar em um plugin consumidor
 
@@ -98,6 +111,7 @@ Apagar `components/HelpTooltip.tsx` (ou equivalente) e atualizar imports para `@
 ## Checklist antes do merge
 
 - [ ] Export documentado em `component-catalog.md`
+- [ ] Demo no catálogo visual (`src/catalog/`)
 - [ ] Estilos `delpi-ui-*` sem vazar para `body` / `:root` global
 - [ ] `npm test` verde em `plugin-ui`
 - [ ] `npm run build` verde em pelo menos um consumidor alterado

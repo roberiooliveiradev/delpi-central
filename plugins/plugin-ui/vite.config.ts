@@ -19,6 +19,7 @@ export default defineConfig({
       exposes: {
         "./index": "./src/index.ts",
         "./styles": "./src/styles-entry.ts",
+        "./App": "./src/app/bootstrap.tsx",
       },
       shared: { ...FEDERATION_SHARED_REACT, ...FEDERATION_SHARED_XYFLOW },
     }),

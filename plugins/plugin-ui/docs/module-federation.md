@@ -42,6 +42,7 @@ Gateway nginx
 |--------|---------|----------------------|
 | `./index` | `src/index.ts` | `import { KpiCard } from "@delpi/plugin-ui/index"` |
 | `./styles` | `src/styles-entry.ts` | `await import("@delpi/plugin-ui/styles")` |
+| `./App` | `src/app/bootstrap.tsx` | Portal AppHost — catálogo visual (`plugin-ui.manifest.json`) |
 
 **Shared singletons:** `react`, `react-dom`, `lucide-react`. O remote consome React do MFE pai via `importShared` — o MFE **deve** chamar `preparePluginUiRemote()` antes de carregar chunks do remote.
 

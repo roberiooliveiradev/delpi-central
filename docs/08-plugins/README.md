@@ -83,10 +83,10 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/tv-dashboard` | `tv-dashboard` | microfrontend | plugin | `/apps/tv-dashboard` | `delpi-tv-dashboard` |
 | `plugins/public-hub` | `public-hub` | microfrontend | plugin | `/p/*` (rotas públicas) | `delpi-public-hub` |
 | `plugins/tv-dashboard-presentation` | — | biblioteca TS | — | (alias Vite nos MFEs) | — |
-| `plugins/plugin-ui` | — | remote MF (`delpi-plugin-ui`) | — | `/apps/plugin-ui/assets/*` | `delpi-plugin-ui` |
+| `plugins/plugin-ui` | `plugin-ui` | remote MF + app catálogo | plugin (técnico) | `/apps/plugin-ui` | `delpi-plugin-ui` |
 | `plugins/docker/` | — | docs Docker MFE | — | fragmento COPY bib. compartilhadas | — |
 
-**`@delpi/plugin-ui`:** componentes React compartilhados (tooltips, labels, abas), servidos como **remote Module Federation** (`delpi-plugin-ui`). Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md) · MF: [plugins/plugin-ui/docs/module-federation.md](../../plugins/plugin-ui/docs/module-federation.md) · **Novo MFE:** [../05-plugin-system/novo-plugin-mfe-checklist.md](../05-plugin-system/novo-plugin-mfe-checklist.md).
+**`@delpi/plugin-ui`:** componentes React compartilhados (tooltips, labels, abas), servidos como **remote Module Federation** (`delpi-plugin-ui`). Também registra o app **Catálogo UI** (`./App`, permissão `plugin-ui.view`) para prévia visual. Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md) · MF: [plugins/plugin-ui/docs/module-federation.md](../../plugins/plugin-ui/docs/module-federation.md) · **Novo MFE:** [../05-plugin-system/novo-plugin-mfe-checklist.md](../05-plugin-system/novo-plugin-mfe-checklist.md).
 
 **Bibliotecas compartilhadas no Docker:** manifesto [plugins/shared-libraries.manifest.json](../../plugins/shared-libraries.manifest.json) · gate `scripts/ci/check_plugin_docker_shared_libraries.py`.
 

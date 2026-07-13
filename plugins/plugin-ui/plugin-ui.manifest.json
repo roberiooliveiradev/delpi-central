@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "plugin-ui",
+  "name": "Catálogo UI",
+  "description": "Listagem e prévia visual dos componentes reutilizáveis @delpi/plugin-ui",
+  "icon": "layers",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/plugin-ui",
+  "entry": "/apps/plugin-ui/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "plugin-ui.view",
+      "name": "Visualizar Catálogo UI",
+      "description": "Permite abrir o catálogo visual de componentes @delpi/plugin-ui (perfil técnico).",
+      "module": "plugin-ui"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/plugin-ui",
+      "label": "Catálogo UI",
+      "permission": "plugin-ui.view",
+      "icon": "layers",
+      "order": 95,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated",
+    "exposedModule": "./App"
+  }
+}

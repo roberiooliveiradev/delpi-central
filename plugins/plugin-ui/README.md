@@ -15,6 +15,7 @@ Centraliza primitivos de UI que hoje estão duplicados em dezenas de plugins (ex
 | [docs/module-federation.md](./docs/module-federation.md) | **Remote runtime** — Docker, remotes, rollout |
 | [docs/component-catalog.md](./docs/component-catalog.md) | API de cada export + exemplos |
 | [docs/contributing.md](./docs/contributing.md) | Como adicionar componentes |
+| [plugin-ui.manifest.json](./plugin-ui.manifest.json) | App portal «Catálogo UI» (`./App`) |
 | [docs/migration-catalog.md](./docs/migration-catalog.md) | Plugins a migrar das cópias locais |
 | [docs/export-catalog.md](./docs/export-catalog.md) | Formatos de exportação (CSV/XLSX/PDF) e fases E1–E4 |
 
@@ -43,6 +44,22 @@ Docker: subir `delpi-plugin-ui` antes do consumidor (`<<: *plugin-ui-federated` 
 ### Histórico — bundled (descontinuado)
 
 Antes do rollout MF (jul/2026), consumidores usavam alias Vite + `COPY plugin-ui`. **Não usar** em plugins novos. Ver [module-federation.md](./docs/module-federation.md) e [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugin-mfe-checklist.md).
+
+---
+
+## App — Catálogo UI
+
+Além da biblioteca (`./index` + `./styles`), o remote expõe **`./App`**: listagem e prévia dos componentes.
+
+| Item | Valor |
+|------|--------|
+| Rota portal | `/apps/plugin-ui` |
+| Permissão | `plugin-ui.view` |
+| Dev | `npm run dev` → http://localhost:5010 |
+| Registro | `TOKEN=$(bash infra/scripts/get-dev-token.sh) ./scripts/register-manifest.sh` |
+| Smoke | `curl -fsS http://localhost/apps/plugin-ui/assets/remoteEntry.js \| head` |
+
+Demos: `src/catalog/` — ao adicionar export público, incluir demo (ver contributing).
 
 ---
 

@@ -2,7 +2,7 @@
   "name": "@delpi/plugin-ui",
   "private": true,
   "version": "0.1.0",
-  "description": "Componentes React reutilizáveis para plugins MFE (tooltips, labels, abas, exportação).",
+  "description": "Componentes React reutilizáveis para plugins MFE + app catálogo visual (./App).",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

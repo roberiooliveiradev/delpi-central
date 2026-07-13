@@ -2,6 +2,8 @@
 
 Exports públicos de `@delpi/plugin-ui`. Import único.
 
+**Prévia visual (app):** no portal, rota `/apps/plugin-ui` (permissão `plugin-ui.view`) — mesmo remote, expose `./App`. Em desenvolvimento: `cd plugins/plugin-ui && npm run dev` (porta 5010). Ver [contributing.md](./contributing.md) § Catálogo visual.
+
 Exportação tabular (CSV / Excel / PDF DELPI) e botões (`TabularExportButtons`, `DocumentExportActions`, `ExcelExportButton`): ver [export-catalog.md](./export-catalog.md).
 
 Imports:
