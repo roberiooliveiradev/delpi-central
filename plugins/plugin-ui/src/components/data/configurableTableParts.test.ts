@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { DECK_TABLE_DEFAULTS } from "../../theme/deckColorCatalog";
 import {
   deleteTablePart,
   isTablePartRefEqual,
@@ -55,7 +56,8 @@ describe("configurableTableParts", () => {
     expect(parts.title?.visible).toBe(false);
     expect(parts.title?.content).toBe("OTD");
     expect(parts.header?.visible).toBe(true);
-    expect(parts.frame?.style?.borderRadius).toBe(0);
+    expect(parts.frame?.style?.borderRadius).toBe(DECK_TABLE_DEFAULTS.borderRadius);
+    expect(parts.frame?.style?.boxShadow).toBe(DECK_TABLE_DEFAULTS.boxShadow);
     expect(partsToTableOptions(parts)).toEqual({
       showTitle: false,
       title: "OTD",
@@ -63,20 +65,37 @@ describe("configurableTableParts", () => {
     });
   });
 
-  it("resolveTableFrameStyle usa defaults Office e honra partes", () => {
+  it("resolveTableFrameStyle usa defaults Delpi e honra partes", () => {
     const defaults = resolveTableFrameStyle(undefined);
-    expect(defaults.borderRadius).toBe(0);
+    expect(defaults.borderRadius).toBe(DECK_TABLE_DEFAULTS.borderRadius);
+    expect(defaults.boxShadow).toBe(DECK_TABLE_DEFAULTS.boxShadow);
     expect(defaults.fill).toBe("#ffffff");
     expect(defaults.stroke).toBe("#b4b4b4");
     const custom = upsertTablePartState({}, { kind: "frame" }, {
-      style: { fill: "#111111", stroke: "#ef4444", strokeWidth: 4, borderRadius: 12 },
+      style: {
+        fill: "#111111",
+        stroke: "#ef4444",
+        strokeWidth: 4,
+        borderRadius: 12,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+      },
     });
     expect(resolveTableFrameStyle(custom)).toEqual({
       fill: "#111111",
       stroke: "#ef4444",
       strokeWidth: 4,
       borderRadius: 12,
+      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
     });
+  });
+
+  it("resolveTableFrameStyle migra seed legado radius 0 sem sombra", () => {
+    const legacy = upsertTablePartState({}, { kind: "frame" }, {
+      style: { fill: "#ffffff", stroke: "#b4b4b4", strokeWidth: 1, borderRadius: 0 },
+    });
+    const resolved = resolveTableFrameStyle(legacy);
+    expect(resolved.borderRadius).toBe(DECK_TABLE_DEFAULTS.borderRadius);
+    expect(resolved.boxShadow).toBe(DECK_TABLE_DEFAULTS.boxShadow);
   });
 
   it("migrateLegacyTableChromeToFrame copia style legado sem sobrescrever frame", () => {

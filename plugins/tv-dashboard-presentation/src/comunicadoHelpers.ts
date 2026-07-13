@@ -6,6 +6,7 @@ import {
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
   DECK_SHAPE_DEFAULTS,
+  DECK_TABLE_DEFAULTS,
   resolvePaintTextColor,
 } from "@delpi/plugin-ui/index";
 
@@ -219,7 +220,12 @@ export function createTableViewBlock(
     tableParts: tableOptionsToParts(presetDefaultTableOptions(preset)),
     // rows/cols do picker só dimensionam o frame — limite de dados fica no binding da fonte.
     frame: { x: 5, y: 55 - height / 2, w: width, h: height },
-    style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
+    style: {
+      zIndex: 2,
+      borderRadius: 0,
+      color: DECK_COLOR_TEXT_STRONG,
+      boxShadow: DECK_TABLE_DEFAULTS.boxShadow,
+    },
   };
 }
 

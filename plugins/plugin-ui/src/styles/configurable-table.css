@@ -8,14 +8,18 @@
   box-sizing: border-box;
   background: var(--delpi-ui-config-table-bg, #ffffff);
   color: var(--delpi-ui-config-table-text, #1e293b);
-  /* Moldura (contorno do bloco) — DECK_TABLE_DEFAULTS.frame*; sem radius TV legado. */
-  border-radius: var(--delpi-ui-config-table-frame-radius, 0);
+  /* Moldura — DECK_TABLE_DEFAULTS (raio/sombra/contorno, paridade KPI/gráfico). */
+  border-radius: var(--delpi-ui-config-table-frame-radius, 16px);
   border: var(--delpi-ui-config-table-frame-border-width, 1px) solid
     var(--delpi-ui-config-table-frame-border-color, #b4b4b4);
   padding: 0.25rem;
   overflow: hidden;
   /* Garante que o fill acompanhe o radius (evita triângulos nos cantos com borda). */
   background-clip: padding-box;
+  box-shadow: var(
+    --tdp-block-box-shadow,
+    var(--delpi-ui-config-table-frame-shadow, none)
+  );
 }
 
 .delpi-ui-config-table__title {

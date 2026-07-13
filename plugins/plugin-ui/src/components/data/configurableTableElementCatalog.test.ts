@@ -37,6 +37,11 @@ describe("configurableTableElementCatalog", () => {
     expect(isConfigurableTableElementEnabled("zebraStripe", on)).toBe(true);
   });
 
+  it("título ligado por padrão (fallback do label da rota)", () => {
+    expect(isConfigurableTableElementEnabled("tableTitle", DEFAULT_CONFIGURABLE_TABLE_OPTIONS)).toBe(true);
+    expect(DEFAULT_CONFIGURABLE_TABLE_OPTIONS.showTitle).toBe(true);
+  });
+
   it("liga total, primeira/última coluna e listras de coluna", () => {
     const patched = mergeConfigurableTableOptions({
       ...setConfigurableTableElementEnabled("totalRow", true),

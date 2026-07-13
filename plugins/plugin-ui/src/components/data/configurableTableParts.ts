@@ -27,6 +27,8 @@ export type TablePartStyle = {
   strokeWidth?: number;
   /** Cantos da moldura (px). */
   borderRadius?: number;
+  /** Sombra da moldura (parte `frame`). */
+  boxShadow?: string;
 };
 
 export type TablePartState = {
@@ -244,8 +246,9 @@ export function tableOptionsToParts(
       style: {
         fill: DECK_TABLE_DEFAULTS.frameFill,
         stroke: DECK_TABLE_DEFAULTS.frameStroke,
-        strokeWidth: 1,
-        borderRadius: 0,
+        strokeWidth: DECK_TABLE_DEFAULTS.borderWidth,
+        borderRadius: DECK_TABLE_DEFAULTS.borderRadius,
+        boxShadow: DECK_TABLE_DEFAULTS.boxShadow,
       },
     },
     title: { visible: config.showTitle !== false, content: config.title },
@@ -281,17 +284,31 @@ export function mergeTablePartsWithOptions(
   return merged;
 }
 
-/** Format Table Area (Excel) — preenchimento + contorno + cantos da moldura. */
+/** Format Table Area (Excel) — preenchimento + contorno + cantos + sombra da moldura. */
 export function resolveTableFrameStyle(
   parts?: TablePartsMap | null,
-): { fill: string; stroke: string; strokeWidth: number; borderRadius: number } {
-  const merged = mergeTablePartsWithOptions(parts);
-  const frame = getTablePartState(merged, { kind: "frame" });
+): {
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  borderRadius: number;
+  boxShadow: string;
+} {
+  const frame = getTablePartState(parts, { kind: "frame" });
+  /* Seed legado: radius 0 sem sombra → aplica chrome Delpi (paridade resolveChartAreaStyle). */
+  const legacyOfficeChrome =
+    (frame?.style?.borderRadius == null || frame.style.borderRadius === 0) &&
+    !frame?.style?.boxShadow?.trim();
   return {
     fill: frame?.style?.fill ?? DECK_TABLE_DEFAULTS.frameFill,
     stroke: frame?.style?.stroke ?? DECK_TABLE_DEFAULTS.frameStroke,
-    strokeWidth: frame?.style?.strokeWidth ?? 1,
-    borderRadius: frame?.style?.borderRadius ?? 0,
+    strokeWidth: frame?.style?.strokeWidth ?? DECK_TABLE_DEFAULTS.borderWidth,
+    borderRadius: legacyOfficeChrome
+      ? DECK_TABLE_DEFAULTS.borderRadius
+      : (frame?.style?.borderRadius ?? DECK_TABLE_DEFAULTS.borderRadius),
+    boxShadow: legacyOfficeChrome
+      ? DECK_TABLE_DEFAULTS.boxShadow
+      : (frame?.style?.boxShadow ?? DECK_TABLE_DEFAULTS.boxShadow),
   };
 }
 

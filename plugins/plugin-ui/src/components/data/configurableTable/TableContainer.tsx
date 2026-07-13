@@ -43,6 +43,7 @@ export function TableContainer({
     [`--${cn.cssVarPrefix}-frame-border-color`]: frame.stroke,
     [`--${cn.cssVarPrefix}-frame-border-width`]: `${Math.max(0, frame.strokeWidth)}px`,
     [`--${cn.cssVarPrefix}-frame-radius`]: `${Math.max(0, frame.borderRadius)}px`,
+    [`--${cn.cssVarPrefix}-frame-shadow`]: frame.boxShadow,
   } as CSSProperties;
 
   if (empty) {

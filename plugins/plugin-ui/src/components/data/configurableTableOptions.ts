@@ -38,7 +38,8 @@ export type ConfigurableTableOptions = {
 
 /** Cores herdadas do catálogo DECK_* (tema claro do gráfico). */
 export const DEFAULT_CONFIGURABLE_TABLE_OPTIONS: ConfigurableTableOptions = {
-  showTitle: false,
+  /** Ligado por padrão — vazio usa o label da rota (paridade com título do gráfico). */
+  showTitle: true,
   showHeader: true,
   showTotalRow: false,
   emphasizeFirstColumn: false,

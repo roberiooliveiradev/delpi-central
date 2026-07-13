@@ -118,7 +118,7 @@ export const DECK_KPI_DEFAULTS = {
     "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
 } as const;
 
-/** Defaults de tabela — células (grade) vs moldura (contorno Office). */
+/** Defaults de tabela — células (grade) vs moldura (chrome alinhado a KPI/gráfico). */
 export const DECK_TABLE_DEFAULTS = {
   headerBg: DECK_COLOR_TABLE_HEADER_BG,
   headerTextColor: DECK_COLOR_MUTED,
@@ -130,6 +130,15 @@ export const DECK_TABLE_DEFAULTS = {
   frameFill: DECK_COLOR_SURFACE,
   /** Contorno da moldura — mesmo `#b4b4b4` de gráfico/KPI (`DECK_COLOR_BORDER`). */
   frameStroke: DECK_COLOR_BORDER,
+  /** Raio padrão da moldura (px) — paridade com KPI/gráfico. */
+  borderRadius: 16,
+  borderWidth: 1,
+  /**
+   * Sombra padrão da moldura (contato + ambiente).
+   * Persistida em `tableParts.frame.style.boxShadow` e/ou `block.style.boxShadow`.
+   */
+  boxShadow:
+    "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
 } as const;
 
 /**

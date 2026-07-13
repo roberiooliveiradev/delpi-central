@@ -234,7 +234,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableCells: "Formato numérico, alinhamento e tamanho da fonte das células.",
     tableAppearance:
       "Cores internas (cabeçalho/células) e bordas entre células. Contorno do bloco = aba Forma / Moldura.",
-    tableTitle: "Título acima da grade (ex.: Top produtos). Vazio usa o nome da fonte de dados.",
+    tableTitle:
+      "Título acima da grade (ex.: Top produtos). Ligado por padrão; vazio usa o nome da fonte de dados.",
     tableTruncation:
       "Limita quantas linhas e colunas a tabela mostra no slide. Vazio = exibe tudo que a fonte entregou (com scroll no bloco).",
     tableMaxRows:

@@ -93,4 +93,12 @@ describe("comunicadoBlockShapeChrome", () => {
     expect(block.maxRows).toBeUndefined();
     expect(block.maxCols).toBeUndefined();
   });
+
+  it("createTableViewBlock nasce com chrome Delpi (raio/sombra) na moldura", () => {
+    const block = createTableViewBlock(3, 3) as ComunicadoTableViewBlock;
+    expect(block.style?.boxShadow).toContain("rgba(15, 23, 42");
+    expect(getTablePartState(block.tableParts, { kind: "frame" })?.style?.borderRadius).toBe(16);
+    expect(getTablePartState(block.tableParts, { kind: "frame" })?.style?.boxShadow).toContain("rgba(15, 23, 42");
+    expect(block.tableOptions?.showTitle).toBe(true);
+  });
 });

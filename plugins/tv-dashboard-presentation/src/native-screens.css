@@ -1228,14 +1228,17 @@
   min-width: 0;
   box-sizing: border-box;
   background: var(--tdp-table-bg, #ffffff);
-  /* Moldura = frameStroke Office; grade de células = --tdp-table-border-color. */
-  border-radius: var(--tdp-table-frame-radius, 0);
+  /* Moldura = chrome Delpi (raio/sombra/contorno); grade = --tdp-table-border-color. */
+  border-radius: var(--tdp-table-frame-radius, 16px);
   border: var(--tdp-table-frame-border-width, 1px) solid
     var(--tdp-table-frame-border-color, #b4b4b4);
   padding: 0.25rem;
   overflow: hidden;
   background-clip: padding-box;
-  box-shadow: var(--tdp-block-box-shadow, none);
+  box-shadow: var(
+    --tdp-block-box-shadow,
+    var(--tdp-table-frame-shadow, none)
+  );
 }
 
 .tdp-table-title {

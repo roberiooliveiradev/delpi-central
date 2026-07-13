@@ -29,6 +29,15 @@ describe("deckColorCatalog", () => {
     expect(DECK_TABLE_DEFAULTS.frameStroke).not.toBe(DECK_TABLE_DEFAULTS.borderColor);
   });
 
+  it("define chrome visual padrão da tabela (raio, borda, sombra)", () => {
+    expect(DECK_TABLE_DEFAULTS.borderRadius).toBe(16);
+    expect(DECK_TABLE_DEFAULTS.borderWidth).toBe(1);
+    expect(DECK_TABLE_DEFAULTS.frameStroke).toBe("#b4b4b4");
+    expect(DECK_TABLE_DEFAULTS.boxShadow).toContain("rgba(15, 23, 42");
+    expect(DECK_TABLE_DEFAULTS.borderRadius).toBe(DECK_KPI_DEFAULTS.borderRadius);
+    expect(DECK_TABLE_DEFAULTS.boxShadow).toBe(DECK_KPI_DEFAULTS.boxShadow);
+  });
+
   it("usa superfície clara no KPI e na tabela", () => {
     expect(DECK_KPI_DEFAULTS.backgroundColor).toBe(DECK_THEME_LIGHT.bg);
     expect(DECK_TABLE_DEFAULTS.cellBg).toBe(DECK_THEME_LIGHT.bg);
