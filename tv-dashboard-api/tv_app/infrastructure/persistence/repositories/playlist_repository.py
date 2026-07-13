@@ -76,7 +76,7 @@ class PlaylistRepository:
         """Lista programações do usuário (dono ou share). `include_all` só para admin."""
         with get_connection() as conn:
             with conn.cursor() as cur:
-                if include_all or not user_id:
+                if include_all:
                     cur.execute(
                         """
                         SELECT *
@@ -86,16 +86,14 @@ class PlaylistRepository:
                         """,
                         (limit, offset),
                     )
+                elif not user_id:
+                    return []
                 else:
                     cur.execute(
                         """
                         SELECT p.*
                         FROM tv_dashboard.playlists p
                         WHERE p.owner_user_id = %s
-                           OR (
-                             (p.owner_user_id IS NULL OR BTRIM(p.owner_user_id) = '')
-                             AND (p.created_by IS NULL OR BTRIM(p.created_by) = '')
-                           )
                            OR EXISTS (
                              SELECT 1
                              FROM tv_dashboard.playlist_shares s

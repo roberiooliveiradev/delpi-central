@@ -157,11 +157,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   header: {
     back: "Voltar à lista de programações.",
     preview: "Abrir pré-visualização em tela cheia (← → slides, Espaço pausa; controles somem após inatividade).",
-    share: "Abrir página de compartilhamento e link público.",
-    copyLink: "Copiar link público da apresentação.",
-    qr: "Gerar QR code do link público.",
-    regenerateToken: "Gerar novo link público (invalida o anterior).",
-    toggleLink: "Ativar ou desativar o link público da programação.",
+    share: "Colaboradores: convidar para editar (usuário Minha DELPI ou link de edição).",
+    copyLink: "Copiar o link da TV (só apresentação, sem edição).",
+    qr: "Gerar QR code do link da TV (apresentação).",
+    regenerateToken: "Gerar novo link da TV (invalida o anterior nas TVs).",
+    toggleLink: "Ativar ou desativar o link da TV (apresentação pública).",
     delete: "Excluir esta programação permanentemente.",
   },
   fields: {

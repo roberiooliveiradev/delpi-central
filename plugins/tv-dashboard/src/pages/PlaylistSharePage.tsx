@@ -246,7 +246,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
           <div className="td-card" style={{ maxWidth: 720, marginBottom: 16 }}>
             <h2 style={{ marginTop: 0 }}>Colaboradores (edição)</h2>
             <p className="td-subtitle">
-              Compartilhe com usuários cadastrados. O acesso fica atrelado ao ID do usuário (não ao e-mail).
+              Convide quem pode editar ou ver esta programação. O acesso fica no ID do usuário (não no e-mail).
             </p>
             <div className="td-toolbar" style={{ gap: 8, flexWrap: "wrap" }}>
               <div style={{ flex: "1 1 220px" }}>

@@ -4043,6 +4043,15 @@
   justify-content: flex-end;
 }
 
+.dashboard-tv-dashboard .td-deck-chrome__actions-sep {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+  flex-shrink: 0;
+}
+
 .dashboard-tv-dashboard .td-deck-chrome__tabs {
   display: flex;
   flex-wrap: nowrap;

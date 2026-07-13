@@ -2,10 +2,12 @@ import {
   ArrowLeft,
   Copy,
   Eye,
-  Link2,
   QrCode,
   RefreshCw,
   Trash2,
+  Tv,
+  TvOff,
+  Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { HintAction } from "@delpi/plugin-ui/index";
@@ -86,25 +88,42 @@ export function DeckEditorHeaderActions({
         <HeaderActionButton hint={H.preview} ariaLabel="Pré-visualizar" onClick={onPreview}>
           <Eye size={16} />
         </HeaderActionButton>
-        <HeaderActionButton hint={H.share} ariaLabel="Compartilhar" onClick={onShare}>
-          <Link2 size={16} />
+
+        <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
+
+        <HeaderActionButton
+          hint={H.share}
+          ariaLabel="Colaboradores e edição"
+          onClick={onShare}
+        >
+          <Users size={16} />
         </HeaderActionButton>
-        <HeaderActionButton hint={H.copyLink} ariaLabel="Copiar link" onClick={onCopyLink}>
+
+        <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
+
+        <HeaderActionButton hint={H.copyLink} ariaLabel="Copiar link da TV" onClick={onCopyLink}>
           <Copy size={16} />
         </HeaderActionButton>
-        <HeaderActionButton hint={H.qr} ariaLabel="QR code" onClick={onQr}>
+        <HeaderActionButton hint={H.qr} ariaLabel="QR code da TV" onClick={onQr}>
           <QrCode size={16} />
         </HeaderActionButton>
-        <HeaderActionButton hint={H.regenerateToken} ariaLabel="Novo link" onClick={onRegenerateToken}>
+        <HeaderActionButton
+          hint={H.regenerateToken}
+          ariaLabel="Novo link da TV"
+          onClick={onRegenerateToken}
+        >
           <RefreshCw size={16} />
         </HeaderActionButton>
         <HeaderActionButton
           hint={H.toggleLink}
-          ariaLabel={linkActive ? "Desativar link" : "Reativar link"}
+          ariaLabel={linkActive ? "Desativar link da TV" : "Ativar link da TV"}
           onClick={onToggleLink}
         >
-          <Link2 size={16} />
+          {linkActive ? <Tv size={16} /> : <TvOff size={16} />}
         </HeaderActionButton>
+
+        <span className="td-deck-chrome__actions-sep" aria-hidden="true" />
+
         <HeaderActionButton hint={H.delete} ariaLabel="Excluir" onClick={onDelete} danger>
           <Trash2 size={16} />
         </HeaderActionButton>

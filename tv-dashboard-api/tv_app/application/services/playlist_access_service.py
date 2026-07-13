@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 from uuid import UUID
 
-from tv_app.core.security import TV_ADMIN, TV_WRITE, can
+from tv_app.core.security import TV_ADMIN, can
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 
 PlaylistAccessLevel = Literal["none", "viewer", "editor", "owner"]
@@ -54,8 +54,14 @@ class PlaylistAccessService:
         if not playlist:
             return PlaylistAccess(level="none")
 
-        # Admin do módulo vê/edita tudo (suporte); ownership continua no registro.
+        # Admin do módulo / superadmin: acesso total; órfã recebe dono na abertura (suporte).
         if can(user, TV_ADMIN):
+            actor = self.actor_id(user)
+            owner = str(playlist.get("ownerUserId") or playlist.get("createdBy") or "").strip()
+            if not owner and actor:
+                claimed = self._repo.try_claim_owner(playlist_id, actor)
+                if claimed:
+                    return PlaylistAccess(level="owner", playlist=claimed)
             return PlaylistAccess(level="owner", playlist=playlist)
 
         actor = self.actor_id(user)
@@ -72,19 +78,5 @@ class PlaylistAccessService:
         if share_role == "viewer":
             return PlaylistAccess(level="viewer", playlist=playlist)
 
-        # Legado: created_by/owner nunca gravados (auth só expõe `id`). Quem tem write
-        # reivindica o órfão na primeira abertura — evita 404 em programações antigas.
-        if not owner and can(user, TV_WRITE):
-            claimed = self._repo.try_claim_owner(playlist_id, actor)
-            if claimed:
-                return PlaylistAccess(level="owner", playlist=claimed)
-            # Outro usuário reivindicou no meio tempo — reavalia.
-            refreshed = self._repo.get_by_id(playlist_id)
-            if refreshed:
-                new_owner = str(
-                    refreshed.get("ownerUserId") or refreshed.get("createdBy") or ""
-                ).strip()
-                if new_owner == actor:
-                    return PlaylistAccess(level="owner", playlist=refreshed)
-
+        # Órfã: usuário comum não vê — admin trata acima.
         return PlaylistAccess(level="none", playlist=playlist)

@@ -74,11 +74,12 @@ def list_playlists(request: Request, limit: int = 50, offset: int = 0):
     except PermissionError as exc:
         return fail(str(exc), 403)
     actor = _actor_id(user)
+    # Sempre segregado por dono/share — não listar tudo para superadmin/admin.
     items = _repo.list_playlists(
         limit=limit,
         offset=offset,
         user_id=actor,
-        include_all=can(user, TV_ADMIN),
+        include_all=False,
     )
     for item in items:
         _with_public_url(item)

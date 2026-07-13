@@ -85,16 +85,24 @@ def test_shared_viewer_read_only():
     assert access.can_edit is False
 
 
-def test_orphan_playlist_claimed_by_writer():
+def test_orphan_not_claimable_by_regular_writer():
     pid = uuid4()
-    claimed = {"id": str(pid), "ownerUserId": "user-a", "createdBy": "user-a"}
-    repo = _FakeRepo(
-        {"id": str(pid), "ownerUserId": None, "createdBy": None},
-        claim_result=claimed,
-    )
+    repo = _FakeRepo({"id": str(pid), "ownerUserId": None, "createdBy": None})
     access = PlaylistAccessService(repo).resolve(
         pid,
         _user("user-a", permissions=["tv-dashboard.write"]),
     )
+    assert access.level == "none"
+    assert repo.claim_calls == []
+
+
+def test_orphan_claimed_by_superadmin_on_open():
+    pid = uuid4()
+    claimed = {"id": str(pid), "ownerUserId": "admin-1", "createdBy": "admin-1"}
+    repo = _FakeRepo(
+        {"id": str(pid), "ownerUserId": None, "createdBy": None},
+        claim_result=claimed,
+    )
+    access = PlaylistAccessService(repo).resolve(pid, _user("admin-1", is_superadmin=True))
     assert access.level == "owner"
     assert len(repo.claim_calls) == 1
