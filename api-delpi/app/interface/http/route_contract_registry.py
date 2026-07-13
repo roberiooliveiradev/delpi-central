@@ -253,6 +253,31 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_inspecoes_entrada_resumo": RouteContract(
         "inspecoes_entrada_resumo", "scalar"
     ),
+    "get_inspecoes_processo_resumo": RouteContract(
+        "inspecoes_processo_resumo", "scalar"
+    ),
+    "get_inspecoes_processo_ranking_ensaio": RouteContract(
+        "inspecoes_processo_ranking_ensaio", "list"
+    ),
+    "get_inspecoes_processo_por_produto": RouteContract(
+        "inspecoes_processo_por_produto", "list"
+    ),
+    "get_inspecoes_processo_por_operacao": RouteContract(
+        "inspecoes_processo_por_operacao", "list"
+    ),
+    "get_inspecoes_processo_por_ensaiador": RouteContract(
+        "inspecoes_processo_por_ensaiador", "list"
+    ),
+    "get_inspecoes_processo_historico": RouteContract(
+        "inspecoes_processo_historico", "paged_list"
+    ),
+    "get_inspecoes_processo_historico_detalhe": RouteContract(
+        "inspecoes_processo_historico_detalhe", "object"
+    ),
+    "get_inspecoes_processo_auditoria_apontamentos": RouteContract(
+        "inspecoes_processo_auditoria_apontamentos", "paged_list"
+    ),
+
     "get_inspecoes_entrada_pendentes": RouteContract(
         "inspecoes_entrada_pendentes", "paged_list"
     ),

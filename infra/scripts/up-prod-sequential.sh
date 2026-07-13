@@ -117,6 +117,7 @@ FASE_MFE=(
   minha-delpi-chat
   auditoria-5s
   inspecoes-entrada
+  inspecoes-processo
   pedidos-venda-abertos
   propostas-comerciais
   financeiro-centro-custo

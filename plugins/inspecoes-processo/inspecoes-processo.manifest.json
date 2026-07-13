@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "inspecoes-processo",
+  "name": "Inspeções de Processo",
+  "description": "Painel operacional de inspeções em processo — resumo, histórico e auditoria apontamento × inspeção por filial",
+  "icon": "clipboard-check-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/inspecoes-processo",
+  "entry": "/apps/inspecoes-processo/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "inspecoes-processo.view.filial-01",
+      "name": "Visualizar Inspeções de Processo — Filial 01",
+      "description": "Acesso ao painel de inspeções de processo da filial 01 (SC)",
+      "module": "inspecoes-processo"
+    },
+    {
+      "code": "inspecoes-processo.view.filial-02",
+      "name": "Visualizar Inspeções de Processo — Filial 02",
+      "description": "Acesso ao painel de inspeções de processo da filial 02 (ES)",
+      "module": "inspecoes-processo"
+    },
+    {
+      "code": "inspecoes-processo.view",
+      "name": "Visualizar Inspeções de Processo",
+      "description": "Acesso amplo ao painel de inspeções de processo (ambas filiais)",
+      "module": "inspecoes-processo"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/inspecoes-processo/filial-01",
+      "label": "Inspeções de Processo — Filial 01",
+      "permission": "inspecoes-processo.view.filial-01",
+      "icon": "clipboard-check-icon",
+      "order": 24,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/inspecoes-processo/filial-02",
+      "label": "Inspeções de Processo — Filial 02",
+      "permission": "inspecoes-processo.view.filial-02",
+      "icon": "clipboard-check-icon",
+      "order": 25,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

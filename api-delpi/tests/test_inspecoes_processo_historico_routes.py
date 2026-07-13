@@ -1,0 +1,137 @@
+"""Smoke HTTP — histórico paginado de inspeções de processo."""
+
+from __future__ import annotations
+
+import json
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+
+
+def _body(response) -> dict:
+    return json.loads(response.body.decode())
+
+
+@patch(
+    "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router._branch_view_allowed",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router.build_list_inspecoes_processo_historico_use_case"
+)
+def test_inspecoes_processo_historico_returns_meta(mock_build, _mock_branch) -> None:
+    from app.interface.http.routes.inspecoes_processo.inspecoes_processo_router import (
+        get_inspecoes_processo_historico_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [
+            {
+                "filial": "01",
+                "ordem_producao": "10565201002",
+                "resultado_inspecao_codigo": "A",
+            }
+        ],
+        "page": 1,
+        "page_size": 25,
+        "has_next": False,
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = get_inspecoes_processo_historico_route(
+        branch="01",
+        page=1,
+        page_size=25,
+        ordem_producao=None,
+        codigo_produto=None,
+        resultado=None,
+        data_inicio=None,
+        data_fim=None,
+    )
+    body = _body(response)
+
+    assert body.get("success") is True
+    meta = body.get("meta")
+    assert isinstance(meta, dict)
+    assert meta.get("operationId") == "get_inspecoes_processo_historico"
+    assert meta.get("shape") == "paged_list"
+    assert body["data"]["page"] == 1
+    assert body["data"]["has_next"] is False
+    assert isinstance(body["data"]["items"], list)
+
+
+@patch(
+    "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router._branch_view_allowed",
+    return_value=False,
+)
+def test_inspecoes_processo_historico_denies_branch_without_permission(
+    _mock_branch,
+) -> None:
+    from app.interface.http.routes.inspecoes_processo.inspecoes_processo_router import (
+        get_inspecoes_processo_historico_route,
+    )
+
+    response = get_inspecoes_processo_historico_route(
+        branch="01",
+        page=1,
+        page_size=25,
+        ordem_producao=None,
+        codigo_produto=None,
+        resultado=None,
+        data_inicio=None,
+        data_fim=None,
+    )
+    assert response.status_code == 403
+
+
+@pytest.fixture
+def inspecoes_processo_client() -> TestClient:
+    from fastapi import FastAPI
+
+    from app.interface.http.routes.inspecoes_processo.inspecoes_processo_router import (
+        router,
+    )
+
+    app = FastAPI()
+    app.include_router(router)
+    return TestClient(app)
+
+
+def test_inspecoes_processo_historico_requires_branch(
+    inspecoes_processo_client: TestClient,
+) -> None:
+    response = inspecoes_processo_client.get("/inspecoes-processo/historico")
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize("branch", ["03", "1", "xx"])
+def test_inspecoes_processo_historico_rejects_invalid_branch(
+    inspecoes_processo_client: TestClient,
+    branch: str,
+) -> None:
+    response = inspecoes_processo_client.get(
+        f"/inspecoes-processo/historico?branch={branch}"
+    )
+    assert response.status_code == 422
+
+
+def test_inspecoes_processo_historico_rejects_page_size_above_max(
+    inspecoes_processo_client: TestClient,
+) -> None:
+    response = inspecoes_processo_client.get(
+        "/inspecoes-processo/historico?branch=01&page_size=51"
+    )
+    assert response.status_code == 422
+
+
+def test_inspecoes_processo_historico_rejects_invalid_resultado(
+    inspecoes_processo_client: TestClient,
+) -> None:
+    response = inspecoes_processo_client.get(
+        "/inspecoes-processo/historico?branch=01&resultado=X"
+    )
+    assert response.status_code == 422

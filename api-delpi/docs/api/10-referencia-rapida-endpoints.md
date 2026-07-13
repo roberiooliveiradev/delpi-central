@@ -260,6 +260,21 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 
 ---
 
+## Inspeções de processo (`/inspecoes-processo`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/inspecoes-processo/resumo` | IP |
+| GET | `/inspecoes-processo/ranking-ensaio` | IP |
+| GET | `/inspecoes-processo/por-produto` | IP |
+| GET | `/inspecoes-processo/por-operacao` | IP |
+| GET | `/inspecoes-processo/por-ensaiador` | IP |
+| GET | `/inspecoes-processo/historico` | IP |
+| GET | `/inspecoes-processo/historico/detalhe` | IP |
+| GET | `/inspecoes-processo/auditoria-apontamentos` | IP |
+
+---
+
 ## Controle de Retrabalhos (`/retrabalhos`)
 
 | Método | Endpoint | Perm. |
