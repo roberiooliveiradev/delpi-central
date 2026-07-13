@@ -2443,13 +2443,15 @@
 
 .dashboard-tv-dashboard .td-deck-ribbon__style-checks {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px 10px;
-  min-width: 200px;
+  grid-template-columns: repeat(4, max-content);
+  gap: 4px 14px;
+  min-width: 0;
   padding: 2px 0;
+  align-content: start;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__style-check {
+.dashboard-tv-dashboard .td-deck-ribbon__style-check,
+.dashboard-tv-dashboard .td-deck-ribbon__check {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2457,11 +2459,14 @@
   color: var(--td-text);
   cursor: pointer;
   white-space: nowrap;
+  line-height: 1.25;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__style-check input {
+.dashboard-tv-dashboard .td-deck-ribbon__style-check input,
+.dashboard-tv-dashboard .td-deck-ribbon__check input {
   accent-color: var(--td-accent);
   margin: 0;
+  flex: 0 0 auto;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__table-gallery {
@@ -3311,11 +3316,16 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__frame-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
   gap: 10px 14px;
-  width: 100%;
-  align-items: start;
+  width: max-content;
+  max-width: 100%;
+  align-items: flex-start;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__organize {
@@ -3484,14 +3494,14 @@
   overflow: hidden;
 }
 
-/* Elemento / Dados / Tela embutida: altura pelo conteúdo (sem cortar selects). */
+/* Elemento / Dados / Design tabela: altura pelo conteúdo — não cortar posições. */
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit {
   --td-ribbon-height: auto;
   height: auto;
   min-height: 72px;
-  max-height: 120px;
+  max-height: min(168px, 28vh);
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups {
@@ -3514,15 +3524,14 @@
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group {
   box-sizing: border-box;
   height: auto;
-  max-height: 100%;
+  max-height: none;
   min-height: 0;
   flex: 0 0 auto;
   flex-shrink: 0;
-  padding: 2px 8px 0;
-  /* Sem space-between — evita ícones no topo e caption no fundo com vazio. */
+  padding: 2px 10px 0;
   justify-content: flex-start;
-  gap: 2px;
-  overflow: hidden;
+  gap: 4px;
+  overflow: visible;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band .td-deck-ribbon__group {
@@ -3538,11 +3547,11 @@
   flex: 0 1 auto;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
   min-height: 0;
-  max-height: 100%;
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__caption {
@@ -3621,10 +3630,15 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid {
-  grid-template-columns: repeat(auto-fill, minmax(156px, 180px));
+  flex-wrap: nowrap;
   gap: 10px 16px;
   width: max-content;
-  max-width: 100%;
+  max-width: none;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__style-checks {
+  grid-template-columns: repeat(4, max-content);
+  gap: 3px 12px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props {
@@ -3632,7 +3646,9 @@
   max-height: none;
   max-width: none;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
+  align-items: flex-start;
+  gap: 8px 12px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__organize-props .td-deck-ribbon__field-label {
@@ -3865,6 +3881,8 @@
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
+  flex: 0 0 auto;
+  width: 148px;
   min-width: 148px;
   padding: 2px 0;
 }

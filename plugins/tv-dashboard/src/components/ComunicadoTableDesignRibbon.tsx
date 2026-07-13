@@ -177,7 +177,7 @@ export function ComunicadoTableDesignRibbon() {
           {STYLE_OPTION_CHECKS.map((item) => {
             const checked = isTableElementEnabled(item.id, options);
             return (
-              <label key={item.id} className="td-deck-ribbon__check" title={item.hint}>
+              <label key={item.id} className="td-deck-ribbon__style-check" title={item.hint}>
                 <input
                   type="checkbox"
                   checked={checked}

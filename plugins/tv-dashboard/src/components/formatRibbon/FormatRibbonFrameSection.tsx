@@ -258,10 +258,7 @@ export function FormatRibbonFrameSection() {
     ? resolveBlockShapeChromeStyle(selected)
     : null;
   const borderRadius = innerChrome?.borderRadius ?? selected.style?.borderRadius ?? 0;
-  const showCornerRadius =
-    !pointOnly &&
-    selected.type !== "chart_view" &&
-    !(selected.type === "kpi_view" && selectedKpiPart == null);
+  const showCornerRadius = !pointOnly && selected.type !== "chart_view";
 
   const framePx = framePercentToPageBottomLeftPx(selected.frame, slideDesign);
 

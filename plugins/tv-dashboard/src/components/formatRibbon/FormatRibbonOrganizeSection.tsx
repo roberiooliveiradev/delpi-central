@@ -1,4 +1,4 @@
-import { FieldLabel, HintAction, NativeRangeControl } from "@delpi/plugin-ui/index";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import {
   getChartPartState,
   getKpiPartState,
@@ -17,6 +17,7 @@ import {
 import { ArrowDown, ArrowUp, Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { DeckRangeField } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { TdRibbonSelect } from "../tdRibbonUi";
@@ -168,28 +169,18 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
           </ShortcutTip>
         </div>
         <div className="td-deck-ribbon__organize-props">
-          <FieldLabel
-            htmlFor="td-block-opacity"
+          <DeckRangeField
+            id="td-block-opacity"
             label="Opacidade"
             hint={H.opacity}
-            className="td-deck-ribbon__field-label"
+            min={0}
+            max={100}
+            step={5}
+            value={opacityPercent}
+            displayValue={`${opacityPercent}%`}
+            aria-label="Opacidade"
+            onChange={(value) => setOpacity(value / 100)}
           />
-          <HintAction hint={H.opacity} ariaLabel="Ajuda: Opacidade">
-            <NativeRangeControl
-              id="td-block-opacity"
-              className="td-deck-ribbon__opacity-range"
-              min={0}
-              max={100}
-              step={5}
-              aria-label="Opacidade"
-              value={opacityPercent}
-              style={{ ["--td-range-progress" as string]: `${opacityPercent}%` }}
-              onChange={(value) => setOpacity(value / 100)}
-            />
-          </HintAction>
-          <span className="td-deck-ribbon__opacity-value" aria-hidden>
-            {opacityPercent}%
-          </span>
           {isMediaBlock ? (
             <>
               <FieldLabel
