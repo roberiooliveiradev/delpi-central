@@ -92,6 +92,10 @@ class PlaylistRepository:
                         SELECT p.*
                         FROM tv_dashboard.playlists p
                         WHERE p.owner_user_id = %s
+                           OR (
+                             (p.owner_user_id IS NULL OR BTRIM(p.owner_user_id) = '')
+                             AND (p.created_by IS NULL OR BTRIM(p.created_by) = '')
+                           )
                            OR EXISTS (
                              SELECT 1
                              FROM tv_dashboard.playlist_shares s
@@ -314,6 +318,36 @@ class PlaylistRepository:
                     (str(playlist_id),),
                 )
                 row = cur.fetchone()
+        return _row_to_playlist(row) if row else None
+
+    def try_claim_owner(self, playlist_id: UUID, user_id: str) -> dict[str, Any] | None:
+        """Atribui dono só se ainda estiver órfã (owner e created_by vazios)."""
+        actor = (user_id or "").strip()
+        if not actor:
+            return None
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE tv_dashboard.playlists
+                    SET owner_user_id = %s,
+                        created_by = COALESCE(NULLIF(BTRIM(COALESCE(created_by, '')), ''), %s),
+                        updated_at = NOW()
+                    WHERE id = %s
+                      AND (
+                        owner_user_id IS NULL
+                        OR BTRIM(owner_user_id) = ''
+                      )
+                      AND (
+                        created_by IS NULL
+                        OR BTRIM(created_by) = ''
+                      )
+                    RETURNING *
+                    """,
+                    (actor, actor, str(playlist_id)),
+                )
+                row = cur.fetchone()
+            conn.commit()
         return _row_to_playlist(row) if row else None
 
     def get_by_token(self, token: str) -> dict[str, Any] | None:

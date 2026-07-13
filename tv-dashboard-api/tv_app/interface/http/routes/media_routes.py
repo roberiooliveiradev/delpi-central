@@ -14,6 +14,7 @@ from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.core.responses import fail, ok
 from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
 from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+from tv_app.application.services.playlist_access_service import PlaylistAccessService
 
 router = APIRouter(prefix="/playlists/{playlist_id}/media", tags=["Media"])
 _media_repo = MediaRepository()
@@ -41,7 +42,7 @@ async def upload_media(request: Request, playlist_id: UUID, file: UploadFile = F
         mime_type=mime_type,
         media_kind=media_kind,
         file_size_bytes=len(content),
-        created_by=getattr(user, "sub", None) or getattr(user, "preferred_username", None),
+        created_by=PlaylistAccessService.actor_id(user),
     )
     notify_presentation_changed(
         playlist_id=str(playlist_id),

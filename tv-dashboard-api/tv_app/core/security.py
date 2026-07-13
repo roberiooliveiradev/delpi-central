@@ -31,7 +31,15 @@ def assert_permission(user: Any | None, permission: str) -> None:
 
 
 def actor_sub_from_request(request: Request) -> str | None:
+    """Id do usuário autenticado (`user.id` do delpi_auth)."""
     user = getattr(request.state, "user", None)
     if user is None:
         return None
-    return getattr(user, "sub", None) or getattr(user, "preferred_username", None)
+    for attr in ("id", "sub", "preferred_username"):
+        raw = getattr(user, attr, None)
+        if raw is None:
+            continue
+        value = str(raw).strip()
+        if value:
+            return value
+    return None
