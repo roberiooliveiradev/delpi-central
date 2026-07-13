@@ -42,6 +42,7 @@ import {
 import {
   kpiOptionsToParts,
   normalizeKpiPartsForLoad,
+  partsToKpiOptions,
   type ComunicadoKpiPartsMap,
 } from "./comunicadoKpiParts";
 import {
@@ -271,8 +272,13 @@ export function createCanvasTableBlock(rows = 3, cols = 3): ComunicadoCanvasTabl
 export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): ComunicadoBlock {
   const kpiOptions = mergeComunicadoKpiOptions({
     ...DEFAULT_COMUNICADO_KPI_OPTIONS,
-    iconName: options?.iconName ?? "Gauge",
-    showIcon: options?.showIcon ?? true,
+    // Ícone só quando o caller pede explicitamente (evita «forma» Gauge fantasma na TV).
+    ...(options?.iconName || options?.showIcon
+      ? {
+          iconName: options.iconName ?? "Gauge",
+          showIcon: options.showIcon ?? true,
+        }
+      : { showIcon: false }),
     ...options,
   });
   return {
@@ -991,7 +997,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     );
   }
   if (type === "kpi_view") {
-    const kpiOptions =
+    const baseOptions =
       block.kpiOptions && typeof block.kpiOptions === "object"
         ? mergeComunicadoKpiOptions(block.kpiOptions as ComunicadoKpiOptions)
         : mergeComunicadoKpiOptions(DEFAULT_COMUNICADO_KPI_OPTIONS);
@@ -999,7 +1005,13 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       block.kpiParts && typeof block.kpiParts === "object"
         ? (block.kpiParts as ComunicadoKpiPartsMap)
         : undefined;
-    const kpiParts = normalizeKpiPartsForLoad(rawParts, kpiOptions);
+    const kpiParts = normalizeKpiPartsForLoad(rawParts, baseOptions);
+    // Parts mandam na visibilidade (evita ícone Gauge «fantasma» quando options
+    // ainda dizem showIcon:true após o gestor ocultar a parte no editor).
+    const kpiOptions = mergeComunicadoKpiOptions({
+      ...baseOptions,
+      ...partsToKpiOptions(kpiParts),
+    });
     return attachBlockAnimations(
       {
         id,

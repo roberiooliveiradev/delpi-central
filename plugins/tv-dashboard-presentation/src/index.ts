@@ -20,7 +20,8 @@ export type {
 } from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
-export { DesignViewportStage } from "./DesignViewportStage";
+export { DesignViewportStage, computeDesignViewportScale } from "./DesignViewportStage";
+export type { DesignViewportFitMode } from "./DesignViewportStage";
 export {
   resolveViewportPixelSize,
   type ViewportPixelSize,

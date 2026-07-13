@@ -45,7 +45,8 @@ export function resolveKpiViewPresentation(
     valueColor: toneResult.valueColor ?? options.valueColor,
     backgroundColor: toneResult.backgroundColor ?? options.backgroundColor,
     iconName: options.iconName?.trim() || undefined,
-    showIcon: options.showIcon !== false,
+    // Opt-in: só exibe ícone quando `showIcon` é explicitamente true.
+    showIcon: options.showIcon === true,
   };
 }
 

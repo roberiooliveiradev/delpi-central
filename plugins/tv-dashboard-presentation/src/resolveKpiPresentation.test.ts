@@ -7,7 +7,7 @@ import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 describe("kpi_view", () => {
   it("é data view e serializa kpiOptions", () => {
     expect(isDataViewBlockType("kpi_view")).toBe(true);
-    const block = createKpiViewBlock({ title: "OEE", iconName: "Gauge" });
+    const block = createKpiViewBlock({ title: "OEE", iconName: "Gauge", showIcon: true });
     expect(block.type).toBe("kpi_view");
     const serialized = serializeComunicadoConfig({ version: 5, blocks: [block] });
     const parsed = parseComunicadoConfig(serialized);
@@ -19,6 +19,37 @@ describe("kpi_view", () => {
       expect(kpi.kpiParts?.title?.content).toBe("OEE");
       expect(kpi.kpiParts?.icon?.visible).not.toBe(false);
     }
+  });
+
+  it("sincroniza showIcon=false a partir de parts.icon.visible no parse", () => {
+    const parsed = parseComunicadoConfig({
+      version: 5,
+      blocks: [
+        {
+          id: "k1",
+          type: "kpi_view",
+          frame: { x: 8, y: 28, w: 32, h: 24 },
+          style: { zIndex: 2 },
+          kpiOptions: { title: "Consumo", iconName: "Gauge", showIcon: true },
+          kpiParts: {
+            icon: { visible: false, style: { fill: "#ffffff" } },
+          },
+        },
+      ],
+    });
+    const kpi = parsed.blocks?.[0];
+    expect(kpi?.type).toBe("kpi_view");
+    if (kpi?.type === "kpi_view") {
+      expect(kpi.kpiOptions?.showIcon).toBe(false);
+      expect(kpi.kpiParts?.icon?.visible).toBe(false);
+    }
+  });
+
+  it("não liga ícone por padrão ao criar kpi_view", () => {
+    const block = createKpiViewBlock({ title: "Consumo" });
+    if (block.type !== "kpi_view") throw new Error("kpi");
+    expect(block.kpiOptions?.showIcon).toBe(false);
+    expect(block.kpiParts?.icon?.visible).toBe(false);
   });
 
   it("resolve apresentação com regras de cor", () => {

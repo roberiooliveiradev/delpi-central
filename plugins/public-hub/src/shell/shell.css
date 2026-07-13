@@ -236,3 +236,14 @@ html.pub-kiosk #root {
   overflow: hidden;
   background: #05070a;
 }
+
+/* Palco da apresentação: preenche o kiosk (DesignViewportStage mede inset:0). */
+.pub-kiosk-root > .tdp-stage,
+.pub-kiosk-root > .tdp-stage--kiosk {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  flex: none;
+}

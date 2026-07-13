@@ -19,9 +19,9 @@ export type ComunicadoKpiOptions = {
   colorRules?: DelpiKpiColorRule[];
 };
 
-/** Herda o tema claro do gráfico (catálogo DECK_*). */
+/** Herda o tema claro do gráfico (catálogo DECK_*). Ícone off por padrão (opt-in). */
 export const DEFAULT_COMUNICADO_KPI_OPTIONS: ComunicadoKpiOptions = {
-  showIcon: true,
+  showIcon: false,
   tone: "default",
   valueFormat: "raw",
   backgroundColor: DECK_KPI_DEFAULTS.backgroundColor,

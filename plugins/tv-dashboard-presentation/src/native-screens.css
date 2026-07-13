@@ -754,14 +754,17 @@
   flex: 1 1 auto;
 }
 
-.tdp-stage__design {
+.tdp-stage__design,
+.tdp-design-viewport {
   position: absolute;
   inset: 0;
   z-index: 0;
+  width: auto;
+  height: auto;
 }
 
 .tdp-design-viewport__stage {
-  position: relative;
+  /* Inline do DesignViewportStage define absolute + scale; CSS só reforça clip. */
   overflow: hidden;
   background: inherit;
 }

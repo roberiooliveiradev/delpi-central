@@ -194,4 +194,17 @@ describe("DelpiKpiCard chrome", () => {
     expect(fit?.style.fontSize).toBe("48px");
   });
 
+  it("não reexibe ícone oculto só porque o ReactNode icon foi passado", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="10"
+        icon={<span data-testid="kpi-icon">i</span>}
+        kpiOptions={{ showIcon: true, iconName: "Gauge" }}
+        kpiParts={{ icon: { visible: false, style: { fill: "#ffffff" } } }}
+      />,
+    );
+    expect(container.querySelector(".delpi-kpi-icon")).toBeNull();
+    expect(container.querySelector("[data-testid='kpi-icon']")).toBeNull();
+  });
 });

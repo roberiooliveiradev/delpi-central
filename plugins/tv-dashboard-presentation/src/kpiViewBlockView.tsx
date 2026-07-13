@@ -1,7 +1,11 @@
 import { DelpiKpiCard } from "@delpi/plugin-ui/index";
 
 import { resolveComunicadoLucideIcon } from "./comunicadoIconView";
-import type { ComunicadoKpiInteraction } from "./comunicadoKpiParts";
+import {
+  isKpiPartVisible,
+  mergeKpiPartsWithOptions,
+  type ComunicadoKpiInteraction,
+} from "./comunicadoKpiParts";
 import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 
@@ -71,8 +75,14 @@ export function KpiViewBlockView({
     );
   }
 
-  const Icon = presentation.iconName ? resolveComunicadoLucideIcon(presentation.iconName) : null;
-  const showIcon = presentation.showIcon && Icon;
+  // Parts são a fonte de verdade (paridade editor ↔ prévia ↔ apresentação).
+  const mergedParts = mergeKpiPartsWithOptions(block.kpiParts, block.kpiOptions);
+  const iconAllowed = isKpiPartVisible(mergedParts, { kind: "icon" }, presentation.showIcon);
+  const Icon =
+    iconAllowed && presentation.iconName
+      ? resolveComunicadoLucideIcon(presentation.iconName)
+      : null;
+  const showIcon = Boolean(iconAllowed && Icon);
   const kpiInteraction = interactive ? interaction : null;
 
   return (

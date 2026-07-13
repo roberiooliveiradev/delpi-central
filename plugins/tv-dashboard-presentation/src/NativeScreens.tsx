@@ -1,11 +1,17 @@
 import type { CSSProperties } from "react";
+import { useMemo } from "react";
 
 import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 import { ComunicadoBlockView } from "./comunicadoBlockView";
 import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 import { useComunicadoGoogleFonts } from "./comunicadoGoogleFonts";
 import { useComunicadoCustomFonts } from "./comunicadoCustomFonts";
-import { hasRichComunicado, sortBlocksByZIndex, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
+import {
+  hasRichComunicado,
+  parseComunicadoConfig,
+  sortBlocksByZIndex,
+  type ComunicadoScreenDataLike,
+} from "./comunicadoHelpers";
 import type { ComunicadoBackground } from "./comunicadoTypes";
 import { formatNumber, formatPct } from "./nativeFormat";
 import "./native-screens.css";
@@ -348,11 +354,26 @@ function RichComunicadoScreen({
   };
   fontScale?: number;
 }) {
-  useComunicadoGoogleFonts({ blocks: data.blocks });
-  useComunicadoCustomFonts(data.customFonts);
+  const normalized = useMemo(
+    () =>
+      parseComunicadoConfig({
+        version: (data as { version?: number }).version,
+        headline: data.headline,
+        subtitle: data.subtitle,
+        background: data.background,
+        blocks: data.blocks,
+        customFonts: data.customFonts,
+        dataFilters: (data as { dataFilters?: unknown }).dataFilters,
+        speakerNotes: (data as { speakerNotes?: string }).speakerNotes,
+      } as Record<string, unknown>),
+    [data],
+  );
+
+  useComunicadoGoogleFonts({ blocks: normalized.blocks });
+  useComunicadoCustomFonts(normalized.customFonts ?? data.customFonts);
 
   const master = data.master?.enabled ? data.master : null;
-  const slideBackground = data.background;
+  const slideBackground = normalized.background ?? data.background;
   const background =
     slideBackground ??
     master?.background ??
@@ -361,7 +382,7 @@ function RichComunicadoScreen({
     background.type === "image" ? background.url ?? background.value : undefined;
   const bgStyle: CSSProperties = comunicadoBackgroundCssProperties(background, imageUrl);
 
-  const blocks = sortBlocksByZIndex(data.blocks ?? []);
+  const blocks = sortBlocksByZIndex(normalized.blocks ?? []);
   const logo = master?.logo;
   const logoFrame = logo?.frame;
 

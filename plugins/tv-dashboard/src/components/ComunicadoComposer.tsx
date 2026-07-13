@@ -325,6 +325,7 @@ export function ComunicadoComposerCanvas() {
                   .join(" ")}
                 style={{
                   ...resolveBlockPlacementStyle(block),
+                  zIndex: block.style?.zIndex ?? 1,
                   ...(block.style?.rotation
                     ? { transform: `rotate(${block.style.rotation}deg)` }
                     : {}),

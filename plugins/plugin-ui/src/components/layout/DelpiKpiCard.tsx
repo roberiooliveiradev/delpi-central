@@ -266,13 +266,17 @@ export function DelpiKpiCard({
   const iconHostRef = useRef<HTMLDivElement>(null);
   const cardHostRef = useRef<HTMLElement>(null);
 
+  // Options/parts mandam; `icon` só entra como fallback quando a visibilidade
+  // ainda não foi declarada (evita reaparecer ícone oculto no modo apresentação).
+  const iconVisibilityDeclared =
+    kpiOptions?.showIcon != null || kpiParts?.icon?.visible != null;
   const parts = mergeKpiPartsWithOptions(kpiParts, {
     title: label,
     subtitle: hint,
-    showIcon: Boolean(icon),
     valueColor,
     backgroundColor,
     ...(kpiOptions ?? {}),
+    ...(iconVisibilityDeclared ? {} : { showIcon: Boolean(icon) }),
   });
 
   const showTitle = isKpiPartVisible(parts, { kind: "title" }, true);

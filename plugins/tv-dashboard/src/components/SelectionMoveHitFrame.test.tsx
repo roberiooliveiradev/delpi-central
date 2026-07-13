@@ -1,8 +1,9 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+
+import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 
 afterEach(() => {
   cleanup();
@@ -17,19 +18,27 @@ const block = {
 
 describe("SelectionMoveHitFrame", () => {
   it("expõe as quatro bordas de arraste alinhadas ao outline", () => {
-    render(<SelectionMoveHitFrame block={block} onMovePointerDown={vi.fn()} />);
-    expect(screen.getByLabelText("Mover pela borda superior")).toBeTruthy();
-    expect(screen.getByLabelText("Mover pela borda direita")).toBeTruthy();
-    expect(screen.getByLabelText("Mover pela borda inferior")).toBeTruthy();
-    expect(screen.getByLabelText("Mover pela borda esquerda")).toBeTruthy();
+    const { container } = render(<SelectionMoveHitFrame block={block} onMovePointerDown={vi.fn()} />);
+    expect(container.querySelector(".td-composer__selection-move-edge--n")).toBeTruthy();
+    expect(container.querySelector(".td-composer__selection-move-edge--e")).toBeTruthy();
+    expect(container.querySelector(".td-composer__selection-move-edge--s")).toBeTruthy();
+    expect(container.querySelector(".td-composer__selection-move-edge--w")).toBeTruthy();
   });
 
   it("dispara move no pointerdown de qualquer borda", () => {
     const onMove = vi.fn();
-    render(<SelectionMoveHitFrame block={block} onMovePointerDown={onMove} />);
-    fireEvent.pointerDown(screen.getByLabelText("Mover pela borda superior"));
+    const { container } = render(<SelectionMoveHitFrame block={block} onMovePointerDown={onMove} />);
+    const edge = container.querySelector(".td-composer__selection-move-edge--n");
+    expect(edge).toBeTruthy();
+    fireEvent.pointerDown(edge!);
     expect(onMove).toHaveBeenCalledTimes(1);
     expect(onMove.mock.calls[0][1]).toBe(block);
     expect(onMove.mock.calls[0][2]).toBe("move");
+  });
+
+  it("não usa button (evita hover global do portal)", () => {
+    const { container } = render(<SelectionMoveHitFrame block={block} onMovePointerDown={vi.fn()} />);
+    expect(container.querySelector("button")).toBeNull();
+    expect(container.querySelectorAll(".td-composer__selection-move-edge")).toHaveLength(4);
   });
 });

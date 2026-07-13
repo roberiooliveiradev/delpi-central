@@ -14,7 +14,7 @@ const SELECTION_MOVE_EDGES = [
 type Props = {
   block: ComunicadoBlock;
   onMovePointerDown: (
-    event: ReactPointerEvent<HTMLButtonElement>,
+    event: ReactPointerEvent<HTMLElement>,
     block: ComunicadoBlock,
     mode: Extract<BlockDragMode, "move">,
   ) => void;
@@ -22,19 +22,18 @@ type Props = {
 
 /**
  * Anel de hit alinhado ao outline global (`outline-offset`).
- * CSS `outline` não recebe pointer events — sem isto, a linha pontilhada
- * não inicia arraste (só os pickers de resize, que são DOM real).
+ * Usa `div` (não `button`) — o portal estiliza `button:hover` com fundo/borda
+ * e essa regra vence o reset local (borda preta no hover).
  */
 export function SelectionMoveHitFrame({ block, onMovePointerDown }: Props) {
   return (
     <div className="td-composer__selection-move-hit" aria-hidden="true">
       {SELECTION_MOVE_EDGES.map(({ position, label }) => (
-        <button
+        <div
           key={position}
-          type="button"
+          role="presentation"
           className={`td-composer__selection-move-edge td-composer__selection-move-edge--${position}`}
           aria-label={label}
-          tabIndex={-1}
           onPointerDown={(event) => {
             event.preventDefault();
             event.stopPropagation();
