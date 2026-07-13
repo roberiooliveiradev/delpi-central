@@ -5,6 +5,7 @@ import {
   writeStageDisplayPreferences,
   type StageDisplayPreferences,
 } from "../../utils/stageDisplayPreferences";
+import { applyCenteredStageScroll } from "../../utils/stagePan";
 import { computeFitStageZoom, clampStageZoom } from "../../utils/stageViewport";
 
 /**
@@ -43,6 +44,9 @@ export function useComunicadoEditorStage() {
     const canvas = interactionCanvasRefSlot.current?.current ?? null;
     if (!wrap || !canvas) return;
     patchPrefs({ stageZoom: computeFitStageZoom(wrap, canvas) });
+    window.requestAnimationFrame(() => {
+      applyCenteredStageScroll(wrap);
+    });
   }, [patchPrefs]);
 
   return {

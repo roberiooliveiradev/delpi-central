@@ -22,7 +22,6 @@ import {
   KPI_ICON_DEFAULT_RADIUS_PX,
   borderRadiusPxToKpiCornerAdj,
   clampKpiPartFrame,
-  defaultKpiPartFrame,
   getKpiPartState,
   kpiCornerAdjToBorderRadiusPx,
   kpiPartAllowsEdit,
@@ -30,6 +29,7 @@ import {
   kpiPartAllowsMove,
   kpiPartAllowsResize,
   kpiPartCornerAdjFromLocalX,
+  materializeMissingKpiPartFramesFromRoot,
   partsToKpiOptions,
   resizeKpiPartFrame,
   resolveKpiPartFrameRoot,
@@ -507,24 +507,19 @@ function EditorKpiViewBlock({
       event.preventDefault();
       const rect = cardRoot.getBoundingClientRect();
       const elRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      const existing = getKpiPartState(block.kpiParts, ref)?.frame;
-      const defaults =
-        ref.kind === "card" ||
-        ref.kind === "title" ||
-        ref.kind === "value" ||
-        ref.kind === "hint" ||
-        ref.kind === "icon"
-          ? defaultKpiPartFrame(ref.kind)
-          : { x: 0, y: 0, w: 40, h: 20 };
+      let lastParts = block.kpiParts ?? {};
+      if (!getKpiPartState(lastParts, ref)?.frame) {
+        lastParts = materializeMissingKpiPartFramesFromRoot(cardRoot, lastParts);
+      }
+      const existing = getKpiPartState(lastParts, ref)?.frame;
       const origin = clampKpiPartFrame({
         x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
         y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
-        w: existing?.w ?? defaults.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
-        h: existing?.h ?? defaults.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
       });
       const startClientX = event.clientX;
       const startClientY = event.clientY;
-      let lastParts = upsertKpiPartState(block.kpiParts, ref, { frame: origin });
       let dragged = false;
 
       const onMove = (ev: PointerEvent) => {
@@ -564,28 +559,26 @@ function EditorKpiViewBlock({
       event.preventDefault();
       const rect = cardRoot.getBoundingClientRect();
       const elRect = host.getBoundingClientRect();
-      const existing = getKpiPartState(block.kpiParts, ref)?.frame;
-      const defaults =
-        ref.kind === "card" ||
-        ref.kind === "title" ||
-        ref.kind === "value" ||
-        ref.kind === "hint" ||
-        ref.kind === "icon"
-          ? defaultKpiPartFrame(ref.kind)
-          : { x: 0, y: 0, w: 40, h: 20 };
+      let lastParts = block.kpiParts ?? {};
+      if (!getKpiPartState(lastParts, ref)?.frame) {
+        lastParts = materializeMissingKpiPartFramesFromRoot(cardRoot, lastParts);
+      }
+      const existing = getKpiPartState(lastParts, ref)?.frame;
       const origin = clampKpiPartFrame({
         x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
         y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
-        w: existing?.w ?? defaults.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
-        h: existing?.h ?? defaults.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
       });
       const startClientX = event.clientX;
       const startClientY = event.clientY;
-      let lastParts = upsertKpiPartState(block.kpiParts, ref, { frame: origin });
+      let resized = false;
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
         const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
+        if (!resized && Math.abs(dx) + Math.abs(dy) < 0.15) return;
+        resized = true;
         const nextFrame = resizeKpiPartFrame(origin, handle, dx, dy);
         lastParts = upsertKpiPartState(lastParts, ref, { frame: nextFrame });
         updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);

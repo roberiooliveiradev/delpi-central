@@ -14,6 +14,8 @@ import {
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
   resolveKpiPartFrame,
+  clearKpiPartsFreeLayoutFrames,
+  seedKpiPartsFreeLayoutFrames,
   serializeKpiPartRef,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
@@ -142,7 +144,19 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   };
 
   const enableFreePosition = () => {
-    persistPart({ frame: defaultKpiPartFrame(frameKind) });
+    const nextParts = seedKpiPartsFreeLayoutFrames(block.kpiParts);
+    updateSelected({
+      kpiParts: mergeKpiPartsWithOptions(nextParts, options),
+      kpiOptions: options,
+    } as Partial<typeof block>);
+  };
+
+  const clearFreePosition = () => {
+    const nextParts = clearKpiPartsFreeLayoutFrames(block.kpiParts);
+    updateSelected({
+      kpiParts: mergeKpiPartsWithOptions(nextParts, options),
+      kpiOptions: options,
+    } as Partial<typeof block>);
   };
 
   const removePart = () => {
@@ -447,7 +461,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
               <button
                 type="button"
                 className="td-btn td-btn--sm td-btn--ghost"
-                onClick={() => persistPart({ frame: null })}
+                onClick={clearFreePosition}
               >
                 Voltar ao fluxo automático
               </button>

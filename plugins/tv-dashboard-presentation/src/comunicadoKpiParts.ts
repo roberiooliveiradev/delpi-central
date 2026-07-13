@@ -65,6 +65,10 @@ export {
   setKpiElementEnabled,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
+  clearKpiPartsFreeLayoutFrames,
+  materializeMissingKpiPartFramesFromRoot,
+  seedKpiPartsFreeLayoutFrames,
   isKpiTextPartKind,
   KPI_TEXT_PART_KINDS,
+  KPI_FREE_LAYOUT_PART_KINDS,
 } from "@delpi/plugin-ui/index";

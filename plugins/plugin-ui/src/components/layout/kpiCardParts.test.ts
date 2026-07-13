@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   borderRadiusPxToKpiCornerAdj,
   clampKpiPartFrame,
+  clearKpiPartsFreeLayoutFrames,
   deleteKpiPart,
   kpiCornerAdjToBorderRadiusPx,
   kpiOptionsToParts,
@@ -12,12 +13,14 @@ import {
   kpiPartSupportsTypography,
   kpiPartCornerAdjustCssPosition,
   resolveKpiShapeChromePartRef,
+  KPI_PART_DEFAULT_FRAMES,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
   resizeKpiPartFrame,
   resolveKpiIconBoxStyle,
   resolveKpiPartFontSize,
   resolveKpiPartLayoutStyle,
+  seedKpiPartsFreeLayoutFrames,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
 } from "./kpiCardParts";
@@ -226,5 +229,33 @@ describe("kpi icon layout", () => {
     const cleared = upsertKpiPartState(moved, { kind: "icon" }, { frame: null, style: { iconSize: 48 } });
     expect(cleared.icon?.frame).toBeUndefined();
     expect(cleared.icon?.style?.iconSize).toBe(48);
+  });
+
+  it("seedKpiPartsFreeLayoutFrames aplica frames em lote, não só numa parte", () => {
+    const seeded = seedKpiPartsFreeLayoutFrames(
+      kpiOptionsToParts({ title: "OEE", showIcon: true, subtitle: "meta" }),
+    );
+    expect(seeded.title?.frame).toEqual(KPI_PART_DEFAULT_FRAMES.title);
+    expect(seeded.value?.frame).toEqual(KPI_PART_DEFAULT_FRAMES.value);
+    expect(seeded.hint?.frame).toEqual(KPI_PART_DEFAULT_FRAMES.hint);
+    expect(seeded.icon?.frame).toEqual(KPI_PART_DEFAULT_FRAMES.icon);
+  });
+
+  it("clearKpiPartsFreeLayoutFrames remove frames e preserva conteúdo", () => {
+    const seeded = seedKpiPartsFreeLayoutFrames(kpiOptionsToParts({ title: "OEE", showIcon: true }));
+    const cleared = clearKpiPartsFreeLayoutFrames(seeded);
+    expect(cleared.title?.frame).toBeUndefined();
+    expect(cleared.value?.frame).toBeUndefined();
+    expect(cleared.title?.content).toBe("OEE");
+  });
+
+  it("seed não sobrescreve frame já definido", () => {
+    const custom = { x: 10, y: 10, w: 40, h: 20 };
+    const parts = upsertKpiPartState(kpiOptionsToParts({ title: "X" }), { kind: "title" }, {
+      frame: custom,
+    });
+    const seeded = seedKpiPartsFreeLayoutFrames(parts);
+    expect(seeded.title?.frame).toEqual(clampKpiPartFrame(custom));
+    expect(seeded.value?.frame).toEqual(KPI_PART_DEFAULT_FRAMES.value);
   });
 });

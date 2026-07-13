@@ -16,6 +16,7 @@ import {
   partsToChartOptions,
   partsToKpiOptions,
   resolveBlockShapeChromeStyle,
+  seedKpiPartsFreeLayoutFrames,
   upsertChartPartState,
   upsertKpiPartState,
   type ComunicadoBlock,
@@ -125,9 +126,7 @@ export function FormatRibbonFrameSection() {
     };
 
     const enableFreePosition = () => {
-      const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, {
-        frame: defaultKpiPartFrame(frameKind),
-      });
+      const nextParts = seedKpiPartsFreeLayoutFrames(block.kpiParts);
       updateSelected({
         kpiParts: mergeKpiPartsWithOptions(nextParts, partsToKpiOptions(nextParts)),
       } as Partial<ComunicadoBlock>);

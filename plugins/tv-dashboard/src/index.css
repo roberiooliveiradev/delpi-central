@@ -998,6 +998,8 @@
 .dashboard-tv-dashboard .td-composer__canvas-zoom-sizer {
   position: relative;
   flex-shrink: 0;
+  /* content-box: padding do gutter entra no scrollWidth/scrollHeight. */
+  box-sizing: content-box;
 }
 
 .dashboard-tv-dashboard .td-composer__block-wrap {
@@ -1030,9 +1032,9 @@
 
 .dashboard-tv-dashboard .td-composer__canvas-wrap--zoom {
   overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  /* Sem justify-content:center — flex center impede scroll até os cantos do slide. */
+  display: block;
+  position: relative;
 }
 
 .dashboard-tv-dashboard .td-composer__canvas-wrap--pan {
@@ -4612,7 +4614,8 @@
 .dashboard-tv-dashboard .td-deck-stage__editor .td-composer__canvas-wrap--full {
   flex: 1;
   min-height: 0;
-  display: flex;
+  /* block (não flex+center) para o pan alcançar os cantos via scroll. */
+  display: block;
 }
 
 .dashboard-tv-dashboard .td-deck-stage__editor .td-composer__canvas-wrap--full .td-composer__canvas {

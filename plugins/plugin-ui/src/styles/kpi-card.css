@@ -16,11 +16,14 @@
   justify-content: center;
   width: 100%;
   min-height: 0;
-  padding: 16px 18px;
-  border-radius: var(--delpi-kpi-card-radius, 12px);
+  padding: 20px 22px;
+  border-radius: var(--delpi-kpi-card-radius, 14px);
   border: var(--delpi-kpi-card-border-width, 1px) solid
     var(--delpi-kpi-card-border-color, var(--delpi-ui-border, color-mix(in srgb, #94a3b8 35%, transparent)));
   background: var(--delpi-kpi-card-bg, #ffffff);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, #0f172a 4%, transparent),
+    0 10px 28px color-mix(in srgb, #0f172a 6%, transparent);
   box-sizing: border-box;
   opacity: var(--delpi-kpi-card-opacity, 1);
   /* Tipografia do card — tokens de conteúdo, NÃO tema chrome do host (evita branco em fundo claro). */
@@ -31,7 +34,7 @@
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  gap: 12px;
+  gap: 14px;
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -42,14 +45,17 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 2px;
   min-width: 0;
   min-height: 0;
 }
 
 .delpi-kpi-card__label {
-  margin: 0 0 6px;
-  font-size: 0.82rem;
+  margin: 0 0 8px;
+  font-size: 0.875rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
   color: var(--delpi-kpi-label-color, #64748b);
   display: inline-flex;
   align-items: center;
@@ -67,8 +73,8 @@
   /* Fallback alinhado a KPI_PART_FONT_SIZE_DEFAULTS.value (FitText/fixedPx manda). */
   font-size: 48px;
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
   color: var(--delpi-kpi-value-fg, #0f172a);
 }
 
@@ -78,8 +84,10 @@
 }
 
 .delpi-kpi-card__hint {
-  margin: 8px 0 0;
-  font-size: 0.78rem;
+  margin: 10px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
   color: var(--delpi-kpi-hint-color, #64748b);
   flex-shrink: 0;
 }
@@ -94,7 +102,7 @@
   flex-shrink: 0;
   align-self: flex-start;
   box-sizing: border-box;
-  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 14%, transparent);
   color: var(--delpi-ui-accent, #089bdb);
   border: 0 solid transparent;
 }

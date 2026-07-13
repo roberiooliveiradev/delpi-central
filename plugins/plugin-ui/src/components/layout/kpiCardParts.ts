@@ -132,19 +132,27 @@ export type KpiCardFlatOptions = {
 };
 
 /** Frame padrão do ícone (canto superior direito). */
-export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 8, w: 14, h: 28 };
+export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 10, w: 16, h: 28 };
 
-/** Frames iniciais (%). Card = fundo relativo ao bloco; demais = relativos ao card. */
+/**
+ * Frames iniciais (%). Card = fundo relativo ao bloco; demais = relativos ao card.
+ * Empilhamento balanceado (rótulo → valor → hint) com ícone no canto — usar sempre em lote.
+ */
 export const KPI_PART_DEFAULT_FRAMES: Record<
   "card" | "title" | "value" | "hint" | "icon",
   KpiPartFrame
 > = {
   card: { x: 0, y: 0, w: 100, h: 100 },
-  title: { x: 4, y: 6, w: 72, h: 16 },
-  value: { x: 4, y: 24, w: 72, h: 48 },
-  hint: { x: 4, y: 78, w: 60, h: 14 },
+  title: { x: 6, y: 12, w: 68, h: 14 },
+  value: { x: 6, y: 28, w: 88, h: 44 },
+  hint: { x: 6, y: 78, w: 70, h: 12 },
   icon: KPI_ICON_DEFAULT_FRAME,
 };
+
+/** Partes do layout livre (sem o fundo `card`). */
+export const KPI_FREE_LAYOUT_PART_KINDS = ["title", "value", "hint", "icon"] as const;
+
+export type KpiFreeLayoutPartKind = (typeof KPI_FREE_LAYOUT_PART_KINDS)[number];
 
 export const KPI_ICON_DEFAULT_SIZE_PX = 44;
 export const KPI_ICON_DEFAULT_RADIUS_PX = 14;
@@ -525,6 +533,72 @@ export function upsertKpiPartState(
   };
 }
 
+/**
+ * Aplica frames default a todas as partes visíveis ainda sem frame.
+ * Nunca uma parte isolada — evita híbrido flex+absolute que quebra o stack.
+ */
+export function seedKpiPartsFreeLayoutFrames(
+  parts: KpiPartsMap | null | undefined,
+): KpiPartsMap {
+  let next = parts ?? {};
+  for (const kind of KPI_FREE_LAYOUT_PART_KINDS) {
+    const ref: KpiPartRef = { kind };
+    const state = getKpiPartState(next, ref);
+    if (!state || state.visible === false) continue;
+    if (resolveKpiPartFrame(state)) continue;
+    next = upsertKpiPartState(next, ref, { frame: defaultKpiPartFrame(kind) });
+  }
+  return next;
+}
+
+/** Remove frames das partes de conteúdo — volta ao fluxo flex do card. */
+export function clearKpiPartsFreeLayoutFrames(
+  parts: KpiPartsMap | null | undefined,
+): KpiPartsMap {
+  let next = parts ?? {};
+  for (const kind of KPI_FREE_LAYOUT_PART_KINDS) {
+    next = upsertKpiPartState(next, { kind }, { frame: null });
+  }
+  return next;
+}
+
+/**
+ * Materializa frames % a partir do DOM atual (layout flex) para todas as partes
+ * ainda sem frame. Usar no 1º move/resize — nunca só na parte clicada.
+ */
+export function materializeMissingKpiPartFramesFromRoot(
+  root: HTMLElement,
+  parts: KpiPartsMap | null | undefined,
+): KpiPartsMap {
+  let next = parts ?? {};
+  const card =
+    root.classList.contains("delpi-kpi-card")
+      ? root
+      : (root.querySelector(".delpi-kpi-card") ?? root.closest(".delpi-kpi-card"));
+  if (!(card instanceof HTMLElement)) return next;
+
+  for (const host of card.querySelectorAll(`[${KPI_PART_DATA_ATTR}]`)) {
+    if (!(host instanceof HTMLElement)) continue;
+    const ref = parseKpiPartRef(host.getAttribute(KPI_PART_DATA_ATTR));
+    if (!ref || ref.kind === "card") continue;
+    if (resolveKpiPartFrame(getKpiPartState(next, ref))) continue;
+    const frameRoot = resolveKpiPartFrameRoot(host, ref);
+    if (!frameRoot) continue;
+    const rect = frameRoot.getBoundingClientRect();
+    const el = host.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) continue;
+    next = upsertKpiPartState(next, ref, {
+      frame: clampKpiPartFrame({
+        x: ((el.left - rect.left) / rect.width) * 100,
+        y: ((el.top - rect.top) / rect.height) * 100,
+        w: Math.max(8, (el.width / rect.width) * 100),
+        h: Math.max(4, (el.height / rect.height) * 100),
+      }),
+    });
+  }
+  return next;
+}
+
 /** Partes tipográficas irmãs (Excel: Apply to All em texto do KPI). */
 export const KPI_TEXT_PART_KINDS = ["title", "value", "hint"] as const;
 
@@ -657,27 +731,39 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
       visible: true,
       style: {
         fill: options?.backgroundColor,
+        borderRadius: 14,
       },
     },
     title: {
       visible: options?.showTitle !== false,
       content: options?.title,
-      style: { fontSize: KPI_PART_FONT_SIZE_DEFAULTS.title },
+      style: {
+        fontSize: KPI_PART_FONT_SIZE_DEFAULTS.title,
+        fontWeight: 600,
+      },
     },
     value: {
       visible: true,
       style: {
         color: options?.valueColor,
         fontSize: KPI_PART_FONT_SIZE_DEFAULTS.value,
+        fontWeight: 700,
       },
     },
     hint: {
       visible: Boolean(options?.subtitle?.trim()),
       content: options?.subtitle,
-      style: { fontSize: KPI_PART_FONT_SIZE_DEFAULTS.hint },
+      style: {
+        fontSize: KPI_PART_FONT_SIZE_DEFAULTS.hint,
+        fontWeight: 500,
+      },
     },
     icon: {
       visible: options?.showIcon !== false,
+      style: {
+        borderRadius: KPI_ICON_DEFAULT_RADIUS_PX,
+        iconSize: KPI_ICON_DEFAULT_SIZE_PX,
+      },
     },
   };
 }

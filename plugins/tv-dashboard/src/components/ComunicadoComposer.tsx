@@ -21,6 +21,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
+import {
+  applyCenteredStageScroll,
+  resolveStagePanGutterPx,
+} from "../utils/stagePan";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -99,6 +103,7 @@ export function ComunicadoComposerCanvas() {
     clearSelection,
     editingTextId,
     canvasRef,
+    canvasWrapRef,
     startDrag,
     dataPreviewLoading,
     showStageGrid,
@@ -117,14 +122,35 @@ export function ComunicadoComposerCanvas() {
   );
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [panGutter, setPanGutter] = useState({ x: 48, y: 48 });
   const marqueeActiveRef = useRef(false);
   const marqueeStartClientRef = useRef<{ x: number; y: number } | null>(null);
   const marqueeRectRef = useRef<MarqueeRect | null>(null);
 
   useEffect(() => {
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+    const updateGutter = () => {
+      setPanGutter(resolveStagePanGutterPx(wrap.clientWidth, wrap.clientHeight));
+    };
+    updateGutter();
+    const observer = new ResizeObserver(updateGutter);
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, [canvasWrapRef]);
+
+  useEffect(() => {
     const timer = window.setTimeout(() => fitStageToView(), 0);
     return () => window.clearTimeout(timer);
   }, [designSize.width, designSize.height, fitStageToView, viewportProfile]);
+
+  useEffect(() => {
+    // Padding do gutter altera scrollWidth — recentra sem resetar o zoom.
+    const timer = window.setTimeout(() => {
+      applyCenteredStageScroll(canvasWrapRef.current);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [canvasWrapRef, panGutter.x, panGutter.y]);
 
   const clientToCanvasPercent = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
@@ -271,6 +297,7 @@ export function ComunicadoComposerCanvas() {
         style={{
           width: designSize.width * stageZoom,
           height: designSize.height * stageZoom,
+          padding: `${panGutter.y}px ${panGutter.x}px`,
         }}
       >
         <div

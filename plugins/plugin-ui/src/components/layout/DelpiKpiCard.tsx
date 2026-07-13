@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { useLayoutEffect, useRef } from "react";
+import { useRef } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import {
@@ -15,7 +15,6 @@ import {
   KPI_ICON_DEFAULT_RADIUS_PX,
   KPI_PART_DATA_ATTR,
   bindKpiPartPointer,
-  clampKpiPartFrame,
   getKpiPartState,
   isKpiPartVisible,
   kpiPartAllowsResize,
@@ -24,13 +23,11 @@ import {
   resolveKpiIconBoxStyle,
   resolveKpiPartFontSize,
   resolveKpiPartFrame,
-  resolveKpiPartFrameRoot,
   resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
   kpiPartHasBoxPaint,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
-  type KpiPartRef,
   type KpiPartsMap,
 } from "./kpiCardParts";
 
@@ -106,8 +103,12 @@ export {
   serializeKpiPartRef,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
+  clearKpiPartsFreeLayoutFrames,
+  materializeMissingKpiPartFramesFromRoot,
+  seedKpiPartsFreeLayoutFrames,
   isKpiTextPartKind,
   KPI_TEXT_PART_KINDS,
+  KPI_FREE_LAYOUT_PART_KINDS,
 } from "./kpiCardParts";
 export {
   KPI_ELEMENT_CATALOG,
@@ -217,34 +218,6 @@ export type DelpiKpiCardProps = {
   /** Hit-test / seleção no editor. */
   interaction?: KpiCardInteraction | null;
 };
-
-function useMaterializeKpiPartFrame(
-  partRef: KpiPartRef,
-  hostRef: { current: HTMLElement | null },
-  showResize: boolean,
-  framed: boolean,
-  onPartFrameChange: KpiCardInteraction["onPartFrameChange"],
-) {
-  useLayoutEffect(() => {
-    if (!showResize || framed || !onPartFrameChange) return;
-    const host = hostRef.current;
-    if (!host) return;
-    const root = resolveKpiPartFrameRoot(host, partRef);
-    if (!root) return;
-    const rect = root.getBoundingClientRect();
-    const el = host.getBoundingClientRect();
-    if (rect.width < 1 || rect.height < 1) return;
-    onPartFrameChange(
-      partRef,
-      clampKpiPartFrame({
-        x: ((el.left - rect.left) / rect.width) * 100,
-        y: ((el.top - rect.top) / rect.height) * 100,
-        w: Math.max(8, (el.width / rect.width) * 100),
-        h: Math.max(4, (el.height / rect.height) * 100),
-      }),
-    );
-  }, [framed, hostRef, onPartFrameChange, partRef, showResize]);
-}
 
 /**
  * Card KPI canônico Delpi composto por primitivos (`card`/`title`/`value`/`hint`/`icon`)
@@ -388,43 +361,7 @@ export function DelpiKpiCard({
   const valueCornerRadius = parts.value?.style?.borderRadius ?? 0;
   const hintCornerRadius = parts.hint?.style?.borderRadius ?? 0;
   const iconCornerRadius = parts.icon?.style?.borderRadius ?? KPI_ICON_DEFAULT_RADIUS_PX;
-  const cardCornerRadius = parts.card?.style?.borderRadius ?? cardRadius ?? 12;
-
-  useMaterializeKpiPartFrame(
-    { kind: "title" },
-    titleHostRef,
-    titleShowResize,
-    titleFramed,
-    interaction?.onPartFrameChange,
-  );
-  useMaterializeKpiPartFrame(
-    { kind: "value" },
-    valueHostRef,
-    valueShowResize,
-    valueFramed,
-    interaction?.onPartFrameChange,
-  );
-  useMaterializeKpiPartFrame(
-    { kind: "hint" },
-    hintHostRef,
-    hintShowResize,
-    hintFramed,
-    interaction?.onPartFrameChange,
-  );
-  useMaterializeKpiPartFrame(
-    { kind: "icon" },
-    iconHostRef,
-    iconShowResize,
-    iconFramed,
-    interaction?.onPartFrameChange,
-  );
-  useMaterializeKpiPartFrame(
-    { kind: "card" },
-    cardHostRef,
-    cardShowChrome,
-    cardFramed,
-    interaction?.onPartFrameChange,
-  );
+  const cardCornerRadius = parts.card?.style?.borderRadius ?? cardRadius ?? 14;
 
   const shellStyle: CSSProperties = {
     position: "relative",
