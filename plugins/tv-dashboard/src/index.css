@@ -1285,8 +1285,64 @@
   pointer-events: none;
 }
 
-.dashboard-tv-dashboard .td-composer__block-handles > * {
+/* Só controles reais — não o container do anel de move (precisa ficar oco). */
+.dashboard-tv-dashboard .td-composer__block-handles > .td-composer__rotate,
+.dashboard-tv-dashboard .td-composer__block-handles > .td-composer__resize,
+.dashboard-tv-dashboard .td-composer__block-handles > .td-composer__adjust,
+.dashboard-tv-dashboard .td-composer__block-handles .td-composer__selection-move-edge {
   pointer-events: auto;
+}
+
+/*
+ * Anel de hit na faixa do outline global (`--td-global-selection-pad`).
+ * `outline` / `outline-offset` são só pintura — sem estes edges, clicar na
+ * linha pontilhada cai no palco e não dispara move.
+ */
+.dashboard-tv-dashboard .td-composer__selection-move-hit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 19;
+}
+
+.dashboard-tv-dashboard .td-composer__selection-move-edge {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: move;
+  z-index: 19;
+}
+
+.dashboard-tv-dashboard .td-composer__selection-move-edge--n,
+.dashboard-tv-dashboard .td-composer__selection-move-edge--s {
+  left: 0;
+  right: 0;
+  height: var(--td-global-selection-pad, 12px);
+}
+
+.dashboard-tv-dashboard .td-composer__selection-move-edge--n {
+  top: 0;
+}
+
+.dashboard-tv-dashboard .td-composer__selection-move-edge--s {
+  bottom: 0;
+}
+
+.dashboard-tv-dashboard .td-composer__selection-move-edge--e,
+.dashboard-tv-dashboard .td-composer__selection-move-edge--w {
+  top: 0;
+  bottom: 0;
+  width: var(--td-global-selection-pad, 12px);
+}
+
+.dashboard-tv-dashboard .td-composer__selection-move-edge--e {
+  right: 0;
+}
+
+.dashboard-tv-dashboard .td-composer__selection-move-edge--w {
+  left: 0;
 }
 
 /*
@@ -1306,8 +1362,10 @@
   pointer-events: stroke;
 }
 
-.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles,
-.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles * {
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles > .td-composer__rotate,
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles > .td-composer__resize,
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles > .td-composer__adjust,
+.dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__selection-move-edge {
   pointer-events: auto;
 }
 

@@ -25,6 +25,7 @@ import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
+import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const MARQUEE_THRESHOLD_PX = 4;
@@ -367,6 +368,8 @@ export function ComunicadoComposerCanvas() {
                 />
                 {showResizeHandles(block.id) ? (
                   <div className="td-composer__block-handles">
+                    {/* Outline CSS não é hit-target — anel de arraste na linha pontilhada. */}
+                    <SelectionMoveHitFrame block={block} onMovePointerDown={startDrag} />
                     <button
                       type="button"
                       className="td-composer__rotate"
