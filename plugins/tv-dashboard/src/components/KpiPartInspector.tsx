@@ -8,9 +8,12 @@ import {
   getKpiPartState,
   kpiPartAllowsDelete,
   kpiPartAllowsFrame,
+  kpiPartBoxChromeLabels,
+  kpiPartSupportsTypography,
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
+  resolveKpiPartFrame,
   serializeKpiPartRef,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
@@ -22,6 +25,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { KpiPartTypographyFields } from "./KpiPartTypographyFields";
 import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
@@ -56,9 +60,17 @@ type PartStylePatch = {
   strokeWidth?: number;
   borderRadius?: number;
   iconSize?: number;
+  fontSize?: number;
+  fontWeight?: string;
+  fontStyle?: string;
+  textDecoration?: string;
+  textShadow?: string;
+  textStrokeColor?: string;
+  textStrokeWidth?: number;
+  textAlign?: "left" | "center" | "right" | "justify";
 };
 
-/** Inspetor da parte selecionada do KPI — espelho de ChartPartInspector. */
+/** Inspetor da parte selecionada do KPI — paridade com ribbon Fonte / Aparência / Posição. */
 export function KpiPartInspector({ pane = false, block }: Props) {
   const {
     selectedKpiPart,
@@ -78,9 +90,18 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   const canEditOnStage = selectedKpiPart.kind === "title" || selectedKpiPart.kind === "hint";
   const frameable = kpiPartAllowsFrame(selectedKpiPart);
   const frameKind = selectedKpiPart.kind as KpiFramePartKind;
-  const partFrame = clampKpiPartFrame(
-    partState?.frame ?? (frameable ? defaultKpiPartFrame(frameKind) : { x: 0, y: 0, w: 20, h: 20 }),
-  );
+  const explicitFrame = resolveKpiPartFrame(partState);
+  const partFrame = clampKpiPartFrame(explicitFrame ?? defaultKpiPartFrame(frameKind));
+  const boxLabels = kpiPartBoxChromeLabels(selectedKpiPart.kind);
+  const isTextPart = kpiPartSupportsTypography(selectedKpiPart);
+  const cardFill =
+    options.backgroundColor ??
+    getKpiPartState(block.kpiParts, { kind: "card" })?.style?.fill ??
+    DECK_KPI_DEFAULTS.backgroundColor;
+  const textContrastBg =
+    partState?.style?.fill && partState.style.fill !== "transparent"
+      ? partState.style.fill
+      : cardFill;
 
   const persistPart = (patch: {
     content?: string;
@@ -120,6 +141,10 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     persistPart({ frame: clampKpiPartFrame({ ...partFrame, ...patch }) });
   };
 
+  const enableFreePosition = () => {
+    persistPart({ frame: defaultKpiPartFrame(frameKind) });
+  };
+
   const removePart = () => {
     const result = deleteKpiPart(block.kpiParts, selectedKpiPart, options);
     updateSelected({
@@ -129,11 +154,24 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     clearKpiPartSelection();
   };
 
+  const colorLabel =
+    selectedKpiPart.kind === "value"
+      ? "Cor do valor"
+      : selectedKpiPart.kind === "title"
+        ? "Cor do título"
+        : "Cor do subtítulo";
+
   return (
     <DeckPropertySection
       pane={pane}
       title={`Parte: ${kpiPartLabel(selectedKpiPart)}`}
-      hint="Ajuste o conteúdo desta parte. Ocultar remove só a parte, não o KPI."
+      hint={
+        isTextPart
+          ? "Tipografia desta parte (igual à faixa superior). Fundo/borda da caixa não alteram o card."
+          : selectedKpiPart.kind === "card"
+            ? "Fundo e contorno do card KPI."
+            : "Ajuste o conteúdo desta parte."
+      }
       defaultOpen
     >
       <PartInspectorToolbar
@@ -168,22 +206,36 @@ export function KpiPartInspector({ pane = false, block }: Props) {
         </DeckField>
       ) : null}
 
+      {isTextPart &&
+      (selectedKpiPart.kind === "title" ||
+        selectedKpiPart.kind === "value" ||
+        selectedKpiPart.kind === "hint") ? (
+        <KpiPartTypographyFields
+          partKind={selectedKpiPart.kind}
+          style={partState?.style}
+          contrastBackground={textContrastBg}
+          colorLabel={colorLabel}
+          onPatch={(patch) => persistPart({ style: patch })}
+        />
+      ) : null}
+
       {selectedKpiPart.kind === "card" ? (
         <>
-          <DeckField id="td-kpi-part-card-fill" label="Fundo">
+          <p className="td-deck-inspector__hint">Aparência do card</p>
+          <DeckField id="td-kpi-part-card-fill" label={boxLabels.fill}>
             <TvRibbonColorPicker
               inline
               variant="fill"
-              label="Fundo"
+              label={boxLabels.fill}
               value={partState?.style?.fill ?? options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor}
               onChange={(color) => persistPart({ style: { fill: color } })}
             />
           </DeckField>
-          <DeckField id="td-kpi-part-card-stroke" label="Contorno">
+          <DeckField id="td-kpi-part-card-stroke" label={boxLabels.stroke}>
             <TvRibbonColorPicker
               inline
               variant="outline"
-              label="Contorno"
+              label={boxLabels.stroke}
               value={partState?.style?.stroke ?? DECK_COLOR_BORDER}
               onChange={(color) => persistPart({ style: { stroke: color } })}
             />
@@ -216,47 +268,6 @@ export function KpiPartInspector({ pane = false, block }: Props) {
         </>
       ) : null}
 
-      {selectedKpiPart.kind === "value" ? (
-        <>
-          <DeckField id="td-kpi-part-value-color" label="Cor do valor">
-            <TvRibbonColorPicker
-              inline
-              variant="text"
-              contrastBackground={
-                partState?.style?.fill && partState.style.fill !== "transparent"
-                  ? partState.style.fill
-                  : (options.backgroundColor ??
-                    getKpiPartState(block.kpiParts, { kind: "card" })?.style?.fill ??
-                    DECK_KPI_DEFAULTS.backgroundColor)
-              }
-              label="Cor do valor"
-              value={partState?.style?.color ?? options.valueColor ?? DECK_KPI_DEFAULTS.valueColor}
-              onChange={(color) => persistPart({ style: { color } })}
-            />
-          </DeckField>
-          <DeckField id="td-kpi-part-value-fill" label="Preenchimento">
-            <TvRibbonColorPicker
-              inline
-              variant="fill"
-              label="Preenchimento"
-              value={partState?.style?.fill ?? "transparent"}
-              onChange={(color) => persistPart({ style: { fill: color } })}
-              onNoFill={() => persistPart({ style: { fill: "transparent" } })}
-            />
-          </DeckField>
-          <DeckField id="td-kpi-part-value-stroke" label="Contorno">
-            <TvRibbonColorPicker
-              inline
-              variant="outline"
-              label="Contorno"
-              value={partState?.style?.stroke ?? "transparent"}
-              onChange={(color) => persistPart({ style: { stroke: color, strokeWidth: partState?.style?.strokeWidth ?? 1 } })}
-              onNoFill={() => persistPart({ style: { stroke: "transparent", strokeWidth: 0 } })}
-            />
-          </DeckField>
-        </>
-      ) : null}
-
       {selectedKpiPart.kind === "icon" ? (
         <DeckField id="td-kpi-part-icon" label="Ícone Lucide">
           <LucideIconPicker
@@ -282,138 +293,166 @@ export function KpiPartInspector({ pane = false, block }: Props) {
         </DeckField>
       ) : null}
 
-      {frameable ? (
+      {selectedKpiPart.kind === "icon" || isTextPart ? (
         <>
-          <div className="td-part-inspector-toolbar__fields-row">
-            <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-x`} label="Posição X (%)">
-              <NativeTextControl
-                id={`td-kpi-part-${selectedKpiPart.kind}-x`}
-                type="number"
-                min={0}
-                max={100}
-                step={0.5}
-                value={Number(partFrame.x.toFixed(1))}
-                onChange={(value) => persistPartFrame({ x: Number(value) || 0 })}
-              />
-            </DeckField>
-            <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-y`} label="Posição Y (%)">
-              <NativeTextControl
-                id={`td-kpi-part-${selectedKpiPart.kind}-y`}
-                type="number"
-                min={0}
-                max={100}
-                step={0.5}
-                value={Number(partFrame.y.toFixed(1))}
-                onChange={(value) => persistPartFrame({ y: Number(value) || 0 })}
-              />
-            </DeckField>
-          </div>
-          <div className="td-part-inspector-toolbar__fields-row">
-            <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-w`} label="Largura (%)">
-              <NativeTextControl
-                id={`td-kpi-part-${selectedKpiPart.kind}-w`}
-                type="number"
-                min={4}
-                max={96}
-                step={0.5}
-                value={Number((partFrame.w ?? 20).toFixed(1))}
-                onChange={(value) => persistPartFrame({ w: Number(value) || 4 })}
-              />
-            </DeckField>
-            <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-h`} label="Altura (%)">
-              <NativeTextControl
-                id={`td-kpi-part-${selectedKpiPart.kind}-h`}
-                type="number"
-                min={4}
-                max={96}
-                step={0.5}
-                value={Number((partFrame.h ?? 20).toFixed(1))}
-                onChange={(value) => persistPartFrame({ h: Number(value) || 4 })}
-              />
-            </DeckField>
-          </div>
-          {selectedKpiPart.kind === "icon" ? (
-            <DeckField id="td-kpi-part-icon-size" label="Tamanho fixo (px)">
-              <NativeTextControl
-                id="td-kpi-part-icon-size"
-                type="number"
-                min={16}
-                max={160}
-                value={partState?.style?.iconSize ?? KPI_ICON_DEFAULT_SIZE_PX}
-                onChange={(value) => {
-                  const size = Math.max(16, Math.min(160, Number(value) || KPI_ICON_DEFAULT_SIZE_PX));
-                  persistPart({ style: { iconSize: size }, frame: null });
-                }}
-              />
-            </DeckField>
-          ) : null}
-          <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-radius`} label="Raio px">
-            <NativeTextControl
-              id={`td-kpi-part-${selectedKpiPart.kind}-radius`}
-              type="number"
-              min={0}
-              max={64}
-              value={
-                partState?.style?.borderRadius ??
-                (selectedKpiPart.kind === "icon" ? KPI_ICON_DEFAULT_RADIUS_PX : 0)
-              }
-              onChange={(value) =>
-                persistPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
-              }
-            />
-          </DeckField>
-        </>
-      ) : null}
-
-      {selectedKpiPart.kind === "icon" ? (
-        <>
-          <DeckField id="td-kpi-part-icon-fill" label="Fundo do ícone">
+          <p className="td-deck-inspector__hint">
+            {isTextPart
+              ? "Caixa da parte (não é o fundo do card)"
+              : "Aparência do ícone"}
+          </p>
+          <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-fill`} label={boxLabels.fill}>
             <TvRibbonColorPicker
               inline
               variant="fill"
-              label="Fundo"
+              label={boxLabels.fill}
               value={partState?.style?.fill ?? "transparent"}
               onChange={(color) => persistPart({ style: { fill: color } })}
               onNoFill={() => persistPart({ style: { fill: "transparent" } })}
             />
           </DeckField>
-          <DeckField id="td-kpi-part-icon-color" label="Cor do ícone">
-            <TvRibbonColorPicker
-              inline
-              variant="text"
-              contrastBackground={
-                partState?.style?.fill && partState.style.fill !== "transparent"
-                  ? partState.style.fill
-                  : (options.backgroundColor ??
-                    getKpiPartState(block.kpiParts, { kind: "card" })?.style?.fill ??
-                    DECK_KPI_DEFAULTS.backgroundColor)
-              }
-              label="Cor do ícone"
-              value={partState?.style?.color ?? DECK_KPI_DEFAULTS.valueColor}
-              onChange={(color) => persistPart({ style: { color } })}
-            />
-          </DeckField>
-          <DeckField id="td-kpi-part-icon-stroke" label="Contorno">
+          {selectedKpiPart.kind === "icon" ? (
+            <DeckField id="td-kpi-part-icon-color" label="Cor do ícone">
+              <TvRibbonColorPicker
+                inline
+                variant="text"
+                contrastBackground={textContrastBg}
+                label="Cor do ícone"
+                value={partState?.style?.color ?? DECK_KPI_DEFAULTS.valueColor}
+                onChange={(color) => persistPart({ style: { color } })}
+              />
+            </DeckField>
+          ) : null}
+          <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-stroke`} label={boxLabels.stroke}>
             <TvRibbonColorPicker
               inline
               variant="outline"
-              label="Contorno"
-              value={partState?.style?.stroke ?? DECK_COLOR_BORDER}
-              onChange={(color) => persistPart({ style: { stroke: color } })}
+              label={boxLabels.stroke}
+              value={partState?.style?.stroke ?? (selectedKpiPart.kind === "icon" ? DECK_COLOR_BORDER : "transparent")}
+              onChange={(color) =>
+                persistPart({
+                  style: {
+                    stroke: color,
+                    strokeWidth: partState?.style?.strokeWidth ?? 1,
+                  },
+                })
+              }
               onNoFill={() => persistPart({ style: { stroke: "transparent", strokeWidth: 0 } })}
             />
           </DeckField>
-          <DeckField id="td-kpi-part-icon-stroke-width" label="Espessura">
-            <NativeTextControl
-              id="td-kpi-part-icon-stroke-width"
-              type="number"
-              min={0}
-              max={12}
-              step={0.5}
-              value={partState?.style?.strokeWidth ?? 0}
-              onChange={(value) => persistPart({ style: { strokeWidth: Number(value) || 0 } })}
-            />
-          </DeckField>
+          <div className="td-part-inspector-toolbar__fields-row">
+            <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-stroke-w`} label="Espessura">
+              <NativeTextControl
+                id={`td-kpi-part-${selectedKpiPart.kind}-stroke-w`}
+                type="number"
+                min={0}
+                max={12}
+                step={0.5}
+                value={partState?.style?.strokeWidth ?? (selectedKpiPart.kind === "icon" ? 0 : 0)}
+                onChange={(value) => persistPart({ style: { strokeWidth: Number(value) || 0 } })}
+              />
+            </DeckField>
+            <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-radius`} label="Raio px">
+              <NativeTextControl
+                id={`td-kpi-part-${selectedKpiPart.kind}-radius`}
+                type="number"
+                min={0}
+                max={64}
+                value={
+                  partState?.style?.borderRadius ??
+                  (selectedKpiPart.kind === "icon" ? KPI_ICON_DEFAULT_RADIUS_PX : 0)
+                }
+                onChange={(value) =>
+                  persistPart({ style: { borderRadius: Math.max(0, Number(value) || 0) } })
+                }
+              />
+            </DeckField>
+          </div>
+        </>
+      ) : null}
+
+      {frameable ? (
+        <>
+          <p className="td-deck-inspector__hint">
+            Posição da parte no card (%) — não é a posição do bloco no slide
+          </p>
+          {!explicitFrame ? (
+            <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+              Posicionar livremente no card…
+            </button>
+          ) : (
+            <>
+              <div className="td-part-inspector-toolbar__fields-row">
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-x`} label="Posição X (%)">
+                  <NativeTextControl
+                    id={`td-kpi-part-${selectedKpiPart.kind}-x`}
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={Number(partFrame.x.toFixed(1))}
+                    onChange={(value) => persistPartFrame({ x: Number(value) || 0 })}
+                  />
+                </DeckField>
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-y`} label="Posição Y (%)">
+                  <NativeTextControl
+                    id={`td-kpi-part-${selectedKpiPart.kind}-y`}
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={Number(partFrame.y.toFixed(1))}
+                    onChange={(value) => persistPartFrame({ y: Number(value) || 0 })}
+                  />
+                </DeckField>
+              </div>
+              <div className="td-part-inspector-toolbar__fields-row">
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-w`} label="Largura (%)">
+                  <NativeTextControl
+                    id={`td-kpi-part-${selectedKpiPart.kind}-w`}
+                    type="number"
+                    min={4}
+                    max={96}
+                    step={0.5}
+                    value={Number((partFrame.w ?? 20).toFixed(1))}
+                    onChange={(value) => persistPartFrame({ w: Number(value) || 4 })}
+                  />
+                </DeckField>
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-h`} label="Altura (%)">
+                  <NativeTextControl
+                    id={`td-kpi-part-${selectedKpiPart.kind}-h`}
+                    type="number"
+                    min={4}
+                    max={96}
+                    step={0.5}
+                    value={Number((partFrame.h ?? 20).toFixed(1))}
+                    onChange={(value) => persistPartFrame({ h: Number(value) || 4 })}
+                  />
+                </DeckField>
+              </div>
+              {selectedKpiPart.kind === "icon" ? (
+                <DeckField id="td-kpi-part-icon-size" label="Tamanho fixo (px)">
+                  <NativeTextControl
+                    id="td-kpi-part-icon-size"
+                    type="number"
+                    min={16}
+                    max={160}
+                    value={partState?.style?.iconSize ?? KPI_ICON_DEFAULT_SIZE_PX}
+                    onChange={(value) => {
+                      const size = Math.max(16, Math.min(160, Number(value) || KPI_ICON_DEFAULT_SIZE_PX));
+                      persistPart({ style: { iconSize: size }, frame: null });
+                    }}
+                  />
+                </DeckField>
+              ) : null}
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                onClick={() => persistPart({ frame: null })}
+              >
+                Voltar ao fluxo automático
+              </button>
+            </>
+          )}
         </>
       ) : null}
 

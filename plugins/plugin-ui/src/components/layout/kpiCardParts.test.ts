@@ -8,6 +8,8 @@ import {
   kpiOptionsToParts,
   kpiPartAllowsFrame,
   kpiPartAllowsResize,
+  kpiPartBoxChromeLabels,
+  kpiPartSupportsTypography,
   kpiPartCornerAdjustCssPosition,
   resolveKpiShapeChromePartRef,
   mergeKpiPartsWithOptions,
@@ -148,6 +150,23 @@ describe("kpi icon layout", () => {
     expect(css.height).toBe("30%");
     expect(css.borderRadius).toBe("8px");
     expect(css.background).toBe("#111");
+  });
+
+  it("resolveKpiPartLayoutStyle com fill sem frame abraça o conteúdo", () => {
+    const css = resolveKpiPartLayoutStyle({
+      style: { fill: "#fef3c7" },
+    });
+    expect(css.background).toBe("#fef3c7");
+    expect(css.flex).toBe("0 0 auto");
+    expect(css.width).toBe("fit-content");
+    expect(css.position).toBeUndefined();
+  });
+
+  it("kpiPartBoxChromeLabels distingue card vs valor", () => {
+    expect(kpiPartBoxChromeLabels("card").fill).toMatch(/card/i);
+    expect(kpiPartBoxChromeLabels("value").fill).toMatch(/caixa/i);
+    expect(kpiPartSupportsTypography({ kind: "value" })).toBe(true);
+    expect(kpiPartSupportsTypography({ kind: "card" })).toBe(false);
   });
 
   it("resolveKpiShapeChromePartRef só com parte explícita (global ≠ card)", () => {

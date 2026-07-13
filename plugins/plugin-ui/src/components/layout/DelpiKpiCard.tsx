@@ -27,6 +27,7 @@ import {
   resolveKpiPartFrameRoot,
   resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
+  kpiPartHasBoxPaint,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
   type KpiPartRef,
@@ -82,6 +83,9 @@ export {
   kpiPartAllowsMove,
   kpiPartAllowsResize,
   kpiPartCapabilities,
+  kpiPartBoxChromeLabels,
+  kpiPartHasBoxPaint,
+  kpiPartSupportsTypography,
   kpiPartCornerAdjFromLocalX,
   kpiPartCornerAdjustCssPosition,
   resolveKpiShapeChromePartRef,
@@ -486,6 +490,7 @@ export function DelpiKpiCard({
                 className={[
                   DELPI_KPI_CLASS_NAMES.label,
                   titleFramed ? "delpi-kpi-part--framed" : "",
+                  !titleFramed && kpiPartHasBoxPaint(titleState?.style) ? "delpi-kpi-part--boxed" : "",
                   titleShowResize ? "delpi-kpi-part--resizable" : "",
                   titlePtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
@@ -547,6 +552,7 @@ export function DelpiKpiCard({
                 className={[
                   DELPI_KPI_CLASS_NAMES.value,
                   valueFramed ? "delpi-kpi-part--framed" : "",
+                  !valueFramed && kpiPartHasBoxPaint(valueState?.style) ? "delpi-kpi-part--boxed" : "",
                   valueShowResize ? "delpi-kpi-part--resizable" : "",
                   valuePtr.selected ? "delpi-kpi-part--selected" : "",
                 ]
@@ -580,6 +586,7 @@ export function DelpiKpiCard({
                 className={[
                   DELPI_KPI_CLASS_NAMES.hint,
                   hintFramed ? "delpi-kpi-part--framed" : "",
+                  !hintFramed && kpiPartHasBoxPaint(hintState?.style) ? "delpi-kpi-part--boxed" : "",
                   hintShowResize ? "delpi-kpi-part--resizable" : "",
                   hintPtr.selected ? "delpi-kpi-part--selected" : "",
                 ]

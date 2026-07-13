@@ -1891,6 +1891,9 @@ Linha/conector           → hit só no traço SVG (bbox não bloqueia vizinhos)
 | 19.19.7 | Fundo KPI: handles + diamante de raio; **frame % do card** relativo ao bloco | `DelpiKpiCard`, `kpiCardParts` |
 | 19.19.8 | Dois escopos de geometria: card/chartArea/moldura sem `startDrag(resize)` do bloco | `ComunicadoEditorBlockView` |
 | 19.19.9 | chartArea móvel/redimensionável com frame; 1º clique global / 2º fundo | `seriesChartParts`, `SeriesChartPrimitive` |
+| 19.19.10 | Sidebar KPI ≡ ribbon: tipografia nas partes texto; rótulos «Fundo/Borda da caixa» ≠ card; fill sem frame não pinta o card (`flex:1`) | `KpiPartInspector`, `kpiCardParts`, `ComunicadoShapeRibbon` |
+
+**Paridade ribbon × sidebar (KPI):** com parte `title`/`value`/`hint` selecionada, ambos expõem Fonte / Efeitos tipográficos / Parágrafo. Preenchimento e contorno de **caixa** usam rótulos distintos do **card** e do **contorno do texto**. Posição % da parte vive só no inspetor da parte (e na ribbon Posição); o painel Elemento não duplica frame do bloco enquanto a parte está ativa.
 
 #### Propriedades intrínsecas
 

@@ -8,8 +8,6 @@ import {
   normalizeTableViewLimit,
   tablePresetLabel,
   type ComunicadoBlock,
-  type ComunicadoChartViewBlock,
-  type ComunicadoKpiViewBlock,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -98,16 +96,17 @@ export function VisualDataViewInspector({
     selectedValueFields?: string[];
     valueField?: string;
   }) => {
-    const next: Partial<ComunicadoChartViewBlock & ComunicadoKpiViewBlock & ComunicadoTableViewBlock> =
-      {};
     if (!patch.selectedValueFields || patch.selectedValueFields.length === 0) {
-      next.selectedValueFields = undefined;
-      next.valueField = undefined;
-    } else {
-      next.selectedValueFields = patch.selectedValueFields;
-      next.valueField = patch.valueField ?? patch.selectedValueFields[0];
+      updateSelected({
+        selectedValueFields: undefined,
+        valueField: undefined,
+      } as Partial<ComunicadoBlock>);
+      return;
     }
-    updateSelected(next as Partial<ComunicadoBlock>);
+    updateSelected({
+      selectedValueFields: patch.selectedValueFields,
+      valueField: patch.valueField ?? patch.selectedValueFields[0],
+    } as Partial<ComunicadoBlock>);
   };
 
   const connectionBody = (
@@ -164,8 +163,10 @@ export function VisualDataViewInspector({
           <ValueFieldsMultiSelect
             idPrefix="td-view-value-field"
             options={valueFieldOptions}
-            selectedValueFields={selected.selectedValueFields}
-            valueField={selected.valueField}
+            selectedValueFields={
+              "selectedValueFields" in selected ? selected.selectedValueFields : undefined
+            }
+            valueField={"valueField" in selected ? selected.valueField : undefined}
             compact={isRibbon}
             onChange={applyMetricPatch}
           />

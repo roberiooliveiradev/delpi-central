@@ -131,6 +131,15 @@
   width: auto;
 }
 
+.delpi-kpi-part--boxed {
+  flex: 0 0 auto !important;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding-inline: 0.2em;
+}
+
 .delpi-kpi-part-resize {
   position: absolute;
   width: 9px;

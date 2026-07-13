@@ -10,6 +10,7 @@ import {
   defaultStrokeWidthForPrimitive,
   getChartPartState,
   getKpiPartState,
+  kpiPartBoxChromeLabels,
   mergeComunicadoChartOptions,
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
@@ -353,6 +354,7 @@ export function ComunicadoShapeRibbon() {
     }
     const partState = getKpiPartState(block.kpiParts, chromePart);
     const isCardChrome = chromePart.kind === "card";
+    const boxLabels = kpiPartBoxChromeLabels(chromePart.kind);
     const cardState = getKpiPartState(block.kpiParts, { kind: "card" });
     const fillValue = isCardChrome
       ? (cardState?.style?.fill ?? block.kpiOptions?.backgroundColor ?? DECK_COLOR_SURFACE)
@@ -384,7 +386,14 @@ export function ComunicadoShapeRibbon() {
 
     return shell(
       <>
-        <DeckRibbonGroup label="Aparência" hint={H.shape}>
+        <DeckRibbonGroup
+          label="Aparência"
+          hint={
+            isCardChrome
+              ? H.shape
+              : "Fundo e borda da caixa desta parte — não alteram o fundo do card."
+          }
+        >
           <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
             <ShapeStyleMenu
               onSelect={(preset) =>
@@ -397,7 +406,7 @@ export function ComunicadoShapeRibbon() {
             />
             <ShapeFillMenu
               value={fillValue}
-              fillLabel="Preench."
+              fillLabel={boxLabels.fillShort}
               onChange={(color) => patchChromeStyle({ fill: color })}
               onNoFill={() => patchChromeStyle({ fill: "transparent" })}
             />
@@ -406,7 +415,7 @@ export function ComunicadoShapeRibbon() {
               strokeWidth={strokeWidth}
               minWidth={0}
               maxWidth={20}
-              outlineLabel="Contorno"
+              outlineLabel={boxLabels.strokeShort}
               onColorChange={(color) => patchChromeStyle({ stroke: color })}
               onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
               onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}

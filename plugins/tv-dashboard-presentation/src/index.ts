@@ -69,6 +69,7 @@ export type {
   ComunicadoShapeConnector,
   ComunicadoGeometryVertex,
   ComunicadoTextBlock,
+  ComunicadoTextDecoration,
 } from "./comunicadoTypes";
 export type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 export {
@@ -383,6 +384,9 @@ export {
   kpiPartAllowsFrame,
   kpiPartAllowsMove,
   kpiPartAllowsResize,
+  kpiPartBoxChromeLabels,
+  kpiPartHasBoxPaint,
+  kpiPartSupportsTypography,
   kpiPartCornerAdjFromLocalX,
   kpiPartCornerAdjustCssPosition,
   resolveKpiShapeChromePartRef,
@@ -408,6 +412,8 @@ export {
   type ComunicadoKpiPartRef,
   type ComunicadoKpiPartResizeHandle,
   type ComunicadoKpiPartsMap,
+  type ComunicadoKpiPartState,
+  type ComunicadoKpiPartStyle,
   type KpiElementId,
   type KpiFramePartKind,
   type KpiTextPartKind,

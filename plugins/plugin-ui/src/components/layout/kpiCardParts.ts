@@ -331,16 +331,20 @@ export function resolveKpiPartFrame(
   return clampKpiPartFrame(state.frame);
 }
 
-/** @deprecated Preferir `resolveKpiPartFrame`. */
-export function resolveKpiIconFrame(
-  state: KpiPartState | null | undefined,
-): KpiPartFrame | null {
-  return resolveKpiPartFrame(state);
+/** Fill/borda de caixa ativos (não transparentes / espessura > 0). */
+export function kpiPartHasBoxPaint(style?: KpiPartStyle | null): boolean {
+  if (!style) return false;
+  const fill = style.fill?.trim();
+  const hasFill = Boolean(fill && fill !== "transparent" && fill !== "none");
+  const stroke = style.stroke?.trim();
+  const strokeWidth = style.strokeWidth ?? 0;
+  const hasStroke = Boolean(stroke && stroke !== "transparent" && stroke !== "none" && strokeWidth > 0);
+  return hasFill || hasStroke;
 }
 
 /**
  * Layout absoluto (% do card) + chrome (raio/fundo/contorno).
- * Usado por ícone e partes textuais com `frame`.
+ * Sem frame: se há fill/borda, a caixa abraça o conteúdo (não estica com flex:1 do valor).
  */
 export function resolveKpiPartLayoutStyle(
   state: KpiPartState | null | undefined,
@@ -375,6 +379,13 @@ export function resolveKpiPartLayoutStyle(
     css.zIndex = 2;
     css.boxSizing = "border-box";
     css.margin = 0;
+  } else if (kpiPartHasBoxPaint(style)) {
+    // Evita que fill do valor (flex:1) pinte o card inteiro.
+    css.flex = "0 0 auto";
+    css.alignSelf = "flex-start";
+    css.width = "fit-content";
+    css.maxWidth = "100%";
+    css.boxSizing = "border-box";
   } else if (
     options?.iconSizeFallback &&
     style?.iconSize != null &&
@@ -387,6 +398,49 @@ export function resolveKpiPartLayoutStyle(
   }
 
   return css;
+}
+
+/** @deprecated Preferir `resolveKpiPartFrame`. */
+export function resolveKpiIconFrame(
+  state: KpiPartState | null | undefined,
+): KpiPartFrame | null {
+  return resolveKpiPartFrame(state);
+}
+
+/** Rótulos de chrome de caixa — distinguem fundo do card vs caixa da parte textual. */
+export function kpiPartBoxChromeLabels(kind: KpiPartRef["kind"]): {
+  fill: string;
+  stroke: string;
+  fillShort: string;
+  strokeShort: string;
+} {
+  if (kind === "card") {
+    return {
+      fill: "Fundo do card",
+      stroke: "Contorno do card",
+      fillShort: "Fundo",
+      strokeShort: "Contorno",
+    };
+  }
+  if (kind === "icon") {
+    return {
+      fill: "Fundo do ícone",
+      stroke: "Contorno do ícone",
+      fillShort: "Fundo",
+      strokeShort: "Contorno",
+    };
+  }
+  return {
+    fill: "Fundo da caixa",
+    stroke: "Borda da caixa",
+    fillShort: "Fundo caixa",
+    strokeShort: "Borda caixa",
+  };
+}
+
+/** Tipografia (fonte / efeitos de texto / parágrafo) — title, value, hint. */
+export function kpiPartSupportsTypography(ref: KpiPartRef | null | undefined): boolean {
+  return Boolean(ref && (ref.kind === "title" || ref.kind === "value" || ref.kind === "hint"));
 }
 
 /** Estilo do box do ícone a partir de `kpiParts.icon` (cores, raio, frame/% ou size px). */

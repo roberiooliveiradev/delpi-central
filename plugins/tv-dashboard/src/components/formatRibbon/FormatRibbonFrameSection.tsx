@@ -8,6 +8,7 @@ import {
   defaultKpiPartFrame,
   getChartPartState,
   getKpiPartState,
+  resolveKpiPartFrame,
   isPointShapeKind,
   kpiPartAllowsFrame,
   mergeChartPartsWithOptions,
@@ -98,9 +99,8 @@ export function FormatRibbonFrameSection() {
     const block = selected as ComunicadoKpiViewBlock;
     const partState = getKpiPartState(block.kpiParts, kpiPartTarget);
     const frameKind = kpiPartTarget.kind as KpiFramePartKind;
-    const partFrame = clampKpiPartFrame(
-      partState?.frame ?? defaultKpiPartFrame(frameKind),
-    );
+    const explicitFrame = resolveKpiPartFrame(partState);
+    const partFrame = clampKpiPartFrame(explicitFrame ?? defaultKpiPartFrame(frameKind));
     const borderRadius = partState?.style?.borderRadius ?? 0;
     const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
 
@@ -124,50 +124,68 @@ export function FormatRibbonFrameSection() {
       } as Partial<ComunicadoBlock>);
     };
 
+    const enableFreePosition = () => {
+      const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, {
+        frame: defaultKpiPartFrame(frameKind),
+      });
+      updateSelected({
+        kpiParts: mergeKpiPartsWithOptions(nextParts, partsToKpiOptions(nextParts)),
+      } as Partial<ComunicadoBlock>);
+    };
+
     return (
-      <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
-        <div className="td-deck-ribbon__frame-grid">
-          {frameKeys.map((key) => (
-            <span key={key} className="td-deck-ribbon__frame-field">
+      <DeckRibbonGroup
+        label="Posição e tamanho"
+        hint="Posição da parte no card (%) — não é o bloco no slide."
+      >
+        {!explicitFrame ? (
+          <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+            Posicionar livremente…
+          </button>
+        ) : (
+          <div className="td-deck-ribbon__frame-grid">
+            {frameKeys.map((key) => (
+              <span key={key} className="td-deck-ribbon__frame-field">
+                <FieldLabel
+                  htmlFor={`td-ribbon-kpi-part-frame-${key}`}
+                  label={FRAME_LABELS[key]}
+                  hint={FRAME_HINTS[key]}
+                  className="td-deck-ribbon__field-label"
+                />
+                <NativeTextControl
+                  id={`td-ribbon-kpi-part-frame-${key}`}
+                  type="number"
+                  className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                  min={key === "w" || key === "h" ? 4 : 0}
+                  max={key === "w" || key === "h" ? 100 : 100}
+                  step={0.5}
+                  aria-label={FRAME_LABELS[key]}
+                  value={formatFrameValue(partFrame[key] ?? 0)}
+                  onChange={(value) => setPartFrameKey(key, Number(value))}
+                />
+              </span>
+            ))}
+            <span className="td-deck-ribbon__frame-field">
               <FieldLabel
-                htmlFor={`td-ribbon-kpi-part-frame-${key}`}
-                label={FRAME_LABELS[key]}
-                hint={FRAME_HINTS[key]}
+                htmlFor="td-ribbon-kpi-part-frame-radius"
+                label="Raio px"
+                hint={H.borderRadius}
                 className="td-deck-ribbon__field-label"
               />
               <NativeTextControl
-                id={`td-ribbon-kpi-part-frame-${key}`}
+                id="td-ribbon-kpi-part-frame-radius"
                 type="number"
                 className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={key === "w" || key === "h" ? 4 : 0}
-                max={key === "w" || key === "h" ? 100 : 100}
-                step={0.5}
-                aria-label={FRAME_LABELS[key]}
-                value={formatFrameValue(partFrame[key] ?? 0)}
-                onChange={(value) => setPartFrameKey(key, Number(value))}
+                min={0}
+                max={64}
+                step={1}
+                aria-label="Raio dos cantos em pixels"
+                value={borderRadius}
+                onChange={(value) => setPartRadius(Number(value))}
               />
             </span>
-          ))}
-          <span className="td-deck-ribbon__frame-field">
-            <FieldLabel
-              htmlFor="td-ribbon-kpi-part-frame-radius"
-              label="Raio px"
-              hint={H.borderRadius}
-              className="td-deck-ribbon__field-label"
-            />
-            <NativeTextControl
-              id="td-ribbon-kpi-part-frame-radius"
-              type="number"
-              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-              min={0}
-              max={64}
-              step={1}
-              aria-label="Raio dos cantos em pixels"
-              value={borderRadius}
-              onChange={(value) => setPartRadius(Number(value))}
-            />
-          </span>
-        </div>
+          </div>
+        )}
       </DeckRibbonGroup>
     );
   }
