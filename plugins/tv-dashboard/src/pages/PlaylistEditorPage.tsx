@@ -61,6 +61,10 @@ import { exportSlideElementToPdf, exportSlideElementToPng, resolveSlideExportTar
 import { exportSlidePptx } from "../utils/exportSlidePptx";
 import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
 import {
+  resolveSelectedSlideId,
+  writeSelectedSlideId,
+} from "../utils/deckSelectedSlidePreferences";
+import {
   getEditorPresenceClientId,
   resolveEditorDisplayName,
 } from "../utils/editorPresence";
@@ -117,27 +121,35 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   }, [playlist]);
 
   /** Troca de slide: alinha o ref live ao nativeConfig do alvo (evita merge WS/thumb do slide anterior). */
-  const selectSlide = useCallback((slideId: string, slideHint?: Slide | null) => {
-    setSelectedSlideId(slideId);
-    const slide =
-      slideHint ?? playlistRef.current?.slides?.find((item) => item.id === slideId) ?? null;
-    if (slide?.nativeScreenKey === "custom_message") {
-      liveComunicadoConfigRef.current = slide.nativeConfig ?? {};
-    } else {
-      liveComunicadoConfigRef.current = null;
-    }
-  }, []);
+  const selectSlide = useCallback(
+    (slideId: string, slideHint?: Slide | null) => {
+      setSelectedSlideId(slideId);
+      writeSelectedSlideId(playlistId, slideId);
+      const slide =
+        slideHint ?? playlistRef.current?.slides?.find((item) => item.id === slideId) ?? null;
+      if (slide?.nativeScreenKey === "custom_message") {
+        liveComunicadoConfigRef.current = slide.nativeConfig ?? {};
+      } else {
+        liveComunicadoConfigRef.current = null;
+      }
+    },
+    [playlistId],
+  );
 
-  const applyDeckSnapshot = useCallback((snapshot: DeckEditorSnapshot) => {
-    setPlaylist(snapshot.playlist);
-    setSelectedSlideId(snapshot.selectedSlideId);
-    const slide = snapshot.selectedSlideId
-      ? snapshot.playlist.slides?.find((item) => item.id === snapshot.selectedSlideId)
-      : null;
-    if (slide?.nativeScreenKey === "custom_message") {
-      liveComunicadoConfigRef.current = slide.nativeConfig ?? {};
-    }
-  }, []);
+  const applyDeckSnapshot = useCallback(
+    (snapshot: DeckEditorSnapshot) => {
+      setPlaylist(snapshot.playlist);
+      setSelectedSlideId(snapshot.selectedSlideId);
+      writeSelectedSlideId(playlistId, snapshot.selectedSlideId);
+      const slide = snapshot.selectedSlideId
+        ? snapshot.playlist.slides?.find((item) => item.id === snapshot.selectedSlideId)
+        : null;
+      if (slide?.nativeScreenKey === "custom_message") {
+        liveComunicadoConfigRef.current = slide.nativeConfig ?? {};
+      }
+    },
+    [playlistId],
+  );
 
   const deckHistory = useDeckEditorHistory({
     playlistId,
@@ -280,14 +292,31 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   }, [refreshPreviewThumbnails, slidesPreviewKey]);
 
   useEffect(() => {
+    setSelectedSlideId(null);
+    liveComunicadoConfigRef.current = null;
+  }, [playlistId]);
+
+  useEffect(() => {
     if (!slides.length) {
       setSelectedSlideId(null);
+      writeSelectedSlideId(playlistId, null);
       return;
     }
-    if (!selectedSlideId || !slides.some((slide) => slide.id === selectedSlideId)) {
-      setSelectedSlideId(slides[0].id);
+    if (selectedSlideId && slides.some((slide) => slide.id === selectedSlideId)) {
+      return;
     }
-  }, [slides, selectedSlideId]);
+    const nextId = resolveSelectedSlideId(
+      playlistId,
+      slides.map((slide) => slide.id),
+    );
+    if (nextId) {
+      const slide = slides.find((item) => item.id === nextId) ?? null;
+      selectSlide(nextId, slide);
+      return;
+    }
+    setSelectedSlideId(null);
+    writeSelectedSlideId(playlistId, null);
+  }, [slides, selectedSlideId, playlistId, selectSlide]);
 
   usePresentationRealtime({
     enabled: Boolean(playlistId && realtimeConnection.wsUrl),
@@ -465,6 +494,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       else {
         setSelectedSlideId(null);
         liveComunicadoConfigRef.current = null;
+        writeSelectedSlideId(playlistId, null);
       }
     }
   }
