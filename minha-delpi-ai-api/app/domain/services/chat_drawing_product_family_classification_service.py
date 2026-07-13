@@ -125,7 +125,7 @@ class ChatDrawingProductFamilyClassificationService:
             if marker and marker.replace(" ", "") in folded:
                 return True
 
-        for noise in cls._consumable_description_noise_markers():
+        for noise in cls.consumable_description_noise_markers():
             if noise in folded:
                 return True
 
@@ -148,8 +148,10 @@ class ChatDrawingProductFamilyClassificationService:
 
         text = str(description or "").strip()
 
+        # Sem descrição: não marcar fantasma — código pode constar só na lista OCR.
+        # Fantasma exige descrição de consumível ou (futuro) outras evidências negativas.
         if not text:
-            return True
+            return False
 
         if cls.has_intermediate_signature(text):
             return False

@@ -84,11 +84,22 @@ class ChatDrawingStructureIndexService:
         cls,
         root: dict[str, Any],
     ) -> dict[str, set[str]]:
+        """Mapa filho→pais 50xx para drop de cabo-filho.
+
+        Se o código também é linha BOM de nível 1 na SG1010, não entra no mapa —
+        evita falso ``bom_missing`` quando o mesmo MP aparece como item direto e sob PI.
+        """
         structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        rows = cls.flatten_items(structure)
+        root_depth = ChatDrawingPatternsService.structure_root_depth()
+        depth1_codes = {row.code for row in rows if row.code and row.depth == root_depth}
         mapping: dict[str, set[str]] = {}
 
-        for row in cls.flatten_items(structure):
+        for row in rows:
             if not row.code or not row.parent_code:
+                continue
+
+            if row.code in depth1_codes:
                 continue
 
             mapping.setdefault(row.code, set()).add(row.parent_code)
