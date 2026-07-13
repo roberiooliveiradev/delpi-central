@@ -419,5 +419,21 @@
     "CF": "Silicone",
     "CT": "Teflon",
     "CV": "Especial"
-  }
+  },
+  "consumableGroupCodes": ["1013", "1050"],
+  "intermediateFourLetterColors": [
+    "AZUL",
+    "BRAN",
+    "LARA",
+    "MARR",
+    "ROSA",
+    "VERD",
+    "VIOL",
+    "AMAR",
+    "CINZ",
+    "LILA",
+    "PRET",
+    "ROXO",
+    "VERM"
+  ]
 }

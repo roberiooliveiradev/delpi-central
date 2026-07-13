@@ -87,7 +87,7 @@ Wrappers especializados (mantêm API estável):
 | `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
 | `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
 | `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |
-| `technical_description_vocabulary.json` | Normas MP (1001–1025) + intermediários 50xx: grupos, campos, cores MP/4 letras, isolação CA–CV, marcadores de intent | `ChatTechnicalDescriptionVocabularyService`, `ChatTechnicalDescriptionIntentService` |
+| `technical_description_vocabulary.json` | Normas MP (1001–1025) + intermediários 50xx: grupos, campos, cores MP/4 letras, isolação CA–CV, marcadores de intent; consumíveis 1013/1050 para classificação no desenho | `ChatTechnicalDescriptionVocabularyService`, `ChatTechnicalDescriptionIntentService`, `ChatDrawingProductFamilyClassificationService` |
 | `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
 | `operational_group_by_refinement.json` | Rotas, dimensões e estratégia session/refetch para agrupamento de follow-up | `ChatOperationalGroupByRefinementService`, `ChatOperationalSessionDataRefinementService` |

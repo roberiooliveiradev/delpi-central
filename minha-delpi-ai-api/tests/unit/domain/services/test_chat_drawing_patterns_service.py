@@ -27,10 +27,11 @@ def test_drawing_validation_rules_from_json():
         "measurable_tests",
         "textual_tests",
     )
-    assert ChatDrawingPatternsService.intermediate_color_ocr_markers("AZUL") == (
+    assert ChatDrawingPatternsService.intermediate_color_ocr_markers("AZUL")[0:2] == (
         "CB20AZUL",
         "20AWGAL",
     )
+    assert "CA20AZUL" in ChatDrawingPatternsService.intermediate_color_ocr_markers("AZUL")
     assert ChatDrawingPatternsService.multipage_min_page_count() == 2
     assert ChatDrawingPatternsService.multipage_warning_ratio_below() == 0.7
     assert "TERMO ENCOL" in ChatDrawingPatternsService.dimension_note_context_markers(
@@ -45,6 +46,13 @@ def test_validation_intermediate_color_signature_pattern():
 
     assert match
     assert match.group(1) == "AZUL"
+
+    match_ca = ChatDrawingPatternsService.compile_validation(
+        "intermediateColorSignature"
+    ).match("CA0,75PRET")
+
+    assert match_ca
+    assert match_ca.group(1) == "PRET"
 
 
 def test_intermediate_segment_pattern_parses_description():

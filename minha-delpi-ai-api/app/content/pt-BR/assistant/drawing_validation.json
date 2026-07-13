@@ -620,7 +620,7 @@
     }
   },
   "patterns": {
-    "intermediateColorSignature": "^CB\\d{2}([A-Z]{4})",
+    "intermediateColorSignature": "^(?:CA|CB|CF|CT|CV)[\\d,.]+([A-Z]{4})",
     "productDescriptionLengthMm": "(\\d{1,4})\\s*MM\\b",
     "intermediateDatePath": "/\\d{2}/\\d{2}-\\d{4}"
   },

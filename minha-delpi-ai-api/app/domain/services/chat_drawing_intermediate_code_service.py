@@ -6,6 +6,9 @@ from collections import Counter
 from typing import Any
 
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_product_family_classification_service import (
+    ChatDrawingProductFamilyClassificationService,
+)
 from app.domain.services.chat_pdf_bom_source_service import ChatPdfBomSourceService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
@@ -48,6 +51,12 @@ class ChatDrawingIntermediateCodeService:
                 cls._append_code(found, match.group(0), exclude=exclude, revision_only=revision_only)
 
         for row in bom_rows:
+            if ChatDrawingProductFamilyClassificationService.is_false_intermediate_candidate(
+                str(row.get("code") or ""),
+                description=str(row.get("description") or ""),
+            ):
+                continue
+
             cls._append_code(
                 found,
                 str(row.get("code") or ""),
@@ -62,16 +71,57 @@ class ChatDrawingIntermediateCodeService:
         )
 
         if structured:
-            return structured
+            return cls.drop_false_intermediate_only_codes(structured, bom_rows=bom_rows)
 
         for match in ChatDrawingPatternsService.intermediate_code().finditer(str(full_text or "")):
             cls._append_code(found, match.group(0), exclude=exclude, revision_only=revision_only)
 
-        return cls.filter_ocr_duplicates(
-            found,
-            bom_sources=bom_sources,
+        return cls.drop_false_intermediate_only_codes(
+            cls.filter_ocr_duplicates(
+                found,
+                bom_sources=bom_sources,
+                bom_rows=bom_rows,
+            ),
             bom_rows=bom_rows,
         )
+
+    @classmethod
+    def drop_false_intermediate_only_codes(
+        cls,
+        codes: list[str],
+        *,
+        bom_rows: list[dict[str, Any]],
+    ) -> list[str]:
+        """Remove 50xx que só aparecem em linhas BOM de consumível / sem assinatura."""
+        false_codes: set[str] = set()
+        credible_codes: set[str] = set()
+
+        for row in bom_rows or []:
+            if not isinstance(row, dict):
+                continue
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if not code or not ChatDrawingPatternsService.is_intermediate_family(code):
+                continue
+
+            description = str(row.get("description") or "")
+
+            if ChatDrawingProductFamilyClassificationService.is_false_intermediate_candidate(
+                code,
+                description=description,
+            ):
+                false_codes.add(code)
+            else:
+                credible_codes.add(code)
+
+        return [
+            code
+            for code in codes
+            if code not in false_codes or code in credible_codes
+        ]
 
     @classmethod
     def filter_ocr_duplicates(

@@ -520,14 +520,22 @@ class ChatDrawingBomComparisonService:
 
     @classmethod
     def _intermediate_color_markers(cls, signature: str) -> tuple[str, ...]:
-        match = ChatDrawingPatternsService.compile_validation(
-            "intermediateColorSignature"
-        ).match(str(signature or "").upper())
+        from app.domain.services.chat_drawing_product_family_classification_service import (
+            ChatDrawingProductFamilyClassificationService,
+        )
 
-        if not match:
+        color = ChatDrawingProductFamilyClassificationService.extract_intermediate_color(
+            signature
+        )
+
+        if not color:
+            match = ChatDrawingPatternsService.compile_validation(
+                "intermediateColorSignature"
+            ).match(str(signature or "").upper())
+            color = str(match.group(1) or "").upper() if match else ""
+
+        if not color:
             return ()
-
-        color = match.group(1)
 
         return ChatDrawingPatternsService.intermediate_color_ocr_markers(color)
 

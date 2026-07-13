@@ -6,6 +6,9 @@ import re
 from typing import Any
 
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_product_family_classification_service import (
+    ChatDrawingProductFamilyClassificationService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -86,58 +89,26 @@ class ChatDrawingBomReferenceNoiseService:
 
     @classmethod
     def is_false_intermediate_bom_row(cls, row: dict[str, Any]) -> bool:
-        """50xx com descrição de consumível (termoencolhível) ou sem assinatura CB/CT."""
+        """50xx com descrição de consumível (termoencolhível) ou sem assinatura CA–CV."""
         code = ChatProductQueryIntentService.normalize_product_code(
             str(row.get("code") or "")
         )
-
-        if not code or not ChatDrawingPatternsService.is_intermediate_family(code):
-            return False
-
         description = str(row.get("description") or "").strip()
 
-        if not description:
-            return True
-
-        if cls._intermediate_description_has_cable_evidence(description):
-            return False
-
-        folded = description.upper().replace(" ", "")
-
-        for marker in cls._intermediate_consumable_noise_markers():
-            if marker in folded:
-                return True
-
-        return False
+        return ChatDrawingProductFamilyClassificationService.is_false_intermediate_candidate(
+            code,
+            description=description,
+        )
 
     @classmethod
     def _intermediate_description_has_cable_evidence(cls, description: str) -> bool:
-        if ChatDrawingPatternsService.intermediate_segment().search(description):
-            return True
-
-        return bool(
-            ChatDrawingPatternsService.compile_validation("intermediateDatePath").search(
-                description
-            )
+        return ChatDrawingProductFamilyClassificationService.has_intermediate_signature(
+            description
         )
 
     @classmethod
     def _intermediate_consumable_noise_markers(cls) -> tuple[str, ...]:
-        node = ChatDrawingPatternsService.validation_rule("intermediateBomEvidence")
-
-        if not isinstance(node, dict):
-            return ()
-
-        markers = node.get("consumableDescriptionNoise")
-
-        if not isinstance(markers, list):
-            return ()
-
-        return tuple(
-            str(marker).strip().upper().replace(" ", "")
-            for marker in markers
-            if str(marker).strip()
-        )
+        return ChatDrawingProductFamilyClassificationService.consumable_description_noise_markers()
 
     @classmethod
     def _is_wire_gauge_false_code_row(cls, row: dict[str, Any]) -> bool:

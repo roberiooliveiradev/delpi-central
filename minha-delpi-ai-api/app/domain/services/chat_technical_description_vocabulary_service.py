@@ -70,6 +70,51 @@ class ChatTechnicalDescriptionVocabularyService(ChatAssistantVocabularyService):
         return tuple(cls.insulation_codes().keys())
 
     @classmethod
+    def consumable_group_codes(cls) -> tuple[str, ...]:
+        return tuple(
+            str(code).strip()
+            for code in cls.terms("consumableGroupCodes")
+            if str(code).strip()
+        )
+
+    @classmethod
+    def intermediate_four_letter_colors(cls) -> tuple[str, ...]:
+        return tuple(
+            str(color).strip().upper()
+            for color in cls.terms("intermediateFourLetterColors")
+            if str(color).strip()
+        )
+
+    @classmethod
+    def material_group_code_prefixes(cls) -> tuple[str, ...]:
+        """Prefixos numéricos de grupo MP (ex.: 1008, 1001…1005) — sem 50xx."""
+        prefixes: list[str] = []
+
+        for group in cls.material_groups():
+            group_code = str(group.get("groupCode") or "").strip()
+
+            if not group_code or group_code.lower() == "50xx" or group_code.startswith("50"):
+                continue
+
+            if "-" in group_code:
+                start_raw, end_raw = group_code.split("-", 1)
+
+                try:
+                    start = int(start_raw)
+                    end = int(end_raw)
+                except ValueError:
+                    continue
+
+                for value in range(start, end + 1):
+                    prefixes.append(str(value))
+                continue
+
+            if group_code.isdigit():
+                prefixes.append(group_code)
+
+        return tuple(dict.fromkeys(prefixes))
+
+    @classmethod
     def material_groups(cls) -> tuple[dict[str, Any], ...]:
         raw = cls.node("materialGroups")
 

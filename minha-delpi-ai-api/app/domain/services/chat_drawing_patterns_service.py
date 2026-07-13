@@ -503,11 +503,22 @@ class ChatDrawingPatternsService:
             )
             raw_markers = [fallback.format(color=normalized_color)]
 
-        return tuple(
-            str(marker).upper().replace(" ", "")
-            for marker in raw_markers
-            if str(marker).strip()
+        from app.domain.services.chat_drawing_product_family_classification_service import (
+            ChatDrawingProductFamilyClassificationService,
         )
+
+        merged = [
+            *(
+                str(marker).upper().replace(" ", "")
+                for marker in raw_markers
+                if str(marker).strip()
+            ),
+            *ChatDrawingProductFamilyClassificationService.vocabulary_color_ocr_markers(
+                normalized_color
+            ),
+        ]
+
+        return tuple(dict.fromkeys(merged))
 
     @classmethod
     def inspection_legacy_plan_keys(cls) -> tuple[str, ...]:
