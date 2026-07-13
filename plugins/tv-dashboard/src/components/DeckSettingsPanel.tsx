@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import {
   ArrowLeftRight,
   Building2,
-  CalendarRange,
   Copy,
   Globe,
   LayoutTemplate,
-  Timer,
+  Trash2,
   Type,
   Upload,
 } from "lucide-react";
@@ -25,7 +24,9 @@ import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import { BranchField } from "./BranchField";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
 import { DeckIconField } from "./deck/DeckIconField";
+import { DeckRangeField } from "./deck/DeckRangeField";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
+import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
@@ -35,7 +36,7 @@ type Props = {
   slide: Slide | null;
   catalog: NativeScreenCatalogItem[];
   branchScope: BranchScope | null;
-  slideTabExtra?: React.ReactNode;
+  slideTabExtra?: ReactNode;
   onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) => void;
   onSaveSlide: (
     slide: Slide,
@@ -205,75 +206,96 @@ export function DeckSettingsPanel({
 
   if (activeTab === "slide" && slide) {
     return (
-      <div className="td-deck-settings-strip td-deck-settings-strip--slide">
-        <div className="td-deck-tabs__grid td-deck-tabs__grid--icon-fields">
-          <DeckIconField id="td-slide-title" icon={Type} label="Título" hint={F.slideTitle}>
-            <TdNativeTextField
-              id="td-slide-title"
-              label=""
-              value={title}
-              onChange={setTitle}
-              onBlur={() => saveSlidePatch({ title })}
-            />
-          </DeckIconField>
-          <DeckIconField
-            id="td-slide-duration"
-            icon={Timer}
-            label="Duração"
-            hint={F.slideDuration}
-            className="td-deck-icon-field--narrow"
-          >
-            <TdNativeTextField
-              id="td-slide-duration"
-              label=""
-              type="number"
-              min={5}
-              max={600}
-              value={String(durationSec)}
-              onChange={(value) => setDurationSec(Number(value))}
-              onBlur={() => saveSlidePatch({ durationSec })}
-            />
-          </DeckIconField>
-          <DeckIconField
-            id="td-slide-transition"
-            icon={ArrowLeftRight}
-            label="Transição"
-            hint={F.slideTransition}
-            className="td-deck-icon-field--medium"
-          >
-            <TdNativeSelectField
-              id="td-slide-transition"
-              label=""
-              value={transitionStyle}
-              onChange={(value) => {
-                setTransitionStyle(value);
-                saveSlidePatch({ transitionStyle: value });
-              }}
-              options={SLIDE_TRANSITION_OPTIONS}
-            />
-          </DeckIconField>
-          {slide.slideType === "external" ? (
-            <DeckIconField
-              id="td-slide-url"
-              icon={Globe}
-              label="URL"
-              hint={F.slideUrl}
-              className="td-deck-icon-field--wide"
-            >
+      <>
+        <DeckRibbonGroup label="Propriedades" hint={F.slideTitle}>
+          <div className="td-deck-tabs__grid td-deck-tabs__grid--icon-fields">
+            <DeckIconField id="td-slide-title" icon={Type} label="Título" hint={F.slideTitle}>
               <TdNativeTextField
-                id="td-slide-url"
+                id="td-slide-title"
                 label=""
-                className="td-deck-tabs__field--wide"
-                value={externalUrl}
-                onChange={setExternalUrl}
-                onBlur={() => saveSlidePatch({ externalUrl })}
+                value={title}
+                onChange={setTitle}
+                onBlur={() => saveSlidePatch({ title })}
               />
             </DeckIconField>
-          ) : !isCustomSlide && slide.nativeScreenKey !== "supplies_stock_value" ? (
-            <>
+            <DeckRangeField
+              id="td-slide-duration"
+              label="Duração (s)"
+              hint={F.slideDuration}
+              min={5}
+              max={600}
+              value={durationSec}
+              onChange={(value) => {
+                setDurationSec(value);
+                saveSlidePatch({ durationSec: value });
+              }}
+            />
+            <DeckIconField
+              id="td-slide-transition"
+              icon={ArrowLeftRight}
+              label="Transição"
+              hint={F.slideTransition}
+              className="td-deck-icon-field--medium"
+            >
+              <TdNativeSelectField
+                id="td-slide-transition"
+                label=""
+                value={transitionStyle}
+                onChange={(value) => {
+                  setTransitionStyle(value);
+                  saveSlidePatch({ transitionStyle: value });
+                }}
+                options={SLIDE_TRANSITION_OPTIONS}
+              />
+            </DeckIconField>
+            {slide.slideType === "external" ? (
+              <DeckIconField
+                id="td-slide-url"
+                icon={Globe}
+                label="URL"
+                hint={F.slideUrl}
+                className="td-deck-icon-field--wide"
+              >
+                <TdNativeTextField
+                  id="td-slide-url"
+                  label=""
+                  className="td-deck-tabs__field--wide"
+                  value={externalUrl}
+                  onChange={setExternalUrl}
+                  onBlur={() => saveSlidePatch({ externalUrl })}
+                />
+              </DeckIconField>
+            ) : !isCustomSlide && slide.nativeScreenKey !== "supplies_stock_value" ? (
+              <>
+                <DeckIconField icon={Building2} label="Filial" hint={F.slideBranch}>
+                  <BranchField
+                    id="td-slide-branch"
+                    label=""
+                    scope={branchScope}
+                    value={branch}
+                    onChange={(value) => {
+                      setBranch(value);
+                      saveSlidePatch({ branch: value });
+                    }}
+                  />
+                </DeckIconField>
+                <DeckRangeField
+                  id="td-slide-period"
+                  label="Período (dias)"
+                  hint={F.slidePeriod}
+                  min={1}
+                  max={365}
+                  value={periodDays}
+                  onChange={(value) => {
+                    setPeriodDays(value);
+                    saveSlidePatch({ periodDays: value });
+                  }}
+                />
+              </>
+            ) : !isCustomSlide ? (
               <DeckIconField icon={Building2} label="Filial" hint={F.slideBranch}>
                 <BranchField
-                  id="td-slide-branch"
+                  id="td-slide-branch-stock"
                   label=""
                   scope={branchScope}
                   value={branch}
@@ -283,218 +305,174 @@ export function DeckSettingsPanel({
                   }}
                 />
               </DeckIconField>
-              <DeckIconField
-                id="td-slide-period"
-                icon={CalendarRange}
-                label="Período"
-                hint={F.slidePeriod}
-                className="td-deck-icon-field--narrow"
-              >
-                <TdNativeTextField
-                  id="td-slide-period"
-                  label=""
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={String(periodDays)}
-                  onChange={(value) => setPeriodDays(Number(value))}
-                  onBlur={() => saveSlidePatch({ periodDays })}
-                />
-              </DeckIconField>
-            </>
-          ) : !isCustomSlide ? (
-            <DeckIconField icon={Building2} label="Filial" hint={F.slideBranch}>
-              <BranchField
-                id="td-slide-branch-stock"
-                label=""
-                scope={branchScope}
-                value={branch}
-                onChange={(value) => {
-                  setBranch(value);
-                  saveSlidePatch({ branch: value });
-                }}
-              />
-            </DeckIconField>
-          ) : null}
-          {isCustomSlide ? (
-            <span className="td-deck-settings-chip" title={F.customSlideType}>
+            ) : null}
+          </div>
+        </DeckRibbonGroup>
+        {isCustomSlide || catalogItem ? (
+          <DeckRibbonGroup label="Tipo" hint={F.customSlideType}>
+            <span className="td-deck-settings-chip" title={isCustomSlide ? F.customSlideType : `Tipo: ${catalogItem?.label}`}>
               <LayoutTemplate size={13} aria-hidden="true" />
-              Tela livre
+              {isCustomSlide ? "Tela livre" : catalogItem?.label}
             </span>
-          ) : catalogItem ? (
-            <span className="td-deck-settings-chip" title={`Tipo: ${catalogItem.label}`}>
-              <LayoutTemplate size={13} aria-hidden="true" />
-              {catalogItem.label}
-            </span>
-          ) : null}
-        </div>
-        {slideTabExtra ? <div className="td-deck-settings-strip__tools">{slideTabExtra}</div> : null}
-      </div>
+          </DeckRibbonGroup>
+        ) : null}
+        {slideTabExtra ? (
+          <DeckRibbonGroup label="Ferramentas">
+            <div className="td-deck-settings-strip__tools">{slideTabExtra}</div>
+          </DeckRibbonGroup>
+        ) : null}
+      </>
     );
   }
 
   if (activeTab === "playlist") {
     return (
-      <div className="td-deck-settings-strip td-deck-settings-strip--playlist">
-        <div className="td-deck-playlist-groups">
-          <DeckRibbonGroup label="Rotação" hint={F.viewport}>
-            <div className="td-deck-tabs__grid td-deck-tabs__grid--playlist-rotation">
-              <TdNativeSelectField
-                id="td-viewport"
-                label="Resolução alvo"
-                hint={F.viewport}
-                value={playlist.viewportProfile}
-                onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
-                options={VIEWPORT_OPTIONS}
-              />
-              <TdNativeSelectField
-                id="td-transition"
-                label="Transição"
-                hint={F.transition}
-                value={playlist.transitionStyle}
-                onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
-                options={TRANSITION_OPTIONS}
-              />
-              <TdNativeTextField
-                id="td-duration-default"
-                label="Duração padrão (s)"
-                hint={F.defaultDuration}
-                type="number"
-                min={5}
-                max={600}
-                value={String(playlist.defaultDurationSec)}
-                onChange={(value) => onSavePlaylistSettings("defaultDurationSec", Number(value))}
-              />
-              <TdNativeTextField
-                id="td-refresh"
-                label="Atualizar dados a cada (s)"
-                hint={F.refreshInterval}
-                type="number"
-                min={30}
-                max={3600}
-                value={String(playlist.globalRefreshSec)}
-                onChange={(value) => onSavePlaylistSettings("globalRefreshSec", Number(value))}
-              />
-            </div>
-          </DeckRibbonGroup>
+      <>
+        <DeckRibbonGroup label="Rotação" hint={F.viewport}>
+          <div className="td-deck-tabs__grid td-deck-tabs__grid--playlist-rotation">
+            <TdNativeSelectField
+              id="td-viewport"
+              label="Resolução alvo"
+              hint={F.viewport}
+              value={playlist.viewportProfile}
+              onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
+              options={VIEWPORT_OPTIONS}
+            />
+            <TdNativeSelectField
+              id="td-transition"
+              label="Transição"
+              hint={F.transition}
+              value={playlist.transitionStyle}
+              onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
+              options={TRANSITION_OPTIONS}
+            />
+            <DeckRangeField
+              id="td-duration-default"
+              label="Duração padrão (s)"
+              hint={F.defaultDuration}
+              min={5}
+              max={600}
+              value={playlist.defaultDurationSec}
+              onChange={(value) => onSavePlaylistSettings("defaultDurationSec", value)}
+            />
+            <DeckRangeField
+              id="td-refresh"
+              label="Atualizar dados (s)"
+              hint={F.refreshInterval}
+              min={30}
+              max={3600}
+              step={10}
+              value={playlist.globalRefreshSec}
+              onChange={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
+            />
+          </div>
+        </DeckRibbonGroup>
 
-          <DeckRibbonGroup label="Link público" hint={F.publicUrl} wide>
-            <div className="td-deck-playlist-link">
-              <TdNativeTextField
-                id="td-public-url"
-                label="URL"
-                hint={F.publicUrl}
-                className="td-deck-playlist-link__field"
-                value={playlist.publicUrl ?? ""}
-                onChange={() => undefined}
-                readOnly
-              />
-              <button
-                type="button"
-                className="td-btn td-btn--sm"
-                disabled={!playlist.publicUrl}
-                onClick={() => {
-                  const url = playlist.publicUrl;
-                  if (!url) return;
-                  void navigator.clipboard.writeText(url).then(() => {
-                    setLinkCopied(true);
-                    window.setTimeout(() => setLinkCopied(false), 2000);
-                  });
-                }}
-                aria-label="Copiar link público"
-              >
-                <Copy size={14} aria-hidden="true" />
-                {linkCopied ? "Copiado" : "Copiar"}
-              </button>
-            </div>
-          </DeckRibbonGroup>
+        <DeckRibbonGroup label="Link público" hint={F.publicUrl} wide>
+          <div className="td-deck-playlist-link">
+            <TdNativeTextField
+              id="td-public-url"
+              label="URL"
+              hint={F.publicUrl}
+              className="td-deck-playlist-link__field"
+              value={playlist.publicUrl ?? ""}
+              onChange={() => undefined}
+              readOnly
+            />
+            <DeckRibbonTile
+              icon={Copy}
+              label={linkCopied ? "Copiado" : "Copiar"}
+              hint={F.publicUrl}
+              disabled={!playlist.publicUrl}
+              onClick={() => {
+                const url = playlist.publicUrl;
+                if (!url) return;
+                void navigator.clipboard.writeText(url).then(() => {
+                  setLinkCopied(true);
+                  window.setTimeout(() => setLinkCopied(false), 2000);
+                });
+              }}
+            />
+          </div>
+        </DeckRibbonGroup>
 
-          <DeckRibbonGroup
-            label="Master slide"
-            hint="Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3)."
-            wide
-          >
-            <div className="td-deck-master td-deck-master--compact">
-              <div className="td-deck-master__row td-deck-master__row--dense">
-                <NativeCheckboxControl
-                  className="td-deck-master__toggle"
-                  label="Ativo em telas livres"
-                  checked={masterEnabled}
-                  onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
-                />
-                <TvRibbonColorPicker
-                  label="Fundo sólido"
-                  value={masterBgColor}
-                  onChange={(color) =>
-                    saveMaster(
-                      patchMaster(master, {
-                        enabled: true,
-                        background: { type: "color", value: color },
-                      }),
-                    )
-                  }
-                />
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm"
-                  disabled={masterUploading}
-                  onClick={() => bgInputRef.current?.click()}
-                >
-                  <Upload size={14} aria-hidden="true" />
-                  Fundo imagem
-                </button>
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm"
-                  disabled={masterUploading}
-                  onClick={() => logoInputRef.current?.click()}
-                >
-                  <Upload size={14} aria-hidden="true" />
-                  Logo
-                </button>
-                {logoUrl ? (
-                  <button
-                    type="button"
-                    className="td-btn td-btn--sm"
-                    onClick={() => saveMaster(patchMaster(master, { logo: undefined }))}
-                  >
-                    Remover logo
-                  </button>
-                ) : null}
-                {logoUrl ? (
-                  <div
-                    className="td-deck-master__logo-preview"
-                    style={{ backgroundImage: `url(${logoUrl})` }}
-                    title="Logo do master"
-                  />
-                ) : null}
-              </div>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (file) void uploadMasterAsset("logo", file);
-                }}
+        <DeckRibbonGroup
+          label="Master slide"
+          hint="Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3)."
+          wide
+        >
+          <div className="td-deck-master td-deck-master--compact">
+            <div className="td-deck-master__row td-deck-master__row--dense">
+              <NativeCheckboxControl
+                className="td-deck-master__toggle"
+                label="Ativo em telas livres"
+                checked={masterEnabled}
+                onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
               />
-              <input
-                ref={bgInputRef}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (file) void uploadMasterAsset("background", file);
-                }}
+              <TvRibbonColorPicker
+                label="Fundo sólido"
+                value={masterBgColor}
+                onChange={(color) =>
+                  saveMaster(
+                    patchMaster(master, {
+                      enabled: true,
+                      background: { type: "color", value: color },
+                    }),
+                  )
+                }
               />
+              <DeckRibbonTile
+                icon={Upload}
+                label="Fundo imagem"
+                disabled={masterUploading}
+                onClick={() => bgInputRef.current?.click()}
+              />
+              <DeckRibbonTile
+                icon={Upload}
+                label="Logo"
+                disabled={masterUploading}
+                onClick={() => logoInputRef.current?.click()}
+              />
+              {logoUrl ? (
+                <DeckRibbonTile
+                  icon={Trash2}
+                  label="Remover logo"
+                  onClick={() => saveMaster(patchMaster(master, { logo: undefined }))}
+                />
+              ) : null}
+              {logoUrl ? (
+                <div
+                  className="td-deck-master__logo-preview"
+                  style={{ backgroundImage: `url(${logoUrl})` }}
+                  title="Logo do master"
+                />
+              ) : null}
             </div>
-          </DeckRibbonGroup>
-        </div>
-      </div>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void uploadMasterAsset("logo", file);
+              }}
+            />
+            <input
+              ref={bgInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void uploadMasterAsset("background", file);
+              }}
+            />
+          </div>
+        </DeckRibbonGroup>
+      </>
     );
   }
 

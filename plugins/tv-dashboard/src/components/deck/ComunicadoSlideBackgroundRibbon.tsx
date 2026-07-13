@@ -26,7 +26,7 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
   const gradientTo = background?.type === "gradient" ? background.to : "#1e3a5f";
 
   return (
-    <div className="td-deck-ribbon__groups">
+    <>
       <DeckRibbonGroup label={labels.comunicadoBackground ?? "Fundo"} hint={E.backgroundColor}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
           <TvRibbonColorPicker
@@ -79,6 +79,6 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
           ))}
         </div>
       </DeckRibbonGroup>
-    </div>
+    </>
   );
 }

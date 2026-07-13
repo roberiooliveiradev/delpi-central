@@ -67,7 +67,16 @@ type Props = {
 
 function isRibbonTab(
   tab: DeckRibbonTabId,
-): tab is "home" | "insert" | "element" | "tableDesign" | "tableLayout" | "data" | "view" {
+): tab is
+  | "home"
+  | "insert"
+  | "element"
+  | "tableDesign"
+  | "tableLayout"
+  | "data"
+  | "view"
+  | "slide"
+  | "playlist" {
   return (
     tab === "home" ||
     tab === "insert" ||
@@ -75,16 +84,20 @@ function isRibbonTab(
     tab === "tableDesign" ||
     tab === "tableLayout" ||
     tab === "data" ||
-    tab === "view"
+    tab === "view" ||
+    tab === "slide" ||
+    tab === "playlist"
   );
 }
 
-function isSettingsTab(tab: DeckRibbonTabId): tab is "slide" | "playlist" {
-  return tab === "slide" || tab === "playlist";
-}
-
 function ribbonDensityFor(tab: DeckRibbonTabId): "band" | "fit" {
-  return tab === "element" || tab === "tableDesign" || tab === "tableLayout" ? "fit" : "band";
+  return tab === "element" ||
+    tab === "tableDesign" ||
+    tab === "tableLayout" ||
+    tab === "slide" ||
+    tab === "playlist"
+    ? "fit"
+    : "band";
 }
 
 /** Chrome do editor: abas estilo PowerPoint + ribbon contextual + painel de configuração. */
@@ -260,7 +273,16 @@ export function DeckEditorChrome({
 
       {showRibbon ? (
         <div className="td-deck-chrome__ribbon">
-          <DeckRibbonShell density={ribbonDensityFor(activeTab)}>
+          <DeckRibbonShell
+            density={ribbonDensityFor(activeTab)}
+            label={
+              activeTab === "playlist"
+                ? "Programação"
+                : activeTab === "slide"
+                  ? "Tela"
+                  : "Controles de slide"
+            }
+          >
             {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
             {isCustomSlide &&
             (activeTab === "insert" ||
@@ -271,39 +293,24 @@ export function DeckEditorChrome({
               activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
             ) : null}
+            {activeTab === "slide" || activeTab === "playlist" ? (
+              <div className="td-deck-ribbon__groups">
+                {activeTab === "slide" && isCustomSlide ? (
+                  <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
+                ) : null}
+                <DeckSettingsPanel
+                  activeTab={activeTab}
+                  playlist={playlist}
+                  slide={slide}
+                  catalog={catalog}
+                  branchScope={branchScope}
+                  slideTabExtra={slideTabExtra}
+                  onSavePlaylistSettings={onSavePlaylistSettings}
+                  onSaveSlide={onSaveSlide}
+                />
+              </div>
+            ) : null}
           </DeckRibbonShell>
-        </div>
-      ) : null}
-
-      {isSettingsTab(activeTab) ? (
-        <div
-          className={[
-            "td-deck-chrome__panel",
-            "td-deck-chrome__panel--compact",
-            activeTab === "slide" && isCustomSlide ? "td-deck-chrome__panel--slide-unified" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          role="tabpanel"
-        >
-          {activeTab === "slide" && isCustomSlide ? (
-            <>
-              <DeckRibbonShell label="Fundo da tela" embedded density="fit">
-                <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
-              </DeckRibbonShell>
-              <div className="td-deck-chrome__slide-strip-sep" aria-hidden="true" />
-            </>
-          ) : null}
-          <DeckSettingsPanel
-            activeTab={activeTab}
-            playlist={playlist}
-            slide={slide}
-            catalog={catalog}
-            branchScope={branchScope}
-            slideTabExtra={slideTabExtra}
-            onSavePlaylistSettings={onSavePlaylistSettings}
-            onSaveSlide={onSaveSlide}
-          />
         </div>
       ) : null}
 
