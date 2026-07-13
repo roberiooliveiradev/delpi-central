@@ -6,6 +6,7 @@ import {
   chartPartAllowsResize,
   clampChartPartFrame,
   getChartPartState,
+  resolveChartPartFontSize,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -54,7 +55,7 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
   const textStyle: CSSProperties = {
     ...frameStyle,
     fontFamily: partStyle?.fontFamily,
-    fontSize: partStyle?.fontSize != null ? `${partStyle.fontSize}px` : undefined,
+    fontSize: `${resolveChartPartFontSize("title", partStyle)}px`,
     fontWeight: partStyle?.fontWeight,
     fontStyle: partStyle?.fontStyle,
     color: resolvePaintTextColor(partStyle?.color, chartAreaFill) ?? DECK_COLOR_TEXT_STRONG,

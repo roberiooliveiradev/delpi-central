@@ -65,26 +65,56 @@ describe("selectedTextFormatTarget", () => {
     }
   });
 
-  it("resolve valor do KPI com default 48 quando sem fontSize persistido", () => {
+  it("resolve valor do KPI com default 32 quando sem fontSize persistido", () => {
     const target = resolveSelectedTextFormatTarget({
       selected: kpiBlock,
       selectedKpiPart: { kind: "value" },
     });
     expect(target?.mode).toBe("part");
     if (target?.mode === "part") {
-      expect(target.style.fontSize).toBe(48);
+      expect(target.style.fontSize).toBe(32);
     }
   });
 
-  it("resolve parte título do gráfico", () => {
-    const target = resolveSelectedTextFormatTarget({
-      selected: chartBlock,
-      selectedChartPart: { kind: "title" },
+  it("resolve eixo do gráfico com default 9 quando sem fontSize persistido", () => {
+    const bare = {
+      ...chartBlock,
+      chartParts: {},
+    } as ComunicadoBlock;
+    const targetX = resolveSelectedTextFormatTarget({
+      selected: bare,
+      selectedChartPart: { kind: "axis", axis: "x" },
     });
-    expect(target?.mode).toBe("part");
-    if (target?.mode === "part") {
-      expect(target.source).toBe("chart");
-      expect(target.style.fontWeight).toBe("bold");
+    const targetY = resolveSelectedTextFormatTarget({
+      selected: bare,
+      selectedChartPart: { kind: "axis", axis: "y" },
+    });
+    expect(targetX?.mode).toBe("part");
+    expect(targetY?.mode).toBe("part");
+    if (targetX?.mode === "part" && targetY?.mode === "part") {
+      expect(targetX.style.fontSize).toBe(9);
+      expect(targetY.style.fontSize).toBe(9);
+    }
+  });
+
+  it("resolve eixo X persistido 16 e Y sem persistência (defaults distintos)", () => {
+    const mixed = {
+      ...chartBlock,
+      chartParts: {
+        "axis:x": { style: { fontSize: 16 } },
+      },
+    } as ComunicadoBlock;
+    const targetX = resolveSelectedTextFormatTarget({
+      selected: mixed,
+      selectedChartPart: { kind: "axis", axis: "x" },
+    });
+    const targetY = resolveSelectedTextFormatTarget({
+      selected: mixed,
+      selectedChartPart: { kind: "axis", axis: "y" },
+    });
+    if (targetX?.mode === "part" && targetY?.mode === "part") {
+      expect(targetX.style.fontSize).toBe(16);
+      expect(targetY.style.fontSize).toBe(9);
     }
   });
 

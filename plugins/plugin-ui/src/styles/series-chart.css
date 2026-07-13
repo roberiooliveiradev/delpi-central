@@ -28,7 +28,7 @@
 .delpi-ui-series-chart__title {
   text-align: center;
   font-weight: 600;
-  font-size: clamp(11px, 1.4vw, 16px);
+  font-size: var(--delpi-ui-series-chart-title-font-size, 14px);
   line-height: 1.2;
   color: var(--delpi-ui-series-chart-text-strong, #0f172a);
 }
@@ -91,7 +91,7 @@
 
 .delpi-ui-series-chart__tick {
   fill: var(--delpi-ui-series-chart-muted, #64748b);
-  font-size: 9px;
+  font-size: var(--delpi-ui-series-chart-tick-font-size, 9px);
 }
 
 .delpi-ui-series-chart__tick--x-rotated {
@@ -100,13 +100,13 @@
 
 .delpi-ui-series-chart__axis-title {
   fill: var(--delpi-ui-series-chart-text, #1e293b);
-  font-size: 9px;
+  font-size: var(--delpi-ui-series-chart-axis-title-font-size, 9px);
   font-weight: 600;
 }
 
 .delpi-ui-series-chart__data-label {
   fill: var(--delpi-ui-series-chart-text-strong, #0f172a);
-  font-size: 8px;
+  font-size: var(--delpi-ui-series-chart-data-label-font-size, 8px);
   font-weight: 600;
 }
 
@@ -116,7 +116,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem 0.75rem;
-  font-size: clamp(9px, 1vw, 11px);
+  font-size: var(--delpi-ui-series-chart-legend-font-size, 10px);
   color: var(--delpi-ui-series-chart-muted, #64748b);
   list-style: none;
   margin: 0;

@@ -24,6 +24,7 @@ import {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartAreaStyle,
+  resolveChartPartFontSize,
   resolveMarkerStyle,
   resolveSeriesStrokeColor,
   serializeChartPartRef,
@@ -249,6 +250,18 @@ describe("seriesChartParts", () => {
       fontSize: "22px",
       fontFamily: "Georgia, serif",
       color: "#fff",
+      fill: "#fff",
     });
+  });
+
+  it("resolveChartPartFontSize e tipografia usam defaults canônicos (não 16 fantasma)", () => {
+    expect(resolveChartPartFontSize("axis")).toBe(9);
+    expect(resolveChartPartFontSize("axisTitle")).toBe(9);
+    expect(resolveChartPartFontSize("dataLabel")).toBe(8);
+    expect(resolveChartPartFontSize("title")).toBe(14);
+    expect(resolveChartPartFontSize("legend")).toBe(10);
+    expect(resolveChartPartFontSize("axis", { fontSize: 16 })).toBe(16);
+    expect(chartPartTypographyStyle({}, { kind: "axis", axis: "y" })).toEqual({ fontSize: "9px" });
+    expect(chartPartTypographyStyle({}, { kind: "axis", axis: "x" })).toEqual({ fontSize: "9px" });
   });
 });

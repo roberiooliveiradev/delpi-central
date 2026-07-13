@@ -415,21 +415,57 @@ export function getChartPartState(parts: ChartPartsMap | null | undefined, ref: 
   return parts[serializeChartPartRef(ref)];
 }
 
-/** Tipografia declarada em chartParts — mesma árvore selected/deselected. */
+/** Tipografia padrão das partes textuais — alinhada ao CSS do gráfico (não ao 16 fantasma da ribbon). */
+export const CHART_PART_FONT_SIZE_DEFAULTS = {
+  title: 14,
+  legend: 10,
+  axis: 9,
+  axisTitle: 9,
+  dataLabel: 8,
+} as const;
+
+export type ChartTextPartKind = keyof typeof CHART_PART_FONT_SIZE_DEFAULTS;
+
+export function isChartTextPartKind(kind: string): kind is ChartTextPartKind {
+  return kind in CHART_PART_FONT_SIZE_DEFAULTS;
+}
+
+/**
+ * Tamanho efetivo da parte — mesma regra do KPI (`resolveKpiPartFontSize`).
+ * Ribbon e render devem consumir isto; nunca um default genérico 16.
+ */
+export function resolveChartPartFontSize(
+  kind: ChartTextPartKind,
+  style?: { fontSize?: number } | null,
+): number {
+  const explicit = style?.fontSize;
+  if (explicit != null && Number.isFinite(explicit) && explicit > 0) {
+    return Math.round(explicit);
+  }
+  return CHART_PART_FONT_SIZE_DEFAULTS[kind];
+}
+
+/** Tipografia declarada em chartParts — sempre emite fontSize canônico (paridade DelpiKpiCard). */
 export function chartPartTypographyStyle(
   parts: ChartPartsMap | null | undefined,
   ref: ChartPartRef,
 ): CSSProperties | undefined {
   const style = getChartPartState(parts, ref)?.style;
-  if (!style) return undefined;
   const css: CSSProperties = {};
-  if (style.fontFamily) css.fontFamily = style.fontFamily;
-  if (style.fontSize != null && Number.isFinite(style.fontSize)) {
-    css.fontSize = `${style.fontSize}px`;
+  if (isChartTextPartKind(ref.kind)) {
+    css.fontSize = `${resolveChartPartFontSize(ref.kind, style)}px`;
   }
+  if (!style) {
+    return Object.keys(css).length > 0 ? css : undefined;
+  }
+  if (style.fontFamily) css.fontFamily = style.fontFamily;
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;
-  if (style.color) css.color = style.color;
+  if (style.color) {
+    css.color = style.color;
+    /* SVG `<text>` usa `fill`; `color` sozinho não pinta o eixo. */
+    css.fill = style.color;
+  }
   if (style.textAlign) css.textAlign = style.textAlign;
   if (style.verticalAlign === "top") css.justifyContent = "flex-start";
   else if (style.verticalAlign === "middle") css.justifyContent = "center";

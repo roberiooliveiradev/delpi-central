@@ -211,7 +211,8 @@ export function kpiPartCornerAdjFromLocalX(localX: number): number {
 /** Tipografia padrão das partes — mesma base da ribbon Formatar. */
 export const KPI_PART_FONT_SIZE_DEFAULTS = {
   title: 14,
-  value: 48,
+  /** Valor compacto p/ card padrão do deck (evita “100” estourando a altura). */
+  value: 32,
   hint: 12,
 } as const;
 

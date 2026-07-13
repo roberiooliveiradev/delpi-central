@@ -70,7 +70,7 @@
   min-height: 0;
   margin: 0;
   /* Fallback alinhado a KPI_PART_FONT_SIZE_DEFAULTS.value (FitText/fixedPx manda). */
-  font-size: 48px;
+  font-size: 32px;
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.025em;

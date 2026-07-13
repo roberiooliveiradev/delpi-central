@@ -132,7 +132,10 @@ export {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartAreaStyle,
+  resolveChartPartFontSize,
   resolveChartPartFrameRoot,
+  CHART_PART_FONT_SIZE_DEFAULTS,
+  isChartTextPartKind,
   resolveMarkerStyle,
   resolvePlotAreaStyle,
   resolveSeriesLineStyle,
@@ -148,6 +151,7 @@ export {
   type ChartPartState,
   type ChartPartStyle,
   type ChartPartsMap,
+  type ChartTextPartKind,
   type ChartVisualPrimitive,
   type SeriesChartInteraction,
 } from "./seriesChartParts";

@@ -1,7 +1,6 @@
 export {
   CHART_MARKER_RADIUS,
   CHART_PART_DATA_ATTR,
-  CHART_PART_RESIZE_HANDLES,
   CHART_SERIES_LINE_STROKE_WIDTH,
   applyMarkerStyleToAll,
   bindChartPartPointer,
@@ -28,7 +27,10 @@ export {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartAreaStyle,
+  resolveChartPartFontSize,
   resolveChartPartFrameRoot,
+  CHART_PART_FONT_SIZE_DEFAULTS,
+  isChartTextPartKind,
   resolveMarkerStyle,
   resolvePlotAreaStyle,
   resolveSeriesStrokeColor,
@@ -45,5 +47,6 @@ export {
   type ChartPartState as ComunicadoChartPartState,
   type ChartPartStyle as ComunicadoChartPartStyle,
   type ChartPartsMap as ComunicadoChartPartsMap,
+  type ChartTextPartKind as ComunicadoChartTextPartKind,
   type SeriesChartInteraction as ComunicadoChartInteraction,
 } from "@delpi/plugin-ui/index";

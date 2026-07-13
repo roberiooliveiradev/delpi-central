@@ -26,6 +26,7 @@ import {
   COMUNICADO_FONT_SIZE_STEP,
   COMUNICADO_LINE_HEIGHT_OPTIONS,
   COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
+  CHART_PART_FONT_SIZE_DEFAULTS,
   KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
   clampFontSize,
@@ -61,11 +62,13 @@ import { TdRibbonIconButton, TdRibbonSelect } from "../tdRibbonUi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
-const PART_FONT_SIZE_DEFAULT = 16;
 
 /**
  * Fonte + Parágrafo — só renderiza se o objeto selecionado admite tipografia
  * (texto, forma com texto, parte textual de KPI/gráfico).
+ *
+ * O tamanho exibido vem de `resolveSelectedTextFormatTarget` (defaults canônicos
+ * por bloco/parte). Evita default fantasma 16 que não bate com o CSS do gráfico.
  */
 export function FormatRibbonTypographySections() {
   const {
@@ -130,9 +133,16 @@ export function FormatRibbonTypographySections() {
     textFormatTarget.mode === "part" && textFormatTarget.source === "kpi"
       ? selectedKpiPart?.kind
       : null;
+  const chartPartKind =
+    textFormatTarget.mode === "part" && textFormatTarget.source === "chart"
+      ? selectedChartPart?.kind
+      : null;
+  /* Fallback só se o target não trouxe fontSize (não deveria ocorrer após resolve). */
   const fontSizeDefault =
     isTextBlock
-      ? 32
+      ? textBlock!.type === "heading"
+        ? 56
+        : 28
       : isShapeTextTarget
         ? 18
         : kpiPartKind === "value"
@@ -141,7 +151,11 @@ export function FormatRibbonTypographySections() {
             ? KPI_PART_FONT_SIZE_DEFAULTS.title
             : kpiPartKind === "hint"
               ? KPI_PART_FONT_SIZE_DEFAULTS.hint
-              : PART_FONT_SIZE_DEFAULT;
+              : chartPartKind && chartPartKind in CHART_PART_FONT_SIZE_DEFAULTS
+                ? CHART_PART_FONT_SIZE_DEFAULTS[
+                    chartPartKind as keyof typeof CHART_PART_FONT_SIZE_DEFAULTS
+                  ]
+                : 9;
   const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
   const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
   const textAlignActive =

@@ -2,7 +2,10 @@ import {
   chartPartAllowsEdit,
   getChartPartState,
   getKpiPartState,
+  isChartTextPartKind,
+  resolveChartPartFontSize,
   resolveKpiPartFontSize,
+  defaultStyle,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoKpiPartRef,
@@ -109,13 +112,14 @@ export function resolveSelectedTextFormatTarget(params: {
   if (!selected) return null;
 
   if (selected.type === "heading" || selected.type === "text") {
+    const defaults = defaultStyle(selected.type);
     return {
       mode: "block",
       blockId: selected.id,
       blockType: selected.type,
       style: {
         fontFamily: selected.style?.fontFamily,
-        fontSize: selected.style?.fontSize,
+        fontSize: selected.style?.fontSize ?? defaults.fontSize,
         fontWeight: selected.style?.fontWeight,
         fontStyle: selected.style?.fontStyle,
         color: selected.style?.color,
@@ -134,13 +138,14 @@ export function resolveSelectedTextFormatTarget(params: {
   }
 
   if (selected.type === "shape") {
+    const defaults = defaultStyle("shape", selected.shape);
     return {
       mode: "block",
       blockId: selected.id,
       blockType: "shape",
       style: {
         fontFamily: selected.style?.fontFamily,
-        fontSize: selected.style?.fontSize,
+        fontSize: selected.style?.fontSize ?? defaults.fontSize,
         fontWeight: selected.style?.fontWeight,
         fontStyle: selected.style?.fontStyle,
         color: selected.style?.color,
@@ -187,6 +192,7 @@ export function resolveSelectedTextFormatTarget(params: {
 
   if (selected.type === "chart_view" && isChartTextFormatPart(selectedChartPart) && selectedChartPart) {
     const partStyle = getChartPartState(selected.chartParts, selectedChartPart)?.style;
+    const kind = isChartTextPartKind(selectedChartPart.kind) ? selectedChartPart.kind : null;
     return {
       mode: "part",
       source: "chart",
@@ -194,7 +200,7 @@ export function resolveSelectedTextFormatTarget(params: {
       partLabel: chartPartLabel(selectedChartPart),
       style: {
         fontFamily: partStyle?.fontFamily,
-        fontSize: partStyle?.fontSize,
+        fontSize: kind ? resolveChartPartFontSize(kind, partStyle) : partStyle?.fontSize,
         fontWeight: partStyle?.fontWeight,
         fontStyle: partStyle?.fontStyle,
         color: partStyle?.color,
