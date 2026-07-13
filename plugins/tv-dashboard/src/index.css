@@ -476,7 +476,9 @@
   background: color-mix(in srgb, #000 45%, transparent);
   display: grid;
   place-items: center;
-  padding: 16px;
+  padding: max(8px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+    max(8px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
 }
 
 .dashboard-tv-dashboard .td-modal {
@@ -595,20 +597,34 @@
 }
 
 .dashboard-tv-dashboard .td-modal--data-catalog {
-  /* Catálogo denso: aproveita a largura da viewport (chips + path + cards). */
-  width: min(1120px, calc(100vw - 48px));
+  /* Catálogo denso: largura + altura da viewport; um único scroll no body. */
+  width: min(1120px, calc(100vw - 24px));
   max-width: 100%;
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 16px 16px 12px;
+}
+
+.dashboard-tv-dashboard .td-modal--data-catalog .td-modal__header {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
 }
 
 .dashboard-tv-dashboard .td-modal--data-catalog .td-modal__body {
-  max-height: min(84vh, 820px);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 0;
 }
 
 .dashboard-tv-dashboard .td-modal--data-catalog .td-data-routes-panel {
-  padding: 4px 14px 10px;
+  padding: 4px 4px 10px;
   gap: 6px;
   min-width: 0;
   max-width: 100%;
@@ -622,6 +638,9 @@
   min-width: 0;
   max-width: 100%;
   gap: 5px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* No modal largo, chips quebram linha em vez de forçar scroll horizontal. */
@@ -629,6 +648,7 @@
   flex-wrap: wrap;
   overflow-x: visible;
   row-gap: 4px;
+  flex: 0 0 auto;
 }
 
 .dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog__card,
@@ -638,7 +658,10 @@
 }
 
 .dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog__groups {
-  max-height: min(64vh, 620px);
+  /* Lista cresce com o body — evita segundo scrollbar interno. */
+  max-height: none;
+  overflow: visible;
+  flex: 0 0 auto;
 }
 
 .dashboard-tv-dashboard .td-data-route-list {
