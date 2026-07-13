@@ -35,7 +35,7 @@ describe("ribbon density contract", () => {
       /\.td-deck-ribbon--compact\.td-deck-ribbon--fit\s*\{[^}]+\}/s,
     )?.[0];
     expect(fit).toMatch(/height:\s*auto/);
-    expect(fit).toMatch(/max-height:\s*120px/);
+    expect(fit).toMatch(/max-height:\s*min\(220px,\s*34vh\)/);
   });
 
   it("tokens de densidade chrome PPT estão declarados", () => {
@@ -45,9 +45,9 @@ describe("ribbon density contract", () => {
     expect(css).toMatch(/--td-chrome-tab-height:\s*36px/);
   });
 
-  it("chrome clipa ribbon fit para não vazar conteúdo no palco", () => {
+  it("chrome usa scroll X no ribbon fit (faixa única) e clipa Y", () => {
     expect(css).toMatch(
-      /\.td-deck-chrome__ribbon:has\(\.td-deck-ribbon--fit\)\s*\{[^}]*overflow-y:\s*hidden/s,
+      /\.td-deck-chrome__ribbon:has\(\.td-deck-ribbon--fit\)\s*\{[^}]*overflow-x:\s*auto/s,
     );
     expect(css).toMatch(
       /\.td-deck-chrome__ribbon \.td-deck-ribbon--fit\s*\{[^}]*overflow-y:\s*hidden/s,
@@ -74,7 +74,7 @@ describe("ribbon density contract", () => {
 
   it("inputs de frame têm largura legível (≥72px)", () => {
     expect(css).toMatch(
-      /\.td-deck-ribbon--compact \.td-deck-ribbon__frame-grid\s*\{[^}]*minmax\(76px/s,
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__frame-grid\s*\{[^}]*flex-wrap:\s*nowrap/s,
     );
     expect(css).toMatch(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__number--compact\s*\{[^}]*width:\s*72px/s,

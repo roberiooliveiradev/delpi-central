@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TabHintCell } from "@delpi/plugin-ui/index";
+import { TabHintCell, TabPanelTransition } from "@delpi/plugin-ui/index";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
 import {
@@ -176,9 +176,11 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       </div>
 
       <div className="td-deck-chrome__ribbon">
-        <DeckRibbonShell density={ribbonDensityFor(activeTab)}>
-          <ComunicadoRibbonContent activeTab={activeTab} labels={labels} />
-        </DeckRibbonShell>
+        <TabPanelTransition tabKey={activeTab} className="td-deck-chrome__ribbon-panel">
+          <DeckRibbonShell density={ribbonDensityFor(activeTab)}>
+            <ComunicadoRibbonContent activeTab={activeTab} labels={labels} />
+          </DeckRibbonShell>
+        </TabPanelTransition>
       </div>
 
       <Modal

@@ -15,7 +15,28 @@ describe("ribbon table style checks layout", () => {
       /\.td-deck-ribbon__frame-grid\s*\{[^}]*flex-wrap:\s*nowrap/s,
     );
     expect(css).toMatch(
-      /\.td-deck-ribbon--compact\.td-deck-ribbon--fit\s*\{[^}]*overflow-y:\s*auto/s,
+      /\.td-deck-ribbon--compact\.td-deck-ribbon--fit\s*\{[^}]*overflow-x:\s*auto/s,
     );
+  });
+
+  it("Posição e Organizar seguem na mesma faixa (depois de Eixos / último grupo)", () => {
+    const css = readFileSync(resolve(__dirname, "../index.css"), "utf8");
+    expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__groups\s*\{[^}]*flex-wrap:\s*nowrap/s,
+    );
+    expect(css).toMatch(
+      /\.td-deck-ribbon__group-cluster\s*\{[^}]*flex-wrap:\s*nowrap/s,
+    );
+  });
+
+  it("abas e tiles da ribbon têm transição suave (e respeitam reduced-motion)", () => {
+    const css = readFileSync(resolve(__dirname, "../index.css"), "utf8");
+    expect(css).toMatch(
+      /\.td-deck-chrome__tab\s*\{[^}]*transition:[^}]*border-bottom-color/s,
+    );
+    expect(css).toMatch(/\.td-ribbon-tile\s*\{[^}]*transition:/s);
+    expect(css).toContain("td-deck-ribbon-panel-enter");
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(css).toContain(".td-deck-chrome__ribbon-panel {\n    animation: none;");
   });
 });

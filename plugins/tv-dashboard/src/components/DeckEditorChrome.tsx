@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { TabHintCell } from "@delpi/plugin-ui/index";
+import { TabHintCell, TabPanelTransition } from "@delpi/plugin-ui/index";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
 import {
@@ -273,44 +273,46 @@ export function DeckEditorChrome({
 
       {showRibbon ? (
         <div className="td-deck-chrome__ribbon">
-          <DeckRibbonShell
-            density={ribbonDensityFor(activeTab)}
-            label={
-              activeTab === "playlist"
-                ? "Programação"
-                : activeTab === "slide"
-                  ? "Tela"
-                  : "Controles de slide"
-            }
-          >
-            {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
-            {isCustomSlide &&
-            (activeTab === "insert" ||
-              activeTab === "element" ||
-              activeTab === "tableDesign" ||
-              activeTab === "tableLayout" ||
-              activeTab === "data" ||
-              activeTab === "view") ? (
-              <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
-            ) : null}
-            {activeTab === "slide" || activeTab === "playlist" ? (
-              <div className="td-deck-ribbon__groups">
-                {activeTab === "slide" && isCustomSlide ? (
-                  <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
-                ) : null}
-                <DeckSettingsPanel
-                  activeTab={activeTab}
-                  playlist={playlist}
-                  slide={slide}
-                  catalog={catalog}
-                  branchScope={branchScope}
-                  slideTabExtra={slideTabExtra}
-                  onSavePlaylistSettings={onSavePlaylistSettings}
-                  onSaveSlide={onSaveSlide}
-                />
-              </div>
-            ) : null}
-          </DeckRibbonShell>
+          <TabPanelTransition tabKey={activeTab} className="td-deck-chrome__ribbon-panel">
+            <DeckRibbonShell
+              density={ribbonDensityFor(activeTab)}
+              label={
+                activeTab === "playlist"
+                  ? "Programação"
+                  : activeTab === "slide"
+                    ? "Tela"
+                    : "Controles de slide"
+              }
+            >
+              {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
+              {isCustomSlide &&
+              (activeTab === "insert" ||
+                activeTab === "element" ||
+                activeTab === "tableDesign" ||
+                activeTab === "tableLayout" ||
+                activeTab === "data" ||
+                activeTab === "view") ? (
+                <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
+              ) : null}
+              {activeTab === "slide" || activeTab === "playlist" ? (
+                <div className="td-deck-ribbon__groups">
+                  {activeTab === "slide" && isCustomSlide ? (
+                    <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
+                  ) : null}
+                  <DeckSettingsPanel
+                    activeTab={activeTab}
+                    playlist={playlist}
+                    slide={slide}
+                    catalog={catalog}
+                    branchScope={branchScope}
+                    slideTabExtra={slideTabExtra}
+                    onSavePlaylistSettings={onSavePlaylistSettings}
+                    onSaveSlide={onSaveSlide}
+                  />
+                </div>
+              ) : null}
+            </DeckRibbonShell>
+          </TabPanelTransition>
         </div>
       ) : null}
 
