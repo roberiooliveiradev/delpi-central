@@ -153,7 +153,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           className="td-chart-float__portal"
           role="menu"
         >
-          <div ref={popoverRef} className="td-chart-float__popover td-chart-float__popover--cascade">
+          <div className="td-chart-float__popover td-chart-float__popover--cascade">
             <ChartAddElementMenu
               options={options}
               chartKind={chartKind}
@@ -173,24 +173,27 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           className="td-chart-float__portal"
           role="menu"
+          aria-label="Cores e estilos do gráfico"
         >
-          <div ref={popoverRef} className="td-chart-float__popover">
+          <div className="td-chart-float__popover td-chart-float__popover--style">
             <ChartColorsStylesMenu
               options={options}
               onApplyOptions={(next) => {
                 persistOptions(next);
                 setPanel(null);
               }}
+              footer={
+                <button
+                  type="button"
+                  className="td-deck-ribbon__cascade-item"
+                  onClick={() => {
+                    toggleElement("legend", !isChartElementEnabled("legend", options));
+                  }}
+                >
+                  {isChartElementEnabled("legend", options) ? "Ocultar legenda" : "Mostrar legenda"}
+                </button>
+              }
             />
-            <button
-              type="button"
-              className="td-deck-ribbon__cascade-item"
-              onClick={() => {
-                toggleElement("legend", !isChartElementEnabled("legend", options));
-              }}
-            >
-              {isChartElementEnabled("legend", options) ? "Ocultar legenda" : "Mostrar legenda"}
-            </button>
           </div>
         </AnchoredPanelPortal>
       ) : null}
@@ -204,8 +207,9 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           className="td-chart-float__portal"
           role="menu"
+          aria-label="Dados do gráfico"
         >
-          <div ref={popoverRef} className="td-chart-float__popover td-chart-float__popover--actions">
+          <div className="td-chart-float__popover td-chart-float__popover--actions">
             <button
               type="button"
               className="td-deck-ribbon__cascade-item"

@@ -2635,8 +2635,9 @@
 }
 
 .dashboard-tv-dashboard .td-chart-float__popover {
-  max-height: 280px;
+  max-height: min(70vh, 520px);
   overflow: auto;
+  box-sizing: border-box;
 }
 
 .dashboard-tv-dashboard .td-chart-float__popover--cascade {
@@ -2644,8 +2645,32 @@
   overflow: visible;
 }
 
+/* Menu «Selecionar dados…» — chrome próprio (cascade-item é transparente). */
+.dashboard-tv-dashboard .td-chart-float__popover--actions {
+  max-height: none;
+  overflow: visible;
+  min-width: 200px;
+  padding: 6px 0;
+  border: 1px solid var(--td-border);
+  border-radius: var(--td-chrome-radius);
+  background: var(--td-surface);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+  color: var(--td-text);
+}
+
 .dashboard-tv-dashboard .td-chart-float__popover--actions .td-deck-ribbon__cascade-item {
   min-width: 200px;
+}
+
+/* Estilos: um único scroll no menu chrome (legenda no footer). */
+.dashboard-tv-dashboard .td-chart-float__popover--style {
+  max-height: min(70vh, 520px);
+  overflow: auto;
+}
+
+.dashboard-tv-dashboard .td-chart-float__popover--style .td-chart-style-menu {
+  max-width: none;
+  box-shadow: none;
 }
 
 /* Adicionar elemento — cascata PPT (raiz + flyout) */
@@ -3006,6 +3031,18 @@
   border-radius: var(--td-chrome-radius);
   background: var(--td-surface);
   box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+  color: var(--td-text);
+  box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__footer {
+  margin: 4px -12px -10px;
+  padding: 4px 0 6px;
+  border-top: 1px solid var(--td-border);
+}
+
+.dashboard-tv-dashboard .td-chart-style-menu__footer .td-deck-ribbon__cascade-item {
+  color: inherit;
 }
 
 .dashboard-tv-dashboard .td-chart-style-menu__section {

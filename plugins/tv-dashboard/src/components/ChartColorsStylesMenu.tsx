@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ComunicadoChartOptions } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -13,10 +14,12 @@ import {
 type Props = {
   options: ComunicadoChartOptions;
   onApplyOptions: (next: ComunicadoChartOptions) => void;
+  /** Ações extras (ex.: legenda) dentro do mesmo chrome do menu. */
+  footer?: ReactNode;
 };
 
 /** Painel compartilhado Alterar Cores / Estilos (ribbon + float pincel). */
-export function ChartColorsStylesMenu({ options, onApplyOptions }: Props) {
+export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props) {
   const applyPalette = (palette: ChartColorPalette) => {
     onApplyOptions(applyChartColorPalette(palette, options));
   };
@@ -88,6 +91,8 @@ export function ChartColorsStylesMenu({ options, onApplyOptions }: Props) {
           })}
         </div>
       </section>
+
+      {footer ? <div className="td-chart-style-menu__footer">{footer}</div> : null}
     </div>
   );
 }

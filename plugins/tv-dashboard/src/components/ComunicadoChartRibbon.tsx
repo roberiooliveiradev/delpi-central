@@ -178,7 +178,7 @@ export function ComunicadoChartRibbon() {
                 role="menu"
                 aria-label="Adicionar elemento de gráfico"
               >
-                <div ref={addElementPanelRef}>
+                <div>
                   <ChartAddElementMenu
                     options={options}
                     chartKind={chartKind}
@@ -212,7 +212,7 @@ export function ComunicadoChartRibbon() {
                 role="menu"
                 aria-label="Layout rápido"
               >
-                <div ref={layoutPanelRef} className="td-chart-quick-layout">
+                <div className="td-chart-quick-layout">
                   {CHART_QUICK_LAYOUTS.map((layout) => (
                     <button
                       key={layout.id}
@@ -258,7 +258,7 @@ export function ComunicadoChartRibbon() {
               role="menu"
               aria-label="Alterar cores e estilos"
             >
-              <div ref={colorsPanelRef} className="td-chart-float__popover">
+              <div className="td-chart-float__popover td-chart-float__popover--style">
                 <ChartColorsStylesMenu
                   options={options}
                   onApplyOptions={(next) => {
