@@ -1,10 +1,11 @@
 import { ChevronLeft, Database, Layers, MousePointer2 } from "lucide-react";
 import { FormatPaneShell } from "@delpi/plugin-ui/index";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, type CSSProperties } from "react";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { useDeckSidePanelLayout } from "../../hooks/useDeckSidePanelLayout";
 import type { SelectionPanelTab } from "../comunicadoEditorContextCore";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectedDataSidePanel } from "../SelectedDataSidePanel";
@@ -44,7 +45,9 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     setSelectionPanelTab,
     requestRibbonTab,
   } = useComunicadoEditor();
-  const [open, setOpen] = useState(true);
+  const { collapsed, setCollapsed, startResize, panelWidthPx, limits, width } =
+    useDeckSidePanelLayout("inspector", { growDirection: "west" });
+  const open = !collapsed;
 
   const dataContext = useMemo(
     () => resolveSelectedDataContext(blocks, selectedIds),
@@ -52,15 +55,15 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   );
 
   useEffect(() => {
-    if (selectedIds.length > 0) setOpen(true);
-  }, [selectedIds]);
+    if (selectedIds.length > 0) setCollapsed(false);
+  }, [selectedIds, setCollapsed]);
 
   useEffect(() => {
     if (dataPanelOpen) {
-      setOpen(true);
+      setCollapsed(false);
       setSelectionPanelTab("data");
     }
-  }, [dataPanelOpen, setSelectionPanelTab]);
+  }, [dataPanelOpen, setCollapsed, setSelectionPanelTab]);
 
   const tab = selectionPanelTab;
 
@@ -87,6 +90,10 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     }
   }
 
+  const panelStyle = {
+    "--td-side-panel-width": `${open ? width : panelWidthPx}px`,
+  } as CSSProperties;
+
   return (
     <aside
       className={[
@@ -96,44 +103,57 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
       ]
         .filter(Boolean)
         .join(" ")}
+      style={panelStyle}
       aria-label="Painel de formatação"
     >
       {open ? (
-        <FormatPaneShell
-          className="td-deck-side-panel__pane"
-          title={panelTitle}
-          closeLabel="Fechar painel de formatação"
-          onClose={() => setOpen(false)}
-          tabs={PANEL_TABS}
-          activeTabId={tab}
-          onTabChange={(id) => handleTabChange(id as SelectionPanelTab)}
-          bodyClassName="td-deck-side-panel__pane-body"
-        >
-          {tab === "element" ? (
-            <ComunicadoElementInspector
-              labels={labels}
-              placement="side"
-              branchScope={branchScope}
-              onOpenDataSources={() => openDataCatalog()}
-            />
-          ) : tab === "data" ? (
-            <SelectedDataSidePanel
-              branchScope={branchScope}
-              onInserted={() => handleTabChange("element")}
-              onOpenCatalog={() => openDataCatalog()}
-            />
-          ) : (
-            <ComunicadoLayersPanel />
-          )}
-        </FormatPaneShell>
+        <>
+          <div
+            className="td-deck-panel-resize td-deck-panel-resize--west"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Redimensionar painel de formatação"
+            aria-valuenow={width}
+            aria-valuemin={limits.minWidth}
+            aria-valuemax={limits.maxWidth}
+            onPointerDown={startResize}
+          />
+          <FormatPaneShell
+            className="td-deck-side-panel__pane"
+            title={panelTitle}
+            closeLabel="Recolher painel de formatação"
+            onClose={() => setCollapsed(true)}
+            tabs={PANEL_TABS}
+            activeTabId={tab}
+            onTabChange={(id) => handleTabChange(id as SelectionPanelTab)}
+            bodyClassName="td-deck-side-panel__pane-body"
+          >
+            {tab === "element" ? (
+              <ComunicadoElementInspector
+                labels={labels}
+                placement="side"
+                branchScope={branchScope}
+                onOpenDataSources={() => openDataCatalog()}
+              />
+            ) : tab === "data" ? (
+              <SelectedDataSidePanel
+                branchScope={branchScope}
+                onInserted={() => handleTabChange("element")}
+                onOpenCatalog={() => openDataCatalog()}
+              />
+            ) : (
+              <ComunicadoLayersPanel />
+            )}
+          </FormatPaneShell>
+        </>
       ) : (
         <div className="td-deck-side-panel__collapsed-rail">
           <button
             type="button"
             className="td-deck-side-panel__reopen"
-            onClick={() => setOpen(true)}
-            aria-label="Abrir painel de formatação"
-            title="Abrir painel"
+            onClick={() => setCollapsed(false)}
+            aria-label="Expandir painel de formatação"
+            title="Expandir painel"
           >
             <ChevronLeft size={18} aria-hidden="true" />
           </button>
@@ -141,7 +161,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
             type="button"
             className={`td-deck-side-panel__rail-btn${tab === "element" ? " td-deck-side-panel__rail-btn--active" : ""}`}
             onClick={() => {
-              setOpen(true);
+              setCollapsed(false);
               handleTabChange("element");
             }}
             aria-label="Elemento"
@@ -153,7 +173,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
             type="button"
             className={`td-deck-side-panel__rail-btn${tab === "data" ? " td-deck-side-panel__rail-btn--active" : ""}`}
             onClick={() => {
-              setOpen(true);
+              setCollapsed(false);
               handleTabChange("data");
             }}
             aria-label="Dados"
@@ -165,7 +185,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
             type="button"
             className={`td-deck-side-panel__rail-btn${tab === "layers" ? " td-deck-side-panel__rail-btn--active" : ""}`}
             onClick={() => {
-              setOpen(true);
+              setCollapsed(false);
               handleTabChange("layers");
             }}
             aria-label="Camadas"

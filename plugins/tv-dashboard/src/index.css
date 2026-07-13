@@ -260,8 +260,9 @@
   gap: 6px;
 }
 
-/* Layout do campo — visual do controle vem de `.delpi-ui-native-control` (plugin-ui). */
-.dashboard-tv-dashboard .td-field input,
+/* Layout do campo — visual do controle vem de `.delpi-ui-native-control` (plugin-ui).
+   Checkbox/radio/file NÃO recebem width:100% (estica o input e corta o rótulo). */
+.dashboard-tv-dashboard .td-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 .dashboard-tv-dashboard .td-field select,
 .dashboard-tv-dashboard .td-field textarea {
   width: 100%;
@@ -269,7 +270,7 @@
   box-sizing: border-box;
 }
 
-.dashboard-tv-dashboard .td-field input:not(.delpi-ui-native-control),
+.dashboard-tv-dashboard .td-field input:not(.delpi-ui-native-control):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 .dashboard-tv-dashboard .td-field select:not(.delpi-ui-native-control),
 .dashboard-tv-dashboard .td-field textarea:not(.delpi-ui-native-control) {
   border: 1px solid var(--td-border);
@@ -3271,7 +3272,7 @@
   --delpi-ui-control-radius: 8px;
 }
 
-.dashboard-tv-dashboard .td-deck-chrome__panel--compact .td-deck-inspector__section--compact .td-field input:not(.delpi-ui-native-control),
+.dashboard-tv-dashboard .td-deck-chrome__panel--compact .td-deck-inspector__section--compact .td-field input:not(.delpi-ui-native-control):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 .dashboard-tv-dashboard .td-deck-chrome__panel--compact .td-deck-inspector__section--compact .td-field select:not(.delpi-ui-native-control) {
   height: 28px;
   min-height: 28px;
@@ -3352,7 +3353,7 @@
   margin-bottom: 0;
 }
 
-.dashboard-tv-dashboard .td-deck-chrome__panel--compact .td-field input:not(.delpi-ui-native-control),
+.dashboard-tv-dashboard .td-deck-chrome__panel--compact .td-field input:not(.delpi-ui-native-control):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 .dashboard-tv-dashboard .td-deck-chrome__panel--compact .td-field select:not(.delpi-ui-native-control) {
   height: 28px;
   min-height: 28px;
@@ -3484,7 +3485,8 @@
 
 .dashboard-tv-dashboard .td-deck__workspace {
   display: grid;
-  grid-template-columns: 196px minmax(0, 1fr);
+  /* auto = largura do filmstrip-shell (CSS var / recolhido); não fixar 196px no grid. */
+  grid-template-columns: auto minmax(0, 1fr);
   /* Linha com piso 0 — senão a altura segue o filmstrip e o scroll some. */
   grid-template-rows: minmax(0, 1fr);
   gap: 10px;
@@ -3492,6 +3494,62 @@
   min-height: 0;
   align-items: stretch;
   overflow: hidden;
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip-shell {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: var(--td-filmstrip-width, 196px);
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip-shell--collapsed {
+  width: var(--td-filmstrip-width, 40px);
+}
+
+.dashboard-tv-dashboard .td-deck-panel-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 4;
+  touch-action: none;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.dashboard-tv-dashboard .td-deck-panel-resize--east {
+  right: -4px;
+}
+
+.dashboard-tv-dashboard .td-deck-panel-resize--west {
+  left: -4px;
+}
+
+.dashboard-tv-dashboard .td-deck-panel-resize::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 3px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--td-border) 85%, transparent);
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, width 0.15s ease;
+}
+
+.dashboard-tv-dashboard .td-deck-panel-resize:hover::after,
+.dashboard-tv-dashboard .td-deck-panel-resize:active::after {
+  opacity: 1;
+  width: 4px;
+  background: color-mix(in srgb, var(--td-accent) 70%, var(--td-border));
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel {
@@ -3525,14 +3583,15 @@
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--open {
-  width: min(320px, 36vw);
-  min-width: 280px;
-  max-width: 36vw;
+  position: relative;
+  width: var(--td-side-panel-width, 320px);
+  min-width: 260px;
+  max-width: min(560px, 48vw);
   border-left: 1px solid var(--td-border);
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--collapsed {
-  width: 36px;
+  width: var(--td-side-panel-width, 36px);
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel__pane {
@@ -4383,7 +4442,7 @@
 
 @media (max-width: 1100px) {
   .dashboard-tv-dashboard .td-deck__workspace {
-    grid-template-columns: 180px minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
   }
 
@@ -4392,7 +4451,7 @@
   }
 
   .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--open {
-    width: min(280px, 42%);
+    width: var(--td-side-panel-width, min(280px, 42%));
     min-width: 220px;
   }
 }
@@ -4401,6 +4460,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
   height: 100%;
   max-height: 100%;
@@ -4409,6 +4470,58 @@
   border-radius: 0;
   border: 1px solid var(--td-border);
   background: color-mix(in srgb, var(--td-text) 4%, var(--td-surface));
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip--collapsed {
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip__toolbar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--td-muted);
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip__collapse,
+.dashboard-tv-dashboard .td-deck-filmstrip__reopen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--td-muted);
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip__collapse:hover,
+.dashboard-tv-dashboard .td-deck-filmstrip__reopen:hover {
+  color: var(--td-text);
+  background: color-mix(in srgb, var(--td-accent) 10%, transparent);
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip__rail-icon {
+  display: inline-flex;
+  color: var(--td-muted);
+}
+
+.dashboard-tv-dashboard .td-deck-filmstrip__rail-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--td-muted);
 }
 
 .dashboard-tv-dashboard .td-deck-filmstrip__empty {
@@ -4700,15 +4813,41 @@
 
 .dashboard-tv-dashboard .td-deck-inspector__checkbox {
   display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
+  width: auto;
+  max-width: 100%;
   font-size: 13px;
   color: var(--td-text);
   cursor: pointer;
 }
 
-.dashboard-tv-dashboard .td-deck-inspector__checkbox input {
+.dashboard-tv-dashboard .td-deck-inspector__checkbox input,
+.dashboard-tv-dashboard .td-field .delpi-ui-native-checkbox input,
+.dashboard-tv-dashboard .td-field .td-deck-inspector__checkbox input {
+  width: 1rem;
+  height: 1rem;
+  max-width: 1rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  flex: 0 0 auto;
   accent-color: var(--td-accent);
+}
+
+.dashboard-tv-dashboard .td-field .delpi-ui-native-checkbox {
+  width: auto;
+  max-width: 100%;
+}
+
+.dashboard-tv-dashboard .td-field .delpi-ui-native-checkbox__copy,
+.dashboard-tv-dashboard .td-field .delpi-ui-native-checkbox__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-tv-dashboard .td-deck-inspector__value-fields {
@@ -4888,7 +5027,7 @@
   min-width: 0;
 }
 
-.dashboard-tv-dashboard .td-deck-inspector--side .td-field input,
+.dashboard-tv-dashboard .td-deck-inspector--side .td-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 .dashboard-tv-dashboard .td-deck-inspector--side .td-field textarea,
 .dashboard-tv-dashboard .td-deck-inspector--side .td-field select {
   width: 100%;
@@ -4898,7 +5037,7 @@
   font-size: 11px;
 }
 
-.dashboard-tv-dashboard .td-field--compact input:not(.delpi-ui-native-control) {
+.dashboard-tv-dashboard .td-field--compact input:not(.delpi-ui-native-control):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]) {
   padding: 6px 8px;
   font-size: 13px;
   width: 100%;

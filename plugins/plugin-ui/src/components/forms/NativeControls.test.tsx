@@ -69,6 +69,9 @@ describe("NativeCheckboxControl", () => {
     const css = readFileSync(cssPath, "utf8");
     expect(css).toMatch(/\.delpi-ui-native-checkbox\s*\{[^}]*flex-direction:\s*row/s);
     expect(css).toMatch(/\.delpi-ui-native-switch\s*\{[^}]*flex-direction:\s*row/s);
+    expect(css).toMatch(
+      /\.delpi-ui-native-checkbox input\s*\{[^}]*max-width:\s*1rem/s,
+    );
   });
 });
 
