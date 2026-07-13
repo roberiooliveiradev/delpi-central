@@ -11,6 +11,7 @@ export type ConfirmModalProps = {
   cancelLabel?: string;
   confirmBusy?: boolean;
   variant?: "default" | "danger";
+  showCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -27,6 +28,7 @@ export function ConfirmModal({
   cancelLabel = "Cancelar",
   confirmBusy = false,
   variant = "default",
+  showCancel = true,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
@@ -38,6 +40,7 @@ export function ConfirmModal({
         cancelLabel={cancelLabel}
         confirmBusy={confirmBusy}
         variant={variant}
+        showCancel={showCancel}
         onConfirm={onConfirm}
         onCancel={onCancel}
         classNames={confirmModalTvClasses()}

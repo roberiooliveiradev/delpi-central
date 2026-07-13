@@ -15,6 +15,8 @@ export type ConfirmModalPanelProps = {
   confirmBusy?: boolean;
   confirmBusyLabel?: string;
   variant?: "default" | "danger";
+  /** Quando false, só o botão de confirmar (alerta/aviso, sem Cancelar). */
+  showCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   classNames: ConfirmModalClassNames;
@@ -57,6 +59,7 @@ export function ConfirmModalPanel({
   confirmBusy = false,
   confirmBusyLabel = "Aguarde…",
   variant = "default",
+  showCancel = true,
   onConfirm,
   onCancel,
   classNames,
@@ -68,9 +71,11 @@ export function ConfirmModalPanel({
     <>
       <p className={classNames.message}>{message}</p>
       <div className={classNames.actions}>
-        <button type="button" className={classNames.cancelButton} disabled={confirmBusy} onClick={onCancel}>
-          {cancelLabel}
-        </button>
+        {showCancel ? (
+          <button type="button" className={classNames.cancelButton} disabled={confirmBusy} onClick={onCancel}>
+            {cancelLabel}
+          </button>
+        ) : null}
         <button type="button" className={confirmButtonClass} disabled={confirmBusy} onClick={onConfirm}>
           {confirmBusy ? confirmBusyLabel : confirmLabel}
         </button>

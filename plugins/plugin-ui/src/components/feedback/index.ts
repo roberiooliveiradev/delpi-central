@@ -30,6 +30,11 @@ export {
   type PendingConfirmDialog,
 } from "./useConfirmDialog";
 export {
+  useNoticeDialogController,
+  type NoticeDialogOptions,
+  type PendingNoticeDialog,
+} from "./useNoticeDialog";
+export {
   ConfirmModalPanel,
   confirmModalBemClasses,
   confirmModalPacClasses,

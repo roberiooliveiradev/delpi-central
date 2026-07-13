@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { ConfirmDialogProvider } from "./context/ConfirmDialogProvider";
+import { NoticeDialogProvider } from "./context/NoticeDialogProvider";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
 import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
@@ -142,32 +143,34 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   }
 
   return (
-    <ConfirmDialogProvider>
-      <div
-        className={[
-          "dashboard-tv-dashboard",
-          "dashboard-page",
-          isFullscreenView ? "td-app-shell--preview" : null,
-          deckChrome ? "dashboard-page--deck-edit" : null,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <div className={`td-app-shell${deckChrome ? " td-app-shell--deck" : ""}`}>
-          {!isFullscreenView && !isDeckEditor ? (
-            <header className="td-hero">
-              <p className="td-eyebrow">Operações · Displays</p>
-              <h1 className="td-title">Painéis TV</h1>
-              <p className="td-subtitle">
-                Crie programações rotativas para TVs da empresa e compartilhe um link público sem login.
-              </p>
-            </header>
-          ) : null}
-          <div className={deckChrome ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
-            {renderBody()}
+    <NoticeDialogProvider>
+      <ConfirmDialogProvider>
+        <div
+          className={[
+            "dashboard-tv-dashboard",
+            "dashboard-page",
+            isFullscreenView ? "td-app-shell--preview" : null,
+            deckChrome ? "dashboard-page--deck-edit" : null,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className={`td-app-shell${deckChrome ? " td-app-shell--deck" : ""}`}>
+            {!isFullscreenView && !isDeckEditor ? (
+              <header className="td-hero">
+                <p className="td-eyebrow">Operações · Displays</p>
+                <h1 className="td-title">Painéis TV</h1>
+                <p className="td-subtitle">
+                  Crie programações rotativas para TVs da empresa e compartilhe um link público sem login.
+                </p>
+              </header>
+            ) : null}
+            <div className={deckChrome ? "td-app-shell__body td-app-shell__body--deck" : "td-app-shell__body"}>
+              {renderBody()}
+            </div>
           </div>
         </div>
-      </div>
-    </ConfirmDialogProvider>
+      </ConfirmDialogProvider>
+    </NoticeDialogProvider>
   );
 }
