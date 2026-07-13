@@ -167,7 +167,14 @@ class ChatDrawingCustomerReferenceCrossCheckService:
         source_meta = meta.get("sourceMetadata")
 
         if isinstance(source_meta, dict):
-            for key in ("stampText", "titleText", "fullText", "cadText"):
+            for key in ChatDrawingPatternsService.pdf_haystack_source_metadata_keys():
+                value = str(source_meta.get(key) or "").strip()
+
+                if value:
+                    chunks.append(value)
+
+            # Compat: chaves legadas além do catálogo JSON
+            for key in ("titleText", "fullText", "cadText"):
                 value = str(source_meta.get(key) or "").strip()
 
                 if value:

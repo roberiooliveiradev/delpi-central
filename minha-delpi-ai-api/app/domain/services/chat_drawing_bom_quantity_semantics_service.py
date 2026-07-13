@@ -61,7 +61,11 @@ class ChatDrawingBomQuantitySemanticsService:
 
     @classmethod
     def collect_structure_segment_reference_mm(cls, root: dict) -> set[float]:
-        """Valores da SG1010 (1º nível) comparáveis a cotas em mm — com conversão MI/MT."""
+        """Valores da SG1010 (1º nível) comparáveis a cotas em mm — com conversão MI/MT.
+
+        Inclui comprimentos declarados na descrição de MP/consumível (COMP 750MM,
+        3,6X150MM) para não confrontar cotas de material com comprimento 50xx.
+        """
         structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
         batch_scale = cls.batch_scale_for_root(root)
         piece_units = ChatDrawingPatternsService.piece_count_units()
@@ -78,6 +82,9 @@ class ChatDrawingBomQuantitySemanticsService:
 
             if not code or ChatDrawingPatternsService.is_intermediate_family(code):
                 continue
+
+            description = str(item.get("description") or "")
+            values.update(cls.parse_mp_description_length_mm(description))
 
             unit = cls._item_unit(item)
             quantity = cls._parse_quantity(item.get("quantity"))
@@ -102,6 +109,33 @@ class ChatDrawingBomQuantitySemanticsService:
 
                 if per_piece_mm is not None:
                     values.add(per_piece_mm)
+
+        return values
+
+    @classmethod
+    def parse_mp_description_length_mm(cls, description: str) -> set[float]:
+        """Extrai mm tipicos de descrição MP (tubo COMP, abraçadeira XxYMM)."""
+        text = str(description or "").strip().upper()
+
+        if not text:
+            return set()
+
+        values: set[float] = set()
+        max_segment = ChatDrawingPatternsService.max_segment_length_mm()
+
+        for pattern in ChatDrawingPatternsService.mp_description_length_mm_patterns():
+            for match in pattern.finditer(text):
+                raw = next((group for group in match.groups() if group), None)
+
+                if raw is None:
+                    continue
+
+                parsed = cls._parse_quantity(str(raw).replace(",", "."))
+
+                if parsed is None or parsed <= 0 or parsed > max_segment:
+                    continue
+
+                values.add(float(parsed))
 
         return values
 

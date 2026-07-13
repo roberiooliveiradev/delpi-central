@@ -203,10 +203,12 @@ class ChatDrawingDimensionsExtractionService:
             dimensions["cotaDecapeValuesMm"] = list(dict.fromkeys(cota_decape_values))
 
         if segment_lengths:
-            dimensions["segmentLengthsMm"] = segment_lengths
+            dimensions["segmentLengthsMm"] = cls.filter_plausible_segment_lengths(
+                segment_lengths
+            )
 
-        if segment_lengths and dimensions["totalLengthMm"] is None:
-            dimensions["totalLengthMm"] = max(segment_lengths)
+        if dimensions.get("segmentLengthsMm") and dimensions["totalLengthMm"] is None:
+            dimensions["totalLengthMm"] = max(dimensions["segmentLengthsMm"])
 
         for key in ("totalLengthMm", "leftDecapeMm", "rightDecapeMm"):
             value = dimensions.get(key)
@@ -355,16 +357,24 @@ class ChatDrawingDimensionsExtractionService:
         ) is not None:
             resolved["totalLengthMm"] = fallback_dims["totalLengthMm"]
 
+        if resolved.get("segmentLengthsMm"):
+            resolved["segmentLengthsMm"] = cls.filter_plausible_segment_lengths(
+                resolved.get("segmentLengthsMm")
+            )
+
         if cls._segment_lengths_implausible(resolved.get("segmentLengthsMm")):
             for source in (fallback_dims, region_dims):
                 segments = source.get("segmentLengthsMm") if isinstance(source, dict) else None
+                plausible = cls.filter_plausible_segment_lengths(segments)
 
-                if segments and not cls._segment_lengths_implausible(segments):
-                    resolved["segmentLengthsMm"] = segments
+                if plausible:
+                    resolved["segmentLengthsMm"] = plausible
                     break
         elif fallback_dims.get("segmentLengthsMm"):
             resolved_segments = list(resolved.get("segmentLengthsMm") or [])
-            fallback_segments = list(fallback_dims.get("segmentLengthsMm") or [])
+            fallback_segments = cls.filter_plausible_segment_lengths(
+                fallback_dims.get("segmentLengthsMm")
+            )
 
             if (
                 resolved_segments
@@ -377,9 +387,10 @@ class ChatDrawingDimensionsExtractionService:
         if not resolved["segmentLengthsMm"]:
             for source in (fallback_dims, region_dims):
                 segments = source.get("segmentLengthsMm") if isinstance(source, dict) else None
+                plausible = cls.filter_plausible_segment_lengths(segments)
 
-                if segments:
-                    resolved["segmentLengthsMm"] = segments
+                if plausible:
+                    resolved["segmentLengthsMm"] = plausible
                     break
 
         if not resolved["cotaDecapeValuesMm"]:
@@ -501,15 +512,36 @@ class ChatDrawingDimensionsExtractionService:
         return float(value) > ChatDrawingPatternsService.max_segment_length_mm()
 
     @classmethod
-    def _segment_lengths_implausible(cls, values: Any) -> bool:
+    def filter_plausible_segment_lengths(cls, values: Any) -> list[float]:
+        """Remove cotas OCR implausíveis (ex.: 31008 mm) sem descartar a lista inteira."""
         if not isinstance(values, list) or not values:
+            return []
+
+        plausible: list[float] = []
+
+        for value in values:
+            if value is None:
+                continue
+
+            try:
+                parsed = float(value)
+            except (TypeError, ValueError):
+                continue
+
+            if cls._length_value_implausible(parsed):
+                continue
+
+            plausible.append(parsed)
+
+        return plausible
+
+    @classmethod
+    def _segment_lengths_implausible(cls, values: Any) -> bool:
+        """True quando a lista está vazia após sanitização (nada útil para cotas)."""
+        if not isinstance(values, list):
             return False
 
-        return any(
-            cls._length_value_implausible(float(value))
-            for value in values
-            if value is not None
-        )
+        return not cls.filter_plausible_segment_lengths(values)
 
     @classmethod
     def _span_overlaps(

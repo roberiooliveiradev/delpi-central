@@ -551,7 +551,7 @@
       "refinementExhaustedPending": true,
       "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"],
       "lengthConsumableCodePrefixes": ["101", "105"],
-      "lengthConsumableDescriptionMarkers": ["TUBO", "TERMOENCOLHIVEL"]
+      "lengthConsumableDescriptionMarkers": ["TUBO", "TERMOENCOLHIVEL", "ABRACADEIRA", "ABRAÇADEIRA"]
     },
     "revisionCrossCheck": {
       "pendingWhenTitleBlockMissing": true,
@@ -623,6 +623,12 @@
     "intermediateColorSignature": "^(?:CA|CB|CF|CT|CV)[\\d,.]+([A-Z]{4})",
     "productDescriptionLengthMm": "(\\d{1,4})\\s*MM\\b",
     "intermediateDatePath": "/\\d{2}/\\d{2}-\\d{4}"
+  },
+  "patternLists": {
+    "mpDescriptionLengthMm": [
+      "\\bCOMP\\s*(\\d{1,4})\\s*MM\\b",
+      "\\d+[.,]?\\d*\\s*[Xx×]\\s*(\\d{1,4})\\s*MM\\b"
+    ]
   },
   "statusPresentation": {
     "ok": { "label": "OK", "symbol": "✅" },

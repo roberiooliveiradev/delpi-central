@@ -125,6 +125,16 @@ class ChatDrawingBalloonValidationService:
 
     @classmethod
     def _collect_bom_codes(cls, pdf_extract: dict) -> tuple[str, ...]:
+        """Códigos sujeitos a cobertura de balão.
+
+        Com BOM colunar/estruturada confiável, ignora `componentCodes` OCR amplos
+        (fantasmas 10xxxxxx) — a tabela BOM já é a fonte canônica.
+        """
+        structured = cls._collect_structured_bom_annotation_codes(pdf_extract)
+
+        if structured:
+            return tuple(sorted(structured))
+
         codes: set[str] = set()
 
         for raw in pdf_extract.get("componentCodes") or []:

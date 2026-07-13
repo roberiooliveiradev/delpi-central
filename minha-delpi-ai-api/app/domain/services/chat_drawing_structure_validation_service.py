@@ -10,6 +10,9 @@ from app.domain.services.chat_drawing_bom_comparison_service import (
 from app.domain.services.chat_drawing_bom_quantity_semantics_service import (
     ChatDrawingBomQuantitySemanticsService,
 )
+from app.domain.services.chat_drawing_dimensions_extraction_service import (
+    ChatDrawingDimensionsExtractionService,
+)
 from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
@@ -812,8 +815,13 @@ class ChatDrawingStructureValidationService:
                 )
             )
             failing_segments: list[float] = []
+            plausible_segments = (
+                ChatDrawingDimensionsExtractionService.filter_plausible_segment_lengths(
+                    segment_lengths
+                )
+            )
 
-            for segment in segment_lengths[
+            for segment in plausible_segments[
                 : ChatDrawingPatternsService.max_segment_length_checks()
             ]:
                 if not api_lengths:

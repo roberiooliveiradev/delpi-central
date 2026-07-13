@@ -435,6 +435,28 @@ class ChatDrawingPatternsService:
         return _COMPILED[cache_key]
 
     @classmethod
+    def compile_validation_list(cls, key: str) -> tuple[re.Pattern[str], ...]:
+        cache_key = f"validation_list:{key}"
+
+        if cache_key not in _COMPILED_LISTS:
+            patterns = ChatAssistantContentService.list(
+                _VALIDATION_BUNDLE,
+                "patternLists",
+                key,
+            )
+            _COMPILED_LISTS[cache_key] = tuple(
+                re.compile(str(item), _DEFAULT_FLAGS)
+                for item in patterns
+                if str(item).strip()
+            )
+
+        return _COMPILED_LISTS[cache_key]
+
+    @classmethod
+    def mp_description_length_mm_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_validation_list("mpDescriptionLengthMm")
+
+    @classmethod
     def validation_rule_node(cls, *path: str) -> Any:
         node = ChatAssistantContentService.get_node(
             _VALIDATION_BUNDLE,
