@@ -156,6 +156,12 @@ export {
 } from "./NativeCheckboxControl";
 
 export {
+  NATIVE_RANGE_CLASS,
+  NativeRangeControl,
+  type NativeRangeControlProps,
+} from "./NativeRangeControl";
+
+export {
   NativeSwitchControl,
   type NativeSwitchControlProps,
 } from "./NativeSwitchControl";

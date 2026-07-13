@@ -45,6 +45,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 import {
   ComboboxNumberControl,
+  FieldLabel,
   HintAction,
   NativeTextControl,
   isAutomaticTextColor,
@@ -436,9 +437,12 @@ export function FormatRibbonTypographySections() {
       <DeckRibbonGroup label="Efeitos" hint={H.textEffects}>
         <div className="td-deck-ribbon__toolbar">
           <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
-            <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-text-shadow">
-              Sombra
-            </label>
+            <FieldLabel
+              htmlFor="td-ribbon-text-shadow"
+              label="Sombra"
+              hint={H.textEffects}
+              className="td-deck-ribbon__field-label"
+            />
             <TdRibbonSelect
               id="td-ribbon-text-shadow"
               value={resolveTextShadowPresetId(formatStyle?.textShadow)}
@@ -478,9 +482,12 @@ export function FormatRibbonTypographySections() {
                 })
               }
             />
-            <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-text-stroke-w">
-              px
-            </label>
+            <FieldLabel
+              htmlFor="td-ribbon-text-stroke-w"
+              label="px"
+              hint={H.textStroke}
+              className="td-deck-ribbon__field-label"
+            />
             <NativeTextControl
               id="td-ribbon-text-stroke-w"
               type="number"
@@ -602,9 +609,11 @@ export function FormatRibbonTypographySections() {
             </div>
             {isTextBlock && textBlock ? (
               <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--dense">
-                <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-named-style">
-                  Estilo
-                </label>
+                <FieldLabel
+                  htmlFor="td-ribbon-named-style"
+                  label="Estilo"
+                  className="td-deck-ribbon__field-label"
+                />
                 <TdRibbonSelect
                   id="td-ribbon-named-style"
                   className="td-deck-ribbon__select td-deck-ribbon__select--style"
@@ -618,9 +627,11 @@ export function FormatRibbonTypographySections() {
                     label: option.label,
                   }))}
                 />
-                <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-line-height">
-                  Entrelinhas
-                </label>
+                <FieldLabel
+                  htmlFor="td-ribbon-line-height"
+                  label="Entrelinhas"
+                  className="td-deck-ribbon__field-label"
+                />
                 <TdRibbonSelect
                   id="td-ribbon-line-height"
                   className="td-deck-ribbon__select td-deck-ribbon__select--compact"
@@ -632,9 +643,11 @@ export function FormatRibbonTypographySections() {
                     label: value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value),
                   }))}
                 />
-                <label className="td-deck-ribbon__field-label" htmlFor="td-ribbon-letter-spacing">
-                  Espaçamento
-                </label>
+                <FieldLabel
+                  htmlFor="td-ribbon-letter-spacing"
+                  label="Espaçamento"
+                  className="td-deck-ribbon__field-label"
+                />
                 <NativeTextControl
                   id="td-ribbon-letter-spacing"
                   type="number"

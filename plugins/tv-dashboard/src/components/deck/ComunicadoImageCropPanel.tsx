@@ -1,3 +1,4 @@
+import { NativeRangeControl } from "@delpi/plugin-ui/index";
 import {
   COMUNICADO_IMAGE_CROP_FULL,
   normalizeComunicadoImageCrop,
@@ -40,14 +41,13 @@ export function ComunicadoImageCropPanel() {
       <div className="td-deck-frame-grid">
         {CROP_KEYS.map(({ key, label, max }) => (
           <DeckField key={key} id={`td-crop-${key}`} label={label} className="td-field--compact">
-            <input
+            <NativeRangeControl
               id={`td-crop-${key}`}
-              type="range"
               min={0}
               max={max}
               step={1}
               value={Math.round(crop[key])}
-              onChange={(event) => updateCropKey(key, Number(event.target.value))}
+              onChange={(value) => updateCropKey(key, value)}
             />
             <span className="td-deck-inspector__range-value">{Math.round(crop[key])}%</span>
           </DeckField>

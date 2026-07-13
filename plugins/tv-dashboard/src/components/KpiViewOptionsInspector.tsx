@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   FormSelectControl,
   LucideIconPicker,
-  NativeCheckboxControl,
   NativeTextControl,
   type DelpiKpiCardTone,
   type DelpiKpiColorRuleOp,

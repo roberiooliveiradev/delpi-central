@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, FolderOpen, Trash2, Upload } from "lucide-react";
-import { FormSelectControl, HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, HintAction, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   BLOCK_ENTRANCE_DELAY_MAX_MS,
   BLOCK_ENTRANCE_DELAY_MIN_MS,
@@ -235,14 +235,13 @@ export function ComunicadoElementInspector({
               }}
             />
           </DeckField>
-          <label className="td-deck-inspector__checkbox">
-            <input
-              type="checkbox"
-              checked={selected.headerRow ?? false}
-              onChange={(event) => updateSelected({ headerRow: event.target.checked })}
-            />
-            Primeira linha como cabeçalho
-          </label>
+          <NativeCheckboxControl
+            id="td-canvas-table-header-row"
+            className="td-deck-inspector__checkbox"
+            checked={selected.headerRow ?? false}
+            label="Primeira linha como cabeçalho"
+            onChange={(checked) => updateSelected({ headerRow: checked })}
+          />
         </DeckPropertySection>
       ) : null}
 

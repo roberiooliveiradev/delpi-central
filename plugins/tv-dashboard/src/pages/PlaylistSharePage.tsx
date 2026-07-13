@@ -1,4 +1,4 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Copy, Link2, QrCode, RefreshCw, Trash2, UserPlus } from "lucide-react";
 
@@ -257,15 +257,15 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
                   aria-label="Buscar usuário"
                 />
               </div>
-              <select
-                className="td-select"
+              <FormSelectControl
+                ariaLabel="Papel"
                 value={shareRole}
-                onChange={(event) => setShareRole(event.target.value as "viewer" | "editor")}
-                aria-label="Papel"
-              >
-                <option value="editor">Editor</option>
-                <option value="viewer">Somente leitura</option>
-              </select>
+                onChange={(value) => setShareRole(value as "viewer" | "editor")}
+                options={[
+                  { value: "editor", label: "Editor" },
+                  { value: "viewer", label: "Somente leitura" },
+                ]}
+              />
             </div>
             {suggestions.length > 0 ? (
               <ul className="td-share-suggestions" style={{ listStyle: "none", padding: 0, marginTop: 8 }}>

@@ -237,6 +237,27 @@ textarea.delpi-ui-native-control--compact {
   color: var(--delpi-ui-text, #111);
 }
 
+/**
+ * Range — só âncora de classe; thumb/track ficam no plugin consumidor
+ * (ex. `.td-deck-ribbon__opacity-range`) para não forçar look de text field.
+ */
+input.delpi-ui-native-range {
+  box-sizing: border-box;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+input.delpi-ui-native-range:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+input.delpi-ui-native-range:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
 :root[data-theme="dark"] select.delpi-ui-native-control.delpi-ui-native-control--select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%94a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 }

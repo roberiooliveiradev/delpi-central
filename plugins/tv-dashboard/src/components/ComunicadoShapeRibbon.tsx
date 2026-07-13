@@ -42,6 +42,7 @@ import {
   DECK_COLOR_BORDER,
   DECK_COLOR_SURFACE,
   DECK_SHAPE_DEFAULTS,
+  FieldLabel,
   NativeTextControl,
   ShapeFillMenu,
   ShapeOutlineMenu,
@@ -305,9 +306,11 @@ export function ComunicadoShapeRibbon() {
         {effectiveChartPart.kind === "marker" ? (
           <DeckRibbonGroup label="Marcador" hint={H.shape}>
             <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-              <label className="td-deck-ribbon__field-label" htmlFor="td-chart-marker-radius">
-                Raio
-              </label>
+              <FieldLabel
+                htmlFor="td-chart-marker-radius"
+                label="Raio"
+                className="td-deck-ribbon__field-label"
+              />
               <NativeTextControl
                 id="td-chart-marker-radius"
                 type="number"
@@ -639,9 +642,12 @@ export function ComunicadoShapeRibbon() {
       {primitive === "point" ? (
         <DeckRibbonGroup label="Marcador" hint={H.shapeSize}>
           <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-            <label className="td-deck-ribbon__field-label" htmlFor="td-shape-marker-radius">
-              Raio px
-            </label>
+            <FieldLabel
+              htmlFor="td-shape-marker-radius"
+              label="Raio px"
+              hint={H.shapeSize}
+              className="td-deck-ribbon__field-label"
+            />
             <NativeTextControl
               id="td-shape-marker-radius"
               type="number"

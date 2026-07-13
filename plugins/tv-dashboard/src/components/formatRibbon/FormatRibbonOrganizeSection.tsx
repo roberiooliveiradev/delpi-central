@@ -1,4 +1,4 @@
-import { FieldLabel, HintAction } from "@delpi/plugin-ui/index";
+import { FieldLabel, HintAction, NativeRangeControl } from "@delpi/plugin-ui/index";
 import {
   getChartPartState,
   getKpiPartState,
@@ -161,20 +161,16 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             className="td-deck-ribbon__field-label"
           />
           <HintAction hint={H.opacity} ariaLabel="Ajuda: Opacidade">
-            <input
+            <NativeRangeControl
               id="td-block-opacity"
-              type="range"
               className="td-deck-ribbon__opacity-range"
               min={0}
               max={100}
               step={5}
               aria-label="Opacidade"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={opacityPercent}
               value={opacityPercent}
               style={{ ["--td-range-progress" as string]: `${opacityPercent}%` }}
-              onChange={(e) => setOpacity(Number(e.target.value) / 100)}
+              onChange={(value) => setOpacity(value / 100)}
             />
           </HintAction>
           <span className="td-deck-ribbon__opacity-value" aria-hidden>

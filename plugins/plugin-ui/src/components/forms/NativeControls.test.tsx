@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { NativeCheckboxControl } from "./NativeCheckboxControl";
+import { NativeRangeControl, NATIVE_RANGE_CLASS } from "./NativeRangeControl";
 import { NativeSelectControl } from "./NativeSelectControl";
 import { NativeSwitchControl } from "./NativeSwitchControl";
 import { NativeTextAreaControl } from "./NativeTextAreaControl";
@@ -148,5 +149,29 @@ describe("NativeTextAreaControl", () => {
     const area = screen.getByLabelText("Notas");
     expect(area.className).toContain(NATIVE_CONTROL_CLASS);
     expect(area.className).toContain(NATIVE_CONTROL_TEXTAREA_CLASS);
+  });
+});
+
+describe("NativeRangeControl", () => {
+  it("dispara onChange com number", () => {
+    const values: number[] = [];
+    render(
+      <NativeRangeControl
+        aria-label="Opacidade"
+        value={40}
+        min={0}
+        max={100}
+        onChange={(value) => values.push(value)}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Opacidade"), { target: { value: "75" } });
+    expect(values).toEqual([75]);
+  });
+
+  it("aplica classe canônica delpi-ui-native-range", () => {
+    render(
+      <NativeRangeControl aria-label="Zoom" value={100} onChange={() => undefined} />,
+    );
+    expect(screen.getByLabelText("Zoom").className).toContain(NATIVE_RANGE_CLASS);
   });
 });

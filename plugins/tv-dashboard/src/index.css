@@ -1010,6 +1010,11 @@
   touch-action: none;
 }
 
+/* Texto / título: cursor de I-beam ao passar o mouse. */
+.dashboard-tv-dashboard .td-composer__block-wrap--text {
+  cursor: text;
+}
+
 /* KPI / gráfico: deixa a sombra do card escapar do bbox do bloco. */
 .dashboard-tv-dashboard .td-composer__block-wrap:has(.delpi-kpi-card-shell),
 .dashboard-tv-dashboard .td-composer__block:has(.delpi-kpi-card-shell),

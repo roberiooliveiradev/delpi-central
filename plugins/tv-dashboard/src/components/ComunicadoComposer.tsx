@@ -25,6 +25,7 @@ import {
   applyCenteredStageScroll,
   resolveStagePanGutterPx,
 } from "../utils/stagePan";
+import { shouldRenderStageGrid } from "../utils/stageViewport";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -315,7 +316,9 @@ export function ComunicadoComposerCanvas() {
           onContextMenu={handleCanvasContextMenu}
         >
           <MasterLogoOverlay />
-          {showStageGrid ? <div className="td-composer__stage-grid" aria-hidden="true" /> : null}
+          {shouldRenderStageGrid(showStageGrid, stageZoom) ? (
+            <div className="td-composer__stage-grid" aria-hidden="true" />
+          ) : null}
           {showStageGuides ? (
             <>
               <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
@@ -344,6 +347,9 @@ export function ComunicadoComposerCanvas() {
                   isSelected ? "td-composer__block-wrap--selected" : "",
                   isSelected && !isPrimary ? "td-composer__block-wrap--multi" : "",
                   hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
+                  block.type === "text" || block.type === "heading"
+                    ? "td-composer__block-wrap--text"
+                    : "",
                   block.type === "shape" && isLineShapeKind(block.shape)
                     ? "td-composer__block-wrap--line-shape"
                     : "",

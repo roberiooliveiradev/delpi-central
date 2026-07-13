@@ -1,4 +1,4 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   cornerAdjustmentToBorderRadiusPx,
   patchShapeAdjustment,
@@ -46,9 +46,12 @@ export function ShapeAdjustmentsControl({
     return (
       <div key={spec.id} className={variant === "ribbon" ? "td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline" : undefined}>
         {variant === "ribbon" ? (
-          <label className="td-deck-ribbon__field-label" htmlFor={id}>
-            {isCorner ? "Raio (px)" : spec.label}
-          </label>
+          <FieldLabel
+            htmlFor={id}
+            label={isCorner ? "Raio (px)" : spec.label}
+            hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.shapeAdjustment}
+            className="td-deck-ribbon__field-label"
+          />
         ) : null}
         {variant === "inspector" ? (
           <DeckField

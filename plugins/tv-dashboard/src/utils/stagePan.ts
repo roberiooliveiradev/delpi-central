@@ -19,6 +19,31 @@ export function applyStagePanScrollDelta(
 }
 
 /**
+ * Após mudar o zoom, mantém o ponto sob o cursor (coords do wrap).
+ * `contentX/Y` = scroll + offset do ponteiro no zoom anterior; `ratio = next/prev`.
+ */
+export function stageScrollAfterZoomTowardPoint(args: {
+  prevZoom: number;
+  nextZoom: number;
+  scrollLeft: number;
+  scrollTop: number;
+  pointerOffsetX: number;
+  pointerOffsetY: number;
+}): StageScrollPoint {
+  const { prevZoom, nextZoom, scrollLeft, scrollTop, pointerOffsetX, pointerOffsetY } = args;
+  if (!(prevZoom > 0) || !(nextZoom > 0) || prevZoom === nextZoom) {
+    return { scrollLeft, scrollTop };
+  }
+  const ratio = nextZoom / prevZoom;
+  const contentX = scrollLeft + pointerOffsetX;
+  const contentY = scrollTop + pointerOffsetY;
+  return {
+    scrollLeft: contentX * ratio - pointerOffsetX,
+    scrollTop: contentY * ratio - pointerOffsetY,
+  };
+}
+
+/**
  * Gutter (px) em cada lado para o pan levar qualquer canto do slide
  * até a área útil do painel (metade da viewport, mínimo 48px).
  */

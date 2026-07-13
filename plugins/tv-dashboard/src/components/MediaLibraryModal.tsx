@@ -1,6 +1,6 @@
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image as ImageIcon, Type, Upload, Video, X } from "lucide-react";
+import { Image as ImageIcon, Type, Upload, Video } from "lucide-react";
 
 import {
   adminMediaUrl,
@@ -10,6 +10,7 @@ import {
 } from "../api/tvDashboardApi";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
+import { Modal } from "./ui/Modal";
 
 type Props = {
   open: boolean;
@@ -124,8 +125,6 @@ export function MediaLibraryModal({
     });
   }, [items, query]);
 
-  if (!open) return null;
-
   async function handleUpload(file: File) {
     setLoading(true);
     setError(null);
@@ -142,92 +141,76 @@ export function MediaLibraryModal({
   }
 
   return (
-    <div className="td-modal-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="td-modal td-modal--wide"
-        role="dialog"
-        aria-modal="true"
-        aria-label={targetTitle(target)}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="td-modal__header">
-          <h2>{targetTitle(target)}</h2>
-          <button type="button" className="td-icon-btn" onClick={onClose} aria-label="Fechar">
-            <X size={18} />
-          </button>
-        </header>
-        <div className="td-modal__body">
-          <div className="td-media-library__toolbar">
-            <NativeTextControl
-              type="text"
-              placeholder="Buscar por nome…"
-              value={query}
-              aria-label="Buscar por nome"
-              onChange={setQuery}
-            />
+    <Modal open={open} title={targetTitle(target)} onClose={onClose} className="td-modal--wide">
+      <div className="td-media-library__toolbar">
+        <NativeTextControl
+          type="text"
+          placeholder="Buscar por nome…"
+          value={query}
+          aria-label="Buscar por nome"
+          onChange={setQuery}
+        />
+        <button
+          type="button"
+          className="td-btn td-btn--sm"
+          disabled={uploading || loading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Upload size={15} aria-hidden />
+          Enviar novo
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          accept={
+            kindFilter === "video"
+              ? "video/mp4,video/webm"
+              : kindFilter === "font"
+                ? ".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
+                : kindFilter === "image"
+                  ? "image/jpeg,image/png,image/webp,image/gif"
+                  : "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,.woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
+          }
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) void handleUpload(file);
+          }}
+        />
+      </div>
+      {loading ? <p className="td-subtitle">Carregando biblioteca…</p> : null}
+      {error ? <p className="td-error">{error}</p> : null}
+      {!loading && filtered.length === 0 ? (
+        <p className="td-subtitle">Nenhum arquivo na playlist. Envie o primeiro acima.</p>
+      ) : null}
+      <ul className="td-media-library__grid">
+        {filtered.map((asset) => (
+          <li key={asset.id}>
             <button
               type="button"
-              className="td-btn td-btn--sm"
-              disabled={uploading || loading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload size={15} aria-hidden />
-              Enviar novo
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              hidden
-              accept={
-                kindFilter === "video"
-                  ? "video/mp4,video/webm"
-                  : kindFilter === "font"
-                    ? ".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
-                  : kindFilter === "image"
-                    ? "image/jpeg,image/png,image/webp,image/gif"
-                    : "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,.woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
-              }
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void handleUpload(file);
+              className="td-media-library__card"
+              onClick={() => {
+                onPick(asset);
+                onClose();
               }}
-            />
-          </div>
-          {loading ? <p className="td-subtitle">Carregando biblioteca…</p> : null}
-          {error ? <p className="td-error">{error}</p> : null}
-          {!loading && filtered.length === 0 ? (
-            <p className="td-subtitle">Nenhum arquivo na playlist. Envie o primeiro acima.</p>
-          ) : null}
-          <ul className="td-media-library__grid">
-            {filtered.map((asset) => (
-              <li key={asset.id}>
-                <button
-                  type="button"
-                  className="td-media-library__card"
-                  onClick={() => {
-                    onPick(asset);
-                    onClose();
-                  }}
-                >
-                  <MediaLibraryThumbnail asset={asset} playlistId={playlistId} />
-                  <span className="td-media-library__name" title={asset.originalName ?? asset.storedName}>
-                    {asset.originalName ?? asset.storedName}
-                  </span>
-                  <span className="td-media-library__meta">
-                    {asset.mediaKind === "video"
-                      ? "Vídeo"
-                      : asset.mediaKind === "font"
-                        ? "Fonte"
-                        : "Imagem"}{" "}
-                    · {formatBytes(asset.fileSizeBytes)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
+            >
+              <MediaLibraryThumbnail asset={asset} playlistId={playlistId} />
+              <span className="td-media-library__name" title={asset.originalName ?? asset.storedName}>
+                {asset.originalName ?? asset.storedName}
+              </span>
+              <span className="td-media-library__meta">
+                {asset.mediaKind === "video"
+                  ? "Vídeo"
+                  : asset.mediaKind === "font"
+                    ? "Fonte"
+                    : "Imagem"}{" "}
+                · {formatBytes(asset.fileSizeBytes)}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Modal>
   );
 }

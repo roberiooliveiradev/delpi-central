@@ -146,12 +146,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
   },
   view: {
-    zoom: "Amplia ou reduz o palco no editor (50% a 200%). Não altera a exibição na TV.",
-    grid: "Mostra grade de 5% no palco para alinhar elementos visualmente.",
+    zoom: "Amplia ou reduz o palco no editor (10% a 200%). Ctrl + scroll do mouse também faz zoom. Não altera a exibição na TV.",
+    grid: "Mostra grade de 5% no palco para alinhar elementos. Some automaticamente abaixo de 50% de zoom.",
     guides: "Exibe guias horizontais e verticais no centro do palco.",
     rulers: "Mostra réguas horizontais e verticais ao redor do palco, como no PowerPoint.",
     snap: "Encaixa posição e tamanho na grade e nas guias ao soltar o elemento.",
-    pan: "Arrastar o palco (pan). Ative e clique + arraste; Esc cancela a ferramenta.",
+    pan: "Arrastar o palco (pan). Segure Ctrl e arraste, ou ative a ferramenta mão (Esc cancela).",
     showGroup: "Elementos visuais de apoio no palco do editor (não aparecem na TV).",
   },
   header: {

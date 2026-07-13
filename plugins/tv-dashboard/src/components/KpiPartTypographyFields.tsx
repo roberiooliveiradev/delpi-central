@@ -9,7 +9,7 @@ import {
   AlignRight,
   AlignJustify,
 } from "lucide-react";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   COMUNICADO_TEXT_SHADOW_PRESETS,
   KPI_PART_FONT_SIZE_DEFAULTS,
@@ -163,21 +163,19 @@ export function KpiPartTypographyFields({
 
       <p className="td-deck-inspector__hint">Efeitos tipográficos</p>
       <DeckField id={`td-kpi-typo-${partKind}-shadow`} label="Sombra do texto">
-        <select
+        <FormSelectControl
           id={`td-kpi-typo-${partKind}-shadow`}
-          className="td-deck-native-select"
+          ariaLabel="Sombra do texto"
           value={shadowPreset}
-          onChange={(event) => {
-            const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === event.target.value);
+          onChange={(value) => {
+            const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === value);
             onPatch({ textShadow: preset?.value ?? "none" });
           }}
-        >
-          {COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => (
-            <option key={preset.id} value={preset.id}>
-              {preset.label}
-            </option>
-          ))}
-        </select>
+          options={COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
+            value: preset.id,
+            label: preset.label,
+          }))}
+        />
       </DeckField>
       <div className="td-part-inspector-toolbar__fields-row">
         <DeckField id={`td-kpi-typo-${partKind}-stroke`} label="Contorno do texto">

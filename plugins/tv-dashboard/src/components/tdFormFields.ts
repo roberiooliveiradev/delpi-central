@@ -4,7 +4,7 @@ import {
   type FormFieldShellClassNames,
 } from "@delpi/plugin-ui/index";
 
-const TD_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
+export const TD_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
   root: "td-field",
   spanWideModifier: "td-deck-tabs__field--wide",
   fieldLabel: "td-field__label",

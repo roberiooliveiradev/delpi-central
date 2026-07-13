@@ -6,6 +6,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { NativeRangeControl } from "@delpi/plugin-ui/index";
 import {
   useCallback,
   useEffect,
@@ -18,7 +19,7 @@ import {
 } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { applyStagePanScrollDelta } from "../utils/stagePan";
+import { applyStagePanScrollDelta, stageScrollAfterZoomTowardPoint } from "../utils/stagePan";
 import {
   buildAxisRulerTicks,
   clampStageZoom,
@@ -26,6 +27,7 @@ import {
   STAGE_RULER_UNITS,
   STAGE_ZOOM_MAX,
   STAGE_ZOOM_MIN,
+  stageZoomFromWheelDelta,
 } from "../utils/stageViewport";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
@@ -134,7 +136,7 @@ function StageRulerVertical({ metrics, zoom }: { metrics: StageMetrics; zoom: nu
   );
 }
 
-function ComunicadoStageStatusBar() {
+function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
   const {
     stageZoom,
     setStageZoom,
@@ -186,13 +188,13 @@ function ComunicadoStageStatusBar() {
           type="button"
           className={[
             "td-stage-statusbar__toggle",
-            stagePanMode ? "td-stage-statusbar__toggle--active" : "",
+            panActive ? "td-stage-statusbar__toggle--active" : "",
           ]
             .filter(Boolean)
             .join(" ")}
           title={V.pan}
           aria-label="Pan"
-          aria-pressed={stagePanMode}
+          aria-pressed={panActive}
           onClick={() => setStagePanMode(!stagePanMode)}
         >
           <Hand size={14} aria-hidden="true" />
@@ -210,15 +212,14 @@ function ComunicadoStageStatusBar() {
         >
           <ZoomOut size={14} aria-hidden="true" />
         </button>
-        <input
-          type="range"
+        <NativeRangeControl
           className="td-stage-statusbar__slider"
           min={STAGE_ZOOM_MIN * 100}
           max={STAGE_ZOOM_MAX * 100}
           step={5}
           value={zoomPercent}
           aria-label="Zoom do palco"
-          onChange={(event) => setStageZoom(clampStageZoom(Number(event.target.value) / 100))}
+          onChange={(value) => setStageZoom(clampStageZoom(value / 100))}
         />
         <button
           type="button"
@@ -252,9 +253,17 @@ type Props = {
   children: ReactNode;
 };
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  return target.isContentEditable;
+}
+
 export function ComunicadoStageShell({ children }: Props) {
   const {
     stageZoom,
+    setStageZoom,
     showStageRulers,
     canvasWrapRef,
     canvasRef,
@@ -262,11 +271,19 @@ export function ComunicadoStageShell({ children }: Props) {
     setStagePanMode,
   } = useComunicadoEditor();
   const [metrics, setMetrics] = useState<StageMetrics>(EMPTY_METRICS);
+  const [ctrlPanHeld, setCtrlPanHeld] = useState(false);
   const panDragRef = useRef<{
     pointerId: number;
     lastX: number;
     lastY: number;
   } | null>(null);
+  const stageZoomRef = useRef(stageZoom);
+  stageZoomRef.current = stageZoom;
+  const pendingZoomScrollRef = useRef<ReturnType<typeof stageScrollAfterZoomTowardPoint> | null>(
+    null,
+  );
+
+  const panActive = stagePanMode || ctrlPanHeld;
 
   const refreshMetrics = useCallback(() => {
     setMetrics(measureStageMetrics(canvasWrapRef.current, canvasRef.current, stageZoom));
@@ -286,14 +303,72 @@ export function ComunicadoStageShell({ children }: Props) {
   }, [canvasRef, canvasWrapRef, refreshMetrics]);
 
   useEffect(() => {
-    if (!stagePanMode) return;
+    const scroll = pendingZoomScrollRef.current;
+    if (!scroll) return;
+    pendingZoomScrollRef.current = null;
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+    wrap.scrollLeft = scroll.scrollLeft;
+    wrap.scrollTop = scroll.scrollTop;
+    refreshMetrics();
+  }, [canvasWrapRef, refreshMetrics, stageZoom]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setStagePanMode(false);
+      if (event.key === "Escape" && stagePanMode) {
+        setStagePanMode(false);
+        return;
+      }
+      if (event.key !== "Control") return;
+      if (isEditableTarget(event.target)) return;
+      setCtrlPanHeld(true);
+    };
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (event.key !== "Control") return;
+      setCtrlPanHeld(false);
+      panDragRef.current = null;
+      canvasWrapRef.current?.classList.remove("td-composer__canvas-wrap--panning");
+    };
+    const onBlur = () => {
+      setCtrlPanHeld(false);
+      panDragRef.current = null;
+      canvasWrapRef.current?.classList.remove("td-composer__canvas-wrap--panning");
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [setStagePanMode, stagePanMode]);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [canvasWrapRef, setStagePanMode, stagePanMode]);
+
+  useEffect(() => {
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      const prevZoom = stageZoomRef.current;
+      const nextZoom = stageZoomFromWheelDelta(prevZoom, event.deltaY);
+      if (nextZoom === prevZoom) return;
+      const rect = wrap.getBoundingClientRect();
+      pendingZoomScrollRef.current = stageScrollAfterZoomTowardPoint({
+        prevZoom,
+        nextZoom,
+        scrollLeft: wrap.scrollLeft,
+        scrollTop: wrap.scrollTop,
+        pointerOffsetX: event.clientX - rect.left,
+        pointerOffsetY: event.clientY - rect.top,
+      });
+      setStageZoom(nextZoom);
+    };
+
+    wrap.addEventListener("wheel", onWheel, { passive: false });
+    return () => wrap.removeEventListener("wheel", onWheel);
+  }, [canvasWrapRef, setStageZoom]);
 
   const handleScroll = useCallback(() => {
     refreshMetrics();
@@ -301,7 +376,7 @@ export function ComunicadoStageShell({ children }: Props) {
 
   const handlePanPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!stagePanMode) return;
+      if (!panActive) return;
       if (event.button !== 0) return;
       const wrap = canvasWrapRef.current;
       if (!wrap) return;
@@ -314,7 +389,7 @@ export function ComunicadoStageShell({ children }: Props) {
       };
       wrap.classList.add("td-composer__canvas-wrap--panning");
     },
-    [canvasWrapRef, stagePanMode],
+    [canvasWrapRef, panActive],
   );
 
   const handlePanPointerMove = useCallback(
@@ -377,7 +452,7 @@ export function ComunicadoStageShell({ children }: Props) {
             "td-composer__canvas-wrap",
             "td-composer__canvas-wrap--full",
             "td-composer__canvas-wrap--zoom",
-            stagePanMode ? "td-composer__canvas-wrap--pan" : "",
+            panActive ? "td-composer__canvas-wrap--pan" : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -390,7 +465,7 @@ export function ComunicadoStageShell({ children }: Props) {
           {children}
         </div>
       </div>
-      <ComunicadoStageStatusBar />
+      <ComunicadoStageStatusBar panActive={panActive} />
     </div>
   );
 }

@@ -4,6 +4,9 @@ import {
   buildAxisRulerTicks,
   clampStageZoom,
   computeFitStageZoom,
+  shouldRenderStageGrid,
+  stageZoomFromWheelDelta,
+  STAGE_GRID_MIN_ZOOM,
   STAGE_RULER_UNITS,
 } from "./stageViewport";
 
@@ -38,5 +41,17 @@ describe("stageViewport", () => {
     expect(labels).toContain("0");
     expect(labels).toContain("20");
     expect(labels).toContain("40");
+  });
+
+  it("oculta grade abaixo do zoom mínimo útil", () => {
+    expect(shouldRenderStageGrid(true, STAGE_GRID_MIN_ZOOM)).toBe(true);
+    expect(shouldRenderStageGrid(true, STAGE_GRID_MIN_ZOOM - 0.01)).toBe(false);
+    expect(shouldRenderStageGrid(false, 1)).toBe(false);
+  });
+
+  it("Ctrl+scroll aproxima com deltaY negativo", () => {
+    expect(stageZoomFromWheelDelta(1, -100)).toBe(1.05);
+    expect(stageZoomFromWheelDelta(1, 100)).toBe(0.95);
+    expect(stageZoomFromWheelDelta(0.12, 400)).toBe(0.1);
   });
 });

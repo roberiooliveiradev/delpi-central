@@ -1,11 +1,31 @@
 /** Mínimo baixo o bastante para encaixar 4K (3840×2160) no wrap do editor. */
 export const STAGE_ZOOM_MIN = 0.1;
 export const STAGE_ZOOM_MAX = 2;
+/** Abaixo disso a grade some (linhas ficam densas demais no zoom out). */
+export const STAGE_GRID_MIN_ZOOM = 0.5;
+/** Passo base do Ctrl+scroll (ajustado pela magnitude do wheel). */
+export const STAGE_ZOOM_WHEEL_STEP = 0.05;
 export const STAGE_RULER_UNITS = 100;
 export const STAGE_RULER_SIZE_PX = 22;
 
 export function clampStageZoom(zoom: number): number {
   return Math.min(STAGE_ZOOM_MAX, Math.max(STAGE_ZOOM_MIN, Math.round(zoom * 100) / 100));
+}
+
+/** Grade ligada pelo usuário e zoom alto o bastante para ser útil. */
+export function shouldRenderStageGrid(showStageGrid: boolean, stageZoom: number): boolean {
+  return showStageGrid && stageZoom >= STAGE_GRID_MIN_ZOOM;
+}
+
+/**
+ * Novo zoom a partir do delta do wheel (Ctrl+scroll).
+ * Scroll para cima (deltaY < 0) → aproxima.
+ */
+export function stageZoomFromWheelDelta(currentZoom: number, deltaY: number): number {
+  if (!Number.isFinite(deltaY) || deltaY === 0) return clampStageZoom(currentZoom);
+  const steps = Math.max(1, Math.min(4, Math.round(Math.abs(deltaY) / 100)));
+  const direction = deltaY < 0 ? 1 : -1;
+  return clampStageZoom(currentZoom + direction * STAGE_ZOOM_WHEEL_STEP * steps);
 }
 
 export function computeFitStageZoom(wrap: HTMLElement, canvas: HTMLElement): number {
