@@ -15,12 +15,11 @@ export function KeyboardShortcutsCatalogModal() {
       className="td-modal--shortcuts"
     >
       <p className="td-shortcuts-catalog__lead">
-        Pressione <kbd className="td-shortcuts-catalog__kbd">F1</kbd>–
-        <kbd className="td-shortcuts-catalog__kbd">F8</kbd> para abrir a aba correspondente;
-        depois uma letra dispara a ação da ribbon (<kbd className="td-shortcuts-catalog__kbd">Esc</kbd>{" "}
-        volta). <kbd className="td-shortcuts-catalog__kbd">F10</kbd> só revela os balões F1…F8. Toque{" "}
-        <kbd className="td-shortcuts-catalog__kbd">Alt</kbd> para ligar/desligar balões dos atalhos
-        Ctrl. No Mac, Ctrl vira ⌘.
+        Toque <kbd className="td-shortcuts-catalog__kbd">Alt</kbd> para ligar/desligar os balões de
+        atalho (Ctrl nos controles e <kbd className="td-shortcuts-catalog__kbd">F1</kbd>–
+        <kbd className="td-shortcuts-catalog__kbd">F8</kbd> nas abas). Com Alt ativo, F1–F8 abrem a
+        aba; depois uma letra dispara a ação da ribbon (
+        <kbd className="td-shortcuts-catalog__kbd">Esc</kbd> sai). No Mac, Ctrl vira ⌘.
       </p>
       <div className="td-shortcuts-catalog">
         {groups.map((group) => (

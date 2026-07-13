@@ -15,14 +15,13 @@ import {
   isDeckKeyTipFunctionKey,
   type DeckKeyTipMode,
 } from "../utils/deckKeyTips";
+import { useKeyboardShortcutsTips } from "./KeyboardShortcutsTipsProvider";
 
 type DeckKeyTipsContextValue = {
   mode: DeckKeyTipMode;
   enterTabs: () => void;
   exit: () => void;
-  /** true quando balões de aba (F1…) devem aparecer. */
-  showTabTips: boolean;
-  /** true quando balões de ação da ribbon devem aparecer. */
+  /** true quando balões de ação da ribbon devem aparecer (com Alt). */
   showActionTips: boolean;
 };
 
@@ -35,17 +34,22 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * KeyTips do chrome:
- * - F1…Fn → ativa a aba correspondente e mostra letras das ações
- * - letra/dígito → dispara ação e sai
- * - Esc → volta um nível / sai
- * - F10 → só revela (ou oculta) os balões F1…Fn das abas
+ * KeyTips do chrome (visual pelo Alt):
+ * - Alt (KeyboardShortcutsTipsProvider) revela F1…Fn nas abas e atalhos Ctrl
+ * - F1…Fn → ativa a aba e entra no modo de letras das ações
+ * - letra/dígito → dispara ação e sai do modo de ações
+ * - Esc → sai do modo de ações
  */
 export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<DeckKeyTipMode>("idle");
+  const { altTipsActive } = useKeyboardShortcutsTips();
 
   const exit = useCallback(() => setMode("idle"), []);
   const enterTabs = useCallback(() => setMode("tabs"), []);
+
+  useEffect(() => {
+    if (!altTipsActive) setMode("idle");
+  }, [altTipsActive]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -54,27 +58,8 @@ export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
       if (event.key === "Escape") {
         if (mode === "actions") {
           event.preventDefault();
-          setMode("tabs");
-          return;
-        }
-        if (mode === "tabs") {
-          event.preventDefault();
           setMode("idle");
         }
-        return;
-      }
-
-      /* F10: preview dos atalhos de aba (F1…) sem selecionar. */
-      if (
-        event.key === "F10" &&
-        !event.ctrlKey &&
-        !event.metaKey &&
-        !event.altKey &&
-        !event.shiftKey
-      ) {
-        if (event.repeat) return;
-        event.preventDefault();
-        setMode((current) => (current === "idle" ? "tabs" : "idle"));
         return;
       }
 
@@ -85,27 +70,17 @@ export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
         const ok = activateDeckKeyTipTarget("tabs", event.key);
         if (ok) {
           window.requestAnimationFrame(() => setMode("actions"));
-        } else {
-          setMode("tabs");
         }
         return;
       }
 
-      if (mode === "idle") return;
+      if (mode !== "actions") return;
       if (!isDeckKeyTipActionKey(event)) return;
 
       event.preventDefault();
       event.stopPropagation();
-
-      if (mode === "tabs") {
-        /* Letras antigas não abrem aba — abas são só F1…Fn. */
-        return;
-      }
-
-      if (mode === "actions") {
-        const ok = activateDeckKeyTipTarget("actions", event.key);
-        if (ok) setMode("idle");
-      }
+      const ok = activateDeckKeyTipTarget("actions", event.key);
+      if (ok) setMode("idle");
     }
 
     function onVisibility() {
@@ -127,10 +102,9 @@ export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
       mode,
       enterTabs,
       exit,
-      showTabTips: mode === "tabs" || mode === "actions",
-      showActionTips: mode === "actions",
+      showActionTips: mode === "actions" && altTipsActive,
     }),
-    [enterTabs, exit, mode],
+    [altTipsActive, enterTabs, exit, mode],
   );
 
   return createElement(DeckKeyTipsContext.Provider, { value }, children);
@@ -143,7 +117,6 @@ export function useDeckKeyTips(): DeckKeyTipsContextValue {
       mode: "idle",
       enterTabs: () => undefined,
       exit: () => undefined,
-      showTabTips: false,
       showActionTips: false,
     };
   }

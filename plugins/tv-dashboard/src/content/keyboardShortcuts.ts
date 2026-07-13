@@ -115,9 +115,10 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
   {
     id: "show-tips",
     group: "palco",
-    label: "Mostrar atalhos Ctrl na UI",
+    label: "Mostrar atalhos na UI",
     keys: "Alt",
-    description: "Toque Alt para ligar/desligar balões das combinações Ctrl/Del",
+    description:
+      "Toque Alt para ligar/desligar balões: F1–F8 nas abas e combinações Ctrl/Del nos controles",
     showAltTip: false,
   },
   {
@@ -126,7 +127,7 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     label: "KeyTips das abas e ribbon",
     keys: "F1…F8",
     description:
-      "F1–F8 abrem a aba (Página Inicial → Camadas). Em seguida uma letra dispara a ação da ribbon. F10 só revela os balões; Esc volta",
+      "Com Alt ativo, F1–F8 abrem a aba; em seguida uma letra dispara a ação da ribbon. Esc sai do nível de ação",
     showAltTip: false,
   },
   {

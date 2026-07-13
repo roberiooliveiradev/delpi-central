@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import { KeyTip, type KeyTipPlacement } from "@delpi/plugin-ui/index";
 
 import { useDeckKeyTips } from "../context/DeckKeyTipsProvider";
+import { useKeyboardShortcutsTips } from "../context/KeyboardShortcutsTipsProvider";
 import {
   normalizeKeyTipLetter,
   type DeckKeyTipScope,
@@ -17,8 +18,8 @@ type Props = {
 };
 
 /**
- * Anota um controle com KeyTip (abas F1… / ações letra) e mostra balão quando o modo
- * correspondente está ativo — visual canônico em `@delpi/plugin-ui` (`KeyTip`).
+ * Anota um controle com KeyTip (abas F1… / ações letra).
+ * A aparição dos balões é disparada pelo Alt (igual aos atalhos Ctrl).
  */
 export function DeckKeyTip({
   letter,
@@ -27,9 +28,10 @@ export function DeckKeyTip({
   className,
   placement = "bottom",
 }: Props): ReactNode {
-  const { showTabTips, showActionTips } = useDeckKeyTips();
+  const { showActionTips } = useDeckKeyTips();
+  const { altTipsActive } = useKeyboardShortcutsTips();
   const tip = normalizeKeyTipLetter(letter);
-  const active = scope === "tabs" ? showTabTips : showActionTips;
+  const active = scope === "tabs" ? altTipsActive : showActionTips;
   const variant = tip.startsWith("F") && tip.length > 1 ? "shortcut" : "letter";
 
   return (
