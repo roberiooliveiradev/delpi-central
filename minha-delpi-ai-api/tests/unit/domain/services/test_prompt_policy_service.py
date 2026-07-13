@@ -298,6 +298,28 @@ def test_build_skill_policy_sections_includes_quality_action_plans_when_enabled(
     assert any("PAC" in section or "8D" in section for section in sections)
 
 
+def test_build_skill_policy_sections_includes_technical_description_when_enabled():
+    service = PromptPolicyService()
+
+    sections = service.build_active_skill_policy_sections(
+        skills={"technicalDescription": True}
+    )
+
+    assert sections
+    assert any("matérias-primas" in section.lower() or "1008" in section for section in sections)
+
+
+def test_technical_description_skill_policy_covers_create_and_analyze():
+    policy_path = PromptPolicyService.POLICY_DIR / "technical-description-delpi-skill.md"
+    content = policy_path.read_text(encoding="utf-8").lower()
+
+    assert "criar" in content
+    assert "analisar" in content
+    assert "normas" in content
+    assert "vdar" in content
+    assert "drawing-analysis-delpi" in content
+
+
 def test_quality_action_plans_skill_policy_requires_confirmation_before_writes():
     policy_path = PromptPolicyService.POLICY_DIR / "quality-action-plans-delpi-skill.md"
     content = policy_path.read_text(encoding="utf-8").lower()

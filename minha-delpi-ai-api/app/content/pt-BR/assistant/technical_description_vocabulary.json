@@ -1,0 +1,324 @@
+{
+  "sourceDoc": "docs/knowledge/domains/global/normas-tecnicas-delpi.md",
+  "guidanceVerbs": [
+    "como descrever",
+    "como descrevo",
+    "como escrever",
+    "como escrevo",
+    "como montar",
+    "como elaborar",
+    "como cadastrar",
+    "como registrar",
+    "como preencher",
+    "como formatar",
+    "como padronizar",
+    "como funciona a descricao",
+    "como funciona a descrição",
+    "como funciona o cadastro da descricao",
+    "como funciona o cadastro da descrição",
+    "como pesquisar por descricao",
+    "como pesquisar por descrição",
+    "como buscar por descricao",
+    "como buscar por descrição",
+    "analise esta descricao",
+    "analise essa descricao",
+    "analise a descricao",
+    "analisar a descricao",
+    "analisar esta descricao",
+    "valide esta descricao",
+    "valide essa descricao",
+    "validar a descricao",
+    "validar esta descricao",
+    "corrija esta descricao",
+    "corrigir a descricao",
+    "monte a descricao",
+    "montar a descricao",
+    "crie a descricao",
+    "criar a descricao"
+  ],
+  "normasMarkers": [
+    "normas tecnicas",
+    "norma tecnica",
+    "normas delpi",
+    "normas_tecnicas",
+    "normas-tecnicas",
+    "normas técnicas",
+    "norma técnica"
+  ],
+  "descriptionGuidanceMarkers": [
+    "descricao tecnica",
+    "descrição técnica",
+    "descricao padrao",
+    "descrição padrão",
+    "modelo de descricao",
+    "modelo de descrição",
+    "estrutura da descricao",
+    "estrutura da descrição",
+    "campos da descricao",
+    "campos da descrição",
+    "sequencia da descricao",
+    "sequência da descrição",
+    "materia prima",
+    "matéria-prima",
+    "materia-prima",
+    "materias primas",
+    "matérias-primas",
+    "cadastro de descricao",
+    "cadastro de descrição",
+    "padrao de descricao",
+    "padrão de descrição",
+    "exemplo de descricao",
+    "exemplo de descrição",
+    "designacao tecnica",
+    "designação técnica",
+    "nomenclatura tecnica",
+    "nomenclatura técnica",
+    "descricao correta",
+    "descrição correta",
+    "descricao conforme",
+    "descrição conforme",
+    "validacao de descricao",
+    "validação de descrição",
+    "analise de descricao",
+    "análise de descrição"
+  ],
+  "fieldMeaningMarkers": [
+    "o que significa",
+    "significado do campo",
+    "significado da coluna",
+    "significado da abreviação",
+    "significado da abreviacao",
+    "para que serve o campo",
+    "para que serve a coluna",
+    "o que e o campo",
+    "o que é o campo",
+    "o que e a abreviacao",
+    "o que é a abreviação",
+    "abreviacao de cor",
+    "abreviação de cor"
+  ],
+  "descriptionFields": [
+    "material",
+    "bitola",
+    "secao",
+    "seção",
+    "cor",
+    "isolacao",
+    "isolação",
+    "temperatura",
+    "norma",
+    "rohs",
+    "bitola awg",
+    "awg",
+    "mm2",
+    "mm²",
+    "banho",
+    "embalagem",
+    "tensao",
+    "tensão",
+    "vias",
+    "plug",
+    "comprimento",
+    "certificacao",
+    "certificação",
+    "observacoes",
+    "observações",
+    "espessura",
+    "diametro",
+    "diâmetro",
+    "parafuso",
+    "trava",
+    "fitado",
+    "granel",
+    "blister"
+  ],
+  "productLookupMarkers": [
+    "descricao do produto",
+    "descrição do produto",
+    "qual a descricao",
+    "qual a descrição",
+    "qual e a descricao",
+    "qual é a descrição",
+    "descricao do item",
+    "descrição do item",
+    "descricao do codigo",
+    "descrição do código",
+    "me fale sobre o produto",
+    "informacoes do produto",
+    "informações do produto",
+    "dados cadastrais do produto"
+  ],
+  "ragQuerySeeds": [
+    "normas técnicas DELPI",
+    "Normas_Tecnicas_DELPI",
+    "descrição técnica matéria-prima",
+    "estrutura da descrição campos exemplo",
+    "cadastro TOTVS Protheus"
+  ],
+  "materialGroups": [
+    {
+      "groupCode": "1006",
+      "label": "cabos PP com plug",
+      "keywords": [
+        "cabo pp com plug",
+        "cabos pp com plug",
+        "pp com plug",
+        "cabo pp plug"
+      ]
+    },
+    {
+      "groupCode": "1007",
+      "label": "cabos PP",
+      "keywords": [
+        "cabo pp",
+        "cabos pp",
+        "pp circular",
+        "pp plano"
+      ]
+    },
+    {
+      "groupCode": "1008",
+      "label": "terminais",
+      "keywords": [
+        "terminal",
+        "terminais",
+        "pino",
+        "forquilha",
+        "ilhos",
+        "ilhós",
+        "tubular",
+        "lingueta",
+        "faston",
+        "bandeira",
+        "olhal",
+        "anzol",
+        "luva",
+        "emenda",
+        "bala"
+      ]
+    },
+    {
+      "groupCode": "1001-1005",
+      "label": "cabos",
+      "keywords": [
+        "cabo",
+        "cabos",
+        "fio",
+        "fios"
+      ]
+    },
+    {
+      "groupCode": "1009",
+      "label": "isoladores",
+      "keywords": [
+        "isolador",
+        "isoladores"
+      ]
+    },
+    {
+      "groupCode": "1009",
+      "label": "inserto",
+      "keywords": [
+        "inserto",
+        "insertos"
+      ]
+    },
+    {
+      "groupCode": "1009",
+      "label": "conectores",
+      "keywords": [
+        "conector",
+        "conectores"
+      ]
+    },
+    {
+      "groupCode": "1011",
+      "label": "etiquetas",
+      "keywords": [
+        "etiqueta",
+        "etiquetas",
+        "anilha",
+        "anilhas",
+        "cartao",
+        "cartão",
+        "cartoes",
+        "cartões"
+      ]
+    },
+    {
+      "groupCode": "1012",
+      "label": "tubo isolante",
+      "keywords": [
+        "tubo isolante",
+        "tubo corrugado",
+        "tubo flexivel",
+        "tubo flexível",
+        "tubos isolantes"
+      ]
+    },
+    {
+      "groupCode": "1013",
+      "label": "termoencolhível",
+      "keywords": [
+        "termoencolhivel",
+        "termoencolhível",
+        "termo retratil",
+        "termo-retratil",
+        "termoretratil",
+        "termo-retrátil",
+        "termo retrátil"
+      ]
+    },
+    {
+      "groupCode": "1015",
+      "label": "prensa cabos",
+      "keywords": [
+        "prensa cabo",
+        "prensa-cabo",
+        "prensa cabos",
+        "prensa-cabos"
+      ]
+    },
+    {
+      "groupCode": "1016",
+      "label": "resistores",
+      "keywords": [
+        "resistor",
+        "resistores"
+      ]
+    },
+    {
+      "groupCode": "1025",
+      "label": "termistores",
+      "keywords": [
+        "termistor",
+        "termistores",
+        "ptc",
+        "ntc"
+      ]
+    }
+  ],
+  "colorAbbreviations": {
+    "PT": "Preto",
+    "BN": "Branco",
+    "VM": "Vermelho",
+    "AL": "Azul",
+    "AZ": "Azul",
+    "AR": "Amarelo",
+    "YE": "Amarelo",
+    "MR": "Marrom",
+    "VD": "Verde",
+    "CZ": "Cinza",
+    "LARA": "Laranja",
+    "LA": "Laranja",
+    "RO": "Rosa",
+    "RX": "Roxo",
+    "VDAR": "Verde-Amarelo",
+    "MRBN": "Marrom-Branco",
+    "VMBN": "Vermelho-Branco",
+    "ALBN": "Azul-Branco",
+    "ARBN": "Amarelo-Branco",
+    "PTBN": "Preto-Branco",
+    "OURO": "Ouro"
+  }
+}

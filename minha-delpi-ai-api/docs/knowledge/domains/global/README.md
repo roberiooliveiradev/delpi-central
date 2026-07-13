@@ -6,7 +6,7 @@ Documentos com `scope: global` — herdados por chats e agentes com skill **`com
 
 | Arquivo | Origem | Uso |
 |---------|--------|-----|
-| [normas-tecnicas-delpi.md](./normas-tecnicas-delpi.md) | `GPT_instructions/Normas_Tecnicas_DELPI.md` | Descrição técnica de matérias-primas (grupos 1001–1025); intent `ChatTechnicalDescriptionIntentService` |
+| [normas-tecnicas-delpi.md](./normas-tecnicas-delpi.md) | `GPT_instructions/Normas_Tecnicas_DELPI.md` | Descrição técnica de MP (grupos 1001–1025); skill `technical-description-delpi` + intent `ChatTechnicalDescriptionIntentService` |
 | [gpt-instructions.md](./gpt-instructions.md) | `GPT_instructions/GPT_instructions.md` | Regras gerais de comportamento GPT |
 | [o-arquiteto-do-codigo.md](./o-arquiteto-do-codigo.md) | `GPT_instructions/O_ARQUITETO_DO_CODIGO.md` | Identidade / plataforma DELPI |
 

@@ -43,12 +43,23 @@ class ChatPromptBuilderService:
 
         return f"\n\n{policy}" if policy else ""
 
-    def _technical_description_policy_addon(self, current_message: str) -> str:
+    def _technical_description_policy_addon(
+        self,
+        current_message: str,
+        skills: dict | None = None,
+    ) -> str:
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
         )
 
-        if not ChatTechnicalDescriptionIntentService.requires_normas_knowledge(current_message):
+        resolved = skills or {}
+
+        if "technicalDescription" in resolved and not resolved.get("technicalDescription"):
+            return ""
+
+        if not ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+            current_message
+        ):
             return ""
 
         policy = self.prompt_policy_service._load_policy("technical-description-normas.md")
@@ -139,7 +150,10 @@ class ChatPromptBuilderService:
         base_prompt += self._user_profile_policy_addon(current_message)
         base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
-        base_prompt += self._technical_description_policy_addon(current_message)
+        base_prompt += self._technical_description_policy_addon(
+            current_message,
+            skills=skills,
+        )
         base_prompt += self._operational_narrative_policy_addon(
             current_message,
             response_mode=response_mode,

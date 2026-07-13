@@ -2,11 +2,62 @@ from app.domain.skills.chat_skill_registry import ChatSkillRegistry
 
 
 def test_catalog_lists_sql_skill():
+    from app.domain.skills.chat_skill_registry import invalidate_skill_cache
+
+    invalidate_skill_cache()
     catalog = ChatSkillRegistry.list_catalog()
 
     assert any(item["skillKey"] == "sql" for item in catalog)
     assert any(item["skillKey"] == "company-knowledge" for item in catalog)
+    assert any(item["skillKey"] == "technical-description-delpi" for item in catalog)
     assert any(item["skillKey"] == "quality-action-plans-delpi" for item in catalog)
+
+
+def test_common_chat_uses_default_technical_description():
+    from app.domain.skills.chat_skill_registry import invalidate_skill_cache
+
+    invalidate_skill_cache()
+    bindings = ChatSkillRegistry.list_agent_bindings(
+        agent_metadata={},
+        allowed_action_ids=[],
+        has_agent=False,
+        default_company_knowledge=True,
+    )
+
+    technical = next(
+        item
+        for item in bindings
+        if item["skillKey"] == "technical-description-delpi"
+    )
+
+    assert technical["enabled"] is True
+
+    resolved = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata={},
+        allowed_action_ids=[],
+        has_agent=False,
+        default_company_knowledge=True,
+    )
+
+    assert resolved["technicalDescription"] is True
+
+
+def test_technical_description_skill_can_be_disabled():
+    from app.domain.skills.chat_skill_registry import invalidate_skill_cache
+
+    invalidate_skill_cache()
+    metadata = ChatSkillRegistry.set_enabled({}, "technical-description-delpi", False)
+
+    assert ChatSkillRegistry.is_enabled(metadata, "technical-description-delpi") is False
+
+    resolved = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata=metadata,
+        allowed_action_ids=[],
+        has_agent=True,
+        default_company_knowledge=True,
+    )
+
+    assert resolved["technicalDescription"] is False
 
 
 def test_set_and_read_sql_skill_enabled():

@@ -1,21 +1,29 @@
-Modo **descrição técnica de matérias-primas** (Normas Técnicas DELPI).
+Modo **descrição técnica de matérias-primas** (Normas Técnicas DELPI) — turno com intent normativo.
+
+A skill `technical-description-delpi` está ativa. Refine a resposta deste turno:
 
 ## Fonte autorizada
 
-Use **exclusivamente** o documento `Normas_Tecnicas_DELPI.md` (conhecimento global / `company-knowledge`) presente no contexto RAG.
+Use **exclusivamente** o documento `Normas_Tecnicas_DELPI.md` presente no contexto RAG (e abreviações de cor do vocabulário interno).
 
-## Como responder
+## Criar
 
-1. Identifique o **grupo técnico** pedido (ex.: terminais → grupo **1008**, cabos → **1001-1005**, isoladores → **1009**).
-2. Localize a seção correspondente no documento (Objetivo, Abrangência, **Estrutura da descrição**, Campos, Exemplos, Fonte).
-3. Explique a **sequência dos campos**, o que cada campo significa e dê **exemplo de descrição padrão** quando houver no trecho.
-4. Se a pergunta for genérica (“como descrever um terminal?”), vá direto ao grupo de **terminais** (1008) e detalhe o subtipo mais provável (pino, forquilha, olhal etc.) ou liste os subtipos com estrutura resumida.
-5. Se perguntarem **como descrições são cadastradas** ou **como pesquisar por descrição**, explique:
-   - cadastro padronizado no TOTVS conforme a norma;
-   - busca operacional via API (`/products/search` com `description=`) serve para **encontrar itens já cadastrados**, não substitui a norma de escrita.
+1. Identifique o **grupo técnico** (ex.: terminais → **1008**, cabos → **1001-1005**, cabo PP → **1006/1007**).
+2. Localize Objetivo, Abrangência, **Estrutura da descrição**, Campos, Exemplos.
+3. Explique a **sequência dos campos** e monte o exemplo padrão.
+4. Pergunta genérica («como descrever um terminal?») → grupo **1008** e subtipos (pino, forquilha, olhal, faston, bandeira, …).
+
+## Analisar
+
+Se o usuário colou uma descrição: valide contra a estrutura do grupo, liste gaps e proponha versão corrigida.
+
+## Cadastro vs busca
+
+- Cadastro TOTVS conforme a norma.
+- `/products/search?description=` acha itens já cadastrados — não substitui a norma.
 
 ## O que não fazer
 
-- Não chame API de produto, SQL ou busca de catálogo — a resposta vem da norma documental.
-- Não invente campos ou exemplos que não estejam no contexto RAG.
-- Não confunda com “qual a descrição do produto X” (consulta cadastral de item existente).
+- Não chame API de produto, SQL ou catálogo neste modo.
+- Não invente campos/exemplos ausentes do RAG.
+- Não confunda com «qual a descrição do produto X» (consulta cadastral).

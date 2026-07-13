@@ -142,6 +142,14 @@ Execução SQL no chat comum **não** é permitida via external actions.
 - **Ferramenta relacionada:** `search_knowledge_base` (quando autorizada ao usuário).
 - **Agente:** segue `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (default `true`) quando a skill não foi configurada no builder. Para desativar, use `PUT /chat/agents/{id}/skills` com `skillKey: "company-knowledge"` e `enabled: false`.
 
+### Skill `technical-description-delpi`
+
+- **Comportamento:** cria, explica e **analisa** descrições de matérias-primas no padrão das Normas Técnicas DELPI (grupos 1001–1025). Injeta policy no prompt; o intent `ChatTechnicalDescriptionIntentService` força RAG normativo e a policy de turno `technical-description-normas.md`.
+- **Fonte:** `normas-tecnicas-delpi.md` (`company-knowledge`) + vocabulário `technical_description_vocabulary.json`.
+- **Ativação:** mesmo default de `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (chat comum e agente sem config explícita). Metadata legado: `technicalDescription`.
+- **Não faz:** consulta cadastral por código de produto (API) nem análise de desenho PDF (`drawing-analysis-delpi`).
+- **Desativar:** `PUT /chat/agents/{id}/skills` com `skillKey: "technical-description-delpi"` e `enabled: false`.
+
 ## Skill SQL — elaborar vs executar
 
 | Intenção do usuário | Skill SQL | Action `/data/sql` |

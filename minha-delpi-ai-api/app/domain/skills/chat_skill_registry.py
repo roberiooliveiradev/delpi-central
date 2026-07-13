@@ -12,6 +12,7 @@ from app.domain.services.chat_domain_config_service import ChatDomainConfigServi
 SQL_SKILL_KEY = "sql"
 SQL_EXECUTION_PATH_TOKEN = "/data/sql"
 COMPANY_KNOWLEDGE_SKILL_KEY = "company-knowledge"
+TECHNICAL_DESCRIPTION_SKILL_KEY = "technical-description-delpi"
 DRAWING_ANALYSIS_SKILL_KEY = "drawing-analysis-delpi"
 DOCUMENT_VISION_SKILL_KEY = "document-vision-delpi"
 QUALITY_ACTION_PLANS_SKILL_KEY = "quality-action-plans-delpi"
@@ -244,6 +245,14 @@ class ChatSkillRegistry:
                 definition,
             ):
                 enabled = default_company_knowledge
+            elif definition.key == TECHNICAL_DESCRIPTION_SKILL_KEY and not has_agent:
+                enabled = default_company_knowledge
+            elif (
+                definition.key == TECHNICAL_DESCRIPTION_SKILL_KEY
+                and has_agent
+                and not cls._has_explicit_config(agent_metadata, definition)
+            ):
+                enabled = default_company_knowledge
             elif (
                 definition.key == DRAWING_ANALYSIS_SKILL_KEY
                 and has_agent
@@ -301,6 +310,7 @@ class ChatSkillRegistry:
             "sqlAuthoring": False,
             "sqlExecutionAvailable": False,
             "companyKnowledge": False,
+            "technicalDescription": False,
             "drawingAnalysis": False,
             "documentVision": False,
             "qualityActionPlans": False,
@@ -315,6 +325,8 @@ class ChatSkillRegistry:
                 )
             if item["skillKey"] == COMPANY_KNOWLEDGE_SKILL_KEY:
                 resolved["companyKnowledge"] = bool(item["enabled"])
+            if item["skillKey"] == TECHNICAL_DESCRIPTION_SKILL_KEY:
+                resolved["technicalDescription"] = bool(item["enabled"])
             if item["skillKey"] == DRAWING_ANALYSIS_SKILL_KEY:
                 resolved["drawingAnalysis"] = bool(item["enabled"])
             if item["skillKey"] == DOCUMENT_VISION_SKILL_KEY:

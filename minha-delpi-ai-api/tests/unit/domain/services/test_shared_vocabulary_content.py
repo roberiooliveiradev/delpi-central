@@ -19,6 +19,16 @@ def test_term_extraction_stopwords_loaded_from_json():
     assert "voce" in ChatTermExtractionVocabularyService.terms("stopwords")
 
 
+def test_technical_description_vocabulary_loaded():
+    from app.domain.services.chat_technical_description_vocabulary_service import (
+        ChatTechnicalDescriptionVocabularyService,
+    )
+
+    assert ChatTechnicalDescriptionVocabularyService.material_groups()
+    assert "VDAR" in ChatTechnicalDescriptionVocabularyService.color_abbreviations()
+    assert ChatTechnicalDescriptionVocabularyService.guidance_verbs()
+
+
 def test_session_topic_change_markers_loaded():
     assert ChatSessionVocabularyService.terms("topicChangeMarkers")
 

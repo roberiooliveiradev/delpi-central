@@ -136,6 +136,20 @@ class PromptPolicyService:
             company_policy = ChatSkillRegistry.get_policy_content(COMPANY_KNOWLEDGE_SKILL_KEY)
             sections.append(company_policy or self._load_policy("company-knowledge-skill.md"))
 
+        if resolved_skills.get("technicalDescription"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                TECHNICAL_DESCRIPTION_SKILL_KEY,
+            )
+
+            technical_policy = ChatSkillRegistry.get_policy_content(
+                TECHNICAL_DESCRIPTION_SKILL_KEY
+            )
+            sections.append(
+                technical_policy
+                or self._load_policy("technical-description-delpi-skill.md")
+            )
+
         if resolved_skills.get("drawingAnalysis"):
             from app.domain.skills.chat_skill_registry import (
                 ChatSkillRegistry,

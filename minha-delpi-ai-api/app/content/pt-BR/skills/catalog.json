@@ -44,6 +44,34 @@
       ]
     },
     {
+      "key": "technical-description-delpi",
+      "label": "Descrição técnica de matérias-primas",
+      "description": "Cria, explica e analisa descrições de matérias-primas no padrão das Normas Técnicas DELPI (grupos 1001–1025): terminais, cabos, isoladores, tubos, termoencolhível, etc. Usa a base documental global; não substitui consulta cadastral de produto por código.",
+      "policyFile": "technical-description-delpi-skill.md",
+      "metadataFlag": "enabled",
+      "legacyMetadataFlag": "technicalDescription",
+      "executionPathHint": "Normas_Tecnicas_DELPI / company-knowledge",
+      "aliases": [
+        "descricao tecnica",
+        "descrição técnica",
+        "normas tecnicas",
+        "normas técnicas",
+        "materia prima",
+        "matéria-prima",
+        "como descrever terminal",
+        "nomenclatura mp",
+        "cadastro descricao"
+      ],
+      "examplePrompts": [
+        "como descrever um terminal pino?",
+        "monte a descrição de um cabo PVC 0,75mm2 preto",
+        "analise esta descrição: TERM. FASTON 6,30X0,80 ...",
+        "o que significa VDAR na descrição?",
+        "normas técnicas DELPI para cabos PP"
+      ],
+      "sortOrder": 20
+    },
+    {
       "key": "drawing-analysis-delpi",
       "label": "Análise de Desenhos DELPI",
       "description": "Analisa desenhos técnicos DELPI em PDF, validando o documento contra dados reais do Protheus via provider OpenAPI (api-delpi ou api-externa: GET /products/{code}/analyser) e normas internas.",
