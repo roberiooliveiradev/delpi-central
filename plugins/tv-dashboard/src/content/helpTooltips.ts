@@ -141,6 +141,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Ferramentas do gráfico selecionado (Excel Online): tipo, rótulos, eixos, grade e formato da parte.",
     table:
       "Ferramentas da tabela selecionada (Excel Table Design): estilos, opções de estilo (cabeçalho, totais, listras) e formato.",
+    tableDesign:
+      "Estilos de tabela, opções de cabeçalho/listras, sombreamento e bordas (como Design da Tabela no PowerPoint).",
+    tableLayout:
+      "Tamanho da moldura, alinhamento do texto, organizar e truncamento de linhas/colunas (como Tabela Layout).",
     shape:
       "Ferramentas da forma selecionada (PowerPoint Online): alterar forma, estilos, preenchimento, contorno e tamanho.",
     data: "Mesmos controles do painel lateral Dados: fonte, parâmetros e catálogo.",

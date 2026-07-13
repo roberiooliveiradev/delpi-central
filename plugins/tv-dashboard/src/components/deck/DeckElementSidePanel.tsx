@@ -68,14 +68,25 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   const tab = selectionPanelTab;
 
   const panelTitle = useMemo(() => {
-    if (tab !== "data") {
-      return tab === "element" ? "Definir elemento" : "Camadas";
+    if (tab === "layers") return "Camadas";
+    if (tab === "data") {
+      if (dataPanelIntent === "catalog" || dataContext.kind === "none") {
+        return "Fontes de dados";
+      }
+      return "Dados do elemento";
     }
-    if (dataPanelIntent === "catalog" || dataContext.kind === "none") {
-      return "Fontes de dados";
+    if (selected?.type === "table_view") return "Formatar Tabela";
+    if (selected?.type === "chart_view") return "Formatar Gráfico";
+    if (
+      selected?.type === "shape" ||
+      selected?.type === "text" ||
+      selected?.type === "heading"
+    ) {
+      return "Definir Forma";
     }
-    return "Dados do elemento";
-  }, [tab, dataPanelIntent, dataContext.kind]);
+    if (selected?.type === "kpi_view") return "Formatar KPI";
+    return "Definir elemento";
+  }, [tab, dataPanelIntent, dataContext.kind, selected?.type]);
 
   function handleTabChange(next: SelectionPanelTab) {
     setSelectionPanelTab(next);

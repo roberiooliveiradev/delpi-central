@@ -6,14 +6,23 @@ import {
   resolveEmbeddedComunicadoRibbonTabs,
 } from "./deckRibbonTabMeta";
 
-describe("deckRibbonTabMeta (Elemento / Dados / Camadas)", () => {
-  it("mostra abas Elemento, Dados e Camadas com seleção", () => {
-    const tabs = resolveDeckRibbonTabs(true, { hasSelection: true });
+describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
+  it("mostra abas Elemento, Dados e Camadas com seleção não-tabela", () => {
+    const tabs = resolveDeckRibbonTabs(true, { hasSelection: true, isTableSelection: false });
     expect(tabs.map((tab) => tab.id)).toEqual(
       expect.arrayContaining(["element", "data", "layers"]),
     );
+    expect(tabs.some((tab) => tab.id === "tableDesign")).toBe(false);
     expect(tabs.find((tab) => tab.id === "element")?.label).toBe("Elemento");
-    expect(tabs.find((tab) => tab.id === "layers")?.label).toBe("Camadas");
+  });
+
+  it("com tabela selecionada troca Elemento por Design + Layout", () => {
+    const tabs = resolveDeckRibbonTabs(true, { hasSelection: true, isTableSelection: true });
+    const ids = tabs.map((tab) => tab.id);
+    expect(ids).toEqual(expect.arrayContaining(["tableDesign", "tableLayout", "data", "layers"]));
+    expect(ids).not.toContain("element");
+    expect(tabs.find((tab) => tab.id === "tableDesign")?.label).toBe("Design da Tabela");
+    expect(tabs.find((tab) => tab.id === "tableLayout")?.label).toBe("Tabela Layout");
   });
 
   it("esconde contextuais sem seleção", () => {
@@ -34,12 +43,27 @@ describe("deckRibbonTabMeta (Elemento / Dados / Camadas)", () => {
     expect(isContextualDeckRibbonTab(tabs.find((t) => t.id === "home")!)).toBe(false);
   });
 
-  it("chrome embutido inclui Inserir, Exibir e as três contextuais", () => {
+  it("chrome embutido inclui Inserir, Exibir e as contextuais", () => {
     const both = resolveEmbeddedComunicadoRibbonTabs({ hasSelection: true });
     expect(both.map((tab) => tab.id)).toEqual([
       "insert",
       "view",
       "element",
+      "data",
+      "layers",
+    ]);
+  });
+
+  it("chrome embutido com tabela usa Design/Layout", () => {
+    const both = resolveEmbeddedComunicadoRibbonTabs({
+      hasSelection: true,
+      isTableSelection: true,
+    });
+    expect(both.map((tab) => tab.id)).toEqual([
+      "insert",
+      "view",
+      "tableDesign",
+      "tableLayout",
       "data",
       "layers",
     ]);

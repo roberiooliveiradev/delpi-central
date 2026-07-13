@@ -2,11 +2,11 @@ import { resolveObjectRibbonTab } from "../utils/resolveObjectRibbonTab";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoChartRibbon } from "./ComunicadoChartRibbon";
 import { ComunicadoShapeRibbon } from "./ComunicadoShapeRibbon";
-import { ComunicadoTableRibbon } from "./ComunicadoTableRibbon";
+import { ComunicadoTableDesignRibbon } from "./ComunicadoTableDesignRibbon";
 
 /**
- * Aba Elemento (top bar) — mesmos domínios do painel lateral Elemento:
- * tipografia, chrome visual, posição e organização conforme o tipo selecionado.
+ * Aba Elemento (top bar) — tipografia, chrome e organização conforme o tipo.
+ * Tabela usa as abas Design/Layout no chrome; fallback aqui se Elemento abrir.
  */
 export function ComunicadoElementRibbon() {
   const { selected, selectedChartPart, selectedKpiPart } = useComunicadoEditor();
@@ -17,6 +17,6 @@ export function ComunicadoElementRibbon() {
   });
 
   if (kind === "chart") return <ComunicadoChartRibbon />;
-  if (kind === "table") return <ComunicadoTableRibbon />;
+  if (kind === "table") return <ComunicadoTableDesignRibbon />;
   return <ComunicadoShapeRibbon />;
 }

@@ -66,11 +66,13 @@ type Props = {
 
 function isRibbonTab(
   tab: DeckRibbonTabId,
-): tab is "home" | "insert" | "element" | "data" | "view" {
+): tab is "home" | "insert" | "element" | "tableDesign" | "tableLayout" | "data" | "view" {
   return (
     tab === "home" ||
     tab === "insert" ||
     tab === "element" ||
+    tab === "tableDesign" ||
+    tab === "tableLayout" ||
     tab === "data" ||
     tab === "view"
   );
@@ -81,8 +83,7 @@ function isSettingsTab(tab: DeckRibbonTabId): tab is "slide" | "playlist" {
 }
 
 function ribbonDensityFor(tab: DeckRibbonTabId): "band" | "fit" {
-  // Dados: faixa baixa (toolbar). Elemento: fit para selects/campos.
-  return tab === "element" ? "fit" : "band";
+  return tab === "element" || tab === "tableDesign" || tab === "tableLayout" ? "fit" : "band";
 }
 
 /** Chrome do editor: abas estilo PowerPoint + ribbon contextual + painel de configuração. */
@@ -100,7 +101,8 @@ export function DeckEditorChrome({
 }: Props) {
   const editor = useOptionalComunicadoEditor();
   const hasSelection = Boolean(editor && editor.selectedIds.length > 0);
-  const tabs = resolveDeckRibbonTabs(isCustomSlide, { hasSelection });
+  const isTableSelection = editor?.selected?.type === "table_view";
+  const tabs = resolveDeckRibbonTabs(isCustomSlide, { hasSelection, isTableSelection });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
   const [layersModalOpen, setLayersModalOpen] = useState(false);
 
@@ -113,7 +115,7 @@ export function DeckEditorChrome({
     setLayersModalOpen(false);
     if (editor?.selectionPanelTab === "layers") {
       editor.setSelectionPanelTab("element");
-      if (hasSelection) setActiveTab("element");
+      if (hasSelection) setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
   }
 
@@ -123,26 +125,49 @@ export function DeckEditorChrome({
       openLayersModal();
       return;
     }
-    if (
-      normalized === "insert" ||
-      normalized === "element" ||
-      normalized === "data" ||
-      normalized === "view"
-    ) {
+    if (normalized === "insert" || normalized === "data" || normalized === "view") {
       setLayersModalOpen(false);
       setActiveTab(normalized);
+      return;
+    }
+    if (normalized === "element") {
+      setLayersModalOpen(false);
+      setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
   });
 
   useEffect(() => {
     if (activeTab === "layers") {
-      setActiveTab(hasSelection ? "element" : "home");
+      setActiveTab(hasSelection ? (isTableSelection ? "tableDesign" : "element") : "home");
       return;
     }
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(hasSelection ? (editor?.selectionPanelTab === "layers" ? "element" : (editor?.selectionPanelTab ?? "element")) : "home");
+      if (!hasSelection) {
+        setActiveTab("home");
+        return;
+      }
+      if (isTableSelection) {
+        setActiveTab("tableDesign");
+        return;
+      }
+      setActiveTab(
+        editor?.selectionPanelTab === "layers"
+          ? "element"
+          : (editor?.selectionPanelTab ?? "element"),
+      );
     }
-  }, [activeTab, tabs, hasSelection, editor?.selectionPanelTab]);
+  }, [activeTab, tabs, hasSelection, isTableSelection, editor?.selectionPanelTab]);
+
+  useEffect(() => {
+    if (!hasSelection || !isCustomSlide) return;
+    if (isTableSelection) {
+      if (activeTab === "element") setActiveTab("tableDesign");
+      return;
+    }
+    if (activeTab === "tableDesign" || activeTab === "tableLayout") {
+      setActiveTab("element");
+    }
+  }, [isTableSelection, hasSelection, isCustomSlide, activeTab]);
 
   useEffect(() => {
     const panelTab = editor?.selectionPanelTab;
@@ -152,8 +177,12 @@ export function DeckEditorChrome({
       return;
     }
     setLayersModalOpen(false);
+    if (panelTab === "element") {
+      setActiveTab(isTableSelection ? "tableDesign" : "element");
+      return;
+    }
     setActiveTab(panelTab);
-  }, [editor?.selectionPanelTab, hasSelection, isCustomSlide]);
+  }, [editor?.selectionPanelTab, hasSelection, isCustomSlide, isTableSelection]);
 
   useEffect(() => {
     if (activeTab === "slide" && !slide) {
@@ -168,6 +197,11 @@ export function DeckEditorChrome({
     }
     setLayersModalOpen(false);
     setActiveTab(tab);
+    if (tab === "tableDesign" || tab === "tableLayout") {
+      editor?.setSelectionPanelTab("element");
+      editor?.setDataPanelOpen(false);
+      return;
+    }
     if (isSelectionPanelTab(tab)) {
       editor?.setSelectionPanelTab(tab);
       editor?.setDataPanelOpen(tab === "data");
@@ -229,6 +263,8 @@ export function DeckEditorChrome({
             {isCustomSlide &&
             (activeTab === "insert" ||
               activeTab === "element" ||
+              activeTab === "tableDesign" ||
+              activeTab === "tableLayout" ||
               activeTab === "data" ||
               activeTab === "view") ? (
               <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />

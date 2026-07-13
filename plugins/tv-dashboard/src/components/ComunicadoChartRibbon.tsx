@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
 import {
   BarChart3,
+  ChevronRight,
   Database,
   Grid3x3,
   Heading,
   ListOrdered,
+  Plus,
   Replace,
   Table2,
   Tags,
@@ -33,13 +35,27 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { FormatRibbonOrganizeSection, FormatRibbonFrameSection, FormatRibbonTypographySections } from "./formatRibbon";
 import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
+import { DeckRibbonLargeButton } from "./deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
+const ADD_ELEMENT_ITEMS: Array<{
+  id: ChartElementId;
+  icon: typeof Heading;
+  label: string;
+}> = [
+  { id: "chartTitle", icon: Heading, label: "Título do gráfico" },
+  { id: "axisTitles", icon: Type, label: "Títulos dos eixos" },
+  { id: "legend", icon: ListOrdered, label: "Legenda" },
+  { id: "dataLabels", icon: Tags, label: "Rótulos de dados" },
+  { id: "dataTable", icon: Table2, label: "Tabela de dados" },
+  { id: "axes", icon: BarChart3, label: "Eixos" },
+  { id: "gridlines", icon: Grid3x3, label: "Linhas de grade" },
+];
+
 /**
- * Faixa Elemento para gráfico — dados, tipo (mesmo catálogo de Inserir),
- * rótulos/eixos e configurações de forma no mesmo lugar.
+ * Faixa Elemento para gráfico — Layout (adicionar elemento) + tipo + rótulos.
  */
 export function ComunicadoChartRibbon() {
   const {
@@ -51,7 +67,10 @@ export function ComunicadoChartRibbon() {
   } = useComunicadoEditor();
   const chartTypeAnchorRef = useRef<HTMLDivElement>(null);
   const chartTypePanelRef = useRef<HTMLDivElement>(null);
+  const addElementAnchorRef = useRef<HTMLDivElement>(null);
+  const addElementPanelRef = useRef<HTMLDivElement>(null);
   const [chartTypeMenuOpen, setChartTypeMenuOpen] = useState(false);
+  const [addElementOpen, setAddElementOpen] = useState(false);
 
   if (!selected || selected.type !== "chart_view") {
     return (
@@ -90,6 +109,55 @@ export function ComunicadoChartRibbon() {
     <div className="td-deck-ribbon__groups">
       <FormatRibbonTypographySections />
 
+      <DeckRibbonGroup label="Layout do gráfico" hint={H.chartLabels}>
+        <div ref={addElementAnchorRef} className="td-composer__dropdown">
+          <DeckRibbonLargeButton
+            icon={Plus}
+            label={"Adicionar\nelemento"}
+            hint="Inclui ou remove elementos do gráfico (título, legenda, eixos…)."
+            onClick={() => setAddElementOpen((open) => !open)}
+          />
+          {addElementOpen ? (
+            <AnchoredPanelPortal
+              open={addElementOpen}
+              anchorRef={addElementAnchorRef}
+              panelRef={addElementPanelRef}
+              variant="bare"
+              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+              className="td-chart-add-element-portal"
+              role="menu"
+              aria-label="Adicionar elemento de gráfico"
+            >
+              <div ref={addElementPanelRef}>
+                <ul className="td-deck-ribbon__cascade-menu">
+                  {ADD_ELEMENT_ITEMS.map((item) => {
+                    const enabled = isChartElementEnabled(item.id, options);
+                    const Icon = item.icon;
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          role="menuitemcheckbox"
+                          aria-checked={enabled}
+                          className="td-deck-ribbon__cascade-item"
+                          onClick={() => {
+                            toggleElement(item.id, !enabled);
+                          }}
+                        >
+                          <Icon size={16} aria-hidden="true" />
+                          <span>{item.label}</span>
+                          {enabled ? <ChevronRight size={14} aria-hidden="true" /> : null}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </AnchoredPanelPortal>
+          ) : null}
+        </div>
+      </DeckRibbonGroup>
+
       <DeckRibbonGroup label="Dados" hint={H.chartData}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
@@ -101,13 +169,12 @@ export function ComunicadoChartRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Alterar tipo" hint={H.chartType}>
+      <DeckRibbonGroup label="Tipo" hint={H.chartType}>
         <div ref={chartTypeAnchorRef} className="td-composer__dropdown">
-          <DeckRibbonTile
+          <DeckRibbonLargeButton
             icon={Replace}
-            label="Trocar gráfico"
+            label={"Alterar tipo\nde gráfico"}
             hint="Abre o mesmo catálogo de tipos usado em Inserir → Gráficos."
-            active={chartTypeMenuOpen}
             onClick={() => setChartTypeMenuOpen((open) => !open)}
           />
           {chartTypeMenuOpen ? (
@@ -118,7 +185,7 @@ export function ComunicadoChartRibbon() {
               variant="bare"
               portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
               className="td-chart-catalog-portal"
-              role="menu"
+              role="dialog"
               aria-label="Alterar tipo de gráfico"
             >
               <ChartTypeCatalogPanel title="Alterar tipo de gráfico" onSelect={setChartType} />
@@ -129,49 +196,20 @@ export function ComunicadoChartRibbon() {
 
       <DeckRibbonGroup label="Rótulos" hint={H.chartLabels}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={Heading}
-            label="Título"
-            hint="Exibir ou ocultar o título do gráfico."
-            active={isChartElementEnabled("chartTitle", options)}
-            onClick={() =>
-              toggleElement("chartTitle", !isChartElementEnabled("chartTitle", options))
-            }
-          />
-          <DeckRibbonTile
-            icon={Type}
-            label="Eixos"
-            hint="Títulos dos eixos X e Y."
-            active={isChartElementEnabled("axisTitles", options)}
-            onClick={() =>
-              toggleElement("axisTitles", !isChartElementEnabled("axisTitles", options))
-            }
-          />
-          <DeckRibbonTile
-            icon={ListOrdered}
-            label="Legenda"
-            hint="Exibir ou ocultar a legenda."
-            active={isChartElementEnabled("legend", options)}
-            onClick={() => toggleElement("legend", !isChartElementEnabled("legend", options))}
-          />
-          <DeckRibbonTile
-            icon={Tags}
-            label="Rótulos"
-            hint="Rótulos de dados nos pontos."
-            active={isChartElementEnabled("dataLabels", options)}
-            onClick={() =>
-              toggleElement("dataLabels", !isChartElementEnabled("dataLabels", options))
-            }
-          />
-          <DeckRibbonTile
-            icon={Table2}
-            label="Tabela"
-            hint="Tabela de dados abaixo do gráfico."
-            active={isChartElementEnabled("dataTable", options)}
-            onClick={() =>
-              toggleElement("dataTable", !isChartElementEnabled("dataTable", options))
-            }
-          />
+          {ADD_ELEMENT_ITEMS.filter((item) =>
+            ["chartTitle", "axisTitles", "legend", "dataLabels", "dataTable"].includes(item.id),
+          ).map((item) => (
+            <DeckRibbonTile
+              key={item.id}
+              icon={item.icon}
+              label={item.label.split(" ")[0] ?? item.label}
+              hint={item.label}
+              active={isChartElementEnabled(item.id, options)}
+              onClick={() =>
+                toggleElement(item.id, !isChartElementEnabled(item.id, options))
+              }
+            />
+          ))}
         </div>
       </DeckRibbonGroup>
 

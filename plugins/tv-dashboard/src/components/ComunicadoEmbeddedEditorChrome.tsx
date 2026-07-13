@@ -15,26 +15,33 @@ import {
   DeckRibbonShell,
   isContextualDeckRibbonTab,
   resolveEmbeddedComunicadoRibbonTabs,
+  type DeckRibbonTabId,
 } from "./deck";
 
 type Labels = Record<string, string>;
 
-type EmbeddedTab = "insert" | "element" | "data" | "layers" | "view";
-type RibbonEmbeddedTab = "insert" | "element" | "data" | "view";
+type RibbonEmbeddedTab =
+  | "insert"
+  | "element"
+  | "tableDesign"
+  | "tableLayout"
+  | "data"
+  | "view";
 
 type Props = {
   labels?: Labels;
 };
 
 function ribbonDensityFor(tab: RibbonEmbeddedTab): "band" | "fit" {
-  return tab === "element" ? "fit" : "band";
+  return tab === "element" || tab === "tableDesign" || tab === "tableLayout" ? "fit" : "band";
 }
 
 /** Chrome compacto do compositor embutido — mesmas faixas do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const editor = useComunicadoEditor();
   const hasSelection = editor.selectedIds.length > 0;
-  const tabs = resolveEmbeddedComunicadoRibbonTabs({ hasSelection });
+  const isTableSelection = editor.selected?.type === "table_view";
+  const tabs = resolveEmbeddedComunicadoRibbonTabs({ hasSelection, isTableSelection });
   const [activeTab, setActiveTab] = useState<RibbonEmbeddedTab>("insert");
   const [layersModalOpen, setLayersModalOpen] = useState(false);
 
@@ -47,7 +54,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     setLayersModalOpen(false);
     if (editor.selectionPanelTab === "layers") {
       editor.setSelectionPanelTab("element");
-      if (hasSelection) setActiveTab("element");
+      if (hasSelection) setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
   }
 
@@ -57,22 +64,33 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       openLayersModal();
       return;
     }
-    if (
-      normalized === "insert" ||
-      normalized === "element" ||
-      normalized === "data" ||
-      normalized === "view"
-    ) {
+    if (normalized === "insert" || normalized === "data" || normalized === "view") {
       setLayersModalOpen(false);
       setActiveTab(normalized);
+      return;
+    }
+    if (normalized === "element") {
+      setLayersModalOpen(false);
+      setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
   });
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab || (tab.id === "layers" && layersModalOpen))) {
-      setActiveTab(hasSelection ? "element" : "insert");
+      setActiveTab(hasSelection ? (isTableSelection ? "tableDesign" : "element") : "insert");
     }
-  }, [activeTab, tabs, hasSelection, layersModalOpen]);
+  }, [activeTab, tabs, hasSelection, layersModalOpen, isTableSelection]);
+
+  useEffect(() => {
+    if (!hasSelection) return;
+    if (isTableSelection && activeTab === "element") {
+      setActiveTab("tableDesign");
+      return;
+    }
+    if (!isTableSelection && (activeTab === "tableDesign" || activeTab === "tableLayout")) {
+      setActiveTab("element");
+    }
+  }, [isTableSelection, hasSelection, activeTab]);
 
   useEffect(() => {
     if (!hasSelection) return;
@@ -80,19 +98,39 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       setLayersModalOpen(true);
       return;
     }
+    if (editor.selectionPanelTab === "element") {
+      setLayersModalOpen(false);
+      setActiveTab(isTableSelection ? "tableDesign" : "element");
+      return;
+    }
     if (isSelectionPanelTab(editor.selectionPanelTab)) {
       setLayersModalOpen(false);
       setActiveTab(editor.selectionPanelTab);
     }
-  }, [editor.selectionPanelTab, hasSelection]);
+  }, [editor.selectionPanelTab, hasSelection, isTableSelection]);
 
-  function selectTab(tab: EmbeddedTab) {
+  function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {
       openLayersModal();
       return;
     }
+    if (
+      tab !== "insert" &&
+      tab !== "element" &&
+      tab !== "tableDesign" &&
+      tab !== "tableLayout" &&
+      tab !== "data" &&
+      tab !== "view"
+    ) {
+      return;
+    }
     setLayersModalOpen(false);
     setActiveTab(tab);
+    if (tab === "tableDesign" || tab === "tableLayout") {
+      editor.setSelectionPanelTab("element");
+      editor.setDataPanelOpen(false);
+      return;
+    }
     if (isSelectionPanelTab(tab)) {
       editor.setSelectionPanelTab(tab);
       editor.setDataPanelOpen(tab === "data");
@@ -116,7 +154,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
                 hint={tab.hint}
                 icon={tab.icon}
                 active={tabActive}
-                onSelect={() => selectTab(tab.id as EmbeddedTab)}
+                onSelect={() => selectTab(tab.id)}
                 cellClassName={[
                   "td-deck-chrome__tab-cell",
                   contextual ? "td-deck-chrome__tab-cell--contextual" : "",
@@ -141,8 +179,9 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
           })}
         </div>
       </div>
+
       <div className="td-deck-chrome__ribbon">
-        <DeckRibbonShell embedded density={ribbonDensityFor(activeTab)}>
+        <DeckRibbonShell density={ribbonDensityFor(activeTab)}>
           <ComunicadoRibbonContent activeTab={activeTab} labels={labels} />
         </DeckRibbonShell>
       </div>

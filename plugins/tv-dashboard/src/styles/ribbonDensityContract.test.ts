@@ -38,6 +38,13 @@ describe("ribbon density contract", () => {
     expect(fit).toMatch(/max-height:\s*120px/);
   });
 
+  it("tokens de densidade chrome PPT estão declarados", () => {
+    expect(css).toMatch(/--td-chrome-radius:\s*2px/);
+    expect(css).toMatch(/--td-ribbon-tile-radius:\s*4px/);
+    expect(css).toMatch(/--td-ribbon-gallery-thumb:\s*44px/);
+    expect(css).toMatch(/--td-chrome-tab-height:\s*36px/);
+  });
+
   it("chrome clipa ribbon fit para não vazar conteúdo no palco", () => {
     expect(css).toMatch(
       /\.td-deck-chrome__ribbon:has\(\.td-deck-ribbon--fit\)\s*\{[^}]*overflow-y:\s*hidden/s,
